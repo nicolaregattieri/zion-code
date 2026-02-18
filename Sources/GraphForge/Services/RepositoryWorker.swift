@@ -158,6 +158,28 @@ actor RepositoryWorker {
         return result.stdout.clean.isEmpty ? result.stderr.clean : result.stdout.clean
     }
 
+    nonisolated func runShellStream(command: String, in repositoryURL: URL, onOutput: @escaping @Sendable (String) -> Void) throws {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/zsh")
+        process.arguments = ["-c", "export PATH=\"/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:$PATH\"; \(command)"]
+        process.currentDirectoryURL = repositoryURL
+        
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = pipe
+        
+        pipe.fileHandleForReading.readabilityHandler = { handle in
+            let data = handle.availableData
+            if let str = String(data: data, encoding: .utf8), !str.isEmpty {
+                onOutput(str)
+            }
+        }
+        
+        try process.run()
+        process.waitUntilExit()
+        pipe.fileHandleForReading.readabilityHandler = nil
+    }
+
     func loadCommitDetails(in repositoryURL: URL, commitID: String) throws -> String {
         try git.run(
             args: ["show", "--no-color", "--name-status", "--pretty=fuller", commitID],
@@ -167,7 +189,16 @@ actor RepositoryWorker {
 
     private func currentBranchName(in repositoryURL: URL) throws -> String {
         let branch = try git.runAllowingFailure(args: ["branch", "--show-current"], in: repositoryURL).stdout.clean
-        return branch.isEmpty ? "detached" : branch
+        if !branch.isEmpty { return branch }
+        
+        // If empty, we are likely in detached HEAD. Try to find if we are at a tag or remote branch.
+        let describe = try? git.runAllowingFailure(args: ["describe", "--tags", "--exact-match"], in: repositoryURL).stdout.clean
+        if let tag = describe, !tag.isEmpty {
+            return "detached (tag: \(tag))"
+        }
+        
+        let hash = try? currentHeadHash(in: repositoryURL)
+        return "detached (\(hash ?? "unknown"))"
     }
 
     private func currentHeadHash(in repositoryURL: URL) throws -> String {

@@ -83,7 +83,7 @@ struct OperationsScreen: View {
                         ScrollView {
                             VStack(alignment: .leading, spacing: 4) {
                                 ForEach(model.uncommittedChanges, id: \.self) { change in
-                                    FileStatusRow(model: model, line: change)
+                                    FileStatusRow(model: model, line: change, performGitAction: performGitAction)
                                 }
                             }
                         }
@@ -101,6 +101,13 @@ struct OperationsScreen: View {
                     .background(Color.black.opacity(0.2))
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                     .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.1), lineWidth: 1))
+
+                HStack {
+                    Toggle(L10n("Corrigir ultimo commit (Amend)"), isOn: $model.amendLastCommit)
+                        .toggleStyle(.checkbox)
+                        .font(.caption)
+                    Spacer()
+                }
 
                 Button(action: {
                     performGitAction(L10n("Commit"), L10n("Deseja realizar o commit de todas as alterações?"), false) {
@@ -336,6 +343,7 @@ struct OperationsScreen: View {
 struct FileStatusRow: View {
     @ObservedObject var model: RepositoryViewModel
     let line: String
+    let performGitAction: (String, String, Bool, @escaping () -> Void) -> Void
     
     var body: some View {
         let (indexStatus, workTreeStatus, file) = parseGitStatus(line)
@@ -375,6 +383,17 @@ struct FileStatusRow: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.white.opacity(isStaged ? 0.06 : 0.02))
         .clipShape(RoundedRectangle(cornerRadius: 6))
+        .contextMenu {
+            Button(L10n("Descartar alteracoes"), role: .destructive) {
+                performGitAction(L10n("Descartar"), L10n("Deseja reverter todas as mudancas neste arquivo? Isso nao pode ser desfeito."), true) {
+                    model.discardChanges(in: file)
+                }
+            }
+            Divider()
+            Button(L10n("Adicionar ao .gitignore")) {
+                model.addToGitIgnore(path: file)
+            }
+        }
     }
     
     private func parseGitStatus(_ line: String) -> (String, String, String) {

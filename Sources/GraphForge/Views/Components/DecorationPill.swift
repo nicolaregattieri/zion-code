@@ -11,7 +11,7 @@ struct DecorationPill: View {
 
     var body: some View {
         let (name, type) = parseDecoration(decoration, remotes: remotes)
-        let isCurrent = (type == .head || type == .localBranch) && name == currentBranch
+        let isCurrent = checkIsCurrent(name: name, type: type, current: currentBranch)
         let isMain = ["main", "master", "develop", "dev"].contains(name.lowercased())
         let isSearchMatch = !highlightSearchQuery.isEmpty && name.lowercased().contains(highlightSearchQuery.lowercased())
         let pillColor = color(for: type)
@@ -56,6 +56,14 @@ struct DecorationPill: View {
 
     enum DecorationType {
         case head, localBranch, remoteBranch, tag, other
+    }
+
+    private func checkIsCurrent(name: String, type: DecorationType, current: String) -> Bool {
+        if type == .head { return true }
+        if name == current { return true }
+        if current.hasPrefix("detached (tag: ") && type == .tag && current.contains(name) { return true }
+        if current.hasPrefix("detached (") && current.contains(name) { return true } // matches hash
+        return false
     }
 
     private func parseDecoration(_ decoration: String, remotes: [String]) -> (String, DecorationType) {

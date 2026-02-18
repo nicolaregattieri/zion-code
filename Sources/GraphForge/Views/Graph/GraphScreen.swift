@@ -11,7 +11,12 @@ struct GraphScreen: View {
     
     @State private var currentMatchIndex: Int = 0
     @State private var searchMatchIDs: [String] = []
+    @State private var isShowingQuickCommit: Bool = false
+    @State private var isShowingQuickStash: Bool = false
+    @State private var isShowingStashList: Bool = false
     @FocusState private var isSearchFocused: Bool
+    @FocusState private var isCommitMessageFocused: Bool
+    @State private var keyboardMonitor: Any?
     
     var body: some View {
         ScrollViewReader { proxy in
@@ -34,6 +39,20 @@ struct GraphScreen: View {
             .onAppear {
                 updateSearchMatches()
                 setupKeyboardMonitor(proxy: proxy)
+            }
+            .onDisappear {
+                if let monitor = keyboardMonitor {
+                    NSEvent.removeMonitor(monitor)
+                    keyboardMonitor = nil
+                }
+            }
+            .onChange(of: model.shouldClosePopovers) { shouldClose in
+                if shouldClose {
+                    isShowingQuickCommit = false
+                    isShowingQuickStash = false
+                    isShowingStashList = false
+                    model.shouldClosePopovers = false
+                }
             }
             .onChange(of: commitSearchQuery) { _ in 
                 updateSearchMatches()
@@ -155,8 +174,29 @@ struct GraphScreen: View {
                             laneCount: model.maxLaneCount,
                             currentBranch: model.currentBranch,
                             onCheckout: { branch in
-                                performGitAction(L10n("Checkout"), L10n("Deseja fazer checkout para %@", branch), false) {
-                                    model.checkout(reference: branch)
+                                let isRemote = model.isRemoteRefName(branch)
+                                let title = isRemote ? L10n("Checkout & Pull") : L10n("Checkout")
+                                
+                                var localName = branch
+                                if isRemote {
+                                    for remote in model.remotes {
+                                        if branch.hasPrefix("\(remote.name)/") {
+                                            localName = String(branch.dropFirst(remote.name.count + 1))
+                                            break
+                                        }
+                                    }
+                                }
+
+                                let message = isRemote 
+                                    ? L10n("Deseja fazer checkout de %@ e puxar as alterações?", localName)
+                                    : L10n("Deseja fazer checkout para %@?", branch)
+                                
+                                performGitAction(title, message, false) {
+                                    if isRemote {
+                                        model.checkoutAndPull(reference: branch)
+                                    } else {
+                                        model.checkout(reference: branch)
+                                    }
                                 }
                             },
                             onSelect: {
@@ -214,12 +254,146 @@ struct GraphScreen: View {
                     
                     Spacer()
                     
-                    Button {
-                        withAnimation { selectedSection = .operations }
-                    } label: {
-                        Label(L10n("Fazer Commit"), systemImage: "plus.square.fill")
-                            .font(.system(size: 12, weight: .bold))
-                    }.buttonStyle(.borderedProminent).tint(.orange).controlSize(.large)
+                    HStack(spacing: 8) {
+                        Button {
+                            isShowingQuickCommit = true
+                        } label: {
+                            Label(L10n("Commit"), systemImage: "plus.circle.fill")
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.green)
+                        .popover(isPresented: $isShowingQuickCommit) {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text(L10n("Criar Commit Rapido")).font(.headline)
+                                Text(L10n("Suas alteracoes serao rastreadas automaticamente (git add -A) se nada estiver no stage.")).font(.caption).foregroundStyle(.secondary)
+                                
+                                TextField(L10n("Mensagem do commit..."), text: $model.commitMessageInput, axis: .vertical)
+                                    .textFieldStyle(.plain)
+                                    .font(.system(.body, design: .monospaced))
+                                    .padding(8)
+                                    .background(Color.black.opacity(0.2))
+                                    .cornerRadius(8)
+                                    .focused($isCommitMessageFocused)
+                                    .lineLimit(3...6)
+                                
+                                HStack {
+                                    Button(L10n("Cancelar")) { isShowingQuickCommit = false }
+                                        .buttonStyle(.bordered)
+                                    
+                                    Spacer()
+                                    
+                                    Button(L10n("Commit")) {
+                                        model.commit(message: model.commitMessageInput)
+                                        isShowingQuickCommit = false
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .tint(.green)
+                                    .disabled(model.commitMessageInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                                }
+                            }
+                            .padding()
+                            .frame(width: 320)
+                            .onAppear {
+                                model.isTypingQuickly = true
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                    isCommitMessageFocused = true
+                                }
+                            }
+                            .onDisappear {
+                                model.isTypingQuickly = false
+                            }
+                        }
+
+                        Button {
+                            isShowingQuickStash = true
+                        } label: {
+                            Label(L10n("Stash"), systemImage: "archivebox.fill")
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(.blue)
+                        .popover(isPresented: $isShowingQuickStash) {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text(L10n("Salvar no Stash")).font(.headline)
+                                TextField(L10n("Mensagem do stash (opcional)"), text: $model.stashMessageInput)
+                                    .textFieldStyle(.roundedBorder)
+                                    .focused($isCommitMessageFocused)
+                                
+                                HStack {
+                                    Button(L10n("Cancelar")) { isShowingQuickStash = false }
+                                    Spacer()
+                                    Button(L10n("Salvar")) {
+                                        model.createStash(message: model.stashMessageInput)
+                                        model.stashMessageInput = ""
+                                        isShowingQuickStash = false
+                                    }.buttonStyle(.borderedProminent)
+                                }
+                            }
+                            .padding().frame(width: 280)
+                            .onAppear {
+                                model.isTypingQuickly = true
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                    isCommitMessageFocused = true
+                                }
+                            }
+                            .onDisappear {
+                                model.isTypingQuickly = false
+                            }
+                        }
+
+                        Button {
+                            isShowingStashList = true
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "list.bullet.rectangle.stack")
+                                if !model.stashes.isEmpty {
+                                    Text("\(model.stashes.count)").font(.system(size: 10, weight: .bold))
+                                        .padding(.horizontal, 6).padding(.vertical, 2)
+                                        .background(Color.blue.opacity(0.3)).clipShape(Capsule())
+                                }
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        .help(L10n("Ver Stashes"))
+                        .popover(isPresented: $isShowingStashList) {
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text(L10n("Stashes Recentes")).font(.headline).padding(.bottom, 4)
+                                
+                                if model.stashes.isEmpty {
+                                    Text(L10n("Nenhum stash encontrado.")).foregroundStyle(.secondary).font(.subheadline).padding(.vertical, 10)
+                                } else {
+                                    ScrollView {
+                                        VStack(spacing: 8) {
+                                            ForEach(model.stashes, id: \.self) { stash in
+                                                HStack {
+                                                    VStack(alignment: .leading, spacing: 2) {
+                                                        Text(stash).font(.system(size: 11, design: .monospaced)).lineLimit(2)
+                                                    }
+                                                    Spacer()
+                                                    Menu {
+                                                        Button(L10n("Apply")) { model.selectedStash = stash; model.applySelectedStash(); isShowingStashList = false }
+                                                        Button(L10n("Pop")) { model.selectedStash = stash; model.popSelectedStash(); isShowingStashList = false }
+                                                        Divider()
+                                                        Button(L10n("Drop"), role: .destructive) { model.selectedStash = stash; model.dropSelectedStash() }
+                                                    } label: {
+                                                        Image(systemName: "ellipsis.circle")
+                                                    }.menuStyle(.borderlessButton).fixedSize()
+                                                }
+                                                .padding(8).background(Color.white.opacity(0.05)).cornerRadius(8)
+                                            }
+                                        }
+                                    }.frame(maxHeight: 300)
+                                }
+                            }
+                            .padding().frame(width: 380)
+                        }
+                        
+                        Button {
+                            withAnimation { selectedSection = .changes }
+                        } label: {
+                            Label(L10n("Ver Mudanças"), systemImage: "doc.text.magnifyingglass")
+                                .font(.system(size: 12, weight: .bold))
+                        }.buttonStyle(.bordered).tint(.orange)
+                    }
                 }
                 .padding(.horizontal, 20)
             }
@@ -229,15 +403,44 @@ struct GraphScreen: View {
     }
 
     private func setupKeyboardMonitor(proxy: ScrollViewProxy) {
-        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            if isSearchFocused { return event }
+        if keyboardMonitor != nil { return }
+        
+        keyboardMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak model] event in
+            guard let model = model else { return event }
+            
+            // 1. Detect if we are currently editing ANY text field in the app
+            // This is the most reliable way to avoid blocking typing.
+            if let firstResponder = NSApp.keyWindow?.firstResponder {
+                let className = String(describing: type(of: firstResponder))
+                if className.contains("TextView") || className.contains("TextField") {
+                    // We are typing! Only intercept Cmd+Enter for quick commit.
+                    if model.isTypingQuickly && event.modifierFlags.contains(.command) && event.keyCode == 36 {
+                        model.commit(message: model.commitMessageInput)
+                        model.shouldClosePopovers = true
+                        return nil
+                    }
+                    return event
+                }
+            }
+            
+            // 2. Global Shortcuts (only when NOT typing)
             switch event.keyCode {
-            case 126: navigateSelection(direction: -1, proxy: proxy); return nil
-            case 125: navigateSelection(direction: 1, proxy: proxy); return nil
+            case 126: // Up Arrow
+                navigateSelection(direction: -1, proxy: proxy)
+                return nil
+            case 125: // Down Arrow
+                navigateSelection(direction: 1, proxy: proxy)
+                return nil
             default:
                 if event.modifierFlags.contains(.command) {
-                    if event.charactersIgnoringModifiers == "f" { isSearchFocused = true; return nil }
-                    if event.charactersIgnoringModifiers == "r" { model.refreshRepository(); return nil }
+                    if event.charactersIgnoringModifiers == "f" {
+                        isSearchFocused = true
+                        return nil
+                    }
+                    if event.charactersIgnoringModifiers == "r" {
+                        model.refreshRepository()
+                        return nil
+                    }
                 }
                 return event
             }

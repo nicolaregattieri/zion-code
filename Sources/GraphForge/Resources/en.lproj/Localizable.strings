@@ -22,6 +22,9 @@
 "Busca" = "Search";
 "Saltar para" = "Jump to";
 "Deseja fazer checkout para %@" = "Do you want to checkout to %@?";
+"Checkout & Pull" = "Checkout & Pull";
+"Deseja fazer checkout de %@ e puxar as alterações?" = "Do you want to checkout %@ and pull changes?";
+"Checkout e Pull concluídos para %@" = "Checkout and Pull complete for %@";
 "Branches" = "Branches";
 "Tags" = "Tags";
 "Stash" = "Stash";
@@ -190,5 +193,17 @@
 "Arquivos alterados" = "Changed files";
 "Selecionar Tudo" = "Select All";
 "Desmarcar Tudo" = "Deselect All";
+"Adicionar ao .gitignore" = "Add to .gitignore";
+"Adicionado ao .gitignore: %@" = "Added to .gitignore: %@";
 "Alteracoes Pendentes" = "Pending Changes";
+"Ver Mudanças" = "View Changes";
+"Tudo limpo!" = "All clean!";
+"Nenhuma alteração pendente no momento." = "No pending changes at the moment.";
+"Selecione um arquivo para ver as mudanças." = "Select a file to see changes.";
+"Vibe Code" = "Vibe Code";
+"Arquivos" = "Files";
+"Salvar" = "Save";
+"Arquivo salvo: %@" = "File saved: %@";
+"Selecione um arquivo para editar." = "Select a file to edit.";
+"Nenhuma mudanca detectada (ou arquivo novo nao rastreado)." = "No changes detected (or new untracked file).";
 "arquivos modificados" = "modified files";

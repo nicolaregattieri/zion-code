@@ -99,6 +99,9 @@
 "Criar" = "Crear";
 "Cancelar" = "Cancelar";
 "Fazer checkout" = "Hacer checkout";
+"Checkout & Pull" = "Checkout y Pull";
+"Deseja fazer checkout de %@ e puxar as alterações?" = "¿Desea hacer checkout a %@ y traer los cambios?";
+"Checkout e Pull concluídos para %@" = "Checkout y Pull completados para %@";
 "Confirmar" = "Confirmar";
 "Continuar" = "Continuar";
 "OK" = "OK";
@@ -141,5 +144,17 @@
 "Arquivos alterados" = "Archivos modificados";
 "Selecionar Tudo" = "Seleccionar Todo";
 "Desmarcar Tudo" = "Desmarcar Todo";
+"Adicionar ao .gitignore" = "Añadir a .gitignore";
+"Adicionado ao .gitignore: %@" = "Añadido a .gitignore: %@";
 "Alteracoes Pendentes" = "Cambios Pendientes";
+"Ver Mudanças" = "Ver Cambios";
+"Tudo limpo!" = "¡Todo limpio!";
+"Nenhuma alteração pendente no momento." = "No hay cambios pendientes en este momento.";
+"Selecione um arquivo para ver as mudanças." = "Seleccione un archivo para ver los cambios.";
+"Vibe Code" = "Vibe Code";
+"Arquivos" = "Archivos";
+"Salvar" = "Guardar";
+"Arquivo salvo: %@" = "Archivo guardado: %@";
+"Selecione um arquivo para editar." = "Seleccione un archivo para editar.";
+"Nenhuma mudanca detectada (ou arquivo novo nao rastreado)." = "No se detectaron cambios (o archivo nuevo no rastreado).";
 "arquivos modificados" = "archivos modificados";

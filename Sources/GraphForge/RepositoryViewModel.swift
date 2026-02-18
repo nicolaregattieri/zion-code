@@ -29,6 +29,15 @@ final class RepositoryViewModel: ObservableObject {
     @Published var isGitRepository: Bool = true
     @Published var uncommittedChanges: [String] = []
     @Published var uncommittedCount: Int = 0
+    @Published var selectedChangeFile: String?
+    @Published var currentFileDiff: String = ""
+    
+    // Vibe Code state
+    @Published var repositoryFiles: [FileItem] = []
+    @Published var selectedCodeFile: FileItem?
+    @Published var codeFileContent: String = ""
+    @Published var selectedTheme: EditorTheme = .dracula
+    @Published var expandedPaths: Set<String> = []
 
     @Published var branchInput: String = ""
     @Published var tagInput: String = ""
@@ -42,6 +51,9 @@ final class RepositoryViewModel: ObservableObject {
     @Published var remoteNameInput: String = "origin"
     @Published var remoteURLInput: String = ""
     @Published var commitMessageInput: String = ""
+    @Published var amendLastCommit: Bool = false
+    @Published var isTypingQuickly: Bool = false
+    @Published var shouldClosePopovers: Bool = false
 
     @AppStorage("graphforge.recentRepositories") private var recentReposData: Data = Data()
     @Published var recentRepositories: [URL] = []
@@ -75,6 +87,7 @@ final class RepositoryViewModel: ObservableObject {
             worktreePathInput = url.deletingLastPathComponent().appendingPathComponent("new-worktree").path
         }
         refreshRepository()
+        refreshFileTree()
     }
 
     func loadRecentRepositories() {
@@ -101,6 +114,73 @@ final class RepositoryViewModel: ObservableObject {
     func selectCommit(_ commitID: String?) {
         selectedCommitID = commitID
         loadCommitDetails(for: commitID)
+    }
+
+    func selectChangeFile(_ file: String?) {
+        selectedChangeFile = file
+        if let file {
+            loadDiff(for: file)
+        } else {
+            currentFileDiff = ""
+        }
+    }
+
+    // MARK: - Vibe Code Methods
+
+    func refreshFileTree() {
+        guard let url = repositoryURL else { return }
+        Task {
+            let files = await loadFiles(at: url)
+            repositoryFiles = files
+        }
+    }
+
+    private func loadFiles(at url: URL) async -> [FileItem] {
+        let fm = FileManager.default
+        do {
+            let contents = try fm.contentsOfDirectory(at: url, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
+            var items: [FileItem] = []
+            for item in contents {
+                let isDir = (try? item.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
+                let children = isDir ? await loadFiles(at: item) : nil
+                items.append(FileItem(url: item, isDirectory: isDir, children: children?.sorted(by: { $0.name.lowercased() < $1.name.lowercased() })))
+            }
+            return items.sorted { a, b in
+                if a.isDirectory != b.isDirectory { return a.isDirectory }
+                return a.name.lowercased() < b.name.lowercased()
+            }
+        } catch {
+            return []
+        }
+    }
+
+    func selectCodeFile(_ item: FileItem) {
+        guard !item.isDirectory else { return }
+        selectedCodeFile = item
+        do {
+            codeFileContent = try String(contentsOf: item.url, encoding: .utf8)
+        } catch {
+            codeFileContent = "Erro ao ler arquivo: \(error.localizedDescription)"
+        }
+    }
+
+    func toggleExpansion(for path: String) {
+        if expandedPaths.contains(path) {
+            expandedPaths.remove(path)
+        } else {
+            expandedPaths.insert(path)
+        }
+    }
+
+    func saveCurrentCodeFile() {
+        guard let item = selectedCodeFile else { return }
+        do {
+            try codeFileContent.write(to: item.url, atomically: true, encoding: .utf8)
+            statusMessage = L10n("Arquivo salvo: %@", item.name)
+            refreshRepository() // Refresh to see changes in Git
+        } catch {
+            lastError = "Erro ao salvar: \(error.localizedDescription)"
+        }
     }
 
     func fetch() { runGitAction(label: "Fetch", args: ["fetch", "--all", "--prune"]) }
@@ -133,11 +213,72 @@ final class RepositoryViewModel: ObservableObject {
         let target = reference.clean
         guard !target.isEmpty else { return }
 
-        if isRemoteRefName(target), !localBranchExists(named: target) {
-            runGitAction(label: "Checkout", args: ["checkout", "-t", target])
-            return
+        // Determine local branch name if it's a remote ref
+        var localName = target
+        for remote in remotes {
+            if target.hasPrefix("\(remote.name)/") {
+                localName = String(target.dropFirst(remote.name.count + 1))
+                break
+            }
         }
-        runGitAction(label: "Checkout", args: ["checkout", target])
+
+        if localBranchExists(named: localName) {
+            runGitAction(label: "Checkout", args: ["checkout", localName])
+        } else if isRemoteRefName(target) {
+            runGitAction(label: "Checkout", args: ["checkout", "-t", target])
+        } else {
+            runGitAction(label: "Checkout", args: ["checkout", target])
+        }
+    }
+
+    func checkoutAndPull(reference: String) {
+        let target = reference.clean
+        guard !target.isEmpty else { return }
+        
+        actionTask?.cancel()
+        isBusy = true
+        
+        let url = repositoryURL
+        actionTask = Task {
+            do {
+                guard let url else { return }
+                
+                // 1. Determine local branch name and full remote target
+                var localName = target
+                var remoteTarget = target
+                
+                // Check if target is a known remote branch (e.g. origin/develop)
+                for remote in remotes {
+                    if target.hasPrefix("\(remote.name)/") {
+                        localName = String(target.dropFirst(remote.name.count + 1))
+                        remoteTarget = target
+                        break
+                    }
+                }
+                
+                // 2. Perform Smart Checkout
+                if localBranchExists(named: localName) {
+                    // Already exists locally, just checkout and pull
+                    let _ = try await worker.runAction(args: ["checkout", localName], in: url)
+                } else if isRemoteRefName(remoteTarget) {
+                    // New local branch tracking remote
+                    let _ = try await worker.runAction(args: ["checkout", "-t", remoteTarget], in: url)
+                } else {
+                    // Fallback
+                    let _ = try await worker.runAction(args: ["checkout", target], in: url)
+                }
+                
+                // 3. Pull changes
+                let _ = try await worker.runAction(args: ["pull"], in: url)
+                
+                clearError()
+                statusMessage = L10n("Checkout e Pull concluídos para %@", localName)
+                refreshRepository(setBusy: true)
+            } catch {
+                isBusy = false
+                handleError(error)
+            }
+        }
     }
 
     func pushBranch(_ branch: String, to remote: String, setUpstream: Bool, mode: PushMode) {
@@ -262,6 +403,16 @@ final class RepositoryViewModel: ObservableObject {
         runGitAction(label: "Reset --hard", args: ["reset", "--hard", cleanedTarget])
     }
 
+    func resetToCommit(_ commitID: String, hard: Bool) {
+        let args = hard ? ["reset", "--hard", commitID] : ["reset", "--soft", commitID]
+        runGitAction(label: hard ? "Reset --hard" : "Reset --soft", args: args)
+    }
+
+    func discardChanges(in path: String) {
+        let file = path.trimmingCharacters(in: .whitespaces)
+        runGitAction(label: "Discard", args: ["checkout", "--", file])
+    }
+
     func createTag() {
         let target = tagInput.clean
         guard !target.isEmpty else { return }
@@ -296,18 +447,27 @@ final class RepositoryViewModel: ObservableObject {
     }
 
     func applySelectedStash() {
-        guard let stashRef = selectedStashReference else { return }
-        runGitAction(label: "Apply stash", args: ["stash", "apply", stashRef])
+        Task {
+            let ref = await resolveStashReference(selectedStash)
+            guard let ref else { return }
+            runGitAction(label: "Apply stash", args: ["stash", "apply", ref])
+        }
     }
 
     func popSelectedStash() {
-        guard let stashRef = selectedStashReference else { return }
-        runGitAction(label: "Pop stash", args: ["stash", "pop", stashRef])
+        Task {
+            let ref = await resolveStashReference(selectedStash)
+            guard let ref else { return }
+            runGitAction(label: "Pop stash", args: ["stash", "pop", ref])
+        }
     }
 
     func dropSelectedStash() {
-        guard let stashRef = selectedStashReference else { return }
-        runGitAction(label: "Drop stash", args: ["stash", "drop", stashRef])
+        Task {
+            let ref = await resolveStashReference(selectedStash)
+            guard let ref else { return }
+            runGitAction(label: "Drop stash", args: ["stash", "drop", ref])
+        }
     }
 
     func addWorktree() {
@@ -397,28 +557,34 @@ final class RepositoryViewModel: ObservableObject {
         isBusy = true
         
         let url = repositoryURL
+        let shouldAmend = amendLastCommit
+        
         actionTask = Task {
             do {
                 guard let url else { return }
-                // 1. Stage all changes if nothing is staged, otherwise just commit what's staged
-                // To keep it simple and match user expectation of "Fazer Commit" button:
-                // If the user hasn't manually staged anything, we stage everything.
+                
+                // 1. Stage all changes if nothing is staged
                 let status = try await worker.runAction(args: ["status", "--porcelain"], in: url)
                 let hasStaged = status.split(separator: "\n").contains { line in
                     let first = line.prefix(1)
                     return first != " " && first != "?"
                 }
                 
-                if !hasStaged {
+                if !hasStaged && !shouldAmend {
                     let _ = try await worker.runAction(args: ["add", "-A"], in: url)
                 }
                 
-                // 2. Commit
-                let _ = try await worker.runAction(args: ["commit", "-m", msg], in: url)
+                // 2. Commit or Amend
+                var args = ["commit", "-m", msg]
+                if shouldAmend {
+                    args.append("--amend")
+                }
+                let _ = try await worker.runAction(args: args, in: url)
                 
                 clearError()
-                statusMessage = L10n("Commit realizado com sucesso.")
+                statusMessage = shouldAmend ? L10n("Commit corrigido com sucesso.") : L10n("Commit realizado com sucesso.")
                 commitMessageInput = ""
+                amendLastCommit = false
                 refreshRepository(setBusy: true)
             } catch {
                 isBusy = false
@@ -441,6 +607,41 @@ final class RepositoryViewModel: ObservableObject {
 
     func unstageAllFiles() {
         runGitAction(label: "Unstage All", args: ["reset", "HEAD", "--", "."])
+    }
+
+    func addToGitIgnore(path: String) {
+        guard let url = repositoryURL else { return }
+        let gitIgnoreURL = url.appendingPathComponent(".gitignore")
+        
+        actionTask?.cancel()
+        isBusy = true
+        
+        actionTask = Task {
+            do {
+                var content = ""
+                if FileManager.default.fileExists(atPath: gitIgnoreURL.path) {
+                    content = try String(contentsOf: gitIgnoreURL, encoding: .utf8)
+                }
+                
+                if !content.contains(path) {
+                    if !content.isEmpty && !content.hasSuffix("\n") {
+                        content += "\n"
+                    }
+                    content += "\(path)\n"
+                    try content.write(to: gitIgnoreURL, atomically: true, encoding: .utf8)
+                }
+                
+                // After adding to gitignore, we should unstage it if it was staged
+                let _ = try await worker.runAction(args: ["rm", "--cached", path], in: url)
+                
+                clearError()
+                statusMessage = L10n("Adicionado ao .gitignore: %@", path)
+                refreshRepository(setBusy: true)
+            } catch {
+                isBusy = false
+                handleError(error)
+            }
+        }
     }
 
     func renameRemote(oldName: String, newName: String) {
@@ -479,10 +680,40 @@ final class RepositoryViewModel: ObservableObject {
         branchInfos.contains(where: { $0.isRemote && $0.name == value })
     }
 
-    private var selectedStashReference: String? {
-        let value = selectedStash.clean
+    private func resolveStashReference(_ input: String) async -> String? {
+        let value = input.clean
         guard !value.isEmpty else { return nil }
-        return value.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: true).first.map(String.init)
+        
+        // 1. If it's already a stash@{n} format, try to extract just that part
+        if value.hasPrefix("stash@{") || value.contains("stash@{") {
+            if let range = value.range(of: "stash@{[0-9]+}", options: .regularExpression) {
+                return String(value[range])
+            }
+        }
+        
+        // 2. If it's a hash, we need to find which stash@{n} corresponds to it
+        let isHex = value.range(of: "^[0-9a-fA-F]{7,40}$", options: .regularExpression) != nil
+        if isHex {
+            guard let url = repositoryURL else { return value }
+            // Run git stash list with hashes to find the match
+            do {
+                let output = try await worker.runAction(args: ["stash", "list", "--format=%H %gD"], in: url)
+                for line in output.split(separator: "\n") {
+                    let parts = line.split(separator: " ")
+                    if parts.count >= 2 {
+                        let hash = String(parts[0])
+                        let stashRef = String(parts[1])
+                        if hash.hasPrefix(value) || value.hasPrefix(hash) {
+                            return stashRef // Found stash@{n}
+                        }
+                    }
+                }
+            } catch {
+                return value // Fallback to hash if it fails
+            }
+        }
+        
+        return value.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: true).first.map(String.init) ?? value
     }
 
     private func refreshCommitsOnly() {
@@ -662,6 +893,20 @@ final class RepositoryViewModel: ObservableObject {
             } catch {
                 guard detailsRequestID == requestID else { return }
                 commitDetails = error.localizedDescription
+            }
+        }
+    }
+
+    private func loadDiff(for file: String) {
+        guard let url = repositoryURL else { return }
+        
+        Task {
+            do {
+                // Get diff including staged changes
+                let diff = try await worker.runAction(args: ["diff", "HEAD", "--", file], in: url)
+                currentFileDiff = diff.isEmpty ? L10n("Nenhuma mudanca detectada (ou arquivo novo nao rastreado).") : diff
+            } catch {
+                currentFileDiff = "Erro ao carregar diff: \(error.localizedDescription)"
             }
         }
     }

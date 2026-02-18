@@ -70,7 +70,13 @@ struct SidebarView: View {
                 Spacer(minLength: 0)
             }
             HStack(spacing: 8) {
-                StatusChip(title: "Branch", value: model.currentBranch, tint: .green, icon: "crown.fill")
+                let isDetached = model.currentBranch.contains("detached")
+                StatusChip(
+                    title: isDetached ? "HEAD" : "Branch", 
+                    value: model.currentBranch, 
+                    tint: isDetached ? .orange : .green, 
+                    icon: isDetached ? "anchor" : "crown.fill"
+                )
                 StatusChip(title: "Commit", value: model.headShortHash, tint: .blue, icon: "number")
             }
         }.padding(.horizontal, 10)
@@ -209,7 +215,16 @@ struct SidebarView: View {
                 .clipShape(Circle())
             }
         }
-        .padding(.vertical, node.isGroup ? 4 : 2).padding(.horizontal, 6).background(RoundedRectangle(cornerRadius: 6).fill(isCurrent ? Color.accentColor.opacity(0.08) : Color.clear)).contentShape(Rectangle())
+        .padding(.vertical, node.isGroup ? 4 : 2)
+        .padding(.horizontal, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(isCurrent ? Color.accentColor.opacity(0.12) : Color.clear)
+        )
+        .overlay(
+            isCurrent ? RoundedRectangle(cornerRadius: 6).stroke(Color.accentColor.opacity(0.3), lineWidth: 1) : nil
+        )
+        .contentShape(Rectangle())
         .onTapGesture { if let branch = node.branchName { selectedBranchTreeNodeID = node.id; model.branchInput = branch } }
         .onTapGesture(count: 2) { if let branch = node.branchName { selectedBranchTreeNodeID = node.id; model.branchInput = branch; model.setBranchFocus(branch) } }
         .contextMenu {
