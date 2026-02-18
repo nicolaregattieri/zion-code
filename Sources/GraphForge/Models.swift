@@ -1,0 +1,215 @@
+import Foundation
+import SwiftUI
+
+struct LaneEdge: Hashable, Sendable {
+    let from: Int
+    let to: Int
+    let colorKey: Int
+}
+
+struct LaneColor: Hashable, Sendable {
+    let lane: Int
+    let colorKey: Int
+}
+
+struct ParsedCommit: Hashable, Sendable {
+    let hash: String
+    let parents: [String]
+    let author: String
+    let date: Date
+    let subject: String
+    let decorations: [String]
+}
+
+struct Commit: Identifiable, Hashable, Sendable {
+    let id: String
+    let shortHash: String
+    let parents: [String]
+    let author: String
+    let date: Date
+    let subject: String
+    let decorations: [String]
+    let lane: Int
+    let nodeColorKey: Int
+    let incomingLanes: [Int]
+    let outgoingLanes: [Int]
+    let laneColors: [LaneColor]
+    let outgoingEdges: [LaneEdge]
+}
+
+struct WorktreeItem: Identifiable, Hashable, Sendable {
+    let path: String
+    let head: String
+    let branch: String
+    let isDetached: Bool
+    let isLocked: Bool
+    let lockReason: String
+    let isPrunable: Bool
+    let pruneReason: String
+    let isCurrent: Bool
+    var id: String { path }
+}
+
+struct BranchInfo: Identifiable, Hashable, Sendable {
+    let name: String
+    let fullRef: String
+    let head: String
+    let upstream: String
+    let committerDate: Date
+    let isRemote: Bool
+    var id: String { name }
+    var shortHead: String { String(head.prefix(8)) }
+}
+
+struct BranchTreeNode: Identifiable, Hashable, Sendable {
+    let id: String
+    let title: String
+    let subtitle: String
+    let branchName: String?
+    let children: [BranchTreeNode]
+    var isGroup: Bool { branchName == nil }
+    var outlineChildren: [BranchTreeNode]? { children.isEmpty ? nil : children }
+}
+
+struct RemoteInfo: Identifiable, Hashable, Sendable {
+    let name: String
+    let url: String
+    var id: String { name }
+}
+
+enum ConfirmationMode: String, CaseIterable, Identifiable, Sendable {
+    case never, destructiveOnly, all
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .never: return "Nunca confirmar"
+        case .destructiveOnly: return "Confirmar criticas"
+        case .all: return "Confirmar todas"
+        }
+    }
+}
+
+enum PushMode: String, CaseIterable, Identifiable, Sendable {
+    case normal, forceWithLease, force
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .normal: return "Normal"
+        case .forceWithLease: return "Force With Lease"
+        case .force: return "Force"
+        }
+    }
+}
+
+enum AppSection: String, CaseIterable, Identifiable {
+    case graph, operations, worktrees
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .graph: return "Git Graph"
+        case .operations: return "Operacoes"
+        case .worktrees: return "Worktrees"
+        }
+    }
+    var icon: String {
+        switch self {
+        case .graph: return "point.3.connected.trianglepath.dotted"
+        case .operations: return "terminal"
+        case .worktrees: return "square.split.2x2"
+        }
+    }
+    var subtitle: String {
+        switch self {
+        case .graph: return "Historico visual"
+        case .operations: return "Acoes e Comandos"
+        case .worktrees: return "Contextos paralelos"
+        }
+    }
+}
+
+enum AppLanguage: String, CaseIterable, Identifiable {
+    case system, ptBR = "pt-BR", en, es
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .system: return "Sistema"
+        case .ptBR: return "Português (BR)"
+        case .en: return "English"
+        case .es: return "Español"
+        }
+    }
+    var locale: Locale {
+        switch self {
+        case .system: return .autoupdatingCurrent
+        case .ptBR: return Locale(identifier: "pt-BR")
+        case .en: return Locale(identifier: "en")
+        case .es: return Locale(identifier: "es")
+        }
+    }
+    
+    var bundle: Bundle {
+        if self == .system { return .module }
+        // Try exact match then lowercase match
+        let resName = self.rawValue
+        if let path = Bundle.module.path(forResource: resName, ofType: "lproj"),
+           let bundle = Bundle(path: path) {
+            return bundle
+        }
+        if let path = Bundle.module.path(forResource: resName.lowercased(), ofType: "lproj"),
+           let bundle = Bundle(path: path) {
+            return bundle
+        }
+        return .module
+    }
+}
+
+func L10n(_ key: String, _ args: CVarArg...) -> String {
+    let languageRaw = UserDefaults.standard.string(forKey: "graphforge.uiLanguage") ?? "system"
+    let language = AppLanguage(rawValue: languageRaw) ?? .system
+    let format = language.bundle.localizedString(forKey: key, value: nil, table: nil)
+    
+    if args.isEmpty { return format }
+    
+    return withVaList(args) { vaList in
+        return NSString(format: format, locale: language.locale, arguments: vaList) as String
+    }
+}
+
+enum ExternalEditor: String, CaseIterable, Identifiable {
+    case vscode = "com.microsoft.VSCode"
+    case cursor = "com.todesktop.230313mzl4w4u92"
+    case antigravity = "com.antigravity.Antigravity"
+    case xcode = "com.apple.dt.Xcode"
+    case intellij = "com.jetbrains.intellij"
+    case sublime = "com.sublimetext.4"
+    case custom = "custom"
+    
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .vscode: return "VS Code"
+        case .cursor: return "Cursor"
+        case .antigravity: return "Antigravity"
+        case .xcode: return "Xcode"
+        case .intellij: return "IntelliJ"
+        case .sublime: return "Sublime Text"
+        case .custom: return "Selecionar do Disco..."
+        }
+    }
+}
+
+enum ExternalTerminal: String, CaseIterable, Identifiable {
+    case terminal = "com.apple.Terminal"
+    case iterm = "com.googlecode.iterm2"
+    case warp = "dev.warp.Warp-Stable"
+    case custom = "custom"
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .terminal: return "Terminal.app"
+        case .iterm: return "iTerm2"
+        case .warp: return "Warp"
+        case .custom: return "Selecionar do Disco..."
+        }
+    }
+}
