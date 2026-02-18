@@ -125,6 +125,10 @@ struct ContentView: View {
                 branchContextMenu: { branch in AnyView(branchContextMenu(for: branch)) },
                 tagContextMenu: { tag in AnyView(tagContextMenu(for: tag)) }
             )
+        case .changes:
+            ChangesScreen(model: model)
+        case .code:
+            CodeScreen(model: model)
         case .operations:
             OperationsScreen(
                 model: model,
@@ -282,11 +286,52 @@ struct ContentView: View {
 
     @ViewBuilder
     private func commitContextMenu(for commit: Commit) -> some View {
-        Button(L10n("Adicionar Tag...")) { if let name = promptForText(title: L10n("Nova tag"), message: L10n("Nome:"), defaultValue: "v") { model.createTag(named: name, at: commit.id) } }
-        Button(L10n("Criar Branch...")) { if let res = promptForBranchCreation(from: commit.shortHash) { model.createBranch(named: res.name, from: commit.id, andCheckout: res.checkout) } }
+        let isStash = commit.decorations.contains { $0.contains("refs/stash") }
+        
+        if isStash {
+            Button(L10n("Apply Stash")) {
+                performGitAction(title: L10n("Apply Stash"), message: L10n("Aplicar as mudancas deste stash na branch atual?"), destructive: false) {
+                    model.selectedStash = commit.id // Use the hash
+                    model.applySelectedStash()
+                }
+            }
+            Button(L10n("Pop Stash")) {
+                performGitAction(title: L10n("Pop Stash"), message: L10n("Aplicar as mudancas deste stash e REMOVER da lista?"), destructive: false) {
+                    model.selectedStash = commit.id // Use the hash
+                    model.popSelectedStash()
+                }
+            }
+            Divider()
+            Button(L10n("Drop Stash"), role: .destructive) {
+                performGitAction(title: L10n("Drop Stash"), message: L10n("Remover permanentemente este stash?"), destructive: true) {
+                    model.selectedStash = commit.id // Use the hash
+                    model.dropSelectedStash()
+                }
+            }
+            Divider()
+            Button(L10n("Checkout Stash (Inspecionar)")) {
+                model.checkout(reference: commit.id)
+            }
+        } else {
+            Button(L10n("Reset Branch to here (Soft)")) { 
+                performGitAction(title: L10n("Reset --soft"), message: L10n("Resetar a branch atual para este commit mantendo as mudancas no stage?"), destructive: true) {
+                    model.resetToCommit(commit.id, hard: false)
+                }
+            }
+            Button(L10n("Reset Branch to here (Hard)"), role: .destructive) { 
+                performGitAction(title: L10n("Reset --hard"), message: L10n("AVISO: Isso apagara todas as mudancas nao salvas. Continuar?"), destructive: true) {
+                    model.resetToCommit(commit.id, hard: true)
+                }
+            }
+            Divider()
+            Button(L10n("Adicionar Tag...")) { if let name = promptForText(title: L10n("Nova tag"), message: L10n("Nome:"), defaultValue: "v") { model.createTag(named: name, at: commit.id) } }
+            Button(L10n("Criar Branch...")) { if let res = promptForBranchCreation(from: commit.shortHash) { model.createBranch(named: res.name, from: commit.id, andCheckout: res.checkout) } }
+        }
+        
         Divider()
         Button(L10n("Abrir no Editor")) { openRepositoryInEditor() }
         Divider()
+        Button(L10n("Copiar Assunto")) { copyToPasteboard(commit.subject) }
         Button(L10n("Copiar Hash")) { copyToPasteboard(commit.id) }
     }
 
@@ -296,6 +341,8 @@ struct ContentView: View {
             model.checkout(reference: branch)
             openRepositoryInEditor()
         }
+        Divider()
+        Button(L10n("Copiar Nome da Branch")) { copyToPasteboard(branch) }
         Divider()
         Button(L10n("Checkout")) { model.checkout(reference: branch) }
         
