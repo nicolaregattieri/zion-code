@@ -1,6 +1,23 @@
 import Foundation
 import SwiftUI
 
+@MainActor
+final class TerminalSession: ObservableObject, Identifiable {
+    let id = UUID()
+    let workingDirectory: URL
+    let label: String
+    let worktreeID: String?
+    @Published var isAlive = true
+    @Published var title: String
+
+    init(workingDirectory: URL, label: String, worktreeID: String? = nil) {
+        self.workingDirectory = workingDirectory
+        self.label = label
+        self.worktreeID = worktreeID
+        self.title = label
+    }
+}
+
 struct LaneEdge: Hashable, Sendable {
     let from: Int
     let to: Int

@@ -349,8 +349,11 @@ struct OperationsScreen: View {
                                 },
                                 onRemove: {
                                     performGitAction(L10n("Remover worktree"), L10n("Deseja remover o worktree %@?", worktree.path), true) {
-                                        model.removeWorktree(worktree.path)
+                                        model.removeWorktreeAndCloseTerminal(worktree)
                                     }
+                                },
+                                onOpenTerminal: {
+                                    model.openWorktreeTerminal(worktree)
                                 }
                             )
                         }
