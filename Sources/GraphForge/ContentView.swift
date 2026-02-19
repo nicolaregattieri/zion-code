@@ -16,7 +16,6 @@ struct ContentView: View {
     @AppStorage("graphforge.customTerminalPath") private var customTerminalPath: String = ""
     @AppStorage("graphforge.inferBranchOrigins") private var inferBranchOrigins: Bool = false
     
-    private let topChromePadding: CGFloat = 34
     private var uiLanguage: AppLanguage { AppLanguage(rawValue: uiLanguageRaw) ?? .system }
 
     var body: some View {
@@ -44,7 +43,6 @@ struct ContentView: View {
             }
             .navigationSplitViewStyle(.balanced)
             .frame(minWidth: 1360, minHeight: 840)
-            .padding(.top, topChromePadding)
             .alert(L10n("Erro"), isPresented: Binding(get: { model.lastError != nil }, set: { show in if !show { model.lastError = nil } })) {
                 Button("OK", role: .cancel) {}
             } message: { Text(model.lastError ?? "") }
@@ -154,28 +152,34 @@ struct ContentView: View {
 
     private var mainToolbar: ToolbarItemGroup<some View> {
         ToolbarItemGroup(placement: .navigation) {
-            Button { model.repositoryURL = nil } label: { Label(L10n("Abrir"), systemImage: "folder") }
-                .help(L10n("Abrir repositório"))
-            
-            Button { model.refreshRepository() } label: { Label(L10n("Atualizar"), systemImage: "arrow.clockwise") }
-                .disabled(model.repositoryURL == nil)
-                .help(L10n("Atualizar status do repositório"))
+            ControlGroup {
+                Button { model.repositoryURL = nil } label: { Image(systemName: "folder") }
+                    .help(L10n("Abrir repositório"))
+                
+                Button { model.refreshRepository() } label: { Image(systemName: "arrow.clockwise") }
+                    .disabled(model.repositoryURL == nil)
+                    .help(L10n("Atualizar status do repositório"))
+            }
             
             if model.repositoryURL != nil {
-                Button { model.fetch() } label: { Label(L10n("Fetch"), systemImage: "arrow.down.circle") }
-                    .help(L10n("Fetch: Busca atualizações remotas"))
+                ControlGroup {
+                    Button { model.fetch() } label: { Image(systemName: "arrow.down.circle") }
+                        .help(L10n("Fetch: Busca atualizações remotas"))
+                    
+                    Button { model.pull() } label: { Image(systemName: "arrow.down.to.line") }
+                        .help(L10n("Pull: Puxa alterações da branch atual"))
+                    
+                    Button { model.push() } label: { Image(systemName: "arrow.up.circle") }
+                        .help(L10n("Push: Envia alterações locais"))
+                }
                 
-                Button { model.pull() } label: { Label(L10n("Pull"), systemImage: "arrow.down.and.line.horizontal") }
-                    .help(L10n("Pull: Puxa alterações da branch atual"))
-                
-                Button { model.push() } label: { Label(L10n("Push"), systemImage: "arrow.up.circle") }
-                    .help(L10n("Push: Envia alterações locais"))
-                
-                Button { openRepositoryInEditor() } label: { Label(L10n("Editor de Codigo"), systemImage: "chevron.left.forwardslash.chevron.right") }
-                    .help(L10n("Abrir no Editor de Código"))
-                
-                Button { openRepositoryInTerminal() } label: { Label(L10n("Terminal"), systemImage: "terminal") }
-                    .help(L10n("Abrir Terminal"))
+                ControlGroup {
+                    Button { openRepositoryInEditor() } label: { Image(systemName: "chevron.left.forwardslash.chevron.right") }
+                        .help(L10n("Abrir no Editor de Código"))
+                    
+                    Button { openRepositoryInTerminal() } label: { Image(systemName: "terminal") }
+                        .help(L10n("Abrir Terminal"))
+                }
             }
         }
     }
@@ -462,12 +466,11 @@ struct LiquidBackgroundView: View {
     var body: some View {
         ZStack {
             if colorScheme == .dark {
-                Color(red: 0.04, green: 0.08, blue: 0.12).ignoresSafeArea()
-                Circle().fill(Color.teal.opacity(0.22)).frame(width: 520).blur(radius: 60).offset(x: -340, y: -220)
-                Circle().fill(Color.blue.opacity(0.26)).frame(width: 420).blur(radius: 56).offset(x: 280, y: -280)
+                Color(red: 0.02, green: 0.04, blue: 0.06).ignoresSafeArea()
+                Circle().fill(Color.teal.opacity(0.12)).frame(width: 600).blur(radius: 100).offset(x: -200, y: -100)
             } else {
-                Color(red: 0.93, green: 0.97, blue: 1.00).ignoresSafeArea()
-                Circle().fill(Color.teal.opacity(0.22)).frame(width: 520).blur(radius: 64).offset(x: -340, y: -220)
+                Color(red: 0.95, green: 0.97, blue: 0.99).ignoresSafeArea()
+                Circle().fill(Color.teal.opacity(0.08)).frame(width: 600).blur(radius: 100).offset(x: -200, y: -100)
             }
         }
     }

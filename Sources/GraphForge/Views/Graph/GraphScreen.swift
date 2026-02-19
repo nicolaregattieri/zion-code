@@ -226,8 +226,14 @@ struct GraphScreen: View {
     private var pendingChangesRow: some View {
         HStack(spacing: 0) {
             // ALIGNED NODE - Matches the graph vertical line perfectly
-            VStack(spacing: 0) {
-                Rectangle().fill(Color.orange.opacity(0.3)).frame(width: 2, height: 35)
+            ZStack(alignment: .topLeading) {
+                VStack(spacing: 0) {
+                    Rectangle().fill(Color.orange.opacity(0.3)).frame(width: 2, height: 42)
+                    Spacer().frame(height: 18)
+                    Rectangle().fill(Color.orange.opacity(0.2)).frame(width: 2, height: 42)
+                }
+                .offset(x: 3)
+                
                 ZStack {
                     Circle()
                         .fill(Color.orange)
@@ -237,24 +243,24 @@ struct GraphScreen: View {
                         .frame(width: 18, height: 18)
                 }
                 .shadow(color: .orange.opacity(0.3), radius: 4)
-                Rectangle().fill(Color.orange.opacity(0.2)).frame(width: 2, height: 35)
+                .offset(x: -5, y: 42)
             }
-            .frame(width: 60)
+            .frame(width: 84)
 
             ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(Color.orange.opacity(0.05))
-                    .frame(height: 64)
+                    .frame(height: 86)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .stroke(Color.orange.opacity(0.2), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(Color.orange.opacity(0.2), lineWidth: 1.5)
                     )
                 
                 HStack(spacing: 12) {
                     Image(systemName: "pencil.circle.fill").font(.title2).foregroundStyle(.orange.opacity(0.8))
                     
                     VStack(alignment: .leading, spacing: 0) {
-                        Text(L10n("Pending Changes")).font(.system(size: 13, weight: .bold)).foregroundStyle(.primary.opacity(0.9))
+                        Text(L10n("Alteracoes Pendentes")).font(.system(size: 13, weight: .bold)).foregroundStyle(.primary.opacity(0.9))
                         Text("\(model.uncommittedCount) \(L10n("arquivos modificados"))").font(.system(size: 10)).foregroundStyle(.secondary)
                     }
                     
@@ -406,9 +412,9 @@ struct GraphScreen: View {
                 }
                 .padding(.horizontal, 16)
             }
-            .padding(.trailing, 24)
+            .padding(.trailing, 16)
         }
-        .frame(height: 74)
+        .frame(height: 102)
     }
 
     private func navigateSelection(direction: Int, proxy: ScrollViewProxy) {
