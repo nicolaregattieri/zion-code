@@ -43,6 +43,10 @@ struct SidebarView: View {
                     quickAccessCard
                 }
 
+                if model.repositoryURL != nil, nonCurrentWorktrees.count > 0 {
+                    worktreesCard
+                }
+
                 if selectedSection == .graph, model.repositoryURL != nil {
                     sidebarBranchExplorer.padding(.horizontal, 10)
                 }
@@ -98,6 +102,68 @@ struct SidebarView: View {
                 }.buttonStyle(.bordered).controlSize(.large)
             }
         }.padding(.horizontal, 10)
+    }
+
+    private var nonCurrentWorktrees: [WorktreeItem] {
+        model.worktrees.filter { !$0.isCurrent }
+    }
+
+    private var worktreesCard: some View {
+        GlassCard(spacing: 10) {
+            HStack {
+                Text(L10n("Worktrees")).font(.headline)
+                Spacer()
+                Text("\(nonCurrentWorktrees.count)")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Capsule().fill(Color.purple.opacity(0.7)))
+            }
+            ForEach(nonCurrentWorktrees) { wt in
+                worktreeRow(wt)
+            }
+        }.padding(.horizontal, 10)
+    }
+
+    private func worktreeRow(_ wt: WorktreeItem) -> some View {
+        HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(wt.branch.isEmpty ? URL(fileURLWithPath: wt.path).lastPathComponent : wt.branch)
+                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    .lineLimit(1)
+                Text(wt.path)
+                    .font(.system(size: 9, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+            Spacer(minLength: 0)
+            Button {
+                model.openWorktreeTerminal(wt)
+                selectedSection = .code
+            } label: {
+                Image(systemName: "terminal.fill")
+                    .font(.system(size: 11))
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .help(L10n("Terminal"))
+
+            Button {
+                NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: wt.path)
+            } label: {
+                Image(systemName: "folder")
+                    .font(.system(size: 11))
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .help(L10n("Abrir"))
+        }
+        .padding(.vertical, 4)
+        .padding(.horizontal, 8)
+        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.white.opacity(0.04)))
+        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color.white.opacity(0.08), lineWidth: 1))
     }
 
     private func actionButton(title: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
