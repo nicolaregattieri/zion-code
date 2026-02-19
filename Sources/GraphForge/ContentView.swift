@@ -48,6 +48,19 @@ struct ContentView: View {
             } message: { Text(model.lastError ?? "") }
             .toolbar { mainToolbar }
             .safeAreaInset(edge: .bottom) { statusBar }
+            .background {
+                // Cmd+1/2/3 tab switching (standard macOS convention)
+                Group {
+                    Button("") { selectedSection = .graph }
+                        .keyboardShortcut("1", modifiers: .command)
+                    Button("") { selectedSection = .code }
+                        .keyboardShortcut("2", modifiers: .command)
+                    Button("") { selectedSection = .operations }
+                        .keyboardShortcut("3", modifiers: .command)
+                }
+                .frame(width: 0, height: 0)
+                .opacity(0)
+            }
         }
         .id(uiLanguageRaw) 
         .environment(\.locale, uiLanguage.locale)

@@ -220,6 +220,7 @@ struct FileTreeNodeView: View {
                 }
                 .padding(.horizontal, 12).padding(.vertical, 6).padding(.leading, CGFloat(level) * 12)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
                 .background(isSelected ? Color.blue.opacity(0.15) : Color.clear)
             }
             .buttonStyle(.plain)
