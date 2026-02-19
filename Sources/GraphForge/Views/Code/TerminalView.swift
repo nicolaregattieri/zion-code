@@ -31,7 +31,8 @@ struct TerminalView: NSViewRepresentable {
         Coordinator(self)
     }
     
-    class Coordinator: NSObject, @preconcurrency SwiftTerm.TerminalViewDelegate, @preconcurrency SwiftTerm.LocalProcessDelegate {
+    @MainActor
+    class Coordinator: NSObject, SwiftTerm.TerminalViewDelegate, SwiftTerm.LocalProcessDelegate {
         var parent: TerminalView
         private var process: LocalProcess?
         private weak var terminalView: SwiftTerm.TerminalView?
@@ -42,9 +43,12 @@ struct TerminalView: NSViewRepresentable {
         
         func startProcess(view: SwiftTerm.TerminalView) {
             self.terminalView = view
+            let url = parent.model.repositoryURL
             
-            DispatchQueue.main.async { [weak self] in
-                guard let self = self, let url = self.parent.model.repositoryURL else { return }
+            // LocalProcess needs a non-isolated or specific queue. 
+            // We use a Task to bridge.
+            Task {
+                guard let url = url else { return }
                 
                 let process = LocalProcess(delegate: self, dispatchQueue: .main)
                 self.process = process
@@ -67,45 +71,54 @@ struct TerminalView: NSViewRepresentable {
         
         // MARK: - TerminalViewDelegate
         
-        func send(source: SwiftTerm.TerminalView, data: ArraySlice<UInt8>) {
-            process?.send(data: data)
+        nonisolated func send(source: SwiftTerm.TerminalView, data: ArraySlice<UInt8>) {
+            Task { @MainActor in
+                process?.send(data: data)
+            }
         }
         
-        func scrolled(source: SwiftTerm.TerminalView, position: Double) {}
-        func setTerminalTitle(source: SwiftTerm.TerminalView, title: String) {}
-        func sizeChanged(source: SwiftTerm.TerminalView, newCols: Int, newRows: Int) {
-            if let fd = process?.childfd {
-                var size = winsize(ws_row: UInt16(newRows), ws_col: UInt16(newCols), ws_xpixel: 0, ws_ypixel: 0)
-                _ = PseudoTerminalHelpers.setWinSize(masterPtyDescriptor: fd, windowSize: &size)
+        nonisolated func scrolled(source: SwiftTerm.TerminalView, position: Double) {}
+        nonisolated func setTerminalTitle(source: SwiftTerm.TerminalView, title: String) {}
+        nonisolated func sizeChanged(source: SwiftTerm.TerminalView, newCols: Int, newRows: Int) {
+            Task { @MainActor in
+                if let fd = process?.childfd {
+                    // Clamp values to valid UInt16 range to avoid crashes
+                    let rows = UInt16(max(0, min(Int(UInt16.max), newRows)))
+                    let cols = UInt16(max(0, min(Int(UInt16.max), newCols)))
+                    var size = winsize(ws_row: rows, ws_col: cols, ws_xpixel: 0, ws_ypixel: 0)
+                    _ = PseudoTerminalHelpers.setWinSize(masterPtyDescriptor: fd, windowSize: &size)
+                }
             }
         }
-        func requestKeyboadFocus(source: SwiftTerm.TerminalView) {}
-        func clipboardCopy(source: SwiftTerm.TerminalView, content: Data) {
+        nonisolated func requestKeyboadFocus(source: SwiftTerm.TerminalView) {}
+        nonisolated func clipboardCopy(source: SwiftTerm.TerminalView, content: Data) {
             if let str = String(data: content, encoding: .utf8) {
-                let pb = NSPasteboard.general
-                pb.clearContents()
-                pb.setString(str, forType: .string)
+                DispatchQueue.main.async {
+                    let pb = NSPasteboard.general
+                    pb.clearContents()
+                    pb.setString(str, forType: .string)
+                }
             }
         }
-        func rangeChanged(source: SwiftTerm.TerminalView, startY: Int, endY: Int) {}
-        func hostCurrentDirectoryUpdate(source: SwiftTerm.TerminalView, directory: String?) {}
+        nonisolated func rangeChanged(source: SwiftTerm.TerminalView, startY: Int, endY: Int) {}
+        nonisolated func hostCurrentDirectoryUpdate(source: SwiftTerm.TerminalView, directory: String?) {}
         
         // MARK: - LocalProcessDelegate
         
-        func processTerminated(_ source: SwiftTerm.LocalProcess, exitCode: Int32?) {}
+        nonisolated func processTerminated(_ source: SwiftTerm.LocalProcess, exitCode: Int32?) {}
         
-        func dataReceived(slice: ArraySlice<UInt8>) {
-            let view = self.terminalView
-            DispatchQueue.main.async {
-                view?.feed(byteArray: slice)
+        nonisolated func dataReceived(slice: ArraySlice<UInt8>) {
+            Task { @MainActor in
+                terminalView?.feed(byteArray: slice)
             }
         }
         
-        func getWindowSize() -> winsize {
-            let view = self.terminalView
-            return MainActor.assumeIsolated {
-                if let terminal = view?.getTerminal() {
-                    return winsize(ws_row: UInt16(terminal.rows), ws_col: UInt16(terminal.cols), ws_xpixel: 0, ws_ypixel: 0)
+        nonisolated func getWindowSize() -> winsize {
+            MainActor.assumeIsolated {
+                if let terminal = terminalView?.getTerminal() {
+                    let rows = UInt16(max(0, min(Int(UInt16.max), terminal.rows)))
+                    let cols = UInt16(max(0, min(Int(UInt16.max), terminal.cols)))
+                    return winsize(ws_row: rows, ws_col: cols, ws_xpixel: 0, ws_ypixel: 0)
                 }
                 return winsize(ws_row: 24, ws_col: 80, ws_xpixel: 0, ws_ypixel: 0)
             }
