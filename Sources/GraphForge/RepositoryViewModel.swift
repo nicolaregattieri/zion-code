@@ -32,6 +32,10 @@ final class RepositoryViewModel: ObservableObject {
     @Published var selectedChangeFile: String?
     @Published var currentFileDiff: String = ""
     
+    // Terminal
+    @Published var terminalSessions: [TerminalSession] = []
+    @Published var activeTerminalID: UUID?
+
     // Vibe Code state
     @Published var repositoryFiles: [FileItem] = []
     @Published var selectedCodeFile: FileItem?
@@ -119,6 +123,7 @@ final class RepositoryViewModel: ObservableObject {
         if worktreePathInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             worktreePathInput = url.deletingLastPathComponent().appendingPathComponent("new-worktree").path
         }
+        createDefaultTerminalSession(repositoryURL: url, branchName: currentBranch.isEmpty ? url.lastPathComponent : currentBranch)
         refreshRepository()
         refreshFileTree()
         startAutoRefreshTimer()
@@ -525,6 +530,51 @@ final class RepositoryViewModel: ObservableObject {
 
     func removeWorktree(_ path: String) {
         runGitAction(label: "Remover worktree", args: ["worktree", "remove", path])
+    }
+
+    func openWorktreeTerminal(_ worktree: WorktreeItem) {
+        let url = URL(fileURLWithPath: worktree.path)
+        let label = worktree.branch.isEmpty ? url.lastPathComponent : worktree.branch
+        createTerminalSession(workingDirectory: url, label: label, worktreeID: worktree.id)
+    }
+
+    func removeWorktreeAndCloseTerminal(_ worktree: WorktreeItem) {
+        closeTerminalSession(forWorktree: worktree.id)
+        removeWorktree(worktree.path)
+    }
+
+    // MARK: - Terminal Session Management
+
+    func createTerminalSession(workingDirectory: URL, label: String, worktreeID: String? = nil, activate: Bool = true) {
+        if let worktreeID, let existing = terminalSessions.first(where: { $0.worktreeID == worktreeID }) {
+            if activate { activeTerminalID = existing.id }
+            return
+        }
+        let session = TerminalSession(workingDirectory: workingDirectory, label: label, worktreeID: worktreeID)
+        terminalSessions.append(session)
+        if activate { activeTerminalID = session.id }
+    }
+
+    func closeTerminalSession(_ session: TerminalSession) {
+        terminalSessions.removeAll(where: { $0.id == session.id })
+        if activeTerminalID == session.id {
+            activeTerminalID = terminalSessions.last?.id
+        }
+    }
+
+    func activateTerminalSession(_ session: TerminalSession) {
+        activeTerminalID = session.id
+    }
+
+    private func closeTerminalSession(forWorktree worktreeID: String) {
+        if let session = terminalSessions.first(where: { $0.worktreeID == worktreeID }) {
+            closeTerminalSession(session)
+        }
+    }
+
+    func createDefaultTerminalSession(repositoryURL: URL?, branchName: String) {
+        guard terminalSessions.isEmpty, let url = repositoryURL else { return }
+        createTerminalSession(workingDirectory: url, label: branchName)
     }
 
     func pruneWorktrees() {

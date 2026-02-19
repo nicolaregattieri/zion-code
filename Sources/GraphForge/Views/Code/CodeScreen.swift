@@ -170,20 +170,118 @@ struct CodeScreen: View {
     
     private var terminalContainer: some View {
         VStack(spacing: 0) {
-            HStack {
-                Image(systemName: "terminal.fill").font(.caption).foregroundStyle(model.selectedTheme.isLightAppearance ? Color.blue : Color.accentColor)
-                Text("Vibe Terminal (zsh)").font(.system(size: 11, weight: .bold))
-                Spacer()
-                Text("Interativo").font(.system(size: 8, weight: .bold)).foregroundStyle(.secondary)
-            }
-            .padding(.horizontal, 12).padding(.vertical, 8)
-            
+            terminalTabBar
+
             Divider()
-            
-            TerminalView(model: model, theme: model.selectedTheme)
+
+            ZStack {
+                if model.terminalSessions.isEmpty {
+                    VStack(spacing: 8) {
+                        Image(systemName: "terminal").font(.title).foregroundStyle(.secondary.opacity(0.4))
+                        Text(L10n("Nenhum terminal aberto")).font(.caption).foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ForEach(model.terminalSessions) { session in
+                        TerminalTabView(session: session, theme: model.selectedTheme)
+                            .opacity(session.id == model.activeTerminalID ? 1 : 0)
+                            .allowsHitTesting(session.id == model.activeTerminalID)
+                    }
+                }
+            }
         }
         .background(Color.black.opacity(0.1))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .onAppear {
+            model.createDefaultTerminalSession(repositoryURL: model.repositoryURL, branchName: model.currentBranch.isEmpty ? "zsh" : model.currentBranch)
+        }
+    }
+
+    private var terminalTabBar: some View {
+        let accentColor = model.selectedTheme.isLightAppearance ? Color.blue : Color.accentColor
+        return HStack(spacing: 0) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 2) {
+                    ForEach(model.terminalSessions) { session in
+                        TerminalTab(
+                            session: session,
+                            isActive: session.id == model.activeTerminalID,
+                            accentColor: accentColor,
+                            onActivate: { model.activateTerminalSession(session) },
+                            onClose: { model.closeTerminalSession(session) },
+                            onRestart: { session.isAlive = true }
+                        )
+                    }
+                }
+                .padding(.horizontal, 4)
+            }
+
+            Spacer()
+
+            Button {
+                guard let url = model.repositoryURL else { return }
+                let label = model.currentBranch.isEmpty ? "zsh" : model.currentBranch
+                model.createTerminalSession(workingDirectory: url, label: label)
+            } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(accentColor)
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 8)
+        }
+        .padding(.vertical, 6)
+    }
+}
+
+struct TerminalTab: View {
+    @ObservedObject var session: TerminalSession
+    let isActive: Bool
+    let accentColor: Color
+    let onActivate: () -> Void
+    let onClose: () -> Void
+    let onRestart: () -> Void
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(session.isAlive ? Color.green : Color.red)
+                .frame(width: 6, height: 6)
+
+            Text(session.title)
+                .font(.system(size: 10, weight: isActive ? .bold : .regular, design: .monospaced))
+                .lineLimit(1)
+
+            if !session.isAlive {
+                Button {
+                    onRestart()
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+
+            Button {
+                onClose()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(isActive ? accentColor.opacity(0.25) : Color.white.opacity(0.05))
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .overlay(
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(isActive ? accentColor.opacity(0.5) : Color.clear, lineWidth: 1)
+        )
+        .contentShape(Rectangle())
+        .onTapGesture { onActivate() }
     }
 }
 
