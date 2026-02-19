@@ -9,6 +9,7 @@ struct SourceCodeEditor: NSViewRepresentable {
     var lineSpacing: Double = 1.2
     var isLineWrappingEnabled: Bool = true
     var activeFileID: String?
+    var fileExtension: String = ""
 
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSTextView.scrollableTextView()
@@ -47,24 +48,9 @@ struct SourceCodeEditor: NSViewRepresentable {
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         guard let textView = nsView.documentView as? NSTextView else { return }
 
-        // Sync text and Reset Scroll properly
+        // Sync text
         if textView.string != text {
             textView.string = text
-            
-            // Critical Fix: More aggressive scroll reset to (0,0)
-            DispatchQueue.main.async {
-                // 1. Reset selection to the start
-                textView.setSelectedRange(NSRange(location: 0, length: 0))
-                
-                // 2. Reset the ClipView bounds (this is the absolute horizontal/vertical origin)
-                if let clipView = nsView.contentView as? NSClipView {
-                    clipView.bounds.origin = NSPoint.zero
-                    nsView.reflectScrolledClipView(clipView)
-                }
-                
-                // 3. Extra safety: scroll the text view itself
-                textView.scroll(NSPoint.zero)
-            }
         }
 
         // Sync font
@@ -110,6 +96,15 @@ struct SourceCodeEditor: NSViewRepresentable {
             paragraphStyle.lineSpacing = CGFloat(lineSpacing)
             textView.textStorage?.addAttribute(.paragraphStyle, value: paragraphStyle, range: range)
         }
+
+        // Scroll to top-left only when the active file changes
+        if activeFileID != context.coordinator.lastActiveFileID {
+            context.coordinator.lastActiveFileID = activeFileID
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                textView.setSelectedRange(NSRange(location: 0, length: 0))
+                textView.scrollRangeToVisible(NSRange(location: 0, length: 0))
+            }
+        }
     }
 
     func makeCoordinator() -> Coordinator {
@@ -118,6 +113,7 @@ struct SourceCodeEditor: NSViewRepresentable {
 
     class Coordinator: NSObject, NSTextViewDelegate {
         var parent: SourceCodeEditor
+        var lastActiveFileID: String?
         init(_ parent: SourceCodeEditor) { self.parent = parent }
 
         @MainActor
@@ -130,12 +126,59 @@ struct SourceCodeEditor: NSViewRepresentable {
             textView.enclosingScrollView?.verticalRulerView?.needsDisplay = true
         }
 
+        private enum LanguageType {
+            case swift, javascript, python, rust, go, ruby, html, css, json, yaml, markdown, shell, cLike, unknown
+        }
+
+        private func detectLanguage(from ext: String) -> LanguageType {
+            switch ext.lowercased() {
+            case "swift": return .swift
+            case "js", "jsx", "ts", "tsx", "mjs", "cjs": return .javascript
+            case "py", "pyw": return .python
+            case "rs": return .rust
+            case "go": return .go
+            case "rb": return .ruby
+            case "html", "htm", "xml", "svg": return .html
+            case "css", "scss", "sass", "less": return .css
+            case "json": return .json
+            case "yaml", "yml": return .yaml
+            case "md", "markdown": return .markdown
+            case "sh", "bash", "zsh", "fish": return .shell
+            case "c", "h", "cpp", "cc", "cxx", "hpp", "m", "mm", "java", "kt", "cs": return .cLike
+            default: return .unknown
+            }
+        }
+
+        private func keywordsPattern(for lang: LanguageType) -> String {
+            switch lang {
+            case .swift:
+                return #"\b(func|let|var|class|struct|import|if|else|return|while|for|in|switch|case|break|continue|enum|protocol|extension|typealias|try|catch|guard|static|public|private|internal|fileprivate|open|override|final|async|await|do|self|throw|throws|as|is|where|nil|true|false|some|any|init|deinit|subscript|operator|precedencegroup|associatedtype|inout|mutating|nonmutating|convenience|required|lazy|weak|unowned|willSet|didSet|get|set|defer|repeat|fallthrough|indirect|macro)\b"#
+            case .javascript:
+                return #"\b(function|const|let|var|class|if|else|return|while|for|in|of|switch|case|break|continue|import|export|from|default|new|this|try|catch|finally|throw|async|await|yield|typeof|instanceof|void|delete|null|undefined|true|false|super|extends|implements|interface|type|enum|namespace|module|declare|abstract|as|is|keyof|readonly|static|public|private|protected|get|set|constructor)\b"#
+            case .python:
+                return #"\b(def|class|if|elif|else|return|while|for|in|import|from|as|try|except|finally|raise|with|yield|lambda|pass|break|continue|and|or|not|is|None|True|False|global|nonlocal|assert|del|async|await|self|super|match|case)\b"#
+            case .rust:
+                return #"\b(fn|let|mut|const|struct|enum|impl|trait|pub|use|mod|if|else|return|while|for|in|loop|match|break|continue|async|await|move|ref|self|Self|super|crate|type|where|as|unsafe|extern|dyn|static|true|false|None|Some|Ok|Err|Box|Vec|String|Option|Result)\b"#
+            case .go:
+                return #"\b(func|var|const|type|struct|interface|if|else|return|for|range|switch|case|break|continue|import|package|go|defer|select|chan|map|make|new|append|len|cap|true|false|nil|error|string|int|bool|byte|rune|float32|float64|int32|int64|uint)\b"#
+            case .ruby:
+                return #"\b(def|class|module|if|elsif|else|unless|return|while|for|in|do|end|begin|rescue|ensure|raise|yield|block_given\?|require|include|extend|attr_accessor|attr_reader|attr_writer|self|super|nil|true|false|and|or|not|puts|print|lambda|proc)\b"#
+            case .shell:
+                return #"\b(if|then|else|elif|fi|for|while|do|done|case|esac|in|function|return|local|export|source|echo|exit|test|read|shift|set|unset|readonly|declare|typeset|eval|exec|trap|wait|cd|pwd|true|false)\b"#
+            case .cLike:
+                return #"\b(auto|break|case|char|const|continue|default|do|double|else|enum|extern|float|for|goto|if|inline|int|long|register|restrict|return|short|signed|sizeof|static|struct|switch|typedef|union|unsigned|void|volatile|while|class|namespace|template|typename|this|new|delete|public|private|protected|virtual|override|final|try|catch|throw|using|true|false|null|nullptr|bool|string|import|package|interface|implements|extends|abstract|synchronized|native|assert)\b"#
+            case .html, .css, .json, .yaml, .markdown, .unknown:
+                return #"\b(func|let|var|class|struct|import|if|else|return|while|for|in|switch|case|break|continue|enum|protocol|extension|typealias|try|catch|guard|static|public|private|true|false|null|nil)\b"#
+            }
+        }
+
         @MainActor
         func applyHighlighting(to textView: NSTextView, colors: EditorColors) {
             let string = textView.string
             let length = string.utf16.count
             guard length > 0, let textStorage = textView.textStorage else { return }
             let range = NSRange(location: 0, length: length)
+            let lang = detectLanguage(from: parent.fileExtension)
 
             textStorage.beginEditing()
 
@@ -145,19 +188,90 @@ struct SourceCodeEditor: NSViewRepresentable {
                 .font: textView.font ?? NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
             ], range: range)
 
-            // 2. Highlighting
-            highlight(pattern: #""[^"\\\n]*(\\.[^"\\\n]*)*""#, in: string, color: colors.string, storage: textStorage)
-            highlight(pattern: #"\b\d+(\.\d+)?\b"#, in: string, color: colors.number, storage: textStorage)
+            // 2. Language-specific highlighting
+            switch lang {
+            case .json:
+                // JSON: keys vs values
+                highlight(pattern: #""[^"\\]*(?:\\.[^"\\]*)*"\s*:"#, in: string, color: colors.keyword, storage: textStorage)
+                highlight(pattern: #":\s*"[^"\\]*(?:\\.[^"\\]*)*""#, in: string, color: colors.string, storage: textStorage)
+                highlight(pattern: #"\b\d+(\.\d+)?\b"#, in: string, color: colors.number, storage: textStorage)
+                highlight(pattern: #"\b(true|false|null)\b"#, in: string, color: colors.keyword, storage: textStorage)
+            case .yaml:
+                // YAML: keys vs values
+                highlight(pattern: #"^[a-zA-Z_][a-zA-Z0-9_]*(?=\s*:)"#, in: string, color: colors.keyword, storage: textStorage)
+                highlight(pattern: #""[^"\\]*(?:\\.[^"\\]*)*""#, in: string, color: colors.string, storage: textStorage)
+                highlight(pattern: #"'[^']*'"#, in: string, color: colors.string, storage: textStorage)
+                highlight(pattern: #"\b\d+(\.\d+)?\b"#, in: string, color: colors.number, storage: textStorage)
+                highlight(pattern: #"\b(true|false|null|yes|no)\b"#, in: string, color: colors.keyword, storage: textStorage)
+                highlight(pattern: #"#.*"#, in: string, color: colors.comment, storage: textStorage)
+            case .markdown:
+                // Markdown headings, bold, links
+                highlight(pattern: #"^#{1,6}\s+.*$"#, in: string, color: colors.keyword, storage: textStorage)
+                highlight(pattern: #"\*\*[^*]+\*\*"#, in: string, color: colors.type, storage: textStorage)
+                highlight(pattern: #"\*[^*]+\*"#, in: string, color: colors.type, storage: textStorage)
+                highlight(pattern: #"`[^`]+`"#, in: string, color: colors.string, storage: textStorage)
+                highlight(pattern: #"\[([^\]]+)\]\([^\)]+\)"#, in: string, color: colors.call, storage: textStorage)
+                highlight(pattern: #"```[\s\S]*?```"#, in: string, color: colors.string, storage: textStorage)
+            case .html:
+                // HTML tags, attributes
+                highlight(pattern: #"</?[a-zA-Z][a-zA-Z0-9]*"#, in: string, color: colors.keyword, storage: textStorage)
+                highlight(pattern: #"\b[a-zA-Z-]+(?=\s*=)"#, in: string, color: colors.type, storage: textStorage)
+                highlight(pattern: #""[^"]*""#, in: string, color: colors.string, storage: textStorage)
+                highlight(pattern: #"'[^']*'"#, in: string, color: colors.string, storage: textStorage)
+                highlight(pattern: #"<!--[\s\S]*?-->"#, in: string, color: colors.comment, storage: textStorage)
+            case .css:
+                // CSS selectors, properties, values
+                highlight(pattern: #"[.#][a-zA-Z_-][a-zA-Z0-9_-]*"#, in: string, color: colors.keyword, storage: textStorage)
+                highlight(pattern: #"[a-z-]+(?=\s*:)"#, in: string, color: colors.type, storage: textStorage)
+                highlight(pattern: #""[^"]*""#, in: string, color: colors.string, storage: textStorage)
+                highlight(pattern: #"'[^']*'"#, in: string, color: colors.string, storage: textStorage)
+                highlight(pattern: #"\b\d+(\.\d+)?(px|em|rem|%|vh|vw|s|ms)?\b"#, in: string, color: colors.number, storage: textStorage)
+                highlight(pattern: #"#[0-9a-fA-F]{3,8}\b"#, in: string, color: colors.number, storage: textStorage)
+                highlight(pattern: #"/\*[\s\S]*?\*/"#, in: string, color: colors.comment, storage: textStorage)
+                highlight(pattern: #"//.*"#, in: string, color: colors.comment, storage: textStorage)
+            default:
+                // General programming languages
+                highlight(pattern: #""[^"\\\n]*(\\.[^"\\\n]*)*""#, in: string, color: colors.string, storage: textStorage)
+                if lang == .python || lang == .ruby || lang == .shell {
+                    highlight(pattern: #"'[^'\\\n]*(\\.[^'\\\n]*)*'"#, in: string, color: colors.string, storage: textStorage)
+                }
+                highlight(pattern: #"\b\d+(\.\d+)?\b"#, in: string, color: colors.number, storage: textStorage)
 
-            let keywords = #"\b(func|let|var|class|struct|import|if|else|return|while|for|in|switch|case|break|continue|enum|protocol|extension|typealias|try|catch|guard|static|public|private|internal|fileprivate|open|override|final|async|await|do|self|throw|throws|as|is|where|nil|true|false)\b"#
-            highlight(pattern: keywords, in: string, color: colors.keyword, storage: textStorage)
+                let keywords = keywordsPattern(for: lang)
+                highlight(pattern: keywords, in: string, color: colors.keyword, storage: textStorage)
 
-            highlight(pattern: #"\b[A-Z][a-zA-Z0-9_]*\b"#, in: string, color: colors.type, storage: textStorage)
-            highlight(pattern: #"@[a-zA-Z0-9_]+"#, in: string, color: colors.keyword, storage: textStorage)
-            highlight(pattern: #"\b[a-z][a-zA-Z0-9_]*(?=\()"#, in: string, color: colors.call, storage: textStorage)
+                highlight(pattern: #"\b[A-Z][a-zA-Z0-9_]*\b"#, in: string, color: colors.type, storage: textStorage)
 
-            highlight(pattern: #"//.*"#, in: string, color: colors.comment, storage: textStorage)
-            highlight(pattern: #"(?s)/\*.*?\*/"#, in: string, color: colors.comment, storage: textStorage)
+                // Decorators/attributes
+                if lang == .swift || lang == .python || lang == .javascript {
+                    highlight(pattern: #"@[a-zA-Z0-9_]+"#, in: string, color: colors.keyword, storage: textStorage)
+                }
+                if lang == .rust {
+                    highlight(pattern: #"#\[[\w:(,\s)]*\]"#, in: string, color: colors.keyword, storage: textStorage)
+                }
+
+                // Function calls
+                highlight(pattern: #"\b[a-z][a-zA-Z0-9_]*(?=\()"#, in: string, color: colors.call, storage: textStorage)
+
+                // Comments
+                if lang == .python || lang == .ruby || lang == .shell {
+                    highlight(pattern: #"#.*"#, in: string, color: colors.comment, storage: textStorage)
+                } else {
+                    highlight(pattern: #"//.*"#, in: string, color: colors.comment, storage: textStorage)
+                    highlight(pattern: #"(?s)/\*.*?\*/"#, in: string, color: colors.comment, storage: textStorage)
+                }
+
+                // Python triple-quoted strings
+                if lang == .python {
+                    highlight(pattern: #"\"\"\"[\s\S]*?\"\"\""#, in: string, color: colors.string, storage: textStorage)
+                    highlight(pattern: #"'''[\s\S]*?'''"#, in: string, color: colors.string, storage: textStorage)
+                }
+
+                // Rust lifetimes
+                if lang == .rust {
+                    highlight(pattern: #"'[a-z_]+"#, in: string, color: colors.type, storage: textStorage)
+                }
+            }
 
             textStorage.endEditing()
         }

@@ -41,11 +41,14 @@ final class RepositoryViewModel: ObservableObject {
     @Published var openedFiles: [FileItem] = []
     @Published var activeFileID: String?
     @Published var selectedCodeFile: FileItem? // Keep for backward compat/simple reference
-    @Published var codeFileContent: String = ""
+    @Published var codeFileContent: String = "" {
+        didSet { markCurrentFileUnsavedIfChanged() }
+    }
     @Published var expandedPaths: Set<String> = []
     
     // Tracking unsaved changes per file
     @Published var unsavedFiles: Set<String> = []
+    private var originalFileContents: [String: String] = [:] // fileID -> original content
     
     // Editor Settings (persisted via UserDefaults + @Published for SwiftUI reactivity)
     @Published var selectedTheme: EditorTheme = .dracula {
@@ -86,6 +89,7 @@ final class RepositoryViewModel: ObservableObject {
 
     private let git = GitClient()
     private let worker = RepositoryWorker()
+    private let fileWatcher = FileWatcher()
     
     private let defaultCommitLimitAll = 700
     private let defaultCommitLimitFocused = 450
@@ -145,6 +149,7 @@ final class RepositoryViewModel: ObservableObject {
         refreshRepository()
         refreshFileTree()
         startAutoRefreshTimer()
+        startFileWatcher(for: url)
     }
 
     func loadRecentRepositories() {
@@ -187,19 +192,53 @@ final class RepositoryViewModel: ObservableObject {
     func refreshFileTree() {
         guard let url = repositoryURL else { return }
         Task {
-            let files = await loadFiles(at: url)
+            let ignoredPaths = await loadGitIgnoredPaths()
+            let files = await loadFiles(at: url, ignoredPaths: ignoredPaths)
             repositoryFiles = files
         }
     }
 
-    private func loadFiles(at url: URL) async -> [FileItem] {
+    private static let ignoredDirectories: Set<String> = [
+        "node_modules", ".build", ".git", "dist", "__pycache__", ".next", "build",
+        ".swiftpm", ".DS_Store", "Pods", ".gradle", ".idea", ".vscode",
+        "DerivedData", ".cache", "vendor", ".eggs", "*.egg-info",
+        ".tox", ".mypy_cache", ".pytest_cache", "coverage", ".nuxt",
+        ".output", ".turbo", ".vercel", ".expo"
+    ]
+
+    private func loadGitIgnoredPaths() async -> Set<String> {
+        guard let url = repositoryURL else { return [] }
+        do {
+            let output = try await worker.runAction(
+                args: ["ls-files", "--others", "--ignored", "--exclude-standard", "--directory"],
+                in: url
+            )
+            let paths = output.split(separator: "\n").map {
+                // git outputs paths relative to repo root, trailing / for dirs
+                url.appendingPathComponent(String($0).trimmingCharacters(in: CharacterSet(charactersIn: "/"))).path
+            }
+            return Set(paths)
+        } catch {
+            return []
+        }
+    }
+
+    private func loadFiles(at url: URL, ignoredPaths: Set<String>? = nil) async -> [FileItem] {
         let fm = FileManager.default
         do {
             let contents = try fm.contentsOfDirectory(at: url, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
             var items: [FileItem] = []
             for item in contents {
+                let name = item.lastPathComponent
+
+                // Skip hardcoded ignored directories
+                if Self.ignoredDirectories.contains(name) { continue }
+
+                // Skip git-ignored paths
+                if let ignored = ignoredPaths, ignored.contains(item.path) { continue }
+
                 let isDir = (try? item.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
-                let children = isDir ? await loadFiles(at: item) : nil
+                let children = isDir ? await loadFiles(at: item, ignoredPaths: ignoredPaths) : nil
                 items.append(FileItem(url: item, isDirectory: isDir, children: children?.sorted(by: { $0.name.lowercased() < $1.name.lowercased() })))
             }
             return items.sorted { a, b in
@@ -213,19 +252,30 @@ final class RepositoryViewModel: ObservableObject {
 
     func selectCodeFile(_ item: FileItem) {
         guard !item.isDirectory else { return }
-        
+
         // Add to opened files if not already there
         if !openedFiles.contains(where: { $0.id == item.id }) {
             openedFiles.append(item)
         }
-        
+
         activeFileID = item.id
         selectedCodeFile = item
-        
+
         do {
-            codeFileContent = try String(contentsOf: item.url, encoding: .utf8)
+            let content = try String(contentsOf: item.url, encoding: .utf8)
+            codeFileContent = content
+            originalFileContents[item.id] = content
         } catch {
             codeFileContent = "Erro ao ler arquivo: \(error.localizedDescription)"
+        }
+    }
+
+    func markCurrentFileUnsavedIfChanged() {
+        guard let fileID = activeFileID else { return }
+        if let original = originalFileContents[fileID], original != codeFileContent {
+            unsavedFiles.insert(fileID)
+        } else {
+            unsavedFiles.remove(fileID)
         }
     }
 
@@ -250,11 +300,29 @@ final class RepositoryViewModel: ObservableObject {
         do {
             try codeFileContent.write(to: file.url, atomically: true, encoding: .utf8)
             statusMessage = String(format: L10n("Arquivo salvo: %@"), file.name)
+            originalFileContents[file.id] = codeFileContent
             unsavedFiles.remove(file.id)
             refreshRepository()
         } catch {
             handleError(error)
         }
+    }
+
+    func allFlatFiles() -> [FileItem] {
+        func flatten(_ items: [FileItem]) -> [FileItem] {
+            var result: [FileItem] = []
+            for item in items {
+                if item.isDirectory {
+                    if let children = item.children {
+                        result.append(contentsOf: flatten(children))
+                    }
+                } else {
+                    result.append(item)
+                }
+            }
+            return result
+        }
+        return flatten(repositoryFiles)
     }
 
     func toggleExpansion(for path: String) {
@@ -1063,6 +1131,27 @@ final class RepositoryViewModel: ObservableObject {
         if debugLog.count > 5000 {
             debugLog = String(debugLog.suffix(2000))
         }
+    }
+
+    private func startFileWatcher(for url: URL) {
+        fileWatcher.onFileChanged = { [weak self] in
+            guard let self else { return }
+            // Reload the currently open file if it changed on disk
+            if let file = self.selectedCodeFile {
+                if let content = try? String(contentsOf: file.url, encoding: .utf8) {
+                    if content != self.codeFileContent {
+                        self.codeFileContent = content
+                        self.originalFileContents[file.id] = content
+                        self.unsavedFiles.remove(file.id)
+                    }
+                }
+            }
+        }
+        fileWatcher.onRepositoryChanged = { [weak self] in
+            self?.refreshRepository(setBusy: false)
+            self?.refreshFileTree()
+        }
+        fileWatcher.watch(directory: url)
     }
 
     private func startAutoRefreshTimer() {

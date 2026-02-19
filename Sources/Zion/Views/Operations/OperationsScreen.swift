@@ -53,14 +53,7 @@ struct OperationsScreen: View {
 
     private var commitCard: some View {
         GlassCard(spacing: 12) {
-            HStack(spacing: 8) {
-                Image(systemName: "plus.square.on.square").foregroundStyle(.secondary)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(L10n("Novo Commit")).font(.headline)
-                    Text(L10n("Gravar alteracoes no repositorio")).font(.caption).foregroundStyle(.secondary)
-                }
-                Spacer()
-            }
+            CardHeader(L10n("Novo Commit"), icon: "plus.square.on.square", subtitle: L10n("Gravar alteracoes no repositorio"))
 
             VStack(spacing: 10) {
                 if !model.uncommittedChanges.isEmpty {
@@ -126,14 +119,7 @@ struct OperationsScreen: View {
 
     private var branchCard: some View {
         GlassCard(spacing: 12) {
-            HStack(spacing: 8) {
-                Image(systemName: "arrow.triangle.branch").foregroundStyle(.secondary)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(L10n("Branches")).font(.headline)
-                    Text(L10n("Checkout e integracao")).font(.caption).foregroundStyle(.secondary)
-                }
-                Spacer()
-            }
+            CardHeader(L10n("Branches"), icon: "arrow.triangle.branch", subtitle: L10n("Checkout e integracao"))
 
             VStack(spacing: 10) {
                 HStack(spacing: 8) {
@@ -208,7 +194,7 @@ struct OperationsScreen: View {
 
     private var stashCard: some View {
         GlassCard(spacing: 10) {
-            Label(L10n("Stash"), systemImage: "archivebox").font(.headline)
+            CardHeader(L10n("Stash"), icon: "archivebox")
             HStack(spacing: 8) {
                 TextField(L10n("mensagem do stash"), text: $model.stashMessageInput).textFieldStyle(.roundedBorder)
                 Button(L10n("Criar stash")) {
@@ -228,7 +214,7 @@ struct OperationsScreen: View {
 
     private var tagsCard: some View {
         GlassCard(spacing: 10) {
-            Label(L10n("Tags"), systemImage: "tag").font(.headline)
+            CardHeader(L10n("Tags"), icon: "tag")
             HStack(spacing: 8) {
                 TextField("v1.0.0", text: $model.tagInput).textFieldStyle(.roundedBorder)
                 Button(L10n("Criar")) { performGitAction(L10n("Criar tag"), L10n("Criar tag no commit atual?"), false) { model.createTag() } }.buttonStyle(.borderedProminent)
@@ -239,7 +225,7 @@ struct OperationsScreen: View {
 
     private var historyCard: some View {
         GlassCard(spacing: 10) {
-            Label(L10n("Historico"), systemImage: "clock.arrow.circlepath").font(.headline)
+            CardHeader(L10n("Historico"), icon: "clock.arrow.circlepath")
             HStack(spacing: 8) {
                 TextField(L10n("rebase target"), text: $model.rebaseTargetInput).textFieldStyle(.roundedBorder)
                 Button(L10n("Rebase")) { performGitAction(L10n("Rebase"), L10n("Rebasear a branch atual no target informado?"), false) { model.rebaseOntoTarget() } }.buttonStyle(.borderedProminent)
@@ -253,7 +239,7 @@ struct OperationsScreen: View {
 
     private var remotesCard: some View {
         GlassCard(spacing: 10) {
-            Label(L10n("Remotes"), systemImage: "network").font(.headline)
+            CardHeader(L10n("Remotes"), icon: "network")
             
             VStack(spacing: 8) {
                 HStack(spacing: 8) {
@@ -310,14 +296,10 @@ struct OperationsScreen: View {
 
     private var worktreeCard: some View {
         GlassCard(spacing: 10) {
-            HStack(spacing: 8) {
-                Image(systemName: "square.split.2x2").foregroundStyle(.secondary)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(L10n("Worktrees")).font(.headline)
-                    Text(L10n("Contextos paralelos")).font(.caption).foregroundStyle(.secondary)
-                }
-                Spacer()
-                Text("\(model.worktrees.count)").font(.caption).foregroundStyle(.secondary)
+            CardHeader(L10n("Worktrees"), icon: "square.split.2x2", subtitle: L10n("Contextos paralelos")) {
+                Text("\(model.worktrees.count)")
+                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .foregroundStyle(.secondary)
             }
 
             HStack(spacing: 8) {
@@ -365,8 +347,7 @@ struct OperationsScreen: View {
 
     private var cleanupCard: some View {
         GlassCard(spacing: 10) {
-            Label(L10n("Limpeza"), systemImage: "sparkles").font(.headline)
-            Text(L10n("Remover branches locais que ja foram mescladas na main.")).font(.caption).foregroundStyle(.secondary)
+            CardHeader(L10n("Limpeza"), icon: "sparkles", subtitle: L10n("Remover branches locais que ja foram mescladas na main."))
             Button(action: {
                 performGitAction(L10n("Prune"), L10n("Deseja remover todas as branches locais ja mescladas?"), true) {
                     model.pruneMergedBranches()
@@ -378,21 +359,27 @@ struct OperationsScreen: View {
     }
 
     private var resetCard: some View {
-        GlassCard(spacing: 12) {
-            HStack {
-                Label(L10n("Danger Zone"), systemImage: "exclamationmark.octagon.fill").font(.headline).foregroundStyle(.red)
-                Spacer()
-            }
-            VStack(alignment: .leading, spacing: 12) {
-                Text(L10n("CUIDADO: Operacoes de reset descartam alteracoes.")).font(.caption).foregroundStyle(.red.opacity(0.8))
-                HStack(spacing: 8) {
-                    TextField("HEAD~1", text: $model.resetTargetInput).textFieldStyle(.roundedBorder)
-                    Button(role: .destructive) {
-                        performGitAction(L10n("Reset --hard"), L10n("Esta acao e IRREVERSIVEL. Deseja continuar?"), true) { model.hardReset() }
-                    } label: { Label(L10n("Reset --hard"), systemImage: "trash.fill") }.buttonStyle(.borderedProminent).tint(.red)
-                }
+        GlassCard(spacing: 12, borderTint: DesignSystem.Colors.dangerBorder) {
+            CardHeader(L10n("Danger Zone"), icon: "exclamationmark.octagon.fill")
+                .foregroundStyle(.red)
+
+            Text(L10n("CUIDADO: Operacoes de reset descartam alteracoes."))
+                .font(.caption)
+                .foregroundStyle(.red.opacity(0.8))
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(DesignSystem.Colors.dangerBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+
+            HStack(spacing: 8) {
+                TextField("HEAD~1", text: $model.resetTargetInput).textFieldStyle(.roundedBorder)
+                Button(role: .destructive) {
+                    performGitAction(L10n("Reset --hard"), L10n("Esta acao e IRREVERSIVEL. Deseja continuar?"), true) { model.hardReset() }
+                } label: { Label(L10n("Reset --hard"), systemImage: "trash.fill") }.buttonStyle(.borderedProminent).tint(.red)
             }
         }
+        .padding(.top, 8)
     }
 }
 

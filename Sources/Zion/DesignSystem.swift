@@ -5,23 +5,40 @@ struct DesignSystem {
         // App background with transparency for glassmorphism
         static let background = Color(NSColor.windowBackgroundColor)
         static let glassBackground = Color.white.opacity(0.05)
-        static let glassBorder = Color.white.opacity(0.1)
-        
+        static let glassBorder = Color.white.opacity(0.12)
+
+        // Glass tokens (consistent across all cards/components)
+        static let glassBorderDark = Color.white.opacity(0.12)
+        static let glassBorderLight = Color.white.opacity(0.55)
+        static let glassHover = Color.white.opacity(0.08)
+        static let glassSubtle = Color.white.opacity(0.04)
+        static let glassOverlay = Color.black.opacity(0.15)
+
         // Brand colors
         static let primary = Color.purple
         static let secondary = Color.indigo
         static let accent = Color.cyan
-        
+
         // Semantic status
         static let error = Color.red
         static let warning = Color.orange
         static let success = Color.green
         static let info = Color.blue
-        
+
         // Text
         static let textPrimary = Color.primary
         static let textSecondary = Color.secondary
         static let textTertiary = Color.secondary.opacity(0.7)
+
+        // Danger zone
+        static let dangerBackground = Color.red.opacity(0.06)
+        static let dangerBorder = Color.red.opacity(0.25)
+    }
+
+    struct Spacing {
+        static let cardPadding: CGFloat = 12
+        static let sectionGap: CGFloat = 20
+        static let cardCornerRadius: CGFloat = 14
     }
     
     struct EditorThemes {

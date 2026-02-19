@@ -22,21 +22,7 @@ struct SidebarView: View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(spacing: 16) {
                 repoSummaryCard
-                
-                // ACTIONS CARD - ALWAYS AT THE TOP IF REPO OPEN
-                if model.repositoryURL != nil {
-                    GlassCard(spacing: 12) {
-                        Text(L10n("Acoes Rapidas")).font(.headline).foregroundStyle(.primary)
-                        HStack(spacing: 8) {
-                            actionButton(title: "Fetch", icon: "arrow.down.circle", color: .blue, action: model.fetch)
-                            actionButton(title: "Pull", icon: "arrow.down.to.line", color: .green, action: model.pull)
-                            actionButton(title: "Push", icon: "arrow.up.circle", color: .orange, action: model.push)
-                            actionButton(title: "Atualizar", icon: "arrow.clockwise", color: .secondary, action: model.refreshRepository)
-                        }
-                    }
-                    .padding(.horizontal, 10)
-                }
-                
+
                 workspaceCard
 
                 if model.repositoryURL != nil {
@@ -244,37 +230,6 @@ struct SidebarView: View {
         .padding(.horizontal, 8)
         .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.white.opacity(0.04)))
         .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color.white.opacity(0.08), lineWidth: 1))
-    }
-
-    private func actionButton(title: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            VStack(spacing: 6) {
-                ZStack {
-                    Circle()
-                        .fill(color.opacity(0.15))
-                        .frame(width: 32, height: 32)
-                    Image(systemName: icon)
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(color)
-                }
-                if !title.isEmpty {
-                    Text(L10n(title))
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color.white.opacity(0.04))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
-            )
-        }
-        .buttonStyle(.plain)
     }
 
     private var workspaceCard: some View {

@@ -99,8 +99,29 @@ struct TerminalTabView: NSViewRepresentable {
         nonisolated func scrolled(source: SwiftTerm.TerminalView, position: Double) {}
         nonisolated func setTerminalTitle(source: SwiftTerm.TerminalView, title: String) {
             Task { @MainActor in
-                parent.session.title = title.isEmpty ? parent.session.label : title
+                parent.session.title = title.isEmpty ? parent.session.label : compactTitle(from: title)
             }
+        }
+
+        @MainActor
+        private func compactTitle(from title: String) -> String {
+            // Parse "user@host:~/path/to/folder" -> "folder"
+            if let colonIndex = title.firstIndex(of: ":") {
+                let pathPart = String(title[title.index(after: colonIndex)...])
+                let cleaned = pathPart.trimmingCharacters(in: .whitespaces)
+                if cleaned == "~" { return "~" }
+                if let last = cleaned.split(separator: "/").last {
+                    return String(last)
+                }
+                return cleaned
+            }
+            // Fallback: if it looks like a path, take the last component
+            if title.contains("/") {
+                if let last = title.split(separator: "/").last {
+                    return String(last)
+                }
+            }
+            return title
         }
         nonisolated func sizeChanged(source: SwiftTerm.TerminalView, newCols: Int, newRows: Int) {
             Task { @MainActor in

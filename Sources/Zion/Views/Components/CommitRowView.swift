@@ -69,9 +69,10 @@ struct CommitRowView: View {
             .frame(height: cardHeight)
         }
         .contentShape(RoundedRectangle(cornerRadius: 14))
-        .scaleEffect(isHovered && !isSelected ? 1.01 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isHovered)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+        .scaleEffect(isHovered && !isSelected ? 1.015 : 1.0)
+        .shadow(color: isHovered && !isSelected ? Color.accentColor.opacity(0.15) : .clear, radius: 8, y: 2)
+        .animation(.spring(response: 0.25, dampingFraction: 0.8), value: isHovered)
+        .animation(.spring(response: 0.25, dampingFraction: 0.8), value: isSelected)
         .onHover { hovering in isHovered = hovering }
         .onTapGesture { onSelect() }
         .contextMenu { contextMenu }
@@ -81,14 +82,14 @@ struct CommitRowView: View {
     private var cardBackground: Color {
         if isSelected { return Color.accentColor }
         if isSearchMatch { return Color.yellow.opacity(0.15) }
-        if isHovered { return Color.white.opacity(0.08) }
+        if isHovered { return Color.white.opacity(0.10) }
         return Color.black.opacity(0.25)
     }
 
     private var cardStroke: Color {
         if isSelected { return Color.white.opacity(0.6) }
         if isSearchMatch { return Color.yellow.opacity(0.5) }
-        if isHovered { return Color.white.opacity(0.2) }
+        if isHovered { return Color.accentColor.opacity(0.35) }
         return Color.white.opacity(0.1)
     }
 
