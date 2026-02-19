@@ -7,7 +7,7 @@ struct LaneGraphView: View {
     let isHead: Bool
     let height: CGFloat
     
-    private let safePadding: CGFloat = 8 // Reduced from 14
+    private let safePadding: CGFloat = 14
     private let laneSpacing: CGFloat = 20
     private let colorPalette: [Color] = [
         .blue, .pink, .green, .orange, .teal, .purple, .red, .mint, .indigo, .yellow, .cyan, .brown
