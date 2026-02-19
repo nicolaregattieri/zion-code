@@ -11,7 +11,10 @@ struct TerminalTabView: NSViewRepresentable {
         terminalView.allowMouseReporting = true
         terminalView.terminalDelegate = context.coordinator
 
-        applyTheme(to: terminalView)
+        applyTheme(to: terminalView, context: context)
+
+        // Cursor style only on initial setup (don't override shell programs in updateNSView)
+        terminalView.getTerminal().setCursorStyle(.blinkBlock)
 
         context.coordinator.startProcess(view: terminalView)
 
@@ -19,7 +22,7 @@ struct TerminalTabView: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: SwiftTerm.TerminalView, context: Context) {
-        applyTheme(to: nsView)
+        applyTheme(to: nsView, context: context)
 
         if session.isAlive && context.coordinator.processIsDead {
             context.coordinator.restartProcess(view: nsView)
@@ -30,9 +33,32 @@ struct TerminalTabView: NSViewRepresentable {
         coordinator.killProcess()
     }
 
-    private func applyTheme(to view: SwiftTerm.TerminalView) {
-        let colors = theme.colors
-        view.layer?.backgroundColor = colors.nsBackground.cgColor
+    private func applyTheme(to view: SwiftTerm.TerminalView, context: Context) {
+        let palette = theme.terminalPalette
+
+        // Always keep layer bg in sync (cheap operation)
+        view.layer?.backgroundColor = palette.background.cgColor
+
+        // Only apply expensive operations when theme actually changes
+        guard theme != context.coordinator.lastAppliedTheme else { return }
+        context.coordinator.lastAppliedTheme = theme
+
+        // Base colors
+        view.nativeBackgroundColor = palette.background
+        view.nativeForegroundColor = palette.foreground
+
+        // ANSI 16-color palette
+        view.getTerminal().installPalette(colors: palette.ansiColors)
+
+        // Cursor
+        view.caretColor = palette.cursorColor
+        view.caretTextColor = palette.cursorTextColor
+
+        // Font: Hack Nerd Font with SF Mono fallback
+        let fontSize: CGFloat = 13.0
+        let font = NSFont(name: "HackNerdFontMono-Regular", size: fontSize)
+                  ?? NSFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
+        view.font = font
     }
 
     func makeCoordinator() -> Coordinator {
@@ -45,6 +71,7 @@ struct TerminalTabView: NSViewRepresentable {
         private var process: LocalProcess?
         private weak var terminalView: SwiftTerm.TerminalView?
         private(set) var processIsDead = false
+        var lastAppliedTheme: EditorTheme?
 
         init(_ parent: TerminalTabView) {
             self.parent = parent
