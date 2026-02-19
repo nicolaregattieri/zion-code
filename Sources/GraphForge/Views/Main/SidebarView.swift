@@ -175,8 +175,10 @@ struct SidebarView: View {
                             }
                         }
                     }
-                    .listStyle(.sidebar).frame(minWidth: 500)
-                }.frame(minHeight: 180, maxHeight: 300)
+                    .listStyle(.sidebar)
+                    .controlSize(.small)
+                    .frame(minWidth: 500)
+                }.frame(minHeight: 120, maxHeight: 250)
             }
         }
     }
@@ -295,6 +297,7 @@ struct SidebarView: View {
 
             Toggle(L10n("Inferir origem da arvore (best practice)"), isOn: $inferBranchOrigins)
                 .toggleStyle(.switch).font(.caption)
+                .help(L10n("Tenta detectar automaticamente de qual branch cada uma foi criada para organizar a arvore lateral de forma hierarquica."))
         }
         .padding(.horizontal, 10)
         .padding(.bottom, 14)

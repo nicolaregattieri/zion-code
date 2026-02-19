@@ -155,17 +155,27 @@ struct ContentView: View {
     private var mainToolbar: ToolbarItemGroup<some View> {
         ToolbarItemGroup(placement: .navigation) {
             Button { model.repositoryURL = nil } label: { Label(L10n("Abrir"), systemImage: "folder") }
-            Button { model.refreshRepository() } label: { Label(L10n("Atualizar"), systemImage: "arrow.clockwise") }.disabled(model.repositoryURL == nil)
+                .help(L10n("Abrir repositório"))
+            
+            Button { model.refreshRepository() } label: { Label(L10n("Atualizar"), systemImage: "arrow.clockwise") }
+                .disabled(model.repositoryURL == nil)
+                .help(L10n("Atualizar status do repositório"))
             
             if model.repositoryURL != nil {
-                Divider()
                 Button { model.fetch() } label: { Label(L10n("Fetch"), systemImage: "arrow.down.circle") }
-                Button { model.pull() } label: { Label(L10n("Pull"), systemImage: "arrow.down.and.line.horizontal") }
-                Button { model.push() } label: { Label(L10n("Push"), systemImage: "arrow.up.circle") }
+                    .help(L10n("Fetch: Busca atualizações remotas"))
                 
-                Divider()
+                Button { model.pull() } label: { Label(L10n("Pull"), systemImage: "arrow.down.and.line.horizontal") }
+                    .help(L10n("Pull: Puxa alterações da branch atual"))
+                
+                Button { model.push() } label: { Label(L10n("Push"), systemImage: "arrow.up.circle") }
+                    .help(L10n("Push: Envia alterações locais"))
+                
                 Button { openRepositoryInEditor() } label: { Label(L10n("Editor de Codigo"), systemImage: "chevron.left.forwardslash.chevron.right") }
+                    .help(L10n("Abrir no Editor de Código"))
+                
                 Button { openRepositoryInTerminal() } label: { Label(L10n("Terminal"), systemImage: "terminal") }
+                    .help(L10n("Abrir Terminal"))
             }
         }
     }
