@@ -36,8 +36,21 @@ final class RepositoryViewModel: ObservableObject {
     @Published var repositoryFiles: [FileItem] = []
     @Published var selectedCodeFile: FileItem?
     @Published var codeFileContent: String = ""
-    @Published var selectedTheme: EditorTheme = .dracula
     @Published var expandedPaths: Set<String> = []
+    
+    // Editor Settings (persisted via UserDefaults + @Published for SwiftUI reactivity)
+    @Published var selectedTheme: EditorTheme = .dracula {
+        didSet { UserDefaults.standard.set(selectedTheme.rawValue, forKey: "editor.theme") }
+    }
+    @Published var editorFontSize: Double = 13.0 {
+        didSet { UserDefaults.standard.set(editorFontSize, forKey: "editor.fontSize") }
+    }
+    @Published var editorFontFamily: String = "SF Mono" {
+        didSet { UserDefaults.standard.set(editorFontFamily, forKey: "editor.fontFamily") }
+    }
+    @Published var editorLineSpacing: Double = 1.2 {
+        didSet { UserDefaults.standard.set(editorLineSpacing, forKey: "editor.lineSpacing") }
+    }
 
     @Published var branchInput: String = ""
     @Published var tagInput: String = ""
@@ -73,6 +86,24 @@ final class RepositoryViewModel: ObservableObject {
     private var detailsTask: Task<Void, Never>?
     private var actionTask: Task<Void, Never>?
     private var autoRefreshTask: Task<Void, Never>?
+
+    // Restore persisted editor settings from UserDefaults
+    func restoreEditorSettings() {
+        let defaults = UserDefaults.standard
+        if let themeRaw = defaults.string(forKey: "editor.theme"),
+           let theme = EditorTheme(rawValue: themeRaw) {
+            selectedTheme = theme
+        }
+        if defaults.object(forKey: "editor.fontSize") != nil {
+            editorFontSize = defaults.double(forKey: "editor.fontSize")
+        }
+        if let family = defaults.string(forKey: "editor.fontFamily") {
+            editorFontFamily = family
+        }
+        if defaults.object(forKey: "editor.lineSpacing") != nil {
+            editorLineSpacing = defaults.double(forKey: "editor.lineSpacing")
+        }
+    }
 
     var maxLaneCount: Int {
         let maxLane = commits
