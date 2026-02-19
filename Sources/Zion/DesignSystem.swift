@@ -87,4 +87,78 @@ struct DesignSystem {
             number: (r: 0.0, g: 0.361, b: 0.773)
         )
     }
+
+    // MARK: - Terminal Palettes
+
+    private static func stColor(_ h: UInt32) -> SwiftTerm.Color {
+        let r = UInt16((h >> 16) & 0xFF) * 257
+        let g = UInt16((h >> 8) & 0xFF) * 257
+        let b = UInt16(h & 0xFF) * 257
+        return SwiftTerm.Color(red: r, green: g, blue: b)
+    }
+
+    private static func nsHex(_ h: UInt32) -> NSColor {
+        NSColor(srgbRed: CGFloat((h >> 16) & 0xFF) / 255,
+                green: CGFloat((h >> 8) & 0xFF) / 255,
+                blue: CGFloat(h & 0xFF) / 255, alpha: 1)
+    }
+
+    private static func swHex(_ h: UInt32) -> SwiftUI.Color {
+        SwiftUI.Color(red: Double((h >> 16) & 0xFF) / 255,
+                      green: Double((h >> 8) & 0xFF) / 255,
+                      blue: Double(h & 0xFF) / 255)
+    }
+
+    struct TerminalPalettes {
+        static let catppuccinMocha = TerminalPalette(
+            foreground: nsHex(0xcdd6f4),
+            background: nsHex(0x1e1e2e),
+            cursorColor: nsHex(0xf5e0dc),
+            cursorTextColor: nsHex(0x1e1e2e),
+            selectionBackground: nsHex(0x585b70),
+            selectionForeground: nsHex(0xcdd6f4),
+            ansiColors: [
+                stColor(0x45475a), stColor(0xf38ba8), stColor(0xa6e3a1), stColor(0xf9e2af),
+                stColor(0x89b4fa), stColor(0xf5c2e7), stColor(0x94e2d5), stColor(0xa6adc8),
+                stColor(0x585b70), stColor(0xf37799), stColor(0x89d88b), stColor(0xebd391),
+                stColor(0x74a8fc), stColor(0xf2aede), stColor(0x6bd7ca), stColor(0xbac2de),
+            ],
+            backgroundSwiftUI: swHex(0x1e1e2e),
+            accentSwiftUI: swHex(0xa6e3a1)
+        )
+
+        static let cityLights = TerminalPalette(
+            foreground: nsHex(0x708ca0),
+            background: nsHex(0x1d252c),
+            cursorColor: nsHex(0x528bff),
+            cursorTextColor: nsHex(0x1d252c),
+            selectionBackground: nsHex(0x28323b),
+            selectionForeground: nsHex(0x708ca0),
+            ansiColors: [
+                stColor(0x333f4a), stColor(0xd95468), stColor(0x8bd49c), stColor(0xebbf83),
+                stColor(0x539afc), stColor(0xb62d65), stColor(0x70e1e8), stColor(0xa0b3c5),
+                stColor(0x41505e), stColor(0xd95468), stColor(0x8bd49c), stColor(0xebbf83),
+                stColor(0x539afc), stColor(0xb62d65), stColor(0x70e1e8), stColor(0xc7d5e0),
+            ],
+            backgroundSwiftUI: swHex(0x1d252c),
+            accentSwiftUI: swHex(0x8bd49c)
+        )
+
+        static let githubLight = TerminalPalette(
+            foreground: nsHex(0x24292e),
+            background: nsHex(0xffffff),
+            cursorColor: nsHex(0x044289),
+            cursorTextColor: nsHex(0xffffff),
+            selectionBackground: nsHex(0xc8e1ff),
+            selectionForeground: nsHex(0x24292e),
+            ansiColors: [
+                stColor(0x24292e), stColor(0xd73a49), stColor(0x28a745), stColor(0xdbab09),
+                stColor(0x0366d6), stColor(0x5a32a3), stColor(0x0598bc), stColor(0x6a737d),
+                stColor(0x959da5), stColor(0xcb2431), stColor(0x22863a), stColor(0xb08800),
+                stColor(0x005cc5), stColor(0x5a32a3), stColor(0x3192aa), stColor(0xd1d5da),
+            ],
+            backgroundSwiftUI: swHex(0xffffff),
+            accentSwiftUI: swHex(0x28a745)
+        )
+    }
 }

@@ -243,7 +243,7 @@ struct CodeScreen: View {
                 }
             }
         }
-        .background(Color.black.opacity(0.1))
+        .background(model.selectedTheme.terminalPalette.backgroundSwiftUI)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .onAppear {
             model.createDefaultTerminalSession(repositoryURL: model.repositoryURL, branchName: model.currentBranch.isEmpty ? "zsh" : model.currentBranch)
@@ -263,7 +263,7 @@ struct CodeScreen: View {
         return HStack(spacing: 0) {
             Image(systemName: "terminal.fill")
                 .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(.green.opacity(0.7))
+                .foregroundStyle(model.selectedTheme.terminalPalette.accentSwiftUI.opacity(0.7))
                 .padding(.leading, 10)
                 .padding(.trailing, 4)
 
@@ -299,7 +299,7 @@ struct CodeScreen: View {
         }
         .padding(.vertical, 6)
         .overlay(alignment: .top) {
-            Rectangle().fill(.green.opacity(0.15)).frame(height: 1)
+            Rectangle().fill(model.selectedTheme.terminalPalette.accentSwiftUI.opacity(0.25)).frame(height: 1)
         }
     }
 }

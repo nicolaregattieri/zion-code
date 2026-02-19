@@ -181,6 +181,14 @@ extension EditorTheme {
         case .githubLight: return DesignSystem.EditorThemes.githubLight
         }
     }
+
+    var terminalPalette: TerminalPalette {
+        switch self {
+        case .dracula: return DesignSystem.TerminalPalettes.catppuccinMocha
+        case .cityLights: return DesignSystem.TerminalPalettes.cityLights
+        case .githubLight: return DesignSystem.TerminalPalettes.githubLight
+        }
+    }
 }
 
 enum ConfirmationMode: String, CaseIterable, Identifiable, Sendable {
