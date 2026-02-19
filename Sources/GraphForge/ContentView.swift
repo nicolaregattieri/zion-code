@@ -126,15 +126,12 @@ struct ContentView: View {
         case .graph:
             GraphScreen(
                 model: model,
-                selectedSection: $selectedSection,
                 commitSearchQuery: $commitSearchQuery,
                 performGitAction: { t, m, d, a in performGitAction(title: t, message: m, destructive: d, action: a) },
                 commitContextMenu: { commit in AnyView(commitContextMenu(for: commit)) },
                 branchContextMenu: { branch in AnyView(branchContextMenu(for: branch)) },
                 tagContextMenu: { tag in AnyView(tagContextMenu(for: tag)) }
             )
-        case .changes:
-            ChangesScreen(model: model)
         case .code:
             CodeScreen(model: model)
         case .operations:
@@ -142,11 +139,6 @@ struct ContentView: View {
                 model: model,
                 performGitAction: { t, m, d, a in performGitAction(title: t, message: m, destructive: d, action: a) },
                 branchContextMenu: { branch in AnyView(branchContextMenu(for: branch)) }
-            )
-        case .worktrees:
-            WorktreesScreen(
-                model: model,
-                performGitAction: { t, m, d, a in performGitAction(title: t, message: m, destructive: d, action: a) }
             )
         }
     }

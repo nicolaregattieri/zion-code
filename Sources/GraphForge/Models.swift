@@ -191,33 +191,27 @@ enum PushMode: String, CaseIterable, Identifiable, Sendable {
 }
 
 enum AppSection: String, CaseIterable, Identifiable {
-    case graph, changes, code, operations, worktrees
+    case graph, code, operations
     var id: String { rawValue }
     var title: String {
         switch self {
         case .graph: return "Git Graph"
-        case .changes: return "Changes"
         case .code: return "Vibe Code"
         case .operations: return "Operacoes"
-        case .worktrees: return "Worktrees"
         }
     }
     var icon: String {
         switch self {
         case .graph: return "point.3.connected.trianglepath.dotted"
-        case .changes: return "doc.on.doc"
         case .code: return "terminal.fill"
         case .operations: return "terminal"
-        case .worktrees: return "square.split.2x2"
         }
     }
     var subtitle: String {
         switch self {
         case .graph: return "Historico visual"
-        case .changes: return "Arquivos modificados"
         case .code: return "Editor e Terminal"
         case .operations: return "Acoes e Comandos"
-        case .worktrees: return "Contextos paralelos"
         }
     }
 }

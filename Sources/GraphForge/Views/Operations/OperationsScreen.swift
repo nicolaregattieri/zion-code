@@ -40,6 +40,7 @@ struct OperationsScreen: View {
                     VStack(spacing: 20) {
                         historyCard
                         remotesCard
+                        worktreeCard
                         cleanupCard
                         resetCard
                     }
@@ -303,6 +304,58 @@ struct OperationsScreen: View {
                         .clipShape(RoundedRectangle(cornerRadius: 6))
                     }
                 }
+            }
+        }
+    }
+
+    private var worktreeCard: some View {
+        GlassCard(spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "square.split.2x2").foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(L10n("Worktrees")).font(.headline)
+                    Text(L10n("Contextos paralelos")).font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer()
+                Text("\(model.worktrees.count)").font(.caption).foregroundStyle(.secondary)
+            }
+
+            HStack(spacing: 8) {
+                TextField(L10n("/caminho/para/worktree"), text: $model.worktreePathInput)
+                    .textFieldStyle(.roundedBorder)
+                TextField(L10n("branch (opcional)"), text: $model.worktreeBranchInput)
+                    .textFieldStyle(.roundedBorder)
+                Button(L10n("Adicionar")) {
+                    performGitAction(L10n("Adicionar worktree"), L10n("Criar o novo worktree com os parametros informados?"), false) {
+                        model.addWorktree()
+                    }
+                }.buttonStyle(.borderedProminent)
+                Button(L10n("Prune")) {
+                    performGitAction(L10n("Prune worktrees"), L10n("Remover metadados de worktrees obsoletos?"), true) {
+                        model.pruneWorktrees()
+                    }
+                }.buttonStyle(.bordered)
+            }
+
+            if !model.worktrees.isEmpty {
+                Divider().opacity(0.1)
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 8) {
+                        ForEach(model.worktrees) { worktree in
+                            WorktreeCardView(
+                                worktree: worktree,
+                                onOpen: {
+                                    NSWorkspace.shared.open(URL(fileURLWithPath: worktree.path))
+                                },
+                                onRemove: {
+                                    performGitAction(L10n("Remover worktree"), L10n("Deseja remover o worktree %@?", worktree.path), true) {
+                                        model.removeWorktree(worktree.path)
+                                    }
+                                }
+                            )
+                        }
+                    }.padding(.vertical, 4)
+                }.frame(maxHeight: 250)
             }
         }
     }
