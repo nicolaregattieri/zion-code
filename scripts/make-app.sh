@@ -24,8 +24,8 @@ if [ -n "$BUNDLE_PATH" ]; then
   cp -R "$BUNDLE_PATH" "$APP_DIR/Contents/Resources/"
 fi
 
-if [ -f "$ROOT_DIR/Resources/AppIcon.icns" ]; then
-  cp "$ROOT_DIR/Resources/AppIcon.icns" "$APP_DIR/Contents/Resources/AppIcon.icns"
+if [ -f "$ROOT_DIR/Resources/ZionAppIcon.icns" ]; then
+  cp "$ROOT_DIR/Resources/ZionAppIcon.icns" "$APP_DIR/Contents/Resources/ZionAppIcon.icns"
 fi
 
 cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
@@ -38,7 +38,7 @@ cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
   <key>CFBundleDisplayName</key>
   <string>Zion</string>
   <key>CFBundleIdentifier</key>
-  <string>com.nicolaregattieri.zion</string>
+  <string>com.nicolaregattieri.zion.app</string>
   <key>CFBundleVersion</key>
   <string>1</string>
   <key>CFBundleShortVersionString</key>
@@ -48,7 +48,7 @@ cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleIconFile</key>
-  <string>AppIcon</string>
+  <string>ZionAppIcon</string>
   <key>LSMinimumSystemVersion</key>
   <string>13.0</string>
   <key>NSHighResolutionCapable</key>

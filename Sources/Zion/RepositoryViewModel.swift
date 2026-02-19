@@ -60,6 +60,9 @@ final class RepositoryViewModel: ObservableObject {
     @Published var editorLineSpacing: Double = 1.2 {
         didSet { UserDefaults.standard.set(editorLineSpacing, forKey: "editor.lineSpacing") }
     }
+    @Published var isLineWrappingEnabled: Bool = true {
+        didSet { UserDefaults.standard.set(isLineWrappingEnabled, forKey: "editor.lineWrap") }
+    }
 
     @Published var branchInput: String = ""
     @Published var tagInput: String = ""
@@ -111,6 +114,9 @@ final class RepositoryViewModel: ObservableObject {
         }
         if defaults.object(forKey: "editor.lineSpacing") != nil {
             editorLineSpacing = defaults.double(forKey: "editor.lineSpacing")
+        }
+        if defaults.object(forKey: "editor.lineWrap") != nil {
+            isLineWrappingEnabled = defaults.bool(forKey: "editor.lineWrap")
         }
     }
 

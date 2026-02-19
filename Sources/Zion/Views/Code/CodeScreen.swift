@@ -82,6 +82,18 @@ struct CodeScreen: View {
                     .frame(width: 35)
             }
             
+            Divider().frame(height: 16)
+
+            Button {
+                model.isLineWrappingEnabled.toggle()
+            } label: {
+                Image(systemName: model.isLineWrappingEnabled ? "text.alignleft" : "text.line.first.and.arrowtriangle.forward")
+                    .font(.caption)
+            }
+            .buttonStyle(.bordered)
+            .tint(model.isLineWrappingEnabled ? Color.accentColor : .secondary)
+            .help(L10n("Quebra de Linha Automática"))
+            
             Spacer()
             
             if model.activeFileID != nil {
@@ -150,7 +162,9 @@ struct CodeScreen: View {
                     theme: model.selectedTheme,
                     fontSize: model.editorFontSize,
                     fontFamily: model.editorFontFamily,
-                    lineSpacing: model.editorLineSpacing
+                    lineSpacing: model.editorLineSpacing,
+                    isLineWrappingEnabled: model.isLineWrappingEnabled,
+                    activeFileID: model.activeFileID
                 )
             } else {
                 emptyEditorView
@@ -165,9 +179,10 @@ struct CodeScreen: View {
     private var codeTabBar: some View {
         let accentColor = model.selectedTheme.isLightAppearance ? Color.blue : Color.accentColor
         return ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 1) {
+            HStack(spacing: 0) {
                 ForEach(model.openedFiles) { file in
                     CodeTab(
+                        model: model,
                         file: file,
                         isActive: file.id == model.activeFileID,
                         accentColor: accentColor,
@@ -177,7 +192,8 @@ struct CodeScreen: View {
                 }
             }
         }
-        .background(model.selectedTheme.colors.background.opacity(0.8))
+        .frame(height: 38)
+        .background(model.selectedTheme.colors.background)
         .environment(\.colorScheme, model.selectedTheme.isLightAppearance ? .light : .dark)
     }
     
@@ -307,6 +323,7 @@ struct TerminalTab: View {
 }
 
 struct CodeTab: View {
+    @ObservedObject var model: RepositoryViewModel
     let file: FileItem
     let isActive: Bool
     let accentColor: Color
@@ -336,7 +353,7 @@ struct CodeTab: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(isActive ? Color.white.opacity(0.08) : Color.black.opacity(0.05))
+        .background(isActive ? model.selectedTheme.colors.background : Color.black.opacity(0.15))
         .overlay(alignment: .bottom) {
             if isActive {
                 Rectangle().fill(accentColor).frame(height: 1.5)

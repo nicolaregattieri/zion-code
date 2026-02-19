@@ -8,9 +8,9 @@ struct DesignSystem {
         static let glassBorder = Color.white.opacity(0.1)
         
         // Brand colors
-        static let primary = Color.blue
-        static let secondary = Color.teal
-        static let accent = Color.purple
+        static let primary = Color.purple
+        static let secondary = Color.indigo
+        static let accent = Color.cyan
         
         // Semantic status
         static let error = Color.red
