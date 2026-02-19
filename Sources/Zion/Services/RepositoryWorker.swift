@@ -631,6 +631,7 @@ actor RepositoryWorker {
             }
 
             if line.hasPrefix("worktree ") {
+                flush()
                 path = String(line.dropFirst("worktree ".count))
             } else if line.hasPrefix("HEAD ") {
                 head = String(line.dropFirst("HEAD ".count))

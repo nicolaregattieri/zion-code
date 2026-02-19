@@ -76,14 +76,32 @@ struct ContentView: View {
             }
         }
         .onChange(of: inferBranchOrigins) { enabled in model.setInferBranchOrigins(enabled) }
+        .onChange(of: model.repositoryURL) { url in
+            if url != nil {
+                selectedSection = .code
+            }
+        }
     }
 
     @ViewBuilder
     private var detailViewHost: some View {
-        if selectedSection == .code {
-            mainContentArea
+        ZStack {
+            // CodeScreen is always rendered to keep terminal sessions alive
+            CodeScreen(model: model, onOpenFolder: { openRepositoryPanel() })
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else if model.repositoryURL == nil {
+                .opacity(selectedSection == .code ? 1 : 0)
+                .allowsHitTesting(selectedSection == .code)
+
+            if selectedSection != .code {
+                nonCodeContent
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var nonCodeContent: some View {
+        if model.repositoryURL == nil {
             WelcomeScreen(model: model) { openRepositoryPanel() }
         } else if !model.isGitRepository {
             nonGitDirectoryView
@@ -91,12 +109,35 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 if model.hasConflicts || model.isMerging || model.isRebasing || model.isCherryPicking {
                     conflictWarningBar
-                        .zIndex(999) // Stay on top
+                        .zIndex(999)
                 }
-                
-                mainContentArea
+
+                nonCodeMainContent
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
+        }
+    }
+
+    @ViewBuilder
+    private var nonCodeMainContent: some View {
+        switch selectedSection ?? .graph {
+        case .graph:
+            GraphScreen(
+                model: model,
+                commitSearchQuery: $commitSearchQuery,
+                performGitAction: { t, m, d, a in performGitAction(title: t, message: m, destructive: d, action: a) },
+                commitContextMenu: { commit in AnyView(commitContextMenu(for: commit)) },
+                branchContextMenu: { branch in AnyView(branchContextMenu(for: branch)) },
+                tagContextMenu: { tag in AnyView(tagContextMenu(for: tag)) }
+            )
+        case .operations:
+            OperationsScreen(
+                model: model,
+                performGitAction: { t, m, d, a in performGitAction(title: t, message: m, destructive: d, action: a) },
+                branchContextMenu: { branch in AnyView(branchContextMenu(for: branch)) }
+            )
+        case .code:
+            EmptyView() // Handled by ZStack above
         }
     }
 
@@ -136,28 +177,6 @@ struct ContentView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    @ViewBuilder
-    private var mainContentArea: some View {
-        switch selectedSection ?? .graph {
-        case .graph:
-            GraphScreen(
-                model: model,
-                commitSearchQuery: $commitSearchQuery,
-                performGitAction: { t, m, d, a in performGitAction(title: t, message: m, destructive: d, action: a) },
-                commitContextMenu: { commit in AnyView(commitContextMenu(for: commit)) },
-                branchContextMenu: { branch in AnyView(branchContextMenu(for: branch)) },
-                tagContextMenu: { tag in AnyView(tagContextMenu(for: tag)) }
-            )
-        case .code:
-            CodeScreen(model: model, onOpenFolder: { openRepositoryPanel() })
-        case .operations:
-            OperationsScreen(
-                model: model,
-                performGitAction: { t, m, d, a in performGitAction(title: t, message: m, destructive: d, action: a) },
-                branchContextMenu: { branch in AnyView(branchContextMenu(for: branch)) }
-            )
-        }
-    }
 
     private var mainToolbar: ToolbarItemGroup<some View> {
         ToolbarItemGroup(placement: .navigation) {
