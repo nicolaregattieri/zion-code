@@ -7,13 +7,15 @@ struct SourceCodeEditor: NSViewRepresentable {
     var fontSize: Double = 13.0
     var fontFamily: String = "SF Mono"
     var lineSpacing: Double = 1.2
+    var isLineWrappingEnabled: Bool = true
+    var activeFileID: String?
 
     func makeNSView(context: Context) -> NSScrollView {
-        // This factory method is the ONLY one that reliably manages the hierarchy in SwiftUI
         let scrollView = NSTextView.scrollableTextView()
         scrollView.hasVerticalScroller = true
         scrollView.hasHorizontalScroller = true
         scrollView.autohidesScrollers = true
+        scrollView.drawsBackground = true
 
         guard let textView = scrollView.documentView as? NSTextView else {
             return scrollView
@@ -28,8 +30,9 @@ struct SourceCodeEditor: NSViewRepresentable {
             ?? .monospacedSystemFont(ofSize: fontSize, weight: .regular)
         textView.usesAdaptiveColorMappingForDarkAppearance = false
         
-        // Add padding to prevent "crowded" look with tabs
-        textView.textContainerInset = NSSize(width: 5, height: 12)
+        // Fix: padding and alignment
+        textView.textContainerInset = NSSize(width: 10, height: 15)
+        textView.textContainer?.lineFragmentPadding = 5
 
         // Setup Line Numbers
         scrollView.hasVerticalRuler = true
@@ -44,6 +47,26 @@ struct SourceCodeEditor: NSViewRepresentable {
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         guard let textView = nsView.documentView as? NSTextView else { return }
 
+        // Sync text and Reset Scroll properly
+        if textView.string != text {
+            textView.string = text
+            
+            // Critical Fix: More aggressive scroll reset to (0,0)
+            DispatchQueue.main.async {
+                // 1. Reset selection to the start
+                textView.setSelectedRange(NSRange(location: 0, length: 0))
+                
+                // 2. Reset the ClipView bounds (this is the absolute horizontal/vertical origin)
+                if let clipView = nsView.contentView as? NSClipView {
+                    clipView.bounds.origin = NSPoint.zero
+                    nsView.reflectScrolledClipView(clipView)
+                }
+                
+                // 3. Extra safety: scroll the text view itself
+                textView.scroll(NSPoint.zero)
+            }
+        }
+
         // Sync font
         let font = NSFont(name: fontFamily, size: fontSize)
             ?? .monospacedSystemFont(ofSize: fontSize, weight: .regular)
@@ -51,9 +74,15 @@ struct SourceCodeEditor: NSViewRepresentable {
             textView.font = font
         }
 
-        // Sync text
-        if textView.string != text {
-            textView.string = text
+        // Handle Line Wrapping
+        if isLineWrappingEnabled {
+            textView.isHorizontallyResizable = false
+            textView.textContainer?.widthTracksTextView = true
+            textView.textContainer?.containerSize = NSSize(width: nsView.contentSize.width, height: CGFloat.greatestFiniteMagnitude)
+        } else {
+            textView.isHorizontallyResizable = true
+            textView.textContainer?.widthTracksTextView = false
+            textView.textContainer?.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
         }
 
         let colors = getEditorColors(for: theme)
@@ -227,20 +256,19 @@ class LineNumberRulerView: NSRulerView {
             let lineGlyphRange = layoutManager.glyphRange(forCharacterRange: lineRange, actualCharacterRange: nil)
             let lineRect = layoutManager.boundingRect(forGlyphRange: lineGlyphRange, in: textContainer)
             
-            // Adjust Y position to account for container inset and center the text vertically in the line
+            // Critical Fix: Align the number exactly with the baseline of the first line fragment
             let y = lineRect.origin.y + textView.textContainerInset.height - visibleRect.origin.y
 
             let color = isLight ? NSColor(srgbRed: 0.416, green: 0.451, blue: 0.490, alpha: 0.7) : NSColor.secondaryLabelColor
             let currentFontSize = textView.font?.pointSize ?? 13.0
             let attrs: [NSAttributedString.Key: Any] = [
-                .font: NSFont.monospacedSystemFont(ofSize: currentFontSize * 0.75, weight: .regular),
+                .font: NSFont.monospacedSystemFont(ofSize: currentFontSize * 0.7, weight: .regular),
                 .foregroundColor: color
             ]
             let str = "\(lineNumber)" as NSString
             let size = str.size(withAttributes: attrs)
             
-            // Draw centered horizontally in the padding area
-            let x = ruleThickness - size.width - 8
+            let x = ruleThickness - size.width - 10
             str.draw(at: NSPoint(x: x, y: y + (lineRect.height - size.height)/2), withAttributes: attrs)
 
             index = lineRange.upperBound

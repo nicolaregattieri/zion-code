@@ -4,7 +4,7 @@ set -euo pipefail
 # Generate a proper AppIcon.icns from the new logo PNG
 # Requires macOS command line tools (sips, iconutil)
 
-PNG_SOURCE="Resources/logo_new.png"
+PNG_SOURCE="Resources/logo.png"
 ICONSET="Resources/AppIcon.iconset"
 
 if [ ! -f "$PNG_SOURCE" ]; then
@@ -27,7 +27,7 @@ sips -z 512 512   "$PNG_SOURCE" --out "$ICONSET/icon_512x512.png"
 sips -z 1024 1024 "$PNG_SOURCE" --out "$ICONSET/icon_512x512@2x.png"
 
 # Convert iconset to icns
-iconutil -c icns "$ICONSET" -o Resources/AppIcon.icns
+iconutil -c icns "$ICONSET" -o Resources/ZionAppIcon.icns
 
 # Update xcassets if it exists
 XC_ASSETS="Resources/Assets.xcassets/AppIcon.appiconset"

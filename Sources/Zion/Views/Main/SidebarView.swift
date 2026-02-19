@@ -41,6 +41,8 @@ struct SidebarView: View {
 
                 if model.repositoryURL != nil {
                     quickAccessCard
+                } else {
+                    recentProjectsCard
                 }
 
                 if model.repositoryURL != nil, nonCurrentWorktrees.count > 0 {
@@ -56,6 +58,60 @@ struct SidebarView: View {
             .padding(.top, 10).padding(.bottom, 20)
         }
         .frame(minWidth: 320, idealWidth: 360, maxWidth: 420)
+        .onAppear {
+            model.loadRecentRepositories()
+        }
+    }
+
+    private var recentProjectsCard: some View {
+        Group {
+            if !model.recentRepositories.isEmpty {
+                GlassCard(spacing: 10) {
+                    HStack {
+                        Text(L10n("Recentes")).font(.headline)
+                        Spacer()
+                        Image(systemName: "clock.arrow.circlepath").font(.caption).foregroundStyle(.secondary)
+                    }
+                    
+                    VStack(spacing: 4) {
+                        ForEach(model.recentRepositories, id: \.self) { url in
+                            Button {
+                                withAnimation {
+                                    model.openRepository(url)
+                                }
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "folder.fill")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(Color.accentColor.opacity(0.8))
+                                    
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        Text(url.lastPathComponent)
+                                            .font(.system(size: 13, weight: .semibold))
+                                            .lineLimit(1)
+                                        Text(url.path)
+                                            .font(.system(size: 9))
+                                            .foregroundStyle(.secondary)
+                                            .lineLimit(1)
+                                            .truncationMode(.middle)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 8, weight: .bold))
+                                        .foregroundStyle(.secondary.opacity(0.5))
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 8)
+                                .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.03)))
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                .padding(.horizontal, 10)
+            }
+        }
     }
 
     private var repoSummaryCard: some View {
@@ -65,7 +121,16 @@ struct SidebarView: View {
                     .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(.white)
                     .frame(width: 44, height: 44)
-                    .background(LinearGradient(colors: [Color.teal, Color.blue], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .background(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 0.15, green: 0.08, blue: 0.35),
+                                Color(red: 0.08, green: 0.04, blue: 0.18)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
                     Text(model.repositoryURL?.lastPathComponent ?? L10n("Zion Code")).font(.system(size: 16, weight: .bold)).lineLimit(1)

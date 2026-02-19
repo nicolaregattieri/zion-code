@@ -8,18 +8,30 @@ struct WelcomeScreen: View {
         VStack(spacing: 32) {
             VStack(spacing: 16) {
                 ZStack {
-                    Circle()
-                        .fill(.ultraThinMaterial)
-                        .frame(width: 120, height: 120)
-                    Image(systemName: "point.3.connected.trianglepath.dotted")
-                        .font(.system(size: 46, weight: .semibold))
-                        .foregroundStyle(
+                    RoundedRectangle(cornerRadius: 30, style: .continuous)
+                        .fill(
                             LinearGradient(
-                                colors: [Color.teal, Color.blue],
+                                colors: [
+                                    Color(red: 0.12, green: 0.06, blue: 0.25),
+                                    Color(red: 0.05, green: 0.02, blue: 0.12)
+                                ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
+                        .frame(width: 120, height: 120)
+                        .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+                    
+                    Image(systemName: "point.3.connected.trianglepath.dotted")
+                        .font(.system(size: 46, weight: .semibold))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.white, Color(red: 0.8, green: 0.7, blue: 1.0)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .shadow(color: Color.purple.opacity(0.5), radius: 8, x: 0, y: 0)
                 }
 
                 Text("Zion")
