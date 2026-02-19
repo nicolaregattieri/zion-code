@@ -18,10 +18,19 @@ Zion is a native Git client for macOS, focusing on a visual representation of th
 |------|---------|
 | `Sources/Zion/ContentView.swift` | Main app layout, navigation, toolbar |
 | `Sources/Zion/Models.swift` | `EditorTheme`, `ThemeColors`, enums |
-| `Sources/Zion/DesignSystem.swift` | Theme color definitions, design tokens |
+| `Sources/Zion/DesignSystem.swift` | Design tokens: glass borders, spacing, colors |
 | `Sources/Zion/RepositoryViewModel.swift` | Central app state and git operations |
 | `Sources/Zion/Views/Code/SourceCodeEditor.swift` | NSTextView wrapper with syntax highlighting |
 | `Sources/Zion/Views/Code/CodeScreen.swift` | Editor UI: toolbar, file browser, terminal |
+| `Sources/Zion/Views/Components/GlassCard.swift` | `GlassCard` + `CardHeader` reusable components |
+| `Sources/Zion/Views/Components/CommitDetailContent.swift` | Structured commit details parser/view |
+| `Sources/Zion/Views/Components/CommitRowView.swift` | Commit row with hover states |
+
+## Custom Skills
+
+| Skill | Usage | Purpose |
+|-------|-------|---------|
+| `/ux-review` | `/ux-review [paste screenshots or describe screen]` | UX/UI expert analysis with actionable SwiftUI code suggestions |
 
 ## Critical Rules
 
@@ -53,6 +62,28 @@ editorToolbar
 ### Terminal
 
 Uses `SwiftTerm` with real PTY via `LocalProcess`. Must be initialized as login shell (`-l`) with `TERM=xterm-256color`. Route all delegate callbacks to `DispatchQueue.main`.
+
+## Design System
+
+### Glass Tokens (`DesignSystem.Colors`)
+
+Always use design tokens instead of hardcoded opacity values:
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `glassBorderDark` | `white @ 0.12` | Card borders in dark mode |
+| `glassBorderLight` | `white @ 0.55` | Card borders in light mode |
+| `glassHover` | `white @ 0.08` | Hover background |
+| `glassSubtle` | `white @ 0.04` | Subtle element backgrounds |
+| `glassOverlay` | `black @ 0.15` | Overlay/inset backgrounds |
+| `dangerBackground` | `red @ 0.06` | Danger zone backgrounds |
+| `dangerBorder` | `red @ 0.25` | Danger zone borders |
+
+### Component Patterns
+
+- **Card headers:** Always use `CardHeader("Title", icon: "sf.symbol", subtitle: "optional")` inside `GlassCard`
+- **Danger cards:** Use `GlassCard(borderTint: DesignSystem.Colors.dangerBorder)` for destructive sections
+- **Toolbar groups:** Wrap related controls in `HStack` with `.background(DesignSystem.Colors.glassSubtle).clipShape(RoundedRectangle(cornerRadius: 8))`
 
 ## Development Conventions
 

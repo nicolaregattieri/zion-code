@@ -221,7 +221,7 @@ enum AppSection: String, CaseIterable, Identifiable {
         switch self {
         case .graph: return "point.3.connected.trianglepath.dotted"
         case .code: return "terminal.fill"
-        case .operations: return "terminal"
+        case .operations: return "gearshape"
         }
     }
     var subtitle: String {

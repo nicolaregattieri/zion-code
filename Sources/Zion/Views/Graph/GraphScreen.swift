@@ -93,15 +93,41 @@ struct GraphScreen: View {
         }
     }
 
+    @State private var showCheckoutConfirmation: Bool = false
+    @State private var checkoutTargetBranch: String = ""
+
     private var jumpBar: some View {
         HStack(spacing: 8) {
-            jumpButton(icon: "crown.fill", color: .green, label: "HEAD") { commitSearchQuery = "HEAD" }
+            // Crown: checkout to default branch (develop > main > master)
+            jumpButton(icon: "crown.fill", color: .green, label: L10n("Checkout Default")) {
+                if let target = findDefaultBranch() {
+                    checkoutTargetBranch = target
+                    showCheckoutConfirmation = true
+                }
+            }
+            .alert(L10n("Checkout"), isPresented: $showCheckoutConfirmation) {
+                Button(L10n("Confirmar")) {
+                    performGitAction(L10n("Checkout"), L10n("Deseja fazer checkout para %@?", checkoutTargetBranch), false) {
+                        model.checkout(reference: checkoutTargetBranch)
+                    }
+                }
+                Button(L10n("Cancelar"), role: .cancel) {}
+            } message: {
+                Text(L10n("Deseja fazer checkout para %@?", checkoutTargetBranch))
+            }
+
+            // Shield: scroll to main/master in graph
             if let mainName = findBranchName(matches: ["main", "master", "trunk"]) {
                 jumpButton(icon: "shield.fill", color: .orange, label: mainName) { commitSearchQuery = mainName }
             }
-            
+
+            // Flag: scroll to develop in graph
+            if let devName = findBranchName(matches: ["develop", "development", "dev"]) {
+                jumpButton(icon: "flag.fill", color: .purple, label: devName) { commitSearchQuery = devName }
+            }
+
             Divider().frame(height: 20).padding(.horizontal, 4).opacity(0.3)
-            
+
             Button(action: { model.refreshRepository() }) {
                 Image(systemName: "arrow.clockwise").font(.system(size: 11, weight: .semibold))
             }
@@ -113,6 +139,16 @@ struct GraphScreen: View {
         .padding(.vertical, 6)
         .background(Color.white.opacity(0.06))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private func findDefaultBranch() -> String? {
+        let priorities = ["develop", "development", "dev", "main", "master", "trunk"]
+        for candidate in priorities {
+            if let _ = findBranchName(matches: [candidate]) {
+                return candidate
+            }
+        }
+        return nil
     }
 
     private func actionButtonSmall(title: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
@@ -142,6 +178,7 @@ struct GraphScreen: View {
         }
         return nil
     }
+
     
     private func searchBar(proxy: ScrollViewProxy) -> some View {
         HStack(spacing: 8) {
@@ -164,9 +201,7 @@ struct GraphScreen: View {
     
     private func commitListPane(proxy: ScrollViewProxy) -> some View {
         GlassCard(spacing: 0) {
-            HStack {
-                Text(L10n("Commits")).font(.headline)
-                Spacer()
+            CardHeader(L10n("Commits"), icon: "list.bullet") {
                 Text("\(model.commits.count) \(L10n("itens"))").font(.caption).foregroundStyle(.secondary)
             }
             .padding(.horizontal, 12).padding(.top, 12).padding(.bottom, 8)
@@ -525,17 +560,20 @@ struct GraphScreen: View {
             inlineChangesPane
         } else {
             GlassCard(spacing: 0) {
-                HStack {
-                    Text(L10n("Detalhes")).font(.headline)
-                    Spacer()
+                CardHeader(L10n("Detalhes"), icon: "doc.text.magnifyingglass") {
                     if let selectedCommitID = model.selectedCommitID {
-                        Text(String(selectedCommitID.prefix(8))).font(.system(.caption, design: .monospaced)).foregroundStyle(.secondary)
+                        Text(String(selectedCommitID.prefix(8)))
+                            .font(.system(.caption, design: .monospaced))
+                            .foregroundStyle(.secondary)
                     }
                 }
                 .padding(.horizontal, 12).padding(.top, 12).padding(.bottom, 8)
+
                 Divider()
+
                 ScrollView {
-                    Text(model.commitDetails).font(.system(.body, design: .monospaced)).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading).padding(12)
+                    CommitDetailContent(rawDetails: model.commitDetails)
+                        .padding(12)
                 }
             }
         }
@@ -554,12 +592,7 @@ struct GraphScreen: View {
 
     private var inlineFileList: some View {
         GlassCard(spacing: 0) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(L10n("Changes")).font(.headline)
-                    Text("\(model.uncommittedCount) \(L10n("arquivos modificados"))").font(.caption).foregroundStyle(.secondary)
-                }
-                Spacer()
+            CardHeader(L10n("Changes"), icon: "pencil.circle", subtitle: "\(model.uncommittedCount) \(L10n("arquivos modificados"))") {
                 Button { model.refreshRepository() } label: {
                     Image(systemName: "arrow.clockwise")
                 }.buttonStyle(.plain).help(L10n("Atualizar"))
