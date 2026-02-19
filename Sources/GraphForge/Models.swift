@@ -86,19 +86,26 @@ struct FileItem: Identifiable, Hashable, Sendable {
 }
 
 enum EditorTheme: String, CaseIterable, Identifiable {
-    case dracula, cityLights, everforestLight
+    case dracula, cityLights, githubLight
     var id: String { rawValue }
     var label: String {
         switch self {
         case .dracula: return "Dracula"
         case .cityLights: return "City Lights"
-        case .everforestLight: return "Everforest Light"
+        case .githubLight: return "GitHub Light"
         }
     }
     var isDark: Bool {
         switch self {
-        case .dracula, .cityLights: return true
-        case .everforestLight: return false
+        case .dracula, .cityLights, .githubLight: return true
+        }
+    }
+
+    /// Visual appearance — true light theme (light bg, dark text)
+    var isLightAppearance: Bool {
+        switch self {
+        case .githubLight: return true
+        case .dracula, .cityLights: return false
         }
     }
 }
@@ -112,50 +119,49 @@ struct ThemeColors {
     let string: Color
     let comment: Color
     let number: Color
-    
-    // AppKit versions for the editor
-    var nsBackground: NSColor { NSColor(background) }
-    var nsText: NSColor { NSColor(text) }
-    var nsKeyword: NSColor { NSColor(keyword) }
-    var nsType: NSColor { NSColor(type) }
-    var nsString: NSColor { NSColor(string) }
-    var nsComment: NSColor { NSColor(comment) }
-    var nsNumber: NSColor { NSColor(number) }
+
+    // Concrete sRGB NSColors for AppKit text rendering
+    let nsBackground: NSColor
+    let nsText: NSColor
+    let nsKeyword: NSColor
+    let nsType: NSColor
+    let nsString: NSColor
+    let nsComment: NSColor
+    let nsNumber: NSColor
+
+    init(
+        background: (r: CGFloat, g: CGFloat, b: CGFloat),
+        text: (r: CGFloat, g: CGFloat, b: CGFloat),
+        keyword: (r: CGFloat, g: CGFloat, b: CGFloat),
+        type: (r: CGFloat, g: CGFloat, b: CGFloat),
+        string: (r: CGFloat, g: CGFloat, b: CGFloat),
+        comment: (r: CGFloat, g: CGFloat, b: CGFloat),
+        number: (r: CGFloat, g: CGFloat, b: CGFloat)
+    ) {
+        self.background = Color(red: background.r, green: background.g, blue: background.b)
+        self.text = Color(red: text.r, green: text.g, blue: text.b)
+        self.keyword = Color(red: keyword.r, green: keyword.g, blue: keyword.b)
+        self.type = Color(red: type.r, green: type.g, blue: type.b)
+        self.string = Color(red: string.r, green: string.g, blue: string.b)
+        self.comment = Color(red: comment.r, green: comment.g, blue: comment.b)
+        self.number = Color(red: number.r, green: number.g, blue: number.b)
+
+        self.nsBackground = NSColor(srgbRed: background.r, green: background.g, blue: background.b, alpha: 1)
+        self.nsText = NSColor(srgbRed: text.r, green: text.g, blue: text.b, alpha: 1)
+        self.nsKeyword = NSColor(srgbRed: keyword.r, green: keyword.g, blue: keyword.b, alpha: 1)
+        self.nsType = NSColor(srgbRed: type.r, green: type.g, blue: type.b, alpha: 1)
+        self.nsString = NSColor(srgbRed: string.r, green: string.g, blue: string.b, alpha: 1)
+        self.nsComment = NSColor(srgbRed: comment.r, green: comment.g, blue: comment.b, alpha: 1)
+        self.nsNumber = NSColor(srgbRed: number.r, green: number.g, blue: number.b, alpha: 1)
+    }
 }
 
 extension EditorTheme {
     var colors: ThemeColors {
         switch self {
-        case .dracula:
-            return ThemeColors(
-                background: Color(red: 0.16, green: 0.16, blue: 0.21),
-                text: Color(red: 0.97, green: 0.97, blue: 0.95),
-                keyword: Color(red: 1.0, green: 0.48, blue: 0.77),
-                type: Color(red: 0.54, green: 0.91, blue: 0.99),
-                string: Color(red: 0.95, green: 0.99, blue: 0.47),
-                comment: Color(red: 0.38, green: 0.41, blue: 0.53),
-                number: Color(red: 0.74, green: 0.57, blue: 0.97)
-            )
-        case .cityLights:
-            return ThemeColors(
-                background: Color(red: 0.11, green: 0.15, blue: 0.17),
-                text: Color(red: 0.44, green: 0.55, blue: 0.63),
-                keyword: Color(red: 0.33, green: 0.60, blue: 0.99),
-                type: Color(red: 0.0, green: 0.73, blue: 0.82),
-                string: Color(red: 0.55, green: 0.83, blue: 0.61),
-                comment: Color(red: 0.25, green: 0.31, blue: 0.37),
-                number: Color(red: 0.89, green: 0.49, blue: 0.55)
-            )
-        case .everforestLight:
-            return ThemeColors(
-                background: Color(red: 0.99, green: 0.98, blue: 0.93),
-                text: Color(red: 0.36, green: 0.42, blue: 0.37),
-                keyword: Color(red: 0.55, green: 0.26, blue: 0.32),
-                type: Color(red: 0.21, green: 0.45, blue: 0.69),
-                string: Color(red: 0.55, green: 0.63, blue: 0.0),
-                comment: Color(red: 0.58, green: 0.62, blue: 0.57),
-                number: Color(red: 0.87, green: 0.63, blue: 0.0)
-            )
+        case .dracula: return DesignSystem.EditorThemes.dracula
+        case .cityLights: return DesignSystem.EditorThemes.cityLights
+        case .githubLight: return DesignSystem.EditorThemes.githubLight
         }
     }
 }

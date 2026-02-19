@@ -51,7 +51,8 @@ struct ContentView: View {
         }
         .id(uiLanguageRaw) 
         .environment(\.locale, uiLanguage.locale)
-        .onAppear { 
+        .onAppear {
+            model.restoreEditorSettings()
             model.setInferBranchOrigins(inferBranchOrigins)
             // Robust window activation
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
