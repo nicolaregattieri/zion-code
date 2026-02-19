@@ -84,6 +84,10 @@ struct SidebarView: View {
 
     private var quickAccessCard: some View {
         GlassCard(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(L10n("Abrir Externamente")).font(.headline).frame(maxWidth: .infinity, alignment: .leading)
+                Text(L10n("Abrir o repositorio no seu editor ou terminal favorito.")).font(.caption).foregroundStyle(.secondary)
+            }
             HStack(spacing: 10) {
                 Button(action: onOpenInEditor) {
                     Label(L10n("Editor de Codigo"), systemImage: "chevron.left.forwardslash.chevron.right").frame(maxWidth: .infinity)
@@ -155,6 +159,7 @@ struct SidebarView: View {
                 }
                 Spacer(minLength: 0)
             }
+            .contentShape(Rectangle())
             .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 10).padding(.vertical, 8)
             .background(RoundedRectangle(cornerRadius: 10).fill(isSelected ? Color.primary.opacity(0.08) : Color.clear))
             .overlay(RoundedRectangle(cornerRadius: 10).stroke(isSelected ? Color.primary.opacity(0.15) : Color.clear, lineWidth: 1))
