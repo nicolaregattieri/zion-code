@@ -28,11 +28,11 @@ struct StatPill: View {
         .padding(.vertical, 10)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.white.opacity(0.06))
+                .fill(DesignSystem.Colors.glassElevated)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                .stroke(DesignSystem.Colors.glassStroke, lineWidth: 1)
         )
     }
 }

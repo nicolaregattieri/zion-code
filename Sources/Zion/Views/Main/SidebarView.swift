@@ -53,11 +53,7 @@ struct SidebarView: View {
         Group {
             if !model.recentRepositories.isEmpty {
                 GlassCard(spacing: 10) {
-                    HStack {
-                        Text(L10n("Recentes")).font(.headline)
-                        Spacer()
-                        Image(systemName: "clock.arrow.circlepath").font(.caption).foregroundStyle(.secondary)
-                    }
+                    CardHeader(L10n("Recentes"), icon: "clock.arrow.circlepath")
                     
                     VStack(spacing: 4) {
                         ForEach(model.recentRepositories, id: \.self) { url in
@@ -88,7 +84,7 @@ struct SidebarView: View {
                                 }
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 8)
-                                .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.03)))
+                                .background(RoundedRectangle(cornerRadius: 8).fill(DesignSystem.Colors.glassMinimal))
                                 .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
@@ -154,10 +150,7 @@ struct SidebarView: View {
 
     private var quickAccessCard: some View {
         GlassCard(spacing: 10) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(L10n("Abrir Externamente")).font(.headline).frame(maxWidth: .infinity, alignment: .leading)
-                Text(L10n("Abrir o repositorio no seu editor ou terminal favorito.")).font(.caption).foregroundStyle(.secondary)
-            }
+            CardHeader(L10n("Abrir Externamente"), icon: "arrow.up.right.square", subtitle: L10n("Abrir o repositorio no seu editor ou terminal favorito."))
             HStack(spacing: 10) {
                 Button(action: onOpenInEditor) {
                     Label(L10n("Editor de Codigo"), systemImage: "chevron.left.forwardslash.chevron.right").frame(maxWidth: .infinity)
@@ -176,9 +169,7 @@ struct SidebarView: View {
 
     private var worktreesCard: some View {
         GlassCard(spacing: 10) {
-            HStack {
-                Text(L10n("Worktrees")).font(.headline)
-                Spacer()
+            CardHeader(L10n("Worktrees"), icon: "square.split.2x2") {
                 Text("\(nonCurrentWorktrees.count)")
                     .font(.system(size: 10, weight: .bold))
                     .foregroundStyle(.white)
@@ -228,13 +219,13 @@ struct SidebarView: View {
         }
         .padding(.vertical, 4)
         .padding(.horizontal, 8)
-        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.white.opacity(0.04)))
-        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(DesignSystem.Colors.glassSubtle))
+        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(DesignSystem.Colors.glassHover, lineWidth: 1))
     }
 
     private var workspaceCard: some View {
         GlassCard(spacing: 8) {
-            Text(L10n("Workspace")).font(.headline).frame(maxWidth: .infinity, alignment: .leading)
+            CardHeader(L10n("Workspace"), icon: "macwindow.on.rectangle")
             VStack(spacing: 8) {
                 ForEach(AppSection.allCases) { section in
                     workspaceButton(for: section)
@@ -368,7 +359,7 @@ struct SidebarView: View {
 
     private var settingsCard: some View {
         GlassCard(spacing: 12) {
-            Text(L10n("Configuracoes")).font(.headline).frame(maxWidth: .infinity, alignment: .leading)
+            CardHeader(L10n("Configuracoes"), icon: "gearshape")
 
             VStack(alignment: .leading, spacing: 10) {
                 // Language

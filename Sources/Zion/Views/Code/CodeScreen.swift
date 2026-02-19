@@ -230,7 +230,7 @@ struct CodeScreen: View {
             ZStack {
                 if model.terminalSessions.isEmpty {
                     VStack(spacing: 8) {
-                        Image(systemName: "terminal").font(.title).foregroundStyle(.secondary.opacity(0.4))
+                        Image(systemName: "terminal").font(.title).foregroundStyle(.secondary)
                         Text(L10n("Nenhum terminal aberto")).font(.caption).foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)

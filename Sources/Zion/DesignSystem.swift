@@ -28,6 +28,10 @@ struct DesignSystem {
         static let glassHover = Color.white.opacity(0.08)
         static let glassSubtle = Color.white.opacity(0.04)
         static let glassOverlay = Color.black.opacity(0.15)
+        static let glassInset = Color.black.opacity(0.2)
+        static let glassStroke = Color.white.opacity(0.1)
+        static let glassMinimal = Color.white.opacity(0.03)
+        static let glassElevated = Color.white.opacity(0.06)
 
         // Brand colors
         static let primary = Color.purple
