@@ -1,12 +1,12 @@
-# GraphForge - Project Context
+# Zion - Project Context
 
-GraphForge is a native Git client for macOS, focusing on a visual representation of the Git graph, branch management, and streamlined operations like commits, stashing, and worktree management.
+Zion is a native Git client for macOS, focusing on a visual representation of the Git graph, branch management, and streamlined operations like commits, stashing, and worktree management.
 
 ## Project Overview
 
 - **Type:** macOS Executable (SwiftUI)
 - **Build:** `swift build` / `swift run` / `swift test`
-- **Release:** `./scripts/make-app.sh` generates `GraphForge.app` in `dist/`
+- **Release:** `./scripts/make-app.sh` generates `Zion.app` in `dist/`
 - **Architecture:** MVVM — `RepositoryViewModel` is the central state hub
 - **Concurrency:** Swift Concurrency (Actors, Tasks). `RepositoryWorker` handles background Git ops
 - **Git Integration:** Direct Git CLI interface through `GitClient`
@@ -16,12 +16,12 @@ GraphForge is a native Git client for macOS, focusing on a visual representation
 
 | File | Purpose |
 |------|---------|
-| `Sources/GraphForge/ContentView.swift` | Main app layout, navigation, toolbar |
-| `Sources/GraphForge/Models.swift` | `EditorTheme`, `ThemeColors`, enums |
-| `Sources/GraphForge/DesignSystem.swift` | Theme color definitions, design tokens |
-| `Sources/GraphForge/RepositoryViewModel.swift` | Central app state and git operations |
-| `Sources/GraphForge/Views/Code/SourceCodeEditor.swift` | NSTextView wrapper with syntax highlighting |
-| `Sources/GraphForge/Views/Code/CodeScreen.swift` | Editor UI: toolbar, file browser, terminal |
+| `Sources/Zion/ContentView.swift` | Main app layout, navigation, toolbar |
+| `Sources/Zion/Models.swift` | `EditorTheme`, `ThemeColors`, enums |
+| `Sources/Zion/DesignSystem.swift` | Theme color definitions, design tokens |
+| `Sources/Zion/RepositoryViewModel.swift` | Central app state and git operations |
+| `Sources/Zion/Views/Code/SourceCodeEditor.swift` | NSTextView wrapper with syntax highlighting |
+| `Sources/Zion/Views/Code/CodeScreen.swift` | Editor UI: toolbar, file browser, terminal |
 
 ## Critical Rules
 

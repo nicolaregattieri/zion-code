@@ -1,5 +1,5 @@
 import XCTest
-@testable import GraphForge
+@testable import Zion
 
 final class LocalizationTests: XCTestCase {
     func testL10nReturnsCorrectKeys() {

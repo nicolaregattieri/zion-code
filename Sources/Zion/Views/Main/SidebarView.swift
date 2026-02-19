@@ -8,10 +8,10 @@ struct SidebarView: View {
     @Binding var inferBranchOrigins: Bool
     @Binding var uiLanguageRaw: String
     
-    @AppStorage("graphforge.preferredEditor") private var preferredEditorRaw: String = ExternalEditor.vscode.rawValue
-    @AppStorage("graphforge.preferredTerminal") private var preferredTerminalRaw: String = ExternalTerminal.terminal.rawValue
-    @AppStorage("graphforge.customEditorPath") private var customEditorPath: String = ""
-    @AppStorage("graphforge.customTerminalPath") private var customTerminalPath: String = ""
+    @AppStorage("zion.preferredEditor") private var preferredEditorRaw: String = ExternalEditor.vscode.rawValue
+    @AppStorage("zion.preferredTerminal") private var preferredTerminalRaw: String = ExternalTerminal.terminal.rawValue
+    @AppStorage("zion.customEditorPath") private var customEditorPath: String = ""
+    @AppStorage("zion.customTerminalPath") private var customTerminalPath: String = ""
     
     let onOpen: () -> Void
     let onOpenInEditor: () -> Void
@@ -68,20 +68,35 @@ struct SidebarView: View {
                     .background(LinearGradient(colors: [Color.teal, Color.blue], startPoint: .topLeading, endPoint: .bottomTrailing))
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(model.repositoryURL?.lastPathComponent ?? L10n("Nenhum repositorio")).font(.system(size: 16, weight: .bold)).lineLimit(1)
-                    Text(model.repositoryURL?.path ?? L10n("Selecione um repositorio")).font(.system(size: 10, design: .monospaced)).foregroundStyle(.secondary).lineLimit(1)
+                    Text(model.repositoryURL?.lastPathComponent ?? L10n("Zion Code")).font(.system(size: 16, weight: .bold)).lineLimit(1)
+                    Text(model.repositoryURL?.path ?? L10n("Modo editor livre")).font(.system(size: 10, design: .monospaced)).foregroundStyle(.secondary).lineLimit(1)
                 }
                 Spacer(minLength: 0)
+                
+                if model.repositoryURL == nil {
+                    Button(action: onOpen) {
+                        Image(systemName: "folder.badge.plus")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .padding(8)
+                            .background(Color.accentColor)
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .help(L10n("Abrir Pasta"))
+                }
             }
-            HStack(spacing: 8) {
-                let isDetached = model.currentBranch.contains("detached")
-                StatusChip(
-                    title: isDetached ? "HEAD" : "Branch", 
-                    value: model.currentBranch, 
-                    tint: isDetached ? .orange : .green, 
-                    icon: isDetached ? "anchor" : "crown.fill"
-                )
-                StatusChip(title: "Commit", value: model.headShortHash, tint: .blue, icon: "number")
+            if model.repositoryURL != nil {
+                HStack(spacing: 8) {
+                    let isDetached = model.currentBranch.contains("detached")
+                    StatusChip(
+                        title: isDetached ? "HEAD" : "Branch", 
+                        value: model.currentBranch, 
+                        tint: isDetached ? .orange : .green, 
+                        icon: isDetached ? "anchor" : "crown.fill"
+                    )
+                    StatusChip(title: "Commit", value: model.headShortHash, tint: .blue, icon: "number")
+                }
             }
         }.padding(.horizontal, 10)
     }
@@ -210,6 +225,8 @@ struct SidebarView: View {
 
     private func workspaceButton(for section: AppSection) -> some View {
         let isSelected = (selectedSection ?? .graph) == section
+        let isDisabled = section != .code && model.repositoryURL == nil
+        
         return Button { selectedSection = section } label: {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: section.icon)
@@ -217,13 +234,25 @@ struct SidebarView: View {
                     .frame(width: 18)
                     .padding(.top, 2)
                     .foregroundStyle(isSelected ? .primary : .secondary)
+                    .opacity(isDisabled ? 0.3 : 1.0)
+
                 VStack(alignment: .leading, spacing: 2) {
                     Text(L10n(section.title)).font(.system(size: 13, weight: .bold)).lineLimit(1)
                         .foregroundStyle(isSelected ? .primary : .secondary)
                     Text(L10n(section.subtitle)).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(2)
-                        .opacity(isSelected ? 1.0 : 0.7)
+                        .opacity(isSelected ? 1.0 : (isDisabled ? 0.3 : 0.7))
                 }
+                .opacity(isDisabled ? 0.3 : 1.0)
+
                 Spacer(minLength: 0)
+                
+                if isDisabled {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                        .opacity(0.5)
+                        .padding(.top, 4)
+                }
             }
             .contentShape(Rectangle())
             .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 10).padding(.vertical, 8)
@@ -231,7 +260,9 @@ struct SidebarView: View {
             .overlay(RoundedRectangle(cornerRadius: 10).stroke(isSelected ? Color.primary.opacity(0.15) : Color.clear, lineWidth: 1))
             .scaleEffect(isSelected ? 1.02 : 1.0)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
-        }.buttonStyle(.plain)
+        }
+        .buttonStyle(.plain)
+        .disabled(isDisabled)
     }
 
     private var sidebarBranchExplorer: some View {
@@ -374,9 +405,15 @@ struct SidebarView: View {
 
             Divider().opacity(0.1)
 
-            Toggle(L10n("Inferir origem da arvore (best practice)"), isOn: $inferBranchOrigins)
-                .toggleStyle(.switch).font(.caption)
-                .help(L10n("Tenta detectar automaticamente de qual branch cada uma foi criada para organizar a arvore lateral de forma hierarquica."))
+            HStack(spacing: 4) {
+                Toggle(L10n("Inferir origem da arvore (best practice)"), isOn: $inferBranchOrigins)
+                    .toggleStyle(.switch).font(.caption)
+                
+                Image(systemName: "info.circle")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .help(L10n("Tenta detectar automaticamente de qual branch cada uma foi criada para organizar a arvore lateral de forma hierarquica. Recomendado para repositorios com muitas branches."))
+            }
         }
         .padding(.horizontal, 10)
         .padding(.bottom, 14)

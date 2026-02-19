@@ -1,6 +1,6 @@
 import XCTest
 import Foundation
-@testable import GraphForge
+@testable import Zion
 
 final class IDEIntegrationTests: XCTestCase {
     func testEditorEnumMapping() {

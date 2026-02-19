@@ -36,11 +36,16 @@ final class RepositoryViewModel: ObservableObject {
     @Published var terminalSessions: [TerminalSession] = []
     @Published var activeTerminalID: UUID?
 
-    // Vibe Code state
+    // Zion Code state
     @Published var repositoryFiles: [FileItem] = []
-    @Published var selectedCodeFile: FileItem?
+    @Published var openedFiles: [FileItem] = []
+    @Published var activeFileID: String?
+    @Published var selectedCodeFile: FileItem? // Keep for backward compat/simple reference
     @Published var codeFileContent: String = ""
     @Published var expandedPaths: Set<String> = []
+    
+    // Tracking unsaved changes per file
+    @Published var unsavedFiles: Set<String> = []
     
     // Editor Settings (persisted via UserDefaults + @Published for SwiftUI reactivity)
     @Published var selectedTheme: EditorTheme = .dracula {
@@ -73,7 +78,7 @@ final class RepositoryViewModel: ObservableObject {
     @Published var shouldClosePopovers: Bool = false
     @Published var debugLog: String = "Debug log initialized...\n"
 
-    @AppStorage("graphforge.recentRepositories") private var recentReposData: Data = Data()
+    @AppStorage("zion.recentRepositories") private var recentReposData: Data = Data()
     @Published var recentRepositories: [URL] = []
 
     private let git = GitClient()
@@ -123,6 +128,13 @@ final class RepositoryViewModel: ObservableObject {
         if worktreePathInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             worktreePathInput = url.deletingLastPathComponent().appendingPathComponent("new-worktree").path
         }
+        
+        // Reset terminal and files for the new project
+        terminalSessions.removeAll()
+        openedFiles.removeAll()
+        activeFileID = nil
+        selectedCodeFile = nil
+        
         createDefaultTerminalSession(repositoryURL: url, branchName: currentBranch.isEmpty ? url.lastPathComponent : currentBranch)
         refreshRepository()
         refreshFileTree()
@@ -164,7 +176,7 @@ final class RepositoryViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Vibe Code Methods
+    // MARK: - Zion Code Methods
 
     func refreshFileTree() {
         guard let url = repositoryURL else { return }
@@ -195,11 +207,47 @@ final class RepositoryViewModel: ObservableObject {
 
     func selectCodeFile(_ item: FileItem) {
         guard !item.isDirectory else { return }
+        
+        // Add to opened files if not already there
+        if !openedFiles.contains(where: { $0.id == item.id }) {
+            openedFiles.append(item)
+        }
+        
+        activeFileID = item.id
         selectedCodeFile = item
+        
         do {
             codeFileContent = try String(contentsOf: item.url, encoding: .utf8)
         } catch {
             codeFileContent = "Erro ao ler arquivo: \(error.localizedDescription)"
+        }
+    }
+
+    func closeFile(id: String) {
+        guard let index = openedFiles.firstIndex(where: { $0.id == id }) else { return }
+        
+        openedFiles.remove(at: index)
+        
+        if activeFileID == id {
+            if let last = openedFiles.last {
+                selectCodeFile(last)
+            } else {
+                activeFileID = nil
+                selectedCodeFile = nil
+                codeFileContent = ""
+            }
+        }
+    }
+
+    func saveCurrentCodeFile() {
+        guard let file = selectedCodeFile else { return }
+        do {
+            try codeFileContent.write(to: file.url, atomically: true, encoding: .utf8)
+            statusMessage = String(format: L10n("Arquivo salvo: %@"), file.name)
+            unsavedFiles.remove(file.id)
+            refreshRepository()
+        } catch {
+            handleError(error)
         }
     }
 
@@ -208,17 +256,6 @@ final class RepositoryViewModel: ObservableObject {
             expandedPaths.remove(path)
         } else {
             expandedPaths.insert(path)
-        }
-    }
-
-    func saveCurrentCodeFile() {
-        guard let item = selectedCodeFile else { return }
-        do {
-            try codeFileContent.write(to: item.url, atomically: true, encoding: .utf8)
-            statusMessage = L10n("Arquivo salvo: %@", item.name)
-            refreshRepository() // Refresh to see changes in Git
-        } catch {
-            lastError = "Erro ao salvar: \(error.localizedDescription)"
         }
     }
 
@@ -573,8 +610,16 @@ final class RepositoryViewModel: ObservableObject {
     }
 
     func createDefaultTerminalSession(repositoryURL: URL?, branchName: String) {
-        guard terminalSessions.isEmpty, let url = repositoryURL else { return }
-        createTerminalSession(workingDirectory: url, label: branchName)
+        let workingDirectory = repositoryURL ?? URL(fileURLWithPath: NSHomeDirectory())
+        
+        // If we already have a session for THIS directory, just activate it
+        if let existing = terminalSessions.first(where: { $0.workingDirectory.path == workingDirectory.path }) {
+            activeTerminalID = existing.id
+            return
+        }
+        
+        // Otherwise create a new one
+        createTerminalSession(workingDirectory: workingDirectory, label: branchName)
     }
 
     func pruneWorktrees() {

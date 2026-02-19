@@ -22,7 +22,7 @@ struct WelcomeScreen: View {
                         )
                 }
 
-                Text("GraphForge")
+                Text("Zion")
                     .font(.system(size: 44, weight: .black))
 
                 Text(L10n("Seu Git Graph nativo para macOS."))

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CodeScreen: View {
     @ObservedObject var model: RepositoryViewModel
+    var onOpenFolder: (() -> Void)? = nil
     
     var body: some View {
         VStack(spacing: 0) {
@@ -83,7 +84,7 @@ struct CodeScreen: View {
             
             Spacer()
             
-            if model.selectedCodeFile != nil {
+            if model.activeFileID != nil {
                 Button {
                     model.saveCurrentCodeFile()
                 } label: {
@@ -112,7 +113,18 @@ struct CodeScreen: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     if model.repositoryFiles.isEmpty {
-                        Text(L10n("Nenhum arquivo encontrado")).font(.caption).foregroundStyle(.secondary).padding(20)
+                        VStack(spacing: 16) {
+                            Text(L10n("Nenhum arquivo encontrado")).font(.caption).foregroundStyle(.secondary)
+                            Button {
+                                onOpenFolder?()
+                            } label: {
+                                Label(L10n("Selecionar Pasta"), systemImage: "folder.badge.plus")
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                        }
+                        .padding(20)
+                        .frame(maxWidth: .infinity)
                     } else {
                         ForEach(model.repositoryFiles) { item in
                             FileTreeNodeView(model: model, item: item, level: 0)
@@ -128,19 +140,9 @@ struct CodeScreen: View {
     
     private var editorPane: some View {
         VStack(spacing: 0) {
-            if let file = model.selectedCodeFile {
-                HStack {
-                    Image(systemName: "doc.text").foregroundStyle(.secondary)
-                    Text(file.url.path.replacingOccurrences(of: model.repositoryURL?.path ?? "", with: ""))
-                        .font(.system(.caption, design: .monospaced))
-                        .fontWeight(.bold)
-                    Spacer()
-                    Text(L10n("Editando")).font(.caption2).foregroundStyle(.secondary)
-                }
-                .padding(10)
-                .background(model.selectedTheme.colors.background)
-                .environment(\.colorScheme, model.selectedTheme.isLightAppearance ? .light : .dark)
-
+            if !model.openedFiles.isEmpty {
+                codeTabBar
+                
                 Divider()
 
                 SourceCodeEditor(
@@ -158,6 +160,25 @@ struct CodeScreen: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.white.opacity(0.1), lineWidth: 1))
+    }
+
+    private var codeTabBar: some View {
+        let accentColor = model.selectedTheme.isLightAppearance ? Color.blue : Color.accentColor
+        return ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 1) {
+                ForEach(model.openedFiles) { file in
+                    CodeTab(
+                        file: file,
+                        isActive: file.id == model.activeFileID,
+                        accentColor: accentColor,
+                        onActivate: { model.selectCodeFile(file) },
+                        onClose: { model.closeFile(id: file.id) }
+                    )
+                }
+            }
+        }
+        .background(model.selectedTheme.colors.background.opacity(0.8))
+        .environment(\.colorScheme, model.selectedTheme.isLightAppearance ? .light : .dark)
     }
     
     private var emptyEditorView: some View {
@@ -285,6 +306,48 @@ struct TerminalTab: View {
     }
 }
 
+struct CodeTab: View {
+    let file: FileItem
+    let isActive: Bool
+    let accentColor: Color
+    let onActivate: () -> Void
+    let onClose: () -> Void
+    @State private var isHovering = false
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "doc.text")
+                .font(.system(size: 11))
+                .foregroundStyle(isActive ? accentColor : .secondary)
+
+            Text(file.name)
+                .font(.system(size: 11, weight: isActive ? .bold : .regular))
+                .lineLimit(1)
+
+            Button {
+                onClose()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .opacity(isActive || isHovering ? 1.0 : 0.0)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(isActive ? Color.white.opacity(0.08) : Color.black.opacity(0.05))
+        .overlay(alignment: .bottom) {
+            if isActive {
+                Rectangle().fill(accentColor).frame(height: 1.5)
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { onActivate() }
+        .onHover { h in isHovering = h }
+    }
+}
+
 struct FileTreeNodeView: View {
     @ObservedObject var model: RepositoryViewModel
     let item: FileItem
@@ -292,7 +355,7 @@ struct FileTreeNodeView: View {
     
     var body: some View {
         let isExpanded = model.expandedPaths.contains(item.id)
-        let isSelected = model.selectedCodeFile?.id == item.id
+        let isSelected = model.activeFileID == item.id
         let isDark = model.selectedTheme.isDark
         let isModified = model.uncommittedChanges.contains { $0.hasSuffix(item.name) }
         

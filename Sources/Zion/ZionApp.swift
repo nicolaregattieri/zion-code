@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct GraphForgeApp: App {
+struct ZionApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
     var body: some Scene {

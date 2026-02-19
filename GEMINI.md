@@ -1,6 +1,6 @@
-# GraphForge - Project Context
+# Zion - Project Context
 
-GraphForge is a native Git client for macOS, focusing on a visual representation of the Git graph, branch management, and streamlined operations like commits, stashing, and worktree management.
+Zion is a native Git client for macOS, focusing on a visual representation of the Git graph, branch management, and streamlined operations like commits, stashing, and worktree management.
 
 ## Project Overview
 
@@ -29,7 +29,7 @@ GraphForge is a native Git client for macOS, focusing on a visual representation
 - **Test:** `swift test`
 
 ### Production
-- **Release Bundle:** Execute `./scripts/make-app.sh` to generate the `GraphForge.app` bundle in the `dist/` directory.
+- **Release Bundle:** Execute `./scripts/make-app.sh` to generate the `Zion.app` bundle in the `dist/` directory.
 
 ## Development Conventions
 
