@@ -54,6 +54,7 @@ final class RepositoryViewModel: ObservableObject {
     @Published var amendLastCommit: Bool = false
     @Published var isTypingQuickly: Bool = false
     @Published var shouldClosePopovers: Bool = false
+    @Published var debugLog: String = "Debug log initialized...\n"
 
     @AppStorage("graphforge.recentRepositories") private var recentReposData: Data = Data()
     @Published var recentRepositories: [URL] = []
@@ -563,23 +564,18 @@ final class RepositoryViewModel: ObservableObject {
             do {
                 guard let url else { return }
                 
-                // 1. Stage all changes if nothing is staged
-                let status = try await worker.runAction(args: ["status", "--porcelain"], in: url)
-                let hasStaged = status.split(separator: "\n").contains { line in
-                    let first = line.prefix(1)
-                    return first != " " && first != "?"
-                }
+                // 1. Always stage everything first for a guaranteed "Quick Commit"
+                // This handles both modified and untracked files.
+                let _ = try await worker.runAction(args: ["add", "-A"], in: url)
                 
-                if !hasStaged && !shouldAmend {
-                    let _ = try await worker.runAction(args: ["add", "-A"], in: url)
-                }
-                
-                // 2. Commit or Amend
-                var args = ["commit", "-m", msg]
+                // 2. Prepare commit arguments
+                var commitArgs = ["commit", "-m", msg]
                 if shouldAmend {
-                    args.append("--amend")
+                    commitArgs.append("--amend")
                 }
-                let _ = try await worker.runAction(args: args, in: url)
+                
+                // 3. Execute commit
+                let _ = try await worker.runAction(args: commitArgs, in: url)
                 
                 clearError()
                 statusMessage = shouldAmend ? L10n("Commit corrigido com sucesso.") : L10n("Commit realizado com sucesso.")
@@ -925,5 +921,13 @@ final class RepositoryViewModel: ObservableObject {
     private func handleError(_ error: Error) {
         lastError = error.localizedDescription
         statusMessage = error.localizedDescription
+    }
+
+    func logDebug(_ message: String) {
+        print("[DEBUG] \(message)")
+        debugLog += "\(message)\n"
+        if debugLog.count > 5000 {
+            debugLog = String(debugLog.suffix(2000))
+        }
     }
 }

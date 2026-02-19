@@ -53,7 +53,16 @@ struct ContentView: View {
         }
         .id(uiLanguageRaw) 
         .environment(\.locale, uiLanguage.locale)
-        .onAppear { model.setInferBranchOrigins(inferBranchOrigins) }
+        .onAppear { 
+            model.setInferBranchOrigins(inferBranchOrigins)
+            // Robust window activation
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                if let window = NSApp.windows.first(where: { $0.isVisible }) {
+                    window.makeKeyAndOrderFront(nil)
+                }
+                NSApp.activate(ignoringOtherApps: true)
+            }
+        }
         .onChange(of: inferBranchOrigins) { enabled in model.setInferBranchOrigins(enabled) }
     }
 

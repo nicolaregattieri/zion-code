@@ -16,7 +16,6 @@ struct GraphScreen: View {
     @State private var isShowingStashList: Bool = false
     @FocusState private var isSearchFocused: Bool
     @FocusState private var isCommitMessageFocused: Bool
-    @State private var keyboardMonitor: Any?
     
     var body: some View {
         ScrollViewReader { proxy in
@@ -38,13 +37,6 @@ struct GraphScreen: View {
             .padding(.bottom, 12)
             .onAppear {
                 updateSearchMatches()
-                setupKeyboardMonitor(proxy: proxy)
-            }
-            .onDisappear {
-                if let monitor = keyboardMonitor {
-                    NSEvent.removeMonitor(monitor)
-                    keyboardMonitor = nil
-                }
             }
             .onChange(of: model.shouldClosePopovers) { shouldClose in
                 if shouldClose {
@@ -262,23 +254,20 @@ struct GraphScreen: View {
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.green)
-                        .popover(isPresented: $isShowingQuickCommit) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text(L10n("Criar Commit Rapido")).font(.headline)
+                        .sheet(isPresented: $isShowingQuickCommit) {
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text(L10n("Criar Commit Rapido")).font(.title3.bold())
                                 Text(L10n("Suas alteracoes serao rastreadas automaticamente (git add -A) se nada estiver no stage.")).font(.caption).foregroundStyle(.secondary)
                                 
                                 TextField(L10n("Mensagem do commit..."), text: $model.commitMessageInput, axis: .vertical)
-                                    .textFieldStyle(.plain)
+                                    .textFieldStyle(.roundedBorder)
                                     .font(.system(.body, design: .monospaced))
-                                    .padding(8)
-                                    .background(Color.black.opacity(0.2))
-                                    .cornerRadius(8)
-                                    .focused($isCommitMessageFocused)
-                                    .lineLimit(3...6)
+                                    .lineLimit(4...8)
                                 
                                 HStack {
                                     Button(L10n("Cancelar")) { isShowingQuickCommit = false }
                                         .buttonStyle(.bordered)
+                                        .keyboardShortcut(.escape, modifiers: [])
                                     
                                     Spacer()
                                     
@@ -289,19 +278,11 @@ struct GraphScreen: View {
                                     .buttonStyle(.borderedProminent)
                                     .tint(.green)
                                     .disabled(model.commitMessageInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                                    .keyboardShortcut(.return, modifiers: .command)
                                 }
                             }
-                            .padding()
-                            .frame(width: 320)
-                            .onAppear {
-                                model.isTypingQuickly = true
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                    isCommitMessageFocused = true
-                                }
-                            }
-                            .onDisappear {
-                                model.isTypingQuickly = false
-                            }
+                            .padding(24)
+                            .frame(width: 450)
                         }
 
                         Button {
@@ -311,15 +292,16 @@ struct GraphScreen: View {
                         }
                         .buttonStyle(.bordered)
                         .tint(.blue)
-                        .popover(isPresented: $isShowingQuickStash) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text(L10n("Salvar no Stash")).font(.headline)
+                        .sheet(isPresented: $isShowingQuickStash) {
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text(L10n("Salvar no Stash")).font(.title3.bold())
                                 TextField(L10n("Mensagem do stash (opcional)"), text: $model.stashMessageInput)
                                     .textFieldStyle(.roundedBorder)
-                                    .focused($isCommitMessageFocused)
                                 
                                 HStack {
                                     Button(L10n("Cancelar")) { isShowingQuickStash = false }
+                                        .buttonStyle(.bordered)
+                                        .keyboardShortcut(.escape, modifiers: [])
                                     Spacer()
                                     Button(L10n("Salvar")) {
                                         model.createStash(message: model.stashMessageInput)
@@ -328,16 +310,7 @@ struct GraphScreen: View {
                                     }.buttonStyle(.borderedProminent)
                                 }
                             }
-                            .padding().frame(width: 280)
-                            .onAppear {
-                                model.isTypingQuickly = true
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                    isCommitMessageFocused = true
-                                }
-                            }
-                            .onDisappear {
-                                model.isTypingQuickly = false
-                            }
+                            .padding(24).frame(width: 400)
                         }
 
                         Button {
@@ -354,37 +327,38 @@ struct GraphScreen: View {
                         }
                         .buttonStyle(.bordered)
                         .help(L10n("Ver Stashes"))
-                        .popover(isPresented: $isShowingStashList) {
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text(L10n("Stashes Recentes")).font(.headline).padding(.bottom, 4)
+                        .sheet(isPresented: $isShowingStashList) {
+                            VStack(alignment: .leading, spacing: 16) {
+                                HStack {
+                                    Text(L10n("Stashes Recentes")).font(.title3.bold())
+                                    Spacer()
+                                    Button(L10n("Fechar")) { isShowingStashList = false }.buttonStyle(.bordered).keyboardShortcut(.escape, modifiers: [])
+                                }
                                 
                                 if model.stashes.isEmpty {
-                                    Text(L10n("Nenhum stash encontrado.")).foregroundStyle(.secondary).font(.subheadline).padding(.vertical, 10)
+                                    Text(L10n("Nenhum stash encontrado.")).foregroundStyle(.secondary).font(.subheadline).padding(.vertical, 20).frame(maxWidth: .infinity, alignment: .center)
                                 } else {
                                     ScrollView {
-                                        VStack(spacing: 8) {
+                                        VStack(spacing: 10) {
                                             ForEach(model.stashes, id: \.self) { stash in
                                                 HStack {
                                                     VStack(alignment: .leading, spacing: 2) {
-                                                        Text(stash).font(.system(size: 11, design: .monospaced)).lineLimit(2)
+                                                        Text(stash).font(.system(size: 12, design: .monospaced)).lineLimit(2)
                                                     }
                                                     Spacer()
-                                                    Menu {
-                                                        Button(L10n("Apply")) { model.selectedStash = stash; model.applySelectedStash(); isShowingStashList = false }
-                                                        Button(L10n("Pop")) { model.selectedStash = stash; model.popSelectedStash(); isShowingStashList = false }
-                                                        Divider()
-                                                        Button(L10n("Drop"), role: .destructive) { model.selectedStash = stash; model.dropSelectedStash() }
-                                                    } label: {
-                                                        Image(systemName: "ellipsis.circle")
-                                                    }.menuStyle(.borderlessButton).fixedSize()
+                                                    HStack(spacing: 8) {
+                                                        Button(L10n("Apply")) { model.selectedStash = stash; model.applySelectedStash(); isShowingStashList = false }.buttonStyle(.bordered).controlSize(.small)
+                                                        Button(L10n("Pop")) { model.selectedStash = stash; model.popSelectedStash(); isShowingStashList = false }.buttonStyle(.bordered).controlSize(.small)
+                                                        Button { model.selectedStash = stash; model.dropSelectedStash() } label: { Image(systemName: "trash") }.buttonStyle(.bordered).tint(.red).controlSize(.small)
+                                                    }
                                                 }
-                                                .padding(8).background(Color.white.opacity(0.05)).cornerRadius(8)
+                                                .padding(10).background(Color.white.opacity(0.05)).cornerRadius(8)
                                             }
                                         }
-                                    }.frame(maxHeight: 300)
+                                    }.frame(maxHeight: 400)
                                 }
                             }
-                            .padding().frame(width: 380)
+                            .padding(24).frame(width: 550)
                         }
                         
                         Button {
@@ -402,51 +376,6 @@ struct GraphScreen: View {
         .frame(height: 96)
     }
 
-    private func setupKeyboardMonitor(proxy: ScrollViewProxy) {
-        if keyboardMonitor != nil { return }
-        
-        keyboardMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak model] event in
-            guard let model = model else { return event }
-            
-            // 1. Detect if we are currently editing ANY text field in the app
-            // This is the most reliable way to avoid blocking typing.
-            if let firstResponder = NSApp.keyWindow?.firstResponder {
-                let className = String(describing: type(of: firstResponder))
-                if className.contains("TextView") || className.contains("TextField") {
-                    // We are typing! Only intercept Cmd+Enter for quick commit.
-                    if model.isTypingQuickly && event.modifierFlags.contains(.command) && event.keyCode == 36 {
-                        model.commit(message: model.commitMessageInput)
-                        model.shouldClosePopovers = true
-                        return nil
-                    }
-                    return event
-                }
-            }
-            
-            // 2. Global Shortcuts (only when NOT typing)
-            switch event.keyCode {
-            case 126: // Up Arrow
-                navigateSelection(direction: -1, proxy: proxy)
-                return nil
-            case 125: // Down Arrow
-                navigateSelection(direction: 1, proxy: proxy)
-                return nil
-            default:
-                if event.modifierFlags.contains(.command) {
-                    if event.charactersIgnoringModifiers == "f" {
-                        isSearchFocused = true
-                        return nil
-                    }
-                    if event.charactersIgnoringModifiers == "r" {
-                        model.refreshRepository()
-                        return nil
-                    }
-                }
-                return event
-            }
-        }
-    }
-    
     private func navigateSelection(direction: Int, proxy: ScrollViewProxy) {
         let commits = model.commits
         guard !commits.isEmpty else { return }
