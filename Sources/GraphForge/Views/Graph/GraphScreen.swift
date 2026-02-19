@@ -62,9 +62,19 @@ struct GraphScreen: View {
                 Text(L10n("Navegue e salte entre as pontas das branches.")).foregroundStyle(.secondary).font(.subheadline)
             }
             Spacer()
+            
+            // FIXED LOADING INDICATOR - No layout shift
+            ZStack {
+                if model.isBusy {
+                    ProgressView()
+                        .controlSize(.small)
+                        .transition(.opacity.combined(with: .scale))
+                }
+            }
+            .frame(width: 24, height: 24)
+            
             jumpBar
             searchBar(proxy: proxy).frame(minWidth: 250, idealWidth: 350, maxWidth: 400)
-            if model.isBusy { ProgressView().controlSize(.small) }
         }
     }
 
@@ -215,50 +225,59 @@ struct GraphScreen: View {
     
     private var pendingChangesRow: some View {
         HStack(spacing: 0) {
-            // Visualize as a special node in the graph
+            // ALIGNED NODE - Matches the graph vertical line perfectly
             VStack(spacing: 0) {
-                Rectangle().fill(Color.orange).frame(width: 3, height: 40)
-                Circle().fill(Color.orange).frame(width: 12, height: 12)
-                    .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                Rectangle().fill(Color.orange.opacity(0.3)).frame(width: 3, height: 40)
+                Rectangle().fill(Color.orange.opacity(0.3)).frame(width: 2, height: 35)
+                ZStack {
+                    Circle()
+                        .fill(Color.orange)
+                        .frame(width: 10, height: 10)
+                    Circle()
+                        .stroke(Color.orange.opacity(0.5), lineWidth: 4)
+                        .frame(width: 18, height: 18)
+                }
+                .shadow(color: .orange.opacity(0.3), radius: 4)
+                Rectangle().fill(Color.orange.opacity(0.2)).frame(width: 2, height: 35)
             }
             .frame(width: 60)
 
             ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color.orange.opacity(0.15))
-                    .frame(height: 80)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color.orange.opacity(0.05))
+                    .frame(height: 64)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .stroke(Color.orange.opacity(0.5), lineWidth: 2)
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .stroke(Color.orange.opacity(0.2), lineWidth: 1)
                     )
                 
-                HStack(spacing: 16) {
-                    Image(systemName: "pencil.and.outline").font(.title2).foregroundStyle(.orange)
+                HStack(spacing: 12) {
+                    Image(systemName: "pencil.circle.fill").font(.title2).foregroundStyle(.orange.opacity(0.8))
                     
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(L10n("Alteracoes Pendentes")).font(.system(size: 14, weight: .bold)).foregroundStyle(.orange)
-                        Text("\(model.uncommittedCount) \(L10n("arquivos modificados"))").font(.caption).foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(L10n("Pending Changes")).font(.system(size: 13, weight: .bold)).foregroundStyle(.primary.opacity(0.9))
+                        Text("\(model.uncommittedCount) \(L10n("arquivos modificados"))").font(.system(size: 10)).foregroundStyle(.secondary)
                     }
                     
                     Spacer()
                     
-                    HStack(spacing: 8) {
+                    HStack(spacing: 6) {
                         Button {
                             isShowingQuickCommit = true
                         } label: {
-                            Label(L10n("Commit"), systemImage: "plus.circle.fill")
+                            Label(L10n("Commit"), systemImage: "checkmark.circle.fill")
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.green)
+                        .controlSize(.small)
                         .sheet(isPresented: $isShowingQuickCommit) {
                             VStack(alignment: .leading, spacing: 16) {
                                 Text(L10n("Criar Commit Rapido")).font(.title3.bold())
-                                Text(L10n("Suas alteracoes serao rastreadas automaticamente (git add -A) se nada estiver no stage.")).font(.caption).foregroundStyle(.secondary)
+                                Text(L10n("Suas alteracoes serao rastreadas automaticamente (git add -A).")).font(.caption).foregroundStyle(.secondary)
                                 
-                                TextField(L10n("Mensagem do commit..."), text: $model.commitMessageInput)
+                                TextField(L10n("Mensagem do commit..."), text: $model.commitMessageInput, axis: .vertical)
                                     .textFieldStyle(.roundedBorder)
                                     .font(.system(.body, design: .monospaced))
+                                    .lineLimit(3, reservesSpace: true)
                                     .onSubmit {
                                         if !model.commitMessageInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                             model.commit(message: model.commitMessageInput)
@@ -280,20 +299,45 @@ struct GraphScreen: View {
                                     .buttonStyle(.borderedProminent)
                                     .tint(.green)
                                     .disabled(model.commitMessageInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                                    .keyboardShortcut(.return, modifiers: []) // Plain Enter triggers this
+                                    .keyboardShortcut(.return, modifiers: [])
                                 }
                             }
                             .padding(24)
                             .frame(width: 450)
                         }
 
-                        Button {
-                            isShowingQuickStash = true
+                        // STASH MENU - COMBINED
+                        Menu {
+                            Button {
+                                isShowingQuickStash = true
+                            } label: {
+                                Label(L10n("Criar Novo Stash"), systemImage: "plus.square.fill")
+                            }
+                            
+                            if !model.stashes.isEmpty {
+                                Divider()
+                                Button {
+                                    isShowingStashList = true
+                                } label: {
+                                    Label(L10n("Gerenciar Stashes..."), systemImage: "list.bullet.rectangle.stack")
+                                }
+                            }
                         } label: {
-                            Label(L10n("Stash"), systemImage: "archivebox.fill")
+                            HStack(spacing: 4) {
+                                Image(systemName: "archivebox.fill")
+                                Text(L10n("Stash"))
+                                if !model.stashes.isEmpty {
+                                    Text("\(model.stashes.count)")
+                                        .font(.system(size: 9, weight: .bold))
+                                        .padding(.horizontal, 4)
+                                        .background(Color.blue.opacity(0.5))
+                                        .clipShape(Capsule())
+                                }
+                            }
                         }
                         .buttonStyle(.bordered)
                         .tint(.blue)
+                        .controlSize(.small)
                         .sheet(isPresented: $isShowingQuickStash) {
                             VStack(alignment: .leading, spacing: 16) {
                                 Text(L10n("Salvar no Stash")).font(.title3.bold())
@@ -320,25 +364,6 @@ struct GraphScreen: View {
                             }
                             .padding(24).frame(width: 400)
                         }
-
-                        Button {
-                            isShowingStashList = true
-                        } label: {
-                            Label {
-                                Text(L10n("Stashes"))
-                                if !model.stashes.isEmpty {
-                                    Text("\(model.stashes.count)")
-                                        .font(.system(size: 9, weight: .bold))
-                                        .padding(.horizontal, 4)
-                                        .background(Color.blue.opacity(0.5))
-                                        .clipShape(Capsule())
-                                }
-                            } icon: {
-                                Image(systemName: "list.bullet.rectangle.stack")
-                            }
-                        }
-                        .buttonStyle(.bordered)
-                        .help(L10n("Ver Stashes"))
                         .sheet(isPresented: $isShowingStashList) {
                             VStack(alignment: .leading, spacing: 16) {
                                 HStack {
@@ -347,28 +372,24 @@ struct GraphScreen: View {
                                     Button(L10n("Fechar")) { isShowingStashList = false }.buttonStyle(.bordered).keyboardShortcut(.escape, modifiers: [])
                                 }
                                 
-                                if model.stashes.isEmpty {
-                                    Text(L10n("Nenhum stash encontrado.")).foregroundStyle(.secondary).font(.subheadline).padding(.vertical, 20).frame(maxWidth: .infinity, alignment: .center)
-                                } else {
-                                    ScrollView {
-                                        VStack(spacing: 10) {
-                                            ForEach(model.stashes, id: \.self) { stash in
-                                                HStack {
-                                                    VStack(alignment: .leading, spacing: 2) {
-                                                        Text(stash).font(.system(size: 12, design: .monospaced)).lineLimit(2)
-                                                    }
-                                                    Spacer()
-                                                    HStack(spacing: 8) {
-                                                        Button(L10n("Apply")) { model.selectedStash = stash; model.applySelectedStash(); isShowingStashList = false }.buttonStyle(.bordered).controlSize(.small)
-                                                        Button(L10n("Pop")) { model.selectedStash = stash; model.popSelectedStash(); isShowingStashList = false }.buttonStyle(.bordered).controlSize(.small)
-                                                        Button { model.selectedStash = stash; model.dropSelectedStash() } label: { Image(systemName: "trash") }.buttonStyle(.bordered).tint(.red).controlSize(.small)
-                                                    }
+                                ScrollView {
+                                    VStack(spacing: 10) {
+                                        ForEach(model.stashes, id: \.self) { stash in
+                                            HStack {
+                                                VStack(alignment: .leading, spacing: 2) {
+                                                    Text(stash).font(.system(size: 12, design: .monospaced)).lineLimit(2)
                                                 }
-                                                .padding(10).background(Color.white.opacity(0.05)).cornerRadius(8)
+                                                Spacer()
+                                                HStack(spacing: 8) {
+                                                    Button(L10n("Apply")) { model.selectedStash = stash; model.applySelectedStash(); isShowingStashList = false }.buttonStyle(.bordered).controlSize(.small)
+                                                    Button(L10n("Pop")) { model.selectedStash = stash; model.popSelectedStash(); isShowingStashList = false }.buttonStyle(.bordered).controlSize(.small)
+                                                    Button { model.selectedStash = stash; model.dropSelectedStash() } label: { Image(systemName: "trash") }.buttonStyle(.bordered).tint(.red).controlSize(.small)
+                                                }
                                             }
+                                            .padding(10).background(Color.white.opacity(0.05)).cornerRadius(8)
                                         }
-                                    }.frame(maxHeight: 400)
-                                }
+                                    }
+                                }.frame(maxHeight: 400)
                             }
                             .padding(24).frame(width: 550)
                         }
@@ -377,15 +398,17 @@ struct GraphScreen: View {
                             withAnimation { selectedSection = .changes }
                         } label: {
                             Label(L10n("Ver Mudanças"), systemImage: "doc.text.magnifyingglass")
-                                .font(.system(size: 12, weight: .bold))
-                        }.buttonStyle(.bordered).tint(.orange)
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(.orange)
+                        .controlSize(.small)
                     }
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 16)
             }
             .padding(.trailing, 24)
         }
-        .frame(height: 96)
+        .frame(height: 74)
     }
 
     private func navigateSelection(direction: Int, proxy: ScrollViewProxy) {

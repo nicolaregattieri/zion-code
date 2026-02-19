@@ -72,6 +72,7 @@ final class RepositoryViewModel: ObservableObject {
     private var refreshTask: Task<Void, Never>?
     private var detailsTask: Task<Void, Never>?
     private var actionTask: Task<Void, Never>?
+    private var autoRefreshTask: Task<Void, Never>?
 
     var maxLaneCount: Int {
         let maxLane = commits
@@ -89,6 +90,7 @@ final class RepositoryViewModel: ObservableObject {
         }
         refreshRepository()
         refreshFileTree()
+        startAutoRefreshTimer()
     }
 
     func loadRecentRepositories() {
@@ -929,5 +931,24 @@ final class RepositoryViewModel: ObservableObject {
         if debugLog.count > 5000 {
             debugLog = String(debugLog.suffix(2000))
         }
+    }
+
+    private func startAutoRefreshTimer() {
+        autoRefreshTask?.cancel()
+        autoRefreshTask = Task {
+            while !Task.isCancelled {
+                // Wait for 30 seconds
+                try? await Task.sleep(nanoseconds: 30_000_000_000)
+                
+                if Task.isCancelled { break }
+                
+                // Refresh without showing busy indicator to avoid UI flickering
+                refreshRepository(setBusy: false)
+            }
+        }
+    }
+
+    deinit {
+        autoRefreshTask?.cancel()
     }
 }
