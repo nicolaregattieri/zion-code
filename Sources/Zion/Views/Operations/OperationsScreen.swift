@@ -83,7 +83,7 @@ struct OperationsScreen: View {
                         }
                         .frame(maxHeight: 160)
                         .padding(4)
-                        .background(Color.black.opacity(0.15))
+                        .background(DesignSystem.Colors.glassOverlay)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                 }
@@ -92,9 +92,9 @@ struct OperationsScreen: View {
                     .textFieldStyle(.plain)
                     .lineLimit(3...6)
                     .padding(12)
-                    .background(Color.black.opacity(0.2))
+                    .background(DesignSystem.Colors.glassInset)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(DesignSystem.Colors.glassStroke, lineWidth: 1))
 
                 HStack {
                     Toggle(L10n("Corrigir ultimo commit (Amend)"), isOn: $model.amendLastCommit)
@@ -128,7 +128,7 @@ struct OperationsScreen: View {
                         .textFieldStyle(.plain)
                         .font(.system(.body, design: .monospaced))
                 }
-                .padding(8).background(Color.black.opacity(0.2)).clipShape(RoundedRectangle(cornerRadius: 8))
+                .padding(8).background(DesignSystem.Colors.glassInset).clipShape(RoundedRectangle(cornerRadius: 8))
 
                 HStack(spacing: 10) {
                     Button(action: {
@@ -188,7 +188,7 @@ struct OperationsScreen: View {
                 }
             }
             .frame(minHeight: 120, maxHeight: 180)
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(.white.opacity(0.09), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(DesignSystem.Colors.glassStroke, lineWidth: 1))
         }
     }
 
@@ -207,7 +207,7 @@ struct OperationsScreen: View {
             HStack {
                 Button(L10n("Apply")) { performGitAction(L10n("Apply stash"), L10n("Aplicar o stash selecionado?"), false) { model.applySelectedStash() } }.buttonStyle(.bordered)
                 Button(L10n("Pop")) { performGitAction(L10n("Pop stash"), L10n("Aplicar e remover o stash selecionado?"), false) { model.popSelectedStash() } }.buttonStyle(.bordered)
-                Button(L10n("Drop")) { performGitAction(L10n("Drop stash"), L10n("Deseja remover permanentemente o stash selecionado?"), true) { model.dropSelectedStash() } }.buttonStyle(.bordered)
+                Button(L10n("Drop")) { performGitAction(L10n("Drop stash"), L10n("Deseja remover permanentemente o stash selecionado?"), true) { model.dropSelectedStash() } }.buttonStyle(.bordered).tint(.red)
             }.disabled(model.stashes.isEmpty)
         }
     }
@@ -218,7 +218,7 @@ struct OperationsScreen: View {
             HStack(spacing: 8) {
                 TextField("v1.0.0", text: $model.tagInput).textFieldStyle(.roundedBorder)
                 Button(L10n("Criar")) { performGitAction(L10n("Criar tag"), L10n("Criar tag no commit atual?"), false) { model.createTag() } }.buttonStyle(.borderedProminent)
-                Button(L10n("Remover")) { performGitAction(L10n("Remover tag"), L10n("Deseja remover a tag informada?"), true) { model.deleteTag() } }.buttonStyle(.bordered)
+                Button(L10n("Remover")) { performGitAction(L10n("Remover tag"), L10n("Deseja remover a tag informada?"), true) { model.deleteTag() } }.buttonStyle(.bordered).tint(.red)
             }
         }
     }
@@ -228,11 +228,11 @@ struct OperationsScreen: View {
             CardHeader(L10n("Historico"), icon: "clock.arrow.circlepath")
             HStack(spacing: 8) {
                 TextField(L10n("rebase target"), text: $model.rebaseTargetInput).textFieldStyle(.roundedBorder)
-                Button(L10n("Rebase")) { performGitAction(L10n("Rebase"), L10n("Rebasear a branch atual no target informado?"), false) { model.rebaseOntoTarget() } }.buttonStyle(.borderedProminent)
+                Button(L10n("Rebase")) { performGitAction(L10n("Rebase"), L10n("Rebasear a branch atual no target informado?"), true) { model.rebaseOntoTarget() } }.buttonStyle(.bordered).tint(.orange)
             }
             HStack(spacing: 8) {
                 TextField(L10n("cherry-pick hash"), text: $model.cherryPickInput).textFieldStyle(.roundedBorder)
-                Button(L10n("Cherry-pick")) { performGitAction(L10n("Cherry-pick"), L10n("Aplicar o commit informado na branch atual?"), false) { model.cherryPick() } }.buttonStyle(.bordered)
+                Button(L10n("Cherry-pick")) { performGitAction(L10n("Cherry-pick"), L10n("Aplicar o commit informado na branch atual?"), false) { model.cherryPick() } }.buttonStyle(.borderedProminent)
             }
         }
     }
@@ -286,7 +286,7 @@ struct OperationsScreen: View {
                             }
                         }
                         .padding(6)
-                        .background(Color.white.opacity(0.03))
+                        .background(DesignSystem.Colors.glassMinimal)
                         .clipShape(RoundedRectangle(cornerRadius: 6))
                     }
                 }
