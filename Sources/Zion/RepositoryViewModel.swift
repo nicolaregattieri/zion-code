@@ -102,6 +102,7 @@ final class RepositoryViewModel: ObservableObject {
     private var detailsTask: Task<Void, Never>?
     private var actionTask: Task<Void, Never>?
     private var autoRefreshTask: Task<Void, Never>?
+    private var cachedIgnoredPaths: Set<String>?
 
     // Restore persisted editor settings from UserDefaults
     func restoreEditorSettings() {
@@ -192,9 +193,60 @@ final class RepositoryViewModel: ObservableObject {
     func refreshFileTree() {
         guard let url = repositoryURL else { return }
         Task {
+            // Phase 1: load top-level only (instant)
+            let initial = await loadFiles(at: url, ignoredPaths: nil, maxDepth: 0)
+            repositoryFiles = initial
+            reloadExpandedDirectories()
+
+            // Phase 2: refine with gitignore
             let ignoredPaths = await loadGitIgnoredPaths()
-            let files = await loadFiles(at: url, ignoredPaths: ignoredPaths)
-            repositoryFiles = files
+            if !ignoredPaths.isEmpty {
+                cachedIgnoredPaths = ignoredPaths
+                let filtered = await loadFiles(at: url, ignoredPaths: ignoredPaths, maxDepth: 0)
+                repositoryFiles = filtered
+                reloadExpandedDirectories()
+            }
+        }
+    }
+
+    private func reloadExpandedDirectories() {
+        for path in expandedPaths {
+            loadChildrenIfNeeded(for: path)
+        }
+    }
+
+    private func loadChildrenIfNeeded(for path: String) {
+        guard let item = findItem(path: path, in: repositoryFiles),
+              item.isDirectory, item.children == nil else { return }
+        let itemURL = item.url
+        let ignoredPaths = cachedIgnoredPaths
+        Task {
+            let children = await loadFiles(at: itemURL, ignoredPaths: ignoredPaths, maxDepth: 0)
+            repositoryFiles = updateTree(repositoryFiles, path: path, newChildren: children)
+        }
+    }
+
+    private func findItem(path: String, in items: [FileItem]) -> FileItem? {
+        for item in items {
+            if item.id == path { return item }
+            if let children = item.children,
+               let found = findItem(path: path, in: children) {
+                return found
+            }
+        }
+        return nil
+    }
+
+    private func updateTree(_ items: [FileItem], path: String, newChildren: [FileItem]) -> [FileItem] {
+        items.map { item in
+            if item.id == path {
+                return FileItem(url: item.url, isDirectory: item.isDirectory, children: newChildren)
+            }
+            if let children = item.children {
+                return FileItem(url: item.url, isDirectory: item.isDirectory,
+                              children: updateTree(children, path: path, newChildren: newChildren))
+            }
+            return item
         }
     }
 
@@ -223,7 +275,7 @@ final class RepositoryViewModel: ObservableObject {
         }
     }
 
-    private func loadFiles(at url: URL, ignoredPaths: Set<String>? = nil) async -> [FileItem] {
+    private func loadFiles(at url: URL, ignoredPaths: Set<String>? = nil, maxDepth: Int = .max) async -> [FileItem] {
         let fm = FileManager.default
         do {
             let contents = try fm.contentsOfDirectory(at: url, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
@@ -238,7 +290,14 @@ final class RepositoryViewModel: ObservableObject {
                 if let ignored = ignoredPaths, ignored.contains(item.path) { continue }
 
                 let isDir = (try? item.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
-                let children = isDir ? await loadFiles(at: item, ignoredPaths: ignoredPaths) : nil
+                let children: [FileItem]?
+                if isDir && maxDepth > 0 {
+                    children = await loadFiles(at: item, ignoredPaths: ignoredPaths, maxDepth: maxDepth - 1)
+                } else if isDir {
+                    children = nil // Directory but children not loaded yet (lazy)
+                } else {
+                    children = nil
+                }
                 items.append(FileItem(url: item, isDirectory: isDir, children: children?.sorted(by: { $0.name.lowercased() < $1.name.lowercased() })))
             }
             return items.sorted { a, b in
@@ -330,6 +389,7 @@ final class RepositoryViewModel: ObservableObject {
             expandedPaths.remove(path)
         } else {
             expandedPaths.insert(path)
+            loadChildrenIfNeeded(for: path)
         }
     }
 

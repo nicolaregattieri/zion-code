@@ -23,13 +23,13 @@ final class FileWatcher {
             queue: .global(qos: .utility)
         )
 
-        source.setEventHandler { [weak self] in
+        source.setEventHandler { @Sendable [weak self] in
             Task { @MainActor [weak self] in
                 self?.handleChange()
             }
         }
 
-        source.setCancelHandler { [fd] in
+        source.setCancelHandler { @Sendable in
             close(fd)
         }
 
@@ -57,8 +57,5 @@ final class FileWatcher {
 
     deinit {
         source?.cancel()
-        if fileDescriptor >= 0 {
-            close(fileDescriptor)
-        }
     }
 }
