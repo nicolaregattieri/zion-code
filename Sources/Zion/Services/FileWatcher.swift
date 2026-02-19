@@ -1,15 +1,15 @@
 import Foundation
 
-@MainActor
 final class FileWatcher {
     private var source: DispatchSourceFileSystemObject?
     private var fileDescriptor: Int32 = -1
     private var debounceTask: Task<Void, Never>?
     private let debounceInterval: UInt64 = 1_500_000_000 // 1.5 seconds
 
-    var onFileChanged: (() -> Void)?
-    var onRepositoryChanged: (() -> Void)?
+    @MainActor var onFileChanged: (@MainActor () -> Void)?
+    @MainActor var onRepositoryChanged: (@MainActor () -> Void)?
 
+    @MainActor
     func watch(directory: URL) {
         stop()
 
@@ -23,13 +23,13 @@ final class FileWatcher {
             queue: .global(qos: .utility)
         )
 
-        source.setEventHandler { @Sendable [weak self] in
+        source.setEventHandler { [weak self] in
             Task { @MainActor [weak self] in
                 self?.handleChange()
             }
         }
 
-        source.setCancelHandler { @Sendable in
+        source.setCancelHandler { [fd = fd] in
             close(fd)
         }
 
@@ -37,6 +37,7 @@ final class FileWatcher {
         source.resume()
     }
 
+    @MainActor
     func stop() {
         debounceTask?.cancel()
         debounceTask = nil
@@ -45,13 +46,15 @@ final class FileWatcher {
         fileDescriptor = -1
     }
 
+    @MainActor
     private func handleChange() {
         debounceTask?.cancel()
-        debounceTask = Task {
-            try? await Task.sleep(nanoseconds: debounceInterval)
+        debounceTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            try? await Task.sleep(nanoseconds: self.debounceInterval)
             guard !Task.isCancelled else { return }
-            onFileChanged?()
-            onRepositoryChanged?()
+            self.onFileChanged?()
+            self.onRepositoryChanged?()
         }
     }
 
