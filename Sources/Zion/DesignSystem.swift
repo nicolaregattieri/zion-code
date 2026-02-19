@@ -1,4 +1,19 @@
 import SwiftUI
+import AppKit
+@preconcurrency import SwiftTerm
+
+struct TerminalPalette {
+    let foreground: NSColor
+    let background: NSColor
+    let cursorColor: NSColor
+    let cursorTextColor: NSColor
+    let selectionBackground: NSColor
+    let selectionForeground: NSColor
+    let ansiColors: [SwiftTerm.Color] // 16 elements
+
+    let backgroundSwiftUI: SwiftUI.Color
+    let accentSwiftUI: SwiftUI.Color // ANSI green for tab accent
+}
 
 struct DesignSystem {
     struct Colors {
