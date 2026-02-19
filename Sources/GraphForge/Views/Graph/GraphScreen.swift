@@ -69,28 +69,25 @@ struct GraphScreen: View {
     }
 
     private var jumpBar: some View {
-        HStack(spacing: 12) {
-            HStack(spacing: 6) {
-                jumpButton(icon: "crown.fill", color: .green, label: "HEAD") { commitSearchQuery = "HEAD" }
-                if let mainName = findBranchName(matches: ["main", "master", "trunk"]) {
-                    jumpButton(icon: "shield.fill", color: .orange, label: mainName) { commitSearchQuery = mainName }
-                }
+        HStack(spacing: 8) {
+            jumpButton(icon: "crown.fill", color: .green, label: "HEAD") { commitSearchQuery = "HEAD" }
+            if let mainName = findBranchName(matches: ["main", "master", "trunk"]) {
+                jumpButton(icon: "shield.fill", color: .orange, label: mainName) { commitSearchQuery = mainName }
             }
-            .padding(.trailing, 4)
             
-            Divider().frame(height: 20).opacity(0.3)
+            Divider().frame(height: 20).padding(.horizontal, 4).opacity(0.3)
             
-            HStack(spacing: 8) {
-                actionButtonSmall(title: "Fetch", icon: "arrow.down.circle", color: .blue, action: model.fetch)
-                actionButtonSmall(title: "Pull", icon: "arrow.down.and.line.horizontal", color: .green, action: model.pull)
-                actionButtonSmall(title: "Push", icon: "arrow.up.circle", color: .orange, action: model.push)
-                
-                Button(action: { model.refreshRepository() }) {
-                    Image(systemName: "arrow.clockwise").font(.system(size: 11, weight: .semibold))
-                }.buttonStyle(.bordered).controlSize(.small).help(L10n("Atualizar"))
+            Button(action: { model.refreshRepository() }) {
+                Image(systemName: "arrow.clockwise").font(.system(size: 11, weight: .semibold))
             }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .help(L10n("Atualizar Grafo"))
         }
-        .padding(.horizontal, 10).padding(.vertical, 6).background(Color.white.opacity(0.06)).clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .background(Color.white.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private func actionButtonSmall(title: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
@@ -259,10 +256,15 @@ struct GraphScreen: View {
                                 Text(L10n("Criar Commit Rapido")).font(.title3.bold())
                                 Text(L10n("Suas alteracoes serao rastreadas automaticamente (git add -A) se nada estiver no stage.")).font(.caption).foregroundStyle(.secondary)
                                 
-                                TextField(L10n("Mensagem do commit..."), text: $model.commitMessageInput, axis: .vertical)
+                                TextField(L10n("Mensagem do commit..."), text: $model.commitMessageInput)
                                     .textFieldStyle(.roundedBorder)
                                     .font(.system(.body, design: .monospaced))
-                                    .lineLimit(4...8)
+                                    .onSubmit {
+                                        if !model.commitMessageInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                            model.commit(message: model.commitMessageInput)
+                                            isShowingQuickCommit = false
+                                        }
+                                    }
                                 
                                 HStack {
                                     Button(L10n("Cancelar")) { isShowingQuickCommit = false }
@@ -278,7 +280,7 @@ struct GraphScreen: View {
                                     .buttonStyle(.borderedProminent)
                                     .tint(.green)
                                     .disabled(model.commitMessageInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                                    .keyboardShortcut(.return, modifiers: .command)
+                                    .keyboardShortcut(.return, modifiers: []) // Plain Enter triggers this
                                 }
                             }
                             .padding(24)
@@ -297,6 +299,11 @@ struct GraphScreen: View {
                                 Text(L10n("Salvar no Stash")).font(.title3.bold())
                                 TextField(L10n("Mensagem do stash (opcional)"), text: $model.stashMessageInput)
                                     .textFieldStyle(.roundedBorder)
+                                    .onSubmit {
+                                        model.createStash(message: model.stashMessageInput)
+                                        model.stashMessageInput = ""
+                                        isShowingQuickStash = false
+                                    }
                                 
                                 HStack {
                                     Button(L10n("Cancelar")) { isShowingQuickStash = false }
@@ -308,6 +315,7 @@ struct GraphScreen: View {
                                         model.stashMessageInput = ""
                                         isShowingQuickStash = false
                                     }.buttonStyle(.borderedProminent)
+                                    .keyboardShortcut(.return, modifiers: [])
                                 }
                             }
                             .padding(24).frame(width: 400)
@@ -316,13 +324,17 @@ struct GraphScreen: View {
                         Button {
                             isShowingStashList = true
                         } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "list.bullet.rectangle.stack")
+                            Label {
+                                Text(L10n("Stashes"))
                                 if !model.stashes.isEmpty {
-                                    Text("\(model.stashes.count)").font(.system(size: 10, weight: .bold))
-                                        .padding(.horizontal, 6).padding(.vertical, 2)
-                                        .background(Color.blue.opacity(0.3)).clipShape(Capsule())
+                                    Text("\(model.stashes.count)")
+                                        .font(.system(size: 9, weight: .bold))
+                                        .padding(.horizontal, 4)
+                                        .background(Color.blue.opacity(0.5))
+                                        .clipShape(Capsule())
                                 }
+                            } icon: {
+                                Image(systemName: "list.bullet.rectangle.stack")
                             }
                         }
                         .buttonStyle(.bordered)
