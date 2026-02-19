@@ -9,7 +9,7 @@ struct GraphForgeApp: App {
             ContentView()
         }
         .windowResizability(.contentMinSize)
-        .windowToolbarStyle(.unifiedCompact)
+        .windowToolbarStyle(.unified)
         .defaultSize(width: 1360, height: 840)
     }
 }
