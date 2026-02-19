@@ -466,11 +466,12 @@ struct LiquidBackgroundView: View {
     var body: some View {
         ZStack {
             if colorScheme == .dark {
-                Color(red: 0.02, green: 0.04, blue: 0.06).ignoresSafeArea()
-                Circle().fill(Color.teal.opacity(0.12)).frame(width: 600).blur(radius: 100).offset(x: -200, y: -100)
+                Color(red: 0.04, green: 0.08, blue: 0.12).ignoresSafeArea()
+                Circle().fill(Color.teal.opacity(0.22)).frame(width: 520).blur(radius: 60).offset(x: -340, y: -220)
+                Circle().fill(Color.blue.opacity(0.26)).frame(width: 420).blur(radius: 56).offset(x: 280, y: -280)
             } else {
-                Color(red: 0.95, green: 0.97, blue: 0.99).ignoresSafeArea()
-                Circle().fill(Color.teal.opacity(0.08)).frame(width: 600).blur(radius: 100).offset(x: -200, y: -100)
+                Color(red: 0.93, green: 0.97, blue: 1.00).ignoresSafeArea()
+                Circle().fill(Color.teal.opacity(0.22)).frame(width: 520).blur(radius: 64).offset(x: -340, y: -220)
             }
         }
     }

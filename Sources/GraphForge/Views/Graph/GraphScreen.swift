@@ -26,10 +26,12 @@ struct GraphScreen: View {
                     commitListPane(proxy: proxy)
                         .layoutPriority(1)
                         .frame(minWidth: 400, idealWidth: 800, maxWidth: .infinity)
+                        .padding(.trailing, 6)
                     
                     commitDetailsPane
                         .layoutPriority(0)
                         .frame(minWidth: 300, idealWidth: 450, maxWidth: .infinity)
+                        .padding(.leading, 6)
                 }
             }
             .padding(.horizontal, 18)
@@ -225,27 +227,28 @@ struct GraphScreen: View {
     
     private var pendingChangesRow: some View {
         HStack(spacing: 0) {
-            // ALIGNED NODE - Matches the graph vertical line perfectly
-            ZStack(alignment: .topLeading) {
-                VStack(spacing: 0) {
-                    Rectangle().fill(Color.orange.opacity(0.3)).frame(width: 2, height: 42)
-                    Spacer().frame(height: 18)
-                    Rectangle().fill(Color.orange.opacity(0.2)).frame(width: 2, height: 42)
-                }
-                .offset(x: 3)
-                
-                ZStack {
-                    Circle()
-                        .fill(Color.orange)
-                        .frame(width: 10, height: 10)
-                    Circle()
-                        .stroke(Color.orange.opacity(0.5), lineWidth: 4)
-                        .frame(width: 18, height: 18)
-                }
-                .shadow(color: .orange.opacity(0.3), radius: 4)
-                .offset(x: -5, y: 42)
-            }
-            .frame(width: 84)
+            // PERFECT ALIGNMENT: Use the real LaneGraphView with a dummy commit
+            LaneGraphView(
+                commit: Commit(
+                    id: "pending",
+                    shortHash: "",
+                    parents: [],
+                    author: "",
+                    date: Date(),
+                    subject: "",
+                    decorations: [],
+                    lane: 0,
+                    nodeColorKey: 3, // Orange
+                    incomingLanes: [0], // Line from top
+                    outgoingLanes: [0], // Line to bottom
+                    laneColors: [LaneColor(lane: 0, colorKey: 3)],
+                    outgoingEdges: []
+                ),
+                laneCount: model.maxLaneCount,
+                isSelected: false,
+                isHead: false,
+                height: 102
+            )
 
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)

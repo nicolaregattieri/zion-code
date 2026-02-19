@@ -142,16 +142,24 @@ struct SidebarView: View {
         let isSelected = (selectedSection ?? .graph) == section
         return Button { selectedSection = section } label: {
             HStack(alignment: .top, spacing: 10) {
-                Image(systemName: section.icon).font(.system(size: 14, weight: .semibold)).frame(width: 18).padding(.top, 2)
+                Image(systemName: section.icon)
+                    .font(.system(size: 13, weight: .semibold))
+                    .frame(width: 18)
+                    .padding(.top, 2)
+                    .foregroundStyle(isSelected ? .primary : .secondary)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(L10n(section.title)).font(.headline).lineLimit(1)
-                    Text(L10n(section.subtitle)).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                    Text(L10n(section.title)).font(.system(size: 13, weight: .bold)).lineLimit(1)
+                        .foregroundStyle(isSelected ? .primary : .secondary)
+                    Text(L10n(section.subtitle)).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(2)
+                        .opacity(isSelected ? 1.0 : 0.7)
                 }
                 Spacer(minLength: 0)
             }
             .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 10).padding(.vertical, 8)
-            .background(RoundedRectangle(cornerRadius: 10).fill(isSelected ? Color.accentColor.opacity(0.18) : Color.white.opacity(0.04)))
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(isSelected ? Color.accentColor.opacity(0.45) : Color.white.opacity(0.08), lineWidth: 1))
+            .background(RoundedRectangle(cornerRadius: 10).fill(isSelected ? Color.primary.opacity(0.08) : Color.clear))
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(isSelected ? Color.primary.opacity(0.15) : Color.clear, lineWidth: 1))
+            .scaleEffect(isSelected ? 1.02 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
         }.buttonStyle(.plain)
     }
 
