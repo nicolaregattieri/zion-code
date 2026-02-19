@@ -111,10 +111,11 @@
 "Tudo limpo!" = "Tudo limpo!";
 "Nenhuma alteração pendente no momento." = "Nenhuma alteração pendente no momento.";
 "Selecione um arquivo para ver as mudanças." = "Selecione um arquivo para ver as mudanças.";
-"Vibe Code" = "Vibe Code";
+"Zion" = "Zion";
 "Arquivos" = "Arquivos";
 "Salvar" = "Salvar";
 "Arquivo salvo: %@" = "Arquivo salvo: %@";
 "Selecione um arquivo para editar." = "Selecione um arquivo para editar.";
 "Nenhuma mudanca detectada (ou arquivo novo nao rastreado)." = "Nenhuma mudança detectada (ou arquivo novo não rastreado).";
 "arquivos modificados" = "arquivos modificados";
+"Tenta detectar automaticamente de qual branch cada uma foi criada para organizar a arvore lateral de forma hierarquica. Recomendado para repositorios com muitas branches." = "Tenta detectar automaticamente de qual branch cada uma foi criada para organizar a árvore lateral de forma hierárquica. Recomendado para repositórios com muitas branches.";

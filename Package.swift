@@ -3,20 +3,20 @@
 import PackageDescription
 
 let package = Package(
-    name: "GraphForge",
+    name: "Zion",
     defaultLocalization: "pt-BR",
     platforms: [
         .macOS(.v13)
     ],
     products: [
-        .executable(name: "GraphForge", targets: ["GraphForge"])
+        .executable(name: "Zion", targets: ["Zion"])
     ],
     dependencies: [
         .package(url: "https://github.com/migueldeicaza/SwiftTerm.git", from: "1.0.7")
     ],
     targets: [
         .executableTarget(
-            name: "GraphForge",
+            name: "Zion",
             dependencies: [
                 "SwiftTerm"
             ],
@@ -25,8 +25,8 @@ let package = Package(
             ]
         ),
         .testTarget(
-            name: "GraphForgeTests",
-            dependencies: ["GraphForge"]
+            name: "ZionTests",
+            dependencies: ["Zion"]
         )
     ]
 )

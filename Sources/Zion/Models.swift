@@ -208,12 +208,12 @@ enum PushMode: String, CaseIterable, Identifiable, Sendable {
 }
 
 enum AppSection: String, CaseIterable, Identifiable {
-    case graph, code, operations
+    case code, graph, operations
     var id: String { rawValue }
     var title: String {
         switch self {
+        case .code: return "Zion Code"
         case .graph: return "Git Graph"
-        case .code: return "Vibe Code"
         case .operations: return "Operacoes"
         }
     }
@@ -255,23 +255,39 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     
     var bundle: Bundle {
         if self == .system { return .module }
-        // Try exact match then lowercase match
+        
         let resName = self.rawValue
-        if let path = Bundle.module.path(forResource: resName, ofType: "lproj"),
+        // Try to find the lproj bundle in the module's resource bundle
+        if let url = Bundle.module.url(forResource: resName, withExtension: "lproj"),
+           let bundle = Bundle(url: url) {
+            return bundle
+        }
+        
+        // Fallback: try search in subdirectories if processing messed with structure
+        if let path = Bundle.module.path(forResource: resName, ofType: "lproj", inDirectory: nil) ?? 
+                      Bundle.module.path(forResource: resName, ofType: "lproj", inDirectory: "Resources"),
            let bundle = Bundle(path: path) {
             return bundle
         }
-        if let path = Bundle.module.path(forResource: resName.lowercased(), ofType: "lproj"),
-           let bundle = Bundle(path: path) {
-            return bundle
-        }
+        
         return .module
     }
 }
 
 func L10n(_ key: String, _ args: CVarArg...) -> String {
-    let languageRaw = UserDefaults.standard.string(forKey: "graphforge.uiLanguage") ?? "system"
-    let language = AppLanguage(rawValue: languageRaw) ?? .system
+    let languageRaw = UserDefaults.standard.string(forKey: "zion.uiLanguage") ?? "system"
+    let language: AppLanguage
+    
+    if languageRaw == "system" {
+        // Find best match for system language
+        let preferred = Locale.preferredLanguages.first?.lowercased() ?? "en"
+        if preferred.hasPrefix("pt") { language = .ptBR }
+        else if preferred.hasPrefix("es") { language = .es }
+        else { language = .en }
+    } else {
+        language = AppLanguage(rawValue: languageRaw) ?? .system
+    }
+    
     let format = language.bundle.localizedString(forKey: key, value: nil, table: nil)
     
     if args.isEmpty { return format }

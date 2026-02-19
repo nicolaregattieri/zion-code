@@ -9,17 +9,17 @@ export CLANG_MODULE_CACHE_PATH="$ROOT_DIR/.build/clang-module-cache"
 
 swift build -c release
 
-APP_DIR="$ROOT_DIR/dist/GraphForge.app"
-BIN_PATH="$ROOT_DIR/.build/release/GraphForge"
+APP_DIR="$ROOT_DIR/dist/Zion.app"
+BIN_PATH="$ROOT_DIR/.build/release/Zion"
 
 rm -rf "$APP_DIR"
 mkdir -p "$APP_DIR/Contents/MacOS"
 mkdir -p "$APP_DIR/Contents/Resources"
 
-cp "$BIN_PATH" "$APP_DIR/Contents/MacOS/GraphForge"
+cp "$BIN_PATH" "$APP_DIR/Contents/MacOS/Zion"
 
 # Copy resources bundle
-BUNDLE_PATH="$(find .build -name "GraphForge_GraphForge.bundle" | grep "/release/" | head -n 1)"
+BUNDLE_PATH="$(find .build -name "Zion_Zion.bundle" | grep "/release/" | head -n 1)"
 if [ -n "$BUNDLE_PATH" ]; then
   cp -R "$BUNDLE_PATH" "$APP_DIR/Contents/Resources/"
 fi
@@ -34,17 +34,17 @@ cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
 <plist version="1.0">
 <dict>
   <key>CFBundleName</key>
-  <string>GraphForge</string>
+  <string>Zion</string>
   <key>CFBundleDisplayName</key>
-  <string>GraphForge</string>
+  <string>Zion</string>
   <key>CFBundleIdentifier</key>
-  <string>com.nicolaregattieri.graphforge</string>
+  <string>com.nicolaregattieri.zion</string>
   <key>CFBundleVersion</key>
   <string>1</string>
   <key>CFBundleShortVersionString</key>
   <string>1.0.0</string>
   <key>CFBundleExecutable</key>
-  <string>GraphForge</string>
+  <string>Zion</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleIconFile</key>
@@ -57,6 +57,6 @@ cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
 </plist>
 PLIST
 
-chmod +x "$APP_DIR/Contents/MacOS/GraphForge"
+chmod +x "$APP_DIR/Contents/MacOS/Zion"
 
 echo "App gerado em: $APP_DIR"

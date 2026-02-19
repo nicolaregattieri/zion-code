@@ -27,6 +27,9 @@ struct SourceCodeEditor: NSViewRepresentable {
         textView.font = NSFont(name: fontFamily, size: fontSize)
             ?? .monospacedSystemFont(ofSize: fontSize, weight: .regular)
         textView.usesAdaptiveColorMappingForDarkAppearance = false
+        
+        // Add padding to prevent "crowded" look with tabs
+        textView.textContainerInset = NSSize(width: 5, height: 12)
 
         // Setup Line Numbers
         scrollView.hasVerticalRuler = true
@@ -223,13 +226,22 @@ class LineNumberRulerView: NSRulerView {
             let lineRange = string.lineRange(for: NSRange(location: index, length: 0))
             let lineGlyphRange = layoutManager.glyphRange(forCharacterRange: lineRange, actualCharacterRange: nil)
             let lineRect = layoutManager.boundingRect(forGlyphRange: lineGlyphRange, in: textContainer)
+            
+            // Adjust Y position to account for container inset and center the text vertically in the line
             let y = lineRect.origin.y + textView.textContainerInset.height - visibleRect.origin.y
 
             let color = isLight ? NSColor(srgbRed: 0.416, green: 0.451, blue: 0.490, alpha: 0.7) : NSColor.secondaryLabelColor
-            let attrs: [NSAttributedString.Key: Any] = [.font: NSFont.monospacedSystemFont(ofSize: 9, weight: .regular), .foregroundColor: color]
+            let currentFontSize = textView.font?.pointSize ?? 13.0
+            let attrs: [NSAttributedString.Key: Any] = [
+                .font: NSFont.monospacedSystemFont(ofSize: currentFontSize * 0.75, weight: .regular),
+                .foregroundColor: color
+            ]
             let str = "\(lineNumber)" as NSString
             let size = str.size(withAttributes: attrs)
-            str.draw(at: NSPoint(x: ruleThickness - size.width - 5, y: y + (lineRect.height - size.height)/2), withAttributes: attrs)
+            
+            // Draw centered horizontally in the padding area
+            let x = ruleThickness - size.width - 8
+            str.draw(at: NSPoint(x: x, y: y + (lineRect.height - size.height)/2), withAttributes: attrs)
 
             index = lineRange.upperBound
             lineNumber += 1

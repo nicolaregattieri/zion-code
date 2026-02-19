@@ -4,17 +4,17 @@ import UniformTypeIdentifiers
 
 struct ContentView: View {
     @StateObject private var model = RepositoryViewModel()
-    @State private var selectedSection: AppSection? = .graph
+    @State private var selectedSection: AppSection? = .code
     @State private var commitSearchQuery: String = ""
     @State private var selectedBranchTreeNodeID: String?
     
-    @AppStorage("graphforge.confirmationMode") private var confirmationModeRaw: String = ConfirmationMode.destructiveOnly.rawValue
-    @AppStorage("graphforge.uiLanguage") private var uiLanguageRaw: String = AppLanguage.system.rawValue
-    @AppStorage("graphforge.preferredEditor") private var preferredEditorRaw: String = ExternalEditor.vscode.rawValue
-    @AppStorage("graphforge.preferredTerminal") private var preferredTerminalRaw: String = ExternalTerminal.terminal.rawValue
-    @AppStorage("graphforge.customEditorPath") private var customEditorPath: String = ""
-    @AppStorage("graphforge.customTerminalPath") private var customTerminalPath: String = ""
-    @AppStorage("graphforge.inferBranchOrigins") private var inferBranchOrigins: Bool = false
+    @AppStorage("zion.confirmationMode") private var confirmationModeRaw: String = ConfirmationMode.destructiveOnly.rawValue
+    @AppStorage("zion.uiLanguage") private var uiLanguageRaw: String = AppLanguage.system.rawValue
+    @AppStorage("zion.preferredEditor") private var preferredEditorRaw: String = ExternalEditor.vscode.rawValue
+    @AppStorage("zion.preferredTerminal") private var preferredTerminalRaw: String = ExternalTerminal.terminal.rawValue
+    @AppStorage("zion.customEditorPath") private var customEditorPath: String = ""
+    @AppStorage("zion.customTerminalPath") private var customTerminalPath: String = ""
+    @AppStorage("zion.inferBranchOrigins") private var inferBranchOrigins: Bool = false
     
     private var uiLanguage: AppLanguage { AppLanguage(rawValue: uiLanguageRaw) ?? .system }
 
@@ -30,7 +30,7 @@ struct ContentView: View {
                     confirmationModeRaw: $confirmationModeRaw,
                     inferBranchOrigins: $inferBranchOrigins,
                     uiLanguageRaw: $uiLanguageRaw,
-                    onOpen: { model.repositoryURL = nil },
+                    onOpen: { openRepositoryPanel() },
                     onOpenInEditor: { openRepositoryInEditor() },
                     onOpenInTerminal: { openRepositoryInTerminal() },
                     branchContextMenu: { branch in AnyView(branchContextMenu(for: branch)) }
@@ -51,9 +51,9 @@ struct ContentView: View {
             .background {
                 // Cmd+1/2/3 tab switching (standard macOS convention)
                 Group {
-                    Button("") { selectedSection = .graph }
-                        .keyboardShortcut("1", modifiers: .command)
                     Button("") { selectedSection = .code }
+                        .keyboardShortcut("1", modifiers: .command)
+                    Button("") { selectedSection = .graph }
                         .keyboardShortcut("2", modifiers: .command)
                     Button("") { selectedSection = .operations }
                         .keyboardShortcut("3", modifiers: .command)
@@ -80,7 +80,10 @@ struct ContentView: View {
 
     @ViewBuilder
     private var detailViewHost: some View {
-        if model.repositoryURL == nil {
+        if selectedSection == .code {
+            mainContentArea
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if model.repositoryURL == nil {
             WelcomeScreen(model: model) { openRepositoryPanel() }
         } else if !model.isGitRepository {
             nonGitDirectoryView
@@ -146,7 +149,7 @@ struct ContentView: View {
                 tagContextMenu: { tag in AnyView(tagContextMenu(for: tag)) }
             )
         case .code:
-            CodeScreen(model: model)
+            CodeScreen(model: model, onOpenFolder: { openRepositoryPanel() })
         case .operations:
             OperationsScreen(
                 model: model,
@@ -159,7 +162,7 @@ struct ContentView: View {
     private var mainToolbar: ToolbarItemGroup<some View> {
         ToolbarItemGroup(placement: .navigation) {
             ControlGroup {
-                Button { model.repositoryURL = nil } label: { Image(systemName: "folder") }
+                Button { openRepositoryPanel() } label: { Image(systemName: "folder") }
                     .help(L10n("Abrir repositório"))
                 
                 Button { model.refreshRepository() } label: { Image(systemName: "arrow.clockwise") }

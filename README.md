@@ -1,6 +1,6 @@
-# GraphForge (macOS)
+# Zion (macOS)
 
-GraphForge is a local macOS Git Graph app built in SwiftUI.
+Zion is a local macOS Git Graph app built in SwiftUI.
 It uses your system Git CLI to provide visual history plus advanced operations (including worktrees).
 
 ## What is implemented
@@ -26,27 +26,27 @@ It uses your system Git CLI to provide visual history plus advanced operations (
 ## Run in dev mode
 
 ```bash
-cd /Users/nicolaregattieri/Developer/GraphForge
+cd /Users/nicolaregattieri/Developer/Zion
 swift build
-swift run GraphForge
+swift run Zion
 ```
 
 ## Build a .app bundle
 
 ```bash
-cd /Users/nicolaregattieri/Developer/GraphForge
+cd /Users/nicolaregattieri/Developer/Zion
 ./scripts/make-app.sh
-open /Users/nicolaregattieri/Developer/GraphForge/dist/GraphForge.app
+open /Users/nicolaregattieri/Developer/Zion/dist/Zion.app
 ```
 
 ## Project structure
 
-- `Sources/GraphForge/GraphForgeApp.swift`: app entry point
-- `Sources/GraphForge/ContentView.swift`: UI tabs and components
-- `Sources/GraphForge/RepositoryViewModel.swift`: command orchestration + parsing
-- `Sources/GraphForge/GitClient.swift`: Git process execution layer
-- `Sources/GraphForge/GitGraphLaneCalculator.swift`: lane/edge layout logic
-- `Sources/GraphForge/Models.swift`: domain models
+- `Sources/Zion/ZionApp.swift`: app entry point
+- `Sources/Zion/ContentView.swift`: UI tabs and components
+- `Sources/Zion/RepositoryViewModel.swift`: command orchestration + parsing
+- `Sources/Zion/GitClient.swift`: Git process execution layer
+- `Sources/Zion/GitGraphLaneCalculator.swift`: lane/edge layout logic
+- `Sources/Zion/Models.swift`: domain models
 - `scripts/make-app.sh`: creates `.app` from release build
 
 ## Open source baseline used
