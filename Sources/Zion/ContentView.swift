@@ -96,6 +96,9 @@ struct ContentView: View {
         .sheet(isPresented: $model.isCloneSheetVisible) {
             CloneSheet(model: model)
         }
+        .sheet(isPresented: $model.isConflictViewVisible) {
+            ConflictResolutionScreen(model: model)
+        }
         .sheet(isPresented: $isShortcutsVisible) {
             KeyboardShortcutsSheet()
         }
@@ -122,8 +125,10 @@ struct ContentView: View {
             if selectedSection != .code {
                 nonCodeContent
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .transition(.opacity)
             }
         }
+        .animation(.easeInOut(duration: 0.2), value: selectedSection)
     }
 
     @ViewBuilder
@@ -205,38 +210,38 @@ struct ContentView: View {
     }
 
 
-    private var mainToolbar: ToolbarItemGroup<some View> {
+    @ToolbarContentBuilder
+    private var mainToolbar: some ToolbarContent {
         ToolbarItemGroup(placement: .navigation) {
             ControlGroup {
                 Button { openRepositoryPanel() } label: { Image(systemName: "folder") }
                     .help(L10n("Abrir repositório"))
-
                 Button { model.isCloneSheetVisible = true } label: { Image(systemName: "square.and.arrow.down.on.square") }
                     .help(L10n("Clonar repositorio remoto"))
-
-                Button { model.refreshRepository() } label: { Image(systemName: "arrow.clockwise") }
-                    .disabled(model.repositoryURL == nil)
-                    .help(L10n("Atualizar status do repositório"))
             }
-            
+
+            Button { model.refreshRepository() } label: { Image(systemName: "arrow.clockwise") }
+                .disabled(model.repositoryURL == nil)
+                .help(L10n("Atualizar status do repositório"))
+                .keyboardShortcut("r", modifiers: .command)
+
             if model.repositoryURL != nil {
                 ControlGroup {
                     Button { model.fetch() } label: { Image(systemName: "arrow.down.circle") }
                         .help(L10n("Fetch: Busca atualizações remotas"))
-                    
                     Button { model.pull() } label: { Image(systemName: "arrow.down.to.line") }
                         .help(L10n("Pull: Puxa alterações da branch atual"))
-                    
                     Button { model.push() } label: { Image(systemName: "arrow.up.circle") }
                         .help(L10n("Push: Envia alterações locais"))
                 }
-                
+            }
+        }
+
+        ToolbarItemGroup(placement: .primaryAction) {
+            if model.repositoryURL != nil {
                 ControlGroup {
                     Button { openRepositoryInTerminal() } label: { Image(systemName: "terminal") }
                         .help(L10n("Abrir Terminal"))
-                }
-
-                ControlGroup {
                     Button {
                         model.loadReflog()
                         model.isReflogVisible = true
@@ -261,8 +266,18 @@ struct ContentView: View {
             }
             Spacer()
             HStack(spacing: 8) {
-                if model.isMerging { Button(L10n("Abort")) { model.abortMerge() }.buttonStyle(.bordered) }
-                if model.isRebasing { Button(L10n("Abort")) { model.abortRebase() }.buttonStyle(.bordered) }
+                Button {
+                    model.loadConflictedFiles()
+                    model.isConflictViewVisible = true
+                } label: {
+                    Label(L10n("Resolver no Zion"), systemImage: "hammer.fill")
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.orange)
+                .controlSize(.small)
+
+                if model.isMerging { Button(L10n("Abort")) { model.abortMerge() }.buttonStyle(.bordered).controlSize(.small) }
+                if model.isRebasing { Button(L10n("Abort")) { model.abortRebase() }.buttonStyle(.bordered).controlSize(.small) }
             }
         }
         .padding(16)
@@ -275,6 +290,53 @@ struct ContentView: View {
             if model.isBusy { ProgressView().controlSize(.small) }
             Text(model.statusMessage).lineLimit(1).font(.caption).foregroundStyle(.secondary)
             Spacer()
+
+            if model.repositoryURL != nil {
+                // Branch pill
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.triangle.branch")
+                        .font(.system(size: 9))
+                    Text(model.currentBranch)
+                        .lineLimit(1)
+                }
+                .font(.system(.caption, design: .monospaced))
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(Color.green.opacity(0.12))
+                .foregroundStyle(.green)
+                .clipShape(Capsule())
+
+                // Behind remote badge
+                if model.behindRemoteCount > 0 {
+                    HStack(spacing: 3) {
+                        Image(systemName: "arrow.down.circle.fill")
+                            .font(.system(size: 9))
+                        Text("\(model.behindRemoteCount)")
+                    }
+                    .font(.caption)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(Color.orange.opacity(0.12))
+                    .foregroundStyle(.orange)
+                    .clipShape(Capsule())
+                }
+
+                // Uncommitted changes count
+                if model.uncommittedCount > 0 {
+                    HStack(spacing: 3) {
+                        Image(systemName: "pencil.circle.fill")
+                            .font(.system(size: 9))
+                        Text("\(model.uncommittedCount)")
+                    }
+                    .font(.caption)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(Color.blue.opacity(0.12))
+                    .foregroundStyle(.blue)
+                    .clipShape(Capsule())
+                }
+            }
+
             if let repositoryURL = model.repositoryURL {
                 Text(repositoryURL.path).lineLimit(1).font(.system(.caption, design: .monospaced)).foregroundStyle(.tertiary)
             }
@@ -496,15 +558,31 @@ struct ContentView: View {
 
 struct LiquidBackgroundView: View {
     @Environment(\.colorScheme) private var colorScheme
+    @State private var phase: Bool = false
+
     var body: some View {
         ZStack {
             if colorScheme == .dark {
                 Color(red: 0.05, green: 0.02, blue: 0.10).ignoresSafeArea()
-                Circle().fill(Color.purple.opacity(0.15)).frame(width: 520).blur(radius: 80).offset(x: -340, y: -220)
-                Circle().fill(Color.indigo.opacity(0.12)).frame(width: 420).blur(radius: 70).offset(x: 280, y: -280)
+                Circle()
+                    .fill(Color.purple.opacity(phase ? 0.17 : 0.14))
+                    .frame(width: 520).blur(radius: 80)
+                    .offset(x: phase ? -310 : -370, y: phase ? -200 : -240)
+                Circle()
+                    .fill(Color.indigo.opacity(0.12))
+                    .frame(width: 420).blur(radius: 70)
+                    .offset(x: phase ? 310 : 260, y: phase ? -260 : -300)
             } else {
                 Color(red: 0.96, green: 0.94, blue: 1.00).ignoresSafeArea()
-                Circle().fill(Color.purple.opacity(0.10)).frame(width: 520).blur(radius: 80).offset(x: -340, y: -220)
+                Circle()
+                    .fill(Color.purple.opacity(phase ? 0.12 : 0.09))
+                    .frame(width: 520).blur(radius: 80)
+                    .offset(x: phase ? -310 : -370, y: phase ? -200 : -240)
+            }
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 8).repeatForever(autoreverses: true)) {
+                phase.toggle()
             }
         }
     }

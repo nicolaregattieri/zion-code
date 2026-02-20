@@ -422,3 +422,25 @@
 "help.diagnostics.export" = "Exporte logs desde el menú Ayuda";
 "help.diagnostics.copy" = "Copie el log al portapapeles";
 "help.diagnostics.sanitize" = "Datos sensibles eliminados automáticamente";
+
+// Conflict Resolution
+"Resolver no Zion" = "Resolver en Zion";
+"Resolver Conflitos" = "Resolver Conflictos";
+"Aceitar Nosso" = "Aceptar Nuestro";
+"Aceitar Deles" = "Aceptar de Ellos";
+"Aceitar Ambos" = "Aceptar Ambos";
+"Editar Manualmente" = "Editar Manualmente";
+"Aplicar" = "Aplicar";
+"Marcar como Resolvido" = "Marcar como Resuelto";
+"Continuar Merge" = "Continuar Merge";
+"Continuar Rebase" = "Continuar Rebase";
+"Continuar" = "Continuar";
+"Todos os conflitos resolvidos!" = "Todos los conflictos resueltos!";
+"conflitos restantes" = "conflictos restantes";
+"Conflito" = "Conflicto";
+"arquivos" = "archivos";
+"Selecione um arquivo com conflito" = "Seleccione un archivo con conflicto";
+"help.conflicts.title" = "Resolución de Conflictos";
+"help.conflicts.resolve" = "Resuelva conflictos de merge en la app";
+"help.conflicts.choose" = "Aceptar Nuestro, Ellos, Ambos o Editar";
+"help.conflicts.continue" = "Continuar merge/rebase después de resolver";

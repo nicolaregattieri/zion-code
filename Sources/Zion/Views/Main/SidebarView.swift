@@ -429,9 +429,6 @@ struct SidebarView: View {
                             }
                         }
                     }
-                    .padding(8)
-                    .background(DesignSystem.Colors.glassMinimal)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
 
                     Divider().opacity(0.1)
 

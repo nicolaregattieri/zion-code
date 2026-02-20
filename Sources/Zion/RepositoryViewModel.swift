@@ -119,6 +119,13 @@ final class RepositoryViewModel {
     // Repository statistics
     var repoStats: RepositoryStats?
 
+    // Conflict resolution state
+    var conflictedFiles: [ConflictFile] = []
+    var selectedConflictFile: String?
+    var conflictBlocks: [ConflictBlock] = []
+    var isConflictViewVisible: Bool = false
+    @ObservationIgnored private var conflictTask: Task<Void, Never>?
+
     // Clone state
     var isCloneSheetVisible: Bool = false
     var cloneProgress: String = ""
@@ -1237,6 +1244,208 @@ final class RepositoryViewModel {
     func abortMerge() { runGitAction(label: "Abort Merge", args: ["merge", "--abort"]) }
     func abortRebase() { runGitAction(label: "Abort Rebase", args: ["rebase", "--abort"]) }
     func abortCherryPick() { runGitAction(label: "Abort Cherry-pick", args: ["cherry-pick", "--abort"]) }
+
+    // MARK: - Conflict Resolution
+
+    func loadConflictedFiles() {
+        guard let repositoryURL else { return }
+        conflictTask?.cancel()
+        conflictTask = Task {
+            do {
+                let files = try await worker.listConflictedFiles(in: repositoryURL)
+                try Task.checkCancellation()
+                conflictedFiles = files
+                if let first = files.first(where: { !$0.isResolved }) {
+                    selectConflictFile(first.path)
+                }
+            } catch is CancellationError {
+                return
+            } catch {
+                handleError(error)
+            }
+        }
+    }
+
+    func selectConflictFile(_ path: String) {
+        guard let repositoryURL else { return }
+        selectedConflictFile = path
+        conflictTask?.cancel()
+        conflictTask = Task {
+            do {
+                let content = try await worker.readConflictFileContent(path: path, in: repositoryURL)
+                try Task.checkCancellation()
+                conflictBlocks = Self.parseConflictBlocks(content)
+            } catch is CancellationError {
+                return
+            } catch {
+                handleError(error)
+            }
+        }
+    }
+
+    func resolveRegion(_ regionID: UUID, choice: ConflictChoice) {
+        for i in conflictBlocks.indices {
+            if case .conflict(var region) = conflictBlocks[i], region.id == regionID {
+                region.choice = choice
+                conflictBlocks[i] = .conflict(region)
+                break
+            }
+        }
+    }
+
+    func saveAndMarkResolved(_ path: String) {
+        guard let repositoryURL else { return }
+        let merged = buildMergedContent()
+        conflictTask?.cancel()
+        conflictTask = Task {
+            do {
+                try await worker.writeResolvedFile(path: path, content: merged, in: repositoryURL)
+                try await worker.markFileResolved(path: path, in: repositoryURL)
+                try Task.checkCancellation()
+                if let idx = conflictedFiles.firstIndex(where: { $0.path == path }) {
+                    conflictedFiles[idx].isResolved = true
+                }
+                statusMessage = "\(path) " + L10n("Marcar como Resolvido")
+                // Select next unresolved file
+                if let next = conflictedFiles.first(where: { !$0.isResolved }) {
+                    selectConflictFile(next.path)
+                } else {
+                    selectedConflictFile = nil
+                    conflictBlocks = []
+                }
+            } catch is CancellationError {
+                return
+            } catch {
+                handleError(error)
+            }
+        }
+    }
+
+    func continueAfterResolution() {
+        guard let repositoryURL else { return }
+        isBusy = true
+        conflictTask?.cancel()
+        conflictTask = Task {
+            do {
+                let output = try await worker.continueOperation(in: repositoryURL)
+                try Task.checkCancellation()
+                isConflictViewVisible = false
+                statusMessage = output.isEmpty ? L10n("Todos os conflitos resolvidos!") : String(output.prefix(240))
+                refreshRepository(setBusy: true)
+            } catch is CancellationError {
+                return
+            } catch {
+                isBusy = false
+                handleError(error)
+            }
+        }
+    }
+
+    var allConflictsResolved: Bool {
+        !conflictedFiles.isEmpty && conflictedFiles.allSatisfy(\.isResolved)
+    }
+
+    var unresolvedConflictCount: Int {
+        conflictedFiles.filter { !$0.isResolved }.count
+    }
+
+    var currentFileAllRegionsChosen: Bool {
+        conflictBlocks.allSatisfy { block in
+            if case .conflict(let region) = block { return region.choice != .undecided }
+            return true
+        }
+    }
+
+    var activeOperationLabel: String {
+        if isMerging { return "Merge" }
+        if isRebasing { return "Rebase" }
+        if isCherryPicking { return "Cherry-pick" }
+        return ""
+    }
+
+    private func buildMergedContent() -> String {
+        var lines: [String] = []
+        for block in conflictBlocks {
+            switch block {
+            case .context(let contextLines):
+                lines.append(contentsOf: contextLines)
+            case .conflict(let region):
+                switch region.choice {
+                case .undecided:
+                    // Keep original markers if undecided
+                    lines.append("<<<<<<< \(region.oursLabel)")
+                    lines.append(contentsOf: region.oursLines)
+                    lines.append("=======")
+                    lines.append(contentsOf: region.theirsLines)
+                    lines.append(">>>>>>> \(region.theirsLabel)")
+                case .ours:
+                    lines.append(contentsOf: region.oursLines)
+                case .theirs:
+                    lines.append(contentsOf: region.theirsLines)
+                case .both:
+                    lines.append(contentsOf: region.oursLines)
+                    lines.append(contentsOf: region.theirsLines)
+                case .bothReverse:
+                    lines.append(contentsOf: region.theirsLines)
+                    lines.append(contentsOf: region.oursLines)
+                case .custom(let text):
+                    lines.append(contentsOf: text.components(separatedBy: "\n"))
+                }
+            }
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    static func parseConflictBlocks(_ content: String) -> [ConflictBlock] {
+        let lines = content.components(separatedBy: "\n")
+        var blocks: [ConflictBlock] = []
+        var contextBuffer: [String] = []
+        var oursBuffer: [String] = []
+        var theirsBuffer: [String] = []
+        var oursLabel = ""
+        var theirsLabel = ""
+        var inOurs = false
+        var inTheirs = false
+
+        for line in lines {
+            if line.hasPrefix("<<<<<<< ") {
+                if !contextBuffer.isEmpty {
+                    blocks.append(.context(contextBuffer))
+                    contextBuffer = []
+                }
+                oursLabel = String(line.dropFirst(8))
+                oursBuffer = []
+                inOurs = true
+                inTheirs = false
+            } else if line == "=======" && inOurs {
+                inOurs = false
+                inTheirs = true
+                theirsBuffer = []
+            } else if line.hasPrefix(">>>>>>> ") && inTheirs {
+                theirsLabel = String(line.dropFirst(8))
+                let region = ConflictRegion(
+                    oursLines: oursBuffer,
+                    theirsLines: theirsBuffer,
+                    oursLabel: oursLabel,
+                    theirsLabel: theirsLabel
+                )
+                blocks.append(.conflict(region))
+                inTheirs = false
+                oursBuffer = []
+                theirsBuffer = []
+            } else if inOurs {
+                oursBuffer.append(line)
+            } else if inTheirs {
+                theirsBuffer.append(line)
+            } else {
+                contextBuffer.append(line)
+            }
+        }
+        if !contextBuffer.isEmpty {
+            blocks.append(.context(contextBuffer))
+        }
+        return blocks
+    }
 
     func createArchive(reference: String, outputPath: String) {
         let ref = reference.clean

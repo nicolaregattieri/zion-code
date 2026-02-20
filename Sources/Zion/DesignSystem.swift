@@ -52,6 +52,17 @@ struct DesignSystem {
         // Danger zone
         static let dangerBackground = Color.red.opacity(0.06)
         static let dangerBorder = Color.red.opacity(0.25)
+
+        // Lane color palette (shared between graph and commit cards)
+        static let lanePalette: [SwiftUI.Color] = [
+            .blue, .pink, .green, .orange, .teal, .purple, .mint, .indigo, .yellow, .cyan, .brown, .gray
+        ]
+
+        static func laneColor(forKey key: Int) -> SwiftUI.Color {
+            if key < lanePalette.count { return lanePalette[key] }
+            let hue = Double((key * 137) % 360) / 360.0
+            return SwiftUI.Color(hue: hue, saturation: 0.80, brightness: 0.95)
+        }
     }
 
     struct Spacing {

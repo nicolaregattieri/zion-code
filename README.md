@@ -2,9 +2,11 @@
 
 # Zion
 
-### The Git workspace that thinks with you.
+### Graph. Code. Terminal. One window.
 
-A native macOS Git client that combines a visual commit graph, a real terminal, a code editor, and AI — all in one glassmorphic workspace.
+A native Git workspace for macOS that puts your commit graph, a real code editor,
+and a full terminal in one window. Stage hunks, resolve conflicts, write code, and
+run commands — without switching apps.
 
 **No Electron. No subscriptions. No bloat. Just Swift.**
 
@@ -14,11 +16,10 @@ A native macOS Git client that combines a visual commit graph, a real terminal, 
 
 </div>
 
-<!-- Replace these with real screenshots before launch -->
 <p align="center">
-  <img src="docs/screenshots/graph.png" width="32%" alt="Zion Tree — visual commit graph" />
-  <img src="docs/screenshots/code.png" width="32%" alt="Zion Code — editor + terminal" />
-  <img src="docs/screenshots/operations.png" width="32%" alt="Operations Center" />
+  <img src="docs/screenshots/hero-graph.png" width="32%" alt="Zion Tree — visual commit graph with lane-colored cards" />
+  <img src="docs/screenshots/hero-code.png" width="32%" alt="Zion Code — editor + terminal + clipboard" />
+  <img src="docs/screenshots/hero-operations.png" width="32%" alt="Operations Center — full Git dashboard" />
 </p>
 
 ---
@@ -33,6 +34,7 @@ Zion doesn't make you choose.
 |---|---|---|
 | **Terminal** | External app / fake shell | Real PTY with splits, tabs, zoom |
 | **Editor** | None / basic viewer | Syntax highlighting, blame, Quick Open |
+| **Conflicts** | External merge tool | Built-in resolver (ours/theirs/both/edit) |
 | **AI** | None or paid addon | Built-in (Claude / GPT), free to configure |
 | **Clipboard** | Copy-paste manually | Smart clipboard that auto-captures and pastes into terminal |
 | **Performance** | Electron / web view | Native SwiftUI, zero web tech |
@@ -45,22 +47,39 @@ Zion doesn't make you choose.
 ### Zion Tree — Visual Commit Graph
 > `Cmd+2`
 
-Color-coded lane visualization with merge edges, branch decorations, commit search with `Cmd+F`, jump bar for quick branch navigation, pending changes row at the top, GPG/SSH signature verification, and keyboard navigation with arrow keys.
+Lane-colored commit cards with colored left stripes matching branch lanes, merge edges, branch decorations, commit search with `Cmd+F`, jump bar for quick branch navigation, pending changes row at the top, status bar pills showing current branch and change count, GPG/SSH signature verification, and keyboard navigation with arrow keys.
 
 ### Zion Code — Editor + Terminal
 > `Cmd+1`
 
 A real code editor with syntax highlighting, Git Blame, Quick Open (`Cmd+P`), file watcher, 6 themes (Dracula, Tokyo Night, Catppuccin Mocha, One Dark Pro, City Lights, GitHub Light), and configurable fonts. Side-by-side with a real PTY terminal that supports split panes, multiple tabs, and independent zoom.
 
+<!-- <p align="center">
+  <img src="docs/screenshots/blame-view.png" width="70%" alt="Git Blame with author-colored gutter" />
+</p> -->
+
 ### Smart Clipboard
 > The feature no other Git GUI has.
 
 Zion watches your clipboard and auto-categorizes everything: commands, file paths, git hashes, URLs, even images. **Single-click** to paste into your active terminal. **Double-click** to paste and execute. **Drag** items directly into any terminal pane. It keeps your last 20 items and auto-cleans temp files.
 
+<!-- <p align="center">
+  <img src="docs/screenshots/clipboard-drawer.png" width="70%" alt="Clipboard drawer with auto-categorized items" />
+</p> -->
+
 ### Operations Center
 > `Cmd+3`
 
 A dashboard for everything Git. Commit with hunk and line-level staging, interactive rebase (pick/squash/fixup/drop/reorder with drag), branch management (create/merge/rebase/rename/delete), stash management, cherry-pick, revert, reset, tag management, worktrees, submodules, remotes, reflog, and repo stats — all in one place.
+
+### Conflict Resolution
+> Built-in. No external merge tools needed.
+
+When a merge, rebase, or cherry-pick hits conflicts, Zion opens a dedicated resolver. A file list on the left shows conflict status with red/green icons. The inline editor on the right highlights conflict regions — **ours** (green) vs **theirs** (blue) — with one-click actions: accept ours, accept theirs, accept both, or edit manually. Once resolved, Zion auto-continues the operation.
+
+<!-- <p align="center">
+  <img src="docs/screenshots/conflict-resolver.png" width="80%" alt="Built-in conflict resolver with ours vs theirs" />
+</p> -->
 
 ### AI Assistant
 > Works with Anthropic Claude or OpenAI GPT.
@@ -74,6 +93,10 @@ List open pull requests, create new PRs from your current branch, and let AI gen
 ### Worktree-First Workflow
 
 Create worktrees with one click (auto-generated path and branch), get a dedicated terminal pane per worktree, remove and prune from the Operations Center.
+
+<!-- <p align="center">
+  <img src="docs/screenshots/quick-open.png" width="60%" alt="Quick Open fuzzy search overlay" />
+</p> -->
 
 ---
 
@@ -140,11 +163,12 @@ Zion is keyboard-first. Press `Cmd+?` to see all shortcuts inside the app.
 
 | Area | Features |
 |------|----------|
-| **Graph** | Lane visualization, commit search, jump bar, branch focus, pending changes, signature verification, keyboard navigation, paginated loading (up to 5000 commits) |
+| **Graph** | Lane-colored commit cards, commit search, jump bar, branch focus, pending changes, status bar pills, signature verification, keyboard navigation, paginated loading (up to 5000 commits) |
 | **Editor** | Syntax highlighting (regex-cached), Quick Open, Git Blame, 6 themes, 5+ font families, line spacing control, line wrapping, file watcher, multi-tab, unsaved indicator |
 | **Terminal** | Real PTY (`/bin/zsh -l`), split panes (H/V), multiple tabs, independent zoom, font config, clipboard paste/drag, process preservation across view changes |
 | **Clipboard** | Auto-capture (0.5s polling), smart categorization (command/path/hash/URL/image/text), click-to-paste, double-click-to-execute, drag-and-drop, image capture, auto-cleanup |
 | **Operations** | Hunk staging, line staging, interactive rebase (visual drag-reorder), cherry-pick, revert, reset (soft/hard), stash (create/apply/pop/drop), custom git commands, discard changes, add to .gitignore |
+| **Conflicts** | Built-in resolver, ours/theirs/both/custom edit, file list with status icons, auto-continue merge/rebase/cherry-pick |
 | **Branches** | Checkout, create, merge, rebase, push, pull, rename, delete, remote tracking |
 | **Tags** | Create and delete lightweight tags |
 | **AI** | Commit messages, diff explanations, PR descriptions, stash messages, provider config (Anthropic/OpenAI), Keychain API key storage, heuristic fallback |

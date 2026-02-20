@@ -470,3 +470,25 @@
 "help.diagnostics.export" = "Export logs from the Help menu";
 "help.diagnostics.copy" = "Copy log to clipboard";
 "help.diagnostics.sanitize" = "Sensitive data automatically redacted";
+
+// Conflict Resolution
+"Resolver no Zion" = "Resolve in Zion";
+"Resolver Conflitos" = "Resolve Conflicts";
+"Aceitar Nosso" = "Accept Ours";
+"Aceitar Deles" = "Accept Theirs";
+"Aceitar Ambos" = "Accept Both";
+"Editar Manualmente" = "Edit Manually";
+"Aplicar" = "Apply";
+"Marcar como Resolvido" = "Mark as Resolved";
+"Continuar Merge" = "Continue Merge";
+"Continuar Rebase" = "Continue Rebase";
+"Continuar" = "Continue";
+"Todos os conflitos resolvidos!" = "All conflicts resolved!";
+"conflitos restantes" = "conflicts remaining";
+"Conflito" = "Conflict";
+"arquivos" = "files";
+"Selecione um arquivo com conflito" = "Select a conflicted file";
+"help.conflicts.title" = "Conflict Resolution";
+"help.conflicts.resolve" = "Built-in merge conflict resolver";
+"help.conflicts.choose" = "Accept Ours, Theirs, Both, or Edit";
+"help.conflicts.continue" = "Continue merge/rebase after resolving";

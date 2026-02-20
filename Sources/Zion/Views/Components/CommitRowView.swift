@@ -45,6 +45,10 @@ struct CommitRowView: View {
         .onTapGesture { onSelect() }
     }
 
+    private var laneColor: Color {
+        DesignSystem.Colors.laneColor(forKey: commit.nodeColorKey)
+    }
+
     private var cardContent: some View {
         ZStack(alignment: .leading) {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
@@ -55,6 +59,16 @@ struct CommitRowView: View {
                         .stroke(cardStroke, lineWidth: 1.5)
                 )
                 .shadow(color: isSelected ? Color.accentColor.opacity(0.3) : .black.opacity(0.1), radius: isSelected ? 8 : 4, y: 2)
+
+            // Lane color left stripe
+            HStack(spacing: 0) {
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(laneColor)
+                    .frame(width: 3, height: cardHeight - 16)
+                    .padding(.leading, 4)
+                Spacer()
+            }
+            .frame(height: cardHeight)
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(commit.subject)
@@ -83,14 +97,14 @@ struct CommitRowView: View {
         if isSelected { return Color.accentColor.opacity(0.18) }
         if isSearchMatch { return Color.yellow.opacity(0.15) }
         if isHovered { return Color.white.opacity(0.10) }
-        return Color.black.opacity(0.25)
+        return laneColor.opacity(0.06)
     }
 
     private var cardStroke: Color {
         if isSelected { return Color.accentColor.opacity(0.7) }
         if isSearchMatch { return Color.yellow.opacity(0.5) }
         if isHovered { return Color.accentColor.opacity(0.35) }
-        return Color.white.opacity(0.1)
+        return laneColor.opacity(0.15)
     }
 
     private var metadataRow: some View {

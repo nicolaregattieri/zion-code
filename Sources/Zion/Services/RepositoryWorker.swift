@@ -163,6 +163,56 @@ actor RepositoryWorker {
         return result.stdout.clean.isEmpty ? result.stderr.clean : result.stdout.clean
     }
 
+    // MARK: - Conflict Resolution
+
+    func listConflictedFiles(in repositoryURL: URL) throws -> [ConflictFile] {
+        let result = try git.runAllowingFailure(args: ["diff", "--name-only", "--diff-filter=U"], in: repositoryURL)
+        guard result.status == 0 else { return [] }
+        return result.stdout.clean
+            .components(separatedBy: "\n")
+            .filter { !$0.isEmpty }
+            .map { ConflictFile(path: $0) }
+    }
+
+    func readConflictFileContent(path: String, in repositoryURL: URL) throws -> String {
+        let fileURL = repositoryURL.appendingPathComponent(path)
+        return try String(contentsOf: fileURL, encoding: .utf8)
+    }
+
+    func writeResolvedFile(path: String, content: String, in repositoryURL: URL) throws {
+        let fileURL = repositoryURL.appendingPathComponent(path)
+        try content.write(to: fileURL, atomically: true, encoding: .utf8)
+    }
+
+    func markFileResolved(path: String, in repositoryURL: URL) throws {
+        _ = try git.run(args: ["add", path], in: repositoryURL)
+    }
+
+    func detectActiveOperation(in repositoryURL: URL) -> String? {
+        let gitDir = repositoryURL.appendingPathComponent(".git")
+        let fm = FileManager.default
+        if fm.fileExists(atPath: gitDir.appendingPathComponent("MERGE_HEAD").path) { return "merge" }
+        if fm.fileExists(atPath: gitDir.appendingPathComponent("rebase-merge").path) ||
+           fm.fileExists(atPath: gitDir.appendingPathComponent("rebase-apply").path) { return "rebase" }
+        if fm.fileExists(atPath: gitDir.appendingPathComponent("CHERRY_PICK_HEAD").path) { return "cherry-pick" }
+        return nil
+    }
+
+    func continueOperation(in repositoryURL: URL) throws -> String {
+        guard let op = detectActiveOperation(in: repositoryURL) else {
+            return "No active operation to continue."
+        }
+        let args: [String]
+        switch op {
+        case "merge": args = ["merge", "--continue"]
+        case "rebase": args = ["rebase", "--continue"]
+        case "cherry-pick": args = ["cherry-pick", "--continue"]
+        default: return "Unknown operation: \(op)"
+        }
+        let result = try git.run(args: args, in: repositoryURL)
+        return result.stdout.clean.isEmpty ? result.stderr.clean : result.stdout.clean
+    }
+
     nonisolated func cloneRepository(
         remoteURL: String,
         destination: URL,

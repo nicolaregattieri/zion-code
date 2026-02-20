@@ -98,31 +98,25 @@ struct GraphScreen: View {
         }
     }
 
+    @ViewBuilder
     private var jumpBar: some View {
-        HStack(spacing: 8) {
-            // Shield: scroll to main/master in graph
-            if let mainName = findBranchName(matches: ["main", "master", "trunk"]) {
-                jumpButton(icon: "shield.fill", color: .orange, label: mainName) { commitSearchQuery = mainName }
-            }
+        let hasMain = findBranchName(matches: ["main", "master", "trunk"]) != nil
+        let hasDev = findBranchName(matches: ["develop", "development", "dev"]) != nil
 
-            // Flag: scroll to develop in graph
-            if let devName = findBranchName(matches: ["develop", "development", "dev"]) {
-                jumpButton(icon: "flag.fill", color: .purple, label: devName) { commitSearchQuery = devName }
+        if hasMain || hasDev {
+            HStack(spacing: 8) {
+                if let mainName = findBranchName(matches: ["main", "master", "trunk"]) {
+                    jumpButton(icon: "shield.fill", color: .orange, label: mainName) { commitSearchQuery = mainName }
+                }
+                if let devName = findBranchName(matches: ["develop", "development", "dev"]) {
+                    jumpButton(icon: "flag.fill", color: .purple, label: devName) { commitSearchQuery = devName }
+                }
             }
-
-            Divider().frame(height: 20).padding(.horizontal, 4).opacity(0.3)
-
-            Button(action: { model.refreshRepository() }) {
-                Image(systemName: "arrow.clockwise").font(.system(size: 11, weight: .semibold))
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            .help(L10n("Atualizar Grafo"))
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .background(DesignSystem.Colors.glassElevated)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
-        .background(DesignSystem.Colors.glassElevated)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private func actionButtonSmall(title: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {

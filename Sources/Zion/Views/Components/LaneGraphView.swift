@@ -9,9 +9,6 @@ struct LaneGraphView: View {
     
     private let safePadding: CGFloat = 14
     private let laneSpacing: CGFloat = 20
-    private let colorPalette: [Color] = [
-        .blue, .pink, .green, .orange, .teal, .purple, .red, .mint, .indigo, .yellow, .cyan, .brown
-    ]
 
     var body: some View {
         Canvas { context, size in
@@ -75,9 +72,5 @@ struct LaneGraphView: View {
     }
 
     private func laneX(_ lane: Int) -> CGFloat { CGFloat(lane) * laneSpacing + 4 }
-    private func color(forKey key: Int) -> Color {
-        if key < colorPalette.count { return colorPalette[key] }
-        let hue = Double((key * 137) % 360) / 360.0
-        return Color(hue: hue, saturation: 0.80, brightness: 0.95)
-    }
+    private func color(forKey key: Int) -> Color { DesignSystem.Colors.laneColor(forKey: key) }
 }
