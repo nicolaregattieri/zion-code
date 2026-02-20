@@ -362,6 +362,17 @@ struct GraphScreen: View {
                                     }
                                 }
 
+                                if model.aiQuotaExceeded {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                            .font(.system(size: 10))
+                                        Text(L10n("Cota da API excedida. Usando sugestao local."))
+                                            .font(.system(size: 10, weight: .medium))
+                                    }
+                                    .foregroundStyle(.orange)
+                                    .padding(.top, -8)
+                                }
+
                                 HStack {
                                     Button(L10n("Cancelar")) { isShowingQuickCommit = false }
                                         .buttonStyle(.bordered)

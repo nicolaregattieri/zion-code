@@ -87,21 +87,30 @@ final class RepositoryViewModel {
     // AI commit message
     var suggestedCommitMessage: String = ""
     var isGeneratingAIMessage: Bool = false
+    var aiQuotaExceeded: Bool = false
     var aiDiffExplanation: String = ""
     var aiProvider: AIProvider = .none {
-        didSet { UserDefaults.standard.set(aiProvider.rawValue, forKey: "zion.aiProvider") }
+        didSet { 
+            UserDefaults.standard.set(aiProvider.rawValue, forKey: "zion.aiProvider")
+            aiQuotaExceeded = false // Reset on provider change
+        }
     }
     @ObservationIgnored let aiClient = AIClient()
     @ObservationIgnored private var aiTask: Task<Void, Never>?
 
+    private var _aiKeyRevision: Int = 0
     var aiAPIKey: String {
-        get { AIClient.loadAPIKey() ?? "" }
+        get { 
+            let _ = _aiKeyRevision // Register dependency
+            return AIClient.loadAPIKey() ?? "" 
+        }
         set {
             if newValue.isEmpty {
                 AIClient.deleteAPIKey()
             } else {
                 AIClient.saveAPIKey(newValue)
             }
+            _aiKeyRevision += 1 // Trigger observation
         }
     }
 
@@ -2341,12 +2350,50 @@ final class RepositoryViewModel {
             defer { isGeneratingAIMessage = false }
 
             do {
-                let diffStat = try await worker.runAction(args: ["diff", "--cached", "--stat"], in: url)
+                aiQuotaExceeded = false
+                let diffStatOutput = try await worker.runAction(args: ["diff", "--cached", "--stat"], in: url)
+                var diffStat = diffStatOutput
                 let status = try await worker.runAction(args: ["status", "--porcelain"], in: url)
+
+                logger.log(.ai, "AI Configured: \(isAIConfigured), Provider: \(aiProvider.rawValue), Key length: \(aiAPIKey.count)")
 
                 if isAIConfigured {
                     logger.log(.ai, "Requesting commit message", context: aiProvider.rawValue)
-                    let diff = try await worker.runAction(args: ["diff", "--cached"], in: url)
+                    var diff = try await worker.runAction(args: ["diff", "--cached"], in: url)
+                    
+                    // If nothing is staged, we're likely in a "Quick Commit" flow.
+                    // Provide the unstaged diff to the AI so it has context.
+                    if diff.isEmpty && !status.isEmpty {
+                        logger.log(.ai, "Staged diff is empty, trying unstaged diff for context")
+                        diff = try await worker.runAction(args: ["diff"], in: url)
+                        diffStat = try await worker.runAction(args: ["diff", "--stat"], in: url)
+                        
+                        // If still empty (e.g. only untracked files), provide the status list AND some content
+                        if diff.isEmpty {
+                            logger.log(.ai, "Unstaged diff also empty, reading untracked files content")
+                            var untrackedContext = "New files (untracked):\n\(status)\n\nFile contents summary:\n"
+                            let untrackedFiles = status.split(separator: "\n").compactMap { line -> String? in
+                                guard line.count >= 4 else { return nil }
+                                return String(line.dropFirst(3)).trimmingCharacters(in: .whitespaces)
+                            }
+                            
+                            for file in untrackedFiles.prefix(5) { // Limit to first 5 files for brevity
+                                if let content = try? await worker.runAction(args: ["show", ":\(file)"], in: url) {
+                                    untrackedContext += "--- \(file) ---\n\(content.prefix(500))\n"
+                                } else if let localContent = try? String(contentsOf: url.appendingPathComponent(file), encoding: .utf8) {
+                                    untrackedContext += "--- \(file) ---\n\(localContent.prefix(500))\n"
+                                }
+                            }
+                            diff = untrackedContext
+                        }
+                    }
+
+                    if diff.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        logger.log(.ai, "No changes detected at all, skipping AI")
+                        suggestedCommitMessage = ""
+                        return
+                    }
+
                     let logOutput = try await worker.runAction(args: ["log", "--oneline", "-10"], in: url)
                     let recentMessages = logOutput.split(separator: "\n").map { line in
                         let parts = line.split(separator: " ", maxSplits: 1)
@@ -2367,6 +2414,9 @@ final class RepositoryViewModel {
                     suggestedCommitMessage = Self.generateCommitMessage(diffStat: diffStat, status: status)
                 }
             } catch {
+                if let aiErr = error as? AIError, case .quotaExceeded = aiErr {
+                    aiQuotaExceeded = true
+                }
                 logger.log(.error, "AI commit message failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
                 // Fallback to heuristic on AI failure
                 if let url = repositoryURL,
@@ -2473,16 +2523,23 @@ final class RepositoryViewModel {
         var added = 0, modified = 0, deleted = 0
         var paths: [String] = []
         for line in lines {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            guard trimmed.count >= 3 else { continue }
-            let indexStatus = String(trimmed.prefix(1))
-            let file = String(trimmed.dropFirst(3)).trimmingCharacters(in: .whitespaces)
+            // git status --porcelain is exactly "XY path"
+            // X (index 0), Y (index 1), space (index 2), path (index 3...)
+            guard line.count >= 4 else { continue }
+            let indexStatus = String(line.prefix(1))
+            let workTreeStatus = String(line.dropFirst(1).prefix(1))
+            let file = String(line.dropFirst(3)).trimmingCharacters(in: .whitespaces)
+            
             paths.append(file)
-            switch indexStatus {
-            case "A", "?": added += 1
-            case "M": modified += 1
-            case "D": deleted += 1
-            default: modified += 1
+            
+            if indexStatus == "A" || indexStatus == "?" {
+                added += 1
+            } else if workTreeStatus == "M" || indexStatus == "M" {
+                modified += 1
+            } else if workTreeStatus == "D" || indexStatus == "D" {
+                deleted += 1
+            } else {
+                modified += 1
             }
         }
 
