@@ -84,10 +84,14 @@ struct SourceCodeEditor: NSViewRepresentable {
         } else {
             textView.isHorizontallyResizable = true
             textView.textContainer?.widthTracksTextView = false
+            // Use a massive width to ensure lines never try to wrap or shift
             textView.textContainer?.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
             
-            // Fix: When word wrap is off, ensure we stay scrolled to the left
-            // especially after resizing the window or toggling sidebars.
+            // Critical: Force the text view's frame width to be at least the size of the scroll view
+            if textView.frame.width < nsView.contentSize.width {
+                textView.setFrameSize(NSSize(width: nsView.contentSize.width, height: textView.frame.height))
+            }
+            
             textView.scroll(NSPoint(x: 0, y: textView.visibleRect.origin.y))
         }
 
@@ -536,9 +540,6 @@ class LeftAnchoredClipView: NSClipView {
     override func setBoundsOrigin(_ newOrigin: NSPoint) {
         var adjusted = newOrigin
         if !isLineWrappingEnabled {
-            if newOrigin.x != 0 {
-                print("[Zion Debug] ClipView attempted to move X to \(newOrigin.x). Blocking and forcing to 0.")
-            }
             adjusted.x = 0
         }
         super.setBoundsOrigin(adjusted)
