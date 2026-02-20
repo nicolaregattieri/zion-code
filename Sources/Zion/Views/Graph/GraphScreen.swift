@@ -67,13 +67,18 @@ struct GraphScreen: View {
                     scrollToMatch(id: searchMatchIDs[0], proxy: proxy)
                 }
             }
+            .background {
+                Button("") { isSearchFocused = true }
+                    .keyboardShortcut("f", modifiers: .command)
+                    .frame(width: 0, height: 0).opacity(0)
+            }
         }
     }
     
     private func header(proxy: ScrollViewProxy) -> some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(L10n("Git Graph")).font(.title2.weight(.semibold))
+                Text(L10n("Zion Tree")).font(.title2.weight(.semibold))
                 Text(L10n("Navegue e salte entre as pontas das branches.")).foregroundStyle(.secondary).font(.subheadline)
             }
             Spacer()
@@ -174,15 +179,15 @@ struct GraphScreen: View {
                 Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
                 TextField(L10n("Busca (Cmd+F)"), text: $commitSearchQuery).textFieldStyle(.plain).focused($isSearchFocused)
                 if !commitSearchQuery.isEmpty {
-                    Button { commitSearchQuery = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain)
+                    Button { commitSearchQuery = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).help(L10n("Limpar busca"))
                     Text("\(searchMatchIDs.isEmpty ? 0 : currentMatchIndex + 1)/\(searchMatchIDs.count)").font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundStyle(.secondary)
                 }
             }
             .padding(.horizontal, 10).padding(.vertical, 6).background(Color.black.opacity(0.15)).clipShape(RoundedRectangle(cornerRadius: 8))
             
             HStack(spacing: 4) {
-                Button(action: { navigateSearch(direction: -1, proxy: proxy) }) { Image(systemName: "chevron.up") }.disabled(searchMatchIDs.isEmpty)
-                Button(action: { navigateSearch(direction: 1, proxy: proxy) }) { Image(systemName: "chevron.down") }.disabled(searchMatchIDs.isEmpty)
+                Button(action: { navigateSearch(direction: -1, proxy: proxy) }) { Image(systemName: "chevron.up") }.disabled(searchMatchIDs.isEmpty).help(L10n("Resultado anterior"))
+                Button(action: { navigateSearch(direction: 1, proxy: proxy) }) { Image(systemName: "chevron.down") }.disabled(searchMatchIDs.isEmpty).help(L10n("Proximo resultado"))
             }.buttonStyle(.bordered)
         }
     }

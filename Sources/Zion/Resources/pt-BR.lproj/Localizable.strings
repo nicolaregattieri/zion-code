@@ -1,6 +1,7 @@
 "Erro" = "Erro";
 "Workspace" = "Workspace";
-"Git Graph" = "Git Graph";
+"Zion Tree" = "Zion Tree";
+"Seu cliente Git nativo para macOS." = "Seu cliente Git nativo para macOS.";
 "Operacoes" = "Operações";
 "Worktrees" = "Worktrees";
 "Seguranca" = "Segurança";
@@ -245,3 +246,49 @@
 "Somente editor" = "Somente editor";
 "Editor e terminal" = "Editor e terminal";
 "Somente terminal" = "Somente terminal";
+
+// Clone
+"Clonar Repositorio" = "Clonar Repositório";
+"Baixe um repositorio remoto para o disco local." = "Baixe um repositório remoto para o disco local.";
+"URL do repositorio" = "URL do repositório";
+"Pasta de destino" = "Pasta de destino";
+"Nome do repositorio" = "Nome do repositório";
+"Escolher..." = "Escolher...";
+"Escolher" = "Escolher";
+"Clonar" = "Clonar";
+"Clonar repositorio..." = "Clonar repositório...";
+"Clonar repositorio remoto" = "Clonar repositório remoto";
+
+// Clipboard explainer
+"Clipboard Inteligente" = "Clipboard Inteligente";
+"Captura automaticamente o que voce copiar" = "Captura automaticamente o que você copiar";
+"Clique para colar no terminal" = "Clique para colar no terminal";
+"Duplo clique para executar" = "Duplo clique para executar";
+"Arraste para o terminal" = "Arraste para o terminal";
+"Copie algo para comecar" = "Copie algo para começar";
+
+// Tooltips
+"Atualizar arvore de arquivos" = "Atualizar árvore de arquivos";
+"Novo terminal" = "Novo terminal";
+"Limpar busca" = "Limpar busca";
+"Resultado anterior" = "Resultado anterior";
+"Proximo resultado" = "Próximo resultado";
+"Adicionar todos ao stage" = "Adicionar todos ao stage";
+"Remover todos do stage" = "Remover todos do stage";
+
+// Keyboard Shortcuts Sheet
+"Atalhos de Teclado" = "Atalhos de Teclado";
+"Navegacao" = "Navegação";
+"Codigo" = "Código";
+"Grafo" = "Grafo";
+"Editor" = "Editor";
+"Quick Open" = "Quick Open";
+"Barra lateral" = "Barra lateral";
+"Maximizar terminal" = "Maximizar terminal";
+"Nova aba" = "Nova aba";
+"Fechar painel dividido" = "Fechar painel dividido";
+"Zoom in" = "Zoom in";
+"Zoom out" = "Zoom out";
+"Buscar no grafo" = "Buscar no grafo";
+"Pressione" = "Pressione";
+"para ver todos os atalhos" = "para ver todos os atalhos";

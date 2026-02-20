@@ -1,6 +1,7 @@
 "Erro" = "Error";
 "Workspace" = "Workspace";
-"Git Graph" = "Git Graph";
+"Zion Tree" = "Zion Tree";
+"Seu cliente Git nativo para macOS." = "Your native Git client for macOS.";
 "Operacoes" = "Operations";
 "Worktrees" = "Worktrees";
 "Seguranca" = "Security";
@@ -105,7 +106,7 @@
 "Crie un novo worktree para comecar a trabalhar em paralelo." = "Create a new worktree to start working in parallel.";
 "ATUAL" = "CURRENT";
 "Abrir repositorio" = "Open repository";
-"Seu Git Graph nativo para macOS. Abra um repositorio para visualizar historico, executar comandos e gerenciar worktrees." = "Your native Git Graph for macOS. Open a repository to view history, execute commands, and manage worktrees.";
+"Seu Git Graph nativo para macOS. Abra um repositorio para visualizar historico, executar comandos e gerenciar worktrees." = "Your native Git client for macOS. Open a repository to view history, execute commands, and manage worktrees.";
 "Nova branch" = "New branch";
 "Adicionar Tag..." = "Add Tag...";
 "Criar Branch..." = "Create Branch...";
@@ -151,7 +152,7 @@
 "Deseja remover o worktree %@?" = "Remove worktree %@?";
 "Inferir origem da arvore" = "Infer tree origin";
 "Selecione um repositorio" = "Select a repository";
-"Seu Git Graph nativo para macOS." = "Your native Git Graph for macOS.";
+"Seu Git Graph nativo para macOS." = "Your native Git client for macOS.";
 "Abrir repositorio..." = "Open repository...";
 "Nova branch a partir de %@" = "New branch from %@";
 "Remover branch remota" = "Delete remote branch";
@@ -340,3 +341,49 @@
 "Somente editor" = "Editor only";
 "Editor e terminal" = "Editor and terminal";
 "Somente terminal" = "Terminal only";
+
+// Clone
+"Clonar Repositorio" = "Clone Repository";
+"Baixe um repositorio remoto para o disco local." = "Download a remote repository to your local disk.";
+"URL do repositorio" = "Repository URL";
+"Pasta de destino" = "Destination folder";
+"Nome do repositorio" = "Repository name";
+"Escolher..." = "Browse...";
+"Escolher" = "Browse";
+"Clonar" = "Clone";
+"Clonar repositorio..." = "Clone repository...";
+"Clonar repositorio remoto" = "Clone remote repository";
+
+// Clipboard explainer
+"Clipboard Inteligente" = "Smart Clipboard";
+"Captura automaticamente o que voce copiar" = "Automatically captures what you copy";
+"Clique para colar no terminal" = "Click to paste in terminal";
+"Duplo clique para executar" = "Double-click to execute";
+"Arraste para o terminal" = "Drag to terminal";
+"Copie algo para comecar" = "Copy something to get started";
+
+// Tooltips
+"Atualizar arvore de arquivos" = "Refresh file tree";
+"Novo terminal" = "New terminal";
+"Limpar busca" = "Clear search";
+"Resultado anterior" = "Previous result";
+"Proximo resultado" = "Next result";
+"Adicionar todos ao stage" = "Stage all files";
+"Remover todos do stage" = "Unstage all files";
+
+// Keyboard Shortcuts Sheet
+"Atalhos de Teclado" = "Keyboard Shortcuts";
+"Navegacao" = "Navigation";
+"Codigo" = "Code";
+"Grafo" = "Graph";
+"Editor" = "Editor";
+"Quick Open" = "Quick Open";
+"Barra lateral" = "Sidebar";
+"Maximizar terminal" = "Maximize terminal";
+"Nova aba" = "New tab";
+"Fechar painel dividido" = "Close split pane";
+"Zoom in" = "Zoom in";
+"Zoom out" = "Zoom out";
+"Buscar no grafo" = "Search graph";
+"Pressione" = "Press";
+"para ver todos os atalhos" = "to see all shortcuts";

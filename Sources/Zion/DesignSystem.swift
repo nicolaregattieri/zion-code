@@ -90,6 +90,39 @@ struct DesignSystem {
             comment: (r: 0.416, g: 0.451, b: 0.490),
             number: (r: 0.0, g: 0.361, b: 0.773)
         )
+
+        // Catppuccin Mocha — pastel dark, community-driven
+        static let catppuccinMocha = ThemeColors(
+            background: (r: 0.118, g: 0.118, b: 0.180),  // #1e1e2e
+            text: (r: 0.804, g: 0.839, b: 0.957),        // #cdd6f4
+            keyword: (r: 0.796, g: 0.651, b: 0.969),      // #cba6f7 mauve
+            type: (r: 0.537, g: 0.706, b: 0.980),         // #89b4fa blue
+            string: (r: 0.651, g: 0.890, b: 0.631),       // #a6e3a1 green
+            comment: (r: 0.424, g: 0.439, b: 0.525),      // #6c7086 overlay0
+            number: (r: 0.980, g: 0.702, b: 0.529)        // #fab387 peach
+        )
+
+        // One Dark Pro — warm-neutral dark, most popular VS Code theme
+        static let oneDarkPro = ThemeColors(
+            background: (r: 0.157, g: 0.173, b: 0.204),   // #282c34
+            text: (r: 0.671, g: 0.698, b: 0.749),         // #abb2bf
+            keyword: (r: 0.776, g: 0.471, b: 0.867),      // #c678dd purple
+            type: (r: 0.898, g: 0.753, b: 0.482),         // #e5c07b yellow
+            string: (r: 0.596, g: 0.765, b: 0.475),       // #98c379 green
+            comment: (r: 0.361, g: 0.388, b: 0.439),      // #5c6370 gray
+            number: (r: 0.820, g: 0.604, b: 0.400)        // #d19a66 orange
+        )
+
+        // Tokyo Night — indigo dark, "screenshot theme"
+        static let tokyoNight = ThemeColors(
+            background: (r: 0.102, g: 0.106, b: 0.149),   // #1a1b26
+            text: (r: 0.663, g: 0.694, b: 0.839),         // #a9b1d6
+            keyword: (r: 0.733, g: 0.604, b: 0.969),      // #bb9af7 purple
+            type: (r: 0.165, g: 0.765, b: 0.871),         // #2ac3de cyan
+            string: (r: 0.620, g: 0.808, b: 0.416),       // #9ece6a green
+            comment: (r: 0.337, g: 0.373, b: 0.537),      // #565f89 muted
+            number: (r: 1.0, g: 0.620, b: 0.392)          // #ff9e64 orange
+        )
     }
 
     // MARK: - Terminal Palettes
@@ -114,6 +147,23 @@ struct DesignSystem {
     }
 
     struct TerminalPalettes {
+        static let dracula = TerminalPalette(
+            foreground: nsHex(0xf8f8f2),
+            background: nsHex(0x282a36),
+            cursorColor: nsHex(0xf8f8f2),
+            cursorTextColor: nsHex(0x282a36),
+            selectionBackground: nsHex(0x44475a),
+            selectionForeground: nsHex(0xf8f8f2),
+            ansiColors: [
+                stColor(0x21222c), stColor(0xff5555), stColor(0x50fa7b), stColor(0xf1fa8c),
+                stColor(0xbd93f9), stColor(0xff79c6), stColor(0x8be9fd), stColor(0xf8f8f2),
+                stColor(0x6272a4), stColor(0xff6e6e), stColor(0x69ff94), stColor(0xffffa5),
+                stColor(0xd6acff), stColor(0xff92df), stColor(0xa4ffff), stColor(0xffffff),
+            ],
+            backgroundSwiftUI: swHex(0x282a36),
+            accentSwiftUI: swHex(0x50fa7b)
+        )
+
         static let catppuccinMocha = TerminalPalette(
             foreground: nsHex(0xcdd6f4),
             background: nsHex(0x1e1e2e),
@@ -163,6 +213,40 @@ struct DesignSystem {
             ],
             backgroundSwiftUI: swHex(0xffffff),
             accentSwiftUI: swHex(0x28a745)
+        )
+
+        static let oneDarkPro = TerminalPalette(
+            foreground: nsHex(0xabb2bf),
+            background: nsHex(0x282c34),
+            cursorColor: nsHex(0x528bff),
+            cursorTextColor: nsHex(0x282c34),
+            selectionBackground: nsHex(0x3e4451),
+            selectionForeground: nsHex(0xabb2bf),
+            ansiColors: [
+                stColor(0x282c34), stColor(0xe06c75), stColor(0x98c379), stColor(0xe5c07b),
+                stColor(0x61afef), stColor(0xc678dd), stColor(0x56b6c2), stColor(0xabb2bf),
+                stColor(0x5c6370), stColor(0xe06c75), stColor(0x98c379), stColor(0xe5c07b),
+                stColor(0x61afef), stColor(0xc678dd), stColor(0x56b6c2), stColor(0xffffff),
+            ],
+            backgroundSwiftUI: swHex(0x282c34),
+            accentSwiftUI: swHex(0x98c379)
+        )
+
+        static let tokyoNight = TerminalPalette(
+            foreground: nsHex(0xa9b1d6),
+            background: nsHex(0x1a1b26),
+            cursorColor: nsHex(0xc0caf5),
+            cursorTextColor: nsHex(0x1a1b26),
+            selectionBackground: nsHex(0x33467c),
+            selectionForeground: nsHex(0xa9b1d6),
+            ansiColors: [
+                stColor(0x15161e), stColor(0xf7768e), stColor(0x9ece6a), stColor(0xe0af68),
+                stColor(0x7aa2f7), stColor(0xbb9af7), stColor(0x7dcfff), stColor(0xa9b1d6),
+                stColor(0x414868), stColor(0xf7768e), stColor(0x9ece6a), stColor(0xe0af68),
+                stColor(0x7aa2f7), stColor(0xbb9af7), stColor(0x7dcfff), stColor(0xc0caf5),
+            ],
+            backgroundSwiftUI: swHex(0x1a1b26),
+            accentSwiftUI: swHex(0x9ece6a)
         )
     }
 }

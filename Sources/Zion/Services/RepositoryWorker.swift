@@ -163,6 +163,15 @@ actor RepositoryWorker {
         return result.stdout.clean.isEmpty ? result.stderr.clean : result.stdout.clean
     }
 
+    nonisolated func cloneRepository(
+        remoteURL: String,
+        destination: URL,
+        onProgress: @escaping @Sendable (String) -> Void
+    ) throws -> Process {
+        let client = GitClient()
+        return try client.cloneWithProgress(remoteURL: remoteURL, destination: destination, onProgress: onProgress)
+    }
+
     nonisolated func runShellStream(command: String, in repositoryURL: URL, onOutput: @escaping @Sendable (String) -> Void) throws {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/zsh")

@@ -34,6 +34,7 @@ struct ChangesScreen: View {
                     Label(L10n("Stage All"), systemImage: "plus.circle.fill")
                 }
                 .buttonStyle(.bordered).controlSize(.mini)
+                .help(L10n("Adicionar todos ao stage"))
 
                 Button {
                     model.unstageAllFiles()
@@ -41,6 +42,7 @@ struct ChangesScreen: View {
                     Label(L10n("Unstage All"), systemImage: "minus.circle.fill")
                 }
                 .buttonStyle(.bordered).controlSize(.mini)
+                .help(L10n("Remover todos do stage"))
 
                 Button {
                     model.refreshRepository()

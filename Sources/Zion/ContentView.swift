@@ -7,6 +7,7 @@ struct ContentView: View {
     @State private var selectedSection: AppSection? = .code
     @State private var commitSearchQuery: String = ""
     @State private var selectedBranchTreeNodeID: String?
+    @State private var isShortcutsVisible: Bool = false
     
     @AppStorage("zion.confirmationMode") private var confirmationModeRaw: String = ConfirmationMode.destructiveOnly.rawValue
     @AppStorage("zion.uiLanguage") private var uiLanguageRaw: String = AppLanguage.system.rawValue
@@ -55,6 +56,8 @@ struct ContentView: View {
                         .keyboardShortcut("2", modifiers: .command)
                     Button("") { selectedSection = .operations }
                         .keyboardShortcut("3", modifiers: .command)
+                    Button("") { isShortcutsVisible = true }
+                        .keyboardShortcut("/", modifiers: .command)
                 }
                 .frame(width: 0, height: 0)
                 .opacity(0)
@@ -91,6 +94,15 @@ struct ContentView: View {
         }
         .sheet(isPresented: $model.isPRSheetVisible) {
             PullRequestSheet(model: model)
+        }
+        .sheet(isPresented: $model.isCloneSheetVisible) {
+            CloneSheet(model: model)
+        }
+        .sheet(isPresented: $isShortcutsVisible) {
+            KeyboardShortcutsSheet()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .showKeyboardShortcuts)) { _ in
+            isShortcutsVisible = true
         }
     }
 
@@ -194,7 +206,10 @@ struct ContentView: View {
             ControlGroup {
                 Button { openRepositoryPanel() } label: { Image(systemName: "folder") }
                     .help(L10n("Abrir repositório"))
-                
+
+                Button { model.isCloneSheetVisible = true } label: { Image(systemName: "square.and.arrow.down.on.square") }
+                    .help(L10n("Clonar repositorio remoto"))
+
                 Button { model.refreshRepository() } label: { Image(systemName: "arrow.clockwise") }
                     .disabled(model.repositoryURL == nil)
                     .help(L10n("Atualizar status do repositório"))

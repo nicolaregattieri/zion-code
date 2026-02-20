@@ -316,26 +316,25 @@ struct LanguageStat: Identifiable {
 }
 
 enum EditorTheme: String, CaseIterable, Identifiable {
-    case dracula, cityLights, githubLight
+    case dracula, cityLights, githubLight, catppuccinMocha, oneDarkPro, tokyoNight
     var id: String { rawValue }
     var label: String {
         switch self {
         case .dracula: return "Dracula"
         case .cityLights: return "City Lights"
         case .githubLight: return "GitHub Light"
+        case .catppuccinMocha: return "Catppuccin Mocha"
+        case .oneDarkPro: return "One Dark Pro"
+        case .tokyoNight: return "Tokyo Night"
         }
     }
-    var isDark: Bool {
-        switch self {
-        case .dracula, .cityLights, .githubLight: return true
-        }
-    }
+    var isDark: Bool { true } // GOLDEN RULE — always true for ALL themes
 
     /// Visual appearance — true light theme (light bg, dark text)
     var isLightAppearance: Bool {
         switch self {
         case .githubLight: return true
-        case .dracula, .cityLights: return false
+        case .dracula, .cityLights, .catppuccinMocha, .oneDarkPro, .tokyoNight: return false
         }
     }
 }
@@ -392,14 +391,20 @@ extension EditorTheme {
         case .dracula: return DesignSystem.EditorThemes.dracula
         case .cityLights: return DesignSystem.EditorThemes.cityLights
         case .githubLight: return DesignSystem.EditorThemes.githubLight
+        case .catppuccinMocha: return DesignSystem.EditorThemes.catppuccinMocha
+        case .oneDarkPro: return DesignSystem.EditorThemes.oneDarkPro
+        case .tokyoNight: return DesignSystem.EditorThemes.tokyoNight
         }
     }
 
     var terminalPalette: TerminalPalette {
         switch self {
-        case .dracula: return DesignSystem.TerminalPalettes.catppuccinMocha
+        case .dracula: return DesignSystem.TerminalPalettes.dracula
         case .cityLights: return DesignSystem.TerminalPalettes.cityLights
         case .githubLight: return DesignSystem.TerminalPalettes.githubLight
+        case .catppuccinMocha: return DesignSystem.TerminalPalettes.catppuccinMocha
+        case .oneDarkPro: return DesignSystem.TerminalPalettes.oneDarkPro
+        case .tokyoNight: return DesignSystem.TerminalPalettes.tokyoNight
         }
     }
 }
@@ -434,7 +439,7 @@ enum AppSection: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .code: return "Zion Code"
-        case .graph: return "Git Graph"
+        case .graph: return "Zion Tree"
         case .operations: return "Operacoes"
         }
     }

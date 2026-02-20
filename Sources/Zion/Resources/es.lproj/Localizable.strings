@@ -1,6 +1,7 @@
 "Erro" = "Error";
 "Workspace" = "Espacio de trabajo";
-"Git Graph" = "Git Graph";
+"Zion Tree" = "Zion Tree";
+"Seu cliente Git nativo para macOS." = "Tu cliente Git nativo para macOS.";
 "Operacoes" = "Operaciones";
 "Worktrees" = "Worktrees";
 "Historico visual, navega em commits e merges" = "Historial visual, navega commits y merges";
@@ -85,7 +86,7 @@
 "Crie un novo worktree para comecar a trabalhar em paralelo." = "Crea un nuevo worktree para empezar a trabajar en paralelo.";
 "ATUAL" = "ACTUAL";
 "Abrir repositorio" = "Abrir repositorio";
-"Seu Git Graph nativo para macOS. Abra um repositorio para visualizar historico, executar comandos e gerenciar worktrees." = "Tu Git Graph nativo para macOS. Abre un repositorio para ver historial, ejecutar comandos y gestionar worktrees.";
+"Seu Git Graph nativo para macOS. Abra um repositorio para visualizar historico, executar comandos e gerenciar worktrees." = "Tu cliente Git nativo para macOS. Abre un repositorio para ver historial, ejecutar comandos y gestionar worktrees.";
 "Nova branch a partir de %@" = "Nueva rama a partir de %@";
 "Remover branch remota" = "Eliminar rama remota";
 "Deseja remover permanentemente a branch remota %@?" = "¿Desea eliminar permanentemente la rama remota %@?";
@@ -292,3 +293,49 @@
 "Somente editor" = "Solo editor";
 "Editor e terminal" = "Editor y terminal";
 "Somente terminal" = "Solo terminal";
+
+// Clone
+"Clonar Repositorio" = "Clonar Repositorio";
+"Baixe um repositorio remoto para o disco local." = "Descarga un repositorio remoto a tu disco local.";
+"URL do repositorio" = "URL del repositorio";
+"Pasta de destino" = "Carpeta de destino";
+"Nome do repositorio" = "Nombre del repositorio";
+"Escolher..." = "Elegir...";
+"Escolher" = "Elegir";
+"Clonar" = "Clonar";
+"Clonar repositorio..." = "Clonar repositorio...";
+"Clonar repositorio remoto" = "Clonar repositorio remoto";
+
+// Clipboard explainer
+"Clipboard Inteligente" = "Portapapeles Inteligente";
+"Captura automaticamente o que voce copiar" = "Captura automaticamente lo que copies";
+"Clique para colar no terminal" = "Clic para pegar en terminal";
+"Duplo clique para executar" = "Doble clic para ejecutar";
+"Arraste para o terminal" = "Arrastra al terminal";
+"Copie algo para comecar" = "Copia algo para empezar";
+
+// Tooltips
+"Atualizar arvore de arquivos" = "Actualizar árbol de archivos";
+"Novo terminal" = "Nuevo terminal";
+"Limpar busca" = "Limpiar búsqueda";
+"Resultado anterior" = "Resultado anterior";
+"Proximo resultado" = "Siguiente resultado";
+"Adicionar todos ao stage" = "Agregar todos al stage";
+"Remover todos do stage" = "Quitar todos del stage";
+
+// Keyboard Shortcuts Sheet
+"Atalhos de Teclado" = "Atajos de Teclado";
+"Navegacao" = "Navegación";
+"Codigo" = "Código";
+"Grafo" = "Grafo";
+"Editor" = "Editor";
+"Quick Open" = "Quick Open";
+"Barra lateral" = "Barra lateral";
+"Maximizar terminal" = "Maximizar terminal";
+"Nova aba" = "Nueva pestaña";
+"Fechar painel dividido" = "Cerrar panel dividido";
+"Zoom in" = "Zoom in";
+"Zoom out" = "Zoom out";
+"Buscar no grafo" = "Buscar en el grafo";
+"Pressione" = "Presiona";
+"para ver todos os atalhos" = "para ver todos los atajos";
