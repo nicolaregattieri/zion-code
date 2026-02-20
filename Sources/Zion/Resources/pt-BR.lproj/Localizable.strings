@@ -209,3 +209,21 @@
 // Branch operations
 "Nenhuma branch encontrada" = "Nenhuma branch encontrada";
 "Deseja fazer checkout para %@?" = "Deseja fazer checkout para %@?";
+
+// L10n coverage fixes
+"Nunca confirmar" = "Nunca confirmar";
+"Confirmar criticas" = "Confirmar críticas";
+"Confirmar todas" = "Confirmar todas";
+"Selecionar do Disco..." = "Selecionar do Disco...";
+"Modificado" = "Modificado";
+"Nao inicializado" = "Não inicializado";
+"OK" = "OK";
+"Sistema" = "Sistema";
+"%d commits" = "%d commits";
+"Tag: %@" = "Tag: %@";
+"Branch: %@" = "Branch: %@";
+"(Atual)" = "(Atual)";
+"(Double-click para checkout)" = "(Double-click para checkout)";
+"Chave SSH" = "Chave SSH";
+"Configuracao SSH" = "Configuração SSH";
+"Acesso ao Keychain" = "Acesso ao Keychain";

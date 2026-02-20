@@ -5,6 +5,7 @@ import AppKit
 struct TerminalTabView: NSViewRepresentable {
     var session: TerminalSession
     var theme: EditorTheme
+    var model: RepositoryViewModel?
 
     func makeNSView(context: Context) -> SwiftTerm.TerminalView {
         let terminalView = SwiftTerm.TerminalView(frame: .zero)
@@ -83,11 +84,19 @@ struct TerminalTabView: NSViewRepresentable {
         func startProcess(view: SwiftTerm.TerminalView) {
             self.terminalView = view
             let url = parent.session.workingDirectory
+            let sessionID = parent.session.id
 
             Task {
                 let process = LocalProcess(delegate: self, dispatchQueue: .main)
                 self.process = process
                 self.processIsDead = false
+
+                // Register send callback so ClipboardDrawer can paste text into this terminal
+                parent.model?.registerTerminalSendCallback(sessionID: sessionID) { [weak self] data in
+                    Task { @MainActor in
+                        self?.process?.send(data: ArraySlice(data))
+                    }
+                }
 
                 var env = ProcessInfo.processInfo.environment
                 env["TERM"] = "xterm-256color"
@@ -119,6 +128,7 @@ struct TerminalTabView: NSViewRepresentable {
                 kill(pid, SIGTERM)
             }
             process = nil
+            parent.model?.unregisterTerminalSendCallback(sessionID: parent.session.id)
         }
 
         // MARK: - TerminalViewDelegate

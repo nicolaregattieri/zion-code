@@ -51,11 +51,19 @@ struct DecorationPill: View {
                 branchContextMenu(name)
             }
         }
-        .help(type == .tag ? "Tag: \(name)" : "Branch: \(name) \(isCurrent ? "(Atual)" : "(Double-click para checkout)")")
+        .help(pillHelp(name: name, type: type, isCurrent: isCurrent))
     }
 
     enum DecorationType {
         case head, localBranch, remoteBranch, tag, other
+    }
+
+    private func pillHelp(name: String, type: DecorationType, isCurrent: Bool) -> String {
+        if type == .tag {
+            return L10n("Tag: %@", name)
+        }
+        let suffix = isCurrent ? L10n("(Atual)") : L10n("(Double-click para checkout)")
+        return L10n("Branch: %@", name) + " " + suffix
     }
 
     private func checkIsCurrent(name: String, type: DecorationType, current: String) -> Bool {

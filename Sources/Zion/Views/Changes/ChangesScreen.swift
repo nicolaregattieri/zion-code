@@ -2,20 +2,22 @@ import SwiftUI
 
 struct ChangesScreen: View {
     var model: RepositoryViewModel
-    
+
     var body: some View {
         HSplitView {
             fileListPane
                 .frame(minWidth: 250, idealWidth: 350, maxWidth: 500)
                 .layoutPriority(1)
-            
+
             diffViewerPane
                 .frame(minWidth: 600, idealWidth: 1000, maxWidth: .infinity)
                 .layoutPriority(2)
         }
         .padding(12)
     }
-    
+
+    // MARK: - File List
+
     private var fileListPane: some View {
         GlassCard(spacing: 0) {
             HStack {
@@ -25,6 +27,21 @@ struct ChangesScreen: View {
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
+
+                Button {
+                    model.stageAllFiles()
+                } label: {
+                    Label(L10n("Stage All"), systemImage: "plus.circle.fill")
+                }
+                .buttonStyle(.bordered).controlSize(.mini)
+
+                Button {
+                    model.unstageAllFiles()
+                } label: {
+                    Label(L10n("Unstage All"), systemImage: "minus.circle.fill")
+                }
+                .buttonStyle(.bordered).controlSize(.mini)
+
                 Button {
                     model.refreshRepository()
                 } label: {
@@ -32,9 +49,9 @@ struct ChangesScreen: View {
                 }.buttonStyle(.plain).help(L10n("Atualizar"))
             }
             .padding(12)
-            
+
             Divider()
-            
+
             if model.uncommittedChanges.isEmpty {
                 VStack(spacing: 12) {
                     Image(systemName: "checkmark.circle.fill")
@@ -61,27 +78,34 @@ struct ChangesScreen: View {
             }
         }
     }
-    
+
     private func fileRow(line: String) -> some View {
         let (indexStatus, workTreeStatus, file) = parseGitStatus(line)
         let isSelected = model.selectedChangeFile == file
-        
+        let isStaged = indexStatus != " " && indexStatus != "?"
+
         return Button {
             model.selectChangeFile(file)
         } label: {
             HStack(spacing: 10) {
                 statusIcon(index: indexStatus, worktree: workTreeStatus)
                     .font(.system(size: 14))
-                
+
                 Text(file)
                     .font(.system(size: 12, weight: isSelected ? .bold : .regular, design: .monospaced))
                     .lineLimit(1)
                     .truncationMode(.middle)
-                
+
                 Spacer()
-                
-                if indexStatus != " " && indexStatus != "?" {
-                    Circle().fill(Color.green).frame(width: 6, height: 6)
+
+                if isStaged {
+                    Text(L10n("Staged"))
+                        .font(.system(size: 9, weight: .semibold))
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 1)
+                        .background(Color.green.opacity(0.15))
+                        .foregroundStyle(.green)
+                        .clipShape(Capsule())
                 }
             }
             .padding(.horizontal, 10).padding(.vertical, 8)
@@ -92,35 +116,41 @@ struct ChangesScreen: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .contextMenu {
+            Button {
+                model.stageFile(file)
+            } label: {
+                Label(L10n("Stage"), systemImage: "plus.circle")
+            }
+            Button {
+                model.unstageFile(file)
+            } label: {
+                Label(L10n("Unstage"), systemImage: "minus.circle")
+            }
+            Divider()
+            Button(role: .destructive) {
+                model.discardChanges(in: file)
+            } label: {
+                Label(L10n("Descartar Mudanças"), systemImage: "trash")
+            }
+        }
     }
-    
+
+    // MARK: - Diff Viewer
+
     private var diffViewerPane: some View {
         GlassCard(spacing: 0) {
             if let file = model.selectedChangeFile {
-                HStack {
-                    Image(systemName: "doc.text").foregroundStyle(.secondary)
-                    Text(file).font(.system(.subheadline, design: .monospaced)).fontWeight(.bold)
-                    Spacer()
-                    Button {
-                        model.stageFile(file)
-                    } label: {
-                        Label(L10n("Stage"), systemImage: "plus")
-                    }.buttonStyle(.bordered).controlSize(.small)
-                }
-                .padding(12)
-                
+                diffHeader(file: file)
+
                 Divider()
-                
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 0) {
-                        let lines = model.currentFileDiff.split(separator: "\n", omittingEmptySubsequences: false)
-                        ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
-                            diffLine(String(line))
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                if !model.currentFileDiffHunks.isEmpty {
+                    HunkDiffView(model: model, file: file, hunks: model.currentFileDiffHunks)
+                } else {
+                    // Fallback to raw diff display
+                    rawDiffView
                 }
-                .background(Color.black.opacity(0.2))
             } else {
                 VStack(spacing: 16) {
                     Image(systemName: "doc.text.magnifyingglass")
@@ -133,11 +163,43 @@ struct ChangesScreen: View {
             }
         }
     }
-    
+
+    private func diffHeader(file: String) -> some View {
+        HStack {
+            Image(systemName: "doc.text").foregroundStyle(.secondary)
+            Text(file).font(.system(.subheadline, design: .monospaced)).fontWeight(.bold)
+            Spacer()
+            Button {
+                model.unstageFile(file)
+            } label: {
+                Label(L10n("Unstage"), systemImage: "minus")
+            }.buttonStyle(.bordered).controlSize(.small)
+            Button {
+                model.stageFile(file)
+            } label: {
+                Label(L10n("Stage"), systemImage: "plus")
+            }.buttonStyle(.bordered).controlSize(.small)
+        }
+        .padding(12)
+    }
+
+    private var rawDiffView: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                let lines = model.currentFileDiff.split(separator: "\n", omittingEmptySubsequences: false)
+                ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
+                    diffLine(String(line))
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .background(Color.black.opacity(0.2))
+    }
+
     private func diffLine(_ line: String) -> some View {
         let backgroundColor: Color
         let textColor: Color
-        
+
         if line.hasPrefix("+") && !line.hasPrefix("+++") {
             backgroundColor = Color.green.opacity(0.15)
             textColor = Color.green
@@ -151,7 +213,7 @@ struct ChangesScreen: View {
             backgroundColor = Color.clear
             textColor = .primary.opacity(0.8)
         }
-        
+
         return Text(line)
             .font(.system(size: 12, design: .monospaced))
             .padding(.horizontal, 8)
@@ -159,7 +221,9 @@ struct ChangesScreen: View {
             .background(backgroundColor)
             .foregroundStyle(textColor)
     }
-    
+
+    // MARK: - Helpers
+
     private func parseGitStatus(_ line: String) -> (String, String, String) {
         if line.count < 3 { return (" ", " ", line) }
         let index = String(line.prefix(1))
@@ -167,7 +231,7 @@ struct ChangesScreen: View {
         let file = String(line.dropFirst(3)).trimmingCharacters(in: .whitespaces)
         return (index, worktree, file)
     }
-    
+
     @ViewBuilder
     private func statusIcon(index: String, worktree: String) -> some View {
         if index != " " && index != "?" {

@@ -32,6 +32,13 @@ Zion is a native Git client for macOS, focusing on a visual representation of th
 | Skill | Usage | Purpose |
 |-------|-------|---------|
 | `/ux-review` | `/ux-review [paste screenshots or describe screen]` | UX/UI expert analysis with actionable SwiftUI code suggestions |
+| `/hype-analyst` | `/hype-analyst [describe what to analyze or compare]` | Product hype analysis: feature audit, competitive positioning, launch strategy |
+| `/regression-check` | `/regression-check [after any change]` | Verify 6 critical paths: terminal, graph, themes, staging, clipboard, @Observable |
+| `/perf-audit` | `/perf-audit [area or concern]` | Profile hot paths: commit list, file tree, diff parsing, search, highlighting |
+| `/l10n-check` | `/l10n-check` | Scan for hardcoded strings missing L10n() and missing translation keys |
+| `/competitor-watch` | `/competitor-watch Fork` | Compare Zion vs a competitor — gaps, opportunities, threats |
+| `/launch-checklist` | `/launch-checklist` | Go/no-go audit: signing, notarization, stability, UX, marketing, legal |
+| `/accessibility-audit` | `/accessibility-audit` | VoiceOver labels, keyboard nav, color contrast, dynamic type check |
 
 ## @Observable Patterns (CRITICAL)
 

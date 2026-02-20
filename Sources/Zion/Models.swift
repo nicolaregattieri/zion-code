@@ -102,6 +102,161 @@ struct FileItem: Identifiable, Hashable, Sendable {
     var name: String { url.lastPathComponent }
 }
 
+// MARK: - Diff Models
+
+struct DiffHunk: Identifiable {
+    let id = UUID()
+    let header: String
+    let oldStart: Int
+    let oldCount: Int
+    let newStart: Int
+    let newCount: Int
+    let lines: [DiffLine]
+}
+
+struct DiffLine: Identifiable {
+    let id = UUID()
+    let type: LineType
+    let content: String
+    let oldLineNumber: Int?
+    let newLineNumber: Int?
+
+    enum LineType {
+        case context, addition, deletion
+    }
+}
+
+struct FileDiff: Identifiable {
+    let id = UUID()
+    let oldPath: String
+    let newPath: String
+    let headerLines: [String]
+    let hunks: [DiffHunk]
+}
+
+// MARK: - Reflog Models
+
+struct ReflogEntry: Identifiable {
+    let id = UUID()
+    let hash: String
+    let shortHash: String
+    let refName: String
+    let action: String
+    let message: String
+    let date: Date
+    let relativeDate: String
+}
+
+// MARK: - Interactive Rebase Models
+
+struct RebaseItem: Identifiable {
+    let id = UUID()
+    let hash: String
+    let shortHash: String
+    let subject: String
+    var action: RebaseAction = .pick
+}
+
+enum RebaseAction: String, CaseIterable, Identifiable {
+    case pick, reword, edit, squash, fixup, drop
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .pick: return "pick"
+        case .reword: return "reword"
+        case .edit: return "edit"
+        case .squash: return "squash"
+        case .fixup: return "fixup"
+        case .drop: return "drop"
+        }
+    }
+    var icon: String {
+        switch self {
+        case .pick: return "checkmark.circle"
+        case .reword: return "pencil.circle"
+        case .edit: return "pause.circle"
+        case .squash: return "arrow.triangle.merge"
+        case .fixup: return "arrow.triangle.merge"
+        case .drop: return "trash.circle"
+        }
+    }
+    var color: Color {
+        switch self {
+        case .pick: return .green
+        case .reword: return .blue
+        case .edit: return .orange
+        case .squash: return .purple
+        case .fixup: return .purple
+        case .drop: return .red
+        }
+    }
+}
+
+// MARK: - Submodule Models
+
+struct SubmoduleInfo: Identifiable {
+    let name: String
+    let path: String
+    let url: String
+    let hash: String
+    let status: SubmoduleStatus
+    var id: String { path }
+
+    enum SubmoduleStatus {
+        case upToDate, modified, uninitialized
+
+        var label: String {
+            switch self {
+            case .upToDate: return L10n("OK")
+            case .modified: return L10n("Modificado")
+            case .uninitialized: return L10n("Nao inicializado")
+            }
+        }
+
+        var icon: String {
+            switch self {
+            case .upToDate: return "checkmark.circle.fill"
+            case .modified: return "exclamationmark.circle.fill"
+            case .uninitialized: return "circle.dashed"
+            }
+        }
+
+        var color: Color {
+            switch self {
+            case .upToDate: return .green
+            case .modified: return .orange
+            case .uninitialized: return .secondary
+            }
+        }
+    }
+}
+
+// MARK: - Repository Statistics
+
+struct RepositoryStats {
+    let totalCommits: Int
+    let totalBranches: Int
+    let totalTags: Int
+    let contributors: [ContributorStat]
+    let languageBreakdown: [LanguageStat]
+    let firstCommitDate: Date?
+    let lastCommitDate: Date?
+}
+
+struct ContributorStat: Identifiable {
+    let name: String
+    let email: String
+    let commitCount: Int
+    var id: String { email }
+}
+
+struct LanguageStat: Identifiable {
+    let language: String
+    let fileCount: Int
+    let percentage: Double
+    var id: String { language }
+}
+
 enum EditorTheme: String, CaseIterable, Identifiable {
     case dracula, cityLights, githubLight
     var id: String { rawValue }
@@ -196,9 +351,9 @@ enum ConfirmationMode: String, CaseIterable, Identifiable, Sendable {
     var id: String { rawValue }
     var label: String {
         switch self {
-        case .never: return "Nunca confirmar"
-        case .destructiveOnly: return "Confirmar criticas"
-        case .all: return "Confirmar todas"
+        case .never: return L10n("Nunca confirmar")
+        case .destructiveOnly: return L10n("Confirmar criticas")
+        case .all: return L10n("Confirmar todas")
         }
     }
 }
@@ -246,7 +401,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var label: String {
         switch self {
-        case .system: return "Sistema"
+        case .system: return L10n("Sistema")
         case .ptBR: return "Português (BR)"
         case .en: return "English"
         case .es: return "Español"
@@ -323,7 +478,7 @@ enum ExternalEditor: String, CaseIterable, Identifiable {
         case .xcode: return "Xcode"
         case .intellij: return "IntelliJ"
         case .sublime: return "Sublime Text"
-        case .custom: return "Selecionar do Disco..."
+        case .custom: return L10n("Selecionar do Disco...")
         }
     }
 }
@@ -339,7 +494,7 @@ enum ExternalTerminal: String, CaseIterable, Identifiable {
         case .terminal: return "Terminal.app"
         case .iterm: return "iTerm2"
         case .warp: return "Warp"
-        case .custom: return "Selecionar do Disco..."
+        case .custom: return L10n("Selecionar do Disco...")
         }
     }
 }
