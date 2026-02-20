@@ -14,7 +14,9 @@ struct ClipboardDrawer: View {
             }
         }
         .background(DesignSystem.Colors.background.opacity(0.3))
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(alignment: .top) {
+            Rectangle().fill(DesignSystem.Colors.glassBorderDark).frame(height: 1)
+        }
         .onAppear { model.clipboardMonitor.start() }
         .onDisappear { model.clipboardMonitor.stop() }
     }
@@ -76,7 +78,7 @@ struct ClipboardDrawer: View {
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
+                    .padding(.vertical, 10)
             } else {
                 ScrollView {
                     VStack(spacing: 2) {

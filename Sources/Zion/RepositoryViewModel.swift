@@ -34,9 +34,20 @@ final class RepositoryViewModel {
     var selectedChangeFile: String?
     var currentFileDiff: String = ""
 
-    // Terminal
-    var terminalSessions: [TerminalSession] = []
-    var activeTerminalID: UUID?
+    // Terminal — pane tree architecture
+    var terminalTabs: [TerminalPaneNode] = []
+    var activeTabID: UUID?
+    var focusedSessionID: UUID?
+
+    /// Flat list of all sessions across all tabs (backward compat + tab bar)
+    var terminalSessions: [TerminalSession] {
+        terminalTabs.flatMap { $0.allSessions() }
+    }
+    /// Points to the focused session within the active tab
+    var activeTerminalID: UUID? {
+        get { focusedSessionID }
+        set { focusedSessionID = newValue }
+    }
 
     // Clipboard
     let clipboardMonitor = ClipboardMonitor()
@@ -119,6 +130,17 @@ final class RepositoryViewModel {
         didSet { UserDefaults.standard.set(isLineWrappingEnabled, forKey: "editor.lineWrap") }
     }
 
+    // Terminal font settings
+    var terminalFontSize: Double = 13.0 {
+        didSet { UserDefaults.standard.set(terminalFontSize, forKey: "terminal.fontSize") }
+    }
+    var terminalFontFamily: String = "SF Mono" {
+        didSet { UserDefaults.standard.set(terminalFontFamily, forKey: "terminal.fontFamily") }
+    }
+    var isTerminalFontAvailable: Bool {
+        NSFont(name: terminalFontFamily, size: 13) != nil
+    }
+
     var branchInput: String = ""
     var tagInput: String = ""
     var stashMessageInput: String = ""
@@ -182,6 +204,13 @@ final class RepositoryViewModel {
         if defaults.object(forKey: "editor.lineWrap") != nil {
             isLineWrappingEnabled = defaults.bool(forKey: "editor.lineWrap")
         }
+        // Terminal font settings
+        if defaults.object(forKey: "terminal.fontSize") != nil {
+            terminalFontSize = defaults.double(forKey: "terminal.fontSize")
+        }
+        if let family = defaults.string(forKey: "terminal.fontFamily") {
+            terminalFontFamily = family
+        }
     }
 
     private func recalculateMaxLaneCount() {
@@ -200,7 +229,9 @@ final class RepositoryViewModel {
         }
         
         // Reset terminal and files for the new project
-        terminalSessions.removeAll()
+        terminalTabs.removeAll()
+        activeTabID = nil
+        focusedSessionID = nil
         openedFiles.removeAll()
         activeFileID = nil
         selectedCodeFile = nil
@@ -789,23 +820,143 @@ final class RepositoryViewModel {
 
     func createTerminalSession(workingDirectory: URL, label: String, worktreeID: String? = nil, activate: Bool = true) {
         if let worktreeID, let existing = terminalSessions.first(where: { $0.worktreeID == worktreeID }) {
-            if activate { activeTerminalID = existing.id }
+            if activate { activateSession(existing) }
             return
         }
         let session = TerminalSession(workingDirectory: workingDirectory, label: label, worktreeID: worktreeID)
-        terminalSessions.append(session)
-        if activate { activeTerminalID = session.id }
+        let tab = TerminalPaneNode(session: session)
+        terminalTabs.append(tab)
+        if activate {
+            activeTabID = tab.id
+            focusedSessionID = session.id
+        }
     }
 
     func closeTerminalSession(_ session: TerminalSession) {
-        terminalSessions.removeAll(where: { $0.id == session.id })
-        if activeTerminalID == session.id {
-            activeTerminalID = terminalSessions.last?.id
+        // Try to close within a split first
+        for tab in terminalTabs {
+            if let (parent, isFirst) = tab.findParent(of: session.id) {
+                // Collapse: replace split with the surviving child
+                if case .split(_, let first, let second) = parent.content {
+                    parent.content = isFirst ? second.content : first.content
+                }
+                if focusedSessionID == session.id {
+                    focusedSessionID = tab.allSessions().first?.id
+                }
+                return
+            }
+        }
+        // Not in a split — remove the entire tab
+        terminalTabs.removeAll(where: { tab in
+            if case .terminal(let s) = tab.content { return s.id == session.id }
+            return false
+        })
+        if activeTabID != nil && !terminalTabs.contains(where: { $0.id == activeTabID }) {
+            activeTabID = terminalTabs.last?.id
+        }
+        if focusedSessionID == session.id {
+            focusedSessionID = terminalSessions.last?.id
+        }
+    }
+
+    func closeTab(_ tab: TerminalPaneNode) {
+        terminalTabs.removeAll(where: { $0.id == tab.id })
+        if activeTabID == tab.id {
+            activeTabID = terminalTabs.last?.id
+            focusedSessionID = terminalTabs.last?.allSessions().first?.id
         }
     }
 
     func activateTerminalSession(_ session: TerminalSession) {
-        activeTerminalID = session.id
+        activateSession(session)
+    }
+
+    private func activateSession(_ session: TerminalSession) {
+        // Find which tab contains this session and activate both tab and session
+        for tab in terminalTabs {
+            if tab.findNode(containing: session.id) != nil {
+                activeTabID = tab.id
+                focusedSessionID = session.id
+                return
+            }
+        }
+    }
+
+    func splitFocusedTerminal(direction: SplitDirection) {
+        guard let focusedID = focusedSessionID else { return }
+        for tab in terminalTabs {
+            if let node = tab.findNode(containing: focusedID) {
+                if case .terminal(let session) = node.content {
+                    let newSession = TerminalSession(
+                        workingDirectory: session.workingDirectory,
+                        label: session.label
+                    )
+                    let firstNode = TerminalPaneNode(session: session)
+                    let secondNode = TerminalPaneNode(session: newSession)
+                    node.content = .split(direction: direction, first: firstNode, second: secondNode)
+                    focusedSessionID = newSession.id
+                    return
+                }
+            }
+        }
+    }
+
+    func splitFocusedWithSession(_ newSession: TerminalSession, direction: SplitDirection) {
+        guard let focusedID = focusedSessionID else {
+            let tab = TerminalPaneNode(session: newSession)
+            terminalTabs.append(tab)
+            activeTabID = tab.id
+            focusedSessionID = newSession.id
+            return
+        }
+        for tab in terminalTabs {
+            if let node = tab.findNode(containing: focusedID) {
+                if case .terminal(let session) = node.content {
+                    let firstNode = TerminalPaneNode(session: session)
+                    let secondNode = TerminalPaneNode(session: newSession)
+                    node.content = .split(direction: direction, first: firstNode, second: secondNode)
+                    focusedSessionID = newSession.id
+                    return
+                }
+            }
+        }
+        let tab = TerminalPaneNode(session: newSession)
+        terminalTabs.append(tab)
+        activeTabID = tab.id
+        focusedSessionID = newSession.id
+    }
+
+    func quickCreateWorktree() {
+        guard let repositoryURL else { return }
+        let repoName = repositoryURL.lastPathComponent
+        let parentDir = repositoryURL.deletingLastPathComponent()
+        var n = 1
+        while FileManager.default.fileExists(atPath: parentDir.appendingPathComponent("\(repoName)-wt-\(n)").path) {
+            n += 1
+        }
+        let wtPath = parentDir.appendingPathComponent("\(repoName)-wt-\(n)").path
+        let branchName = "wt-\(n)"
+
+        actionTask?.cancel()
+        isBusy = true
+        actionTask = Task {
+            do {
+                let _ = try await worker.runAction(args: ["worktree", "add", "-b", branchName, wtPath], in: repositoryURL)
+                try Task.checkCancellation()
+                clearError()
+                let wtSession = TerminalSession(workingDirectory: URL(fileURLWithPath: wtPath), label: branchName, worktreeID: wtPath)
+                splitFocusedWithSession(wtSession, direction: .vertical)
+                statusMessage = "Worktree criado: \(repoName)-wt-\(n)"
+                refreshRepository(setBusy: true)
+            } catch is CancellationError { return }
+            catch { isBusy = false; handleError(error) }
+        }
+    }
+
+    func closeFocusedTerminalPane() {
+        guard let focusedID = focusedSessionID,
+              let session = terminalSessions.first(where: { $0.id == focusedID }) else { return }
+        closeTerminalSession(session)
     }
 
     private func closeTerminalSession(forWorktree worktreeID: String) {
@@ -816,13 +967,13 @@ final class RepositoryViewModel {
 
     func createDefaultTerminalSession(repositoryURL: URL?, branchName: String) {
         let workingDirectory = repositoryURL ?? URL(fileURLWithPath: NSHomeDirectory())
-        
+
         // If we already have a session for THIS directory, just activate it
         if let existing = terminalSessions.first(where: { $0.workingDirectory.path == workingDirectory.path }) {
-            activeTerminalID = existing.id
+            activateSession(existing)
             return
         }
-        
+
         // Otherwise create a new one
         createTerminalSession(workingDirectory: workingDirectory, label: branchName)
     }

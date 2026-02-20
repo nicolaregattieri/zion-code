@@ -18,6 +18,64 @@ final class TerminalSession: Identifiable {
     }
 }
 
+enum SplitDirection: String {
+    case horizontal, vertical
+}
+
+@Observable @MainActor
+final class TerminalPaneNode: Identifiable {
+    let id = UUID()
+    var content: PaneContent
+
+    enum PaneContent {
+        case terminal(TerminalSession)
+        case split(direction: SplitDirection, first: TerminalPaneNode, second: TerminalPaneNode)
+    }
+
+    init(session: TerminalSession) {
+        self.content = .terminal(session)
+    }
+
+    init(direction: SplitDirection, first: TerminalPaneNode, second: TerminalPaneNode) {
+        self.content = .split(direction: direction, first: first, second: second)
+    }
+
+    /// Collect all terminal sessions in this subtree
+    func allSessions() -> [TerminalSession] {
+        switch content {
+        case .terminal(let session):
+            return [session]
+        case .split(_, let first, let second):
+            return first.allSessions() + second.allSessions()
+        }
+    }
+
+    /// Find the node containing a specific session ID, returning the parent and which side
+    func findNode(containing sessionID: UUID) -> TerminalPaneNode? {
+        switch content {
+        case .terminal(let session):
+            return session.id == sessionID ? self : nil
+        case .split(_, let first, let second):
+            return first.findNode(containing: sessionID) ?? second.findNode(containing: sessionID)
+        }
+    }
+
+    /// Find parent of a node containing sessionID, returns (parent, isFirst)
+    func findParent(of sessionID: UUID) -> (parent: TerminalPaneNode, isFirst: Bool)? {
+        guard case .split(_, let first, let second) = content else { return nil }
+        if case .terminal(let s) = first.content, s.id == sessionID {
+            return (self, true)
+        }
+        if case .terminal(let s) = second.content, s.id == sessionID {
+            return (self, false)
+        }
+        // Recurse into children
+        if let found = first.findParent(of: sessionID) { return found }
+        if let found = second.findParent(of: sessionID) { return found }
+        return nil
+    }
+}
+
 struct LaneEdge: Hashable, Sendable {
     let from: Int
     let to: Int
