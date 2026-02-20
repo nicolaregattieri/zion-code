@@ -2,7 +2,7 @@ import SwiftUI
 import AppKit
 
 struct OperationsScreen: View {
-    @ObservedObject var model: RepositoryViewModel
+    @Bindable var model: RepositoryViewModel
     let performGitAction: (String, String, Bool, @escaping () -> Void) -> Void
     let branchContextMenu: (String) -> AnyView
     
@@ -384,7 +384,7 @@ struct OperationsScreen: View {
 }
 
 struct FileStatusRow: View {
-    @ObservedObject var model: RepositoryViewModel
+    var model: RepositoryViewModel
     let line: String
     let performGitAction: (String, String, Bool, @escaping () -> Void) -> Void
     

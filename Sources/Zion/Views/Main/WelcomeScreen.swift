@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct WelcomeScreen: View {
-    @ObservedObject var model: RepositoryViewModel
+    var model: RepositoryViewModel
     let onOpen: () -> Void
 
     var body: some View {

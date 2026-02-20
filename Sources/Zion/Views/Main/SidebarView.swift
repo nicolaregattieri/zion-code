@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SidebarView: View {
-    @ObservedObject var model: RepositoryViewModel
+    var model: RepositoryViewModel
     @Binding var selectedSection: AppSection?
     @Binding var selectedBranchTreeNodeID: String?
     @Binding var confirmationModeRaw: String
@@ -385,7 +385,7 @@ struct SidebarView: View {
                         }
                     }
                     .labelsHidden()
-                    .onChange(of: preferredEditorRaw) { val in
+                    .onChange(of: preferredEditorRaw) { _, val in
                         if val == "custom" { pickCustomApp(forEditor: true) }
                     }
                     if preferredEditorRaw == "custom" && !customEditorPath.isEmpty {
@@ -403,7 +403,7 @@ struct SidebarView: View {
                         }
                     }
                     .labelsHidden()
-                    .onChange(of: preferredTerminalRaw) { val in
+                    .onChange(of: preferredTerminalRaw) { _, val in
                         if val == "custom" { pickCustomApp(forEditor: false) }
                     }
                     if preferredTerminalRaw == "custom" && !customTerminalPath.isEmpty {

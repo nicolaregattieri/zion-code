@@ -1,108 +1,119 @@
 import Foundation
 import SwiftUI
 
-@MainActor
-final class RepositoryViewModel: ObservableObject {
-    @Published var repositoryURL: URL?
-    @Published var currentBranch: String = "-"
-    @Published var headShortHash: String = "-"
-    @Published var commits: [Commit] = []
-    @Published var selectedCommitID: String?
-    @Published var commitDetails: String = "Selecione um commit para ver os detalhes."
-    @Published var branches: [String] = []
-    @Published var branchInfos: [BranchInfo] = []
-    @Published var branchTree: [BranchTreeNode] = []
-    @Published var focusedBranch: String?
-    @Published var inferBranchOrigins: Bool = false
-    @Published var hasMoreCommits: Bool = false
-    @Published var tags: [String] = []
-    @Published var stashes: [String] = []
-    @Published var selectedStash: String = ""
-    @Published var worktrees: [WorktreeItem] = []
-    @Published var statusMessage: String = "Selecione um repositorio para iniciar."
-    @Published var lastError: String?
-    @Published var isBusy: Bool = false
-    @Published var hasConflicts: Bool = false
-    @Published var isMerging: Bool = false
-    @Published var isRebasing: Bool = false
-    @Published var isCherryPicking: Bool = false
-    @Published var isGitRepository: Bool = true
-    @Published var uncommittedChanges: [String] = []
-    @Published var uncommittedCount: Int = 0
-    @Published var selectedChangeFile: String?
-    @Published var currentFileDiff: String = ""
-    
+@Observable @MainActor
+final class RepositoryViewModel {
+    var repositoryURL: URL?
+    var currentBranch: String = "-"
+    var headShortHash: String = "-"
+    var commits: [Commit] = [] {
+        didSet { recalculateMaxLaneCount() }
+    }
+    var selectedCommitID: String?
+    var commitDetails: String = "Selecione um commit para ver os detalhes."
+    var branches: [String] = []
+    var branchInfos: [BranchInfo] = []
+    var branchTree: [BranchTreeNode] = []
+    var focusedBranch: String?
+    var inferBranchOrigins: Bool = false
+    var hasMoreCommits: Bool = false
+    var tags: [String] = []
+    var stashes: [String] = []
+    var selectedStash: String = ""
+    var worktrees: [WorktreeItem] = []
+    var statusMessage: String = "Selecione um repositorio para iniciar."
+    var lastError: String?
+    var isBusy: Bool = false
+    var hasConflicts: Bool = false
+    var isMerging: Bool = false
+    var isRebasing: Bool = false
+    var isCherryPicking: Bool = false
+    var isGitRepository: Bool = true
+    var uncommittedChanges: [String] = []
+    var uncommittedCount: Int = 0
+    var selectedChangeFile: String?
+    var currentFileDiff: String = ""
+
     // Terminal
-    @Published var terminalSessions: [TerminalSession] = []
-    @Published var activeTerminalID: UUID?
+    var terminalSessions: [TerminalSession] = []
+    var activeTerminalID: UUID?
 
     // Zion Code state
-    @Published var repositoryFiles: [FileItem] = []
-    @Published var openedFiles: [FileItem] = []
-    @Published var activeFileID: String?
-    @Published var selectedCodeFile: FileItem? // Keep for backward compat/simple reference
-    @Published var codeFileContent: String = "" {
+    var repositoryFiles: [FileItem] = [] {
+        didSet { rebuildFlatFileCache() }
+    }
+    var openedFiles: [FileItem] = []
+    var activeFileID: String?
+    var selectedCodeFile: FileItem?
+    var codeFileContent: String = "" {
         didSet { markCurrentFileUnsavedIfChanged() }
     }
-    @Published var expandedPaths: Set<String> = []
-    
+    var expandedPaths: Set<String> = []
+
     // Tracking unsaved changes per file
-    @Published var unsavedFiles: Set<String> = []
-    private var originalFileContents: [String: String] = [:] // fileID -> original content
-    
-    // Editor Settings (persisted via UserDefaults + @Published for SwiftUI reactivity)
-    @Published var selectedTheme: EditorTheme = .dracula {
+    var unsavedFiles: Set<String> = []
+    @ObservationIgnored private var originalFileContents: [String: String] = [:]
+
+    // Editor Settings (persisted via UserDefaults)
+    var selectedTheme: EditorTheme = .dracula {
         didSet { UserDefaults.standard.set(selectedTheme.rawValue, forKey: "editor.theme") }
     }
-    @Published var editorFontSize: Double = 13.0 {
+    var editorFontSize: Double = 13.0 {
         didSet { UserDefaults.standard.set(editorFontSize, forKey: "editor.fontSize") }
     }
-    @Published var editorFontFamily: String = "SF Mono" {
+    var editorFontFamily: String = "SF Mono" {
         didSet { UserDefaults.standard.set(editorFontFamily, forKey: "editor.fontFamily") }
     }
-    @Published var editorLineSpacing: Double = 1.2 {
+    var editorLineSpacing: Double = 1.2 {
         didSet { UserDefaults.standard.set(editorLineSpacing, forKey: "editor.lineSpacing") }
     }
-    @Published var isLineWrappingEnabled: Bool = true {
+    var isLineWrappingEnabled: Bool = true {
         didSet { UserDefaults.standard.set(isLineWrappingEnabled, forKey: "editor.lineWrap") }
     }
 
-    @Published var branchInput: String = ""
-    @Published var tagInput: String = ""
-    @Published var stashMessageInput: String = ""
-    @Published var cherryPickInput: String = ""
-    @Published var resetTargetInput: String = "HEAD~1"
-    @Published var rebaseTargetInput: String = ""
-    @Published var worktreePathInput: String = ""
-    @Published var worktreeBranchInput: String = ""
-    @Published var remotes: [RemoteInfo] = []
-    @Published var remoteNameInput: String = "origin"
-    @Published var remoteURLInput: String = ""
-    @Published var commitMessageInput: String = ""
-    @Published var amendLastCommit: Bool = false
-    @Published var isTypingQuickly: Bool = false
-    @Published var shouldClosePopovers: Bool = false
-    @Published var debugLog: String = "Debug log initialized...\n"
+    var branchInput: String = ""
+    var tagInput: String = ""
+    var stashMessageInput: String = ""
+    var cherryPickInput: String = ""
+    var resetTargetInput: String = "HEAD~1"
+    var rebaseTargetInput: String = ""
+    var worktreePathInput: String = ""
+    var worktreeBranchInput: String = ""
+    var remotes: [RemoteInfo] = []
+    var remoteNameInput: String = "origin"
+    var remoteURLInput: String = ""
+    var commitMessageInput: String = ""
+    var amendLastCommit: Bool = false
+    var isTypingQuickly: Bool = false
+    var shouldClosePopovers: Bool = false
+    var debugLog: String = "Debug log initialized...\n"
 
-    @AppStorage("zion.recentRepositories") private var recentReposData: Data = Data()
-    @Published var recentRepositories: [URL] = []
+    private var recentReposData: Data {
+        get { UserDefaults.standard.data(forKey: "zion.recentRepositories") ?? Data() }
+        set { UserDefaults.standard.set(newValue, forKey: "zion.recentRepositories") }
+    }
+    var recentRepositories: [URL] = []
 
-    private let git = GitClient()
-    private let worker = RepositoryWorker()
-    private let fileWatcher = FileWatcher()
-    
-    private let defaultCommitLimitAll = 700
-    private let defaultCommitLimitFocused = 450
-    private let commitPageSize = 300
-    private let maxCommitLimit = 5000
-    private var commitLimit = 700
-    private var refreshRequestID = UUID()
-    private var detailsRequestID = UUID()
-    private var refreshTask: Task<Void, Never>?
-    private var detailsTask: Task<Void, Never>?
-    private var actionTask: Task<Void, Never>?
-    private var autoRefreshTask: Task<Void, Never>?
-    private var cachedIgnoredPaths: Set<String>?
+    // Performance caches
+    private(set) var maxLaneCount: Int = 1
+    private(set) var flatFileCache: [FileItem] = []
+
+    @ObservationIgnored private let git = GitClient()
+    @ObservationIgnored private let worker = RepositoryWorker()
+    @ObservationIgnored private let fileWatcher = FileWatcher()
+
+    @ObservationIgnored private let defaultCommitLimitAll = 700
+    @ObservationIgnored private let defaultCommitLimitFocused = 450
+    @ObservationIgnored private let commitPageSize = 300
+    @ObservationIgnored private let maxCommitLimit = 5000
+    @ObservationIgnored private var commitLimit = 700
+    @ObservationIgnored private var refreshRequestID = UUID()
+    @ObservationIgnored private var detailsRequestID = UUID()
+    @ObservationIgnored private var refreshTask: Task<Void, Never>?
+    @ObservationIgnored private var detailsTask: Task<Void, Never>?
+    @ObservationIgnored private var actionTask: Task<Void, Never>?
+    @ObservationIgnored private var autoRefreshTask: Task<Void, Never>?
+    @ObservationIgnored private var cachedIgnoredPaths: Set<String>?
 
     // Restore persisted editor settings from UserDefaults
     func restoreEditorSettings() {
@@ -125,11 +136,11 @@ final class RepositoryViewModel: ObservableObject {
         }
     }
 
-    var maxLaneCount: Int {
+    private func recalculateMaxLaneCount() {
         let maxLane = commits
             .flatMap { [$0.lane] + $0.incomingLanes + $0.outgoingLanes + $0.outgoingEdges.map(\.to) }
             .max() ?? 0
-        return maxLane + 1
+        maxLaneCount = maxLane + 1
     }
 
     func openRepository(_ url: URL) {
@@ -320,12 +331,16 @@ final class RepositoryViewModel: ObservableObject {
         activeFileID = item.id
         selectedCodeFile = item
 
-        do {
-            let content = try String(contentsOf: item.url, encoding: .utf8)
-            codeFileContent = content
-            originalFileContents[item.id] = content
-        } catch {
-            codeFileContent = "Erro ao ler arquivo: \(error.localizedDescription)"
+        let itemURL = item.url
+        let itemID = item.id
+        Task {
+            do {
+                let content = try String(contentsOf: itemURL, encoding: .utf8)
+                codeFileContent = content
+                originalFileContents[itemID] = content
+            } catch {
+                codeFileContent = "Erro ao ler arquivo: \(error.localizedDescription)"
+            }
         }
     }
 
@@ -356,18 +371,28 @@ final class RepositoryViewModel: ObservableObject {
 
     func saveCurrentCodeFile() {
         guard let file = selectedCodeFile else { return }
-        do {
-            try codeFileContent.write(to: file.url, atomically: true, encoding: .utf8)
-            statusMessage = String(format: L10n("Arquivo salvo: %@"), file.name)
-            originalFileContents[file.id] = codeFileContent
-            unsavedFiles.remove(file.id)
-            refreshRepository()
-        } catch {
-            handleError(error)
+        let content = codeFileContent
+        let fileURL = file.url
+        let fileID = file.id
+        let fileName = file.name
+        Task {
+            do {
+                try content.write(to: fileURL, atomically: true, encoding: .utf8)
+                statusMessage = String(format: L10n("Arquivo salvo: %@"), fileName)
+                originalFileContents[fileID] = content
+                unsavedFiles.remove(fileID)
+                refreshRepository()
+            } catch {
+                handleError(error)
+            }
         }
     }
 
     func allFlatFiles() -> [FileItem] {
+        flatFileCache
+    }
+
+    private func rebuildFlatFileCache() {
         func flatten(_ items: [FileItem]) -> [FileItem] {
             var result: [FileItem] = []
             for item in items {
@@ -381,7 +406,7 @@ final class RepositoryViewModel: ObservableObject {
             }
             return result
         }
-        return flatten(repositoryFiles)
+        flatFileCache = flatten(repositoryFiles)
     }
 
     func toggleExpansion(for path: String) {

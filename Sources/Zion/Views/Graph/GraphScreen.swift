@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct GraphScreen: View {
-    @ObservedObject var model: RepositoryViewModel
+    @Bindable var model: RepositoryViewModel
     @Binding var commitSearchQuery: String
     let performGitAction: (String, String, Bool, @escaping () -> Void) -> Void
     let commitContextMenu: (Commit) -> AnyView
@@ -53,7 +53,7 @@ struct GraphScreen: View {
             .onAppear {
                 updateSearchMatches()
             }
-            .onChange(of: model.shouldClosePopovers) { shouldClose in
+            .onChange(of: model.shouldClosePopovers) { _, shouldClose in
                 if shouldClose {
                     isShowingQuickCommit = false
                     isShowingQuickStash = false
@@ -61,7 +61,7 @@ struct GraphScreen: View {
                     model.shouldClosePopovers = false
                 }
             }
-            .onChange(of: commitSearchQuery) { _ in
+            .onChange(of: commitSearchQuery) { _, _ in
                 updateSearchMatches()
                 if !searchMatchIDs.isEmpty {
                     scrollToMatch(id: searchMatchIDs[0], proxy: proxy)
@@ -93,27 +93,15 @@ struct GraphScreen: View {
         }
     }
 
-    @State private var showCheckoutConfirmation: Bool = false
-    @State private var checkoutTargetBranch: String = ""
-
     private var jumpBar: some View {
         HStack(spacing: 8) {
             // Crown: checkout to default branch (develop > main > master)
             jumpButton(icon: "crown.fill", color: .green, label: L10n("Checkout Default")) {
                 if let target = findDefaultBranch() {
-                    checkoutTargetBranch = target
-                    showCheckoutConfirmation = true
-                }
-            }
-            .alert(L10n("Checkout"), isPresented: $showCheckoutConfirmation) {
-                Button(L10n("Confirmar")) {
-                    performGitAction(L10n("Checkout"), L10n("Deseja fazer checkout para %@?", checkoutTargetBranch), false) {
-                        model.checkout(reference: checkoutTargetBranch)
+                    performGitAction(L10n("Checkout"), L10n("Deseja fazer checkout para %@?", target), false) {
+                        model.checkout(reference: target)
                     }
                 }
-                Button(L10n("Cancelar"), role: .cancel) {}
-            } message: {
-                Text(L10n("Deseja fazer checkout para %@?", checkoutTargetBranch))
             }
 
             // Shield: scroll to main/master in graph

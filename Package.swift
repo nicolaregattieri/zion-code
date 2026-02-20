@@ -6,7 +6,7 @@ let package = Package(
     name: "Zion",
     defaultLocalization: "pt-BR",
     platforms: [
-        .macOS(.v13)
+        .macOS(.v14)
     ],
     products: [
         .executable(name: "Zion", targets: ["Zion"])

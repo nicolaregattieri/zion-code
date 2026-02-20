@@ -3,7 +3,7 @@ import AppKit
 @preconcurrency import SwiftTerm
 
 struct TerminalTabView: NSViewRepresentable {
-    @ObservedObject var session: TerminalSession
+    var session: TerminalSession
     var theme: EditorTheme
 
     func makeNSView(context: Context) -> SwiftTerm.TerminalView {
@@ -36,16 +36,16 @@ struct TerminalTabView: NSViewRepresentable {
     private func applyTheme(to view: SwiftTerm.TerminalView, context: Context) {
         let palette = theme.terminalPalette
 
-        // Always keep layer bg in sync (cheap operation)
+        // Always keep layer bg in sync (cheap — setter doesn't touch layer)
         view.layer?.backgroundColor = palette.background.cgColor
 
         // Only apply expensive operations when theme actually changes
         guard theme != context.coordinator.lastAppliedTheme else { return }
         context.coordinator.lastAppliedTheme = theme
 
-        // Base colors
-        view.nativeBackgroundColor = palette.background
+        // Base colors (must be set BEFORE installPalette — palette generation uses these)
         view.nativeForegroundColor = palette.foreground
+        view.nativeBackgroundColor = palette.background
 
         // ANSI 16-color palette
         view.getTerminal().installPalette(colors: palette.ansiColors)
@@ -59,6 +59,9 @@ struct TerminalTabView: NSViewRepresentable {
         let font = NSFont(name: "HackNerdFontMono-Regular", size: fontSize)
                   ?? NSFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
         view.font = font
+
+        // Force redraw — setters above don't trigger needsDisplay
+        view.needsDisplay = true
     }
 
     func makeCoordinator() -> Coordinator {
@@ -99,6 +102,9 @@ struct TerminalTabView: NSViewRepresentable {
                     environment: envArray,
                     currentDirectory: url.path
                 )
+
+                // Force theme re-application on next updateNSView cycle
+                self.lastAppliedTheme = nil
             }
         }
 

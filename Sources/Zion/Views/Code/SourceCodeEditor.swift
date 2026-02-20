@@ -86,8 +86,15 @@ struct SourceCodeEditor: NSViewRepresentable {
             ruler.needsDisplay = true
         }
 
-        // Highlighting
-        context.coordinator.applyHighlighting(to: textView, colors: colors)
+        // Highlighting — skip if text/theme/extension unchanged
+        let coord = context.coordinator
+        let currentText = textView.string
+        if currentText != coord.lastHighlightedText || theme != coord.lastHighlightedTheme || fileExtension != coord.lastHighlightedExtension {
+            coord.applyHighlighting(to: textView, colors: colors)
+            coord.lastHighlightedText = currentText
+            coord.lastHighlightedTheme = theme
+            coord.lastHighlightedExtension = fileExtension
+        }
 
         // Apply line spacing AFTER highlighting via addAttribute
         let range = NSRange(location: 0, length: textView.string.utf16.count)
@@ -114,6 +121,10 @@ struct SourceCodeEditor: NSViewRepresentable {
     class Coordinator: NSObject, NSTextViewDelegate {
         var parent: SourceCodeEditor
         var lastActiveFileID: String?
+        var lastHighlightedText: String?
+        var lastHighlightedTheme: EditorTheme?
+        var lastHighlightedExtension: String?
+        var regexCache: [String: NSRegularExpression] = [:]
         init(_ parent: SourceCodeEditor) { self.parent = parent }
 
         @MainActor
@@ -122,7 +133,11 @@ struct SourceCodeEditor: NSViewRepresentable {
             if parent.text != textView.string {
                 parent.text = textView.string
             }
-            applyHighlighting(to: textView, colors: parent.getEditorColors(for: parent.theme))
+            let colors = parent.getEditorColors(for: parent.theme)
+            applyHighlighting(to: textView, colors: colors)
+            lastHighlightedText = textView.string
+            lastHighlightedTheme = parent.theme
+            lastHighlightedExtension = parent.fileExtension
             textView.enclosingScrollView?.verticalRulerView?.needsDisplay = true
         }
 
@@ -277,7 +292,14 @@ struct SourceCodeEditor: NSViewRepresentable {
         }
 
         private func highlight(pattern: String, in text: String, color: NSColor, storage: NSTextStorage) {
-            guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return }
+            let regex: NSRegularExpression
+            if let cached = regexCache[pattern] {
+                regex = cached
+            } else {
+                guard let created = try? NSRegularExpression(pattern: pattern, options: []) else { return }
+                regexCache[pattern] = created
+                regex = created
+            }
             let matches = regex.matches(in: text, options: [], range: NSRange(location: 0, length: text.utf16.count))
             for match in matches {
                 storage.addAttribute(.foregroundColor, value: color, range: match.range)
