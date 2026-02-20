@@ -79,6 +79,9 @@ struct CodeScreen: View {
     @State private var isQuickOpenVisible: Bool = false
     @State private var isFileBrowserVisible: Bool = true
     @State private var layout: EditorTerminalLayout = .split
+    @State private var editorFraction: CGFloat = 0.5
+    @State private var isDraggingSplit = false
+    @State private var dragStartFraction: CGFloat = 0.5
 
     var body: some View {
         ZStack {
@@ -97,25 +100,53 @@ struct CodeScreen: View {
                             .frame(minWidth: 200, idealWidth: 260, maxWidth: 400)
                     }
 
-                    VStack(spacing: 0) {
-                        editorPane
-                            .frame(
-                                minWidth: 400, idealWidth: 800, maxWidth: .infinity,
-                                maxHeight: layout == .terminalOnly ? 0 : .infinity
-                            )
-                            .clipped()
+                    GeometryReader { geo in
+                        VStack(spacing: 0) {
+                            editorPane
+                                .frame(
+                                    height: layout == .terminalOnly ? 0 :
+                                        (layout == .editorOnly ? geo.size.height :
+                                         max(100, editorFraction * geo.size.height))
+                                )
+                                .clipped()
 
-                        if layout == .split {
-                            Divider()
+                            if layout == .split {
+                                Rectangle()
+                                    .fill(Color.clear)
+                                    .frame(height: 6)
+                                    .frame(maxWidth: .infinity)
+                                    .contentShape(Rectangle())
+                                    .overlay(Divider())
+                                    .gesture(
+                                        DragGesture(minimumDistance: 1)
+                                            .onChanged { value in
+                                                if !isDraggingSplit {
+                                                    isDraggingSplit = true
+                                                    dragStartFraction = editorFraction
+                                                }
+                                                let delta = value.translation.height / geo.size.height
+                                                editorFraction = max(0.15, min(0.85, dragStartFraction + delta))
+                                            }
+                                            .onEnded { _ in isDraggingSplit = false }
+                                    )
+                                    .onContinuousHover { phase in
+                                        switch phase {
+                                        case .active: NSCursor.resizeUpDown.push()
+                                        case .ended: NSCursor.pop()
+                                        }
+                                    }
+                            }
+
+                            terminalContainer
+                                .frame(
+                                    height: layout == .editorOnly ? 0 :
+                                        (layout == .terminalOnly ? geo.size.height :
+                                         max(100, (1 - editorFraction) * geo.size.height - 6))
+                                )
+                                .clipped()
                         }
-
-                        terminalContainer
-                            .frame(
-                                minWidth: 400, idealWidth: 800, maxWidth: .infinity,
-                                maxHeight: layout == .editorOnly ? 0 : .infinity
-                            )
-                            .clipped()
                     }
+                    .frame(minWidth: 400)
                 }
             }
 
@@ -253,7 +284,7 @@ struct CodeScreen: View {
                 .help(L10n("Somente editor") + " (⌘J)")
 
                 Button {
-                    withAnimation(.easeInOut(duration: 0.15)) { layout = .split }
+                    withAnimation(.easeInOut(duration: 0.15)) { layout = .split; editorFraction = 0.5 }
                 } label: {
                     Image(systemName: "rectangle.split.1x2")
                         .font(.system(size: 11, weight: .medium))
@@ -758,12 +789,14 @@ struct TerminalPaneView: View {
                 HSplitView {
                     ForEach(children) { child in
                         TerminalPaneView(node: child, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model)
+                            .frame(minWidth: 0, maxWidth: .infinity)
                     }
                 }
             } else {
                 VSplitView {
                     ForEach(children) { child in
                         TerminalPaneView(node: child, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model)
+                            .frame(minHeight: 0, maxHeight: .infinity)
                     }
                 }
             }

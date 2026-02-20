@@ -100,15 +100,6 @@ struct GraphScreen: View {
 
     private var jumpBar: some View {
         HStack(spacing: 8) {
-            // Crown: checkout to default branch (develop > main > master)
-            jumpButton(icon: "crown.fill", color: .green, label: L10n("Checkout Default")) {
-                if let target = findDefaultBranch() {
-                    performGitAction(L10n("Checkout"), L10n("Deseja fazer checkout para %@?", target), false) {
-                        model.checkout(reference: target)
-                    }
-                }
-            }
-
             // Shield: scroll to main/master in graph
             if let mainName = findBranchName(matches: ["main", "master", "trunk"]) {
                 jumpButton(icon: "shield.fill", color: .orange, label: mainName) { commitSearchQuery = mainName }
@@ -132,16 +123,6 @@ struct GraphScreen: View {
         .padding(.vertical, 6)
         .background(DesignSystem.Colors.glassElevated)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-    }
-
-    private func findDefaultBranch() -> String? {
-        let priorities = ["develop", "development", "dev", "main", "master", "trunk"]
-        for candidate in priorities {
-            if let _ = findBranchName(matches: [candidate]) {
-                return candidate
-            }
-        }
-        return nil
     }
 
     private func actionButtonSmall(title: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {

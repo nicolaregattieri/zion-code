@@ -109,6 +109,7 @@ struct TerminalTabView: NSViewRepresentable {
         var lastAppliedTheme: EditorTheme?
         var lastAppliedFontSize: Double?
         var lastAppliedFontFamily: String?
+        private var pendingResizeTask: Task<Void, Never>?
 
         init(_ parent: TerminalTabView) {
             self.parent = parent
@@ -232,11 +233,22 @@ struct TerminalTabView: NSViewRepresentable {
         }
         nonisolated func sizeChanged(source: SwiftTerm.TerminalView, newCols: Int, newRows: Int) {
             Task { @MainActor in
-                if let fd = process?.childfd {
-                    let rows = UInt16(max(0, min(Int(UInt16.max), newRows)))
-                    let cols = UInt16(max(0, min(Int(UInt16.max), newCols)))
-                    var size = winsize(ws_row: rows, ws_col: cols, ws_xpixel: 0, ws_ypixel: 0)
-                    _ = PseudoTerminalHelpers.setWinSize(masterPtyDescriptor: fd, windowSize: &size)
+                // Cancel any pending resize — only the final size matters
+                pendingResizeTask?.cancel()
+
+                // Skip degenerate sizes (terminal hidden or mid-animation)
+                guard newRows > 0, newCols > 0 else { return }
+
+                pendingResizeTask = Task {
+                    try? await Task.sleep(for: .milliseconds(80))
+                    guard !Task.isCancelled else { return }
+
+                    if let fd = process?.childfd {
+                        let rows = UInt16(max(1, min(Int(UInt16.max), newRows)))
+                        let cols = UInt16(max(1, min(Int(UInt16.max), newCols)))
+                        var size = winsize(ws_row: rows, ws_col: cols, ws_xpixel: 0, ws_ypixel: 0)
+                        _ = PseudoTerminalHelpers.setWinSize(masterPtyDescriptor: fd, windowSize: &size)
+                    }
                 }
             }
         }

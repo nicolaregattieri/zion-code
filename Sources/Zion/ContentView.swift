@@ -12,9 +12,7 @@ struct ContentView: View {
     
     @AppStorage("zion.confirmationMode") private var confirmationModeRaw: String = ConfirmationMode.destructiveOnly.rawValue
     @AppStorage("zion.uiLanguage") private var uiLanguageRaw: String = AppLanguage.system.rawValue
-    @AppStorage("zion.preferredEditor") private var preferredEditorRaw: String = ExternalEditor.vscode.rawValue
     @AppStorage("zion.preferredTerminal") private var preferredTerminalRaw: String = ExternalTerminal.terminal.rawValue
-    @AppStorage("zion.customEditorPath") private var customEditorPath: String = ""
     @AppStorage("zion.customTerminalPath") private var customTerminalPath: String = ""
     
     private var uiLanguage: AppLanguage { AppLanguage(rawValue: uiLanguageRaw) ?? .system }
@@ -31,7 +29,6 @@ struct ContentView: View {
                     confirmationModeRaw: $confirmationModeRaw,
                     uiLanguageRaw: $uiLanguageRaw,
                     onOpen: { openRepositoryPanel() },
-                    onOpenInEditor: { openRepositoryInEditor() },
                     onOpenInTerminal: { openRepositoryInTerminal() },
                     branchContextMenu: { branch in AnyView(branchContextMenu(for: branch)) }
                 )
@@ -235,9 +232,6 @@ struct ContentView: View {
                 }
                 
                 ControlGroup {
-                    Button { openRepositoryInEditor() } label: { Image(systemName: "chevron.left.forwardslash.chevron.right") }
-                        .help(L10n("Abrir no Editor de Código"))
-
                     Button { openRepositoryInTerminal() } label: { Image(systemName: "terminal") }
                         .help(L10n("Abrir Terminal"))
                 }
@@ -266,10 +260,6 @@ struct ContentView: View {
                 Text(L10n("Resolva os conflitos na sua IDE favorita.")).font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
-            Button(action: { openRepositoryInEditor(conflictMode: true) }) {
-                Label(L10n("Resolver na IDE"), systemImage: "wand.and.stars")
-            }.buttonStyle(.borderedProminent).tint(.orange)
-            
             HStack(spacing: 8) {
                 if model.isMerging { Button(L10n("Abort")) { model.abortMerge() }.buttonStyle(.bordered) }
                 if model.isRebasing { Button(L10n("Abort")) { model.abortRebase() }.buttonStyle(.bordered) }
@@ -289,53 +279,6 @@ struct ContentView: View {
                 Text(repositoryURL.path).lineLimit(1).font(.system(.caption, design: .monospaced)).foregroundStyle(.tertiary)
             }
         }.padding(.horizontal, 16).padding(.vertical, 8).background(.ultraThinMaterial).overlay(alignment: .top) { Divider().opacity(0.45) }
-    }
-
-    private func openRepositoryInEditor(conflictMode: Bool = false) {
-        guard let url = model.repositoryURL else { return }
-        let editor = ExternalEditor(rawValue: preferredEditorRaw) ?? .vscode
-        
-        let appPath: String
-        if editor == .custom {
-            appPath = customEditorPath
-        } else {
-            // Use common paths for reliability
-            switch editor {
-            case .vscode: appPath = "/Applications/Visual Studio Code.app"
-            case .cursor: appPath = "/Applications/Cursor.app"
-            case .antigravity: appPath = "/Applications/Antigravity.app"
-            case .xcode: appPath = "/Applications/Xcode.app"
-            case .sublime: appPath = "/Applications/Sublime Text.app"
-            default: appPath = ""
-            }
-        }
-
-        let ws = NSWorkspace.shared
-        
-        // Strategy 1: CLI Merge Tool (for VS Code/Cursor)
-        if conflictMode && (editor == .vscode || editor == .cursor) {
-            let binName = editor == .vscode ? "code" : "cursor"
-            let internalBin = "\(appPath)/Contents/Resources/app/bin/\(binName)"
-            if FileManager.default.fileExists(atPath: internalBin) {
-                let task = Process()
-                task.executableURL = URL(fileURLWithPath: internalBin)
-                task.arguments = ["--merge", url.path]
-                try? task.run()
-                return
-            }
-        }
-
-        // Strategy 2: NSWorkspace open with App URL
-        if !appPath.isEmpty, let appUrl = URL(string: "file://\(appPath.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? "")") {
-            ws.open([url], withApplicationAt: appUrl, configuration: NSWorkspace.OpenConfiguration())
-        } else {
-            // Strategy 3: Bundle ID fallback
-            if let appUrl = ws.urlForApplication(withBundleIdentifier: editor.id) {
-                ws.open([url], withApplicationAt: appUrl, configuration: NSWorkspace.OpenConfiguration())
-            } else {
-                ws.open(url) // Final fallback: Finder
-            }
-        }
     }
 
     private func openRepositoryInTerminal() {
@@ -441,19 +384,12 @@ struct ContentView: View {
         }
         
         Divider()
-        Button(L10n("Abrir no Editor")) { openRepositoryInEditor() }
-        Divider()
         Button(L10n("Copiar Assunto")) { copyToPasteboard(commit.subject) }
         Button(L10n("Copiar Hash")) { copyToPasteboard(commit.id) }
     }
 
     @ViewBuilder
     private func branchContextMenu(for branch: String) -> some View {
-        Button(L10n("Checkout & Abrir no Editor")) { 
-            model.checkout(reference: branch)
-            openRepositoryInEditor()
-        }
-        Divider()
         Button(L10n("Copiar Nome da Branch")) { copyToPasteboard(branch) }
         Divider()
         Button(L10n("Checkout")) { model.checkout(reference: branch) }
