@@ -54,18 +54,18 @@ Lane-colored commit cards with colored left stripes matching branch lanes, merge
 
 A real code editor with syntax highlighting, Git Blame, Quick Open (`Cmd+P`), file watcher, 6 themes (Dracula, Tokyo Night, Catppuccin Mocha, One Dark Pro, City Lights, GitHub Light), and configurable fonts. Side-by-side with a real PTY terminal that supports split panes, multiple tabs, and independent zoom.
 
-<!-- <p align="center">
+<p align="center">
   <img src="docs/screenshots/blame-view.png" width="70%" alt="Git Blame with author-colored gutter" />
-</p> -->
+</p>
 
 ### Smart Clipboard
 > The feature no other Git GUI has.
 
 Zion watches your clipboard and auto-categorizes everything: commands, file paths, git hashes, URLs, even images. **Single-click** to paste into your active terminal. **Double-click** to paste and execute. **Drag** items directly into any terminal pane. It keeps your last 20 items and auto-cleans temp files.
 
-<!-- <p align="center">
+<p align="center">
   <img src="docs/screenshots/clipboard-drawer.png" width="70%" alt="Clipboard drawer with auto-categorized items" />
-</p> -->
+</p>
 
 ### Operations Center
 > `Cmd+3`
@@ -77,9 +77,9 @@ A dashboard for everything Git. Commit with hunk and line-level staging, interac
 
 When a merge, rebase, or cherry-pick hits conflicts, Zion opens a dedicated resolver. A file list on the left shows conflict status with red/green icons. The inline editor on the right highlights conflict regions — **ours** (green) vs **theirs** (blue) — with one-click actions: accept ours, accept theirs, accept both, or edit manually. Once resolved, Zion auto-continues the operation.
 
-<!-- <p align="center">
+<p align="center">
   <img src="docs/screenshots/conflict-resolver.png" width="80%" alt="Built-in conflict resolver with ours vs theirs" />
-</p> -->
+</p>
 
 ### AI Assistant
 > Works with Anthropic Claude or OpenAI GPT.
@@ -94,9 +94,9 @@ List open pull requests, create new PRs from your current branch, and let AI gen
 
 Create worktrees with one click (auto-generated path and branch), get a dedicated terminal pane per worktree, remove and prune from the Operations Center.
 
-<!-- <p align="center">
+<p align="center">
   <img src="docs/screenshots/quick-open.png" width="60%" alt="Quick Open fuzzy search overlay" />
-</p> -->
+</p>
 
 ---
 
