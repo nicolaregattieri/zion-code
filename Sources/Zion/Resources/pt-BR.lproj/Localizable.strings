@@ -300,6 +300,9 @@
 "Desativado" = "Desativado";
 "Cota da API excedida ou saldo insuficiente" = "Cota da API excedida ou saldo insuficiente";
 "Cota da API excedida. Usando sugestao local." = "Cota da API excedida. Usando sugestão local.";
+"Git não encontrado" = "Git não encontrado";
+"Baixar Git" = "Baixar Git";
+"O Zion precisa do Git instalado para funcionar. Por favor, instale o Git e reinicie o app." = "O Zion precisa do Git instalado para funcionar. Por favor, instale o Git e reinicie o app.";
 "Chave registrada" = "Chave registrada";
 "Alterar" = "Alterar";
 "Salvar" = "Salvar";

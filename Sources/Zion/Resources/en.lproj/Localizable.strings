@@ -395,6 +395,9 @@
 "Desativado" = "Disabled";
 "Cota da API excedida ou saldo insuficiente" = "API quota exceeded or insufficient balance";
 "Cota da API excedida. Usando sugestao local." = "API quota exceeded. Using local suggestion.";
+"Git não encontrado" = "Git not found";
+"Baixar Git" = "Download Git";
+"O Zion precisa do Git instalado para funcionar. Por favor, instale o Git e reinicie o app." = "Zion requires Git to be installed. Please install Git and restart the app.";
 "Chave registrada" = "Key registered";
 "Alterar" = "Change";
 "Salvar" = "Save";
