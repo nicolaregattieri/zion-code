@@ -12,26 +12,15 @@ struct SourceCodeEditor: NSViewRepresentable {
     var fileExtension: String = ""
 
     func makeNSView(context: Context) -> NSScrollView {
-        let scrollView = NSScrollView()
-        let clipView = LeftAnchoredClipView()
-        clipView.isLineWrappingEnabled = isLineWrappingEnabled
-        scrollView.contentView = clipView
-        
+        let scrollView = NSTextView.scrollableTextView()
         scrollView.hasVerticalScroller = true
         scrollView.hasHorizontalScroller = true
         scrollView.autohidesScrollers = true
         scrollView.drawsBackground = true
 
-        let textView = NSTextView()
-        textView.isVerticallyResizable = true
-        textView.isHorizontallyResizable = !isLineWrappingEnabled
-        textView.autoresizingMask = isLineWrappingEnabled ? [.width] : []
-        if !isLineWrappingEnabled {
-            textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
-            textView.textContainer?.widthTracksTextView = false
-            textView.textContainer?.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        guard let textView = scrollView.documentView as? NSTextView else {
+            return scrollView
         }
-        scrollView.documentView = textView
 
         textView.delegate = context.coordinator
         textView.isEditable = true
@@ -42,10 +31,6 @@ struct SourceCodeEditor: NSViewRepresentable {
             ?? .monospacedSystemFont(ofSize: fontSize, weight: .regular)
         textView.usesAdaptiveColorMappingForDarkAppearance = false
         
-        // Fix: padding and alignment
-        textView.textContainerInset = NSSize(width: 10, height: 15)
-        textView.textContainer?.lineFragmentPadding = 5
-
         // Setup Line Numbers
         scrollView.hasVerticalRuler = true
         scrollView.rulersVisible = true
@@ -58,11 +43,6 @@ struct SourceCodeEditor: NSViewRepresentable {
 
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         guard let textView = nsView.documentView as? NSTextView else { return }
-        
-        // Update clip view state
-        if let clipView = nsView.contentView as? LeftAnchoredClipView {
-            clipView.isLineWrappingEnabled = isLineWrappingEnabled
-        }
 
         // Sync text
         if textView.string != text {
@@ -84,42 +64,22 @@ struct SourceCodeEditor: NSViewRepresentable {
         } else {
             textView.isHorizontallyResizable = true
             textView.textContainer?.widthTracksTextView = false
-            // Use a massive width to ensure lines never try to wrap or shift
             textView.textContainer?.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
-            
-            // Critical: Force the text view's frame width to be at least the size of the scroll view
-            if textView.frame.width < nsView.contentSize.width {
-                textView.setFrameSize(NSSize(width: nsView.contentSize.width, height: textView.frame.height))
-            }
-            
-            textView.scroll(NSPoint(x: 0, y: textView.visibleRect.origin.y))
         }
 
         let colors = getEditorColors(for: theme)
-
-        // Always draw background — drawsBackground = false causes invisible text in dark mode
         textView.drawsBackground = true
         textView.backgroundColor = colors.background
         nsView.drawsBackground = true
         nsView.backgroundColor = colors.background
-
         textView.insertionPointColor = colors.text
-
-        // Fix: Detect width changes and ensure we are scrolled to the left
-        let currentWidth = nsView.frame.width
-        if currentWidth != context.coordinator.lastWidth {
-            context.coordinator.lastWidth = currentWidth
-            if !isLineWrappingEnabled {
-                textView.scroll(NSPoint(x: 0, y: textView.visibleRect.origin.y))
-            }
-        }
 
         if let ruler = nsView.verticalRulerView as? LineNumberRulerView {
             ruler.theme = theme
             ruler.needsDisplay = true
         }
 
-        // Highlighting — skip if text/theme/extension unchanged
+        // Highlighting
         let coord = context.coordinator
         let currentText = textView.string
         if currentText != coord.lastHighlightedText || theme != coord.lastHighlightedTheme || fileExtension != coord.lastHighlightedExtension {
@@ -129,7 +89,7 @@ struct SourceCodeEditor: NSViewRepresentable {
             coord.lastHighlightedExtension = fileExtension
         }
 
-        // Apply line spacing AFTER highlighting via addAttribute
+        // Apply line spacing
         let range = NSRange(location: 0, length: textView.string.utf16.count)
         if range.length > 0 {
             let paragraphStyle = NSMutableParagraphStyle()
@@ -157,7 +117,6 @@ struct SourceCodeEditor: NSViewRepresentable {
         var lastHighlightedText: String?
         var lastHighlightedTheme: EditorTheme?
         var lastHighlightedExtension: String?
-        var lastWidth: CGFloat = 0
         var regexCache: [String: NSRegularExpression] = [:]
         init(_ parent: SourceCodeEditor) { self.parent = parent }
 
@@ -241,22 +200,20 @@ struct SourceCodeEditor: NSViewRepresentable {
 
             textStorage.beginEditing()
 
-            // 1. Reset all attributes to theme base color
+            // 1. Reset all attributes
             textStorage.setAttributes([
                 .foregroundColor: colors.text,
                 .font: textView.font ?? NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
             ], range: range)
 
-            // 2. Language-specific highlighting
+            // 2. Language highlighting
             switch lang {
             case .json:
-                // JSON: keys vs values
                 highlight(pattern: #""[^"\\]*(?:\\.[^"\\]*)*"\s*:"#, in: string, color: colors.keyword, storage: textStorage)
                 highlight(pattern: #":\s*"[^"\\]*(?:\\.[^"\\]*)*""#, in: string, color: colors.string, storage: textStorage)
                 highlight(pattern: #"\b\d+(\.\d+)?\b"#, in: string, color: colors.number, storage: textStorage)
                 highlight(pattern: #"\b(true|false|null)\b"#, in: string, color: colors.keyword, storage: textStorage)
             case .yaml:
-                // YAML: keys vs values
                 highlight(pattern: #"^[a-zA-Z_][a-zA-Z0-9_]*(?=\s*:)"#, in: string, color: colors.keyword, storage: textStorage)
                 highlight(pattern: #""[^"\\]*(?:\\.[^"\\]*)*""#, in: string, color: colors.string, storage: textStorage)
                 highlight(pattern: #"'[^']*'"#, in: string, color: colors.string, storage: textStorage)
@@ -264,7 +221,6 @@ struct SourceCodeEditor: NSViewRepresentable {
                 highlight(pattern: #"\b(true|false|null|yes|no)\b"#, in: string, color: colors.keyword, storage: textStorage)
                 highlight(pattern: #"#.*"#, in: string, color: colors.comment, storage: textStorage)
             case .markdown:
-                // Markdown headings, bold, links
                 highlight(pattern: #"^#{1,6}\s+.*$"#, in: string, color: colors.keyword, storage: textStorage)
                 highlight(pattern: #"\*\*[^*]+\*\*"#, in: string, color: colors.type, storage: textStorage)
                 highlight(pattern: #"\*[^*]+\*"#, in: string, color: colors.type, storage: textStorage)
@@ -272,14 +228,12 @@ struct SourceCodeEditor: NSViewRepresentable {
                 highlight(pattern: #"\[([^\]]+)\]\([^\)]+\)"#, in: string, color: colors.call, storage: textStorage)
                 highlight(pattern: #"```[\s\S]*?```"#, in: string, color: colors.string, storage: textStorage)
             case .html:
-                // HTML tags, attributes
                 highlight(pattern: #"</?[a-zA-Z][a-zA-Z0-9]*"#, in: string, color: colors.keyword, storage: textStorage)
                 highlight(pattern: #"\b[a-zA-Z-]+(?=\s*=)"#, in: string, color: colors.type, storage: textStorage)
                 highlight(pattern: #""[^"]*""#, in: string, color: colors.string, storage: textStorage)
                 highlight(pattern: #"'[^']*'"#, in: string, color: colors.string, storage: textStorage)
                 highlight(pattern: #"<!--[\s\S]*?-->"#, in: string, color: colors.comment, storage: textStorage)
             case .css:
-                // CSS selectors, properties, values
                 highlight(pattern: #"[.#][a-zA-Z_-][a-zA-Z0-9_-]*"#, in: string, color: colors.keyword, storage: textStorage)
                 highlight(pattern: #"[a-z-]+(?=\s*:)"#, in: string, color: colors.type, storage: textStorage)
                 highlight(pattern: #""[^"]*""#, in: string, color: colors.string, storage: textStorage)
@@ -289,7 +243,6 @@ struct SourceCodeEditor: NSViewRepresentable {
                 highlight(pattern: #"/\*[\s\S]*?\*/"#, in: string, color: colors.comment, storage: textStorage)
                 highlight(pattern: #"//.*"#, in: string, color: colors.comment, storage: textStorage)
             case .sql:
-                // SQL: strings, comments, keywords (case-insensitive via pattern), numbers
                 highlight(pattern: #"'[^']*'"#, in: string, color: colors.string, storage: textStorage)
                 highlight(pattern: #"\b\d+(\.\d+)?\b"#, in: string, color: colors.number, storage: textStorage)
                 let sqlKeywords = keywordsPattern(for: .sql)
@@ -298,9 +251,7 @@ struct SourceCodeEditor: NSViewRepresentable {
                 highlight(pattern: #"\b[a-z][a-zA-Z0-9_]*(?=\()"#, in: string, color: colors.call, storage: textStorage)
                 highlight(pattern: #"--.*"#, in: string, color: colors.comment, storage: textStorage)
                 highlight(pattern: #"(?s)/\*.*?\*/"#, in: string, color: colors.comment, storage: textStorage)
-
             case .lua:
-                // Lua: strings, comments, keywords, numbers, function calls
                 highlight(pattern: #""[^"\\\n]*(\\.[^"\\\n]*)*""#, in: string, color: colors.string, storage: textStorage)
                 highlight(pattern: #"'[^'\\\n]*(\\.[^'\\\n]*)*'"#, in: string, color: colors.string, storage: textStorage)
                 highlight(pattern: #"\b\d+(\.\d+)?\b"#, in: string, color: colors.number, storage: textStorage)
@@ -310,59 +261,41 @@ struct SourceCodeEditor: NSViewRepresentable {
                 highlight(pattern: #"\b[a-z][a-zA-Z0-9_]*(?=\()"#, in: string, color: colors.call, storage: textStorage)
                 highlight(pattern: #"--.*"#, in: string, color: colors.comment, storage: textStorage)
                 highlight(pattern: #"(?s)--\[\[.*?\]\]"#, in: string, color: colors.comment, storage: textStorage)
-
             case .liquid:
-                // HTML + Liquid tags/objects
                 highlight(pattern: #"</?[a-zA-Z][a-zA-Z0-9]*"#, in: string, color: colors.keyword, storage: textStorage)
                 highlight(pattern: #"\b[a-zA-Z-]+(?=\s*=)"#, in: string, color: colors.type, storage: textStorage)
                 highlight(pattern: #""[^"]*""#, in: string, color: colors.string, storage: textStorage)
                 highlight(pattern: #"'[^']*'"#, in: string, color: colors.string, storage: textStorage)
                 highlight(pattern: #"<!--[\s\S]*?-->"#, in: string, color: colors.comment, storage: textStorage)
-                
-                // Liquid specific
                 highlight(pattern: #"\{%[\s\S]*?%\}"#, in: string, color: colors.type, storage: textStorage)
                 highlight(pattern: #"\{\{[\s\S]*?\}\}"#, in: string, color: colors.call, storage: textStorage)
                 highlight(pattern: #"\{%[\s\S]*?comment[\s\S]*?endcomment[\s\S]*?%\}"#, in: string, color: colors.comment, storage: textStorage)
-
             default:
-                // General programming languages
                 highlight(pattern: #""[^"\\\n]*(\\.[^"\\\n]*)*""#, in: string, color: colors.string, storage: textStorage)
                 if lang == .python || lang == .ruby || lang == .shell {
                     highlight(pattern: #"'[^'\\\n]*(\\.[^'\\\n]*)*'"#, in: string, color: colors.string, storage: textStorage)
                 }
                 highlight(pattern: #"\b\d+(\.\d+)?\b"#, in: string, color: colors.number, storage: textStorage)
-
                 let keywords = keywordsPattern(for: lang)
                 highlight(pattern: keywords, in: string, color: colors.keyword, storage: textStorage)
-
                 highlight(pattern: #"\b[A-Z][a-zA-Z0-9_]*\b"#, in: string, color: colors.type, storage: textStorage)
-
-                // Decorators/attributes
                 if lang == .swift || lang == .python || lang == .javascript {
                     highlight(pattern: #"@[a-zA-Z0-9_]+"#, in: string, color: colors.keyword, storage: textStorage)
                 }
                 if lang == .rust {
                     highlight(pattern: #"#\[[\w:(,\s)]*\]"#, in: string, color: colors.keyword, storage: textStorage)
                 }
-
-                // Function calls
                 highlight(pattern: #"\b[a-z][a-zA-Z0-9_]*(?=\()"#, in: string, color: colors.call, storage: textStorage)
-
-                // Comments
                 if lang == .python || lang == .ruby || lang == .shell {
                     highlight(pattern: #"#.*"#, in: string, color: colors.comment, storage: textStorage)
                 } else {
                     highlight(pattern: #"//.*"#, in: string, color: colors.comment, storage: textStorage)
                     highlight(pattern: #"(?s)/\*.*?\*/"#, in: string, color: colors.comment, storage: textStorage)
                 }
-
-                // Python triple-quoted strings
                 if lang == .python {
                     highlight(pattern: #"\"\"\"[\s\S]*?\"\"\""#, in: string, color: colors.string, storage: textStorage)
                     highlight(pattern: #"'''[\s\S]*?'''"#, in: string, color: colors.string, storage: textStorage)
                 }
-
-                // Rust lifetimes
                 if lang == .rust {
                     highlight(pattern: #"'[a-z_]+"#, in: string, color: colors.type, storage: textStorage)
                 }
@@ -505,7 +438,6 @@ class LineNumberRulerView: NSRulerView {
             let lineGlyphRange = layoutManager.glyphRange(forCharacterRange: lineRange, actualCharacterRange: nil)
             let lineRect = layoutManager.boundingRect(forGlyphRange: lineGlyphRange, in: textContainer)
             
-            // Critical Fix: Align the number exactly with the baseline of the first line fragment
             let y = lineRect.origin.y + textView.textContainerInset.height - visibleRect.origin.y
 
             let color = isLight ? NSColor(srgbRed: 0.416, green: 0.451, blue: 0.490, alpha: 0.7) : NSColor.secondaryLabelColor
@@ -523,25 +455,5 @@ class LineNumberRulerView: NSRulerView {
             index = lineRange.upperBound
             lineNumber += 1
         }
-    }
-}
-
-class LeftAnchoredClipView: NSClipView {
-    var isLineWrappingEnabled: Bool = true
-    
-    override func constrainBoundsRect(_ proposedBounds: NSRect) -> NSRect {
-        var constrained = super.constrainBoundsRect(proposedBounds)
-        if !isLineWrappingEnabled {
-            constrained.origin.x = 0
-        }
-        return constrained
-    }
-
-    override func setBoundsOrigin(_ newOrigin: NSPoint) {
-        var adjusted = newOrigin
-        if !isLineWrappingEnabled {
-            adjusted.x = 0
-        }
-        super.setBoundsOrigin(adjusted)
     }
 }
