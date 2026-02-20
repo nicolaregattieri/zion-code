@@ -124,6 +124,17 @@ struct HelpSheet: View {
                                 L10n("help.diagnostics.sanitize"),
                             ]
                         )
+
+                        featureCard(
+                            icon: "exclamationmark.triangle.fill",
+                            color: .orange,
+                            title: L10n("help.conflicts.title"),
+                            features: [
+                                L10n("help.conflicts.resolve"),
+                                L10n("help.conflicts.choose"),
+                                L10n("help.conflicts.continue"),
+                            ]
+                        )
                     }
 
                     shortcutsHighlight
