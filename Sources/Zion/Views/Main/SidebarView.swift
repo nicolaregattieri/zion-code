@@ -278,9 +278,7 @@ struct SidebarView: View {
 
     private var sidebarBranchExplorer: some View {
         GlassCard(spacing: 0) {
-            HStack {
-                Text(L10n("Branches")).font(.headline)
-                Spacer()
+            CardHeader(L10n("Branches"), icon: "arrow.triangle.branch") {
                 Text("\(model.branchInfos.count) \(L10n("refs"))").font(.caption).foregroundStyle(.secondary)
             }
             .padding(.horizontal, 12).padding(.top, 12).padding(.bottom, 8)
