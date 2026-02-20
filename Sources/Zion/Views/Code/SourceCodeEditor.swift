@@ -353,6 +353,39 @@ struct SourceCodeEditor: NSViewRepresentable {
                 number: NSColor(srgbRed: 0.0, green: 0.361, blue: 0.773, alpha: 1.0),
                 call: NSColor(srgbRed: 0.435, green: 0.259, blue: 0.757, alpha: 1.0)
             )
+        case .catppuccinMocha:
+            return EditorColors(
+                background: NSColor(srgbRed: 0.118, green: 0.118, blue: 0.180, alpha: 1.0),
+                text: NSColor(srgbRed: 0.804, green: 0.839, blue: 0.957, alpha: 1.0),
+                keyword: NSColor(srgbRed: 0.796, green: 0.651, blue: 0.969, alpha: 1.0),
+                type: NSColor(srgbRed: 0.537, green: 0.706, blue: 0.980, alpha: 1.0),
+                string: NSColor(srgbRed: 0.651, green: 0.890, blue: 0.631, alpha: 1.0),
+                comment: NSColor(srgbRed: 0.424, green: 0.439, blue: 0.525, alpha: 1.0),
+                number: NSColor(srgbRed: 0.980, green: 0.702, blue: 0.529, alpha: 1.0),
+                call: NSColor(srgbRed: 0.537, green: 0.706, blue: 0.980, alpha: 1.0)
+            )
+        case .oneDarkPro:
+            return EditorColors(
+                background: NSColor(srgbRed: 0.157, green: 0.173, blue: 0.204, alpha: 1.0),
+                text: NSColor(srgbRed: 0.671, green: 0.698, blue: 0.749, alpha: 1.0),
+                keyword: NSColor(srgbRed: 0.776, green: 0.471, blue: 0.867, alpha: 1.0),
+                type: NSColor(srgbRed: 0.898, green: 0.753, blue: 0.482, alpha: 1.0),
+                string: NSColor(srgbRed: 0.596, green: 0.765, blue: 0.475, alpha: 1.0),
+                comment: NSColor(srgbRed: 0.361, green: 0.388, blue: 0.439, alpha: 1.0),
+                number: NSColor(srgbRed: 0.820, green: 0.604, blue: 0.400, alpha: 1.0),
+                call: NSColor(srgbRed: 0.380, green: 0.686, blue: 0.937, alpha: 1.0)
+            )
+        case .tokyoNight:
+            return EditorColors(
+                background: NSColor(srgbRed: 0.102, green: 0.106, blue: 0.149, alpha: 1.0),
+                text: NSColor(srgbRed: 0.663, green: 0.694, blue: 0.839, alpha: 1.0),
+                keyword: NSColor(srgbRed: 0.733, green: 0.604, blue: 0.969, alpha: 1.0),
+                type: NSColor(srgbRed: 0.165, green: 0.765, blue: 0.871, alpha: 1.0),
+                string: NSColor(srgbRed: 0.620, green: 0.808, blue: 0.416, alpha: 1.0),
+                comment: NSColor(srgbRed: 0.337, green: 0.373, blue: 0.537, alpha: 1.0),
+                number: NSColor(srgbRed: 1.0, green: 0.620, blue: 0.392, alpha: 1.0),
+                call: NSColor(srgbRed: 0.478, green: 0.635, blue: 0.969, alpha: 1.0)
+            )
         }
     }
 }

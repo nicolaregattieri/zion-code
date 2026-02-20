@@ -74,11 +74,18 @@ struct ClipboardDrawer: View {
     private var content: some View {
         Group {
             if model.clipboardMonitor.items.isEmpty {
-                Text(L10n("Copie algo para ver aqui"))
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(L10n("Clipboard Inteligente"))
+                        .font(.system(size: 11, weight: .bold))
+                    featureRow("clipboard", .blue, L10n("Captura automaticamente o que voce copiar"))
+                    featureRow("cursorarrow.click", .green, L10n("Clique para colar no terminal"))
+                    featureRow("cursorarrow.click.2", .orange, L10n("Duplo clique para executar"))
+                    featureRow("hand.draw", .purple, L10n("Arraste para o terminal"))
+                    Text(L10n("Copie algo para comecar"))
+                        .font(.system(size: 10)).foregroundStyle(.tertiary)
+                        .frame(maxWidth: .infinity, alignment: .center).padding(.top, 4)
+                }
+                .padding(.horizontal, 12).padding(.vertical, 10)
             } else {
                 ScrollView {
                     VStack(spacing: 2) {
@@ -89,6 +96,13 @@ struct ClipboardDrawer: View {
                     .padding(6)
                 }
             }
+        }
+    }
+
+    private func featureRow(_ icon: String, _ color: Color, _ text: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon).font(.system(size: 11)).foregroundStyle(color).frame(width: 16)
+            Text(text).font(.system(size: 10)).foregroundStyle(.secondary)
         }
     }
 

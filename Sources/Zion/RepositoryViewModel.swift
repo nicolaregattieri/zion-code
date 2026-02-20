@@ -97,6 +97,14 @@ final class RepositoryViewModel {
     // Repository statistics
     var repoStats: RepositoryStats?
 
+    // Clone state
+    var isCloneSheetVisible: Bool = false
+    var cloneProgress: String = ""
+    var isCloning: Bool = false
+    var cloneError: String?
+    @ObservationIgnored private var cloneTask: Task<Void, Never>?
+    @ObservationIgnored private var cloneProcess: Process?
+
     // Zion Code state
     var repositoryFiles: [FileItem] = [] {
         didSet { rebuildFlatFileCache() }
@@ -245,6 +253,63 @@ final class RepositoryViewModel {
         loadSubmodules()
         startBackgroundFetch()
         loadSignatureStatuses()
+    }
+
+    func cloneRepository(remoteURL: String, destination: URL) {
+        guard !isCloning else { return }
+        isCloning = true
+        cloneProgress = ""
+        cloneError = nil
+
+        cloneTask = Task.detached { [worker] in
+            do {
+                let process = try worker.cloneRepository(
+                    remoteURL: remoteURL,
+                    destination: destination
+                ) { line in
+                    Task { @MainActor [weak self] in
+                        self?.cloneProgress = line.trimmingCharacters(in: .whitespacesAndNewlines)
+                    }
+                }
+
+                await MainActor.run { [weak self] in
+                    self?.cloneProcess = process
+                }
+
+                process.waitUntilExit()
+
+                await MainActor.run { [weak self] in
+                    guard let self else { return }
+                    self.cloneProcess = nil
+                    if process.terminationStatus == 0 {
+                        self.isCloning = false
+                        self.isCloneSheetVisible = false
+                        self.cloneProgress = ""
+                        self.openRepository(destination)
+                    } else {
+                        self.isCloning = false
+                        self.cloneError = self.cloneProgress.isEmpty
+                            ? "Clone failed (exit code \(process.terminationStatus))"
+                            : self.cloneProgress
+                    }
+                }
+            } catch {
+                await MainActor.run { [weak self] in
+                    self?.isCloning = false
+                    self?.cloneError = error.localizedDescription
+                }
+            }
+        }
+    }
+
+    func cancelClone() {
+        cloneProcess?.terminate()
+        cloneProcess = nil
+        cloneTask?.cancel()
+        cloneTask = nil
+        isCloning = false
+        cloneProgress = ""
+        cloneError = nil
     }
 
     func loadRecentRepositories() {

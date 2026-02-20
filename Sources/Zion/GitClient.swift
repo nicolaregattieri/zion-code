@@ -117,6 +117,36 @@ struct GitClient {
         return result
     }
 
+    func cloneWithProgress(
+        remoteURL: String,
+        destination: URL,
+        onProgress: @escaping @Sendable (String) -> Void
+    ) throws -> Process {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        process.arguments = ["git", "clone", "--progress", remoteURL, destination.path]
+        process.currentDirectoryURL = destination.deletingLastPathComponent()
+
+        var environment = ProcessInfo.processInfo.environment
+        environment["LC_ALL"] = "C"
+        environment["LANG"] = "C"
+        process.environment = environment
+
+        let stderrPipe = Pipe()
+        process.standardError = stderrPipe
+        process.standardOutput = Pipe() // discard stdout
+
+        stderrPipe.fileHandleForReading.readabilityHandler = { handle in
+            let data = handle.availableData
+            if let str = String(data: data, encoding: .utf8), !str.isEmpty {
+                onProgress(str)
+            }
+        }
+
+        try process.run()
+        return process
+    }
+
     func runAllowingFailure(args: [String], in repositoryURL: URL) throws -> GitCommandResult {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")

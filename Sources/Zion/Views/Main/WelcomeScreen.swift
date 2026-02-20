@@ -37,7 +37,7 @@ struct WelcomeScreen: View {
                 Text("Zion")
                     .font(.system(size: 44, weight: .black))
 
-                Text(L10n("Seu Git Graph nativo para macOS."))
+                Text(L10n("Seu cliente Git nativo para macOS."))
                     .font(.headline)
                     .foregroundStyle(.secondary)
             }
@@ -51,7 +51,16 @@ struct WelcomeScreen: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
-                
+
+                Button {
+                    model.isCloneSheetVisible = true
+                } label: {
+                    Label(L10n("Clonar repositorio..."), systemImage: "square.and.arrow.down.on.square")
+                        .frame(width: 240)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+
                 if !model.recentRepositories.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(L10n("Recentes"))

@@ -289,6 +289,7 @@ struct CodeScreen: View {
                 .buttonStyle(.borderedProminent)
                 .controlSize(.small)
                 .tint(model.selectedTheme.isLightAppearance ? Color.blue : Color.accentColor)
+                .help(L10n("Salvar") + " (⌘S)")
             }
         }
         .controlSize(.small)
@@ -300,6 +301,7 @@ struct CodeScreen: View {
             CardHeader(L10n("Arquivos"), icon: "folder.fill") {
                 Button { model.refreshFileTree() } label: { Image(systemName: "arrow.clockwise") }
                     .buttonStyle(.plain).foregroundStyle(.secondary)
+                    .help(L10n("Atualizar arvore de arquivos"))
             }
             .padding(12)
 
@@ -572,6 +574,7 @@ struct CodeScreen: View {
             .buttonStyle(.borderless)
             .frame(width: 28, height: 24)
             .contentShape(Rectangle())
+            .help(L10n("Novo terminal") + " (⌘T)")
             .padding(.trailing, 8)
         }
         .padding(.vertical, 8)
@@ -739,7 +742,7 @@ struct TerminalPaneView: View {
                     .buttonStyle(.plain)
                     .frame(width: 20, height: 20)
                     .contentShape(Rectangle())
-                    .help(L10n("Fechar painel"))
+                    .help(L10n("Fechar painel") + " (⇧⌘W)")
                     .padding(4)
                 }
             }
