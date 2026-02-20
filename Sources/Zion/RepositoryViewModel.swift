@@ -350,15 +350,6 @@ final class RepositoryViewModel {
         }
     }
 
-    func removeRecentRepository(_ url: URL) {
-        var current = (try? JSONDecoder().decode([URL].self, from: recentReposData)) ?? []
-        current.removeAll { $0 == url }
-        if let encoded = try? JSONEncoder().encode(current) {
-            recentReposData = encoded
-            recentRepositories = current
-        }
-    }
-
     private func saveRecentRepository(_ url: URL) {
         var current = (try? JSONDecoder().decode([URL].self, from: recentReposData)) ?? []
         current.removeAll { $0 == url }

@@ -570,29 +570,6 @@ enum AIProvider: String, CaseIterable, Identifiable {
     }
 }
 
-enum ExternalEditor: String, CaseIterable, Identifiable {
-    case vscode = "com.microsoft.VSCode"
-    case cursor = "com.todesktop.230313mzl4w4u92"
-    case antigravity = "com.antigravity.Antigravity"
-    case xcode = "com.apple.dt.Xcode"
-    case intellij = "com.jetbrains.intellij"
-    case sublime = "com.sublimetext.4"
-    case custom = "custom"
-    
-    var id: String { rawValue }
-    var label: String {
-        switch self {
-        case .vscode: return "VS Code"
-        case .cursor: return "Cursor"
-        case .antigravity: return "Antigravity"
-        case .xcode: return "Xcode"
-        case .intellij: return "IntelliJ"
-        case .sublime: return "Sublime Text"
-        case .custom: return L10n("Selecionar do Disco...")
-        }
-    }
-}
-
 enum ExternalTerminal: String, CaseIterable, Identifiable {
     case terminal = "com.apple.Terminal"
     case iterm = "com.googlecode.iterm2"

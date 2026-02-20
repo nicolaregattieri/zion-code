@@ -142,24 +142,27 @@ struct SourceCodeEditor: NSViewRepresentable {
         }
 
         private enum LanguageType {
-            case swift, javascript, python, rust, go, ruby, html, css, json, yaml, markdown, shell, cLike, unknown
+            case swift, javascript, python, rust, go, ruby, html, css, json, yaml, markdown, shell, cLike, sql, lua, unknown
         }
 
         private func detectLanguage(from ext: String) -> LanguageType {
             switch ext.lowercased() {
             case "swift": return .swift
-            case "js", "jsx", "ts", "tsx", "mjs", "cjs": return .javascript
-            case "py", "pyw": return .python
+            case "js", "jsx", "ts", "tsx", "mjs", "cjs", "mts", "cts", "graphql", "gql": return .javascript
+            case "py", "pyw", "r": return .python
             case "rs": return .rust
             case "go": return .go
-            case "rb": return .ruby
-            case "html", "htm", "xml", "svg": return .html
+            case "rb", "ex", "exs": return .ruby
+            case "html", "htm", "xml", "svg", "vue", "svelte", "liquid", "erb", "ejs", "hbs", "njk": return .html
             case "css", "scss", "sass", "less": return .css
             case "json": return .json
-            case "yaml", "yml": return .yaml
+            case "yaml", "yml", "toml", "ini", "cfg", "conf", "properties", "env": return .yaml
             case "md", "markdown": return .markdown
-            case "sh", "bash", "zsh", "fish": return .shell
-            case "c", "h", "cpp", "cc", "cxx", "hpp", "m", "mm", "java", "kt", "cs": return .cLike
+            case "sh", "bash", "zsh", "fish", "dockerfile": return .shell
+            case "c", "h", "cpp", "cc", "cxx", "hpp", "m", "mm", "java", "kt", "cs",
+                 "dart", "zig", "v", "php", "tf", "hcl", "prisma", "pl", "pm": return .cLike
+            case "sql": return .sql
+            case "lua": return .lua
             default: return .unknown
             }
         }
@@ -182,6 +185,10 @@ struct SourceCodeEditor: NSViewRepresentable {
                 return #"\b(if|then|else|elif|fi|for|while|do|done|case|esac|in|function|return|local|export|source|echo|exit|test|read|shift|set|unset|readonly|declare|typeset|eval|exec|trap|wait|cd|pwd|true|false)\b"#
             case .cLike:
                 return #"\b(auto|break|case|char|const|continue|default|do|double|else|enum|extern|float|for|goto|if|inline|int|long|register|restrict|return|short|signed|sizeof|static|struct|switch|typedef|union|unsigned|void|volatile|while|class|namespace|template|typename|this|new|delete|public|private|protected|virtual|override|final|try|catch|throw|using|true|false|null|nullptr|bool|string|import|package|interface|implements|extends|abstract|synchronized|native|assert)\b"#
+            case .sql:
+                return #"(?i)\b(select|from|where|insert|into|update|set|delete|create|alter|drop|table|index|view|join|inner|outer|left|right|cross|on|and|or|not|in|is|null|like|between|exists|having|group|by|order|asc|desc|limit|offset|union|all|as|distinct|case|when|then|else|end|begin|commit|rollback|transaction|grant|revoke|primary|key|foreign|references|constraint|default|values|count|sum|avg|min|max|cast|coalesce|if|function|procedure|trigger|returns|declare|cursor|fetch|into|varchar|int|integer|text|boolean|date|timestamp|float|double|decimal|serial|auto_increment|unique|check|truncate)\b"#
+            case .lua:
+                return #"\b(and|break|do|else|elseif|end|false|for|function|goto|if|in|local|nil|not|or|repeat|return|then|true|until|while|require|self|pairs|ipairs|next|type|tostring|tonumber|print|error|pcall|xpcall|setmetatable|getmetatable|rawget|rawset|select|unpack|table|string|math|io|os|coroutine)\b"#
             case .html, .css, .json, .yaml, .markdown, .unknown:
                 return #"\b(func|let|var|class|struct|import|if|else|return|while|for|in|switch|case|break|continue|enum|protocol|extension|typealias|try|catch|guard|static|public|private|true|false|null|nil)\b"#
             }
@@ -244,6 +251,29 @@ struct SourceCodeEditor: NSViewRepresentable {
                 highlight(pattern: #"#[0-9a-fA-F]{3,8}\b"#, in: string, color: colors.number, storage: textStorage)
                 highlight(pattern: #"/\*[\s\S]*?\*/"#, in: string, color: colors.comment, storage: textStorage)
                 highlight(pattern: #"//.*"#, in: string, color: colors.comment, storage: textStorage)
+            case .sql:
+                // SQL: strings, comments, keywords (case-insensitive via pattern), numbers
+                highlight(pattern: #"'[^']*'"#, in: string, color: colors.string, storage: textStorage)
+                highlight(pattern: #"\b\d+(\.\d+)?\b"#, in: string, color: colors.number, storage: textStorage)
+                let sqlKeywords = keywordsPattern(for: .sql)
+                highlight(pattern: sqlKeywords, in: string, color: colors.keyword, storage: textStorage)
+                highlight(pattern: #"\b[A-Z][a-zA-Z0-9_]*\b"#, in: string, color: colors.type, storage: textStorage)
+                highlight(pattern: #"\b[a-z][a-zA-Z0-9_]*(?=\()"#, in: string, color: colors.call, storage: textStorage)
+                highlight(pattern: #"--.*"#, in: string, color: colors.comment, storage: textStorage)
+                highlight(pattern: #"(?s)/\*.*?\*/"#, in: string, color: colors.comment, storage: textStorage)
+
+            case .lua:
+                // Lua: strings, comments, keywords, numbers, function calls
+                highlight(pattern: #""[^"\\\n]*(\\.[^"\\\n]*)*""#, in: string, color: colors.string, storage: textStorage)
+                highlight(pattern: #"'[^'\\\n]*(\\.[^'\\\n]*)*'"#, in: string, color: colors.string, storage: textStorage)
+                highlight(pattern: #"\b\d+(\.\d+)?\b"#, in: string, color: colors.number, storage: textStorage)
+                let luaKeywords = keywordsPattern(for: .lua)
+                highlight(pattern: luaKeywords, in: string, color: colors.keyword, storage: textStorage)
+                highlight(pattern: #"\b[A-Z][a-zA-Z0-9_]*\b"#, in: string, color: colors.type, storage: textStorage)
+                highlight(pattern: #"\b[a-z][a-zA-Z0-9_]*(?=\()"#, in: string, color: colors.call, storage: textStorage)
+                highlight(pattern: #"--.*"#, in: string, color: colors.comment, storage: textStorage)
+                highlight(pattern: #"(?s)--\[\[.*?\]\]"#, in: string, color: colors.comment, storage: textStorage)
+
             default:
                 // General programming languages
                 highlight(pattern: #""[^"\\\n]*(\\.[^"\\\n]*)*""#, in: string, color: colors.string, storage: textStorage)
