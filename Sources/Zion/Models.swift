@@ -1,14 +1,14 @@
 import Foundation
 import SwiftUI
 
-@MainActor
-final class TerminalSession: ObservableObject, Identifiable {
+@Observable @MainActor
+final class TerminalSession: Identifiable {
     let id = UUID()
     let workingDirectory: URL
     let label: String
     let worktreeID: String?
-    @Published var isAlive = true
-    @Published var title: String
+    var isAlive = true
+    var title: String
 
     init(workingDirectory: URL, label: String, worktreeID: String? = nil) {
         self.workingDirectory = workingDirectory

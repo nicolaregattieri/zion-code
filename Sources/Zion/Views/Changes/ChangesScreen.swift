@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ChangesScreen: View {
-    @ObservedObject var model: RepositoryViewModel
+    var model: RepositoryViewModel
     
     var body: some View {
         HSplitView {

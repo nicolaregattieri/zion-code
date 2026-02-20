@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct CodeScreen: View {
-    @ObservedObject var model: RepositoryViewModel
+    @Bindable var model: RepositoryViewModel
     var onOpenFolder: (() -> Void)? = nil
     @State private var isQuickOpenVisible: Bool = false
 
@@ -305,7 +305,7 @@ struct CodeScreen: View {
 }
 
 struct TerminalTab: View {
-    @ObservedObject var session: TerminalSession
+    var session: TerminalSession
     let isActive: Bool
     let accentColor: Color
     let onActivate: () -> Void
@@ -356,7 +356,7 @@ struct TerminalTab: View {
 }
 
 struct CodeTab: View {
-    @ObservedObject var model: RepositoryViewModel
+    var model: RepositoryViewModel
     let file: FileItem
     let isActive: Bool
     let accentColor: Color
@@ -410,7 +410,7 @@ struct CodeTab: View {
 }
 
 struct QuickOpenOverlay: View {
-    @ObservedObject var model: RepositoryViewModel
+    var model: RepositoryViewModel
     @Binding var isVisible: Bool
     @State private var query: String = ""
     @FocusState private var isSearchFocused: Bool
@@ -484,7 +484,7 @@ struct QuickOpenOverlay: View {
                         }
                     }
                     .frame(maxHeight: 400)
-                    .onChange(of: selectedIndex) { idx in
+                    .onChange(of: selectedIndex) { _, idx in
                         scrollProxy.scrollTo(idx, anchor: .center)
                     }
                 }
@@ -509,7 +509,7 @@ struct QuickOpenOverlay: View {
         .onDisappear {
             removeKeyMonitor()
         }
-        .onChange(of: query) { _ in selectedIndex = 0 }
+        .onChange(of: query) { _, _ in selectedIndex = 0 }
     }
 
     private func installKeyMonitor() {
@@ -567,7 +567,7 @@ struct QuickOpenOverlay: View {
 }
 
 struct FileTreeNodeView: View {
-    @ObservedObject var model: RepositoryViewModel
+    var model: RepositoryViewModel
     let item: FileItem
     let level: Int
     

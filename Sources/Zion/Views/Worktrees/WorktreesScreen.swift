@@ -2,7 +2,7 @@ import SwiftUI
 import AppKit
 
 struct WorktreesScreen: View {
-    @ObservedObject var model: RepositoryViewModel
+    @Bindable var model: RepositoryViewModel
     let performGitAction: (String, String, Bool, @escaping () -> Void) -> Void
     
     var body: some View {

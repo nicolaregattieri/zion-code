@@ -3,7 +3,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct ContentView: View {
-    @StateObject private var model = RepositoryViewModel()
+    @State private var model = RepositoryViewModel()
     @State private var selectedSection: AppSection? = .code
     @State private var commitSearchQuery: String = ""
     @State private var selectedBranchTreeNodeID: String?
@@ -75,8 +75,8 @@ struct ContentView: View {
                 NSApp.activate(ignoringOtherApps: true)
             }
         }
-        .onChange(of: inferBranchOrigins) { enabled in model.setInferBranchOrigins(enabled) }
-        .onChange(of: model.repositoryURL) { url in
+        .onChange(of: inferBranchOrigins) { _, enabled in model.setInferBranchOrigins(enabled) }
+        .onChange(of: model.repositoryURL) { _, url in
             if url != nil {
                 selectedSection = .code
             }
