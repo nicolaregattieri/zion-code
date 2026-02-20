@@ -210,7 +210,7 @@ struct OperationsScreen: View {
                     performGitAction(L10n("Criar stash"), L10n("Salvar alteracoes locais no stash?"), false) { model.createStash() }
                 }.buttonStyle(.borderedProminent)
             }
-            Picker("Stash", selection: $model.selectedStash) {
+            Picker(L10n("Stash"), selection: $model.selectedStash) {
                 ForEach(model.stashes, id: \.self) { stash in Text(stash).tag(stash) }
             }.pickerStyle(.menu).disabled(model.stashes.isEmpty)
             HStack {
@@ -423,7 +423,7 @@ struct FileStatusRow: View {
             Spacer()
             
             if isStaged {
-                Text("STAGED")
+                Text(L10n("STAGED"))
                     .font(.system(size: 7, weight: .black))
                     .padding(.horizontal, 4).padding(.vertical, 1)
                     .background(Color.green.opacity(0.2))

@@ -137,12 +137,12 @@ struct SidebarView: View {
                 HStack(spacing: 8) {
                     let isDetached = model.currentBranch.contains("detached")
                     StatusChip(
-                        title: isDetached ? "HEAD" : "Branch", 
-                        value: model.currentBranch, 
-                        tint: isDetached ? .orange : .green, 
+                        title: isDetached ? "HEAD" : L10n("Branch"),
+                        value: model.currentBranch,
+                        tint: isDetached ? .orange : .green,
                         icon: isDetached ? "anchor" : "crown.fill"
                     )
-                    StatusChip(title: "Commit", value: model.headShortHash, tint: .blue, icon: "number")
+                    StatusChip(title: L10n("Commit"), value: model.headShortHash, tint: .blue, icon: "number")
                 }
             }
         }.padding(.horizontal, 10)
@@ -311,7 +311,7 @@ struct SidebarView: View {
                     HStack(spacing: 6) {
                         Image(systemName: isMain ? "shield.fill" : "arrow.triangle.branch").font(.caption).foregroundStyle(isMain ? Color.orange : (isCurrent ? Color.accentColor : Color.secondary))
                         Text(node.title).font(.system(.caption, design: .monospaced)).fontWeight(isCurrent || isMain ? .bold : .regular).lineLimit(1)
-                        if isCurrent { Text("current").font(.system(size: 8, weight: .bold)).padding(.horizontal, 4).padding(.vertical, 1).background(Color.accentColor.opacity(0.2)).foregroundStyle(Color.accentColor).clipShape(Capsule()) }
+                        if isCurrent { Text(L10n("current")).font(.system(size: 8, weight: .bold)).padding(.horizontal, 4).padding(.vertical, 1).background(Color.accentColor.opacity(0.2)).foregroundStyle(Color.accentColor).clipShape(Capsule()) }
                     }
                 }
                 if !node.subtitle.isEmpty { Text(node.subtitle).font(.caption2).foregroundStyle(.secondary).lineLimit(1) }
@@ -430,7 +430,7 @@ struct SidebarView: View {
 
     private func pickCustomApp(forEditor: Bool) {
         let panel = NSOpenPanel()
-        panel.message = forEditor ? "Selecione seu Editor de Codigo favorito" : "Selecione seu Terminal favorito"
+        panel.message = forEditor ? L10n("Selecione seu Editor de Codigo favorito") : L10n("Selecione seu Terminal favorito")
         panel.allowedContentTypes = [.application, .aliasFile]
         panel.canChooseFiles = true; panel.canChooseDirectories = false
         panel.directoryURL = URL(fileURLWithPath: "/Applications")

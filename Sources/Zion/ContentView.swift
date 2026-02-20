@@ -44,7 +44,7 @@ struct ContentView: View {
             .navigationSplitViewStyle(.balanced)
             .frame(minWidth: 1360, minHeight: 840)
             .alert(L10n("Erro"), isPresented: Binding(get: { model.lastError != nil }, set: { show in if !show { model.lastError = nil } })) {
-                Button("OK", role: .cancel) {}
+                Button(L10n("OK"), role: .cancel) {}
             } message: { Text(model.lastError ?? "") }
             .toolbar { mainToolbar }
             .safeAreaInset(edge: .bottom) { statusBar }
@@ -225,8 +225,8 @@ struct ContentView: View {
             }.buttonStyle(.borderedProminent).tint(.orange)
             
             HStack(spacing: 8) {
-                if model.isMerging { Button("Abort") { model.abortMerge() }.buttonStyle(.bordered) }
-                if model.isRebasing { Button("Abort") { model.abortRebase() }.buttonStyle(.bordered) }
+                if model.isMerging { Button(L10n("Abort")) { model.abortMerge() }.buttonStyle(.bordered) }
+                if model.isRebasing { Button(L10n("Abort")) { model.abortRebase() }.buttonStyle(.bordered) }
             }
         }
         .padding(16)

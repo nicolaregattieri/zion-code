@@ -119,3 +119,93 @@
 "Nenhuma mudanca detectada (ou arquivo novo nao rastreado)." = "Nenhuma mudança detectada (ou arquivo novo não rastreado).";
 "arquivos modificados" = "arquivos modificados";
 "Tenta detectar automaticamente de qual branch cada uma foi criada para organizar a arvore lateral de forma hierarquica. Recomendado para repositorios com muitas branches." = "Tenta detectar automaticamente de qual branch cada uma foi criada para organizar a árvore lateral de forma hierárquica. Recomendado para repositórios com muitas branches.";
+
+// --- Localization Audit: New Keys ---
+
+// CommitDetailContent metadata labels
+"Author" = "Autor";
+"Date" = "Data";
+"Committer" = "Committer";
+"Commit Date" = "Data do Commit";
+
+// WorktreesScreen status labels
+"branch" = "branch";
+"head" = "head";
+"detached" = "desanexado";
+"locked" = "bloqueado";
+"prunable" = "podável";
+
+// SidebarView
+"Branch" = "Branch";
+"current" = "atual";
+"Selecione seu Editor de Codigo favorito" = "Selecione seu Editor de Código favorito";
+"Selecione seu Terminal favorito" = "Selecione seu Terminal favorito";
+
+// ContentView
+"Abort" = "Abortar";
+
+// OperationsScreen
+"STAGED" = "STAGED";
+
+// Commit context menu
+"Apply Stash" = "Aplicar Stash";
+"Pop Stash" = "Pop Stash";
+"Drop Stash" = "Drop Stash";
+"Aplicar as mudancas deste stash na branch atual?" = "Aplicar as mudanças deste stash na branch atual?";
+"Aplicar as mudancas deste stash e REMOVER da lista?" = "Aplicar as mudanças deste stash e REMOVER da lista?";
+"Remover permanentemente este stash?" = "Remover permanentemente este stash?";
+"Checkout Stash (Inspecionar)" = "Checkout Stash (Inspecionar)";
+"Reset Branch to here (Soft)" = "Reset Branch aqui (Soft)";
+"Reset Branch to here (Hard)" = "Reset Branch aqui (Hard)";
+"Reset --soft" = "Reset --soft";
+"Resetar a branch atual para este commit mantendo as mudancas no stage?" = "Resetar a branch atual para este commit mantendo as mudanças no stage?";
+"AVISO: Isso apagara todas as mudancas nao salvas. Continuar?" = "AVISO: Isso apagará todas as mudanças não salvas. Continuar?";
+"Copiar Assunto" = "Copiar Assunto";
+"Copiar Nome da Branch" = "Copiar Nome da Branch";
+
+// SidebarView repo summary
+"Zion Code" = "Zion Code";
+"Modo editor livre" = "Modo editor livre";
+"Abrir Pasta" = "Abrir Pasta";
+"Abrir Externamente" = "Abrir Externamente";
+"Abrir o repositorio no seu editor ou terminal favorito." = "Abrir o repositório no seu editor ou terminal favorito.";
+
+// Toolbar
+"Abrir repositório" = "Abrir repositório";
+"Atualizar status do repositório" = "Atualizar status do repositório";
+"Fetch: Busca atualizações remotas" = "Fetch: Busca atualizações remotas";
+"Pull: Puxa alterações da branch atual" = "Pull: Puxa alterações da branch atual";
+"Push: Envia alterações locais" = "Push: Envia alterações locais";
+"Abrir no Editor de Código" = "Abrir no Editor de Código";
+"Abrir Terminal" = "Abrir Terminal";
+
+// GraphScreen
+"Checkout Default" = "Checkout Default";
+"Atualizar Grafo" = "Atualizar Grafo";
+"Criar Commit Rapido" = "Criar Commit Rápido";
+"Suas alteracoes serao rastreadas automaticamente (git add -A)." = "Suas alterações serão rastreadas automaticamente (git add -A).";
+"Criar Novo Stash" = "Criar Novo Stash";
+"Gerenciar Stashes..." = "Gerenciar Stashes...";
+"Mensagem do stash (opcional)" = "Mensagem do stash (opcional)";
+"Stashes Recentes" = "Stashes Recentes";
+"Fechar" = "Fechar";
+
+// CodeScreen
+"Changes" = "Alterações";
+"Stage" = "Stage";
+"Quebra de Linha Automática" = "Quebra de Linha Automática";
+"Nenhum arquivo encontrado" = "Nenhum arquivo encontrado";
+"Selecionar Pasta" = "Selecionar Pasta";
+"Selecione um arquivo" = "Selecione um arquivo";
+"Nenhum terminal aberto" = "Nenhum terminal aberto";
+"Buscar arquivo..." = "Buscar arquivo...";
+"Contextos paralelos" = "Contextos paralelos";
+
+// Stash operations
+"Apply stash" = "Aplicar stash";
+"Pop stash" = "Pop stash";
+"Drop stash" = "Drop stash";
+
+// Branch operations
+"Nenhuma branch encontrada" = "Nenhuma branch encontrada";
+"Deseja fazer checkout para %@?" = "Deseja fazer checkout para %@?";

@@ -159,3 +159,100 @@
 "Nenhuma mudanca detectada (ou arquivo novo nao rastreado)." = "No se detectaron cambios (o archivo nuevo no rastreado).";
 "arquivos modificados" = "archivos modificados";
 "Tenta detectar automaticamente de qual branch cada uma foi criada para organizar a arvore lateral de forma hierarquica. Recomendado para repositorios com muitas branches." = "Intenta detectar automáticamente de qué rama se creó cada una para organizar el árbol lateral jerárquicamente. Recomendado para repositorios con muchas ramas.";
+
+// --- Localization Audit: New Keys ---
+
+// CommitDetailContent metadata labels
+"Author" = "Autor";
+"Date" = "Fecha";
+"Committer" = "Committer";
+"Commit Date" = "Fecha de Commit";
+
+// WorktreesScreen status labels
+"branch" = "branch";
+"head" = "head";
+"detached" = "detached";
+"locked" = "bloqueado";
+"prunable" = "podable";
+
+// SidebarView
+"Branch" = "Branch";
+"current" = "actual";
+"Selecione seu Editor de Codigo favorito" = "Selecciona tu Editor de Código favorito";
+"Selecione seu Terminal favorito" = "Selecciona tu Terminal favorito";
+
+// ContentView
+"Abort" = "Abortar";
+
+// OperationsScreen
+"STAGED" = "STAGED";
+
+// Commit context menu
+"Apply Stash" = "Aplicar Stash";
+"Pop Stash" = "Pop Stash";
+"Drop Stash" = "Drop Stash";
+"Aplicar as mudancas deste stash na branch atual?" = "¿Aplicar los cambios de este stash a la branch actual?";
+"Aplicar as mudancas deste stash e REMOVER da lista?" = "¿Aplicar los cambios de este stash y ELIMINAR de la lista?";
+"Remover permanentemente este stash?" = "¿Eliminar permanentemente este stash?";
+"Checkout Stash (Inspecionar)" = "Checkout Stash (Inspeccionar)";
+"Reset Branch to here (Soft)" = "Reset Branch aquí (Soft)";
+"Reset Branch to here (Hard)" = "Reset Branch aquí (Hard)";
+"Reset --soft" = "Reset --soft";
+"Resetar a branch atual para este commit mantendo as mudancas no stage?" = "¿Resetear la branch actual a este commit manteniendo los cambios en stage?";
+"AVISO: Isso apagara todas as mudancas nao salvas. Continuar?" = "AVISO: Esto borrará todos los cambios no guardados. ¿Continuar?";
+"Copiar Assunto" = "Copiar Asunto";
+"Copiar Nome da Branch" = "Copiar Nombre de Branch";
+
+// SidebarView repo summary
+"Zion Code" = "Zion Code";
+"Modo editor livre" = "Modo editor libre";
+"Abrir Pasta" = "Abrir Carpeta";
+"Abrir Externamente" = "Abrir Externamente";
+"Abrir o repositorio no seu editor ou terminal favorito." = "Abre el repositorio en tu editor o terminal favorito.";
+
+// Toolbar
+"Abrir repositório" = "Abrir repositorio";
+"Atualizar status do repositório" = "Actualizar estado del repositorio";
+"Fetch: Busca atualizações remotas" = "Fetch: Descarga actualizaciones remotas";
+"Pull: Puxa alterações da branch atual" = "Pull: Trae cambios de la branch actual";
+"Push: Envia alterações locais" = "Push: Envía cambios locales";
+"Abrir no Editor de Código" = "Abrir en Editor de Código";
+"Abrir Terminal" = "Abrir Terminal";
+
+// GraphScreen
+"Checkout Default" = "Checkout Default";
+"Atualizar Grafo" = "Actualizar Grafo";
+"Criar Commit Rapido" = "Commit Rápido";
+"Suas alteracoes serao rastreadas automaticamente (git add -A)." = "Tus cambios serán rastreados automáticamente (git add -A).";
+"Criar Novo Stash" = "Crear Nuevo Stash";
+"Gerenciar Stashes..." = "Gestionar Stashes...";
+"Mensagem do stash (opcional)" = "Mensaje del stash (opcional)";
+"Stashes Recentes" = "Stashes Recientes";
+"Fechar" = "Cerrar";
+
+// CodeScreen
+"Changes" = "Cambios";
+"Stage" = "Stage";
+"Quebra de Linha Automática" = "Ajuste de Línea Automático";
+"Nenhum arquivo encontrado" = "Ningún archivo encontrado";
+"Selecionar Pasta" = "Seleccionar Carpeta";
+"Selecione um arquivo" = "Seleccione un archivo";
+"Nenhum terminal aberto" = "Ningún terminal abierto";
+"Buscar arquivo..." = "Buscar archivo...";
+"Contextos paralelos" = "Contextos paralelos";
+
+// Stash operations
+"Apply stash" = "Aplicar stash";
+"Pop stash" = "Pop stash";
+"Drop stash" = "Drop stash";
+
+// Branch operations
+"Nenhuma branch encontrada" = "No se encontraron branches";
+"Deseja fazer checkout para %@?" = "¿Desea hacer checkout a %@?";
+
+// OperationsScreen missing keys
+"Corrigir ultimo commit (Amend)" = "Corregir último commit (Amend)";
+"Descartar alteracoes" = "Descartar cambios";
+"Descartar" = "Descartar";
+"Deseja reverter todas as mudancas neste arquivo? Isso nao pode ser desfeito." = "¿Desea revertir todos los cambios en este archivo? Esto no se puede deshacer.";
+"Checkout & Abrir no Editor" = "Checkout y abrir en el editor";
