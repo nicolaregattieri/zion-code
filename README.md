@@ -47,13 +47,16 @@ Zion doesn't make you choose.
 Zion is the only Git workspace that brings the modern macOS **Glassmorphism** (UltraThinMaterial) aesthetic to your developer workflow. Whether you prefer deep indigo, classic dark, or a clean light theme, Zion looks stunning on every Mac.
 
 <p align="center">
-  <img src="docs/screenshots/gallery-1.png" width="48%" alt="Zion with Tokyo Night theme" />
-  <img src="docs/screenshots/gallery-2.png" width="48%" alt="Zion with One Dark Pro theme" />
+  <img src="docs/screenshots/gallery-1.png" width="100%" alt="Zion Tree Graph - Tokyo Night Theme" />
 </p>
 <p align="center">
-  <img src="docs/screenshots/gallery-3.png" width="32%" alt="Zion in Light Mode" />
-  <img src="docs/screenshots/gallery-4.png" width="32%" alt="Operations Dashboard" />
-  <img src="docs/screenshots/gallery-5.png" width="32%" alt="Branch Tree Explorer" />
+  <img src="docs/screenshots/gallery-2.png" width="100%" alt="Zion Code Editor - One Dark Pro Theme" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/gallery-3.png" width="100%" alt="Zion Code Editor - Light Mode" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/gallery-4.png" width="100%" alt="Operations Dashboard" />
 </p>
 
 ---
