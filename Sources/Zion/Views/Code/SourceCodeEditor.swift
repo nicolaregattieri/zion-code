@@ -43,9 +43,11 @@ struct SourceCodeEditor: NSViewRepresentable {
             queue: .main
         ) { [weak textView] _ in
             guard let textView = textView else { return }
-            if !isLineWrappingEnabled {
-                let currentY = textView.visibleRect.origin.y
-                textView.scroll(NSPoint(x: 0, y: currentY))
+            MainActor.assumeIsolated {
+                if !isLineWrappingEnabled {
+                    let currentY = textView.visibleRect.origin.y
+                    textView.scroll(NSPoint(x: 0, y: currentY))
+                }
             }
         }
 
