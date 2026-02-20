@@ -69,6 +69,10 @@ struct SourceCodeEditor: NSViewRepresentable {
             textView.isHorizontallyResizable = true
             textView.textContainer?.widthTracksTextView = false
             textView.textContainer?.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+            
+            // Fix: When word wrap is off, ensure we stay scrolled to the left
+            // especially after resizing the window or toggling sidebars.
+            textView.scroll(NSPoint(x: 0, y: textView.visibleRect.origin.y))
         }
 
         let colors = getEditorColors(for: theme)
@@ -80,6 +84,15 @@ struct SourceCodeEditor: NSViewRepresentable {
         nsView.backgroundColor = colors.background
 
         textView.insertionPointColor = colors.text
+
+        // Fix: Detect width changes and ensure we are scrolled to the left
+        let currentWidth = nsView.frame.width
+        if currentWidth != context.coordinator.lastWidth {
+            context.coordinator.lastWidth = currentWidth
+            if !isLineWrappingEnabled {
+                textView.scroll(NSPoint(x: 0, y: textView.visibleRect.origin.y))
+            }
+        }
 
         if let ruler = nsView.verticalRulerView as? LineNumberRulerView {
             ruler.theme = theme
@@ -124,6 +137,7 @@ struct SourceCodeEditor: NSViewRepresentable {
         var lastHighlightedText: String?
         var lastHighlightedTheme: EditorTheme?
         var lastHighlightedExtension: String?
+        var lastWidth: CGFloat = 0
         var regexCache: [String: NSRegularExpression] = [:]
         init(_ parent: SourceCodeEditor) { self.parent = parent }
 
