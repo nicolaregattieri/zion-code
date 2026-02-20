@@ -42,6 +42,7 @@ DerivedData/
 # GraphForge Specific
 dist/
 *.log
+*.skill
 
 # Editors
 .vscode/
