@@ -589,7 +589,7 @@ struct FileTreeNodeView: View {
                         Image(systemName: isExpanded ? "chevron.down" : "chevron.right").font(.system(size: 8, weight: .bold)).foregroundStyle(.secondary.opacity(0.5)).frame(width: 12)
                     } else { Spacer().frame(width: 12) }
 
-                    Image(systemName: item.isDirectory ? (isExpanded ? "folder.open.fill" : "folder.fill") : "doc.text")
+                    Image(systemName: item.isDirectory ? "folder.fill" : "doc.text")
                         .font(.system(size: 12))
                         .foregroundStyle(isModified ? Color.orange : (item.isDirectory ? (isDark ? Color.accentColor : Color.blue) : .secondary))
 
