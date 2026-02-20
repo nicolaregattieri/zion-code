@@ -752,16 +752,19 @@ struct TerminalPaneView: View {
             .contentShape(Rectangle())
             .onTapGesture { model.focusedSessionID = session.id }
 
-        case .split(let direction, let first, let second):
+        case .split(let direction, _, _):
+            let children = node.flattenedChildren(forDirection: direction)
             if direction == .vertical {
                 HSplitView {
-                    TerminalPaneView(node: first, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model)
-                    TerminalPaneView(node: second, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model)
+                    ForEach(children) { child in
+                        TerminalPaneView(node: child, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model)
+                    }
                 }
             } else {
                 VSplitView {
-                    TerminalPaneView(node: first, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model)
-                    TerminalPaneView(node: second, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model)
+                    ForEach(children) { child in
+                        TerminalPaneView(node: child, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model)
+                    }
                 }
             }
         }
