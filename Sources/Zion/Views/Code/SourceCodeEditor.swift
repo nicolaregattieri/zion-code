@@ -12,16 +12,21 @@ struct SourceCodeEditor: NSViewRepresentable {
     var fileExtension: String = ""
 
     func makeNSView(context: Context) -> NSScrollView {
-        let scrollView = NSTextView.scrollableTextView()
+        let scrollView = NSScrollView()
+        let clipView = LeftAnchoredClipView()
+        clipView.isLineWrappingEnabled = isLineWrappingEnabled
+        scrollView.contentView = clipView
+        
         scrollView.hasVerticalScroller = true
         scrollView.hasHorizontalScroller = true
         scrollView.autohidesScrollers = true
         scrollView.drawsBackground = true
-        scrollView.postsFrameChangedNotifications = true
 
-        guard let textView = scrollView.documentView as? NSTextView else {
-            return scrollView
-        }
+        let textView = NSTextView()
+        textView.isVerticallyResizable = true
+        textView.isHorizontallyResizable = true
+        textView.autoresizingMask = [.width, .height]
+        scrollView.documentView = textView
 
         textView.delegate = context.coordinator
         textView.isEditable = true
@@ -36,21 +41,6 @@ struct SourceCodeEditor: NSViewRepresentable {
         textView.textContainerInset = NSSize(width: 10, height: 15)
         textView.textContainer?.lineFragmentPadding = 5
 
-        // Anchor to left on resize
-        NotificationCenter.default.addObserver(
-            forName: NSView.frameDidChangeNotification,
-            object: scrollView,
-            queue: .main
-        ) { [weak textView] _ in
-            guard let textView = textView else { return }
-            MainActor.assumeIsolated {
-                if !isLineWrappingEnabled {
-                    let currentY = textView.visibleRect.origin.y
-                    textView.scroll(NSPoint(x: 0, y: currentY))
-                }
-            }
-        }
-
         // Setup Line Numbers
         scrollView.hasVerticalRuler = true
         scrollView.rulersVisible = true
@@ -63,6 +53,11 @@ struct SourceCodeEditor: NSViewRepresentable {
 
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         guard let textView = nsView.documentView as? NSTextView else { return }
+        
+        // Update clip view state
+        if let clipView = nsView.contentView as? LeftAnchoredClipView {
+            clipView.isLineWrappingEnabled = isLineWrappingEnabled
+        }
 
         // Sync text
         if textView.string != text {
@@ -519,5 +514,18 @@ class LineNumberRulerView: NSRulerView {
             index = lineRange.upperBound
             lineNumber += 1
         }
+    }
+}
+
+class LeftAnchoredClipView: NSClipView {
+    var isLineWrappingEnabled: Bool = true
+    
+    override func constrainBoundsRect(_ proposedBounds: NSRect) -> NSRect {
+        var constrained = super.constrainBoundsRect(proposedBounds)
+        if !isLineWrappingEnabled {
+            // Force horizontal origin to 0 to prevent drifting during resize
+            constrained.origin.x = 0
+        }
+        return constrained
     }
 }
