@@ -17,6 +17,7 @@ struct SourceCodeEditor: NSViewRepresentable {
         scrollView.hasHorizontalScroller = true
         scrollView.autohidesScrollers = true
         scrollView.drawsBackground = true
+        scrollView.postsFrameChangedNotifications = true
 
         guard let textView = scrollView.documentView as? NSTextView else {
             return scrollView
@@ -34,6 +35,19 @@ struct SourceCodeEditor: NSViewRepresentable {
         // Fix: padding and alignment
         textView.textContainerInset = NSSize(width: 10, height: 15)
         textView.textContainer?.lineFragmentPadding = 5
+
+        // Anchor to left on resize
+        NotificationCenter.default.addObserver(
+            forName: NSView.frameDidChangeNotification,
+            object: scrollView,
+            queue: .main
+        ) { [weak textView] _ in
+            guard let textView = textView else { return }
+            if !isLineWrappingEnabled {
+                let currentY = textView.visibleRect.origin.y
+                textView.scroll(NSPoint(x: 0, y: currentY))
+            }
+        }
 
         // Setup Line Numbers
         scrollView.hasVerticalRuler = true
