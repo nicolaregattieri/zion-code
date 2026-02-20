@@ -79,6 +79,22 @@ final class TerminalPaneNode: Identifiable {
         }
     }
 
+    /// Flatten consecutive same-direction splits into a single array of children.
+    /// Stops at direction boundaries (different-direction splits become leaf nodes).
+    func flattenedChildren(forDirection target: SplitDirection) -> [TerminalPaneNode] {
+        switch content {
+        case .terminal:
+            return [self]
+        case .split(let direction, let first, let second):
+            if direction == target {
+                return first.flattenedChildren(forDirection: target)
+                     + second.flattenedChildren(forDirection: target)
+            } else {
+                return [self]
+            }
+        }
+    }
+
     /// Find parent of a node containing sessionID, returns (parent, isFirst)
     func findParent(of sessionID: UUID) -> (parent: TerminalPaneNode, isFirst: Bool)? {
         guard case .split(_, let first, let second) = content else { return nil }
