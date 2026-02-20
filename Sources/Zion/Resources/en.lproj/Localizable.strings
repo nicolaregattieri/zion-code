@@ -322,3 +322,21 @@
 "Chave SSH" = "SSH Key";
 "Configuracao SSH" = "SSH Config";
 "Acesso ao Keychain" = "Keychain Access";
+
+// Terminal split & font
+"Fonte nao encontrada, usando fallback" = "Font not found, using fallback";
+"Dividir verticalmente" = "Split vertically";
+"Dividir horizontalmente" = "Split horizontally";
+"Alternar painel de arquivos" = "Toggle file browser";
+"Fonte do terminal" = "Terminal font";
+"Fonte" = "Font";
+"Tamanho" = "Size";
+
+// Worktree & pane management
+"Criar worktree rapido" = "Quick create worktree";
+"Fechar painel" = "Close pane";
+
+// Layout toggle
+"Somente editor" = "Editor only";
+"Editor e terminal" = "Editor and terminal";
+"Somente terminal" = "Terminal only";

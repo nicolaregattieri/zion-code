@@ -29,10 +29,6 @@ final class FileWatcher {
             }
         }
 
-        source.setCancelHandler { [fd = fd] in
-            close(fd)
-        }
-
         self.source = source
         source.resume()
     }
@@ -43,7 +39,10 @@ final class FileWatcher {
         debounceTask = nil
         source?.cancel()
         source = nil
-        fileDescriptor = -1
+        if fileDescriptor >= 0 {
+            close(fileDescriptor)
+            fileDescriptor = -1
+        }
     }
 
     @MainActor
@@ -60,5 +59,8 @@ final class FileWatcher {
 
     deinit {
         source?.cancel()
+        if fileDescriptor >= 0 {
+            close(fileDescriptor)
+        }
     }
 }

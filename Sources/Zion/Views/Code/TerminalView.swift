@@ -5,6 +5,8 @@ import AppKit
 struct TerminalTabView: NSViewRepresentable {
     var session: TerminalSession
     var theme: EditorTheme
+    var fontSize: Double = 13.0
+    var fontFamily: String = "SF Mono"
     var model: RepositoryViewModel?
 
     func makeNSView(context: Context) -> SwiftTerm.TerminalView {
@@ -40,9 +42,13 @@ struct TerminalTabView: NSViewRepresentable {
         // Always keep layer bg in sync (cheap — setter doesn't touch layer)
         view.layer?.backgroundColor = palette.background.cgColor
 
-        // Only apply expensive operations when theme actually changes
-        guard theme != context.coordinator.lastAppliedTheme else { return }
+        // Only apply expensive operations when theme or font actually changes
+        let fontChanged = fontSize != context.coordinator.lastAppliedFontSize
+                       || fontFamily != context.coordinator.lastAppliedFontFamily
+        guard theme != context.coordinator.lastAppliedTheme || fontChanged else { return }
         context.coordinator.lastAppliedTheme = theme
+        context.coordinator.lastAppliedFontSize = fontSize
+        context.coordinator.lastAppliedFontFamily = fontFamily
 
         // Base colors (must be set BEFORE installPalette — palette generation uses these)
         view.nativeForegroundColor = palette.foreground
@@ -55,10 +61,11 @@ struct TerminalTabView: NSViewRepresentable {
         view.caretColor = palette.cursorColor
         view.caretTextColor = palette.cursorTextColor
 
-        // Font: Hack Nerd Font with SF Mono fallback
-        let fontSize: CGFloat = 13.0
-        let font = NSFont(name: "HackNerdFontMono-Regular", size: fontSize)
-                  ?? NSFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
+        // Font with fallback chain
+        let size = CGFloat(fontSize)
+        let font = NSFont(name: fontFamily, size: size)
+                  ?? NSFont(name: "Menlo", size: size)
+                  ?? NSFont.monospacedSystemFont(ofSize: size, weight: .regular)
         view.font = font
 
         // Force redraw — setters above don't trigger needsDisplay
@@ -76,6 +83,8 @@ struct TerminalTabView: NSViewRepresentable {
         private weak var terminalView: SwiftTerm.TerminalView?
         private(set) var processIsDead = false
         var lastAppliedTheme: EditorTheme?
+        var lastAppliedFontSize: Double?
+        var lastAppliedFontFamily: String?
 
         init(_ parent: TerminalTabView) {
             self.parent = parent

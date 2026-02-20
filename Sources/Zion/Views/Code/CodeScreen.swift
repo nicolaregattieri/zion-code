@@ -67,10 +67,18 @@ struct FolderIcon: View {
     }
 }
 
+enum EditorTerminalLayout: String, CaseIterable {
+    case editorOnly
+    case split
+    case terminalOnly
+}
+
 struct CodeScreen: View {
     @Bindable var model: RepositoryViewModel
     var onOpenFolder: (() -> Void)? = nil
     @State private var isQuickOpenVisible: Bool = false
+    @State private var isFileBrowserVisible: Bool = true
+    @State private var layout: EditorTerminalLayout = .split
 
     var body: some View {
         ZStack {
@@ -84,15 +92,26 @@ struct CodeScreen: View {
                 Divider()
 
                 HSplitView {
-                    fileBrowserPane
-                        .frame(minWidth: 200, idealWidth: 260, maxWidth: 400)
+                    if isFileBrowserVisible {
+                        fileBrowserPane
+                            .frame(minWidth: 200, idealWidth: 260, maxWidth: 400)
+                    }
 
-                    VSplitView {
+                    switch layout {
+                    case .editorOnly:
                         editorPane
-                            .frame(minWidth: 400, idealWidth: 800, maxWidth: .infinity, minHeight: 300)
-
+                            .frame(minWidth: 400, idealWidth: 800, maxWidth: .infinity)
+                    case .terminalOnly:
                         terminalContainer
-                            .frame(minWidth: 400, idealWidth: 800, maxWidth: .infinity, minHeight: 150, maxHeight: 600)
+                            .frame(minWidth: 400, idealWidth: 800, maxWidth: .infinity)
+                    case .split:
+                        VSplitView {
+                            editorPane
+                                .frame(minWidth: 400, idealWidth: 800, maxWidth: .infinity, minHeight: 200)
+
+                            terminalContainer
+                                .frame(minWidth: 400, idealWidth: 800, maxWidth: .infinity, minHeight: 150)
+                        }
                     }
                 }
             }
@@ -110,11 +129,42 @@ struct CodeScreen: View {
             Button("") { isQuickOpenVisible.toggle() }
                 .keyboardShortcut("p", modifiers: .command)
                 .frame(width: 0, height: 0).opacity(0)
+
+            Button("") { withAnimation(.easeInOut(duration: 0.2)) { isFileBrowserVisible.toggle() } }
+                .keyboardShortcut("b", modifiers: .command)
+                .frame(width: 0, height: 0).opacity(0)
+
+            // Toggle terminal visibility (Cmd+J)
+            Button("") {
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    layout = layout == .editorOnly ? .split : .editorOnly
+                }
+            }
+            .keyboardShortcut("j", modifiers: .command)
+            .frame(width: 0, height: 0).opacity(0)
+
+            // Maximize terminal (Cmd+Shift+J)
+            Button("") {
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    layout = layout == .terminalOnly ? .split : .terminalOnly
+                }
+            }
+            .keyboardShortcut("j", modifiers: [.command, .shift])
+            .frame(width: 0, height: 0).opacity(0)
         }
     }
     
     private var editorToolbar: some View {
         HStack(spacing: 6) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) { isFileBrowserVisible.toggle() }
+            } label: {
+                Image(systemName: "sidebar.left").font(.caption)
+            }
+            .buttonStyle(.bordered)
+            .tint(isFileBrowserVisible ? Color.accentColor : .secondary)
+            .help(L10n("Alternar painel de arquivos") + " (⌘B)")
+
             // Theme & Font group
             HStack(spacing: 6) {
                 Picker("", selection: $model.selectedTheme) {
@@ -183,6 +233,51 @@ struct CodeScreen: View {
             .help(L10n("Git Blame"))
             .disabled(model.activeFileID == nil)
 
+            Divider().frame(height: 14).padding(.horizontal, 4)
+
+            // Layout toggle: editor / split / terminal
+            HStack(spacing: 2) {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.15)) { layout = .editorOnly }
+                } label: {
+                    Image(systemName: "rectangle.topthird.inset.filled")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(layout == .editorOnly ? Color.accentColor : .secondary)
+                .frame(width: 26, height: 22)
+                .contentShape(Rectangle())
+                .help(L10n("Somente editor") + " (⌘J)")
+
+                Button {
+                    withAnimation(.easeInOut(duration: 0.15)) { layout = .split }
+                } label: {
+                    Image(systemName: "rectangle.split.1x2")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(layout == .split ? Color.accentColor : .secondary)
+                .frame(width: 26, height: 22)
+                .contentShape(Rectangle())
+                .help(L10n("Editor e terminal"))
+
+                Button {
+                    withAnimation(.easeInOut(duration: 0.15)) { layout = .terminalOnly }
+                } label: {
+                    Image(systemName: "rectangle.bottomthird.inset.filled")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(layout == .terminalOnly ? Color.accentColor : .secondary)
+                .frame(width: 26, height: 22)
+                .contentShape(Rectangle())
+                .help(L10n("Somente terminal") + " (⇧⌘J)")
+            }
+            .padding(.horizontal, 4)
+            .padding(.vertical, 3)
+            .background(DesignSystem.Colors.glassSubtle)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+
             Spacer()
 
             if model.activeFileID != nil {
@@ -201,49 +296,45 @@ struct CodeScreen: View {
     
     private var fileBrowserPane: some View {
         VStack(spacing: 0) {
-            // File tree fills remaining space
-            VStack(alignment: .leading, spacing: 0) {
-                CardHeader(L10n("Arquivos"), icon: "folder.fill") {
-                    Button { model.refreshFileTree() } label: { Image(systemName: "arrow.clockwise") }
-                        .buttonStyle(.plain).foregroundStyle(.secondary)
-                }
-                .padding(12)
-
-                Divider()
-
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 0) {
-                        if model.repositoryFiles.isEmpty {
-                            VStack(spacing: 16) {
-                                Text(L10n("Nenhum arquivo encontrado")).font(.caption).foregroundStyle(.secondary)
-                                Button {
-                                    onOpenFolder?()
-                                } label: {
-                                    Label(L10n("Selecionar Pasta"), systemImage: "folder.badge.plus")
-                                }
-                                .buttonStyle(.bordered)
-                                .controlSize(.small)
-                            }
-                            .padding(20)
-                            .frame(maxWidth: .infinity)
-                        } else {
-                            ForEach(model.repositoryFiles) { item in
-                                FileTreeNodeView(model: model, item: item, level: 0)
-                            }
-                        }
-                    }
-                    .padding(.vertical, 8)
-                }
+            // File tree header
+            CardHeader(L10n("Arquivos"), icon: "folder.fill") {
+                Button { model.refreshFileTree() } label: { Image(systemName: "arrow.clockwise") }
+                    .buttonStyle(.plain).foregroundStyle(.secondary)
             }
-            .frame(maxHeight: .infinity)
-            .background(DesignSystem.Colors.background.opacity(0.3))
+            .padding(12)
 
             Divider()
 
-            // Clipboard pinned to bottom — shrinks to header when collapsed
-            ClipboardDrawer(model: model)
-                .frame(maxHeight: model.clipboardMonitor.isCollapsed ? nil : 200)
+            // File tree scroll — fills available space
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    if model.repositoryFiles.isEmpty {
+                        VStack(spacing: 16) {
+                            Text(L10n("Nenhum arquivo encontrado")).font(.caption).foregroundStyle(.secondary)
+                            Button {
+                                onOpenFolder?()
+                            } label: {
+                                Label(L10n("Selecionar Pasta"), systemImage: "folder.badge.plus")
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                        }
+                        .padding(20)
+                        .frame(maxWidth: .infinity)
+                    } else {
+                        ForEach(model.repositoryFiles) { item in
+                            FileTreeNodeView(model: model, item: item, level: 0)
+                        }
+                    }
+
+                    ClipboardDrawer(model: model)
+                        .padding(.top, 8)
+                }
+                .padding(.top, 8)
+                .padding(.bottom, 40)
+            }
         }
+        .background(DesignSystem.Colors.background.opacity(0.3))
     }
     
     private var editorPane: some View {
@@ -321,17 +412,24 @@ struct CodeScreen: View {
             Divider()
 
             ZStack {
-                if model.terminalSessions.isEmpty {
+                if model.terminalTabs.isEmpty {
                     VStack(spacing: 8) {
                         Image(systemName: "terminal").font(.title).foregroundStyle(.secondary)
                         Text(L10n("Nenhum terminal aberto")).font(.caption).foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    ForEach(model.terminalSessions) { session in
-                        TerminalTabView(session: session, theme: model.selectedTheme, model: model)
-                            .opacity(session.id == model.activeTerminalID ? 1 : 0)
-                            .allowsHitTesting(session.id == model.activeTerminalID)
+                    ForEach(model.terminalTabs) { tab in
+                        TerminalPaneView(
+                            node: tab,
+                            theme: model.selectedTheme,
+                            fontSize: model.terminalFontSize,
+                            fontFamily: model.terminalFontFamily,
+                            focusedSessionID: model.focusedSessionID,
+                            model: model
+                        )
+                        .opacity(tab.id == model.activeTabID ? 1 : 0)
+                        .allowsHitTesting(tab.id == model.activeTabID)
                     }
                 }
             }
@@ -346,12 +444,42 @@ struct CodeScreen: View {
             model.createDefaultTerminalSession(repositoryURL: model.repositoryURL, branchName: model.currentBranch.isEmpty ? "zsh" : model.currentBranch)
         }
         .background {
+            // New tab
             Button("") {
-                guard let url = model.repositoryURL else { return }
+                let url = model.repositoryURL ?? URL(fileURLWithPath: NSHomeDirectory())
                 model.createTerminalSession(workingDirectory: url, label: model.currentBranch.isEmpty ? "zsh" : model.currentBranch)
             }
             .keyboardShortcut("t", modifiers: .command)
             .frame(width: 0, height: 0).opacity(0)
+
+            // Vertical split
+            Button("") { model.splitFocusedTerminal(direction: .vertical) }
+                .keyboardShortcut("d", modifiers: [.command, .shift])
+                .frame(width: 0, height: 0).opacity(0)
+
+            // Horizontal split
+            Button("") { model.splitFocusedTerminal(direction: .horizontal) }
+                .keyboardShortcut("e", modifiers: [.command, .shift])
+                .frame(width: 0, height: 0).opacity(0)
+
+            // Terminal zoom in (Ctrl+=)
+            Button("") {
+                model.terminalFontSize = min(32, model.terminalFontSize + 1)
+            }
+            .keyboardShortcut("=", modifiers: .control)
+            .frame(width: 0, height: 0).opacity(0)
+
+            // Terminal zoom out (Ctrl+-)
+            Button("") {
+                model.terminalFontSize = max(8, model.terminalFontSize - 1)
+            }
+            .keyboardShortcut("-", modifiers: .control)
+            .frame(width: 0, height: 0).opacity(0)
+
+            // Close focused split pane (Cmd+Shift+W)
+            Button("") { model.closeFocusedTerminalPane() }
+                .keyboardShortcut("w", modifiers: [.command, .shift])
+                .frame(width: 0, height: 0).opacity(0)
         }
     }
 
@@ -366,14 +494,16 @@ struct CodeScreen: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 2) {
-                    ForEach(model.terminalSessions) { session in
-                        TerminalTab(
-                            session: session,
-                            isActive: session.id == model.activeTerminalID,
+                    ForEach(model.terminalTabs) { tab in
+                        TerminalTabChip(
+                            tab: tab,
+                            isActive: tab.id == model.activeTabID,
                             accentColor: accentColor,
-                            onActivate: { model.activateTerminalSession(session) },
-                            onClose: { model.closeTerminalSession(session) },
-                            onRestart: { session.isAlive = true }
+                            onActivate: {
+                                model.activeTabID = tab.id
+                                model.focusedSessionID = tab.allSessions().first?.id
+                            },
+                            onClose: { model.closeTab(tab) }
                         )
                     }
                 }
@@ -382,52 +512,104 @@ struct CodeScreen: View {
 
             Spacer()
 
+            // Split buttons grouped
+            HStack(spacing: 2) {
+                Button {
+                    model.splitFocusedTerminal(direction: .vertical)
+                } label: {
+                    Image(systemName: "square.split.2x1")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(accentColor)
+                }
+                .buttonStyle(.borderless)
+                .frame(width: 28, height: 24)
+                .contentShape(Rectangle())
+                .help(L10n("Dividir verticalmente") + " (⇧⌘D)")
+
+                Button {
+                    model.splitFocusedTerminal(direction: .horizontal)
+                } label: {
+                    Image(systemName: "square.split.1x2")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(accentColor)
+                }
+                .buttonStyle(.borderless)
+                .frame(width: 28, height: 24)
+                .contentShape(Rectangle())
+                .help(L10n("Dividir horizontalmente") + " (⇧⌘E)")
+            }
+            .padding(.horizontal, 4)
+            .padding(.vertical, 3)
+            .background(DesignSystem.Colors.glassSubtle)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+
+            // Font popover
+            TerminalFontPopoverButton(model: model, accentColor: accentColor)
+                .padding(.horizontal, 4)
+
+            // Quick worktree
+            Button { model.quickCreateWorktree() } label: {
+                Image(systemName: "arrow.triangle.branch")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(accentColor)
+            }
+            .buttonStyle(.borderless)
+            .frame(width: 28, height: 24)
+            .contentShape(Rectangle())
+            .help(L10n("Criar worktree rapido"))
+            .disabled(model.repositoryURL == nil)
+
+            // New tab
             Button {
-                guard let url = model.repositoryURL else { return }
+                let url = model.repositoryURL ?? URL(fileURLWithPath: NSHomeDirectory())
                 let label = model.currentBranch.isEmpty ? "zsh" : model.currentBranch
                 model.createTerminalSession(workingDirectory: url, label: label)
             } label: {
                 Image(systemName: "plus")
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(accentColor)
             }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 8)
+            .buttonStyle(.borderless)
+            .frame(width: 28, height: 24)
+            .contentShape(Rectangle())
+            .padding(.trailing, 8)
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 8)
         .overlay(alignment: .top) {
             Rectangle().fill(model.selectedTheme.terminalPalette.accentSwiftUI.opacity(0.25)).frame(height: 1)
         }
     }
 }
 
-struct TerminalTab: View {
-    var session: TerminalSession
+struct TerminalTabChip: View {
+    let tab: TerminalPaneNode
     let isActive: Bool
     let accentColor: Color
     let onActivate: () -> Void
     let onClose: () -> Void
-    let onRestart: () -> Void
+
+    private var sessions: [TerminalSession] { tab.allSessions() }
+    private var title: String { sessions.first?.title ?? "zsh" }
+    private var hasAlive: Bool { sessions.contains(where: { $0.isAlive }) }
 
     var body: some View {
         HStack(spacing: 6) {
             Circle()
-                .fill(session.isAlive ? Color.green : Color.red)
+                .fill(hasAlive ? Color.green : Color.red)
                 .frame(width: 6, height: 6)
 
-            Text(session.title)
+            Text(title)
                 .font(.system(size: 10, weight: isActive ? .bold : .regular, design: .monospaced))
                 .lineLimit(1)
 
-            if !session.isAlive {
-                Button {
-                    onRestart()
-                } label: {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 8, weight: .bold))
-                        .foregroundStyle(.secondary)
-                }
-                .buttonStyle(.plain)
+            if sessions.count > 1 {
+                Text("\(sessions.count)")
+                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    .foregroundStyle(accentColor)
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 1)
+                    .background(accentColor.opacity(0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
             }
 
             Button {
@@ -438,6 +620,8 @@ struct TerminalTab: View {
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
+            .frame(width: 16, height: 16)
+            .contentShape(Rectangle())
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
@@ -449,6 +633,132 @@ struct TerminalTab: View {
         )
         .contentShape(Rectangle())
         .onTapGesture { onActivate() }
+    }
+}
+
+struct TerminalFontPopoverButton: View {
+    @Bindable var model: RepositoryViewModel
+    let accentColor: Color
+    @State private var isPresented = false
+
+    var body: some View {
+        Button {
+            isPresented.toggle()
+        } label: {
+            Image(systemName: "textformat.size")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(accentColor)
+        }
+        .buttonStyle(.plain)
+        .frame(width: 28, height: 24)
+        .contentShape(Rectangle())
+        .help(L10n("Fonte do terminal"))
+        .popover(isPresented: $isPresented) {
+            VStack(alignment: .leading, spacing: 10) {
+                Text(L10n("Fonte do terminal"))
+                    .font(.system(size: 11, weight: .semibold))
+
+                HStack(spacing: 6) {
+                    Text(L10n("Fonte"))
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                    Picker("", selection: $model.terminalFontFamily) {
+                        Text("SF Mono").tag("SF Mono")
+                        Text("Menlo").tag("Menlo")
+                        Text("Monaco").tag("Monaco")
+                        Text("Fira Code").tag("Fira Code")
+                        Text("JetBrains Mono").tag("JetBrains Mono")
+                        Text("Hack Nerd Font").tag("HackNerdFontMono-Regular")
+                    }
+                    .pickerStyle(.menu)
+                    .frame(width: 140)
+                }
+
+                if !model.isTerminalFontAvailable {
+                    HStack(spacing: 4) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 9))
+                            .foregroundStyle(.orange)
+                        Text(L10n("Fonte nao encontrada, usando fallback"))
+                            .font(.system(size: 10))
+                            .foregroundStyle(.orange)
+                    }
+                }
+
+                HStack(spacing: 6) {
+                    Text(L10n("Tamanho"))
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                    Stepper(value: $model.terminalFontSize, in: 8...32, step: 1) {
+                        Text("\(Int(model.terminalFontSize))pt")
+                            .font(.system(size: 11, design: .monospaced))
+                    }
+                }
+            }
+            .controlSize(.small)
+            .padding(12)
+            .frame(width: 240)
+        }
+    }
+}
+
+struct TerminalPaneView: View {
+    let node: TerminalPaneNode
+    var theme: EditorTheme
+    var fontSize: Double
+    var fontFamily: String
+    var focusedSessionID: UUID?
+    var model: RepositoryViewModel
+
+    var body: some View {
+        switch node.content {
+        case .terminal(let session):
+            TerminalTabView(
+                session: session,
+                theme: theme,
+                fontSize: fontSize,
+                fontFamily: fontFamily,
+                model: model
+            )
+            .overlay(alignment: .topLeading) {
+                if focusedSessionID == session.id, model.terminalSessions.count > 1 {
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(Color.accentColor)
+                        .frame(width: 3, height: 20)
+                        .padding(.top, 4)
+                        .padding(.leading, 2)
+                }
+            }
+            .overlay(alignment: .topTrailing) {
+                if model.terminalSessions.count > 1 {
+                    Button { model.closeTerminalSession(session) } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .frame(width: 20, height: 20)
+                    .contentShape(Rectangle())
+                    .help(L10n("Fechar painel"))
+                    .padding(4)
+                }
+            }
+            .contentShape(Rectangle())
+            .onTapGesture { model.focusedSessionID = session.id }
+
+        case .split(let direction, let first, let second):
+            if direction == .vertical {
+                HSplitView {
+                    TerminalPaneView(node: first, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model)
+                    TerminalPaneView(node: second, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model)
+                }
+            } else {
+                VSplitView {
+                    TerminalPaneView(node: first, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model)
+                    TerminalPaneView(node: second, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model)
+                }
+            }
+        }
     }
 }
 
