@@ -108,6 +108,12 @@ Pattern: **MVVM** with Swift Observation (`@Observable`).
 - `drawsBackground = true` with explicit `backgroundColor`
 - Use `NSColor(srgbRed:green:blue:alpha:)` for text attributes — never bridge through SwiftUI Color
 
+### L10n & Multi-language Support
+
+- **MANDATORY**: All user-facing strings MUST be wrapped in `L10n()`.
+- **MANDATORY**: Every new string added MUST have a corresponding key in all 3 supported `.lproj` files: `pt-BR`, `en`, and `es`.
+- Never commit UI changes without updating all three localization files.
+
 ### Terminal
 
 - SwiftTerm + real PTY via `LocalProcess`

@@ -142,7 +142,7 @@ struct SourceCodeEditor: NSViewRepresentable {
         }
 
         private enum LanguageType {
-            case swift, javascript, python, rust, go, ruby, html, css, json, yaml, markdown, shell, cLike, sql, lua, unknown
+            case swift, javascript, python, rust, go, ruby, html, css, json, yaml, markdown, shell, cLike, sql, lua, liquid, unknown
         }
 
         private func detectLanguage(from ext: String) -> LanguageType {
@@ -153,7 +153,8 @@ struct SourceCodeEditor: NSViewRepresentable {
             case "rs": return .rust
             case "go": return .go
             case "rb", "ex", "exs": return .ruby
-            case "html", "htm", "xml", "svg", "vue", "svelte", "liquid", "erb", "ejs", "hbs", "njk": return .html
+            case "html", "htm", "xml", "svg", "vue", "svelte", "erb", "ejs", "hbs", "njk": return .html
+            case "liquid": return .liquid
             case "css", "scss", "sass", "less": return .css
             case "json": return .json
             case "yaml", "yml", "toml", "ini", "cfg", "conf", "properties", "env": return .yaml
@@ -189,6 +190,8 @@ struct SourceCodeEditor: NSViewRepresentable {
                 return #"(?i)\b(select|from|where|insert|into|update|set|delete|create|alter|drop|table|index|view|join|inner|outer|left|right|cross|on|and|or|not|in|is|null|like|between|exists|having|group|by|order|asc|desc|limit|offset|union|all|as|distinct|case|when|then|else|end|begin|commit|rollback|transaction|grant|revoke|primary|key|foreign|references|constraint|default|values|count|sum|avg|min|max|cast|coalesce|if|function|procedure|trigger|returns|declare|cursor|fetch|into|varchar|int|integer|text|boolean|date|timestamp|float|double|decimal|serial|auto_increment|unique|check|truncate)\b"#
             case .lua:
                 return #"\b(and|break|do|else|elseif|end|false|for|function|goto|if|in|local|nil|not|or|repeat|return|then|true|until|while|require|self|pairs|ipairs|next|type|tostring|tonumber|print|error|pcall|xpcall|setmetatable|getmetatable|rawget|rawset|select|unpack|table|string|math|io|os|coroutine)\b"#
+            case .liquid:
+                return #"\b(if|else|elsif|endif|unless|endunless|case|when|endcase|for|endfor|tablerow|endtablerow|assign|capture|endcapture|increment|decrement|comment|endcomment|raw|endraw|include|render|layout|section)\b"#
             case .html, .css, .json, .yaml, .markdown, .unknown:
                 return #"\b(func|let|var|class|struct|import|if|else|return|while|for|in|switch|case|break|continue|enum|protocol|extension|typealias|try|catch|guard|static|public|private|true|false|null|nil)\b"#
             }
@@ -273,6 +276,19 @@ struct SourceCodeEditor: NSViewRepresentable {
                 highlight(pattern: #"\b[a-z][a-zA-Z0-9_]*(?=\()"#, in: string, color: colors.call, storage: textStorage)
                 highlight(pattern: #"--.*"#, in: string, color: colors.comment, storage: textStorage)
                 highlight(pattern: #"(?s)--\[\[.*?\]\]"#, in: string, color: colors.comment, storage: textStorage)
+
+            case .liquid:
+                // HTML + Liquid tags/objects
+                highlight(pattern: #"</?[a-zA-Z][a-zA-Z0-9]*"#, in: string, color: colors.keyword, storage: textStorage)
+                highlight(pattern: #"\b[a-zA-Z-]+(?=\s*=)"#, in: string, color: colors.type, storage: textStorage)
+                highlight(pattern: #""[^"]*""#, in: string, color: colors.string, storage: textStorage)
+                highlight(pattern: #"'[^']*'"#, in: string, color: colors.string, storage: textStorage)
+                highlight(pattern: #"<!--[\s\S]*?-->"#, in: string, color: colors.comment, storage: textStorage)
+                
+                // Liquid specific
+                highlight(pattern: #"\{%[\s\S]*?%\}"#, in: string, color: colors.type, storage: textStorage)
+                highlight(pattern: #"\{\{[\s\S]*?\}\}"#, in: string, color: colors.call, storage: textStorage)
+                highlight(pattern: #"\{%[\s\S]*?comment[\s\S]*?endcomment[\s\S]*?%\}"#, in: string, color: colors.comment, storage: textStorage)
 
             default:
                 // General programming languages
