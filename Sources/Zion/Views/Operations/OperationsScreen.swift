@@ -41,6 +41,8 @@ struct OperationsScreen: View {
                         historyCard
                         remotesCard
                         worktreeCard
+                        SubmodulesCard(model: model)
+                        RepositoryStatsCard(model: model)
                         cleanupCard
                         resetCard
                     }
@@ -88,13 +90,30 @@ struct OperationsScreen: View {
                     }
                 }
 
-                TextField(L10n("Mensagem do commit..."), text: $model.commitMessageInput, axis: .vertical)
-                    .textFieldStyle(.plain)
-                    .lineLimit(3...6)
-                    .padding(12)
-                    .background(DesignSystem.Colors.glassInset)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(DesignSystem.Colors.glassStroke, lineWidth: 1))
+                HStack(alignment: .bottom, spacing: 8) {
+                    TextField(L10n("Mensagem do commit..."), text: $model.commitMessageInput, axis: .vertical)
+                        .textFieldStyle(.plain)
+                        .lineLimit(3...6)
+                        .padding(12)
+                        .background(DesignSystem.Colors.glassInset)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(DesignSystem.Colors.glassStroke, lineWidth: 1))
+
+                    Button {
+                        model.suggestCommitMessage()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            if !model.suggestedCommitMessage.isEmpty {
+                                model.commitMessageInput = model.suggestedCommitMessage
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 12))
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .help(L10n("Sugerir mensagem de commit"))
+                }
 
                 HStack {
                     Toggle(L10n("Corrigir ultimo commit (Amend)"), isOn: $model.amendLastCommit)

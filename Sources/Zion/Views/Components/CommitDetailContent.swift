@@ -2,6 +2,9 @@ import SwiftUI
 
 struct CommitDetailContent: View {
     let rawDetails: String
+    var model: RepositoryViewModel?
+    var commitID: String?
+    @State private var expandedFile: String?
 
     private var parsed: ParsedDetail { ParsedDetail(rawDetails) }
 
@@ -80,17 +83,42 @@ struct CommitDetailContent: View {
 
                         VStack(alignment: .leading, spacing: 0) {
                             ForEach(Array(detail.changedFiles.enumerated()), id: \.offset) { _, file in
-                                HStack(spacing: 8) {
-                                    fileStatusBadge(file.status)
-                                    Text(file.path)
-                                        .font(.system(size: 11, design: .monospaced))
-                                        .lineLimit(1)
-                                        .truncationMode(.middle)
-                                        .textSelection(.enabled)
+                                VStack(alignment: .leading, spacing: 0) {
+                                    Button {
+                                        if expandedFile == file.path {
+                                            expandedFile = nil
+                                        } else {
+                                            expandedFile = file.path
+                                            if let model, let commitID {
+                                                model.loadDiffForCommitFile(commitID: commitID, file: file.path)
+                                            }
+                                        }
+                                    } label: {
+                                        HStack(spacing: 8) {
+                                            fileStatusBadge(file.status)
+                                            Text(file.path)
+                                                .font(.system(size: 11, design: .monospaced))
+                                                .lineLimit(1)
+                                                .truncationMode(.middle)
+                                            Spacer()
+                                            if model != nil && commitID != nil {
+                                                Image(systemName: expandedFile == file.path ? "chevron.down" : "chevron.right")
+                                                    .font(.system(size: 8, weight: .bold))
+                                                    .foregroundStyle(.secondary)
+                                            }
+                                        }
+                                    }
+                                    .buttonStyle(.plain)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 5)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .contentShape(Rectangle())
+
+                                    if expandedFile == file.path, let model, !model.currentFileDiffHunks.isEmpty {
+                                        HunkDiffView(model: model, file: file.path, hunks: model.currentFileDiffHunks)
+                                            .frame(maxHeight: 300)
+                                    }
                                 }
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 5)
-                                .frame(maxWidth: .infinity, alignment: .leading)
                             }
                         }
                         .background(DesignSystem.Colors.glassOverlay)

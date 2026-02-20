@@ -40,6 +40,70 @@ struct GitCommandResult {
 }
 
 struct GitClient {
+    func runWithStdin(args: [String], stdin: String, in repositoryURL: URL) throws -> GitCommandResult {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        process.arguments = ["git"] + args
+        process.currentDirectoryURL = repositoryURL
+
+        var environment = ProcessInfo.processInfo.environment
+        environment["LC_ALL"] = "C"
+        environment["LANG"] = "C"
+        process.environment = environment
+
+        let stdinPipe = Pipe()
+        let stdoutPipe = Pipe()
+        let stderrPipe = Pipe()
+        process.standardInput = stdinPipe
+        process.standardOutput = stdoutPipe
+        process.standardError = stderrPipe
+
+        let stdoutAccumulator = DataAccumulator()
+        let stderrAccumulator = DataAccumulator()
+
+        stdoutPipe.fileHandleForReading.readabilityHandler = { handle in
+            let chunk = handle.availableData
+            guard !chunk.isEmpty else { return }
+            stdoutAccumulator.append(chunk)
+        }
+
+        stderrPipe.fileHandleForReading.readabilityHandler = { handle in
+            let chunk = handle.availableData
+            guard !chunk.isEmpty else { return }
+            stderrAccumulator.append(chunk)
+        }
+
+        try process.run()
+
+        if let inputData = stdin.data(using: .utf8) {
+            stdinPipe.fileHandleForWriting.write(inputData)
+        }
+        stdinPipe.fileHandleForWriting.closeFile()
+
+        process.waitUntilExit()
+
+        stdoutPipe.fileHandleForReading.readabilityHandler = nil
+        stderrPipe.fileHandleForReading.readabilityHandler = nil
+
+        stdoutAccumulator.append(stdoutPipe.fileHandleForReading.readDataToEndOfFile())
+        stderrAccumulator.append(stderrPipe.fileHandleForReading.readDataToEndOfFile())
+
+        let stdoutData = stdoutAccumulator.value()
+        let stderrData = stderrAccumulator.value()
+        let stdout = String(data: stdoutData, encoding: .utf8) ?? ""
+        let stderr = String(data: stderrData, encoding: .utf8) ?? ""
+
+        if process.terminationStatus != 0 {
+            let message = stderr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                ? stdout.trimmingCharacters(in: .whitespacesAndNewlines)
+                : stderr.trimmingCharacters(in: .whitespacesAndNewlines)
+            let command = (["git"] + args).joined(separator: " ")
+            throw GitClientError.commandFailed(command: command, message: message)
+        }
+
+        return GitCommandResult(stdout: stdout, stderr: stderr, status: process.terminationStatus)
+    }
+
     func run(args: [String], in repositoryURL: URL) throws -> GitCommandResult {
         let result = try runAllowingFailure(args: args, in: repositoryURL)
         if result.status != 0 {

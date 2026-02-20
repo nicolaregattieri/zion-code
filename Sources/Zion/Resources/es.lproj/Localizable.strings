@@ -256,3 +256,21 @@
 "Descartar" = "Descartar";
 "Deseja reverter todas as mudancas neste arquivo? Isso nao pode ser desfeito." = "¿Desea revertir todos los cambios en este archivo? Esto no se puede deshacer.";
 "Checkout & Abrir no Editor" = "Checkout y abrir en el editor";
+
+// L10n coverage fixes
+"Nunca confirmar" = "Nunca confirmar";
+"Confirmar criticas" = "Confirmar críticas";
+"Confirmar todas" = "Confirmar todas";
+"Selecionar do Disco..." = "Seleccionar del disco...";
+"Modificado" = "Modificado";
+"Nao inicializado" = "No inicializado";
+"OK" = "OK";
+"Sistema" = "Sistema";
+"%d commits" = "%d commits";
+"Tag: %@" = "Tag: %@";
+"Branch: %@" = "Branch: %@";
+"(Atual)" = "(Actual)";
+"(Double-click para checkout)" = "(Doble clic para checkout)";
+"Chave SSH" = "Clave SSH";
+"Configuracao SSH" = "Configuración SSH";
+"Acesso ao Keychain" = "Acceso al Keychain";

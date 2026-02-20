@@ -158,6 +158,11 @@ actor RepositoryWorker {
         return result.stdout.clean.isEmpty ? result.stderr.clean : result.stdout.clean
     }
 
+    func runActionWithStdin(args: [String], stdin: String, in repositoryURL: URL) throws -> String {
+        let result = try git.runWithStdin(args: args, stdin: stdin, in: repositoryURL)
+        return result.stdout.clean.isEmpty ? result.stderr.clean : result.stdout.clean
+    }
+
     nonisolated func runShellStream(command: String, in repositoryURL: URL, onOutput: @escaping @Sendable (String) -> Void) throws {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/zsh")
@@ -732,5 +737,13 @@ actor RepositoryWorker {
 extension String {
     var clean: String {
         trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
+
+extension Array where Element: Hashable {
+    func mostFrequent() -> Element? {
+        var counts: [Element: Int] = [:]
+        for element in self { counts[element, default: 0] += 1 }
+        return counts.max(by: { $0.value < $1.value })?.key
     }
 }

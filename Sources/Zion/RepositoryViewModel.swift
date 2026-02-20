@@ -15,7 +15,7 @@ final class RepositoryViewModel {
     var branchInfos: [BranchInfo] = []
     var branchTree: [BranchTreeNode] = []
     var focusedBranch: String?
-    var inferBranchOrigins: Bool = false
+    var inferBranchOrigins: Bool = true
     var hasMoreCommits: Bool = false
     var tags: [String] = []
     var stashes: [String] = []
@@ -37,6 +37,54 @@ final class RepositoryViewModel {
     // Terminal
     var terminalSessions: [TerminalSession] = []
     var activeTerminalID: UUID?
+
+    // Clipboard
+    let clipboardMonitor = ClipboardMonitor()
+    @ObservationIgnored var terminalSendCallbacks: [UUID: (Data) -> Void] = [:]
+
+    // Hunk diff state
+    var currentFileDiffHunks: [DiffHunk] = []
+    var selectedHunkLines: Set<UUID> = []
+
+    // Blame state
+    var isBlameVisible: Bool = false
+    var blameEntries: [BlameEntry] = []
+    @ObservationIgnored private var blameTask: Task<Void, Never>?
+
+    // Reflog state
+    var reflogEntries: [ReflogEntry] = []
+    var isReflogVisible: Bool = false
+    @ObservationIgnored private var reflogTask: Task<Void, Never>?
+
+    // Interactive rebase state
+    var isRebaseSheetVisible: Bool = false
+    var rebaseItems: [RebaseItem] = []
+    var rebaseBaseRef: String = ""
+
+    // Navigation signal (consumed by ContentView to switch tabs)
+    var navigateToGraphRequested: Bool = false
+
+    // GitHub PR integration
+    var pullRequests: [GitHubPRInfo] = []
+    var isPRSheetVisible: Bool = false
+    @ObservationIgnored let githubClient = GitHubClient()
+    @ObservationIgnored private var prTask: Task<Void, Never>?
+
+    // Submodule state
+    var submodules: [SubmoduleInfo] = []
+
+    // AI commit message
+    var suggestedCommitMessage: String = ""
+
+    // Commit signing
+    var commitSignatureStatus: [String: String] = [:] // hash -> "G"/"N"/"B"/etc
+
+    // Background fetch
+    var behindRemoteCount: Int = 0
+    @ObservationIgnored private var backgroundFetchTask: Task<Void, Never>?
+
+    // Repository statistics
+    var repoStats: RepositoryStats?
 
     // Zion Code state
     var repositoryFiles: [FileItem] = [] {
@@ -162,6 +210,10 @@ final class RepositoryViewModel {
         refreshFileTree()
         startAutoRefreshTimer()
         startFileWatcher(for: url)
+        loadPullRequests()
+        loadSubmodules()
+        startBackgroundFetch()
+        loadSignatureStatuses()
     }
 
     func loadRecentRepositories() {
@@ -422,12 +474,6 @@ final class RepositoryViewModel {
     func pull() { runGitAction(label: "Pull", args: ["pull", "--ff-only"]) }
     func push() { runGitAction(label: "Push", args: ["push"]) }
 
-    func setInferBranchOrigins(_ enabled: Bool) {
-        inferBranchOrigins = enabled
-        if repositoryURL != nil {
-            refreshRepository()
-        }
-    }
 
     func setBranchFocus(_ branch: String?) {
         let normalized = branch?.clean
@@ -1182,16 +1228,839 @@ final class RepositoryViewModel {
 
     private func loadDiff(for file: String) {
         guard let url = repositoryURL else { return }
-        
+
         Task {
             do {
                 // Get diff including staged changes
                 let diff = try await worker.runAction(args: ["diff", "HEAD", "--", file], in: url)
-                currentFileDiff = diff.isEmpty ? L10n("Nenhuma mudanca detectada (ou arquivo novo nao rastreado).") : diff
+                if diff.isEmpty {
+                    currentFileDiff = L10n("Nenhuma mudanca detectada (ou arquivo novo nao rastreado).")
+                    currentFileDiffHunks = []
+                } else {
+                    currentFileDiff = diff
+                    currentFileDiffHunks = Self.parseDiffHunks(diff)
+                }
+                selectedHunkLines = []
             } catch {
                 currentFileDiff = "Erro ao carregar diff: \(error.localizedDescription)"
+                currentFileDiffHunks = []
             }
         }
+    }
+
+    // MARK: - Terminal Paste
+
+    func sendTextToActiveTerminal(_ text: String) {
+        guard let activeID = activeTerminalID,
+              let callback = terminalSendCallbacks[activeID],
+              let data = text.data(using: .utf8) else { return }
+        callback(data)
+    }
+
+    func registerTerminalSendCallback(sessionID: UUID, callback: @escaping (Data) -> Void) {
+        terminalSendCallbacks[sessionID] = callback
+    }
+
+    func unregisterTerminalSendCallback(sessionID: UUID) {
+        terminalSendCallbacks.removeValue(forKey: sessionID)
+    }
+
+    // MARK: - Diff Parsing
+
+    static func parseDiffHunks(_ rawDiff: String) -> [DiffHunk] {
+        let lines = rawDiff.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        var hunks: [DiffHunk] = []
+        var i = 0
+
+        // Skip file header lines (diff --git, index, ---, +++)
+        while i < lines.count && !lines[i].hasPrefix("@@") {
+            i += 1
+        }
+
+        while i < lines.count {
+            let line = lines[i]
+            guard line.hasPrefix("@@") else { i += 1; continue }
+
+            // Parse hunk header: @@ -oldStart,oldCount +newStart,newCount @@
+            let header = line
+            var oldStart = 0, oldCount = 0, newStart = 0, newCount = 0
+            if let rangeMatch = line.range(of: "@@ -(\\d+)(?:,(\\d+))? \\+(\\d+)(?:,(\\d+))? @@",
+                                           options: .regularExpression) {
+                let headerStr = String(line[rangeMatch])
+                let nums = headerStr.matches(of: /(\d+)/)
+                if nums.count >= 3 {
+                    oldStart = Int(nums[0].output.1) ?? 0
+                    if nums.count == 4 {
+                        oldCount = Int(nums[1].output.1) ?? 0
+                        newStart = Int(nums[2].output.1) ?? 0
+                        newCount = Int(nums[3].output.1) ?? 0
+                    } else {
+                        oldCount = 0
+                        newStart = Int(nums[1].output.1) ?? 0
+                        newCount = Int(nums[2].output.1) ?? 0
+                    }
+                }
+            }
+
+            i += 1
+            var diffLines: [DiffLine] = []
+            var currentOld = oldStart
+            var currentNew = newStart
+
+            while i < lines.count && !lines[i].hasPrefix("@@") {
+                let diffLineText = lines[i]
+                if diffLineText.hasPrefix("+") {
+                    diffLines.append(DiffLine(type: .addition, content: String(diffLineText.dropFirst()),
+                                              oldLineNumber: nil, newLineNumber: currentNew))
+                    currentNew += 1
+                } else if diffLineText.hasPrefix("-") {
+                    diffLines.append(DiffLine(type: .deletion, content: String(diffLineText.dropFirst()),
+                                              oldLineNumber: currentOld, newLineNumber: nil))
+                    currentOld += 1
+                } else if diffLineText.hasPrefix("\\") {
+                    // "\ No newline at end of file" — skip
+                    i += 1
+                    continue
+                } else {
+                    // Context line (starts with space or is empty)
+                    let content = diffLineText.isEmpty ? "" : String(diffLineText.dropFirst())
+                    diffLines.append(DiffLine(type: .context, content: content,
+                                              oldLineNumber: currentOld, newLineNumber: currentNew))
+                    currentOld += 1
+                    currentNew += 1
+                }
+                i += 1
+            }
+
+            hunks.append(DiffHunk(header: header, oldStart: oldStart, oldCount: oldCount,
+                                  newStart: newStart, newCount: newCount, lines: diffLines))
+        }
+
+        return hunks
+    }
+
+    // MARK: - Hunk & Line Staging
+
+    func stageHunk(_ hunk: DiffHunk, file: String) {
+        guard let url = repositoryURL else { return }
+        let patch = buildPatch(file: file, hunks: [hunk])
+
+        actionTask?.cancel()
+        isBusy = true
+        actionTask = Task {
+            do {
+                let _ = try await worker.runActionWithStdin(
+                    args: ["apply", "--cached", "--unidiff-zero"],
+                    stdin: patch,
+                    in: url
+                )
+                clearError()
+                statusMessage = L10n("Hunk staged com sucesso.")
+                refreshRepository(setBusy: true)
+                if let file = selectedChangeFile { loadDiff(for: file) }
+            } catch {
+                isBusy = false
+                handleError(error)
+            }
+        }
+    }
+
+    func unstageHunk(_ hunk: DiffHunk, file: String) {
+        guard let url = repositoryURL else { return }
+        let patch = buildPatch(file: file, hunks: [hunk])
+
+        actionTask?.cancel()
+        isBusy = true
+        actionTask = Task {
+            do {
+                let _ = try await worker.runActionWithStdin(
+                    args: ["apply", "--cached", "--reverse", "--unidiff-zero"],
+                    stdin: patch,
+                    in: url
+                )
+                clearError()
+                statusMessage = L10n("Hunk unstaged com sucesso.")
+                refreshRepository(setBusy: true)
+                if let file = selectedChangeFile { loadDiff(for: file) }
+            } catch {
+                isBusy = false
+                handleError(error)
+            }
+        }
+    }
+
+    func stageSelectedLines(from hunk: DiffHunk, selectedLineIDs: Set<UUID>, file: String) {
+        guard let url = repositoryURL else { return }
+        let patch = buildPartialPatch(file: file, hunk: hunk, selectedLineIDs: selectedLineIDs)
+        guard !patch.isEmpty else { return }
+
+        actionTask?.cancel()
+        isBusy = true
+        actionTask = Task {
+            do {
+                let _ = try await worker.runActionWithStdin(
+                    args: ["apply", "--cached", "--unidiff-zero"],
+                    stdin: patch,
+                    in: url
+                )
+                clearError()
+                statusMessage = L10n("Linhas staged com sucesso.")
+                refreshRepository(setBusy: true)
+                if let file = selectedChangeFile { loadDiff(for: file) }
+            } catch {
+                isBusy = false
+                handleError(error)
+            }
+        }
+    }
+
+    private func buildPatch(file: String, hunks: [DiffHunk]) -> String {
+        var patch = "--- a/\(file)\n+++ b/\(file)\n"
+        for hunk in hunks {
+            patch += hunk.header + "\n"
+            for line in hunk.lines {
+                switch line.type {
+                case .context: patch += " \(line.content)\n"
+                case .addition: patch += "+\(line.content)\n"
+                case .deletion: patch += "-\(line.content)\n"
+                }
+            }
+        }
+        return patch
+    }
+
+    private func buildPartialPatch(file: String, hunk: DiffHunk, selectedLineIDs: Set<UUID>) -> String {
+        // Build a hunk with only the selected changed lines; unselected changes become context
+        var newLines: [DiffLine] = []
+        var oldLineCount = 0
+        var newLineCount = 0
+
+        for line in hunk.lines {
+            let isSelected = selectedLineIDs.contains(line.id)
+            switch line.type {
+            case .context:
+                newLines.append(line)
+                oldLineCount += 1
+                newLineCount += 1
+            case .addition:
+                if isSelected {
+                    newLines.append(line)
+                    newLineCount += 1
+                }
+                // If not selected, skip the addition entirely
+            case .deletion:
+                if isSelected {
+                    newLines.append(line)
+                    oldLineCount += 1
+                } else {
+                    // Unselected deletion becomes context
+                    newLines.append(DiffLine(type: .context, content: line.content,
+                                             oldLineNumber: line.oldLineNumber, newLineNumber: nil))
+                    oldLineCount += 1
+                    newLineCount += 1
+                }
+            }
+        }
+
+        guard newLines.contains(where: { $0.type != .context }) else { return "" }
+
+        let header = "@@ -\(hunk.oldStart),\(oldLineCount) +\(hunk.newStart),\(newLineCount) @@"
+        var patch = "--- a/\(file)\n+++ b/\(file)\n\(header)\n"
+        for line in newLines {
+            switch line.type {
+            case .context: patch += " \(line.content)\n"
+            case .addition: patch += "+\(line.content)\n"
+            case .deletion: patch += "-\(line.content)\n"
+            }
+        }
+        return patch
+    }
+
+    // MARK: - Commit Diff for File
+
+    func loadDiffForCommitFile(commitID: String, file: String) {
+        guard let url = repositoryURL else { return }
+        Task {
+            do {
+                let diff = try await worker.runAction(
+                    args: ["diff", "\(commitID)~1", commitID, "--", file],
+                    in: url
+                )
+                currentFileDiff = diff.isEmpty ? L10n("Nenhuma mudanca.") : diff
+                currentFileDiffHunks = Self.parseDiffHunks(diff)
+            } catch {
+                currentFileDiff = "Erro: \(error.localizedDescription)"
+                currentFileDiffHunks = []
+            }
+        }
+    }
+
+    // MARK: - Git Blame
+
+    func loadBlame(for file: FileItem) {
+        guard let url = repositoryURL else { return }
+        let filePath: String
+        if let repoURL = repositoryURL {
+            filePath = file.url.path.replacingOccurrences(of: repoURL.path + "/", with: "")
+        } else {
+            filePath = file.name
+        }
+
+        blameTask?.cancel()
+        blameEntries = []
+
+        blameTask = Task {
+            do {
+                let output = try await worker.runAction(
+                    args: ["blame", "--porcelain", filePath],
+                    in: url
+                )
+                let entries = Self.parseBlameOutput(output)
+                blameEntries = entries
+            } catch {
+                blameEntries = []
+                statusMessage = "Blame: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    func toggleBlame() {
+        isBlameVisible.toggle()
+        if isBlameVisible, let file = selectedCodeFile {
+            loadBlame(for: file)
+        } else {
+            blameEntries = []
+        }
+    }
+
+    static func parseBlameOutput(_ raw: String) -> [BlameEntry] {
+        let lines = raw.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        var entries: [BlameEntry] = []
+        var i = 0
+        var authorMap: [String: String] = [:]
+        var dateMap: [String: Date] = [:]
+
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.formatOptions = [.withInternetDateTime]
+
+        while i < lines.count {
+            let line = lines[i]
+            // Header line: <hash> <orig-line> <final-line> [<num-lines>]
+            let parts = line.split(separator: " ")
+            guard parts.count >= 3,
+                  let hash = parts.first, hash.count >= 7,
+                  hash.allSatisfy({ $0.isHexDigit }),
+                  let lineNum = Int(parts[2]) else {
+                i += 1
+                continue
+            }
+
+            let commitHash = String(hash)
+            i += 1
+
+            // Read metadata lines until we hit the tab-prefixed content line
+            var author = authorMap[commitHash] ?? ""
+            var date = dateMap[commitHash] ?? Date.distantPast
+
+            while i < lines.count && !lines[i].hasPrefix("\t") {
+                let metaLine = lines[i]
+                if metaLine.hasPrefix("author ") {
+                    author = String(metaLine.dropFirst(7))
+                    authorMap[commitHash] = author
+                } else if metaLine.hasPrefix("author-time ") {
+                    if let ts = TimeInterval(metaLine.dropFirst(12)) {
+                        date = Date(timeIntervalSince1970: ts)
+                        dateMap[commitHash] = date
+                    }
+                }
+                i += 1
+            }
+
+            // Content line (starts with tab)
+            var content = ""
+            if i < lines.count && lines[i].hasPrefix("\t") {
+                content = String(lines[i].dropFirst(1))
+            }
+            i += 1
+
+            entries.append(BlameEntry(
+                commitHash: commitHash,
+                shortHash: String(commitHash.prefix(8)),
+                author: author,
+                date: date,
+                lineNumber: lineNum,
+                content: content
+            ))
+        }
+
+        return entries
+    }
+
+    // MARK: - Reflog
+
+    func loadReflog() {
+        guard let url = repositoryURL else { return }
+
+        reflogTask?.cancel()
+        reflogEntries = []
+
+        reflogTask = Task {
+            do {
+                let output = try await worker.runAction(
+                    args: ["reflog", "--format=%H|%h|%gD|%gs|%ci|%cr", "-n", "50"],
+                    in: url
+                )
+                let entries = Self.parseReflogOutput(output)
+                reflogEntries = entries
+            } catch {
+                reflogEntries = []
+            }
+        }
+    }
+
+    func undoLastAction() {
+        guard !reflogEntries.isEmpty else { return }
+        // Find the previous state (reflog entry at index 1)
+        guard reflogEntries.count > 1 else { return }
+        let target = reflogEntries[1]
+        runGitAction(label: "Undo", args: ["reset", "--soft", target.hash])
+    }
+
+    static func parseReflogOutput(_ raw: String) -> [ReflogEntry] {
+        let lines = raw.split(separator: "\n", omittingEmptySubsequences: true).map(String.init)
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss Z"
+
+        return lines.compactMap { line in
+            let parts = line.split(separator: "|", maxSplits: 5).map(String.init)
+            guard parts.count >= 6 else { return nil }
+
+            let hash = parts[0]
+            let shortHash = parts[1]
+            let refName = parts[2]
+            let message = parts[3]
+            let dateStr = parts[4]
+            let relDate = parts[5]
+
+            // Parse action type from message (e.g. "commit: ..." -> "commit")
+            let action = message.split(separator: ":", maxSplits: 1).first.map(String.init) ?? message
+
+            let date = dateFormatter.date(from: dateStr) ?? Date.distantPast
+
+            return ReflogEntry(
+                hash: hash,
+                shortHash: shortHash,
+                refName: refName,
+                action: action,
+                message: message,
+                date: date,
+                relativeDate: relDate
+            )
+        }
+    }
+
+    // MARK: - Interactive Rebase
+
+    func prepareInteractiveRebase(from baseRef: String) {
+        guard let url = repositoryURL else { return }
+        rebaseBaseRef = baseRef
+
+        Task {
+            do {
+                let output = try await worker.runAction(
+                    args: ["log", "--oneline", "--reverse", "\(baseRef)..HEAD"],
+                    in: url
+                )
+                let items = output.split(separator: "\n", omittingEmptySubsequences: true).map { line -> RebaseItem in
+                    let parts = line.split(separator: " ", maxSplits: 1)
+                    let hash = parts.count > 0 ? String(parts[0]) : ""
+                    let subject = parts.count > 1 ? String(parts[1]) : ""
+                    return RebaseItem(hash: hash, shortHash: String(hash.prefix(8)), subject: subject)
+                }
+                rebaseItems = items
+                isRebaseSheetVisible = true
+            } catch {
+                handleError(error)
+            }
+        }
+    }
+
+    func executeInteractiveRebase() {
+        guard let url = repositoryURL, !rebaseItems.isEmpty else { return }
+
+        // Build the rebase todo list
+        let todoList = rebaseItems.map { item in
+            "\(item.action.rawValue) \(item.hash) \(item.subject)"
+        }.joined(separator: "\n")
+
+        actionTask?.cancel()
+        isBusy = true
+        isRebaseSheetVisible = false
+
+        actionTask = Task {
+            do {
+                // Use GIT_SEQUENCE_EDITOR to pass the todo list
+                // We write the todo to a temp file and use a script that replaces the editor
+                let tempDir = FileManager.default.temporaryDirectory
+                let todoFile = tempDir.appendingPathComponent("zion-rebase-todo-\(UUID().uuidString)")
+                try todoList.write(to: todoFile, atomically: true, encoding: .utf8)
+
+                let scriptContent = "#!/bin/sh\ncp \"\(todoFile.path)\" \"$1\""
+                let scriptFile = tempDir.appendingPathComponent("zion-rebase-editor-\(UUID().uuidString).sh")
+                try scriptContent.write(to: scriptFile, atomically: true, encoding: .utf8)
+                try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: scriptFile.path)
+
+                // Run rebase with our custom sequence editor
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+                process.arguments = ["git", "rebase", "-i", rebaseBaseRef]
+                process.currentDirectoryURL = url
+                var env = ProcessInfo.processInfo.environment
+                env["GIT_SEQUENCE_EDITOR"] = scriptFile.path
+                env["LC_ALL"] = "C"
+                env["LANG"] = "C"
+                process.environment = env
+
+                let stdoutPipe = Pipe()
+                let stderrPipe = Pipe()
+                process.standardOutput = stdoutPipe
+                process.standardError = stderrPipe
+
+                try process.run()
+                process.waitUntilExit()
+
+                // Cleanup temp files
+                try? FileManager.default.removeItem(at: todoFile)
+                try? FileManager.default.removeItem(at: scriptFile)
+
+                let stderr = String(data: stderrPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+
+                if process.terminationStatus != 0 {
+                    handleError(GitClientError.commandFailed(
+                        command: "git rebase -i \(rebaseBaseRef)",
+                        message: stderr.trimmingCharacters(in: .whitespacesAndNewlines)
+                    ))
+                    isBusy = false
+                } else {
+                    clearError()
+                    statusMessage = L10n("Rebase interativo concluido com sucesso.")
+                    refreshRepository(setBusy: true)
+                }
+            } catch {
+                isBusy = false
+                handleError(error)
+            }
+        }
+    }
+
+    // MARK: - GitHub PR Integration
+
+    func loadPullRequests() {
+        guard let remote = detectGitHubRemote() else { return }
+
+        prTask?.cancel()
+        prTask = Task {
+            let prs = await githubClient.fetchPullRequests(remote: remote)
+            pullRequests = prs
+        }
+    }
+
+    func prForBranch(_ branch: String) -> GitHubPRInfo? {
+        pullRequests.first { $0.headBranch == branch }
+    }
+
+    private func detectGitHubRemote() -> GitHubRemote? {
+        for remote in remotes {
+            if let gh = GitHubClient.parseRemote(remote.url) {
+                return gh
+            }
+        }
+        return nil
+    }
+
+    // MARK: - Submodules
+
+    func loadSubmodules() {
+        guard let url = repositoryURL else { return }
+
+        Task {
+            do {
+                let output = try await worker.runAction(args: ["submodule", "status"], in: url)
+                submodules = Self.parseSubmoduleStatus(output, repoURL: url)
+            } catch {
+                submodules = []
+            }
+        }
+    }
+
+    func submoduleInit() {
+        runGitAction(label: "Submodule init", args: ["submodule", "init"])
+    }
+
+    func submoduleUpdate(recursive: Bool) {
+        var args = ["submodule", "update", "--init"]
+        if recursive { args.append("--recursive") }
+        runGitAction(label: "Submodule update", args: args)
+    }
+
+    func submoduleSync() {
+        runGitAction(label: "Submodule sync", args: ["submodule", "sync"])
+    }
+
+    static func parseSubmoduleStatus(_ raw: String, repoURL: URL) -> [SubmoduleInfo] {
+        let lines = raw.split(separator: "\n", omittingEmptySubsequences: true).map(String.init)
+        return lines.compactMap { line in
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            guard !trimmed.isEmpty else { return nil }
+
+            let statusChar = trimmed.first
+            let rest = String(trimmed.dropFirst()).trimmingCharacters(in: .whitespaces)
+            let parts = rest.split(separator: " ", maxSplits: 1)
+            guard parts.count >= 1 else { return nil }
+
+            let hash = String(parts[0])
+            let path = parts.count > 1 ? String(parts[1]).split(separator: " ").first.map(String.init) ?? "" : ""
+
+            let status: SubmoduleInfo.SubmoduleStatus
+            switch statusChar {
+            case "-": status = .uninitialized
+            case "+": status = .modified
+            default: status = .upToDate
+            }
+
+            return SubmoduleInfo(name: URL(fileURLWithPath: path).lastPathComponent,
+                               path: path, url: "", hash: hash, status: status)
+        }
+    }
+
+    // MARK: - Auth Error Detection
+
+    func detectAuthError(from errorMessage: String) -> String? {
+        let patterns = [
+            "Permission denied",
+            "Could not read from remote",
+            "Authentication failed",
+            "fatal: repository.*not found",
+            "ERROR: Repository not found",
+            "Host key verification failed"
+        ]
+        for pattern in patterns {
+            if errorMessage.range(of: pattern, options: .regularExpression) != nil {
+                return errorMessage
+            }
+        }
+        return nil
+    }
+
+    // MARK: - AI Commit Message (heuristic-based)
+
+    func suggestCommitMessage() {
+        guard let url = repositoryURL else { return }
+
+        Task {
+            do {
+                let diff = try await worker.runAction(args: ["diff", "--cached", "--stat"], in: url)
+                let status = try await worker.runAction(args: ["status", "--porcelain"], in: url)
+
+                suggestedCommitMessage = Self.generateCommitMessage(diffStat: diff, status: status)
+            } catch {
+                suggestedCommitMessage = ""
+            }
+        }
+    }
+
+    static func generateCommitMessage(diffStat: String, status: String) -> String {
+        let lines = status.split(separator: "\n").map(String.init)
+        guard !lines.isEmpty else { return "" }
+
+        // Count change types
+        var added = 0, modified = 0, deleted = 0
+        var paths: [String] = []
+        for line in lines {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            guard trimmed.count >= 3 else { continue }
+            let indexStatus = String(trimmed.prefix(1))
+            let file = String(trimmed.dropFirst(3)).trimmingCharacters(in: .whitespaces)
+            paths.append(file)
+            switch indexStatus {
+            case "A", "?": added += 1
+            case "M": modified += 1
+            case "D": deleted += 1
+            default: modified += 1
+            }
+        }
+
+        // Detect scope from common path prefix
+        let scope: String
+        let commonComponents = paths.compactMap { $0.split(separator: "/").dropLast().first }.map(String.init)
+        if let most = commonComponents.mostFrequent() {
+            scope = "(\(most))"
+        } else {
+            scope = ""
+        }
+
+        // Determine type
+        let type: String
+        if added > 0 && modified == 0 && deleted == 0 {
+            type = "feat"
+        } else if deleted > 0 && added == 0 && modified == 0 {
+            type = "chore"
+        } else if paths.allSatisfy({ $0.hasSuffix("Test.swift") || $0.hasSuffix("Tests.swift") || $0.contains("test") }) {
+            type = "test"
+        } else if paths.allSatisfy({ $0.hasSuffix(".md") || $0.hasSuffix(".txt") }) {
+            type = "docs"
+        } else {
+            type = modified > added ? "fix" : "feat"
+        }
+
+        // Generate description
+        let description: String
+        let fileCount = lines.count
+        if fileCount == 1 {
+            let fileName = URL(fileURLWithPath: paths[0]).deletingPathExtension().lastPathComponent
+            description = added > 0 ? "add \(fileName)" : "update \(fileName)"
+        } else {
+            description = "\(type == "feat" ? "add" : "update") \(fileCount) files"
+        }
+
+        return "\(type)\(scope): \(description)"
+    }
+
+    // MARK: - Commit Signing Visualization
+
+    func loadSignatureStatuses() {
+        guard let url = repositoryURL else { return }
+
+        Task {
+            do {
+                let output = try await worker.runAction(
+                    args: ["log", "--format=%H %G?", "-n", "100"],
+                    in: url
+                )
+                var statuses: [String: String] = [:]
+                for line in output.split(separator: "\n") {
+                    let parts = line.split(separator: " ", maxSplits: 1)
+                    if parts.count == 2 {
+                        statuses[String(parts[0])] = String(parts[1])
+                    }
+                }
+                commitSignatureStatus = statuses
+            } catch {
+                commitSignatureStatus = [:]
+            }
+        }
+    }
+
+    func signatureStatusFor(_ commitHash: String) -> String? {
+        commitSignatureStatus[commitHash]
+    }
+
+    // MARK: - Background Fetch
+
+    func startBackgroundFetch() {
+        backgroundFetchTask?.cancel()
+        backgroundFetchTask = Task {
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 60_000_000_000) // 60s
+                if Task.isCancelled { break }
+                await checkBehindRemote()
+            }
+        }
+    }
+
+    private func checkBehindRemote() async {
+        guard let url = repositoryURL else { return }
+        do {
+            // Dry-run fetch to check for updates
+            let _ = try await worker.runAction(args: ["fetch", "--dry-run"], in: url)
+            // Check how many commits behind
+            let output = try await worker.runAction(
+                args: ["rev-list", "--count", "HEAD..@{upstream}"],
+                in: url
+            )
+            behindRemoteCount = Int(output.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
+        } catch {
+            behindRemoteCount = 0
+        }
+    }
+
+    // MARK: - Repository Statistics
+
+    func loadRepositoryStats() {
+        guard let url = repositoryURL else { return }
+
+        Task {
+            do {
+                // Total commits
+                let countOutput = try await worker.runAction(args: ["rev-list", "--count", "HEAD"], in: url)
+                let totalCommits = Int(countOutput.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
+
+                // Contributors
+                let shortlog = try await worker.runAction(args: ["shortlog", "-sne", "HEAD"], in: url)
+                let contributors = shortlog.split(separator: "\n").compactMap { line -> ContributorStat? in
+                    let trimmed = line.trimmingCharacters(in: .whitespaces)
+                    let parts = trimmed.split(separator: "\t", maxSplits: 1)
+                    guard parts.count == 2 else { return nil }
+                    let count = Int(parts[0].trimmingCharacters(in: .whitespaces)) ?? 0
+                    let nameEmail = String(parts[1])
+                    // Parse "Name <email>"
+                    var name = nameEmail
+                    var email = ""
+                    if let emailRange = nameEmail.range(of: "<(.+?)>", options: .regularExpression) {
+                        email = String(nameEmail[emailRange]).replacingOccurrences(of: "<", with: "").replacingOccurrences(of: ">", with: "")
+                        name = String(nameEmail[..<emailRange.lowerBound]).trimmingCharacters(in: .whitespaces)
+                    }
+                    return ContributorStat(name: name, email: email, commitCount: count)
+                }
+
+                // Language breakdown by file extension
+                let files = try await worker.runAction(args: ["ls-files"], in: url)
+                var extCount: [String: Int] = [:]
+                for file in files.split(separator: "\n") {
+                    let ext = URL(fileURLWithPath: String(file)).pathExtension.lowercased()
+                    if !ext.isEmpty {
+                        extCount[ext, default: 0] += 1
+                    }
+                }
+                let totalFiles = max(1, extCount.values.reduce(0, +))
+                let languages = extCount.sorted { $0.value > $1.value }.prefix(10).map { ext, count in
+                    LanguageStat(language: Self.languageName(for: ext), fileCount: count,
+                                percentage: Double(count) / Double(totalFiles) * 100)
+                }
+
+                // Date range
+                let firstDate = try? await worker.runAction(args: ["log", "--reverse", "--format=%ci", "-1"], in: url)
+                let lastDate = try? await worker.runAction(args: ["log", "--format=%ci", "-1"], in: url)
+
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss Z"
+
+                repoStats = RepositoryStats(
+                    totalCommits: totalCommits,
+                    totalBranches: branches.count,
+                    totalTags: tags.count,
+                    contributors: contributors,
+                    languageBreakdown: languages,
+                    firstCommitDate: firstDate.flatMap { dateFormatter.date(from: $0.trimmingCharacters(in: .whitespacesAndNewlines)) },
+                    lastCommitDate: lastDate.flatMap { dateFormatter.date(from: $0.trimmingCharacters(in: .whitespacesAndNewlines)) }
+                )
+            } catch {
+                repoStats = nil
+            }
+        }
+    }
+
+    private static func languageName(for ext: String) -> String {
+        let map: [String: String] = [
+            "swift": "Swift", "ts": "TypeScript", "tsx": "TypeScript", "js": "JavaScript",
+            "jsx": "JavaScript", "py": "Python", "rb": "Ruby", "go": "Go", "rs": "Rust",
+            "java": "Java", "kt": "Kotlin", "c": "C", "cpp": "C++", "h": "C/C++ Header",
+            "cs": "C#", "php": "PHP", "html": "HTML", "css": "CSS", "scss": "SCSS",
+            "json": "JSON", "yaml": "YAML", "yml": "YAML", "md": "Markdown",
+            "sql": "SQL", "sh": "Shell", "bash": "Shell", "zsh": "Shell",
+            "xml": "XML", "toml": "TOML", "lock": "Lock", "liquid": "Liquid"
+        ]
+        return map[ext] ?? ext.uppercased()
     }
 
     private func defaultCommitLimit(for reference: String?) -> Int {

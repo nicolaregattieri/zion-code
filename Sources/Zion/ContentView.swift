@@ -14,7 +14,6 @@ struct ContentView: View {
     @AppStorage("zion.preferredTerminal") private var preferredTerminalRaw: String = ExternalTerminal.terminal.rawValue
     @AppStorage("zion.customEditorPath") private var customEditorPath: String = ""
     @AppStorage("zion.customTerminalPath") private var customTerminalPath: String = ""
-    @AppStorage("zion.inferBranchOrigins") private var inferBranchOrigins: Bool = false
     
     private var uiLanguage: AppLanguage { AppLanguage(rawValue: uiLanguageRaw) ?? .system }
 
@@ -28,7 +27,6 @@ struct ContentView: View {
                     selectedSection: $selectedSection,
                     selectedBranchTreeNodeID: $selectedBranchTreeNodeID,
                     confirmationModeRaw: $confirmationModeRaw,
-                    inferBranchOrigins: $inferBranchOrigins,
                     uiLanguageRaw: $uiLanguageRaw,
                     onOpen: { openRepositoryPanel() },
                     onOpenInEditor: { openRepositoryInEditor() },
@@ -66,7 +64,6 @@ struct ContentView: View {
         .environment(\.locale, uiLanguage.locale)
         .onAppear {
             model.restoreEditorSettings()
-            model.setInferBranchOrigins(inferBranchOrigins)
             // Robust window activation
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 if let window = NSApp.windows.first(where: { $0.isVisible }) {
@@ -75,11 +72,25 @@ struct ContentView: View {
                 NSApp.activate(ignoringOtherApps: true)
             }
         }
-        .onChange(of: inferBranchOrigins) { _, enabled in model.setInferBranchOrigins(enabled) }
         .onChange(of: model.repositoryURL) { _, url in
             if url != nil {
                 selectedSection = .code
             }
+        }
+        .onChange(of: model.navigateToGraphRequested) { _, requested in
+            if requested {
+                selectedSection = .graph
+                model.navigateToGraphRequested = false
+            }
+        }
+        .sheet(isPresented: $model.isReflogVisible) {
+            ReflogSheet(model: model)
+        }
+        .sheet(isPresented: $model.isRebaseSheetVisible) {
+            InteractiveRebaseSheet(model: model)
+        }
+        .sheet(isPresented: $model.isPRSheetVisible) {
+            PullRequestSheet(model: model)
         }
     }
 
@@ -204,9 +215,19 @@ struct ContentView: View {
                 ControlGroup {
                     Button { openRepositoryInEditor() } label: { Image(systemName: "chevron.left.forwardslash.chevron.right") }
                         .help(L10n("Abrir no Editor de Código"))
-                    
+
                     Button { openRepositoryInTerminal() } label: { Image(systemName: "terminal") }
                         .help(L10n("Abrir Terminal"))
+                }
+
+                ControlGroup {
+                    Button {
+                        model.loadReflog()
+                        model.isReflogVisible = true
+                    } label: {
+                        Image(systemName: "clock.arrow.circlepath")
+                    }
+                    .help(L10n("Reflog / Desfazer"))
                 }
             }
         }
@@ -377,6 +398,21 @@ struct ContentView: View {
             Divider()
             Button(L10n("Adicionar Tag...")) { if let name = promptForText(title: L10n("Nova tag"), message: L10n("Nome:"), defaultValue: "v") { model.createTag(named: name, at: commit.id) } }
             Button(L10n("Criar Branch...")) { if let res = promptForBranchCreation(from: commit.shortHash) { model.createBranch(named: res.name, from: commit.id, andCheckout: res.checkout) } }
+            Divider()
+            Button(L10n("Cherry-pick")) {
+                performGitAction(title: L10n("Cherry-pick"), message: L10n("Aplicar este commit na branch atual?"), destructive: false) {
+                    model.cherryPick(commitHash: commit.id)
+                }
+            }
+            Button(L10n("Revert")) {
+                performGitAction(title: L10n("Revert"), message: L10n("Reverter este commit criando um novo commit?"), destructive: false) {
+                    model.revert(commitHash: commit.id)
+                }
+            }
+            Divider()
+            Button(L10n("Rebase Interativo a partir daqui...")) {
+                model.prepareInteractiveRebase(from: commit.id)
+            }
         }
         
         Divider()
@@ -424,6 +460,14 @@ struct ContentView: View {
         }
         Divider()
         
+        if !isRemote {
+            Button(L10n("Criar Pull Request...")) {
+                model.isPRSheetVisible = true
+            }
+        }
+
+        Divider()
+
         if isRemote {
             Button(L10n("Remover branch remota"), role: .destructive) {
                 performGitAction(title: L10n("Remover branch remota"), message: String(format: L10n("Deseja remover permanentemente a branch remota %@?"), branch), destructive: true) {

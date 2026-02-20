@@ -306,3 +306,19 @@
 "Descartar" = "Discard";
 "Deseja reverter todas as mudancas neste arquivo? Isso nao pode ser desfeito." = "Do you want to revert all changes in this file? This cannot be undone.";
 "Checkout & Abrir no Editor" = "Checkout & Open in Editor";
+
+// L10n coverage fixes
+"Confirmar criticas" = "Confirm destructive";
+"Confirmar todas" = "Confirm all";
+"Selecionar do Disco..." = "Select from Disk...";
+"Modificado" = "Modified";
+"Nao inicializado" = "Not initialized";
+"Sistema" = "System";
+"%d commits" = "%d commits";
+"Tag: %@" = "Tag: %@";
+"Branch: %@" = "Branch: %@";
+"(Atual)" = "(Current)";
+"(Double-click para checkout)" = "(Double-click to checkout)";
+"Chave SSH" = "SSH Key";
+"Configuracao SSH" = "SSH Config";
+"Acesso ao Keychain" = "Keychain Access";

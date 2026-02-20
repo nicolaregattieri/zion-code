@@ -172,6 +172,17 @@ struct CodeScreen: View {
             .tint(model.isLineWrappingEnabled ? Color.accentColor : .secondary)
             .help(L10n("Quebra de Linha Automática"))
 
+            Button {
+                model.toggleBlame()
+            } label: {
+                Image(systemName: "person.text.rectangle")
+                    .font(.caption)
+            }
+            .buttonStyle(.bordered)
+            .tint(model.isBlameVisible ? Color.accentColor : .secondary)
+            .help(L10n("Git Blame"))
+            .disabled(model.activeFileID == nil)
+
             Spacer()
 
             if model.activeFileID != nil {
@@ -189,41 +200,50 @@ struct CodeScreen: View {
     }
     
     private var fileBrowserPane: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            CardHeader(L10n("Arquivos"), icon: "folder.fill") {
-                Button { model.refreshFileTree() } label: { Image(systemName: "arrow.clockwise") }
-                    .buttonStyle(.plain).foregroundStyle(.secondary)
-            }
-            .padding(12)
-            
-            Divider()
-            
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    if model.repositoryFiles.isEmpty {
-                        VStack(spacing: 16) {
-                            Text(L10n("Nenhum arquivo encontrado")).font(.caption).foregroundStyle(.secondary)
-                            Button {
-                                onOpenFolder?()
-                            } label: {
-                                Label(L10n("Selecionar Pasta"), systemImage: "folder.badge.plus")
+        VStack(spacing: 0) {
+            // File tree fills remaining space
+            VStack(alignment: .leading, spacing: 0) {
+                CardHeader(L10n("Arquivos"), icon: "folder.fill") {
+                    Button { model.refreshFileTree() } label: { Image(systemName: "arrow.clockwise") }
+                        .buttonStyle(.plain).foregroundStyle(.secondary)
+                }
+                .padding(12)
+
+                Divider()
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        if model.repositoryFiles.isEmpty {
+                            VStack(spacing: 16) {
+                                Text(L10n("Nenhum arquivo encontrado")).font(.caption).foregroundStyle(.secondary)
+                                Button {
+                                    onOpenFolder?()
+                                } label: {
+                                    Label(L10n("Selecionar Pasta"), systemImage: "folder.badge.plus")
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
                             }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
-                        }
-                        .padding(20)
-                        .frame(maxWidth: .infinity)
-                    } else {
-                        ForEach(model.repositoryFiles) { item in
-                            FileTreeNodeView(model: model, item: item, level: 0)
+                            .padding(20)
+                            .frame(maxWidth: .infinity)
+                        } else {
+                            ForEach(model.repositoryFiles) { item in
+                                FileTreeNodeView(model: model, item: item, level: 0)
+                            }
                         }
                     }
+                    .padding(.vertical, 8)
                 }
-                .padding(.vertical, 8)
             }
+            .frame(maxHeight: .infinity)
+            .background(DesignSystem.Colors.background.opacity(0.3))
+
+            Divider()
+
+            // Clipboard pinned to bottom — shrinks to header when collapsed
+            ClipboardDrawer(model: model)
+                .frame(maxHeight: model.clipboardMonitor.isCollapsed ? nil : 200)
         }
-        .background(DesignSystem.Colors.background.opacity(0.3))
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
     
     private var editorPane: some View {
@@ -233,24 +253,30 @@ struct CodeScreen: View {
 
                 Divider()
 
-                SourceCodeEditor(
-                    text: $model.codeFileContent,
-                    theme: model.selectedTheme,
-                    fontSize: model.editorFontSize,
-                    fontFamily: model.editorFontFamily,
-                    lineSpacing: model.editorLineSpacing,
-                    isLineWrappingEnabled: model.isLineWrappingEnabled,
-                    activeFileID: model.activeFileID,
-                    fileExtension: model.selectedCodeFile?.url.pathExtension ?? ""
-                )
+                if model.isBlameVisible && !model.blameEntries.isEmpty {
+                    BlameView(entries: model.blameEntries) { commitHash in
+                        model.selectCommit(commitHash)
+                        model.navigateToGraphRequested = true
+                    }
+                    .background(model.selectedTheme.colors.background)
+                } else {
+                    SourceCodeEditor(
+                        text: $model.codeFileContent,
+                        theme: model.selectedTheme,
+                        fontSize: model.editorFontSize,
+                        fontFamily: model.editorFontFamily,
+                        lineSpacing: model.editorLineSpacing,
+                        isLineWrappingEnabled: model.isLineWrappingEnabled,
+                        activeFileID: model.activeFileID,
+                        fileExtension: model.selectedCodeFile?.url.pathExtension ?? ""
+                    )
+                }
             } else {
                 emptyEditorView
                     .background(model.selectedTheme.colors.background)
                     .environment(\.colorScheme, model.selectedTheme.isLightAppearance ? .light : .dark)
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.white.opacity(0.1), lineWidth: 1))
         .background {
             Button("") { model.saveCurrentCodeFile() }
                 .keyboardShortcut("s", modifiers: .command)
@@ -303,15 +329,19 @@ struct CodeScreen: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     ForEach(model.terminalSessions) { session in
-                        TerminalTabView(session: session, theme: model.selectedTheme)
+                        TerminalTabView(session: session, theme: model.selectedTheme, model: model)
                             .opacity(session.id == model.activeTerminalID ? 1 : 0)
                             .allowsHitTesting(session.id == model.activeTerminalID)
                     }
                 }
             }
+            .dropDestination(for: String.self) { items, _ in
+                guard let text = items.first, !text.isEmpty else { return false }
+                model.sendTextToActiveTerminal(text)
+                return true
+            }
         }
         .background(model.selectedTheme.terminalPalette.backgroundSwiftUI)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .onAppear {
             model.createDefaultTerminalSession(repositoryURL: model.repositoryURL, branchName: model.currentBranch.isEmpty ? "zsh" : model.currentBranch)
         }

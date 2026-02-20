@@ -5,7 +5,6 @@ struct SidebarView: View {
     @Binding var selectedSection: AppSection?
     @Binding var selectedBranchTreeNodeID: String?
     @Binding var confirmationModeRaw: String
-    @Binding var inferBranchOrigins: Bool
     @Binding var uiLanguageRaw: String
     
     @AppStorage("zion.preferredEditor") private var preferredEditorRaw: String = ExternalEditor.vscode.rawValue
@@ -263,6 +262,15 @@ struct SidebarView: View {
                         .foregroundStyle(.secondary)
                         .opacity(0.5)
                         .padding(.top, 4)
+                } else if section == .graph && model.behindRemoteCount > 0 {
+                    Text("\(model.behindRemoteCount)")
+                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(Color.orange.opacity(0.2))
+                        .foregroundStyle(.orange)
+                        .clipShape(Capsule())
+                        .padding(.top, 4)
                 }
             }
             .contentShape(Rectangle())
@@ -412,17 +420,6 @@ struct SidebarView: View {
             }
             .pickerStyle(.menu)
 
-            Divider().opacity(0.1)
-
-            HStack(spacing: 4) {
-                Toggle(L10n("Inferir origem da arvore (best practice)"), isOn: $inferBranchOrigins)
-                    .toggleStyle(.switch).font(.caption)
-                
-                Image(systemName: "info.circle")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .help(L10n("Tenta detectar automaticamente de qual branch cada uma foi criada para organizar a arvore lateral de forma hierarquica. Recomendado para repositorios com muitas branches."))
-            }
         }
         .padding(.horizontal, 10)
         .padding(.bottom, 14)

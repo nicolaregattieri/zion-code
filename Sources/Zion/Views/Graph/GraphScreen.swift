@@ -590,7 +590,7 @@ struct GraphScreen: View {
                 Divider()
 
                 ScrollView {
-                    CommitDetailContent(rawDetails: model.commitDetails)
+                    CommitDetailContent(rawDetails: model.commitDetails, model: model, commitID: model.selectedCommitID)
                         .padding(12)
                 }
             }
