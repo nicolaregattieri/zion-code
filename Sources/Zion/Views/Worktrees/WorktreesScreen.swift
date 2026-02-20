@@ -144,11 +144,11 @@ struct WorktreeCardView: View {
             }
 
             HStack(spacing: 12) {
-                Text("branch: \(worktree.branch)")
-                Text("head: \(worktree.head)")
-                if worktree.isDetached { Text("detached") }
-                if worktree.isLocked { Text("locked") }
-                if worktree.isPrunable { Text("prunable") }
+                Text("\(L10n("branch")): \(worktree.branch)")
+                Text("\(L10n("head")): \(worktree.head)")
+                if worktree.isDetached { Text(L10n("detached")) }
+                if worktree.isLocked { Text(L10n("locked")) }
+                if worktree.isPrunable { Text(L10n("prunable")) }
             }
             .font(.system(.caption, design: .monospaced))
             .foregroundStyle(.secondary)

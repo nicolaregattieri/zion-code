@@ -40,22 +40,22 @@ struct CommitDetailContent: View {
                 // Metadata grid
                 VStack(alignment: .leading, spacing: 8) {
                     if !detail.commitHash.isEmpty {
-                        metadataRow(label: "Commit", value: detail.commitHash, mono: true)
+                        metadataRow(label: L10n("Commit"), value: detail.commitHash, mono: true)
                     }
                     if !detail.mergeInfo.isEmpty {
-                        metadataRow(label: "Merge", value: detail.mergeInfo, mono: true)
+                        metadataRow(label: L10n("Merge"), value: detail.mergeInfo, mono: true)
                     }
                     if !detail.author.isEmpty {
-                        metadataRow(label: "Author", value: detail.author)
+                        metadataRow(label: L10n("Author"), value: detail.author)
                     }
                     if !detail.authorDate.isEmpty {
-                        metadataRow(label: "Date", value: detail.authorDate)
+                        metadataRow(label: L10n("Date"), value: detail.authorDate)
                     }
                     if !detail.committer.isEmpty && detail.committer != detail.author {
-                        metadataRow(label: "Committer", value: detail.committer)
+                        metadataRow(label: L10n("Committer"), value: detail.committer)
                     }
                     if !detail.commitDate.isEmpty && detail.commitDate != detail.authorDate {
-                        metadataRow(label: "Commit Date", value: detail.commitDate)
+                        metadataRow(label: L10n("Commit Date"), value: detail.commitDate)
                     }
                 }
                 .padding(10)
