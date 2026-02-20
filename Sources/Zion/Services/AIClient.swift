@@ -58,7 +58,7 @@ actor AIClient {
     ) async throws -> String {
         let recentStyle = recentMessages.prefix(10).joined(separator: "\n")
         let prompt = """
-        You are a Git commit message generator. Write a single-line commit message for the following changes.
+        You are an expert Git commit message generator. Analyze the provided changes and write a single-line commit message.
 
         Match the style of these recent commits from the repository:
         \(recentStyle)
@@ -68,14 +68,17 @@ actor AIClient {
         Diff stat:
         \(diffStat.prefix(2000))
 
-        Diff (truncated):
+        Diff / Content summary (truncated):
         \(diff.prefix(4000))
 
         Rules:
-        - Match the convention seen in the recent commits above (e.g. conventional commits, imperative mood, etc.)
-        - Be concise — one line, max 72 characters
-        - Focus on WHAT changed and WHY, not HOW
-        - Output ONLY the commit message, nothing else
+        - Output EXACTLY one line. NO "Commit:" or "Message:" prefix.
+        - Use the format: type(scope): description (Conventional Commits).
+        - Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert.
+        - Scope: The most relevant component or folder affected (e.g. "auth", "ui", "core").
+        - Description: Concise summary of WHAT and WHY, in the imperative mood (e.g., "add user login" NOT "Added user login").
+        - MAX 72 characters.
+        - NEVER output generic messages like "update files" if you can infer intent from the diff content.
         """
         return try await call(prompt: prompt, provider: provider, apiKey: apiKey)
     }
@@ -186,7 +189,7 @@ actor AIClient {
         request.timeoutInterval = 30
 
         let body: [String: Any] = [
-            "model": "claude-haiku-4-5-20251001",
+            "model": "claude-3-5-haiku-20241022",
             "max_tokens": 1024,
             "messages": [
                 ["role": "user", "content": prompt]
@@ -198,6 +201,7 @@ actor AIClient {
         guard let http = response as? HTTPURLResponse else { throw AIError.invalidResponse }
 
         if http.statusCode == 401 { throw AIError.invalidKey }
+        if http.statusCode == 429 { throw AIError.quotaExceeded }
         guard http.statusCode == 200 else {
             let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
             throw AIError.apiError("Anthropic \(http.statusCode): \(msg)")
@@ -232,6 +236,7 @@ actor AIClient {
         guard let http = response as? HTTPURLResponse else { throw AIError.invalidResponse }
 
         if http.statusCode == 401 { throw AIError.invalidKey }
+        if http.statusCode == 429 { throw AIError.quotaExceeded }
         guard http.statusCode == 200 else {
             let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
             throw AIError.apiError("OpenAI \(http.statusCode): \(msg)")
@@ -278,6 +283,7 @@ enum AIError: LocalizedError {
     case noProvider
     case invalidKey
     case invalidResponse
+    case quotaExceeded
     case apiError(String)
 
     var errorDescription: String? {
@@ -285,6 +291,7 @@ enum AIError: LocalizedError {
         case .noProvider: return L10n("Nenhum provedor de IA configurado")
         case .invalidKey: return L10n("Chave de API invalida")
         case .invalidResponse: return L10n("Resposta invalida da API")
+        case .quotaExceeded: return L10n("Cota da API excedida ou saldo insuficiente")
         case .apiError(let msg): return msg
         }
     }

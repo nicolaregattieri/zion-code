@@ -393,6 +393,8 @@
 // AI Integration
 "Assistente IA" = "AI Assistant";
 "Desativado" = "Disabled";
+"Cota da API excedida ou saldo insuficiente" = "API quota exceeded or insufficient balance";
+"Cota da API excedida. Usando sugestao local." = "API quota exceeded. Using local suggestion.";
 "Chave de API" = "API Key";
 "Chave salva no Keychain" = "Key saved in Keychain";
 "Gerar mensagem com IA" = "Generate message with AI";

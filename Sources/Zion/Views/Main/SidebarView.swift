@@ -11,6 +11,7 @@ struct SidebarView: View {
     @AppStorage("zion.customTerminalPath") private var customTerminalPath: String = ""
 
     @State private var aiKeyInput: String = ""
+    @State private var isEditingAIKey: Bool = false
     @AppStorage("zion.sidebar.recentsExpanded") private var isRecentsExpanded: Bool = true
     @AppStorage("zion.sidebar.settingsExpanded") private var isSettingsExpanded: Bool = false
 
@@ -449,18 +450,68 @@ struct SidebarView: View {
                         .pickerStyle(.menu)
 
                         if model.aiProvider != .none {
-                            SecureField(L10n("Chave de API"), text: $aiKeyInput)
-                                .textFieldStyle(.roundedBorder)
-                                .font(.system(size: 11, design: .monospaced))
-                                .onAppear { aiKeyInput = model.aiAPIKey }
-                                .onChange(of: aiKeyInput) { _, newValue in
-                                    model.aiAPIKey = newValue
+                            let hasKey = !model.aiAPIKey.isEmpty
+                            
+                            if hasKey && !isEditingAIKey {
+                                HStack {
+                                    Label(L10n("Chave registrada"), systemImage: "lock.fill")
+                                        .font(.system(size: 10, weight: .medium))
+                                        .foregroundStyle(.green.opacity(0.8))
+                                    
+                                    Spacer()
+                                    
+                                    Button(L10n("Alterar")) {
+                                        aiKeyInput = model.aiAPIKey
+                                        isEditingAIKey = true
+                                    }
+                                    .buttonStyle(.plain)
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(Color.accentColor)
                                 }
-
-                            if !aiKeyInput.isEmpty {
-                                Label(L10n("Chave salva no Keychain"), systemImage: "lock.fill")
-                                    .font(.system(size: 9))
-                                    .foregroundStyle(.green)
+                                .padding(.vertical, 2)
+                            } else {
+                                VStack(alignment: .trailing, spacing: 6) {
+                                    SecureField(L10n("Chave de API"), text: $aiKeyInput)
+                                        .textFieldStyle(.roundedBorder)
+                                        .font(.system(size: 11, design: .monospaced))
+                                        .onSubmit {
+                                            if !aiKeyInput.isEmpty {
+                                                model.aiAPIKey = aiKeyInput
+                                                isEditingAIKey = false
+                                            }
+                                        }
+                                    
+                                    HStack {
+                                        if isEditingAIKey {
+                                            Button(L10n("Cancelar")) {
+                                                isEditingAIKey = false
+                                                aiKeyInput = model.aiAPIKey
+                                            }
+                                            .buttonStyle(.plain)
+                                            .font(.system(size: 10))
+                                            .foregroundStyle(.secondary)
+                                        }
+                                        
+                                        Spacer()
+                                        
+                                        Button {
+                                            model.aiAPIKey = aiKeyInput
+                                            isEditingAIKey = false
+                                        } label: {
+                                            Label(L10n("Salvar"), systemImage: "checkmark.circle.fill")
+                                                .font(.system(size: 10, weight: .bold))
+                                        }
+                                        .buttonStyle(.borderedProminent)
+                                        .controlSize(.small)
+                                        .tint(.accentColor)
+                                        .disabled(aiKeyInput.isEmpty)
+                                    }
+                                }
+                                .onAppear {
+                                    if aiKeyInput.isEmpty && hasKey {
+                                        aiKeyInput = model.aiAPIKey
+                                    }
+                                }
                             }
                         }
                     }
