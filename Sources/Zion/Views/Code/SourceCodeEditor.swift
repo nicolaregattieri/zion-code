@@ -24,8 +24,13 @@ struct SourceCodeEditor: NSViewRepresentable {
 
         let textView = NSTextView()
         textView.isVerticallyResizable = true
-        textView.isHorizontallyResizable = true
-        textView.autoresizingMask = [.width, .height]
+        textView.isHorizontallyResizable = !isLineWrappingEnabled
+        textView.autoresizingMask = isLineWrappingEnabled ? [.width] : []
+        if !isLineWrappingEnabled {
+            textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+            textView.textContainer?.widthTracksTextView = false
+            textView.textContainer?.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        }
         scrollView.documentView = textView
 
         textView.delegate = context.coordinator
@@ -531,6 +536,9 @@ class LeftAnchoredClipView: NSClipView {
     override func setBoundsOrigin(_ newOrigin: NSPoint) {
         var adjusted = newOrigin
         if !isLineWrappingEnabled {
+            if newOrigin.x != 0 {
+                print("[Zion Debug] ClipView attempted to move X to \(newOrigin.x). Blocking and forcing to 0.")
+            }
             adjusted.x = 0
         }
         super.setBoundsOrigin(adjusted)
