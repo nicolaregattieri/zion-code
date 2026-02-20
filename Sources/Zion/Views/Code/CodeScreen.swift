@@ -516,6 +516,11 @@ struct CodeScreen: View {
             Button("") { model.closeFocusedTerminalPane() }
                 .keyboardShortcut("w", modifiers: [.command, .shift])
                 .frame(width: 0, height: 0).opacity(0)
+
+            // Git Blame (Cmd+Shift+B)
+            Button("") { model.toggleBlame() }
+                .keyboardShortcut("b", modifiers: [.command, .shift])
+                .frame(width: 0, height: 0).opacity(0)
         }
     }
 

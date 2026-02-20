@@ -345,6 +345,11 @@
 // AI Integration
 "Assistente IA" = "Asistente IA";
 "Desativado" = "Desactivado";
+"Cota da API excedida ou saldo insuficiente" = "Cuota de API excedida o saldo insuficiente";
+"Cota da API excedida. Usando sugestao local." = "Cuota de API excedida. Usando sugerencia local.";
+"Chave registrada" = "Clave registrada";
+"Alterar" = "Cambiar";
+"Salvar" = "Guardar";
 "Chave de API" = "Clave de API";
 "Chave salva no Keychain" = "Clave guardada en Keychain";
 "Gerar mensagem com IA" = "Generar mensaje con IA";

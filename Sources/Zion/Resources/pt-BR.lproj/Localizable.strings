@@ -300,6 +300,9 @@
 "Desativado" = "Desativado";
 "Cota da API excedida ou saldo insuficiente" = "Cota da API excedida ou saldo insuficiente";
 "Cota da API excedida. Usando sugestao local." = "Cota da API excedida. Usando sugestão local.";
+"Chave registrada" = "Chave registrada";
+"Alterar" = "Alterar";
+"Salvar" = "Salvar";
 "Chave de API" = "Chave de API";
 "Chave salva no Keychain" = "Chave salva no Keychain";
 "Gerar mensagem com IA" = "Gerar mensagem com IA";

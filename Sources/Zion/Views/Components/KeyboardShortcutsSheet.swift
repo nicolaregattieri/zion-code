@@ -31,6 +31,7 @@ struct KeyboardShortcutsSheet: View {
 
                     shortcutSection(L10n("Editor"), icon: "doc.text", shortcuts: [
                         (L10n("Quick Open"), "⌘P"),
+                        (L10n("Git Blame"), "⇧⌘B"),
                         (L10n("Barra lateral"), "⌘B"),
                         (L10n("Salvar"), "⌘S"),
                         (L10n("Terminal"), "⌘J"),
