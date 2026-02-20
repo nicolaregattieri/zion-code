@@ -11,13 +11,45 @@ struct CommitGraphLayout {
 }
 
 struct GitGraphLaneCalculator {
-    func layout(for commits: [ParsedCommit]) -> [CommitGraphLayout] {
+    /// Walk first-parent chain from HEAD to build the set of main-line commit hashes.
+    static func mainFirstParentChain(from commits: [ParsedCommit]) -> Set<String> {
+        // Find the HEAD commit (has "HEAD" in decorations)
+        guard let headCommit = commits.first(where: { commit in
+            commit.decorations.contains { $0.contains("HEAD") }
+        }) else {
+            return []
+        }
+
+        let parentIndex = Dictionary(uniqueKeysWithValues: commits.map { ($0.hash, $0.parents) })
+        var chain = Set<String>()
+        var current = headCommit.hash
+
+        while true {
+            chain.insert(current)
+            guard let parents = parentIndex[current], let firstParent = parents.first else {
+                break
+            }
+            current = firstParent
+        }
+
+        return chain
+    }
+
+    func layout(for commits: [ParsedCommit], mainChain: Set<String> = []) -> [CommitGraphLayout] {
         var activeLaneHashes: [String?] = []
         var activeLaneColorKeys: [Int?] = []
         var colorKeyByHash: [String: Int] = [:]
         var nextColorKey = 0
         var rows: [CommitGraphLayout] = []
         rows.reserveCapacity(commits.count)
+
+        // Pre-assign color key 0 for ALL main-chain commits so the main line color is consistent
+        if !mainChain.isEmpty {
+            for hash in mainChain {
+                colorKeyByHash[hash] = 0
+            }
+            nextColorKey = 1
+        }
 
         for commit in commits {
             let incomingLaneColors = activeLaneColors(
@@ -26,8 +58,10 @@ struct GitGraphLaneCalculator {
                 colorKeyByHash: &colorKeyByHash,
                 nextColorKey: &nextColorKey
             )
+            let isMainChain = mainChain.contains(commit.hash)
             let lane = laneForCommit(
                 commit.hash,
+                isMainChain: isMainChain,
                 hashes: &activeLaneHashes,
                 colorKeys: &activeLaneColorKeys
             )
@@ -52,6 +86,7 @@ struct GitGraphLaneCalculator {
                     for: firstParent,
                     preferred: lane,
                     preferredColorKey: nodeColorKey,
+                    mainChain: mainChain,
                     hashes: &activeLaneHashes,
                     colorKeys: &activeLaneColorKeys,
                     colorKeyByHash: &colorKeyByHash,
@@ -70,6 +105,7 @@ struct GitGraphLaneCalculator {
                         for: parent,
                         preferred: lane + 1,
                         preferredColorKey: nil,
+                        mainChain: mainChain,
                         hashes: &activeLaneHashes,
                         colorKeys: &activeLaneColorKeys,
                         colorKeyByHash: &colorKeyByHash,
@@ -139,13 +175,16 @@ struct GitGraphLaneCalculator {
 
     private func laneForCommit(
         _ hash: String,
+        isMainChain: Bool,
         hashes: inout [String?],
         colorKeys: inout [Int?]
     ) -> Int {
         if let existing = hashes.firstIndex(where: { $0 == hash }) {
             return existing
         }
-        return firstAvailableLane(preferred: 0, hashes: &hashes, colorKeys: &colorKeys)
+        // Main-chain commits prefer lane 0; non-main commits prefer lane 1+ to leave room
+        let preferred = isMainChain ? 0 : 1
+        return firstAvailableLane(preferred: preferred, hashes: &hashes, colorKeys: &colorKeys)
     }
 
     private func consumeCommitIfReserved(
@@ -165,20 +204,41 @@ struct GitGraphLaneCalculator {
         for hash: String,
         preferred: Int,
         preferredColorKey: Int?,
+        mainChain: Set<String>,
         hashes: inout [String?],
         colorKeys: inout [Int?],
         colorKeyByHash: inout [String: Int],
         nextColorKey: inout Int
     ) -> (lane: Int, colorKey: Int) {
         if let existing = hashes.firstIndex(where: { $0 == hash }) {
-            let colorKey = colorKeys[existing]
-                ?? colorKeyByHash[hash]
-                ?? assignedColorKey(
-                    for: hash,
-                    preferredColorKey: preferredColorKey,
-                    colorKeyByHash: &colorKeyByHash,
-                    nextColorKey: &nextColorKey
-                )
+            // For main-chain commits, always use pre-assigned color 0 regardless of what a feature branch set
+            let isMain = mainChain.contains(hash)
+            let colorKey: Int
+            if isMain, let mainColor = colorKeyByHash[hash] {
+                colorKey = mainColor
+            } else {
+                colorKey = colorKeys[existing]
+                    ?? colorKeyByHash[hash]
+                    ?? assignedColorKey(
+                        for: hash,
+                        preferredColorKey: preferredColorKey,
+                        colorKeyByHash: &colorKeyByHash,
+                        nextColorKey: &nextColorKey
+                    )
+            }
+
+            // Relocate misplaced main-chain parent to lane 0 if it's available
+            if isMain && existing != 0 {
+                ensureCapacity(0, hashes: &hashes, colorKeys: &colorKeys)
+                if hashes[0] == nil {
+                    hashes[existing] = nil
+                    colorKeys[existing] = nil
+                    hashes[0] = hash
+                    colorKeys[0] = colorKey
+                    return (0, colorKey)
+                }
+            }
+
             colorKeys[existing] = colorKey
             return (existing, colorKey)
         }

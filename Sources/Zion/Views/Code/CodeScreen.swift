@@ -84,7 +84,7 @@ struct CodeScreen: View {
 
                 Divider().frame(height: 14)
 
-                Slider(value: $model.editorLineSpacing, in: 0.8...2.0, step: 0.1)
+                Slider(value: $model.editorLineSpacing, in: 0.8...3.0, step: 0.1)
                     .frame(width: 60)
                 Text(String(format: "%.1fx", model.editorLineSpacing))
                     .font(.system(size: 10, design: .monospaced))
@@ -570,13 +570,14 @@ struct FileTreeNodeView: View {
     var model: RepositoryViewModel
     let item: FileItem
     let level: Int
-    
+    @State private var isHovering = false
+
     var body: some View {
         let isExpanded = model.expandedPaths.contains(item.id)
         let isSelected = model.activeFileID == item.id
         let isDark = model.selectedTheme.isDark
         let isModified = model.uncommittedChanges.contains { $0.hasSuffix(item.name) }
-        
+
         VStack(alignment: .leading, spacing: 0) {
             Button {
                 if item.isDirectory {
@@ -587,11 +588,11 @@ struct FileTreeNodeView: View {
                     if item.isDirectory {
                         Image(systemName: isExpanded ? "chevron.down" : "chevron.right").font(.system(size: 8, weight: .bold)).foregroundStyle(.secondary.opacity(0.5)).frame(width: 12)
                     } else { Spacer().frame(width: 12) }
-                    
-                    Image(systemName: item.isDirectory ? (isExpanded ? "folder.badge.minus" : "folder.fill") : "doc.text")
+
+                    Image(systemName: item.isDirectory ? (isExpanded ? "folder.open.fill" : "folder.fill") : "doc.text")
                         .font(.system(size: 12))
                         .foregroundStyle(isModified ? Color.orange : (item.isDirectory ? (isDark ? Color.accentColor : Color.blue) : .secondary))
-                    
+
                     Text(item.name)
                         .font(.system(size: 12, weight: isSelected ? .bold : .regular, design: .monospaced))
                         .lineLimit(1)
@@ -600,10 +601,11 @@ struct FileTreeNodeView: View {
                 .padding(.horizontal, 12).padding(.vertical, 6).padding(.leading, CGFloat(level) * 12)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())
-                .background(isSelected ? Color.blue.opacity(0.15) : Color.clear)
+                .background(isSelected ? Color.blue.opacity(0.15) : (isHovering ? DesignSystem.Colors.glassHover : Color.clear))
             }
             .buttonStyle(.plain)
-            
+            .onHover { h in isHovering = h }
+
             if item.isDirectory && isExpanded, let children = item.children {
                 ForEach(children) { child in
                     FileTreeNodeView(model: model, item: child, level: level + 1)

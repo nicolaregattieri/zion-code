@@ -262,25 +262,55 @@ struct GraphScreen: View {
         }
     }
     
+    /// Build a pending-changes commit that aligns with the first real commit's lane and pass-through lanes.
+    private var pendingChangesCommit: Commit {
+        if let first = model.commits.first {
+            // Inherit lane position and all active pass-through lanes from HEAD
+            let pendingColorKey = first.nodeColorKey
+            var laneColors = first.laneColors
+            // Ensure the pending node's own lane is in the color list
+            if !laneColors.contains(where: { $0.lane == first.lane }) {
+                laneColors.append(LaneColor(lane: first.lane, colorKey: pendingColorKey))
+            }
+            return Commit(
+                id: "pending",
+                shortHash: "",
+                parents: [],
+                author: "",
+                date: Date(),
+                subject: "",
+                decorations: [],
+                lane: first.lane,
+                nodeColorKey: pendingColorKey,
+                incomingLanes: first.incomingLanes,
+                outgoingLanes: first.incomingLanes,
+                laneColors: laneColors,
+                outgoingEdges: []
+            )
+        }
+        // Fallback when no commits exist
+        return Commit(
+            id: "pending",
+            shortHash: "",
+            parents: [],
+            author: "",
+            date: Date(),
+            subject: "",
+            decorations: [],
+            lane: 0,
+            nodeColorKey: 3,
+            incomingLanes: [0],
+            outgoingLanes: [0],
+            laneColors: [LaneColor(lane: 0, colorKey: 3)],
+            outgoingEdges: []
+        )
+    }
+
     private var pendingChangesRow: some View {
         HStack(spacing: 0) {
             // PERFECT ALIGNMENT: Use the real LaneGraphView with a dummy commit
             LaneGraphView(
-                commit: Commit(
-                    id: "pending",
-                    shortHash: "",
-                    parents: [],
-                    author: "",
-                    date: Date(),
-                    subject: "",
-                    decorations: [],
-                    lane: 0,
-                    nodeColorKey: 3, // Orange
-                    incomingLanes: [0], // Line from top
-                    outgoingLanes: [0], // Line to bottom
-                    laneColors: [LaneColor(lane: 0, colorKey: 3)],
-                    outgoingEdges: []
-                ),
+                commit: pendingChangesCommit,
                 laneCount: model.maxLaneCount,
                 isSelected: false,
                 isHead: false,

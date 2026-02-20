@@ -5,9 +5,10 @@ Zion is a native Git client for macOS, focusing on a visual representation of th
 ## Project Overview
 
 - **Type:** macOS Executable (SwiftUI)
+- **Platform:** macOS 14+ (Sonoma)
 - **Build:** `swift build` / `swift run` / `swift test`
 - **Release:** `./scripts/make-app.sh` generates `Zion.app` in `dist/`
-- **Architecture:** MVVM — `RepositoryViewModel` is the central state hub
+- **Architecture:** MVVM with `@Observable` (Swift Observation framework) — `RepositoryViewModel` is the central state hub
 - **Concurrency:** Swift Concurrency (Actors, Tasks). `RepositoryWorker` handles background Git ops
 - **Git Integration:** Direct Git CLI interface through `GitClient`
 - **Localization:** Portuguese (BR), English, Spanish via `.lproj` files and `L10n()` helper
@@ -31,6 +32,35 @@ Zion is a native Git client for macOS, focusing on a visual representation of th
 | Skill | Usage | Purpose |
 |-------|-------|---------|
 | `/ux-review` | `/ux-review [paste screenshots or describe screen]` | UX/UI expert analysis with actionable SwiftUI code suggestions |
+
+## @Observable Patterns (CRITICAL)
+
+The codebase uses Swift's `@Observable` macro (NOT legacy `ObservableObject`). Follow these rules:
+
+### View Property Wrappers
+
+| Pattern | When to use |
+|---------|-------------|
+| `@State private var model = RepositoryViewModel()` | Owning view (ContentView) — replaces `@StateObject` |
+| `@Bindable var model: RepositoryViewModel` | Child views that need `$model.property` bindings (TextField, Picker, Toggle, etc.) |
+| `var model: RepositoryViewModel` | Child views that only read properties (no bindings) |
+| `var session: TerminalSession` | Any child view referencing `@Observable` classes |
+
+**Key rule:** If a view uses `$model.someProperty`, the property must be `@Bindable`. If it only reads `model.someProperty`, use plain `var`. Using `@ObservedObject` or `@StateObject` is WRONG with `@Observable`.
+
+### RepositoryViewModel Conventions
+
+- Marked `@Observable @MainActor`
+- Use `@ObservationIgnored` on private implementation properties (git client, worker, tasks, file watchers) to avoid tracking overhead
+- `@AppStorage` does NOT work in `@Observable` — use computed properties with direct `UserDefaults` access instead
+- Performance caches use `didSet` for invalidation (e.g., `commits { didSet { recalculateMaxLaneCount() } }`)
+
+### onChange Syntax
+
+Always use the two-parameter form (macOS 14+):
+```swift
+.onChange(of: value) { _, newValue in ... }
+```
 
 ## Critical Rules
 
@@ -84,6 +114,13 @@ Always use design tokens instead of hardcoded opacity values:
 - **Card headers:** Always use `CardHeader("Title", icon: "sf.symbol", subtitle: "optional")` inside `GlassCard`
 - **Danger cards:** Use `GlassCard(borderTint: DesignSystem.Colors.dangerBorder)` for destructive sections
 - **Toolbar groups:** Wrap related controls in `HStack` with `.background(DesignSystem.Colors.glassSubtle).clipShape(RoundedRectangle(cornerRadius: 8))`
+
+## Performance Patterns
+
+- **`maxLaneCount`:** Cached stored property, recalculated via `didSet` on `commits` — avoids O(n) per row
+- **`flatFileCache`:** Cached flat file list, rebuilt via `didSet` on `repositoryFiles` — avoids recomputation on every QuickOpen render
+- **Syntax highlighting:** Coordinator uses `regexCache` dictionary and dirty tracking (`lastHighlightedText/Theme/Extension`) to skip redundant work in `updateNSView`
+- **File I/O:** `selectCodeFile` and `saveCurrentCodeFile` run I/O in `Task { }` to avoid blocking main thread
 
 ## Development Conventions
 

@@ -156,39 +156,48 @@ struct OperationsScreen: View {
     private var branchListView: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(L10n("Branches locais/remotas")).font(.caption).foregroundStyle(.secondary)
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 0) {
-                    ForEach(model.branchInfos) { branch in
-                        Button {
-                            model.branchInput = branch.name
-                        } label: {
-                            VStack(alignment: .leading, spacing: 2) {
-                                HStack {
-                                    if branch.name == model.currentBranch {
-                                        Image(systemName: "checkmark.circle.fill").font(.caption2).foregroundStyle(.green)
+            if model.branchInfos.isEmpty {
+                VStack(spacing: 6) {
+                    Image(systemName: "arrow.triangle.branch").font(.title3).foregroundStyle(.secondary)
+                    Text(L10n("Nenhuma branch encontrada")).font(.caption).foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, minHeight: 80)
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(DesignSystem.Colors.glassStroke, lineWidth: 1))
+            } else {
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 0) {
+                        ForEach(model.branchInfos) { branch in
+                            Button {
+                                model.branchInput = branch.name
+                            } label: {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    HStack {
+                                        if branch.name == model.currentBranch {
+                                            Image(systemName: "checkmark.circle.fill").font(.caption2).foregroundStyle(.green)
+                                        }
+                                        Text(branch.name).font(.system(.caption, design: .monospaced))
+                                            .fontWeight(branch.name == model.currentBranch ? .bold : .regular)
+                                            .lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
+                                        if branch.isRemote { Image(systemName: "icloud").font(.caption2).foregroundStyle(.secondary) }
                                     }
-                                    Text(branch.name).font(.system(.caption, design: .monospaced))
-                                        .fontWeight(branch.name == model.currentBranch ? .bold : .regular)
-                                        .lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
-                                    if branch.isRemote { Image(systemName: "icloud").font(.caption2).foregroundStyle(.secondary) }
+                                    Text("HEAD \(branch.shortHead)").font(.caption2).foregroundStyle(.secondary).lineLimit(1)
                                 }
-                                Text("HEAD \(branch.shortHead)").font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 8).padding(.vertical, 5).contentShape(Rectangle())
                             }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 8).padding(.vertical, 5).contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .onTapGesture(count: 2) {
-                            performGitAction(L10n("Checkout branch"), L10n("Fazer checkout da branch %@?", branch.name), false) {
-                                model.checkout(reference: branch.name)
+                            .buttonStyle(.plain)
+                            .onTapGesture(count: 2) {
+                                performGitAction(L10n("Checkout branch"), L10n("Fazer checkout da branch %@?", branch.name), false) {
+                                    model.checkout(reference: branch.name)
+                                }
                             }
+                            .contextMenu { branchContextMenu(branch.name) }
                         }
-                        .contextMenu { branchContextMenu(branch.name) }
                     }
                 }
+                .frame(minHeight: 120, maxHeight: 180)
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(DesignSystem.Colors.glassStroke, lineWidth: 1))
             }
-            .frame(minHeight: 120, maxHeight: 180)
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(DesignSystem.Colors.glassStroke, lineWidth: 1))
         }
     }
 

@@ -301,7 +301,15 @@ actor RepositoryWorker {
         let parsed = parseCommits(from: output)
         let hasMore = parsed.count > effectiveLimit
         let visibleParsed = hasMore ? Array(parsed.prefix(effectiveLimit)) : parsed
-        let layout = laneCalculator.layout(for: visibleParsed)
+
+        // When showing all branches, compute main-chain to pin main line to lane 0
+        let mainChain: Set<String>
+        if reference == nil {
+            mainChain = GitGraphLaneCalculator.mainFirstParentChain(from: visibleParsed)
+        } else {
+            mainChain = []
+        }
+        let layout = laneCalculator.layout(for: visibleParsed, mainChain: mainChain)
         let layoutByID = Dictionary(uniqueKeysWithValues: layout.map { ($0.id, $0) })
 
         let commits = visibleParsed.map { entry in
