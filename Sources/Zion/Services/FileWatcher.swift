@@ -14,7 +14,10 @@ final class FileWatcher {
         stop()
 
         let fd = open(directory.path, O_EVTONLY)
-        guard fd >= 0 else { return }
+        guard fd >= 0 else {
+            DiagnosticLogger.shared.log(.warn, "FileWatcher: failed to open directory", context: directory.path, source: #function)
+            return
+        }
         fileDescriptor = fd
 
         let source = DispatchSource.makeFileSystemObjectSource(

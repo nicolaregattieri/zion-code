@@ -61,54 +61,17 @@ struct WelcomeScreen: View {
                 .buttonStyle(.bordered)
                 .controlSize(.large)
 
-                if !model.recentRepositories.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(L10n("Recentes"))
-                            .font(.caption.weight(.bold))
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 4)
-                        
-                        ForEach(model.recentRepositories, id: \.self) { url in
-                            Button {
-                                model.openRepository(url)
-                            } label: {
-                                HStack(spacing: 12) {
-                                    Image(systemName: "folder.fill")
-                                        .foregroundStyle(.blue.opacity(0.8))
-                                    VStack(alignment: .leading, spacing: 1) {
-                                        Text(url.lastPathComponent)
-                                            .font(.subheadline.weight(.semibold))
-                                        Text(url.path)
-                                            .font(.caption2)
-                                            .foregroundStyle(.secondary)
-                                            .lineLimit(1)
-                                    }
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption2)
-                                        .foregroundStyle(.tertiary)
-                                }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
-                                .frame(width: 320)
-                                .background(Color.white.opacity(0.05))
-                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                                )
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.top, 20)
+                Button {
+                    NotificationCenter.default.post(name: .showHelp, object: nil)
+                } label: {
+                    Label(L10n("Conheca o Zion"), systemImage: "questionmark.circle")
+                        .frame(width: 240)
                 }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(32)
-        .onAppear {
-            model.loadRecentRepositories()
-        }
     }
 }

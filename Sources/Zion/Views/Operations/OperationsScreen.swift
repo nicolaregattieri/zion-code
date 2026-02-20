@@ -101,18 +101,25 @@ struct OperationsScreen: View {
 
                     Button {
                         model.suggestCommitMessage()
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            if !model.suggestedCommitMessage.isEmpty {
-                                model.commitMessageInput = model.suggestedCommitMessage
-                            }
-                        }
                     } label: {
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 12))
+                        if model.isGeneratingAIMessage {
+                            ProgressView()
+                                .controlSize(.small)
+                                .frame(width: 12, height: 12)
+                        } else {
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 12))
+                        }
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
-                    .help(L10n("Sugerir mensagem de commit"))
+                    .disabled(model.isGeneratingAIMessage)
+                    .help(model.isAIConfigured ? L10n("Gerar mensagem com IA") : L10n("Sugerir mensagem de commit"))
+                    .onChange(of: model.suggestedCommitMessage) { _, newValue in
+                        if !newValue.isEmpty {
+                            model.commitMessageInput = newValue
+                        }
+                    }
                 }
 
                 HStack {
@@ -225,6 +232,21 @@ struct OperationsScreen: View {
             CardHeader(L10n("Stash"), icon: "archivebox")
             HStack(spacing: 8) {
                 TextField(L10n("mensagem do stash"), text: $model.stashMessageInput).textFieldStyle(.roundedBorder)
+                if model.isAIConfigured {
+                    Button {
+                        model.suggestStashMessage()
+                    } label: {
+                        if model.isGeneratingAIMessage {
+                            ProgressView().controlSize(.small).frame(width: 12, height: 12)
+                        } else {
+                            Image(systemName: "sparkles").font(.system(size: 12))
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .disabled(model.isGeneratingAIMessage)
+                    .help(L10n("Gerar mensagem com IA"))
+                }
                 Button(L10n("Criar stash")) {
                     performGitAction(L10n("Criar stash"), L10n("Salvar alteracoes locais no stash?"), false) { model.createStash() }
                 }.buttonStyle(.borderedProminent)
@@ -300,7 +322,7 @@ struct OperationsScreen: View {
                                 Button {
                                     model.testRemote(named: remote.name)
                                 } label: {
-                                    Image(systemName: " antenna.radiowaves.left.and.right").font(.caption2)
+                                    Image(systemName: "antenna.radiowaves.left.and.right").font(.caption2)
                                 }.buttonStyle(.plain).foregroundStyle(.blue.opacity(0.7))
                                 .help(L10n("Testar conexao"))
 
@@ -452,7 +474,7 @@ struct FileStatusRow: View {
         }
         .padding(.horizontal, 8).padding(.vertical, 6)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white.opacity(isStaged ? 0.06 : 0.02))
+        .background(isStaged ? DesignSystem.Colors.glassElevated : DesignSystem.Colors.glassMinimal)
         .clipShape(RoundedRectangle(cornerRadius: 6))
         .contextMenu {
             Button(L10n("Descartar alteracoes"), role: .destructive) {

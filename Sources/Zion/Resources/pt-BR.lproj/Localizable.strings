@@ -137,6 +137,8 @@
 "prunable" = "podável";
 
 // SidebarView
+"Ferramentas Externas" = "Ferramentas Externas";
+"Editor" = "Editor";
 "Branch" = "Branch";
 "current" = "atual";
 "Selecione seu Editor de Codigo favorito" = "Selecione seu Editor de Código favorito";
@@ -292,3 +294,84 @@
 "Buscar no grafo" = "Buscar no grafo";
 "Pressione" = "Pressione";
 "para ver todos os atalhos" = "para ver todos os atalhos";
+
+// AI Integration
+"Assistente IA" = "Assistente IA";
+"Desativado" = "Desativado";
+"Chave de API" = "Chave de API";
+"Chave salva no Keychain" = "Chave salva no Keychain";
+"Gerar mensagem com IA" = "Gerar mensagem com IA";
+"Gerar com IA" = "Gerar com IA";
+"Explicar diff com IA" = "Explicar diff com IA";
+"Nenhum provedor de IA configurado" = "Nenhum provedor de IA configurado";
+"Chave de API invalida" = "Chave de API inválida";
+"Resposta invalida da API" = "Resposta inválida da API";
+
+// Help Sheet
+"Conheca o Zion" = "Conheça o Zion";
+"help.hero.title" = "Tudo que você precisa para trabalhar com Git, nativo no seu Mac.";
+"help.hero.subtitle" = "O Zion combina visualização de grafo, editor de código, terminal integrado e operações Git — tudo em uma única interface nativa macOS.";
+
+// Zion Tree
+"help.tree.lanes" = "Grafo visual com lanes coloridas mostrando topologia de branches e merges";
+"help.tree.search" = "Busca por hash, autor ou mensagem com navegação entre resultados (⌘F)";
+"help.tree.jumpbar" = "Jump Bar para saltar instantaneamente para main, develop ou branch padrão";
+"help.tree.pending" = "Alterações pendentes no topo do grafo com commit rápido e stash";
+"help.tree.signature" = "Verificação de assinatura GPG/SSH dos commits";
+
+// Zion Code
+"help.code.editor" = "Editor com syntax highlighting, múltiplas abas e detecção de alterações externas";
+"help.code.quickopen" = "Quick Open com busca fuzzy para abrir arquivos instantaneamente (⌘P)";
+"help.code.blame" = "Git Blame inline mostrando autor, hash e data por linha";
+"help.code.themes" = "Temas de editor (Dracula, GitHub Light, etc.) e fontes configuráveis";
+"help.code.unsaved" = "Indicador visual de alterações não salvas nas abas";
+
+// Terminal
+"help.terminal.pty" = "Terminal real com PTY nativo, login shell e suporte a cores 256";
+"help.terminal.splits" = "Divide o terminal em painéis verticais (⇧⌘D) ou horizontais (⇧⌘E)";
+"help.terminal.tabs" = "Múltiplas abas de terminal com status de processo vivo";
+"help.terminal.zoom" = "Zoom independente com Ctrl+/- e fonte configurável";
+
+// Clipboard
+"help.clipboard.capture" = "Captura automaticamente tudo que você copia na área de transferência";
+"help.clipboard.paste" = "Clique para colar no terminal, duplo clique para executar";
+"help.clipboard.drag" = "Arraste itens diretamente para o terminal";
+"help.clipboard.images" = "Captura imagens copiadas com limpeza automática";
+
+// Operations
+"help.ops.commit" = "Commit com staging individual, amend e mensagens sugeridas por IA";
+"help.ops.branch" = "Checkout, merge, rebase, push, pull e gerenciamento completo de branches";
+"help.ops.stash" = "Salvar, aplicar, pop e gerenciar stashes com mensagens";
+"help.ops.rebase" = "Rebase interativo visual com pick, squash, fixup, drop e reordenação";
+"help.ops.hunk" = "Staging por hunk e por linha — controle granular do que entra no commit";
+
+// Worktrees
+"help.worktree.parallel" = "Trabalhe em múltiplas branches simultaneamente sem trocar contexto";
+"help.worktree.quick" = "Criação rápida com caminho e branch gerados automaticamente";
+"help.worktree.terminal" = "Cada worktree abre um terminal split dedicado";
+
+// AI
+"help.ai.commit" = "Gera mensagens de commit a partir do diff staged";
+"help.ai.diff" = "Explica diffs em linguagem natural";
+"help.ai.pr" = "Gera título e descrição de Pull Requests";
+"help.ai.stash" = "Sugere mensagens descritivas para stashes";
+
+// Customization
+"help.customization.title" = "Personalização";
+"help.customization.languages" = "Interface em Português, English e Español";
+"help.customization.editor" = "Escolha seu editor e terminal externo favorito";
+"help.customization.confirmation" = "Controle quando exibir diálogos de confirmação";
+"help.customization.reflog" = "Reflog visual com desfazer da última ação Git";
+
+// Shortcuts highlight
+"help.shortcuts.title" = "Mais de 15 atalhos de teclado";
+"help.shortcuts.subtitle" = "Pressione ⌘? para ver todos os atalhos disponíveis.";
+
+// Diagnostics
+"Exportar Diagnostico..." = "Exportar Diagnóstico...";
+"Copiar Diagnostico" = "Copiar Diagnóstico";
+"Exportar log de diagnostico" = "Exportar log de diagnóstico";
+"help.diagnostics.title" = "Diagnóstico";
+"help.diagnostics.export" = "Exporte logs pelo menu Ajuda";
+"help.diagnostics.copy" = "Copie o log para o clipboard";
+"help.diagnostics.sanitize" = "Dados sensíveis removidos automaticamente";

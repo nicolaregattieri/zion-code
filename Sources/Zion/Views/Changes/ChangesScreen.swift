@@ -167,22 +167,62 @@ struct ChangesScreen: View {
     }
 
     private func diffHeader(file: String) -> some View {
-        HStack {
-            Image(systemName: "doc.text").foregroundStyle(.secondary)
-            Text(file).font(.system(.subheadline, design: .monospaced)).fontWeight(.bold)
-            Spacer()
-            Button {
-                model.unstageFile(file)
-            } label: {
-                Label(L10n("Unstage"), systemImage: "minus")
-            }.buttonStyle(.bordered).controlSize(.small)
-            Button {
-                model.stageFile(file)
-            } label: {
-                Label(L10n("Stage"), systemImage: "plus")
-            }.buttonStyle(.bordered).controlSize(.small)
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Image(systemName: "doc.text").foregroundStyle(.secondary)
+                Text(file).font(.system(.subheadline, design: .monospaced)).fontWeight(.bold)
+                Spacer()
+                if model.isAIConfigured {
+                    Button {
+                        model.explainFileDiff(fileName: file, diff: model.currentFileDiff)
+                    } label: {
+                        if model.isGeneratingAIMessage {
+                            ProgressView().controlSize(.small).frame(width: 12, height: 12)
+                        } else {
+                            Image(systemName: "sparkles").font(.system(size: 12))
+                        }
+                    }
+                    .buttonStyle(.bordered).controlSize(.small)
+                    .disabled(model.isGeneratingAIMessage)
+                    .help(L10n("Explicar diff com IA"))
+                }
+                Button {
+                    model.unstageFile(file)
+                } label: {
+                    Label(L10n("Unstage"), systemImage: "minus")
+                }.buttonStyle(.bordered).controlSize(.small)
+                Button {
+                    model.stageFile(file)
+                } label: {
+                    Label(L10n("Stage"), systemImage: "plus")
+                }.buttonStyle(.bordered).controlSize(.small)
+            }
+            .padding(12)
+
+            if !model.aiDiffExplanation.isEmpty {
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.purple)
+                    Text(model.aiDiffExplanation)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                    Spacer()
+                    Button {
+                        model.aiDiffExplanation = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 12)
+                .padding(.bottom, 8)
+                .transition(.opacity)
+            }
         }
-        .padding(12)
     }
 
     private var rawDiffView: some View {

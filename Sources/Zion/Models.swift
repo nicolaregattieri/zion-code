@@ -10,11 +10,30 @@ final class TerminalSession: Identifiable {
     var isAlive = true
     var title: String
 
+    // Cache for preserving terminal across SwiftUI view tree changes
+    // (split/unsplit restructures the view hierarchy without user intent to close)
+    @ObservationIgnored var _cachedView: AnyObject?       // SwiftTerm.TerminalView
+    @ObservationIgnored var _processBridge: AnyObject?    // Coordinator (keeps it alive)
+    @ObservationIgnored var _shellPid: Int32 = 0
+    @ObservationIgnored var _shouldPreserve = true        // false after explicit kill
+
     init(workingDirectory: URL, label: String, worktreeID: String? = nil) {
         self.workingDirectory = workingDirectory
         self.label = label
         self.worktreeID = worktreeID
         self.title = label
+    }
+
+    /// Explicitly kill the terminal process and clear cached state.
+    /// Call this only for intentional close (close tab, close pane, switch project).
+    func killCachedProcess() {
+        _shouldPreserve = false
+        if _shellPid > 0 {
+            kill(_shellPid, SIGTERM)
+        }
+        _shellPid = 0
+        _cachedView = nil
+        _processBridge = nil
     }
 }
 
@@ -520,6 +539,18 @@ func L10n(_ key: String, _ args: CVarArg...) -> String {
     
     return withVaList(args) { vaList in
         return NSString(format: format, locale: language.locale, arguments: vaList) as String
+    }
+}
+
+enum AIProvider: String, CaseIterable, Identifiable {
+    case none, anthropic, openai
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .none: return L10n("Desativado")
+        case .anthropic: return "Anthropic (Claude)"
+        case .openai: return "OpenAI (GPT)"
+        }
     }
 }
 

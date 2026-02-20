@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SidebarView: View {
-    var model: RepositoryViewModel
+    @Bindable var model: RepositoryViewModel
     @Binding var selectedSection: AppSection?
     @Binding var selectedBranchTreeNodeID: String?
     @Binding var confirmationModeRaw: String
@@ -11,7 +11,11 @@ struct SidebarView: View {
     @AppStorage("zion.preferredTerminal") private var preferredTerminalRaw: String = ExternalTerminal.terminal.rawValue
     @AppStorage("zion.customEditorPath") private var customEditorPath: String = ""
     @AppStorage("zion.customTerminalPath") private var customTerminalPath: String = ""
-    
+
+    @State private var aiKeyInput: String = ""
+    @AppStorage("zion.sidebar.recentsExpanded") private var isRecentsExpanded: Bool = true
+    @AppStorage("zion.sidebar.settingsExpanded") private var isSettingsExpanded: Bool = false
+
     let onOpen: () -> Void
     let onOpenInEditor: () -> Void
     let onOpenInTerminal: () -> Void
@@ -24,11 +28,7 @@ struct SidebarView: View {
 
                 workspaceCard
 
-                if model.repositoryURL != nil {
-                    quickAccessCard
-                } else {
-                    recentProjectsCard
-                }
+                recentProjectsCard
 
                 if model.repositoryURL != nil, nonCurrentWorktrees.count > 0 {
                     worktreesCard
@@ -52,41 +52,15 @@ struct SidebarView: View {
         Group {
             if !model.recentRepositories.isEmpty {
                 GlassCard(spacing: 10) {
-                    CardHeader(L10n("Recentes"), icon: "clock.arrow.circlepath")
-                    
-                    VStack(spacing: 4) {
-                        ForEach(model.recentRepositories, id: \.self) { url in
-                            Button {
-                                withAnimation {
-                                    model.openRepository(url)
-                                }
-                            } label: {
-                                HStack(spacing: 10) {
-                                    Image(systemName: "folder.fill")
-                                        .font(.system(size: 12))
-                                        .foregroundStyle(Color.accentColor.opacity(0.8))
-                                    
-                                    VStack(alignment: .leading, spacing: 1) {
-                                        Text(url.lastPathComponent)
-                                            .font(.system(size: 13, weight: .semibold))
-                                            .lineLimit(1)
-                                        Text(url.path)
-                                            .font(.system(size: 9))
-                                            .foregroundStyle(.secondary)
-                                            .lineLimit(1)
-                                            .truncationMode(.middle)
-                                    }
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .font(.system(size: 8, weight: .bold))
-                                        .foregroundStyle(.secondary.opacity(0.5))
-                                }
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 8)
-                                .background(RoundedRectangle(cornerRadius: 8).fill(DesignSystem.Colors.glassMinimal))
-                                .contentShape(Rectangle())
+                    CardHeader(L10n("Recentes"), icon: "clock.arrow.circlepath") {
+                        collapseToggle(isExpanded: $isRecentsExpanded)
+                    }
+
+                    if isRecentsExpanded {
+                        VStack(spacing: 4) {
+                            ForEach(model.recentRepositories, id: \.self) { url in
+                                RecentProjectRow(url: url, model: model)
                             }
-                            .buttonStyle(.plain)
                         }
                     }
                 }
@@ -147,19 +121,21 @@ struct SidebarView: View {
         }.padding(.horizontal, 10)
     }
 
-    private var quickAccessCard: some View {
-        GlassCard(spacing: 10) {
-            CardHeader(L10n("Abrir Externamente"), icon: "arrow.up.right.square", subtitle: L10n("Abrir o repositorio no seu editor ou terminal favorito."))
-            HStack(spacing: 10) {
-                Button(action: onOpenInEditor) {
-                    Label(L10n("Editor de Codigo"), systemImage: "chevron.left.forwardslash.chevron.right").frame(maxWidth: .infinity)
-                }.buttonStyle(.bordered).controlSize(.large)
-
-                Button(action: onOpenInTerminal) {
-                    Label(L10n("Terminal"), systemImage: "terminal").frame(maxWidth: .infinity)
-                }.buttonStyle(.bordered).controlSize(.large)
+    private func collapseToggle(isExpanded: Binding<Bool>) -> some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isExpanded.wrappedValue.toggle()
             }
-        }.padding(.horizontal, 10)
+        } label: {
+            Image(systemName: "chevron.right")
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(.secondary)
+                .rotationEffect(.degrees(isExpanded.wrappedValue ? 90 : 0))
+                .animation(.easeInOut(duration: 0.2), value: isExpanded.wrappedValue)
+        }
+        .buttonStyle(.plain)
+        .frame(width: 20, height: 20)
+        .contentShape(Rectangle())
     }
 
     private var nonCurrentWorktrees: [WorktreeItem] {
@@ -365,60 +341,113 @@ struct SidebarView: View {
 
     private var settingsCard: some View {
         GlassCard(spacing: 12) {
-            CardHeader(L10n("Configuracoes"), icon: "gearshape")
+            CardHeader(L10n("Configuracoes"), icon: "gearshape") {
+                collapseToggle(isExpanded: $isSettingsExpanded)
+            }
 
-            VStack(alignment: .leading, spacing: 10) {
-                // Language
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(L10n("Idioma")).font(.caption).foregroundStyle(.secondary)
-                    Picker("", selection: $uiLanguageRaw) {
-                        ForEach(AppLanguage.allCases) { language in
-                            Text(language.label).tag(language.rawValue)
+            if isSettingsExpanded {
+                VStack(alignment: .leading, spacing: 10) {
+                    // Language
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(L10n("Idioma")).font(.caption).foregroundStyle(.secondary)
+                        Picker("", selection: $uiLanguageRaw) {
+                            ForEach(AppLanguage.allCases) { language in
+                                Text(language.label).tag(language.rawValue)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                    }
+
+                    Divider().opacity(0.1)
+
+                    // External Tools
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.up.right.square")
+                                .font(.system(size: 9))
+                                .foregroundStyle(.blue)
+                            Text(L10n("Ferramentas Externas")).font(.caption).foregroundStyle(.secondary)
+                        }
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(L10n("Editor")).font(.system(size: 10)).foregroundStyle(.tertiary)
+                            Picker("", selection: $preferredEditorRaw) {
+                                ForEach(ExternalEditor.allCases) { editor in
+                                    Text(editor.label).tag(editor.rawValue)
+                                }
+                            }
+                            .labelsHidden()
+                            .pickerStyle(.menu)
+                            .onChange(of: preferredEditorRaw) { _, val in
+                                if val == "custom" { pickCustomApp(forEditor: true) }
+                            }
+                            if preferredEditorRaw == "custom" && !customEditorPath.isEmpty {
+                                Text(URL(fileURLWithPath: customEditorPath).lastPathComponent)
+                                    .font(.system(size: 9, design: .monospaced)).foregroundStyle(.tertiary)
+                            }
+                        }
+
+                        Divider().opacity(0.05)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(L10n("Terminal")).font(.system(size: 10)).foregroundStyle(.tertiary)
+                            Picker("", selection: $preferredTerminalRaw) {
+                                ForEach(ExternalTerminal.allCases) { term in
+                                    Text(term.label).tag(term.rawValue)
+                                }
+                            }
+                            .labelsHidden()
+                            .pickerStyle(.menu)
+                            .onChange(of: preferredTerminalRaw) { _, val in
+                                if val == "custom" { pickCustomApp(forEditor: false) }
+                            }
+                            if preferredTerminalRaw == "custom" && !customTerminalPath.isEmpty {
+                                Text(URL(fileURLWithPath: customTerminalPath).lastPathComponent)
+                                    .font(.system(size: 9, design: .monospaced)).foregroundStyle(.tertiary)
+                            }
                         }
                     }
-                    .labelsHidden()
-                    .pickerStyle(.menu)
-                }
+                    .padding(8)
+                    .background(DesignSystem.Colors.glassMinimal)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
 
-                Divider().opacity(0.1)
+                    Divider().opacity(0.1)
 
-                // Editor
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(L10n("Editor de Codigo")).font(.caption).foregroundStyle(.secondary)
-                    Picker("", selection: $preferredEditorRaw) {
-                        ForEach(ExternalEditor.allCases) { editor in
-                            Text(editor.label).tag(editor.rawValue)
+                    // AI Provider
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 9))
+                                .foregroundStyle(.purple)
+                            Text(L10n("Assistente IA")).font(.caption).foregroundStyle(.secondary)
                         }
-                    }
-                    .labelsHidden()
-                    .onChange(of: preferredEditorRaw) { _, val in
-                        if val == "custom" { pickCustomApp(forEditor: true) }
-                    }
-                    if preferredEditorRaw == "custom" && !customEditorPath.isEmpty {
-                        Text(URL(fileURLWithPath: customEditorPath).lastPathComponent)
-                            .font(.system(size: 9, design: .monospaced)).foregroundStyle(.tertiary)
-                    }
-                }
-                
-                // Terminal
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(L10n("Terminal")).font(.caption).foregroundStyle(.secondary)
-                    Picker("", selection: $preferredTerminalRaw) {
-                        ForEach(ExternalTerminal.allCases) { term in
-                            Text(term.label).tag(term.rawValue)
+                        Picker("", selection: $model.aiProvider) {
+                            ForEach(AIProvider.allCases) { provider in
+                                Text(provider.label).tag(provider)
+                            }
                         }
-                    }
-                    .labelsHidden()
-                    .onChange(of: preferredTerminalRaw) { _, val in
-                        if val == "custom" { pickCustomApp(forEditor: false) }
-                    }
-                    if preferredTerminalRaw == "custom" && !customTerminalPath.isEmpty {
-                        Text(URL(fileURLWithPath: customTerminalPath).lastPathComponent)
-                            .font(.system(size: 9, design: .monospaced)).foregroundStyle(.tertiary)
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+
+                        if model.aiProvider != .none {
+                            SecureField(L10n("Chave de API"), text: $aiKeyInput)
+                                .textFieldStyle(.roundedBorder)
+                                .font(.system(size: 11, design: .monospaced))
+                                .onAppear { aiKeyInput = model.aiAPIKey }
+                                .onChange(of: aiKeyInput) { _, newValue in
+                                    model.aiAPIKey = newValue
+                                }
+
+                            if !aiKeyInput.isEmpty {
+                                Label(L10n("Chave salva no Keychain"), systemImage: "lock.fill")
+                                    .font(.system(size: 9))
+                                    .foregroundStyle(.green)
+                            }
+                        }
                     }
                 }
             }
-            .pickerStyle(.menu)
 
         }
         .padding(.horizontal, 10)
@@ -436,6 +465,61 @@ struct SidebarView: View {
         } else {
             if forEditor { preferredEditorRaw = ExternalEditor.vscode.rawValue }
             else { preferredTerminalRaw = ExternalTerminal.terminal.rawValue }
+        }
+    }
+}
+
+private struct RecentProjectRow: View {
+    let url: URL
+    var model: RepositoryViewModel
+    @State private var isHovered = false
+
+    var body: some View {
+        Button {
+            withAnimation { model.openRepository(url) }
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "folder.fill")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.accentColor.opacity(0.8))
+
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(url.lastPathComponent)
+                        .font(.system(size: 13, weight: .semibold))
+                        .lineLimit(1)
+                    Text(url.path)
+                        .font(.system(size: 9))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+                Spacer()
+
+                if isHovered {
+                    Button {
+                        withAnimation { model.removeRecentRepository(url) }
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.secondary.opacity(0.6))
+                    }
+                    .buttonStyle(.plain)
+                    .help(L10n("Remover dos recentes"))
+                    .transition(.opacity)
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundStyle(.secondary.opacity(0.5))
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(RoundedRectangle(cornerRadius: 8).fill(DesignSystem.Colors.glassMinimal))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) { isHovered = hovering }
         }
     }
 }

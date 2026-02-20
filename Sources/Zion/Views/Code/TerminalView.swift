@@ -2,6 +2,8 @@ import SwiftUI
 import AppKit
 @preconcurrency import SwiftTerm
 
+// MARK: - TerminalTabView
+
 struct TerminalTabView: NSViewRepresentable {
     var session: TerminalSession
     var theme: EditorTheme
@@ -10,6 +12,17 @@ struct TerminalTabView: NSViewRepresentable {
     var model: RepositoryViewModel?
 
     func makeNSView(context: Context) -> SwiftTerm.TerminalView {
+        // Reuse cached view from session (preserves running process + display buffer)
+        if let cachedView = session._cachedView as? SwiftTerm.TerminalView {
+            cachedView.removeFromSuperview()
+            cachedView.terminalDelegate = context.coordinator
+            context.coordinator.reattach(view: cachedView)
+            // Don't clear cache — reattach re-populates it for future restructures
+            applyTheme(to: cachedView, context: context)
+            return cachedView
+        }
+
+        // Fresh terminal
         let terminalView = SwiftTerm.TerminalView(frame: .zero)
         terminalView.allowMouseReporting = true
         terminalView.terminalDelegate = context.coordinator
@@ -33,7 +46,14 @@ struct TerminalTabView: NSViewRepresentable {
     }
 
     static func dismantleNSView(_ nsView: SwiftTerm.TerminalView, coordinator: Coordinator) {
-        coordinator.killProcess()
+        // If session was explicitly killed, let everything deallocate naturally.
+        guard coordinator.parent.session._shouldPreserve else { return }
+        // Cache coordinator + NSView on session so they survive view tree restructuring.
+        // Explicit kills happen via session.killCachedProcess() in the ViewModel.
+        // Note: don't unregister send callback here — reattach() re-registers it,
+        // and SwiftUI may create the new view BEFORE calling dismantle on the old one.
+        coordinator.parent.session._cachedView = nsView
+        coordinator.parent.session._processBridge = coordinator
     }
 
     private func applyTheme(to view: SwiftTerm.TerminalView, context: Context) {
@@ -73,7 +93,11 @@ struct TerminalTabView: NSViewRepresentable {
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(self)
+        if let existing = session._processBridge as? Coordinator {
+            existing.parent = self
+            return existing
+        }
+        return Coordinator(self)
     }
 
     @MainActor
@@ -89,6 +113,8 @@ struct TerminalTabView: NSViewRepresentable {
         init(_ parent: TerminalTabView) {
             self.parent = parent
         }
+
+        // MARK: - Process lifecycle
 
         func startProcess(view: SwiftTerm.TerminalView) {
             self.terminalView = view
@@ -121,9 +147,37 @@ struct TerminalTabView: NSViewRepresentable {
                     currentDirectory: url.path
                 )
 
+                // Eagerly cache coordinator + view for reuse across view tree changes.
+                // SwiftUI may create the new view BEFORE dismantling the old one (e.g. split),
+                // so the cache must be populated before dismantleNSView fires.
+                parent.session._cachedView = view
+                parent.session._processBridge = self
+                parent.session._shellPid = process.shellPid
+
                 // Force theme re-application on next updateNSView cycle
                 self.lastAppliedTheme = nil
             }
+        }
+
+        /// Reattach to a cached terminal view after view tree restructure.
+        /// The coordinator (and its LocalProcess) survived via session._processBridge.
+        func reattach(view: SwiftTerm.TerminalView) {
+            self.terminalView = view
+
+            // Re-cache for future restructures (split → unsplit → split again)
+            parent.session._cachedView = view
+            parent.session._processBridge = self
+
+            // Re-register send callback for clipboard
+            let sessionID = parent.session.id
+            parent.model?.registerTerminalSendCallback(sessionID: sessionID) { [weak self] data in
+                Task { @MainActor in
+                    self?.process?.send(data: ArraySlice(data))
+                }
+            }
+
+            // Force theme re-application
+            self.lastAppliedTheme = nil
         }
 
         func restartProcess(view: SwiftTerm.TerminalView) {
@@ -137,6 +191,7 @@ struct TerminalTabView: NSViewRepresentable {
                 kill(pid, SIGTERM)
             }
             process = nil
+            parent.session._shellPid = 0
             parent.model?.unregisterTerminalSendCallback(sessionID: parent.session.id)
         }
 

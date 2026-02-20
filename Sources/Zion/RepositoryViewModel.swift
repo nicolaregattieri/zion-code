@@ -86,6 +86,28 @@ final class RepositoryViewModel {
 
     // AI commit message
     var suggestedCommitMessage: String = ""
+    var isGeneratingAIMessage: Bool = false
+    var aiDiffExplanation: String = ""
+    var aiProvider: AIProvider = .none {
+        didSet { UserDefaults.standard.set(aiProvider.rawValue, forKey: "zion.aiProvider") }
+    }
+    @ObservationIgnored let aiClient = AIClient()
+    @ObservationIgnored private var aiTask: Task<Void, Never>?
+
+    var aiAPIKey: String {
+        get { AIClient.loadAPIKey() ?? "" }
+        set {
+            if newValue.isEmpty {
+                AIClient.deleteAPIKey()
+            } else {
+                AIClient.saveAPIKey(newValue)
+            }
+        }
+    }
+
+    var isAIConfigured: Bool {
+        aiProvider != .none && !aiAPIKey.isEmpty
+    }
 
     // Commit signing
     var commitSignatureStatus: [String: String] = [:] // hash -> "G"/"N"/"B"/etc
@@ -164,7 +186,7 @@ final class RepositoryViewModel {
     var amendLastCommit: Bool = false
     var isTypingQuickly: Bool = false
     var shouldClosePopovers: Bool = false
-    var debugLog: String = "Debug log initialized...\n"
+    @ObservationIgnored private let logger = DiagnosticLogger.shared
 
     private var recentReposData: Data {
         get { UserDefaults.standard.data(forKey: "zion.recentRepositories") ?? Data() }
@@ -219,6 +241,11 @@ final class RepositoryViewModel {
         if let family = defaults.string(forKey: "terminal.fontFamily") {
             terminalFontFamily = family
         }
+        // AI provider
+        if let aiRaw = defaults.string(forKey: "zion.aiProvider"),
+           let provider = AIProvider(rawValue: aiRaw) {
+            aiProvider = provider
+        }
     }
 
     private func recalculateMaxLaneCount() {
@@ -236,7 +263,12 @@ final class RepositoryViewModel {
             worktreePathInput = url.deletingLastPathComponent().appendingPathComponent("new-worktree").path
         }
         
-        // Reset terminal and files for the new project
+        // Kill all existing terminal processes and reset for the new project
+        for tab in terminalTabs {
+            for session in tab.allSessions() {
+                session.killCachedProcess()
+            }
+        }
         terminalTabs.removeAll()
         activeTabID = nil
         focusedSessionID = nil
@@ -315,6 +347,15 @@ final class RepositoryViewModel {
     func loadRecentRepositories() {
         if let urls = try? JSONDecoder().decode([URL].self, from: recentReposData) {
             recentRepositories = urls
+        }
+    }
+
+    func removeRecentRepository(_ url: URL) {
+        var current = (try? JSONDecoder().decode([URL].self, from: recentReposData)) ?? []
+        current.removeAll { $0 == url }
+        if let encoded = try? JSONEncoder().encode(current) {
+            recentReposData = encoded
+            recentRepositories = current
         }
     }
 
@@ -430,6 +471,7 @@ final class RepositoryViewModel {
             }
             return Set(paths)
         } catch {
+            logger.log(.warn, "Failed to load gitignored paths: \(error.localizedDescription)", source: #function)
             return []
         }
     }
@@ -464,6 +506,7 @@ final class RepositoryViewModel {
                 return a.name.lowercased() < b.name.lowercased()
             }
         } catch {
+            logger.log(.warn, "Failed to load files: \(error.localizedDescription)", context: url.path, source: #function)
             return []
         }
     }
@@ -898,6 +941,9 @@ final class RepositoryViewModel {
     }
 
     func closeTerminalSession(_ session: TerminalSession) {
+        // Explicitly kill the closed session's process before restructuring the view tree
+        session.killCachedProcess()
+
         // Try to close within a split first
         for tab in terminalTabs {
             if let (parent, isFirst) = tab.findParent(of: session.id) {
@@ -925,6 +971,10 @@ final class RepositoryViewModel {
     }
 
     func closeTab(_ tab: TerminalPaneNode) {
+        // Kill all terminal processes in this tab before removing
+        for session in tab.allSessions() {
+            session.killCachedProcess()
+        }
         terminalTabs.removeAll(where: { $0.id == tab.id })
         if activeTabID == tab.id {
             activeTabID = terminalTabs.last?.id
@@ -1254,6 +1304,7 @@ final class RepositoryViewModel {
                     }
                 }
             } catch {
+                logger.log(.warn, "Failed to resolve stash ref: \(error.localizedDescription)", context: value, source: #function)
                 return value // Fallback to hash if it fails
             }
         }
@@ -1390,6 +1441,9 @@ final class RepositoryViewModel {
         actionTask?.cancel()
         isBusy = true
 
+        let command = "git " + args.joined(separator: " ")
+        logger.log(.git, command, context: label)
+
         actionTask = Task {
             do {
                 let output = try await worker.runAction(args: args, in: repositoryURL)
@@ -1401,11 +1455,13 @@ final class RepositoryViewModel {
                 } else {
                     statusMessage = "\(label): \(output.prefix(240))"
                 }
+                logger.log(.git, "\(label) OK", context: command)
                 refreshRepository(setBusy: true)
             } catch is CancellationError {
                 return
             } catch {
                 isBusy = false
+                logger.log(.error, error.localizedDescription, context: command)
                 handleError(error)
             }
         }
@@ -1437,6 +1493,7 @@ final class RepositoryViewModel {
                 return
             } catch {
                 guard detailsRequestID == requestID else { return }
+                logger.log(.warn, "Failed to load commit details: \(error.localizedDescription)", context: commitID, source: #function)
                 commitDetails = error.localizedDescription
             }
         }
@@ -1458,6 +1515,7 @@ final class RepositoryViewModel {
                 }
                 selectedHunkLines = []
             } catch {
+                logger.log(.warn, "Failed to load diff: \(error.localizedDescription)", context: file, source: #function)
                 currentFileDiff = "Erro ao carregar diff: \(error.localizedDescription)"
                 currentFileDiffHunks = []
             }
@@ -1705,6 +1763,7 @@ final class RepositoryViewModel {
                 currentFileDiff = diff.isEmpty ? L10n("Nenhuma mudanca.") : diff
                 currentFileDiffHunks = Self.parseDiffHunks(diff)
             } catch {
+                logger.log(.warn, "Failed to load commit file diff: \(error.localizedDescription)", context: "\(commitID):\(file)", source: #function)
                 currentFileDiff = "Erro: \(error.localizedDescription)"
                 currentFileDiffHunks = []
             }
@@ -1734,6 +1793,7 @@ final class RepositoryViewModel {
                 let entries = Self.parseBlameOutput(output)
                 blameEntries = entries
             } catch {
+                logger.log(.warn, "Failed to load blame: \(error.localizedDescription)", context: filePath, source: #function)
                 blameEntries = []
                 statusMessage = "Blame: \(error.localizedDescription)"
             }
@@ -1829,6 +1889,7 @@ final class RepositoryViewModel {
                 let entries = Self.parseReflogOutput(output)
                 reflogEntries = entries
             } catch {
+                logger.log(.warn, "Failed to load reflog: \(error.localizedDescription)", source: #function)
                 reflogEntries = []
             }
         }
@@ -2004,6 +2065,7 @@ final class RepositoryViewModel {
                 let output = try await worker.runAction(args: ["submodule", "status"], in: url)
                 submodules = Self.parseSubmoduleStatus(output, repoURL: url)
             } catch {
+                logger.log(.warn, "Failed to load submodules: \(error.localizedDescription)", source: #function)
                 submodules = []
             }
         }
@@ -2068,19 +2130,138 @@ final class RepositoryViewModel {
         return nil
     }
 
-    // MARK: - AI Commit Message (heuristic-based)
+    // MARK: - AI Commit Message
 
     func suggestCommitMessage() {
         guard let url = repositoryURL else { return }
 
-        Task {
+        aiTask?.cancel()
+        aiTask = Task {
+            isGeneratingAIMessage = true
+            defer { isGeneratingAIMessage = false }
+
             do {
-                let diff = try await worker.runAction(args: ["diff", "--cached", "--stat"], in: url)
+                let diffStat = try await worker.runAction(args: ["diff", "--cached", "--stat"], in: url)
                 let status = try await worker.runAction(args: ["status", "--porcelain"], in: url)
 
-                suggestedCommitMessage = Self.generateCommitMessage(diffStat: diff, status: status)
+                if isAIConfigured {
+                    logger.log(.ai, "Requesting commit message", context: aiProvider.rawValue)
+                    let diff = try await worker.runAction(args: ["diff", "--cached"], in: url)
+                    let logOutput = try await worker.runAction(args: ["log", "--oneline", "-10"], in: url)
+                    let recentMessages = logOutput.split(separator: "\n").map { line in
+                        let parts = line.split(separator: " ", maxSplits: 1)
+                        return parts.count > 1 ? String(parts[1]) : String(line)
+                    }
+
+                    let message = try await aiClient.generateCommitMessage(
+                        diff: diff,
+                        diffStat: diffStat,
+                        recentMessages: recentMessages,
+                        branchName: currentBranch,
+                        provider: aiProvider,
+                        apiKey: aiAPIKey
+                    )
+                    logger.log(.ai, "Commit message generated OK")
+                    suggestedCommitMessage = message
+                } else {
+                    suggestedCommitMessage = Self.generateCommitMessage(diffStat: diffStat, status: status)
+                }
             } catch {
-                suggestedCommitMessage = ""
+                logger.log(.error, "AI commit message failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
+                // Fallback to heuristic on AI failure
+                if let url = repositoryURL,
+                   let diffStat = try? await worker.runAction(args: ["diff", "--cached", "--stat"], in: url),
+                   let status = try? await worker.runAction(args: ["status", "--porcelain"], in: url) {
+                    suggestedCommitMessage = Self.generateCommitMessage(diffStat: diffStat, status: status)
+                } else {
+                    suggestedCommitMessage = ""
+                }
+            }
+        }
+    }
+
+    func suggestPRDescription() async -> (title: String, body: String)? {
+        guard let url = repositoryURL, isAIConfigured else { return nil }
+
+        isGeneratingAIMessage = true
+        defer { isGeneratingAIMessage = false }
+
+        do {
+            logger.log(.ai, "Requesting PR description", context: aiProvider.rawValue)
+            let commitLog = try await worker.runAction(
+                args: ["log", "--oneline", "main..HEAD"],
+                in: url
+            )
+            let diffStat = try await worker.runAction(
+                args: ["diff", "--stat", "main..HEAD"],
+                in: url
+            )
+            let result = try await aiClient.generatePRDescription(
+                commitLog: commitLog,
+                diffStat: diffStat,
+                branchName: currentBranch,
+                baseBranch: "main",
+                provider: aiProvider,
+                apiKey: aiAPIKey
+            )
+            logger.log(.ai, "PR description generated OK")
+            return result
+        } catch {
+            logger.log(.error, "AI PR description failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
+            lastError = error.localizedDescription
+            return nil
+        }
+    }
+
+    func suggestStashMessage() {
+        guard let url = repositoryURL, isAIConfigured else { return }
+
+        aiTask?.cancel()
+        aiTask = Task {
+            isGeneratingAIMessage = true
+            defer { isGeneratingAIMessage = false }
+
+            do {
+                logger.log(.ai, "Requesting stash message", context: aiProvider.rawValue)
+                let diff = try await worker.runAction(args: ["diff"], in: url)
+                let diffStat = try await worker.runAction(args: ["diff", "--stat"], in: url)
+                let message = try await aiClient.generateStashMessage(
+                    diff: diff,
+                    diffStat: diffStat,
+                    provider: aiProvider,
+                    apiKey: aiAPIKey
+                )
+                logger.log(.ai, "Stash message generated OK")
+                stashMessageInput = message
+            } catch {
+                logger.log(.error, "AI stash message failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
+                lastError = error.localizedDescription
+            }
+        }
+    }
+
+    func explainFileDiff(fileName: String, diff: String) {
+        guard isAIConfigured else { return }
+
+        aiTask?.cancel()
+        aiTask = Task {
+            isGeneratingAIMessage = true
+            defer { isGeneratingAIMessage = false }
+
+            do {
+                logger.log(.ai, "Requesting diff explanation", context: "\(aiProvider.rawValue): \(fileName)")
+                let explanation = try await aiClient.explainDiff(
+                    fileDiff: diff,
+                    fileName: fileName,
+                    provider: aiProvider,
+                    apiKey: aiAPIKey
+                )
+                logger.log(.ai, "Diff explanation generated OK")
+                aiDiffExplanation = explanation
+            } catch {
+                logger.log(.error, "AI diff explanation failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
+                aiDiffExplanation = ""
+                lastError = error.localizedDescription
             }
         }
     }
@@ -2089,7 +2270,6 @@ final class RepositoryViewModel {
         let lines = status.split(separator: "\n").map(String.init)
         guard !lines.isEmpty else { return "" }
 
-        // Count change types
         var added = 0, modified = 0, deleted = 0
         var paths: [String] = []
         for line in lines {
@@ -2106,7 +2286,6 @@ final class RepositoryViewModel {
             }
         }
 
-        // Detect scope from common path prefix
         let scope: String
         let commonComponents = paths.compactMap { $0.split(separator: "/").dropLast().first }.map(String.init)
         if let most = commonComponents.mostFrequent() {
@@ -2115,7 +2294,6 @@ final class RepositoryViewModel {
             scope = ""
         }
 
-        // Determine type
         let type: String
         if added > 0 && modified == 0 && deleted == 0 {
             type = "feat"
@@ -2129,7 +2307,6 @@ final class RepositoryViewModel {
             type = modified > added ? "fix" : "feat"
         }
 
-        // Generate description
         let description: String
         let fileCount = lines.count
         if fileCount == 1 {
@@ -2162,6 +2339,7 @@ final class RepositoryViewModel {
                 }
                 commitSignatureStatus = statuses
             } catch {
+                logger.log(.warn, "Failed to load signature statuses: \(error.localizedDescription)", source: #function)
                 commitSignatureStatus = [:]
             }
         }
@@ -2196,6 +2374,7 @@ final class RepositoryViewModel {
             )
             behindRemoteCount = Int(output.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
         } catch {
+            logger.log(.info, "Behind remote check failed (expected if no upstream): \(error.localizedDescription)", source: #function)
             behindRemoteCount = 0
         }
     }
@@ -2261,6 +2440,7 @@ final class RepositoryViewModel {
                     lastCommitDate: lastDate.flatMap { dateFormatter.date(from: $0.trimmingCharacters(in: .whitespacesAndNewlines)) }
                 )
             } catch {
+                logger.log(.warn, "Failed to load repo stats: \(error.localizedDescription)", source: #function)
                 repoStats = nil
             }
         }
@@ -2290,17 +2470,10 @@ final class RepositoryViewModel {
         lastError = nil
     }
 
-    private func handleError(_ error: Error) {
+    private func handleError(_ error: Error, source: String = #function) {
         lastError = error.localizedDescription
         statusMessage = error.localizedDescription
-    }
-
-    func logDebug(_ message: String) {
-        print("[DEBUG] \(message)")
-        debugLog += "\(message)\n"
-        if debugLog.count > 5000 {
-            debugLog = String(debugLog.suffix(2000))
-        }
+        logger.log(.error, error.localizedDescription, source: source)
     }
 
     private func startFileWatcher(for url: URL) {
