@@ -130,7 +130,7 @@ struct GraphScreen: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
-        .background(Color.white.opacity(0.06))
+        .background(DesignSystem.Colors.glassElevated)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
@@ -355,16 +355,37 @@ struct GraphScreen: View {
                                 Text(L10n("Criar Commit Rapido")).font(.title3.bold())
                                 Text(L10n("Suas alteracoes serao rastreadas automaticamente (git add -A).")).font(.caption).foregroundStyle(.secondary)
 
-                                TextField(L10n("Mensagem do commit..."), text: $model.commitMessageInput, axis: .vertical)
-                                    .textFieldStyle(.roundedBorder)
-                                    .font(.system(.body, design: .monospaced))
-                                    .lineLimit(3, reservesSpace: true)
-                                    .onSubmit {
-                                        if !model.commitMessageInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                            model.commit(message: model.commitMessageInput)
-                                            isShowingQuickCommit = false
+                                HStack(alignment: .bottom, spacing: 8) {
+                                    TextField(L10n("Mensagem do commit..."), text: $model.commitMessageInput, axis: .vertical)
+                                        .textFieldStyle(.roundedBorder)
+                                        .font(.system(.body, design: .monospaced))
+                                        .lineLimit(3, reservesSpace: true)
+                                        .onSubmit {
+                                            if !model.commitMessageInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                                model.commit(message: model.commitMessageInput)
+                                                isShowingQuickCommit = false
+                                            }
+                                        }
+
+                                    Button {
+                                        model.suggestCommitMessage()
+                                    } label: {
+                                        if model.isGeneratingAIMessage {
+                                            ProgressView().controlSize(.small).frame(width: 12, height: 12)
+                                        } else {
+                                            Image(systemName: "sparkles").font(.system(size: 12))
                                         }
                                     }
+                                    .buttonStyle(.bordered)
+                                    .controlSize(.small)
+                                    .disabled(model.isGeneratingAIMessage)
+                                    .help(model.isAIConfigured ? L10n("Gerar mensagem com IA") : L10n("Sugerir mensagem de commit"))
+                                    .onChange(of: model.suggestedCommitMessage) { _, newValue in
+                                        if !newValue.isEmpty {
+                                            model.commitMessageInput = newValue
+                                        }
+                                    }
+                                }
 
                                 HStack {
                                     Button(L10n("Cancelar")) { isShowingQuickCommit = false }
@@ -467,7 +488,7 @@ struct GraphScreen: View {
                                                     Button { model.selectedStash = stash; model.dropSelectedStash() } label: { Image(systemName: "trash") }.buttonStyle(.bordered).tint(.red).controlSize(.small)
                                                 }
                                             }
-                                            .padding(10).background(Color.white.opacity(0.05)).cornerRadius(8)
+                                            .padding(10).background(DesignSystem.Colors.glassSubtle).cornerRadius(8)
                                         }
                                     }
                                 }.frame(maxHeight: 400)

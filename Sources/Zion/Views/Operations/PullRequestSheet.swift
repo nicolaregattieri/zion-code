@@ -10,6 +10,7 @@ struct PullRequestSheet: View {
     @State private var isCreating: Bool = false
     @State private var errorMessage: String?
     @State private var createdPRURL: String?
+    @State private var isGeneratingAI: Bool = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -53,7 +54,34 @@ struct PullRequestSheet: View {
 
                     // Body
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(L10n("Descricao")).font(.system(size: 11, weight: .bold)).foregroundStyle(.secondary)
+                        HStack {
+                            Text(L10n("Descricao")).font(.system(size: 11, weight: .bold)).foregroundStyle(.secondary)
+                            Spacer()
+                            if model.isAIConfigured {
+                                Button {
+                                    isGeneratingAI = true
+                                    Task {
+                                        if let result = await model.suggestPRDescription() {
+                                            title = result.title
+                                            body_ = result.body
+                                        }
+                                        isGeneratingAI = false
+                                    }
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        if isGeneratingAI {
+                                            ProgressView().controlSize(.small).frame(width: 10, height: 10)
+                                        } else {
+                                            Image(systemName: "sparkles").font(.system(size: 10))
+                                        }
+                                        Text(L10n("Gerar com IA")).font(.system(size: 10))
+                                    }
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.mini)
+                                .disabled(isGeneratingAI)
+                            }
+                        }
                         TextEditor(text: $body_)
                             .font(.system(size: 12, design: .monospaced))
                             .frame(minHeight: 120)

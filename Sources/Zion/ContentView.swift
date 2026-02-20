@@ -8,6 +8,7 @@ struct ContentView: View {
     @State private var commitSearchQuery: String = ""
     @State private var selectedBranchTreeNodeID: String?
     @State private var isShortcutsVisible: Bool = false
+    @State private var isHelpVisible: Bool = false
     
     @AppStorage("zion.confirmationMode") private var confirmationModeRaw: String = ConfirmationMode.destructiveOnly.rawValue
     @AppStorage("zion.uiLanguage") private var uiLanguageRaw: String = AppLanguage.system.rawValue
@@ -101,8 +102,14 @@ struct ContentView: View {
         .sheet(isPresented: $isShortcutsVisible) {
             KeyboardShortcutsSheet()
         }
+        .sheet(isPresented: $isHelpVisible) {
+            HelpSheet()
+        }
         .onReceive(NotificationCenter.default.publisher(for: .showKeyboardShortcuts)) { _ in
             isShortcutsVisible = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .showHelp)) { _ in
+            isHelpVisible = true
         }
     }
 
@@ -245,6 +252,9 @@ struct ContentView: View {
                     .help(L10n("Reflog / Desfazer"))
                 }
             }
+
+            Button { isHelpVisible = true } label: { Image(systemName: "questionmark.circle") }
+                .help(L10n("Conheca o Zion"))
         }
     }
 

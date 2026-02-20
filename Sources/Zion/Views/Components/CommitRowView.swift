@@ -60,7 +60,7 @@ struct CommitRowView: View {
                 Text(commit.subject)
                     .font(.system(size: 13, weight: .bold))
                     .lineLimit(1)
-                    .foregroundStyle(isSelected ? .white : .primary)
+                    .foregroundStyle(.primary)
                 
                 metadataRow
                 decorationRow
@@ -80,14 +80,14 @@ struct CommitRowView: View {
     }
 
     private var cardBackground: Color {
-        if isSelected { return Color.accentColor }
+        if isSelected { return Color.accentColor.opacity(0.18) }
         if isSearchMatch { return Color.yellow.opacity(0.15) }
         if isHovered { return Color.white.opacity(0.10) }
         return Color.black.opacity(0.25)
     }
 
     private var cardStroke: Color {
-        if isSelected { return Color.white.opacity(0.6) }
+        if isSelected { return Color.accentColor.opacity(0.7) }
         if isSearchMatch { return Color.yellow.opacity(0.5) }
         if isHovered { return Color.accentColor.opacity(0.35) }
         return Color.white.opacity(0.1)
@@ -98,23 +98,23 @@ struct CommitRowView: View {
             Text(commit.shortHash)
                 .font(.system(size: 10, weight: .bold, design: .monospaced))
                 .padding(.horizontal, 6).padding(.vertical, 2)
-                .background(isSelected ? .white.opacity(0.25) : Color.accentColor.opacity(0.15))
+                .background(Color.accentColor.opacity(0.15))
                 .clipShape(Capsule())
-                .foregroundStyle(isSelected ? .white : .accentColor)
+                .foregroundStyle(Color.accentColor)
 
             HStack(spacing: 4) {
                 Image(systemName: "person.fill").font(.system(size: 9))
                 Text(commit.author)
             }
             .font(.system(size: 11, weight: .medium))
-            .foregroundStyle(isSelected ? .white.opacity(0.9) : .secondary)
+            .foregroundStyle(.secondary)
 
             HStack(spacing: 4) {
                 Image(systemName: "calendar").font(.system(size: 9))
                 Text(Self.dateFormatter.string(from: commit.date))
             }
             .font(.system(size: 10, design: .monospaced))
-            .foregroundStyle(isSelected ? .white.opacity(0.7) : Color.secondary.opacity(0.7))
+            .foregroundStyle(Color.secondary.opacity(0.7))
         }
     }
 

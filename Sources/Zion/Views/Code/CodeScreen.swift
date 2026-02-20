@@ -97,21 +97,24 @@ struct CodeScreen: View {
                             .frame(minWidth: 200, idealWidth: 260, maxWidth: 400)
                     }
 
-                    switch layout {
-                    case .editorOnly:
+                    VStack(spacing: 0) {
                         editorPane
-                            .frame(minWidth: 400, idealWidth: 800, maxWidth: .infinity)
-                    case .terminalOnly:
-                        terminalContainer
-                            .frame(minWidth: 400, idealWidth: 800, maxWidth: .infinity)
-                    case .split:
-                        VSplitView {
-                            editorPane
-                                .frame(minWidth: 400, idealWidth: 800, maxWidth: .infinity, minHeight: 200)
+                            .frame(
+                                minWidth: 400, idealWidth: 800, maxWidth: .infinity,
+                                maxHeight: layout == .terminalOnly ? 0 : .infinity
+                            )
+                            .clipped()
 
-                            terminalContainer
-                                .frame(minWidth: 400, idealWidth: 800, maxWidth: .infinity, minHeight: 150)
+                        if layout == .split {
+                            Divider()
                         }
+
+                        terminalContainer
+                            .frame(
+                                minWidth: 400, idealWidth: 800, maxWidth: .infinity,
+                                maxHeight: layout == .editorOnly ? 0 : .infinity
+                            )
+                            .clipped()
                     }
                 }
             }
@@ -628,7 +631,7 @@ struct TerminalTabChip: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
-        .background(isActive ? accentColor.opacity(0.25) : Color.white.opacity(0.05))
+        .background(isActive ? accentColor.opacity(0.25) : DesignSystem.Colors.glassSubtle)
         .clipShape(RoundedRectangle(cornerRadius: 6))
         .overlay(
             RoundedRectangle(cornerRadius: 6)
@@ -736,11 +739,11 @@ struct TerminalPaneView: View {
                 if model.terminalSessions.count > 1 {
                     Button { model.closeTerminalSession(session) } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 8, weight: .bold))
+                            .font(.system(size: 10, weight: .bold))
                             .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
-                    .frame(width: 20, height: 20)
+                    .frame(width: 24, height: 24)
                     .contentShape(Rectangle())
                     .help(L10n("Fechar painel") + " (⇧⌘W)")
                     .padding(4)
@@ -802,7 +805,7 @@ struct CodeTab: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(isActive ? model.selectedTheme.colors.background : (isHovering ? Color.white.opacity(0.06) : Color.clear))
+        .background(isActive ? model.selectedTheme.colors.background : (isHovering ? DesignSystem.Colors.glassElevated : Color.clear))
         .overlay(alignment: .bottom) {
             if isActive {
                 Rectangle().fill(accentColor).frame(height: 2)
