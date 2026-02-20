@@ -28,6 +28,10 @@ if [ -f "$ROOT_DIR/Resources/ZionAppIcon.icns" ]; then
   cp "$ROOT_DIR/Resources/ZionAppIcon.icns" "$APP_DIR/Contents/Resources/ZionAppIcon.icns"
 fi
 
+# Copy fonts from Resources folder
+cp "$ROOT_DIR"/Resources/*.ttf "$APP_DIR/Contents/Resources/" 2>/dev/null || true
+cp "$ROOT_DIR"/Resources/*.otf "$APP_DIR/Contents/Resources/" 2>/dev/null || true
+
 cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -51,6 +55,10 @@ cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
   <string>ZionAppIcon</string>
   <key>LSMinimumSystemVersion</key>
   <string>14.0</string>
+  <key>NSDocumentsFolderUsageDescription</key>
+  <string>Zion needs access to your Documents folder to open and manage Git repositories.</string>
+  <key>NSDownloadsFolderUsageDescription</key>
+  <string>Zion needs access to your Downloads folder to open and manage Git repositories.</string>
   <key>NSHighResolutionCapable</key>
   <true/>
 </dict>

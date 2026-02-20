@@ -127,6 +127,7 @@ final class RepositoryViewModel {
 
     // Repository statistics
     var repoStats: RepositoryStats?
+    var isGitAvailable: Bool = true
 
     // Conflict resolution state
     var conflictedFiles: [ConflictFile] = []
@@ -231,8 +232,26 @@ final class RepositoryViewModel {
     @ObservationIgnored private var autoRefreshTask: Task<Void, Never>?
     @ObservationIgnored private var cachedIgnoredPaths: Set<String>?
 
+    func checkGitAvailability() {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/which")
+        process.arguments = ["git"]
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        
+        do {
+            try process.run()
+            process.waitUntilExit()
+            isGitAvailable = (process.terminationStatus == 0)
+        } catch {
+            isGitAvailable = false
+        }
+    }
+
     // Restore persisted editor settings from UserDefaults
     func restoreEditorSettings() {
+        checkGitAvailability()
+        
         let defaults = UserDefaults.standard
         if let themeRaw = defaults.string(forKey: "editor.theme"),
            let theme = EditorTheme(rawValue: themeRaw) {
