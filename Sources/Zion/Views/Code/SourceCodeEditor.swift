@@ -523,9 +523,16 @@ class LeftAnchoredClipView: NSClipView {
     override func constrainBoundsRect(_ proposedBounds: NSRect) -> NSRect {
         var constrained = super.constrainBoundsRect(proposedBounds)
         if !isLineWrappingEnabled {
-            // Force horizontal origin to 0 to prevent drifting during resize
             constrained.origin.x = 0
         }
         return constrained
+    }
+
+    override func setBoundsOrigin(_ newOrigin: NSPoint) {
+        var adjusted = newOrigin
+        if !isLineWrappingEnabled {
+            adjusted.x = 0
+        }
+        super.setBoundsOrigin(adjusted)
     }
 }
