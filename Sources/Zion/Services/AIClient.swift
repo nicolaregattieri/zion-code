@@ -298,6 +298,43 @@ actor AIClient {
         return parseReviewFindings(raw)
     }
 
+    func reviewBranch(
+        diff: String,
+        diffStat: String,
+        sourceBranch: String,
+        targetBranch: String,
+        provider: AIProvider,
+        apiKey: String
+    ) async throws -> [ReviewFinding] {
+        let prompt = """
+        You are a senior code reviewer. Analyze the diff between "\(sourceBranch)" and "\(targetBranch)" and find bugs, security issues, and architectural problems.
+
+        Source: \(sourceBranch)
+        Target: \(targetBranch)
+
+        Diff stat:
+        \(diffStat.prefix(2000))
+
+        Diff:
+        \(diff.prefix(10000))
+
+        Output format — one finding per line, pipe-delimited:
+        SEVERITY|FILE|MESSAGE
+
+        Where SEVERITY is one of: critical, warning, suggestion
+        FILE is the affected filename (or "general" if not file-specific)
+        MESSAGE is a concise description of the issue
+
+        Rules:
+        - Output ONLY the pipe-delimited lines, nothing else
+        - Focus on real issues: logic bugs, security vulnerabilities, breaking changes
+        - Maximum 15 findings
+        - If the code looks good, output a single line: suggestion|general|No issues found between branches.
+        """
+        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 1000)
+        return parseReviewFindings(raw)
+    }
+
     // MARK: - Changelog Generator
 
     func generateChangelog(

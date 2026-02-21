@@ -542,7 +542,7 @@ struct SidebarView: View {
     // MARK: - ntfy Settings
 
     private var ntfySettingsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 4) {
                 Image(systemName: "bell.badge")
                     .font(.system(size: 9))
@@ -616,6 +616,8 @@ struct SidebarView: View {
                 }
             }
 
+            Divider().opacity(0.1)
+
             // Advanced: custom server
             DisclosureGroup(isExpanded: $isNtfyAdvancedExpanded) {
                 VStack(alignment: .leading, spacing: 4) {
@@ -642,19 +644,20 @@ struct SidebarView: View {
             .toggleStyle(.switch)
             .controlSize(.mini)
 
+            Divider().opacity(0.1)
+
             // Event toggles (only user-configurable events)
             if model.isNtfyConfigured {
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 8) {
                     Text(L10n("ntfy.events.title"))
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundStyle(.secondary)
-                        .padding(.top, 4)
 
-                    VStack(spacing: 4) {
+                    VStack(spacing: 8) {
                         ForEach(NtfyEventGroup.allCases) { group in
                             let events = NtfyEvent.allCases.filter { $0.group == group && $0.isUserConfigurable }
                             if !events.isEmpty {
-                                VStack(alignment: .leading, spacing: 3) {
+                                VStack(alignment: .leading, spacing: 5) {
                                     HStack(spacing: 4) {
                                         Image(systemName: group.icon)
                                             .font(.system(size: 8))
@@ -678,7 +681,7 @@ struct SidebarView: View {
                             }
                         }
                     }
-                    .padding(8)
+                    .padding(10)
                     .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(DesignSystem.Colors.glassSubtle))
                     .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(DesignSystem.Colors.glassHover, lineWidth: 1))
                 }
@@ -699,7 +702,7 @@ struct SidebarView: View {
     }
 
     private var ntfyAgentsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 4) {
                 Image(systemName: "cpu")
                     .font(.system(size: 9))
@@ -720,7 +723,7 @@ struct SidebarView: View {
             .controlSize(.mini)
 
             if model.ntfyExternalAgentsEnabled {
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: 5) {
                     ForEach(AIAgent.allCases) { agent in
                         Toggle(isOn: agentToggleBinding(for: agent)) {
                             Text(agent.label)
@@ -731,7 +734,7 @@ struct SidebarView: View {
                         .controlSize(.mini)
                     }
                 }
-                .padding(8)
+                .padding(10)
                 .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(DesignSystem.Colors.glassSubtle))
                 .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(DesignSystem.Colors.glassHover, lineWidth: 1))
             }
