@@ -85,13 +85,18 @@ struct SourceCodeEditor: NSViewRepresentable {
 
         // Handle Line Wrapping
         if isLineWrappingEnabled {
+            let width = nsView.contentSize.width
+            nsView.hasHorizontalScroller = false
             textView.isHorizontallyResizable = false
             textView.textContainer?.widthTracksTextView = true
-            textView.textContainer?.containerSize = NSSize(width: nsView.contentSize.width, height: CGFloat.greatestFiniteMagnitude)
+            textView.maxSize = NSSize(width: width, height: CGFloat.greatestFiniteMagnitude)
+            textView.setFrameSize(NSSize(width: width, height: textView.frame.height))
         } else {
+            nsView.hasHorizontalScroller = true
             textView.isHorizontallyResizable = true
             textView.textContainer?.widthTracksTextView = false
             textView.textContainer?.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+            textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
         }
 
         let colors = getEditorColors(for: theme)
