@@ -554,7 +554,7 @@ enum PushMode: String, CaseIterable, Identifiable, Sendable {
 enum FeatureSection: String, CaseIterable, Identifiable {
     case tree, code, terminal, clipboard, operations, worktrees, ai,
          customization, diagnostics, conflicts, settings, diffExplanation,
-         codeReview, prInbox
+         codeReview, prInbox, autoUpdates
     var id: String { rawValue }
 
     var icon: String {
@@ -573,6 +573,7 @@ enum FeatureSection: String, CaseIterable, Identifiable {
         case .diffExplanation: return "sparkles"
         case .codeReview: return "doc.text.magnifyingglass"
         case .prInbox: return "tray.full.fill"
+        case .autoUpdates: return "arrow.triangle.2.circlepath"
         }
     }
 
@@ -592,6 +593,7 @@ enum FeatureSection: String, CaseIterable, Identifiable {
         case .diffExplanation: return .purple
         case .codeReview: return .indigo
         case .prInbox: return .mint
+        case .autoUpdates: return .green
         }
     }
 
@@ -611,6 +613,7 @@ enum FeatureSection: String, CaseIterable, Identifiable {
         case .diffExplanation: return "help.diffExplanation.title"
         case .codeReview: return "help.codeReview.title"
         case .prInbox: return "help.prInbox.title"
+        case .autoUpdates: return "help.updates.title"
         }
     }
 

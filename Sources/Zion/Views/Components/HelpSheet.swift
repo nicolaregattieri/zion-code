@@ -54,6 +54,8 @@ struct HelpSheet: View {
             return L10n("help.codeReview.features").split(separator: "|").map(String.init)
         case .prInbox:
             return L10n("help.prInbox.features").split(separator: "|").map(String.init)
+        case .autoUpdates:
+            return ["help.updates.check", "help.updates.auto", "help.updates.delta"]
         }
     }
 

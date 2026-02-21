@@ -1,4 +1,5 @@
 import SwiftUI
+import Sparkle
 import UniformTypeIdentifiers
 
 extension Notification.Name {
@@ -9,6 +10,7 @@ extension Notification.Name {
 @main
 struct ZionApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @State private var updater = SparkleUpdater()
 
     var body: some Scene {
         WindowGroup {
@@ -29,6 +31,13 @@ struct ZionApp: App {
                     NotificationCenter.default.post(name: .showKeyboardShortcuts, object: nil)
                 }
                 .keyboardShortcut("/", modifiers: .command)
+
+                Divider()
+
+                Button(L10n("Buscar Atualizacoes...")) {
+                    updater.checkForUpdates()
+                }
+                .disabled(!updater.canCheckForUpdates)
 
                 Divider()
 
