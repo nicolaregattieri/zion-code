@@ -56,6 +56,18 @@ struct ContentView: View {
             .alert(L10n("Erro"), isPresented: Binding(get: { model.lastError != nil }, set: { show in if !show { model.lastError = nil } })) {
                 Button(L10n("OK"), role: .cancel) {}
             } message: { Text(model.lastError ?? "") }
+            .alert(L10n("push.warning.title"), isPresented: $model.showPushDivergenceWarning) {
+                pushDivergenceAlertButtons
+            } message: {
+                switch model.pushDivergenceState {
+                case .behind(let count):
+                    Text(L10n("push.warning.behind", count))
+                case .diverged(let ahead, let behind):
+                    Text(L10n("push.warning.diverged", ahead, behind))
+                case .clear:
+                    Text("")
+                }
+            }
             .toolbar { mainToolbar }
             .safeAreaInset(edge: .bottom) { statusBar }
             .background {
@@ -255,7 +267,7 @@ struct ContentView: View {
                         .help(L10n("Fetch: Busca atualizações remotas"))
                     Button { model.pull() } label: { Image(systemName: "arrow.down.to.line") }
                         .help(L10n("Pull: Puxa alterações da branch atual"))
-                    Button { model.push() } label: { Image(systemName: "arrow.up.circle") }
+                    Button { model.requestPush() } label: { Image(systemName: "arrow.up.circle") }
                         .help(L10n("Push: Envia alterações locais"))
                 }
             }
@@ -278,6 +290,21 @@ struct ContentView: View {
 
             Button { isHelpVisible = true } label: { Image(systemName: "questionmark.circle") }
                 .help(L10n("Conheca o Zion"))
+        }
+    }
+
+    @ViewBuilder
+    private var pushDivergenceAlertButtons: some View {
+        switch model.pushDivergenceState {
+        case .behind:
+            Button(L10n("push.pullFirst")) { model.pull() }
+            Button(L10n("Cancelar"), role: .cancel) {}
+        case .diverged:
+            Button(L10n("push.pullFirst")) { model.pull() }
+            Button(L10n("push.forceWithLease")) { model.forceWithLeasePush() }
+            Button(L10n("Cancelar"), role: .cancel) {}
+        case .clear:
+            Button(L10n("OK"), role: .cancel) {}
         }
     }
 
@@ -329,6 +356,21 @@ struct ContentView: View {
                 .background(Color.green.opacity(0.12))
                 .foregroundStyle(.green)
                 .clipShape(Capsule())
+
+                // Ahead remote badge
+                if model.aheadRemoteCount > 0 {
+                    HStack(spacing: 3) {
+                        Image(systemName: "arrow.up.circle.fill")
+                            .font(.system(size: 9))
+                        Text("\(model.aheadRemoteCount)")
+                    }
+                    .font(.caption)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(model.behindRemoteCount > 0 ? Color.orange.opacity(0.12) : Color.blue.opacity(0.12))
+                    .foregroundStyle(model.behindRemoteCount > 0 ? .orange : .blue)
+                    .clipShape(Capsule())
+                }
 
                 // Behind remote badge
                 if model.behindRemoteCount > 0 {
