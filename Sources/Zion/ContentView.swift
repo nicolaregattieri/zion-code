@@ -106,6 +106,9 @@ struct ContentView: View {
                 NSApp.activate(ignoringOtherApps: true)
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
+            model.syncEditorSettingsFromDefaults()
+        }
         .onChange(of: model.repositoryURL) { _, url in
             if url != nil {
                 selectedSection = .code

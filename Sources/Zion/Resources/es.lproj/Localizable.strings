@@ -918,6 +918,12 @@
 "help.code.saveas" = "Guardar Como para elegir nombre y ubicación del archivo (⇧⌘S)";
 "help.code.openineditor" = "Abrir archivos modificados en el editor desde cualquier pantalla";
 "help.code.contextmenu" = "Menú contextual completo en el navegador de archivos (nuevo, renombrar, copiar, pegar, eliminar)";
+"help.code.findreplace" = "Buscar y Reemplazar en el editor con resaltado de resultados (⌘F / ⌘H)";
+"help.code.tabsize" = "Tamaño de tabulación y estilo de indentación configurables (2/4/8, espacios o tabs)";
+"help.code.columnruler" = "Regla de columna configurable (80/100/120) para referencia visual";
+"help.code.brackets" = "Resaltado de pares de paréntesis/corchetes/llaves al posicionar el cursor";
+"help.code.indentguides" = "Guías visuales de indentación para navegación estructural en el código";
+"help.code.repoconfig" = "Configuración por repositorio mediante .zion/editor.json (sobrescribe ajustes globales)";
 
 // File Browser Context Menu
 "Nova Pasta" = "Nueva Carpeta";
@@ -932,3 +938,34 @@
 "Novo nome:" = "Nuevo nombre:";
 "Deseja excluir '%@'?" = "¿Eliminar '%@'?";
 "Esta acao nao pode ser desfeita." = "Esta acción no se puede deshacer.";
+
+// Editor Settings Tab
+"settings.tab.editor" = "Editor";
+"settings.editor.appearance" = "Apariencia";
+"settings.editor.theme" = "Tema";
+"settings.editor.font" = "Fuente";
+"settings.editor.fontSize" = "Tamaño de Fuente";
+"settings.editor.lineSpacing" = "Espaciado de Línea";
+"settings.editor.editing" = "Edición";
+"settings.editor.tabSize" = "Tamaño del Tab";
+"settings.editor.useTabs" = "Usar Tabs (en vez de espacios)";
+"settings.editor.autoCloseBrackets" = "Cerrar paréntesis automáticamente";
+"settings.editor.bracketPairHighlight" = "Resaltar par de paréntesis";
+"settings.editor.display" = "Visualización";
+"settings.editor.lineWrap" = "Ajuste de Línea Automático";
+"settings.editor.highlightCurrentLine" = "Resaltar Línea Actual";
+"settings.editor.showIndentGuides" = "Mostrar guías de indentación";
+"settings.editor.showRuler" = "Mostrar regla de columna";
+"settings.editor.rulerColumn" = "Columna de la regla";
+
+// Find/Replace
+"editor.search.placeholder" = "Buscar...";
+"editor.search.noResults" = "Ninguno";
+"editor.search.previous" = "Anterior";
+"editor.search.next" = "Siguiente";
+"editor.replace.placeholder" = "Reemplazar...";
+"editor.replace.one" = "Reemplazar";
+"editor.replace.all" = "Reemplazar Todo";
+
+// Per-Repo Config
+"editor.repoConfig.active" = "Ajustes del editor definidos por .zion/editor.json";

@@ -10,6 +10,17 @@ struct SourceCodeEditor: NSViewRepresentable {
     var isLineWrappingEnabled: Bool = true
     var activeFileID: String?
     var fileExtension: String = ""
+    var tabSize: Int = 4
+    var useTabs: Bool = false
+    var autoCloseBrackets: Bool = true
+    var highlightCurrentLine: Bool = true
+    var showRuler: Bool = false
+    var rulerColumn: Int = 80
+    var bracketPairHighlight: Bool = true
+    var showIndentGuides: Bool = false
+    var searchQuery: String = ""
+    var currentMatchIndex: Int = 0
+    var onMatchCountChanged: ((Int) -> Void)?
 
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSScrollView()
@@ -88,10 +99,21 @@ struct SourceCodeEditor: NSViewRepresentable {
         nsView.backgroundColor = colors.background
         textView.insertionPointColor = colors.text
 
+        // Editor settings
+        textView.editorTabSize = tabSize
+        textView.editorUseTabs = useTabs
+        textView.editorAutoCloseBrackets = autoCloseBrackets
+        textView.editorHighlightCurrentLine = highlightCurrentLine
+        textView.showColumnRuler = showRuler
+        textView.columnRulerPosition = rulerColumn
+        textView.editorBracketPairHighlight = bracketPairHighlight
+        textView.editorShowIndentGuides = showIndentGuides
+
         // Current line highlight color — theme-aware
         textView.currentLineHighlightColor = theme.isLightAppearance
             ? NSColor.black.withAlphaComponent(0.06)
             : NSColor.white.withAlphaComponent(0.04)
+        textView.isLightTheme = theme.isLightAppearance
 
         if let ruler = nsView.verticalRulerView as? LineNumberRulerView {
             ruler.theme = theme
@@ -116,6 +138,17 @@ struct SourceCodeEditor: NSViewRepresentable {
             textView.textStorage?.addAttribute(.paragraphStyle, value: paragraphStyle, range: range)
         }
 
+        // Search highlighting
+        let coord2 = context.coordinator
+        if searchQuery != coord2.lastSearchQuery {
+            coord2.lastSearchQuery = searchQuery
+            coord2.updateSearchHighlights(in: textView, query: searchQuery, currentIndex: currentMatchIndex)
+            onMatchCountChanged?(coord2.searchMatchRanges.count)
+        } else if currentMatchIndex != coord2.lastCurrentMatchIndex {
+            coord2.lastCurrentMatchIndex = currentMatchIndex
+            coord2.updateCurrentMatchHighlight(in: textView, currentIndex: currentMatchIndex)
+        }
+
         // Scroll to top-left only when the active file changes
         if activeFileID != context.coordinator.lastActiveFileID {
             context.coordinator.lastActiveFileID = activeFileID
@@ -137,6 +170,9 @@ struct SourceCodeEditor: NSViewRepresentable {
         var lastHighlightedTheme: EditorTheme?
         var lastHighlightedExtension: String?
         var regexCache: [String: NSRegularExpression] = [:]
+        var lastSearchQuery: String = ""
+        var lastCurrentMatchIndex: Int = 0
+        var searchMatchRanges: [NSRange] = []
         init(_ parent: SourceCodeEditor) { self.parent = parent }
 
         @MainActor
@@ -155,7 +191,8 @@ struct SourceCodeEditor: NSViewRepresentable {
 
         @MainActor
         func textViewDidChangeSelection(_ notification: Notification) {
-            guard let textView = notification.object as? NSTextView else { return }
+            guard let textView = notification.object as? ZionTextView else { return }
+            textView.updateBracketMatch()
             textView.needsDisplay = true
         }
 
@@ -359,6 +396,60 @@ struct SourceCodeEditor: NSViewRepresentable {
                 storage.addAttribute(.foregroundColor, value: color, range: match.range)
             }
         }
+
+        // MARK: - Search Highlighting
+
+        private static let searchHighlightKey = NSAttributedString.Key("ZionSearchHighlight")
+        private static let searchMatchColor = NSColor.systemYellow.withAlphaComponent(0.35)
+        private static let searchCurrentMatchColor = NSColor.systemOrange.withAlphaComponent(0.55)
+
+        @MainActor
+        func updateSearchHighlights(in textView: NSTextView, query: String, currentIndex: Int) {
+            guard let textStorage = textView.textStorage else { return }
+            let fullRange = NSRange(location: 0, length: textStorage.length)
+
+            // Clear previous search highlights
+            textStorage.removeAttribute(.backgroundColor, range: fullRange)
+            searchMatchRanges = []
+
+            guard !query.isEmpty else { return }
+
+            let escaped = NSRegularExpression.escapedPattern(for: query)
+            guard let regex = try? NSRegularExpression(pattern: escaped, options: .caseInsensitive) else { return }
+            let matches = regex.matches(in: textView.string, options: [], range: fullRange)
+
+            searchMatchRanges = matches.map { $0.range }
+
+            textStorage.beginEditing()
+            for (i, range) in searchMatchRanges.enumerated() {
+                let color = (i == currentIndex) ? Self.searchCurrentMatchColor : Self.searchMatchColor
+                textStorage.addAttribute(.backgroundColor, value: color, range: range)
+            }
+            textStorage.endEditing()
+
+            lastCurrentMatchIndex = currentIndex
+
+            // Scroll to current match
+            if currentIndex < searchMatchRanges.count {
+                textView.scrollRangeToVisible(searchMatchRanges[currentIndex])
+            }
+        }
+
+        @MainActor
+        func updateCurrentMatchHighlight(in textView: NSTextView, currentIndex: Int) {
+            guard let textStorage = textView.textStorage, !searchMatchRanges.isEmpty else { return }
+
+            textStorage.beginEditing()
+            for (i, range) in searchMatchRanges.enumerated() {
+                let color = (i == currentIndex) ? Self.searchCurrentMatchColor : Self.searchMatchColor
+                textStorage.addAttribute(.backgroundColor, value: color, range: range)
+            }
+            textStorage.endEditing()
+
+            if currentIndex < searchMatchRanges.count {
+                textView.scrollRangeToVisible(searchMatchRanges[currentIndex])
+            }
+        }
     }
 
     struct EditorColors {
@@ -449,32 +540,234 @@ struct SourceCodeEditor: NSViewRepresentable {
 class ZionTextView: NSTextView {
     weak var coordinator: SourceCodeEditor.Coordinator?
     var currentLineHighlightColor: NSColor = NSColor.white.withAlphaComponent(0.04)
+    var isLightTheme: Bool = false
+
+    // Editor settings
+    var editorTabSize: Int = 4
+    var editorUseTabs: Bool = false
+    var editorAutoCloseBrackets: Bool = true
+    var editorHighlightCurrentLine: Bool = true
+    var showColumnRuler: Bool = false
+    var columnRulerPosition: Int = 80
+    var editorBracketPairHighlight: Bool = true
+    var editorShowIndentGuides: Bool = false
+    var matchingBracketRange: NSRange?
+
+    var indentString: String {
+        editorUseTabs ? "\t" : String(repeating: " ", count: editorTabSize)
+    }
 
     private static let autoClosePairs: [Character: Character] = [
         "(": ")", "[": "]", "{": "}",
         "\"": "\"", "'": "'", "`": "`"
     ]
 
-    // MARK: - Current Line Highlight
+    private static let bracketPairs: [Character: Character] = [
+        "(": ")", "[": "]", "{": "}"
+    ]
+    private static let closingBrackets: [Character: Character] = [
+        ")": "(", "]": "[", "}": "{"
+    ]
+
+    // MARK: - Background Drawing (current line, ruler, brackets, indent guides)
 
     override func drawBackground(in rect: NSRect) {
         super.drawBackground(in: rect)
         guard let layoutManager = layoutManager, let textContainer = textContainer else { return }
+
+        // Current line highlight
+        if editorHighlightCurrentLine && !string.isEmpty {
+            let sel = selectedRange()
+            let nsString = string as NSString
+            let lineRange = nsString.lineRange(for: NSRange(location: sel.location, length: 0))
+            let glyphRange = layoutManager.glyphRange(forCharacterRange: lineRange, actualCharacterRange: nil)
+            var lineRect = layoutManager.boundingRect(forGlyphRange: glyphRange, in: textContainer)
+            lineRect.origin.x = 0
+            lineRect.size.width = bounds.width
+            lineRect.origin.y += textContainerOrigin.y
+
+            if lineRect.intersects(rect) {
+                currentLineHighlightColor.setFill()
+                lineRect.fill()
+            }
+        }
+
+        // Column ruler
+        if showColumnRuler {
+            drawColumnRuler(in: rect)
+        }
+
+        // Bracket pair highlight
+        if editorBracketPairHighlight {
+            drawBracketHighlightPair(in: rect)
+        }
+
+        // Indent guides
+        if editorShowIndentGuides {
+            drawIndentGuides(in: rect)
+        }
+    }
+
+    private func drawColumnRuler(in rect: NSRect) {
+        guard let font = self.font else { return }
+        let charWidth = NSString("m").size(withAttributes: [.font: font]).width
+        let x = textContainerOrigin.x + charWidth * CGFloat(columnRulerPosition)
+        guard rect.minX <= x && x <= rect.maxX else { return }
+
+        let color = isLightTheme
+            ? NSColor.black.withAlphaComponent(0.08)
+            : NSColor.white.withAlphaComponent(0.08)
+        color.setStroke()
+
+        let path = NSBezierPath()
+        path.move(to: NSPoint(x: x, y: rect.minY))
+        path.line(to: NSPoint(x: x, y: rect.maxY))
+        path.lineWidth = 1.0
+        path.stroke()
+    }
+
+    private func drawBracketHighlight(range: NSRange, in rect: NSRect) {
+        guard let layoutManager = layoutManager, let textContainer = textContainer else { return }
+        let glyphRange = layoutManager.glyphRange(forCharacterRange: range, actualCharacterRange: nil)
+        var bracketRect = layoutManager.boundingRect(forGlyphRange: glyphRange, in: textContainer)
+        bracketRect.origin.y += textContainerOrigin.y
+        bracketRect.origin.x += textContainerOrigin.x
+
+        guard bracketRect.intersects(rect) else { return }
+
+        let color = NSColor.systemBlue.withAlphaComponent(0.2)
+        color.setFill()
+        let highlightRect = bracketRect.insetBy(dx: -1, dy: -1)
+        let path = NSBezierPath(roundedRect: highlightRect, xRadius: 2, yRadius: 2)
+        path.fill()
+    }
+
+    private func drawIndentGuides(in rect: NSRect) {
+        guard let layoutManager = layoutManager, let textContainer = textContainer, let font = self.font else { return }
         guard !string.isEmpty else { return }
 
-        let sel = selectedRange()
-        let nsString = string as NSString
-        let lineRange = nsString.lineRange(for: NSRange(location: sel.location, length: 0))
-        let glyphRange = layoutManager.glyphRange(forCharacterRange: lineRange, actualCharacterRange: nil)
-        var lineRect = layoutManager.boundingRect(forGlyphRange: glyphRange, in: textContainer)
-        lineRect.origin.x = 0
-        lineRect.size.width = bounds.width
-        lineRect.origin.y += textContainerOrigin.y
+        let charWidth = NSString(" ").size(withAttributes: [.font: font]).width
+        let guideSpacing = charWidth * CGFloat(editorTabSize)
+        guard guideSpacing > 0 else { return }
 
-        if lineRect.intersects(rect) {
-            currentLineHighlightColor.setFill()
-            lineRect.fill()
+        let color = isLightTheme
+            ? NSColor.black.withAlphaComponent(0.06)
+            : NSColor.white.withAlphaComponent(0.06)
+        color.setStroke()
+
+        let visibleGlyphRange = layoutManager.glyphRange(forBoundingRect: visibleRect, in: textContainer)
+        let visibleCharRange = layoutManager.characterRange(forGlyphRange: visibleGlyphRange, actualGlyphRange: nil)
+
+        let nsString = string as NSString
+        var index = visibleCharRange.location
+        while index < NSMaxRange(visibleCharRange) && index < nsString.length {
+            let lineRange = nsString.lineRange(for: NSRange(location: index, length: 0))
+            let lineText = nsString.substring(with: lineRange)
+
+            // Count leading whitespace columns
+            var columns = 0
+            for ch in lineText {
+                if ch == " " { columns += 1 }
+                else if ch == "\t" { columns += editorTabSize }
+                else { break }
+            }
+
+            let lineGlyphRange = layoutManager.glyphRange(forCharacterRange: lineRange, actualCharacterRange: nil)
+            let lineRect = layoutManager.boundingRect(forGlyphRange: lineGlyphRange, in: textContainer)
+
+            // Draw guide at each indent level
+            var level = 1
+            while CGFloat(level) * guideSpacing < charWidth * CGFloat(columns) {
+                let x = textContainerOrigin.x + CGFloat(level) * guideSpacing
+                let path = NSBezierPath()
+                path.move(to: NSPoint(x: x, y: lineRect.minY + textContainerOrigin.y))
+                path.line(to: NSPoint(x: x, y: lineRect.maxY + textContainerOrigin.y))
+                path.lineWidth = 0.5
+                path.stroke()
+                level += 1
+            }
+
+            index = NSMaxRange(lineRange)
         }
+    }
+
+    // MARK: - Bracket Matching
+
+    func updateBracketMatch() {
+        matchingBracketRange = nil
+        guard editorBracketPairHighlight else { needsDisplay = true; return }
+
+        let sel = selectedRange()
+        let pos = sel.location
+        let nsString = string as NSString
+        let length = nsString.length
+        guard length > 0 else { return }
+
+        // Check char at cursor and before cursor
+        let positions = [pos, pos > 0 ? pos - 1 : -1].filter { $0 >= 0 && $0 < length }
+
+        for checkPos in positions {
+            let ch = Character(nsString.substring(with: NSRange(location: checkPos, length: 1)))
+
+            if let closing = ZionTextView.bracketPairs[ch] {
+                // Opening bracket — scan forward
+                if let matchPos = findMatchingBracket(from: checkPos + 1, open: ch, close: closing, forward: true) {
+                    // Highlight both brackets
+                    drawBothBrackets(checkPos, matchPos)
+                    return
+                }
+            } else if let opening = ZionTextView.closingBrackets[ch] {
+                // Closing bracket — scan backward
+                if let matchPos = findMatchingBracket(from: checkPos - 1, open: opening, close: ch, forward: false) {
+                    drawBothBrackets(matchPos, checkPos)
+                    return
+                }
+            }
+        }
+        needsDisplay = true
+    }
+
+    private func drawBothBrackets(_ pos1: Int, _ pos2: Int) {
+        // We draw both brackets — use two passes via drawBackground
+        // Store the second bracket for drawBackground; draw both in sequence
+        matchingBracketRange = NSRange(location: pos1, length: 1)
+        // Store second bracket in a temporary — we need to draw both
+        secondBracketRange = NSRange(location: pos2, length: 1)
+        needsDisplay = true
+    }
+
+    var secondBracketRange: NSRange?
+
+    // Override drawBackground to also draw secondBracketRange
+    private func drawBracketHighlightPair(in rect: NSRect) {
+        if let range = matchingBracketRange {
+            drawBracketHighlight(range: range, in: rect)
+        }
+        if let range = secondBracketRange {
+            drawBracketHighlight(range: range, in: rect)
+        }
+    }
+
+    private func findMatchingBracket(from start: Int, open: Character, close: Character, forward: Bool) -> Int? {
+        let nsString = string as NSString
+        let length = nsString.length
+        var depth = 1
+        var pos = start
+        let maxScan = 10_000 // Safety limit
+
+        var scanned = 0
+        while pos >= 0 && pos < length && scanned < maxScan {
+            let ch = Character(nsString.substring(with: NSRange(location: pos, length: 1)))
+            if ch == (forward ? close : open) {
+                depth -= 1
+                if depth == 0 { return pos }
+            } else if ch == (forward ? open : close) {
+                depth += 1
+            }
+            pos += forward ? 1 : -1
+            scanned += 1
+        }
+        return nil
     }
 
     // MARK: - Key Interception
@@ -512,7 +805,7 @@ class ZionTextView: NSTextView {
         }
 
         // Auto-closing brackets/quotes
-        if let chars = event.characters, chars.count == 1, !flags.contains(.command), !flags.contains(.control) {
+        if editorAutoCloseBrackets, let chars = event.characters, chars.count == 1, !flags.contains(.command), !flags.contains(.control) {
             let char = chars.first!
             if handleAutoClose(char) {
                 return
@@ -639,10 +932,10 @@ class ZionTextView: NSTextView {
     private func indentLines() {
         let nsString = string as NSString
         let sel = selectedRange()
+        let indent = indentString
 
         if sel.length == 0 {
-            // No selection: insert 4 spaces at cursor
-            insertText("    ", replacementRange: sel)
+            insertText(indent, replacementRange: sel)
             return
         }
 
@@ -651,7 +944,7 @@ class ZionTextView: NSTextView {
         let lines = text.components(separatedBy: "\n")
         let indented = lines.enumerated().map { index, line in
             if index == lines.count - 1 && line.isEmpty { return line }
-            return "    " + line
+            return indent + line
         }.joined(separator: "\n")
 
         if shouldChangeText(in: lineRange, replacementString: indented) {
@@ -667,11 +960,12 @@ class ZionTextView: NSTextView {
         let lineRange = nsString.lineRange(for: sel)
         let text = nsString.substring(with: lineRange)
         let lines = text.components(separatedBy: "\n")
+        let tabSize = editorTabSize
         let outdented = lines.enumerated().map { index, line in
             if index == lines.count - 1 && line.isEmpty { return line }
             var removed = 0
             var result = line
-            while removed < 4 && result.hasPrefix(" ") {
+            while removed < tabSize && result.hasPrefix(" ") {
                 result = String(result.dropFirst())
                 removed += 1
             }
@@ -804,7 +1098,7 @@ class ZionTextView: NSTextView {
 
         let leadingWhitespace = String(textBeforeCursor.prefix(while: { $0 == " " || $0 == "\t" }))
         let trimmedBefore = textBeforeCursor.trimmingCharacters(in: .whitespaces)
-        let extraIndent = (trimmedBefore.hasSuffix("{") || trimmedBefore.hasSuffix(":") || trimmedBefore.hasSuffix("(")) ? "    " : ""
+        let extraIndent = (trimmedBefore.hasSuffix("{") || trimmedBefore.hasSuffix(":") || trimmedBefore.hasSuffix("(")) ? indentString : ""
 
         let insertion = "\n" + leadingWhitespace + extraIndent
         insertText(insertion, replacementRange: sel)

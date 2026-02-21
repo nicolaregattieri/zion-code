@@ -917,6 +917,12 @@
 "help.code.saveas" = "Save As to choose file name and location (⇧⌘S)";
 "help.code.openineditor" = "Open changed files in the editor from any screen";
 "help.code.contextmenu" = "Full context menu in the file browser (new, rename, copy, paste, delete)";
+"help.code.findreplace" = "Find and Replace in the editor with match highlighting (⌘F / ⌘H)";
+"help.code.tabsize" = "Configurable tab size and indent style (2/4/8, spaces or tabs)";
+"help.code.columnruler" = "Configurable column ruler (80/100/120) for visual reference";
+"help.code.brackets" = "Bracket pair highlighting when cursor is adjacent to ()[]{}";
+"help.code.indentguides" = "Visual indent guides for structured code navigation";
+"help.code.repoconfig" = "Per-repo configuration via .zion/editor.json (overrides global settings)";
 
 // File Browser Context Menu
 "Nova Pasta" = "New Folder";
@@ -931,3 +937,34 @@
 "Novo nome:" = "New name:";
 "Deseja excluir '%@'?" = "Delete '%@'?";
 "Esta acao nao pode ser desfeita." = "This action cannot be undone.";
+
+// Editor Settings Tab
+"settings.tab.editor" = "Editor";
+"settings.editor.appearance" = "Appearance";
+"settings.editor.theme" = "Theme";
+"settings.editor.font" = "Font";
+"settings.editor.fontSize" = "Font Size";
+"settings.editor.lineSpacing" = "Line Spacing";
+"settings.editor.editing" = "Editing";
+"settings.editor.tabSize" = "Tab Size";
+"settings.editor.useTabs" = "Use Tabs (instead of spaces)";
+"settings.editor.autoCloseBrackets" = "Auto-close brackets";
+"settings.editor.bracketPairHighlight" = "Bracket pair highlighting";
+"settings.editor.display" = "Display";
+"settings.editor.lineWrap" = "Word Wrap";
+"settings.editor.highlightCurrentLine" = "Highlight Current Line";
+"settings.editor.showIndentGuides" = "Show indent guides";
+"settings.editor.showRuler" = "Show column ruler";
+"settings.editor.rulerColumn" = "Ruler column";
+
+// Find/Replace
+"editor.search.placeholder" = "Find...";
+"editor.search.noResults" = "None";
+"editor.search.previous" = "Previous";
+"editor.search.next" = "Next";
+"editor.replace.placeholder" = "Replace...";
+"editor.replace.one" = "Replace";
+"editor.replace.all" = "Replace All";
+
+// Per-Repo Config
+"editor.repoConfig.active" = "Editor settings defined by .zion/editor.json";
