@@ -72,8 +72,9 @@ final class RepositoryViewModel {
     var rebaseItems: [RebaseItem] = []
     var rebaseBaseRef: String = ""
 
-    // Navigation signal (consumed by ContentView to switch tabs)
+    // Navigation signals (consumed by ContentView to switch tabs)
     var navigateToGraphRequested: Bool = false
+    var navigateToCodeRequested: Bool = false
 
     // GitHub PR integration
     var pullRequests: [GitHubPRInfo] = []
@@ -275,6 +276,10 @@ final class RepositoryViewModel {
     // Tracking unsaved changes per file
     var unsavedFiles: Set<String> = []
     @ObservationIgnored private var originalFileContents: [String: String] = [:]
+    @ObservationIgnored private var untitledCounter: Int = 0
+
+    // File browser clipboard (cut/copy/paste)
+    @ObservationIgnored private var fileBrowserClipboard: (url: URL, isCut: Bool)?
 
     // Editor Settings (persisted via UserDefaults)
     var selectedTheme: EditorTheme = .dracula {
@@ -837,6 +842,11 @@ final class RepositoryViewModel {
 
     func saveCurrentCodeFile() {
         guard let file = selectedCodeFile else { return }
+        // Untitled files redirect to Save As
+        if file.url.path.hasPrefix(NSTemporaryDirectory()) {
+            saveCurrentFileAs()
+            return
+        }
         let content = codeFileContent
         let fileURL = file.url
         let fileID = file.id
@@ -851,6 +861,220 @@ final class RepositoryViewModel {
             } catch {
                 handleError(error)
             }
+        }
+    }
+
+    func openFileInEditor(relativePath: String) {
+        guard let repoURL = repositoryURL else { return }
+        let fileURL = repoURL.appendingPathComponent(relativePath)
+        let item = FileItem(url: fileURL, isDirectory: false, children: nil)
+        selectCodeFile(item)
+        navigateToCodeRequested = true
+    }
+
+    func createNewFile() {
+        untitledCounter += 1
+        let name = untitledCounter == 1 ? L10n("Sem titulo") : "\(L10n("Sem titulo")) \(untitledCounter)"
+        let tempURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(name)
+        let item = FileItem(url: tempURL, isDirectory: false, children: nil)
+        if !openedFiles.contains(where: { $0.id == item.id }) {
+            openedFiles.append(item)
+        }
+        activeFileID = item.id
+        selectedCodeFile = item
+        codeFileContent = ""
+        originalFileContents[item.id] = ""
+    }
+
+    func saveCurrentFileAs() {
+        guard let file = selectedCodeFile else { return }
+        let content = codeFileContent
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = file.name
+        panel.canCreateDirectories = true
+        if let repoURL = repositoryURL {
+            panel.directoryURL = repoURL
+        }
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        let oldID = file.id
+        Task {
+            do {
+                try content.write(to: url, atomically: true, encoding: .utf8)
+                let newItem = FileItem(url: url, isDirectory: false, children: nil)
+                // Replace the tab
+                if let idx = openedFiles.firstIndex(where: { $0.id == oldID }) {
+                    openedFiles[idx] = newItem
+                }
+                activeFileID = newItem.id
+                selectedCodeFile = newItem
+                originalFileContents.removeValue(forKey: oldID)
+                originalFileContents[newItem.id] = content
+                unsavedFiles.remove(oldID)
+                statusMessage = String(format: L10n("Arquivo salvo: %@"), newItem.name)
+                refreshRepository()
+            } catch {
+                handleError(error)
+            }
+        }
+    }
+
+    // MARK: - File Browser Context Menu Operations
+
+    func createNewFileInFolder(parentURL: URL) {
+        let alert = NSAlert()
+        alert.messageText = L10n("Novo Arquivo")
+        alert.informativeText = L10n("Nome do arquivo:")
+        alert.addButton(withTitle: L10n("Criar"))
+        alert.addButton(withTitle: L10n("Cancelar"))
+        let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        input.stringValue = ""
+        input.placeholderString = "filename.swift"
+        alert.accessoryView = input
+        alert.window.initialFirstResponder = input
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let name = input.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+        let fileURL = parentURL.appendingPathComponent(name)
+        do {
+            try "".write(to: fileURL, atomically: true, encoding: .utf8)
+            refreshFileTree()
+            let item = FileItem(url: fileURL, isDirectory: false, children: nil)
+            selectCodeFile(item)
+        } catch {
+            handleError(error)
+        }
+    }
+
+    func createNewFolder(parentURL: URL) {
+        let alert = NSAlert()
+        alert.messageText = L10n("Nova Pasta")
+        alert.informativeText = L10n("Nome da pasta:")
+        alert.addButton(withTitle: L10n("Criar"))
+        alert.addButton(withTitle: L10n("Cancelar"))
+        let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        input.stringValue = ""
+        input.placeholderString = "new-folder"
+        alert.accessoryView = input
+        alert.window.initialFirstResponder = input
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let name = input.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+        let folderURL = parentURL.appendingPathComponent(name)
+        do {
+            try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
+            refreshFileTree()
+        } catch {
+            handleError(error)
+        }
+    }
+
+    func deleteFileItem(_ item: FileItem) {
+        let alert = NSAlert()
+        alert.messageText = String(format: L10n("Deseja excluir '%@'?"), item.name)
+        alert.informativeText = L10n("Esta acao nao pode ser desfeita.")
+        alert.alertStyle = .critical
+        alert.addButton(withTitle: L10n("Excluir"))
+        alert.addButton(withTitle: L10n("Cancelar"))
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        do {
+            try FileManager.default.removeItem(at: item.url)
+            // Close tab if open
+            if let idx = openedFiles.firstIndex(where: { $0.id == item.id }) {
+                closeFile(id: openedFiles[idx].id)
+            }
+            refreshFileTree()
+        } catch {
+            handleError(error)
+        }
+    }
+
+    func renameFileItem(_ item: FileItem) {
+        let alert = NSAlert()
+        alert.messageText = L10n("Renomear...")
+        alert.informativeText = L10n("Novo nome:")
+        alert.addButton(withTitle: L10n("Confirmar"))
+        alert.addButton(withTitle: L10n("Cancelar"))
+        let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        input.stringValue = item.name
+        alert.accessoryView = input
+        alert.window.initialFirstResponder = input
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let newName = input.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !newName.isEmpty, newName != item.name else { return }
+        let newURL = item.url.deletingLastPathComponent().appendingPathComponent(newName)
+        do {
+            try FileManager.default.moveItem(at: item.url, to: newURL)
+            // Update tab if open
+            if let idx = openedFiles.firstIndex(where: { $0.id == item.id }) {
+                let newItem = FileItem(url: newURL, isDirectory: item.isDirectory, children: item.children)
+                openedFiles[idx] = newItem
+                if activeFileID == item.id {
+                    activeFileID = newItem.id
+                    selectedCodeFile = newItem
+                    if let content = originalFileContents.removeValue(forKey: item.id) {
+                        originalFileContents[newItem.id] = content
+                    }
+                    unsavedFiles.remove(item.id)
+                }
+            }
+            refreshFileTree()
+        } catch {
+            handleError(error)
+        }
+    }
+
+    func duplicateFileItem(_ item: FileItem) {
+        let parentURL = item.url.deletingLastPathComponent()
+        let ext = item.url.pathExtension
+        let baseName = ext.isEmpty ? item.name : String(item.name.dropLast(ext.count + 1))
+        let newName = ext.isEmpty ? "\(baseName) copy" : "\(baseName) copy.\(ext)"
+        let newURL = parentURL.appendingPathComponent(newName)
+        do {
+            try FileManager.default.copyItem(at: item.url, to: newURL)
+            refreshFileTree()
+        } catch {
+            handleError(error)
+        }
+    }
+
+    func copyFileItem(_ item: FileItem) {
+        fileBrowserClipboard = (url: item.url, isCut: false)
+    }
+
+    func cutFileItem(_ item: FileItem) {
+        fileBrowserClipboard = (url: item.url, isCut: true)
+    }
+
+    var hasFileBrowserClipboard: Bool {
+        fileBrowserClipboard != nil
+    }
+
+    func pasteFileItem(into parentURL: URL) {
+        guard let clipboard = fileBrowserClipboard else { return }
+        let destURL = parentURL.appendingPathComponent(clipboard.url.lastPathComponent)
+        do {
+            if clipboard.isCut {
+                try FileManager.default.moveItem(at: clipboard.url, to: destURL)
+                // Close tab if the moved file was open
+                let oldPath = clipboard.url.path
+                if let idx = openedFiles.firstIndex(where: { $0.id == oldPath }) {
+                    let newItem = FileItem(url: destURL, isDirectory: false, children: nil)
+                    openedFiles[idx] = newItem
+                    if activeFileID == oldPath {
+                        activeFileID = newItem.id
+                        selectedCodeFile = newItem
+                        if let content = originalFileContents.removeValue(forKey: oldPath) {
+                            originalFileContents[newItem.id] = content
+                        }
+                    }
+                }
+            } else {
+                try FileManager.default.copyItem(at: clipboard.url, to: destURL)
+            }
+            fileBrowserClipboard = nil
+            refreshFileTree()
+        } catch {
+            handleError(error)
         }
     }
 

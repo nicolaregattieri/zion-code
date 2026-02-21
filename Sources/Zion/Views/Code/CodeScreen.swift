@@ -158,6 +158,16 @@ struct CodeScreen: View {
             }
             .keyboardShortcut("j", modifiers: [.command, .shift])
             .frame(width: 0, height: 0).opacity(0)
+
+            // New File (Cmd+N)
+            Button("") { model.createNewFile() }
+                .keyboardShortcut("n", modifiers: .command)
+                .frame(width: 0, height: 0).opacity(0)
+
+            // Save As (Cmd+Shift+S)
+            Button("") { model.saveCurrentFileAs() }
+                .keyboardShortcut("s", modifiers: [.command, .shift])
+                .frame(width: 0, height: 0).opacity(0)
         }
     }
     
@@ -287,7 +297,25 @@ struct CodeScreen: View {
 
             Spacer()
 
+            Button {
+                model.createNewFile()
+            } label: {
+                Image(systemName: "doc.badge.plus")
+                    .font(.caption)
+            }
+            .buttonStyle(.bordered)
+            .help(L10n("Novo Arquivo") + " (⌘N)")
+
             if model.activeFileID != nil {
+                Button {
+                    model.saveCurrentFileAs()
+                } label: {
+                    Image(systemName: "arrow.down.doc")
+                        .font(.caption)
+                }
+                .buttonStyle(.bordered)
+                .help(L10n("Salvar Como...") + " (⇧⌘S)")
+
                 Button {
                     model.saveCurrentCodeFile()
                 } label: {
@@ -307,7 +335,7 @@ struct CodeScreen: View {
             // File tree header
             CardHeader(L10n("Arquivos"), icon: "folder.fill") {
                 Button { model.refreshFileTree() } label: { Image(systemName: "arrow.clockwise") }
-                    .buttonStyle(.plain).foregroundStyle(.secondary)
+                    .buttonStyle(.plain).contentShape(Rectangle()).foregroundStyle(.secondary)
                     .help(L10n("Atualizar arvore de arquivos"))
             }
             .padding(12)
@@ -344,8 +372,24 @@ struct CodeScreen: View {
             }
         }
         .background(DesignSystem.Colors.background.opacity(0.3))
+        .contextMenu {
+            if let repoURL = model.repositoryURL {
+                Button { model.createNewFileInFolder(parentURL: repoURL) } label: {
+                    Label(L10n("Novo Arquivo"), systemImage: "doc.badge.plus")
+                }
+                Button { model.createNewFolder(parentURL: repoURL) } label: {
+                    Label(L10n("Nova Pasta"), systemImage: "folder.badge.plus")
+                }
+                if model.hasFileBrowserClipboard {
+                    Divider()
+                    Button { model.pasteFileItem(into: repoURL) } label: {
+                        Label(L10n("Colar"), systemImage: "doc.on.clipboard")
+                    }
+                }
+            }
+        }
     }
-    
+
     private var editorPane: some View {
         VStack(spacing: 0) {
             if !model.openedFiles.isEmpty {
@@ -830,6 +874,7 @@ struct CodeTab: View {
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
+            .contentShape(Rectangle())
             .opacity(isActive || isHovering ? 1.0 : 0.0)
         }
         .padding(.horizontal, 12)
@@ -1055,6 +1100,99 @@ struct FileTreeNodeView: View {
             }
             .buttonStyle(.plain)
             .onHover { h in isHovering = h }
+            .contextMenu {
+                if item.isDirectory {
+                    Button { model.createNewFileInFolder(parentURL: item.url) } label: {
+                        Label(L10n("Novo Arquivo"), systemImage: "doc.badge.plus")
+                    }
+                    Button { model.createNewFolder(parentURL: item.url) } label: {
+                        Label(L10n("Nova Pasta"), systemImage: "folder.badge.plus")
+                    }
+
+                    Divider()
+
+                    Button { model.copyFileItem(item) } label: {
+                        Label(L10n("Copiar"), systemImage: "doc.on.doc")
+                    }
+                    Button { model.cutFileItem(item) } label: {
+                        Label(L10n("Recortar"), systemImage: "scissors")
+                    }
+                    if model.hasFileBrowserClipboard {
+                        Button { model.pasteFileItem(into: item.url) } label: {
+                            Label(L10n("Colar"), systemImage: "doc.on.clipboard")
+                        }
+                    }
+
+                    Divider()
+
+                    Button { model.renameFileItem(item) } label: {
+                        Label(L10n("Renomear..."), systemImage: "pencil")
+                    }
+                    Button { model.duplicateFileItem(item) } label: {
+                        Label(L10n("Duplicar"), systemImage: "plus.square.on.square")
+                    }
+
+                    Divider()
+
+                    Button(role: .destructive) { model.deleteFileItem(item) } label: {
+                        Label(L10n("Excluir"), systemImage: "trash")
+                    }
+
+                    Divider()
+
+                    Button { NSWorkspace.shared.activateFileViewerSelecting([item.url]) } label: {
+                        Label(L10n("Revelar no Finder"), systemImage: "folder")
+                    }
+                } else {
+                    Button { model.selectCodeFile(item) } label: {
+                        Label(L10n("Abrir no Editor"), systemImage: "pencil.and.outline")
+                    }
+
+                    Divider()
+
+                    Button { model.createNewFileInFolder(parentURL: item.url.deletingLastPathComponent()) } label: {
+                        Label(L10n("Novo Arquivo"), systemImage: "doc.badge.plus")
+                    }
+                    Button { model.createNewFolder(parentURL: item.url.deletingLastPathComponent()) } label: {
+                        Label(L10n("Nova Pasta"), systemImage: "folder.badge.plus")
+                    }
+
+                    Divider()
+
+                    Button { model.copyFileItem(item) } label: {
+                        Label(L10n("Copiar"), systemImage: "doc.on.doc")
+                    }
+                    Button { model.cutFileItem(item) } label: {
+                        Label(L10n("Recortar"), systemImage: "scissors")
+                    }
+                    if model.hasFileBrowserClipboard {
+                        Button { model.pasteFileItem(into: item.url.deletingLastPathComponent()) } label: {
+                            Label(L10n("Colar"), systemImage: "doc.on.clipboard")
+                        }
+                    }
+
+                    Divider()
+
+                    Button { model.renameFileItem(item) } label: {
+                        Label(L10n("Renomear..."), systemImage: "pencil")
+                    }
+                    Button { model.duplicateFileItem(item) } label: {
+                        Label(L10n("Duplicar"), systemImage: "plus.square.on.square")
+                    }
+
+                    Divider()
+
+                    Button(role: .destructive) { model.deleteFileItem(item) } label: {
+                        Label(L10n("Excluir"), systemImage: "trash")
+                    }
+
+                    Divider()
+
+                    Button { NSWorkspace.shared.activateFileViewerSelecting([item.url]) } label: {
+                        Label(L10n("Revelar no Finder"), systemImage: "folder")
+                    }
+                }
+            }
 
             if item.isDirectory && isExpanded, let children = item.children {
                 ForEach(children) { child in

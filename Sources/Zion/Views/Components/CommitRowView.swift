@@ -51,14 +51,14 @@ struct CommitRowView: View {
 
     private var cardContent: some View {
         ZStack(alignment: .leading) {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous)
                 .fill(cardBackground)
                 .frame(height: cardHeight)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous)
                         .stroke(cardStroke, lineWidth: 1.5)
                 )
-                .shadow(color: isSelected ? Color.accentColor.opacity(0.3) : .black.opacity(0.1), radius: isSelected ? 8 : 4, y: 2)
+                .shadow(color: isSelected ? Color.accentColor.opacity(0.3) : DesignSystem.Colors.shadowLight, radius: isSelected ? 8 : 4, y: 2)
 
             // Lane color left stripe
             HStack(spacing: 0) {
@@ -82,7 +82,7 @@ struct CommitRowView: View {
             .padding(.horizontal, 16)
             .frame(height: cardHeight)
         }
-        .contentShape(RoundedRectangle(cornerRadius: 14))
+        .contentShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius))
         .scaleEffect(isHovered && !isSelected ? 1.015 : 1.0)
         .shadow(color: isHovered && !isSelected ? Color.accentColor.opacity(0.15) : .clear, radius: 8, y: 2)
         .animation(.spring(response: 0.25, dampingFraction: 0.8), value: isHovered)
@@ -95,15 +95,15 @@ struct CommitRowView: View {
 
     private var cardBackground: Color {
         if isSelected { return Color.accentColor.opacity(0.18) }
-        if isSearchMatch { return Color.yellow.opacity(0.15) }
+        if isSearchMatch { return DesignSystem.Colors.statusYellowBg }
         if isHovered { return Color.white.opacity(0.10) }
         return laneColor.opacity(0.06)
     }
 
     private var cardStroke: Color {
-        if isSelected { return Color.accentColor.opacity(0.7) }
+        if isSelected { return DesignSystem.Colors.selectionBorder }
         if isSearchMatch { return Color.yellow.opacity(0.5) }
-        if isHovered { return Color.accentColor.opacity(0.35) }
+        if isHovered { return DesignSystem.Colors.hoverAccent }
         return laneColor.opacity(0.15)
     }
 
@@ -112,7 +112,7 @@ struct CommitRowView: View {
             Text(commit.shortHash)
                 .font(.system(size: 10, weight: .bold, design: .monospaced))
                 .padding(.horizontal, 6).padding(.vertical, 2)
-                .background(Color.accentColor.opacity(0.15))
+                .background(DesignSystem.Colors.selectionBackground)
                 .clipShape(Capsule())
                 .foregroundStyle(Color.accentColor)
 

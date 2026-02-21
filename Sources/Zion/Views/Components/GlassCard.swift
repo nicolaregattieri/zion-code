@@ -26,7 +26,7 @@ struct GlassCard<Content: View>: View {
                     lineWidth: borderTint != nil ? 1.5 : 1
                 )
         )
-        .shadow(color: .black.opacity(colorScheme == .dark ? 0.14 : 0.08), radius: 12, y: 4)
+        .shadow(color: colorScheme == .dark ? DesignSystem.Colors.shadowDark : DesignSystem.Colors.shadowLight, radius: 12, y: 4)
     }
 }
 

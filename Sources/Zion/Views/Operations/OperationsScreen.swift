@@ -695,6 +695,12 @@ struct FileStatusRow: View {
         .background(isStaged ? DesignSystem.Colors.glassElevated : DesignSystem.Colors.glassMinimal)
         .clipShape(RoundedRectangle(cornerRadius: 6))
         .contextMenu {
+            Button {
+                model.openFileInEditor(relativePath: file)
+            } label: {
+                Label(L10n("Abrir no Editor"), systemImage: "pencil.and.outline")
+            }
+            Divider()
             Button(L10n("Descartar alteracoes"), role: .destructive) {
                 performGitAction(L10n("Descartar"), L10n("Deseja reverter todas as mudancas neste arquivo? Isso nao pode ser desfeito."), true) {
                     model.discardChanges(in: file)

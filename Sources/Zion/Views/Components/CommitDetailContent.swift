@@ -101,6 +101,18 @@ struct CommitDetailContent: View {
                                                 .lineLimit(1)
                                                 .truncationMode(.middle)
                                             Spacer()
+                                            if let model {
+                                                Button {
+                                                    model.openFileInEditor(relativePath: file.path)
+                                                } label: {
+                                                    Image(systemName: "pencil.and.outline")
+                                                        .font(.system(size: 9, weight: .bold))
+                                                        .foregroundStyle(.secondary)
+                                                }
+                                                .buttonStyle(.plain)
+                                                .contentShape(Rectangle())
+                                                .help(L10n("Abrir no Editor"))
+                                            }
                                             if model != nil && commitID != nil {
                                                 Image(systemName: expandedFile == file.path ? "chevron.down" : "chevron.right")
                                                     .font(.system(size: 8, weight: .bold))
@@ -113,6 +125,15 @@ struct CommitDetailContent: View {
                                     .padding(.vertical, 5)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .contentShape(Rectangle())
+                                    .contextMenu {
+                                        if let model {
+                                            Button {
+                                                model.openFileInEditor(relativePath: file.path)
+                                            } label: {
+                                                Label(L10n("Abrir no Editor"), systemImage: "pencil.and.outline")
+                                            }
+                                        }
+                                    }
 
                                     if expandedFile == file.path, let model {
                                         if model.isAIConfigured {
