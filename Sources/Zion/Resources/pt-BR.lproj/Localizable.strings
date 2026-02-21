@@ -315,6 +315,9 @@
 "Nenhum provedor de IA configurado" = "Nenhum provedor de IA configurado";
 "Chave de API invalida" = "Chave de API inválida";
 "Resposta invalida da API" = "Resposta inválida da API";
+"Anthropic (Claude)" = "Anthropic (Claude)";
+"OpenAI (GPT)" = "OpenAI (GPT)";
+"Google (Gemini)" = "Google (Gemini)";
 
 // Help Sheet
 "Conheca o Zion" = "Conheça o Zion";

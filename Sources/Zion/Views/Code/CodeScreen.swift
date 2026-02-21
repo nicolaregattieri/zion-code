@@ -442,6 +442,8 @@ struct CodeScreen: View {
                     }
                 }
             }
+            .padding(.horizontal, 8)
+            .padding(.bottom, 8)
             .dropDestination(for: String.self) { items, _ in
                 guard let text = items.first, !text.isEmpty else { return false }
                 model.sendTextToActiveTerminal(text)

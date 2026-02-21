@@ -97,11 +97,11 @@
 
 | Feature | Description |
 |---------|-------------|
-| Commit Messages | Generate from staged diff (Anthropic/OpenAI or heuristic fallback) |
+| Commit Messages | Generate from staged diff (Anthropic/OpenAI/Gemini or heuristic fallback) |
 | Diff Explanation | Plain-language explanation of a file diff |
 | PR Description | Generate title and body from commit log |
 | Stash Messages | Suggest descriptive stash messages |
-| Provider Config | Anthropic (Claude) or OpenAI (GPT), API key in Keychain |
+| Provider Config | Anthropic (Claude), OpenAI (GPT), Google (Gemini), API keys in Keychain |
 
 ## GitHub Integration
 

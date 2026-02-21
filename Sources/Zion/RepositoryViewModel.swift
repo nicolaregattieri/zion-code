@@ -93,6 +93,7 @@ final class RepositoryViewModel {
         didSet { 
             UserDefaults.standard.set(aiProvider.rawValue, forKey: "zion.aiProvider")
             aiQuotaExceeded = false // Reset on provider change
+            _aiKeyRevision += 1 // Ensure aiAPIKey getter is re-evaluated for the new provider
         }
     }
     @ObservationIgnored let aiClient = AIClient()
@@ -102,13 +103,13 @@ final class RepositoryViewModel {
     var aiAPIKey: String {
         get { 
             let _ = _aiKeyRevision // Register dependency
-            return AIClient.loadAPIKey() ?? "" 
+            return AIClient.loadAPIKey(for: aiProvider) ?? "" 
         }
         set {
             if newValue.isEmpty {
-                AIClient.deleteAPIKey()
+                AIClient.deleteAPIKey(for: aiProvider)
             } else {
-                AIClient.saveAPIKey(newValue)
+                AIClient.saveAPIKey(newValue, for: aiProvider)
             }
             _aiKeyRevision += 1 // Trigger observation
         }

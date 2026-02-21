@@ -443,6 +443,10 @@ struct SidebarView: View {
                         }
                         .labelsHidden()
                         .pickerStyle(.menu)
+                        .onChange(of: model.aiProvider) { _, _ in
+                            isEditingAIKey = false
+                            aiKeyInput = ""
+                        }
 
                         if model.aiProvider != .none {
                             let hasKey = !model.aiAPIKey.isEmpty
