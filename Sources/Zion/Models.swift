@@ -27,6 +27,7 @@ final class TerminalSession: Identifiable {
     /// Explicitly kill the terminal process and clear cached state.
     /// Call this only for intentional close (close tab, close pane, switch project).
     func killCachedProcess() {
+        DiagnosticLogger.shared.log(.info, "killCachedProcess", context: "\(label)(\(id.uuidString.prefix(4))) pid=\(_shellPid) preserve=\(_shouldPreserve)", source: "TerminalSession")
         _shouldPreserve = false
         if _shellPid > 0 {
             kill(_shellPid, SIGTERM)

@@ -97,7 +97,7 @@ struct OperationsScreen: View {
                     ScrollView(.vertical) {
                         TextField(L10n("Mensagem do commit..."), text: $model.commitMessageInput, axis: .vertical)
                             .textFieldStyle(.plain)
-                            .lineLimit(3...8)
+                            .lineLimit(3...)
                     }
                     .frame(maxHeight: 120)
                     .padding(12)

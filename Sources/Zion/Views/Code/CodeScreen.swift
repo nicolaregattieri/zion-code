@@ -765,18 +765,31 @@ struct TerminalPaneView: View {
 
         case .split(let direction, _, _):
             let children = node.flattenedChildren(forDirection: direction)
-            if direction == .vertical {
-                HSplitView {
-                    ForEach(children) { child in
-                        TerminalPaneView(node: child, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model)
-                            .frame(minWidth: 0, maxWidth: .infinity)
+            let dividerThickness: CGFloat = 1
+            GeometryReader { geometry in
+                if direction == .vertical {
+                    let totalDividers = dividerThickness * CGFloat(children.count - 1)
+                    let paneWidth = (geometry.size.width - totalDividers) / CGFloat(children.count)
+                    HStack(spacing: 0) {
+                        ForEach(Array(children.enumerated()), id: \.element.id) { index, child in
+                            if index > 0 {
+                                Divider().frame(width: dividerThickness)
+                            }
+                            TerminalPaneView(node: child, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model)
+                                .frame(width: max(0, paneWidth))
+                        }
                     }
-                }
-            } else {
-                VSplitView {
-                    ForEach(children) { child in
-                        TerminalPaneView(node: child, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model)
-                            .frame(minHeight: 0, maxHeight: .infinity)
+                } else {
+                    let totalDividers = dividerThickness * CGFloat(children.count - 1)
+                    let paneHeight = (geometry.size.height - totalDividers) / CGFloat(children.count)
+                    VStack(spacing: 0) {
+                        ForEach(Array(children.enumerated()), id: \.element.id) { index, child in
+                            if index > 0 {
+                                Divider().frame(height: dividerThickness)
+                            }
+                            TerminalPaneView(node: child, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model)
+                                .frame(height: max(0, paneHeight))
+                        }
                     }
                 }
             }
