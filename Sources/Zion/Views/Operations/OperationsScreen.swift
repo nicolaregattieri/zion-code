@@ -94,13 +94,16 @@ struct OperationsScreen: View {
                 }
 
                 HStack(alignment: .bottom, spacing: 8) {
-                    TextField(L10n("Mensagem do commit..."), text: $model.commitMessageInput, axis: .vertical)
-                        .textFieldStyle(.plain)
-                        .lineLimit(3...6)
-                        .padding(12)
-                        .background(DesignSystem.Colors.glassInset)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(DesignSystem.Colors.glassStroke, lineWidth: 1))
+                    ScrollView(.vertical) {
+                        TextField(L10n("Mensagem do commit..."), text: $model.commitMessageInput, axis: .vertical)
+                            .textFieldStyle(.plain)
+                            .lineLimit(3...8)
+                    }
+                    .frame(maxHeight: 120)
+                    .padding(12)
+                    .background(DesignSystem.Colors.glassInset)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(DesignSystem.Colors.glassStroke, lineWidth: 1))
 
                     Button {
                         model.suggestCommitMessage()
@@ -343,7 +346,7 @@ struct OperationsScreen: View {
 
     private var stashCard: some View {
         GlassCard(spacing: 10) {
-            CardHeader(L10n("Stash"), icon: "archivebox")
+            CardHeader(L10n("Stash"), icon: "archivebox", subtitle: L10n("Salvar e restaurar alteracoes temporarias"))
             HStack(spacing: 8) {
                 TextField(L10n("mensagem do stash"), text: $model.stashMessageInput).textFieldStyle(.roundedBorder)
                 if model.isAIConfigured {
@@ -378,7 +381,7 @@ struct OperationsScreen: View {
 
     private var tagsCard: some View {
         GlassCard(spacing: 10) {
-            CardHeader(L10n("Tags"), icon: "tag")
+            CardHeader(L10n("Tags"), icon: "tag", subtitle: L10n("Marcar pontos importantes no historico"))
             HStack(spacing: 8) {
                 TextField("v1.0.0", text: $model.tagInput).textFieldStyle(.roundedBorder)
                 Button(L10n("Criar")) { performGitAction(L10n("Criar tag"), L10n("Criar tag no commit atual?"), false) { model.createTag() } }.buttonStyle(.borderedProminent)
@@ -389,7 +392,7 @@ struct OperationsScreen: View {
 
     private var historyCard: some View {
         GlassCard(spacing: 10) {
-            CardHeader(L10n("Historico"), icon: "clock.arrow.circlepath")
+            CardHeader(L10n("Historico"), icon: "clock.arrow.circlepath", subtitle: L10n("Rebase e cherry-pick"))
             HStack(spacing: 8) {
                 TextField(L10n("rebase target"), text: $model.rebaseTargetInput).textFieldStyle(.roundedBorder)
                 Button(L10n("Rebase")) { performGitAction(L10n("Rebase"), L10n("Rebasear a branch atual no target informado?"), true) { model.rebaseOntoTarget() } }.buttonStyle(.bordered).tint(.orange)
@@ -403,7 +406,7 @@ struct OperationsScreen: View {
 
     private var remotesCard: some View {
         GlassCard(spacing: 10) {
-            CardHeader(L10n("Remotes"), icon: "network")
+            CardHeader(L10n("Remotes"), icon: "network", subtitle: L10n("Repositorios remotos conectados"))
             
             VStack(spacing: 8) {
                 HStack(spacing: 8) {
@@ -562,7 +565,7 @@ struct OperationsScreen: View {
 
     private var cleanupCard: some View {
         GlassCard(spacing: 10) {
-            CardHeader(L10n("Limpeza"), icon: "sparkles", subtitle: L10n("Remover branches locais que ja foram mescladas na main."))
+            CardHeader(L10n("Limpeza"), icon: "leaf.fill", subtitle: L10n("Remover branches locais que ja foram mescladas na main."))
             Button(action: {
                 performGitAction(L10n("Prune"), L10n("Deseja remover todas as branches locais ja mescladas?"), true) {
                     model.pruneMergedBranches()

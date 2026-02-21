@@ -58,45 +58,9 @@ struct SidebarView: View {
                     if isRecentsExpanded {
                         VStack(spacing: 4) {
                             ForEach(model.recentRepositories, id: \.self) { url in
-                                Button {
+                                RecentProjectRow(url: url, changedCount: model.backgroundRepoChangedFiles[url]) {
                                     withAnimation { model.openRepository(url) }
-                                } label: {
-                                    HStack(spacing: 10) {
-                                        Image(systemName: "folder.fill")
-                                            .font(.system(size: 12))
-                                            .foregroundStyle(Color.accentColor.opacity(0.8))
-                                        VStack(alignment: .leading, spacing: 1) {
-                                            Text(url.lastPathComponent)
-                                                .font(.system(size: 13, weight: .semibold))
-                                                .lineLimit(1)
-                                            Text(url.path)
-                                                .font(.system(size: 9))
-                                                .foregroundStyle(.secondary)
-                                                .lineLimit(1)
-                                                .truncationMode(.middle)
-                                        }
-                                        Spacer()
-
-                                        if let count = model.backgroundRepoChangedFiles[url], count > 0 {
-                                            Text("\(count)")
-                                                .font(.system(size: 9, weight: .bold, design: .monospaced))
-                                                .padding(.horizontal, 5)
-                                                .padding(.vertical, 2)
-                                                .background(Color.orange.opacity(0.2))
-                                                .foregroundStyle(.orange)
-                                                .clipShape(Capsule())
-                                        }
-
-                                        Image(systemName: "chevron.right")
-                                            .font(.system(size: 8, weight: .bold))
-                                            .foregroundStyle(.secondary.opacity(0.5))
-                                    }
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 8)
-                                    .background(RoundedRectangle(cornerRadius: 8).fill(DesignSystem.Colors.glassMinimal))
-                                    .contentShape(Rectangle())
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
                     }
@@ -303,8 +267,7 @@ struct SidebarView: View {
             .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 10).padding(.vertical, 8)
             .background(RoundedRectangle(cornerRadius: 10).fill(isSelected ? Color.primary.opacity(0.08) : Color.clear))
             .overlay(RoundedRectangle(cornerRadius: 10).stroke(isSelected ? Color.primary.opacity(0.15) : Color.clear, lineWidth: 1))
-            .scaleEffect(isSelected ? 1.02 : 1.0)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+            .animation(.easeInOut(duration: 0.15), value: isSelected)
         }
         .buttonStyle(.plain)
         .disabled(isDisabled)
@@ -320,18 +283,16 @@ struct SidebarView: View {
             if model.branchTree.isEmpty {
                 VStack(spacing: 8) { Image(systemName: "arrow.triangle.branch").font(.title2).foregroundStyle(.secondary); Text(L10n("Sem branches detectadas")).font(.headline) }.frame(maxWidth: .infinity, minHeight: 120)
             } else {
-                ScrollView(.horizontal, showsIndicators: true) {
-                    List(selection: $selectedBranchTreeNodeID) {
-                        ForEach(model.branchTree) { root in
-                            OutlineGroup([root], children: \.outlineChildren) { node in
-                                branchTreeNodeRow(node).tag(node.id)
-                            }
+                List(selection: $selectedBranchTreeNodeID) {
+                    ForEach(model.branchTree) { root in
+                        OutlineGroup([root], children: \.outlineChildren) { node in
+                            branchTreeNodeRow(node).tag(node.id)
                         }
                     }
-                    .listStyle(.sidebar)
-                    .controlSize(.small)
-                    .frame(minWidth: 500)
-                }.frame(minHeight: 120, maxHeight: 250)
+                }
+                .listStyle(.sidebar)
+                .controlSize(.small)
+                .frame(minHeight: 120, maxHeight: 250)
             }
         }
     }
@@ -542,12 +503,20 @@ struct SidebarView: View {
                     }
 
                     if model.aiProvider != .none {
-                        Picker(L10n("Estilo de Mensagem"), selection: $model.commitMessageStyle) {
-                            ForEach(CommitMessageStyle.allCases) { style in
-                                Text(style.label).tag(style)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Picker(L10n("Commit com IA"), selection: $model.commitMessageStyle) {
+                                ForEach(CommitMessageStyle.allCases) { style in
+                                    Text(style.label).tag(style)
+                                }
                             }
+                            .pickerStyle(.segmented)
+
+                            Text(model.commitMessageStyle == .compact
+                                ? L10n("commit.style.compact.hint")
+                                : L10n("commit.style.detailed.hint"))
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
                         }
-                        .pickerStyle(.segmented)
                     }
                 }
             }
@@ -568,5 +537,53 @@ struct SidebarView: View {
         } else {
             preferredTerminalRaw = ExternalTerminal.terminal.rawValue
         }
+    }
+}
+
+private struct RecentProjectRow: View {
+    let url: URL
+    let changedCount: Int?
+    let onTap: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 10) {
+                Image(systemName: "folder.fill")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.accentColor.opacity(0.8))
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(url.lastPathComponent)
+                        .font(.system(size: 13, weight: .semibold))
+                        .lineLimit(1)
+                    Text(url.path)
+                        .font(.system(size: 9))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+                Spacer()
+
+                if let count = changedCount, count > 0 {
+                    Text("\(count)")
+                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(Color.orange.opacity(0.2))
+                        .foregroundStyle(.orange)
+                        .clipShape(Capsule())
+                }
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundStyle(.secondary.opacity(0.5))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(RoundedRectangle(cornerRadius: 8).fill(isHovered ? DesignSystem.Colors.glassHover : DesignSystem.Colors.glassMinimal))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { h in isHovered = h }
     }
 }
