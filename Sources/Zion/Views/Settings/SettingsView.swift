@@ -8,6 +8,11 @@ struct SettingsView: View {
                     Label(L10n("settings.tab.general"), systemImage: "gearshape")
                 }
 
+            EditorSettingsTab()
+                .tabItem {
+                    Label(L10n("settings.tab.editor"), systemImage: "pencil.and.outline")
+                }
+
             AISettingsTab()
                 .tabItem {
                     Label(L10n("settings.tab.ai"), systemImage: "sparkles")
@@ -18,6 +23,6 @@ struct SettingsView: View {
                     Label(L10n("settings.tab.notifications"), systemImage: "bell.badge")
                 }
         }
-        .frame(width: 480, height: 520)
+        .frame(width: 480, height: 580)
     }
 }
