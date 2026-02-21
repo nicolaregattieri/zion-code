@@ -151,6 +151,15 @@
 | Notifications | macOS + ntfy push alerts when AI review completes |
 | Open in Code Review | Click a PR to open it in the full Code Review screen |
 
+## Auto Updates
+
+| Feature | Description |
+|---------|-------------|
+| Check for Updates | Manual check from Help menu via Sparkle framework |
+| Automatic Checks | Background update check every 24 hours |
+| Delta Updates | Smart downloads that only transfer version differences |
+| EdDSA Signing | Secure update verification with EdDSA public key |
+
 ## GitHub Integration
 
 | Feature | Description |

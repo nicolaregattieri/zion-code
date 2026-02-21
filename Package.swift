@@ -12,13 +12,15 @@ let package = Package(
         .executable(name: "Zion", targets: ["Zion"])
     ],
     dependencies: [
-        .package(url: "https://github.com/migueldeicaza/SwiftTerm.git", from: "1.0.7")
+        .package(url: "https://github.com/migueldeicaza/SwiftTerm.git", from: "1.0.7"),
+        .package(url: "https://github.com/sparkle-project/Sparkle.git", from: "2.8.0")
     ],
     targets: [
         .executableTarget(
             name: "Zion",
             dependencies: [
-                "SwiftTerm"
+                "SwiftTerm",
+                "Sparkle"
             ],
             resources: [
                 .process("Resources")

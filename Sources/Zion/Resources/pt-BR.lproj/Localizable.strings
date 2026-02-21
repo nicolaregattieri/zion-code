@@ -732,6 +732,8 @@
 "pr.inbox.title" = "Revisões de PR";
 "pr.inbox.reviewAll" = "Revisar Todos";
 "pr.inbox.openGitHub" = "Abrir no GitHub";
+"pr.inbox.empty" = "Nenhum PR aguardando revisão";
+"pr.inbox.setup.hint" = "Requer gh CLI autenticado (gh auth login)";
 "pr.status.pending" = "Pendente";
 "pr.status.reviewing" = "Revisando...";
 "pr.status.reviewed" = "Revisado";
@@ -785,3 +787,17 @@
 "map.prinbox.autoreview.description" = "Quando ativado, a IA revisa automaticamente PRs atribuídos e notifica você com os achados prontos.";
 "map.prinbox.notifications.title" = "Notificações de Revisão";
 "map.prinbox.notifications.description" = "Receba notificações do macOS e alertas push via ntfy quando a IA completar revisões de PR.";
+
+// Auto Updates (Sparkle)
+"Buscar Atualizacoes..." = "Buscar Atualizações...";
+"help.updates.title" = "Atualizações Automáticas";
+"help.updates.check" = "Busque atualizações pelo menu Ajuda";
+"help.updates.auto" = "Verificação automática diária em segundo plano";
+"help.updates.delta" = "Atualizações delta para downloads menores";
+"map.autoUpdates.subtitle" = "Atualizações automáticas nativas via Sparkle com verificação diária.";
+"map.updates.check.title" = "Buscar Atualizações";
+"map.updates.check.description" = "Busque manualmente por novas versões pelo menu Ajuda > Buscar Atualizações.";
+"map.updates.auto.title" = "Verificação Automática";
+"map.updates.auto.description" = "O Zion verifica automaticamente se há atualizações a cada 24 horas em segundo plano.";
+"map.updates.delta.title" = "Atualizações Delta";
+"map.updates.delta.description" = "Downloads inteligentes que transferem apenas as diferenças entre versões.";
