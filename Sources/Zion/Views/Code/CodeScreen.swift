@@ -335,7 +335,7 @@ struct CodeScreen: View {
             // File tree header
             CardHeader(L10n("Arquivos"), icon: "folder.fill") {
                 Button { model.refreshFileTree() } label: { Image(systemName: "arrow.clockwise") }
-                    .buttonStyle(.plain).contentShape(Rectangle()).foregroundStyle(.secondary)
+                    .buttonStyle(.plain).cursorArrow().foregroundStyle(.secondary)
                     .help(L10n("Atualizar arvore de arquivos"))
             }
             .padding(12)
@@ -874,7 +874,7 @@ struct CodeTab: View {
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
-            .contentShape(Rectangle())
+            .cursorArrow()
             .opacity(isActive || isHovering ? 1.0 : 0.0)
         }
         .padding(.horizontal, 12)

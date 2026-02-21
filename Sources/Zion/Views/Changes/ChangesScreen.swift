@@ -48,7 +48,7 @@ struct ChangesScreen: View {
                     model.refreshRepository()
                 } label: {
                     Image(systemName: "arrow.clockwise")
-                }.buttonStyle(.plain).contentShape(Rectangle()).help(L10n("Atualizar"))
+                }.buttonStyle(.plain).cursorArrow().help(L10n("Atualizar"))
             }
             .padding(12)
 
@@ -234,7 +234,7 @@ struct ChangesScreen: View {
                             .foregroundStyle(.tertiary)
                     }
                     .buttonStyle(.plain)
-                    .contentShape(Rectangle())
+                    .cursorArrow()
                 }
                 .padding(.horizontal, 12)
                 .padding(.bottom, 8)

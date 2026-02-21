@@ -27,7 +27,7 @@ struct NotificationSettingsTab: View {
                             isEditingTopic = true
                         }
                         .buttonStyle(.plain)
-                        .contentShape(Rectangle())
+                        .cursorArrow()
                         .foregroundStyle(.blue)
                     }
                 } else {

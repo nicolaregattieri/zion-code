@@ -281,3 +281,15 @@ struct DesignSystem {
         )
     }
 }
+
+extension View {
+    func cursorArrow() -> some View {
+        self.onHover { inside in
+            if inside {
+                NSCursor.arrow.push()
+            } else {
+                NSCursor.pop()
+            }
+        }
+    }
+}

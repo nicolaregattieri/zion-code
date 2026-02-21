@@ -110,7 +110,7 @@ struct CommitDetailContent: View {
                                                         .foregroundStyle(.secondary)
                                                 }
                                                 .buttonStyle(.plain)
-                                                .contentShape(Rectangle())
+                                                .cursorArrow()
                                                 .help(L10n("Abrir no Editor"))
                                             }
                                             if model != nil && commitID != nil {
