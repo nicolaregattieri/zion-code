@@ -1,8 +1,12 @@
 <div align="center">
 
+<img src="docs/zion-logo.png" width="128" alt="Zion" />
+
 # Zion
 
-### Graph. Code. Terminal. One window.
+*The view from the top.*
+
+**Graph. Code. Terminal. One window.**
 
 A native Git workspace for macOS that puts your commit graph, a real code editor,
 and a full terminal in one window. Stage hunks, resolve conflicts, write code, and
