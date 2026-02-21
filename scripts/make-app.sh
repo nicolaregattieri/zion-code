@@ -72,7 +72,7 @@ cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
   <key>NSHighResolutionCapable</key>
   <true/>
   <key>SUFeedURL</key>
-  <string>https://github.com/nicolaregattieri/GraphForge/releases/latest/download/appcast.xml</string>
+  <string>https://github.com/nicolaregattieri/zion-code/releases/latest/download/appcast.xml</string>
   <key>SUPublicEDKey</key>
   <string>4UJJHDAuD5klxnaOjA8q/4pd/tVSygoSNWZ2W/IQ6hQ=</string>
   <key>SUEnableAutomaticChecks</key>
