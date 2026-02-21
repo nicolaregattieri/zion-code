@@ -190,6 +190,9 @@ final class RepositoryViewModel {
 
     // Background fetch
     var behindRemoteCount: Int = 0
+    var aheadRemoteCount: Int = 0
+    var showPushDivergenceWarning: Bool = false
+    var pushDivergenceState: PushDivergenceState = .clear
     @ObservationIgnored private var backgroundFetchTask: Task<Void, Never>?
     @ObservationIgnored private var lastNotifiedBehindCount: Int = 0
     @ObservationIgnored private var notifiedReviewRequestPRIDs: Set<Int> = []
@@ -883,6 +886,21 @@ final class RepositoryViewModel {
 
     func fetch() { runGitAction(label: "Fetch", args: ["fetch", "--all", "--prune"]) }
     func pull() { runGitAction(label: "Pull", args: ["pull", "--ff-only"]) }
+    func requestPush() {
+        let behind = behindRemoteCount
+        let ahead = aheadRemoteCount
+        if behind > 0 && ahead > 0 {
+            pushDivergenceState = .diverged(ahead: ahead, behind: behind)
+            showPushDivergenceWarning = true
+        } else if behind > 0 {
+            pushDivergenceState = .behind(behind)
+            showPushDivergenceWarning = true
+        } else {
+            pushDivergenceState = .clear
+            push()
+        }
+    }
+
     func push() {
         let branch = currentBranch ?? ""
         let hasUpstream = branchInfos.first(where: { !$0.isRemote && $0.name == branch })?.upstream.isEmpty == false
@@ -893,6 +911,19 @@ final class RepositoryViewModel {
             runGitAction(label: "Push", args: ["push", "--set-upstream", remote, branch])
         } else {
             runGitAction(label: "Push", args: ["push"])
+        }
+    }
+
+    func forceWithLeasePush() {
+        let branch = currentBranch ?? ""
+        let hasUpstream = branchInfos.first(where: { !$0.isRemote && $0.name == branch })?.upstream.isEmpty == false
+        if hasUpstream {
+            runGitAction(label: "Push", args: ["push", "--force-with-lease"])
+        } else if !branch.isEmpty {
+            let remote = remotes.first?.name ?? "origin"
+            runGitAction(label: "Push", args: ["push", "--force-with-lease", "--set-upstream", remote, branch])
+        } else {
+            runGitAction(label: "Push", args: ["push", "--force-with-lease"])
         }
     }
 
@@ -2993,6 +3024,14 @@ final class RepositoryViewModel {
         }
     }
 
+    func openPRFromInfo(_ pr: GitHubPRInfo) {
+        branchReviewSource = pr.headBranch
+        branchReviewTarget = pr.baseBranch
+        if !pr.headBranch.isEmpty && !pr.baseBranch.isEmpty {
+            startCodeReview(source: pr.headBranch, target: pr.baseBranch)
+        }
+    }
+
     func reviewAllPRs() {
         guard isAIConfigured, let url = repositoryURL else { return }
 
@@ -3466,12 +3505,18 @@ final class RepositoryViewModel {
             // Dry-run fetch to check for updates
             let _ = try await worker.runAction(args: ["fetch", "--dry-run"], in: url)
             // Check how many commits behind
-            let output = try await worker.runAction(
+            let behindOutput = try await worker.runAction(
                 args: ["rev-list", "--count", "HEAD..@{upstream}"],
                 in: url
             )
-            let newCount = Int(output.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
+            let newCount = Int(behindOutput.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
             behindRemoteCount = newCount
+            // Check how many commits ahead
+            let aheadOutput = try await worker.runAction(
+                args: ["rev-list", "--count", "@{upstream}..HEAD"],
+                in: url
+            )
+            aheadRemoteCount = Int(aheadOutput.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
             if newCount > 0 && lastNotifiedBehindCount == 0 {
                 await ntfyClient.sendIfEnabled(
                     event: .newRemoteCommits,
@@ -3484,6 +3529,7 @@ final class RepositoryViewModel {
         } catch {
             logger.log(.info, "Behind remote check failed (expected if no upstream): \(error.localizedDescription)", source: #function)
             behindRemoteCount = 0
+            aheadRemoteCount = 0
             lastNotifiedBehindCount = 0
         }
     }

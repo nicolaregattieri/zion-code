@@ -146,10 +146,11 @@
 | Feature | Description |
 |---------|-------------|
 | PR Queue | Sidebar card showing assigned PRs with status badges |
+| All Open PRs | Browse all open PRs in the repo via segmented "All Open" tab |
 | Auto-Review | AI automatically reviews assigned PRs when they arrive |
 | Status Flow | Pending → Reviewing → Reviewed/Clean with severity badges |
 | Notifications | macOS + ntfy push alerts when AI review completes |
-| Open in Code Review | Click a PR to open it in the full Code Review screen |
+| Open in Code Review | Click any PR (assigned or open) to open it in the full Code Review screen |
 
 ## Auto Updates
 
@@ -174,7 +175,9 @@
 |---------|-------------|
 | Fetch | `git fetch --all --prune` |
 | Pull | `git pull --ff-only` |
-| Push | `git push` |
+| Push | `git push` with pre-push divergence check |
+| Push Divergence Warning | Detects when branch is behind or diverged from remote before pushing; offers Pull First or Force Push with Lease |
+| Ahead/Behind Badges | Status bar shows ↑N (ahead, blue) and ↓N (behind, orange) commit counts vs remote |
 | Add/Remove Remote | Manage remote URLs |
 | Test Connection | Verify remote connectivity |
 

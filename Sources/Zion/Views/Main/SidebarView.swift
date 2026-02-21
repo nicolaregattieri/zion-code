@@ -30,7 +30,7 @@ struct SidebarView: View {
                     worktreesCard
                 }
 
-                if model.repositoryURL != nil, !model.prReviewQueue.isEmpty {
+                if model.repositoryURL != nil, model.hasGitHubRemote {
                     PRInboxCard(model: model)
                 }
 

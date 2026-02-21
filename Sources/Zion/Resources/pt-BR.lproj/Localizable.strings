@@ -738,6 +738,11 @@
 "pr.status.reviewing" = "Revisando...";
 "pr.status.reviewed" = "Revisado";
 "pr.status.clean" = "Limpo";
+"pr.tab.forReview" = "Para Revisão";
+"pr.tab.allOpen" = "Todos Abertos";
+"pr.allOpen.empty" = "Nenhum PR aberto";
+"pr.draft" = "Rascunho";
+"pr.review" = "Revisar";
 "ntfy.event.prAutoReviewComplete" = "Revisão automática de PR concluída";
 
 // Phase 5: Help Sheet
@@ -748,7 +753,7 @@
 "help.codeReview.title" = "Code Review";
 "help.codeReview.features" = "Revisão em tela cheia por arquivo|Análise IA por arquivo|Exportar como Markdown|Atalho Cmd+Shift+R";
 "help.prInbox.title" = "Caixa de PRs";
-"help.prInbox.features" = "Fila de PRs atribuídos|Revisão automática com IA|Clique para abrir no Code Review|Notificações macOS + ntfy";
+"help.prInbox.features" = "Fila de PRs atribuídos|Navegar todos os PRs abertos|Revisão automática com IA|Clique para abrir no Code Review|Notificações macOS + ntfy";
 
 
 // Zion Map — Settings
@@ -801,3 +806,10 @@
 "map.updates.auto.description" = "O Zion verifica automaticamente se há atualizações a cada 24 horas em segundo plano.";
 "map.updates.delta.title" = "Atualizações Delta";
 "map.updates.delta.description" = "Downloads inteligentes que transferem apenas as diferenças entre versões.";
+
+// Push divergence warnings
+"push.warning.title" = "Atenção ao Push";
+"push.warning.behind" = "Sua branch está %@ commits atrás do remoto. Faça Pull primeiro para evitar conflitos.";
+"push.warning.diverged" = "Sua branch divergiu: %@ commits à frente, %@ atrás do remoto.";
+"push.pullFirst" = "Fazer Pull primeiro";
+"push.forceWithLease" = "Force Push (seguro)";
