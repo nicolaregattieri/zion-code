@@ -84,7 +84,7 @@ struct CodeScreen: View {
         ZStack {
             VStack(spacing: 0) {
                 editorToolbar
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, 8)
                     .padding(.vertical, 8)
                     .background(model.selectedTheme.colors.background)
                     .environment(\.colorScheme, model.selectedTheme.isLightAppearance ? .light : .dark)
