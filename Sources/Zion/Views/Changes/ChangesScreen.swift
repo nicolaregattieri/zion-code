@@ -174,16 +174,16 @@ struct ChangesScreen: View {
                 Spacer()
                 if model.isAIConfigured {
                     Button {
-                        model.explainFileDiff(fileName: file, diff: model.currentFileDiff)
+                        model.explainDiffDetailed(fileName: file, diff: model.currentFileDiff)
                     } label: {
-                        if model.isGeneratingAIMessage {
+                        if model.isExplainingDiff {
                             ProgressView().controlSize(.small).frame(width: 12, height: 12)
                         } else {
                             Image(systemName: "sparkles").font(.system(size: 12))
                         }
                     }
                     .buttonStyle(.bordered).controlSize(.small)
-                    .disabled(model.isGeneratingAIMessage)
+                    .disabled(model.isExplainingDiff)
                     .help(L10n("Explicar diff com IA"))
                 }
                 Button {
@@ -199,7 +199,18 @@ struct ChangesScreen: View {
             }
             .padding(12)
 
-            if !model.aiDiffExplanation.isEmpty {
+            // Detailed diff explanation card (Phase 2)
+            if let explanation = model.currentDiffExplanation {
+                DiffExplanationCard(explanation: explanation) {
+                    model.currentDiffExplanation = nil
+                }
+                .padding(.horizontal, 12)
+                .padding(.bottom, 8)
+            } else if model.isExplainingDiff {
+                DiffExplanationShimmer()
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 8)
+            } else if !model.aiDiffExplanation.isEmpty {
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "sparkles")
                         .font(.system(size: 10))

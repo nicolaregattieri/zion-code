@@ -194,6 +194,55 @@ actor GitHubClient {
         }
     }
 
+    /// Fetch the diff for a specific PR
+    func fetchPRDiff(remote: GitHubRemote, prNumber: Int) async -> String? {
+        guard let token = await getToken() else { return nil }
+        let urlString = "https://api.github.com/repos/\(remote.owner)/\(remote.repo)/pulls/\(prNumber)"
+        guard let url = URL(string: urlString) else { return nil }
+
+        var request = URLRequest(url: url)
+        request.setValue("application/vnd.github.diff", forHTTPHeaderField: "Accept")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 30
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { return nil }
+            return String(data: data, encoding: .utf8)
+        } catch {
+            return nil
+        }
+    }
+
+    /// Fetch files changed in a PR
+    func fetchPRFiles(remote: GitHubRemote, prNumber: Int) async -> [(filename: String, status: String, additions: Int, deletions: Int, patch: String)] {
+        guard let token = await getToken() else { return [] }
+        let urlString = "https://api.github.com/repos/\(remote.owner)/\(remote.repo)/pulls/\(prNumber)/files?per_page=100"
+        guard let url = URL(string: urlString) else { return [] }
+
+        var request = URLRequest(url: url)
+        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 30
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { return [] }
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return [] }
+
+            return json.compactMap { file in
+                guard let filename = file["filename"] as? String,
+                      let status = file["status"] as? String else { return nil }
+                let additions = file["additions"] as? Int ?? 0
+                let deletions = file["deletions"] as? Int ?? 0
+                let patch = file["patch"] as? String ?? ""
+                return (filename: filename, status: status, additions: additions, deletions: deletions, patch: patch)
+            }
+        } catch {
+            return []
+        }
+    }
+
     /// Create a pull request
     func createPullRequest(remote: GitHubRemote, title: String, body: String, head: String, base: String, draft: Bool) async throws -> GitHubPRInfo {
         guard let token = await getToken() else {

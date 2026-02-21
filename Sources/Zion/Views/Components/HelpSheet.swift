@@ -2,149 +2,91 @@ import SwiftUI
 
 struct HelpSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @State private var path: [FeatureSection] = []
+    @State private var hoveredSection: FeatureSection?
 
     private let columns = [
         GridItem(.flexible(), spacing: 16),
         GridItem(.flexible(), spacing: 16)
     ]
 
+    /// Ordered list of sections matching the original card layout
+    private let sections: [FeatureSection] = FeatureSection.allCases
+
+    /// Feature bullet keys per section (matching original HelpSheet content)
+    private func featureKeys(for section: FeatureSection) -> [String] {
+        switch section {
+        case .tree:
+            return ["help.tree.lanes", "help.tree.search", "help.tree.jumpbar",
+                    "help.tree.pending", "help.tree.signature"]
+        case .code:
+            return ["help.code.editor", "help.code.quickopen", "help.code.blame",
+                    "help.code.themes", "help.code.unsaved"]
+        case .terminal:
+            return ["help.terminal.pty", "help.terminal.splits", "help.terminal.tabs",
+                    "help.terminal.zoom", "help.terminal.persistence"]
+        case .clipboard:
+            return ["help.clipboard.capture", "help.clipboard.paste",
+                    "help.clipboard.drag", "help.clipboard.images"]
+        case .operations:
+            return ["help.ops.commit", "help.ops.branch", "help.ops.stash",
+                    "help.ops.rebase", "help.ops.hunk"]
+        case .worktrees:
+            return ["help.worktree.parallel", "help.worktree.quick", "help.worktree.terminal"]
+        case .ai:
+            return ["help.ai.commit", "help.ai.diff", "help.ai.pr", "help.ai.stash",
+                    "help.ai.conflict", "help.ai.review", "help.ai.changelog",
+                    "help.ai.search", "help.ai.branch", "help.ai.blame",
+                    "help.ai.split", "help.ai.style"]
+        case .customization:
+            return ["help.customization.languages", "help.customization.appearance",
+                    "help.customization.editor", "help.customization.confirmation",
+                    "help.customization.reflog"]
+        case .diagnostics:
+            return ["help.diagnostics.export", "help.diagnostics.copy", "help.diagnostics.sanitize"]
+        case .conflicts:
+            return ["help.conflicts.resolve", "help.conflicts.choose", "help.conflicts.continue"]
+        case .settings:
+            return L10n("help.settings.features").split(separator: "|").map(String.init)
+        case .diffExplanation:
+            return L10n("help.diffExplanation.features").split(separator: "|").map(String.init)
+        case .codeReview:
+            return L10n("help.codeReview.features").split(separator: "|").map(String.init)
+        case .prInbox:
+            return L10n("help.prInbox.features").split(separator: "|").map(String.init)
+        }
+    }
+
     var body: some View {
+        NavigationStack(path: $path) {
+            discoverGrid
+                .navigationDestination(for: FeatureSection.self) { section in
+                    ZionMapDetailPage(section: section)
+                }
+        }
+        .toolbar(.hidden)
+        .frame(width: 720, height: 680)
+    }
+
+    // MARK: - Discover Grid (root page)
+
+    private var discoverGrid: some View {
         VStack(spacing: 0) {
             header
             Divider()
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     heroSection
+
                     LazyVGrid(columns: columns, spacing: 16) {
-                        featureCard(
-                            icon: "point.3.connected.trianglepath.dotted",
-                            color: .purple,
-                            title: L10n("Zion Tree"),
-                            features: [
-                                L10n("help.tree.lanes"),
-                                L10n("help.tree.search"),
-                                L10n("help.tree.jumpbar"),
-                                L10n("help.tree.pending"),
-                                L10n("help.tree.signature"),
-                            ]
-                        )
-
-                        featureCard(
-                            icon: "terminal.fill",
-                            color: .green,
-                            title: L10n("Zion Code"),
-                            features: [
-                                L10n("help.code.editor"),
-                                L10n("help.code.quickopen"),
-                                L10n("help.code.blame"),
-                                L10n("help.code.themes"),
-                                L10n("help.code.unsaved"),
-                            ]
-                        )
-
-                        featureCard(
-                            icon: "rectangle.split.1x2",
-                            color: .blue,
-                            title: L10n("Terminal"),
-                            features: [
-                                L10n("help.terminal.pty"),
-                                L10n("help.terminal.splits"),
-                                L10n("help.terminal.tabs"),
-                                L10n("help.terminal.zoom"),
-                                L10n("help.terminal.persistence"),
-                            ]
-                        )
-
-                        featureCard(
-                            icon: "clipboard",
-                            color: .orange,
-                            title: L10n("Clipboard Inteligente"),
-                            features: [
-                                L10n("help.clipboard.capture"),
-                                L10n("help.clipboard.paste"),
-                                L10n("help.clipboard.drag"),
-                                L10n("help.clipboard.images"),
-                            ]
-                        )
-
-                        featureCard(
-                            icon: "gearshape.2.fill",
-                            color: .indigo,
-                            title: L10n("Centro de Operacoes"),
-                            features: [
-                                L10n("help.ops.commit"),
-                                L10n("help.ops.branch"),
-                                L10n("help.ops.stash"),
-                                L10n("help.ops.rebase"),
-                                L10n("help.ops.hunk"),
-                            ]
-                        )
-
-                        featureCard(
-                            icon: "arrow.triangle.branch",
-                            color: .teal,
-                            title: L10n("Worktrees"),
-                            features: [
-                                L10n("help.worktree.parallel"),
-                                L10n("help.worktree.quick"),
-                                L10n("help.worktree.terminal"),
-                            ]
-                        )
-
-                        featureCard(
-                            icon: "sparkles",
-                            color: .pink,
-                            title: L10n("Assistente IA"),
-                            features: [
-                                L10n("help.ai.commit"),
-                                L10n("help.ai.diff"),
-                                L10n("help.ai.pr"),
-                                L10n("help.ai.stash"),
-                                L10n("help.ai.conflict"),
-                                L10n("help.ai.review"),
-                                L10n("help.ai.changelog"),
-                                L10n("help.ai.search"),
-                                L10n("help.ai.branch"),
-                                L10n("help.ai.blame"),
-                                L10n("help.ai.split"),
-                                L10n("help.ai.style"),
-                            ]
-                        )
-
-                        featureCard(
-                            icon: "globe",
-                            color: .cyan,
-                            title: L10n("help.customization.title"),
-                            features: [
-                                L10n("help.customization.languages"),
-                                L10n("help.customization.appearance"),
-                                L10n("help.customization.editor"),
-                                L10n("help.customization.confirmation"),
-                                L10n("help.customization.reflog"),
-                            ]
-                        )
-
-                        featureCard(
-                            icon: "doc.text.magnifyingglass",
-                            color: .gray,
-                            title: L10n("help.diagnostics.title"),
-                            features: [
-                                L10n("help.diagnostics.export"),
-                                L10n("help.diagnostics.copy"),
-                                L10n("help.diagnostics.sanitize"),
-                            ]
-                        )
-
-                        featureCard(
-                            icon: "exclamationmark.triangle.fill",
-                            color: .orange,
-                            title: L10n("help.conflicts.title"),
-                            features: [
-                                L10n("help.conflicts.resolve"),
-                                L10n("help.conflicts.choose"),
-                                L10n("help.conflicts.continue"),
-                            ]
-                        )
+                        ForEach(sections) { section in
+                            Button {
+                                path.append(section)
+                            } label: {
+                                featureCard(for: section)
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
 
                     shortcutsHighlight
@@ -152,8 +94,9 @@ struct HelpSheet: View {
                 .padding(24)
             }
         }
-        .frame(width: 680, height: 640)
     }
+
+    // MARK: - Header
 
     private var header: some View {
         HStack {
@@ -174,6 +117,8 @@ struct HelpSheet: View {
         .padding(20)
     }
 
+    // MARK: - Hero
+
     private var heroSection: some View {
         VStack(spacing: 8) {
             Text(L10n("help.hero.title"))
@@ -186,24 +131,34 @@ struct HelpSheet: View {
         }
     }
 
-    private func featureCard(icon: String, color: Color, title: String, features: [String]) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+    // MARK: - Feature Card
+
+    private func featureCard(for section: FeatureSection) -> some View {
+        let isHovered = hoveredSection == section
+        let features = featureKeys(for: section).map { L10n($0) }
+
+        return VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
-                Image(systemName: icon)
+                Image(systemName: section.icon)
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(color)
+                    .foregroundStyle(section.color)
                     .frame(width: 28, height: 28)
-                    .background(color.opacity(0.12))
+                    .background(section.color.opacity(0.12))
                     .clipShape(RoundedRectangle(cornerRadius: 7))
-                Text(title)
+                Text(L10n(section.titleKey))
                     .font(.system(size: 13, weight: .bold))
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.tertiary)
+                    .opacity(isHovered ? 1 : 0.5)
             }
 
             VStack(alignment: .leading, spacing: 5) {
                 ForEach(Array(features.enumerated()), id: \.offset) { _, text in
                     HStack(alignment: .top, spacing: 6) {
                         Circle()
-                            .fill(color.opacity(0.5))
+                            .fill(section.color.opacity(0.5))
                             .frame(width: 4, height: 4)
                             .padding(.top, 5)
                         Text(text)
@@ -216,13 +171,20 @@ struct HelpSheet: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DesignSystem.Colors.glassSubtle)
+        .background(isHovered ? DesignSystem.Colors.glassHover : DesignSystem.Colors.glassSubtle)
         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
         )
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                hoveredSection = hovering ? section : nil
+            }
+        }
     }
+
+    // MARK: - Shortcuts Highlight
 
     private var shortcutsHighlight: some View {
         HStack(spacing: 12) {
@@ -237,7 +199,7 @@ struct HelpSheet: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Text("⌘?")
+            Text("\u{2318}?")
                 .font(.system(size: 13, weight: .medium, design: .monospaced))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)

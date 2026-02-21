@@ -113,6 +113,44 @@
 | Commit Message Style | Toggle between compact (single-line) and detailed (header + bullet points) AI-generated messages |
 | Provider Config | Anthropic (Claude), OpenAI (GPT), Google (Gemini), API keys in Keychain |
 
+## Settings Window
+
+| Feature | Description | Shortcut |
+|---------|-------------|----------|
+| Native Settings | macOS Settings window with 3 tabs: General, AI, Notifications | `⌘,` |
+| General Tab | Language, Appearance, External Terminal, Confirmation Mode | — |
+| AI Tab | Provider, API key, Commit style, Diff explanation depth, Auto-explain | — |
+| Notifications Tab | ntfy topic, events, PR polling interval, Auto-review toggle | — |
+
+## AI Diff Explanation
+
+| Feature | Description |
+|---------|-------------|
+| Structured Analysis | Intent, Risks, and Narrative sections for every diff |
+| Risk Severity | Color-coded badges (Safe/Moderate/Risky) with risk assessment |
+| Auto-Explain | Automatically analyze diffs when selecting files |
+| Copy to Clipboard | One-click copy of explanation text |
+
+## Code Review
+
+| Feature | Description | Shortcut |
+|---------|-------------|----------|
+| Full-Window Review | Dedicated 1000x700 window with file list and diff viewer | `⇧⌘R` |
+| Per-File AI Analysis | Individual AI review for each changed file |  — |
+| Review Statistics | Files changed, additions/deletions, commit count, risk badge | — |
+| Export Markdown | Export full review as Markdown for PR comments | — |
+| Copy Summary | Copy review summary to clipboard | — |
+
+## PR Inbox
+
+| Feature | Description |
+|---------|-------------|
+| PR Queue | Sidebar card showing assigned PRs with status badges |
+| Auto-Review | AI automatically reviews assigned PRs when they arrive |
+| Status Flow | Pending → Reviewing → Reviewed/Clean with severity badges |
+| Notifications | macOS + ntfy push alerts when AI review completes |
+| Open in Code Review | Click a PR to open it in the full Code Review screen |
+
 ## GitHub Integration
 
 | Feature | Description |
@@ -151,6 +189,7 @@
 
 | Feature | Description |
 |---------|-------------|
+| Settings Window | Native macOS Settings window (`⌘,`) with General, AI, and Notifications tabs |
 | Language | Portuguese (BR), English, Spanish, System |
 | Appearance Mode | System, Light, Dark |
 | External Editor | VS Code, Cursor, Antigravity, Xcode, IntelliJ, Sublime, custom |
@@ -187,5 +226,6 @@
 | `⌃+` | Terminal zoom in |
 | `⌃-` | Terminal zoom out |
 | `⌘F` | Search graph |
+| `⇧⌘R` | Code Review |
 | `↑↓` | Navigate commits |
 | `Esc` | Deselect / close |

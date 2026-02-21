@@ -549,6 +549,76 @@ enum PushMode: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
+// MARK: - Zion Map (Help Detail Navigation)
+
+enum FeatureSection: String, CaseIterable, Identifiable {
+    case tree, code, terminal, clipboard, operations, worktrees, ai,
+         customization, diagnostics, conflicts, settings, diffExplanation,
+         codeReview, prInbox
+    var id: String { rawValue }
+
+    var icon: String {
+        switch self {
+        case .tree: return "point.3.connected.trianglepath.dotted"
+        case .code: return "terminal.fill"
+        case .terminal: return "rectangle.split.1x2"
+        case .clipboard: return "clipboard"
+        case .operations: return "gearshape.2.fill"
+        case .worktrees: return "arrow.triangle.branch"
+        case .ai: return "sparkles"
+        case .customization: return "globe"
+        case .diagnostics: return "doc.text.magnifyingglass"
+        case .conflicts: return "exclamationmark.triangle.fill"
+        case .settings: return "gearshape"
+        case .diffExplanation: return "sparkles"
+        case .codeReview: return "doc.text.magnifyingglass"
+        case .prInbox: return "tray.full.fill"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .tree: return .purple
+        case .code: return .green
+        case .terminal: return .blue
+        case .clipboard: return .orange
+        case .operations: return .indigo
+        case .worktrees: return .teal
+        case .ai: return .pink
+        case .customization: return .cyan
+        case .diagnostics: return .gray
+        case .conflicts: return .orange
+        case .settings: return .gray
+        case .diffExplanation: return .purple
+        case .codeReview: return .indigo
+        case .prInbox: return .mint
+        }
+    }
+
+    var titleKey: String {
+        switch self {
+        case .tree: return "Zion Tree"
+        case .code: return "Zion Code"
+        case .terminal: return "Terminal"
+        case .clipboard: return "Clipboard Inteligente"
+        case .operations: return "Centro de Operacoes"
+        case .worktrees: return "Worktrees"
+        case .ai: return "Assistente IA"
+        case .customization: return "help.customization.title"
+        case .diagnostics: return "help.diagnostics.title"
+        case .conflicts: return "help.conflicts.title"
+        case .settings: return "help.settings.title"
+        case .diffExplanation: return "help.diffExplanation.title"
+        case .codeReview: return "help.codeReview.title"
+        case .prInbox: return "help.prInbox.title"
+        }
+    }
+
+    var subtitleKey: String {
+        "map.\(rawValue).subtitle"
+    }
+}
+
 enum AppSection: String, CaseIterable, Identifiable {
     case code, graph, operations
     var id: String { rawValue }
@@ -695,5 +765,148 @@ enum ExternalTerminal: String, CaseIterable, Identifiable {
         case .warp: return "Warp"
         case .custom: return L10n("Selecionar do Disco...")
         }
+    }
+}
+
+// MARK: - Phase 2: Diff Explanation Models
+
+enum DiffExplanationDepth: String, CaseIterable, Identifiable {
+    case quick, detailed
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .quick: return L10n("settings.diff.depth.quick")
+        case .detailed: return L10n("settings.diff.depth.detailed")
+        }
+    }
+}
+
+struct DiffExplanation: Sendable {
+    let intent: String
+    let risks: String
+    let narrative: String
+    let severity: DiffExplanationSeverity
+
+    enum DiffExplanationSeverity: String, Sendable {
+        case safe, moderate, risky
+
+        var color: Color {
+            switch self {
+            case .safe: return .green
+            case .moderate: return .orange
+            case .risky: return .red
+            }
+        }
+
+        var label: String {
+            switch self {
+            case .safe: return L10n("diff.severity.safe")
+            case .moderate: return L10n("diff.severity.moderate")
+            case .risky: return L10n("diff.severity.risky")
+            }
+        }
+    }
+}
+
+// MARK: - Phase 3: Code Review Models
+
+struct CodeReviewFile: Identifiable {
+    let id = UUID()
+    let path: String
+    let status: FileChangeStatus
+    let additions: Int
+    let deletions: Int
+    var findings: [ReviewFinding] = []
+    var explanation: DiffExplanation?
+    var diff: String = ""
+    var hunks: [DiffHunk] = []
+    var isReviewed: Bool = false
+}
+
+enum FileChangeStatus: String, Sendable {
+    case added, modified, deleted, renamed
+
+    var icon: String {
+        switch self {
+        case .added: return "plus.circle.fill"
+        case .modified: return "pencil.circle.fill"
+        case .deleted: return "minus.circle.fill"
+        case .renamed: return "arrow.right.circle.fill"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .added: return .green
+        case .modified: return .orange
+        case .deleted: return .red
+        case .renamed: return .blue
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .added: return L10n("file.status.added")
+        case .modified: return L10n("file.status.modified")
+        case .deleted: return L10n("file.status.deleted")
+        case .renamed: return L10n("file.status.renamed")
+        }
+    }
+}
+
+struct CodeReviewStats {
+    let totalFiles: Int
+    let totalAdditions: Int
+    let totalDeletions: Int
+    let commitCount: Int
+    let criticalCount: Int
+    let warningCount: Int
+    let suggestionCount: Int
+
+    var overallRisk: DiffExplanation.DiffExplanationSeverity {
+        if criticalCount > 0 { return .risky }
+        if warningCount > 2 { return .moderate }
+        return .safe
+    }
+}
+
+// MARK: - Phase 4: PR Review Queue Models
+
+enum PRReviewStatus: String, Sendable {
+    case pending, reviewing, reviewed, clean
+
+    var label: String {
+        switch self {
+        case .pending: return L10n("pr.status.pending")
+        case .reviewing: return L10n("pr.status.reviewing")
+        case .reviewed: return L10n("pr.status.reviewed")
+        case .clean: return L10n("pr.status.clean")
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .pending: return .secondary
+        case .reviewing: return .blue
+        case .reviewed: return .orange
+        case .clean: return .green
+        }
+    }
+}
+
+struct PRReviewItem: Identifiable {
+    let pr: GitHubPRInfo
+    var status: PRReviewStatus = .pending
+    var findings: [ReviewFinding] = []
+    var reviewedAt: Date?
+    var id: Int { pr.id }
+
+    var severitySummary: String {
+        let critical = findings.filter { $0.severity == .critical }.count
+        let warning = findings.filter { $0.severity == .warning }.count
+        if critical > 0 { return "\(critical) critical" }
+        if warning > 0 { return "\(warning) warn" }
+        if findings.isEmpty && status == .reviewed { return L10n("pr.status.clean") }
+        return ""
     }
 }

@@ -69,6 +69,13 @@ struct ContentView: View {
                         .keyboardShortcut("3", modifiers: .command)
                     Button("") { isShortcutsVisible = true }
                         .keyboardShortcut("/", modifiers: .command)
+                    Button("") {
+                        if model.repositoryURL != nil {
+                            model.isBranchReviewSheetVisible = false
+                            model.isCodeReviewVisible = true
+                        }
+                    }
+                    .keyboardShortcut("r", modifiers: [.command, .shift])
                 }
                 .frame(width: 0, height: 0)
                 .opacity(0)
@@ -118,6 +125,9 @@ struct ContentView: View {
         }
         .sheet(isPresented: $isHelpVisible) {
             HelpSheet()
+        }
+        .sheet(isPresented: $model.isCodeReviewVisible) {
+            CodeReviewSheet(model: model)
         }
         .onReceive(NotificationCenter.default.publisher(for: .showKeyboardShortcuts)) { _ in
             isShortcutsVisible = true

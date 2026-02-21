@@ -30,6 +30,18 @@ struct BranchReviewSheet: View {
                 Button(L10n("Fechar")) { dismiss() }
                     .buttonStyle(.bordered)
                     .keyboardShortcut(.escape, modifiers: [])
+
+                if !model.branchReviewFindings.isEmpty {
+                    Button {
+                        dismiss()
+                        model.startCodeReview(source: model.branchReviewSource, target: model.branchReviewTarget)
+                    } label: {
+                        Label(L10n("branch.review.fullReview"), systemImage: "rectangle.expand.vertical")
+                    }
+                    .buttonStyle(.bordered)
+                    .help(L10n("branch.review.fullReview.hint"))
+                }
+
                 Spacer()
                 Button {
                     model.reviewBranch(source: model.branchReviewSource, target: model.branchReviewTarget)

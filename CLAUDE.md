@@ -26,6 +26,8 @@ Zion is a native Git client for macOS, focusing on a visual representation of th
 | `Sources/Zion/Views/Components/GlassCard.swift` | `GlassCard` + `CardHeader` reusable components |
 | `Sources/Zion/Views/Components/CommitDetailContent.swift` | Structured commit details parser/view |
 | `Sources/Zion/Views/Components/CommitRowView.swift` | Commit row with hover states |
+| `Sources/Zion/Views/Components/ZionMapContent.swift` | Zion Map data model (detail entries per section) |
+| `Sources/Zion/Views/Components/ZionMapDetailPage.swift` | Zion Map detail page (feature documentation) |
 
 ## Custom Skills
 
@@ -39,6 +41,7 @@ Zion is a native Git client for macOS, focusing on a visual representation of th
 | `/competitor-watch` | `/competitor-watch Fork` | Compare Zion vs a competitor — gaps, opportunities, threats |
 | `/launch-checklist` | `/launch-checklist` | Go/no-go audit: signing, notarization, stability, UX, marketing, legal |
 | `/accessibility-audit` | `/accessibility-audit` | VoiceOver labels, keyboard nav, color contrast, dynamic type check |
+| `/documenter` | `/documenter` or `/documenter audit-only` | Audit & sync all doc surfaces: FEATURES.md, HelpSheet, ZionMap, shortcuts, L10n keys |
 
 ## @Observable Patterns (CRITICAL)
 

@@ -114,9 +114,43 @@ struct CommitDetailContent: View {
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .contentShape(Rectangle())
 
-                                    if expandedFile == file.path, let model, !model.currentFileDiffHunks.isEmpty {
-                                        HunkDiffView(model: model, file: file.path, hunks: model.currentFileDiffHunks)
-                                            .frame(maxHeight: 300)
+                                    if expandedFile == file.path, let model {
+                                        if model.isAIConfigured {
+                                            HStack {
+                                                Button {
+                                                    model.explainDiffDetailed(fileName: file.path, diff: model.currentFileDiff)
+                                                } label: {
+                                                    if model.isExplainingDiff {
+                                                        ProgressView().controlSize(.small).frame(width: 12, height: 12)
+                                                    } else {
+                                                        Label(L10n("diff.explanation.title"), systemImage: "sparkles")
+                                                    }
+                                                }
+                                                .buttonStyle(.bordered).controlSize(.mini)
+                                                .disabled(model.isExplainingDiff || model.currentFileDiff.isEmpty)
+                                                .help(L10n("Explicar diff com IA"))
+                                                Spacer()
+                                            }
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                        }
+
+                                        if let explanation = model.currentDiffExplanation {
+                                            DiffExplanationCard(explanation: explanation) {
+                                                model.currentDiffExplanation = nil
+                                            }
+                                            .padding(.horizontal, 8)
+                                            .padding(.bottom, 4)
+                                        } else if model.isExplainingDiff {
+                                            DiffExplanationShimmer()
+                                                .padding(.horizontal, 8)
+                                                .padding(.bottom, 4)
+                                        }
+
+                                        if !model.currentFileDiffHunks.isEmpty {
+                                            HunkDiffView(model: model, file: file.path, hunks: model.currentFileDiffHunks)
+                                                .frame(maxHeight: 300)
+                                        }
                                     }
                                 }
                             }

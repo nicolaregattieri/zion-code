@@ -41,6 +41,10 @@ struct ZionApp: App {
                 }
             }
         }
+
+        Settings {
+            SettingsView()
+        }
     }
 
     private func exportDiagnosticLog() {

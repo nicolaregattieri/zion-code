@@ -499,6 +499,69 @@ actor AIClient {
         return parseCommitSuggestions(raw)
     }
 
+    // MARK: - Detailed Diff Explanation (Phase 2)
+
+    func explainDiffDetailed(
+        fileDiff: String,
+        fileName: String,
+        provider: AIProvider,
+        apiKey: String
+    ) async throws -> DiffExplanation {
+        let prompt = """
+        You are a senior code reviewer explaining a diff to a tech lead. Analyze the diff for "\(fileName)" and provide a structured explanation.
+
+        Diff:
+        \(fileDiff.prefix(10000))
+
+        Output format (exactly — each section on its own line):
+        INTENT: <1-2 sentences explaining the purpose/motivation of this change>
+        RISKS: <1-2 sentences about potential risks, breaking changes, or things to watch out for>
+        NARRATIVE: <1-2 sentences telling the story of this change — what was the developer thinking>
+        SEVERITY: <one of: safe, moderate, risky>
+
+        Rules:
+        - Output ONLY the four lines above, nothing else
+        - SEVERITY must be exactly one of: safe, moderate, risky
+        - "safe" = no risks, routine change
+        - "moderate" = some edge cases or minor concerns
+        - "risky" = breaking changes, security implications, or complex logic
+        - Be specific and technical, not generic
+        """
+        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 400)
+        return parseDiffExplanation(raw)
+    }
+
+    // MARK: - Per-file Code Review (Phase 3)
+
+    func reviewFile(
+        fileDiff: String,
+        fileName: String,
+        provider: AIProvider,
+        apiKey: String
+    ) async throws -> [ReviewFinding] {
+        let prompt = """
+        You are a senior code reviewer. Analyze the diff for the file "\(fileName)" and find bugs, security issues, and problems.
+
+        Diff:
+        \(fileDiff.prefix(10000))
+
+        Output format — one finding per line, pipe-delimited:
+        SEVERITY|FILE|MESSAGE
+
+        Where SEVERITY is one of: critical, warning, suggestion
+        FILE is "\(fileName)"
+        MESSAGE is a concise description of the issue
+
+        Rules:
+        - Output ONLY the pipe-delimited lines, nothing else
+        - Focus on real issues in THIS specific file
+        - Maximum 5 findings per file
+        - If the code looks good, output: suggestion|\(fileName)|No issues found.
+        """
+        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 400)
+        return parseReviewFindings(raw)
+    }
+
     // MARK: - Private
 
     private func call(prompt: String, provider: AIProvider, apiKey: String, maxTokens: Int) async throws -> String {
@@ -661,6 +724,40 @@ actor AIClient {
             guard !message.isEmpty else { return nil }
             return CommitSuggestion(message: message, files: files)
         }
+    }
+
+    private func parseDiffExplanation(_ raw: String) -> DiffExplanation {
+        var intent = ""
+        var risks = ""
+        var narrative = ""
+        var severityStr = "safe"
+
+        for line in raw.components(separatedBy: "\n") {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if trimmed.hasPrefix("INTENT:") {
+                intent = trimmed.replacingOccurrences(of: "INTENT:", with: "").trimmingCharacters(in: .whitespaces)
+            } else if trimmed.hasPrefix("RISKS:") {
+                risks = trimmed.replacingOccurrences(of: "RISKS:", with: "").trimmingCharacters(in: .whitespaces)
+            } else if trimmed.hasPrefix("NARRATIVE:") {
+                narrative = trimmed.replacingOccurrences(of: "NARRATIVE:", with: "").trimmingCharacters(in: .whitespaces)
+            } else if trimmed.hasPrefix("SEVERITY:") {
+                severityStr = trimmed.replacingOccurrences(of: "SEVERITY:", with: "").trimmingCharacters(in: .whitespaces).lowercased()
+            }
+        }
+
+        let severity: DiffExplanation.DiffExplanationSeverity
+        switch severityStr {
+        case "risky": severity = .risky
+        case "moderate": severity = .moderate
+        default: severity = .safe
+        }
+
+        return DiffExplanation(
+            intent: intent.isEmpty ? raw : intent,
+            risks: risks.isEmpty ? "No specific risks identified." : risks,
+            narrative: narrative.isEmpty ? "" : narrative,
+            severity: severity
+        )
     }
 
     private func parsePRResponse(_ raw: String) -> (title: String, body: String) {
