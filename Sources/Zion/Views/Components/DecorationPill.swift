@@ -34,7 +34,7 @@ struct DecorationPill: View {
         .padding(.vertical, 4)
         .background(
             Capsule()
-                .fill(isSearchMatch ? Color.yellow.opacity(0.3) : pillColor.opacity(isCurrent ? 0.25 : 0.12))
+                .fill(isSearchMatch ? DesignSystem.Colors.statusYellowBg : pillColor.opacity(isCurrent ? 0.25 : 0.12))
         )
         .foregroundStyle(isSearchMatch ? .primary : pillColor)
         .overlay(

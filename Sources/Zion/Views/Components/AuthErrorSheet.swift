@@ -62,7 +62,7 @@ struct AuthErrorSheet: View {
                                         .font(.system(size: 9, weight: .bold))
                                         .padding(.horizontal, 6)
                                         .padding(.vertical, 2)
-                                        .background(Color.blue.opacity(0.1))
+                                        .background(DesignSystem.Colors.statusBlueBg)
                                         .foregroundStyle(.blue)
                                         .clipShape(Capsule())
                                 }

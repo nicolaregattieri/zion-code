@@ -18,7 +18,7 @@ struct GraphScreen: View {
     
     @State private var showingPendingChanges: Bool = false
     @State private var splitRatio: CGFloat = 0.7
-    @GestureState private var dragOffset: CGFloat = 0
+    @State private var inlineSplitRatio: CGFloat = 0.35
     @FocusState private var isGraphFocused: Bool
 
     var body: some View {
@@ -26,54 +26,29 @@ struct GraphScreen: View {
             VStack(spacing: 14) {
                 header(proxy: proxy)
 
-                GeometryReader { geo in
-                    let dividerWidth: CGFloat = 8
-                    let availableWidth = geo.size.width - dividerWidth
-                    let minLeft: CGFloat = 400
-                    let minRight: CGFloat = 300
-                    let baseLeft = availableWidth * splitRatio
-                    let leftWidth = max(minLeft, min(availableWidth - minRight, baseLeft + dragOffset))
-
-                    HStack(spacing: 0) {
-                        commitListPane(proxy: proxy)
-                            .focusable()
-                            .focused($isGraphFocused)
-                            .focusEffectDisabled()
-                            .onMoveCommand { direction in
-                                switch direction {
-                                case .up: navigateSelection(direction: -1, proxy: proxy)
-                                case .down: navigateSelection(direction: 1, proxy: proxy)
-                                default: break
-                                }
+                DraggableSplitView(
+                    axis: .horizontal,
+                    ratio: $splitRatio,
+                    minLeading: 400,
+                    minTrailing: 300
+                ) {
+                    commitListPane(proxy: proxy)
+                        .focusable()
+                        .focused($isGraphFocused)
+                        .focusEffectDisabled()
+                        .onMoveCommand { direction in
+                            switch direction {
+                            case .up: navigateSelection(direction: -1, proxy: proxy)
+                            case .down: navigateSelection(direction: 1, proxy: proxy)
+                            default: break
                             }
-                            .onExitCommand { model.selectCommit(nil); showingPendingChanges = false }
-                            .frame(width: leftWidth)
-                            .padding(.trailing, 6)
-
-                        Rectangle()
-                            .fill(Color.clear)
-                            .frame(width: dividerWidth)
-                            .contentShape(Rectangle())
-                            .onHover { hovering in
-                                if hovering { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() }
-                            }
-                            .gesture(
-                                DragGesture(coordinateSpace: .named("splitContainer"))
-                                    .updating($dragOffset) { value, state, _ in
-                                        state = value.translation.width
-                                    }
-                                    .onEnded { value in
-                                        let newLeft = max(minLeft, min(availableWidth - minRight, baseLeft + value.translation.width))
-                                        splitRatio = newLeft / availableWidth
-                                    }
-                            )
-
-                        commitDetailsPane
-                            .animation(nil, value: showingPendingChanges)
-                            .frame(maxWidth: .infinity)
-                            .padding(.leading, 6)
-                    }
-                    .coordinateSpace(name: "splitContainer")
+                        }
+                        .onExitCommand { model.selectCommit(nil); showingPendingChanges = false }
+                        .padding(.trailing, 6)
+                } trailing: {
+                    commitDetailsPane
+                        .animation(nil, value: showingPendingChanges)
+                        .padding(.leading, 6)
                 }
             }
             .padding(.horizontal, 18)
@@ -694,13 +669,17 @@ struct GraphScreen: View {
     // MARK: - Inline Changes Pane (replaces detail when pending changes selected)
 
     private var inlineChangesPane: some View {
-        VSplitView {
+        DraggableSplitView(
+            axis: .vertical,
+            ratio: $inlineSplitRatio,
+            minLeading: 150,
+            minTrailing: 200
+        ) {
             inlineFileList
                 .padding(.bottom, 6)
-                .frame(minHeight: 150, idealHeight: 250)
+        } trailing: {
             inlineDiffViewer
                 .padding(.top, 6)
-                .frame(minHeight: 200, idealHeight: 400)
         }
     }
 

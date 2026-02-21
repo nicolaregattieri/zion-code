@@ -59,8 +59,8 @@ struct CodeReviewDiffPane: View {
                                 }
                             }
                         }
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(DesignSystem.Colors.glassHover, lineWidth: 1))
+                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
+                        .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius).stroke(DesignSystem.Colors.glassHover, lineWidth: 1))
                         .padding(.horizontal, 12)
                     } else if !file.diff.isEmpty {
                         // Raw diff fallback
@@ -70,7 +70,7 @@ struct CodeReviewDiffPane: View {
                             .padding(12)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(DesignSystem.Colors.glassSubtle)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
                             .padding(.horizontal, 12)
                     }
                 }

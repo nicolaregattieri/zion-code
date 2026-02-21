@@ -38,8 +38,8 @@ struct ReviewFindingsView: View {
                 .padding(8)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(finding.severity.color.opacity(0.06))
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-                .overlay(RoundedRectangle(cornerRadius: 6).stroke(finding.severity.color.opacity(0.2)))
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
+                .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius).stroke(finding.severity.color.opacity(0.2)))
             }
         }
         .padding(10)

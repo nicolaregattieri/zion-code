@@ -3,6 +3,7 @@ import SwiftUI
 struct CodeReviewSheet: View {
     @Bindable var model: RepositoryViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var splitRatio: CGFloat = 0.25
 
     var body: some View {
         VStack(spacing: 0) {
@@ -10,19 +11,22 @@ struct CodeReviewSheet: View {
 
             Divider()
 
-            HSplitView {
+            DraggableSplitView(
+                axis: .horizontal,
+                ratio: $splitRatio,
+                minLeading: 220,
+                minTrailing: 600
+            ) {
                 CodeReviewFileList(
                     files: model.codeReviewFiles,
                     selectedID: $model.selectedReviewFileID,
                     onReviewAll: { model.reviewAllCodeReviewFiles() }
                 )
-                .frame(minWidth: 220, idealWidth: 260, maxWidth: 320)
-
+            } trailing: {
                 CodeReviewDiffPane(
                     model: model,
                     file: model.codeReviewFiles.first { $0.id == model.selectedReviewFileID }
                 )
-                .frame(minWidth: 600, idealWidth: 800, maxWidth: .infinity)
             }
 
             Divider()

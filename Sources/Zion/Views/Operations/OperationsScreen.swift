@@ -91,7 +91,7 @@ struct OperationsScreen: View {
                         .frame(maxHeight: 160)
                         .padding(4)
                         .background(DesignSystem.Colors.glassOverlay)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
                     }
                 }
 

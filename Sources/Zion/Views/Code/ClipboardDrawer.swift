@@ -149,7 +149,7 @@ struct ClipboardDrawer: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
         .background(isHovered ? DesignSystem.Colors.glassHover : Color.clear)
-        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
         .contentShape(Rectangle())
         .onTapGesture(count: 2) {
             if hasText {

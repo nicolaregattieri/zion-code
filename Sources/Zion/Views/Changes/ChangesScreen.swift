@@ -2,16 +2,18 @@ import SwiftUI
 
 struct ChangesScreen: View {
     var model: RepositoryViewModel
+    @State private var splitRatio: CGFloat = 0.25
 
     var body: some View {
-        HSplitView {
+        DraggableSplitView(
+            axis: .horizontal,
+            ratio: $splitRatio,
+            minLeading: 250,
+            minTrailing: 400
+        ) {
             fileListPane
-                .frame(minWidth: 250, idealWidth: 350, maxWidth: 500)
-                .layoutPriority(1)
-
+        } trailing: {
             diffViewerPane
-                .frame(minWidth: 600, idealWidth: 1000, maxWidth: .infinity)
-                .layoutPriority(2)
         }
         .padding(12)
     }
@@ -112,8 +114,8 @@ struct ChangesScreen: View {
             }
             .padding(.horizontal, 10).padding(.vertical, 8)
             .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius)
+                    .fill(isSelected ? DesignSystem.Colors.selectionBackground : Color.clear)
             )
             .contentShape(Rectangle())
         }

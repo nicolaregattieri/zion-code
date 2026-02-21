@@ -84,8 +84,8 @@ struct CodeReviewFileList: View {
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
             .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius)
+                    .fill(isSelected ? DesignSystem.Colors.selectionBackground : Color.clear)
             )
             .contentShape(Rectangle())
         }
