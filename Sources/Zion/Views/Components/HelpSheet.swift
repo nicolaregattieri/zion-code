@@ -99,6 +99,13 @@ struct HelpSheet: View {
                                 L10n("help.ai.diff"),
                                 L10n("help.ai.pr"),
                                 L10n("help.ai.stash"),
+                                L10n("help.ai.conflict"),
+                                L10n("help.ai.review"),
+                                L10n("help.ai.changelog"),
+                                L10n("help.ai.search"),
+                                L10n("help.ai.branch"),
+                                L10n("help.ai.blame"),
+                                L10n("help.ai.split"),
                             ]
                         )
 

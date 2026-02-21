@@ -504,3 +504,39 @@
 "help.conflicts.resolve" = "Built-in merge conflict resolver";
 "help.conflicts.choose" = "Accept Ours, Theirs, Both, or Edit";
 "help.conflicts.continue" = "Continue merge/rebase after resolving";
+
+// AI Smart Services
+"Resolver com IA" = "Resolve with AI";
+"Resolver conflito com IA" = "Resolve conflict with AI";
+"Revisar codigo com IA" = "Review code with AI";
+"Code Review" = "Code Review";
+"Review" = "Review";
+"Split" = "Split";
+"Sugerir divisao de commits com IA" = "Suggest commit split with AI";
+"Sugestao de Split" = "Split Suggestion";
+"Changelog" = "Changelog";
+"Gerar notas de release com IA" = "Generate release notes with AI";
+"De (tag/hash)" = "From (tag/hash)";
+"Ate (tag/hash)" = "To (tag/hash)";
+"Gerar" = "Generate";
+"Copiar" = "Copy";
+"Nenhum commit encontrado no intervalo." = "No commits found in range.";
+"Busca semantica com IA..." = "Semantic search with AI...";
+"Busca semantica com IA" = "Semantic search with AI";
+"resultados" = "results";
+"Resumir com IA" = "Summarize with AI";
+"Resumindo..." = "Summarizing...";
+"Explicar com IA" = "Explain with AI";
+"Nenhuma alteracao staged para revisar." = "No staged changes to review.";
+"Critico" = "Critical";
+"Aviso" = "Warning";
+"Sugestao" = "Suggestion";
+
+// Help: AI Smart Services
+"help.ai.conflict" = "AI-powered merge conflict resolution";
+"help.ai.review" = "Pre-commit code review catching bugs and security issues";
+"help.ai.changelog" = "Changelog generation from commit ranges";
+"help.ai.search" = "Natural language semantic search over git history";
+"help.ai.branch" = "One-sentence branch summaries in context menu";
+"help.ai.blame" = "Blame explainer: understand WHY code was changed";
+"help.ai.split" = "Commit split advisor for atomic commits";

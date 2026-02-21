@@ -101,6 +101,13 @@
 | Diff Explanation | Plain-language explanation of a file diff |
 | PR Description | Generate title and body from commit log |
 | Stash Messages | Suggest descriptive stash messages |
+| Smart Conflict Resolution | AI reads both sides of a merge conflict and proposes a semantically correct resolution |
+| Code Review | Pre-commit code review that catches bugs, security issues, and style problems |
+| Changelog Generator | Generates categorized release notes from a commit range (Features/Fixes/Improvements) |
+| Semantic Search | Natural language search over git history ("when did we change the auth flow?") |
+| Branch Summarizer | One-sentence summary of what any branch does, available in context menu |
+| Blame Explainer | Click a blame entry to get an AI explanation of WHY that code was changed |
+| Commit Split Advisor | Suggests how to split a large staged diff into multiple atomic commits |
 | Provider Config | Anthropic (Claude), OpenAI (GPT), Google (Gemini), API keys in Keychain |
 
 ## GitHub Integration

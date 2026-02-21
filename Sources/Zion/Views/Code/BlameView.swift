@@ -12,8 +12,11 @@ struct BlameEntry: Identifiable {
 
 struct BlameView: View {
     let entries: [BlameEntry]
+    let fileName: String
+    var model: RepositoryViewModel
     var onCommitTapped: ((String) -> Void)?
     @State private var hoveredEntryID: UUID?
+    @State private var explanationEntryID: UUID?
 
     // Color mapping: assign consistent colors to authors
     private var authorColors: [String: Color] {
@@ -66,9 +69,38 @@ struct BlameView: View {
 
                 Spacer()
 
-                Text(relativeDate(entry.date))
-                    .font(.system(size: 8))
-                    .foregroundStyle(.tertiary)
+                if isHovered && model.isAIConfigured {
+                    Button {
+                        model.explainBlameEntry(entry: entry, fileName: fileName)
+                        explanationEntryID = entry.id
+                    } label: {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 8))
+                            .foregroundStyle(.pink)
+                    }
+                    .buttonStyle(.plain)
+                    .help(L10n("Explicar com IA"))
+                    .popover(isPresented: Binding(
+                        get: { explanationEntryID == entry.id && model.aiBlameEntryID == entry.id && !model.aiBlameExplanation.isEmpty },
+                        set: { if !$0 { explanationEntryID = nil; model.aiBlameEntryID = nil } }
+                    )) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "sparkles").font(.system(size: 10)).foregroundStyle(.pink)
+                                Text(entry.shortHash).font(.system(size: 10, weight: .bold, design: .monospaced))
+                            }
+                            Text(model.aiBlameExplanation)
+                                .font(.system(size: 11))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(12)
+                        .frame(maxWidth: 300)
+                    }
+                } else {
+                    Text(relativeDate(entry.date))
+                        .font(.system(size: 8))
+                        .foregroundStyle(.tertiary)
+                }
             }
             .frame(width: 160)
             .padding(.horizontal, 6)

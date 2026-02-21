@@ -456,3 +456,39 @@
 "help.conflicts.resolve" = "Resuelva conflictos de merge en la app";
 "help.conflicts.choose" = "Aceptar Nuestro, Ellos, Ambos o Editar";
 "help.conflicts.continue" = "Continuar merge/rebase después de resolver";
+
+// AI Smart Services
+"Resolver com IA" = "Resolver con IA";
+"Resolver conflito com IA" = "Resolver conflicto con IA";
+"Revisar codigo com IA" = "Revisar código con IA";
+"Code Review" = "Code Review";
+"Review" = "Review";
+"Split" = "Split";
+"Sugerir divisao de commits com IA" = "Sugerir división de commits con IA";
+"Sugestao de Split" = "Sugerencia de Split";
+"Changelog" = "Changelog";
+"Gerar notas de release com IA" = "Generar notas de release con IA";
+"De (tag/hash)" = "Desde (tag/hash)";
+"Ate (tag/hash)" = "Hasta (tag/hash)";
+"Gerar" = "Generar";
+"Copiar" = "Copiar";
+"Nenhum commit encontrado no intervalo." = "No se encontraron commits en el rango.";
+"Busca semantica com IA..." = "Búsqueda semántica con IA...";
+"Busca semantica com IA" = "Búsqueda semántica con IA";
+"resultados" = "resultados";
+"Resumir com IA" = "Resumir con IA";
+"Resumindo..." = "Resumiendo...";
+"Explicar com IA" = "Explicar con IA";
+"Nenhuma alteracao staged para revisar." = "No hay cambios staged para revisar.";
+"Critico" = "Crítico";
+"Aviso" = "Aviso";
+"Sugestao" = "Sugerencia";
+
+// Help: AI Smart Services
+"help.ai.conflict" = "Resolución inteligente de conflictos de merge con IA";
+"help.ai.review" = "Code review pre-commit detectando bugs y problemas de seguridad";
+"help.ai.changelog" = "Generación de changelog a partir de rangos de commits";
+"help.ai.search" = "Búsqueda semántica en lenguaje natural en el historial Git";
+"help.ai.branch" = "Resumen de branches en una frase en el menú contextual";
+"help.ai.blame" = "Explicador de blame: entiende POR QUÉ se cambió el código";
+"help.ai.split" = "Consejero de split de commits para commits atómicos";

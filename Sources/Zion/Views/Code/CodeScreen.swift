@@ -354,7 +354,7 @@ struct CodeScreen: View {
                 Divider()
 
                 if model.isBlameVisible && !model.blameEntries.isEmpty {
-                    BlameView(entries: model.blameEntries) { commitHash in
+                    BlameView(entries: model.blameEntries, fileName: model.selectedCodeFile?.name ?? "", model: model) { commitHash in
                         model.selectCommit(commitHash)
                         model.navigateToGraphRequested = true
                     }

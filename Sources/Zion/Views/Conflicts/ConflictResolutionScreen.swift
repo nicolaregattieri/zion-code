@@ -201,9 +201,11 @@ struct ConflictResolutionScreen: View {
             ConflictRegionCard(
                 region: region,
                 index: idx,
+                fileName: model.selectedConflictFile ?? "",
                 onChoose: { choice in
                     model.resolveRegion(region.id, choice: choice)
-                }
+                },
+                model: model
             )
         }
     }
