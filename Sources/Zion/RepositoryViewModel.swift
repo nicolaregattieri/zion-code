@@ -79,7 +79,17 @@ final class RepositoryViewModel {
     var pullRequests: [GitHubPRInfo] = []
     var isPRSheetVisible: Bool = false
     @ObservationIgnored let githubClient = GitHubClient()
+    @ObservationIgnored let ntfyClient = NtfyClient()
     @ObservationIgnored private var prTask: Task<Void, Never>?
+
+    // Branch review
+    var isBranchReviewSheetVisible: Bool = false
+    var branchReviewFindings: [ReviewFinding] = []
+    var branchReviewSource: String = ""
+    var branchReviewTarget: String = ""
+    var isBranchReviewLoading: Bool = false
+    var githubUsername: String = ""
+    @ObservationIgnored private var lastNotifiedPRReviewIDs: Set<Int> = []
 
     // Submodule state
     var submodules: [SubmoduleInfo] = []
@@ -144,6 +154,47 @@ final class RepositoryViewModel {
     // Background fetch
     var behindRemoteCount: Int = 0
     @ObservationIgnored private var backgroundFetchTask: Task<Void, Never>?
+    @ObservationIgnored private var lastNotifiedBehindCount: Int = 0
+
+    // ntfy Push Notifications
+    var ntfyTopic: String = "" {
+        didSet {
+            UserDefaults.standard.set(ntfyTopic, forKey: "zion.ntfy.topic")
+            if !ntfyTopic.isEmpty {
+                NtfyClient.writeGlobalConfig(topic: ntfyTopic, serverURL: ntfyServerURL)
+            }
+        }
+    }
+    var ntfyServerURL: String = "https://ntfy.sh" {
+        didSet {
+            UserDefaults.standard.set(ntfyServerURL, forKey: "zion.ntfy.serverURL")
+            if !ntfyTopic.isEmpty {
+                NtfyClient.writeGlobalConfig(topic: ntfyTopic, serverURL: ntfyServerURL)
+            }
+        }
+    }
+    var ntfyEnabledEvents: [String] = NtfyEvent.defaultEnabledEvents {
+        didSet { UserDefaults.standard.set(ntfyEnabledEvents, forKey: "zion.ntfy.enabledEvents") }
+    }
+    var ntfyExternalAgentsEnabled: Bool = false {
+        didSet {
+            UserDefaults.standard.set(ntfyExternalAgentsEnabled, forKey: "zion.ntfy.externalAgents")
+            syncAIAgentConfigs()
+        }
+    }
+    var ntfySelectedAgents: [String] = [] {
+        didSet {
+            UserDefaults.standard.set(ntfySelectedAgents, forKey: "zion.ntfy.selectedAgents")
+            syncAIAgentConfigs()
+        }
+    }
+
+    var ntfyLocalNotificationsEnabled: Bool {
+        get { UserDefaults.standard.object(forKey: "zion.ntfy.localNotifications") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "zion.ntfy.localNotifications") }
+    }
+
+    var isNtfyConfigured: Bool { !ntfyTopic.isEmpty }
 
     // Background repo persistence (terminal sessions + change badges)
     @ObservationIgnored private var backgroundRepoStates: [URL: BackgroundRepoState] = [:]
@@ -309,6 +360,65 @@ final class RepositoryViewModel {
         if let styleRaw = defaults.string(forKey: "zion.commitMessageStyle"),
            let style = CommitMessageStyle(rawValue: styleRaw) {
             commitMessageStyle = style
+        }
+        // ntfy Push Notifications
+        if let topic = defaults.string(forKey: "zion.ntfy.topic") {
+            ntfyTopic = topic
+        } else if let global = NtfyClient.readGlobalConfig() {
+            ntfyTopic = global.topic
+            ntfyServerURL = global.serverURL
+        }
+        if let server = defaults.string(forKey: "zion.ntfy.serverURL"), !server.isEmpty {
+            ntfyServerURL = server
+        }
+        if let events = defaults.stringArray(forKey: "zion.ntfy.enabledEvents") {
+            ntfyEnabledEvents = events
+        }
+        if defaults.object(forKey: "zion.ntfy.externalAgents") != nil {
+            ntfyExternalAgentsEnabled = defaults.bool(forKey: "zion.ntfy.externalAgents")
+        }
+        if let agents = defaults.stringArray(forKey: "zion.ntfy.selectedAgents") {
+            ntfySelectedAgents = agents
+        }
+    }
+
+    // MARK: - ntfy Helpers
+
+    func testNtfyNotification() {
+        Task {
+            let success = await ntfyClient.sendTest(serverURL: ntfyServerURL, topic: ntfyTopic)
+            if !success {
+                lastError = L10n("ntfy.test.failed")
+            }
+        }
+    }
+
+    func notifyPRCreated(title: String, url: String) {
+        let repoName = repositoryURL?.lastPathComponent ?? ""
+        Task {
+            await ntfyClient.sendIfEnabled(
+                event: .prCreated,
+                title: L10n("ntfy.event.prCreated"),
+                body: "\(title)\n\(url)",
+                repoName: repoName
+            )
+        }
+    }
+
+    func syncAIAgentConfigs() {
+        guard let repoPath = repositoryURL else { return }
+        let selectedAgents = ntfySelectedAgents.compactMap { AIAgent(rawValue: $0) }
+
+        if ntfyExternalAgentsEnabled && isNtfyConfigured && !selectedAgents.isEmpty {
+            AIAgentConfigManager.updateNtfyBlock(
+                agents: selectedAgents,
+                topic: ntfyTopic,
+                serverURL: ntfyServerURL,
+                repoPath: repoPath
+            )
+        } else {
+            // Remove from all agents when disabled
+            AIAgentConfigManager.removeNtfyBlock(agents: AIAgent.allCases, repoPath: repoPath)
         }
     }
 
@@ -2804,6 +2914,41 @@ final class RepositoryViewModel {
                 branchSummaries[branchName] = summary
             } catch {
                 logger.log(.error, "AI branch summary failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
+                lastError = error.localizedDescription
+            }
+        }
+    }
+
+    func reviewBranch(source: String, target: String) {
+        guard let url = repositoryURL, isAIConfigured else { return }
+
+        aiTask?.cancel()
+        aiTask = Task {
+            isBranchReviewLoading = true
+            defer { isBranchReviewLoading = false }
+
+            do {
+                logger.log(.ai, "Requesting branch review", context: "\(aiProvider.rawValue): \(source)..\(target)")
+                let diff = try await worker.runAction(args: ["diff", "\(target)...\(source)"], in: url)
+                let diffStat = try await worker.runAction(args: ["diff", "--stat", "\(target)...\(source)"], in: url)
+                
+                guard !diff.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                    branchReviewFindings = [ReviewFinding(severity: .suggestion, file: "general", message: L10n("Nenhuma diferenca entre as branches."))]
+                    return
+                }
+
+                let findings = try await aiClient.reviewBranch(
+                    diff: diff,
+                    diffStat: diffStat,
+                    sourceBranch: source,
+                    targetBranch: target,
+                    provider: aiProvider,
+                    apiKey: aiAPIKey
+                )
+                logger.log(.ai, "Branch review OK: \(findings.count) findings")
+                branchReviewFindings = findings
+            } catch {
+                logger.log(.error, "AI branch review failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
                 lastError = error.localizedDescription
             }
         }
