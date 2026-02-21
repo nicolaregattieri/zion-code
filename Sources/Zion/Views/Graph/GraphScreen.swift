@@ -372,7 +372,7 @@ struct GraphScreen: View {
                                         TextField(L10n("Mensagem do commit..."), text: $model.commitMessageInput, axis: .vertical)
                                             .textFieldStyle(.roundedBorder)
                                             .font(.system(.body, design: .monospaced))
-                                            .lineLimit(3...8)
+                                            .lineLimit(3...)
                                     }
                                     .frame(maxHeight: 120)
                                         .onSubmit {

@@ -58,7 +58,7 @@ struct SidebarView: View {
                     if isRecentsExpanded {
                         VStack(spacing: 4) {
                             ForEach(model.recentRepositories, id: \.self) { url in
-                                RecentProjectRow(url: url, changedCount: model.backgroundRepoChangedFiles[url]) {
+                                RecentProjectRow(url: url, isCurrent: url == model.repositoryURL, changedCount: model.backgroundRepoChangedFiles[url]) {
                                     withAnimation { model.openRepository(url) }
                                 }
                             }
@@ -542,16 +542,23 @@ struct SidebarView: View {
 
 private struct RecentProjectRow: View {
     let url: URL
+    let isCurrent: Bool
     let changedCount: Int?
     let onTap: () -> Void
     @State private var isHovered = false
+
+    private var rowBackground: Color {
+        if isCurrent { return Color.white.opacity(0.10) }
+        if isHovered { return DesignSystem.Colors.glassHover }
+        return DesignSystem.Colors.glassMinimal
+    }
 
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 10) {
                 Image(systemName: "folder.fill")
                     .font(.system(size: 12))
-                    .foregroundStyle(Color.accentColor.opacity(0.8))
+                    .foregroundStyle(isCurrent ? DesignSystem.Colors.success : Color.accentColor.opacity(0.8))
                 VStack(alignment: .leading, spacing: 1) {
                     Text(url.lastPathComponent)
                         .font(.system(size: 13, weight: .semibold))
@@ -574,16 +581,26 @@ private struct RecentProjectRow: View {
                         .clipShape(Capsule())
                 }
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 8, weight: .bold))
-                    .foregroundStyle(.secondary.opacity(0.5))
+                if isCurrent {
+                    Circle()
+                        .fill(DesignSystem.Colors.success)
+                        .frame(width: 6, height: 6)
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundStyle(.secondary.opacity(0.5))
+                }
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
-            .background(RoundedRectangle(cornerRadius: 8).fill(isHovered ? DesignSystem.Colors.glassHover : DesignSystem.Colors.glassMinimal))
+            .background(RoundedRectangle(cornerRadius: 8).fill(rowBackground))
+            .overlay(
+                isCurrent ? RoundedRectangle(cornerRadius: 8).strokeBorder(DesignSystem.Colors.glassBorderDark, lineWidth: 1) : nil
+            )
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .disabled(isCurrent)
         .onHover { h in isHovered = h }
     }
 }

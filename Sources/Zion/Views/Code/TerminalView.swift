@@ -11,9 +11,12 @@ struct TerminalTabView: NSViewRepresentable {
     var fontFamily: String = "SF Mono"
     var model: RepositoryViewModel?
 
+    private static let log = DiagnosticLogger.shared
+
     func makeNSView(context: Context) -> SwiftTerm.TerminalView {
         // Reuse cached view from session (preserves running process + display buffer)
         if let cachedView = session._cachedView as? SwiftTerm.TerminalView {
+            Self.log.log(.info, "makeNSView CACHED", context: "\(session.label)(\(session.id.uuidString.prefix(4))) alive=\(session.isAlive) preserve=\(session._shouldPreserve) pid=\(session._shellPid)", source: "TerminalTabView")
             cachedView.removeFromSuperview()
             cachedView.terminalDelegate = context.coordinator
             context.coordinator.reattach(view: cachedView)
@@ -22,6 +25,7 @@ struct TerminalTabView: NSViewRepresentable {
             return cachedView
         }
 
+        Self.log.log(.info, "makeNSView FRESH", context: "\(session.label)(\(session.id.uuidString.prefix(4)))", source: "TerminalTabView")
         // Fresh terminal
         let terminalView = SwiftTerm.TerminalView(frame: .zero)
         terminalView.allowMouseReporting = true
@@ -47,20 +51,23 @@ struct TerminalTabView: NSViewRepresentable {
         // Auto-restart dead processes for preserved sessions.
         // Uses _shouldPreserve (not isAlive) to avoid race with async processTerminated callback.
         if context.coordinator.processIsDead && session._shouldPreserve {
+            Self.log.log(.info, "updateNSView RESTART", context: "\(session.label)(\(session.id.uuidString.prefix(4))) dead=\(context.coordinator.processIsDead) preserve=\(session._shouldPreserve) alive=\(session.isAlive)", source: "TerminalTabView")
             session.isAlive = true
             context.coordinator.restartProcess(view: nsView)
         }
     }
 
     static func dismantleNSView(_ nsView: SwiftTerm.TerminalView, coordinator: Coordinator) {
+        let s = coordinator.parent.session
+        log.log(.info, "dismantleNSView", context: "\(s.label)(\(s.id.uuidString.prefix(4))) preserve=\(s._shouldPreserve) alive=\(s.isAlive) pid=\(s._shellPid)", source: "TerminalTabView")
         // If session was explicitly killed, let everything deallocate naturally.
-        guard coordinator.parent.session._shouldPreserve else { return }
+        guard s._shouldPreserve else { return }
         // Cache coordinator + NSView on session so they survive view tree restructuring.
         // Explicit kills happen via session.killCachedProcess() in the ViewModel.
         // Note: don't unregister send callback here — reattach() re-registers it,
         // and SwiftUI may create the new view BEFORE calling dismantle on the old one.
-        coordinator.parent.session._cachedView = nsView
-        coordinator.parent.session._processBridge = coordinator
+        s._cachedView = nsView
+        s._processBridge = coordinator
     }
 
     private func applyTheme(to view: SwiftTerm.TerminalView, context: Context) {
@@ -279,6 +286,7 @@ struct TerminalTabView: NSViewRepresentable {
 
         nonisolated func processTerminated(_ source: SwiftTerm.LocalProcess, exitCode: Int32?) {
             Task { @MainActor in
+                DiagnosticLogger.shared.log(.info, "processTerminated", context: "\(parent.session.label)(\(parent.session.id.uuidString.prefix(4))) exitCode=\(exitCode ?? -1)", source: "TerminalTabView")
                 processIsDead = true
                 parent.session.isAlive = false
             }

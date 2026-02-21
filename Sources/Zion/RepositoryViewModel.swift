@@ -321,6 +321,18 @@ final class RepositoryViewModel {
 
     func openRepository(_ url: URL) {
         let previousURL = repositoryURL
+
+        // Same repo already open — just refresh metadata, don't touch terminals
+        if previousURL == url {
+            logger.log(.info, "openRepository SKIP (same repo)", context: "\(url.lastPathComponent) tabs=\(terminalTabs.count) sessions=\(terminalTabs.flatMap { $0.allSessions() }.count)", source: #function)
+            saveRecentRepository(url)
+            refreshRepository()
+            refreshFileTree()
+            loadPullRequests()
+            loadSubmodules()
+            return
+        }
+
         repositoryURL = url
         saveRecentRepository(url)
         commitLimit = defaultCommitLimit(for: nil)
@@ -328,9 +340,14 @@ final class RepositoryViewModel {
             worktreePathInput = url.deletingLastPathComponent().appendingPathComponent("new-worktree").path
         }
 
+        let stashedKeys = backgroundRepoStates.keys.map { $0.lastPathComponent }
+        logger.log(.info, "openRepository ENTER", context: "prev=\(previousURL?.lastPathComponent ?? "nil") target=\(url.lastPathComponent) tabs=\(terminalTabs.count) sessions=\(terminalTabs.flatMap { $0.allSessions() }.count) stashed=\(stashedKeys)", source: #function)
+
         // Stash current repo's terminals (save WITHOUT clearing terminalTabs yet to avoid
         // intermediate empty state that could cause SwiftUI to dismantle NSViews prematurely)
-        if let previousURL, previousURL != url, !terminalTabs.isEmpty {
+        if let previousURL, !terminalTabs.isEmpty {
+            let sessions = terminalTabs.flatMap { $0.allSessions() }
+            logger.log(.info, "STASH", context: "\(previousURL.lastPathComponent): \(terminalTabs.count) tabs, \(sessions.map { "\($0.label)(\($0.id.uuidString.prefix(4))) alive=\($0.isAlive) preserve=\($0._shouldPreserve) pid=\($0._shellPid)" })", source: #function)
             let watcher = FileWatcher()
             backgroundRepoStates[previousURL] = BackgroundRepoState(
                 terminalTabs: terminalTabs,
@@ -342,8 +359,9 @@ final class RepositoryViewModel {
             backgroundRepoChangedFiles[previousURL] = 0
             startBackgroundMonitor(for: previousURL)
             // DON'T set terminalTabs = [] here — let the restore/create below do a direct swap
-        } else {
-            // No previous repo or same repo — kill terminals as before
+        } else if previousURL == nil {
+            // First open — no previous repo, kill any leftover terminals
+            logger.log(.info, "KILL (first open)", context: "tabs=\(terminalTabs.count)", source: #function)
             for tab in terminalTabs {
                 for session in tab.allSessions() {
                     session.killCachedProcess()
@@ -355,6 +373,8 @@ final class RepositoryViewModel {
         if let restored = backgroundRepoStates.removeValue(forKey: url) {
             restored.fileWatcher.stop()
             restored.monitorTask?.cancel()
+            let sessions = restored.terminalTabs.flatMap { $0.allSessions() }
+            logger.log(.info, "RESTORE", context: "\(url.lastPathComponent): \(restored.terminalTabs.count) tabs, \(sessions.map { "\($0.label)(\($0.id.uuidString.prefix(4))) alive=\($0.isAlive) preserve=\($0._shouldPreserve) pid=\($0._shellPid)" })", source: #function)
             terminalTabs = restored.terminalTabs
             activeTabID = restored.activeTabID
             focusedSessionID = restored.focusedSessionID
@@ -366,11 +386,16 @@ final class RepositoryViewModel {
                 }
             }
         } else {
+            let stashedKeysNow = backgroundRepoStates.keys.map { $0.lastPathComponent }
+            logger.log(.info, "FRESH (no stash found)", context: "\(url.lastPathComponent) stashedKeys=\(stashedKeysNow)", source: #function)
             terminalTabs = []
             activeTabID = nil
             focusedSessionID = nil
             createDefaultTerminalSession(repositoryURL: url, branchName: currentBranch.isEmpty ? url.lastPathComponent : currentBranch)
         }
+
+        let finalStashedKeys = backgroundRepoStates.keys.map { $0.lastPathComponent }
+        logger.log(.info, "openRepository EXIT", context: "tabs=\(terminalTabs.count) sessions=\(terminalTabs.flatMap { $0.allSessions() }.count) stashed=\(finalStashedKeys)", source: #function)
 
         openedFiles.removeAll()
         activeFileID = nil
