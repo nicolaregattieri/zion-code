@@ -626,8 +626,8 @@ class ZionTextView: NSTextView {
         guard rect.minX <= x && x <= rect.maxX else { return }
 
         let color = isLightTheme
-            ? NSColor.black.withAlphaComponent(0.08)
-            : NSColor.white.withAlphaComponent(0.08)
+            ? NSColor.black.withAlphaComponent(0.15)
+            : NSColor.white.withAlphaComponent(0.15)
         color.setStroke()
 
         let path = NSBezierPath()
