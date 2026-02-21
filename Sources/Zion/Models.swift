@@ -596,13 +596,14 @@ func L10n(_ key: String, _ args: CVarArg...) -> String {
 }
 
 enum AIProvider: String, CaseIterable, Identifiable {
-    case none, anthropic, openai
+    case none, anthropic, openai, gemini
     var id: String { rawValue }
     var label: String {
         switch self {
         case .none: return L10n("Desativado")
-        case .anthropic: return "Anthropic (Claude)"
-        case .openai: return "OpenAI (GPT)"
+        case .anthropic: return L10n("Anthropic (Claude)")
+        case .openai: return L10n("OpenAI (GPT)")
+        case .gemini: return L10n("Google (Gemini)")
         }
     }
 }

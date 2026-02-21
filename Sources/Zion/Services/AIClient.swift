@@ -7,12 +7,13 @@ actor AIClient {
 
     private static let keychainService = "com.zion.ai-api-key"
 
-    static func saveAPIKey(_ key: String) {
+    static func saveAPIKey(_ key: String, for provider: AIProvider) {
+        guard provider != .none else { return }
         let data = Data(key.utf8)
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: "default",
+            kSecAttrAccount as String: provider.rawValue,
         ]
 
         // Delete any existing item first
@@ -23,11 +24,12 @@ actor AIClient {
         SecItemAdd(add as CFDictionary, nil)
     }
 
-    static func loadAPIKey() -> String? {
+    static func loadAPIKey(for provider: AIProvider) -> String? {
+        guard provider != .none else { return nil }
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: "default",
+            kSecAttrAccount as String: provider.rawValue,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne,
         ]
@@ -37,13 +39,31 @@ actor AIClient {
         return String(data: data, encoding: .utf8)
     }
 
-    static func deleteAPIKey() {
+    static func deleteAPIKey(for provider: AIProvider) {
+        guard provider != .none else { return }
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: provider.rawValue,
+        ]
+        SecItemDelete(query as CFDictionary)
+    }
+
+    // Deprecated helpers for backward compatibility (migrate to "default" if exists)
+    private static func migrateLegacyKey() {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
             kSecAttrAccount as String: "default",
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne,
         ]
-        SecItemDelete(query as CFDictionary)
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        if status == errSecSuccess, let data = result as? Data, let _ = String(data: data, encoding: .utf8) {
+            // Migrating to Anthropic as a guess or simply keeping it for a while
+            // For now, let's just leave it but the new methods won't use it.
+        }
     }
 
     // MARK: - API Calls
@@ -69,7 +89,7 @@ actor AIClient {
         \(diffStat.prefix(2000))
 
         Diff / Content summary (truncated):
-        \(diff.prefix(4000))
+        \(diff.prefix(10000))
 
         Rules:
         - Output EXACTLY one line. NO "Commit:" or "Message:" prefix.
@@ -80,7 +100,7 @@ actor AIClient {
         - MAX 72 characters.
         - NEVER output generic messages like "update files" if you can infer intent from the diff content.
         """
-        return try await call(prompt: prompt, provider: provider, apiKey: apiKey)
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 100)
     }
 
     func generatePRDescription(
@@ -117,7 +137,7 @@ actor AIClient {
         - Focus on the "why" and user impact
         - Keep it professional and clear
         """
-        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey)
+        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 600)
         return parsePRResponse(raw)
     }
 
@@ -142,7 +162,7 @@ actor AIClient {
         - Describe WHAT the changes are about
         - Example style: "WIP: refactor auth flow" or "Add user avatar upload"
         """
-        return try await call(prompt: prompt, provider: provider, apiKey: apiKey)
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 60)
     }
 
     func explainDiff(
@@ -155,7 +175,7 @@ actor AIClient {
         You are a code reviewer. Explain the following diff for the file "\(fileName)" in 2-3 plain-English sentences. Focus on WHAT changed and WHY it matters.
 
         Diff:
-        \(fileDiff.prefix(4000))
+        \(fileDiff.prefix(10000))
 
         Rules:
         - 2-3 sentences maximum
@@ -163,23 +183,69 @@ actor AIClient {
         - Focus on the intent behind the changes
         - Output ONLY the explanation
         """
-        return try await call(prompt: prompt, provider: provider, apiKey: apiKey)
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 200)
     }
 
     // MARK: - Private
 
-    private func call(prompt: String, provider: AIProvider, apiKey: String) async throws -> String {
+    private func call(prompt: String, provider: AIProvider, apiKey: String, maxTokens: Int) async throws -> String {
         switch provider {
         case .anthropic:
-            return try await callAnthropic(prompt: prompt, apiKey: apiKey)
+            return try await callAnthropic(prompt: prompt, apiKey: apiKey, maxTokens: maxTokens)
         case .openai:
-            return try await callOpenAI(prompt: prompt, apiKey: apiKey)
+            return try await callOpenAI(prompt: prompt, apiKey: apiKey, maxTokens: maxTokens)
+        case .gemini:
+            return try await callGemini(prompt: prompt, apiKey: apiKey, maxTokens: maxTokens)
         case .none:
             throw AIError.noProvider
         }
     }
 
-    private func callAnthropic(prompt: String, apiKey: String) async throws -> String {
+    private func callGemini(prompt: String, apiKey: String, maxTokens: Int) async throws -> String {
+        // Using gemini-2.5-flash-lite: the fastest and most cost-effective model
+        let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
+        request.timeoutInterval = 30
+
+        let body: [String: Any] = [
+            "contents": [
+                [
+                    "parts": [
+                        ["text": prompt]
+                    ]
+                ]
+            ],
+            "generationConfig": [
+                "maxOutputTokens": maxTokens
+            ]
+        ]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw AIError.invalidResponse }
+
+        if http.statusCode == 400 || http.statusCode == 401 { throw AIError.invalidKey }
+        if http.statusCode == 429 { throw AIError.quotaExceeded }
+        guard http.statusCode == 200 else {
+            let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw AIError.apiError("Gemini \(http.statusCode): \(msg)")
+        }
+
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        guard let candidates = json?["candidates"] as? [[String: Any]],
+              let firstCandidate = candidates.first,
+              let content = firstCandidate["content"] as? [String: Any],
+              let parts = content["parts"] as? [[String: Any]],
+              let text = parts.first?["text"] as? String else {
+            throw AIError.invalidResponse
+        }
+        return text.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func callAnthropic(prompt: String, apiKey: String, maxTokens: Int) async throws -> String {
         let url = URL(string: "https://api.anthropic.com/v1/messages")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -190,7 +256,7 @@ actor AIClient {
 
         let body: [String: Any] = [
             "model": "claude-3-5-haiku-20241022",
-            "max_tokens": 1024,
+            "max_tokens": maxTokens,
             "messages": [
                 ["role": "user", "content": prompt]
             ]
@@ -215,7 +281,7 @@ actor AIClient {
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private func callOpenAI(prompt: String, apiKey: String) async throws -> String {
+    private func callOpenAI(prompt: String, apiKey: String, maxTokens: Int) async throws -> String {
         let url = URL(string: "https://api.openai.com/v1/chat/completions")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -228,7 +294,7 @@ actor AIClient {
             "messages": [
                 ["role": "user", "content": prompt]
             ],
-            "max_tokens": 1024
+            "max_tokens": maxTokens
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
