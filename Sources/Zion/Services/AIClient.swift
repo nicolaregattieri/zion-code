@@ -74,33 +74,69 @@ actor AIClient {
         recentMessages: [String],
         branchName: String,
         provider: AIProvider,
-        apiKey: String
+        apiKey: String,
+        style: CommitMessageStyle = .compact
     ) async throws -> String {
         let recentStyle = recentMessages.prefix(10).joined(separator: "\n")
-        let prompt = """
-        You are an expert Git commit message generator. Analyze the provided changes and write a single-line commit message.
+        let prompt: String
+        let maxTokens: Int
 
-        Match the style of these recent commits from the repository:
-        \(recentStyle)
+        switch style {
+        case .compact:
+            prompt = """
+            You are an expert Git commit message generator. Analyze the provided changes and write a single-line commit message.
 
-        Branch: \(branchName)
+            Match the style of these recent commits from the repository:
+            \(recentStyle)
 
-        Diff stat:
-        \(diffStat.prefix(2000))
+            Branch: \(branchName)
 
-        Diff / Content summary (truncated):
-        \(diff.prefix(10000))
+            Diff stat:
+            \(diffStat.prefix(2000))
 
-        Rules:
-        - Output EXACTLY one line. NO "Commit:" or "Message:" prefix.
-        - Use the format: type(scope): description (Conventional Commits).
-        - Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert.
-        - Scope: The most relevant component or folder affected (e.g. "auth", "ui", "core").
-        - Description: Concise summary of WHAT and WHY, in the imperative mood (e.g., "add user login" NOT "Added user login").
-        - MAX 72 characters.
-        - NEVER output generic messages like "update files" if you can infer intent from the diff content.
-        """
-        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 100)
+            Diff / Content summary (truncated):
+            \(diff.prefix(10000))
+
+            Rules:
+            - Output EXACTLY one line. NO "Commit:" or "Message:" prefix.
+            - Use the format: type(scope): description (Conventional Commits).
+            - Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert.
+            - Scope: The most relevant component or folder affected (e.g. "auth", "ui", "core").
+            - Description: Concise summary of WHAT and WHY, in the imperative mood (e.g., "add user login" NOT "Added user login").
+            - MAX 72 characters.
+            - NEVER output generic messages like "update files" if you can infer intent from the diff content.
+            """
+            maxTokens = 100
+
+        case .detailed:
+            prompt = """
+            You are an expert Git commit message generator. Analyze the provided changes and write a detailed commit message.
+
+            Match the style of these recent commits from the repository:
+            \(recentStyle)
+
+            Branch: \(branchName)
+
+            Diff stat:
+            \(diffStat.prefix(2000))
+
+            Diff / Content summary (truncated):
+            \(diff.prefix(10000))
+
+            Rules:
+            - First line: type(scope): short summary (Conventional Commits, max 72 chars).
+            - Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert.
+            - Scope: The most relevant component or folder affected (e.g. "auth", "ui", "core").
+            - Leave a blank line after the first line.
+            - Then list 3-7 bullet points starting with "- ", each describing a specific change.
+            - Each bullet: imperative mood, concise, specific (e.g., "- Add validation for email input").
+            - NO "Commit:" or "Message:" prefix. Output ONLY the commit message.
+            - NEVER output generic messages like "update files" if you can infer intent from the diff content.
+            """
+            maxTokens = 400
+        }
+
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: maxTokens)
     }
 
     func generatePRDescription(

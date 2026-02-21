@@ -14,8 +14,10 @@ struct ContentView: View {
     @AppStorage("zion.uiLanguage") private var uiLanguageRaw: String = AppLanguage.system.rawValue
     @AppStorage("zion.preferredTerminal") private var preferredTerminalRaw: String = ExternalTerminal.terminal.rawValue
     @AppStorage("zion.customTerminalPath") private var customTerminalPath: String = ""
-    
+    @AppStorage("zion.appearance") private var appearanceRaw: String = AppAppearance.system.rawValue
+
     private var uiLanguage: AppLanguage { AppLanguage(rawValue: uiLanguageRaw) ?? .system }
+    private var appearance: AppAppearance { AppAppearance(rawValue: appearanceRaw) ?? .system }
 
     var body: some View {
         ZStack {
@@ -28,6 +30,7 @@ struct ContentView: View {
                     selectedBranchTreeNodeID: $selectedBranchTreeNodeID,
                     confirmationModeRaw: $confirmationModeRaw,
                     uiLanguageRaw: $uiLanguageRaw,
+                    appearanceRaw: $appearanceRaw,
                     onOpen: { openRepositoryPanel() },
                     onOpenInTerminal: { openRepositoryInTerminal() },
                     branchContextMenu: { branch in AnyView(branchContextMenu(for: branch)) }
@@ -71,7 +74,8 @@ struct ContentView: View {
                 .opacity(0)
             }
         }
-        .id(uiLanguageRaw) 
+        .id(uiLanguageRaw)
+        .preferredColorScheme(appearance.colorScheme)
         .environment(\.locale, uiLanguage.locale)
         .onAppear {
             model.restoreEditorSettings()

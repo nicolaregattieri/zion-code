@@ -6,6 +6,7 @@ struct SidebarView: View {
     @Binding var selectedBranchTreeNodeID: String?
     @Binding var confirmationModeRaw: String
     @Binding var uiLanguageRaw: String
+    @Binding var appearanceRaw: String
     
     @AppStorage("zion.preferredTerminal") private var preferredTerminalRaw: String = ExternalTerminal.terminal.rawValue
     @AppStorage("zion.customTerminalPath") private var customTerminalPath: String = ""
@@ -75,6 +76,17 @@ struct SidebarView: View {
                                                 .truncationMode(.middle)
                                         }
                                         Spacer()
+
+                                        if let count = model.backgroundRepoChangedFiles[url], count > 0 {
+                                            Text("\(count)")
+                                                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                                .padding(.horizontal, 5)
+                                                .padding(.vertical, 2)
+                                                .background(Color.orange.opacity(0.2))
+                                                .foregroundStyle(.orange)
+                                                .clipShape(Capsule())
+                                        }
+
                                         Image(systemName: "chevron.right")
                                             .font(.system(size: 8, weight: .bold))
                                             .foregroundStyle(.secondary.opacity(0.5))
@@ -399,6 +411,20 @@ struct SidebarView: View {
 
                     Divider().opacity(0.1)
 
+                    // Appearance
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(L10n("Aparencia")).font(.caption).foregroundStyle(.secondary)
+                        Picker("", selection: $appearanceRaw) {
+                            ForEach(AppAppearance.allCases) { mode in
+                                Text(mode.label).tag(mode.rawValue)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                    }
+
+                    Divider().opacity(0.1)
+
                     // External Terminal
                     VStack(alignment: .leading, spacing: 8) {
                         HStack(spacing: 4) {
@@ -513,6 +539,15 @@ struct SidebarView: View {
                                 }
                             }
                         }
+                    }
+
+                    if model.aiProvider != .none {
+                        Picker(L10n("Estilo de Mensagem"), selection: $model.commitMessageStyle) {
+                            ForEach(CommitMessageStyle.allCases) { style in
+                                Text(style.label).tag(style)
+                            }
+                        }
+                        .pickerStyle(.segmented)
                     }
                 }
             }

@@ -112,6 +112,9 @@ final class RepositoryViewModel {
             _aiKeyRevision += 1 // Ensure aiAPIKey getter is re-evaluated for the new provider
         }
     }
+    var commitMessageStyle: CommitMessageStyle = .compact {
+        didSet { UserDefaults.standard.set(commitMessageStyle.rawValue, forKey: "zion.commitMessageStyle") }
+    }
     @ObservationIgnored let aiClient = AIClient()
     @ObservationIgnored private var aiTask: Task<Void, Never>?
 
@@ -141,6 +144,10 @@ final class RepositoryViewModel {
     // Background fetch
     var behindRemoteCount: Int = 0
     @ObservationIgnored private var backgroundFetchTask: Task<Void, Never>?
+
+    // Background repo persistence (terminal sessions + change badges)
+    @ObservationIgnored private var backgroundRepoStates: [URL: BackgroundRepoState] = [:]
+    var backgroundRepoChangedFiles: [URL: Int] = [:]
 
     // Repository statistics
     var repoStats: RepositoryStats?
@@ -298,6 +305,11 @@ final class RepositoryViewModel {
            let provider = AIProvider(rawValue: aiRaw) {
             aiProvider = provider
         }
+        // Commit message style
+        if let styleRaw = defaults.string(forKey: "zion.commitMessageStyle"),
+           let style = CommitMessageStyle(rawValue: styleRaw) {
+            commitMessageStyle = style
+        }
     }
 
     private func recalculateMaxLaneCount() {
@@ -308,27 +320,62 @@ final class RepositoryViewModel {
     }
 
     func openRepository(_ url: URL) {
+        let previousURL = repositoryURL
         repositoryURL = url
         saveRecentRepository(url)
         commitLimit = defaultCommitLimit(for: nil)
         if worktreePathInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             worktreePathInput = url.deletingLastPathComponent().appendingPathComponent("new-worktree").path
         }
-        
-        // Kill all existing terminal processes and reset for the new project
-        for tab in terminalTabs {
-            for session in tab.allSessions() {
-                session.killCachedProcess()
+
+        // Stash current repo's terminals (save WITHOUT clearing terminalTabs yet to avoid
+        // intermediate empty state that could cause SwiftUI to dismantle NSViews prematurely)
+        if let previousURL, previousURL != url, !terminalTabs.isEmpty {
+            let watcher = FileWatcher()
+            backgroundRepoStates[previousURL] = BackgroundRepoState(
+                terminalTabs: terminalTabs,
+                activeTabID: activeTabID,
+                focusedSessionID: focusedSessionID,
+                fileWatcher: watcher,
+                monitorTask: nil
+            )
+            backgroundRepoChangedFiles[previousURL] = 0
+            startBackgroundMonitor(for: previousURL)
+            // DON'T set terminalTabs = [] here — let the restore/create below do a direct swap
+        } else {
+            // No previous repo or same repo — kill terminals as before
+            for tab in terminalTabs {
+                for session in tab.allSessions() {
+                    session.killCachedProcess()
+                }
             }
         }
-        terminalTabs.removeAll()
-        activeTabID = nil
-        focusedSessionID = nil
+
+        // Restore stashed terminals or create fresh (direct swap, no empty intermediate)
+        if let restored = backgroundRepoStates.removeValue(forKey: url) {
+            restored.fileWatcher.stop()
+            restored.monitorTask?.cancel()
+            terminalTabs = restored.terminalTabs
+            activeTabID = restored.activeTabID
+            focusedSessionID = restored.focusedSessionID
+            backgroundRepoChangedFiles.removeValue(forKey: url)
+            // Reset isAlive for sessions that died while stashed — lets updateNSView restart them
+            for tab in terminalTabs {
+                for session in tab.allSessions() where !session.isAlive {
+                    session.isAlive = true
+                }
+            }
+        } else {
+            terminalTabs = []
+            activeTabID = nil
+            focusedSessionID = nil
+            createDefaultTerminalSession(repositoryURL: url, branchName: currentBranch.isEmpty ? url.lastPathComponent : currentBranch)
+        }
+
         openedFiles.removeAll()
         activeFileID = nil
         selectedCodeFile = nil
-        
-        createDefaultTerminalSession(repositoryURL: url, branchName: currentBranch.isEmpty ? url.lastPathComponent : currentBranch)
+
         refreshRepository()
         refreshFileTree()
         startAutoRefreshTimer()
@@ -2442,7 +2489,8 @@ final class RepositoryViewModel {
                         recentMessages: recentMessages,
                         branchName: currentBranch,
                         provider: aiProvider,
-                        apiKey: aiAPIKey
+                        apiKey: aiAPIKey,
+                        style: commitMessageStyle
                     )
                     logger.log(.ai, "Commit message generated OK")
                     suggestedCommitMessage = message
@@ -2928,6 +2976,57 @@ final class RepositoryViewModel {
         }
     }
 
+    // MARK: - Background Repo Persistence
+
+    private func startBackgroundMonitor(for url: URL) {
+        guard var state = backgroundRepoStates[url] else { return }
+
+        state.fileWatcher.onRepositoryChanged = { [weak self] in
+            Task { [weak self] in
+                await self?.updateChangedFileCount(for: url)
+            }
+        }
+        state.fileWatcher.watch(directory: url)
+
+        // Periodic check every 30s (catches changes FileWatcher might miss)
+        state.monitorTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 30_000_000_000)
+                if Task.isCancelled { break }
+                await self?.updateChangedFileCount(for: url)
+            }
+        }
+
+        backgroundRepoStates[url] = state
+    }
+
+    private func updateChangedFileCount(for url: URL) async {
+        do {
+            let output = try await worker.runAction(
+                args: ["status", "--porcelain"],
+                in: url
+            )
+            let count = output.split(separator: "\n").count
+            backgroundRepoChangedFiles[url] = count
+        } catch {
+            // Silently fail — repo may be unavailable
+        }
+    }
+
+    func cleanupAllBackgroundStates() {
+        for (_, state) in backgroundRepoStates {
+            state.monitorTask?.cancel()
+            state.fileWatcher.stop()
+            for tab in state.terminalTabs {
+                for session in tab.allSessions() {
+                    session.killCachedProcess()
+                }
+            }
+        }
+        backgroundRepoStates.removeAll()
+        backgroundRepoChangedFiles.removeAll()
+    }
+
     // MARK: - Repository Statistics
 
     func loadRepositoryStats() {
@@ -3063,5 +3162,29 @@ final class RepositoryViewModel {
 
     deinit {
         autoRefreshTask?.cancel()
+        let states = backgroundRepoStates
+        for (_, state) in states {
+            state.monitorTask?.cancel()
+        }
+        Task { @MainActor in
+            for (_, state) in states {
+                state.fileWatcher.stop()
+                for tab in state.terminalTabs {
+                    for session in tab.allSessions() {
+                        session.killCachedProcess()
+                    }
+                }
+            }
+        }
     }
+}
+
+// MARK: - Background Repo State
+
+struct BackgroundRepoState {
+    var terminalTabs: [TerminalPaneNode]
+    var activeTabID: UUID?
+    var focusedSessionID: UUID?
+    var fileWatcher: FileWatcher
+    var monitorTask: Task<Void, Never>?
 }

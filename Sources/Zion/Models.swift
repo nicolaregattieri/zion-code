@@ -615,6 +615,25 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     }
 }
 
+enum AppAppearance: String, CaseIterable, Identifiable {
+    case system, light, dark
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .system: return L10n("Sistema")
+        case .light: return L10n("Claro")
+        case .dark: return L10n("Escuro")
+        }
+    }
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
+}
+
 func L10n(_ key: String, _ args: CVarArg...) -> String {
     let languageRaw = UserDefaults.standard.string(forKey: "zion.uiLanguage") ?? "system"
     let language: AppLanguage
@@ -647,6 +666,17 @@ enum AIProvider: String, CaseIterable, Identifiable {
         case .anthropic: return L10n("Anthropic (Claude)")
         case .openai: return L10n("OpenAI (GPT)")
         case .gemini: return L10n("Google (Gemini)")
+        }
+    }
+}
+
+enum CommitMessageStyle: String, CaseIterable, Identifiable {
+    case compact, detailed
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .compact: return L10n("Compacto")
+        case .detailed: return L10n("Detalhado")
         }
     }
 }
