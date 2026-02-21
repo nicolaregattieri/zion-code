@@ -39,7 +39,7 @@ struct AISettingsTab: View {
                                 isEditingKey = true
                             }
                             .buttonStyle(.plain)
-                            .contentShape(Rectangle())
+                            .cursorArrow()
                             .foregroundStyle(.blue)
                         }
                     } else {

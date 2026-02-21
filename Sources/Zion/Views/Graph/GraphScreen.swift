@@ -135,7 +135,7 @@ struct GraphScreen: View {
     private func jumpButton(icon: String, color: Color, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon).font(.system(size: 14, weight: .bold)).foregroundStyle(.white).frame(width: 32, height: 32).background(color.gradient).clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous))
-        }.buttonStyle(.plain).contentShape(Rectangle()).help(L10n("Saltar para") + " \(label)")
+        }.buttonStyle(.plain).cursorArrow().help(L10n("Saltar para") + " \(label)")
     }
 
     private func findBranchName(matches: [String]) -> String? {
@@ -162,7 +162,7 @@ struct GraphScreen: View {
                         }
                     }
                 if !commitSearchQuery.isEmpty {
-                    Button { commitSearchQuery = ""; model.clearSemanticSearch() } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).contentShape(Rectangle()).help(L10n("Limpar busca"))
+                    Button { commitSearchQuery = ""; model.clearSemanticSearch() } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).cursorArrow().help(L10n("Limpar busca"))
                     if !model.isSemanticSearchActive && !searchMatchIDs.isEmpty {
                         Text("\(currentMatchIndex + 1)/\(searchMatchIDs.count)").font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundStyle(.secondary)
                     } else if !model.aiSemanticSearchResults.isEmpty {
@@ -679,7 +679,7 @@ struct GraphScreen: View {
             CardHeader(L10n("Changes"), icon: "pencil.circle", subtitle: "\(model.uncommittedCount) \(L10n("arquivos modificados"))") {
                 Button { model.refreshRepository() } label: {
                     Image(systemName: "arrow.clockwise")
-                }.buttonStyle(.plain).contentShape(Rectangle()).help(L10n("Atualizar"))
+                }.buttonStyle(.plain).cursorArrow().help(L10n("Atualizar"))
             }
             .padding(12)
             Divider()
