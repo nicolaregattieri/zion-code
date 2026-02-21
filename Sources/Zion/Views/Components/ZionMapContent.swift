@@ -175,6 +175,13 @@ struct ZionMapContent {
                 ZionMapEntry("map.prinbox.autoreview.title", description: "map.prinbox.autoreview.description"),
                 ZionMapEntry("map.prinbox.notifications.title", description: "map.prinbox.notifications.description"),
             ]
+
+        case .autoUpdates:
+            return [
+                ZionMapEntry("map.updates.check.title", description: "map.updates.check.description"),
+                ZionMapEntry("map.updates.auto.title", description: "map.updates.auto.description"),
+                ZionMapEntry("map.updates.delta.title", description: "map.updates.delta.description"),
+            ]
         }
     }
 }

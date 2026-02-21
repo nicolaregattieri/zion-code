@@ -827,6 +827,8 @@
 "pr.inbox.title" = "PR Reviews";
 "pr.inbox.reviewAll" = "Review All";
 "pr.inbox.openGitHub" = "Open on GitHub";
+"pr.inbox.empty" = "No PRs awaiting review";
+"pr.inbox.setup.hint" = "Requires gh CLI authenticated (gh auth login)";
 "pr.status.pending" = "Pending";
 "pr.status.reviewing" = "Reviewing...";
 "pr.status.reviewed" = "Reviewed";
@@ -880,3 +882,17 @@
 "map.prinbox.autoreview.description" = "When enabled, AI automatically reviews assigned PRs and notifies you with findings ready.";
 "map.prinbox.notifications.title" = "Review Notifications";
 "map.prinbox.notifications.description" = "Get macOS notifications and ntfy push alerts when AI completes PR reviews.";
+
+// Auto Updates (Sparkle)
+"Buscar Atualizacoes..." = "Check for Updates\U2026";
+"help.updates.title" = "Auto Updates";
+"help.updates.check" = "Check for updates from the Help menu";
+"help.updates.auto" = "Automatic daily background update checks";
+"help.updates.delta" = "Delta updates for smaller downloads";
+"map.autoUpdates.subtitle" = "Native auto-updates via Sparkle with daily background checks.";
+"map.updates.check.title" = "Check for Updates";
+"map.updates.check.description" = "Manually check for new versions from Help > Check for Updates.";
+"map.updates.auto.title" = "Automatic Checks";
+"map.updates.auto.description" = "Zion automatically checks for updates every 24 hours in the background.";
+"map.updates.delta.title" = "Delta Updates";
+"map.updates.delta.description" = "Smart downloads that only transfer the differences between versions.";

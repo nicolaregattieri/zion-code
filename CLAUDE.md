@@ -13,7 +13,7 @@ Zion is a native Git client for macOS, focusing on a visual representation of th
 - **Git Integration:** Direct Git CLI interface through `GitClient`
 - **Localization:** Portuguese (BR), English, Spanish via `.lproj` files and `L10n()` helper
 
-## Key Files
+## Key Filesas dfasdfasd
 
 | File | Purpose |
 |------|---------|
