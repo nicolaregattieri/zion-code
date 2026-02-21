@@ -382,9 +382,7 @@ struct SidebarView: View {
 
                 Spacer()
 
-                Button {
-                    NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-                } label: {
+                SettingsLink {
                     Label(L10n("settings.open"), systemImage: "gearshape")
                         .font(.system(size: 10, weight: .medium))
                 }

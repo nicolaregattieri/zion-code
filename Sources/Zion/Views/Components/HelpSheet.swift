@@ -60,12 +60,13 @@ struct HelpSheet: View {
     var body: some View {
         NavigationStack(path: $path) {
             discoverGrid
+                .frame(width: 720, height: 680)
                 .navigationDestination(for: FeatureSection.self) { section in
                     ZionMapDetailPage(section: section)
+                        .frame(width: 720, height: 680)
                 }
         }
         .toolbar(.hidden)
-        .frame(width: 720, height: 680)
     }
 
     // MARK: - Discover Grid (root page)
