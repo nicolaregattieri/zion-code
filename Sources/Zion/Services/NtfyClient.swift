@@ -121,10 +121,10 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
     /// Synchronous events (instant inline results) are hidden — notifications add no value.
     var isUserConfigurable: Bool {
         switch self {
-        case .cloneComplete, .newRemoteCommits,
+        case .newRemoteCommits,
              .prCreated, .prReviewRequested:
             return true
-        case .pushComplete, .pullComplete,
+        case .cloneComplete, .pushComplete, .pullComplete,
              .codeReviewComplete, .branchReviewComplete,
              .commitMessageReady, .changelogReady, .blameExplanationReady,
              .diffExplanationReady, .commitSplitReady, .conflictResolutionReady:

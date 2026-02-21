@@ -563,6 +563,7 @@
 // ntfy Push Notifications
 "Notificacoes Push" = "Push Notifications";
 "Terminal Externo" = "External Terminal";
+"ntfy.onboarding.hint" = "Get push notifications on your phone and macOS via ntfy.sh";
 "ntfy.topic.configured" = "Topic configured";
 "ntfy.topic.placeholder" = "Your ntfy topic (e.g. zion-my-mac)";
 "ntfy.topic.privacy" = "Use a unique, hard-to-guess name. Anyone with the topic name can send/receive notifications.";

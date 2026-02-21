@@ -16,6 +16,7 @@ struct SidebarView: View {
     @State private var ntfyTopicInput: String = ""
     @State private var isEditingNtfyTopic: Bool = false
     @State private var isNtfyAdvancedExpanded: Bool = false
+    @State private var isTestingNtfy: Bool = false
     @AppStorage("zion.sidebar.recentsExpanded") private var isRecentsExpanded: Bool = true
     @AppStorage("zion.sidebar.settingsExpanded") private var isSettingsExpanded: Bool = false
 
@@ -445,7 +446,7 @@ struct SidebarView: View {
                                 HStack {
                                     Label(L10n("Chave registrada"), systemImage: "lock.fill")
                                         .font(.system(size: 10, weight: .medium))
-                                        .foregroundStyle(.green.opacity(0.8))
+                                        .foregroundStyle(DesignSystem.Colors.success)
                                     
                                     Spacer()
                                     
@@ -526,11 +527,6 @@ struct SidebarView: View {
 
                     // ntfy Push Notifications
                     ntfySettingsSection
-
-                    if model.isNtfyConfigured {
-                        Divider().opacity(0.1)
-                        ntfyAgentsSection
-                    }
                 }
             }
 
@@ -542,7 +538,7 @@ struct SidebarView: View {
     // MARK: - ntfy Settings
 
     private var ntfySettingsSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 4) {
                 Image(systemName: "bell.badge")
                     .font(.system(size: 9))
@@ -550,12 +546,20 @@ struct SidebarView: View {
                 Text(L10n("Notificacoes Push")).font(.caption).foregroundStyle(.secondary)
             }
 
+            // Onboarding hint for unconfigured state
+            if !model.isNtfyConfigured && !isEditingNtfyTopic {
+                Text(L10n("ntfy.onboarding.hint"))
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
             // Topic input
             if model.isNtfyConfigured && !isEditingNtfyTopic {
                 HStack {
                     Label(L10n("ntfy.topic.configured"), systemImage: "bell.fill")
                         .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.green.opacity(0.8))
+                        .foregroundStyle(DesignSystem.Colors.success)
                     Spacer()
                     Button(L10n("Alterar")) {
                         ntfyTopicInput = model.ntfyTopic
@@ -582,6 +586,10 @@ struct SidebarView: View {
                         .font(.system(size: 9))
                         .foregroundStyle(.secondary)
                         .lineLimit(3)
+                        .padding(8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(DesignSystem.Colors.glassSubtle))
+                        .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(DesignSystem.Colors.glassHover, lineWidth: 1))
 
                     HStack {
                         if isEditingNtfyTopic {
@@ -680,55 +688,68 @@ struct SidebarView: View {
 
                 // Test notification button
                 Button {
-                    model.testNtfyNotification()
+                    isTestingNtfy = true
+                    Task {
+                        await model.testNtfyNotification()
+                        isTestingNtfy = false
+                    }
                 } label: {
-                    Label(L10n("ntfy.test.button"), systemImage: "paperplane.fill")
-                        .font(.system(size: 10, weight: .medium))
-                        .frame(maxWidth: .infinity)
+                    HStack(spacing: 6) {
+                        if isTestingNtfy {
+                            ProgressView()
+                                .controlSize(.small)
+                                .scaleEffect(0.7)
+                        } else {
+                            Image(systemName: "paperplane.fill")
+                        }
+                        Text(L10n("ntfy.test.button"))
+                    }
+                    .font(.system(size: 10, weight: .medium))
+                    .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
+                .disabled(isTestingNtfy)
                 .padding(.top, 2)
-            }
-        }
-    }
 
-    private var ntfyAgentsSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 4) {
-                Image(systemName: "cpu")
-                    .font(.system(size: 9))
-                    .foregroundStyle(.cyan)
-                Text(L10n("ntfy.agents.title")).font(.caption).foregroundStyle(.secondary)
-            }
+                Divider().opacity(0.1)
 
-            Text(L10n("ntfy.agents.description"))
-                .font(.system(size: 9))
-                .foregroundStyle(.tertiary)
-                .lineLimit(3)
-
-            Toggle(isOn: $model.ntfyExternalAgentsEnabled) {
-                Text(L10n("ntfy.agents.enable"))
-                    .font(.system(size: 11))
-            }
-            .toggleStyle(.switch)
-            .controlSize(.mini)
-
-            if model.ntfyExternalAgentsEnabled {
-                VStack(alignment: .leading, spacing: 5) {
-                    ForEach(AIAgent.allCases) { agent in
-                        Toggle(isOn: agentToggleBinding(for: agent)) {
-                            Text(agent.label)
-                                .font(.system(size: 10))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .toggleStyle(.switch)
-                        .controlSize(.mini)
-                    }
+                // External agents
+                HStack(spacing: 4) {
+                    Image(systemName: "cpu")
+                        .font(.system(size: 9))
+                        .foregroundStyle(.cyan)
+                    Text(L10n("ntfy.agents.title")).font(.caption).foregroundStyle(.secondary)
                 }
-                .padding(10)
-                .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(DesignSystem.Colors.glassSubtle))
-                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(DesignSystem.Colors.glassHover, lineWidth: 1))
+
+                Text(L10n("ntfy.agents.description"))
+                    .font(.system(size: 9))
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(3)
+
+                Toggle(isOn: $model.ntfyExternalAgentsEnabled) {
+                    Text(L10n("ntfy.agents.enable"))
+                        .font(.system(size: 11))
+                }
+                .toggleStyle(.switch)
+                .controlSize(.mini)
+
+                if model.ntfyExternalAgentsEnabled {
+                    VStack(alignment: .leading, spacing: 5) {
+                        ForEach(AIAgent.allCases) { agent in
+                            Toggle(isOn: agentToggleBinding(for: agent)) {
+                                Text(agent.label)
+                                    .font(.system(size: 10))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .toggleStyle(.switch)
+                            .controlSize(.mini)
+                        }
+                    }
+                    .padding(10)
+                    .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(DesignSystem.Colors.glassSubtle))
+                    .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(DesignSystem.Colors.glassHover, lineWidth: 1))
+                }
             }
         }
     }

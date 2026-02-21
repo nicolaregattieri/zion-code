@@ -385,12 +385,10 @@ final class RepositoryViewModel {
 
     // MARK: - ntfy Helpers
 
-    func testNtfyNotification() {
-        Task {
-            let success = await ntfyClient.sendTest(serverURL: ntfyServerURL, topic: ntfyTopic)
-            if !success {
-                lastError = L10n("ntfy.test.failed")
-            }
+    func testNtfyNotification() async {
+        let success = await ntfyClient.sendTest(serverURL: ntfyServerURL, topic: ntfyTopic)
+        if !success {
+            lastError = L10n("ntfy.test.failed")
         }
     }
 
