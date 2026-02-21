@@ -312,6 +312,12 @@ final class RepositoryViewModel {
     var editorAutoCloseBrackets: Bool = true {
         didSet { UserDefaults.standard.set(editorAutoCloseBrackets, forKey: "editor.autoCloseBrackets") }
     }
+    var editorAutoCloseQuotes: Bool = true {
+        didSet { UserDefaults.standard.set(editorAutoCloseQuotes, forKey: "editor.autoCloseQuotes") }
+    }
+    var editorLetterSpacing: Double = 0.0 {
+        didSet { UserDefaults.standard.set(editorLetterSpacing, forKey: "editor.letterSpacing") }
+    }
     var editorHighlightCurrentLine: Bool = true {
         didSet { UserDefaults.standard.set(editorHighlightCurrentLine, forKey: "editor.highlightCurrentLine") }
     }
@@ -445,6 +451,12 @@ final class RepositoryViewModel {
         if defaults.object(forKey: "editor.autoCloseBrackets") != nil {
             editorAutoCloseBrackets = defaults.bool(forKey: "editor.autoCloseBrackets")
         }
+        if defaults.object(forKey: "editor.autoCloseQuotes") != nil {
+            editorAutoCloseQuotes = defaults.bool(forKey: "editor.autoCloseQuotes")
+        }
+        if defaults.object(forKey: "editor.letterSpacing") != nil {
+            editorLetterSpacing = defaults.double(forKey: "editor.letterSpacing")
+        }
         if defaults.object(forKey: "editor.highlightCurrentLine") != nil {
             editorHighlightCurrentLine = defaults.bool(forKey: "editor.highlightCurrentLine")
         }
@@ -520,6 +532,10 @@ final class RepositoryViewModel {
         if rc > 0 && rc != editorRulerColumn { editorRulerColumn = rc }
         let acb = defaults.bool(forKey: "editor.autoCloseBrackets")
         if acb != editorAutoCloseBrackets { editorAutoCloseBrackets = acb }
+        let acq = defaults.bool(forKey: "editor.autoCloseQuotes")
+        if acq != editorAutoCloseQuotes { editorAutoCloseQuotes = acq }
+        let els = defaults.double(forKey: "editor.letterSpacing")
+        if els != editorLetterSpacing { editorLetterSpacing = els }
         let hcl = defaults.bool(forKey: "editor.highlightCurrentLine")
         if hcl != editorHighlightCurrentLine { editorHighlightCurrentLine = hcl }
         let bph = defaults.bool(forKey: "editor.bracketPairHighlight")

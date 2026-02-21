@@ -13,6 +13,8 @@ struct SourceCodeEditor: NSViewRepresentable {
     var tabSize: Int = 4
     var useTabs: Bool = false
     var autoCloseBrackets: Bool = true
+    var autoCloseQuotes: Bool = true
+    var letterSpacing: Double = 0.0
     var highlightCurrentLine: Bool = true
     var showRuler: Bool = false
     var rulerColumn: Int = 80
@@ -103,6 +105,7 @@ struct SourceCodeEditor: NSViewRepresentable {
         textView.editorTabSize = tabSize
         textView.editorUseTabs = useTabs
         textView.editorAutoCloseBrackets = autoCloseBrackets
+        textView.editorAutoCloseQuotes = autoCloseQuotes
         textView.editorHighlightCurrentLine = highlightCurrentLine
         textView.showColumnRuler = showRuler
         textView.columnRulerPosition = rulerColumn
@@ -130,12 +133,13 @@ struct SourceCodeEditor: NSViewRepresentable {
             coord.lastHighlightedExtension = fileExtension
         }
 
-        // Apply line spacing
+        // Apply line spacing and letter spacing
         let range = NSRange(location: 0, length: textView.string.utf16.count)
         if range.length > 0 {
             let paragraphStyle = NSMutableParagraphStyle()
             paragraphStyle.lineSpacing = CGFloat(lineSpacing)
             textView.textStorage?.addAttribute(.paragraphStyle, value: paragraphStyle, range: range)
+            textView.textStorage?.addAttribute(.kern, value: CGFloat(letterSpacing), range: range)
         }
 
         // Search highlighting
@@ -225,17 +229,23 @@ struct SourceCodeEditor: NSViewRepresentable {
             }
         }
 
-        func commentPrefix() -> String {
+        enum CommentStyle {
+            case line(String)
+            case block(String, String)
+            case none
+        }
+
+        func commentStyle() -> CommentStyle {
             let lang = detectLanguage(from: parent.fileExtension)
             switch lang {
             case .swift, .javascript, .rust, .go, .cLike, .css, .json, .unknown:
-                return "//"
+                return .line("//")
             case .python, .ruby, .shell, .yaml:
-                return "#"
+                return .line("#")
             case .sql, .lua:
-                return "--"
+                return .line("--")
             case .html, .liquid, .markdown:
-                return ""
+                return .block("<!-- ", " -->")
             }
         }
 
@@ -546,6 +556,7 @@ class ZionTextView: NSTextView {
     var editorTabSize: Int = 4
     var editorUseTabs: Bool = false
     var editorAutoCloseBrackets: Bool = true
+    var editorAutoCloseQuotes: Bool = true
     var editorHighlightCurrentLine: Bool = true
     var showColumnRuler: Bool = false
     var columnRulerPosition: Int = 80
@@ -805,7 +816,7 @@ class ZionTextView: NSTextView {
         }
 
         // Auto-closing brackets/quotes
-        if editorAutoCloseBrackets, let chars = event.characters, chars.count == 1, !flags.contains(.command), !flags.contains(.control) {
+        if let chars = event.characters, chars.count == 1, !flags.contains(.command), !flags.contains(.control) {
             let char = chars.first!
             if handleAutoClose(char) {
                 return
@@ -986,8 +997,7 @@ class ZionTextView: NSTextView {
 
     private func toggleComment() {
         guard let coordinator = coordinator else { return }
-        let prefix = coordinator.commentPrefix()
-        guard !prefix.isEmpty else { return }
+        let style = coordinator.commentStyle()
 
         let nsString = string as NSString
         let sel = selectedRange()
@@ -995,30 +1005,65 @@ class ZionTextView: NSTextView {
         let text = nsString.substring(with: lineRange)
         let lines = text.components(separatedBy: "\n")
 
-        let nonEmptyLines = lines.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
-        let allCommented = !nonEmptyLines.isEmpty && nonEmptyLines.allSatisfy {
-            $0.trimmingCharacters(in: .whitespaces).hasPrefix(prefix)
-        }
+        let toggled: String
+        switch style {
+        case .none:
+            return
 
-        let toggled = lines.map { line -> String in
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            if trimmed.isEmpty { return line }
-
-            if allCommented {
-                let leading = line.prefix(while: { $0 == " " || $0 == "\t" })
-                let rest = String(line.dropFirst(leading.count))
-                if rest.hasPrefix(prefix + " ") {
-                    return String(leading) + String(rest.dropFirst(prefix.count + 1))
-                } else if rest.hasPrefix(prefix) {
-                    return String(leading) + String(rest.dropFirst(prefix.count))
-                }
-                return line
-            } else {
-                let leading = line.prefix(while: { $0 == " " || $0 == "\t" })
-                let rest = String(line.dropFirst(leading.count))
-                return String(leading) + prefix + " " + rest
+        case .line(let prefix):
+            let nonEmptyLines = lines.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+            let allCommented = !nonEmptyLines.isEmpty && nonEmptyLines.allSatisfy {
+                $0.trimmingCharacters(in: .whitespaces).hasPrefix(prefix)
             }
-        }.joined(separator: "\n")
+
+            toggled = lines.map { line -> String in
+                let trimmed = line.trimmingCharacters(in: .whitespaces)
+                if trimmed.isEmpty { return line }
+
+                if allCommented {
+                    let leading = line.prefix(while: { $0 == " " || $0 == "\t" })
+                    let rest = String(line.dropFirst(leading.count))
+                    if rest.hasPrefix(prefix + " ") {
+                        return String(leading) + String(rest.dropFirst(prefix.count + 1))
+                    } else if rest.hasPrefix(prefix) {
+                        return String(leading) + String(rest.dropFirst(prefix.count))
+                    }
+                    return line
+                } else {
+                    let leading = line.prefix(while: { $0 == " " || $0 == "\t" })
+                    let rest = String(line.dropFirst(leading.count))
+                    return String(leading) + prefix + " " + rest
+                }
+            }.joined(separator: "\n")
+
+        case .block(let open, let close):
+            let nonEmptyLines = lines.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+            let allCommented = !nonEmptyLines.isEmpty && nonEmptyLines.allSatisfy {
+                let t = $0.trimmingCharacters(in: .whitespaces)
+                return t.hasPrefix(open) && t.hasSuffix(close)
+            }
+
+            toggled = lines.map { line -> String in
+                let trimmed = line.trimmingCharacters(in: .whitespaces)
+                if trimmed.isEmpty { return line }
+
+                if allCommented {
+                    let leading = line.prefix(while: { $0 == " " || $0 == "\t" })
+                    var rest = String(line.dropFirst(leading.count))
+                    if rest.hasPrefix(open) {
+                        rest = String(rest.dropFirst(open.count))
+                    }
+                    if rest.hasSuffix(close) {
+                        rest = String(rest.dropLast(close.count))
+                    }
+                    return String(leading) + rest
+                } else {
+                    let leading = line.prefix(while: { $0 == " " || $0 == "\t" })
+                    let rest = String(line.dropFirst(leading.count))
+                    return String(leading) + open + rest + close
+                }
+            }.joined(separator: "\n")
+        }
 
         if shouldChangeText(in: lineRange, replacementString: toggled) {
             textStorage?.replaceCharacters(in: lineRange, with: toggled)
@@ -1034,7 +1079,14 @@ class ZionTextView: NSTextView {
         let pos = sel.location
         let nsString = string as NSString
         let closers: Set<Character> = [")", "]", "}"]
+        let brackets: Set<Character> = ["(", "[", "{"]
         let quotes: Set<Character> = ["\"", "'", "`"]
+
+        // Check if this character type is enabled
+        let isBracketChar = brackets.contains(char) || closers.contains(char)
+        let isQuoteChar = quotes.contains(char)
+        if isBracketChar && !editorAutoCloseBrackets { return false }
+        if isQuoteChar && !editorAutoCloseQuotes { return false }
 
         // Skip over closing bracket if next char matches
         if closers.contains(char) && sel.length == 0 && pos < nsString.length {
