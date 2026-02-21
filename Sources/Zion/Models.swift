@@ -919,3 +919,25 @@ struct PRReviewItem: Identifiable {
         return ""
     }
 }
+
+// MARK: - Per-Repo Editor Config (.zion/editor.json)
+
+struct EditorConfig: Codable {
+    var tabSize: Int?
+    var useTabs: Bool?
+    var fontSize: Double?
+    var theme: String?
+    var rulerColumn: Int?
+    var lineSpacing: Double?
+    var showRuler: Bool?
+    var showIndentGuides: Bool?
+
+    static func load(from repoURL: URL) -> EditorConfig? {
+        let configURL = repoURL.appendingPathComponent(".zion/editor.json")
+        guard let data = try? Data(contentsOf: configURL),
+              let config = try? JSONDecoder().decode(EditorConfig.self, from: data) else {
+            return nil
+        }
+        return config
+    }
+}

@@ -118,22 +118,18 @@ if [ "${1:-}" = "upload" ]; then
         exit 1
     fi
 
-    # Check if release already exists
+    # Delete existing release to avoid CDN caching stale assets
     if gh release view "$TAG" --repo "$GITHUB_REPO" &>/dev/null; then
-        echo "Release $TAG already exists — updating assets..."
-        gh release upload "$TAG" \
-            "$DMG_PATH" \
-            "$APPCAST_PATH" \
-            --clobber \
-            --repo "$GITHUB_REPO"
-    else
-        gh release create "$TAG" \
-            --title "Zion $VERSION" \
-            --generate-notes \
-            "$DMG_PATH" \
-            "$APPCAST_PATH" \
-            --repo "$GITHUB_REPO"
+        echo "Release $TAG already exists — deleting to avoid CDN cache..."
+        gh release delete "$TAG" --yes --cleanup-tag --repo "$GITHUB_REPO"
     fi
+
+    gh release create "$TAG" \
+        --title "Zion $VERSION" \
+        --generate-notes \
+        "$DMG_PATH" \
+        "$APPCAST_PATH" \
+        --repo "$GITHUB_REPO"
 
     echo ""
     echo "Release published: https://github.com/$GITHUB_REPO/releases/tag/$TAG"

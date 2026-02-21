@@ -54,7 +54,7 @@ cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
   <key>CFBundleIdentifier</key>
   <string>com.nicolaregattieri.zion.app</string>
   <key>CFBundleVersion</key>
-  <string>2</string>
+  <string>4</string>
   <key>CFBundleShortVersionString</key>
   <string>1.1.0</string>
   <key>CFBundleExecutable</key>
@@ -84,5 +84,11 @@ cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
 PLIST
 
 chmod +x "$APP_DIR/Contents/MacOS/Zion"
+
+# Strip extended attributes that break codesign (resource forks from cp)
+xattr -cr "$APP_DIR"
+
+# Re-sign app bundle (install_name_tool invalidates the ad-hoc signature from swift build)
+codesign --force --deep --sign - "$APP_DIR"
 
 echo "App gerado em: $APP_DIR"
