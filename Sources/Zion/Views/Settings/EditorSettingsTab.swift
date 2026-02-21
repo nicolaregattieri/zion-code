@@ -5,10 +5,12 @@ struct EditorSettingsTab: View {
     @AppStorage("editor.fontFamily") private var fontFamily: String = "SF Mono"
     @AppStorage("editor.fontSize") private var fontSize: Double = 13.0
     @AppStorage("editor.lineSpacing") private var lineSpacing: Double = 1.2
+    @AppStorage("editor.letterSpacing") private var letterSpacing: Double = 0.0
 
     @AppStorage("editor.tabSize") private var tabSize: Int = 4
     @AppStorage("editor.useTabs") private var useTabs: Bool = false
     @AppStorage("editor.autoCloseBrackets") private var autoCloseBrackets: Bool = true
+    @AppStorage("editor.autoCloseQuotes") private var autoCloseQuotes: Bool = true
     @AppStorage("editor.bracketPairHighlight") private var bracketPairHighlight: Bool = true
 
     @AppStorage("editor.lineWrap") private var lineWrap: Bool = true
@@ -48,9 +50,19 @@ struct EditorSettingsTab: View {
                 HStack {
                     Text(L10n("settings.editor.lineSpacing"))
                     Spacer()
-                    Slider(value: $lineSpacing, in: 0.8...3.0, step: 0.1)
+                    Slider(value: $lineSpacing, in: 0.0...5.0, step: 0.1)
                         .frame(width: 120)
                     Text(String(format: "%.1fx", lineSpacing))
+                        .font(.system(size: 11, design: .monospaced))
+                        .frame(width: 36, alignment: .trailing)
+                }
+
+                HStack {
+                    Text(L10n("settings.editor.letterSpacing"))
+                    Spacer()
+                    Slider(value: $letterSpacing, in: -1.0...5.0, step: 0.1)
+                        .frame(width: 120)
+                    Text(String(format: "%.1f", letterSpacing))
                         .font(.system(size: 11, design: .monospaced))
                         .frame(width: 36, alignment: .trailing)
                 }
@@ -67,6 +79,8 @@ struct EditorSettingsTab: View {
                 Toggle(L10n("settings.editor.useTabs"), isOn: $useTabs)
 
                 Toggle(L10n("settings.editor.autoCloseBrackets"), isOn: $autoCloseBrackets)
+
+                Toggle(L10n("settings.editor.autoCloseQuotes"), isOn: $autoCloseQuotes)
 
                 Toggle(L10n("settings.editor.bracketPairHighlight"), isOn: $bracketPairHighlight)
             }

@@ -861,6 +861,9 @@
 "settings.editor.showIndentGuides" = "Mostrar guias de indentação";
 "settings.editor.showRuler" = "Mostrar régua de coluna";
 "settings.editor.rulerColumn" = "Coluna da régua";
+"settings.editor.letterSpacing" = "Espaçamento de Letras";
+"settings.editor.autoCloseQuotes" = "Fechar aspas automaticamente";
+"settings.editor.popover.title" = "Configurações do Editor";
 
 // Find/Replace
 "editor.search.placeholder" = "Buscar...";

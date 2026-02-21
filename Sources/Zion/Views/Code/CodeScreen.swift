@@ -224,7 +224,7 @@ struct CodeScreen: View {
 
                 Divider().frame(height: 14)
 
-                Slider(value: $model.editorLineSpacing, in: 0.8...3.0, step: 0.1)
+                Slider(value: $model.editorLineSpacing, in: 0.0...5.0, step: 0.1)
                     .frame(width: 60)
                 Text(String(format: "%.1fx", model.editorLineSpacing))
                     .font(.system(size: 10, design: .monospaced))
@@ -244,6 +244,8 @@ struct CodeScreen: View {
             .buttonStyle(.bordered)
             .tint(model.isLineWrappingEnabled ? Color.accentColor : .secondary)
             .help(L10n("Quebra de Linha Automática"))
+
+            EditorSettingsPopoverButton(model: model)
 
             Button {
                 model.toggleBlame()
@@ -443,6 +445,8 @@ struct CodeScreen: View {
                         tabSize: model.effectiveTabSize,
                         useTabs: model.effectiveUseTabs,
                         autoCloseBrackets: model.editorAutoCloseBrackets,
+                        autoCloseQuotes: model.editorAutoCloseQuotes,
+                        letterSpacing: model.editorLetterSpacing,
                         highlightCurrentLine: model.editorHighlightCurrentLine,
                         showRuler: model.effectiveShowRuler,
                         rulerColumn: model.effectiveRulerColumn,
@@ -854,6 +858,114 @@ struct CodeScreen: View {
         .padding(.vertical, 8)
         .overlay(alignment: .top) {
             Rectangle().fill(model.selectedTheme.terminalPalette.accentSwiftUI.opacity(0.25)).frame(height: 1)
+        }
+    }
+}
+
+struct EditorSettingsPopoverButton: View {
+    @Bindable var model: RepositoryViewModel
+    @State private var isPresented = false
+
+    var body: some View {
+        Button {
+            isPresented.toggle()
+        } label: {
+            Image(systemName: "slider.horizontal.3")
+                .font(.caption)
+        }
+        .buttonStyle(.bordered)
+        .tint(isPresented ? Color.accentColor : .secondary)
+        .help(L10n("settings.editor.popover.title"))
+        .popover(isPresented: $isPresented) {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(L10n("settings.editor.popover.title"))
+                    .font(.system(size: 11, weight: .semibold))
+
+                // Editing section
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(L10n("settings.editor.editing"))
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.secondary)
+
+                    HStack(spacing: 6) {
+                        Text(L10n("settings.editor.tabSize"))
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                        Picker("", selection: $model.editorTabSize) {
+                            Text("2").tag(2)
+                            Text("4").tag(4)
+                            Text("8").tag(8)
+                        }
+                        .pickerStyle(.segmented)
+                        .frame(width: 120)
+                    }
+
+                    Toggle(L10n("settings.editor.useTabs"), isOn: $model.editorUseTabs)
+                        .font(.system(size: 11))
+
+                    Toggle(L10n("settings.editor.autoCloseBrackets"), isOn: $model.editorAutoCloseBrackets)
+                        .font(.system(size: 11))
+
+                    Toggle(L10n("settings.editor.autoCloseQuotes"), isOn: $model.editorAutoCloseQuotes)
+                        .font(.system(size: 11))
+
+                    Toggle(L10n("settings.editor.bracketPairHighlight"), isOn: $model.editorBracketPairHighlight)
+                        .font(.system(size: 11))
+                }
+
+                Divider()
+
+                // Display section
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(L10n("settings.editor.display"))
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.secondary)
+
+                    Toggle(L10n("settings.editor.lineWrap"), isOn: $model.isLineWrappingEnabled)
+                        .font(.system(size: 11))
+
+                    Toggle(L10n("settings.editor.highlightCurrentLine"), isOn: $model.editorHighlightCurrentLine)
+                        .font(.system(size: 11))
+
+                    Toggle(L10n("settings.editor.showIndentGuides"), isOn: $model.editorShowIndentGuides)
+                        .font(.system(size: 11))
+
+                    Toggle(L10n("settings.editor.showRuler"), isOn: $model.editorShowRuler)
+                        .font(.system(size: 11))
+
+                    if model.editorShowRuler {
+                        HStack(spacing: 6) {
+                            Text(L10n("settings.editor.rulerColumn"))
+                                .font(.system(size: 10))
+                                .foregroundStyle(.secondary)
+                            Picker("", selection: $model.editorRulerColumn) {
+                                Text("80").tag(80)
+                                Text("100").tag(100)
+                                Text("120").tag(120)
+                            }
+                            .pickerStyle(.segmented)
+                            .frame(width: 120)
+                        }
+                    }
+                }
+
+                Divider()
+
+                // Letter spacing
+                HStack(spacing: 6) {
+                    Text(L10n("settings.editor.letterSpacing"))
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                    Slider(value: $model.editorLetterSpacing, in: -1.0...5.0, step: 0.1)
+                        .frame(width: 100)
+                    Text(String(format: "%.1f", model.editorLetterSpacing))
+                        .font(.system(size: 10, design: .monospaced))
+                        .frame(width: 30)
+                }
+            }
+            .controlSize(.small)
+            .padding(12)
+            .frame(width: 260)
         }
     }
 }

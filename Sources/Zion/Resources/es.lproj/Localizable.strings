@@ -957,6 +957,9 @@
 "settings.editor.showIndentGuides" = "Mostrar guías de indentación";
 "settings.editor.showRuler" = "Mostrar regla de columna";
 "settings.editor.rulerColumn" = "Columna de la regla";
+"settings.editor.letterSpacing" = "Espaciado de Letras";
+"settings.editor.autoCloseQuotes" = "Cerrar comillas automáticamente";
+"settings.editor.popover.title" = "Configuración del Editor";
 
 // Find/Replace
 "editor.search.placeholder" = "Buscar...";

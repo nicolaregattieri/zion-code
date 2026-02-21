@@ -956,6 +956,9 @@
 "settings.editor.showIndentGuides" = "Show indent guides";
 "settings.editor.showRuler" = "Show column ruler";
 "settings.editor.rulerColumn" = "Ruler column";
+"settings.editor.letterSpacing" = "Letter Spacing";
+"settings.editor.autoCloseQuotes" = "Auto-close quotes";
+"settings.editor.popover.title" = "Editor Settings";
 
 // Find/Replace
 "editor.search.placeholder" = "Find...";
