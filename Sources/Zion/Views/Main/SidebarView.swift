@@ -616,74 +616,66 @@ struct SidebarView: View {
                 }
             }
 
-            Divider().opacity(0.1)
-
-            // Advanced: custom server
-            DisclosureGroup(isExpanded: $isNtfyAdvancedExpanded) {
-                VStack(alignment: .leading, spacing: 4) {
-                    TextField("https://ntfy.sh", text: $model.ntfyServerURL)
-                        .textFieldStyle(.roundedBorder)
-                        .font(.system(size: 10, design: .monospaced))
-
-                    Text(L10n("ntfy.server.hint"))
-                        .font(.system(size: 9))
-                        .foregroundStyle(.tertiary)
-                }
-                .padding(.top, 4)
-            } label: {
-                Text(L10n("ntfy.advanced"))
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.secondary)
-            }
-
-            // Local notifications toggle
-            Toggle(isOn: $model.ntfyLocalNotificationsEnabled) {
-                Label(L10n("ntfy.local.toggle"), systemImage: "bell")
-                    .font(.system(size: 11))
-            }
-            .toggleStyle(.switch)
-            .controlSize(.mini)
-
-            Divider().opacity(0.1)
-
-            // Event toggles (only user-configurable events)
+            // Configured state: show toggles, server, and test button
             if model.isNtfyConfigured {
+                Divider().opacity(0.1)
+
+                // Local notifications toggle
+                Toggle(isOn: $model.ntfyLocalNotificationsEnabled) {
+                    Label(L10n("ntfy.local.toggle"), systemImage: "bell")
+                        .font(.system(size: 11))
+                }
+                .toggleStyle(.switch)
+                .controlSize(.mini)
+
+                Divider().opacity(0.1)
+
+                // Event toggles — flat list, no group headers needed for 4 items
                 VStack(alignment: .leading, spacing: 8) {
                     Text(L10n("ntfy.events.title"))
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundStyle(.secondary)
 
-                    VStack(spacing: 8) {
-                        ForEach(NtfyEventGroup.allCases) { group in
-                            let events = NtfyEvent.allCases.filter { $0.group == group && $0.isUserConfigurable }
-                            if !events.isEmpty {
-                                VStack(alignment: .leading, spacing: 5) {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: group.icon)
-                                            .font(.system(size: 8))
-                                            .foregroundStyle(.secondary)
-                                        Text(group.label)
-                                            .font(.system(size: 9, weight: .bold))
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    .padding(.top, 2)
-
-                                    ForEach(events) { event in
-                                        Toggle(isOn: ntfyEventBinding(for: event)) {
-                                            Text(event.label)
-                                                .font(.system(size: 10))
-                                                .frame(maxWidth: .infinity, alignment: .leading)
-                                        }
-                                        .toggleStyle(.switch)
-                                        .controlSize(.mini)
-                                    }
+                    VStack(spacing: 6) {
+                        ForEach(NtfyEvent.allCases.filter(\.isUserConfigurable)) { event in
+                            Toggle(isOn: ntfyEventBinding(for: event)) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: event.group.icon)
+                                        .font(.system(size: 8))
+                                        .foregroundStyle(.secondary)
+                                        .frame(width: 12)
+                                    Text(event.label)
+                                        .font(.system(size: 10))
                                 }
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             }
+                            .toggleStyle(.switch)
+                            .controlSize(.mini)
                         }
                     }
                     .padding(10)
                     .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(DesignSystem.Colors.glassSubtle))
                     .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(DesignSystem.Colors.glassHover, lineWidth: 1))
+                }
+
+                Divider().opacity(0.1)
+
+                // Advanced: custom server
+                DisclosureGroup(isExpanded: $isNtfyAdvancedExpanded) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        TextField("https://ntfy.sh", text: $model.ntfyServerURL)
+                            .textFieldStyle(.roundedBorder)
+                            .font(.system(size: 10, design: .monospaced))
+
+                        Text(L10n("ntfy.server.hint"))
+                            .font(.system(size: 9))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(.top, 4)
+                } label: {
+                    Text(L10n("ntfy.advanced"))
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.secondary)
                 }
 
                 // Test notification button
