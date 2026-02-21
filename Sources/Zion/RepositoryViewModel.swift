@@ -297,6 +297,30 @@ final class RepositoryViewModel {
     var isLineWrappingEnabled: Bool = true {
         didSet { UserDefaults.standard.set(isLineWrappingEnabled, forKey: "editor.lineWrap") }
     }
+    var editorTabSize: Int = 4 {
+        didSet { UserDefaults.standard.set(editorTabSize, forKey: "editor.tabSize") }
+    }
+    var editorUseTabs: Bool = false {
+        didSet { UserDefaults.standard.set(editorUseTabs, forKey: "editor.useTabs") }
+    }
+    var editorShowRuler: Bool = false {
+        didSet { UserDefaults.standard.set(editorShowRuler, forKey: "editor.showRuler") }
+    }
+    var editorRulerColumn: Int = 80 {
+        didSet { UserDefaults.standard.set(editorRulerColumn, forKey: "editor.rulerColumn") }
+    }
+    var editorAutoCloseBrackets: Bool = true {
+        didSet { UserDefaults.standard.set(editorAutoCloseBrackets, forKey: "editor.autoCloseBrackets") }
+    }
+    var editorHighlightCurrentLine: Bool = true {
+        didSet { UserDefaults.standard.set(editorHighlightCurrentLine, forKey: "editor.highlightCurrentLine") }
+    }
+    var editorBracketPairHighlight: Bool = true {
+        didSet { UserDefaults.standard.set(editorBracketPairHighlight, forKey: "editor.bracketPairHighlight") }
+    }
+    var editorShowIndentGuides: Bool = false {
+        didSet { UserDefaults.standard.set(editorShowIndentGuides, forKey: "editor.showIndentGuides") }
+    }
 
     // Terminal font settings
     var terminalFontSize: Double = 13.0 {
@@ -335,6 +359,22 @@ final class RepositoryViewModel {
     // Performance caches
     private(set) var maxLaneCount: Int = 1
     private(set) var flatFileCache: [FileItem] = []
+
+    @ObservationIgnored private var repoEditorConfig: EditorConfig?
+    var hasRepoEditorConfig: Bool { repoEditorConfig != nil }
+
+    // Effective editor properties — repo config overrides global
+    var effectiveTabSize: Int { repoEditorConfig?.tabSize ?? editorTabSize }
+    var effectiveUseTabs: Bool { repoEditorConfig?.useTabs ?? editorUseTabs }
+    var effectiveFontSize: Double { repoEditorConfig?.fontSize ?? editorFontSize }
+    var effectiveRulerColumn: Int { repoEditorConfig?.rulerColumn ?? editorRulerColumn }
+    var effectiveLineSpacing: Double { repoEditorConfig?.lineSpacing ?? editorLineSpacing }
+    var effectiveShowRuler: Bool { repoEditorConfig?.showRuler ?? editorShowRuler }
+    var effectiveShowIndentGuides: Bool { repoEditorConfig?.showIndentGuides ?? editorShowIndentGuides }
+    var effectiveTheme: EditorTheme {
+        if let name = repoEditorConfig?.theme, let t = EditorTheme(rawValue: name) { return t }
+        return selectedTheme
+    }
 
     @ObservationIgnored private let git = GitClient()
     @ObservationIgnored private let worker = RepositoryWorker()
@@ -390,6 +430,30 @@ final class RepositoryViewModel {
         if defaults.object(forKey: "editor.lineWrap") != nil {
             isLineWrappingEnabled = defaults.bool(forKey: "editor.lineWrap")
         }
+        if defaults.object(forKey: "editor.tabSize") != nil {
+            editorTabSize = defaults.integer(forKey: "editor.tabSize")
+        }
+        if defaults.object(forKey: "editor.useTabs") != nil {
+            editorUseTabs = defaults.bool(forKey: "editor.useTabs")
+        }
+        if defaults.object(forKey: "editor.showRuler") != nil {
+            editorShowRuler = defaults.bool(forKey: "editor.showRuler")
+        }
+        if defaults.object(forKey: "editor.rulerColumn") != nil {
+            editorRulerColumn = defaults.integer(forKey: "editor.rulerColumn")
+        }
+        if defaults.object(forKey: "editor.autoCloseBrackets") != nil {
+            editorAutoCloseBrackets = defaults.bool(forKey: "editor.autoCloseBrackets")
+        }
+        if defaults.object(forKey: "editor.highlightCurrentLine") != nil {
+            editorHighlightCurrentLine = defaults.bool(forKey: "editor.highlightCurrentLine")
+        }
+        if defaults.object(forKey: "editor.bracketPairHighlight") != nil {
+            editorBracketPairHighlight = defaults.bool(forKey: "editor.bracketPairHighlight")
+        }
+        if defaults.object(forKey: "editor.showIndentGuides") != nil {
+            editorShowIndentGuides = defaults.bool(forKey: "editor.showIndentGuides")
+        }
         // Terminal font settings
         if defaults.object(forKey: "terminal.fontSize") != nil {
             terminalFontSize = defaults.double(forKey: "terminal.fontSize")
@@ -426,6 +490,42 @@ final class RepositoryViewModel {
         if let agents = defaults.stringArray(forKey: "zion.ntfy.selectedAgents") {
             ntfySelectedAgents = agents
         }
+    }
+
+    /// Sync editor settings from UserDefaults (called when Settings window changes values via @AppStorage)
+    func syncEditorSettingsFromDefaults() {
+        let defaults = UserDefaults.standard
+        if let themeRaw = defaults.string(forKey: "editor.theme"),
+           let theme = EditorTheme(rawValue: themeRaw), theme != selectedTheme {
+            selectedTheme = theme
+        }
+        let fs = defaults.double(forKey: "editor.fontSize")
+        if fs > 0 && fs != editorFontSize { editorFontSize = fs }
+        if let family = defaults.string(forKey: "editor.fontFamily"), family != editorFontFamily {
+            editorFontFamily = family
+        }
+        let ls = defaults.double(forKey: "editor.lineSpacing")
+        if ls > 0 && ls != editorLineSpacing { editorLineSpacing = ls }
+
+        let lw = defaults.bool(forKey: "editor.lineWrap")
+        if lw != isLineWrappingEnabled { isLineWrappingEnabled = lw }
+
+        let ts = defaults.integer(forKey: "editor.tabSize")
+        if ts > 0 && ts != editorTabSize { editorTabSize = ts }
+        let ut = defaults.bool(forKey: "editor.useTabs")
+        if ut != editorUseTabs { editorUseTabs = ut }
+        let sr = defaults.bool(forKey: "editor.showRuler")
+        if sr != editorShowRuler { editorShowRuler = sr }
+        let rc = defaults.integer(forKey: "editor.rulerColumn")
+        if rc > 0 && rc != editorRulerColumn { editorRulerColumn = rc }
+        let acb = defaults.bool(forKey: "editor.autoCloseBrackets")
+        if acb != editorAutoCloseBrackets { editorAutoCloseBrackets = acb }
+        let hcl = defaults.bool(forKey: "editor.highlightCurrentLine")
+        if hcl != editorHighlightCurrentLine { editorHighlightCurrentLine = hcl }
+        let bph = defaults.bool(forKey: "editor.bracketPairHighlight")
+        if bph != editorBracketPairHighlight { editorBracketPairHighlight = bph }
+        let sig = defaults.bool(forKey: "editor.showIndentGuides")
+        if sig != editorShowIndentGuides { editorShowIndentGuides = sig }
     }
 
     // MARK: - ntfy Helpers
@@ -489,6 +589,7 @@ final class RepositoryViewModel {
         }
 
         repositoryURL = url
+        repoEditorConfig = EditorConfig.load(from: url)
         saveRecentRepository(url)
         commitLimit = defaultCommitLimit(for: nil)
         if worktreePathInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {

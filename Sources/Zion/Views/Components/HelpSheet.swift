@@ -22,7 +22,9 @@ struct HelpSheet: View {
         case .code:
             return ["help.code.editor", "help.code.quickopen", "help.code.blame",
                     "help.code.themes", "help.code.unsaved", "help.code.newfile",
-                    "help.code.saveas", "help.code.openineditor", "help.code.contextmenu"]
+                    "help.code.saveas", "help.code.openineditor", "help.code.contextmenu",
+                    "help.code.findreplace", "help.code.tabsize", "help.code.columnruler",
+                    "help.code.brackets", "help.code.indentguides", "help.code.repoconfig"]
         case .terminal:
             return ["help.terminal.pty", "help.terminal.splits", "help.terminal.tabs",
                     "help.terminal.zoom", "help.terminal.persistence"]

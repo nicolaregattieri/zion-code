@@ -79,6 +79,12 @@ struct CodeScreen: View {
     @State private var isQuickOpenVisible: Bool = false
     @State private var isFileBrowserVisible: Bool = true
     @State private var layout: EditorTerminalLayout = .split
+    @State private var isSearchVisible: Bool = false
+    @State private var isReplaceVisible: Bool = false
+    @State private var searchQuery: String = ""
+    @State private var replaceQuery: String = ""
+    @State private var matchCount: Int = 0
+    @State private var currentMatchIndex: Int = 0
 
     var body: some View {
         ZStack {
@@ -297,6 +303,21 @@ struct CodeScreen: View {
 
             Spacer()
 
+            if model.hasRepoEditorConfig {
+                HStack(spacing: 4) {
+                    Image(systemName: "doc.text.magnifyingglass")
+                        .font(.system(size: 9))
+                    Text(".zion")
+                        .font(.system(size: 9, weight: .medium, design: .monospaced))
+                }
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 3)
+                .background(DesignSystem.Colors.glassSubtle)
+                .clipShape(RoundedRectangle(cornerRadius: 5))
+                .help(L10n("editor.repoConfig.active"))
+            }
+
             Button {
                 model.createNewFile()
             } label: {
@@ -397,6 +418,12 @@ struct CodeScreen: View {
 
                 Divider()
 
+                if isSearchVisible {
+                    findReplaceBar
+                        .background(model.selectedTheme.colors.background)
+                        .environment(\.colorScheme, model.selectedTheme.isLightAppearance ? .light : .dark)
+                }
+
                 if model.isBlameVisible && !model.blameEntries.isEmpty {
                     BlameView(entries: model.blameEntries, fileName: model.selectedCodeFile?.name ?? "", model: model) { commitHash in
                         model.selectCommit(commitHash)
@@ -406,13 +433,24 @@ struct CodeScreen: View {
                 } else {
                     SourceCodeEditor(
                         text: $model.codeFileContent,
-                        theme: model.selectedTheme,
-                        fontSize: model.editorFontSize,
+                        theme: model.effectiveTheme,
+                        fontSize: model.effectiveFontSize,
                         fontFamily: model.editorFontFamily,
-                        lineSpacing: model.editorLineSpacing,
+                        lineSpacing: model.effectiveLineSpacing,
                         isLineWrappingEnabled: model.isLineWrappingEnabled,
                         activeFileID: model.activeFileID,
-                        fileExtension: model.selectedCodeFile?.url.pathExtension ?? ""
+                        fileExtension: model.selectedCodeFile?.url.pathExtension ?? "",
+                        tabSize: model.effectiveTabSize,
+                        useTabs: model.effectiveUseTabs,
+                        autoCloseBrackets: model.editorAutoCloseBrackets,
+                        highlightCurrentLine: model.editorHighlightCurrentLine,
+                        showRuler: model.effectiveShowRuler,
+                        rulerColumn: model.effectiveRulerColumn,
+                        bracketPairHighlight: model.editorBracketPairHighlight,
+                        showIndentGuides: model.effectiveShowIndentGuides,
+                        searchQuery: isSearchVisible ? searchQuery : "",
+                        currentMatchIndex: currentMatchIndex,
+                        onMatchCountChanged: { count in matchCount = count }
                     )
                 }
             } else {
@@ -425,7 +463,185 @@ struct CodeScreen: View {
             Button("") { model.saveCurrentCodeFile() }
                 .keyboardShortcut("s", modifiers: .command)
                 .frame(width: 0, height: 0).opacity(0)
+
+            // Find (Cmd+F)
+            Button("") { toggleSearch() }
+                .keyboardShortcut("f", modifiers: .command)
+                .frame(width: 0, height: 0).opacity(0)
+
+            // Replace (Cmd+H)
+            Button("") { toggleReplace() }
+                .keyboardShortcut("h", modifiers: .command)
+                .frame(width: 0, height: 0).opacity(0)
         }
+    }
+
+    // MARK: - Find/Replace Bar
+
+    private var findReplaceBar: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 8) {
+                // Toggle replace visibility
+                Button {
+                    withAnimation(.easeInOut(duration: 0.15)) { isReplaceVisible.toggle() }
+                } label: {
+                    Image(systemName: isReplaceVisible ? "chevron.down" : "chevron.right")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .frame(width: 16, height: 16)
+                .contentShape(Rectangle())
+
+                // Search field
+                HStack(spacing: 4) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                    TextField(L10n("editor.search.placeholder"), text: $searchQuery)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 12))
+                        .onSubmit { navigateToNextMatch() }
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .background(DesignSystem.Colors.glassSubtle)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .frame(maxWidth: 280)
+
+                // Match count
+                if !searchQuery.isEmpty {
+                    Text(matchCount > 0 ? "\(currentMatchIndex + 1)/\(matchCount)" : L10n("editor.search.noResults"))
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 50)
+                }
+
+                // Nav buttons
+                Button { navigateToPreviousMatch() } label: {
+                    Image(systemName: "chevron.up").font(.system(size: 10, weight: .medium))
+                }
+                .buttonStyle(.borderless)
+                .disabled(matchCount == 0)
+                .help(L10n("editor.search.previous") + " (⇧Enter)")
+
+                Button { navigateToNextMatch() } label: {
+                    Image(systemName: "chevron.down").font(.system(size: 10, weight: .medium))
+                }
+                .buttonStyle(.borderless)
+                .disabled(matchCount == 0)
+                .help(L10n("editor.search.next") + " (Enter)")
+
+                Spacer()
+
+                // Close
+                Button { closeSearch() } label: {
+                    Image(systemName: "xmark").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .frame(width: 20, height: 20)
+                .contentShape(Rectangle())
+                .help("Esc")
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+
+            if isReplaceVisible {
+                HStack(spacing: 8) {
+                    Spacer().frame(width: 16)
+
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.2.squarepath")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                        TextField(L10n("editor.replace.placeholder"), text: $replaceQuery)
+                            .textFieldStyle(.plain)
+                            .font(.system(size: 12))
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(DesignSystem.Colors.glassSubtle)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .frame(maxWidth: 280)
+
+                    Button(L10n("editor.replace.one")) { replaceCurrent() }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .disabled(matchCount == 0)
+
+                    Button(L10n("editor.replace.all")) { replaceAll() }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .disabled(matchCount == 0)
+
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.bottom, 6)
+            }
+
+            Divider()
+        }
+    }
+
+    private func toggleSearch() {
+        withAnimation(.easeInOut(duration: 0.15)) {
+            isSearchVisible.toggle()
+            if !isSearchVisible { closeSearch() }
+        }
+    }
+
+    private func toggleReplace() {
+        withAnimation(.easeInOut(duration: 0.15)) {
+            if !isSearchVisible { isSearchVisible = true }
+            isReplaceVisible.toggle()
+        }
+    }
+
+    private func closeSearch() {
+        isSearchVisible = false
+        isReplaceVisible = false
+        searchQuery = ""
+        replaceQuery = ""
+        matchCount = 0
+        currentMatchIndex = 0
+    }
+
+    private func navigateToNextMatch() {
+        guard matchCount > 0 else { return }
+        currentMatchIndex = (currentMatchIndex + 1) % matchCount
+    }
+
+    private func navigateToPreviousMatch() {
+        guard matchCount > 0 else { return }
+        currentMatchIndex = (currentMatchIndex - 1 + matchCount) % matchCount
+    }
+
+    private func replaceCurrent() {
+        guard matchCount > 0, !searchQuery.isEmpty else { return }
+        let escaped = NSRegularExpression.escapedPattern(for: searchQuery)
+        guard let regex = try? NSRegularExpression(pattern: escaped, options: .caseInsensitive) else { return }
+        let nsString = model.codeFileContent as NSString
+        let matches = regex.matches(in: model.codeFileContent, options: [], range: NSRange(location: 0, length: nsString.length))
+        guard currentMatchIndex < matches.count else { return }
+
+        let range = matches[currentMatchIndex].range
+        guard let swiftRange = Range(range, in: model.codeFileContent) else { return }
+        model.codeFileContent.replaceSubrange(swiftRange, with: replaceQuery)
+
+        // Recalculate after replacement
+        if currentMatchIndex >= matchCount - 1 {
+            currentMatchIndex = max(0, matchCount - 2)
+        }
+    }
+
+    private func replaceAll() {
+        guard !searchQuery.isEmpty else { return }
+        let escaped = NSRegularExpression.escapedPattern(for: searchQuery)
+        guard let regex = try? NSRegularExpression(pattern: escaped, options: .caseInsensitive) else { return }
+        let nsString = model.codeFileContent as NSString
+        model.codeFileContent = regex.stringByReplacingMatches(in: model.codeFileContent, options: [], range: NSRange(location: 0, length: nsString.length), withTemplate: NSRegularExpression.escapedTemplate(for: replaceQuery))
+        currentMatchIndex = 0
     }
 
     private var codeTabBar: some View {
