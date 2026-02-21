@@ -7,39 +7,25 @@ struct WelcomeScreen: View {
     var body: some View {
         VStack(spacing: 32) {
             VStack(spacing: 16) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 30, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 0.12, green: 0.06, blue: 0.25),
-                                    Color(red: 0.05, green: 0.02, blue: 0.12)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 120, height: 120)
-                        .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
-                    
-                    Image(systemName: "point.3.connected.trianglepath.dotted")
-                        .font(.system(size: 46, weight: .semibold))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [.white, Color(red: 0.8, green: 0.7, blue: 1.0)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .shadow(color: Color.purple.opacity(0.5), radius: 8, x: 0, y: 0)
+                Group {
+                    if let logoURL = Bundle.module.url(forResource: "zion-logo", withExtension: "png"),
+                       let nsImage = NSImage(contentsOf: logoURL) {
+                        Image(nsImage: nsImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    }
                 }
+                .frame(width: 128, height: 128)
+                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                .shadow(color: Color.purple.opacity(0.5), radius: 12, x: 0, y: 4)
 
                 Text("Zion")
                     .font(.system(size: 44, weight: .black))
 
-                Text(L10n("Seu cliente Git nativo para macOS."))
-                    .font(.headline)
+                Text(L10n("The view from the top."))
+                    .font(.system(size: 13, weight: .medium, design: .default))
                     .foregroundStyle(.secondary)
+                    .tracking(0.5)
             }
 
             VStack(spacing: 12) {

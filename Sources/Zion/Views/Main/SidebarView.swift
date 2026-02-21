@@ -97,21 +97,16 @@ struct SidebarView: View {
     private var repoSummaryCard: some View {
         GlassCard(spacing: 12) {
             HStack(alignment: .center, spacing: 14) {
-                Image(systemName: "point.3.connected.trianglepath.dotted")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 44, height: 44)
-                    .background(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.15, green: 0.08, blue: 0.35),
-                                Color(red: 0.08, green: 0.04, blue: 0.18)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                Group {
+                    if let logoURL = Bundle.module.url(forResource: "zion-logo", withExtension: "png"),
+                       let nsImage = NSImage(contentsOf: logoURL) {
+                        Image(nsImage: nsImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    }
+                }
+                .frame(width: 44, height: 44)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
                     Text(model.repositoryURL?.lastPathComponent ?? L10n("Zion Code")).font(.system(size: 16, weight: .bold)).lineLimit(1)
                     Text(model.repositoryURL?.path ?? L10n("Modo editor livre")).font(.system(size: 10, design: .monospaced)).foregroundStyle(.secondary).lineLimit(1)
