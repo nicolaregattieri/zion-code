@@ -13,6 +13,9 @@ struct SidebarView: View {
 
     @State private var aiKeyInput: String = ""
     @State private var isEditingAIKey: Bool = false
+    @State private var ntfyTopicInput: String = ""
+    @State private var isEditingNtfyTopic: Bool = false
+    @State private var isNtfyAdvancedExpanded: Bool = false
     @AppStorage("zion.sidebar.recentsExpanded") private var isRecentsExpanded: Bool = true
     @AppStorage("zion.sidebar.settingsExpanded") private var isSettingsExpanded: Bool = false
 
@@ -518,12 +521,253 @@ struct SidebarView: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
+
+                    Divider().opacity(0.1)
+
+                    // ntfy Push Notifications
+                    ntfySettingsSection
+
+                    if model.isNtfyConfigured {
+                        Divider().opacity(0.1)
+                        ntfyAgentsSection
+                    }
                 }
             }
 
         }
         .padding(.horizontal, 10)
         .padding(.bottom, 14)
+    }
+
+    // MARK: - ntfy Settings
+
+    private var ntfySettingsSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 4) {
+                Image(systemName: "bell.badge")
+                    .font(.system(size: 9))
+                    .foregroundStyle(.orange)
+                Text(L10n("Notificacoes Push")).font(.caption).foregroundStyle(.secondary)
+            }
+
+            // Topic input
+            if model.isNtfyConfigured && !isEditingNtfyTopic {
+                HStack {
+                    Label(L10n("ntfy.topic.configured"), systemImage: "bell.fill")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.green.opacity(0.8))
+                    Spacer()
+                    Button(L10n("Alterar")) {
+                        ntfyTopicInput = model.ntfyTopic
+                        isEditingNtfyTopic = true
+                    }
+                    .buttonStyle(.plain)
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(Color.accentColor)
+                }
+                .padding(.vertical, 2)
+            } else {
+                VStack(alignment: .leading, spacing: 6) {
+                    TextField(L10n("ntfy.topic.placeholder"), text: $ntfyTopicInput)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(size: 11, design: .monospaced))
+                        .onSubmit {
+                            if !ntfyTopicInput.isEmpty {
+                                model.ntfyTopic = ntfyTopicInput
+                                isEditingNtfyTopic = false
+                            }
+                        }
+
+                    Text(L10n("ntfy.topic.privacy"))
+                        .font(.system(size: 9))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(3)
+
+                    HStack {
+                        if isEditingNtfyTopic {
+                            Button(L10n("Cancelar")) {
+                                isEditingNtfyTopic = false
+                                ntfyTopicInput = model.ntfyTopic
+                            }
+                            .buttonStyle(.plain)
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        Button {
+                            model.ntfyTopic = ntfyTopicInput
+                            isEditingNtfyTopic = false
+                        } label: {
+                            Label(L10n("Salvar"), systemImage: "checkmark.circle.fill")
+                                .font(.system(size: 10, weight: .bold))
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+                        .tint(.accentColor)
+                        .disabled(ntfyTopicInput.isEmpty)
+                    }
+                }
+                .onAppear {
+                    if ntfyTopicInput.isEmpty && model.isNtfyConfigured {
+                        ntfyTopicInput = model.ntfyTopic
+                    }
+                }
+            }
+
+            // Advanced: custom server
+            DisclosureGroup(isExpanded: $isNtfyAdvancedExpanded) {
+                VStack(alignment: .leading, spacing: 4) {
+                    TextField("https://ntfy.sh", text: $model.ntfyServerURL)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(size: 10, design: .monospaced))
+
+                    Text(L10n("ntfy.server.hint"))
+                        .font(.system(size: 9))
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(.top, 4)
+            } label: {
+                Text(L10n("ntfy.advanced"))
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+
+            // Local notifications toggle
+            Toggle(isOn: $model.ntfyLocalNotificationsEnabled) {
+                Label(L10n("ntfy.local.toggle"), systemImage: "bell")
+                    .font(.system(size: 11))
+            }
+            .toggleStyle(.switch)
+            .controlSize(.mini)
+
+            // Event toggles (only user-configurable events)
+            if model.isNtfyConfigured {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(L10n("ntfy.events.title"))
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 4)
+
+                    VStack(spacing: 4) {
+                        ForEach(NtfyEventGroup.allCases) { group in
+                            let events = NtfyEvent.allCases.filter { $0.group == group && $0.isUserConfigurable }
+                            if !events.isEmpty {
+                                VStack(alignment: .leading, spacing: 3) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: group.icon)
+                                            .font(.system(size: 8))
+                                            .foregroundStyle(.secondary)
+                                        Text(group.label)
+                                            .font(.system(size: 9, weight: .bold))
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .padding(.top, 2)
+
+                                    ForEach(events) { event in
+                                        Toggle(isOn: ntfyEventBinding(for: event)) {
+                                            Text(event.label)
+                                                .font(.system(size: 10))
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                        }
+                                        .toggleStyle(.switch)
+                                        .controlSize(.mini)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .padding(8)
+                    .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(DesignSystem.Colors.glassSubtle))
+                    .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(DesignSystem.Colors.glassHover, lineWidth: 1))
+                }
+
+                // Test notification button
+                Button {
+                    model.testNtfyNotification()
+                } label: {
+                    Label(L10n("ntfy.test.button"), systemImage: "paperplane.fill")
+                        .font(.system(size: 10, weight: .medium))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .padding(.top, 2)
+            }
+        }
+    }
+
+    private var ntfyAgentsSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 4) {
+                Image(systemName: "cpu")
+                    .font(.system(size: 9))
+                    .foregroundStyle(.cyan)
+                Text(L10n("ntfy.agents.title")).font(.caption).foregroundStyle(.secondary)
+            }
+
+            Text(L10n("ntfy.agents.description"))
+                .font(.system(size: 9))
+                .foregroundStyle(.tertiary)
+                .lineLimit(3)
+
+            Toggle(isOn: $model.ntfyExternalAgentsEnabled) {
+                Text(L10n("ntfy.agents.enable"))
+                    .font(.system(size: 11))
+            }
+            .toggleStyle(.switch)
+            .controlSize(.mini)
+
+            if model.ntfyExternalAgentsEnabled {
+                VStack(alignment: .leading, spacing: 3) {
+                    ForEach(AIAgent.allCases) { agent in
+                        Toggle(isOn: agentToggleBinding(for: agent)) {
+                            Text(agent.label)
+                                .font(.system(size: 10))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .toggleStyle(.switch)
+                        .controlSize(.mini)
+                    }
+                }
+                .padding(8)
+                .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(DesignSystem.Colors.glassSubtle))
+                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(DesignSystem.Colors.glassHover, lineWidth: 1))
+            }
+        }
+    }
+
+    // MARK: - Binding Helpers
+
+    private func ntfyEventBinding(for event: NtfyEvent) -> Binding<Bool> {
+        Binding<Bool>(
+            get: { model.ntfyEnabledEvents.contains(event.rawValue) },
+            set: { enabled in
+                if enabled {
+                    if !model.ntfyEnabledEvents.contains(event.rawValue) {
+                        model.ntfyEnabledEvents.append(event.rawValue)
+                    }
+                } else {
+                    model.ntfyEnabledEvents.removeAll { $0 == event.rawValue }
+                }
+            }
+        )
+    }
+
+    private func agentToggleBinding(for agent: AIAgent) -> Binding<Bool> {
+        Binding<Bool>(
+            get: { model.ntfySelectedAgents.contains(agent.rawValue) },
+            set: { enabled in
+                if enabled {
+                    if !model.ntfySelectedAgents.contains(agent.rawValue) {
+                        model.ntfySelectedAgents.append(agent.rawValue)
+                    }
+                } else {
+                    model.ntfySelectedAgents.removeAll { $0 == agent.rawValue }
+                }
+            }
+        )
     }
 
     private func pickCustomApp() {
