@@ -155,11 +155,19 @@ final class RepositoryViewModel {
     @ObservationIgnored let aiClient = AIClient()
     @ObservationIgnored private var aiTask: Task<Void, Never>?
 
+    @ObservationIgnored private var _cachedAIKey: String?
+    @ObservationIgnored private var _cachedAIKeyProvider: AIProvider?
     private var _aiKeyRevision: Int = 0
     var aiAPIKey: String {
-        get { 
+        get {
             let _ = _aiKeyRevision // Register dependency
-            return AIClient.loadAPIKey(for: aiProvider) ?? "" 
+            if _cachedAIKeyProvider == aiProvider, let cached = _cachedAIKey {
+                return cached
+            }
+            let key = AIClient.loadAPIKey(for: aiProvider) ?? ""
+            _cachedAIKey = key
+            _cachedAIKeyProvider = aiProvider
+            return key
         }
         set {
             if newValue.isEmpty {
@@ -167,6 +175,8 @@ final class RepositoryViewModel {
             } else {
                 AIClient.saveAPIKey(newValue, for: aiProvider)
             }
+            _cachedAIKey = newValue
+            _cachedAIKeyProvider = aiProvider
             _aiKeyRevision += 1 // Trigger observation
         }
     }
@@ -465,6 +475,7 @@ final class RepositoryViewModel {
             refreshRepository()
             refreshFileTree()
             loadPullRequests()
+            refreshPRReviewQueue()
             loadSubmodules()
             return
         }
@@ -542,6 +553,8 @@ final class RepositoryViewModel {
         startAutoRefreshTimer()
         startFileWatcher(for: url)
         loadPullRequests()
+        refreshPRReviewQueue()
+        startPRPollingTimer()
         loadSubmodules()
         startBackgroundFetch()
         loadSignatureStatuses()
@@ -870,7 +883,18 @@ final class RepositoryViewModel {
 
     func fetch() { runGitAction(label: "Fetch", args: ["fetch", "--all", "--prune"]) }
     func pull() { runGitAction(label: "Pull", args: ["pull", "--ff-only"]) }
-    func push() { runGitAction(label: "Push", args: ["push"]) }
+    func push() {
+        let branch = currentBranch ?? ""
+        let hasUpstream = branchInfos.first(where: { !$0.isRemote && $0.name == branch })?.upstream.isEmpty == false
+        if hasUpstream {
+            runGitAction(label: "Push", args: ["push"])
+        } else if !branch.isEmpty {
+            let remote = remotes.first?.name ?? "origin"
+            runGitAction(label: "Push", args: ["push", "--set-upstream", remote, branch])
+        } else {
+            runGitAction(label: "Push", args: ["push"])
+        }
+    }
 
 
     func setBranchFocus(_ branch: String?) {
@@ -2507,6 +2531,10 @@ final class RepositoryViewModel {
         pullRequests.first { $0.headBranch == branch }
     }
 
+    var hasGitHubRemote: Bool {
+        detectGitHubRemote() != nil
+    }
+
     private func detectGitHubRemote() -> GitHubRemote? {
         for remote in remotes {
             if let gh = GitHubClient.parseRemote(remote.url) {
@@ -3651,17 +3679,32 @@ final class RepositoryViewModel {
             while !Task.isCancelled {
                 // Wait for 30 seconds
                 try? await Task.sleep(nanoseconds: 30_000_000_000)
-                
+
                 if Task.isCancelled { break }
-                
+
                 // Refresh without showing busy indicator to avoid UI flickering
                 refreshRepository(setBusy: false)
             }
         }
     }
 
+    @ObservationIgnored private var prPollingTimer: Task<Void, Never>?
+
+    private func startPRPollingTimer() {
+        prPollingTimer?.cancel()
+        prPollingTimer = Task {
+            while !Task.isCancelled {
+                // Poll every 5 minutes
+                try? await Task.sleep(nanoseconds: 5 * 60 * 1_000_000_000)
+                if Task.isCancelled { break }
+                refreshPRReviewQueue()
+            }
+        }
+    }
+
     deinit {
         autoRefreshTask?.cancel()
+        prPollingTimer?.cancel()
         let states = backgroundRepoStates
         for (_, state) in states {
             state.monitorTask?.cancel()

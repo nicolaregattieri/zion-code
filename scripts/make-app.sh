@@ -15,6 +15,7 @@ BIN_PATH="$ROOT_DIR/.build/release/Zion"
 rm -rf "$APP_DIR"
 mkdir -p "$APP_DIR/Contents/MacOS"
 mkdir -p "$APP_DIR/Contents/Resources"
+mkdir -p "$APP_DIR/Contents/Frameworks"
 
 cp "$BIN_PATH" "$APP_DIR/Contents/MacOS/Zion"
 
@@ -31,6 +32,12 @@ fi
 # Copy fonts from Resources folder
 cp "$ROOT_DIR"/Resources/*.ttf "$APP_DIR/Contents/Resources/" 2>/dev/null || true
 cp "$ROOT_DIR"/Resources/*.otf "$APP_DIR/Contents/Resources/" 2>/dev/null || true
+
+# Copy Sparkle framework for auto-updates
+SPARKLE_FW="$(find .build/artifacts -name "Sparkle.framework" -path "*/macos-*" 2>/dev/null | head -n 1)"
+if [ -n "$SPARKLE_FW" ]; then
+  cp -R "$SPARKLE_FW" "$APP_DIR/Contents/Frameworks/"
+fi
 
 cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -61,6 +68,14 @@ cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
   <string>Zion needs access to your Downloads folder to open and manage Git repositories.</string>
   <key>NSHighResolutionCapable</key>
   <true/>
+  <key>SUFeedURL</key>
+  <string>https://github.com/nicolaregattieri/GraphForge/releases/latest/download/appcast.xml</string>
+  <key>SUPublicEDKey</key>
+  <string>PLACEHOLDER_PUBLIC_KEY</string>
+  <key>SUEnableAutomaticChecks</key>
+  <true/>
+  <key>SUScheduledCheckInterval</key>
+  <integer>86400</integer>
 </dict>
 </plist>
 PLIST

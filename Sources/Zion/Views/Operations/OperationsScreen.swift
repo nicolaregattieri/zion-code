@@ -54,6 +54,7 @@ struct OperationsScreen: View {
                 }
             }
             .padding(24)
+            .padding(.bottom, 32)
         }
     }
 
