@@ -48,6 +48,8 @@
 | Close Split | Close focused split pane | `⇧⌘W` |
 | Zoom In/Out | Independent terminal font size | `⌃+` / `⌃-` |
 | Font Settings | Configurable family and size | — |
+| Session Persistence | Terminal sessions persist across repo switches with live processes | — |
+| Background Badges | Orange badge on recent repos showing changed file count | — |
 | Paste from Clipboard | Click clipboard item to paste | — |
 | Drag to Terminal | Drag clipboard items into terminal | — |
 
@@ -108,6 +110,7 @@
 | Branch Summarizer | One-sentence summary of what any branch does, available in context menu |
 | Blame Explainer | Click a blame entry to get an AI explanation of WHY that code was changed |
 | Commit Split Advisor | Suggests how to split a large staged diff into multiple atomic commits |
+| Commit Message Style | Toggle between compact (single-line) and detailed (header + bullet points) AI-generated messages |
 | Provider Config | Anthropic (Claude), OpenAI (GPT), Google (Gemini), API keys in Keychain |
 
 ## GitHub Integration
@@ -149,6 +152,7 @@
 | Feature | Description |
 |---------|-------------|
 | Language | Portuguese (BR), English, Spanish, System |
+| Appearance Mode | System, Light, Dark |
 | External Editor | VS Code, Cursor, Antigravity, Xcode, IntelliJ, Sublime, custom |
 | External Terminal | Terminal.app, iTerm, Warp, custom |
 | Confirmation Mode | Never / Destructive Only / All |

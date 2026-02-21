@@ -343,6 +343,7 @@
 "help.terminal.splits" = "Divide o terminal em painéis verticais (⇧⌘D) ou horizontais (⇧⌘E)";
 "help.terminal.tabs" = "Múltiplas abas de terminal com status de processo vivo";
 "help.terminal.zoom" = "Zoom independente com Ctrl+/- e fonte configurável";
+"help.terminal.persistence" = "Terminais persistem ao trocar de repositório, com badges de alterações";
 
 // Clipboard
 "help.clipboard.capture" = "Captura automaticamente tudo que você copia na área de transferência";
@@ -445,3 +446,13 @@
 "help.ai.branch" = "Resumo de branches em uma frase no menu de contexto";
 "help.ai.blame" = "Explicador de blame: entenda POR QUE o código foi alterado";
 "help.ai.split" = "Conselheiro de split de commits para commits atômicos";
+"help.ai.style" = "Alterne entre mensagens compactas ou detalhadas com bullet points";
+"Compacto" = "Compacto";
+"Detalhado" = "Detalhado";
+"Estilo de Mensagem" = "Estilo de Mensagem";
+
+// Appearance
+"Aparencia" = "Aparência";
+"Claro" = "Claro";
+"Escuro" = "Escuro";
+"help.customization.appearance" = "Modo claro, escuro ou automático do sistema";

@@ -51,6 +51,7 @@ struct HelpSheet: View {
                                 L10n("help.terminal.splits"),
                                 L10n("help.terminal.tabs"),
                                 L10n("help.terminal.zoom"),
+                                L10n("help.terminal.persistence"),
                             ]
                         )
 
@@ -106,6 +107,7 @@ struct HelpSheet: View {
                                 L10n("help.ai.branch"),
                                 L10n("help.ai.blame"),
                                 L10n("help.ai.split"),
+                                L10n("help.ai.style"),
                             ]
                         )
 
@@ -115,6 +117,7 @@ struct HelpSheet: View {
                             title: L10n("help.customization.title"),
                             features: [
                                 L10n("help.customization.languages"),
+                                L10n("help.customization.appearance"),
                                 L10n("help.customization.editor"),
                                 L10n("help.customization.confirmation"),
                                 L10n("help.customization.reflog"),

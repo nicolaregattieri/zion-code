@@ -182,6 +182,9 @@ struct TerminalTabView: NSViewRepresentable {
         }
 
         func restartProcess(view: SwiftTerm.TerminalView) {
+            // Reset synchronously to prevent double-fire from updateNSView
+            // (startProcess sets it inside a Task, leaving a window for re-entry)
+            processIsDead = false
             killProcess()
             view.getTerminal().resetToInitialState()
             startProcess(view: view)
