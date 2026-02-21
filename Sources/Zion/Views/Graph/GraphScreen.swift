@@ -151,18 +151,55 @@ struct GraphScreen: View {
     private func searchBar(proxy: ScrollViewProxy) -> some View {
         HStack(spacing: 8) {
             HStack {
-                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                TextField(L10n("Busca (Cmd+F)"), text: $commitSearchQuery).textFieldStyle(.plain).focused($isSearchFocused)
+                Image(systemName: model.isSemanticSearchActive ? "sparkles" : "magnifyingglass")
+                    .foregroundStyle(model.isSemanticSearchActive ? .pink : .secondary)
+                TextField(model.isSemanticSearchActive ? L10n("Busca semantica com IA...") : L10n("Busca (Cmd+F)"), text: $commitSearchQuery)
+                    .textFieldStyle(.plain).focused($isSearchFocused)
+                    .onSubmit {
+                        if model.isSemanticSearchActive && !commitSearchQuery.isEmpty {
+                            model.semanticSearchCommits(query: commitSearchQuery)
+                        }
+                    }
                 if !commitSearchQuery.isEmpty {
-                    Button { commitSearchQuery = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).help(L10n("Limpar busca"))
-                    Text("\(searchMatchIDs.isEmpty ? 0 : currentMatchIndex + 1)/\(searchMatchIDs.count)").font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundStyle(.secondary)
+                    Button { commitSearchQuery = ""; model.clearSemanticSearch() } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).help(L10n("Limpar busca"))
+                    if !model.isSemanticSearchActive {
+                        Text("\(searchMatchIDs.isEmpty ? 0 : currentMatchIndex + 1)/\(searchMatchIDs.count)").font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundStyle(.secondary)
+                    } else if !model.aiSemanticSearchResults.isEmpty {
+                        Text("\(model.aiSemanticSearchResults.count) \(L10n("resultados"))").font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundStyle(.pink)
+                    }
                 }
             }
-            .padding(.horizontal, 10).padding(.vertical, 6).background(Color.black.opacity(0.15)).clipShape(RoundedRectangle(cornerRadius: 8))
-            
+            .padding(.horizontal, 10).padding(.vertical, 6)
+            .background(model.isSemanticSearchActive ? Color.pink.opacity(0.08) : Color.black.opacity(0.15))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(model.isSemanticSearchActive ? Color.pink.opacity(0.3) : Color.clear, lineWidth: 1)
+            )
+
             HStack(spacing: 4) {
-                Button(action: { navigateSearch(direction: -1, proxy: proxy) }) { Image(systemName: "chevron.up") }.disabled(searchMatchIDs.isEmpty).help(L10n("Resultado anterior"))
-                Button(action: { navigateSearch(direction: 1, proxy: proxy) }) { Image(systemName: "chevron.down") }.disabled(searchMatchIDs.isEmpty).help(L10n("Proximo resultado"))
+                if !model.isSemanticSearchActive {
+                    Button(action: { navigateSearch(direction: -1, proxy: proxy) }) { Image(systemName: "chevron.up") }.disabled(searchMatchIDs.isEmpty).help(L10n("Resultado anterior"))
+                    Button(action: { navigateSearch(direction: 1, proxy: proxy) }) { Image(systemName: "chevron.down") }.disabled(searchMatchIDs.isEmpty).help(L10n("Proximo resultado"))
+                }
+                if model.isAIConfigured {
+                    Button {
+                        model.isSemanticSearchActive.toggle()
+                        if !model.isSemanticSearchActive {
+                            model.clearSemanticSearch()
+                        }
+                    } label: {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(model.isSemanticSearchActive ? .pink : .secondary)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .help(L10n("Busca semantica com IA"))
+                }
+                if model.isSemanticSearchActive && model.isGeneratingAIMessage {
+                    ProgressView().controlSize(.small)
+                }
             }.buttonStyle(.bordered)
         }
     }
@@ -186,7 +223,7 @@ struct GraphScreen: View {
                         CommitRowView(
                             commit: commit,
                             isSelected: model.selectedCommitID == commit.id,
-                            isSearchMatch: searchMatchIDs.contains(commit.id),
+                            isSearchMatch: searchMatchIDs.contains(commit.id) || model.aiSemanticSearchResults.contains(where: { commit.shortHash.hasPrefix($0) || commit.id.hasPrefix($0) }),
                             searchQuery: commitSearchQuery,
                             laneCount: model.maxLaneCount,
                             currentBranch: model.currentBranch,

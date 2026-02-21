@@ -3,7 +3,9 @@ import SwiftUI
 struct ConflictRegionCard: View {
     let region: ConflictRegion
     let index: Int
+    let fileName: String
     let onChoose: (ConflictChoice) -> Void
+    var model: RepositoryViewModel
 
     @State private var customText: String = ""
     @State private var isEditingCustom: Bool = false
@@ -134,6 +136,33 @@ struct ConflictRegionCard: View {
                 .buttonStyle(.bordered)
                 .controlSize(.small)
                 .tint(.orange)
+
+                if model.isAIConfigured {
+                    Button {
+                        model.resolveConflictWithAI(region: region, fileName: fileName)
+                    } label: {
+                        if model.isGeneratingAIMessage {
+                            ProgressView()
+                                .controlSize(.small)
+                                .frame(width: 12, height: 12)
+                        } else {
+                            Label(L10n("Resolver com IA"), systemImage: "sparkles")
+                                .font(.system(size: 11, weight: .medium))
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .tint(.pink)
+                    .disabled(model.isGeneratingAIMessage)
+                    .help(L10n("Resolver conflito com IA"))
+                    .onChange(of: model.aiConflictResolution) { _, newValue in
+                        if !newValue.isEmpty {
+                            customText = newValue
+                            isEditingCustom = true
+                            model.aiConflictResolution = ""
+                        }
+                    }
+                }
             }
 
             if isEditingCustom {

@@ -129,6 +129,16 @@ Always use design tokens instead of hardcoded opacity values:
 - **Syntax highlighting:** Coordinator uses `regexCache` dictionary and dirty tracking (`lastHighlightedText/Theme/Extension`) to skip redundant work in `updateNSView`
 - **File I/O:** `selectCodeFile` and `saveCurrentCodeFile` run I/O in `Task { }` to avoid blocking main thread
 
+## New Feature Checklist (MANDATORY)
+
+**Run this checklist against EVERY code change before marking as done.** Don't trust plans or summaries — always verify each item yourself. This applies to new features, bug fixes that touch UI, and audit fixes.
+
+1. Keyboard shortcut (hidden button pattern) where applicable
+2. `.help()` tooltip with shortcut hint (except context menu items — SwiftUI limitation)
+3. L10n keys in all 3 locales (pt-BR, en, es)
+4. Add entry to `HelpSheet.swift` (feature card) + L10n `help.*` keys in all 3 locales
+5. Update `docs/FEATURES.md` with the new feature description
+
 ## Development Conventions
 
 - **UI Style:** Glassmorphism aesthetic with `ultraThinMaterial` and `GlassCard` containers

@@ -186,6 +186,246 @@ actor AIClient {
         return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 200)
     }
 
+    // MARK: - Smart Conflict Resolution
+
+    func resolveConflict(
+        oursLines: [String],
+        theirsLines: [String],
+        oursLabel: String,
+        theirsLabel: String,
+        surroundingContext: String,
+        fileName: String,
+        provider: AIProvider,
+        apiKey: String
+    ) async throws -> String {
+        let ours = oursLines.joined(separator: "\n")
+        let theirs = theirsLines.joined(separator: "\n")
+        let prompt = """
+        You are an expert code conflict resolver. Analyze both sides of a merge conflict and produce a semantically correct resolution.
+
+        File: \(fileName)
+
+        <<<<<<< \(oursLabel) (OURS)
+        \(ours)
+        =======
+        \(theirs)
+        >>>>>>> \(theirsLabel) (THEIRS)
+
+        Surrounding context:
+        \(surroundingContext.prefix(3000))
+
+        Rules:
+        - Output ONLY the resolved code, nothing else. No explanation, no markers.
+        - Combine both changes when they don't conflict semantically.
+        - If they truly conflict, prefer the most complete/correct version.
+        - Preserve indentation and coding style from the surrounding context.
+        - Do NOT include conflict markers in the output.
+        """
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 500)
+    }
+
+    // MARK: - Code Review
+
+    func reviewDiff(
+        diff: String,
+        diffStat: String,
+        branchName: String,
+        provider: AIProvider,
+        apiKey: String
+    ) async throws -> [ReviewFinding] {
+        let prompt = """
+        You are a senior code reviewer. Analyze the staged diff below and find bugs, security issues, and style problems.
+
+        Branch: \(branchName)
+
+        Diff stat:
+        \(diffStat.prefix(2000))
+
+        Diff:
+        \(diff.prefix(10000))
+
+        Output format — one finding per line, pipe-delimited:
+        SEVERITY|FILE|MESSAGE
+
+        Where SEVERITY is one of: critical, warning, suggestion
+        FILE is the affected filename (or "general" if not file-specific)
+        MESSAGE is a concise description of the issue
+
+        Rules:
+        - Output ONLY the pipe-delimited lines, nothing else
+        - Focus on real issues: bugs, security vulnerabilities, race conditions, missing error handling
+        - Include style suggestions only if they're significant
+        - Maximum 10 findings
+        - If the code looks good, output a single line: suggestion|general|Code looks good — no issues found.
+        """
+        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 800)
+        return parseReviewFindings(raw)
+    }
+
+    // MARK: - Changelog Generator
+
+    func generateChangelog(
+        commitLog: String,
+        fromRef: String,
+        toRef: String,
+        provider: AIProvider,
+        apiKey: String
+    ) async throws -> String {
+        let prompt = """
+        You are a release notes generator. Create a categorized changelog from the commit log below.
+
+        Range: \(fromRef)..\(toRef)
+
+        Commits:
+        \(commitLog.prefix(5000))
+
+        Output format (markdown):
+        ## What's New
+
+        ### Features
+        - description
+
+        ### Bug Fixes
+        - description
+
+        ### Improvements
+        - description
+
+        ### Breaking Changes
+        - description (only if applicable)
+
+        Rules:
+        - Group commits by category
+        - Write user-facing descriptions, not commit messages
+        - Omit empty categories
+        - Be concise but informative
+        - Output ONLY the markdown, nothing else
+        """
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 1000)
+    }
+
+    // MARK: - Semantic Search
+
+    func semanticSearch(
+        query: String,
+        commitLog: String,
+        provider: AIProvider,
+        apiKey: String
+    ) async throws -> [String] {
+        let prompt = """
+        You are a git history search engine. The user is searching their commit history with a natural language query.
+
+        Query: "\(query)"
+
+        Commit log (hash subject):
+        \(commitLog.prefix(8000))
+
+        Output the SHORT HASHES (first column) of commits that match the query, one per line.
+
+        Rules:
+        - Output ONLY the short hashes, one per line, nothing else
+        - Return at most 20 matching commits
+        - Match semantically — "auth flow changes" should match commits about login, authentication, OAuth, etc.
+        - If no commits match, output: NONE
+        """
+        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 200)
+        if raw.trimmingCharacters(in: .whitespacesAndNewlines) == "NONE" { return [] }
+        return raw.split(separator: "\n").map { String($0).trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+    }
+
+    // MARK: - Branch Summarizer
+
+    func summarizeBranch(
+        branchName: String,
+        commitLog: String,
+        diffStat: String,
+        provider: AIProvider,
+        apiKey: String
+    ) async throws -> String {
+        let prompt = """
+        You are a branch summarizer. Write a single-sentence summary of what this branch does.
+
+        Branch: \(branchName)
+
+        Commits since diverging:
+        \(commitLog.prefix(3000))
+
+        Diff stat:
+        \(diffStat.prefix(2000))
+
+        Rules:
+        - Output EXACTLY one sentence, max 100 characters
+        - Describe WHAT the branch does, not HOW
+        - Be specific and informative
+        - Output ONLY the sentence, nothing else
+        """
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 60)
+    }
+
+    // MARK: - Blame Explainer
+
+    func explainBlameRegion(
+        commitHash: String,
+        fileName: String,
+        commitDiff: String,
+        commitSubject: String,
+        regionContent: String,
+        provider: AIProvider,
+        apiKey: String
+    ) async throws -> String {
+        let prompt = """
+        You are a code historian. Explain WHY this code change was made based on the commit context.
+
+        Commit: \(commitHash) — \(commitSubject)
+        File: \(fileName)
+
+        Blame region content:
+        \(regionContent.prefix(1000))
+
+        Commit diff for this file:
+        \(commitDiff.prefix(5000))
+
+        Rules:
+        - 2-3 sentences explaining the intent behind the change
+        - Focus on WHY, not WHAT (the user can see the code)
+        - Plain English, no code blocks
+        - Output ONLY the explanation
+        """
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 200)
+    }
+
+    // MARK: - Commit Split Advisor
+
+    func suggestCommitSplit(
+        diff: String,
+        diffStat: String,
+        provider: AIProvider,
+        apiKey: String
+    ) async throws -> [CommitSuggestion] {
+        let prompt = """
+        You are a Git best practices advisor. The user has staged a large change. Suggest how to split it into atomic commits.
+
+        Diff stat:
+        \(diffStat.prefix(2000))
+
+        Diff:
+        \(diff.prefix(10000))
+
+        Output format — one commit per block, separated by blank lines:
+        MESSAGE: commit message here
+        FILES: file1.swift, file2.swift
+
+        Rules:
+        - Suggest 2-5 atomic commits
+        - Each commit should be a logical unit
+        - Messages follow Conventional Commits format
+        - List exact file paths from the diff stat
+        - Output ONLY the formatted blocks, nothing else
+        """
+        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 600)
+        return parseCommitSuggestions(raw)
+    }
+
     // MARK: - Private
 
     private func call(prompt: String, provider: AIProvider, apiKey: String, maxTokens: Int) async throws -> String {
@@ -315,6 +555,39 @@ actor AIClient {
             throw AIError.invalidResponse
         }
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func parseReviewFindings(_ raw: String) -> [ReviewFinding] {
+        raw.split(separator: "\n").compactMap { line in
+            let parts = line.split(separator: "|", maxSplits: 2).map { String($0).trimmingCharacters(in: .whitespaces) }
+            guard parts.count == 3 else { return nil }
+            let severity: ReviewFinding.ReviewSeverity
+            switch parts[0].lowercased() {
+            case "critical": severity = .critical
+            case "warning": severity = .warning
+            default: severity = .suggestion
+            }
+            return ReviewFinding(severity: severity, file: parts[1], message: parts[2])
+        }
+    }
+
+    private func parseCommitSuggestions(_ raw: String) -> [CommitSuggestion] {
+        let blocks = raw.components(separatedBy: "\n\n").filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        return blocks.compactMap { block in
+            let lines = block.split(separator: "\n").map { String($0) }
+            var message = ""
+            var files: [String] = []
+            for line in lines {
+                if line.hasPrefix("MESSAGE:") {
+                    message = line.replacingOccurrences(of: "MESSAGE:", with: "").trimmingCharacters(in: .whitespaces)
+                } else if line.hasPrefix("FILES:") {
+                    files = line.replacingOccurrences(of: "FILES:", with: "")
+                        .split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) }
+                }
+            }
+            guard !message.isEmpty else { return nil }
+            return CommitSuggestion(message: message, files: files)
+        }
     }
 
     private func parsePRResponse(_ raw: String) -> (title: String, body: String) {

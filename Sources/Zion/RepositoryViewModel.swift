@@ -89,6 +89,22 @@ final class RepositoryViewModel {
     var isGeneratingAIMessage: Bool = false
     var aiQuotaExceeded: Bool = false
     var aiDiffExplanation: String = ""
+
+    // AI Smart Services
+    var aiConflictResolution: String = ""
+    var aiReviewFindings: [ReviewFinding] = []
+    var isReviewVisible: Bool = false
+    var aiChangelog: String = ""
+    var isChangelogSheetVisible: Bool = false
+    var changelogFromRef: String = ""
+    var changelogToRef: String = "HEAD"
+    var aiSemanticSearchResults: [String] = []
+    var isSemanticSearchActive: Bool = false
+    var branchSummaries: [String: String] = [:]
+    var aiBlameExplanation: String = ""
+    var aiBlameEntryID: UUID?
+    var aiCommitSplitSuggestions: [CommitSuggestion] = []
+    var isSplitVisible: Bool = false
     var aiProvider: AIProvider = .none {
         didSet { 
             UserDefaults.standard.set(aiProvider.rawValue, forKey: "zion.aiProvider")
@@ -2531,6 +2547,262 @@ final class RepositoryViewModel {
             } catch {
                 logger.log(.error, "AI diff explanation failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
                 aiDiffExplanation = ""
+                lastError = error.localizedDescription
+            }
+        }
+    }
+
+    // MARK: - AI Smart Conflict Resolution
+
+    func resolveConflictWithAI(region: ConflictRegion, fileName: String) {
+        guard let url = repositoryURL, isAIConfigured else { return }
+
+        aiTask?.cancel()
+        aiTask = Task {
+            isGeneratingAIMessage = true
+            defer { isGeneratingAIMessage = false }
+
+            do {
+                logger.log(.ai, "Requesting conflict resolution", context: "\(aiProvider.rawValue): \(fileName)")
+                // Get surrounding context from the file
+                var context = ""
+                if let fileContent = try? String(contentsOf: url.appendingPathComponent(fileName), encoding: .utf8) {
+                    context = String(fileContent.prefix(3000))
+                }
+
+                let resolved = try await aiClient.resolveConflict(
+                    oursLines: region.oursLines,
+                    theirsLines: region.theirsLines,
+                    oursLabel: region.oursLabel,
+                    theirsLabel: region.theirsLabel,
+                    surroundingContext: context,
+                    fileName: fileName,
+                    provider: aiProvider,
+                    apiKey: aiAPIKey
+                )
+                logger.log(.ai, "Conflict resolution generated OK")
+                aiConflictResolution = resolved
+            } catch {
+                logger.log(.error, "AI conflict resolution failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
+                aiConflictResolution = ""
+                lastError = error.localizedDescription
+            }
+        }
+    }
+
+    // MARK: - AI Code Review
+
+    func reviewStagedChanges() {
+        guard let url = repositoryURL, isAIConfigured else { return }
+
+        aiTask?.cancel()
+        aiTask = Task {
+            isGeneratingAIMessage = true
+            defer { isGeneratingAIMessage = false }
+
+            do {
+                logger.log(.ai, "Requesting code review", context: aiProvider.rawValue)
+                let diff = try await worker.runAction(args: ["diff", "--cached"], in: url)
+                guard !diff.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                    aiReviewFindings = [ReviewFinding(severity: .suggestion, file: "general", message: L10n("Nenhuma alteracao staged para revisar."))]
+                    isReviewVisible = true
+                    return
+                }
+                let diffStat = try await worker.runAction(args: ["diff", "--cached", "--stat"], in: url)
+                let findings = try await aiClient.reviewDiff(
+                    diff: diff,
+                    diffStat: diffStat,
+                    branchName: currentBranch,
+                    provider: aiProvider,
+                    apiKey: aiAPIKey
+                )
+                logger.log(.ai, "Code review generated OK: \(findings.count) findings")
+                aiReviewFindings = findings
+                isReviewVisible = true
+            } catch {
+                if let aiErr = error as? AIError, case .quotaExceeded = aiErr {
+                    aiQuotaExceeded = true
+                }
+                logger.log(.error, "AI code review failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
+                lastError = error.localizedDescription
+            }
+        }
+    }
+
+    // MARK: - AI Changelog Generator
+
+    func generateChangelog() {
+        guard let url = repositoryURL, isAIConfigured else { return }
+        let from = changelogFromRef.isEmpty ? "HEAD~20" : changelogFromRef
+        let to = changelogToRef.isEmpty ? "HEAD" : changelogToRef
+
+        aiTask?.cancel()
+        aiTask = Task {
+            isGeneratingAIMessage = true
+            defer { isGeneratingAIMessage = false }
+
+            do {
+                logger.log(.ai, "Requesting changelog", context: "\(aiProvider.rawValue): \(from)..\(to)")
+                let commitLog = try await worker.runAction(args: ["log", "--oneline", "\(from)..\(to)"], in: url)
+                guard !commitLog.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                    aiChangelog = L10n("Nenhum commit encontrado no intervalo.")
+                    isChangelogSheetVisible = true
+                    return
+                }
+                let changelog = try await aiClient.generateChangelog(
+                    commitLog: commitLog,
+                    fromRef: from,
+                    toRef: to,
+                    provider: aiProvider,
+                    apiKey: aiAPIKey
+                )
+                logger.log(.ai, "Changelog generated OK")
+                aiChangelog = changelog
+                isChangelogSheetVisible = true
+            } catch {
+                if let aiErr = error as? AIError, case .quotaExceeded = aiErr {
+                    aiQuotaExceeded = true
+                }
+                logger.log(.error, "AI changelog failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
+                lastError = error.localizedDescription
+            }
+        }
+    }
+
+    // MARK: - AI Semantic Search
+
+    func semanticSearchCommits(query: String) {
+        guard let url = repositoryURL, isAIConfigured else { return }
+
+        aiTask?.cancel()
+        aiTask = Task {
+            isGeneratingAIMessage = true
+            defer { isGeneratingAIMessage = false }
+
+            do {
+                logger.log(.ai, "Requesting semantic search", context: "\(aiProvider.rawValue): \(query)")
+                let commitLog = try await worker.runAction(args: ["log", "--oneline", "-200"], in: url)
+                let hashes = try await aiClient.semanticSearch(
+                    query: query,
+                    commitLog: commitLog,
+                    provider: aiProvider,
+                    apiKey: aiAPIKey
+                )
+                logger.log(.ai, "Semantic search OK: \(hashes.count) results")
+                aiSemanticSearchResults = hashes
+            } catch {
+                if let aiErr = error as? AIError, case .quotaExceeded = aiErr {
+                    aiQuotaExceeded = true
+                }
+                logger.log(.error, "AI semantic search failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
+                aiSemanticSearchResults = []
+                lastError = error.localizedDescription
+            }
+        }
+    }
+
+    func clearSemanticSearch() {
+        aiSemanticSearchResults = []
+        isSemanticSearchActive = false
+    }
+
+    // MARK: - AI Branch Summarizer
+
+    func summarizeBranch(_ branchName: String) {
+        guard let url = repositoryURL, isAIConfigured else { return }
+
+        aiTask?.cancel()
+        aiTask = Task {
+            isGeneratingAIMessage = true
+            defer { isGeneratingAIMessage = false }
+
+            do {
+                logger.log(.ai, "Requesting branch summary", context: "\(aiProvider.rawValue): \(branchName)")
+                let commitLog = try await worker.runAction(args: ["log", "--oneline", "HEAD...\(branchName)", "--", "--max-count=50"], in: url)
+                let diffStat = try await worker.runAction(args: ["diff", "--stat", "HEAD...\(branchName)"], in: url)
+                let summary = try await aiClient.summarizeBranch(
+                    branchName: branchName,
+                    commitLog: commitLog.isEmpty ? branchName : commitLog,
+                    diffStat: diffStat,
+                    provider: aiProvider,
+                    apiKey: aiAPIKey
+                )
+                logger.log(.ai, "Branch summary generated OK")
+                branchSummaries[branchName] = summary
+            } catch {
+                logger.log(.error, "AI branch summary failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
+                lastError = error.localizedDescription
+            }
+        }
+    }
+
+    // MARK: - AI Blame Explainer
+
+    func explainBlameEntry(entry: BlameEntry, fileName: String) {
+        guard let url = repositoryURL, isAIConfigured else { return }
+
+        aiTask?.cancel()
+        aiTask = Task {
+            isGeneratingAIMessage = true
+            defer { isGeneratingAIMessage = false }
+
+            do {
+                logger.log(.ai, "Requesting blame explanation", context: "\(aiProvider.rawValue): \(entry.commitHash)")
+                let commitDiff = try await worker.runAction(args: ["show", entry.commitHash, "--", fileName], in: url)
+                let commitSubject = try await worker.runAction(args: ["log", "-1", "--format=%s", entry.commitHash], in: url)
+                let explanation = try await aiClient.explainBlameRegion(
+                    commitHash: entry.commitHash,
+                    fileName: fileName,
+                    commitDiff: commitDiff,
+                    commitSubject: commitSubject,
+                    regionContent: entry.content,
+                    provider: aiProvider,
+                    apiKey: aiAPIKey
+                )
+                logger.log(.ai, "Blame explanation generated OK")
+                aiBlameExplanation = explanation
+                aiBlameEntryID = entry.id
+            } catch {
+                logger.log(.error, "AI blame explanation failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
+                aiBlameExplanation = ""
+                aiBlameEntryID = nil
+                lastError = error.localizedDescription
+            }
+        }
+    }
+
+    // MARK: - AI Commit Split Advisor
+
+    func suggestCommitSplit() {
+        guard let url = repositoryURL, isAIConfigured else { return }
+
+        aiTask?.cancel()
+        aiTask = Task {
+            isGeneratingAIMessage = true
+            defer { isGeneratingAIMessage = false }
+
+            do {
+                logger.log(.ai, "Requesting commit split suggestion", context: aiProvider.rawValue)
+                let diff = try await worker.runAction(args: ["diff", "--cached"], in: url)
+                guard !diff.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                    aiCommitSplitSuggestions = []
+                    return
+                }
+                let diffStat = try await worker.runAction(args: ["diff", "--cached", "--stat"], in: url)
+                let suggestions = try await aiClient.suggestCommitSplit(
+                    diff: diff,
+                    diffStat: diffStat,
+                    provider: aiProvider,
+                    apiKey: aiAPIKey
+                )
+                logger.log(.ai, "Commit split suggestions OK: \(suggestions.count) commits")
+                aiCommitSplitSuggestions = suggestions
+                isSplitVisible = true
+            } catch {
+                if let aiErr = error as? AIError, case .quotaExceeded = aiErr {
+                    aiQuotaExceeded = true
+                }
+                logger.log(.error, "AI commit split failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
                 lastError = error.localizedDescription
             }
         }

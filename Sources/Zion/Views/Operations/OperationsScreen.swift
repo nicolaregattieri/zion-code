@@ -40,6 +40,9 @@ struct OperationsScreen: View {
                     VStack(spacing: 20) {
                         historyCard
                         remotesCard
+                        if model.isAIConfigured {
+                            changelogCard
+                        }
                         worktreeCard
                         SubmodulesCard(model: model)
                         RepositoryStatsCard(model: model)
@@ -127,6 +130,117 @@ struct OperationsScreen: View {
                         .toggleStyle(.checkbox)
                         .font(.caption)
                     Spacer()
+
+                    if model.isAIConfigured {
+                        Button {
+                            model.reviewStagedChanges()
+                        } label: {
+                            if model.isGeneratingAIMessage && !model.isReviewVisible {
+                                ProgressView().controlSize(.small).frame(width: 12, height: 12)
+                            } else {
+                                Label(L10n("Review"), systemImage: "sparkles")
+                                    .font(.system(size: 10, weight: .bold))
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .tint(.purple)
+                        .disabled(model.isGeneratingAIMessage)
+                        .help(L10n("Revisar codigo com IA"))
+
+                        Button {
+                            model.suggestCommitSplit()
+                        } label: {
+                            if model.isGeneratingAIMessage && !model.isSplitVisible {
+                                ProgressView().controlSize(.small).frame(width: 12, height: 12)
+                            } else {
+                                Label(L10n("Split"), systemImage: "sparkles")
+                                    .font(.system(size: 10, weight: .bold))
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .tint(.cyan)
+                        .disabled(model.isGeneratingAIMessage)
+                        .help(L10n("Sugerir divisao de commits com IA"))
+                    }
+                }
+
+                // AI Code Review Results
+                if model.isReviewVisible && !model.aiReviewFindings.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Image(systemName: "sparkles").foregroundStyle(.purple)
+                            Text(L10n("Code Review")).font(.system(size: 11, weight: .bold))
+                            Spacer()
+                            Button { model.isReviewVisible = false } label: {
+                                Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                            }.buttonStyle(.plain)
+                        }
+                        ForEach(model.aiReviewFindings) { finding in
+                            HStack(alignment: .top, spacing: 8) {
+                                Image(systemName: finding.severity.icon)
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(finding.severity.color)
+                                    .frame(width: 14)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    if finding.file != "general" {
+                                        Text(finding.file)
+                                            .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    Text(finding.message)
+                                        .font(.system(size: 10))
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                            }
+                            .padding(8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(finding.severity.color.opacity(0.06))
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                            .overlay(RoundedRectangle(cornerRadius: 6).stroke(finding.severity.color.opacity(0.2)))
+                        }
+                    }
+                    .padding(10)
+                    .background(DesignSystem.Colors.glassSubtle)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+
+                // AI Commit Split Suggestions
+                if model.isSplitVisible && !model.aiCommitSplitSuggestions.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Image(systemName: "sparkles").foregroundStyle(.cyan)
+                            Text(L10n("Sugestao de Split")).font(.system(size: 11, weight: .bold))
+                            Spacer()
+                            Button { model.isSplitVisible = false } label: {
+                                Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                            }.buttonStyle(.plain)
+                        }
+                        ForEach(model.aiCommitSplitSuggestions) { suggestion in
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(suggestion.message)
+                                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                                HStack(spacing: 4) {
+                                    ForEach(suggestion.files, id: \.self) { file in
+                                        Text(file)
+                                            .font(.system(size: 9, design: .monospaced))
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(Color.cyan.opacity(0.1))
+                                            .clipShape(Capsule())
+                                    }
+                                }
+                            }
+                            .padding(8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(DesignSystem.Colors.glassMinimal)
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                        }
+                    }
+                    .padding(10)
+                    .background(DesignSystem.Colors.glassSubtle)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
 
                 Button(action: {
@@ -392,6 +506,57 @@ struct OperationsScreen: View {
                     }.padding(.vertical, 4)
                 }.frame(maxHeight: 250)
             }
+        }
+    }
+
+    private var changelogCard: some View {
+        GlassCard(spacing: 10) {
+            CardHeader(L10n("Changelog"), icon: "sparkles", subtitle: L10n("Gerar notas de release com IA"))
+            HStack(spacing: 8) {
+                TextField(L10n("De (tag/hash)"), text: $model.changelogFromRef)
+                    .textFieldStyle(.roundedBorder)
+                TextField(L10n("Ate (tag/hash)"), text: $model.changelogToRef)
+                    .textFieldStyle(.roundedBorder)
+                Button {
+                    model.generateChangelog()
+                } label: {
+                    if model.isGeneratingAIMessage {
+                        ProgressView().controlSize(.small).frame(width: 12, height: 12)
+                    } else {
+                        Label(L10n("Gerar"), systemImage: "sparkles")
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(model.isGeneratingAIMessage)
+                .help(L10n("Gerar notas de release com IA"))
+            }
+        }
+        .sheet(isPresented: $model.isChangelogSheetVisible) {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    Text(L10n("Changelog")).font(.title3.bold())
+                    Spacer()
+                    Button {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(model.aiChangelog, forType: .string)
+                    } label: {
+                        Label(L10n("Copiar"), systemImage: "doc.on.doc")
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    Button(L10n("Fechar")) { model.isChangelogSheetVisible = false }
+                        .buttonStyle(.bordered)
+                        .keyboardShortcut(.escape, modifiers: [])
+                }
+                ScrollView {
+                    Text(model.aiChangelog)
+                        .font(.system(size: 12, design: .monospaced))
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .padding(24)
+            .frame(width: 550, height: 450)
         }
     }
 

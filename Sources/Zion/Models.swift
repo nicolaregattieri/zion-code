@@ -387,6 +387,49 @@ enum ConflictBlock: Identifiable {
     }
 }
 
+// MARK: - AI Review Models
+
+struct ReviewFinding: Identifiable {
+    let id = UUID()
+    let severity: ReviewSeverity
+    let file: String
+    let message: String
+
+    enum ReviewSeverity: String {
+        case critical, warning, suggestion
+
+        var color: Color {
+            switch self {
+            case .critical: return .red
+            case .warning: return .orange
+            case .suggestion: return .blue
+            }
+        }
+
+        var icon: String {
+            switch self {
+            case .critical: return "exclamationmark.octagon.fill"
+            case .warning: return "exclamationmark.triangle.fill"
+            case .suggestion: return "lightbulb.fill"
+            }
+        }
+
+        var label: String {
+            switch self {
+            case .critical: return L10n("Critico")
+            case .warning: return L10n("Aviso")
+            case .suggestion: return L10n("Sugestao")
+            }
+        }
+    }
+}
+
+struct CommitSuggestion: Identifiable {
+    let id = UUID()
+    let message: String
+    let files: [String]
+}
+
 enum EditorTheme: String, CaseIterable, Identifiable {
     case dracula, cityLights, githubLight, catppuccinMocha, oneDarkPro, tokyoNight
     var id: String { rawValue }

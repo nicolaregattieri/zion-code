@@ -492,11 +492,27 @@ struct ContentView: View {
             }
         }
         Divider()
-        
+
         if !isRemote {
             Button(L10n("Criar Pull Request...")) {
                 model.isPRSheetVisible = true
             }
+        }
+
+        if model.isAIConfigured {
+            Divider()
+            Button {
+                model.summarizeBranch(branch)
+            } label: {
+                if model.isGeneratingAIMessage {
+                    Label(L10n("Resumindo..."), systemImage: "sparkles")
+                } else if let summary = model.branchSummaries[branch] {
+                    Label(summary, systemImage: "sparkles")
+                } else {
+                    Label(L10n("Resumir com IA"), systemImage: "sparkles")
+                }
+            }
+            .disabled(model.isGeneratingAIMessage)
         }
 
         Divider()
