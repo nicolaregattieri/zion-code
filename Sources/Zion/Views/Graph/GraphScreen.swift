@@ -162,8 +162,8 @@ struct GraphScreen: View {
                     }
                 if !commitSearchQuery.isEmpty {
                     Button { commitSearchQuery = ""; model.clearSemanticSearch() } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).help(L10n("Limpar busca"))
-                    if !model.isSemanticSearchActive {
-                        Text("\(searchMatchIDs.isEmpty ? 0 : currentMatchIndex + 1)/\(searchMatchIDs.count)").font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundStyle(.secondary)
+                    if !model.isSemanticSearchActive && !searchMatchIDs.isEmpty {
+                        Text("\(currentMatchIndex + 1)/\(searchMatchIDs.count)").font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundStyle(.secondary)
                     } else if !model.aiSemanticSearchResults.isEmpty {
                         Text("\(model.aiSemanticSearchResults.count) \(L10n("resultados"))").font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundStyle(.pink)
                     }
@@ -368,10 +368,13 @@ struct GraphScreen: View {
                                 Text(L10n("Suas alteracoes serao rastreadas automaticamente (git add -A).")).font(.caption).foregroundStyle(.secondary)
 
                                 HStack(alignment: .bottom, spacing: 8) {
-                                    TextField(L10n("Mensagem do commit..."), text: $model.commitMessageInput, axis: .vertical)
-                                        .textFieldStyle(.roundedBorder)
-                                        .font(.system(.body, design: .monospaced))
-                                        .lineLimit(3, reservesSpace: true)
+                                    ScrollView(.vertical) {
+                                        TextField(L10n("Mensagem do commit..."), text: $model.commitMessageInput, axis: .vertical)
+                                            .textFieldStyle(.roundedBorder)
+                                            .font(.system(.body, design: .monospaced))
+                                            .lineLimit(3...8)
+                                    }
+                                    .frame(maxHeight: 120)
                                         .onSubmit {
                                             if !model.commitMessageInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                                 model.commit(message: model.commitMessageInput)
@@ -625,7 +628,7 @@ struct GraphScreen: View {
     private var commitDetailsPane: some View {
         if showingPendingChanges {
             inlineChangesPane
-        } else {
+        } else if model.selectedCommitID != nil {
             GlassCard(spacing: 0) {
                 CardHeader(L10n("Detalhes"), icon: "doc.text.magnifyingglass") {
                     if let selectedCommitID = model.selectedCommitID {
@@ -642,6 +645,19 @@ struct GraphScreen: View {
                     CommitDetailContent(rawDetails: model.commitDetails, model: model, commitID: model.selectedCommitID)
                         .padding(12)
                 }
+            }
+        } else {
+            GlassCard(spacing: 0) {
+                VStack(spacing: 16) {
+                    Image(systemName: "arrow.left.circle")
+                        .font(.system(size: 36))
+                        .foregroundStyle(.tertiary)
+                    Text(L10n("Selecione um commit para ver detalhes"))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(40)
             }
         }
     }
@@ -746,7 +762,7 @@ struct GraphScreen: View {
         } else {
             backgroundColor = Color.clear; textColor = .primary.opacity(0.8)
         }
-        return Text(line).font(.system(size: 12, design: .monospaced)).padding(.horizontal, 8)
+        return Text(line).font(.system(size: 12, design: .monospaced)).padding(.horizontal, 8).padding(.vertical, 1)
             .frame(maxWidth: .infinity, alignment: .leading).background(backgroundColor).foregroundStyle(textColor)
     }
 

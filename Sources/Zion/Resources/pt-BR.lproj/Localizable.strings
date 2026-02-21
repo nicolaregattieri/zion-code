@@ -449,10 +449,18 @@
 "help.ai.style" = "Alterne entre mensagens compactas ou detalhadas com bullet points";
 "Compacto" = "Compacto";
 "Detalhado" = "Detalhado";
-"Estilo de Mensagem" = "Estilo de Mensagem";
+"Commit com IA" = "Commit com IA";
+"commit.style.compact.hint" = "Uma linha no formato Conventional Commits";
+"commit.style.detailed.hint" = "Linha de resumo + bullet points detalhando as alterações";
 
 // Appearance
 "Aparencia" = "Aparência";
 "Claro" = "Claro";
 "Escuro" = "Escuro";
 "help.customization.appearance" = "Modo claro, escuro ou automático do sistema";
+
+// Operations card subtitles
+"Salvar e restaurar alteracoes temporarias" = "Salvar e restaurar alterações temporárias";
+"Marcar pontos importantes no historico" = "Marcar pontos importantes no histórico";
+"Repositorios remotos conectados" = "Repositórios remotos conectados";
+"Selecione um commit para ver detalhes" = "Selecione um commit para ver detalhes";

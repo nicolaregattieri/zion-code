@@ -14,7 +14,7 @@
 "Atualiza a branch atual com commits do remoto via fast-forward." = "Actualiza la branch actual con commits remotos via fast-forward.";
 "Envia commits locais da branch atual para o remoto." = "Envia commits locales de la branch actual al remoto.";
 "Seguranca" = "Seguridad";
-"Confirmacao" = "Confirmacion";
+"Confirmacao" = "Confirmación";
 "Nunca confirmar" = "Nunca confirmar";
 "Confirmar acoes criticas" = "Confirmar acciones criticas";
 "Confirmar todas as acoes" = "Confirmar todas las acciones";
@@ -496,10 +496,67 @@
 "help.ai.style" = "Alterne entre mensajes compactos o detallados con bullet points";
 "Compacto" = "Compacto";
 "Detalhado" = "Detallado";
-"Estilo de Mensagem" = "Estilo de Mensaje";
+"Commit com IA" = "Commit con IA";
+"commit.style.compact.hint" = "Una línea en formato Conventional Commits";
+"commit.style.detailed.hint" = "Línea de resumen + bullet points detallando los cambios";
 
 // Appearance
 "Aparencia" = "Apariencia";
 "Claro" = "Claro";
 "Escuro" = "Oscuro";
 "help.customization.appearance" = "Modo claro, oscuro o apariencia automática del sistema";
+
+// --- ES Locale Gap Fix: Missing Translations ---
+
+// Drawer / Sidebar navigation
+"Centro de Operacoes" = "Centro de Operaciones";
+"Configuracoes" = "Configuración";
+"Editor de Codigo" = "Editor de Código";
+"Terminal" = "Terminal";
+"Conflitos" = "Conflictos";
+
+// Graph / Tree screen
+"Navegue e salte entre as pontas das branches." = "Navega y salta entre las puntas de las ramas.";
+"Busca (Cmd+F)" = "Búsqueda (Cmd+F)";
+"Carregar mais" = "Cargar más";
+
+// Operations screen
+"Gerencie branches, tags, stashes e alteracoes de historico." = "Gestiona branches, tags, stashes y cambios de historial.";
+"Checkout e integracao" = "Checkout e integración";
+"Selecionar branch ou hash..." = "Seleccionar branch o hash...";
+"Fazer checkout da referencia informada?" = "¿Hacer checkout de la referencia ingresada?";
+"Checkout branch" = "Checkout branch";
+"Fazer checkout da branch %@?" = "¿Hacer checkout a la rama %@?";
+"Deseja fazer checkout para %@" = "¿Desea hacer checkout a %@?";
+"Executar comando" = "Ejecutar comando";
+"Executar comando git custom informado?" = "¿Ejecutar el comando git personalizado ingresado?";
+
+// Stash confirmations
+"Salvar alteracoes locais no stash?" = "¿Guardar cambios locales en stash?";
+"Aplicar o stash selecionado?" = "¿Aplicar el stash seleccionado?";
+"Aplicar e remover o stash selecionado?" = "¿Aplicar y eliminar el stash seleccionado?";
+
+// Tag confirmations
+"Criar tag no commit atual?" = "¿Crear tag en el commit actual?";
+"Deseja remover a tag informada?" = "¿Eliminar la tag ingresada?";
+
+// Reset / Danger zone
+"CUIDADO: Operacoes de reset descartam alteracoes." = "ADVERTENCIA: Las operaciones de reset descartan cambios.";
+"Esta acao e IRREVERSIVEL. Deseja continuar?" = "Esta acción es IRREVERSIBLE. ¿Desea continuar?";
+
+// Worktree screen
+"Gerencie contextos paralelos sem trocar branch no diretorio principal." = "Gestiona contextos paralelos sin cambiar de rama en el directorio principal.";
+"Criar o novo worktree com os parametros informados?" = "¿Crear el nuevo worktree con los parámetros ingresados?";
+"Remover metadados de worktrees obsoletos?" = "¿Eliminar metadatos de worktrees obsoletos?";
+"Deseja remover o worktree %@?" = "¿Eliminar worktree %@?";
+
+// Welcome / Repo selection
+"Selecione um repositorio" = "Selecciona un repositorio";
+"Abrir repositorio..." = "Abrir repositorio...";
+"Inferir origem da arvore" = "Inferir origen del árbol";
+
+// Operations card subtitles
+"Salvar e restaurar alteracoes temporarias" = "Guardar y restaurar cambios temporales";
+"Marcar pontos importantes no historico" = "Marcar puntos importantes en el historial";
+"Repositorios remotos conectados" = "Repositorios remotos conectados";
+"Selecione um commit para ver detalhes" = "Selecciona un commit para ver detalles";

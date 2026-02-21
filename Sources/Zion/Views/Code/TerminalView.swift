@@ -40,7 +40,14 @@ struct TerminalTabView: NSViewRepresentable {
     func updateNSView(_ nsView: SwiftTerm.TerminalView, context: Context) {
         applyTheme(to: nsView, context: context)
 
-        if session.isAlive && context.coordinator.processIsDead {
+        // Read isAlive for @Observable tracking (processTerminated changes it,
+        // which triggers this updateNSView call)
+        let _ = session.isAlive
+
+        // Auto-restart dead processes for preserved sessions.
+        // Uses _shouldPreserve (not isAlive) to avoid race with async processTerminated callback.
+        if context.coordinator.processIsDead && session._shouldPreserve {
+            session.isAlive = true
             context.coordinator.restartProcess(view: nsView)
         }
     }
