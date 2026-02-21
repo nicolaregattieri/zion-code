@@ -559,3 +559,36 @@
 "Marcar pontos importantes no historico" = "Mark important points in history";
 "Repositorios remotos conectados" = "Connected remote repositories";
 "Selecione um commit para ver detalhes" = "Select a commit to view details";
+
+// ntfy Push Notifications
+"Notificacoes Push" = "Push Notifications";
+"Terminal Externo" = "External Terminal";
+"ntfy.topic.configured" = "Topic configured";
+"ntfy.topic.placeholder" = "Your ntfy topic (e.g. zion-my-mac)";
+"ntfy.topic.privacy" = "Use a unique, hard-to-guess name. Anyone with the topic name can send/receive notifications.";
+"ntfy.server.hint" = "Leave blank to use the default server (ntfy.sh)";
+"ntfy.advanced" = "Advanced";
+"ntfy.local.toggle" = "macOS local notifications";
+"ntfy.events.title" = "Notified Events";
+"ntfy.test.button" = "Send Test Notification";
+"ntfy.test.failed" = "Failed to send test notification. Check your topic and connection.";
+"ntfy.agents.title" = "External Agents";
+"ntfy.agents.description" = "Allow external agents (CI, scripts) to send notifications via ntfy using your configured topic.";
+"ntfy.agents.enable" = "Enable external agents";
+"ntfy.group.gitOps" = "Git Operations";
+"ntfy.group.ai" = "AI";
+"ntfy.group.github" = "GitHub";
+"ntfy.event.cloneComplete" = "Clone complete";
+"ntfy.event.pushComplete" = "Push complete";
+"ntfy.event.pullComplete" = "Pull complete";
+"ntfy.event.newRemoteCommits" = "New remote commits";
+"ntfy.event.codeReviewComplete" = "Code review complete";
+"ntfy.event.conflictResolutionReady" = "Conflict resolution ready";
+"ntfy.event.commitMessageReady" = "Commit message ready";
+"ntfy.event.changelogReady" = "Changelog ready";
+"ntfy.event.blameExplanationReady" = "Blame explanation ready";
+"ntfy.event.diffExplanationReady" = "Diff explanation ready";
+"ntfy.event.commitSplitReady" = "Split suggestion ready";
+"ntfy.event.prCreated" = "PR created";
+"ntfy.event.prReviewRequested" = "PR review requested";
+"ntfy.event.branchReviewComplete" = "Branch review complete";

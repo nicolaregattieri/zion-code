@@ -560,3 +560,36 @@
 "Marcar pontos importantes no historico" = "Marcar puntos importantes en el historial";
 "Repositorios remotos conectados" = "Repositorios remotos conectados";
 "Selecione um commit para ver detalhes" = "Selecciona un commit para ver detalles";
+
+// ntfy Push Notifications
+"Notificacoes Push" = "Notificaciones Push";
+"Terminal Externo" = "Terminal Externo";
+"ntfy.topic.configured" = "Tópico configurado";
+"ntfy.topic.placeholder" = "Tu tópico ntfy (ej: zion-mi-mac)";
+"ntfy.topic.privacy" = "Usa un nombre único y difícil de adivinar. Cualquiera con el nombre del tópico puede enviar/recibir notificaciones.";
+"ntfy.server.hint" = "Deja en blanco para usar el servidor predeterminado (ntfy.sh)";
+"ntfy.advanced" = "Avanzado";
+"ntfy.local.toggle" = "Notificaciones locales de macOS";
+"ntfy.events.title" = "Eventos Notificados";
+"ntfy.test.button" = "Enviar Notificación de Prueba";
+"ntfy.test.failed" = "Error al enviar notificación de prueba. Verifica el tópico y la conexión.";
+"ntfy.agents.title" = "Agentes Externos";
+"ntfy.agents.description" = "Permite que agentes externos (CI, scripts) envíen notificaciones via ntfy usando tu tópico configurado.";
+"ntfy.agents.enable" = "Habilitar agentes externos";
+"ntfy.group.gitOps" = "Operaciones Git";
+"ntfy.group.ai" = "IA";
+"ntfy.group.github" = "GitHub";
+"ntfy.event.cloneComplete" = "Clone completado";
+"ntfy.event.pushComplete" = "Push completado";
+"ntfy.event.pullComplete" = "Pull completado";
+"ntfy.event.newRemoteCommits" = "Nuevos commits remotos";
+"ntfy.event.codeReviewComplete" = "Code review completado";
+"ntfy.event.conflictResolutionReady" = "Resolución de conflicto lista";
+"ntfy.event.commitMessageReady" = "Mensaje de commit listo";
+"ntfy.event.changelogReady" = "Changelog listo";
+"ntfy.event.blameExplanationReady" = "Explicación de blame lista";
+"ntfy.event.diffExplanationReady" = "Explicación de diff lista";
+"ntfy.event.commitSplitReady" = "Sugerencia de split lista";
+"ntfy.event.prCreated" = "PR creado";
+"ntfy.event.prReviewRequested" = "Review de PR solicitado";
+"ntfy.event.branchReviewComplete" = "Review de branch completado";
