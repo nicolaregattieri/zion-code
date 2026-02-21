@@ -19,6 +19,9 @@ mkdir -p "$APP_DIR/Contents/Frameworks"
 
 cp "$BIN_PATH" "$APP_DIR/Contents/MacOS/Zion"
 
+# Add rpath so @rpath/Sparkle.framework resolves to Contents/Frameworks/
+install_name_tool -add_rpath @executable_path/../Frameworks "$APP_DIR/Contents/MacOS/Zion"
+
 # Copy resources bundle
 BUNDLE_PATH="$(find .build -name "Zion_Zion.bundle" | grep "/release/" | head -n 1)"
 if [ -n "$BUNDLE_PATH" ]; then
