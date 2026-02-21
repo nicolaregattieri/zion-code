@@ -69,7 +69,7 @@ struct CloneSheet: View {
                             .font(.caption2.weight(.bold))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(protocolBadge == "SSH" ? Color.orange.opacity(0.15) : Color.green.opacity(0.15))
+                            .background(protocolBadge == "SSH" ? DesignSystem.Colors.statusOrangeBg : DesignSystem.Colors.statusGreenBg)
                             .foregroundStyle(protocolBadge == "SSH" ? .orange : .green)
                             .clipShape(Capsule())
                     }

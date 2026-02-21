@@ -3,15 +3,20 @@ import SwiftUI
 struct ConflictResolutionScreen: View {
     @Bindable var model: RepositoryViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var splitRatio: CGFloat = 0.25
 
     var body: some View {
         VStack(spacing: 0) {
             header
-            HSplitView {
+            DraggableSplitView(
+                axis: .horizontal,
+                ratio: $splitRatio,
+                minLeading: 240,
+                minTrailing: 500
+            ) {
                 fileListPane
-                    .frame(minWidth: 240, idealWidth: 280, maxWidth: 360)
+            } trailing: {
                 conflictViewerPane
-                    .frame(minWidth: 500, idealWidth: 700)
             }
         }
         .frame(minWidth: 900, minHeight: 600)
@@ -109,7 +114,7 @@ struct ConflictResolutionScreen: View {
                     ? Color.accentColor.opacity(0.15)
                     : (file.isResolved ? Color.green.opacity(0.05) : Color.clear)
             )
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
         }
         .buttonStyle(.plain)
     }

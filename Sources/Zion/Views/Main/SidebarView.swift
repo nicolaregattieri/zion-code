@@ -266,8 +266,8 @@ struct SidebarView: View {
             }
             .contentShape(Rectangle())
             .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 10).padding(.vertical, 8)
-            .background(RoundedRectangle(cornerRadius: 10).fill(isSelected ? Color.primary.opacity(0.08) : Color.clear))
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(isSelected ? Color.primary.opacity(0.15) : Color.clear, lineWidth: 1))
+            .background(RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius).fill(isSelected ? DesignSystem.Colors.glassHover : Color.clear))
+            .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius).stroke(isSelected ? Color.primary.opacity(0.15) : Color.clear, lineWidth: 1))
             .animation(.easeInOut(duration: 0.15), value: isSelected)
         }
         .buttonStyle(.plain)
@@ -404,7 +404,7 @@ private struct RecentProjectRow: View {
     @State private var isHovered = false
 
     private var rowBackground: Color {
-        if isCurrent { return Color.white.opacity(0.10) }
+        if isCurrent { return DesignSystem.Colors.glassHover }
         if isHovered { return DesignSystem.Colors.glassHover }
         return DesignSystem.Colors.glassMinimal
     }

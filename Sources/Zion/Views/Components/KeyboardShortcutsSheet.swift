@@ -82,7 +82,7 @@ struct KeyboardShortcutsSheet: View {
         }
         .padding(12)
         .background(DesignSystem.Colors.glassSubtle)
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius, style: .continuous))
     }
 
     private func shortcutRow(description: String, keys: String) -> some View {

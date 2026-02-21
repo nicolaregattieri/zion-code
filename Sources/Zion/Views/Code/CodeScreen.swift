@@ -78,6 +78,8 @@ struct CodeScreen: View {
     var onOpenFolder: (() -> Void)? = nil
     @State private var isQuickOpenVisible: Bool = false
     @State private var isFileBrowserVisible: Bool = true
+    @State private var fileBrowserRatio: CGFloat = 0.25
+    @State private var terminalRatio: CGFloat = 0.6
     @State private var layout: EditorTerminalLayout = .split
     @State private var isSearchVisible: Bool = false
     @State private var isReplaceVisible: Bool = false
@@ -97,35 +99,19 @@ struct CodeScreen: View {
 
                 Divider()
 
-                HSplitView {
-                    if isFileBrowserVisible {
+                if isFileBrowserVisible {
+                    DraggableSplitView(
+                        axis: .horizontal,
+                        ratio: $fileBrowserRatio,
+                        minLeading: 200,
+                        minTrailing: 400
+                    ) {
                         fileBrowserPane
-                            .frame(minWidth: 200, idealWidth: 260, maxWidth: 400)
+                    } trailing: {
+                        editorTerminalContent
                     }
-
-                    VStack(spacing: 0) {
-                        GeometryReader { geo in
-                            if layout == .split {
-                                VSplitView {
-                                    editorPane
-                                        .frame(minHeight: 100, maxHeight: .infinity)
-                                    terminalContainer
-                                        .frame(minHeight: 100, maxHeight: .infinity)
-                                }
-                            } else {
-                                VStack(spacing: 0) {
-                                    if layout == .editorOnly {
-                                        editorPane
-                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                    } else {
-                                        terminalContainer
-                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    .frame(minWidth: 400, maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    editorTerminalContent
                 }
             }
 
@@ -177,6 +163,28 @@ struct CodeScreen: View {
         }
     }
     
+    @ViewBuilder
+    private var editorTerminalContent: some View {
+        if layout == .split {
+            DraggableSplitView(
+                axis: .vertical,
+                ratio: $terminalRatio,
+                minLeading: 100,
+                minTrailing: 100
+            ) {
+                editorPane
+            } trailing: {
+                terminalContainer
+            }
+        } else if layout == .editorOnly {
+            editorPane
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            terminalContainer
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+
     private var editorToolbar: some View {
         HStack(spacing: 6) {
             Button {
@@ -212,7 +220,7 @@ struct CodeScreen: View {
             .padding(.horizontal, 6)
             .padding(.vertical, 4)
             .background(DesignSystem.Colors.glassSubtle)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
 
             // Size & Spacing group
             HStack(spacing: 6) {
@@ -233,7 +241,7 @@ struct CodeScreen: View {
             .padding(.horizontal, 6)
             .padding(.vertical, 4)
             .background(DesignSystem.Colors.glassSubtle)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
 
             Button {
                 model.isLineWrappingEnabled.toggle()
@@ -301,7 +309,7 @@ struct CodeScreen: View {
             .padding(.horizontal, 4)
             .padding(.vertical, 3)
             .background(DesignSystem.Colors.glassSubtle)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
 
             Spacer()
 
@@ -510,7 +518,7 @@ struct CodeScreen: View {
                 .padding(.horizontal, 8)
                 .padding(.vertical, 5)
                 .background(DesignSystem.Colors.glassSubtle)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
                 .frame(maxWidth: 280)
 
                 // Match count
@@ -565,7 +573,7 @@ struct CodeScreen: View {
                     .padding(.horizontal, 8)
                     .padding(.vertical, 5)
                     .background(DesignSystem.Colors.glassSubtle)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
                     .frame(maxWidth: 280)
 
                     Button(L10n("editor.replace.one")) { replaceCurrent() }
@@ -821,7 +829,7 @@ struct CodeScreen: View {
             .padding(.horizontal, 4)
             .padding(.vertical, 3)
             .background(DesignSystem.Colors.glassSubtle)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
 
             // Font popover
             TerminalFontPopoverButton(model: model, accentColor: accentColor)
@@ -1015,9 +1023,9 @@ struct TerminalTabChip: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
         .background(isActive ? accentColor.opacity(0.25) : DesignSystem.Colors.glassSubtle)
-        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
         .overlay(
-            RoundedRectangle(cornerRadius: 6)
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius)
                 .stroke(isActive ? accentColor.opacity(0.5) : Color.clear, lineWidth: 1)
         )
         .contentShape(Rectangle())
@@ -1306,8 +1314,8 @@ struct QuickOpenOverlay: View {
             }
             .frame(width: 500)
             .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.accentColor.opacity(0.3), lineWidth: 1))
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius, style: .continuous).stroke(Color.accentColor.opacity(0.3), lineWidth: 1))
             .shadow(color: .black.opacity(0.3), radius: 20, y: 10)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
