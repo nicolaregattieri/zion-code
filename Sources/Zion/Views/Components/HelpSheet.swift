@@ -21,7 +21,8 @@ struct HelpSheet: View {
                     "help.tree.pending", "help.tree.signature"]
         case .code:
             return ["help.code.editor", "help.code.quickopen", "help.code.blame",
-                    "help.code.themes", "help.code.unsaved"]
+                    "help.code.themes", "help.code.unsaved", "help.code.newfile",
+                    "help.code.saveas", "help.code.openineditor", "help.code.contextmenu"]
         case .terminal:
             return ["help.terminal.pty", "help.terminal.splits", "help.terminal.tabs",
                     "help.terminal.zoom", "help.terminal.persistence"]

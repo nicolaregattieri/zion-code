@@ -28,6 +28,7 @@ struct GraphScreen: View {
                     commitListPane(proxy: proxy)
                         .focusable()
                         .focused($isGraphFocused)
+                        .focusEffectDisabled()
                         .onMoveCommand { direction in
                             switch direction {
                             case .up: navigateSelection(direction: -1, proxy: proxy)
@@ -115,7 +116,7 @@ struct GraphScreen: View {
             .padding(.horizontal, 8)
             .padding(.vertical, 6)
             .background(DesignSystem.Colors.glassElevated)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius, style: .continuous))
         }
     }
 
@@ -133,8 +134,8 @@ struct GraphScreen: View {
 
     private func jumpButton(icon: String, color: Color, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: icon).font(.system(size: 14, weight: .bold)).foregroundStyle(.white).frame(width: 32, height: 32).background(color.gradient).clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        }.buttonStyle(.plain).help(L10n("Saltar para") + " \(label)")
+            Image(systemName: icon).font(.system(size: 14, weight: .bold)).foregroundStyle(.white).frame(width: 32, height: 32).background(color.gradient).clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous))
+        }.buttonStyle(.plain).contentShape(Rectangle()).help(L10n("Saltar para") + " \(label)")
     }
 
     private func findBranchName(matches: [String]) -> String? {
@@ -161,7 +162,7 @@ struct GraphScreen: View {
                         }
                     }
                 if !commitSearchQuery.isEmpty {
-                    Button { commitSearchQuery = ""; model.clearSemanticSearch() } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).help(L10n("Limpar busca"))
+                    Button { commitSearchQuery = ""; model.clearSemanticSearch() } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).contentShape(Rectangle()).help(L10n("Limpar busca"))
                     if !model.isSemanticSearchActive && !searchMatchIDs.isEmpty {
                         Text("\(currentMatchIndex + 1)/\(searchMatchIDs.count)").font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundStyle(.secondary)
                     } else if !model.aiSemanticSearchResults.isEmpty {
@@ -171,9 +172,9 @@ struct GraphScreen: View {
             }
             .padding(.horizontal, 10).padding(.vertical, 6)
             .background(model.isSemanticSearchActive ? Color.pink.opacity(0.08) : Color.black.opacity(0.15))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius)
                     .stroke(model.isSemanticSearchActive ? Color.pink.opacity(0.3) : Color.clear, lineWidth: 1)
             )
 
@@ -335,11 +336,11 @@ struct GraphScreen: View {
             )
 
             ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(showingPendingChanges ? Color.orange.opacity(0.12) : Color.orange.opacity(0.05))
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous)
+                    .fill(showingPendingChanges ? DesignSystem.Colors.statusOrangeBg : Color.orange.opacity(0.05))
                     .frame(height: 86)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous)
                             .stroke(showingPendingChanges ? Color.orange.opacity(0.5) : Color.orange.opacity(0.2), lineWidth: 1.5)
                     )
 
@@ -514,7 +515,7 @@ struct GraphScreen: View {
                                                     Button { model.selectedStash = stash; model.dropSelectedStash() } label: { Image(systemName: "trash") }.buttonStyle(.bordered).tint(.red).controlSize(.small)
                                                 }
                                             }
-                                            .padding(10).background(DesignSystem.Colors.glassSubtle).cornerRadius(8)
+                                            .padding(10).background(DesignSystem.Colors.glassSubtle).cornerRadius(DesignSystem.Spacing.elementCornerRadius)
                                         }
                                     }
                                 }.frame(maxHeight: 400)
@@ -678,7 +679,7 @@ struct GraphScreen: View {
             CardHeader(L10n("Changes"), icon: "pencil.circle", subtitle: "\(model.uncommittedCount) \(L10n("arquivos modificados"))") {
                 Button { model.refreshRepository() } label: {
                     Image(systemName: "arrow.clockwise")
-                }.buttonStyle(.plain).help(L10n("Atualizar"))
+                }.buttonStyle(.plain).contentShape(Rectangle()).help(L10n("Atualizar"))
             }
             .padding(12)
             Divider()
@@ -716,7 +717,7 @@ struct GraphScreen: View {
                 }
             }
             .padding(.horizontal, 10).padding(.vertical, 8)
-            .background(RoundedRectangle(cornerRadius: 8).fill(isSelected ? Color.accentColor.opacity(0.15) : Color.clear))
+            .background(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius).fill(isSelected ? DesignSystem.Colors.selectionBackground : Color.clear))
             .contentShape(Rectangle())
         }.buttonStyle(.plain)
     }

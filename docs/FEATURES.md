@@ -33,6 +33,10 @@
 | Fonts | SF Mono, Menlo, Monaco, Fira Code, JetBrains Mono | — |
 | Line Spacing | Adjustable 0.8x–3.0x | — |
 | Line Wrapping | Toggle on/off | — |
+| New File | Create new untitled file in editor | `⌘N` |
+| Save As | Save current file to a new location | `⇧⌘S` |
+| Open in Editor | Open changed files from commit details, staging, or operations | — |
+| File Browser Context Menu | Right-click: new file/folder, rename, duplicate, copy, cut, paste, delete, reveal in Finder | — |
 | File Watcher | Auto-reload on external changes | — |
 
 ## Integrated Terminal
@@ -228,7 +232,9 @@
 | `⌘?` | Keyboard shortcuts sheet |
 | `⌘P` | Quick Open |
 | `⌘B` | Toggle file browser |
+| `⌘N` | New file |
 | `⌘S` | Save file |
+| `⇧⌘S` | Save As |
 | `⌘J` | Toggle terminal |
 | `⇧⌘J` | Maximize terminal |
 | `⌘T` | New terminal tab |

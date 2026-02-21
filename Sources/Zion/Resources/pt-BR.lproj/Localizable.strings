@@ -813,3 +813,26 @@
 "push.warning.diverged" = "Sua branch divergiu: %@ commits à frente, %@ atrás do remoto.";
 "push.pullFirst" = "Fazer Pull primeiro";
 "push.forceWithLease" = "Force Push (seguro)";
+
+// New File / Save As / Open in Editor
+"Novo Arquivo" = "Novo Arquivo";
+"Salvar Como..." = "Salvar Como...";
+"Sem titulo" = "Sem título";
+"help.code.newfile" = "Criar novos arquivos diretamente no editor (⌘N)";
+"help.code.saveas" = "Salvar Como para escolher nome e local do arquivo (⇧⌘S)";
+"help.code.openineditor" = "Abrir arquivos alterados no editor a partir de qualquer tela";
+"help.code.contextmenu" = "Menu de contexto completo no navegador de arquivos (novo, renomear, copiar, colar, excluir)";
+
+// File Browser Context Menu
+"Nova Pasta" = "Nova Pasta";
+"Renomear..." = "Renomear...";
+"Duplicar" = "Duplicar";
+"Excluir" = "Excluir";
+"Recortar" = "Recortar";
+"Colar" = "Colar";
+"Revelar no Finder" = "Revelar no Finder";
+"Nome do arquivo:" = "Nome do arquivo:";
+"Nome da pasta:" = "Nome da pasta:";
+"Novo nome:" = "Novo nome:";
+"Deseja excluir '%@'?" = "Deseja excluir '%@'?";
+"Esta acao nao pode ser desfeita." = "Esta ação não pode ser desfeita.";

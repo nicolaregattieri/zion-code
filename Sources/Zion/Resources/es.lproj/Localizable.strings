@@ -909,3 +909,26 @@
 "push.warning.diverged" = "Tu rama ha divergido: %@ commits adelante, %@ detrás del remoto.";
 "push.pullFirst" = "Hacer Pull primero";
 "push.forceWithLease" = "Force Push (seguro)";
+
+// New File / Save As / Open in Editor
+"Novo Arquivo" = "Nuevo Archivo";
+"Salvar Como..." = "Guardar Como...";
+"Sem titulo" = "Sin título";
+"help.code.newfile" = "Crear nuevos archivos directamente en el editor (⌘N)";
+"help.code.saveas" = "Guardar Como para elegir nombre y ubicación del archivo (⇧⌘S)";
+"help.code.openineditor" = "Abrir archivos modificados en el editor desde cualquier pantalla";
+"help.code.contextmenu" = "Menú contextual completo en el navegador de archivos (nuevo, renombrar, copiar, pegar, eliminar)";
+
+// File Browser Context Menu
+"Nova Pasta" = "Nueva Carpeta";
+"Renomear..." = "Renombrar...";
+"Duplicar" = "Duplicar";
+"Excluir" = "Eliminar";
+"Recortar" = "Cortar";
+"Colar" = "Pegar";
+"Revelar no Finder" = "Mostrar en Finder";
+"Nome do arquivo:" = "Nombre del archivo:";
+"Nome da pasta:" = "Nombre de la carpeta:";
+"Novo nome:" = "Nuevo nombre:";
+"Deseja excluir '%@'?" = "¿Eliminar '%@'?";
+"Esta acao nao pode ser desfeita." = "Esta acción no se puede deshacer.";

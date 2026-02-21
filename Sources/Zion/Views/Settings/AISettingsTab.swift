@@ -39,6 +39,7 @@ struct AISettingsTab: View {
                                 isEditingKey = true
                             }
                             .buttonStyle(.plain)
+                            .contentShape(Rectangle())
                             .foregroundStyle(.blue)
                         }
                     } else {

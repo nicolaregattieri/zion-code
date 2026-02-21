@@ -48,7 +48,7 @@ struct ChangesScreen: View {
                     model.refreshRepository()
                 } label: {
                     Image(systemName: "arrow.clockwise")
-                }.buttonStyle(.plain).help(L10n("Atualizar"))
+                }.buttonStyle(.plain).contentShape(Rectangle()).help(L10n("Atualizar"))
             }
             .padding(12)
 
@@ -128,6 +128,12 @@ struct ChangesScreen: View {
                 model.unstageFile(file)
             } label: {
                 Label(L10n("Unstage"), systemImage: "minus.circle")
+            }
+            Divider()
+            Button {
+                model.openFileInEditor(relativePath: file)
+            } label: {
+                Label(L10n("Abrir no Editor"), systemImage: "pencil.and.outline")
             }
             Divider()
             Button(role: .destructive) {
@@ -228,6 +234,7 @@ struct ChangesScreen: View {
                             .foregroundStyle(.tertiary)
                     }
                     .buttonStyle(.plain)
+                    .contentShape(Rectangle())
                 }
                 .padding(.horizontal, 12)
                 .padding(.bottom, 8)

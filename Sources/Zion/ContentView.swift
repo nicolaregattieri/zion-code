@@ -117,6 +117,12 @@ struct ContentView: View {
                 model.navigateToGraphRequested = false
             }
         }
+        .onChange(of: model.navigateToCodeRequested) { _, requested in
+            if requested {
+                selectedSection = .code
+                model.navigateToCodeRequested = false
+            }
+        }
         .sheet(isPresented: $model.isReflogVisible) {
             ReflogSheet(model: model)
         }

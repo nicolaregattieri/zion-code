@@ -49,6 +49,21 @@ struct DesignSystem {
         static let textSecondary = Color.secondary
         static let textTertiary = Color.secondary.opacity(0.7)
 
+        // Selection & interaction states
+        static let selectionBackground = Color.accentColor.opacity(0.15)
+        static let selectionBorder = Color.accentColor.opacity(0.7)
+        static let hoverAccent = Color.accentColor.opacity(0.35)
+
+        // Status backgrounds (consistent scale)
+        static let statusGreenBg = Color.green.opacity(0.12)
+        static let statusOrangeBg = Color.orange.opacity(0.12)
+        static let statusBlueBg = Color.blue.opacity(0.12)
+        static let statusYellowBg = Color.yellow.opacity(0.15)
+
+        // Shadow tokens
+        static let shadowDark = Color.black.opacity(0.14)
+        static let shadowLight = Color.black.opacity(0.08)
+
         // Danger zone
         static let dangerBackground = Color.red.opacity(0.06)
         static let dangerBorder = Color.red.opacity(0.25)
@@ -68,7 +83,12 @@ struct DesignSystem {
     struct Spacing {
         static let cardPadding: CGFloat = 12
         static let sectionGap: CGFloat = 20
-        static let cardCornerRadius: CGFloat = 14
+
+        // Corner radii (4 tiers)
+        static let cardCornerRadius: CGFloat = 14       // GlassCards, commit row cards
+        static let containerCornerRadius: CGFloat = 12  // Toolbar groups, overlays
+        static let elementCornerRadius: CGFloat = 8     // Buttons, search bars, inline items
+        static let smallCornerRadius: CGFloat = 6       // Tags, tiny pills, code blocks
     }
     
     struct EditorThemes {
