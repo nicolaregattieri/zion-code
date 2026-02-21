@@ -549,6 +549,12 @@ enum PushMode: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
+enum PushDivergenceState {
+    case clear
+    case behind(Int)
+    case diverged(ahead: Int, behind: Int)
+}
+
 // MARK: - Zion Map (Help Detail Navigation)
 
 enum FeatureSection: String, CaseIterable, Identifiable {
