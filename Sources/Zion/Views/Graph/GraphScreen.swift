@@ -17,6 +17,8 @@ struct GraphScreen: View {
     @FocusState private var isCommitMessageFocused: Bool
     
     @State private var showingPendingChanges: Bool = false
+    @State private var splitRatio: CGFloat = 0.7
+    @GestureState private var dragOffset: CGFloat = 0
     @FocusState private var isGraphFocused: Bool
 
     var body: some View {
@@ -24,28 +26,54 @@ struct GraphScreen: View {
             VStack(spacing: 14) {
                 header(proxy: proxy)
 
-                HSplitView {
-                    commitListPane(proxy: proxy)
-                        .focusable()
-                        .focused($isGraphFocused)
-                        .focusEffectDisabled()
-                        .onMoveCommand { direction in
-                            switch direction {
-                            case .up: navigateSelection(direction: -1, proxy: proxy)
-                            case .down: navigateSelection(direction: 1, proxy: proxy)
-                            default: break
-                            }
-                        }
-                        .onExitCommand { model.selectCommit(nil); showingPendingChanges = false }
-                        .layoutPriority(1)
-                        .frame(minWidth: 400, idealWidth: 800, maxWidth: .infinity)
-                        .padding(.trailing, 6)
+                GeometryReader { geo in
+                    let dividerWidth: CGFloat = 8
+                    let availableWidth = geo.size.width - dividerWidth
+                    let minLeft: CGFloat = 400
+                    let minRight: CGFloat = 300
+                    let baseLeft = availableWidth * splitRatio
+                    let leftWidth = max(minLeft, min(availableWidth - minRight, baseLeft + dragOffset))
 
-                    commitDetailsPane
-                        .animation(nil, value: showingPendingChanges)
-                        .layoutPriority(0)
-                        .frame(minWidth: 300, idealWidth: 520, maxWidth: .infinity)
-                        .padding(.leading, 6)
+                    HStack(spacing: 0) {
+                        commitListPane(proxy: proxy)
+                            .focusable()
+                            .focused($isGraphFocused)
+                            .focusEffectDisabled()
+                            .onMoveCommand { direction in
+                                switch direction {
+                                case .up: navigateSelection(direction: -1, proxy: proxy)
+                                case .down: navigateSelection(direction: 1, proxy: proxy)
+                                default: break
+                                }
+                            }
+                            .onExitCommand { model.selectCommit(nil); showingPendingChanges = false }
+                            .frame(width: leftWidth)
+                            .padding(.trailing, 6)
+
+                        Rectangle()
+                            .fill(Color.clear)
+                            .frame(width: dividerWidth)
+                            .contentShape(Rectangle())
+                            .onHover { hovering in
+                                if hovering { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() }
+                            }
+                            .gesture(
+                                DragGesture(coordinateSpace: .named("splitContainer"))
+                                    .updating($dragOffset) { value, state, _ in
+                                        state = value.translation.width
+                                    }
+                                    .onEnded { value in
+                                        let newLeft = max(minLeft, min(availableWidth - minRight, baseLeft + value.translation.width))
+                                        splitRatio = newLeft / availableWidth
+                                    }
+                            )
+
+                        commitDetailsPane
+                            .animation(nil, value: showingPendingChanges)
+                            .frame(maxWidth: .infinity)
+                            .padding(.leading, 6)
+                    }
+                    .coordinateSpace(name: "splitContainer")
                 }
             }
             .padding(.horizontal, 18)
@@ -668,8 +696,10 @@ struct GraphScreen: View {
     private var inlineChangesPane: some View {
         VSplitView {
             inlineFileList
+                .padding(.bottom, 6)
                 .frame(minHeight: 150, idealHeight: 250)
             inlineDiffViewer
+                .padding(.top, 6)
                 .frame(minHeight: 200, idealHeight: 400)
         }
     }
@@ -720,6 +750,33 @@ struct GraphScreen: View {
             .background(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius).fill(isSelected ? DesignSystem.Colors.selectionBackground : Color.clear))
             .contentShape(Rectangle())
         }.buttonStyle(.plain)
+        .onTapGesture(count: 2) {
+            model.openFileInEditor(relativePath: file)
+        }
+        .contextMenu {
+            Button {
+                model.stageFile(file)
+            } label: {
+                Label(L10n("Stage"), systemImage: "plus.circle")
+            }
+            Button {
+                model.unstageFile(file)
+            } label: {
+                Label(L10n("Unstage"), systemImage: "minus.circle")
+            }
+            Divider()
+            Button {
+                model.openFileInEditor(relativePath: file)
+            } label: {
+                Label(L10n("Abrir no Editor"), systemImage: "pencil.and.outline")
+            }
+            Divider()
+            Button(role: .destructive) {
+                model.discardChanges(in: file)
+            } label: {
+                Label(L10n("Descartar Mudanças"), systemImage: "trash")
+            }
+        }
     }
 
     private var inlineDiffViewer: some View {
