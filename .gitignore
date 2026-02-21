@@ -41,6 +41,7 @@ DerivedData/
 
 # GraphForge Specific
 dist/
+docs/RELEASE.md
 *.log
 *.skill
 
