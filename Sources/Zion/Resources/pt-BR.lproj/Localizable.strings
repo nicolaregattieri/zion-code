@@ -498,3 +498,290 @@
 "ntfy.event.prCreated" = "PR criado";
 "ntfy.event.prReviewRequested" = "Review de PR solicitado";
 "ntfy.event.branchReviewComplete" = "Review de branch concluído";
+
+// Zion Map — Section Subtitles
+"map.tree.subtitle" = "Visualize o histórico do Git com lanes coloridas, busca e navegação por commits.";
+"map.code.subtitle" = "Editor de código com syntax highlighting, Quick Open, blame e múltiplas abas.";
+"map.terminal.subtitle" = "Terminal real com PTY nativo, splits, abas e zoom independente.";
+"map.clipboard.subtitle" = "Clipboard que captura automaticamente e cola direto no terminal.";
+"map.operations.subtitle" = "Commit, staging, branches, tags, stash, rebase interativo e mais.";
+"map.worktrees.subtitle" = "Trabalhe em múltiplas branches simultaneamente com terminais dedicados.";
+"map.ai.subtitle" = "Assistente de IA para commits, diffs, code review, conflitos e mais.";
+"map.customization.subtitle" = "Idioma, aparência, editor externo, confirmações e reflog.";
+"map.diagnostics.subtitle" = "Log de diagnóstico com exportação e sanitização automática.";
+"map.conflicts.subtitle" = "Resolva conflitos de merge diretamente no Zion.";
+
+// Zion Map — Tree
+"map.tree.lanes.title" = "Grafo com Lanes";
+"map.tree.lanes.description" = "Visualize a topologia de branches e merges com lanes coloridas. Cada branch recebe uma cor única que persiste durante toda a navegação.";
+"map.tree.lanes.tip1" = "Double-click em uma branch para filtrar o grafo e ver apenas seus commits.";
+"map.tree.search.title" = "Busca no Grafo";
+"map.tree.search.description" = "Busque por hash, autor ou mensagem de commit. Navegue entre resultados com os botões anterior/próximo.";
+"map.tree.search.tip1" = "Use termos parciais — a busca encontra correspondências em hash, autor e mensagem.";
+"map.tree.jumpbar.title" = "Jump Bar";
+"map.tree.jumpbar.description" = "Salte instantaneamente para main, develop ou a branch padrão do repositório. Ideal para repositórios grandes.";
+"map.tree.jumpbar.tip1" = "O Jump Bar detecta automaticamente a branch padrão do repositório.";
+"map.tree.pending.title" = "Alterações Pendentes";
+"map.tree.pending.description" = "Mudanças não commitadas aparecem no topo do grafo com opções de commit rápido e stash.";
+"map.tree.pending.tip1" = "Use o commit rápido para fazer git add -A e commitar em um clique.";
+"map.tree.signature.title" = "Verificação de Assinatura";
+"map.tree.signature.description" = "Veja se commits possuem assinatura GPG ou SSH válida direto no grafo.";
+"map.tree.navigation.title" = "Navegação por Teclado";
+"map.tree.navigation.description" = "Use as setas para navegar entre commits. Escape para limpar a seleção.";
+"map.tree.navigation.tip1" = "Combine com a busca para pular para um commit e depois navegar ao redor.";
+"map.tree.focus.title" = "Foco em Branch";
+"map.tree.focus.description" = "Double-click em uma branch para filtrar o grafo e exibir apenas os commits daquela branch.";
+"map.tree.focus.tip1" = "Clique em 'Limpar' para voltar a ver todas as branches.";
+
+// Zion Map — Code
+"map.code.editor.title" = "Editor com Syntax Highlighting";
+"map.code.editor.description" = "Editor baseado em NSTextView com cache de regex para highlighting performático. Suporta múltiplos arquivos em abas.";
+"map.code.editor.tip1" = "Abra arquivos clicando na árvore ou use Quick Open para busca rápida.";
+"map.code.quickopen.title" = "Quick Open";
+"map.code.quickopen.description" = "Busca fuzzy para abrir qualquer arquivo do repositório instantaneamente. Filtra enquanto você digita.";
+"map.code.quickopen.tip1" = "Digite apenas parte do nome — a busca fuzzy encontra correspondências parciais.";
+"map.code.filebrowser.title" = "Navegador de Arquivos";
+"map.code.filebrowser.description" = "Árvore de arquivos do repositório com respeito ao .gitignore. Alterne visibilidade com ⌘B.";
+"map.code.blame.title" = "Git Blame Inline";
+"map.code.blame.description" = "Veja autor, hash e data de cada linha diretamente no editor. Clique para ver o commit completo.";
+"map.code.blame.tip1" = "Com IA configurada, clique no blame para entender POR QUE o código foi alterado.";
+"map.code.tabs.title" = "Múltiplas Abas";
+"map.code.tabs.description" = "Abra vários arquivos simultaneamente. Abas com mudanças não salvas exibem um indicador visual.";
+"map.code.themes.title" = "Temas e Fontes";
+"map.code.themes.description" = "Escolha entre Dracula, GitHub Light, Catppuccin, One Dark Pro, Tokyo Night e City Lights. Fonte e tamanho configuráveis.";
+"map.code.themes.tip1" = "O tema também se aplica ao terminal integrado.";
+"map.code.watcher.title" = "Detecção de Mudanças Externas";
+"map.code.watcher.description" = "O editor detecta automaticamente quando um arquivo é alterado por outro programa e oferece recarregar.";
+
+// Zion Map — Terminal
+"map.terminal.pty.title" = "Terminal Real com PTY";
+"map.terminal.pty.description" = "Terminal completo com PTY nativo, login shell (-l) e suporte a xterm-256color. Roda qualquer comando.";
+"map.terminal.pty.tip1" = "O terminal usa sua configuração de shell padrão (zsh, bash, fish).";
+"map.terminal.splits.title" = "Splits Vertical e Horizontal";
+"map.terminal.splits.description" = "Divida o terminal em painéis verticais ou horizontais para trabalhar com múltiplos comandos lado a lado.";
+"map.terminal.splits.tip1" = "Feche um painel split com ⇧⌘W sem afetar os outros.";
+"map.terminal.tabs.title" = "Abas de Terminal";
+"map.terminal.tabs.description" = "Crie múltiplas abas de terminal, cada uma com seu processo independente e indicador de status.";
+"map.terminal.zoom.title" = "Zoom Independente";
+"map.terminal.zoom.description" = "Ajuste o tamanho da fonte do terminal independentemente do editor com Ctrl+ e Ctrl-.";
+"map.terminal.persistence.title" = "Persistência de Sessões";
+"map.terminal.persistence.description" = "Sessões de terminal persistem ao trocar de repositório. Badges laranja mostram contagem de arquivos alterados.";
+"map.terminal.persistence.tip1" = "Seus processos continuam rodando mesmo ao navegar para outro repositório.";
+
+// Zion Map — Clipboard
+"map.clipboard.capture.title" = "Captura Automática";
+"map.clipboard.capture.description" = "Monitora o clipboard do sistema e captura automaticamente texto, comandos, hashes, URLs e imagens.";
+"map.clipboard.capture.tip1" = "O clipboard mantém até 20 itens, removendo os mais antigos automaticamente.";
+"map.clipboard.paste.title" = "Colar e Executar";
+"map.clipboard.paste.description" = "Clique em um item para colar no terminal. Duplo clique para executar imediatamente (envia com Enter).";
+"map.clipboard.drag.title" = "Arrastar para o Terminal";
+"map.clipboard.drag.description" = "Arraste itens do clipboard diretamente para qualquer painel do terminal.";
+"map.clipboard.images.title" = "Captura de Imagens";
+"map.clipboard.images.description" = "Imagens copiadas são salvas como JPEG temporário. Limpeza automática após 1 hora e na saída do app.";
+"map.clipboard.images.tip1" = "Útil para capturar screenshots e colar em issues ou documentação.";
+
+// Zion Map — Operations
+"map.ops.commit.title" = "Commit com Staging";
+"map.ops.commit.description" = "Faça commits com staging individual por arquivo, opção de amend e mensagens geradas por IA.";
+"map.ops.commit.tip1" = "Use o botão de IA para gerar mensagens no formato Conventional Commits.";
+"map.ops.hunk.title" = "Staging por Hunk e Linha";
+"map.ops.hunk.description" = "Adicione ou remova hunks e linhas individuais do stage para controle granular do que entra no commit.";
+"map.ops.hunk.tip1" = "Perfeito para separar mudanças lógicas em commits atômicos.";
+"map.ops.branch.title" = "Gerenciamento de Branches";
+"map.ops.branch.description" = "Checkout, criação, merge, rebase, push, pull, renomear e deletar branches em uma interface unificada.";
+"map.ops.branch.tip1" = "Clique em uma branch da lista para preencher automaticamente o campo de referência.";
+"map.ops.rebase.title" = "Rebase Interativo Visual";
+"map.ops.rebase.description" = "Interface visual para pick, reword, edit, squash, fixup e drop. Reordene commits arrastando.";
+"map.ops.rebase.tip1" = "Use squash para combinar commits relacionados antes de fazer push.";
+"map.ops.stash.title" = "Gerenciamento de Stash";
+"map.ops.stash.description" = "Crie stashes com mensagens descritivas, aplique, pop ou remova. Veja stashes recentes no grafo.";
+"map.ops.tags.title" = "Gerenciamento de Tags";
+"map.ops.tags.description" = "Crie e remova tags lightweight rapidamente. A lista exibe tags existentes para referência.";
+
+// Zion Map — Worktrees
+"map.worktree.parallel.title" = "Contextos Paralelos";
+"map.worktree.parallel.description" = "Trabalhe em múltiplas branches ao mesmo tempo sem trocar contexto no diretório principal.";
+"map.worktree.parallel.tip1" = "Ideal para revisar PRs enquanto trabalha em outra feature.";
+"map.worktree.quick.title" = "Criação Rápida";
+"map.worktree.quick.description" = "Crie um worktree com um clique — caminho e branch são gerados automaticamente.";
+"map.worktree.terminal.title" = "Terminal Dedicado";
+"map.worktree.terminal.description" = "Cada worktree abre automaticamente um painel de terminal split dedicado apontando para seu diretório.";
+"map.worktree.terminal.tip1" = "O terminal do worktree já abre no diretório correto, pronto para uso.";
+
+// Zion Map — AI
+"map.ai.commit.title" = "Mensagens de Commit com IA";
+"map.ai.commit.description" = "Gera mensagens de commit a partir do diff staged usando Anthropic, OpenAI ou Gemini. Fallback heurístico sem API.";
+"map.ai.commit.tip1" = "Alterne entre estilo compacto (uma linha) e detalhado (com bullet points).";
+"map.ai.diff.title" = "Explicação de Diffs";
+"map.ai.diff.description" = "Entenda qualquer diff em linguagem natural. A IA explica intenção, riscos e impacto das mudanças.";
+"map.ai.pr.title" = "Descrição de Pull Request";
+"map.ai.pr.description" = "Gera título e corpo do PR automaticamente a partir do log de commits da branch.";
+"map.ai.review.title" = "Code Review Pré-Commit";
+"map.ai.review.description" = "Análise automática do código staged detectando bugs, problemas de segurança e sugestões de melhoria.";
+"map.ai.review.tip1" = "Execute antes de cada commit para pegar problemas cedo.";
+"map.ai.conflict.title" = "Resolução de Conflitos com IA";
+"map.ai.conflict.description" = "A IA lê ambos os lados do conflito de merge e propõe uma resolução semanticamente correta.";
+"map.ai.changelog.title" = "Geração de Changelog";
+"map.ai.changelog.description" = "Gera notas de release categorizadas (Features/Fixes/Improvements) a partir de um range de commits.";
+"map.ai.search.title" = "Busca Semântica";
+"map.ai.search.description" = "Busque no histórico Git em linguagem natural, como 'quando mudamos o fluxo de autenticação?'.";
+"map.ai.search.tip1" = "Funciona melhor com perguntas sobre funcionalidades ou mudanças específicas.";
+"map.ai.blame.title" = "Explicador de Blame";
+"map.ai.blame.description" = "Clique em uma entrada de blame para entender POR QUE aquele código foi alterado, não apenas quem alterou.";
+"map.ai.split.title" = "Conselheiro de Split";
+"map.ai.split.description" = "Sugere como dividir um diff grande em múltiplos commits atômicos e focados.";
+"map.ai.style.title" = "Estilo de Mensagem";
+"map.ai.style.description" = "Alterne entre mensagens compactas (Conventional Commits) ou detalhadas (header + bullet points).";
+
+// Zion Map — Customization
+"map.custom.languages.title" = "Idiomas";
+"map.custom.languages.description" = "Interface disponível em Português (BR), English e Español. Mude a qualquer momento nas configurações.";
+"map.custom.appearance.title" = "Aparência";
+"map.custom.appearance.description" = "Escolha entre modo claro, escuro ou automático do sistema. O tema do editor acompanha.";
+"map.custom.editor.title" = "Editor e Terminal Externos";
+"map.custom.editor.description" = "Configure seu editor (VS Code, Cursor, Xcode, etc.) e terminal (Terminal, iTerm, Warp) favoritos.";
+"map.custom.editor.tip1" = "Use 'Abrir Externamente' na sidebar para abrir o repo no editor configurado.";
+"map.custom.confirmation.title" = "Diálogos de Confirmação";
+"map.custom.confirmation.description" = "Controle quando exibir confirmação: nunca, apenas ações destrutivas, ou todas as ações.";
+"map.custom.reflog.title" = "Reflog e Desfazer";
+"map.custom.reflog.description" = "Visualize as últimas 50 entradas do reflog. Desfaça a última ação Git com um clique.";
+"map.custom.reflog.tip1" = "O desfazer usa reset --soft, preservando suas mudanças no stage.";
+
+// Zion Map — Diagnostics
+"map.diag.log.title" = "Log de Diagnóstico";
+"map.diag.log.description" = "Ring-buffer que captura erros, comandos Git e chamadas de IA para depuração.";
+"map.diag.export.title" = "Exportar Log";
+"map.diag.export.description" = "Salve o log sanitizado em arquivo pelo menu Ajuda. Dados sensíveis são removidos automaticamente.";
+"map.diag.export.tip1" = "Útil para reportar bugs — inclua o log no seu relato.";
+"map.diag.copy.title" = "Copiar Log";
+"map.diag.copy.description" = "Copie o log sanitizado para o clipboard para compartilhamento rápido.";
+
+// Zion Map — Conflicts
+"map.conflicts.resolve.title" = "Resolução no App";
+"map.conflicts.resolve.description" = "Resolva conflitos de merge e rebase diretamente no Zion, sem precisar abrir outro editor.";
+"map.conflicts.resolve.tip1" = "Com IA configurada, use 'Resolver com IA' para uma sugestão automática.";
+"map.conflicts.choose.title" = "Escolha de Lado";
+"map.conflicts.choose.description" = "Aceite Nosso, Deles, Ambos, Ambos (inverso) ou edite manualmente cada região de conflito.";
+"map.conflicts.continue.title" = "Continuar Merge/Rebase";
+"map.conflicts.continue.description" = "Após resolver todos os conflitos, continue o merge ou rebase com um clique.";
+
+// Phase 1: Settings Window
+"settings.tab.general" = "Geral";
+"settings.tab.ai" = "Assistente IA";
+"settings.tab.notifications" = "Notificações";
+"settings.general.interface" = "Interface";
+"settings.general.tools" = "Ferramentas";
+"settings.general.safety" = "Segurança";
+"settings.general.confirmation" = "Modo de Confirmação";
+"settings.general.customPath" = "Caminho Personalizado";
+"settings.open" = "Abrir Configurações";
+"settings.open.hint" = "Abrir Configurações (⌘,)";
+"settings.ai.provider" = "Provedor de IA";
+"settings.ai.commitStyle" = "Estilo de Commit";
+"settings.ai.diffExplanation" = "Explicação de Diff";
+"settings.ai.autoExplain" = "Explicar diffs automaticamente ao selecionar";
+"settings.ai.depth" = "Profundidade da Explicação";
+"settings.notifications.topic" = "Tópico ntfy";
+"settings.notifications.preferences" = "Preferências";
+"settings.notifications.events" = "Eventos";
+"settings.notifications.test" = "Testar";
+"settings.notifications.pr" = "Pull Requests";
+"settings.notifications.prPolling" = "Intervalo de Polling de PRs";
+"settings.notifications.prPolling.2min" = "A cada 2 minutos";
+"settings.notifications.prPolling.5min" = "A cada 5 minutos";
+"settings.notifications.prPolling.10min" = "A cada 10 minutos";
+"settings.notifications.prPolling.30min" = "A cada 30 minutos";
+"settings.notifications.autoReview" = "Revisar PRs atribuídos automaticamente";
+"settings.notifications.server" = "URL do Servidor";
+"settings.diff.depth.quick" = "Rápido";
+"settings.diff.depth.detailed" = "Detalhado";
+
+// Phase 2: Diff Explanation
+"diff.explanation.title" = "Explicação IA";
+"diff.explanation.intent" = "Intenção";
+"diff.explanation.risks" = "Riscos";
+"diff.explanation.narrative" = "Narrativa";
+"diff.explanation.copy" = "Copiar";
+"diff.explanation.loading" = "Analisando diff...";
+"diff.severity.safe" = "Seguro";
+"diff.severity.moderate" = "Moderado";
+"diff.severity.risky" = "Arriscado";
+
+// Phase 3: Code Review
+"codereview.files" = "Arquivos";
+"codereview.reviewAll" = "Revisar Todos";
+"codereview.selectFile" = "Selecione um arquivo para ver os detalhes.";
+"codereview.copySummary" = "Copiar Resumo";
+"codereview.exportMarkdown" = "Exportar Markdown";
+"codereview.stats.files" = "arquivos";
+"codereview.stats.commits" = "commits";
+"codereview.card.title" = "Code Review";
+"codereview.card.subtitle" = "Revisão completa arquivo por arquivo com IA";
+"codereview.startReview" = "Iniciar Revisão";
+"codereview.startReview.hint" = "Iniciar revisão completa entre branches (⇧⌘R)";
+"file.status.added" = "Adicionado";
+"file.status.modified" = "Modificado";
+"file.status.deleted" = "Removido";
+"file.status.renamed" = "Renomeado";
+
+// Phase 3: Branch Review Upgrades
+"branch.review.fullReview" = "Revisão Completa";
+"branch.review.fullReview.hint" = "Abrir tela de revisão completa";
+
+// Phase 4: PR Inbox
+"pr.inbox.title" = "Revisões de PR";
+"pr.inbox.reviewAll" = "Revisar Todos";
+"pr.inbox.openGitHub" = "Abrir no GitHub";
+"pr.status.pending" = "Pendente";
+"pr.status.reviewing" = "Revisando...";
+"pr.status.reviewed" = "Revisado";
+"pr.status.clean" = "Limpo";
+"ntfy.event.prAutoReviewComplete" = "Revisão automática de PR concluída";
+
+// Phase 5: Help Sheet
+"help.settings.title" = "Janela de Configurações";
+"help.settings.features" = "Atalho Cmd+,|Abas: Geral, IA, Notificações|Idioma, aparência, terminal|Gerenciamento de chave API";
+"help.diffExplanation.title" = "Explicação de Diff com IA";
+"help.diffExplanation.features" = "Intenção, Riscos, Narrativa|Badges de severidade|Explicar automaticamente ao selecionar|Copiar para área de transferência";
+"help.codeReview.title" = "Code Review";
+"help.codeReview.features" = "Revisão em tela cheia por arquivo|Análise IA por arquivo|Exportar como Markdown|Atalho Cmd+Shift+R";
+"help.prInbox.title" = "Caixa de PRs";
+"help.prInbox.features" = "Fila de PRs atribuídos|Revisão automática com IA|Clique para abrir no Code Review|Notificações macOS + ntfy";
+
+
+// Zion Map — Settings
+"map.settings.subtitle" = "Janela de configurações nativa do macOS com 3 abas organizadas.";
+"map.settings.window.title" = "Janela de Configurações";
+"map.settings.window.description" = "Janela de Configurações completa do macOS acessível via Cmd+, com abas Geral, IA e Notificações.";
+"map.settings.tabs.title" = "Abas Organizadas";
+"map.settings.tabs.description" = "Configurações divididas em grupos lógicos: Interface e Ferramentas, Provedor e estilo de IA, Notificações e polling de PRs.";
+"map.settings.api.title" = "Gerenciamento de Chave API";
+"map.settings.api.description" = "Gerencie chaves API de provedores de IA armazenadas no Keychain do macOS com segurança.";
+
+// Zion Map — Diff Explanation
+"map.diffExplanation.subtitle" = "Análise estruturada de diff com IA e avaliação de risco.";
+"map.diffexp.structured.title" = "Análise Estruturada";
+"map.diffexp.structured.description" = "Cada diff recebe seções de Intenção, Riscos e Narrativa para compreensão completa.";
+"map.diffexp.severity.title" = "Severidade de Risco";
+"map.diffexp.severity.description" = "Badges de severidade com cores (Seguro/Moderado/Arriscado) ajudam a priorizar a atenção da revisão.";
+"map.diffexp.auto.title" = "Explicação Automática";
+"map.diffexp.auto.description" = "Ative a explicação automática para analisar diffs automaticamente ao selecionar arquivos.";
+"map.diffexp.auto.tip1" = "Ative em Configurações > IA > Explicar diffs automaticamente ao selecionar.";
+
+// Zion Map — Code Review
+"map.codeReview.subtitle" = "Revisão de código em tela cheia arquivo por arquivo com IA.";
+"map.codereview.fullscreen.title" = "Revisão em Tela Cheia";
+"map.codereview.fullscreen.description" = "Janela dedicada de 1000x700 com lista de arquivos, visualizador de diff e achados da IA lado a lado.";
+"map.codereview.perfile.title" = "Análise IA por Arquivo";
+"map.codereview.perfile.description" = "Cada arquivo recebe revisão individual da IA com achados estruturados e explicação de diff.";
+"map.codereview.export.title" = "Exportar e Compartilhar";
+"map.codereview.export.description" = "Copie o resumo para a área de transferência ou exporte a revisão completa como Markdown para comentários de PR.";
+
+// Zion Map — PR Inbox
+"map.prInbox.subtitle" = "Acompanhe PRs atribuídos com revisão automática por IA.";
+"map.prinbox.queue.title" = "Fila de PRs";
+"map.prinbox.queue.description" = "Card na sidebar mostrando todos os PRs atribuídos com badges de status e resumos de severidade.";
+"map.prinbox.autoreview.title" = "Revisão Automática";
+"map.prinbox.autoreview.description" = "Quando ativado, a IA revisa automaticamente PRs atribuídos e notifica você com os achados prontos.";
+"map.prinbox.notifications.title" = "Notificações de Revisão";
+"map.prinbox.notifications.description" = "Receba notificações do macOS e alertas push via ntfy quando a IA completar revisões de PR.";

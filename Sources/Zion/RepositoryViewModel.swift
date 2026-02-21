@@ -91,6 +91,33 @@ final class RepositoryViewModel {
     var githubUsername: String = ""
     @ObservationIgnored private var lastNotifiedPRReviewIDs: Set<Int> = []
 
+    // Code Review (Phase 3)
+    var isCodeReviewVisible: Bool = false
+    var codeReviewFiles: [CodeReviewFile] = []
+    var selectedReviewFileID: UUID?
+    var isCodeReviewLoading: Bool = false
+    var codeReviewStats: CodeReviewStats = CodeReviewStats(totalFiles: 0, totalAdditions: 0, totalDeletions: 0, commitCount: 0, criticalCount: 0, warningCount: 0, suggestionCount: 0)
+    @ObservationIgnored private var codeReviewTask: Task<Void, Never>?
+
+    // PR Review Queue (Phase 4)
+    var prReviewQueue: [PRReviewItem] = []
+    @ObservationIgnored private var prPollingTask: Task<Void, Never>?
+
+    // Diff Explanation (Phase 2)
+    var currentDiffExplanation: DiffExplanation?
+    var isExplainingDiff: Bool = false
+    @ObservationIgnored private var explainDiffTask: Task<Void, Never>?
+
+    // Auto-explain setting (reads UserDefaults)
+    var autoExplainDiffs: Bool {
+        get { UserDefaults.standard.bool(forKey: "zion.autoExplainDiffs") }
+        set { UserDefaults.standard.set(newValue, forKey: "zion.autoExplainDiffs") }
+    }
+    var diffExplanationDepth: DiffExplanationDepth {
+        get { DiffExplanationDepth(rawValue: UserDefaults.standard.string(forKey: "zion.diffExplanationDepth") ?? "quick") ?? .quick }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: "zion.diffExplanationDepth") }
+    }
+
     // Submodule state
     var submodules: [SubmoduleInfo] = []
 
@@ -2738,6 +2765,274 @@ final class RepositoryViewModel {
                 logger.log(.error, "AI diff explanation failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
                 aiDiffExplanation = ""
                 lastError = error.localizedDescription
+            }
+        }
+    }
+
+    // MARK: - Detailed Diff Explanation (Phase 2)
+
+    func explainDiffDetailed(fileName: String, diff: String) {
+        guard isAIConfigured else { return }
+
+        explainDiffTask?.cancel()
+        explainDiffTask = Task {
+            isExplainingDiff = true
+            defer { isExplainingDiff = false }
+
+            do {
+                let explanation = try await aiClient.explainDiffDetailed(
+                    fileDiff: diff,
+                    fileName: fileName,
+                    provider: aiProvider,
+                    apiKey: aiAPIKey
+                )
+                currentDiffExplanation = explanation
+            } catch {
+                currentDiffExplanation = nil
+                lastError = error.localizedDescription
+            }
+        }
+    }
+
+    // MARK: - Code Review (Phase 3)
+
+    func startCodeReview(source: String, target: String) {
+        guard let url = repositoryURL else { return }
+
+        codeReviewTask?.cancel()
+        codeReviewTask = Task {
+            isCodeReviewLoading = true
+            isCodeReviewVisible = true
+            codeReviewFiles = []
+
+            // Get diff stat for file list
+            let diffStatResult = try? git.run(args: ["diff", "--numstat", "\(target)...\(source)"], in: url)
+            let diffStat = diffStatResult?.stdout ?? ""
+            let files = parseDiffStatForCodeReview(diffStat, source: source, target: target, at: url)
+            codeReviewFiles = files
+            if let first = files.first { selectedReviewFileID = first.id }
+
+            // Get commit count
+            let logCountResult = try? git.run(args: ["rev-list", "--count", "\(target)...\(source)"], in: url)
+            let commitCount = Int((logCountResult?.stdout ?? "").trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
+
+            recalculateCodeReviewStats(commitCount: commitCount)
+            isCodeReviewLoading = false
+        }
+    }
+
+    func reviewAllCodeReviewFiles() {
+        guard isAIConfigured else { return }
+
+        codeReviewTask?.cancel()
+        codeReviewTask = Task {
+            isCodeReviewLoading = true
+
+            for i in codeReviewFiles.indices {
+                guard !Task.isCancelled else { break }
+                guard codeReviewFiles[i].findings.isEmpty else { continue }
+
+                do {
+                    let findings = try await aiClient.reviewFile(
+                        fileDiff: codeReviewFiles[i].diff,
+                        fileName: codeReviewFiles[i].path,
+                        provider: aiProvider,
+                        apiKey: aiAPIKey
+                    )
+                    codeReviewFiles[i].findings = findings
+                    codeReviewFiles[i].isReviewed = true
+
+                    // Also get detailed explanation
+                    let explanation = try await aiClient.explainDiffDetailed(
+                        fileDiff: codeReviewFiles[i].diff,
+                        fileName: codeReviewFiles[i].path,
+                        provider: aiProvider,
+                        apiKey: aiAPIKey
+                    )
+                    codeReviewFiles[i].explanation = explanation
+                } catch {
+                    lastError = error.localizedDescription
+                }
+            }
+
+            recalculateCodeReviewStats(commitCount: codeReviewStats.commitCount)
+            isCodeReviewLoading = false
+        }
+    }
+
+    func copyCodeReviewSummary() {
+        var summary = "# Code Review: \(branchReviewSource) → \(branchReviewTarget)\n\n"
+        summary += "Files: \(codeReviewStats.totalFiles) | "
+        summary += "+\(codeReviewStats.totalAdditions)/-\(codeReviewStats.totalDeletions) | "
+        summary += "Risk: \(codeReviewStats.overallRisk.label)\n\n"
+
+        for file in codeReviewFiles where !file.findings.isEmpty {
+            summary += "## \(file.path)\n"
+            for finding in file.findings {
+                summary += "- [\(finding.severity.rawValue)] \(finding.message)\n"
+            }
+            summary += "\n"
+        }
+
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(summary, forType: .string)
+    }
+
+    func exportCodeReviewMarkdown() {
+        var md = "# Code Review\n\n"
+        md += "**Source:** `\(branchReviewSource)` → **Target:** `\(branchReviewTarget)`\n\n"
+        md += "| Metric | Value |\n|--------|-------|\n"
+        md += "| Files | \(codeReviewStats.totalFiles) |\n"
+        md += "| Additions | +\(codeReviewStats.totalAdditions) |\n"
+        md += "| Deletions | -\(codeReviewStats.totalDeletions) |\n"
+        md += "| Risk | \(codeReviewStats.overallRisk.label) |\n\n"
+
+        for file in codeReviewFiles {
+            md += "## \(file.path)\n\n"
+            if let explanation = file.explanation {
+                md += "**Intent:** \(explanation.intent)\n\n"
+                md += "**Risks:** \(explanation.risks)\n\n"
+            }
+            if !file.findings.isEmpty {
+                md += "### Findings\n\n"
+                for finding in file.findings {
+                    let icon = finding.severity == .critical ? "🔴" : finding.severity == .warning ? "🟡" : "🔵"
+                    md += "- \(icon) \(finding.message)\n"
+                }
+                md += "\n"
+            }
+        }
+
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = "code-review-\(branchReviewSource)-\(branchReviewTarget).md"
+        panel.allowedContentTypes = [.plainText]
+        if panel.runModal() == .OK, let url = panel.url {
+            try? md.write(to: url, atomically: true, encoding: .utf8)
+        }
+    }
+
+    private func parseDiffStatForCodeReview(_ output: String, source: String, target: String, at url: URL) -> [CodeReviewFile] {
+        // Parse --numstat output: additions\tdeletions\tfilename
+        output.split(separator: "\n").compactMap { line -> CodeReviewFile? in
+            let parts = line.split(separator: "\t")
+            guard parts.count >= 3 else { return nil }
+            let additions = Int(parts[0]) ?? 0
+            let deletions = Int(parts[1]) ?? 0
+            let path = String(parts[2])
+
+            // Determine file status
+            let status: FileChangeStatus
+            if additions > 0 && deletions == 0 { status = .added }
+            else if additions == 0 && deletions > 0 { status = .deleted }
+            else { status = .modified }
+
+            // Get per-file diff
+            let diffResult = try? git.run(args: ["diff", "\(target)...\(source)", "--", path], in: url)
+            let diff = diffResult?.stdout ?? ""
+            let hunks = Self.parseDiffHunks(diff)
+
+            return CodeReviewFile(
+                path: path,
+                status: status,
+                additions: additions,
+                deletions: deletions,
+                diff: diff,
+                hunks: hunks
+            )
+        }
+    }
+
+    private func recalculateCodeReviewStats(commitCount: Int) {
+        let allFindings = codeReviewFiles.flatMap(\.findings)
+        codeReviewStats = CodeReviewStats(
+            totalFiles: codeReviewFiles.count,
+            totalAdditions: codeReviewFiles.reduce(0) { $0 + $1.additions },
+            totalDeletions: codeReviewFiles.reduce(0) { $0 + $1.deletions },
+            commitCount: commitCount,
+            criticalCount: allFindings.filter { $0.severity == .critical }.count,
+            warningCount: allFindings.filter { $0.severity == .warning }.count,
+            suggestionCount: allFindings.filter { $0.severity == .suggestion }.count
+        )
+    }
+
+    // MARK: - PR Review Queue (Phase 4)
+
+    func openPRInCodeReview(_ item: PRReviewItem) {
+        branchReviewSource = item.pr.headBranch
+        branchReviewTarget = item.pr.baseBranch
+        if !item.pr.headBranch.isEmpty && !item.pr.baseBranch.isEmpty {
+            startCodeReview(source: item.pr.headBranch, target: item.pr.baseBranch)
+        }
+    }
+
+    func reviewAllPRs() {
+        guard isAIConfigured, let url = repositoryURL else { return }
+
+        for i in prReviewQueue.indices where prReviewQueue[i].status == .pending {
+            prReviewQueue[i].status = .reviewing
+
+            let item = prReviewQueue[i]
+            let idx = i
+            Task {
+                do {
+                    // Get the diff for this PR
+                    let remoteResult = try? git.run(args: ["remote", "get-url", "origin"], in: url)
+            let remote = (remoteResult?.stdout ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard let ghRemote = GitHubClient.parseRemote(remote) else { return }
+
+                    let diff = await githubClient.fetchPRDiff(remote: ghRemote, prNumber: item.pr.number) ?? ""
+                    let findings = try await aiClient.reviewBranch(
+                        diff: diff,
+                        diffStat: "",
+                        sourceBranch: item.pr.headBranch,
+                        targetBranch: item.pr.baseBranch,
+                        provider: aiProvider,
+                        apiKey: aiAPIKey
+                    )
+
+                    prReviewQueue[idx].findings = findings
+                    prReviewQueue[idx].status = findings.contains(where: { $0.severity == .critical || $0.severity == .warning }) ? .reviewed : .clean
+                    prReviewQueue[idx].reviewedAt = Date()
+
+                    // Notify
+                    let repoName = url.lastPathComponent
+                    await ntfyClient.sendIfEnabled(
+                        event: .prAutoReviewComplete,
+                        title: L10n("PR #\(item.pr.number) reviewed"),
+                        body: "\(item.pr.title) — \(findings.count) findings",
+                        repoName: repoName
+                    )
+                } catch {
+                    prReviewQueue[idx].status = .pending
+                }
+            }
+        }
+    }
+
+    func refreshPRReviewQueue() {
+        guard let url = repositoryURL else { return }
+
+        prPollingTask?.cancel()
+        prPollingTask = Task {
+            let remoteResult = try? git.run(args: ["remote", "get-url", "origin"], in: url)
+            let remote = (remoteResult?.stdout ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            guard let ghRemote = GitHubClient.parseRemote(remote) else { return }
+
+            let prs = await githubClient.fetchPRsRequestingMyReview(remote: ghRemote)
+            let existingIDs = Set(prReviewQueue.map(\.pr.id))
+
+            for pr in prs where !existingIDs.contains(pr.id) {
+                prReviewQueue.append(PRReviewItem(pr: pr))
+            }
+
+            // Remove PRs no longer requesting review
+            let currentIDs = Set(prs.map(\.id))
+            prReviewQueue.removeAll { !currentIDs.contains($0.pr.id) }
+
+            // Auto-review if enabled
+            let autoReview = UserDefaults.standard.bool(forKey: "zion.autoReviewAssignedPRs")
+            if autoReview && isAIConfigured {
+                reviewAllPRs()
             }
         }
     }

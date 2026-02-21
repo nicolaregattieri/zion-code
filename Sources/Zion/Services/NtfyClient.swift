@@ -44,6 +44,7 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
     case prReviewRequested = "prReviewRequested"
     // AI — Branch Review
     case branchReviewComplete = "branchReviewComplete"
+    case prAutoReviewComplete = "prAutoReviewComplete"
 
     var id: String { rawValue }
 
@@ -53,7 +54,7 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
             return .gitOps
         case .codeReviewComplete, .conflictResolutionReady, .commitMessageReady,
              .changelogReady, .blameExplanationReady, .diffExplanationReady, .commitSplitReady,
-             .branchReviewComplete:
+             .branchReviewComplete, .prAutoReviewComplete:
             return .ai
         case .prCreated, .prReviewRequested:
             return .github
@@ -76,6 +77,7 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
         case .prCreated: return L10n("ntfy.event.prCreated")
         case .prReviewRequested: return L10n("ntfy.event.prReviewRequested")
         case .branchReviewComplete: return L10n("ntfy.event.branchReviewComplete")
+        case .prAutoReviewComplete: return L10n("ntfy.event.prAutoReviewComplete")
         }
     }
 
@@ -95,6 +97,7 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
         case .prCreated: return 3
         case .prReviewRequested: return 4
         case .branchReviewComplete: return 4
+        case .prAutoReviewComplete: return 4
         }
     }
 
@@ -114,6 +117,7 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
         case .prCreated: return "tada"
         case .prReviewRequested: return "eyes"
         case .branchReviewComplete: return "mag"
+        case .prAutoReviewComplete: return "mag"
         }
     }
 
@@ -122,7 +126,7 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
     var isUserConfigurable: Bool {
         switch self {
         case .newRemoteCommits,
-             .prCreated, .prReviewRequested:
+             .prCreated, .prReviewRequested, .prAutoReviewComplete:
             return true
         case .cloneComplete, .pushComplete, .pullComplete,
              .codeReviewComplete, .branchReviewComplete,
@@ -136,7 +140,7 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .cloneComplete, .pushComplete, .pullComplete, .newRemoteCommits,
              .codeReviewComplete, .conflictResolutionReady, .prCreated,
-             .prReviewRequested, .branchReviewComplete:
+             .prReviewRequested, .branchReviewComplete, .prAutoReviewComplete:
             return true
         case .commitMessageReady, .changelogReady, .blameExplanationReady,
              .diffExplanationReady, .commitSplitReady:

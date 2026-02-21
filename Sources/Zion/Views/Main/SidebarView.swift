@@ -11,14 +11,7 @@ struct SidebarView: View {
     @AppStorage("zion.preferredTerminal") private var preferredTerminalRaw: String = ExternalTerminal.terminal.rawValue
     @AppStorage("zion.customTerminalPath") private var customTerminalPath: String = ""
 
-    @State private var aiKeyInput: String = ""
-    @State private var isEditingAIKey: Bool = false
-    @State private var ntfyTopicInput: String = ""
-    @State private var isEditingNtfyTopic: Bool = false
-    @State private var isNtfyAdvancedExpanded: Bool = false
-    @State private var isTestingNtfy: Bool = false
     @AppStorage("zion.sidebar.recentsExpanded") private var isRecentsExpanded: Bool = true
-    @AppStorage("zion.sidebar.settingsExpanded") private var isSettingsExpanded: Bool = false
 
     let onOpen: () -> Void
     let onOpenInTerminal: () -> Void
@@ -37,11 +30,15 @@ struct SidebarView: View {
                     worktreesCard
                 }
 
+                if model.repositoryURL != nil, !model.prReviewQueue.isEmpty {
+                    PRInboxCard(model: model)
+                }
+
                 if selectedSection == .graph, model.repositoryURL != nil {
                     sidebarBranchExplorer.padding(.horizontal, 10)
                 }
 
-                settingsCard
+                quickSettingsRow
             }
             .padding(.top, 10).padding(.bottom, 20)
         }
@@ -354,449 +351,50 @@ struct SidebarView: View {
         }
     }
 
-    private var settingsCard: some View {
-        GlassCard(spacing: 12) {
-            CardHeader(L10n("Configuracoes"), icon: "gearshape") {
-                collapseToggle(isExpanded: $isSettingsExpanded)
-            }
-
-            if isSettingsExpanded {
-                VStack(alignment: .leading, spacing: 10) {
-                    // Language
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(L10n("Idioma")).font(.caption).foregroundStyle(.secondary)
-                        Picker("", selection: $uiLanguageRaw) {
-                            ForEach(AppLanguage.allCases) { language in
-                                Text(language.label).tag(language.rawValue)
-                            }
-                        }
-                        .labelsHidden()
-                        .pickerStyle(.menu)
+    private var quickSettingsRow: some View {
+        GlassCard(spacing: 8) {
+            HStack(spacing: 12) {
+                // Language flag
+                let langRaw = uiLanguageRaw
+                let langLabel: String = {
+                    switch langRaw {
+                    case "pt-BR": return "🇧🇷"
+                    case "en": return "🇺🇸"
+                    case "es": return "🇪🇸"
+                    default: return "🌐"
                     }
+                }()
+                Text(langLabel).font(.system(size: 16))
 
-                    Divider().opacity(0.1)
-
-                    // Appearance
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(L10n("Aparencia")).font(.caption).foregroundStyle(.secondary)
-                        Picker("", selection: $appearanceRaw) {
-                            ForEach(AppAppearance.allCases) { mode in
-                                Text(mode.label).tag(mode.rawValue)
-                            }
-                        }
-                        .labelsHidden()
-                        .pickerStyle(.menu)
-                    }
-
-                    Divider().opacity(0.1)
-
-                    // External Terminal
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "terminal")
-                                .font(.system(size: 9))
-                                .foregroundStyle(.blue)
-                            Text(L10n("Terminal Externo")).font(.caption).foregroundStyle(.secondary)
-                        }
-
-                        VStack(alignment: .leading, spacing: 4) {
-                            Picker("", selection: $preferredTerminalRaw) {
-                                ForEach(ExternalTerminal.allCases) { term in
-                                    Text(term.label).tag(term.rawValue)
-                                }
-                            }
-                            .labelsHidden()
-                            .pickerStyle(.menu)
-                            .onChange(of: preferredTerminalRaw) { _, val in
-                                if val == "custom" { pickCustomApp() }
-                            }
-                            if preferredTerminalRaw == "custom" && !customTerminalPath.isEmpty {
-                                Text(URL(fileURLWithPath: customTerminalPath).lastPathComponent)
-                                    .font(.system(size: 9, design: .monospaced)).foregroundStyle(.tertiary)
-                            }
-                        }
-                    }
-
-                    Divider().opacity(0.1)
-
-                    // AI Provider
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "sparkles")
-                                .font(.system(size: 9))
-                                .foregroundStyle(.purple)
-                            Text(L10n("Assistente IA")).font(.caption).foregroundStyle(.secondary)
-                        }
-                        Picker("", selection: $model.aiProvider) {
-                            ForEach(AIProvider.allCases) { provider in
-                                Text(provider.label).tag(provider)
-                            }
-                        }
-                        .labelsHidden()
-                        .pickerStyle(.menu)
-                        .onChange(of: model.aiProvider) { _, _ in
-                            isEditingAIKey = false
-                            aiKeyInput = ""
-                        }
-
-                        if model.aiProvider != .none {
-                            let hasKey = !model.aiAPIKey.isEmpty
-                            
-                            if hasKey && !isEditingAIKey {
-                                HStack {
-                                    Label(L10n("Chave registrada"), systemImage: "lock.fill")
-                                        .font(.system(size: 10, weight: .medium))
-                                        .foregroundStyle(DesignSystem.Colors.success)
-                                    
-                                    Spacer()
-                                    
-                                    Button(L10n("Alterar")) {
-                                        aiKeyInput = model.aiAPIKey
-                                        isEditingAIKey = true
-                                    }
-                                    .buttonStyle(.plain)
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundStyle(Color.accentColor)
-                                }
-                                .padding(.vertical, 2)
-                            } else {
-                                VStack(alignment: .trailing, spacing: 6) {
-                                    SecureField(L10n("Chave de API"), text: $aiKeyInput)
-                                        .textFieldStyle(.roundedBorder)
-                                        .font(.system(size: 11, design: .monospaced))
-                                        .onSubmit {
-                                            if !aiKeyInput.isEmpty {
-                                                model.aiAPIKey = aiKeyInput
-                                                isEditingAIKey = false
-                                            }
-                                        }
-                                    
-                                    HStack {
-                                        if isEditingAIKey {
-                                            Button(L10n("Cancelar")) {
-                                                isEditingAIKey = false
-                                                aiKeyInput = model.aiAPIKey
-                                            }
-                                            .buttonStyle(.plain)
-                                            .font(.system(size: 10))
-                                            .foregroundStyle(.secondary)
-                                        }
-                                        
-                                        Spacer()
-                                        
-                                        Button {
-                                            model.aiAPIKey = aiKeyInput
-                                            isEditingAIKey = false
-                                        } label: {
-                                            Label(L10n("Salvar"), systemImage: "checkmark.circle.fill")
-                                                .font(.system(size: 10, weight: .bold))
-                                        }
-                                        .buttonStyle(.borderedProminent)
-                                        .controlSize(.small)
-                                        .tint(.accentColor)
-                                        .disabled(aiKeyInput.isEmpty)
-                                    }
-                                }
-                                .onAppear {
-                                    if aiKeyInput.isEmpty && hasKey {
-                                        aiKeyInput = model.aiAPIKey
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if model.aiProvider != .none {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Picker(L10n("Commit com IA"), selection: $model.commitMessageStyle) {
-                                ForEach(CommitMessageStyle.allCases) { style in
-                                    Text(style.label).tag(style)
-                                }
-                            }
-                            .pickerStyle(.segmented)
-
-                            Text(model.commitMessageStyle == .compact
-                                ? L10n("commit.style.compact.hint")
-                                : L10n("commit.style.detailed.hint"))
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-
-                    Divider().opacity(0.1)
-
-                    // ntfy Push Notifications
-                    ntfySettingsSection
-                }
-            }
-
-        }
-        .padding(.horizontal, 10)
-        .padding(.bottom, 14)
-    }
-
-    // MARK: - ntfy Settings
-
-    private var ntfySettingsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 4) {
-                Image(systemName: "bell.badge")
-                    .font(.system(size: 9))
-                    .foregroundStyle(.orange)
-                Text(L10n("Notificacoes Push")).font(.caption).foregroundStyle(.secondary)
-            }
-
-            // Onboarding hint for unconfigured state
-            if !model.isNtfyConfigured && !isEditingNtfyTopic {
-                Text(L10n("ntfy.onboarding.hint"))
-                    .font(.system(size: 10))
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-
-            // Topic input
-            if model.isNtfyConfigured && !isEditingNtfyTopic {
-                HStack {
-                    Label(L10n("ntfy.topic.configured"), systemImage: "bell.fill")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(DesignSystem.Colors.success)
-                    Spacer()
-                    Button(L10n("Alterar")) {
-                        ntfyTopicInput = model.ntfyTopic
-                        isEditingNtfyTopic = true
-                    }
-                    .buttonStyle(.plain)
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(Color.accentColor)
-                }
-                .padding(.vertical, 2)
-            } else {
-                VStack(alignment: .leading, spacing: 6) {
-                    TextField(L10n("ntfy.topic.placeholder"), text: $ntfyTopicInput)
-                        .textFieldStyle(.roundedBorder)
-                        .font(.system(size: 11, design: .monospaced))
-                        .onSubmit {
-                            if !ntfyTopicInput.isEmpty {
-                                model.ntfyTopic = ntfyTopicInput
-                                isEditingNtfyTopic = false
-                            }
-                        }
-
-                    Text(L10n("ntfy.topic.privacy"))
-                        .font(.system(size: 9))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(3)
-                        .padding(8)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(DesignSystem.Colors.glassSubtle))
-                        .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(DesignSystem.Colors.glassHover, lineWidth: 1))
-
-                    HStack {
-                        if isEditingNtfyTopic {
-                            Button(L10n("Cancelar")) {
-                                isEditingNtfyTopic = false
-                                ntfyTopicInput = model.ntfyTopic
-                            }
-                            .buttonStyle(.plain)
-                            .font(.system(size: 10))
-                            .foregroundStyle(.secondary)
-                        }
-
-                        Spacer()
-
-                        Button {
-                            model.ntfyTopic = ntfyTopicInput
-                            isEditingNtfyTopic = false
-                        } label: {
-                            Label(L10n("Salvar"), systemImage: "checkmark.circle.fill")
-                                .font(.system(size: 10, weight: .bold))
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.small)
-                        .tint(.accentColor)
-                        .disabled(ntfyTopicInput.isEmpty)
-                    }
-                }
-                .onAppear {
-                    if ntfyTopicInput.isEmpty && model.isNtfyConfigured {
-                        ntfyTopicInput = model.ntfyTopic
-                    }
-                }
-            }
-
-            // Configured state: show toggles, server, and test button
-            if model.isNtfyConfigured {
-                Divider().opacity(0.1)
-
-                // Local notifications toggle
-                Toggle(isOn: $model.ntfyLocalNotificationsEnabled) {
-                    Label(L10n("ntfy.local.toggle"), systemImage: "bell")
+                // AI status
+                if model.aiProvider != .none {
+                    Image(systemName: "sparkles")
                         .font(.system(size: 11))
-                }
-                .toggleStyle(.switch)
-                .controlSize(.mini)
-
-                Divider().opacity(0.1)
-
-                // Event toggles — flat list, no group headers needed for 4 items
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(L10n("ntfy.events.title"))
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.secondary)
-
-                    VStack(spacing: 6) {
-                        ForEach(NtfyEvent.allCases.filter(\.isUserConfigurable)) { event in
-                            Toggle(isOn: ntfyEventBinding(for: event)) {
-                                HStack(spacing: 6) {
-                                    Image(systemName: event.group.icon)
-                                        .font(.system(size: 8))
-                                        .foregroundStyle(.secondary)
-                                        .frame(width: 12)
-                                    Text(event.label)
-                                        .font(.system(size: 10))
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                            .toggleStyle(.switch)
-                            .controlSize(.mini)
-                        }
-                    }
-                    .padding(10)
-                    .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(DesignSystem.Colors.glassSubtle))
-                    .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(DesignSystem.Colors.glassHover, lineWidth: 1))
+                        .foregroundStyle(model.isAIConfigured ? .purple : .secondary)
                 }
 
-                Divider().opacity(0.1)
-
-                // Advanced: custom server
-                DisclosureGroup(isExpanded: $isNtfyAdvancedExpanded) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        TextField("https://ntfy.sh", text: $model.ntfyServerURL)
-                            .textFieldStyle(.roundedBorder)
-                            .font(.system(size: 10, design: .monospaced))
-
-                        Text(L10n("ntfy.server.hint"))
-                            .font(.system(size: 9))
-                            .foregroundStyle(.tertiary)
-                    }
-                    .padding(.top, 4)
-                } label: {
-                    Text(L10n("ntfy.advanced"))
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.secondary)
+                // ntfy status
+                if model.isNtfyConfigured {
+                    Circle()
+                        .fill(Color.orange)
+                        .frame(width: 6, height: 6)
                 }
 
-                // Test notification button
+                Spacer()
+
                 Button {
-                    isTestingNtfy = true
-                    Task {
-                        await model.testNtfyNotification()
-                        isTestingNtfy = false
-                    }
+                    NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
                 } label: {
-                    HStack(spacing: 6) {
-                        if isTestingNtfy {
-                            ProgressView()
-                                .controlSize(.small)
-                                .scaleEffect(0.7)
-                        } else {
-                            Image(systemName: "paperplane.fill")
-                        }
-                        Text(L10n("ntfy.test.button"))
-                    }
-                    .font(.system(size: 10, weight: .medium))
-                    .frame(maxWidth: .infinity)
+                    Label(L10n("settings.open"), systemImage: "gearshape")
+                        .font(.system(size: 10, weight: .medium))
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
-                .disabled(isTestingNtfy)
-                .padding(.top, 2)
-
-                Divider().opacity(0.1)
-
-                // External agents
-                HStack(spacing: 4) {
-                    Image(systemName: "cpu")
-                        .font(.system(size: 9))
-                        .foregroundStyle(.cyan)
-                    Text(L10n("ntfy.agents.title")).font(.caption).foregroundStyle(.secondary)
-                }
-
-                Text(L10n("ntfy.agents.description"))
-                    .font(.system(size: 9))
-                    .foregroundStyle(.tertiary)
-                    .lineLimit(3)
-
-                Toggle(isOn: $model.ntfyExternalAgentsEnabled) {
-                    Text(L10n("ntfy.agents.enable"))
-                        .font(.system(size: 11))
-                }
-                .toggleStyle(.switch)
-                .controlSize(.mini)
-
-                if model.ntfyExternalAgentsEnabled {
-                    VStack(alignment: .leading, spacing: 5) {
-                        ForEach(AIAgent.allCases) { agent in
-                            Toggle(isOn: agentToggleBinding(for: agent)) {
-                                Text(agent.label)
-                                    .font(.system(size: 10))
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                            .toggleStyle(.switch)
-                            .controlSize(.mini)
-                        }
-                    }
-                    .padding(10)
-                    .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(DesignSystem.Colors.glassSubtle))
-                    .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(DesignSystem.Colors.glassHover, lineWidth: 1))
-                }
+                .help(L10n("settings.open.hint"))
             }
         }
-    }
-
-    // MARK: - Binding Helpers
-
-    private func ntfyEventBinding(for event: NtfyEvent) -> Binding<Bool> {
-        Binding<Bool>(
-            get: { model.ntfyEnabledEvents.contains(event.rawValue) },
-            set: { enabled in
-                if enabled {
-                    if !model.ntfyEnabledEvents.contains(event.rawValue) {
-                        model.ntfyEnabledEvents.append(event.rawValue)
-                    }
-                } else {
-                    model.ntfyEnabledEvents.removeAll { $0 == event.rawValue }
-                }
-            }
-        )
-    }
-
-    private func agentToggleBinding(for agent: AIAgent) -> Binding<Bool> {
-        Binding<Bool>(
-            get: { model.ntfySelectedAgents.contains(agent.rawValue) },
-            set: { enabled in
-                if enabled {
-                    if !model.ntfySelectedAgents.contains(agent.rawValue) {
-                        model.ntfySelectedAgents.append(agent.rawValue)
-                    }
-                } else {
-                    model.ntfySelectedAgents.removeAll { $0 == agent.rawValue }
-                }
-            }
-        )
-    }
-
-    private func pickCustomApp() {
-        let panel = NSOpenPanel()
-        panel.message = L10n("Selecione seu Terminal favorito")
-        panel.allowedContentTypes = [.application, .aliasFile]
-        panel.canChooseFiles = true; panel.canChooseDirectories = false
-        panel.directoryURL = URL(fileURLWithPath: "/Applications")
-        if panel.runModal() == .OK, let url = panel.url {
-            customTerminalPath = url.path
-        } else {
-            preferredTerminalRaw = ExternalTerminal.terminal.rawValue
-        }
+        .padding(.horizontal, 10)
+        .padding(.bottom, 14)
     }
 }
 

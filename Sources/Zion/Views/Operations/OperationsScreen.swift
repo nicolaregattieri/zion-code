@@ -42,6 +42,7 @@ struct OperationsScreen: View {
                         remotesCard
                         if model.isAIConfigured {
                             changelogCard
+                            codeReviewCard
                         }
                         worktreeCard
                         SubmodulesCard(model: model)
@@ -560,6 +561,54 @@ struct OperationsScreen: View {
             }
             .padding(24)
             .frame(width: 550, height: 450)
+        }
+    }
+
+    private var codeReviewCard: some View {
+        GlassCard(spacing: 10) {
+            CardHeader(L10n("codereview.card.title"), icon: "magnifyingglass", subtitle: L10n("codereview.card.subtitle"))
+
+            HStack(spacing: 8) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(L10n("branch.review.target"))
+                        .font(.caption).foregroundStyle(.secondary)
+                    Picker("", selection: $model.branchReviewTarget) {
+                        Text(L10n("Selecionar...")).tag("")
+                        ForEach(model.branches, id: \.self) { branch in
+                            Text(branch).tag(branch)
+                        }
+                    }
+                    .labelsHidden()
+                }
+
+                Image(systemName: "arrow.left")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 16)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(L10n("branch.review.source"))
+                        .font(.caption).foregroundStyle(.secondary)
+                    Picker("", selection: $model.branchReviewSource) {
+                        Text(L10n("Selecionar...")).tag("")
+                        ForEach(model.branches, id: \.self) { branch in
+                            Text(branch).tag(branch)
+                        }
+                    }
+                    .labelsHidden()
+                }
+            }
+
+            Button {
+                model.startCodeReview(source: model.branchReviewSource, target: model.branchReviewTarget)
+            } label: {
+                Label(L10n("codereview.startReview"), systemImage: "sparkles")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.indigo)
+            .disabled(model.branchReviewSource.isEmpty || model.branchReviewTarget.isEmpty)
+            .help(L10n("codereview.startReview.hint"))
         }
     }
 
