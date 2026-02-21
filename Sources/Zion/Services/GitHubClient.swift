@@ -129,6 +129,71 @@ actor GitHubClient {
         }
     }
 
+    /// Fetch PRs requesting review from the authenticated user using the search API
+    func fetchPRsRequestingMyReview(remote: GitHubRemote) async -> [GitHubPRInfo] {
+        guard let token = await getToken() else { return [] }
+        guard let username = await fetchAuthenticatedUsername(token: token) else { return [] }
+
+        let query = "type:pr+state:open+review-requested:\(username)+repo:\(remote.owner)/\(remote.repo)"
+        let urlString = "https://api.github.com/search/issues?q=\(query)&per_page=30"
+        guard let url = URL(string: urlString) else { return [] }
+
+        var request = URLRequest(url: url)
+        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 15
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { return [] }
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let items = json["items"] as? [[String: Any]] else { return [] }
+
+            return items.compactMap { item -> GitHubPRInfo? in
+                guard let id = item["id"] as? Int,
+                      let number = item["number"] as? Int,
+                      let title = item["title"] as? String,
+                      let htmlUrl = item["html_url"] as? String else { return nil }
+
+                let user = item["user"] as? [String: Any]
+                let author = user?["login"] as? String ?? ""
+
+                return GitHubPRInfo(
+                    id: id, number: number, title: title, state: .open,
+                    headBranch: "", baseBranch: "",
+                    url: htmlUrl, isDraft: false, author: author
+                )
+            }
+        } catch {
+            return []
+        }
+    }
+
+    private var cachedUsername: String?
+
+    private func fetchAuthenticatedUsername(token: String) async -> String? {
+        if let cached = cachedUsername { return cached }
+
+        let urlString = "https://api.github.com/user"
+        guard let url = URL(string: urlString) else { return nil }
+
+        var request = URLRequest(url: url)
+        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 10
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { return nil }
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let login = json["login"] as? String else { return nil }
+            cachedUsername = login
+            return login
+        } catch {
+            return nil
+        }
+    }
+
     /// Create a pull request
     func createPullRequest(remote: GitHubRemote, title: String, body: String, head: String, base: String, draft: Bool) async throws -> GitHubPRInfo {
         guard let token = await getToken() else {

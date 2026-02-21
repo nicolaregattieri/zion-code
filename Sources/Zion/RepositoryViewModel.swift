@@ -155,6 +155,7 @@ final class RepositoryViewModel {
     var behindRemoteCount: Int = 0
     @ObservationIgnored private var backgroundFetchTask: Task<Void, Never>?
     @ObservationIgnored private var lastNotifiedBehindCount: Int = 0
+    @ObservationIgnored private var notifiedReviewRequestPRIDs: Set<Int> = []
 
     // ntfy Push Notifications
     var ntfyTopic: String = "" {
@@ -552,6 +553,14 @@ final class RepositoryViewModel {
                         self.isCloneSheetVisible = false
                         self.cloneProgress = ""
                         self.openRepository(destination)
+                        Task {
+                            await self.ntfyClient.sendIfEnabled(
+                                event: .cloneComplete,
+                                title: L10n("ntfy.event.cloneComplete"),
+                                body: destination.lastPathComponent,
+                                repoName: destination.lastPathComponent
+                            )
+                        }
                     } else {
                         self.isCloning = false
                         self.cloneError = self.cloneProgress.isEmpty
@@ -3125,6 +3134,7 @@ final class RepositoryViewModel {
                 try? await Task.sleep(nanoseconds: 60_000_000_000) // 60s
                 if Task.isCancelled { break }
                 await checkBehindRemote()
+                await checkPRReviewRequests()
             }
         }
     }
@@ -3139,10 +3149,37 @@ final class RepositoryViewModel {
                 args: ["rev-list", "--count", "HEAD..@{upstream}"],
                 in: url
             )
-            behindRemoteCount = Int(output.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
+            let newCount = Int(output.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
+            behindRemoteCount = newCount
+            if newCount > 0 && lastNotifiedBehindCount == 0 {
+                await ntfyClient.sendIfEnabled(
+                    event: .newRemoteCommits,
+                    title: L10n("ntfy.event.newRemoteCommits"),
+                    body: "\(newCount) commits behind upstream",
+                    repoName: url.lastPathComponent
+                )
+            }
+            lastNotifiedBehindCount = newCount
         } catch {
             logger.log(.info, "Behind remote check failed (expected if no upstream): \(error.localizedDescription)", source: #function)
             behindRemoteCount = 0
+            lastNotifiedBehindCount = 0
+        }
+    }
+
+    private func checkPRReviewRequests() async {
+        guard let remote = detectGitHubRemote() else { return }
+        let prs = await githubClient.fetchPRsRequestingMyReview(remote: remote)
+        for pr in prs {
+            if !notifiedReviewRequestPRIDs.contains(pr.id) {
+                notifiedReviewRequestPRIDs.insert(pr.id)
+                await ntfyClient.sendIfEnabled(
+                    event: .prReviewRequested,
+                    title: L10n("ntfy.event.prReviewRequested"),
+                    body: "#\(pr.number) \(pr.title)",
+                    repoName: repositoryURL?.lastPathComponent ?? ""
+                )
+            }
         }
     }
 
