@@ -44,7 +44,7 @@ struct GraphScreen: View {
                     commitDetailsPane
                         .animation(nil, value: showingPendingChanges)
                         .layoutPriority(0)
-                        .frame(minWidth: 300, idealWidth: 450, maxWidth: .infinity)
+                        .frame(minWidth: 300, idealWidth: 520, maxWidth: .infinity)
                         .padding(.leading, 6)
                 }
             }
