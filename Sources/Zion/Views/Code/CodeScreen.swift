@@ -238,7 +238,7 @@ struct CodeScreen: View {
             Button {
                 model.isLineWrappingEnabled.toggle()
             } label: {
-                Image(systemName: model.isLineWrappingEnabled ? "text.alignleft" : "text.line.first.and.arrowtriangle.forward")
+                Image(systemName: "text.wrap")
                     .font(.caption)
             }
             .buttonStyle(.bordered)
