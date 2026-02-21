@@ -155,11 +155,19 @@ final class RepositoryViewModel {
     @ObservationIgnored let aiClient = AIClient()
     @ObservationIgnored private var aiTask: Task<Void, Never>?
 
+    @ObservationIgnored private var _cachedAIKey: String?
+    @ObservationIgnored private var _cachedAIKeyProvider: AIProvider?
     private var _aiKeyRevision: Int = 0
     var aiAPIKey: String {
-        get { 
+        get {
             let _ = _aiKeyRevision // Register dependency
-            return AIClient.loadAPIKey(for: aiProvider) ?? "" 
+            if _cachedAIKeyProvider == aiProvider, let cached = _cachedAIKey {
+                return cached
+            }
+            let key = AIClient.loadAPIKey(for: aiProvider) ?? ""
+            _cachedAIKey = key
+            _cachedAIKeyProvider = aiProvider
+            return key
         }
         set {
             if newValue.isEmpty {
@@ -167,6 +175,8 @@ final class RepositoryViewModel {
             } else {
                 AIClient.saveAPIKey(newValue, for: aiProvider)
             }
+            _cachedAIKey = newValue
+            _cachedAIKeyProvider = aiProvider
             _aiKeyRevision += 1 // Trigger observation
         }
     }
@@ -2505,6 +2515,10 @@ final class RepositoryViewModel {
 
     func prForBranch(_ branch: String) -> GitHubPRInfo? {
         pullRequests.first { $0.headBranch == branch }
+    }
+
+    var hasGitHubRemote: Bool {
+        detectGitHubRemote() != nil
     }
 
     private func detectGitHubRemote() -> GitHubRemote? {
