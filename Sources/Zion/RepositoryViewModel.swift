@@ -475,6 +475,7 @@ final class RepositoryViewModel {
             refreshRepository()
             refreshFileTree()
             loadPullRequests()
+            refreshPRReviewQueue()
             loadSubmodules()
             return
         }
@@ -552,6 +553,8 @@ final class RepositoryViewModel {
         startAutoRefreshTimer()
         startFileWatcher(for: url)
         loadPullRequests()
+        refreshPRReviewQueue()
+        startPRPollingTimer()
         loadSubmodules()
         startBackgroundFetch()
         loadSignatureStatuses()
@@ -3676,17 +3679,32 @@ final class RepositoryViewModel {
             while !Task.isCancelled {
                 // Wait for 30 seconds
                 try? await Task.sleep(nanoseconds: 30_000_000_000)
-                
+
                 if Task.isCancelled { break }
-                
+
                 // Refresh without showing busy indicator to avoid UI flickering
                 refreshRepository(setBusy: false)
             }
         }
     }
 
+    @ObservationIgnored private var prPollingTimer: Task<Void, Never>?
+
+    private func startPRPollingTimer() {
+        prPollingTimer?.cancel()
+        prPollingTimer = Task {
+            while !Task.isCancelled {
+                // Poll every 5 minutes
+                try? await Task.sleep(nanoseconds: 5 * 60 * 1_000_000_000)
+                if Task.isCancelled { break }
+                refreshPRReviewQueue()
+            }
+        }
+    }
+
     deinit {
         autoRefreshTask?.cancel()
+        prPollingTimer?.cancel()
         let states = backgroundRepoStates
         for (_, state) in states {
             state.monitorTask?.cancel()
