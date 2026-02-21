@@ -880,7 +880,18 @@ final class RepositoryViewModel {
 
     func fetch() { runGitAction(label: "Fetch", args: ["fetch", "--all", "--prune"]) }
     func pull() { runGitAction(label: "Pull", args: ["pull", "--ff-only"]) }
-    func push() { runGitAction(label: "Push", args: ["push"]) }
+    func push() {
+        let branch = currentBranch ?? ""
+        let hasUpstream = branchInfos.first(where: { !$0.isRemote && $0.name == branch })?.upstream.isEmpty == false
+        if hasUpstream {
+            runGitAction(label: "Push", args: ["push"])
+        } else if !branch.isEmpty {
+            let remote = remotes.first?.name ?? "origin"
+            runGitAction(label: "Push", args: ["push", "--set-upstream", remote, branch])
+        } else {
+            runGitAction(label: "Push", args: ["push"])
+        }
+    }
 
 
     func setBranchFocus(_ branch: String?) {
