@@ -819,7 +819,7 @@ struct GraphScreen: View {
             switch worktree {
             case "?": Image(systemName: "plus.circle").foregroundStyle(.secondary)
             case "M": Image(systemName: "pencil.circle").foregroundStyle(.orange)
-            case "D": Image(systemName: "minus.circle").foregroundStyle(.red)
+            case "D": Image(systemName: "minus.circle").foregroundStyle(.pink)
             default: Image(systemName: "questionmark.circle").foregroundStyle(.secondary)
             }
         }

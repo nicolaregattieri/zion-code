@@ -100,7 +100,7 @@ struct ConflictResolutionScreen: View {
             HStack(spacing: 8) {
                 Image(systemName: file.isResolved ? "checkmark.circle.fill" : "xmark.circle.fill")
                     .font(.system(size: 12))
-                    .foregroundStyle(file.isResolved ? .green : .red)
+                    .foregroundStyle(file.isResolved ? .green : .pink)
                 Text(file.path)
                     .font(.system(size: 11, design: .monospaced))
                     .lineLimit(1)

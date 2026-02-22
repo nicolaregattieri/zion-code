@@ -273,7 +273,7 @@ struct OperationsScreen: View {
                         .textFieldStyle(.plain)
                         .font(.system(.body, design: .monospaced))
                 }
-                .padding(8).background(DesignSystem.Colors.glassInset).clipShape(RoundedRectangle(cornerRadius: 8))
+                .padding(8).background(DesignSystem.Colors.glassInset).clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
 
                 HStack(spacing: 10) {
                     Button(action: {
@@ -376,7 +376,7 @@ struct OperationsScreen: View {
             HStack {
                 Button(L10n("Apply")) { performGitAction(L10n("Apply stash"), L10n("Aplicar o stash selecionado?"), false) { model.applySelectedStash() } }.buttonStyle(.bordered)
                 Button(L10n("Pop")) { performGitAction(L10n("Pop stash"), L10n("Aplicar e remover o stash selecionado?"), false) { model.popSelectedStash() } }.buttonStyle(.bordered)
-                Button(L10n("Drop")) { performGitAction(L10n("Drop stash"), L10n("Deseja remover permanentemente o stash selecionado?"), true) { model.dropSelectedStash() } }.buttonStyle(.bordered).tint(.red)
+                Button(L10n("Drop")) { performGitAction(L10n("Drop stash"), L10n("Deseja remover permanentemente o stash selecionado?"), true) { model.dropSelectedStash() } }.buttonStyle(.bordered).tint(.pink)
             }.disabled(model.stashes.isEmpty)
         }
     }
@@ -387,7 +387,7 @@ struct OperationsScreen: View {
             HStack(spacing: 8) {
                 TextField("v1.0.0", text: $model.tagInput).textFieldStyle(.roundedBorder)
                 Button(L10n("Criar")) { performGitAction(L10n("Criar tag"), L10n("Criar tag no commit atual?"), false) { model.createTag() } }.buttonStyle(.borderedProminent)
-                Button(L10n("Remover")) { performGitAction(L10n("Remover tag"), L10n("Deseja remover a tag informada?"), true) { model.deleteTag() } }.buttonStyle(.bordered).tint(.red)
+                Button(L10n("Remover")) { performGitAction(L10n("Remover tag"), L10n("Deseja remover a tag informada?"), true) { model.deleteTag() } }.buttonStyle(.bordered).tint(.pink)
             }
         }
     }
@@ -451,12 +451,12 @@ struct OperationsScreen: View {
                                     }
                                 } label: {
                                     Image(systemName: "trash").font(.caption2)
-                                }.buttonStyle(.plain).foregroundStyle(.red.opacity(0.7))
+                                }.buttonStyle(.plain).foregroundStyle(.pink.opacity(0.7))
                             }
                         }
                         .padding(6)
                         .background(DesignSystem.Colors.glassMinimal)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
                     }
                 }
             }
@@ -629,22 +629,22 @@ struct OperationsScreen: View {
     private var resetCard: some View {
         GlassCard(spacing: 12, borderTint: DesignSystem.Colors.dangerBorder) {
             CardHeader(L10n("Danger Zone"), icon: "exclamationmark.octagon.fill")
-                .foregroundStyle(.red)
+                .foregroundStyle(.pink)
 
             Text(L10n("CUIDADO: Operacoes de reset descartam alteracoes."))
                 .font(.caption)
-                .foregroundStyle(.red.opacity(0.8))
+                .foregroundStyle(.pink.opacity(0.8))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 6)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(DesignSystem.Colors.dangerBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
 
             HStack(spacing: 8) {
                 TextField("HEAD~1", text: $model.resetTargetInput).textFieldStyle(.roundedBorder)
                 Button(role: .destructive) {
                     performGitAction(L10n("Reset --hard"), L10n("Esta acao e IRREVERSIVEL. Deseja continuar?"), true) { model.hardReset() }
-                } label: { Label(L10n("Reset --hard"), systemImage: "trash.fill") }.buttonStyle(.borderedProminent).tint(.red)
+                } label: { Label(L10n("Reset --hard"), systemImage: "trash.fill") }.buttonStyle(.borderedProminent).tint(.pink)
             }
         }
         .padding(.top, 8)
@@ -693,7 +693,7 @@ struct FileStatusRow: View {
         .padding(.horizontal, 8).padding(.vertical, 6)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(isStaged ? DesignSystem.Colors.glassElevated : DesignSystem.Colors.glassMinimal)
-        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
         .contextMenu {
             Button {
                 model.openFileInEditor(relativePath: file)
@@ -738,7 +738,7 @@ struct FileStatusRow: View {
                     .foregroundStyle(.orange)
             case "D":
                 Image(systemName: "minus.circle")
-                    .foregroundStyle(.red)
+                    .foregroundStyle(.pink)
             default:
                 Image(systemName: "questionmark.circle")
                     .foregroundStyle(.secondary)

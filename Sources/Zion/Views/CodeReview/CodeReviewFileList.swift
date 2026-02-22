@@ -78,7 +78,7 @@ struct CodeReviewFileList: View {
                         .foregroundStyle(.green)
                     Text("-\(file.deletions)")
                         .font(.system(size: 9, design: .monospaced))
-                        .foregroundStyle(.red)
+                        .foregroundStyle(.pink)
                 }
             }
             .padding(.horizontal, 10)

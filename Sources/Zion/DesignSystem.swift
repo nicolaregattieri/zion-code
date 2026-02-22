@@ -65,8 +65,8 @@ struct DesignSystem {
         static let shadowLight = Color.black.opacity(0.08)
 
         // Danger zone
-        static let dangerBackground = Color.red.opacity(0.06)
-        static let dangerBorder = Color.red.opacity(0.25)
+        static let dangerBackground = Color.pink.opacity(0.06)
+        static let dangerBorder = Color.pink.opacity(0.25)
 
         // Lane color palette (shared between graph and commit cards)
         static let lanePalette: [SwiftUI.Color] = [
@@ -90,7 +90,62 @@ struct DesignSystem {
         static let elementCornerRadius: CGFloat = 8     // Buttons, search bars, inline items
         static let smallCornerRadius: CGFloat = 6       // Tags, tiny pills, code blocks
     }
-    
+
+    // MARK: - Typography Tokens
+
+    struct Typography {
+        // Headings
+        static let screenTitle = Font.system(size: 28, weight: .bold)
+        static let sheetTitle = Font.system(size: 16, weight: .semibold)
+        static let sectionTitle = Font.system(size: 13, weight: .bold)
+
+        // Body
+        static let body = Font.system(size: 12)
+        static let bodyMedium = Font.system(size: 11, weight: .medium)
+
+        // Labels & Meta
+        static let label = Font.system(size: 10)
+        static let labelBold = Font.system(size: 10, weight: .bold)
+        static let meta = Font.system(size: 9)
+        static let metaBold = Font.system(size: 9, weight: .bold)
+        static let micro = Font.system(size: 8, weight: .bold)
+
+        // Monospaced
+        static let monoBody = Font.system(size: 12, design: .monospaced)
+        static let monoSmall = Font.system(size: 11, design: .monospaced)
+        static let monoLabel = Font.system(size: 10, design: .monospaced)
+        static let monoLabelBold = Font.system(size: 10, weight: .bold, design: .monospaced)
+        static let monoMeta = Font.system(size: 9, design: .monospaced)
+    }
+
+    // MARK: - Icon Size Tokens
+
+    struct IconSize {
+        // Font sizes by role
+        static let sectionHeader = Font.system(size: 13, weight: .semibold)
+        static let toolbar = Font.system(size: 11, weight: .medium)
+        static let inline = Font.system(size: 10)
+        static let meta = Font.system(size: 9)
+        static let tiny = Font.system(size: 8)
+
+        // Tap target frames
+        static let terminalToolbarFrame = CGSize(width: 28, height: 24)
+        static let editorToolbarFrame = CGSize(width: 26, height: 22)
+        static let standardFrame = CGSize(width: 24, height: 24)
+        static let compactFrame = CGSize(width: 20, height: 20)
+        static let smallFrame = CGSize(width: 16, height: 16)
+        static let statusFrame = CGSize(width: 32, height: 32)
+    }
+
+    // MARK: - Interactive State Tokens
+
+    struct Interactive {
+        static let hoverBackground = Colors.glassHover
+        static let selectionBackground = Colors.selectionBackground
+        static let selectionBorder = Colors.selectionBorder
+        static let pressedBackground = Color.white.opacity(0.12)
+    }
+
     struct EditorThemes {
         static let dracula = ThemeColors(
             background: (r: 0.16, g: 0.16, b: 0.21),

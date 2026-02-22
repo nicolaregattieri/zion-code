@@ -204,7 +204,7 @@ struct CommitDetailContent: View {
             switch status.uppercased() {
             case "M", "MM": return (.orange, "pencil")
             case "A": return (.green, "plus")
-            case "D": return (.red, "minus")
+            case "D": return (.pink, "minus")
             case "R": return (.blue, "arrow.right")
             case "C": return (.purple, "doc.on.doc")
             default: return (.secondary, "questionmark")

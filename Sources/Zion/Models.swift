@@ -401,7 +401,7 @@ struct ReviewFinding: Identifiable {
 
         var color: Color {
             switch self {
-            case .critical: return .red
+            case .critical: return .pink
             case .warning: return .orange
             case .suggestion: return .blue
             }
@@ -803,7 +803,7 @@ struct DiffExplanation: Sendable {
             switch self {
             case .safe: return .green
             case .moderate: return .orange
-            case .risky: return .red
+            case .risky: return .pink
             }
         }
 

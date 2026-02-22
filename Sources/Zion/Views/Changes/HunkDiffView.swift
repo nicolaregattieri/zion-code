@@ -102,8 +102,8 @@ struct HunkDiffView: View {
             textColor = Color.green
             prefix = "+"
         case .deletion:
-            bgColor = isSelected ? Color.red.opacity(0.25) : Color.red.opacity(0.12)
-            textColor = Color.red
+            bgColor = isSelected ? Color.pink.opacity(0.25) : Color.pink.opacity(0.12)
+            textColor = Color.pink
             prefix = "-"
         case .context:
             bgColor = Color.clear

@@ -209,8 +209,8 @@ struct SidebarView: View {
         }
         .padding(.vertical, 4)
         .padding(.horizontal, 8)
-        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(DesignSystem.Colors.glassSubtle))
-        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(DesignSystem.Colors.glassHover, lineWidth: 1))
+        .background(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous).fill(DesignSystem.Colors.glassSubtle))
+        .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous).stroke(DesignSystem.Colors.glassHover, lineWidth: 1))
     }
 
     private var workspaceCard: some View {
@@ -324,22 +324,22 @@ struct SidebarView: View {
                         model.deleteLocalBranch(branch, force: false)
                     }
                 } label: {
-                    Image(systemName: "trash").font(.caption2).foregroundStyle(.red.opacity(0.7))
+                    Image(systemName: "trash").font(.caption2).foregroundStyle(.pink.opacity(0.7))
                 }
                 .buttonStyle(.plain)
                 .padding(4)
-                .background(Color.red.opacity(0.1))
+                .background(Color.pink.opacity(0.1))
                 .clipShape(Circle())
             }
         }
         .padding(.vertical, node.isGroup ? 4 : 2)
         .padding(.horizontal, 6)
         .background(
-            RoundedRectangle(cornerRadius: 6)
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius)
                 .fill(isCurrent ? Color.accentColor.opacity(0.12) : Color.clear)
         )
         .overlay(
-            isCurrent ? RoundedRectangle(cornerRadius: 6).stroke(Color.accentColor.opacity(0.3), lineWidth: 1) : nil
+            isCurrent ? RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius).stroke(Color.accentColor.opacity(0.3), lineWidth: 1) : nil
         )
         .contentShape(Rectangle())
         .onTapGesture { if let branch = node.branchName { selectedBranchTreeNodeID = node.id; model.branchInput = branch } }
@@ -449,9 +449,9 @@ private struct RecentProjectRow: View {
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
-            .background(RoundedRectangle(cornerRadius: 8).fill(rowBackground))
+            .background(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius).fill(rowBackground))
             .overlay(
-                isCurrent ? RoundedRectangle(cornerRadius: 8).strokeBorder(DesignSystem.Colors.glassBorderDark, lineWidth: 1) : nil
+                isCurrent ? RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius).strokeBorder(DesignSystem.Colors.glassBorderDark, lineWidth: 1) : nil
             )
             .contentShape(Rectangle())
         }
