@@ -526,12 +526,29 @@ final class RepositoryViewModel {
         }
     }
 
-    func restoreLastRepository() {
-        if let urls = try? JSONDecoder().decode([URL].self, from: recentReposData),
-           let lastURL = urls.first,
-           FileManager.default.fileExists(atPath: lastURL.path) {
-            openRepository(lastURL)
+    enum RestoreLastRepositoryResult {
+        case opened(URL)
+        case none
+        case missing(URL)
+    }
+
+    @discardableResult
+    func restoreLastRepository() -> RestoreLastRepositoryResult {
+        guard let urls = try? JSONDecoder().decode([URL].self, from: recentReposData),
+              let lastURL = urls.first else {
+            return .none
         }
+        guard FileManager.default.fileExists(atPath: lastURL.path) else {
+            return .missing(lastURL)
+        }
+        openRepository(lastURL)
+        return .opened(lastURL)
+    }
+
+    func hasRestorableRecentRepository() -> Bool {
+        guard let urls = try? JSONDecoder().decode([URL].self, from: recentReposData),
+              let lastURL = urls.first else { return false }
+        return FileManager.default.fileExists(atPath: lastURL.path)
     }
 
     /// Sync editor settings from UserDefaults (called when Settings window changes values via @AppStorage)
