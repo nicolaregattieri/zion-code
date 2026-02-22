@@ -28,10 +28,10 @@ struct ConflictRegionCard: View {
 
     private var borderColor: Color {
         switch region.choice {
-        case .ours: return .green.opacity(0.4)
-        case .theirs: return .blue.opacity(0.4)
-        case .both, .bothReverse: return .purple.opacity(0.4)
-        case .custom: return .orange.opacity(0.4)
+        case .ours: return DesignSystem.Colors.success.opacity(0.4)
+        case .theirs: return DesignSystem.Colors.conflictTheirs.opacity(0.4)
+        case .both, .bothReverse: return DesignSystem.Colors.ai.opacity(0.4)
+        case .custom: return DesignSystem.Colors.warning.opacity(0.4)
         case .undecided: return DesignSystem.Colors.glassBorderDark
         }
     }
@@ -46,17 +46,17 @@ struct ConflictRegionCard: View {
             Spacer()
             Text(region.oursLabel)
                 .font(.system(size: 10, weight: .medium, design: .monospaced))
-                .foregroundStyle(.green)
+                .foregroundStyle(DesignSystem.Colors.success)
             Text("vs")
                 .font(.system(size: 10))
                 .foregroundStyle(.secondary)
             Text(region.theirsLabel)
                 .font(.system(size: 10, weight: .medium, design: .monospaced))
-                .foregroundStyle(.blue)
+                .foregroundStyle(DesignSystem.Colors.conflictTheirs)
             if region.choice != .undecided {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 12))
-                    .foregroundStyle(.green)
+                    .foregroundStyle(DesignSystem.Colors.success)
             }
         }
         .padding(.horizontal, 12)
@@ -67,7 +67,7 @@ struct ConflictRegionCard: View {
     private var oursBlock: some View {
         HStack(spacing: 0) {
             Rectangle()
-                .fill(Color.green)
+                .fill(DesignSystem.Colors.success)
                 .frame(width: 3)
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(Array(region.oursLines.enumerated()), id: \.offset) { _, line in
@@ -80,7 +80,7 @@ struct ConflictRegionCard: View {
                 }
             }
             .frame(maxWidth: .infinity)
-            .background(Color.green.opacity(0.06))
+            .background(DesignSystem.Colors.success.opacity(0.06))
         }
         .opacity(region.choice == .theirs ? 0.4 : 1.0)
     }
@@ -100,7 +100,7 @@ struct ConflictRegionCard: View {
     private var theirsBlock: some View {
         HStack(spacing: 0) {
             Rectangle()
-                .fill(Color.blue)
+                .fill(DesignSystem.Colors.conflictTheirs)
                 .frame(width: 3)
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(Array(region.theirsLines.enumerated()), id: \.offset) { _, line in
@@ -113,7 +113,7 @@ struct ConflictRegionCard: View {
                 }
             }
             .frame(maxWidth: .infinity)
-            .background(Color.blue.opacity(0.06))
+            .background(DesignSystem.Colors.conflictTheirs.opacity(0.06))
         }
         .opacity(region.choice == .ours ? 0.4 : 1.0)
     }
@@ -121,9 +121,9 @@ struct ConflictRegionCard: View {
     private var actionButtons: some View {
         VStack(spacing: 8) {
             HStack(spacing: 8) {
-                choiceButton(L10n("Aceitar Nosso"), icon: "checkmark", color: .green, choice: .ours)
-                choiceButton(L10n("Aceitar Deles"), icon: "checkmark", color: .blue, choice: .theirs)
-                choiceButton(L10n("Aceitar Ambos"), icon: "arrow.up.arrow.down", color: .purple, choice: .both)
+                choiceButton(L10n("Aceitar Nosso"), icon: "checkmark", color: DesignSystem.Colors.success, choice: .ours)
+                choiceButton(L10n("Aceitar Deles"), icon: "checkmark", color: DesignSystem.Colors.conflictTheirs, choice: .theirs)
+                choiceButton(L10n("Aceitar Ambos"), icon: "arrow.up.arrow.down", color: DesignSystem.Colors.ai, choice: .both)
                 Button {
                     isEditingCustom.toggle()
                     if isEditingCustom {
@@ -135,7 +135,7 @@ struct ConflictRegionCard: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
-                .tint(.orange)
+                .tint(DesignSystem.Colors.warning)
 
                 if model.isAIConfigured {
                     Button {
@@ -152,7 +152,7 @@ struct ConflictRegionCard: View {
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
-                    .tint(.pink)
+                    .tint(DesignSystem.Colors.semanticSearch)
                     .disabled(model.isGeneratingAIMessage)
                     .help(L10n("Resolver conflito com IA"))
                     .onChange(of: model.aiConflictResolution) { _, newValue in
@@ -183,7 +183,7 @@ struct ConflictRegionCard: View {
                         }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.small)
-                        .tint(.orange)
+                        .tint(DesignSystem.Colors.warning)
                     }
                 }
             }

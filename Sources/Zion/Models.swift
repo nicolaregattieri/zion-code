@@ -276,12 +276,12 @@ enum RebaseAction: String, CaseIterable, Identifiable {
     }
     var color: Color {
         switch self {
-        case .pick: return .green
-        case .reword: return .blue
-        case .edit: return .orange
-        case .squash: return .purple
-        case .fixup: return .purple
-        case .drop: return .red
+        case .pick: return DesignSystem.Colors.success
+        case .reword: return DesignSystem.Colors.info
+        case .edit: return DesignSystem.Colors.warning
+        case .squash: return DesignSystem.Colors.ai
+        case .fixup: return DesignSystem.Colors.ai
+        case .drop: return DesignSystem.Colors.destructive
         }
     }
 }
@@ -317,8 +317,8 @@ struct SubmoduleInfo: Identifiable {
 
         var color: Color {
             switch self {
-            case .upToDate: return .green
-            case .modified: return .orange
+            case .upToDate: return DesignSystem.Colors.success
+            case .modified: return DesignSystem.Colors.warning
             case .uninitialized: return .secondary
             }
         }
@@ -401,9 +401,9 @@ struct ReviewFinding: Identifiable {
 
         var color: Color {
             switch self {
-            case .critical: return .pink
-            case .warning: return .orange
-            case .suggestion: return .blue
+            case .critical: return DesignSystem.Colors.destructive
+            case .warning: return DesignSystem.Colors.warning
+            case .suggestion: return DesignSystem.Colors.info
             }
         }
 
@@ -801,9 +801,9 @@ struct DiffExplanation: Sendable {
 
         var color: Color {
             switch self {
-            case .safe: return .green
-            case .moderate: return .orange
-            case .risky: return .pink
+            case .safe: return DesignSystem.Colors.success
+            case .moderate: return DesignSystem.Colors.warning
+            case .risky: return DesignSystem.Colors.destructive
             }
         }
 
@@ -846,10 +846,10 @@ enum FileChangeStatus: String, Sendable {
 
     var color: Color {
         switch self {
-        case .added: return .green
-        case .modified: return .orange
-        case .deleted: return .red
-        case .renamed: return .blue
+        case .added: return DesignSystem.Colors.fileAdded
+        case .modified: return DesignSystem.Colors.fileModified
+        case .deleted: return DesignSystem.Colors.fileDeleted
+        case .renamed: return DesignSystem.Colors.fileRenamed
         }
     }
 
@@ -896,9 +896,9 @@ enum PRReviewStatus: String, Sendable {
     var color: Color {
         switch self {
         case .pending: return .secondary
-        case .reviewing: return .blue
-        case .reviewed: return .orange
-        case .clean: return .green
+        case .reviewing: return DesignSystem.Colors.info
+        case .reviewed: return DesignSystem.Colors.warning
+        case .clean: return DesignSystem.Colors.success
         }
     }
 }

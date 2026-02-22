@@ -43,7 +43,7 @@ struct HunkDiffView: View {
 
                 Text(hunk.header)
                     .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(Color.blue.opacity(0.8))
+                    .foregroundStyle(DesignSystem.Colors.diffHunkHeader)
                     .lineLimit(1)
 
                 Spacer()
@@ -70,12 +70,12 @@ struct HunkDiffView: View {
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.mini)
-                    .tint(.green)
+                    .tint(DesignSystem.Colors.success)
                 }
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(Color.blue.opacity(0.08))
+            .background(DesignSystem.Colors.diffHunkHeaderBg)
 
             if !isCollapsed {
                 ForEach(hunk.lines) { line in
@@ -98,16 +98,16 @@ struct HunkDiffView: View {
 
         switch line.type {
         case .addition:
-            bgColor = isSelected ? Color.green.opacity(0.25) : Color.green.opacity(0.12)
-            textColor = Color.green
+            bgColor = isSelected ? DesignSystem.Colors.diffAdditionBgSelected : DesignSystem.Colors.diffAdditionBg
+            textColor = DesignSystem.Colors.diffAddition
             prefix = "+"
         case .deletion:
-            bgColor = isSelected ? Color.pink.opacity(0.25) : Color.pink.opacity(0.12)
-            textColor = Color.pink
+            bgColor = isSelected ? DesignSystem.Colors.diffDeletionBgSelected : DesignSystem.Colors.diffDeletionBg
+            textColor = DesignSystem.Colors.diffDeletion
             prefix = "-"
         case .context:
             bgColor = Color.clear
-            textColor = .primary.opacity(0.7)
+            textColor = DesignSystem.Colors.diffContext
             prefix = " "
         }
 
@@ -123,7 +123,7 @@ struct HunkDiffView: View {
                 } label: {
                     Image(systemName: isSelected ? "checkmark.square.fill" : "square")
                         .font(.system(size: 10))
-                        .foregroundStyle(isSelected ? Color.accentColor : .secondary.opacity(0.5))
+                        .foregroundStyle(isSelected ? Color.accentColor : .secondary)
                 }
                 .buttonStyle(.plain)
                 .frame(width: 20)
@@ -134,14 +134,14 @@ struct HunkDiffView: View {
             // Old line number
             Text(line.oldLineNumber.map { "\($0)" } ?? "")
                 .font(.system(size: 10, design: .monospaced))
-                .foregroundStyle(.secondary.opacity(0.5))
+                .foregroundStyle(.secondary)
                 .frame(width: 40, alignment: .trailing)
                 .padding(.trailing, 4)
 
             // New line number
             Text(line.newLineNumber.map { "\($0)" } ?? "")
                 .font(.system(size: 10, design: .monospaced))
-                .foregroundStyle(.secondary.opacity(0.5))
+                .foregroundStyle(.secondary)
                 .frame(width: 40, alignment: .trailing)
                 .padding(.trailing, 4)
 

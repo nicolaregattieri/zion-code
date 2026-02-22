@@ -39,7 +39,7 @@ struct DecorationPill: View {
         .foregroundStyle(isSearchMatch ? .primary : pillColor)
         .overlay(
             Capsule()
-                .strokeBorder(isSearchMatch ? Color.yellow : pillColor.opacity(isCurrent ? 0.6 : 0.2), lineWidth: isSearchMatch ? 2 : 1)
+                .strokeBorder(isSearchMatch ? DesignSystem.Colors.searchHighlight : pillColor.opacity(isCurrent ? 0.6 : 0.2), lineWidth: isSearchMatch ? 2 : 1)
         )
         .onTapGesture(count: 2) {
             if type != .tag { onCheckout(name) }
@@ -100,10 +100,10 @@ struct DecorationPill: View {
 
     private func color(for type: DecorationType) -> Color {
         switch type {
-        case .head: return .cyan
-        case .localBranch: return .green
-        case .remoteBranch: return .orange
-        case .tag: return .yellow
+        case .head: return DesignSystem.Colors.commitSplit
+        case .localBranch: return DesignSystem.Colors.success
+        case .remoteBranch: return DesignSystem.Colors.warning
+        case .tag: return DesignSystem.Colors.searchHighlight
         case .other: return .gray
         }
     }

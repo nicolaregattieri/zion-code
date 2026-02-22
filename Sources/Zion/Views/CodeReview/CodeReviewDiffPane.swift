@@ -18,10 +18,10 @@ struct CodeReviewDiffPane: View {
                         Spacer()
                         Text("+\(file.additions)")
                             .font(.system(size: 11, design: .monospaced))
-                            .foregroundStyle(.green)
+                            .foregroundStyle(DesignSystem.Colors.diffAddition)
                         Text("-\(file.deletions)")
                             .font(.system(size: 11, design: .monospaced))
-                            .foregroundStyle(.pink)
+                            .foregroundStyle(DesignSystem.Colors.diffDeletion)
                     }
                     .padding(12)
 
@@ -36,7 +36,7 @@ struct CodeReviewDiffPane: View {
 
                     // Findings
                     if !file.findings.isEmpty {
-                        ReviewFindingsView(findings: file.findings, tintColor: .indigo)
+                        ReviewFindingsView(findings: file.findings, tintColor: DesignSystem.Colors.codeReview)
                             .padding(.horizontal, 12)
                     }
 
@@ -47,11 +47,11 @@ struct CodeReviewDiffPane: View {
                                 VStack(alignment: .leading, spacing: 0) {
                                     Text(hunk.header)
                                         .font(.system(size: 10, design: .monospaced))
-                                        .foregroundStyle(.blue.opacity(0.8))
+                                        .foregroundStyle(DesignSystem.Colors.diffHunkHeader)
                                         .padding(.horizontal, 8)
                                         .padding(.vertical, 4)
                                         .frame(maxWidth: .infinity, alignment: .leading)
-                                        .background(Color.blue.opacity(0.05))
+                                        .background(DesignSystem.Colors.diffHunkHeaderBgLight)
 
                                     ForEach(hunk.lines) { line in
                                         diffLineView(line)
@@ -93,14 +93,14 @@ struct CodeReviewDiffPane: View {
         let fg: Color
         switch line.type {
         case .addition:
-            bg = Color.green.opacity(0.12)
-            fg = .green
+            bg = DesignSystem.Colors.diffAdditionBg
+            fg = DesignSystem.Colors.diffAddition
         case .deletion:
-            bg = Color.red.opacity(0.12)
-            fg = .red
+            bg = DesignSystem.Colors.diffDeletionBg
+            fg = DesignSystem.Colors.diffDeletion
         case .context:
             bg = .clear
-            fg = .primary.opacity(0.7)
+            fg = DesignSystem.Colors.diffContext
         }
 
         return HStack(spacing: 0) {

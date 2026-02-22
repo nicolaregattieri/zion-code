@@ -60,7 +60,7 @@ struct ChangesScreen: View {
                 VStack(spacing: 12) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 32))
-                        .foregroundStyle(.green.opacity(0.6))
+                        .foregroundStyle(DesignSystem.Colors.success.opacity(0.6))
                     Text(L10n("Tudo limpo!"))
                         .font(.headline)
                     Text(L10n("Nenhuma alteração pendente no momento."))
@@ -107,8 +107,8 @@ struct ChangesScreen: View {
                         .font(.system(size: 9, weight: .semibold))
                         .padding(.horizontal, 5)
                         .padding(.vertical, 1)
-                        .background(Color.green.opacity(0.15))
-                        .foregroundStyle(.green)
+                        .background(DesignSystem.Colors.fileStaged.opacity(0.15))
+                        .foregroundStyle(DesignSystem.Colors.fileStaged)
                         .clipShape(Capsule())
                 }
             }
@@ -222,7 +222,7 @@ struct ChangesScreen: View {
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "sparkles")
                         .font(.system(size: 10))
-                        .foregroundStyle(.purple)
+                        .foregroundStyle(DesignSystem.Colors.ai)
                     Text(model.aiDiffExplanation)
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
@@ -263,14 +263,14 @@ struct ChangesScreen: View {
         let textColor: Color
 
         if line.hasPrefix("+") && !line.hasPrefix("+++") {
-            backgroundColor = Color.green.opacity(0.15)
-            textColor = Color.green
+            backgroundColor = DesignSystem.Colors.diffAdditionBgRaw
+            textColor = DesignSystem.Colors.diffAddition
         } else if line.hasPrefix("-") && !line.hasPrefix("---") {
-            backgroundColor = Color.pink.opacity(0.15)
-            textColor = Color.pink
+            backgroundColor = DesignSystem.Colors.diffDeletionBgRaw
+            textColor = DesignSystem.Colors.diffDeletion
         } else if line.hasPrefix("@@") {
-            backgroundColor = Color.blue.opacity(0.1)
-            textColor = Color.blue.opacity(0.8)
+            backgroundColor = DesignSystem.Colors.diffHunkHeaderBg
+            textColor = DesignSystem.Colors.diffHunkHeader
         } else {
             backgroundColor = Color.clear
             textColor = .primary.opacity(0.8)
@@ -297,12 +297,12 @@ struct ChangesScreen: View {
     @ViewBuilder
     private func statusIcon(index: String, worktree: String) -> some View {
         if index != " " && index != "?" {
-            Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+            Image(systemName: "checkmark.circle.fill").foregroundStyle(DesignSystem.Colors.fileStaged)
         } else {
             switch worktree {
             case "?": Image(systemName: "plus.circle").foregroundStyle(.secondary)
-            case "M": Image(systemName: "pencil.circle").foregroundStyle(.orange)
-            case "D": Image(systemName: "minus.circle").foregroundStyle(.pink)
+            case "M": Image(systemName: "pencil.circle").foregroundStyle(DesignSystem.Colors.fileModified)
+            case "D": Image(systemName: "minus.circle").foregroundStyle(DesignSystem.Colors.fileDeleted)
             default: Image(systemName: "questionmark.circle").foregroundStyle(.secondary)
             }
         }

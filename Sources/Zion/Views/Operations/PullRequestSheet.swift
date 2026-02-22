@@ -18,7 +18,7 @@ struct PullRequestSheet: View {
             HStack {
                 Image(systemName: "arrow.triangle.pull")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.green)
+                    .foregroundStyle(DesignSystem.Colors.success)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(L10n("Criar Pull Request")).font(.headline)
                     Text(model.currentBranch)
@@ -110,7 +110,7 @@ struct PullRequestSheet: View {
                     // Success
                     if let url = createdPRURL {
                         HStack(spacing: 8) {
-                            Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                            Image(systemName: "checkmark.circle.fill").foregroundStyle(DesignSystem.Colors.success)
                             Text(L10n("PR criado com sucesso!"))
                                 .font(.system(size: 12, weight: .semibold))
                             Spacer()
@@ -123,7 +123,7 @@ struct PullRequestSheet: View {
                             .controlSize(.small)
                         }
                         .padding(10)
-                        .background(Color.green.opacity(0.1))
+                        .background(DesignSystem.Colors.success.opacity(0.1))
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                 }
@@ -150,7 +150,7 @@ struct PullRequestSheet: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.small)
-                .tint(.green)
+                .tint(DesignSystem.Colors.success)
                 .disabled(title.isEmpty || isCreating || createdPRURL != nil)
             }
             .padding(16)

@@ -17,7 +17,7 @@ struct WelcomeScreen: View {
                 }
                 .frame(width: 128, height: 128)
                 .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-                .shadow(color: Color.purple.opacity(0.5), radius: 12, x: 0, y: 4)
+                .shadow(color: DesignSystem.Colors.brandPrimary.opacity(0.5), radius: 12, x: 0, y: 4)
 
                 Text("Zion")
                     .font(.system(size: 44, weight: .black))

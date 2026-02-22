@@ -102,7 +102,7 @@ struct CommitRowView: View {
 
     private var cardStroke: Color {
         if isSelected { return DesignSystem.Colors.selectionBorder }
-        if isSearchMatch { return Color.yellow.opacity(0.5) }
+        if isSearchMatch { return DesignSystem.Colors.searchHighlight.opacity(0.5) }
         if isHovered { return DesignSystem.Colors.hoverAccent }
         return laneColor.opacity(0.15)
     }

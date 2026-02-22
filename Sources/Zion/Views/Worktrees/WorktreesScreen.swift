@@ -140,7 +140,7 @@ struct WorktreeCardView: View {
                     .buttonStyle(.bordered)
                 Button(L10n("Remover")) { onRemove() }
                     .buttonStyle(.bordered)
-                    .tint(.pink)
+                    .tint(DesignSystem.Colors.destructive)
             }
 
             HStack(spacing: 12) {

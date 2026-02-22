@@ -64,8 +64,8 @@ struct CodeReviewFileList: View {
 
                 // Severity heatmap dot
                 if !file.findings.isEmpty {
-                    let worst = file.findings.contains { $0.severity == .critical } ? Color.red :
-                               file.findings.contains { $0.severity == .warning } ? Color.orange : Color.blue
+                    let worst = file.findings.contains { $0.severity == .critical } ? DesignSystem.Colors.destructive :
+                               file.findings.contains { $0.severity == .warning } ? DesignSystem.Colors.warning : DesignSystem.Colors.info
                     Circle()
                         .fill(worst)
                         .frame(width: 6, height: 6)
@@ -75,10 +75,10 @@ struct CodeReviewFileList: View {
                 HStack(spacing: 2) {
                     Text("+\(file.additions)")
                         .font(.system(size: 9, design: .monospaced))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(DesignSystem.Colors.diffAddition)
                     Text("-\(file.deletions)")
                         .font(.system(size: 9, design: .monospaced))
-                        .foregroundStyle(.pink)
+                        .foregroundStyle(DesignSystem.Colors.diffDeletion)
                 }
             }
             .padding(.horizontal, 10)

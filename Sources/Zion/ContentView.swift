@@ -362,8 +362,8 @@ struct ContentView: View {
                 .font(.system(.caption, design: .monospaced))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
-                .background(Color.green.opacity(0.12))
-                .foregroundStyle(.green)
+                .background(DesignSystem.Colors.success.opacity(0.12))
+                .foregroundStyle(DesignSystem.Colors.success)
                 .clipShape(Capsule())
 
                 // Ahead remote badge
@@ -376,8 +376,8 @@ struct ContentView: View {
                     .font(.caption)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
-                    .background(model.behindRemoteCount > 0 ? Color.orange.opacity(0.12) : Color.blue.opacity(0.12))
-                    .foregroundStyle(model.behindRemoteCount > 0 ? .orange : .blue)
+                    .background(model.behindRemoteCount > 0 ? DesignSystem.Colors.warning.opacity(0.12) : DesignSystem.Colors.info.opacity(0.12))
+                    .foregroundStyle(model.behindRemoteCount > 0 ? DesignSystem.Colors.warning : DesignSystem.Colors.info)
                     .clipShape(Capsule())
                 }
 
@@ -391,8 +391,8 @@ struct ContentView: View {
                     .font(.caption)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
-                    .background(Color.orange.opacity(0.12))
-                    .foregroundStyle(.orange)
+                    .background(DesignSystem.Colors.warning.opacity(0.12))
+                    .foregroundStyle(DesignSystem.Colors.warning)
                     .clipShape(Capsule())
                 }
 
@@ -406,8 +406,8 @@ struct ContentView: View {
                     .font(.caption)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
-                    .background(Color.blue.opacity(0.12))
-                    .foregroundStyle(.blue)
+                    .background(DesignSystem.Colors.info.opacity(0.12))
+                    .foregroundStyle(DesignSystem.Colors.info)
                     .clipShape(Capsule())
                 }
             }
@@ -656,17 +656,17 @@ struct LiquidBackgroundView: View {
             if colorScheme == .dark {
                 Color(red: 0.05, green: 0.02, blue: 0.10).ignoresSafeArea()
                 Circle()
-                    .fill(Color.purple.opacity(phase ? 0.17 : 0.14))
+                    .fill(DesignSystem.Colors.brandPrimary.opacity(phase ? 0.17 : 0.14))
                     .frame(width: 520).blur(radius: 80)
                     .offset(x: phase ? -310 : -370, y: phase ? -200 : -240)
                 Circle()
-                    .fill(Color.indigo.opacity(0.12))
+                    .fill(DesignSystem.Colors.brandInk.opacity(0.12))
                     .frame(width: 420).blur(radius: 70)
                     .offset(x: phase ? 310 : 260, y: phase ? -260 : -300)
             } else {
                 Color(red: 0.96, green: 0.94, blue: 1.00).ignoresSafeArea()
                 Circle()
-                    .fill(Color.purple.opacity(phase ? 0.12 : 0.09))
+                    .fill(DesignSystem.Colors.brandPrimary.opacity(phase ? 0.12 : 0.09))
                     .frame(width: 520).blur(radius: 80)
                     .offset(x: phase ? -310 : -370, y: phase ? -200 : -240)
             }

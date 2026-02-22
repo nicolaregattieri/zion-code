@@ -29,7 +29,7 @@ struct PRInboxRow: View {
                         if !item.severitySummary.isEmpty {
                             Text(item.severitySummary)
                                 .font(.system(size: 9, weight: .semibold))
-                                .foregroundStyle(item.status == .reviewed ? .orange : .green)
+                                .foregroundStyle(item.status == .reviewed ? DesignSystem.Colors.warning : DesignSystem.Colors.success)
                         }
 
                         if let reviewedAt = item.reviewedAt {
@@ -47,7 +47,7 @@ struct PRInboxRow: View {
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 8, weight: .bold))
-                    .foregroundStyle(.secondary.opacity(0.5))
+                    .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
@@ -95,11 +95,11 @@ struct PRInboxRow: View {
         case .reviewed:
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 12))
-                .foregroundStyle(.orange)
+                .foregroundStyle(DesignSystem.Colors.warning)
         case .clean:
             Image(systemName: "checkmark.seal.fill")
                 .font(.system(size: 12))
-                .foregroundStyle(.green)
+                .foregroundStyle(DesignSystem.Colors.success)
         case .pending:
             Image(systemName: "clock")
                 .font(.system(size: 11))

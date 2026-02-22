@@ -17,7 +17,7 @@ struct BranchReviewSheet: View {
                 ScrollView {
                     ReviewFindingsView(
                         findings: model.branchReviewFindings,
-                        tintColor: .indigo
+                        tintColor: DesignSystem.Colors.codeReview
                     )
                 }
             } else {
@@ -53,7 +53,7 @@ struct BranchReviewSheet: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(.indigo)
+                .tint(DesignSystem.Colors.codeReview)
                 .disabled(model.branchReviewSource.isEmpty || model.branchReviewTarget.isEmpty || model.isBranchReviewLoading)
             }
         }
@@ -65,7 +65,7 @@ struct BranchReviewSheet: View {
         HStack(spacing: 10) {
             Image(systemName: "arrow.triangle.branch")
                 .font(.title3)
-                .foregroundStyle(.indigo)
+                .foregroundStyle(DesignSystem.Colors.codeReview)
             VStack(alignment: .leading, spacing: 2) {
                 Text(L10n("branch.review.title"))
                     .font(.title3.bold())
