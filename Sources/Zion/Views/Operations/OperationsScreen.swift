@@ -8,7 +8,7 @@ struct OperationsScreen: View {
     
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .bottom) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(L10n("Centro de Operacoes"))
@@ -133,6 +133,7 @@ struct OperationsScreen: View {
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
+                    .tint(DesignSystem.Colors.ai)
                     .disabled(model.isGeneratingAIMessage)
                     .help(model.isAIConfigured ? L10n("Gerar mensagem com IA") : L10n("Sugerir mensagem de commit"))
                     .onChange(of: model.suggestedCommitMessage) { _, newValue in
@@ -671,7 +672,7 @@ struct OperationsScreen: View {
         }
         .foregroundStyle(.tertiary)
         .padding(.leading, 4)
-        .padding(.top, 4)
+        .padding(.top, 12)
     }
 }
 

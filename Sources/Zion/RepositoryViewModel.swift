@@ -504,6 +504,14 @@ final class RepositoryViewModel {
         }
     }
 
+    func restoreLastRepository() {
+        if let urls = try? JSONDecoder().decode([URL].self, from: recentReposData),
+           let lastURL = urls.first,
+           FileManager.default.fileExists(atPath: lastURL.path) {
+            openRepository(lastURL)
+        }
+    }
+
     /// Sync editor settings from UserDefaults (called when Settings window changes values via @AppStorage)
     func syncEditorSettingsFromDefaults() {
         let defaults = UserDefaults.standard
