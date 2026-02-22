@@ -23,6 +23,7 @@ struct SourceCodeEditor: NSViewRepresentable {
     var searchQuery: String = ""
     var currentMatchIndex: Int = 0
     var onMatchCountChanged: ((Int) -> Void)?
+    var goToLine: Int = 0
 
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSScrollView()
@@ -175,6 +176,12 @@ struct SourceCodeEditor: NSViewRepresentable {
             coord2.updateCurrentMatchHighlight(in: textView, currentIndex: currentMatchIndex)
         }
 
+        // Go to line
+        if goToLine > 0 && goToLine != context.coordinator.lastGoToLine {
+            context.coordinator.lastGoToLine = goToLine
+            context.coordinator.scrollToLine(goToLine, in: textView)
+        }
+
         // Scroll to top-left only when the active file changes
         if activeFileID != context.coordinator.lastActiveFileID {
             context.coordinator.lastActiveFileID = activeFileID
@@ -204,8 +211,36 @@ struct SourceCodeEditor: NSViewRepresentable {
         var lastSearchQuery: String = ""
         var lastCurrentMatchIndex: Int = 0
         var searchMatchRanges: [NSRange] = []
+        var lastGoToLine: Int = 0
         private var highlightDebounceTask: DispatchWorkItem?
         init(_ parent: SourceCodeEditor) { self.parent = parent }
+
+        @MainActor
+        func scrollToLine(_ lineNumber: Int, in textView: NSTextView) {
+            let string = textView.string
+            guard !string.isEmpty else { return }
+            var currentLine = 1
+            var lineStart = string.startIndex
+            for (i, char) in string.enumerated() {
+                if currentLine == lineNumber {
+                    let nsLocation = i
+                    let range = NSRange(location: nsLocation, length: 0)
+                    textView.setSelectedRange(range)
+                    textView.scrollRangeToVisible(range)
+                    return
+                }
+                if char == "\n" {
+                    currentLine += 1
+                    lineStart = string.index(string.startIndex, offsetBy: i + 1, limitedBy: string.endIndex) ?? string.endIndex
+                }
+            }
+            // If lineNumber exceeds total lines, go to last line
+            if let lastNewline = string.lastIndex(of: "\n") {
+                let nsLocation = string.distance(from: string.startIndex, to: string.index(after: lastNewline))
+                textView.setSelectedRange(NSRange(location: nsLocation, length: 0))
+                textView.scrollRangeToVisible(NSRange(location: nsLocation, length: 0))
+            }
+        }
 
         @MainActor
         func textDidChange(_ notification: Notification) {

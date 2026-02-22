@@ -63,7 +63,7 @@ struct AuthErrorSheet: View {
                                         .padding(.horizontal, 6)
                                         .padding(.vertical, 2)
                                         .background(DesignSystem.Colors.statusBlueBg)
-                                        .foregroundStyle(.blue)
+                                        .foregroundStyle(DesignSystem.Colors.info)
                                         .clipShape(Capsule())
                                 }
                             }
@@ -114,7 +114,7 @@ struct AuthErrorSheet: View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: icon)
                 .font(.system(size: 12))
-                .foregroundStyle(.blue)
+                .foregroundStyle(DesignSystem.Colors.info)
                 .frame(width: 18)
 
             VStack(alignment: .leading, spacing: 4) {

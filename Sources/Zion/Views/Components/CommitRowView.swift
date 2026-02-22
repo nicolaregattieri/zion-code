@@ -94,9 +94,9 @@ struct CommitRowView: View {
     }
 
     private var cardBackground: Color {
-        if isSelected { return Color.accentColor.opacity(0.18) }
+        if isSelected { return DesignSystem.Colors.selectionBackground }
         if isSearchMatch { return DesignSystem.Colors.statusYellowBg }
-        if isHovered { return Color.white.opacity(0.10) }
+        if isHovered { return DesignSystem.Colors.glassHover }
         return laneColor.opacity(0.06)
     }
 

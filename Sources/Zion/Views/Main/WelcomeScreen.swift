@@ -3,6 +3,7 @@ import SwiftUI
 struct WelcomeScreen: View {
     var model: RepositoryViewModel
     let onOpen: () -> Void
+    let onInit: () -> Void
 
     var body: some View {
         VStack(spacing: 32) {
@@ -47,6 +48,21 @@ struct WelcomeScreen: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.large)
+
+                Button {
+                    onInit()
+                } label: {
+                    Label(L10n("Inicializar repositorio..."), systemImage: "plus.rectangle.on.folder")
+                        .frame(width: 240)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                .help(L10n("Criar um novo repositorio Git em uma pasta existente"))
+                .accessibilityLabel(L10n("Inicializar repositorio..."))
+
+                Divider()
+                    .frame(width: 120)
+                    .padding(.vertical, 4)
 
                 Button {
                     NotificationCenter.default.post(name: .showHelp, object: nil)

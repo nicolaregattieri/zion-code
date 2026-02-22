@@ -143,6 +143,21 @@ final class RepositoryViewModel {
     var aiBlameEntryID: UUID?
     var aiCommitSplitSuggestions: [CommitSuggestion] = []
     var isSplitVisible: Bool = false
+
+    // Pre-Commit AI Review Gate
+    var preCommitReviewEnabled: Bool {
+        get { UserDefaults.standard.bool(forKey: "zion.preCommitReview") }
+        set { UserDefaults.standard.set(newValue, forKey: "zion.preCommitReview") }
+    }
+    var preCommitReviewPending: Bool = false
+    @ObservationIgnored private var preCommitDiffHash: String = ""
+
+    // File History
+    var fileHistoryEntries: [FileHistoryEntry] = []
+    var isFileHistoryVisible: Bool = false
+    var isFileHistoryLoading: Bool = false
+    @ObservationIgnored private var fileHistoryTask: Task<Void, Never>?
+
     var aiProvider: AIProvider = .none {
         didSet { 
             UserDefaults.standard.set(aiProvider.rawValue, forKey: "zion.aiProvider")
@@ -3543,6 +3558,108 @@ final class RepositoryViewModel {
                     aiQuotaExceeded = true
                 }
                 logger.log(.error, "AI code review failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
+                lastError = error.localizedDescription
+            }
+        }
+    }
+
+    // MARK: - Pre-Commit AI Review Gate
+
+    func runPreCommitReview() {
+        guard let url = repositoryURL, isAIConfigured, preCommitReviewEnabled else {
+            preCommitReviewPending = false
+            return
+        }
+
+        aiTask?.cancel()
+        preCommitReviewPending = true
+        aiTask = Task {
+            isGeneratingAIMessage = true
+            defer { isGeneratingAIMessage = false }
+
+            do {
+                let diff = try await worker.runAction(args: ["diff", "--cached"], in: url)
+                let diffHash = String(diff.hashValue)
+
+                // Use cache if diff unchanged
+                if diffHash == preCommitDiffHash && !aiReviewFindings.isEmpty {
+                    isReviewVisible = true
+                    return
+                }
+
+                guard !diff.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                    aiReviewFindings = [ReviewFinding(severity: .suggestion, file: "general", message: L10n("Nenhuma alteracao staged para revisar."))]
+                    isReviewVisible = true
+                    return
+                }
+
+                let diffStat = try await worker.runAction(args: ["diff", "--cached", "--stat"], in: url)
+                let findings = try await aiClient.reviewDiff(
+                    diff: diff,
+                    diffStat: diffStat,
+                    branchName: currentBranch,
+                    provider: aiProvider,
+                    apiKey: aiAPIKey
+                )
+                logger.log(.ai, "Pre-commit review: \(findings.count) findings")
+                aiReviewFindings = findings
+                isReviewVisible = true
+                preCommitDiffHash = diffHash
+            } catch {
+                if let aiErr = error as? AIError, case .quotaExceeded = aiErr {
+                    aiQuotaExceeded = true
+                }
+                logger.log(.error, "Pre-commit review failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
+                lastError = error.localizedDescription
+                preCommitReviewPending = false
+            }
+        }
+    }
+
+    func dismissPreCommitReview() {
+        preCommitReviewPending = false
+        isReviewVisible = false
+    }
+
+    var preCommitHasCritical: Bool {
+        aiReviewFindings.contains { $0.severity == .critical }
+    }
+
+    // MARK: - File History
+
+    func loadFileHistory(for relativePath: String) {
+        guard let url = repositoryURL else { return }
+
+        fileHistoryTask?.cancel()
+        isFileHistoryLoading = true
+        fileHistoryEntries = []
+
+        fileHistoryTask = Task {
+            defer { isFileHistoryLoading = false }
+
+            do {
+                let output = try await worker.runAction(
+                    args: ["log", "--follow", "--format=%H|%h|%an|%ar|%s", "-50", "--", relativePath],
+                    in: url
+                )
+
+                let lines = output.components(separatedBy: "\n").filter { !$0.isEmpty }
+                var entries: [FileHistoryEntry] = []
+                for line in lines {
+                    let parts = line.components(separatedBy: "|")
+                    guard parts.count >= 5 else { continue }
+                    entries.append(FileHistoryEntry(
+                        hash: parts[0],
+                        shortHash: parts[1],
+                        author: parts[2],
+                        date: parts[3],
+                        message: parts[4...].joined(separator: "|")
+                    ))
+                }
+                fileHistoryEntries = entries
+                isFileHistoryVisible = true
+            } catch {
+                logger.log(.error, "File history failed: \(error.localizedDescription)", source: #function)
                 lastError = error.localizedDescription
             }
         }

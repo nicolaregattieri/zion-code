@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ReviewFindingsView: View {
     let findings: [ReviewFinding]
-    var tintColor: Color = .purple
+    var tintColor: Color = DesignSystem.Colors.codeReview
     var onDismiss: (() -> Void)?
 
     var body: some View {

@@ -34,6 +34,10 @@ struct KeyboardShortcutsSheet: View {
                         (L10n("Git Blame"), "⇧⌘B"),
                         (L10n("Barra lateral"), "⌘B"),
                         (L10n("Salvar"), "⌘S"),
+                        (L10n("Novo Arquivo"), "⌘N"),
+                        (L10n("Salvar Como..."), "⇧⌘S"),
+                        (L10n("shortcuts.find"), "⌘F"),
+                        (L10n("shortcuts.findReplace"), "⌘H"),
                         (L10n("Terminal"), "⌘J"),
                         (L10n("Maximizar terminal"), "⇧⌘J"),
                     ])
@@ -49,6 +53,11 @@ struct KeyboardShortcutsSheet: View {
 
                     shortcutSection(L10n("Grafo"), icon: "point.3.connected.trianglepath.dotted", shortcuts: [
                         (L10n("Buscar no grafo"), "⌘F"),
+                    ])
+
+                    shortcutSection(L10n("shortcuts.general"), icon: "gearshape", shortcuts: [
+                        (L10n("Atualizar"), "⇧⌘R"),
+                        (L10n("Atalhos de Teclado"), "⌘/"),
                     ])
                 }
                 .padding(20)
@@ -96,7 +105,7 @@ struct KeyboardShortcutsSheet: View {
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
                 .background(DesignSystem.Colors.glassSubtle)
-                .clipShape(RoundedRectangle(cornerRadius: 5))
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
         }
     }
 }

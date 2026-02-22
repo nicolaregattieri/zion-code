@@ -109,10 +109,10 @@ struct SidebarView: View {
                     StatusChip(
                         title: isDetached ? "HEAD" : L10n("Branch"),
                         value: model.currentBranch,
-                        tint: isDetached ? .orange : .green,
+                        tint: isDetached ? DesignSystem.Colors.warning : DesignSystem.Colors.success,
                         icon: isDetached ? "anchor" : "crown.fill"
                     )
-                    StatusChip(title: L10n("Commit"), value: model.headShortHash, tint: .blue, icon: "number")
+                    StatusChip(title: L10n("Commit"), value: model.headShortHash, tint: DesignSystem.Colors.info, icon: "number")
                 }
             }
         }.padding(.horizontal, 10)
@@ -147,7 +147,7 @@ struct SidebarView: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
-                    .background(Capsule().fill(Color.purple.opacity(0.7)))
+                    .background(Capsule().fill(DesignSystem.Colors.brandPrimary.opacity(0.7)))
             }
             ForEach(nonCurrentWorktrees) { wt in
                 worktreeRow(wt)
@@ -258,7 +258,7 @@ struct SidebarView: View {
                         .font(.system(size: 9, weight: .bold, design: .monospaced))
                         .padding(.horizontal, 5)
                         .padding(.vertical, 2)
-                        .background(Color.orange.opacity(0.2))
+                        .background(DesignSystem.Colors.warning.opacity(0.2))
                         .foregroundStyle(DesignSystem.Colors.warning)
                         .clipShape(Capsule())
                         .padding(.top, 4)
@@ -305,9 +305,9 @@ struct SidebarView: View {
             VStack(alignment: .leading, spacing: 2) {
                 if node.isGroup { Text(node.title).font(.headline) } else {
                     HStack(spacing: 6) {
-                        Image(systemName: isMain ? "shield.fill" : "arrow.triangle.branch").font(.caption).foregroundStyle(isMain ? Color.orange : (isCurrent ? Color.accentColor : Color.secondary))
+                        Image(systemName: isMain ? "shield.fill" : "arrow.triangle.branch").font(.caption).foregroundStyle(isMain ? DesignSystem.Colors.warning : (isCurrent ? Color.accentColor : Color.secondary))
                         Text(node.title).font(.system(.caption, design: .monospaced)).fontWeight(isCurrent || isMain ? .bold : .regular).lineLimit(1)
-                        if isCurrent { Text(L10n("current")).font(.system(size: 8, weight: .bold)).padding(.horizontal, 4).padding(.vertical, 1).background(Color.accentColor.opacity(0.2)).foregroundStyle(Color.accentColor).clipShape(Capsule()) }
+                        if isCurrent { Text(L10n("current")).font(.system(size: 8, weight: .bold)).padding(.horizontal, 4).padding(.vertical, 1).background(DesignSystem.Colors.selectionBackground).foregroundStyle(Color.accentColor).clipShape(Capsule()) }
                     }
                 }
                 if !node.subtitle.isEmpty { Text(node.subtitle).font(.caption2).foregroundStyle(.secondary).lineLimit(1) }
@@ -336,10 +336,10 @@ struct SidebarView: View {
         .padding(.horizontal, 6)
         .background(
             RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius)
-                .fill(isCurrent ? Color.accentColor.opacity(0.12) : Color.clear)
+                .fill(isCurrent ? DesignSystem.Colors.selectionBackground : Color.clear)
         )
         .overlay(
-            isCurrent ? RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius).stroke(Color.accentColor.opacity(0.3), lineWidth: 1) : nil
+            isCurrent ? RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius).stroke(DesignSystem.Colors.hoverAccent, lineWidth: 1) : nil
         )
         .contentShape(Rectangle())
         .onTapGesture { if let branch = node.branchName { selectedBranchTreeNodeID = node.id; model.branchInput = branch } }
@@ -433,7 +433,7 @@ private struct RecentProjectRow: View {
                         .font(.system(size: 9, weight: .bold, design: .monospaced))
                         .padding(.horizontal, 5)
                         .padding(.vertical, 2)
-                        .background(Color.orange.opacity(0.2))
+                        .background(DesignSystem.Colors.warning.opacity(0.2))
                         .foregroundStyle(DesignSystem.Colors.warning)
                         .clipShape(Capsule())
                 }

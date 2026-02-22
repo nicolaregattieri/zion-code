@@ -101,7 +101,7 @@ struct DecorationPill: View {
 
     private func color(for type: DecorationType) -> Color {
         switch type {
-        case .head: return DesignSystem.Colors.commitSplit
+        case .head: return DesignSystem.Colors.ai
         case .localBranch: return DesignSystem.Colors.success
         case .remoteBranch: return DesignSystem.Colors.warning
         case .tag: return DesignSystem.Colors.searchHighlight

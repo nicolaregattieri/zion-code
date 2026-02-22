@@ -44,7 +44,7 @@ struct CloneSheet: View {
         HStack(spacing: 12) {
             Image(systemName: "square.and.arrow.down.on.square")
                 .font(.title2)
-                .foregroundStyle(.purple)
+                .foregroundStyle(DesignSystem.Colors.brandPrimary)
             VStack(alignment: .leading, spacing: 2) {
                 Text(L10n("Clonar Repositorio"))
                     .font(.headline)
@@ -70,7 +70,7 @@ struct CloneSheet: View {
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(protocolBadge == "SSH" ? DesignSystem.Colors.statusOrangeBg : DesignSystem.Colors.statusGreenBg)
-                            .foregroundStyle(protocolBadge == "SSH" ? .orange : .green)
+                            .foregroundStyle(protocolBadge == "SSH" ? DesignSystem.Colors.warning : DesignSystem.Colors.success)
                             .clipShape(Capsule())
                     }
                 }

@@ -125,7 +125,7 @@ struct WorktreeCardView: View {
                         .font(.caption2.weight(.semibold))
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
-                        .background(Color.accentColor.opacity(0.18))
+                        .background(DesignSystem.Colors.selectionBackground)
                         .clipShape(Capsule())
                 }
 

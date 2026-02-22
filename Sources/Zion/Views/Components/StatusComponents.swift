@@ -11,7 +11,7 @@ struct StatPill: View {
                 .font(.title3)
                 .foregroundStyle(Color.accentColor)
                 .frame(width: 32, height: 32)
-                .background(Color.accentColor.opacity(0.1))
+                .background(DesignSystem.Colors.selectionBackground)
                 .clipShape(Circle())
             
             VStack(alignment: .leading, spacing: 1) {

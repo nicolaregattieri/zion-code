@@ -20,9 +20,7 @@ struct BlameView: View {
 
     // Color mapping: assign consistent colors to authors
     private var authorColors: [String: Color] {
-        let palette: [Color] = [
-            .blue, .green, .orange, .purple, .pink, .cyan, .mint, .indigo, .teal, .yellow
-        ]
+        let palette: [Color] = DesignSystem.Colors.lanePalette
         var map: [String: Color] = [:]
         var idx = 0
         for entry in entries {

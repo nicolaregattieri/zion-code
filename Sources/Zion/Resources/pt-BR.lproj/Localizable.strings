@@ -290,6 +290,9 @@
 "Zoom in" = "Zoom in";
 "Zoom out" = "Zoom out";
 "Buscar no grafo" = "Buscar no grafo";
+"shortcuts.find" = "Buscar";
+"shortcuts.findReplace" = "Buscar e Substituir";
+"shortcuts.general" = "Geral";
 "Pressione" = "Pressione";
 "para ver todos os atalhos" = "para ver todos os atalhos";
 
@@ -353,6 +356,7 @@
 "help.ops.stash" = "Salvar, aplicar, pop e gerenciar stashes com mensagens";
 "help.ops.rebase" = "Rebase interativo visual com pick, squash, fixup, drop e reordenação";
 "help.ops.hunk" = "Staging por hunk e por linha — controle granular do que entra no commit";
+"help.ops.init" = "Inicialize um novo repositório Git diretamente pela tela inicial";
 
 // Worktrees
 "help.worktree.parallel" = "Trabalhe em múltiplas branches simultaneamente sem trocar contexto";
@@ -469,6 +473,10 @@
 "ntfy.topic.privacy" = "Use um nome único e difícil de adivinhar. Qualquer pessoa com o nome do tópico pode enviar/receber notificações.";
 "ntfy.server.hint" = "Deixe em branco para usar o servidor padrão (ntfy.sh)";
 "ntfy.advanced" = "Avançado";
+"ntfy.whatIs.title" = "O que é ntfy?";
+"ntfy.whatIs.description" = "ntfy é um serviço gratuito de notificações push. Um \"tópico\" é como um canal — qualquer dispositivo inscrito nele recebe as mensagens.";
+"ntfy.whatIs.steps" = "1. Instale o app ntfy no celular (iOS/Android)\n2. Escolha um nome de tópico único acima\n3. No app ntfy, inscreva-se no mesmo tópico\n4. Pronto! Zion enviará notificações para seus dispositivos";
+"ntfy.whatIs.learnMore" = "Saiba mais em ntfy.sh";
 "ntfy.local.toggle" = "Notificações locais do macOS";
 "ntfy.events.title" = "Eventos Notificados";
 "ntfy.test.button" = "Enviar Notificação de Teste";
@@ -994,6 +1002,8 @@
 
 // HunkDiffView / ChangesScreen
 "Abrir repositorio..." = "Abrir repositório...";
+"Inicializar repositorio..." = "Inicializar repositório...";
+"Criar um novo repositorio Git em uma pasta existente" = "Criar um novo repositório Git em uma pasta existente";
 
 // Keys that existed in EN/ES but not PT-BR (used in code)
 "/caminho/para/worktree" = "/caminho/para/worktree";
@@ -1044,3 +1054,31 @@
 "mensagem do stash" = "mensagem do stash";
 "rebase target" = "rebase target";
 "refs" = "refs";
+
+// Pre-Commit AI Review Gate
+"settings.ai.preCommitReview" = "Review Pré-Commit";
+"settings.ai.preCommitReview.toggle" = "Executar review com IA antes de commitar";
+"settings.ai.preCommitReview.hint" = "Quando ativo, clicar em Commit primeiro executa um code review com IA. Você ainda pode commitar mesmo se problemas forem encontrados.";
+"precommit.gate.title" = "Review de IA Pré-Commit";
+"precommit.reviewing" = "Revisando código antes do commit...";
+"precommit.fixIssues" = "Corrigir Problemas";
+"precommit.commitAnyway" = "Commitar Mesmo Assim";
+"precommit.moreFindings" = "e mais findings:";
+"help.ai.precommit" = "Gate de review com IA automático antes de cada commit (ativar em Configurações)";
+
+// File History
+"filehistory.title" = "Histórico do Arquivo";
+"filehistory.loading" = "Carregando histórico do arquivo...";
+"filehistory.empty" = "Nenhum commit encontrado para este arquivo.";
+"filehistory.showInGraph" = "Mostrar no Grafo";
+"help.code.filehistory" = "Visualize o histórico de commits de qualquer arquivo com um clique";
+
+// Zion Map — Pre-Commit Review
+"map.ai.precommit.title" = "Gate de Review Pré-Commit";
+"map.ai.precommit.description" = "Executa automaticamente review de código com IA quando você clica em Commit. Mostra findings com contagem de safe/warning/critical e permite corrigir ou commitar mesmo assim.";
+"map.ai.precommit.tip1" = "Ative em Configurações > IA > Executar review com IA antes de commitar.";
+
+// Zion Map — File History
+"map.code.filehistory.title" = "Histórico do Arquivo";
+"map.code.filehistory.description" = "Veja o histórico de commits de qualquer arquivo. Mostra hash, autor, data e mensagem de cada commit que tocou o arquivo.";
+"map.code.filehistory.tip1" = "Clique com botão direito em um arquivo e selecione Histórico do Arquivo, ou use o botão na toolbar.";
