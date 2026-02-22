@@ -116,6 +116,7 @@ struct ContentView: View {
         .environment(\.locale, uiLanguage.locale)
         .onAppear {
             model.restoreEditorSettings()
+            model.restoreLastRepository()
             // Robust window activation
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 if let window = NSApp.windows.first(where: { $0.isVisible }) {
