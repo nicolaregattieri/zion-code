@@ -22,6 +22,8 @@ All notable changes to Zion are documented here.
 - App icon no longer shows double squircle border (uses full-bleed square PNG)
 - Internal logo uses raw PNG with `clipShape` instead of `NSApp.applicationIconImage` to avoid jagged edges at small sizes
 
+
+fasdfasdfsadfasd
 ---
 
 ## 1.0.0 — 2026-02-20
