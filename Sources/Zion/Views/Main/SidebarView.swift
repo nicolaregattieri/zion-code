@@ -324,11 +324,11 @@ struct SidebarView: View {
                         model.deleteLocalBranch(branch, force: false)
                     }
                 } label: {
-                    Image(systemName: "trash").font(.caption2).foregroundStyle(.pink.opacity(0.7))
+                    Image(systemName: "trash").font(.caption2).foregroundStyle(DesignSystem.Colors.destructiveMuted)
                 }
                 .buttonStyle(.plain)
                 .padding(4)
-                .background(Color.pink.opacity(0.1))
+                .background(DesignSystem.Colors.destructiveBg)
                 .clipShape(Circle())
             }
         }
@@ -370,14 +370,15 @@ struct SidebarView: View {
                 if model.aiProvider != .none {
                     Image(systemName: "sparkles")
                         .font(.system(size: 11))
-                        .foregroundStyle(model.isAIConfigured ? .purple : .secondary)
+                        .foregroundStyle(model.isAIConfigured ? DesignSystem.Colors.ai : .secondary)
                 }
 
                 // ntfy status
                 if model.isNtfyConfigured {
-                    Circle()
-                        .fill(Color.orange)
-                        .frame(width: 6, height: 6)
+                    Image(systemName: "bell.fill")
+                        .font(.system(size: 9))
+                        .foregroundStyle(DesignSystem.Colors.warning)
+                        .help(L10n("Notificações ativas"))
                 }
 
                 Spacer()
@@ -438,13 +439,13 @@ private struct RecentProjectRow: View {
                 }
 
                 if isCurrent {
-                    Circle()
-                        .fill(DesignSystem.Colors.success)
-                        .frame(width: 6, height: 6)
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 10))
+                        .foregroundStyle(DesignSystem.Colors.success)
                 } else {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 8, weight: .bold))
-                        .foregroundStyle(.secondary.opacity(0.5))
+                        .foregroundStyle(.secondary)
                 }
             }
             .padding(.horizontal, 10)

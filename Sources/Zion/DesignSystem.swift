@@ -38,11 +38,57 @@ struct DesignSystem {
         static let secondary = Color.indigo
         static let accent = Color.cyan
 
+        // ── Zion brand palette ──
+        static let brandPrimary = SwiftUI.Color(red: 101.0/255.0, green: 68.0/255.0, blue: 155.0/255.0)   // Rebecca Purple #65449b
+        static let brandDark = SwiftUI.Color(red: 26.0/255.0, green: 0.0/255.0, blue: 78.0/255.0)         // Deep Twilight #1a004e
+        static let brandInk = SwiftUI.Color(red: 42.0/255.0, green: 1.0/255.0, blue: 108.0/255.0)         // Indigo Ink #2a016c
+        static let brandLight = SwiftUI.Color(red: 212.0/255.0, green: 206.0/255.0, blue: 232.0/255.0)    // Lavender #d4cee8
+        static let brandWhite = SwiftUI.Color(red: 248.0/255.0, green: 247.0/255.0, blue: 251.0/255.0)    // Ghost White #f8f7fb
+
         // Semantic status
         static let error = Color.red
         static let warning = Color.orange
         static let success = Color.green
         static let info = Color.blue
+
+        // ── File status ──
+        static let fileAdded = Color.green
+        static let fileModified = Color.orange
+        static let fileDeleted = Color.pink
+        static let fileRenamed = Color.blue
+        static let fileUntracked = Color.secondary
+        static let fileStaged = Color.green
+
+        // ── Diff ──
+        static let diffAddition = Color.green
+        static let diffAdditionBg = Color.green.opacity(0.12)
+        static let diffAdditionBgSelected = Color.green.opacity(0.25)
+        static let diffAdditionBgRaw = Color.green.opacity(0.15)
+        static let diffDeletion = Color.pink
+        static let diffDeletionBg = Color.pink.opacity(0.12)
+        static let diffDeletionBgSelected = Color.pink.opacity(0.25)
+        static let diffDeletionBgRaw = Color.pink.opacity(0.15)
+        static let diffContext = Color.primary.opacity(0.7)
+        static let diffHunkHeader = Color.blue.opacity(0.8)
+        static let diffHunkHeaderBg = Color.blue.opacity(0.08)
+        static let diffHunkHeaderBgLight = Color.blue.opacity(0.05)
+
+        // ── Feature accents ──
+        static let ai = Color.purple
+        static let codeReview = Color.indigo
+        static let commitSplit = Color.cyan
+        static let searchHighlight = Color.yellow
+        static let semanticSearch = Color.pink
+
+        // ── Destructive ──
+        static let destructive = Color.pink
+        static let destructiveMuted = Color.pink.opacity(0.7)
+        static let destructiveBg = Color.pink.opacity(0.1)
+
+        // ── Conflict resolution ──
+        static let conflictOurs = Color.orange
+        static let conflictTheirs = Color.blue
+        static let conflictResolved = Color.green
 
         // Text
         static let textPrimary = Color.primary

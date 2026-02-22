@@ -32,7 +32,7 @@ struct PRInboxCard: View {
                             .foregroundStyle(.white)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Capsule().fill(Color.indigo.opacity(0.7)))
+                            .background(Capsule().fill(DesignSystem.Colors.codeReview.opacity(0.7)))
                     }
 
                     Button {
@@ -100,7 +100,7 @@ struct PRInboxCard: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
-                .tint(.indigo)
+                .tint(DesignSystem.Colors.codeReview)
             }
         }
     }
@@ -191,7 +191,7 @@ private struct PROpenRow: View {
 
                 Image(systemName: "sparkles")
                     .font(.system(size: 11))
-                    .foregroundStyle(.purple)
+                    .foregroundStyle(DesignSystem.Colors.ai)
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 8, weight: .bold))

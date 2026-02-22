@@ -32,7 +32,7 @@ struct AISettingsTab: View {
                     if savedKeyExists && !isEditingKey {
                         HStack {
                             Label(L10n("Chave registrada"), systemImage: "lock.fill")
-                                .foregroundStyle(.green)
+                                .foregroundStyle(DesignSystem.Colors.success)
                             Spacer()
                             Button(L10n("Alterar")) {
                                 aiKeyInput = AIClient.loadAPIKey(for: provider) ?? ""
@@ -40,7 +40,7 @@ struct AISettingsTab: View {
                             }
                             .buttonStyle(.plain)
                             .cursorArrow()
-                            .foregroundStyle(.blue)
+                            .foregroundStyle(DesignSystem.Colors.info)
                         }
                     } else {
                         SecureField(L10n("Chave de API"), text: $aiKeyInput)

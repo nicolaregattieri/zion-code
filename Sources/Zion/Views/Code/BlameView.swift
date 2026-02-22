@@ -76,7 +76,7 @@ struct BlameView: View {
                     } label: {
                         Image(systemName: "sparkles")
                             .font(.system(size: 8))
-                            .foregroundStyle(.pink)
+                            .foregroundStyle(DesignSystem.Colors.semanticSearch)
                     }
                     .buttonStyle(.plain)
                     .help(L10n("Explicar com IA"))
@@ -86,7 +86,7 @@ struct BlameView: View {
                     )) {
                         VStack(alignment: .leading, spacing: 8) {
                             HStack(spacing: 4) {
-                                Image(systemName: "sparkles").font(.system(size: 10)).foregroundStyle(.pink)
+                                Image(systemName: "sparkles").font(.system(size: 10)).foregroundStyle(DesignSystem.Colors.semanticSearch)
                                 Text(entry.shortHash).font(.system(size: 10, weight: .bold, design: .monospaced))
                             }
                             Text(model.aiBlameExplanation)

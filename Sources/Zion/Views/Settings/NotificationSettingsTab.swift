@@ -20,7 +20,7 @@ struct NotificationSettingsTab: View {
                 if isConfigured && !isEditingTopic {
                     HStack {
                         Label(L10n("ntfy.topic.configured"), systemImage: "bell.fill")
-                            .foregroundStyle(.green)
+                            .foregroundStyle(DesignSystem.Colors.success)
                         Spacer()
                         Button(L10n("Alterar")) {
                             topicInput = ntfyTopic
@@ -28,7 +28,7 @@ struct NotificationSettingsTab: View {
                         }
                         .buttonStyle(.plain)
                         .cursorArrow()
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(DesignSystem.Colors.info)
                     }
                 } else {
                     TextField(L10n("ntfy.topic.placeholder"), text: $topicInput)

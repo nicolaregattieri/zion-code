@@ -20,7 +20,7 @@ struct InteractiveRebaseSheet: View {
         HStack {
             Image(systemName: "arrow.triangle.branch")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(.purple)
+                .foregroundStyle(DesignSystem.Colors.ai)
             VStack(alignment: .leading, spacing: 2) {
                 Text(L10n("Rebase Interativo")).font(.headline)
                 Text(L10n("Base: %@", model.rebaseBaseRef))
@@ -124,7 +124,7 @@ struct InteractiveRebaseSheet: View {
         .padding(.vertical, 6)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .fill(item.action == .drop ? Color.red.opacity(0.05) : DesignSystem.Colors.glassSubtle)
+                .fill(item.action == .drop ? DesignSystem.Colors.destructive.opacity(0.05) : DesignSystem.Colors.glassSubtle)
         )
     }
 
@@ -155,7 +155,7 @@ struct InteractiveRebaseSheet: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.small)
-            .tint(.purple)
+            .tint(DesignSystem.Colors.ai)
             .disabled(model.rebaseItems.isEmpty)
         }
         .padding(16)

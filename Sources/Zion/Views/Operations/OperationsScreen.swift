@@ -149,7 +149,7 @@ struct OperationsScreen: View {
                         }
                         .buttonStyle(.bordered)
                         .controlSize(.small)
-                        .tint(.purple)
+                        .tint(DesignSystem.Colors.ai)
                         .disabled(model.isGeneratingAIMessage)
                         .help(L10n("Revisar codigo com IA"))
 
@@ -165,7 +165,7 @@ struct OperationsScreen: View {
                         }
                         .buttonStyle(.bordered)
                         .controlSize(.small)
-                        .tint(.cyan)
+                        .tint(DesignSystem.Colors.commitSplit)
                         .disabled(model.isGeneratingAIMessage)
                         .help(L10n("Sugerir divisao de commits com IA"))
                     }
@@ -175,7 +175,7 @@ struct OperationsScreen: View {
                 if model.isReviewVisible && !model.aiReviewFindings.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
-                            Image(systemName: "sparkles").foregroundStyle(.purple)
+                            Image(systemName: "sparkles").foregroundStyle(DesignSystem.Colors.ai)
                             Text(L10n("Code Review")).font(.system(size: 11, weight: .bold))
                             Spacer()
                             Button { model.isReviewVisible = false } label: {
@@ -215,7 +215,7 @@ struct OperationsScreen: View {
                 if model.isSplitVisible && !model.aiCommitSplitSuggestions.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
-                            Image(systemName: "sparkles").foregroundStyle(.cyan)
+                            Image(systemName: "sparkles").foregroundStyle(DesignSystem.Colors.commitSplit)
                             Text(L10n("Sugestao de Split")).font(.system(size: 11, weight: .bold))
                             Spacer()
                             Button { model.isSplitVisible = false } label: {
@@ -232,7 +232,7 @@ struct OperationsScreen: View {
                                             .font(.system(size: 9, design: .monospaced))
                                             .padding(.horizontal, 6)
                                             .padding(.vertical, 2)
-                                            .background(Color.cyan.opacity(0.1))
+                                            .background(DesignSystem.Colors.commitSplit.opacity(0.1))
                                             .clipShape(Capsule())
                                     }
                                 }
@@ -442,7 +442,7 @@ struct OperationsScreen: View {
                                     model.testRemote(named: remote.name)
                                 } label: {
                                     Image(systemName: "antenna.radiowaves.left.and.right").font(.caption2)
-                                }.buttonStyle(.plain).foregroundStyle(.blue.opacity(0.7))
+                                }.buttonStyle(.plain).foregroundStyle(DesignSystem.Colors.info.opacity(0.7))
                                 .help(L10n("Testar conexao"))
 
                                 Button(role: .destructive) {
@@ -451,7 +451,7 @@ struct OperationsScreen: View {
                                     }
                                 } label: {
                                     Image(systemName: "trash").font(.caption2)
-                                }.buttonStyle(.plain).foregroundStyle(.pink.opacity(0.7))
+                                }.buttonStyle(.plain).foregroundStyle(DesignSystem.Colors.destructiveMuted)
                             }
                         }
                         .padding(6)
@@ -607,7 +607,7 @@ struct OperationsScreen: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .tint(.indigo)
+            .tint(DesignSystem.Colors.codeReview)
             .disabled(model.branchReviewSource.isEmpty || model.branchReviewTarget.isEmpty)
             .help(L10n("codereview.startReview.hint"))
         }
@@ -685,8 +685,8 @@ struct FileStatusRow: View {
                 Text(L10n("STAGED"))
                     .font(.system(size: 7, weight: .black))
                     .padding(.horizontal, 4).padding(.vertical, 1)
-                    .background(Color.green.opacity(0.2))
-                    .foregroundStyle(.green)
+                    .background(DesignSystem.Colors.fileStaged.opacity(0.2))
+                    .foregroundStyle(DesignSystem.Colors.fileStaged)
                     .clipShape(Capsule())
             }
         }
@@ -726,7 +726,7 @@ struct FileStatusRow: View {
         if index != " " && index != "?" {
             // Something is staged
             Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(.green)
+                .foregroundStyle(DesignSystem.Colors.fileStaged)
         } else {
             // Nothing staged, show what's in worktree
             switch worktree {
@@ -735,10 +735,10 @@ struct FileStatusRow: View {
                     .foregroundStyle(.secondary)
             case "M":
                 Image(systemName: "pencil.circle")
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(DesignSystem.Colors.fileModified)
             case "D":
                 Image(systemName: "minus.circle")
-                    .foregroundStyle(.pink)
+                    .foregroundStyle(DesignSystem.Colors.fileDeleted)
             default:
                 Image(systemName: "questionmark.circle")
                     .foregroundStyle(.secondary)

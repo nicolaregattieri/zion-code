@@ -10,7 +10,7 @@ struct DiffExplanationCard: View {
             HStack(spacing: 8) {
                 Image(systemName: "sparkles")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.purple)
+                    .foregroundStyle(DesignSystem.Colors.ai)
                 Text(L10n("diff.explanation.title"))
                     .font(.system(size: 12, weight: .bold))
                 Spacer()
@@ -104,7 +104,7 @@ struct DiffExplanationShimmer: View {
             HStack(spacing: 8) {
                 Image(systemName: "sparkles")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.purple)
+                    .foregroundStyle(DesignSystem.Colors.ai)
                 Text(L10n("diff.explanation.loading"))
                     .font(.system(size: 12, weight: .bold))
                 Spacer()

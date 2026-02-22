@@ -11,14 +11,14 @@ struct CodeReviewStatsBar: View {
             HStack(spacing: 6) {
                 Text(source.isEmpty ? "?" : source)
                     .font(.system(size: 12, weight: .bold, design: .monospaced))
-                    .foregroundStyle(.green)
+                    .foregroundStyle(DesignSystem.Colors.success)
                     .lineLimit(1)
                 Image(systemName: "arrow.right")
                     .font(.system(size: 10))
                     .foregroundStyle(.secondary)
                 Text(target.isEmpty ? "?" : target)
                     .font(.system(size: 12, weight: .bold, design: .monospaced))
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(DesignSystem.Colors.info)
                     .lineLimit(1)
             }
 
@@ -26,11 +26,11 @@ struct CodeReviewStatsBar: View {
 
             // Stats chips
             statChip(icon: "doc.text", value: "\(stats.totalFiles)", label: L10n("codereview.stats.files"), color: .secondary)
-            statChip(icon: "plus", value: "+\(stats.totalAdditions)", label: nil, color: .green)
-            statChip(icon: "minus", value: "-\(stats.totalDeletions)", label: nil, color: .red)
+            statChip(icon: "plus", value: "+\(stats.totalAdditions)", label: nil, color: DesignSystem.Colors.diffAddition)
+            statChip(icon: "minus", value: "-\(stats.totalDeletions)", label: nil, color: DesignSystem.Colors.diffDeletion)
 
             if stats.commitCount > 0 {
-                statChip(icon: "number", value: "\(stats.commitCount)", label: L10n("codereview.stats.commits"), color: .blue)
+                statChip(icon: "number", value: "\(stats.commitCount)", label: L10n("codereview.stats.commits"), color: DesignSystem.Colors.info)
             }
 
             Spacer()

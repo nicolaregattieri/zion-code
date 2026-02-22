@@ -44,7 +44,7 @@ struct ConflictResolutionScreen: View {
             if model.allConflictsResolved {
                 Label(L10n("Todos os conflitos resolvidos!"), systemImage: "checkmark.circle.fill")
                     .font(.caption)
-                    .foregroundStyle(.green)
+                    .foregroundStyle(DesignSystem.Colors.success)
             } else {
                 Text("\(model.unresolvedConflictCount) \(L10n("conflitos restantes"))")
                     .font(.caption)
@@ -100,7 +100,7 @@ struct ConflictResolutionScreen: View {
             HStack(spacing: 8) {
                 Image(systemName: file.isResolved ? "checkmark.circle.fill" : "xmark.circle.fill")
                     .font(.system(size: 12))
-                    .foregroundStyle(file.isResolved ? .green : .pink)
+                    .foregroundStyle(file.isResolved ? DesignSystem.Colors.success : DesignSystem.Colors.destructive)
                 Text(file.path)
                     .font(.system(size: 11, design: .monospaced))
                     .lineLimit(1)
@@ -112,7 +112,7 @@ struct ConflictResolutionScreen: View {
             .background(
                 model.selectedConflictFile == file.path
                     ? Color.accentColor.opacity(0.15)
-                    : (file.isResolved ? Color.green.opacity(0.05) : Color.clear)
+                    : (file.isResolved ? DesignSystem.Colors.success.opacity(0.05) : Color.clear)
             )
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
         }
@@ -137,7 +137,7 @@ struct ConflictResolutionScreen: View {
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.regular)
-        .tint(.green)
+        .tint(DesignSystem.Colors.success)
     }
 
     // MARK: - Conflict Viewer
@@ -156,7 +156,7 @@ struct ConflictResolutionScreen: View {
                             }
                             .buttonStyle(.borderedProminent)
                             .controlSize(.small)
-                            .tint(.green)
+                            .tint(DesignSystem.Colors.success)
                         }
                     }
 

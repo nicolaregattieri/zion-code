@@ -27,7 +27,7 @@ struct ReflogSheet: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.small)
-                .tint(.orange)
+                .tint(DesignSystem.Colors.warning)
                 .disabled(model.reflogEntries.count < 2)
 
                 Button(L10n("Fechar")) { dismiss() }
@@ -139,13 +139,13 @@ struct ReflogSheet: View {
 
     private func colorForAction(_ action: String) -> Color {
         switch action.lowercased() {
-        case "commit": return .green
-        case "pull": return .blue
-        case "checkout": return .orange
-        case "merge": return .purple
-        case "rebase": return .pink
-        case "reset": return .red
-        case "cherry-pick": return .cyan
+        case "commit": return DesignSystem.Colors.success
+        case "pull": return DesignSystem.Colors.info
+        case "checkout": return DesignSystem.Colors.warning
+        case "merge": return DesignSystem.Colors.ai
+        case "rebase": return DesignSystem.Colors.destructive
+        case "reset": return DesignSystem.Colors.destructive
+        case "cherry-pick": return DesignSystem.Colors.commitSplit
         case "clone": return .mint
         default: return .secondary
         }

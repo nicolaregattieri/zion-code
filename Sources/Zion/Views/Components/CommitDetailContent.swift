@@ -202,11 +202,11 @@ struct CommitDetailContent: View {
     private func fileStatusBadge(_ status: String) -> some View {
         let (color, icon): (Color, String) = {
             switch status.uppercased() {
-            case "M", "MM": return (.orange, "pencil")
-            case "A": return (.green, "plus")
-            case "D": return (.pink, "minus")
-            case "R": return (.blue, "arrow.right")
-            case "C": return (.purple, "doc.on.doc")
+            case "M", "MM": return (DesignSystem.Colors.fileModified, "pencil")
+            case "A": return (DesignSystem.Colors.fileAdded, "plus")
+            case "D": return (DesignSystem.Colors.fileDeleted, "minus")
+            case "R": return (DesignSystem.Colors.fileRenamed, "arrow.right")
+            case "C": return (DesignSystem.Colors.ai, "doc.on.doc")
             default: return (.secondary, "questionmark")
             }
         }()

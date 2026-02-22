@@ -52,7 +52,7 @@ struct CodeReviewSheet: View {
                     Label(L10n("codereview.exportMarkdown"), systemImage: "arrow.down.doc")
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(.indigo)
+                .tint(DesignSystem.Colors.codeReview)
             }
             .padding(16)
         }

@@ -97,8 +97,6 @@ struct CodeScreen: View {
                     .background(model.selectedTheme.colors.background)
                     .environment(\.colorScheme, model.selectedTheme.isLightAppearance ? .light : .dark)
 
-                Divider()
-
                 if isFileBrowserVisible {
                     DraggableSplitView(
                         axis: .horizontal,
@@ -680,7 +678,7 @@ struct CodeScreen: View {
     
     private var emptyEditorView: some View {
         VStack(spacing: 16) {
-            Image(systemName: "pencil.and.outline").font(.system(size: 40)).foregroundStyle(Color.gray.opacity(0.3))
+            Image(systemName: "pencil.and.outline").font(.system(size: 40)).foregroundStyle(.secondary)
             Text(L10n("Selecione um arquivo")).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -992,7 +990,7 @@ struct TerminalTabChip: View {
     var body: some View {
         HStack(spacing: 6) {
             Circle()
-                .fill(hasAlive ? Color.green : Color.red)
+                .fill(hasAlive ? DesignSystem.Colors.success : DesignSystem.Colors.destructive)
                 .frame(width: 6, height: 6)
 
             Text(title)

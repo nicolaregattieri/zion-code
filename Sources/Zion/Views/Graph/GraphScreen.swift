@@ -156,7 +156,7 @@ struct GraphScreen: View {
         HStack(spacing: 8) {
             HStack {
                 Image(systemName: model.isSemanticSearchActive ? "sparkles" : "magnifyingglass")
-                    .foregroundStyle(model.isSemanticSearchActive ? .pink : .secondary)
+                    .foregroundStyle(model.isSemanticSearchActive ? DesignSystem.Colors.semanticSearch : .secondary)
                 TextField(model.isSemanticSearchActive ? L10n("Busca semantica com IA...") : L10n("Busca (Cmd+F)"), text: $commitSearchQuery)
                     .textFieldStyle(.plain).focused($isSearchFocused)
                     .onSubmit {
@@ -169,16 +169,16 @@ struct GraphScreen: View {
                     if !model.isSemanticSearchActive && !searchMatchIDs.isEmpty {
                         Text("\(currentMatchIndex + 1)/\(searchMatchIDs.count)").font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundStyle(.secondary)
                     } else if !model.aiSemanticSearchResults.isEmpty {
-                        Text("\(model.aiSemanticSearchResults.count) \(L10n("resultados"))").font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundStyle(.pink)
+                        Text("\(model.aiSemanticSearchResults.count) \(L10n("resultados"))").font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundStyle(DesignSystem.Colors.semanticSearch)
                     }
                 }
             }
             .padding(.horizontal, 10).padding(.vertical, 6)
-            .background(model.isSemanticSearchActive ? Color.pink.opacity(0.08) : Color.black.opacity(0.15))
+            .background(model.isSemanticSearchActive ? DesignSystem.Colors.semanticSearch.opacity(0.08) : Color.black.opacity(0.15))
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
             .overlay(
                 RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius)
-                    .stroke(model.isSemanticSearchActive ? Color.pink.opacity(0.3) : Color.clear, lineWidth: 1)
+                    .stroke(model.isSemanticSearchActive ? DesignSystem.Colors.semanticSearch.opacity(0.3) : Color.clear, lineWidth: 1)
             )
 
             HStack(spacing: 4) {
@@ -195,7 +195,7 @@ struct GraphScreen: View {
                     } label: {
                         Image(systemName: "sparkles")
                             .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(model.isSemanticSearchActive ? .pink : .secondary)
+                            .foregroundStyle(model.isSemanticSearchActive ? DesignSystem.Colors.semanticSearch : .secondary)
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
@@ -271,7 +271,7 @@ struct GraphScreen: View {
                         .id(commit.id)
                         .overlay(alignment: .trailing) {
                             if !searchMatchIDs.isEmpty && searchMatchIDs[currentMatchIndex] == commit.id {
-                                Image(systemName: "arrow.left").foregroundStyle(.yellow).padding(.trailing, 32)
+                                Image(systemName: "arrow.left").foregroundStyle(DesignSystem.Colors.searchHighlight).padding(.trailing, 32)
                             }
                         }
                     }
@@ -364,7 +364,7 @@ struct GraphScreen: View {
                             Label(L10n("Commit"), systemImage: "checkmark.circle.fill")
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(.green)
+                        .tint(DesignSystem.Colors.success)
                         .controlSize(.small)
                         .sheet(isPresented: $isShowingQuickCommit) {
                             VStack(alignment: .leading, spacing: 16) {
@@ -429,7 +429,7 @@ struct GraphScreen: View {
                                         isShowingQuickCommit = false
                                     }
                                     .buttonStyle(.borderedProminent)
-                                    .tint(.green)
+                                    .tint(DesignSystem.Colors.success)
                                     .disabled(model.commitMessageInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                                     .keyboardShortcut(.return, modifiers: [])
                                 }
@@ -515,7 +515,7 @@ struct GraphScreen: View {
                                                 HStack(spacing: 8) {
                                                     Button(L10n("Apply")) { model.selectedStash = stash; model.applySelectedStash(); isShowingStashList = false }.buttonStyle(.bordered).controlSize(.small)
                                                     Button(L10n("Pop")) { model.selectedStash = stash; model.popSelectedStash(); isShowingStashList = false }.buttonStyle(.bordered).controlSize(.small)
-                                                    Button { model.selectedStash = stash; model.dropSelectedStash() } label: { Image(systemName: "trash") }.buttonStyle(.bordered).tint(.red).controlSize(.small)
+                                                    Button { model.selectedStash = stash; model.dropSelectedStash() } label: { Image(systemName: "trash") }.buttonStyle(.bordered).tint(DesignSystem.Colors.destructive).controlSize(.small)
                                                 }
                                             }
                                             .padding(10).background(DesignSystem.Colors.glassSubtle).cornerRadius(DesignSystem.Spacing.elementCornerRadius)
@@ -694,7 +694,7 @@ struct GraphScreen: View {
             Divider()
             if model.uncommittedChanges.isEmpty {
                 VStack(spacing: 12) {
-                    Image(systemName: "checkmark.circle.fill").font(.system(size: 32)).foregroundStyle(.green.opacity(0.6))
+                    Image(systemName: "checkmark.circle.fill").font(.system(size: 32)).foregroundStyle(DesignSystem.Colors.success.opacity(0.6))
                     Text(L10n("Tudo limpo!")).font(.headline)
                     Text(L10n("Nenhuma alteração pendente no momento.")).font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
                 }
@@ -722,7 +722,7 @@ struct GraphScreen: View {
                 Text(file).font(.system(size: 12, weight: isSelected ? .bold : .regular, design: .monospaced)).lineLimit(1).truncationMode(.middle)
                 Spacer()
                 if indexStatus != " " && indexStatus != "?" {
-                    Circle().fill(Color.green).frame(width: 6, height: 6)
+                    Circle().fill(DesignSystem.Colors.fileStaged).frame(width: 6, height: 6)
                 }
             }
             .padding(.horizontal, 10).padding(.vertical, 8)
@@ -791,11 +791,11 @@ struct GraphScreen: View {
         let backgroundColor: Color
         let textColor: Color
         if line.hasPrefix("+") && !line.hasPrefix("+++") {
-            backgroundColor = Color.green.opacity(0.15); textColor = Color.green
+            backgroundColor = DesignSystem.Colors.diffAdditionBgRaw; textColor = DesignSystem.Colors.diffAddition
         } else if line.hasPrefix("-") && !line.hasPrefix("---") {
-            backgroundColor = Color.red.opacity(0.15); textColor = Color.red
+            backgroundColor = DesignSystem.Colors.diffDeletionBgRaw; textColor = DesignSystem.Colors.diffDeletion
         } else if line.hasPrefix("@@") {
-            backgroundColor = Color.blue.opacity(0.1); textColor = Color.blue.opacity(0.8)
+            backgroundColor = DesignSystem.Colors.diffHunkHeaderBg; textColor = DesignSystem.Colors.diffHunkHeader
         } else {
             backgroundColor = Color.clear; textColor = .primary.opacity(0.8)
         }
@@ -814,12 +814,12 @@ struct GraphScreen: View {
     @ViewBuilder
     private func inlineStatusIcon(index: String, worktree: String) -> some View {
         if index != " " && index != "?" {
-            Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+            Image(systemName: "checkmark.circle.fill").foregroundStyle(DesignSystem.Colors.fileStaged)
         } else {
             switch worktree {
             case "?": Image(systemName: "plus.circle").foregroundStyle(.secondary)
-            case "M": Image(systemName: "pencil.circle").foregroundStyle(.orange)
-            case "D": Image(systemName: "minus.circle").foregroundStyle(.pink)
+            case "M": Image(systemName: "pencil.circle").foregroundStyle(DesignSystem.Colors.fileModified)
+            case "D": Image(systemName: "minus.circle").foregroundStyle(DesignSystem.Colors.fileDeleted)
             default: Image(systemName: "questionmark.circle").foregroundStyle(.secondary)
             }
         }
