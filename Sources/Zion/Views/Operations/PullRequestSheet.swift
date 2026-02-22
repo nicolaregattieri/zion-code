@@ -93,6 +93,8 @@ struct PullRequestSheet: View {
                         Text(L10n("Criar como Draft"))
                             .font(.system(size: 12))
                     }
+                    .toggleStyle(SwitchToggleStyle(tint: DesignSystem.Colors.actionPrimary))
+                    .tint(DesignSystem.Colors.actionPrimary)
 
                     // Error
                     if let error = errorMessage {

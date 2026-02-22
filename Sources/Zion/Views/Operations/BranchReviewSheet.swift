@@ -88,6 +88,7 @@ struct BranchReviewSheet: View {
                         Text(branch).tag(branch)
                     }
                 }
+                .pickerStyle(.menu)
                 .labelsHidden()
             }
 
@@ -105,6 +106,7 @@ struct BranchReviewSheet: View {
                         Text(branch).tag(branch)
                     }
                 }
+                .pickerStyle(.menu)
                 .labelsHidden()
             }
         }

@@ -24,5 +24,6 @@ struct SettingsView: View {
                 }
         }
         .frame(width: 480, height: 580)
+        .tint(DesignSystem.Colors.actionPrimary)
     }
 }

@@ -105,5 +105,7 @@ struct EditorSettingsTab: View {
             }
         }
         .formStyle(.grouped)
+        .toggleStyle(SwitchToggleStyle(tint: DesignSystem.Colors.actionPrimary))
+        .tint(DesignSystem.Colors.actionPrimary)
     }
 }

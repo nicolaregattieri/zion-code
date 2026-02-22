@@ -625,6 +625,7 @@ struct OperationsScreen: View {
                             Text(branch).tag(branch)
                         }
                     }
+                    .pickerStyle(.menu)
                     .labelsHidden()
                 }
 
@@ -642,6 +643,7 @@ struct OperationsScreen: View {
                             Text(branch).tag(branch)
                         }
                     }
+                    .pickerStyle(.menu)
                     .labelsHidden()
                 }
             }
