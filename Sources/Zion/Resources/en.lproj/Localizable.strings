@@ -390,6 +390,12 @@
 "Buscar no grafo" = "Search graph";
 "shortcuts.find" = "Find";
 "shortcuts.findReplace" = "Find & Replace";
+"shortcuts.goToLine" = "Go to line";
+"shortcuts.terminalSearch" = "Search terminal";
+"shortcuts.navigateCommits" = "Navigate commits";
+"shortcuts.closeOrDeselect" = "Close / deselect";
+"shortcuts.refreshRepository" = "Refresh repository";
+"shortcuts.codeReview" = "Code Review";
 "shortcuts.general" = "General";
 "Pressione" = "Press";
 "para ver todos os atalhos" = "to see all shortcuts";
@@ -1198,3 +1204,21 @@
 "help.aiSummary" = "AI summary of pending changes";
 "help.smartClipboard" = "Smart context-aware clipboard actions";
 "help.avatars" = "Gravatar author avatars in graph";
+
+// Worktree Smart Create
+"Abrir no Zion Code" = "Open in Zion Code";
+"worktree.smart.new" = "New Worktree";
+"worktree.smart.subtitle" = "Prefix + name. Path is derived automatically.";
+"worktree.smart.prefix" = "Prefix";
+"worktree.smart.name.placeholder" = "branch-name";
+"worktree.smart.createOpen" = "Create & Open";
+"worktree.smart.advanced" = "Advanced";
+"worktree.smart.confirm" = "Create and open the new worktree in Zion Code?";
+"worktree.smart.missing" = "Fill in a name (or path + branch in advanced mode).";
+"worktree.smart.created" = "Worktree created: %@";
+"worktree.smart.empty" = "No parallel worktrees yet. Create one above.";
+"worktree.prefix.feat" = "feat";
+"worktree.prefix.fix" = "fix";
+"worktree.prefix.chore" = "chore";
+"worktree.prefix.hotfix" = "hotfix";
+"worktree.prefix.exp" = "exp";

@@ -115,12 +115,15 @@
 
 | Feature | Description |
 |---------|-------------|
-| Add Worktree | Create at specified path with optional branch |
-| Quick Create | One-click with auto-generated path and branch |
-| Remove Worktree | Remove and close associated terminal |
+| Smart Branch Naming | Prefix picker (`feat/fix/chore/hotfix/exp`) + name input derives branch and path automatically |
+| Advanced Mode | Manual `path + branch` fields behind "Advanced" disclosure |
+| Inline Sidebar Create | `+ Novo Worktree` expands smart form directly in sidebar (no navigation needed) |
+| Create & Open | `smartCreateWorktree()` creates and immediately opens the new context in Zion Code |
+| Graph Worktree Pills | Cyan pills show `⊞ branch-name ● N` with in-pill dirty/conflict status |
+| Remove Worktree | Remove and close associated terminal session |
 | Prune | Clean up stale worktree metadata |
 | Dedicated Terminal | Each worktree opens a split terminal pane |
-| Open in Finder | Reveal worktree directory |
+| Reveal in Finder | Available from overflow menu on worktree cards |
 
 ## AI Assistant
 
@@ -236,7 +239,7 @@
 | External Terminal | Terminal.app, iTerm, Warp, custom |
 | Confirmation Mode | Never / Destructive Only / All |
 | Background Fetch | Auto-checks remote every 60s |
-| Recent Repositories | Quick access to last 5 opened repos |
+| Recent Repositories | Root-only list (up to 10) with per-project `WT n` badge |
 
 ## Diagnostics
 
@@ -271,6 +274,7 @@
 | `⌘N` | New file |
 | `⌘S` | Save file |
 | `⇧⌘S` | Save As |
+| `⌘R` | Refresh repository status |
 | `⌘J` | Toggle terminal |
 | `⇧⌘J` | Maximize terminal |
 | `⌘T` | New terminal tab |
@@ -279,7 +283,7 @@
 | `⇧⌘W` | Close split pane |
 | `⌃+` | Terminal zoom in |
 | `⌃-` | Terminal zoom out |
-| `⌘F` | Search graph |
+| `⌘F` | Context search (graph, editor, terminal) |
 | `⌘G` | Go to Line |
 | `⇧⌘R` | Code Review |
 | `↑↓` | Navigate commits |

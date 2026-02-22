@@ -31,32 +31,37 @@ struct KeyboardShortcutsSheet: View {
 
                     shortcutSection(L10n("Editor"), icon: "doc.text", shortcuts: [
                         (L10n("Quick Open"), "⌘P"),
-                        (L10n("Git Blame"), "⇧⌘B"),
                         (L10n("Barra lateral"), "⌘B"),
                         (L10n("Salvar"), "⌘S"),
                         (L10n("Novo Arquivo"), "⌘N"),
                         (L10n("Salvar Como..."), "⇧⌘S"),
                         (L10n("shortcuts.find"), "⌘F"),
                         (L10n("shortcuts.findReplace"), "⌘H"),
-                        (L10n("Terminal"), "⌘J"),
-                        (L10n("Maximizar terminal"), "⇧⌘J"),
+                        (L10n("shortcuts.goToLine"), "⌘G"),
+                        (L10n("Git Blame"), "⇧⌘B"),
                     ])
 
                     shortcutSection(L10n("Terminal"), icon: "terminal", shortcuts: [
+                        (L10n("Terminal"), "⌘J"),
+                        (L10n("Maximizar terminal"), "⇧⌘J"),
                         (L10n("Nova aba"), "⌘T"),
                         (L10n("Dividir verticalmente"), "⇧⌘D"),
                         (L10n("Dividir horizontalmente"), "⇧⌘E"),
                         (L10n("Fechar painel dividido"), "⇧⌘W"),
+                        (L10n("shortcuts.terminalSearch"), "⌘F"),
                         (L10n("Zoom in"), "⌃+"),
                         (L10n("Zoom out"), "⌃-"),
                     ])
 
                     shortcutSection(L10n("Grafo"), icon: "point.3.connected.trianglepath.dotted", shortcuts: [
                         (L10n("Buscar no grafo"), "⌘F"),
+                        (L10n("shortcuts.navigateCommits"), "↑↓"),
+                        (L10n("shortcuts.closeOrDeselect"), "Esc"),
                     ])
 
                     shortcutSection(L10n("shortcuts.general"), icon: "gearshape", shortcuts: [
-                        (L10n("Atualizar"), "⇧⌘R"),
+                        (L10n("shortcuts.refreshRepository"), "⌘R"),
+                        (L10n("shortcuts.codeReview"), "⇧⌘R"),
                         (L10n("Atalhos de Teclado"), "⌘/"),
                     ])
                 }

@@ -337,6 +337,12 @@
 "Buscar no grafo" = "Buscar en el grafo";
 "shortcuts.find" = "Buscar";
 "shortcuts.findReplace" = "Buscar y Reemplazar";
+"shortcuts.goToLine" = "Ir a línea";
+"shortcuts.terminalSearch" = "Buscar en terminal";
+"shortcuts.navigateCommits" = "Navegar commits";
+"shortcuts.closeOrDeselect" = "Cerrar / deseleccionar";
+"shortcuts.refreshRepository" = "Actualizar repositorio";
+"shortcuts.codeReview" = "Code Review";
 "shortcuts.general" = "General";
 "Pressione" = "Presiona";
 "para ver todos os atalhos" = "para ver todos los atajos";
@@ -1214,3 +1220,21 @@
 "help.aiSummary" = "Resumen IA de cambios pendientes";
 "help.smartClipboard" = "Acciones contextuales inteligentes en clipboard";
 "help.avatars" = "Avatares Gravatar de autores en graph";
+
+// Worktree Smart Create
+"Abrir no Zion Code" = "Abrir en Zion Code";
+"worktree.smart.new" = "Nuevo Worktree";
+"worktree.smart.subtitle" = "Prefijo + nombre. La ruta se deriva automáticamente.";
+"worktree.smart.prefix" = "Prefijo";
+"worktree.smart.name.placeholder" = "nombre-de-rama";
+"worktree.smart.createOpen" = "Crear y Abrir";
+"worktree.smart.advanced" = "Avanzado";
+"worktree.smart.confirm" = "¿Crear y abrir el nuevo worktree en Zion Code?";
+"worktree.smart.missing" = "Completa un nombre (o ruta + rama en modo avanzado).";
+"worktree.smart.created" = "Worktree creado: %@";
+"worktree.smart.empty" = "Todavía no hay worktrees paralelos. Crea uno arriba.";
+"worktree.prefix.feat" = "feat";
+"worktree.prefix.fix" = "fix";
+"worktree.prefix.chore" = "chore";
+"worktree.prefix.hotfix" = "hotfix";
+"worktree.prefix.exp" = "exp";

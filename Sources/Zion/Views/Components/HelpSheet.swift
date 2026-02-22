@@ -5,13 +5,29 @@ struct HelpSheet: View {
     @State private var path: [FeatureSection] = []
     @State private var hoveredSection: FeatureSection?
 
-    private let columns = [
-        GridItem(.flexible(), spacing: 16),
-        GridItem(.flexible(), spacing: 16)
-    ]
-
     /// Ordered list of sections matching the original card layout
     private let sections: [FeatureSection] = FeatureSection.allCases
+
+    private var balancedSectionColumns: ([FeatureSection], [FeatureSection]) {
+        let sorted = sections.sorted { estimatedCardWeight(for: $0) > estimatedCardWeight(for: $1) }
+        var left: [FeatureSection] = []
+        var right: [FeatureSection] = []
+        var leftWeight = 0
+        var rightWeight = 0
+
+        for section in sorted {
+            let weight = estimatedCardWeight(for: section)
+            if leftWeight <= rightWeight {
+                left.append(section)
+                leftWeight += weight
+            } else {
+                right.append(section)
+                rightWeight += weight
+            }
+        }
+
+        return (left, right)
+    }
 
     /// Feature bullet keys per section (matching original HelpSheet content)
     private func featureKeys(for section: FeatureSection) -> [String] {
@@ -90,15 +106,9 @@ struct HelpSheet: View {
                 VStack(alignment: .leading, spacing: 24) {
                     heroSection
 
-                    LazyVGrid(columns: columns, spacing: 16) {
-                        ForEach(sections) { section in
-                            Button {
-                                path.append(section)
-                            } label: {
-                                featureCard(for: section)
-                            }
-                            .buttonStyle(.plain)
-                        }
+                    HStack(alignment: .top, spacing: 16) {
+                        featureColumn(balancedSectionColumns.0)
+                        featureColumn(balancedSectionColumns.1)
                     }
 
                     shortcutsHighlight
@@ -202,6 +212,25 @@ struct HelpSheet: View {
                 hoveredSection = hovering ? section : nil
             }
         }
+    }
+
+    private func featureColumn(_ sections: [FeatureSection]) -> some View {
+        VStack(spacing: 16) {
+            ForEach(sections) { section in
+                Button {
+                    path.append(section)
+                } label: {
+                    featureCard(for: section)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .top)
+    }
+
+    private func estimatedCardWeight(for section: FeatureSection) -> Int {
+        let featureCount = max(featureKeys(for: section).count, 1)
+        return featureCount + 2
     }
 
     // MARK: - Shortcuts Highlight

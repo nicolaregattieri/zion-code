@@ -54,14 +54,16 @@ cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
   <key>CFBundleIdentifier</key>
   <string>com.nicolaregattieri.zion.app</string>
   <key>CFBundleVersion</key>
-  <string>4</string>
+  <string>5</string>
   <key>CFBundleShortVersionString</key>
-  <string>1.1.0</string>
+  <string>1.2.0</string>
   <key>CFBundleExecutable</key>
   <string>Zion</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleIconFile</key>
+  <string>ZionAppIcon.icns</string>
+  <key>CFBundleIconName</key>
   <string>ZionAppIcon</string>
   <key>LSMinimumSystemVersion</key>
   <string>14.0</string>
@@ -90,5 +92,8 @@ xattr -cr "$APP_DIR"
 
 # Re-sign app bundle (install_name_tool invalidates the ad-hoc signature from swift build)
 codesign --force --deep --sign - "$APP_DIR"
+
+# Nudge Finder/LaunchServices caches by bumping bundle mtimes after final signing
+touch "$APP_DIR/Contents/Info.plist" "$APP_DIR"
 
 echo "App gerado em: $APP_DIR"

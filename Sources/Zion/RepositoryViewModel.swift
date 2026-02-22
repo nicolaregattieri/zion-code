@@ -367,6 +367,9 @@ final class RepositoryViewModel {
     var cherryPickInput: String = ""
     var resetTargetInput: String = "HEAD~1"
     var rebaseTargetInput: String = ""
+    var worktreePrefix: WorktreePrefix = .feat
+    var worktreeNameInput: String = ""
+    var isWorktreeAdvancedExpanded: Bool = false
     var worktreePathInput: String = ""
     var worktreeBranchInput: String = ""
     var remotes: [RemoteInfo] = []
@@ -383,10 +386,37 @@ final class RepositoryViewModel {
         set { UserDefaults.standard.set(newValue, forKey: "zion.recentRepositories") }
     }
     var recentRepositories: [URL] = []
+    var recentWorktreeCounts: [URL: Int] = [:]
 
     // Performance caches
     private(set) var maxLaneCount: Int = 1
     private(set) var flatFileCache: [FileItem] = []
+
+    var worktreeNameSlug: String {
+        slugifiedWorktreeName(from: worktreeNameInput)
+    }
+
+    var derivedWorktreeBranch: String {
+        guard !worktreeNameSlug.isEmpty else { return "" }
+        return "\(worktreePrefix.rawValue)/\(worktreeNameSlug)"
+    }
+
+    var derivedWorktreePath: String {
+        guard let repositoryURL, !worktreeNameSlug.isEmpty else { return "" }
+        let parentDir = repositoryURL.deletingLastPathComponent()
+        let repoName = repositoryURL.lastPathComponent
+        let baseName = "\(repoName)-\(worktreePrefix.rawValue)-\(worktreeNameSlug)"
+        return uniquePath(forBaseName: baseName, in: parentDir).path
+    }
+
+    var canSmartCreateWorktree: Bool {
+        let manualPath = worktreePathInput.clean
+        let manualBranch = worktreeBranchInput.clean
+        if !manualPath.isEmpty, !manualBranch.isEmpty {
+            return true
+        }
+        return !worktreeNameSlug.isEmpty
+    }
 
     @ObservationIgnored private var repoEditorConfig: EditorConfig?
     var hasRepoEditorConfig: Bool { repoEditorConfig != nil }
@@ -655,9 +685,10 @@ final class RepositoryViewModel {
         repoEditorConfig = EditorConfig.load(from: url)
         saveRecentRepository(url)
         commitLimit = defaultCommitLimit(for: nil)
-        if worktreePathInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            worktreePathInput = url.deletingLastPathComponent().appendingPathComponent("new-worktree").path
-        }
+        worktreeNameInput = ""
+        worktreePathInput = ""
+        worktreeBranchInput = ""
+        isWorktreeAdvancedExpanded = false
 
         let stashedKeys = backgroundRepoStates.keys.map { $0.lastPathComponent }
         logger.log(.info, "openRepository ENTER", context: "prev=\(previousURL?.lastPathComponent ?? "nil") target=\(url.lastPathComponent) tabs=\(terminalTabs.count) sessions=\(terminalTabs.flatMap { $0.allSessions() }.count) stashed=\(stashedKeys)", source: #function)
@@ -799,18 +830,107 @@ final class RepositoryViewModel {
 
     func loadRecentRepositories() {
         if let urls = try? JSONDecoder().decode([URL].self, from: recentReposData) {
-            recentRepositories = urls
+            let normalized = normalizeRecentRepositories(urls)
+            recentRepositories = normalized
+            if let encoded = try? JSONEncoder().encode(normalized) {
+                recentReposData = encoded
+            }
+            refreshRecentWorktreeCounts()
         }
     }
 
     private func saveRecentRepository(_ url: URL) {
+        let canonical = canonicalRecentRepositoryURL(for: url)
         var current = (try? JSONDecoder().decode([URL].self, from: recentReposData)) ?? []
-        current.removeAll { $0 == url }
-        current.insert(url, at: 0)
-        let limited = Array(current.prefix(5))
+        current = normalizeRecentRepositories(current)
+        current.removeAll { $0 == canonical }
+        current.insert(canonical, at: 0)
+        let limited = Array(current.prefix(10))
         if let encoded = try? JSONEncoder().encode(limited) {
             recentReposData = encoded
             recentRepositories = limited
+            refreshRecentWorktreeCounts()
+        }
+    }
+
+    func recentRepositoryRoot(for url: URL?) -> URL? {
+        guard let url else { return nil }
+        return canonicalRecentRepositoryURL(for: url)
+    }
+
+    private func normalizeRecentRepositories(_ urls: [URL]) -> [URL] {
+        var seen: Set<String> = []
+        var ordered: [URL] = []
+        for url in urls {
+            let canonical = canonicalRecentRepositoryURL(for: url)
+            if seen.insert(canonical.path).inserted {
+                ordered.append(canonical)
+            }
+        }
+        return ordered
+    }
+
+    private func canonicalRecentRepositoryURL(for url: URL) -> URL {
+        let standardized = url.standardizedFileURL
+        let gitMarker = standardized.appendingPathComponent(".git")
+        var isDirectory = ObjCBool(false)
+
+        if FileManager.default.fileExists(atPath: gitMarker.path, isDirectory: &isDirectory), isDirectory.boolValue {
+            return standardized
+        }
+
+        guard FileManager.default.fileExists(atPath: gitMarker.path),
+              let markerContent = try? String(contentsOf: gitMarker, encoding: .utf8),
+              let gitdirLine = markerContent
+                .split(separator: "\n")
+                .map(String.init)
+                .first(where: { $0.hasPrefix("gitdir:") }) else {
+            return standardized
+        }
+
+        let gitdirRaw = gitdirLine.replacingOccurrences(of: "gitdir:", with: "").clean
+        guard !gitdirRaw.isEmpty else { return standardized }
+
+        let gitdirURL: URL = if gitdirRaw.hasPrefix("/") {
+            URL(fileURLWithPath: gitdirRaw).standardizedFileURL
+        } else {
+            standardized.appendingPathComponent(gitdirRaw).standardizedFileURL
+        }
+
+        let gitdirPath = gitdirURL.path
+        if let worktreeRange = gitdirPath.range(of: "/.git/worktrees/") {
+            let rootPath = String(gitdirPath[..<worktreeRange.lowerBound])
+            return URL(fileURLWithPath: rootPath).standardizedFileURL
+        }
+
+        if gitdirPath.hasSuffix("/.git") {
+            let rootPath = String(gitdirPath.dropLast("/.git".count))
+            return URL(fileURLWithPath: rootPath).standardizedFileURL
+        }
+
+        return standardized
+    }
+
+    private func refreshRecentWorktreeCounts() {
+        let roots = recentRepositories
+        Task {
+            var counts: [URL: Int] = [:]
+            for root in roots {
+                guard FileManager.default.fileExists(atPath: root.path) else {
+                    counts[root] = 0
+                    continue
+                }
+                if let output = try? await worker.runAction(args: ["worktree", "list", "--porcelain"], in: root) {
+                    let total = output
+                        .split(separator: "\n", omittingEmptySubsequences: true)
+                        .filter { $0.hasPrefix("worktree ") }
+                        .count
+                    counts[root] = max(total - 1, 0)
+                } else {
+                    counts[root] = 0
+                }
+            }
+            recentWorktreeCounts = counts
         }
     }
 
@@ -1629,6 +1749,68 @@ final class RepositoryViewModel {
         runGitAction(label: "Adicionar worktree", args: args)
     }
 
+    func smartCreateWorktree() {
+        guard let repositoryURL else { return }
+
+        let manualPath = worktreePathInput.clean
+        let manualBranch = worktreeBranchInput.clean
+        let slug = worktreeNameSlug
+
+        let resolvedBranch = manualBranch.isEmpty ? "\(worktreePrefix.rawValue)/\(slug)" : manualBranch
+        let resolvedPath: String = {
+            if !manualPath.isEmpty {
+                return manualPath
+            }
+            guard !slug.isEmpty else { return "" }
+            let parentDir = repositoryURL.deletingLastPathComponent()
+            let repoName = repositoryURL.lastPathComponent
+            let baseName = "\(repoName)-\(worktreePrefix.rawValue)-\(slug)"
+            return uniquePath(forBaseName: baseName, in: parentDir).path
+        }()
+
+        guard !resolvedPath.isEmpty, !resolvedBranch.clean.isEmpty else {
+            statusMessage = L10n("worktree.smart.missing")
+            return
+        }
+
+        actionTask?.cancel()
+        isBusy = true
+        actionTask = Task {
+            do {
+                let _ = try await worker.runAction(
+                    args: ["worktree", "add", "-b", resolvedBranch.clean, resolvedPath],
+                    in: repositoryURL
+                )
+                try Task.checkCancellation()
+                clearError()
+                statusMessage = L10n("worktree.smart.created", resolvedBranch.clean)
+
+                worktreeNameInput = ""
+                worktreePathInput = ""
+                worktreeBranchInput = ""
+                isWorktreeAdvancedExpanded = false
+
+                let created = WorktreeItem(
+                    path: resolvedPath,
+                    head: "",
+                    branch: resolvedBranch.clean,
+                    isDetached: false,
+                    isLocked: false,
+                    lockReason: "",
+                    isPrunable: false,
+                    pruneReason: "",
+                    isCurrent: false
+                )
+                openWorktreeInZion(created)
+            } catch is CancellationError {
+                return
+            } catch {
+                isBusy = false
+                handleError(error)
+            }
+        }
+    }
+
     func removeWorktree(_ path: String) {
         runGitAction(label: "Remover worktree", args: ["worktree", "remove", path])
     }
@@ -1637,6 +1819,18 @@ final class RepositoryViewModel {
         let url = URL(fileURLWithPath: worktree.path)
         let label = worktree.branch.isEmpty ? url.lastPathComponent : worktree.branch
         createTerminalSession(workingDirectory: url, label: label, worktreeID: worktree.id)
+    }
+
+    func openWorktreeInZion(_ worktree: WorktreeItem) {
+        let url = URL(fileURLWithPath: worktree.path)
+        openRepository(url)
+        let label = worktree.branch.isEmpty ? url.lastPathComponent : worktree.branch
+        if let existing = terminalSessions.first(where: { $0.workingDirectory.path == url.path }) {
+            activateSession(existing)
+        } else {
+            createTerminalSession(workingDirectory: url, label: label, worktreeID: worktree.id)
+        }
+        navigateToCodeRequested = true
     }
 
     func removeWorktreeAndCloseTerminal(_ worktree: WorktreeItem) {
@@ -1815,6 +2009,37 @@ final class RepositoryViewModel {
 
     func pruneWorktrees() {
         runGitAction(label: "Worktree prune", args: ["worktree", "prune"])
+    }
+
+    private func slugifiedWorktreeName(from input: String) -> String {
+        let folded = input
+            .clean
+            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+            .lowercased()
+
+        let mapped = folded.map { character -> Character in
+            if character.isLetter || character.isNumber { return character }
+            return "-"
+        }
+
+        var slug = String(mapped)
+            .replacingOccurrences(of: "-+", with: "-", options: .regularExpression)
+            .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
+
+        while slug.hasPrefix(".") || slug.hasSuffix(".") {
+            slug = slug.trimmingCharacters(in: CharacterSet(charactersIn: "."))
+        }
+        return slug
+    }
+
+    private func uniquePath(forBaseName baseName: String, in directory: URL) -> URL {
+        var candidate = directory.appendingPathComponent(baseName)
+        var index = 2
+        while FileManager.default.fileExists(atPath: candidate.path) {
+            candidate = directory.appendingPathComponent("\(baseName)-\(index)")
+            index += 1
+        }
+        return candidate
     }
 
     func pruneMergedBranches() {
@@ -2327,6 +2552,9 @@ final class RepositoryViewModel {
                 stashes = payload.stashes
                 selectedStash = payload.selectedStash
                 worktrees = payload.worktrees
+                if let root = recentRepositoryRoot(for: repositoryURL) {
+                    recentWorktreeCounts[root] = max(payload.worktrees.count - 1, 0)
+                }
                 remotes = payload.remotes
                 commits = payload.commits
                 hasMoreCommits = payload.hasMoreCommits

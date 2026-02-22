@@ -13,6 +13,7 @@ struct SidebarView: View {
 
     @AppStorage("zion.sidebar.recentsExpanded") private var isRecentsExpanded: Bool = true
     @State private var branchSearchQuery: String = ""
+    @State private var isNewWorktreeExpanded: Bool = false
 
     let onOpen: () -> Void
     let onOpenInTerminal: () -> Void
@@ -27,7 +28,7 @@ struct SidebarView: View {
 
                 recentProjectsCard
 
-                if model.repositoryURL != nil, nonCurrentWorktrees.count > 0 {
+                if model.repositoryURL != nil {
                     worktreesCard
                 }
 
@@ -58,13 +59,21 @@ struct SidebarView: View {
                     }
 
                     if isRecentsExpanded {
-                        VStack(spacing: 4) {
-                            ForEach(model.recentRepositories, id: \.self) { url in
-                                RecentProjectRow(url: url, isCurrent: url == model.repositoryURL, changedCount: model.backgroundRepoChangedFiles[url]) {
-                                    withAnimation { model.openRepository(url) }
+                        ScrollView(showsIndicators: true) {
+                            VStack(spacing: 4) {
+                                ForEach(model.recentRepositories, id: \.self) { url in
+                                    RecentProjectRow(
+                                        url: url,
+                                        isCurrent: model.recentRepositoryRoot(for: model.repositoryURL) == url,
+                                        changedCount: model.backgroundRepoChangedFiles[url],
+                                        worktreeCount: model.recentWorktreeCounts[url] ?? 0
+                                    ) {
+                                        withAnimation { model.openRepository(url) }
+                                    }
                                 }
                             }
                         }
+                        .frame(maxHeight: 220)
                     }
                 }
                 .padding(.horizontal, 10)
@@ -146,17 +155,118 @@ struct SidebarView: View {
     private var worktreesCard: some View {
         GlassCard(spacing: 10) {
             CardHeader(L10n("Worktrees"), icon: "square.split.2x2") {
-                Text("\(nonCurrentWorktrees.count)")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Capsule().fill(DesignSystem.Colors.brandPrimary.opacity(0.7)))
+                HStack(spacing: 6) {
+                    Text("\(nonCurrentWorktrees.count)")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Capsule().fill(DesignSystem.Colors.brandPrimary.opacity(0.7)))
+                    Button {
+                        withAnimation(DesignSystem.Motion.panel) {
+                            isNewWorktreeExpanded.toggle()
+                        }
+                    } label: {
+                        Label(L10n("worktree.smart.new"), systemImage: "plus")
+                            .font(.system(size: 10, weight: .semibold))
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
             }
-            ForEach(nonCurrentWorktrees) { wt in
-                worktreeRow(wt)
+
+            if isNewWorktreeExpanded {
+                smartWorktreeInlineForm
+            }
+
+            if nonCurrentWorktrees.isEmpty {
+                Text(L10n("worktree.smart.empty"))
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(nonCurrentWorktrees) { wt in
+                    worktreeRow(wt)
+                }
             }
         }.padding(.horizontal, 10)
+    }
+
+    private var smartWorktreeInlineForm: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Picker(L10n("worktree.smart.prefix"), selection: $model.worktreePrefix) {
+                    ForEach(WorktreePrefix.allCases) { prefix in
+                        Text(L10n(prefix.l10nKey)).tag(prefix)
+                    }
+                }
+                .pickerStyle(.menu)
+                .frame(width: 120)
+
+                TextField(L10n("worktree.smart.name.placeholder"), text: $model.worktreeNameInput)
+                    .textFieldStyle(.roundedBorder)
+
+                Button(L10n("worktree.smart.createOpen")) {
+                    model.smartCreateWorktree()
+                    selectedSection = .code
+                    withAnimation(DesignSystem.Motion.panel) {
+                        isNewWorktreeExpanded = false
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(DesignSystem.Colors.actionPrimary)
+                .disabled(!model.canSmartCreateWorktree)
+            }
+
+            if !model.derivedWorktreeBranch.isEmpty || !model.derivedWorktreePath.isEmpty {
+                HStack(spacing: 10) {
+                    if !model.derivedWorktreeBranch.isEmpty {
+                        Text("branch: \(model.derivedWorktreeBranch)")
+                            .font(.system(size: 9, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                    if !model.derivedWorktreePath.isEmpty {
+                        Text(model.derivedWorktreePath)
+                            .font(.system(size: 9, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
+                }
+            }
+
+            Button {
+                withAnimation(DesignSystem.Motion.panel) {
+                    model.isWorktreeAdvancedExpanded.toggle()
+                }
+            } label: {
+                Label(
+                    L10n("worktree.smart.advanced"),
+                    systemImage: model.isWorktreeAdvancedExpanded ? "chevron.down" : "chevron.right"
+                )
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+
+            if model.isWorktreeAdvancedExpanded {
+                HStack(spacing: 8) {
+                    TextField(L10n("/caminho/para/worktree"), text: $model.worktreePathInput)
+                        .textFieldStyle(.roundedBorder)
+                    TextField(L10n("branch (opcional)"), text: $model.worktreeBranchInput)
+                        .textFieldStyle(.roundedBorder)
+                }
+            }
+        }
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                .fill(DesignSystem.Colors.glassSubtle)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                .stroke(DesignSystem.Colors.glassHover, lineWidth: 1)
+        )
     }
 
     private func worktreeRow(_ wt: WorktreeItem) -> some View {
@@ -170,11 +280,33 @@ struct SidebarView: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(worktreeStatusColor(wt))
+                        .frame(width: 6, height: 6)
+                    Text("\(wt.uncommittedCount)")
+                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                    if wt.hasConflicts {
+                        Text("⚠")
+                            .font(.system(size: 9, weight: .bold))
+                    }
+                }
             }
             Spacer(minLength: 0)
             Button {
-                model.openWorktreeTerminal(wt)
+                model.openWorktreeInZion(wt)
                 selectedSection = .code
+            } label: {
+                Image(systemName: "pencil.and.outline")
+                    .font(.system(size: 11))
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .help(L10n("Abrir no Zion Code"))
+
+            Button {
+                model.openWorktreeTerminal(wt)
             } label: {
                 Image(systemName: "terminal.fill")
                     .font(.system(size: 11))
@@ -182,16 +314,6 @@ struct SidebarView: View {
             .buttonStyle(.bordered)
             .controlSize(.small)
             .help(L10n("Terminal"))
-
-            Button {
-                NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: wt.path)
-            } label: {
-                Image(systemName: "folder")
-                    .font(.system(size: 11))
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            .help(L10n("Abrir"))
 
             Button {
                 let alert = NSAlert()
@@ -215,6 +337,12 @@ struct SidebarView: View {
         .padding(.horizontal, 8)
         .background(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous).fill(DesignSystem.Colors.glassSubtle))
         .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous).stroke(DesignSystem.Colors.glassHover, lineWidth: 1))
+    }
+
+    private func worktreeStatusColor(_ worktree: WorktreeItem) -> Color {
+        if worktree.hasConflicts { return DesignSystem.Colors.destructive }
+        if worktree.uncommittedCount > 0 { return DesignSystem.Colors.warning }
+        return DesignSystem.Colors.success
     }
 
     private var workspaceCard: some View {
@@ -466,6 +594,7 @@ private struct RecentProjectRow: View {
     let url: URL
     let isCurrent: Bool
     let changedCount: Int?
+    let worktreeCount: Int
     let onTap: () -> Void
     @State private var isHovered = false
 
@@ -490,6 +619,15 @@ private struct RecentProjectRow: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.middle)
+                }
+                if worktreeCount > 0 {
+                    Text("WT \(worktreeCount)")
+                        .font(.system(size: 8, weight: .bold, design: .monospaced))
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 2)
+                        .background(DesignSystem.Colors.commitSplit.opacity(0.2))
+                        .foregroundStyle(DesignSystem.Colors.commitSplit)
+                        .clipShape(Capsule())
                 }
                 Spacer()
 
