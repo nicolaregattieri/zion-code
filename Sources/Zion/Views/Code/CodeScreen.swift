@@ -1184,7 +1184,7 @@ struct CodeTab: View {
     let accentColor: Color
     let onActivate: () -> Void
     let onClose: () -> Void
-    @State private var isHovering = false
+    @State private var isHovered = false
 
     private var isUnsaved: Bool { model.unsavedFiles.contains(file.id) }
 
@@ -1211,11 +1211,11 @@ struct CodeTab: View {
             }
             .buttonStyle(.plain)
             .cursorArrow()
-            .opacity(isActive || isHovering ? 1.0 : 0.0)
+            .opacity(isActive || isHovered ? 1.0 : 0.0)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(isActive ? model.selectedTheme.colors.background : (isHovering ? DesignSystem.Colors.glassElevated : Color.clear))
+        .background(isActive ? model.selectedTheme.colors.background : (isHovered ? DesignSystem.Colors.glassElevated : Color.clear))
         .overlay(alignment: .bottom) {
             if isActive {
                 Rectangle().fill(accentColor).frame(height: 2)
@@ -1228,7 +1228,7 @@ struct CodeTab: View {
         }
         .contentShape(Rectangle())
         .onTapGesture { onActivate() }
-        .onHover { h in isHovering = h }
+        .onHover { h in isHovered = h }
     }
 }
 
@@ -1393,7 +1393,7 @@ struct FileTreeNodeView: View {
     var model: RepositoryViewModel
     let item: FileItem
     let level: Int
-    @State private var isHovering = false
+    @State private var isHovered = false
 
     var body: some View {
         let isExpanded = model.expandedPaths.contains(item.id)
@@ -1432,10 +1432,10 @@ struct FileTreeNodeView: View {
                 .padding(.horizontal, 12).padding(.vertical, 6).padding(.leading, CGFloat(level) * 12)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())
-                .background(isSelected ? Color.blue.opacity(0.15) : (isHovering ? DesignSystem.Colors.glassHover : Color.clear))
+                .background(isSelected ? DesignSystem.Colors.selectionBackground : (isHovered ? DesignSystem.Colors.glassHover : Color.clear))
             }
             .buttonStyle(.plain)
-            .onHover { h in isHovering = h }
+            .onHover { h in isHovered = h }
             .contextMenu {
                 if item.isDirectory {
                     Button { model.createNewFileInFolder(parentURL: item.url) } label: {

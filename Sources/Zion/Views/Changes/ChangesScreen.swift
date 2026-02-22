@@ -266,8 +266,8 @@ struct ChangesScreen: View {
             backgroundColor = Color.green.opacity(0.15)
             textColor = Color.green
         } else if line.hasPrefix("-") && !line.hasPrefix("---") {
-            backgroundColor = Color.red.opacity(0.15)
-            textColor = Color.red
+            backgroundColor = Color.pink.opacity(0.15)
+            textColor = Color.pink
         } else if line.hasPrefix("@@") {
             backgroundColor = Color.blue.opacity(0.1)
             textColor = Color.blue.opacity(0.8)
@@ -302,7 +302,7 @@ struct ChangesScreen: View {
             switch worktree {
             case "?": Image(systemName: "plus.circle").foregroundStyle(.secondary)
             case "M": Image(systemName: "pencil.circle").foregroundStyle(.orange)
-            case "D": Image(systemName: "minus.circle").foregroundStyle(.red)
+            case "D": Image(systemName: "minus.circle").foregroundStyle(.pink)
             default: Image(systemName: "questionmark.circle").foregroundStyle(.secondary)
             }
         }

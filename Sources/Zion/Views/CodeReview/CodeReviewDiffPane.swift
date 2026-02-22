@@ -21,7 +21,7 @@ struct CodeReviewDiffPane: View {
                             .foregroundStyle(.green)
                         Text("-\(file.deletions)")
                             .font(.system(size: 11, design: .monospaced))
-                            .foregroundStyle(.red)
+                            .foregroundStyle(.pink)
                     }
                     .padding(12)
 

@@ -53,7 +53,7 @@ struct CardHeader: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: icon)
-                .font(.system(size: 13, weight: .semibold))
+                .font(DesignSystem.IconSize.sectionHeader)
                 .foregroundStyle(.secondary)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title).font(.headline)
