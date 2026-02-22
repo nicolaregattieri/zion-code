@@ -26,9 +26,9 @@ enum GitClientError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .repositoryNotSelected:
-            return "Selecione um repositorio Git primeiro."
+            return L10n("Selecione um repositorio Git primeiro.")
         case .commandFailed(let command, let message):
-            return "Falha ao executar `\(command)`: \(message)"
+            return L10n("gitError.commandFailed", command, message)
         }
     }
 }

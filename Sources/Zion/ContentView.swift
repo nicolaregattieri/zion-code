@@ -247,23 +247,29 @@ struct ContentView: View {
             ControlGroup {
                 Button { openRepositoryPanel() } label: { Image(systemName: "folder") }
                     .help(L10n("Abrir repositório"))
+                    .accessibilityLabel(L10n("Abrir repositório"))
                 Button { model.isCloneSheetVisible = true } label: { Image(systemName: "square.and.arrow.down.on.square") }
                     .help(L10n("Clonar repositorio remoto"))
+                    .accessibilityLabel(L10n("Clonar repositorio remoto"))
             }
 
             Button { model.refreshRepository() } label: { Image(systemName: "arrow.clockwise") }
                 .disabled(model.repositoryURL == nil)
                 .help(L10n("Atualizar status do repositório"))
+                .accessibilityLabel(L10n("Atualizar status do repositório"))
                 .keyboardShortcut("r", modifiers: .command)
 
             if model.repositoryURL != nil {
                 ControlGroup {
                     Button { model.fetch() } label: { Image(systemName: "arrow.down.circle") }
                         .help(L10n("Fetch: Busca atualizações remotas"))
+                        .accessibilityLabel(L10n("Fetch: Busca atualizações remotas"))
                     Button { model.pull() } label: { Image(systemName: "arrow.down.to.line") }
                         .help(L10n("Pull: Puxa alterações da branch atual"))
+                        .accessibilityLabel(L10n("Pull: Puxa alterações da branch atual"))
                     Button { model.requestPush() } label: { Image(systemName: "arrow.up.circle") }
                         .help(L10n("Push: Envia alterações locais"))
+                        .accessibilityLabel(L10n("Push: Envia alterações locais"))
                 }
             }
         }
@@ -273,6 +279,7 @@ struct ContentView: View {
                 ControlGroup {
                     Button { openRepositoryInTerminal() } label: { Image(systemName: "terminal") }
                         .help(L10n("Abrir Terminal"))
+                        .accessibilityLabel(L10n("Abrir Terminal"))
                     Button {
                         model.loadReflog()
                         model.isReflogVisible = true
@@ -280,11 +287,13 @@ struct ContentView: View {
                         Image(systemName: "clock.arrow.circlepath")
                     }
                     .help(L10n("Reflog / Desfazer"))
+                    .accessibilityLabel(L10n("Reflog / Desfazer"))
                 }
             }
 
             Button { isHelpVisible = true } label: { Image(systemName: "questionmark.circle") }
                 .help(L10n("Conheca o Zion"))
+                .accessibilityLabel(L10n("Conheca o Zion"))
         }
     }
 

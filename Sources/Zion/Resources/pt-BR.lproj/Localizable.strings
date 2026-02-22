@@ -56,7 +56,6 @@
 "Nova branch" = "Nova branch";
 "Criar" = "Criar";
 "Cancelar" = "Cancelar";
-"Fazer checkout" = "Fazer checkout";
 "Confirmar" = "Confirmar";
 "Continuar" = "Continuar";
 "OK" = "OK";
@@ -221,7 +220,6 @@
 "Selecionar do Disco..." = "Selecionar do Disco...";
 "Modificado" = "Modificado";
 "Nao inicializado" = "Não inicializado";
-"OK" = "OK";
 "Sistema" = "Sistema";
 "%d commits" = "%d commits";
 "Tag: %@" = "Tag: %@";
@@ -284,7 +282,6 @@
 "Navegacao" = "Navegação";
 "Codigo" = "Código";
 "Grafo" = "Grafo";
-"Editor" = "Editor";
 "Quick Open" = "Quick Open";
 "Barra lateral" = "Barra lateral";
 "Maximizar terminal" = "Maximizar terminal";
@@ -306,7 +303,6 @@
 "O Zion precisa do Git instalado para funcionar. Por favor, instale o Git e reinicie o app." = "O Zion precisa do Git instalado para funcionar. Por favor, instale o Git e reinicie o app.";
 "Chave registrada" = "Chave registrada";
 "Alterar" = "Alterar";
-"Salvar" = "Salvar";
 "Chave de API" = "Chave de API";
 "Chave salva no Keychain" = "Chave salva no Keychain";
 "Gerar mensagem com IA" = "Gerar mensagem com IA";
@@ -400,7 +396,6 @@
 "Marcar como Resolvido" = "Marcar como Resolvido";
 "Continuar Merge" = "Continuar Merge";
 "Continuar Rebase" = "Continuar Rebase";
-"Continuar" = "Continuar";
 "Todos os conflitos resolvidos!" = "Todos os conflitos resolvidos!";
 "conflitos restantes" = "conflitos restantes";
 "Conflito" = "Conflito";
@@ -884,3 +879,168 @@
 "Inteligencia Artificial" = "Inteligência Artificial";
 "Informacoes" = "Informações";
 "Manutencao" = "Manutenção";
+
+// --- L10n Audit: Missing Keys ---
+
+// GitClient errors
+"gitError.commandFailed" = "Falha ao executar `%@`: %@";
+"Selecione um repositorio Git primeiro." = "Selecione um repositório Git primeiro.";
+"Selecione um repositorio Git." = "Selecione um repositório Git.";
+
+// RepositoryViewModel status messages
+"Carregando detalhes do commit..." = "Carregando detalhes do commit...";
+"Selecione um commit para ver os detalhes." = "Selecione um commit para ver os detalhes.";
+"Hunk staged com sucesso." = "Hunk staged com sucesso.";
+"Hunk unstaged com sucesso." = "Hunk unstaged com sucesso.";
+"Linhas staged com sucesso." = "Linhas staged com sucesso.";
+"Nenhuma mudanca." = "Nenhuma mudança.";
+"Nenhuma diferenca entre as branches." = "Nenhuma diferença entre as branches.";
+"Rebase interativo concluido com sucesso." = "Rebase interativo concluído com sucesso.";
+
+// GraphScreen & commit actions
+"Esc" = "Esc";
+"Staged" = "Staged";
+"Stage All" = "Stage All";
+"Stage Hunk" = "Stage Hunk";
+"Stage Linhas" = "Stage Linhas";
+"Unstage" = "Unstage";
+"Unstage All" = "Unstage All";
+"Salvar no Stash" = "Salvar no Stash";
+"Carregar mais" = "Carregar mais";
+"Sugerir mensagem de commit" = "Sugerir mensagem de commit";
+"Descartar Mudanças" = "Descartar Mudanças";
+"Selecionar..." = "Selecionar...";
+"Clipboard" = "Clipboard";
+"Imagem" = "Imagem";
+"Colar no Terminal" = "Colar no Terminal";
+"Limpar tudo" = "Limpar tudo";
+"agora" = "agora";
+
+// ContentView commit context menu
+"Revert" = "Revert";
+"Reverter este commit criando um novo commit?" = "Reverter este commit criando um novo commit?";
+"Rebase Interativo a partir daqui..." = "Rebase interativo a partir daqui...";
+"Reflog / Desfazer" = "Reflog / Desfazer";
+
+// Branch context menu
+"Criar Pull Request..." = "Criar Pull Request...";
+
+// ReflogSheet
+"Reflog" = "Reflog";
+"Historico de acoes do repositorio" = "Histórico de ações do repositório";
+"Desfazer Ultima Acao" = "Desfazer Última Ação";
+"Carregando reflog..." = "Carregando reflog...";
+"Reset --soft para aqui" = "Reset --soft para aqui";
+"Reset --hard para aqui" = "Reset --hard para aqui";
+
+// BlameView
+"Git Blame" = "Git Blame";
+
+// RepositoryStatsView
+"Estatisticas" = "Estatísticas";
+"Visao geral do repositorio" = "Visão geral do repositório";
+"Carregue as estatisticas para visualizar." = "Carregue as estatísticas para visualizar.";
+"Carregar" = "Carregar";
+"Autores" = "Autores";
+"Top Contribuidores" = "Top Contribuidores";
+"Linguagens" = "Linguagens";
+
+// SubmodulesCard
+"Submodulos" = "Submódulos";
+"Nenhum submodulo encontrado." = "Nenhum submódulo encontrado.";
+"Dependencias externas do repositorio" = "Dependências externas do repositório";
+"Init" = "Init";
+"Update" = "Update";
+"Sync" = "Sync";
+
+// InteractiveRebaseSheet
+"Rebase Interativo" = "Rebase Interativo";
+"Base: %@" = "Base: %@";
+"Executar Rebase" = "Executar Rebase";
+
+// PullRequestSheet
+"Criar Pull Request" = "Criar Pull Request";
+"Titulo" = "Título";
+"Titulo do PR..." = "Título do PR...";
+"Branch base" = "Branch base";
+"Descricao" = "Descrição";
+"Criar como Draft" = "Criar como Draft";
+"PR criado com sucesso!" = "PR criado com sucesso!";
+"Abrir no Navegador" = "Abrir no Navegador";
+"Criar PR" = "Criar PR";
+"Nenhum remote GitHub detectado." = "Nenhum remote GitHub detectado.";
+
+// AuthErrorSheet
+"Erro de Autenticacao" = "Erro de Autenticação";
+"Nao foi possivel acessar o repositorio remoto." = "Não foi possível acessar o repositório remoto.";
+"Possiveis solucoes:" = "Possíveis soluções:";
+"Verifique se sua chave SSH esta adicionada ao ssh-agent." = "Verifique se sua chave SSH está adicionada ao ssh-agent.";
+"Configuracao SSH" = "Configuração SSH";
+"Teste a conexao SSH com o GitHub." = "Teste a conexão SSH com o GitHub.";
+"Autentique-se com o GitHub CLI para configurar credenciais." = "Autentique-se com o GitHub CLI para configurar credenciais.";
+"Verifique as credenciais salvas no Keychain Access do macOS." = "Verifique as credenciais salvas no Keychain Access do macOS.";
+
+// SidebarView
+"Notificações ativas" = "Notificações ativas";
+
+// BranchReviewSheet
+"branch.review.title" = "Revisão de Branch";
+"branch.review.subtitle" = "Compare duas branches e revise as diferenças com IA";
+"branch.review.target" = "Branch Alvo";
+"branch.review.source" = "Branch Origem";
+"branch.review.button" = "Revisar Branch";
+"branch.review.loading" = "Analisando diferenças...";
+"branch.review.empty" = "Nenhuma diferença encontrada entre as branches";
+
+// HunkDiffView / ChangesScreen
+"Abrir repositorio..." = "Abrir repositório...";
+
+// Keys that existed in EN/ES but not PT-BR (used in code)
+"/caminho/para/worktree" = "/caminho/para/worktree";
+"ATUAL" = "ATUAL";
+"Adicionar" = "Adicionar";
+"Adicionar worktree" = "Adicionar worktree";
+"Aplicar e remover o stash selecionado?" = "Aplicar e remover o stash selecionado?";
+"Aplicar este commit na branch atual?" = "Aplicar este commit na branch atual?";
+"Aplicar o commit informado na branch atual?" = "Aplicar o commit informado na branch atual?";
+"Aplicar o stash selecionado?" = "Aplicar o stash selecionado?";
+"Apply" = "Apply";
+"Branches locais/remotas" = "Branches locais/remotas";
+"Busca (Cmd+F)" = "Busca (Cmd+F)";
+"CUIDADO: Operacoes de reset descartam alteracoes." = "CUIDADO: Operações de reset descartam alterações.";
+"Checkout branch" = "Checkout branch";
+"Checkout e integracao" = "Checkout e integração";
+"Cherry-pick" = "Cherry-pick";
+"Criar o novo worktree com os parametros informados?" = "Criar o novo worktree com os parâmetros informados?";
+"Criar stash" = "Criar stash";
+"Criar tag" = "Criar tag";
+"Criar tag no commit atual?" = "Criar tag no commit atual?";
+"Defina caminho e branch opcional" = "Defina caminho e branch opcional";
+"Deseja remover a tag informada?" = "Deseja remover a tag informada?";
+"Deseja remover o worktree %@?" = "Deseja remover o worktree %@?";
+"Deseja remover permanentemente o stash selecionado?" = "Deseja remover permanentemente o stash selecionado?";
+"Drop" = "Drop";
+"Esta acao e IRREVERSIVEL. Deseja continuar?" = "Esta ação é IRREVERSÍVEL. Deseja continuar?";
+"Fazer checkout da branch %@?" = "Fazer checkout da branch %@?";
+"Fazer checkout da referencia informada?" = "Fazer checkout da referência informada?";
+"Gerencie branches, tags, stashes e alteracoes de historico." = "Gerencie branches, tags, stashes e alterações de histórico.";
+"Gerencie contextos paralelos sem trocar branch no diretorio principal." = "Gerencie contextos paralelos sem trocar branch no diretório principal.";
+"Navegue e salte entre as pontas das branches." = "Navegue e salte entre as pontas das branches.";
+"Nenhum worktree encontrado" = "Nenhum worktree encontrado";
+"Pop" = "Pop";
+"Prune" = "Prune";
+"Prune worktrees" = "Prune worktrees";
+"Rebase e cherry-pick" = "Rebase e cherry-pick";
+"Remover" = "Remover";
+"Remover metadados de worktrees obsoletos?" = "Remover metadados de worktrees obsoletos?";
+"Remover tag" = "Remover tag";
+"Remover worktree" = "Remover worktree";
+"Salvar alteracoes locais no stash?" = "Salvar alterações locais no stash?";
+"Selecionar branch ou hash..." = "Selecionar branch ou hash...";
+"Worktrees disponiveis" = "Worktrees disponíveis";
+"branch (opcional)" = "branch (opcional)";
+"cherry-pick hash" = "cherry-pick hash";
+"itens" = "itens";
+"mensagem do stash" = "mensagem do stash";
+"rebase target" = "rebase target";
+"refs" = "refs";

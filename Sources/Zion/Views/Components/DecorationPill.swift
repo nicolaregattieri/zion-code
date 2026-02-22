@@ -52,6 +52,7 @@ struct DecorationPill: View {
             }
         }
         .help(pillHelp(name: name, type: type, isCurrent: isCurrent))
+        .accessibilityLabel(pillHelp(name: name, type: type, isCurrent: isCurrent))
     }
 
     enum DecorationType {

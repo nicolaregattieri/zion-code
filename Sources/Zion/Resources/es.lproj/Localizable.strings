@@ -98,7 +98,6 @@
 "Fazer merge da branch informada na atual?" = "¿Hacer merge de la rama informada en la actual?";
 "Rebasear a branch atual no target informado?" = "¿Rebasear la rama actual en el objetivo informado?";
 "Nova branch" = "Nueva rama";
-"Criar" = "Crear";
 "Cancelar" = "Cancelar";
 "Fazer checkout" = "Hacer checkout";
 "Checkout & Pull" = "Checkout y Pull";
@@ -259,16 +258,13 @@
 "Descartar alteracoes" = "Descartar cambios";
 "Descartar" = "Descartar";
 "Deseja reverter todas as mudancas neste arquivo? Isso nao pode ser desfeito." = "¿Desea revertir todos los cambios en este archivo? Esto no se puede deshacer.";
-"Checkout & Abrir no Editor" = "Checkout y abrir en el editor";
 
 // L10n coverage fixes
-"Nunca confirmar" = "Nunca confirmar";
 "Confirmar criticas" = "Confirmar críticas";
 "Confirmar todas" = "Confirmar todas";
 "Selecionar do Disco..." = "Seleccionar del disco...";
 "Modificado" = "Modificado";
 "Nao inicializado" = "No inicializado";
-"OK" = "OK";
 "Sistema" = "Sistema";
 "%d commits" = "%d commits";
 "Tag: %@" = "Tag: %@";
@@ -331,7 +327,6 @@
 "Navegacao" = "Navegación";
 "Codigo" = "Código";
 "Grafo" = "Grafo";
-"Editor" = "Editor";
 "Quick Open" = "Quick Open";
 "Barra lateral" = "Barra lateral";
 "Maximizar terminal" = "Maximizar terminal";
@@ -353,7 +348,6 @@
 "O Zion precisa do Git instalado para funcionar. Por favor, instale o Git e reinicie o app." = "Zion requiere que Git esté instalado. Por favor, instala Git y reinicia la aplicación.";
 "Chave registrada" = "Clave registrada";
 "Alterar" = "Cambiar";
-"Salvar" = "Guardar";
 "Chave de API" = "Clave de API";
 "Chave salva no Keychain" = "Clave guardada en Keychain";
 "Gerar mensagem com IA" = "Generar mensaje con IA";
@@ -447,7 +441,6 @@
 "Marcar como Resolvido" = "Marcar como Resuelto";
 "Continuar Merge" = "Continuar Merge";
 "Continuar Rebase" = "Continuar Rebase";
-"Continuar" = "Continuar";
 "Todos os conflitos resolvidos!" = "Todos los conflictos resueltos!";
 "conflitos restantes" = "conflictos restantes";
 "Conflito" = "Conflicto";
@@ -980,3 +973,130 @@
 "Inteligencia Artificial" = "Inteligencia Artificial";
 "Informacoes" = "Información";
 "Manutencao" = "Mantenimiento";
+
+// --- L10n Audit: Missing Keys ---
+
+// GitClient errors
+"gitError.commandFailed" = "Error al ejecutar `%@`: %@";
+"Selecione um repositorio Git primeiro." = "Seleccione un repositorio Git primero.";
+"Selecione um repositorio Git." = "Seleccione un repositorio Git.";
+
+// RepositoryViewModel status messages
+"Carregando detalhes do commit..." = "Cargando detalles del commit...";
+"Selecione um commit para ver os detalhes." = "Seleccione un commit para ver los detalles.";
+"Hunk staged com sucesso." = "Hunk staged con éxito.";
+"Hunk unstaged com sucesso." = "Hunk unstaged con éxito.";
+"Linhas staged com sucesso." = "Líneas staged con éxito.";
+"Nenhuma mudanca." = "Sin cambios.";
+"Nenhuma diferenca entre as branches." = "No hay diferencias entre las branches.";
+"Rebase interativo concluido com sucesso." = "Rebase interactivo completado con éxito.";
+"Commit corrigido com sucesso." = "Commit corregido con éxito.";
+
+// GraphScreen & commit actions
+"Esc" = "Esc";
+"Staged" = "Staged";
+"Stage All" = "Stage All";
+"Stage Hunk" = "Stage Hunk";
+"Stage Linhas" = "Stage Líneas";
+"Unstage" = "Unstage";
+"Unstage All" = "Unstage All";
+"Salvar no Stash" = "Guardar en Stash";
+"Sugerir mensagem de commit" = "Sugerir mensaje de commit";
+"Descartar Mudanças" = "Descartar Cambios";
+"Selecionar..." = "Seleccionar...";
+"Clipboard" = "Portapapeles";
+"Imagem" = "Imagen";
+"Colar no Terminal" = "Pegar en Terminal";
+"Limpar tudo" = "Limpiar todo";
+"agora" = "ahora";
+
+// ContentView commit context menu
+"Revert" = "Revert";
+"Reverter este commit criando um novo commit?" = "¿Revertir este commit creando un nuevo commit?";
+"Rebase Interativo a partir daqui..." = "Rebase interactivo desde aquí...";
+"Reflog / Desfazer" = "Reflog / Deshacer";
+
+// Branch context menu
+"Criar Pull Request..." = "Crear Pull Request...";
+
+// ReflogSheet
+"Reflog" = "Reflog";
+"Historico de acoes do repositorio" = "Historial de acciones del repositorio";
+"Desfazer Ultima Acao" = "Deshacer Última Acción";
+"Carregando reflog..." = "Cargando reflog...";
+"Reset --soft para aqui" = "Reset --soft hasta aquí";
+"Reset --hard para aqui" = "Reset --hard hasta aquí";
+
+// BlameView
+"Git Blame" = "Git Blame";
+
+// RepositoryStatsView
+"Estatisticas" = "Estadísticas";
+"Visao geral do repositorio" = "Vista general del repositorio";
+"Carregue as estatisticas para visualizar." = "Cargue las estadísticas para visualizar.";
+"Carregar" = "Cargar";
+"Autores" = "Autores";
+"Top Contribuidores" = "Principales Contribuidores";
+"Linguagens" = "Lenguajes";
+
+// SubmodulesCard
+"Submodulos" = "Submódulos";
+"Nenhum submodulo encontrado." = "Ningún submódulo encontrado.";
+"Dependencias externas do repositorio" = "Dependencias externas del repositorio";
+"Init" = "Init";
+"Update" = "Update";
+"Sync" = "Sync";
+
+// InteractiveRebaseSheet
+"Rebase Interativo" = "Rebase Interactivo";
+"Base: %@" = "Base: %@";
+"Executar Rebase" = "Ejecutar Rebase";
+
+// PullRequestSheet
+"Criar Pull Request" = "Crear Pull Request";
+"Titulo" = "Título";
+"Titulo do PR..." = "Título del PR...";
+"Branch base" = "Branch base";
+"Descricao" = "Descripción";
+"Criar como Draft" = "Crear como Borrador";
+"PR criado com sucesso!" = "¡PR creado con éxito!";
+"Abrir no Navegador" = "Abrir en Navegador";
+"Criar PR" = "Crear PR";
+"Nenhum remote GitHub detectado." = "Ningún remote de GitHub detectado.";
+
+// AuthErrorSheet
+"Erro de Autenticacao" = "Error de Autenticación";
+"Nao foi possivel acessar o repositorio remoto." = "No se pudo acceder al repositorio remoto.";
+"Possiveis solucoes:" = "Posibles soluciones:";
+"Verifique se sua chave SSH esta adicionada ao ssh-agent." = "Verifique que su clave SSH esté añadida al ssh-agent.";
+"Teste a conexao SSH com o GitHub." = "Pruebe la conexión SSH con GitHub.";
+"Autentique-se com o GitHub CLI para configurar credenciais." = "Autentíquese con el GitHub CLI para configurar credenciales.";
+"Verifique as credenciais salvas no Keychain Access do macOS." = "Verifique las credenciales guardadas en Keychain Access de macOS.";
+
+// SidebarView
+"Notificações ativas" = "Notificaciones activas";
+
+// BranchReviewSheet
+"branch.review.title" = "Revisión de Branch";
+"branch.review.subtitle" = "Compare dos branches y revise las diferencias con IA";
+"branch.review.target" = "Branch Destino";
+"branch.review.source" = "Branch Origen";
+"branch.review.button" = "Revisar Branch";
+"branch.review.loading" = "Analizando diferencias...";
+"branch.review.empty" = "No se encontraron diferencias entre las branches";
+
+// Cross-language sync: keys in EN/ES but missing from ES
+"Aplicar o commit informado na branch atual?" = "¿Aplicar el commit ingresado en la rama actual?";
+"Apply" = "Apply";
+"Criar tag" = "Crear tag";
+"Danger Zone" = "Zona de Peligro";
+"Deseja remover permanentemente o stash selecionado?" = "¿Eliminar permanentemente el stash seleccionado?";
+"Detalhes" = "Detalles";
+"Drop" = "Drop";
+"Nome da branch a partir de %@" = "Nombre de la rama a partir de %@:";
+"Pop" = "Pop";
+"Prune worktrees" = "Prune worktrees";
+"Recentes" = "Recientes";
+"Remover tag" = "Eliminar tag";
+"Remover worktree" = "Eliminar worktree";
+"Saltar para" = "Saltar a";
