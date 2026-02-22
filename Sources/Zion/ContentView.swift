@@ -9,8 +9,22 @@ struct ContentView: View {
         case workspace
     }
 
+    private enum LaunchPhase {
+        case bootstrapping
+        case ready
+    }
+
+    private enum NavigationEvent {
+        case repositoryOpened
+        case requestSection(AppSection)
+        case showOnboardingFromHelp
+        case navigateToGraph
+        case navigateToCode
+    }
+
     @State private var model = RepositoryViewModel()
-    @State private var selectedSection: AppSection? = .code
+    @State private var launchPhase: LaunchPhase = .bootstrapping
+    @State private var selectedSection: AppSection = .code
     @State private var commitSearchQuery: String = ""
     @State private var selectedBranchTreeNodeID: String?
     @State private var isShortcutsVisible: Bool = false
@@ -39,6 +53,31 @@ struct ContentView: View {
             return .welcome
         }
         return .workspace
+    }
+
+    private let logger = DiagnosticLogger.shared
+
+    private func route(_ event: NavigationEvent) {
+        switch event {
+        case .repositoryOpened:
+            hasCompletedOnboarding = true
+            shouldPresentOnboardingFromHelp = false
+            selectedSection = .code
+        case .requestSection(let section):
+            guard section == .code || model.repositoryURL != nil else {
+                model.statusMessage = L10n("Abra um repositorio para acessar %@", L10n(section.title))
+                return
+            }
+            selectedSection = section
+        case .showOnboardingFromHelp:
+            isHelpVisible = false
+            selectedSection = .code
+            shouldPresentOnboardingFromHelp = true
+        case .navigateToGraph:
+            selectedSection = .graph
+        case .navigateToCode:
+            selectedSection = .code
+        }
     }
 
     var body: some View {
@@ -97,11 +136,11 @@ struct ContentView: View {
             .background {
                 // Cmd+1/2/3 tab switching (standard macOS convention)
                 Group {
-                    Button("") { selectedSection = .code }
+                    Button("") { route(.requestSection(.code)) }
                         .keyboardShortcut("1", modifiers: .command)
-                    Button("") { selectedSection = .graph }
+                    Button("") { route(.requestSection(.graph)) }
                         .keyboardShortcut("2", modifiers: .command)
-                    Button("") { selectedSection = .operations }
+                    Button("") { route(.requestSection(.operations)) }
                         .keyboardShortcut("3", modifiers: .command)
                     Button("") { isShortcutsVisible = true }
                         .keyboardShortcut("/", modifiers: .command)
@@ -121,11 +160,19 @@ struct ContentView: View {
         .preferredColorScheme(appearance.colorScheme)
         .environment(\.locale, uiLanguage.locale)
         .onAppear {
+            logger.log(.info, "Boot: starting", source: "ContentView")
             model.restoreEditorSettings()
-            model.restoreLastRepository()
-            if model.repositoryURL != nil {
+            let result = model.restoreLastRepository()
+            switch result {
+            case .opened(let url):
                 hasCompletedOnboarding = true
+                logger.log(.info, "Boot: restored \(url.lastPathComponent)", source: "ContentView")
+            case .missing(let url):
+                logger.log(.info, "Boot: missing \(url.lastPathComponent)", source: "ContentView")
+            case .none:
+                logger.log(.info, "Boot: no recent repo", source: "ContentView")
             }
+            launchPhase = .ready
             // Robust window activation
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 if let window = NSApp.windows.first(where: { $0.isVisible }) {
@@ -139,9 +186,7 @@ struct ContentView: View {
         }
         .onChange(of: model.repositoryURL) { _, url in
             if url != nil {
-                hasCompletedOnboarding = true
-                shouldPresentOnboardingFromHelp = false
-                selectedSection = .code
+                route(.repositoryOpened)
             }
         }
         .onChange(of: selectedSection) { _, _ in
@@ -155,13 +200,13 @@ struct ContentView: View {
         }
         .onChange(of: model.navigateToGraphRequested) { _, requested in
             if requested {
-                selectedSection = .graph
+                route(.navigateToGraph)
                 model.navigateToGraphRequested = false
             }
         }
         .onChange(of: model.navigateToCodeRequested) { _, requested in
             if requested {
-                selectedSection = .code
+                route(.navigateToCode)
                 model.navigateToCodeRequested = false
             }
         }
@@ -196,38 +241,40 @@ struct ContentView: View {
             isHelpVisible = true
         }
         .onReceive(NotificationCenter.default.publisher(for: .showOnboarding)) { _ in
-            isHelpVisible = false
-            selectedSection = .code
-            shouldPresentOnboardingFromHelp = true
+            route(.showOnboardingFromHelp)
         }
     }
 
     @ViewBuilder
     private var detailViewHost: some View {
-        switch rootPresentation {
-        case .onboarding:
-            ClimbingZionView(
-                model: model,
-                onComplete: {
-                    hasCompletedOnboarding = true
-                    shouldPresentOnboardingFromHelp = false
-                },
-                onOpen: {
-                    hasCompletedOnboarding = true
-                    shouldPresentOnboardingFromHelp = false
-                    openRepositoryPanel()
-                },
-                onInit: {
-                    hasCompletedOnboarding = true
-                    shouldPresentOnboardingFromHelp = false
-                    initRepositoryPanel()
-                }
-            )
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        case .welcome:
-            WelcomeScreen(model: model, onOpen: { openRepositoryPanel() }, onInit: { initRepositoryPanel() })
-        case .workspace:
-            workspaceHost
+        if launchPhase == .bootstrapping {
+            Color.clear // Liquid background shows through during bootstrap
+        } else {
+            switch rootPresentation {
+            case .onboarding:
+                ClimbingZionView(
+                    model: model,
+                    onComplete: {
+                        hasCompletedOnboarding = true
+                        shouldPresentOnboardingFromHelp = false
+                    },
+                    onOpen: {
+                        hasCompletedOnboarding = true
+                        shouldPresentOnboardingFromHelp = false
+                        openRepositoryPanel()
+                    },
+                    onInit: {
+                        hasCompletedOnboarding = true
+                        shouldPresentOnboardingFromHelp = false
+                        initRepositoryPanel()
+                    }
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            case .welcome:
+                WelcomeScreen(model: model, onOpen: { openRepositoryPanel() }, onInit: { initRepositoryPanel() })
+            case .workspace:
+                workspaceHost
+            }
         }
     }
 
@@ -269,7 +316,7 @@ struct ContentView: View {
 
     @ViewBuilder
     private var nonCodeMainContent: some View {
-        switch selectedSection ?? .graph {
+        switch selectedSection {
         case .graph:
             GraphScreen(
                 model: model,

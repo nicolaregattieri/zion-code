@@ -2,7 +2,7 @@ import SwiftUI
 
 struct SidebarView: View {
     @Bindable var model: RepositoryViewModel
-    @Binding var selectedSection: AppSection?
+    @Binding var selectedSection: AppSection
     @Binding var selectedBranchTreeNodeID: String?
     @Binding var confirmationModeRaw: String
     @Binding var uiLanguageRaw: String
@@ -229,7 +229,7 @@ struct SidebarView: View {
     }
 
     private func workspaceButton(for section: AppSection) -> some View {
-        let isSelected = (selectedSection ?? .graph) == section
+        let isSelected = selectedSection == section
         let isDisabled = section != .code && model.repositoryURL == nil
         
         return Button { selectedSection = section } label: {
