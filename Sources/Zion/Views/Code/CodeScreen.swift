@@ -123,6 +123,7 @@ struct CodeScreen: View {
                     model: model,
                     isVisible: $isQuickOpenVisible
                 )
+                .transition(DesignSystem.Motion.fadeScale)
             }
         }
         .padding(12)
@@ -136,17 +137,17 @@ struct CodeScreen: View {
             }
         }
         .background {
-            Button("") { isQuickOpenVisible.toggle() }
+            Button("") { withAnimation(DesignSystem.Motion.detail) { isQuickOpenVisible.toggle() } }
                 .keyboardShortcut("p", modifiers: .command)
                 .frame(width: 0, height: 0).opacity(0)
 
-            Button("") { withAnimation(.easeInOut(duration: 0.2)) { isFileBrowserVisible.toggle() } }
+            Button("") { withAnimation(DesignSystem.Motion.panel) { isFileBrowserVisible.toggle() } }
                 .keyboardShortcut("b", modifiers: .command)
                 .frame(width: 0, height: 0).opacity(0)
 
             // Toggle terminal visibility (Cmd+J)
             Button("") {
-                withAnimation(.easeInOut(duration: 0.15)) {
+                withAnimation(DesignSystem.Motion.detail) {
                     layout = layout == .editorOnly ? .split : .editorOnly
                 }
             }
@@ -155,7 +156,7 @@ struct CodeScreen: View {
 
             // Maximize terminal (Cmd+Shift+J)
             Button("") {
-                withAnimation(.easeInOut(duration: 0.15)) {
+                withAnimation(DesignSystem.Motion.detail) {
                     layout = layout == .terminalOnly ? .split : .terminalOnly
                 }
             }
@@ -204,7 +205,7 @@ struct CodeScreen: View {
     private var editorToolbar: some View {
         HStack(spacing: 6) {
             Button {
-                withAnimation(.easeInOut(duration: 0.2)) { isFileBrowserVisible.toggle() }
+                withAnimation(DesignSystem.Motion.panel) { isFileBrowserVisible.toggle() }
             } label: {
                 Image(systemName: "sidebar.left").font(.caption)
             }
@@ -304,7 +305,7 @@ struct CodeScreen: View {
             // Layout toggle: editor / split / terminal
             HStack(spacing: 2) {
                 Button {
-                    withAnimation(.easeInOut(duration: 0.15)) { layout = .editorOnly }
+                    withAnimation(DesignSystem.Motion.detail) { layout = .editorOnly }
                 } label: {
                     Image(systemName: "rectangle.topthird.inset.filled")
                         .font(.system(size: 11, weight: .medium))
@@ -317,7 +318,7 @@ struct CodeScreen: View {
                 .accessibilityLabel(L10n("Somente editor"))
 
                 Button {
-                    withAnimation(.easeInOut(duration: 0.15)) { layout = .split }
+                    withAnimation(DesignSystem.Motion.detail) { layout = .split }
                 } label: {
                     Image(systemName: "rectangle.split.1x2")
                         .font(.system(size: 11, weight: .medium))
@@ -330,7 +331,7 @@ struct CodeScreen: View {
                 .accessibilityLabel(L10n("Editor e terminal"))
 
                 Button {
-                    withAnimation(.easeInOut(duration: 0.15)) { layout = .terminalOnly }
+                    withAnimation(DesignSystem.Motion.detail) { layout = .terminalOnly }
                 } label: {
                     Image(systemName: "rectangle.bottomthird.inset.filled")
                         .font(.system(size: 11, weight: .medium))
@@ -463,7 +464,7 @@ struct CodeScreen: View {
                         if selectedBrowserIndex >= 0 && selectedBrowserIndex < flatFiles.count {
                             let item = flatFiles[selectedBrowserIndex]
                             if item.isDirectory && model.expandedPaths.contains(item.id) {
-                                withAnimation(.snappy(duration: 0.2)) { model.toggleExpansion(for: item.id) }
+                                withAnimation(DesignSystem.Motion.snappy) { model.toggleExpansion(for: item.id) }
                             }
                         }
                         return
@@ -472,7 +473,7 @@ struct CodeScreen: View {
                         if selectedBrowserIndex >= 0 && selectedBrowserIndex < flatFiles.count {
                             let item = flatFiles[selectedBrowserIndex]
                             if item.isDirectory && !model.expandedPaths.contains(item.id) {
-                                withAnimation(.snappy(duration: 0.2)) { model.toggleExpansion(for: item.id) }
+                                withAnimation(DesignSystem.Motion.snappy) { model.toggleExpansion(for: item.id) }
                             }
                         }
                         return
@@ -516,6 +517,7 @@ struct CodeScreen: View {
 
                 if isSearchVisible {
                     findReplaceBar
+                        .transition(DesignSystem.Motion.slideFromTop)
                         .background(model.selectedTheme.colors.background)
                         .environment(\.colorScheme, model.selectedTheme.isLightAppearance ? .light : .dark)
                 }
@@ -582,7 +584,7 @@ struct CodeScreen: View {
             HStack(spacing: 8) {
                 // Toggle replace visibility
                 Button {
-                    withAnimation(.easeInOut(duration: 0.15)) { isReplaceVisible.toggle() }
+                    withAnimation(DesignSystem.Motion.detail) { isReplaceVisible.toggle() }
                 } label: {
                     Image(systemName: isReplaceVisible ? "chevron.down" : "chevron.right")
                         .font(.system(size: 9, weight: .bold))
@@ -711,14 +713,14 @@ struct CodeScreen: View {
     }
 
     private func toggleSearch() {
-        withAnimation(.easeInOut(duration: 0.15)) {
+        withAnimation(DesignSystem.Motion.detail) {
             isSearchVisible.toggle()
             if !isSearchVisible { closeSearch() }
         }
     }
 
     private func toggleReplace() {
-        withAnimation(.easeInOut(duration: 0.15)) {
+        withAnimation(DesignSystem.Motion.detail) {
             if !isSearchVisible { isSearchVisible = true }
             isReplaceVisible.toggle()
         }
@@ -1525,7 +1527,7 @@ struct FileTreeNodeView: View {
         VStack(alignment: .leading, spacing: 0) {
             Button {
                 if item.isDirectory {
-                    withAnimation(.snappy(duration: 0.2)) { model.toggleExpansion(for: item.id) }
+                    withAnimation(DesignSystem.Motion.snappy) { model.toggleExpansion(for: item.id) }
                 } else { model.selectCodeFile(item) }
             } label: {
                 HStack(spacing: 6) {

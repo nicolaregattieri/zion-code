@@ -5,6 +5,18 @@
 
 ---
 
+## Climbing Zion (First-Time Onboarding)
+
+| Feature | Description |
+|---------|-------------|
+| 5-Step Flow | Welcome, Zion Tree, Zion Code, AI Assistant, Ready — guided introduction |
+| First-Launch Detection | Shows only once via `UserDefaults` flag; returning users see normal WelcomeScreen |
+| Feature Highlights | Each step showcases a pillar: graph visualization, code editor, terminal, AI |
+| AI Setup (Optional) | Provider selection (Anthropic/OpenAI/Gemini) with direct API key links and inline input |
+| Skip-Friendly | "Skip onboarding" link on step 0, "Skip for now" on AI step — non-blocking design |
+| Localized | Full L10n support in Portuguese (BR), English, and Spanish |
+| Navigation | Step dots, Back/Continue buttons, Enter/Escape keyboard shortcuts |
+
 ## Zion Tree (Graph Visualization)
 
 | Feature | Description | Shortcut |

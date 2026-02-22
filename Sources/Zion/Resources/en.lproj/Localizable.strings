@@ -1128,3 +1128,43 @@
 "map.code.filehistory.title" = "File History";
 "map.code.filehistory.description" = "View the commit history for any file. Shows hash, author, date, and message for each commit that touched the file.";
 "map.code.filehistory.tip1" = "Right-click a file and select File History, or use the toolbar button.";
+
+// Climbing Zion — Onboarding
+"onboarding.title" = "Climbing Zion";
+"onboarding.subtitle" = "The view from the top.";
+"onboarding.discover" = "Discover";
+"onboarding.skip" = "Skip";
+"onboarding.continue" = "Continue";
+"onboarding.back" = "Back";
+"onboarding.skipOnboarding" = "Skip onboarding";
+
+"onboarding.tree.title" = "Zion Tree";
+"onboarding.tree.subtitle" = "Your Git history, visualized.";
+"onboarding.tree.lanes" = "Color-coded lanes show branch flow at a glance";
+"onboarding.tree.search" = "Search commits, tags, and branches instantly";
+"onboarding.tree.pending" = "See pending changes right in the graph";
+"onboarding.tree.stash" = "Stash management built into the commit list";
+
+"onboarding.code.title" = "Zion Code";
+"onboarding.code.subtitle" = "Edit, review, and run — all in one place.";
+"onboarding.code.editor" = "Syntax highlighting with 6 beautiful themes";
+"onboarding.code.terminal" = "Integrated terminal with splits and tabs";
+"onboarding.code.blame" = "Git blame with inline annotations";
+"onboarding.code.clipboard" = "Smart clipboard for snippets and images";
+
+"onboarding.ai.title" = "AI Assistant";
+"onboarding.ai.subtitle" = "12 AI-powered features to supercharge your workflow.";
+"onboarding.ai.optional" = "This is completely optional.";
+"onboarding.ai.laterHint" = "You can always enable this later in Settings > AI.";
+"onboarding.ai.getKey" = "Get API Key";
+"onboarding.ai.skipAI" = "Skip for now";
+"onboarding.ai.keySaved" = "Key saved!";
+"onboarding.ai.features" = "Commit messages, diff explanation, code review, semantic search, conflict resolution, and more.";
+
+"onboarding.ready.title" = "You're at the top!";
+"onboarding.ready.subtitle" = "Zion is ready. Open a repository to begin.";
+"onboarding.ready.openRepo" = "Open a Repository";
+"onboarding.ready.cloneRepo" = "Clone a Repository";
+"onboarding.ready.initRepo" = "Initialize a Repository";
+"onboarding.ready.enabled" = "Enabled";
+"onboarding.ready.skipped" = "Not configured";

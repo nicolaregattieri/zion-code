@@ -185,7 +185,7 @@ struct HelpSheet: View {
                 .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
         )
         .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.15)) {
+            withAnimation(DesignSystem.Motion.detail) {
                 hoveredSection = hovering ? section : nil
             }
         }

@@ -17,6 +17,7 @@ struct ClipboardDrawer: View {
             if !model.clipboardMonitor.isCollapsed {
                 Divider()
                 content
+                    .transition(DesignSystem.Motion.slideFromBottom)
             }
         }
         .background(DesignSystem.Colors.background.opacity(0.3))
@@ -30,7 +31,7 @@ struct ClipboardDrawer: View {
     private var header: some View {
         HStack(spacing: 8) {
             Button {
-                withAnimation(.snappy(duration: 0.2)) {
+                withAnimation(DesignSystem.Motion.snappy) {
                     model.clipboardMonitor.isCollapsed.toggle()
                 }
             } label: {

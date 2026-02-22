@@ -263,7 +263,7 @@ struct GraphScreen: View {
                             },
                             onSelect: {
                                 showingPendingChanges = false
-                                withAnimation(.easeInOut(duration: 0.12)) {
+                                withAnimation(DesignSystem.Motion.graph) {
                                     model.selectCommit(commit.id)
                                 }
                             },
@@ -555,7 +555,7 @@ struct GraphScreen: View {
             if direction == 1 {
                 let first = commits[0]
                 showingPendingChanges = false
-                withAnimation(.easeInOut(duration: 0.12)) {
+                withAnimation(DesignSystem.Motion.graph) {
                     model.selectCommit(first.id)
                     proxy.scrollTo(first.id, anchor: .center)
                 }
@@ -576,7 +576,7 @@ struct GraphScreen: View {
         if nextIndex >= 0 && nextIndex < commits.count {
             let nextCommit = commits[nextIndex]
             showingPendingChanges = false
-            withAnimation(.easeInOut(duration: 0.12)) {
+            withAnimation(DesignSystem.Motion.graph) {
                 model.selectCommit(nextCommit.id)
                 proxy.scrollTo(nextCommit.id, anchor: .center)
             }
