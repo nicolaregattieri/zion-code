@@ -384,11 +384,11 @@ struct SidebarView: View {
                 Spacer()
 
                 SettingsLink {
-                    Label(L10n("settings.open"), systemImage: "gearshape")
-                        .font(.system(size: 10, weight: .medium))
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
+                .buttonStyle(.plain)
                 .help(L10n("settings.open.hint"))
             }
         }

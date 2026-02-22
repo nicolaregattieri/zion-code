@@ -1087,3 +1087,6 @@
 "branch.review.button" = "Review Branch";
 "branch.review.loading" = "Analyzing differences...";
 "branch.review.empty" = "No differences found between branches";
+
+// Cherry-pick confirmation
+"Aplicar este commit na branch atual?" = "Apply this commit to the current branch?";

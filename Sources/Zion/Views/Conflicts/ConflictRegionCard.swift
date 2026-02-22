@@ -152,7 +152,7 @@ struct ConflictRegionCard: View {
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
-                    .tint(DesignSystem.Colors.semanticSearch)
+                    .tint(DesignSystem.Colors.ai)
                     .disabled(model.isGeneratingAIMessage)
                     .help(L10n("Resolver conflito com IA"))
                     .onChange(of: model.aiConflictResolution) { _, newValue in

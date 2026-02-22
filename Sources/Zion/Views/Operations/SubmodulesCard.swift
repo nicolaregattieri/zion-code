@@ -4,7 +4,7 @@ struct SubmodulesCard: View {
     var model: RepositoryViewModel
 
     var body: some View {
-        GlassCard(spacing: 12) {
+        GlassCard(spacing: 12, expanding: true) {
             CardHeader(L10n("Submodulos"), icon: "cube.transparent", subtitle: L10n("Dependencias externas do repositorio"))
 
             if model.submodules.isEmpty {

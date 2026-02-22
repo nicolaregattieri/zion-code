@@ -32,7 +32,7 @@ struct PRInboxCard: View {
                             .foregroundStyle(.white)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Capsule().fill(DesignSystem.Colors.codeReview.opacity(0.7)))
+                            .background(Capsule().fill(DesignSystem.Colors.ai.opacity(0.7)))
                     }
 
                     Button {
@@ -100,7 +100,7 @@ struct PRInboxCard: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
-                .tint(DesignSystem.Colors.codeReview)
+                .tint(DesignSystem.Colors.ai)
             }
         }
     }

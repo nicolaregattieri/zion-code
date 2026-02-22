@@ -471,7 +471,6 @@ struct GraphScreen: View {
                             }
                         }
                         .buttonStyle(.bordered)
-                        .tint(.blue)
                         .controlSize(.small)
                         .sheet(isPresented: $isShowingQuickStash) {
                             VStack(alignment: .leading, spacing: 16) {
