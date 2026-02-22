@@ -178,9 +178,9 @@ struct HelpSheet: View {
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(isHovered ? DesignSystem.Colors.glassHover : DesignSystem.Colors.glassSubtle)
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous)
                 .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
         )
         .onHover { hovering in
@@ -210,13 +210,13 @@ struct HelpSheet: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
                 .background(DesignSystem.Colors.glassSubtle)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
         }
         .padding(14)
         .background(DesignSystem.Colors.glassSubtle)
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous)
                 .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
         )
     }

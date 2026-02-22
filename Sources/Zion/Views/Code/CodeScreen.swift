@@ -1073,10 +1073,10 @@ struct TerminalFontPopoverButton: View {
                     HStack(spacing: 4) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.system(size: 9))
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(DesignSystem.Colors.warning)
                         Text(L10n("Fonte nao encontrada, usando fallback"))
                             .font(.system(size: 10))
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(DesignSystem.Colors.warning)
                     }
                 }
 
@@ -1221,7 +1221,7 @@ struct CodeTab: View {
         }
         .overlay(alignment: .trailing) {
             if !isActive {
-                Rectangle().fill(Color.white.opacity(0.08)).frame(width: 1).padding(.vertical, 8)
+                Rectangle().fill(DesignSystem.Colors.glassHover).frame(width: 1).padding(.vertical, 8)
             }
         }
         .contentShape(Rectangle())

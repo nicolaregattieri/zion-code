@@ -15,7 +15,7 @@ struct AuthErrorSheet: View {
             HStack(spacing: 12) {
                 Image(systemName: "lock.trianglebadge.exclamationmark")
                     .font(.system(size: 28))
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(DesignSystem.Colors.warning)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(L10n("Erro de Autenticacao")).font(.headline)
                     Text(L10n("Nao foi possivel acessar o repositorio remoto."))
@@ -32,15 +32,15 @@ struct AuthErrorSheet: View {
                     // Error details
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.red)
+                            .foregroundStyle(DesignSystem.Colors.error)
                         Text(errorMessage)
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.secondary)
                             .textSelection(.enabled)
                     }
                     .padding(12)
-                    .background(Color.red.opacity(0.06))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .background(DesignSystem.Colors.dangerBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
 
                     // Remote info
                     if !remotes.isEmpty {
@@ -124,7 +124,7 @@ struct AuthErrorSheet: View {
                     HStack(spacing: 6) {
                         Text(command)
                             .font(.system(size: 10, design: .monospaced))
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(DesignSystem.Colors.warning)
                         Button {
                             NSPasteboard.general.clearContents()
                             NSPasteboard.general.setString(command, forType: .string)
@@ -135,7 +135,7 @@ struct AuthErrorSheet: View {
                         .buttonStyle(.plain).foregroundStyle(.secondary)
                     }
                     .padding(6)
-                    .background(Color.black.opacity(0.15))
+                    .background(DesignSystem.Colors.glassOverlay)
                     .clipShape(RoundedRectangle(cornerRadius: 4))
                 }
             }

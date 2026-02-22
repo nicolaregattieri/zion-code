@@ -27,11 +27,11 @@ struct StatPill: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius, style: .continuous)
                 .fill(DesignSystem.Colors.glassElevated)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius, style: .continuous)
                 .stroke(DesignSystem.Colors.glassStroke, lineWidth: 1)
         )
     }
@@ -62,11 +62,11 @@ struct StatusChip: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
         .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous)
                 .fill(tint.opacity(0.12))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous)
                 .stroke(tint.opacity(0.2), lineWidth: 1)
         )
     }

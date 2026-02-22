@@ -28,30 +28,42 @@ struct OperationsScreen: View {
                 }
                 .padding(.bottom, 10)
 
-                HStack(alignment: .top, spacing: 20) {
-                    VStack(spacing: 20) {
-                        commitCard
-                        branchCard
-                        stashCard
-                        tagsCard
-                    }
-                    .frame(maxWidth: .infinity)
+                commitCard
 
-                    VStack(spacing: 20) {
-                        historyCard
-                        remotesCard
-                        if model.isAIConfigured {
-                            changelogCard
-                            codeReviewCard
-                        }
-                        worktreeCard
-                        SubmodulesCard(model: model)
-                        RepositoryStatsCard(model: model)
-                        cleanupCard
-                        resetCard
-                    }
-                    .frame(maxWidth: .infinity)
+                SectionLabel(title: L10n("Operacoes Principais"), icon: "arrow.triangle.turn.up.right.diamond")
+                HStack(alignment: .top, spacing: 20) {
+                    branchCard.frame(maxWidth: .infinity)
+                    historyCard.frame(maxWidth: .infinity)
                 }
+
+                SectionLabel(title: L10n("Snapshots"), icon: "camera")
+                HStack(alignment: .top, spacing: 20) {
+                    stashCard.frame(maxWidth: .infinity)
+                    tagsCard.frame(maxWidth: .infinity)
+                }
+
+                SectionLabel(title: L10n("Infraestrutura"), icon: "network")
+                HStack(alignment: .top, spacing: 20) {
+                    remotesCard.frame(maxWidth: .infinity)
+                    worktreeCard.frame(maxWidth: .infinity)
+                }
+
+                if model.isAIConfigured {
+                    SectionLabel(title: L10n("Inteligencia Artificial"), icon: "sparkles")
+                    HStack(alignment: .top, spacing: 20) {
+                        changelogCard.frame(maxWidth: .infinity)
+                        codeReviewCard.frame(maxWidth: .infinity)
+                    }
+                }
+
+                SectionLabel(title: L10n("Informacoes"), icon: "info.circle")
+                HStack(alignment: .top, spacing: 20) {
+                    SubmodulesCard(model: model).frame(maxWidth: .infinity)
+                    RepositoryStatsCard(model: model).frame(maxWidth: .infinity)
+                }
+
+                SectionLabel(title: L10n("Manutencao"), icon: "wrench.and.screwdriver")
+                maintenanceCard
             }
             .padding(24)
             .padding(.bottom, 32)
@@ -104,8 +116,8 @@ struct OperationsScreen: View {
                     .frame(maxHeight: 120)
                     .padding(12)
                     .background(DesignSystem.Colors.glassInset)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(DesignSystem.Colors.glassStroke, lineWidth: 1))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius))
+                    .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius).stroke(DesignSystem.Colors.glassStroke, lineWidth: 1))
 
                     Button {
                         model.suggestCommitMessage()
@@ -202,13 +214,13 @@ struct OperationsScreen: View {
                             .padding(8)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(finding.severity.color.opacity(0.06))
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
-                            .overlay(RoundedRectangle(cornerRadius: 6).stroke(finding.severity.color.opacity(0.2)))
+                            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
+                            .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius).stroke(finding.severity.color.opacity(0.2)))
                         }
                     }
                     .padding(10)
                     .background(DesignSystem.Colors.glassSubtle)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius))
                 }
 
                 // AI Commit Split Suggestions
@@ -240,12 +252,12 @@ struct OperationsScreen: View {
                             .padding(8)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(DesignSystem.Colors.glassMinimal)
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
                         }
                     }
                     .padding(10)
                     .background(DesignSystem.Colors.glassSubtle)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius))
                 }
 
                 Button(action: {
@@ -307,7 +319,7 @@ struct OperationsScreen: View {
                     Text(L10n("Nenhuma branch encontrada")).font(.caption).foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, minHeight: 80)
-                .overlay(RoundedRectangle(cornerRadius: 10).stroke(DesignSystem.Colors.glassStroke, lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius).stroke(DesignSystem.Colors.glassStroke, lineWidth: 1))
             } else {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
@@ -318,7 +330,7 @@ struct OperationsScreen: View {
                                 VStack(alignment: .leading, spacing: 2) {
                                     HStack {
                                         if branch.name == model.currentBranch {
-                                            Image(systemName: "checkmark.circle.fill").font(.caption2).foregroundStyle(.green)
+                                            Image(systemName: "checkmark.circle.fill").font(.caption2).foregroundStyle(DesignSystem.Colors.success)
                                         }
                                         Text(branch.name).font(.system(.caption, design: .monospaced))
                                             .fontWeight(branch.name == model.currentBranch ? .bold : .regular)
@@ -341,7 +353,7 @@ struct OperationsScreen: View {
                     }
                 }
                 .frame(minHeight: 120, maxHeight: 180)
-                .overlay(RoundedRectangle(cornerRadius: 10).stroke(DesignSystem.Colors.glassStroke, lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius).stroke(DesignSystem.Colors.glassStroke, lineWidth: 1))
             }
         }
     }
@@ -376,7 +388,7 @@ struct OperationsScreen: View {
             HStack {
                 Button(L10n("Apply")) { performGitAction(L10n("Apply stash"), L10n("Aplicar o stash selecionado?"), false) { model.applySelectedStash() } }.buttonStyle(.bordered)
                 Button(L10n("Pop")) { performGitAction(L10n("Pop stash"), L10n("Aplicar e remover o stash selecionado?"), false) { model.popSelectedStash() } }.buttonStyle(.bordered)
-                Button(L10n("Drop")) { performGitAction(L10n("Drop stash"), L10n("Deseja remover permanentemente o stash selecionado?"), true) { model.dropSelectedStash() } }.buttonStyle(.bordered).tint(.pink)
+                Button(L10n("Drop")) { performGitAction(L10n("Drop stash"), L10n("Deseja remover permanentemente o stash selecionado?"), true) { model.dropSelectedStash() } }.buttonStyle(.bordered).tint(DesignSystem.Colors.destructive)
             }.disabled(model.stashes.isEmpty)
         }
     }
@@ -387,7 +399,7 @@ struct OperationsScreen: View {
             HStack(spacing: 8) {
                 TextField("v1.0.0", text: $model.tagInput).textFieldStyle(.roundedBorder)
                 Button(L10n("Criar")) { performGitAction(L10n("Criar tag"), L10n("Criar tag no commit atual?"), false) { model.createTag() } }.buttonStyle(.borderedProminent)
-                Button(L10n("Remover")) { performGitAction(L10n("Remover tag"), L10n("Deseja remover a tag informada?"), true) { model.deleteTag() } }.buttonStyle(.bordered).tint(.pink)
+                Button(L10n("Remover")) { performGitAction(L10n("Remover tag"), L10n("Deseja remover a tag informada?"), true) { model.deleteTag() } }.buttonStyle(.bordered).tint(DesignSystem.Colors.destructive)
             }
         }
     }
@@ -397,7 +409,7 @@ struct OperationsScreen: View {
             CardHeader(L10n("Historico"), icon: "clock.arrow.circlepath", subtitle: L10n("Rebase e cherry-pick"))
             HStack(spacing: 8) {
                 TextField(L10n("rebase target"), text: $model.rebaseTargetInput).textFieldStyle(.roundedBorder)
-                Button(L10n("Rebase")) { performGitAction(L10n("Rebase"), L10n("Rebasear a branch atual no target informado?"), true) { model.rebaseOntoTarget() } }.buttonStyle(.bordered).tint(.orange)
+                Button(L10n("Rebase")) { performGitAction(L10n("Rebase"), L10n("Rebasear a branch atual no target informado?"), true) { model.rebaseOntoTarget() } }.buttonStyle(.bordered).tint(DesignSystem.Colors.warning)
             }
             HStack(spacing: 8) {
                 TextField(L10n("cherry-pick hash"), text: $model.cherryPickInput).textFieldStyle(.roundedBorder)
@@ -613,9 +625,10 @@ struct OperationsScreen: View {
         }
     }
 
-    private var cleanupCard: some View {
-        GlassCard(spacing: 10) {
+    private var maintenanceCard: some View {
+        GlassCard(spacing: 12, borderTint: DesignSystem.Colors.dangerBorder) {
             CardHeader(L10n("Limpeza"), icon: "leaf.fill", subtitle: L10n("Remover branches locais que ja foram mescladas na main."))
+
             Button(action: {
                 performGitAction(L10n("Prune"), L10n("Deseja remover todas as branches locais ja mescladas?"), true) {
                     model.pruneMergedBranches()
@@ -623,17 +636,15 @@ struct OperationsScreen: View {
             }) {
                 Label(L10n("Prune Merged"), systemImage: "broom.fill").frame(maxWidth: .infinity)
             }.buttonStyle(.bordered).controlSize(.large)
-        }
-    }
 
-    private var resetCard: some View {
-        GlassCard(spacing: 12, borderTint: DesignSystem.Colors.dangerBorder) {
+            Divider().opacity(0.3)
+
             CardHeader(L10n("Danger Zone"), icon: "exclamationmark.octagon.fill")
-                .foregroundStyle(.pink)
+                .foregroundStyle(DesignSystem.Colors.destructive)
 
             Text(L10n("CUIDADO: Operacoes de reset descartam alteracoes."))
                 .font(.caption)
-                .foregroundStyle(.pink.opacity(0.8))
+                .foregroundStyle(DesignSystem.Colors.destructiveMuted)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 6)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -644,10 +655,23 @@ struct OperationsScreen: View {
                 TextField("HEAD~1", text: $model.resetTargetInput).textFieldStyle(.roundedBorder)
                 Button(role: .destructive) {
                     performGitAction(L10n("Reset --hard"), L10n("Esta acao e IRREVERSIVEL. Deseja continuar?"), true) { model.hardReset() }
-                } label: { Label(L10n("Reset --hard"), systemImage: "trash.fill") }.buttonStyle(.borderedProminent).tint(.pink)
+                } label: { Label(L10n("Reset --hard"), systemImage: "trash.fill") }.buttonStyle(.bordered).tint(DesignSystem.Colors.destructive)
             }
         }
-        .padding(.top, 8)
+    }
+
+    private func SectionLabel(title: String, icon: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 10, weight: .semibold))
+            Text(title)
+                .font(.system(size: 11, weight: .bold))
+                .textCase(.uppercase)
+                .tracking(0.5)
+        }
+        .foregroundStyle(.tertiary)
+        .padding(.leading, 4)
+        .padding(.top, 4)
     }
 }
 

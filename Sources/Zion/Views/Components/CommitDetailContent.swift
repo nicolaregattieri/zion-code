@@ -63,7 +63,7 @@ struct CommitDetailContent: View {
                 }
                 .padding(10)
                 .background(DesignSystem.Colors.glassSubtle)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
 
                 // Changed files
                 if !detail.changedFiles.isEmpty {
@@ -177,7 +177,7 @@ struct CommitDetailContent: View {
                             }
                         }
                         .background(DesignSystem.Colors.glassOverlay)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
                     }
                 }
             }

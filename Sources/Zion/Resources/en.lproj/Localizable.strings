@@ -971,3 +971,11 @@
 
 // Per-Repo Config
 "editor.repoConfig.active" = "Editor settings defined by .zion/editor.json";
+
+// Operations Center Section Labels
+"Operacoes Principais" = "Core Operations";
+"Snapshots" = "Snapshots";
+"Infraestrutura" = "Infrastructure";
+"Inteligencia Artificial" = "Artificial Intelligence";
+"Informacoes" = "Information";
+"Manutencao" = "Maintenance";

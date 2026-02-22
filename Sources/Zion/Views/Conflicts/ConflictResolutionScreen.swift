@@ -29,7 +29,7 @@ struct ConflictResolutionScreen: View {
         HStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.title2)
-                .foregroundStyle(.orange)
+                .foregroundStyle(DesignSystem.Colors.warning)
             VStack(alignment: .leading, spacing: 2) {
                 Text(L10n("Resolver Conflitos"))
                     .font(.headline)
@@ -48,7 +48,7 @@ struct ConflictResolutionScreen: View {
             } else {
                 Text("\(model.unresolvedConflictCount) \(L10n("conflitos restantes"))")
                     .font(.caption)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(DesignSystem.Colors.warning)
             }
 
             Button {
@@ -111,7 +111,7 @@ struct ConflictResolutionScreen: View {
             .padding(.vertical, 6)
             .background(
                 model.selectedConflictFile == file.path
-                    ? Color.accentColor.opacity(0.15)
+                    ? DesignSystem.Colors.selectionBackground
                     : (file.isResolved ? DesignSystem.Colors.success.opacity(0.05) : Color.clear)
             )
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))

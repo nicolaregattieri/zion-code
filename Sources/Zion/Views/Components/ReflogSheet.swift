@@ -110,7 +110,7 @@ struct ReflogSheet: View {
             .padding(10)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(isHovered ? DesignSystem.Colors.glassHover : Color.clear)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
             .contentShape(Rectangle())
             .onHover { h in hoveredEntryID = h ? entry.id : nil }
             .contextMenu {

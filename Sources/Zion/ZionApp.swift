@@ -15,6 +15,7 @@ struct ZionApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .tint(DesignSystem.Colors.brandPrimary)
         }
         .windowResizability(.contentMinSize)
         .windowToolbarStyle(.unified)

@@ -174,7 +174,7 @@ struct GraphScreen: View {
                 }
             }
             .padding(.horizontal, 10).padding(.vertical, 6)
-            .background(model.isSemanticSearchActive ? DesignSystem.Colors.semanticSearch.opacity(0.08) : Color.black.opacity(0.15))
+            .background(model.isSemanticSearchActive ? DesignSystem.Colors.semanticSearch.opacity(0.08) : DesignSystem.Colors.glassOverlay)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
             .overlay(
                 RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius)
@@ -413,7 +413,7 @@ struct GraphScreen: View {
                                         Text(L10n("Cota da API excedida. Usando sugestao local."))
                                             .font(.system(size: 10, weight: .medium))
                                     }
-                                    .foregroundStyle(.orange)
+                                    .foregroundStyle(DesignSystem.Colors.warning)
                                     .padding(.top, -8)
                                 }
 
@@ -777,7 +777,7 @@ struct GraphScreen: View {
                             inlineDiffLine(String(line))
                         }
                     }.frame(maxWidth: .infinity, alignment: .leading)
-                }.background(Color.black.opacity(0.2))
+                }.background(DesignSystem.Colors.glassInset)
             } else {
                 VStack(spacing: 16) {
                     Image(systemName: "doc.text.magnifyingglass").font(.system(size: 48)).foregroundStyle(.tertiary)

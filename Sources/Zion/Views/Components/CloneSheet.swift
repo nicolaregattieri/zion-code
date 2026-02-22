@@ -132,24 +132,24 @@ struct CloneSheet: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .padding(10)
-                .background(Color.white.opacity(0.04))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .background(DesignSystem.Colors.glassSubtle)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
             }
 
             // Error
             if let error = model.cloneError {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.red)
+                        .foregroundStyle(DesignSystem.Colors.error)
                     Text(error)
                         .font(.caption)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(DesignSystem.Colors.error)
                         .lineLimit(3)
                 }
                 .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.red.opacity(0.08))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .background(DesignSystem.Colors.dangerBackground)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
             }
         }
         .padding(20)

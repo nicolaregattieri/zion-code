@@ -84,7 +84,7 @@ struct CommitRowView: View {
         }
         .contentShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius))
         .scaleEffect(isHovered && !isSelected ? 1.015 : 1.0)
-        .shadow(color: isHovered && !isSelected ? Color.accentColor.opacity(0.15) : .clear, radius: 8, y: 2)
+        .shadow(color: isHovered && !isSelected ? DesignSystem.Colors.selectionBackground : .clear, radius: 8, y: 2)
         .animation(.spring(response: 0.25, dampingFraction: 0.8), value: isHovered)
         .animation(.spring(response: 0.25, dampingFraction: 0.8), value: isSelected)
         .onHover { hovering in isHovered = hovering }

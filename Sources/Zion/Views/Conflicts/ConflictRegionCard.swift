@@ -19,9 +19,9 @@ struct ConflictRegionCard: View {
             actionButtons
         }
         .background(DesignSystem.Colors.glassSubtle)
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous)
                 .stroke(borderColor, lineWidth: 1.5)
         )
     }
@@ -40,7 +40,7 @@ struct ConflictRegionCard: View {
         HStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 11))
-                .foregroundStyle(.orange)
+                .foregroundStyle(DesignSystem.Colors.warning)
             Text(L10n("Conflito") + " #\(index + 1)")
                 .font(.system(size: 12, weight: .bold))
             Spacer()
@@ -170,9 +170,9 @@ struct ConflictRegionCard: View {
                     TextEditor(text: $customText)
                         .font(.system(size: 11, design: .monospaced))
                         .frame(height: 100)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 6)
+                            RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius)
                                 .stroke(DesignSystem.Colors.glassBorderDark)
                         )
                     HStack {

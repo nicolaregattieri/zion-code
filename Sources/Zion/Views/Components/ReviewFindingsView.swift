@@ -44,7 +44,7 @@ struct ReviewFindingsView: View {
         }
         .padding(10)
         .background(DesignSystem.Colors.glassSubtle)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius))
     }
 
     private var summaryBadges: some View {
@@ -54,13 +54,13 @@ struct ReviewFindingsView: View {
             let suggestionCount = findings.filter { $0.severity == .suggestion }.count
 
             if criticalCount > 0 {
-                badge(count: criticalCount, color: .red, label: L10n("Critico"))
+                badge(count: criticalCount, color: DesignSystem.Colors.error, label: L10n("Critico"))
             }
             if warningCount > 0 {
-                badge(count: warningCount, color: .orange, label: L10n("Aviso"))
+                badge(count: warningCount, color: DesignSystem.Colors.warning, label: L10n("Aviso"))
             }
             if suggestionCount > 0 {
-                badge(count: suggestionCount, color: .blue, label: L10n("Sugestao"))
+                badge(count: suggestionCount, color: DesignSystem.Colors.info, label: L10n("Sugestao"))
             }
         }
     }
