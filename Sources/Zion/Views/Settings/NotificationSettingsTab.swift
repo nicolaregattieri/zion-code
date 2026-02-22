@@ -136,6 +136,8 @@ struct NotificationSettingsTab: View {
             }
         }
         .formStyle(.grouped)
+        .toggleStyle(SwitchToggleStyle(tint: DesignSystem.Colors.actionPrimary))
+        .tint(DesignSystem.Colors.actionPrimary)
     }
 
     private func saveTopic() {

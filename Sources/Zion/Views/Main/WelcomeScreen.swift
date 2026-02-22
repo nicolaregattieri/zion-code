@@ -5,6 +5,8 @@ struct WelcomeScreen: View {
     let onOpen: () -> Void
     let onInit: () -> Void
 
+    @State private var hoveredURL: URL?
+
     var body: some View {
         ViewportContentContainer {
             VStack(spacing: 32) {
@@ -74,8 +76,59 @@ struct WelcomeScreen: View {
                     .buttonStyle(.bordered)
                     .controlSize(.large)
                 }
+
+                // Recent repositories
+                if !model.recentRepositories.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(L10n("Recentes"))
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                        VStack(spacing: 4) {
+                            ForEach(model.recentRepositories, id: \.self) { url in
+                                Button {
+                                    model.openRepository(url)
+                                } label: {
+                                    HStack(spacing: 10) {
+                                        Image(systemName: "folder.fill")
+                                            .font(.system(size: 12))
+                                            .foregroundStyle(Color.accentColor.opacity(0.8))
+                                        VStack(alignment: .leading, spacing: 1) {
+                                            Text(url.lastPathComponent)
+                                                .font(.system(size: 13, weight: .semibold))
+                                                .lineLimit(1)
+                                            Text(url.path)
+                                                .font(.system(size: 9))
+                                                .foregroundStyle(.secondary)
+                                                .lineLimit(1)
+                                                .truncationMode(.middle)
+                                        }
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .font(.system(size: 8, weight: .bold))
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 8)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius)
+                                            .fill(hoveredURL == url ? DesignSystem.Colors.glassHover : DesignSystem.Colors.glassMinimal)
+                                    )
+                                    .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+                                .onHover { h in hoveredURL = h ? url : nil }
+                            }
+                        }
+                    }
+                    .frame(width: 320)
+                }
             }
         }
         .padding(32)
+        .onAppear {
+            model.loadRecentRepositories()
+        }
     }
 }

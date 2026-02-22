@@ -1182,6 +1182,8 @@ struct EditorSettingsPopoverButton: View {
                 }
             }
             .controlSize(.small)
+            .toggleStyle(SwitchToggleStyle(tint: DesignSystem.Colors.actionPrimary))
+            .tint(DesignSystem.Colors.actionPrimary)
             .padding(12)
             .frame(width: 260)
         }

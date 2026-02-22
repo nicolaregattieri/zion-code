@@ -710,13 +710,13 @@ struct ContentView: View {
 
     private func openRepositoryPanel() {
         let panel = NSOpenPanel()
-        panel.canChooseFiles = false; panel.canChooseDirectories = true
+        panel.canChooseFiles = false; panel.canChooseDirectories = true; panel.canCreateDirectories = true
         if panel.runModal() == .OK, let selectedURL = panel.url { model.openRepository(selectedURL) }
     }
 
     private func initRepositoryPanel() {
         let panel = NSOpenPanel()
-        panel.canChooseFiles = false; panel.canChooseDirectories = true
+        panel.canChooseFiles = false; panel.canChooseDirectories = true; panel.canCreateDirectories = true
         panel.prompt = L10n("Inicializar Repositorio")
         if panel.runModal() == .OK, let selectedURL = panel.url {
             model.repositoryURL = selectedURL
