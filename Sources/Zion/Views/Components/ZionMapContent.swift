@@ -51,6 +51,8 @@ struct ZionMapContent {
                 ZionMapEntry("map.code.themes.title", description: "map.code.themes.description",
                              tips: ["map.code.themes.tip1"]),
                 ZionMapEntry("map.code.watcher.title", description: "map.code.watcher.description"),
+                ZionMapEntry("map.code.filehistory.title", description: "map.code.filehistory.description",
+                             tips: ["map.code.filehistory.tip1"]),
             ]
 
         case .terminal:
@@ -116,6 +118,8 @@ struct ZionMapContent {
                 ZionMapEntry("map.ai.blame.title", description: "map.ai.blame.description"),
                 ZionMapEntry("map.ai.split.title", description: "map.ai.split.description"),
                 ZionMapEntry("map.ai.style.title", description: "map.ai.style.description"),
+                ZionMapEntry("map.ai.precommit.title", description: "map.ai.precommit.description",
+                             tips: ["map.ai.precommit.tip1"]),
             ]
 
         case .customization:

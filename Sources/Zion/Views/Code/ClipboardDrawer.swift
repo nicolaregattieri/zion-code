@@ -3,6 +3,12 @@ import SwiftUI
 struct ClipboardDrawer: View {
     var model: RepositoryViewModel
     @State private var hoveredItemID: UUID?
+    @State private var searchQuery: String = ""
+
+    private var filteredItems: [ClipboardItem] {
+        if searchQuery.isEmpty { return model.clipboardMonitor.items }
+        return model.clipboardMonitor.items.filter { $0.preview.localizedCaseInsensitiveContains(searchQuery) }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -46,7 +52,7 @@ struct ClipboardDrawer: View {
                             .font(.system(size: 9, weight: .bold, design: .monospaced))
                             .padding(.horizontal, 5)
                             .padding(.vertical, 1)
-                            .background(Color.accentColor.opacity(0.2))
+                            .background(DesignSystem.Colors.selectionBackground)
                             .clipShape(Capsule())
                     }
                 }
@@ -77,23 +83,40 @@ struct ClipboardDrawer: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(L10n("Clipboard Inteligente"))
                         .font(.system(size: 11, weight: .bold))
-                    featureRow("clipboard", .blue, L10n("Captura automaticamente o que voce copiar"))
-                    featureRow("cursorarrow.click", .green, L10n("Clique para colar no terminal"))
-                    featureRow("cursorarrow.click.2", .orange, L10n("Duplo clique para executar"))
-                    featureRow("hand.draw", .purple, L10n("Arraste para o terminal"))
+                    featureRow("clipboard", DesignSystem.Colors.info, L10n("Captura automaticamente o que voce copiar"))
+                    featureRow("cursorarrow.click", DesignSystem.Colors.success, L10n("Clique para colar no terminal"))
+                    featureRow("cursorarrow.click.2", DesignSystem.Colors.warning, L10n("Duplo clique para executar"))
+                    featureRow("hand.draw", DesignSystem.Colors.brandPrimary, L10n("Arraste para o terminal"))
                     Text(L10n("Copie algo para comecar"))
                         .font(.system(size: 10)).foregroundStyle(.tertiary)
                         .frame(maxWidth: .infinity, alignment: .center).padding(.top, 4)
                 }
                 .padding(.horizontal, 12).padding(.vertical, 10)
             } else {
-                ScrollView {
-                    VStack(spacing: 2) {
-                        ForEach(model.clipboardMonitor.items) { item in
-                            clipboardRow(item)
-                        }
+                VStack(spacing: 0) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 9))
+                            .foregroundStyle(.secondary)
+                        TextField(L10n("Filtrar clipboard..."), text: $searchQuery)
+                            .textFieldStyle(.plain)
+                            .font(.system(size: 11))
                     }
-                    .padding(6)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(DesignSystem.Colors.glassSubtle)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 4)
+
+                    ScrollView {
+                        VStack(spacing: 2) {
+                            ForEach(filteredItems) { item in
+                                clipboardRow(item)
+                            }
+                        }
+                        .padding(6)
+                    }
                 }
             }
         }
@@ -194,11 +217,11 @@ struct ClipboardDrawer: View {
 
     private func categoryColor(_ category: ClipboardItem.Category) -> Color {
         switch category {
-        case .command: return .green
-        case .path: return .blue
-        case .hash: return .orange
-        case .url: return .purple
-        case .image: return .pink
+        case .command: return DesignSystem.Colors.success
+        case .path: return DesignSystem.Colors.info
+        case .hash: return DesignSystem.Colors.warning
+        case .url: return DesignSystem.Colors.brandPrimary
+        case .image: return DesignSystem.Colors.semanticSearch
         case .text: return .secondary
         }
     }

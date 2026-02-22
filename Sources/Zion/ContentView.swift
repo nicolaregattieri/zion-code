@@ -9,7 +9,6 @@ struct ContentView: View {
     @State private var selectedBranchTreeNodeID: String?
     @State private var isShortcutsVisible: Bool = false
     @State private var isHelpVisible: Bool = false
-    @State private var pendingNonGitURL: URL? = nil
 
     @AppStorage("zion.confirmationMode") private var confirmationModeRaw: String = ConfirmationMode.destructiveOnly.rawValue
     @AppStorage("zion.uiLanguage") private var uiLanguageRaw: String = AppLanguage.system.rawValue
@@ -68,23 +67,6 @@ struct ContentView: View {
                 case .clear:
                     Text("")
                 }
-            }
-            .alert(L10n("Nao e um repositorio Git"), isPresented: Binding(
-                get: { pendingNonGitURL != nil },
-                set: { if !$0 { pendingNonGitURL = nil } }
-            )) {
-                Button(L10n("Inicializar Repositorio")) {
-                    if let url = pendingNonGitURL {
-                        model.repositoryURL = url
-                        model.initRepository()
-                    }
-                    pendingNonGitURL = nil
-                }
-                Button(L10n("Cancelar"), role: .cancel) {
-                    pendingNonGitURL = nil
-                }
-            } message: {
-                Text(L10n("Este diretorio nao possui um repositorio Git inicializado."))
             }
             .toolbar { mainToolbar }
             .safeAreaInset(edge: .bottom) { statusBar }
@@ -198,10 +180,9 @@ struct ContentView: View {
     @ViewBuilder
     private var nonCodeContent: some View {
         if model.repositoryURL == nil {
-            WelcomeScreen(model: model) { openRepositoryPanel() }
+            WelcomeScreen(model: model, onOpen: { openRepositoryPanel() }, onInit: { initRepositoryPanel() })
         } else if !model.isGitRepository {
             Color.clear.onAppear {
-                pendingNonGitURL = model.repositoryURL
                 model.repositoryURL = nil
             }
         } else {
@@ -357,7 +338,7 @@ struct ContentView: View {
                 .font(.system(.caption, design: .monospaced))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
-                .background(DesignSystem.Colors.success.opacity(0.12))
+                .background(DesignSystem.Colors.statusGreenBg)
                 .foregroundStyle(DesignSystem.Colors.success)
                 .clipShape(Capsule())
 
@@ -371,7 +352,7 @@ struct ContentView: View {
                     .font(.caption)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
-                    .background(model.behindRemoteCount > 0 ? DesignSystem.Colors.warning.opacity(0.12) : DesignSystem.Colors.info.opacity(0.12))
+                    .background(model.behindRemoteCount > 0 ? DesignSystem.Colors.statusOrangeBg : DesignSystem.Colors.statusBlueBg)
                     .foregroundStyle(model.behindRemoteCount > 0 ? DesignSystem.Colors.warning : DesignSystem.Colors.info)
                     .clipShape(Capsule())
                 }
@@ -386,7 +367,7 @@ struct ContentView: View {
                     .font(.caption)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
-                    .background(DesignSystem.Colors.warning.opacity(0.12))
+                    .background(DesignSystem.Colors.statusOrangeBg)
                     .foregroundStyle(DesignSystem.Colors.warning)
                     .clipShape(Capsule())
                 }
@@ -401,7 +382,7 @@ struct ContentView: View {
                     .font(.caption)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
-                    .background(DesignSystem.Colors.info.opacity(0.12))
+                    .background(DesignSystem.Colors.statusBlueBg)
                     .foregroundStyle(DesignSystem.Colors.info)
                     .clipShape(Capsule())
                 }
@@ -615,6 +596,16 @@ struct ContentView: View {
         let panel = NSOpenPanel()
         panel.canChooseFiles = false; panel.canChooseDirectories = true
         if panel.runModal() == .OK, let selectedURL = panel.url { model.openRepository(selectedURL) }
+    }
+
+    private func initRepositoryPanel() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false; panel.canChooseDirectories = true
+        panel.prompt = L10n("Inicializar Repositorio")
+        if panel.runModal() == .OK, let selectedURL = panel.url {
+            model.repositoryURL = selectedURL
+            model.initRepository()
+        }
     }
 
     private func copyToPasteboard(_ value: String) {

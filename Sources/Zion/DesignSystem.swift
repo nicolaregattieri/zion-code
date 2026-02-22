@@ -33,10 +33,10 @@ struct DesignSystem {
         static let glassMinimal = Color.white.opacity(0.03)
         static let glassElevated = Color.white.opacity(0.06)
 
-        // Brand colors
-        static let primary = Color.purple
-        static let secondary = Color.indigo
-        static let accent = Color.cyan
+        // Brand colors (derived from brand hue 265°)
+        static let primary = brandPrimary
+        static let secondary = codeReview
+        static let accent = commitSplit
 
         // ── Zion brand palette ──
         static let brandPrimary = SwiftUI.Color(red: 101.0/255.0, green: 68.0/255.0, blue: 155.0/255.0)   // Rebecca Purple #65449b
@@ -45,51 +45,51 @@ struct DesignSystem {
         static let brandLight = SwiftUI.Color(red: 212.0/255.0, green: 206.0/255.0, blue: 232.0/255.0)    // Lavender #d4cee8
         static let brandWhite = SwiftUI.Color(red: 248.0/255.0, green: 247.0/255.0, blue: 251.0/255.0)    // Ghost White #f8f7fb
 
-        // Semantic status
-        static let error = Color.red
-        static let warning = Color.orange
-        static let success = Color.green
-        static let info = Color.blue
+        // ── Semantic status (harmonized with brand) ──
+        static let error = SwiftUI.Color(red: 224.0/255.0, green: 82.0/255.0, blue: 82.0/255.0)           // Warm red #e05252
+        static let warning = SwiftUI.Color(red: 230.0/255.0, green: 162.0/255.0, blue: 60.0/255.0)        // Amber-gold #e6a23c
+        static let success = SwiftUI.Color(red: 77.0/255.0, green: 204.0/255.0, blue: 122.0/255.0)        // Cool green #4dcc7a
+        static let info = SwiftUI.Color(red: 107.0/255.0, green: 159.0/255.0, blue: 226.0/255.0)          // Periwinkle #6b9fe2
 
         // ── File status ──
-        static let fileAdded = Color.green
-        static let fileModified = Color.orange
-        static let fileDeleted = Color.pink
-        static let fileRenamed = Color.blue
+        static let fileAdded = success
+        static let fileModified = warning
+        static let fileDeleted = destructive
+        static let fileRenamed = info
         static let fileUntracked = Color.secondary
-        static let fileStaged = Color.green
+        static let fileStaged = success
 
         // ── Diff ──
-        static let diffAddition = Color.green
-        static let diffAdditionBg = Color.green.opacity(0.12)
-        static let diffAdditionBgSelected = Color.green.opacity(0.25)
-        static let diffAdditionBgRaw = Color.green.opacity(0.15)
-        static let diffDeletion = Color.pink
-        static let diffDeletionBg = Color.pink.opacity(0.12)
-        static let diffDeletionBgSelected = Color.pink.opacity(0.25)
-        static let diffDeletionBgRaw = Color.pink.opacity(0.15)
+        static let diffAddition = success
+        static let diffAdditionBg = success.opacity(0.12)
+        static let diffAdditionBgSelected = success.opacity(0.25)
+        static let diffAdditionBgRaw = success.opacity(0.15)
+        static let diffDeletion = destructive
+        static let diffDeletionBg = destructive.opacity(0.12)
+        static let diffDeletionBgSelected = destructive.opacity(0.25)
+        static let diffDeletionBgRaw = destructive.opacity(0.15)
         static let diffContext = Color.primary.opacity(0.7)
-        static let diffHunkHeader = Color.blue.opacity(0.8)
-        static let diffHunkHeaderBg = Color.blue.opacity(0.08)
-        static let diffHunkHeaderBgLight = Color.blue.opacity(0.05)
+        static let diffHunkHeader = info.opacity(0.8)
+        static let diffHunkHeaderBg = info.opacity(0.08)
+        static let diffHunkHeaderBgLight = info.opacity(0.05)
 
-        // ── Feature accents ──
-        static let ai = Color.purple
+        // ── Feature accents (brand-derived) ──
+        static let ai = SwiftUI.Color(red: 161.0/255.0, green: 123.0/255.0, blue: 223.0/255.0)            // Light purple #a17bdf (265° lighter)
         static let actionPrimary = brandPrimary  // Rebecca Purple for standard prominent buttons
-        static let codeReview = Color.indigo
-        static let commitSplit = Color.cyan
-        static let searchHighlight = Color.yellow
-        static let semanticSearch = Color.pink
+        static let codeReview = SwiftUI.Color(red: 123.0/255.0, green: 111.0/255.0, blue: 199.0/255.0)    // Blue-purple #7b6fc7 (250° analogous)
+        static let commitSplit = SwiftUI.Color(red: 94.0/255.0, green: 184.0/255.0, blue: 212.0/255.0)    // Cool cyan #5eb8d4 (195°)
+        static let searchHighlight = SwiftUI.Color(red: 240.0/255.0, green: 210.0/255.0, blue: 100.0/255.0) // Complementary gold #f0d264 (48°)
+        static let semanticSearch = SwiftUI.Color(red: 192.0/255.0, green: 132.0/255.0, blue: 224.0/255.0) // Orchid #c084e0 (280°)
 
-        // ── Destructive ──
-        static let destructive = Color.pink
-        static let destructiveMuted = Color.pink.opacity(0.7)
-        static let destructiveBg = Color.pink.opacity(0.1)
+        // ── Destructive (harmonized rose) ──
+        static let destructive = SwiftUI.Color(red: 232.0/255.0, green: 92.0/255.0, blue: 122.0/255.0)    // Rose #e85c7a (348°)
+        static let destructiveMuted = destructive.opacity(0.7)
+        static let destructiveBg = destructive.opacity(0.1)
 
         // ── Conflict resolution ──
-        static let conflictOurs = Color.orange
-        static let conflictTheirs = Color.blue
-        static let conflictResolved = Color.green
+        static let conflictOurs = warning
+        static let conflictTheirs = info
+        static let conflictResolved = success
 
         // Text
         static let textPrimary = Color.primary
@@ -102,22 +102,24 @@ struct DesignSystem {
         static let hoverAccent = Color.accentColor.opacity(0.35)
 
         // Status backgrounds (consistent scale)
-        static let statusGreenBg = Color.green.opacity(0.12)
-        static let statusOrangeBg = Color.orange.opacity(0.12)
-        static let statusBlueBg = Color.blue.opacity(0.12)
-        static let statusYellowBg = Color.yellow.opacity(0.15)
+        static let statusGreenBg = success.opacity(0.12)
+        static let statusOrangeBg = warning.opacity(0.12)
+        static let statusBlueBg = info.opacity(0.12)
+        static let statusYellowBg = searchHighlight.opacity(0.15)
 
         // Shadow tokens
         static let shadowDark = Color.black.opacity(0.14)
         static let shadowLight = Color.black.opacity(0.08)
 
         // Danger zone
-        static let dangerBackground = Color.pink.opacity(0.06)
-        static let dangerBorder = Color.pink.opacity(0.25)
+        static let dangerBackground = destructive.opacity(0.06)
+        static let dangerBorder = destructive.opacity(0.25)
 
-        // Lane color palette (shared between graph and commit cards)
+        // Lane color palette (shared between graph and commit cards — harmonized)
         static let lanePalette: [SwiftUI.Color] = [
-            .blue, .pink, .green, .orange, .teal, .purple, .mint, .indigo, .yellow, .cyan, .brown, .gray
+            info, destructive, success, warning, commitSplit, brandPrimary, ai, codeReview, searchHighlight, semanticSearch,
+            SwiftUI.Color(red: 0.55, green: 0.42, blue: 0.32), // warm brown
+            .gray
         ]
 
         static func laneColor(forKey key: Int) -> SwiftUI.Color {

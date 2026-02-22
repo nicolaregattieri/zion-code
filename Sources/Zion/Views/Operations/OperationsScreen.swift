@@ -261,9 +261,38 @@ struct OperationsScreen: View {
                     .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius))
                 }
 
+                // Pre-Commit Review Gate Card
+                if model.preCommitReviewPending && model.isReviewVisible && !model.aiReviewFindings.isEmpty {
+                    PreCommitCheckCard(model: model) {
+                        model.dismissPreCommitReview()
+                        performGitAction(L10n("Commit"), L10n("Deseja realizar o commit de todas as alterações?"), false) {
+                            model.commit(message: model.commitMessageInput)
+                        }
+                    } onFixIssues: {
+                        model.preCommitReviewPending = false
+                    }
+                }
+
+                if model.preCommitReviewPending && model.isGeneratingAIMessage {
+                    HStack(spacing: 8) {
+                        ProgressView().controlSize(.small)
+                        Text(L10n("precommit.reviewing"))
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(10)
+                    .frame(maxWidth: .infinity)
+                    .background(DesignSystem.Colors.ai.opacity(0.06))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius))
+                }
+
                 Button(action: {
-                    performGitAction(L10n("Commit"), L10n("Deseja realizar o commit de todas as alterações?"), false) {
-                        model.commit(message: model.commitMessageInput)
+                    if model.preCommitReviewEnabled && model.isAIConfigured && !model.preCommitReviewPending {
+                        model.runPreCommitReview()
+                    } else if !model.preCommitReviewPending {
+                        performGitAction(L10n("Commit"), L10n("Deseja realizar o commit de todas as alterações?"), false) {
+                            model.commit(message: model.commitMessageInput)
+                        }
                     }
                 }) {
                     Label(L10n("Fazer Commit"), systemImage: "checkmark.circle.fill").frame(maxWidth: .infinity)
@@ -271,7 +300,7 @@ struct OperationsScreen: View {
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
                 .tint(DesignSystem.Colors.actionPrimary)
-                .disabled(model.commitMessageInput.clean.isEmpty)
+                .disabled(model.commitMessageInput.clean.isEmpty || model.preCommitReviewPending)
             }
         }
     }
@@ -773,5 +802,120 @@ struct FileStatusRow: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+}
+
+struct PreCommitCheckCard: View {
+    var model: RepositoryViewModel
+    let onCommitAnyway: () -> Void
+    let onFixIssues: () -> Void
+
+    private var criticalCount: Int {
+        model.aiReviewFindings.filter { $0.severity == .critical }.count
+    }
+    private var warningCount: Int {
+        model.aiReviewFindings.filter { $0.severity == .warning }.count
+    }
+    private var safeCount: Int {
+        model.aiReviewFindings.filter { $0.severity == .suggestion }.count
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "shield.checkered")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(criticalCount > 0 ? DesignSystem.Colors.destructive : DesignSystem.Colors.ai)
+                Text(L10n("precommit.gate.title"))
+                    .font(.system(size: 12, weight: .bold))
+                Spacer()
+                Button { onFixIssues() } label: {
+                    Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                }.buttonStyle(.plain)
+            }
+
+            HStack(spacing: 12) {
+                if criticalCount > 0 {
+                    HStack(spacing: 4) {
+                        Image(systemName: "xmark.octagon.fill").font(.system(size: 10))
+                            .foregroundStyle(DesignSystem.Colors.destructive)
+                        Text("\(criticalCount) \(L10n("Critico"))")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(DesignSystem.Colors.destructive)
+                    }
+                }
+                if warningCount > 0 {
+                    HStack(spacing: 4) {
+                        Image(systemName: "exclamationmark.triangle.fill").font(.system(size: 10))
+                            .foregroundStyle(DesignSystem.Colors.warning)
+                        Text("\(warningCount) \(L10n("Aviso"))")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(DesignSystem.Colors.warning)
+                    }
+                }
+                if safeCount > 0 {
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.circle.fill").font(.system(size: 10))
+                            .foregroundStyle(DesignSystem.Colors.info)
+                        Text("\(safeCount) \(L10n("Sugestao"))")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(DesignSystem.Colors.info)
+                    }
+                }
+            }
+
+            ForEach(model.aiReviewFindings.prefix(5)) { finding in
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: finding.severity.icon)
+                        .font(.system(size: 10))
+                        .foregroundStyle(finding.severity.color)
+                        .frame(width: 14)
+                    VStack(alignment: .leading, spacing: 2) {
+                        if finding.file != "general" {
+                            Text(finding.file)
+                                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                .foregroundStyle(.secondary)
+                        }
+                        Text(finding.message)
+                            .font(.system(size: 10))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .padding(6)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(finding.severity.color.opacity(0.06))
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
+            }
+
+            if model.aiReviewFindings.count > 5 {
+                Text(L10n("precommit.moreFindings") + " \(model.aiReviewFindings.count - 5)")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack(spacing: 10) {
+                Button(action: onFixIssues) {
+                    Label(L10n("precommit.fixIssues"), systemImage: "wrench.and.screwdriver")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.regular)
+
+                Button(action: onCommitAnyway) {
+                    Label(L10n("precommit.commitAnyway"), systemImage: "checkmark.circle")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.regular)
+                .tint(criticalCount > 0 ? DesignSystem.Colors.warning : DesignSystem.Colors.actionPrimary)
+            }
+        }
+        .padding(12)
+        .background(DesignSystem.Colors.glassSubtle)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius)
+                .stroke(criticalCount > 0 ? DesignSystem.Colors.dangerBorder : DesignSystem.Colors.ai.opacity(0.3), lineWidth: 1)
+        )
     }
 }

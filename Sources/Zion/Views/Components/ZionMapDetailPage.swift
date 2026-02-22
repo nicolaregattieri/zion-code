@@ -115,7 +115,7 @@ struct ZionMapDetailPage: View {
                         HStack(alignment: .top, spacing: 6) {
                             Image(systemName: "lightbulb.fill")
                                 .font(.system(size: 9))
-                                .foregroundStyle(.yellow.opacity(0.8))
+                                .foregroundStyle(DesignSystem.Colors.searchHighlight.opacity(0.8))
                                 .padding(.top, 3)
                             Text(L10n(tipKey))
                                 .font(.system(size: 11))

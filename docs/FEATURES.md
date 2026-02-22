@@ -45,6 +45,8 @@
 | Indent Guides | Subtle vertical lines at each indent level | Settings |
 | Editor Settings Tab | Dedicated Settings tab for all editor preferences | `⌘,` |
 | Per-Repo Config | `.zion/editor.json` overrides global editor settings | — |
+| Go to Line | Jump to a specific line number | `⌘G` |
+| File History | View commit history for any file from context menu or toolbar | — |
 
 ## Integrated Terminal
 
@@ -76,6 +78,7 @@
 | Image Capture | Saves copied images to temp dir as JPEG |
 | Auto-Cleanup | Temp images purged after 1h, full cleanup on quit |
 | Item Limit | Keeps up to 20 items, evicts oldest |
+| Search/Filter | Filter clipboard items by text content |
 
 ## Operations Center
 
@@ -94,6 +97,7 @@
 | Custom Command | Execute arbitrary `git` command |
 | Discard Changes | Revert file changes (with confirmation) |
 | Add to .gitignore | Ignore a file from context menu |
+| Initialize Repository | Create a new Git repo from the welcome screen directory picker |
 
 ## Worktree Management
 
@@ -122,6 +126,7 @@
 | Blame Explainer | Click a blame entry to get an AI explanation of WHY that code was changed |
 | Commit Split Advisor | Suggests how to split a large staged diff into multiple atomic commits |
 | Commit Message Style | Toggle between compact (single-line) and detailed (header + bullet points) AI-generated messages |
+| Pre-Commit Review Gate | Automatic AI review before committing — shows findings and lets you fix or commit anyway |
 | Provider Config | Anthropic (Claude), OpenAI (GPT), Google (Gemini), API keys in Keychain |
 
 ## Settings Window
@@ -251,6 +256,7 @@
 | `⌃+` | Terminal zoom in |
 | `⌃-` | Terminal zoom out |
 | `⌘F` | Search graph |
+| `⌘G` | Go to Line |
 | `⇧⌘R` | Code Review |
 | `↑↓` | Navigate commits |
 | `Esc` | Deselect / close |

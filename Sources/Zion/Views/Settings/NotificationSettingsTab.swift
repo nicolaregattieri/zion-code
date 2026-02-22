@@ -50,10 +50,36 @@ struct NotificationSettingsTab: View {
                 }
 
                 if !isConfigured {
-                    Text(L10n("ntfy.onboarding.hint"))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(L10n("ntfy.onboarding.hint"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        DisclosureGroup(L10n("ntfy.whatIs.title")) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(L10n("ntfy.whatIs.description"))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+
+                                Text(L10n("ntfy.whatIs.steps"))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+
+                                Link(destination: URL(string: "https://ntfy.sh")!) {
+                                    Label(L10n("ntfy.whatIs.learnMore"), systemImage: "arrow.up.right.square")
+                                        .font(.caption)
+                                }
+                            }
+                            .padding(.top, 4)
+                        }
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(DesignSystem.Colors.info)
+                    }
                 }
+
+                Text(L10n("ntfy.topic.privacy"))
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
             }
 
             if isConfigured {

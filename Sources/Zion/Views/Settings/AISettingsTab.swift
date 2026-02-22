@@ -5,6 +5,7 @@ struct AISettingsTab: View {
     @AppStorage("zion.commitMessageStyle") private var commitStyleRaw: String = CommitMessageStyle.compact.rawValue
     @AppStorage("zion.autoExplainDiffs") private var autoExplainDiffs: Bool = false
     @AppStorage("zion.diffExplanationDepth") private var diffDepthRaw: String = DiffExplanationDepth.quick.rawValue
+    @AppStorage("zion.preCommitReview") private var preCommitReviewEnabled: Bool = false
 
     @State private var aiKeyInput: String = ""
     @State private var isEditingKey: Bool = false
@@ -75,6 +76,13 @@ struct AISettingsTab: View {
                     Text(commitStyleRaw == CommitMessageStyle.compact.rawValue
                         ? L10n("commit.style.compact.hint")
                         : L10n("commit.style.detailed.hint"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Section(L10n("settings.ai.preCommitReview")) {
+                    Toggle(L10n("settings.ai.preCommitReview.toggle"), isOn: $preCommitReviewEnabled)
+                    Text(L10n("settings.ai.preCommitReview.hint"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

@@ -24,7 +24,8 @@ struct HelpSheet: View {
                     "help.code.themes", "help.code.unsaved", "help.code.newfile",
                     "help.code.saveas", "help.code.openineditor", "help.code.contextmenu",
                     "help.code.findreplace", "help.code.tabsize", "help.code.columnruler",
-                    "help.code.brackets", "help.code.indentguides", "help.code.repoconfig"]
+                    "help.code.brackets", "help.code.indentguides", "help.code.repoconfig",
+                    "help.code.filehistory"]
         case .terminal:
             return ["help.terminal.pty", "help.terminal.splits", "help.terminal.tabs",
                     "help.terminal.zoom", "help.terminal.persistence"]
@@ -33,14 +34,14 @@ struct HelpSheet: View {
                     "help.clipboard.drag", "help.clipboard.images"]
         case .operations:
             return ["help.ops.commit", "help.ops.branch", "help.ops.stash",
-                    "help.ops.rebase", "help.ops.hunk"]
+                    "help.ops.rebase", "help.ops.hunk", "help.ops.init"]
         case .worktrees:
             return ["help.worktree.parallel", "help.worktree.quick", "help.worktree.terminal"]
         case .ai:
             return ["help.ai.commit", "help.ai.diff", "help.ai.pr", "help.ai.stash",
                     "help.ai.conflict", "help.ai.review", "help.ai.changelog",
                     "help.ai.search", "help.ai.branch", "help.ai.blame",
-                    "help.ai.split", "help.ai.style"]
+                    "help.ai.split", "help.ai.style", "help.ai.precommit"]
         case .customization:
             return ["help.customization.languages", "help.customization.appearance",
                     "help.customization.editor", "help.customization.confirmation",
@@ -150,7 +151,7 @@ struct HelpSheet: View {
                     .foregroundStyle(section.color)
                     .frame(width: 28, height: 28)
                     .background(section.color.opacity(0.12))
-                    .clipShape(RoundedRectangle(cornerRadius: 7))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
                 Text(L10n(section.titleKey))
                     .font(.system(size: 13, weight: .bold))
                 Spacer()

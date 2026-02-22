@@ -431,6 +431,15 @@ struct CommitSuggestion: Identifiable {
     let files: [String]
 }
 
+struct FileHistoryEntry: Identifiable {
+    let id = UUID()
+    let hash: String
+    let shortHash: String
+    let author: String
+    let date: String
+    let message: String
+}
+
 enum EditorTheme: String, CaseIterable, Identifiable {
     case dracula, cityLights, githubLight, catppuccinMocha, oneDarkPro, tokyoNight
     var id: String { rawValue }
@@ -585,21 +594,21 @@ enum FeatureSection: String, CaseIterable, Identifiable {
 
     var color: Color {
         switch self {
-        case .tree: return .purple
-        case .code: return .green
-        case .terminal: return .blue
-        case .clipboard: return .orange
-        case .operations: return .indigo
-        case .worktrees: return .teal
-        case .ai: return .pink
-        case .customization: return .cyan
+        case .tree: return DesignSystem.Colors.brandPrimary
+        case .code: return DesignSystem.Colors.success
+        case .terminal: return DesignSystem.Colors.info
+        case .clipboard: return DesignSystem.Colors.warning
+        case .operations: return DesignSystem.Colors.codeReview
+        case .worktrees: return DesignSystem.Colors.commitSplit
+        case .ai: return DesignSystem.Colors.ai
+        case .customization: return DesignSystem.Colors.commitSplit
         case .diagnostics: return .gray
-        case .conflicts: return .orange
+        case .conflicts: return DesignSystem.Colors.warning
         case .settings: return .gray
-        case .diffExplanation: return .purple
-        case .codeReview: return .indigo
-        case .prInbox: return .mint
-        case .autoUpdates: return .green
+        case .diffExplanation: return DesignSystem.Colors.ai
+        case .codeReview: return DesignSystem.Colors.codeReview
+        case .prInbox: return DesignSystem.Colors.commitSplit
+        case .autoUpdates: return DesignSystem.Colors.success
         }
     }
 

@@ -155,6 +155,8 @@
 "Selecione um repositorio" = "Select a repository";
 "Seu Git Graph nativo para macOS." = "Your native Git client for macOS.";
 "Abrir repositorio..." = "Open repository...";
+"Inicializar repositorio..." = "Initialize repository...";
+"Criar um novo repositorio Git em uma pasta existente" = "Create a new Git repository in an existing folder";
 "Nova branch a partir de %@" = "New branch from %@";
 "Remover branch remota" = "Delete remote branch";
 "Deseja remover permanentemente a branch remota %@?" = "Do you want to permanently delete the remote branch %@?";
@@ -386,6 +388,9 @@
 "Zoom in" = "Zoom in";
 "Zoom out" = "Zoom out";
 "Buscar no grafo" = "Search graph";
+"shortcuts.find" = "Find";
+"shortcuts.findReplace" = "Find & Replace";
+"shortcuts.general" = "General";
 "Pressione" = "Press";
 "para ver todos os atalhos" = "to see all shortcuts";
 
@@ -449,6 +454,7 @@
 "help.ops.stash" = "Save, apply, pop, and manage stashes with messages";
 "help.ops.rebase" = "Visual interactive rebase with pick, squash, fixup, drop, and reordering";
 "help.ops.hunk" = "Hunk and line staging — granular control over what goes into the commit";
+"help.ops.init" = "Initialize a new Git repository directly from the welcome screen";
 
 // Worktrees
 "help.worktree.parallel" = "Work on multiple branches simultaneously without switching context";
@@ -565,6 +571,10 @@
 "ntfy.topic.privacy" = "Use a unique, hard-to-guess name. Anyone with the topic name can send/receive notifications.";
 "ntfy.server.hint" = "Leave blank to use the default server (ntfy.sh)";
 "ntfy.advanced" = "Advanced";
+"ntfy.whatIs.title" = "What is ntfy?";
+"ntfy.whatIs.description" = "ntfy is a free push notification service. A \"topic\" is like a channel — any device subscribed to it receives the messages.";
+"ntfy.whatIs.steps" = "1. Install the ntfy app on your phone (iOS/Android)\n2. Choose a unique topic name above\n3. In the ntfy app, subscribe to the same topic\n4. Done! Zion will send notifications to your devices";
+"ntfy.whatIs.learnMore" = "Learn more at ntfy.sh";
 "ntfy.local.toggle" = "macOS local notifications";
 "ntfy.events.title" = "Notified Events";
 "ntfy.test.button" = "Send Test Notification";
@@ -1090,3 +1100,31 @@
 
 // Cherry-pick confirmation
 "Aplicar este commit na branch atual?" = "Apply this commit to the current branch?";
+
+// Pre-Commit AI Review Gate
+"settings.ai.preCommitReview" = "Pre-Commit Review";
+"settings.ai.preCommitReview.toggle" = "Run AI review before committing";
+"settings.ai.preCommitReview.hint" = "When enabled, clicking Commit will first run an AI code review. You can still commit even if issues are found.";
+"precommit.gate.title" = "Pre-Commit AI Review";
+"precommit.reviewing" = "Reviewing code before commit...";
+"precommit.fixIssues" = "Fix Issues";
+"precommit.commitAnyway" = "Commit Anyway";
+"precommit.moreFindings" = "and more findings:";
+"help.ai.precommit" = "Automatic AI review gate before every commit (toggle in Settings)";
+
+// File History
+"filehistory.title" = "File History";
+"filehistory.loading" = "Loading file history...";
+"filehistory.empty" = "No commits found for this file.";
+"filehistory.showInGraph" = "Show in Graph";
+"help.code.filehistory" = "View commit history for any file with one click";
+
+// Zion Map — Pre-Commit Review
+"map.ai.precommit.title" = "Pre-Commit Review Gate";
+"map.ai.precommit.description" = "Automatically runs AI code review when you click Commit. Shows findings with safe/warning/critical counts and lets you fix issues or commit anyway.";
+"map.ai.precommit.tip1" = "Enable in Settings > AI > Run AI review before committing.";
+
+// Zion Map — File History
+"map.code.filehistory.title" = "File History";
+"map.code.filehistory.description" = "View the commit history for any file. Shows hash, author, date, and message for each commit that touched the file.";
+"map.code.filehistory.tip1" = "Right-click a file and select File History, or use the toolbar button.";

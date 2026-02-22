@@ -335,6 +335,9 @@
 "Zoom in" = "Zoom in";
 "Zoom out" = "Zoom out";
 "Buscar no grafo" = "Buscar en el grafo";
+"shortcuts.find" = "Buscar";
+"shortcuts.findReplace" = "Buscar y Reemplazar";
+"shortcuts.general" = "General";
 "Pressione" = "Presiona";
 "para ver todos os atalhos" = "para ver todos los atajos";
 
@@ -398,6 +401,7 @@
 "help.ops.stash" = "Guardar, aplicar, pop y gestionar stashes con mensajes";
 "help.ops.rebase" = "Rebase interactivo visual con pick, squash, fixup, drop y reordenamiento";
 "help.ops.hunk" = "Staging por hunk y por línea — control granular de lo que entra en el commit";
+"help.ops.init" = "Inicializa un nuevo repositorio Git directamente desde la pantalla de bienvenida";
 
 // Worktrees
 "help.worktree.parallel" = "Trabaja en múltiples branches simultáneamente sin cambiar de contexto";
@@ -546,6 +550,8 @@
 // Welcome / Repo selection
 "Selecione um repositorio" = "Selecciona un repositorio";
 "Abrir repositorio..." = "Abrir repositorio...";
+"Inicializar repositorio..." = "Inicializar repositorio...";
+"Criar um novo repositorio Git em uma pasta existente" = "Crear un nuevo repositorio Git en una carpeta existente";
 "Inferir origem da arvore" = "Inferir origen del árbol";
 
 // Operations card subtitles
@@ -563,6 +569,10 @@
 "ntfy.topic.privacy" = "Usa un nombre único y difícil de adivinar. Cualquiera con el nombre del tópico puede enviar/recibir notificaciones.";
 "ntfy.server.hint" = "Deja en blanco para usar el servidor predeterminado (ntfy.sh)";
 "ntfy.advanced" = "Avanzado";
+"ntfy.whatIs.title" = "¿Qué es ntfy?";
+"ntfy.whatIs.description" = "ntfy es un servicio gratuito de notificaciones push. Un \"tópico\" es como un canal — cualquier dispositivo suscrito a él recibe los mensajes.";
+"ntfy.whatIs.steps" = "1. Instala la app ntfy en tu celular (iOS/Android)\n2. Elige un nombre de tópico único arriba\n3. En la app ntfy, suscríbete al mismo tópico\n4. ¡Listo! Zion enviará notificaciones a tus dispositivos";
+"ntfy.whatIs.learnMore" = "Más información en ntfy.sh";
 "ntfy.local.toggle" = "Notificaciones locales de macOS";
 "ntfy.events.title" = "Eventos Notificados";
 "ntfy.test.button" = "Enviar Notificación de Prueba";
@@ -1103,3 +1113,31 @@
 "Remover tag" = "Eliminar tag";
 "Remover worktree" = "Eliminar worktree";
 "Saltar para" = "Saltar a";
+
+// Pre-Commit AI Review Gate
+"settings.ai.preCommitReview" = "Review Pre-Commit";
+"settings.ai.preCommitReview.toggle" = "Ejecutar review con IA antes de commitear";
+"settings.ai.preCommitReview.hint" = "Cuando está activo, hacer clic en Commit primero ejecuta un code review con IA. Aún puedes commitear incluso si se encuentran problemas.";
+"precommit.gate.title" = "Review de IA Pre-Commit";
+"precommit.reviewing" = "Revisando código antes del commit...";
+"precommit.fixIssues" = "Corregir Problemas";
+"precommit.commitAnyway" = "Commitear de Todos Modos";
+"precommit.moreFindings" = "y más findings:";
+"help.ai.precommit" = "Gate de review con IA automático antes de cada commit (activar en Configuración)";
+
+// File History
+"filehistory.title" = "Historial del Archivo";
+"filehistory.loading" = "Cargando historial del archivo...";
+"filehistory.empty" = "No se encontraron commits para este archivo.";
+"filehistory.showInGraph" = "Mostrar en el Grafo";
+"help.code.filehistory" = "Visualiza el historial de commits de cualquier archivo con un clic";
+
+// Zion Map — Pre-Commit Review
+"map.ai.precommit.title" = "Gate de Review Pre-Commit";
+"map.ai.precommit.description" = "Ejecuta automáticamente review de código con IA cuando haces clic en Commit. Muestra findings con conteo de safe/warning/critical y permite corregir o commitear de todos modos.";
+"map.ai.precommit.tip1" = "Activa en Configuración > IA > Ejecutar review con IA antes de commitear.";
+
+// Zion Map — File History
+"map.code.filehistory.title" = "Historial del Archivo";
+"map.code.filehistory.description" = "Ve el historial de commits de cualquier archivo. Muestra hash, autor, fecha y mensaje de cada commit que tocó el archivo.";
+"map.code.filehistory.tip1" = "Haz clic derecho en un archivo y selecciona Historial del Archivo, o usa el botón en la toolbar.";

@@ -29,10 +29,10 @@ struct RepositoryStatsCard: View {
         VStack(alignment: .leading, spacing: 16) {
             // Summary badges
             HStack(spacing: 12) {
-                statBadge(value: "\(stats.totalCommits)", label: L10n("Commits"), icon: "number", color: .blue)
-                statBadge(value: "\(stats.totalBranches)", label: L10n("Branches"), icon: "arrow.triangle.branch", color: .green)
-                statBadge(value: "\(stats.totalTags)", label: L10n("Tags"), icon: "tag", color: .yellow)
-                statBadge(value: "\(stats.contributors.count)", label: L10n("Autores"), icon: "person.2", color: .purple)
+                statBadge(value: "\(stats.totalCommits)", label: L10n("Commits"), icon: "number", color: DesignSystem.Colors.info)
+                statBadge(value: "\(stats.totalBranches)", label: L10n("Branches"), icon: "arrow.triangle.branch", color: DesignSystem.Colors.success)
+                statBadge(value: "\(stats.totalTags)", label: L10n("Tags"), icon: "tag", color: DesignSystem.Colors.searchHighlight)
+                statBadge(value: "\(stats.contributors.count)", label: L10n("Autores"), icon: "person.2", color: DesignSystem.Colors.brandPrimary)
             }
 
             // Date range
@@ -85,7 +85,7 @@ struct RepositoryStatsCard: View {
                     Text(L10n("Linguagens")).font(.system(size: 11, weight: .bold)).foregroundStyle(.secondary)
 
                     // Stacked bar
-                    let colors: [Color] = [.blue, .green, .orange, .purple, .pink, .cyan, .mint, .indigo, .teal, .yellow]
+                    let colors: [Color] = DesignSystem.Colors.lanePalette
                     GeometryReader { geo in
                         HStack(spacing: 1) {
                             ForEach(Array(stats.languageBreakdown.enumerated()), id: \.element.id) { index, lang in

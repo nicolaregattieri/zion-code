@@ -146,7 +146,7 @@ struct ReflogSheet: View {
         case "rebase": return DesignSystem.Colors.destructive
         case "reset": return DesignSystem.Colors.destructive
         case "cherry-pick": return DesignSystem.Colors.commitSplit
-        case "clone": return .mint
+        case "clone": return DesignSystem.Colors.commitSplit
         default: return .secondary
         }
     }

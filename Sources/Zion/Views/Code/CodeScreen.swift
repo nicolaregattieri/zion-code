@@ -89,6 +89,9 @@ struct CodeScreen: View {
     @State private var currentMatchIndex: Int = 0
     @FocusState private var isFileBrowserFocused: Bool
     @State private var selectedBrowserIndex: Int = -1
+    @State private var showGoToLine: Bool = false
+    @State private var goToLineNumber: String = ""
+    @State private var goToLineTarget: Int = 0
 
     var body: some View {
         ZStack {
@@ -124,6 +127,14 @@ struct CodeScreen: View {
         }
         .padding(12)
         .background(DesignSystem.Colors.background)
+        .sheet(isPresented: $showGoToLine) {
+            goToLineSheet
+        }
+        .sheet(isPresented: $model.isFileHistoryVisible) {
+            if let file = model.selectedCodeFile {
+                FileHistorySheet(model: model, fileName: file.name)
+            }
+        }
         .background {
             Button("") { isQuickOpenVisible.toggle() }
                 .keyboardShortcut("p", modifiers: .command)
@@ -159,6 +170,11 @@ struct CodeScreen: View {
             // Save As (Cmd+Shift+S)
             Button("") { model.saveCurrentFileAs() }
                 .keyboardShortcut("s", modifiers: [.command, .shift])
+                .frame(width: 0, height: 0).opacity(0)
+
+            // Go to Line (Cmd+G)
+            Button("") { showGoToLine = true; goToLineNumber = "" }
+                .keyboardShortcut("g", modifiers: .command)
                 .frame(width: 0, height: 0).opacity(0)
         }
     }
@@ -269,6 +285,20 @@ struct CodeScreen: View {
             .accessibilityLabel(L10n("Git Blame"))
             .disabled(model.activeFileID == nil)
 
+            Button {
+                if let file = model.selectedCodeFile, let repoURL = model.repositoryURL {
+                    let relativePath = file.url.path.replacingOccurrences(of: repoURL.path + "/", with: "")
+                    model.loadFileHistory(for: relativePath)
+                }
+            } label: {
+                Image(systemName: "clock.arrow.circlepath")
+                    .font(.caption)
+            }
+            .buttonStyle(.bordered)
+            .help(L10n("filehistory.title"))
+            .accessibilityLabel(L10n("filehistory.title"))
+            .disabled(model.activeFileID == nil)
+
             Divider().frame(height: 14).padding(.horizontal, 4)
 
             // Layout toggle: editor / split / terminal
@@ -330,7 +360,7 @@ struct CodeScreen: View {
                 .padding(.horizontal, 6)
                 .padding(.vertical, 3)
                 .background(DesignSystem.Colors.glassSubtle)
-                .clipShape(RoundedRectangle(cornerRadius: 5))
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
                 .help(L10n("editor.repoConfig.active"))
                 .accessibilityLabel(L10n("editor.repoConfig.active"))
             }
@@ -363,7 +393,7 @@ struct CodeScreen: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.small)
-                .tint(model.selectedTheme.isLightAppearance ? Color.blue : Color.accentColor)
+                .tint(model.selectedTheme.isLightAppearance ? DesignSystem.Colors.info : Color.accentColor)
                 .help(L10n("Salvar") + " (⌘S)")
             }
         }
@@ -518,7 +548,8 @@ struct CodeScreen: View {
                         showIndentGuides: model.effectiveShowIndentGuides,
                         searchQuery: isSearchVisible ? searchQuery : "",
                         currentMatchIndex: currentMatchIndex,
-                        onMatchCountChanged: { count in matchCount = count }
+                        onMatchCountChanged: { count in matchCount = count },
+                        goToLine: goToLineTarget
                     )
                 }
             } else {
@@ -655,6 +686,30 @@ struct CodeScreen: View {
         }
     }
 
+    private var goToLineSheet: some View {
+        VStack(spacing: 12) {
+            Text(L10n("Ir para Linha"))
+                .font(.headline)
+            HStack(spacing: 8) {
+                TextField(L10n("Numero da linha..."), text: $goToLineNumber)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 140)
+                    .onSubmit { performGoToLine() }
+                Button(L10n("Ir")) { performGoToLine() }
+                    .buttonStyle(.borderedProminent)
+                    .tint(DesignSystem.Colors.actionPrimary)
+                    .disabled(Int(goToLineNumber) == nil)
+            }
+        }
+        .padding(20)
+    }
+
+    private func performGoToLine() {
+        guard let line = Int(goToLineNumber), line > 0 else { return }
+        goToLineTarget = line
+        showGoToLine = false
+    }
+
     private func toggleSearch() {
         withAnimation(.easeInOut(duration: 0.15)) {
             isSearchVisible.toggle()
@@ -716,7 +771,7 @@ struct CodeScreen: View {
     }
 
     private var codeTabBar: some View {
-        let accentColor = model.selectedTheme.isLightAppearance ? Color.blue : Color.accentColor
+        let accentColor = model.selectedTheme.isLightAppearance ? DesignSystem.Colors.info : Color.accentColor
         return ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 0) {
                 ForEach(model.openedFiles) { file in
@@ -831,7 +886,7 @@ struct CodeScreen: View {
     }
 
     private var terminalTabBar: some View {
-        let accentColor = model.selectedTheme.isLightAppearance ? Color.blue : Color.accentColor
+        let accentColor = model.selectedTheme.isLightAppearance ? DesignSystem.Colors.info : Color.accentColor
         return HStack(spacing: 0) {
             Image(systemName: "terminal.fill")
                 .font(.system(size: 10, weight: .semibold))
@@ -1257,7 +1312,7 @@ struct CodeTab: View {
     var body: some View {
         HStack(spacing: 8) {
             if isUnsaved {
-                Circle().fill(Color.orange).frame(width: 6, height: 6)
+                Circle().fill(DesignSystem.Colors.warning).frame(width: 6, height: 6)
             }
 
             Image(systemName: "doc.text")
@@ -1443,7 +1498,7 @@ struct QuickOpenOverlay: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
-        .background(isSelected ? Color.accentColor.opacity(0.2) : Color.clear)
+        .background(isSelected ? DesignSystem.Colors.selectionBackground : Color.clear)
         .contentShape(Rectangle())
     }
 
@@ -1481,19 +1536,19 @@ struct FileTreeNodeView: View {
                     if item.isDirectory {
                         FolderIcon(
                             isOpen: isExpanded,
-                            color: isModified ? .orange : (isDark ? Color.accentColor : .blue),
+                            color: isModified ? DesignSystem.Colors.warning : (isDark ? Color.accentColor : DesignSystem.Colors.info),
                             size: 14
                         )
                     } else {
                         Image(systemName: "doc.text")
                             .font(.system(size: 12))
-                            .foregroundStyle(isModified ? Color.orange : .secondary)
+                            .foregroundStyle(isModified ? DesignSystem.Colors.warning : .secondary)
                     }
 
                     Text(item.name)
                         .font(.system(size: 12, weight: isSelected ? .bold : .regular, design: .monospaced))
                         .lineLimit(1)
-                        .foregroundStyle(isSelected ? (isDark ? .white : Color.blue) : (isModified ? Color.orange : .primary))
+                        .foregroundStyle(isSelected ? (isDark ? .white : DesignSystem.Colors.info) : (isModified ? DesignSystem.Colors.warning : .primary))
                 }
                 .padding(.horizontal, 12).padding(.vertical, 6).padding(.leading, CGFloat(level) * 12)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -1548,6 +1603,15 @@ struct FileTreeNodeView: View {
                 } else {
                     Button { model.selectCodeFile(item) } label: {
                         Label(L10n("Abrir no Editor"), systemImage: "pencil.and.outline")
+                    }
+
+                    Button {
+                        if let repoURL = model.repositoryURL {
+                            let relativePath = item.url.path.replacingOccurrences(of: repoURL.path + "/", with: "")
+                            model.loadFileHistory(for: relativePath)
+                        }
+                    } label: {
+                        Label(L10n("filehistory.title"), systemImage: "clock.arrow.circlepath")
                     }
 
                     Divider()
