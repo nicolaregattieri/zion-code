@@ -366,7 +366,7 @@ struct GraphScreen: View {
                             Label(L10n("Commit"), systemImage: "checkmark.circle.fill")
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(DesignSystem.Colors.success)
+                        .tint(DesignSystem.Colors.actionPrimary)
                         .controlSize(.small)
                         .sheet(isPresented: $isShowingQuickCommit) {
                             VStack(alignment: .leading, spacing: 16) {
@@ -399,6 +399,7 @@ struct GraphScreen: View {
                                     }
                                     .buttonStyle(.bordered)
                                     .controlSize(.small)
+                                    .tint(DesignSystem.Colors.ai)
                                     .disabled(model.isGeneratingAIMessage)
                                     .help(model.isAIConfigured ? L10n("Gerar mensagem com IA") : L10n("Sugerir mensagem de commit"))
                                     .accessibilityLabel(L10n("Gerar mensagem com IA"))
@@ -432,7 +433,7 @@ struct GraphScreen: View {
                                         isShowingQuickCommit = false
                                     }
                                     .buttonStyle(.borderedProminent)
-                                    .tint(DesignSystem.Colors.success)
+                                    .tint(DesignSystem.Colors.actionPrimary)
                                     .disabled(model.commitMessageInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                                     .keyboardShortcut(.return, modifiers: [])
                                 }
