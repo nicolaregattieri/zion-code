@@ -76,9 +76,18 @@ struct SourceCodeEditor: NSViewRepresentable {
             textView.string = text
         }
 
-        // Sync font
-        let font = NSFont(name: fontFamily, size: fontSize)
-            ?? .monospacedSystemFont(ofSize: fontSize, weight: .regular)
+        // Sync font (cached)
+        let coord0 = context.coordinator
+        let font: NSFont
+        if let cached = coord0.cachedFont, coord0.cachedFontSize == fontSize, coord0.cachedFontFamily == fontFamily {
+            font = cached
+        } else {
+            font = NSFont(name: fontFamily, size: fontSize)
+                ?? .monospacedSystemFont(ofSize: fontSize, weight: .regular)
+            coord0.cachedFont = font
+            coord0.cachedFontSize = fontSize
+            coord0.cachedFontFamily = fontFamily
+        }
         if textView.font != font {
             textView.font = font
         }
@@ -99,7 +108,15 @@ struct SourceCodeEditor: NSViewRepresentable {
             textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
         }
 
-        let colors = getEditorColors(for: theme)
+        // Colors (cached)
+        let colors: EditorColors
+        if let cached = coord0.cachedColors, coord0.cachedColorsTheme == theme {
+            colors = cached
+        } else {
+            colors = getEditorColors(for: theme)
+            coord0.cachedColors = colors
+            coord0.cachedColorsTheme = theme
+        }
         textView.drawsBackground = true
         textView.backgroundColor = colors.background
         nsView.drawsBackground = true
@@ -179,9 +196,15 @@ struct SourceCodeEditor: NSViewRepresentable {
         var lastHighlightedTheme: EditorTheme?
         var lastHighlightedExtension: String?
         var regexCache: [String: NSRegularExpression] = [:]
+        var cachedFont: NSFont?
+        var cachedFontSize: Double?
+        var cachedFontFamily: String?
+        var cachedColors: SourceCodeEditor.EditorColors?
+        var cachedColorsTheme: EditorTheme?
         var lastSearchQuery: String = ""
         var lastCurrentMatchIndex: Int = 0
         var searchMatchRanges: [NSRange] = []
+        private var highlightDebounceTask: DispatchWorkItem?
         init(_ parent: SourceCodeEditor) { self.parent = parent }
 
         @MainActor
@@ -190,12 +213,19 @@ struct SourceCodeEditor: NSViewRepresentable {
             if parent.text != textView.string {
                 parent.text = textView.string
             }
-            let colors = parent.getEditorColors(for: parent.theme)
-            applyHighlighting(to: textView, colors: colors)
-            lastHighlightedText = textView.string
-            lastHighlightedTheme = parent.theme
-            lastHighlightedExtension = parent.fileExtension
             textView.enclosingScrollView?.verticalRulerView?.needsDisplay = true
+
+            highlightDebounceTask?.cancel()
+            let task = DispatchWorkItem { [weak self] in
+                guard let self else { return }
+                let colors = self.parent.getEditorColors(for: self.parent.theme)
+                self.applyHighlighting(to: textView, colors: colors)
+                self.lastHighlightedText = textView.string
+                self.lastHighlightedTheme = self.parent.theme
+                self.lastHighlightedExtension = self.parent.fileExtension
+            }
+            highlightDebounceTask = task
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: task)
         }
 
         @MainActor
@@ -453,11 +483,16 @@ struct SourceCodeEditor: NSViewRepresentable {
         @MainActor
         func updateCurrentMatchHighlight(in textView: NSTextView, currentIndex: Int) {
             guard let textStorage = textView.textStorage, !searchMatchRanges.isEmpty else { return }
+            let previousIndex = lastCurrentMatchIndex
 
             textStorage.beginEditing()
-            for (i, range) in searchMatchRanges.enumerated() {
-                let color = (i == currentIndex) ? Self.searchCurrentMatchColor : Self.searchMatchColor
-                textStorage.addAttribute(.backgroundColor, value: color, range: range)
+            // Revert previous match to normal highlight
+            if previousIndex < searchMatchRanges.count {
+                textStorage.addAttribute(.backgroundColor, value: Self.searchMatchColor, range: searchMatchRanges[previousIndex])
+            }
+            // Highlight new current match
+            if currentIndex < searchMatchRanges.count {
+                textStorage.addAttribute(.backgroundColor, value: Self.searchCurrentMatchColor, range: searchMatchRanges[currentIndex])
             }
             textStorage.endEditing()
 

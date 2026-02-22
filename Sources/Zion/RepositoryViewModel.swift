@@ -800,17 +800,18 @@ final class RepositoryViewModel {
         Task {
             // Phase 1: load top-level only (instant)
             let initial = await loadFiles(at: url, ignoredPaths: nil, maxDepth: 0)
-            repositoryFiles = initial
-            reloadExpandedDirectories()
 
-            // Phase 2: refine with gitignore
+            // Phase 2: refine with gitignore — build final value before assigning
             let ignoredPaths = await loadGitIgnoredPaths()
+            let files: [FileItem]
             if !ignoredPaths.isEmpty {
                 cachedIgnoredPaths = ignoredPaths
-                let filtered = await loadFiles(at: url, ignoredPaths: ignoredPaths, maxDepth: 0)
-                repositoryFiles = filtered
-                reloadExpandedDirectories()
+                files = await loadFiles(at: url, ignoredPaths: ignoredPaths, maxDepth: 0)
+            } else {
+                files = initial
             }
+            repositoryFiles = files  // single assignment, single cache rebuild
+            reloadExpandedDirectories()
         }
     }
 
@@ -2571,18 +2572,18 @@ final class RepositoryViewModel {
     }
 
     private func buildPatch(file: String, hunks: [DiffHunk]) -> String {
-        var patch = "--- a/\(file)\n+++ b/\(file)\n"
+        var parts: [String] = ["--- a/\(file)", "+++ b/\(file)"]
         for hunk in hunks {
-            patch += hunk.header + "\n"
+            parts.append(hunk.header)
             for line in hunk.lines {
                 switch line.type {
-                case .context: patch += " \(line.content)\n"
-                case .addition: patch += "+\(line.content)\n"
-                case .deletion: patch += "-\(line.content)\n"
+                case .context: parts.append(" \(line.content)")
+                case .addition: parts.append("+\(line.content)")
+                case .deletion: parts.append("-\(line.content)")
                 }
             }
         }
-        return patch
+        return parts.joined(separator: "\n") + "\n"
     }
 
     private func buildPartialPatch(file: String, hunk: DiffHunk, selectedLineIDs: Set<UUID>) -> String {
@@ -2621,15 +2622,15 @@ final class RepositoryViewModel {
         guard newLines.contains(where: { $0.type != .context }) else { return "" }
 
         let header = "@@ -\(hunk.oldStart),\(oldLineCount) +\(hunk.newStart),\(newLineCount) @@"
-        var patch = "--- a/\(file)\n+++ b/\(file)\n\(header)\n"
+        var parts: [String] = ["--- a/\(file)", "+++ b/\(file)", header]
         for line in newLines {
             switch line.type {
-            case .context: patch += " \(line.content)\n"
-            case .addition: patch += "+\(line.content)\n"
-            case .deletion: patch += "-\(line.content)\n"
+            case .context: parts.append(" \(line.content)")
+            case .addition: parts.append("+\(line.content)")
+            case .deletion: parts.append("-\(line.content)")
             }
         }
-        return patch
+        return parts.joined(separator: "\n") + "\n"
     }
 
     // MARK: - Commit Diff for File
