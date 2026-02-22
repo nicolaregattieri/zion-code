@@ -1207,6 +1207,23 @@ final class RepositoryViewModel {
         flatFileCache
     }
 
+    /// Returns all visible items in the file browser tree (directories + files),
+    /// respecting the current expansion state. Used for keyboard navigation.
+    func visibleFlatFiles() -> [FileItem] {
+        func walk(_ items: [FileItem]) -> [FileItem] {
+            var result: [FileItem] = []
+            for item in items {
+                result.append(item)
+                if item.isDirectory && expandedPaths.contains(item.id),
+                   let children = item.children {
+                    result.append(contentsOf: walk(children))
+                }
+            }
+            return result
+        }
+        return walk(repositoryFiles)
+    }
+
     private func rebuildFlatFileCache() {
         func flatten(_ items: [FileItem]) -> [FileItem] {
             var result: [FileItem] = []
@@ -2334,19 +2351,19 @@ final class RepositoryViewModel {
 
     private func loadCommitDetails(for commitID: String?) {
         guard let repositoryURL else {
-            commitDetails = "Selecione um repositorio Git."
+            commitDetails = L10n("Selecione um repositorio Git.")
             return
         }
 
         guard let commitID else {
-            commitDetails = "Selecione um commit para ver os detalhes."
+            commitDetails = L10n("Selecione um commit para ver os detalhes.")
             return
         }
 
         detailsTask?.cancel()
         let requestID = UUID()
         detailsRequestID = requestID
-        commitDetails = "Carregando detalhes do commit..."
+        commitDetails = L10n("Carregando detalhes do commit...")
 
         detailsTask = Task {
             do {

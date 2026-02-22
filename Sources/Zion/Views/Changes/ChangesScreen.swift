@@ -3,6 +3,8 @@ import SwiftUI
 struct ChangesScreen: View {
     var model: RepositoryViewModel
     @State private var splitRatio: CGFloat = 0.25
+    @FocusState private var isFileListFocused: Bool
+    @State private var selectedFileIndex: Int = -1
 
     var body: some View {
         DraggableSplitView(
@@ -37,6 +39,7 @@ struct ChangesScreen: View {
                 }
                 .buttonStyle(.bordered).controlSize(.mini)
                 .help(L10n("Adicionar todos ao stage"))
+                .accessibilityLabel(L10n("Adicionar todos ao stage"))
 
                 Button {
                     model.unstageAllFiles()
@@ -45,12 +48,13 @@ struct ChangesScreen: View {
                 }
                 .buttonStyle(.bordered).controlSize(.mini)
                 .help(L10n("Remover todos do stage"))
+                .accessibilityLabel(L10n("Remover todos do stage"))
 
                 Button {
                     model.refreshRepository()
                 } label: {
                     Image(systemName: "arrow.clockwise")
-                }.buttonStyle(.plain).cursorArrow().help(L10n("Atualizar"))
+                }.buttonStyle(.plain).cursorArrow().help(L10n("Atualizar")).accessibilityLabel(L10n("Atualizar"))
             }
             .padding(12)
 
@@ -71,13 +75,40 @@ struct ChangesScreen: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding(20)
             } else {
-                ScrollView {
-                    VStack(spacing: 2) {
-                        ForEach(model.uncommittedChanges, id: \.self) { line in
-                            fileRow(line: line)
+                ScrollViewReader { scrollProxy in
+                    ScrollView {
+                        VStack(spacing: 2) {
+                            ForEach(Array(model.uncommittedChanges.enumerated()), id: \.element) { index, line in
+                                fileRow(line: line)
+                                    .id(index)
+                            }
+                        }
+                        .padding(8)
+                    }
+                    .focusable()
+                    .focused($isFileListFocused)
+                    .focusEffectDisabled()
+                    .onMoveCommand { direction in
+                        let changes = model.uncommittedChanges
+                        guard !changes.isEmpty else { return }
+                        switch direction {
+                        case .up:
+                            if selectedFileIndex > 0 {
+                                selectedFileIndex -= 1
+                            }
+                        case .down:
+                            if selectedFileIndex < changes.count - 1 {
+                                selectedFileIndex += 1
+                            }
+                        default: break
+                        }
+                        if selectedFileIndex >= 0 && selectedFileIndex < changes.count {
+                            let line = changes[selectedFileIndex]
+                            let file = String(line.dropFirst(3)).trimmingCharacters(in: .whitespaces)
+                            model.selectChangeFile(file)
+                            withAnimation { scrollProxy.scrollTo(selectedFileIndex, anchor: .center) }
                         }
                     }
-                    .padding(8)
                 }
             }
         }
@@ -193,6 +224,7 @@ struct ChangesScreen: View {
                     .buttonStyle(.bordered).controlSize(.small)
                     .disabled(model.isExplainingDiff)
                     .help(L10n("Explicar diff com IA"))
+                    .accessibilityLabel(L10n("Explicar diff com IA"))
                 }
                 Button {
                     model.unstageFile(file)

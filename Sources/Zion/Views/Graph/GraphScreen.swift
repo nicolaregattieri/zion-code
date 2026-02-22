@@ -139,6 +139,7 @@ struct GraphScreen: View {
         Button(action: action) {
             Image(systemName: icon).font(.system(size: 14, weight: .bold)).foregroundStyle(.white).frame(width: 32, height: 32).background(color.gradient).clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous))
         }.buttonStyle(.plain).cursorArrow().help(L10n("Saltar para") + " \(label)")
+        .accessibilityLabel(L10n("Saltar para") + " \(label)")
     }
 
     private func findBranchName(matches: [String]) -> String? {
@@ -165,7 +166,7 @@ struct GraphScreen: View {
                         }
                     }
                 if !commitSearchQuery.isEmpty {
-                    Button { commitSearchQuery = ""; model.clearSemanticSearch() } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).cursorArrow().help(L10n("Limpar busca"))
+                    Button { commitSearchQuery = ""; model.clearSemanticSearch() } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).cursorArrow().help(L10n("Limpar busca")).accessibilityLabel(L10n("Limpar busca"))
                     if !model.isSemanticSearchActive && !searchMatchIDs.isEmpty {
                         Text("\(currentMatchIndex + 1)/\(searchMatchIDs.count)").font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundStyle(.secondary)
                     } else if !model.aiSemanticSearchResults.isEmpty {
@@ -183,8 +184,8 @@ struct GraphScreen: View {
 
             HStack(spacing: 4) {
                 if !model.isSemanticSearchActive {
-                    Button(action: { navigateSearch(direction: -1, proxy: proxy) }) { Image(systemName: "chevron.up") }.disabled(searchMatchIDs.isEmpty).help(L10n("Resultado anterior"))
-                    Button(action: { navigateSearch(direction: 1, proxy: proxy) }) { Image(systemName: "chevron.down") }.disabled(searchMatchIDs.isEmpty).help(L10n("Proximo resultado"))
+                    Button(action: { navigateSearch(direction: -1, proxy: proxy) }) { Image(systemName: "chevron.up") }.disabled(searchMatchIDs.isEmpty).help(L10n("Resultado anterior")).accessibilityLabel(L10n("Resultado anterior"))
+                    Button(action: { navigateSearch(direction: 1, proxy: proxy) }) { Image(systemName: "chevron.down") }.disabled(searchMatchIDs.isEmpty).help(L10n("Proximo resultado")).accessibilityLabel(L10n("Proximo resultado"))
                 }
                 if model.isAIConfigured {
                     Button {
@@ -200,6 +201,7 @@ struct GraphScreen: View {
                     .buttonStyle(.bordered)
                     .controlSize(.small)
                     .help(L10n("Busca semantica com IA"))
+                    .accessibilityLabel(L10n("Busca semantica com IA"))
                 }
                 if model.isSemanticSearchActive && model.isGeneratingAIMessage {
                     ProgressView().controlSize(.small)
@@ -399,6 +401,7 @@ struct GraphScreen: View {
                                     .controlSize(.small)
                                     .disabled(model.isGeneratingAIMessage)
                                     .help(model.isAIConfigured ? L10n("Gerar mensagem com IA") : L10n("Sugerir mensagem de commit"))
+                                    .accessibilityLabel(L10n("Gerar mensagem com IA"))
                                     .onChange(of: model.suggestedCommitMessage) { _, newValue in
                                         if !newValue.isEmpty {
                                             model.commitMessageInput = newValue
@@ -515,7 +518,7 @@ struct GraphScreen: View {
                                                 HStack(spacing: 8) {
                                                     Button(L10n("Apply")) { model.selectedStash = stash; model.applySelectedStash(); isShowingStashList = false }.buttonStyle(.bordered).controlSize(.small)
                                                     Button(L10n("Pop")) { model.selectedStash = stash; model.popSelectedStash(); isShowingStashList = false }.buttonStyle(.bordered).controlSize(.small)
-                                                    Button { model.selectedStash = stash; model.dropSelectedStash() } label: { Image(systemName: "trash") }.buttonStyle(.bordered).tint(DesignSystem.Colors.destructive).controlSize(.small)
+                                                    Button { model.selectedStash = stash; model.dropSelectedStash() } label: { Image(systemName: "trash") }.buttonStyle(.bordered).tint(DesignSystem.Colors.destructive).controlSize(.small).accessibilityLabel(L10n("Drop Stash"))
                                                 }
                                             }
                                             .padding(10).background(DesignSystem.Colors.glassSubtle).cornerRadius(DesignSystem.Spacing.elementCornerRadius)
@@ -688,7 +691,7 @@ struct GraphScreen: View {
             CardHeader(L10n("Changes"), icon: "pencil.circle", subtitle: "\(model.uncommittedCount) \(L10n("arquivos modificados"))") {
                 Button { model.refreshRepository() } label: {
                     Image(systemName: "arrow.clockwise")
-                }.buttonStyle(.plain).cursorArrow().help(L10n("Atualizar"))
+                }.buttonStyle(.plain).cursorArrow().help(L10n("Atualizar")).accessibilityLabel(L10n("Atualizar"))
             }
             .padding(12)
             Divider()

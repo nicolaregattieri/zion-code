@@ -87,6 +87,8 @@ struct CodeScreen: View {
     @State private var replaceQuery: String = ""
     @State private var matchCount: Int = 0
     @State private var currentMatchIndex: Int = 0
+    @FocusState private var isFileBrowserFocused: Bool
+    @State private var selectedBrowserIndex: Int = -1
 
     var body: some View {
         ZStack {
@@ -193,6 +195,7 @@ struct CodeScreen: View {
             .buttonStyle(.bordered)
             .tint(isFileBrowserVisible ? Color.accentColor : .secondary)
             .help(L10n("Alternar painel de arquivos") + " (⌘B)")
+            .accessibilityLabel(L10n("Alternar painel de arquivos"))
 
             // Theme & Font group
             HStack(spacing: 6) {
@@ -250,6 +253,7 @@ struct CodeScreen: View {
             .buttonStyle(.bordered)
             .tint(model.isLineWrappingEnabled ? Color.accentColor : .secondary)
             .help(L10n("Quebra de Linha Automática"))
+            .accessibilityLabel(L10n("Quebra de Linha Automática"))
 
             EditorSettingsPopoverButton(model: model)
 
@@ -262,6 +266,7 @@ struct CodeScreen: View {
             .buttonStyle(.bordered)
             .tint(model.isBlameVisible ? Color.accentColor : .secondary)
             .help(L10n("Git Blame"))
+            .accessibilityLabel(L10n("Git Blame"))
             .disabled(model.activeFileID == nil)
 
             Divider().frame(height: 14).padding(.horizontal, 4)
@@ -279,6 +284,7 @@ struct CodeScreen: View {
                 .frame(width: 26, height: 22)
                 .contentShape(Rectangle())
                 .help(L10n("Somente editor") + " (⌘J)")
+                .accessibilityLabel(L10n("Somente editor"))
 
                 Button {
                     withAnimation(.easeInOut(duration: 0.15)) { layout = .split }
@@ -291,6 +297,7 @@ struct CodeScreen: View {
                 .frame(width: 26, height: 22)
                 .contentShape(Rectangle())
                 .help(L10n("Editor e terminal"))
+                .accessibilityLabel(L10n("Editor e terminal"))
 
                 Button {
                     withAnimation(.easeInOut(duration: 0.15)) { layout = .terminalOnly }
@@ -303,6 +310,7 @@ struct CodeScreen: View {
                 .frame(width: 26, height: 22)
                 .contentShape(Rectangle())
                 .help(L10n("Somente terminal") + " (⇧⌘J)")
+                .accessibilityLabel(L10n("Somente terminal"))
             }
             .padding(.horizontal, 4)
             .padding(.vertical, 3)
@@ -324,6 +332,7 @@ struct CodeScreen: View {
                 .background(DesignSystem.Colors.glassSubtle)
                 .clipShape(RoundedRectangle(cornerRadius: 5))
                 .help(L10n("editor.repoConfig.active"))
+                .accessibilityLabel(L10n("editor.repoConfig.active"))
             }
 
             Button {
@@ -334,6 +343,7 @@ struct CodeScreen: View {
             }
             .buttonStyle(.bordered)
             .help(L10n("Novo Arquivo") + " (⌘N)")
+            .accessibilityLabel(L10n("Novo Arquivo"))
 
             if model.activeFileID != nil {
                 Button {
@@ -344,6 +354,7 @@ struct CodeScreen: View {
                 }
                 .buttonStyle(.bordered)
                 .help(L10n("Salvar Como...") + " (⇧⌘S)")
+                .accessibilityLabel(L10n("Salvar Como..."))
 
                 Button {
                     model.saveCurrentCodeFile()
@@ -366,38 +377,85 @@ struct CodeScreen: View {
                 Button { model.refreshFileTree() } label: { Image(systemName: "arrow.clockwise") }
                     .buttonStyle(.plain).cursorArrow().foregroundStyle(.secondary)
                     .help(L10n("Atualizar arvore de arquivos"))
+                    .accessibilityLabel(L10n("Atualizar arvore de arquivos"))
             }
             .padding(12)
 
             Divider()
 
             // File tree scroll — fills available space
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    if model.repositoryFiles.isEmpty {
-                        VStack(spacing: 16) {
-                            Text(L10n("Nenhum arquivo encontrado")).font(.caption).foregroundStyle(.secondary)
-                            Button {
-                                onOpenFolder?()
-                            } label: {
-                                Label(L10n("Selecionar Pasta"), systemImage: "folder.badge.plus")
+            ScrollViewReader { scrollProxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        if model.repositoryFiles.isEmpty {
+                            VStack(spacing: 16) {
+                                Text(L10n("Nenhum arquivo encontrado")).font(.caption).foregroundStyle(.secondary)
+                                Button {
+                                    onOpenFolder?()
+                                } label: {
+                                    Label(L10n("Selecionar Pasta"), systemImage: "folder.badge.plus")
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
                             }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
+                            .padding(20)
+                            .frame(maxWidth: .infinity)
+                        } else {
+                            ForEach(model.repositoryFiles) { item in
+                                FileTreeNodeView(model: model, item: item, level: 0)
+                                    .id(item.id)
+                            }
                         }
-                        .padding(20)
-                        .frame(maxWidth: .infinity)
-                    } else {
-                        ForEach(model.repositoryFiles) { item in
-                            FileTreeNodeView(model: model, item: item, level: 0)
-                        }
-                    }
 
-                    ClipboardDrawer(model: model)
-                        .padding(.top, 8)
+                        ClipboardDrawer(model: model)
+                            .padding(.top, 8)
+                    }
+                    .padding(.top, 8)
+                    .padding(.bottom, 40)
                 }
-                .padding(.top, 8)
-                .padding(.bottom, 40)
+                .focusable()
+                .focused($isFileBrowserFocused)
+                .focusEffectDisabled()
+                .onMoveCommand { direction in
+                    let flatFiles = model.visibleFlatFiles()
+                    guard !flatFiles.isEmpty else { return }
+                    switch direction {
+                    case .up:
+                        if selectedBrowserIndex > 0 {
+                            selectedBrowserIndex -= 1
+                        }
+                    case .down:
+                        if selectedBrowserIndex < flatFiles.count - 1 {
+                            selectedBrowserIndex += 1
+                        }
+                    case .left:
+                        // Collapse folder
+                        if selectedBrowserIndex >= 0 && selectedBrowserIndex < flatFiles.count {
+                            let item = flatFiles[selectedBrowserIndex]
+                            if item.isDirectory && model.expandedPaths.contains(item.id) {
+                                withAnimation(.snappy(duration: 0.2)) { model.toggleExpansion(for: item.id) }
+                            }
+                        }
+                        return
+                    case .right:
+                        // Expand folder
+                        if selectedBrowserIndex >= 0 && selectedBrowserIndex < flatFiles.count {
+                            let item = flatFiles[selectedBrowserIndex]
+                            if item.isDirectory && !model.expandedPaths.contains(item.id) {
+                                withAnimation(.snappy(duration: 0.2)) { model.toggleExpansion(for: item.id) }
+                            }
+                        }
+                        return
+                    @unknown default: break
+                    }
+                    if selectedBrowserIndex >= 0 && selectedBrowserIndex < flatFiles.count {
+                        let item = flatFiles[selectedBrowserIndex]
+                        if !item.isDirectory {
+                            model.selectCodeFile(item)
+                        }
+                        withAnimation { scrollProxy.scrollTo(item.id, anchor: .center) }
+                    }
+                }
             }
         }
         .background(DesignSystem.Colors.background.opacity(0.3))
@@ -534,6 +592,7 @@ struct CodeScreen: View {
                 .buttonStyle(.borderless)
                 .disabled(matchCount == 0)
                 .help(L10n("editor.search.previous") + " (⇧Enter)")
+                .accessibilityLabel(L10n("editor.search.previous"))
 
                 Button { navigateToNextMatch() } label: {
                     Image(systemName: "chevron.down").font(.system(size: 10, weight: .medium))
@@ -541,6 +600,7 @@ struct CodeScreen: View {
                 .buttonStyle(.borderless)
                 .disabled(matchCount == 0)
                 .help(L10n("editor.search.next") + " (Enter)")
+                .accessibilityLabel(L10n("editor.search.next"))
 
                 Spacer()
 
@@ -551,7 +611,8 @@ struct CodeScreen: View {
                 .buttonStyle(.plain)
                 .frame(width: 20, height: 20)
                 .contentShape(Rectangle())
-                .help("Esc")
+                .help(L10n("Esc"))
+                .accessibilityLabel(L10n("Esc"))
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
@@ -811,6 +872,7 @@ struct CodeScreen: View {
                 .frame(width: 28, height: 24)
                 .contentShape(Rectangle())
                 .help(L10n("Dividir verticalmente") + " (⇧⌘D)")
+                .accessibilityLabel(L10n("Dividir verticalmente"))
 
                 Button {
                     model.splitFocusedTerminal(direction: .horizontal)
@@ -823,6 +885,7 @@ struct CodeScreen: View {
                 .frame(width: 28, height: 24)
                 .contentShape(Rectangle())
                 .help(L10n("Dividir horizontalmente") + " (⇧⌘E)")
+                .accessibilityLabel(L10n("Dividir horizontalmente"))
             }
             .padding(.horizontal, 4)
             .padding(.vertical, 3)
@@ -843,6 +906,7 @@ struct CodeScreen: View {
             .frame(width: 28, height: 24)
             .contentShape(Rectangle())
             .help(L10n("Criar worktree rapido"))
+            .accessibilityLabel(L10n("Criar worktree rapido"))
             .disabled(model.repositoryURL == nil)
 
             // New tab
@@ -859,6 +923,7 @@ struct CodeScreen: View {
             .frame(width: 28, height: 24)
             .contentShape(Rectangle())
             .help(L10n("Novo terminal") + " (⌘T)")
+            .accessibilityLabel(L10n("Novo terminal"))
             .padding(.trailing, 8)
         }
         .padding(.vertical, 8)
@@ -882,6 +947,7 @@ struct EditorSettingsPopoverButton: View {
         .buttonStyle(.bordered)
         .tint(isPresented ? Color.accentColor : .secondary)
         .help(L10n("settings.editor.popover.title"))
+        .accessibilityLabel(L10n("settings.editor.popover.title"))
         .popover(isPresented: $isPresented) {
             VStack(alignment: .leading, spacing: 12) {
                 Text(L10n("settings.editor.popover.title"))
@@ -1048,6 +1114,7 @@ struct TerminalFontPopoverButton: View {
         .frame(width: 28, height: 24)
         .contentShape(Rectangle())
         .help(L10n("Fonte do terminal"))
+        .accessibilityLabel(L10n("Fonte do terminal"))
         .popover(isPresented: $isPresented) {
             VStack(alignment: .leading, spacing: 10) {
                 Text(L10n("Fonte do terminal"))
@@ -1135,6 +1202,7 @@ struct TerminalPaneView: View {
                     .frame(width: 24, height: 24)
                     .contentShape(Rectangle())
                     .help(L10n("Fechar painel") + " (⇧⌘W)")
+                    .accessibilityLabel(L10n("Fechar painel"))
                     .padding(4)
                 }
             }
