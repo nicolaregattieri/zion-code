@@ -46,6 +46,15 @@ Zion doesn't make you choose.
 
 ---
 
+## What's New in 1.2.0
+
+- Smart worktree create: prefix + name derives branch/path automatically, with advanced manual mode.
+- Inline sidebar flow: `+ Novo Worktree` creates context without leaving the current screen.
+- Graph worktree pills: quick switch with in-pill dirty/conflict status (`⊞ branch ● N`).
+- Root-only recents: global list stays project-focused, with `WT n` badge per repo.
+
+---
+
 ## Beautiful by Design
 
 Zion is the only Git workspace that brings the modern macOS **Glassmorphism** (UltraThinMaterial) aesthetic to your developer workflow. Whether you prefer deep indigo, classic dark, or a clean light theme, Zion looks stunning on every Mac.
@@ -126,7 +135,7 @@ List open pull requests, create new PRs from your current branch, and let AI gen
 
 ### Worktree-First Workflow
 
-Create worktrees with one click (auto-generated path and branch), get a dedicated terminal pane per worktree, remove and prune from the Operations Center.
+Create worktrees with a smart prefix+name flow, open directly into Zion Code, and keep a dedicated terminal context per worktree. Global Recents stays root-only while context switching happens in Worktrees.
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/8e07e3bd-55ab-41ab-ac51-aecf82ede782" width="100%" alt="Quick Open fuzzy search overlay" />
@@ -185,7 +194,10 @@ Zion is keyboard-first. Press `Cmd+?` to see all shortcuts inside the app.
 | `Shift+Cmd+E` | Split terminal horizontal |
 | `Shift+Cmd+W` | Close split pane |
 | `Cmd+S` | Save file |
-| `Cmd+F` | Search graph |
+| `Cmd+R` | Refresh repository status |
+| `Cmd+F` | Context search (graph / editor / terminal) |
+| `Cmd+G` | Go to line |
+| `Shift+Cmd+R` | Open Code Review |
 | `Ctrl+Plus` / `Ctrl+Minus` | Terminal zoom in / out |
 
 ---
@@ -207,11 +219,11 @@ Zion is keyboard-first. Press `Cmd+?` to see all shortcuts inside the app.
 | **Tags** | Create and delete lightweight tags |
 | **AI** | Commit messages, diff explanations, PR descriptions, stash messages, provider config (Anthropic/OpenAI), Keychain API key storage, heuristic fallback |
 | **GitHub** | PR list, create PR, AI-generated PR body |
-| **Worktrees** | Add, quick create (one-click), remove, prune, dedicated terminal, open in Finder |
+| **Worktrees** | Smart create (prefix+name), inline sidebar form, graph quick-switch pills with dirty status, remove/prune, dedicated terminal |
 | **Remotes** | Fetch all, pull, push (normal/force-with-lease/force), add/remove, connection test |
 | **Submodules** | Status, init, update (recursive), sync |
 | **Reflog** | Visual viewer (last 50), undo last action (soft reset) |
-| **Settings** | Language (PT-BR/EN/ES/System), external editor (VS Code/Cursor/Xcode/IntelliJ/Sublime/custom), external terminal (Terminal.app/iTerm/Warp/custom), confirmation mode, background fetch (60s) |
+| **Settings** | Language (PT-BR/EN/ES/System), external editor (VS Code/Cursor/Xcode/IntelliJ/Sublime/custom), external terminal (Terminal.app/iTerm/Warp/custom), confirmation mode, background fetch (60s), root-only recents (10) |
 | **Diagnostics** | Ring-buffer logger, export/copy sanitized logs |
 
 </details>

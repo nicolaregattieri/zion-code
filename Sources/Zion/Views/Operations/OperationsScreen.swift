@@ -517,20 +517,71 @@ struct OperationsScreen: View {
             }
 
             HStack(spacing: 8) {
-                TextField(L10n("/caminho/para/worktree"), text: $model.worktreePathInput)
-                    .textFieldStyle(.roundedBorder)
-                TextField(L10n("branch (opcional)"), text: $model.worktreeBranchInput)
-                    .textFieldStyle(.roundedBorder)
-                Button(L10n("Adicionar")) {
-                    performGitAction(L10n("Adicionar worktree"), L10n("Criar o novo worktree com os parametros informados?"), false) {
-                        model.addWorktree()
+                Picker(L10n("worktree.smart.prefix"), selection: $model.worktreePrefix) {
+                    ForEach(WorktreePrefix.allCases) { prefix in
+                        Text(L10n(prefix.l10nKey)).tag(prefix)
                     }
-                }.buttonStyle(.borderedProminent).tint(DesignSystem.Colors.actionPrimary)
+                }
+                .pickerStyle(.menu)
+                .frame(width: 120)
+
+                TextField(L10n("worktree.smart.name.placeholder"), text: $model.worktreeNameInput)
+                    .textFieldStyle(.roundedBorder)
+
+                Button(L10n("worktree.smart.createOpen")) {
+                    performGitAction(L10n("Adicionar worktree"), L10n("worktree.smart.confirm"), false) {
+                        model.smartCreateWorktree()
+                    }
+                }.buttonStyle(.borderedProminent)
+                    .tint(DesignSystem.Colors.actionPrimary)
+                    .disabled(!model.canSmartCreateWorktree)
+
                 Button(L10n("Prune")) {
                     performGitAction(L10n("Prune worktrees"), L10n("Remover metadados de worktrees obsoletos?"), true) {
                         model.pruneWorktrees()
                     }
                 }.buttonStyle(.bordered)
+            }
+
+            if !model.derivedWorktreeBranch.isEmpty || !model.derivedWorktreePath.isEmpty {
+                HStack(spacing: 10) {
+                    if !model.derivedWorktreeBranch.isEmpty {
+                        Text("branch: \(model.derivedWorktreeBranch)")
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                    if !model.derivedWorktreePath.isEmpty {
+                        Text(model.derivedWorktreePath)
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
+                }
+            }
+
+            Button {
+                withAnimation(DesignSystem.Motion.panel) {
+                    model.isWorktreeAdvancedExpanded.toggle()
+                }
+            } label: {
+                Label(
+                    L10n("worktree.smart.advanced"),
+                    systemImage: model.isWorktreeAdvancedExpanded ? "chevron.down" : "chevron.right"
+                )
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+
+            if model.isWorktreeAdvancedExpanded {
+                HStack(spacing: 8) {
+                    TextField(L10n("/caminho/para/worktree"), text: $model.worktreePathInput)
+                        .textFieldStyle(.roundedBorder)
+                    TextField(L10n("branch (opcional)"), text: $model.worktreeBranchInput)
+                        .textFieldStyle(.roundedBorder)
+                }
             }
 
             if !model.worktrees.isEmpty {
@@ -541,7 +592,7 @@ struct OperationsScreen: View {
                             WorktreeCardView(
                                 worktree: worktree,
                                 onOpen: {
-                                    NSWorkspace.shared.open(URL(fileURLWithPath: worktree.path))
+                                    model.openWorktreeInZion(worktree)
                                 },
                                 onRemove: {
                                     performGitAction(L10n("Remover worktree"), L10n("Deseja remover o worktree %@?", worktree.path), true) {
@@ -550,6 +601,9 @@ struct OperationsScreen: View {
                                 },
                                 onOpenTerminal: {
                                     model.openWorktreeTerminal(worktree)
+                                },
+                                onRevealInFinder: {
+                                    NSWorkspace.shared.open(URL(fileURLWithPath: worktree.path))
                                 }
                             )
                         }

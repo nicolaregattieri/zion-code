@@ -348,7 +348,8 @@ actor RepositoryWorker {
     private func worktreeList(in repositoryURL: URL) throws -> [WorktreeItem] {
         let output = try git.run(args: ["worktree", "list", "--porcelain"], in: repositoryURL).stdout
         let currentPath = repositoryURL.path
-        return parseWorktrees(from: output, currentPath: currentPath)
+        let parsed = parseWorktrees(from: output, currentPath: currentPath)
+        return parsed.map { enrichWorktreeStatus(for: $0, repositoryURL: repositoryURL) }
     }
 
     private func commitList(in repositoryURL: URL, reference: String?, limit: Int) throws -> ([Commit], Bool) {
@@ -769,6 +770,36 @@ actor RepositoryWorker {
         }
 
         return items
+    }
+
+    private func enrichWorktreeStatus(for item: WorktreeItem, repositoryURL: URL) -> WorktreeItem {
+        let statusResult = try? git.runAllowingFailure(
+            args: ["-C", item.path, "status", "--porcelain"],
+            in: repositoryURL
+        )
+        let uncommittedCount = statusResult?.stdout
+            .split(separator: "\n", omittingEmptySubsequences: true)
+            .count ?? 0
+
+        let conflictResult = try? git.runAllowingFailure(
+            args: ["-C", item.path, "ls-files", "--unmerged"],
+            in: repositoryURL
+        )
+        let hasConflicts = !(conflictResult?.stdout.clean.isEmpty ?? true)
+
+        return WorktreeItem(
+            path: item.path,
+            head: item.head,
+            branch: item.branch,
+            isDetached: item.isDetached,
+            isLocked: item.isLocked,
+            lockReason: item.lockReason,
+            isPrunable: item.isPrunable,
+            pruneReason: item.pruneReason,
+            isCurrent: item.isCurrent,
+            uncommittedCount: uncommittedCount,
+            hasConflicts: hasConflicts
+        )
     }
 
     private func parseISODate(_ value: String) -> Date {

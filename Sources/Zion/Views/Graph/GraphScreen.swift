@@ -26,6 +26,9 @@ struct GraphScreen: View {
         ScrollViewReader { proxy in
             VStack(spacing: 14) {
                 header(proxy: proxy)
+                if !model.worktrees.isEmpty {
+                    worktreeQuickSwitchBar
+                }
 
                 DraggableSplitView(
                     axis: .horizontal,
@@ -76,6 +79,36 @@ struct GraphScreen: View {
                 Button("") { isSearchFocused = true }
                     .keyboardShortcut("f", modifiers: .command)
                     .frame(width: 0, height: 0).opacity(0)
+            }
+        }
+    }
+
+    private var worktreeQuickSwitchBar: some View {
+        GlassCard(spacing: 8) {
+            HStack(spacing: 10) {
+                Image(systemName: "square.split.2x2")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                Text(L10n("Worktrees"))
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(model.worktrees) { worktree in
+                        WorktreePill(
+                            branch: worktree.branch,
+                            dirtyCount: worktree.uncommittedCount,
+                            hasConflicts: worktree.hasConflicts,
+                            isCurrent: worktree.isCurrent
+                        ) {
+                            model.openWorktreeInZion(worktree)
+                        }
+                    }
+                }
+                .padding(.vertical, 2)
             }
         }
     }
@@ -882,5 +915,67 @@ struct GraphScreen: View {
             default: Image(systemName: "questionmark.circle").foregroundStyle(.secondary)
             }
         }
+    }
+}
+
+private struct WorktreePill: View {
+    let branch: String
+    let dirtyCount: Int
+    let hasConflicts: Bool
+    let isCurrent: Bool
+    let action: () -> Void
+
+    private var borderColor: Color {
+        if hasConflicts { return DesignSystem.Colors.destructive.opacity(0.8) }
+        if dirtyCount > 0 { return DesignSystem.Colors.warning.opacity(0.8) }
+        if isCurrent { return DesignSystem.Colors.commitSplit.opacity(0.9) }
+        return DesignSystem.Colors.glassBorderDark
+    }
+
+    private var backgroundColor: Color {
+        if isCurrent { return DesignSystem.Colors.commitSplit.opacity(0.18) }
+        return DesignSystem.Colors.glassSubtle
+    }
+
+    private var statusColor: Color {
+        if hasConflicts { return DesignSystem.Colors.destructive }
+        if dirtyCount > 0 { return DesignSystem.Colors.warning }
+        return DesignSystem.Colors.success
+    }
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Text("⊞")
+                    .font(.system(size: 11, weight: .semibold))
+                Text(branch)
+                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                    .lineLimit(1)
+                Circle()
+                    .fill(statusColor)
+                    .frame(width: 6, height: 6)
+                Text("\(dirtyCount)")
+                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                if hasConflicts {
+                    Text("⚠")
+                        .font(.system(size: 10, weight: .bold))
+                }
+                if isCurrent {
+                    Text("*")
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                    .fill(backgroundColor)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                    .stroke(borderColor, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
     }
 }
