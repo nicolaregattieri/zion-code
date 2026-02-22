@@ -18,7 +18,8 @@ struct HelpSheet: View {
         switch section {
         case .tree:
             return ["help.tree.lanes", "help.tree.search", "help.tree.jumpbar",
-                    "help.tree.pending", "help.tree.signature"]
+                    "help.tree.pending", "help.tree.signature",
+                    "help.commitStats", "help.avatars", "help.branchSearch"]
         case .code:
             return ["help.code.editor", "help.code.quickopen", "help.code.blame",
                     "help.code.themes", "help.code.unsaved", "help.code.newfile",
@@ -28,20 +29,24 @@ struct HelpSheet: View {
                     "help.code.filehistory"]
         case .terminal:
             return ["help.terminal.pty", "help.terminal.splits", "help.terminal.tabs",
-                    "help.terminal.zoom", "help.terminal.persistence"]
+                    "help.terminal.zoom", "help.terminal.persistence",
+                    "help.terminalSearch"]
         case .clipboard:
             return ["help.clipboard.capture", "help.clipboard.paste",
-                    "help.clipboard.drag", "help.clipboard.images"]
+                    "help.clipboard.drag", "help.clipboard.images",
+                    "help.smartClipboard"]
         case .operations:
             return ["help.ops.commit", "help.ops.branch", "help.ops.stash",
-                    "help.ops.rebase", "help.ops.hunk", "help.ops.init"]
+                    "help.ops.rebase", "help.ops.hunk", "help.ops.init",
+                    "help.stashBadge"]
         case .worktrees:
             return ["help.worktree.parallel", "help.worktree.quick", "help.worktree.terminal"]
         case .ai:
             return ["help.ai.commit", "help.ai.diff", "help.ai.pr", "help.ai.stash",
                     "help.ai.conflict", "help.ai.review", "help.ai.changelog",
                     "help.ai.search", "help.ai.branch", "help.ai.blame",
-                    "help.ai.split", "help.ai.style", "help.ai.precommit"]
+                    "help.ai.split", "help.ai.style", "help.ai.precommit",
+                    "help.aiSummary"]
         case .customization:
             return ["help.customization.languages", "help.customization.appearance",
                     "help.customization.editor", "help.customization.confirmation",

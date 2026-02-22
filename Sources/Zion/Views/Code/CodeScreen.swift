@@ -92,6 +92,9 @@ struct CodeScreen: View {
     @State private var showGoToLine: Bool = false
     @State private var goToLineNumber: String = ""
     @State private var goToLineTarget: Int = 0
+    @State private var isTerminalSearchVisible: Bool = false
+    @State private var terminalSearchQuery: String = ""
+    @FocusState private var isTerminalSearchFocused: Bool
 
     var body: some View {
         ZStack {
@@ -772,6 +775,80 @@ struct CodeScreen: View {
         currentMatchIndex = 0
     }
 
+    // MARK: - Terminal Search
+
+    private var terminalSearchBar: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+
+            TextField(L10n("Buscar no terminal..."), text: $terminalSearchQuery)
+                .textFieldStyle(.plain)
+                .font(.system(size: 12, design: .monospaced))
+                .focused($isTerminalSearchFocused)
+                .onSubmit { terminalFindNext() }
+
+            if !terminalSearchQuery.isEmpty {
+                Button { terminalFindPrevious() } label: {
+                    Image(systemName: "chevron.up")
+                        .font(.system(size: 10, weight: .semibold))
+                }
+                .buttonStyle(.plain)
+                .help(L10n("Resultado anterior"))
+
+                Button { terminalFindNext() } label: {
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 10, weight: .semibold))
+                }
+                .buttonStyle(.plain)
+                .help(L10n("Proximo resultado"))
+            }
+
+            Button { closeTerminalSearch() } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .help(L10n("Fechar busca"))
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(model.selectedTheme.terminalPalette.backgroundSwiftUI.opacity(0.9))
+    }
+
+    private func toggleTerminalSearch() {
+        withAnimation(DesignSystem.Motion.detail) {
+            isTerminalSearchVisible.toggle()
+            if isTerminalSearchVisible {
+                isTerminalSearchFocused = true
+            } else {
+                closeTerminalSearch()
+            }
+        }
+    }
+
+    private func closeTerminalSearch() {
+        guard isTerminalSearchVisible else { return }
+        withAnimation(DesignSystem.Motion.detail) {
+            isTerminalSearchVisible = false
+            terminalSearchQuery = ""
+            isTerminalSearchFocused = false
+            model.terminalClearSearch()
+        }
+    }
+
+    private func terminalFindNext() {
+        guard !terminalSearchQuery.isEmpty else { return }
+        model.terminalFindNext(terminalSearchQuery)
+    }
+
+    private func terminalFindPrevious() {
+        guard !terminalSearchQuery.isEmpty else { return }
+        model.terminalFindPrevious(terminalSearchQuery)
+    }
+
     private var codeTabBar: some View {
         let accentColor = model.selectedTheme.isLightAppearance ? DesignSystem.Colors.info : Color.accentColor
         return ScrollView(.horizontal, showsIndicators: false) {
@@ -805,6 +882,11 @@ struct CodeScreen: View {
     private var terminalContainer: some View {
         VStack(spacing: 0) {
             terminalTabBar
+
+            if isTerminalSearchVisible {
+                terminalSearchBar
+                    .transition(DesignSystem.Motion.slideFromTop)
+            }
 
             Divider()
 
@@ -883,6 +965,16 @@ struct CodeScreen: View {
             // Git Blame (Cmd+Shift+B)
             Button("") { model.toggleBlame() }
                 .keyboardShortcut("b", modifiers: [.command, .shift])
+                .frame(width: 0, height: 0).opacity(0)
+
+            // Terminal Search (Cmd+F when terminal focused)
+            Button("") { toggleTerminalSearch() }
+                .keyboardShortcut("f", modifiers: .command)
+                .frame(width: 0, height: 0).opacity(0)
+
+            // Close terminal search (Escape)
+            Button("") { closeTerminalSearch() }
+                .keyboardShortcut(.escape, modifiers: [])
                 .frame(width: 0, height: 0).opacity(0)
         }
     }

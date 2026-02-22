@@ -127,6 +127,7 @@ struct ParsedCommit: Hashable, Sendable {
     let hash: String
     let parents: [String]
     let author: String
+    let email: String
     let date: Date
     let subject: String
     let decorations: [String]
@@ -137,6 +138,7 @@ struct Commit: Identifiable, Hashable, Sendable {
     let shortHash: String
     let parents: [String]
     let author: String
+    let email: String
     let date: Date
     let subject: String
     let decorations: [String]
@@ -146,6 +148,8 @@ struct Commit: Identifiable, Hashable, Sendable {
     let outgoingLanes: [Int]
     let laneColors: [LaneColor]
     let outgoingEdges: [LaneEdge]
+    var insertions: Int?
+    var deletions: Int?
 }
 
 struct WorktreeItem: Identifiable, Hashable, Sendable {

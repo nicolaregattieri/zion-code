@@ -270,7 +270,8 @@ struct GraphScreen: View {
                             contextMenu: commitContextMenu(commit),
                             branchContextMenu: branchContextMenu,
                             tagContextMenu: tagContextMenu,
-                            remotes: remoteNames
+                            remotes: remoteNames,
+                            avatarImage: model.avatarImage(for: commit.email)
                         )
                         .id(commit.id)
                         .overlay(alignment: .trailing) {
@@ -302,6 +303,7 @@ struct GraphScreen: View {
                 shortHash: "",
                 parents: [],
                 author: "",
+                email: "",
                 date: Date(),
                 subject: "",
                 decorations: [],
@@ -319,6 +321,7 @@ struct GraphScreen: View {
             shortHash: "",
             parents: [],
             author: "",
+            email: "",
             date: Date(),
             subject: "",
             decorations: [],
@@ -695,11 +698,58 @@ struct GraphScreen: View {
     private var inlineFileList: some View {
         GlassCard(spacing: 0) {
             CardHeader(L10n("Changes"), icon: "pencil.circle", subtitle: "\(model.uncommittedCount) \(L10n("arquivos modificados"))") {
-                Button { model.refreshRepository() } label: {
-                    Image(systemName: "arrow.clockwise")
-                }.buttonStyle(.plain).cursorArrow().help(L10n("Atualizar")).accessibilityLabel(L10n("Atualizar"))
+                HStack(spacing: 6) {
+                    if model.isAIConfigured && !model.uncommittedChanges.isEmpty {
+                        Button { model.summarizePendingChanges() } label: {
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 11))
+                                .foregroundStyle(DesignSystem.Colors.ai)
+                        }
+                        .buttonStyle(.plain)
+                        .help(L10n("Resumo IA das mudancas"))
+                        .disabled(model.isLoadingPendingChangesSummary)
+                    }
+                    Button { model.refreshRepository() } label: {
+                        Image(systemName: "arrow.clockwise")
+                    }.buttonStyle(.plain).cursorArrow().help(L10n("Atualizar")).accessibilityLabel(L10n("Atualizar"))
+                }
             }
             .padding(12)
+
+            if model.isLoadingPendingChangesSummary {
+                HStack(spacing: 8) {
+                    ProgressView().controlSize(.small)
+                    Text(L10n("Analisando mudancas..."))
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 12)
+                .padding(.bottom, 8)
+            } else if !model.aiPendingChangesSummary.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 10))
+                            .foregroundStyle(DesignSystem.Colors.ai)
+                        Text(model.aiPendingChangesSummary)
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(3)
+                        Spacer()
+                    }
+                    Button {
+                        model.commitMessageInput = model.aiPendingChangesSummary
+                    } label: {
+                        Label(L10n("Usar como mensagem de commit"), systemImage: "text.insert")
+                            .font(.system(size: 10))
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+                .padding(.horizontal, 12)
+                .padding(.bottom, 8)
+            }
+
             Divider()
             if model.uncommittedChanges.isEmpty {
                 VStack(spacing: 12) {

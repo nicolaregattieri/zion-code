@@ -246,6 +246,18 @@
 | Export Log | Save sanitized diagnostic log to file (Help menu) |
 | Copy Log | Copy sanitized log to clipboard for quick sharing |
 
+## Wave 2 — Differentiation & Polish
+
+| Feature | Description |
+|---------|-------------|
+| Terminal Search | Cmd+F search within terminal (prev/next/close) using SwiftTerm's built-in search |
+| Stash Count Badge | Badge on Operations workspace button showing stash count when > 0 |
+| Branch Search | Filter branches by name in the sidebar branch explorer |
+| Commit Stats | Insertions (+N) and deletions (-M) shown per commit in the graph |
+| AI Pending Changes Summary | One-click AI summary of what you've been working on, with "Use as commit message" |
+| Smart Clipboard Actions | Context-aware actions: git hashes → Show in Graph, branch names → Checkout, file paths → Open in Editor |
+| Author Avatars | Gravatar identicons shown next to author names in the commit graph |
+
 ## Keyboard Shortcuts
 
 | Shortcut | Action |

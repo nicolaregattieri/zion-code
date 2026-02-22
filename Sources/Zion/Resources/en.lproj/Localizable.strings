@@ -1169,3 +1169,32 @@
 "onboarding.ready.initRepo" = "Initialize a Repository";
 "onboarding.ready.enabled" = "Enabled";
 "onboarding.ready.skipped" = "Not configured";
+
+// Wave 2: Terminal Search
+"Buscar no terminal..." = "Search terminal...";
+"Fechar busca" = "Close search";
+
+// Wave 2: Stash Badge
+"Stashes" = "Stashes";
+
+// Wave 2: Branch Search
+"Filtrar branches..." = "Filter branches...";
+"Nenhuma branch encontrada" = "No branches found";
+
+// Wave 2: AI Pending Changes Summary
+"Resumo IA das mudancas" = "AI summary of changes";
+"Analisando mudancas..." = "Analyzing changes...";
+"Usar como mensagem de commit" = "Use as commit message";
+
+// Wave 2: Smart Clipboard
+"Mostrar no Graph" = "Show in Graph";
+"Checkout %@" = "Checkout %@";
+
+// Wave 2: Help entries
+"help.terminalSearch" = "Search text in terminal with Cmd+F";
+"help.stashBadge" = "Stash count badge in sidebar";
+"help.branchSearch" = "Filter branches by name in sidebar";
+"help.commitStats" = "Lines added/removed per commit in graph";
+"help.aiSummary" = "AI summary of pending changes";
+"help.smartClipboard" = "Smart context-aware clipboard actions";
+"help.avatars" = "Gravatar author avatars in graph";

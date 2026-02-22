@@ -7,11 +7,12 @@ struct SidebarView: View {
     @Binding var confirmationModeRaw: String
     @Binding var uiLanguageRaw: String
     @Binding var appearanceRaw: String
-    
+
     @AppStorage("zion.preferredTerminal") private var preferredTerminalRaw: String = ExternalTerminal.terminal.rawValue
     @AppStorage("zion.customTerminalPath") private var customTerminalPath: String = ""
 
     @AppStorage("zion.sidebar.recentsExpanded") private var isRecentsExpanded: Bool = true
+    @State private var branchSearchQuery: String = ""
 
     let onOpen: () -> Void
     let onOpenInTerminal: () -> Void
@@ -113,6 +114,9 @@ struct SidebarView: View {
                         icon: isDetached ? "anchor" : "crown.fill"
                     )
                     StatusChip(title: L10n("Commit"), value: model.headShortHash, tint: DesignSystem.Colors.info, icon: "number")
+                    if model.stashes.count > 0 {
+                        StatusChip(title: L10n("Stashes"), value: "\(model.stashes.count)", tint: DesignSystem.Colors.brandPrimary, icon: "tray.full.fill")
+                    }
                 }
             }
         }.padding(.horizontal, 10)
@@ -262,6 +266,15 @@ struct SidebarView: View {
                         .foregroundStyle(DesignSystem.Colors.warning)
                         .clipShape(Capsule())
                         .padding(.top, 4)
+                } else if section == .operations && model.stashes.count > 0 {
+                    Text("\(model.stashes.count)")
+                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(DesignSystem.Colors.info.opacity(0.2))
+                        .foregroundStyle(DesignSystem.Colors.info)
+                        .clipShape(Capsule())
+                        .padding(.top, 4)
                 }
             }
             .contentShape(Rectangle())
@@ -274,18 +287,70 @@ struct SidebarView: View {
         .disabled(isDisabled)
     }
 
+    private var filteredBranchTree: [BranchTreeNode] {
+        guard !branchSearchQuery.isEmpty else { return model.branchTree }
+        return model.branchTree.compactMap { filterBranchNode($0, query: branchSearchQuery) }
+    }
+
+    private func filterBranchNode(_ node: BranchTreeNode, query: String) -> BranchTreeNode? {
+        // Leaf node: match on title
+        if node.children.isEmpty {
+            return node.title.localizedCaseInsensitiveContains(query) ? node : nil
+        }
+        // Group node: keep if any child matches
+        let filteredChildren = node.children.compactMap { filterBranchNode($0, query: query) }
+        if filteredChildren.isEmpty { return nil }
+        return BranchTreeNode(
+            id: node.id,
+            title: node.title,
+            subtitle: node.subtitle,
+            branchName: node.branchName,
+            children: filteredChildren
+        )
+    }
+
     private var sidebarBranchExplorer: some View {
         GlassCard(spacing: 0) {
             CardHeader(L10n("Branches"), icon: "arrow.triangle.branch") {
                 Text("\(model.branchInfos.count) \(L10n("refs"))").font(.caption).foregroundStyle(.secondary)
             }
             .padding(.horizontal, 12).padding(.top, 12).padding(.bottom, 8)
+
+            HStack(spacing: 4) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 9))
+                    .foregroundStyle(.secondary)
+                TextField(L10n("Filtrar branches..."), text: $branchSearchQuery)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 11))
+                if !branchSearchQuery.isEmpty {
+                    Button { branchSearchQuery = "" } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(DesignSystem.Colors.glassSubtle)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
+            .padding(.horizontal, 12)
+            .padding(.bottom, 8)
+
             Divider()
-            if model.branchTree.isEmpty {
-                VStack(spacing: 8) { Image(systemName: "arrow.triangle.branch").font(.title2).foregroundStyle(.secondary); Text(L10n("Sem branches detectadas")).font(.headline) }.frame(maxWidth: .infinity, minHeight: 120)
+            if filteredBranchTree.isEmpty {
+                VStack(spacing: 8) {
+                    Image(systemName: branchSearchQuery.isEmpty ? "arrow.triangle.branch" : "magnifyingglass")
+                        .font(.title2).foregroundStyle(.secondary)
+                    Text(branchSearchQuery.isEmpty ? L10n("Sem branches detectadas") : L10n("Nenhuma branch encontrada"))
+                        .font(.headline)
+                }
+                .frame(maxWidth: .infinity, minHeight: 120)
             } else {
                 List(selection: $selectedBranchTreeNodeID) {
-                    ForEach(model.branchTree) { root in
+                    ForEach(filteredBranchTree) { root in
                         OutlineGroup([root], children: \.outlineChildren) { node in
                             branchTreeNodeRow(node).tag(node.id)
                         }
