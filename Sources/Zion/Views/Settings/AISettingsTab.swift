@@ -56,6 +56,7 @@ struct AISettingsTab: View {
                             Spacer()
                             Button(L10n("Salvar")) { saveKey() }
                                 .buttonStyle(.borderedProminent)
+                                .tint(DesignSystem.Colors.actionPrimary)
                                 .disabled(aiKeyInput.isEmpty)
                         }
                     }

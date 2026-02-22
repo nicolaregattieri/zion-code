@@ -270,6 +270,7 @@ struct OperationsScreen: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
+                .tint(DesignSystem.Colors.actionPrimary)
                 .disabled(model.commitMessageInput.clean.isEmpty)
             }
         }
@@ -295,7 +296,7 @@ struct OperationsScreen: View {
                         }
                     }) {
                         Label(L10n("Checkout"), systemImage: "arrow.right.circle.fill").frame(maxWidth: .infinity)
-                    }.buttonStyle(.borderedProminent).controlSize(.large)
+                    }.buttonStyle(.borderedProminent).controlSize(.large).tint(DesignSystem.Colors.actionPrimary)
 
                     Button(action: {
                         performGitAction(L10n("Merge"), L10n("Fazer merge da branch informada na atual?"), false) {
@@ -382,7 +383,7 @@ struct OperationsScreen: View {
                 }
                 Button(L10n("Criar stash")) {
                     performGitAction(L10n("Criar stash"), L10n("Salvar alteracoes locais no stash?"), false) { model.createStash() }
-                }.buttonStyle(.borderedProminent)
+                }.buttonStyle(.borderedProminent).tint(DesignSystem.Colors.actionPrimary)
             }
             Picker(L10n("Stash"), selection: $model.selectedStash) {
                 ForEach(model.stashes, id: \.self) { stash in Text(stash).tag(stash) }
@@ -400,7 +401,7 @@ struct OperationsScreen: View {
             CardHeader(L10n("Tags"), icon: "tag", subtitle: L10n("Marcar pontos importantes no historico"))
             HStack(spacing: 8) {
                 TextField("v1.0.0", text: $model.tagInput).textFieldStyle(.roundedBorder)
-                Button(L10n("Criar")) { performGitAction(L10n("Criar tag"), L10n("Criar tag no commit atual?"), false) { model.createTag() } }.buttonStyle(.borderedProminent)
+                Button(L10n("Criar")) { performGitAction(L10n("Criar tag"), L10n("Criar tag no commit atual?"), false) { model.createTag() } }.buttonStyle(.borderedProminent).tint(DesignSystem.Colors.actionPrimary)
                 Button(L10n("Remover")) { performGitAction(L10n("Remover tag"), L10n("Deseja remover a tag informada?"), true) { model.deleteTag() } }.buttonStyle(.bordered).tint(DesignSystem.Colors.destructive)
             }
         }
@@ -415,7 +416,7 @@ struct OperationsScreen: View {
             }
             HStack(spacing: 8) {
                 TextField(L10n("cherry-pick hash"), text: $model.cherryPickInput).textFieldStyle(.roundedBorder)
-                Button(L10n("Cherry-pick")) { performGitAction(L10n("Cherry-pick"), L10n("Aplicar o commit informado na branch atual?"), false) { model.cherryPick() } }.buttonStyle(.borderedProminent)
+                Button(L10n("Cherry-pick")) { performGitAction(L10n("Cherry-pick"), L10n("Aplicar o commit informado na branch atual?"), false) { model.cherryPick() } }.buttonStyle(.borderedProminent).tint(DesignSystem.Colors.actionPrimary)
             }
         }
     }
@@ -437,8 +438,9 @@ struct OperationsScreen: View {
                         Image(systemName: "plus")
                     }
                     .buttonStyle(.borderedProminent)
+                    .tint(DesignSystem.Colors.actionPrimary)
                 }
-                
+
                 Divider().opacity(0.1)
                 
                 if model.remotes.isEmpty {
@@ -494,7 +496,7 @@ struct OperationsScreen: View {
                     performGitAction(L10n("Adicionar worktree"), L10n("Criar o novo worktree com os parametros informados?"), false) {
                         model.addWorktree()
                     }
-                }.buttonStyle(.borderedProminent)
+                }.buttonStyle(.borderedProminent).tint(DesignSystem.Colors.actionPrimary)
                 Button(L10n("Prune")) {
                     performGitAction(L10n("Prune worktrees"), L10n("Remover metadados de worktrees obsoletos?"), true) {
                         model.pruneWorktrees()
@@ -546,6 +548,7 @@ struct OperationsScreen: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
+                .tint(DesignSystem.Colors.ai)
                 .disabled(model.isGeneratingAIMessage)
                 .help(L10n("Gerar notas de release com IA"))
             }

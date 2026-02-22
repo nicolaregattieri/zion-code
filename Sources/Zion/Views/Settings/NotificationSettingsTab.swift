@@ -44,6 +44,7 @@ struct NotificationSettingsTab: View {
                         Spacer()
                         Button(L10n("Salvar")) { saveTopic() }
                             .buttonStyle(.borderedProminent)
+                            .tint(DesignSystem.Colors.actionPrimary)
                             .disabled(topicInput.isEmpty)
                     }
                 }

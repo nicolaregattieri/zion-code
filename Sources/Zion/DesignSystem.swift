@@ -75,6 +75,7 @@ struct DesignSystem {
 
         // ── Feature accents ──
         static let ai = Color.purple
+        static let actionPrimary = brandPrimary  // Rebecca Purple for standard prominent buttons
         static let codeReview = Color.indigo
         static let commitSplit = Color.cyan
         static let searchHighlight = Color.yellow
