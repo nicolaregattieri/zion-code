@@ -66,7 +66,7 @@ struct OperationsScreen: View {
                 maintenanceCard
             }
             .padding(24)
-            .padding(.bottom, 32)
+            .padding(.bottom, DesignSystem.Spacing.cardPadding)
         }
     }
 

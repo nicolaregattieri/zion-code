@@ -442,7 +442,7 @@ struct CodeScreen: View {
                             .padding(.top, 8)
                     }
                     .padding(.top, 8)
-                    .padding(.bottom, 40)
+                    .padding(.bottom, DesignSystem.Spacing.clipboardDrawerClearance)
                 }
                 .focusable()
                 .focused($isFileBrowserFocused)
@@ -984,9 +984,6 @@ struct CodeScreen: View {
             .padding(.trailing, 8)
         }
         .padding(.vertical, 8)
-        .overlay(alignment: .top) {
-            Rectangle().fill(model.selectedTheme.terminalPalette.accentSwiftUI.opacity(0.25)).frame(height: 1)
-        }
     }
 }
 

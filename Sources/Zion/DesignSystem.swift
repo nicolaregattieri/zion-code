@@ -16,6 +16,11 @@ struct TerminalPalette {
 }
 
 struct DesignSystem {
+    struct Layout {
+        static let centeredContentMaxWidth: CGFloat = 920
+        static let onboardingStepContentMaxWidth: CGFloat = 680
+    }
+
     struct Colors {
         // App background with transparency for glassmorphism
         static let background = Color(NSColor.windowBackgroundColor)
@@ -132,6 +137,8 @@ struct DesignSystem {
     struct Spacing {
         static let cardPadding: CGFloat = 12
         static let sectionGap: CGFloat = 20
+        static let statusBarClearance: CGFloat = 44
+        static let clipboardDrawerClearance: CGFloat = 40
 
         // Corner radii (5 tiers)
         static let cardCornerRadius: CGFloat = 14       // GlassCards, commit row cards

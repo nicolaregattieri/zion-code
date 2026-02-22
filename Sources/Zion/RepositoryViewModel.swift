@@ -1284,7 +1284,7 @@ final class RepositoryViewModel {
     }
 
     func push() {
-        let branch = currentBranch ?? ""
+        let branch = currentBranch
         let hasUpstream = branchInfos.first(where: { !$0.isRemote && $0.name == branch })?.upstream.isEmpty == false
         if hasUpstream {
             runGitAction(label: "Push", args: ["push"])
@@ -1297,7 +1297,7 @@ final class RepositoryViewModel {
     }
 
     func forceWithLeasePush() {
-        let branch = currentBranch ?? ""
+        let branch = currentBranch
         let hasUpstream = branchInfos.first(where: { !$0.isRemote && $0.name == branch })?.upstream.isEmpty == false
         if hasUpstream {
             runGitAction(label: "Push", args: ["push", "--force-with-lease"])

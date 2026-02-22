@@ -127,7 +127,7 @@ struct HelpSheet: View {
     // MARK: - Hero
 
     private var heroSection: some View {
-        VStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             Text(L10n("help.hero.title"))
                 .font(.system(size: 18, weight: .bold))
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -135,6 +135,14 @@ struct HelpSheet: View {
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
+            Button {
+                dismiss()
+                NotificationCenter.default.post(name: .showOnboarding, object: nil)
+            } label: {
+                Label(L10n("help.openOnboarding"), systemImage: "sparkles.rectangle.stack")
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
         }
     }
 
