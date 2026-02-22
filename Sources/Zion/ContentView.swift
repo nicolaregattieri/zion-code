@@ -3,12 +3,19 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct ContentView: View {
+    private enum RootPresentation {
+        case onboarding
+        case welcome
+        case workspace
+    }
+
     @State private var model = RepositoryViewModel()
     @State private var selectedSection: AppSection? = .code
     @State private var commitSearchQuery: String = ""
     @State private var selectedBranchTreeNodeID: String?
     @State private var isShortcutsVisible: Bool = false
     @State private var isHelpVisible: Bool = false
+    @State private var shouldPresentOnboardingFromHelp: Bool = false
 
     @AppStorage("zion.confirmationMode") private var confirmationModeRaw: String = ConfirmationMode.destructiveOnly.rawValue
     @AppStorage("zion.uiLanguage") private var uiLanguageRaw: String = AppLanguage.system.rawValue
@@ -19,6 +26,20 @@ struct ContentView: View {
 
     private var uiLanguage: AppLanguage { AppLanguage(rawValue: uiLanguageRaw) ?? .system }
     private var appearance: AppAppearance { AppAppearance(rawValue: appearanceRaw) ?? .system }
+    private var rootPresentation: RootPresentation {
+        // Explicit replay from Help always wins.
+        if shouldPresentOnboardingFromHelp {
+            return .onboarding
+        }
+        // First-run only: show onboarding in Code section when there is no repo yet.
+        if !hasCompletedOnboarding && model.repositoryURL == nil && selectedSection == .code {
+            return .onboarding
+        }
+        if model.repositoryURL == nil || !model.isGitRepository {
+            return .welcome
+        }
+        return .workspace
+    }
 
     var body: some View {
         ZStack {
@@ -36,10 +57,12 @@ struct ContentView: View {
                     onOpenInTerminal: { openRepositoryInTerminal() },
                     branchContextMenu: { branch in AnyView(branchContextMenu(for: branch)) }
                 )
+                .padding(.bottom, DesignSystem.Spacing.statusBarClearance)
             } detail: {
                 // RIGID LAYOUT: Detail view is a solid container
                 detailViewHost
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.bottom, DesignSystem.Spacing.statusBarClearance)
                     .background(Color(NSColor.windowBackgroundColor)) 
             }
             .navigationSplitViewStyle(.balanced)
@@ -100,6 +123,9 @@ struct ContentView: View {
         .onAppear {
             model.restoreEditorSettings()
             model.restoreLastRepository()
+            if model.repositoryURL != nil {
+                hasCompletedOnboarding = true
+            }
             // Robust window activation
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 if let window = NSApp.windows.first(where: { $0.isVisible }) {
@@ -113,7 +139,18 @@ struct ContentView: View {
         }
         .onChange(of: model.repositoryURL) { _, url in
             if url != nil {
+                hasCompletedOnboarding = true
+                shouldPresentOnboardingFromHelp = false
                 selectedSection = .code
+            }
+        }
+        .onChange(of: selectedSection) { _, _ in
+            if shouldPresentOnboardingFromHelp {
+                return
+            }
+            // Onboarding should not block navigation: any section switch dismisses first-run onboarding.
+            if !hasCompletedOnboarding {
+                hasCompletedOnboarding = true
             }
         }
         .onChange(of: model.navigateToGraphRequested) { _, requested in
@@ -158,10 +195,43 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .showHelp)) { _ in
             isHelpVisible = true
         }
+        .onReceive(NotificationCenter.default.publisher(for: .showOnboarding)) { _ in
+            isHelpVisible = false
+            selectedSection = .code
+            shouldPresentOnboardingFromHelp = true
+        }
     }
 
     @ViewBuilder
     private var detailViewHost: some View {
+        switch rootPresentation {
+        case .onboarding:
+            ClimbingZionView(
+                model: model,
+                onComplete: {
+                    hasCompletedOnboarding = true
+                    shouldPresentOnboardingFromHelp = false
+                },
+                onOpen: {
+                    hasCompletedOnboarding = true
+                    shouldPresentOnboardingFromHelp = false
+                    openRepositoryPanel()
+                },
+                onInit: {
+                    hasCompletedOnboarding = true
+                    shouldPresentOnboardingFromHelp = false
+                    initRepositoryPanel()
+                }
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        case .welcome:
+            WelcomeScreen(model: model, onOpen: { openRepositoryPanel() }, onInit: { initRepositoryPanel() })
+        case .workspace:
+            workspaceHost
+        }
+    }
+
+    private var workspaceHost: some View {
         ZStack {
             // CodeScreen is always rendered to keep terminal sessions alive
             CodeScreen(model: model, onOpenFolder: { openRepositoryPanel() })
@@ -180,28 +250,19 @@ struct ContentView: View {
 
     @ViewBuilder
     private var nonCodeContent: some View {
-        if !hasCompletedOnboarding {
-            ClimbingZionView(
-                model: model,
-                onComplete: { hasCompletedOnboarding = true },
-                onOpen: { openRepositoryPanel() },
-                onInit: { initRepositoryPanel() }
-            )
-        } else if model.repositoryURL == nil {
+        if model.repositoryURL == nil {
             WelcomeScreen(model: model, onOpen: { openRepositoryPanel() }, onInit: { initRepositoryPanel() })
-        } else if !model.isGitRepository {
-            Color.clear.onAppear {
-                model.repositoryURL = nil
-            }
         } else {
-            VStack(spacing: 0) {
-                if model.hasConflicts || model.isMerging || model.isRebasing || model.isCherryPicking {
-                    conflictWarningBar
-                        .zIndex(999)
-                }
+            ZStack {
+                VStack(spacing: 0) {
+                    if model.hasConflicts || model.isMerging || model.isRebasing || model.isCherryPicking {
+                        conflictWarningBar
+                            .zIndex(999)
+                    }
 
-                nonCodeMainContent
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    nonCodeMainContent
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
             }
         }
     }

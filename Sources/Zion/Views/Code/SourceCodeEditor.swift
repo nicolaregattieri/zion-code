@@ -220,7 +220,6 @@ struct SourceCodeEditor: NSViewRepresentable {
             let string = textView.string
             guard !string.isEmpty else { return }
             var currentLine = 1
-            var lineStart = string.startIndex
             for (i, char) in string.enumerated() {
                 if currentLine == lineNumber {
                     let nsLocation = i
@@ -231,7 +230,6 @@ struct SourceCodeEditor: NSViewRepresentable {
                 }
                 if char == "\n" {
                     currentLine += 1
-                    lineStart = string.index(string.startIndex, offsetBy: i + 1, limitedBy: string.endIndex) ?? string.endIndex
                 }
             }
             // If lineNumber exceeds total lines, go to last line

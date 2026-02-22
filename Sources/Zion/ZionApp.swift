@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 extension Notification.Name {
     static let showKeyboardShortcuts = Notification.Name("showKeyboardShortcuts")
     static let showHelp = Notification.Name("showHelp")
+    static let showOnboarding = Notification.Name("showOnboarding")
 }
 
 @main

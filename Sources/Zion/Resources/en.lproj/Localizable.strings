@@ -420,6 +420,7 @@
 "Conheca o Zion" = "Discover Zion";
 "help.hero.title" = "Everything you need to work with Git, native on your Mac.";
 "help.hero.subtitle" = "Zion combines graph visualization, code editor, integrated terminal, and Git operations — all in a single native macOS interface.";
+"help.openOnboarding" = "View onboarding again";
 
 // Zion Tree
 "help.tree.lanes" = "Visual graph with color-coded lanes showing branch and merge topology";

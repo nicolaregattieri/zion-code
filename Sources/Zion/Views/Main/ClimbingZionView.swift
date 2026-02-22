@@ -18,12 +18,14 @@ struct ClimbingZionView: View {
         VStack(spacing: 0) {
             // Step content
             ZStack {
-                stepContent(for: currentStep)
-                    .id(currentStep)
-                    .transition(.asymmetric(
-                        insertion: .move(edge: .trailing).combined(with: .opacity),
-                        removal: .move(edge: .leading).combined(with: .opacity)
-                    ))
+                ViewportContentContainer {
+                    stepContent(for: currentStep)
+                        .id(currentStep)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .trailing).combined(with: .opacity),
+                            removal: .move(edge: .leading).combined(with: .opacity)
+                        ))
+                }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .animation(DesignSystem.Motion.panel, value: currentStep)
@@ -116,150 +118,126 @@ struct ClimbingZionView: View {
     // MARK: - Step 1: Zion Tree
 
     private var treeStep: some View {
-        ScrollView {
-            VStack(spacing: 28) {
-                Spacer(minLength: 20)
+        centeredStepPage {
+            featureIcon("point.3.connected.trianglepath.dotted", color: DesignSystem.Colors.brandPrimary)
 
-                featureIcon("point.3.connected.trianglepath.dotted", color: DesignSystem.Colors.brandPrimary)
-
-                VStack(spacing: 6) {
-                    Text(L10n("onboarding.tree.title"))
-                        .font(.system(size: 24, weight: .bold))
-                    Text(L10n("onboarding.tree.subtitle"))
-                        .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
-                }
-
-                VStack(alignment: .leading, spacing: 12) {
-                    featureBullet(L10n("onboarding.tree.lanes"), color: DesignSystem.Colors.brandPrimary)
-                    featureBullet(L10n("onboarding.tree.search"), color: DesignSystem.Colors.brandPrimary)
-                    featureBullet(L10n("onboarding.tree.pending"), color: DesignSystem.Colors.brandPrimary)
-                    featureBullet(L10n("onboarding.tree.stash"), color: DesignSystem.Colors.brandPrimary)
-                }
-                .padding(.horizontal, 40)
-
-                // Decorative graph lanes
-                graphDecoration
-                    .padding(.top, 8)
-
-                Spacer(minLength: 20)
+            VStack(spacing: 6) {
+                Text(L10n("onboarding.tree.title"))
+                    .font(.system(size: 24, weight: .bold))
+                Text(L10n("onboarding.tree.subtitle"))
+                    .font(.system(size: 13))
+                    .foregroundStyle(.secondary)
             }
-            .frame(maxWidth: .infinity)
-            .padding(32)
+
+            VStack(alignment: .leading, spacing: 12) {
+                featureBullet(L10n("onboarding.tree.lanes"), color: DesignSystem.Colors.brandPrimary)
+                featureBullet(L10n("onboarding.tree.search"), color: DesignSystem.Colors.brandPrimary)
+                featureBullet(L10n("onboarding.tree.pending"), color: DesignSystem.Colors.brandPrimary)
+                featureBullet(L10n("onboarding.tree.stash"), color: DesignSystem.Colors.brandPrimary)
+            }
+            .padding(.horizontal, 40)
+
+            // Decorative graph lanes
+            graphDecoration
+                .padding(.top, 8)
         }
     }
 
     // MARK: - Step 2: Zion Code
 
     private var codeStep: some View {
-        ScrollView {
-            VStack(spacing: 28) {
-                Spacer(minLength: 20)
+        centeredStepPage {
+            featureIcon("terminal.fill", color: DesignSystem.Colors.success)
 
-                featureIcon("terminal.fill", color: DesignSystem.Colors.success)
-
-                VStack(spacing: 6) {
-                    Text(L10n("onboarding.code.title"))
-                        .font(.system(size: 24, weight: .bold))
-                    Text(L10n("onboarding.code.subtitle"))
-                        .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
-                }
-
-                VStack(alignment: .leading, spacing: 12) {
-                    featureBullet(L10n("onboarding.code.editor"), color: DesignSystem.Colors.success)
-                    featureBullet(L10n("onboarding.code.terminal"), color: DesignSystem.Colors.success)
-                    featureBullet(L10n("onboarding.code.blame"), color: DesignSystem.Colors.success)
-                    featureBullet(L10n("onboarding.code.clipboard"), color: DesignSystem.Colors.success)
-                }
-                .padding(.horizontal, 40)
-
-                // Mini code mockup
-                codeMockup
-                    .padding(.top, 8)
-
-                Spacer(minLength: 20)
+            VStack(spacing: 6) {
+                Text(L10n("onboarding.code.title"))
+                    .font(.system(size: 24, weight: .bold))
+                Text(L10n("onboarding.code.subtitle"))
+                    .font(.system(size: 13))
+                    .foregroundStyle(.secondary)
             }
-            .frame(maxWidth: .infinity)
-            .padding(32)
+
+            VStack(alignment: .leading, spacing: 12) {
+                featureBullet(L10n("onboarding.code.editor"), color: DesignSystem.Colors.success)
+                featureBullet(L10n("onboarding.code.terminal"), color: DesignSystem.Colors.success)
+                featureBullet(L10n("onboarding.code.blame"), color: DesignSystem.Colors.success)
+                featureBullet(L10n("onboarding.code.clipboard"), color: DesignSystem.Colors.success)
+            }
+            .padding(.horizontal, 40)
+
+            // Mini code mockup
+            codeMockup
+                .padding(.top, 8)
         }
     }
 
     // MARK: - Step 3: AI Assistant
 
     private var aiStep: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                Spacer(minLength: 12)
+        centeredStepPage(spacing: 24, verticalGutter: 12) {
+            featureIcon("sparkles", color: DesignSystem.Colors.ai)
 
-                featureIcon("sparkles", color: DesignSystem.Colors.ai)
-
-                VStack(spacing: 6) {
-                    Text(L10n("onboarding.ai.title"))
-                        .font(.system(size: 24, weight: .bold))
-                    Text(L10n("onboarding.ai.subtitle"))
-                        .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
-                }
-
-                Text(L10n("onboarding.ai.features"))
-                    .font(.system(size: 12))
+            VStack(spacing: 6) {
+                Text(L10n("onboarding.ai.title"))
+                    .font(.system(size: 24, weight: .bold))
+                Text(L10n("onboarding.ai.subtitle"))
+                    .font(.system(size: 13))
                     .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
-
-                Text(L10n("onboarding.ai.optional"))
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(DesignSystem.Colors.ai)
-
-                // Provider cards
-                HStack(spacing: 12) {
-                    providerCard(.anthropic, icon: "brain.head.profile", model: "Claude 3.5 Haiku", url: "https://console.anthropic.com/settings/keys")
-                    providerCard(.openai, icon: "cpu", model: "GPT-4o mini", url: "https://platform.openai.com/api-keys")
-                    providerCard(.gemini, icon: "wand.and.stars", model: "Gemini 2.0 Flash", url: "https://aistudio.google.com/apikey")
-                }
-                .padding(.horizontal, 20)
-
-                // API key input (shows when provider selected)
-                if selectedProvider != .none {
-                    VStack(spacing: 8) {
-                        SecureField(L10n("Chave de API"), text: $apiKeyInput)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(maxWidth: 360)
-                            .onSubmit { saveAPIKey() }
-
-                        if keySaved {
-                            Label(L10n("onboarding.ai.keySaved"), systemImage: "checkmark.circle.fill")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(DesignSystem.Colors.success)
-                        } else {
-                            Button(L10n("Salvar")) { saveAPIKey() }
-                                .buttonStyle(.borderedProminent)
-                                .tint(DesignSystem.Colors.ai)
-                                .controlSize(.small)
-                                .disabled(apiKeyInput.isEmpty)
-                        }
-                    }
-                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
-                }
-
-                Button(L10n("onboarding.ai.skipAI")) {
-                    selectedProvider = .none
-                    keySaved = false
-                    apiKeyInput = ""
-                    advanceStep()
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.regular)
-
-                Text(L10n("onboarding.ai.laterHint"))
-                    .font(.system(size: 11))
-                    .foregroundStyle(.tertiary)
-
-                Spacer(minLength: 12)
             }
-            .frame(maxWidth: .infinity)
-            .padding(32)
+
+            Text(L10n("onboarding.ai.features"))
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
+
+            Text(L10n("onboarding.ai.optional"))
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(DesignSystem.Colors.ai)
+
+            // Provider cards
+            HStack(spacing: 12) {
+                providerCard(.anthropic, icon: "brain.head.profile", model: "Claude 3.5 Haiku", url: "https://console.anthropic.com/settings/keys")
+                providerCard(.openai, icon: "cpu", model: "GPT-4o mini", url: "https://platform.openai.com/api-keys")
+                providerCard(.gemini, icon: "wand.and.stars", model: "Gemini 2.0 Flash", url: "https://aistudio.google.com/apikey")
+            }
+            .padding(.horizontal, 20)
+
+            // API key input (shows when provider selected)
+            if selectedProvider != .none {
+                VStack(spacing: 8) {
+                    SecureField(L10n("Chave de API"), text: $apiKeyInput)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(maxWidth: 360)
+                        .onSubmit { saveAPIKey() }
+
+                    if keySaved {
+                        Label(L10n("onboarding.ai.keySaved"), systemImage: "checkmark.circle.fill")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(DesignSystem.Colors.success)
+                    } else {
+                        Button(L10n("Salvar")) { saveAPIKey() }
+                            .buttonStyle(.borderedProminent)
+                            .tint(DesignSystem.Colors.ai)
+                            .controlSize(.small)
+                            .disabled(apiKeyInput.isEmpty)
+                    }
+                }
+                .transition(.opacity.combined(with: .scale(scale: 0.95)))
+            }
+
+            Button(L10n("onboarding.ai.skipAI")) {
+                selectedProvider = .none
+                keySaved = false
+                apiKeyInput = ""
+                advanceStep()
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.regular)
+
+            Text(L10n("onboarding.ai.laterHint"))
+                .font(.system(size: 11))
+                .foregroundStyle(.tertiary)
         }
     }
 
@@ -332,6 +310,8 @@ struct ClimbingZionView: View {
 
             Spacer()
         }
+        .frame(maxWidth: DesignSystem.Layout.onboardingStepContentMaxWidth)
+        .frame(maxWidth: .infinity)
         .padding(32)
     }
 
@@ -387,6 +367,21 @@ struct ClimbingZionView: View {
         .padding(.horizontal, 24)
         .padding(.vertical, 12)
         .background(.ultraThinMaterial)
+    }
+
+    private func centeredStepPage<Content: View>(
+        spacing: CGFloat = 28,
+        verticalGutter: CGFloat = 20,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(spacing: spacing) {
+            Spacer(minLength: verticalGutter)
+            content()
+            Spacer(minLength: verticalGutter)
+        }
+        .frame(maxWidth: DesignSystem.Layout.onboardingStepContentMaxWidth)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .padding(32)
     }
 
     // MARK: - Shared Components
