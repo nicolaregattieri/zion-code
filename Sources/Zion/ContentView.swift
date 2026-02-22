@@ -9,7 +9,8 @@ struct ContentView: View {
     @State private var selectedBranchTreeNodeID: String?
     @State private var isShortcutsVisible: Bool = false
     @State private var isHelpVisible: Bool = false
-    
+    @State private var pendingNonGitURL: URL? = nil
+
     @AppStorage("zion.confirmationMode") private var confirmationModeRaw: String = ConfirmationMode.destructiveOnly.rawValue
     @AppStorage("zion.uiLanguage") private var uiLanguageRaw: String = AppLanguage.system.rawValue
     @AppStorage("zion.preferredTerminal") private var preferredTerminalRaw: String = ExternalTerminal.terminal.rawValue
@@ -67,6 +68,23 @@ struct ContentView: View {
                 case .clear:
                     Text("")
                 }
+            }
+            .alert(L10n("Nao e um repositorio Git"), isPresented: Binding(
+                get: { pendingNonGitURL != nil },
+                set: { if !$0 { pendingNonGitURL = nil } }
+            )) {
+                Button(L10n("Inicializar Repositorio")) {
+                    if let url = pendingNonGitURL {
+                        model.repositoryURL = url
+                        model.initRepository()
+                    }
+                    pendingNonGitURL = nil
+                }
+                Button(L10n("Cancelar"), role: .cancel) {
+                    pendingNonGitURL = nil
+                }
+            } message: {
+                Text(L10n("Este diretorio nao possui um repositorio Git inicializado."))
             }
             .toolbar { mainToolbar }
             .safeAreaInset(edge: .bottom) { statusBar }
@@ -181,7 +199,10 @@ struct ContentView: View {
         if model.repositoryURL == nil {
             WelcomeScreen(model: model) { openRepositoryPanel() }
         } else if !model.isGitRepository {
-            nonGitDirectoryView
+            Color.clear.onAppear {
+                pendingNonGitURL = model.repositoryURL
+                model.repositoryURL = nil
+            }
         } else {
             VStack(spacing: 0) {
                 if model.hasConflicts || model.isMerging || model.isRebasing || model.isCherryPicking {
@@ -216,42 +237,6 @@ struct ContentView: View {
         case .code:
             EmptyView() // Handled by ZStack above
         }
-    }
-
-    private var nonGitDirectoryView: some View {
-        VStack(spacing: 32) {
-            VStack(spacing: 16) {
-                Image(systemName: "folder.badge.questionmark")
-                    .font(.system(size: 64))
-                    .foregroundStyle(.secondary)
-                Text(L10n("Nao e um repositorio Git"))
-                    .font(.title.bold())
-                Text(L10n("Este diretorio nao possui um repositorio Git inicializado."))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            VStack(spacing: 16) {
-                Button {
-                    model.initRepository()
-                } label: {
-                    Label(L10n("Inicializar Repositorio"), systemImage: "plus.square.fill")
-                        .frame(width: 240)
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-
-                Button {
-                    model.repositoryURL = nil
-                } label: {
-                    Text(L10n("Voltar"))
-                        .frame(width: 240)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
 
@@ -319,7 +304,7 @@ struct ContentView: View {
 
     private var conflictWarningBar: some View {
         HStack(spacing: 16) {
-            Image(systemName: "exclamationmark.triangle.fill").font(.title3).foregroundStyle(.orange)
+            Image(systemName: "exclamationmark.triangle.fill").font(.title3).foregroundStyle(DesignSystem.Colors.warning)
             VStack(alignment: .leading, spacing: 2) {
                 Text(L10n("Conflitos")).font(.headline)
                 Text(L10n("Resolva os conflitos na sua IDE favorita.")).font(.caption).foregroundStyle(.secondary)
@@ -333,7 +318,7 @@ struct ContentView: View {
                     Label(L10n("Resolver no Zion"), systemImage: "hammer.fill")
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(.orange)
+                .tint(DesignSystem.Colors.warning)
                 .controlSize(.small)
 
                 if model.isMerging { Button(L10n("Abort")) { model.abortMerge() }.buttonStyle(.bordered).controlSize(.small) }

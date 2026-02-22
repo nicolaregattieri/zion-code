@@ -154,11 +154,11 @@ struct WorktreeCardView: View {
             .foregroundStyle(.secondary)
         }
         .padding(12)
-        .background(Color.white.opacity(0.06))
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .background(DesignSystem.Colors.glassElevated)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .stroke(.white.opacity(0.10), lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous)
+                .stroke(DesignSystem.Colors.glassStroke, lineWidth: 1)
         )
     }
 }

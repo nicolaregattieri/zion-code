@@ -83,7 +83,7 @@ struct SidebarView: View {
                     }
                 }
                 .frame(width: 44, height: 44)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
                     Text(model.repositoryURL?.lastPathComponent ?? L10n("Zion Code")).font(.system(size: 16, weight: .bold)).lineLimit(1)
                     Text(model.repositoryURL?.path ?? L10n("Modo editor livre")).font(.system(size: 10, design: .monospaced)).foregroundStyle(.secondary).lineLimit(1)
@@ -259,7 +259,7 @@ struct SidebarView: View {
                         .padding(.horizontal, 5)
                         .padding(.vertical, 2)
                         .background(Color.orange.opacity(0.2))
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(DesignSystem.Colors.warning)
                         .clipShape(Capsule())
                         .padding(.top, 4)
                 }
@@ -434,7 +434,7 @@ private struct RecentProjectRow: View {
                         .padding(.horizontal, 5)
                         .padding(.vertical, 2)
                         .background(Color.orange.opacity(0.2))
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(DesignSystem.Colors.warning)
                         .clipShape(Capsule())
                 }
 

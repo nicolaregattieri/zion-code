@@ -73,7 +73,7 @@ struct InteractiveRebaseSheet: View {
                 .padding(.vertical, 4)
                 .background(item.action.color.opacity(0.15))
                 .foregroundStyle(item.action.color)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
             }
             .menuStyle(.borderlessButton)
             .frame(width: 90)
@@ -123,7 +123,7 @@ struct InteractiveRebaseSheet: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
         .background(
-            RoundedRectangle(cornerRadius: 8)
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius)
                 .fill(item.action == .drop ? DesignSystem.Colors.destructive.opacity(0.05) : DesignSystem.Colors.glassSubtle)
         )
     }

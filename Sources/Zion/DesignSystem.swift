@@ -130,9 +130,10 @@ struct DesignSystem {
         static let cardPadding: CGFloat = 12
         static let sectionGap: CGFloat = 20
 
-        // Corner radii (4 tiers)
+        // Corner radii (5 tiers)
         static let cardCornerRadius: CGFloat = 14       // GlassCards, commit row cards
         static let containerCornerRadius: CGFloat = 12  // Toolbar groups, overlays
+        static let mediumCornerRadius: CGFloat = 10     // Panels, explanation cards, status chips
         static let elementCornerRadius: CGFloat = 8     // Buttons, search bars, inline items
         static let smallCornerRadius: CGFloat = 6       // Tags, tiny pills, code blocks
     }

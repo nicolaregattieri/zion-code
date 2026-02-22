@@ -16,7 +16,7 @@ struct HunkDiffView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(Color.black.opacity(0.2))
+        .background(DesignSystem.Colors.glassInset)
     }
 
     private func hunkSection(_ hunk: DiffHunk) -> some View {

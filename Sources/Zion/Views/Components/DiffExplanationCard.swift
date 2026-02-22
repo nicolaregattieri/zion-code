@@ -85,11 +85,11 @@ struct DiffExplanationCard: View {
         }
         .padding(12)
         .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous)
                 .fill(DesignSystem.Colors.glassSubtle)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous)
                 .stroke(DesignSystem.Colors.glassHover, lineWidth: 1)
         )
         .transition(.move(edge: .top).combined(with: .opacity))
@@ -121,11 +121,11 @@ struct DiffExplanationShimmer: View {
         }
         .padding(12)
         .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous)
                 .fill(DesignSystem.Colors.glassSubtle)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous)
                 .stroke(DesignSystem.Colors.glassHover, lineWidth: 1)
         )
         .onAppear {

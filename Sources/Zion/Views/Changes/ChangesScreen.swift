@@ -255,7 +255,7 @@ struct ChangesScreen: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(Color.black.opacity(0.2))
+        .background(DesignSystem.Colors.glassInset)
     }
 
     private func diffLine(_ line: String) -> some View {

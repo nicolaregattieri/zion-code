@@ -85,7 +85,7 @@ struct PullRequestSheet: View {
                         TextEditor(text: $body_)
                             .font(.system(size: 12, design: .monospaced))
                             .frame(minHeight: 120)
-                            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.secondary.opacity(0.2)))
+                            .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius).stroke(Color.secondary.opacity(0.2)))
                     }
 
                     // Draft toggle
@@ -97,14 +97,14 @@ struct PullRequestSheet: View {
                     // Error
                     if let error = errorMessage {
                         HStack(spacing: 8) {
-                            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(DesignSystem.Colors.warning)
                             Text(error)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
                         .padding(10)
-                        .background(Color.orange.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .background(DesignSystem.Colors.warning.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
                     }
 
                     // Success
@@ -124,7 +124,7 @@ struct PullRequestSheet: View {
                         }
                         .padding(10)
                         .background(DesignSystem.Colors.success.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
                     }
                 }
                 .padding(16)

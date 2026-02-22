@@ -69,7 +69,7 @@ struct ZionMapDetailPage: View {
                 .foregroundStyle(section.color)
                 .frame(width: 48, height: 48)
                 .background(section.color.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(L10n(section.titleKey))
@@ -129,9 +129,9 @@ struct ZionMapDetailPage: View {
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(DesignSystem.Colors.glassSubtle)
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous)
                 .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
         )
     }
