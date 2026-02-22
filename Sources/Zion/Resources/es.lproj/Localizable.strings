@@ -1085,6 +1085,9 @@
 "branch.review.loading" = "Analizando diferencias...";
 "branch.review.empty" = "No se encontraron diferencias entre las branches";
 
+// Cherry-pick confirmation
+"Aplicar este commit na branch atual?" = "¿Aplicar este commit a la branch actual?";
+
 // Cross-language sync: keys in EN/ES but missing from ES
 "Aplicar o commit informado na branch atual?" = "¿Aplicar el commit ingresado en la rama actual?";
 "Apply" = "Apply";

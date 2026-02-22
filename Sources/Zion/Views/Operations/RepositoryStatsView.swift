@@ -4,7 +4,7 @@ struct RepositoryStatsCard: View {
     var model: RepositoryViewModel
 
     var body: some View {
-        GlassCard(spacing: 12) {
+        GlassCard(spacing: 12, expanding: true) {
             CardHeader(L10n("Estatisticas"), icon: "chart.bar.xaxis", subtitle: L10n("Visao geral do repositorio"))
 
             if let stats = model.repoStats {

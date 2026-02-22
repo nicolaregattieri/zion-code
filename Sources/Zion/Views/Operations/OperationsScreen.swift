@@ -178,7 +178,7 @@ struct OperationsScreen: View {
                         }
                         .buttonStyle(.bordered)
                         .controlSize(.small)
-                        .tint(DesignSystem.Colors.commitSplit)
+                        .tint(DesignSystem.Colors.ai)
                         .disabled(model.isGeneratingAIMessage)
                         .help(L10n("Sugerir divisao de commits com IA"))
                     }
@@ -276,7 +276,7 @@ struct OperationsScreen: View {
     }
 
     private var branchCard: some View {
-        GlassCard(spacing: 12) {
+        GlassCard(spacing: 12, expanding: true) {
             CardHeader(L10n("Branches"), icon: "arrow.triangle.branch", subtitle: L10n("Checkout e integracao"))
 
             VStack(spacing: 10) {
@@ -360,7 +360,7 @@ struct OperationsScreen: View {
     }
 
     private var stashCard: some View {
-        GlassCard(spacing: 10) {
+        GlassCard(spacing: 10, expanding: true) {
             CardHeader(L10n("Stash"), icon: "archivebox", subtitle: L10n("Salvar e restaurar alteracoes temporarias"))
             HStack(spacing: 8) {
                 TextField(L10n("mensagem do stash"), text: $model.stashMessageInput).textFieldStyle(.roundedBorder)
@@ -376,6 +376,7 @@ struct OperationsScreen: View {
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
+                    .tint(DesignSystem.Colors.ai)
                     .disabled(model.isGeneratingAIMessage)
                     .help(L10n("Gerar mensagem com IA"))
                 }
@@ -395,7 +396,7 @@ struct OperationsScreen: View {
     }
 
     private var tagsCard: some View {
-        GlassCard(spacing: 10) {
+        GlassCard(spacing: 10, expanding: true) {
             CardHeader(L10n("Tags"), icon: "tag", subtitle: L10n("Marcar pontos importantes no historico"))
             HStack(spacing: 8) {
                 TextField("v1.0.0", text: $model.tagInput).textFieldStyle(.roundedBorder)
@@ -406,7 +407,7 @@ struct OperationsScreen: View {
     }
 
     private var historyCard: some View {
-        GlassCard(spacing: 10) {
+        GlassCard(spacing: 10, expanding: true) {
             CardHeader(L10n("Historico"), icon: "clock.arrow.circlepath", subtitle: L10n("Rebase e cherry-pick"))
             HStack(spacing: 8) {
                 TextField(L10n("rebase target"), text: $model.rebaseTargetInput).textFieldStyle(.roundedBorder)
@@ -420,7 +421,7 @@ struct OperationsScreen: View {
     }
 
     private var remotesCard: some View {
-        GlassCard(spacing: 10) {
+        GlassCard(spacing: 10, expanding: true) {
             CardHeader(L10n("Remotes"), icon: "network", subtitle: L10n("Repositorios remotos conectados"))
             
             VStack(spacing: 8) {
@@ -477,7 +478,7 @@ struct OperationsScreen: View {
     }
 
     private var worktreeCard: some View {
-        GlassCard(spacing: 10) {
+        GlassCard(spacing: 10, expanding: true) {
             CardHeader(L10n("Worktrees"), icon: "square.split.2x2", subtitle: L10n("Contextos paralelos")) {
                 Text("\(model.worktrees.count)")
                     .font(.system(size: 10, weight: .bold, design: .monospaced))
@@ -528,7 +529,7 @@ struct OperationsScreen: View {
     }
 
     private var changelogCard: some View {
-        GlassCard(spacing: 10) {
+        GlassCard(spacing: 10, expanding: true) {
             CardHeader(L10n("Changelog"), icon: "sparkles", subtitle: L10n("Gerar notas de release com IA"))
             HStack(spacing: 8) {
                 TextField(L10n("De (tag/hash)"), text: $model.changelogFromRef)
@@ -579,7 +580,7 @@ struct OperationsScreen: View {
     }
 
     private var codeReviewCard: some View {
-        GlassCard(spacing: 10) {
+        GlassCard(spacing: 10, expanding: true) {
             CardHeader(L10n("codereview.card.title"), icon: "magnifyingglass", subtitle: L10n("codereview.card.subtitle"))
 
             HStack(spacing: 8) {
@@ -620,7 +621,7 @@ struct OperationsScreen: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .tint(DesignSystem.Colors.codeReview)
+            .tint(DesignSystem.Colors.ai)
             .disabled(model.branchReviewSource.isEmpty || model.branchReviewTarget.isEmpty)
             .help(L10n("codereview.startReview.hint"))
         }

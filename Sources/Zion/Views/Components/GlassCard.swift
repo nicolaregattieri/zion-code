@@ -4,18 +4,22 @@ struct GlassCard<Content: View>: View {
     @Environment(\.colorScheme) private var colorScheme
     let spacing: CGFloat
     let borderTint: Color?
+    let expanding: Bool
     @ViewBuilder var content: Content
 
-    init(spacing: CGFloat = 12, borderTint: Color? = nil, @ViewBuilder content: () -> Content) {
+    init(spacing: CGFloat = 12, borderTint: Color? = nil, expanding: Bool = false, @ViewBuilder content: () -> Content) {
         self.spacing = spacing
         self.borderTint = borderTint
+        self.expanding = expanding
         self.content = content()
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: spacing) {
             content
+            if expanding { Spacer(minLength: 0) }
         }
+        .frame(maxHeight: expanding ? .infinity : nil, alignment: .topLeading)
         .padding(DesignSystem.Spacing.cardPadding)
         .background(colorScheme == .dark ? .ultraThinMaterial : .regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous))
