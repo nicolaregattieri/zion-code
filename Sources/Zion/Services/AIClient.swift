@@ -562,6 +562,32 @@ actor AIClient {
         return parseReviewFindings(raw)
     }
 
+    // MARK: - Pending Changes Summary
+
+    func summarizePendingChanges(
+        diffStat: String,
+        fileList: String,
+        provider: AIProvider,
+        apiKey: String
+    ) async throws -> String {
+        let prompt = """
+        You are a developer assistant. Summarize what the developer has been working on based on their pending (uncommitted) changes.
+
+        Changed files:
+        \(fileList.prefix(3000))
+
+        Diff stat:
+        \(diffStat.prefix(5000))
+
+        Rules:
+        - 1-2 sentences, plain English, conversational tone
+        - Focus on the INTENT (what they're trying to accomplish), not individual files
+        - Example: "You've been refactoring the auth module and fixing sidebar CSS."
+        - Output ONLY the summary, nothing else
+        """
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 150)
+    }
+
     // MARK: - Private
 
     private func call(prompt: String, provider: AIProvider, apiKey: String, maxTokens: Int) async throws -> String {

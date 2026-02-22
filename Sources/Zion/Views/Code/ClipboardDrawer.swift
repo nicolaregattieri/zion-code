@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ClipboardDrawer: View {
     var model: RepositoryViewModel
+    var onNavigateToGraph: (() -> Void)?
     @State private var hoveredItemID: UUID?
     @State private var searchQuery: String = ""
 
@@ -155,6 +156,16 @@ struct ClipboardDrawer: View {
             Spacer()
 
             if isHovered && hasText {
+                if let action = smartAction(for: item) {
+                    Button { action.handler() } label: {
+                        Image(systemName: action.icon)
+                            .font(.system(size: 10))
+                            .foregroundStyle(action.tint)
+                    }
+                    .buttonStyle(.plain)
+                    .help(action.label)
+                }
+
                 Button {
                     model.sendTextToActiveTerminal(item.text)
                 } label: {
@@ -229,6 +240,63 @@ struct ClipboardDrawer: View {
 
     private func shellQuote(_ path: String) -> String {
         "'" + path.replacingOccurrences(of: "'", with: "'\\''") + "'"
+    }
+
+    // MARK: - Smart Clipboard Actions
+
+    private struct SmartAction {
+        let icon: String
+        let label: String
+        let tint: Color
+        let handler: () -> Void
+    }
+
+    private static let gitHashRegex = try! NSRegularExpression(pattern: "^[0-9a-f]{7,40}$", options: [])
+
+    private func smartAction(for item: ClipboardItem) -> SmartAction? {
+        let text = item.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return nil }
+
+        // Git hash → Show in Graph
+        let range = NSRange(text.startIndex..., in: text)
+        if Self.gitHashRegex.firstMatch(in: text, range: range) != nil {
+            return SmartAction(
+                icon: "point.3.connected.trianglepath.dotted",
+                label: L10n("Mostrar no Graph"),
+                tint: DesignSystem.Colors.info
+            ) {
+                model.selectCommit(text)
+                onNavigateToGraph?()
+            }
+        }
+
+        // Branch name → Checkout
+        if model.branches.contains(text) {
+            return SmartAction(
+                icon: "arrow.triangle.branch",
+                label: L10n("Checkout %@", text),
+                tint: DesignSystem.Colors.success
+            ) {
+                model.branchInput = text
+                model.setBranchFocus(text)
+            }
+        }
+
+        // File path → Open in Editor
+        if let repoURL = model.repositoryURL {
+            let fullPath = repoURL.appendingPathComponent(text).path
+            if FileManager.default.fileExists(atPath: fullPath) {
+                return SmartAction(
+                    icon: "pencil.and.outline",
+                    label: L10n("Abrir no Editor"),
+                    tint: DesignSystem.Colors.brandPrimary
+                ) {
+                    model.openFileInEditor(relativePath: text)
+                }
+            }
+        }
+
+        return nil
     }
 
     private func relativeTime(_ date: Date) -> String {

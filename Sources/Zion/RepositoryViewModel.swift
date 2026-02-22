@@ -1,5 +1,7 @@
 import Foundation
 import SwiftUI
+import CryptoKit
+@preconcurrency import SwiftTerm
 
 @Observable @MainActor
 final class RepositoryViewModel {
@@ -52,6 +54,10 @@ final class RepositoryViewModel {
     // Clipboard
     let clipboardMonitor = ClipboardMonitor()
     @ObservationIgnored var terminalSendCallbacks: [UUID: (Data) -> Void] = [:]
+
+    // Avatar cache (Gravatar)
+    @ObservationIgnored var avatarCache: [String: NSImage] = [:]
+    @ObservationIgnored private var avatarDownloadTasks: Set<String> = []
 
     // Hunk diff state
     var currentFileDiffHunks: [DiffHunk] = []
@@ -267,6 +273,7 @@ final class RepositoryViewModel {
     var conflictBlocks: [ConflictBlock] = []
     var isConflictViewVisible: Bool = false
     @ObservationIgnored private var conflictTask: Task<Void, Never>?
+    @ObservationIgnored private var commitStatsTask: Task<Void, Never>?
 
     // Clone state
     var isCloneSheetVisible: Bool = false
@@ -2248,6 +2255,7 @@ final class RepositoryViewModel {
                 }
                 isBusy = false
                 loadCommitDetails(for: payload.selectedCommitID)
+                loadCommitStats()
             } catch is CancellationError {
                 return
             } catch {
@@ -2313,11 +2321,13 @@ final class RepositoryViewModel {
                 isGitRepository = payload.isGitRepository
                 uncommittedChanges = payload.uncommittedChanges
                 uncommittedCount = payload.uncommittedCount
+                aiPendingChangesSummary = "" // Clear cached summary on refresh
                 statusMessage = L10n("Repositorio carregado: %@ · %@ commits", repositoryURL.lastPathComponent, "\(payload.commits.count)")
                 if setBusy {
                     isBusy = false
                 }
                 loadCommitDetails(for: payload.selectedCommitID)
+                loadCommitStats()
             } catch is CancellationError {
                 return
             } catch {
@@ -2435,6 +2445,114 @@ final class RepositoryViewModel {
 
     func unregisterTerminalSendCallback(sessionID: UUID) {
         terminalSendCallbacks.removeValue(forKey: sessionID)
+    }
+
+    // MARK: - Terminal Search
+
+    private var focusedTerminalView: SwiftTerm.TerminalView? {
+        let session: TerminalSession? = {
+            if let fid = focusedSessionID {
+                return terminalTabs.flatMap({ $0.allSessions() }).first(where: { $0.id == fid })
+            }
+            return terminalTabs.first(where: { $0.id == activeTabID })?.allSessions().first
+        }()
+        return session?._cachedView as? SwiftTerm.TerminalView
+    }
+
+    func terminalFindNext(_ term: String) {
+        _ = focusedTerminalView?.findNext(term)
+    }
+
+    func terminalFindPrevious(_ term: String) {
+        _ = focusedTerminalView?.findPrevious(term)
+    }
+
+    func terminalClearSearch() {
+        focusedTerminalView?.clearSearch()
+    }
+
+    // MARK: - AI Pending Changes Summary
+
+    var aiPendingChangesSummary: String = ""
+    var isLoadingPendingChangesSummary: Bool = false
+    @ObservationIgnored private var pendingSummaryTask: Task<Void, Never>?
+
+    func summarizePendingChanges() {
+        guard let url = repositoryURL, isAIConfigured, !uncommittedChanges.isEmpty else { return }
+        pendingSummaryTask?.cancel()
+        isLoadingPendingChangesSummary = true
+        aiPendingChangesSummary = ""
+
+        let fileList = uncommittedChanges.joined(separator: "\n")
+        pendingSummaryTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                let diffStat = try await worker.runGitCommand(in: url, args: ["diff", "--stat"])
+                try Task.checkCancellation()
+                let summary = try await aiClient.summarizePendingChanges(
+                    diffStat: diffStat,
+                    fileList: fileList,
+                    provider: aiProvider,
+                    apiKey: aiAPIKey
+                )
+                try Task.checkCancellation()
+                aiPendingChangesSummary = summary
+                isLoadingPendingChangesSummary = false
+            } catch {
+                isLoadingPendingChangesSummary = false
+                logger.log(.error, "AI pending changes summary failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
+            }
+        }
+    }
+
+    // MARK: - Commit Stats
+
+    func loadCommitStats() {
+        guard let url = repositoryURL, !commits.isEmpty else { return }
+        commitStatsTask?.cancel()
+        let hashes = commits.map(\.id)
+        commitStatsTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                let stats = try await worker.fetchCommitStats(in: url, hashes: hashes)
+                try Task.checkCancellation()
+                for i in commits.indices {
+                    if let stat = stats[commits[i].id] {
+                        commits[i].insertions = stat.0
+                        commits[i].deletions = stat.1
+                    }
+                }
+            } catch {
+                // Silently fail — stats are optional enhancement
+            }
+        }
+    }
+
+    // MARK: - Gravatar Avatars
+
+    func avatarImage(for email: String) -> NSImage? {
+        guard !email.isEmpty else { return nil }
+        let key = email.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        if let cached = avatarCache[key] { return cached }
+        // Start download if not already in-flight
+        if !avatarDownloadTasks.contains(key) {
+            avatarDownloadTasks.insert(key)
+            Task { [weak self] in
+                guard let self else { return }
+                let hash = Insecure.MD5.hash(data: Data(key.utf8)).map { String(format: "%02x", $0) }.joined()
+                guard let url = URL(string: "https://gravatar.com/avatar/\(hash)?s=40&d=identicon") else { return }
+                do {
+                    let (data, _) = try await URLSession.shared.data(from: url)
+                    if let image = NSImage(data: data) {
+                        avatarCache[key] = image
+                    }
+                } catch {
+                    // Silently fail — identicon fallback handled by Gravatar
+                }
+                avatarDownloadTasks.remove(key)
+            }
+        }
+        return nil
     }
 
     // MARK: - Diff Parsing

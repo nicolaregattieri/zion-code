@@ -44,6 +44,10 @@ actor RepositoryWorker {
         return formatter
     }()
 
+    func runGitCommand(in repositoryURL: URL, args: [String]) throws -> String {
+        try git.run(args: args, in: repositoryURL).stdout
+    }
+
     func isGitRepository(at url: URL) -> Bool {
         do {
             let result = try git.runAllowingFailure(args: ["rev-parse", "--is-inside-work-tree"], in: url)
@@ -349,7 +353,7 @@ actor RepositoryWorker {
 
     private func commitList(in repositoryURL: URL, reference: String?, limit: Int) throws -> ([Commit], Bool) {
         let effectiveLimit = max(150, limit)
-        let format = "%H%x1F%P%x1F%an%x1F%ad%x1F%s%x1F%D%x1E"
+        let format = "%H%x1F%P%x1F%an%x1F%ae%x1F%ad%x1F%s%x1F%D%x1E"
         var args = ["log"]
         if let reference, !reference.clean.isEmpty {
             args.append(reference.clean)
@@ -391,6 +395,7 @@ actor RepositoryWorker {
                 shortHash: String(entry.hash.prefix(8)),
                 parents: entry.parents,
                 author: entry.author,
+                email: entry.email,
                 date: entry.date,
                 subject: entry.subject,
                 decorations: entry.decorations,
@@ -403,6 +408,47 @@ actor RepositoryWorker {
             )
         }
         return (commits, hasMore)
+    }
+
+    // MARK: - Commit Stats (insertions/deletions)
+
+    func fetchCommitStats(in repositoryURL: URL, hashes: [String]) throws -> [String: (Int, Int)] {
+        guard !hashes.isEmpty else { return [:] }
+        // Use --shortstat to get compact "+N -M" per commit
+        let limit = min(hashes.count, 500)
+        let args = ["log", "--all", "--shortstat", "--format=%H", "--max-count=\(limit)"]
+        let output = try git.run(args: args, in: repositoryURL).stdout
+
+        var stats: [String: (Int, Int)] = [:]
+        let lines = output.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        var currentHash: String?
+
+        for line in lines {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if trimmed.isEmpty { continue }
+
+            // Full SHA hash line (40 hex chars)
+            if trimmed.count == 40, trimmed.allSatisfy({ $0.isHexDigit }) {
+                currentHash = trimmed
+                continue
+            }
+
+            // Shortstat line: "N files changed, N insertions(+), N deletions(-)"
+            if let hash = currentHash, trimmed.contains("changed") {
+                var ins = 0, del = 0
+                let parts = trimmed.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+                for part in parts {
+                    if part.contains("insertion") {
+                        ins = Int(part.split(separator: " ").first ?? "0") ?? 0
+                    } else if part.contains("deletion") {
+                        del = Int(part.split(separator: " ").first ?? "0") ?? 0
+                    }
+                }
+                stats[hash] = (ins, del)
+                currentHash = nil
+            }
+        }
+        return stats
     }
 
     private func buildBranchTree(
@@ -629,7 +675,7 @@ actor RepositoryWorker {
             .split(separator: recordSeparator, omittingEmptySubsequences: true)
             .compactMap { rawRecord in
                 let fields = rawRecord.split(separator: fieldSeparator, omittingEmptySubsequences: false).map(String.init)
-                guard fields.count >= 6 else { return nil }
+                guard fields.count >= 7 else { return nil }
 
                 let hash = fields[0].clean
                 guard !hash.isEmpty else { return nil }
@@ -639,9 +685,10 @@ actor RepositoryWorker {
                     .map(String.init)
 
                 let author = fields[2].clean
-                let dateValue = parseISODate(fields[3].clean)
-                let subject = fields[4].clean
-                let decorations = fields[5]
+                let email = fields[3].clean
+                let dateValue = parseISODate(fields[4].clean)
+                let subject = fields[5].clean
+                let decorations = fields[6]
                     .split(separator: ",", omittingEmptySubsequences: true)
                     .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
 
@@ -649,6 +696,7 @@ actor RepositoryWorker {
                     hash: hash,
                     parents: parents,
                     author: author,
+                    email: email,
                     date: dateValue,
                     subject: subject,
                     decorations: decorations

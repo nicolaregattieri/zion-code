@@ -13,6 +13,7 @@ struct CommitRowView: View {
     let branchContextMenu: (String) -> AnyView
     let tagContextMenu: (String) -> AnyView
     let remotes: [String]
+    var avatarImage: NSImage? = nil
     
     @State private var isHovered = false
     
@@ -117,7 +118,14 @@ struct CommitRowView: View {
                 .foregroundStyle(Color.accentColor)
 
             HStack(spacing: 4) {
-                Image(systemName: "person.fill").font(.system(size: 9))
+                if let avatar = avatarImage {
+                    Image(nsImage: avatar)
+                        .resizable()
+                        .frame(width: 18, height: 18)
+                        .clipShape(Circle())
+                } else {
+                    Image(systemName: "person.fill").font(.system(size: 9))
+                }
                 Text(commit.author)
             }
             .font(.system(size: 11, weight: .medium))
@@ -129,6 +137,25 @@ struct CommitRowView: View {
             }
             .font(.system(size: 10, design: .monospaced))
             .foregroundStyle(Color.secondary.opacity(0.7))
+
+            if let ins = commit.insertions, let del = commit.deletions, (ins > 0 || del > 0) {
+                HStack(spacing: 4) {
+                    if ins > 0 {
+                        Text("+\(ins)")
+                            .font(.system(size: 9, weight: .bold, design: .monospaced))
+                            .foregroundStyle(DesignSystem.Colors.diffAddition)
+                    }
+                    if del > 0 {
+                        Text("-\(del)")
+                            .font(.system(size: 9, weight: .bold, design: .monospaced))
+                            .foregroundStyle(DesignSystem.Colors.diffDeletion)
+                    }
+                }
+                .padding(.horizontal, 5)
+                .padding(.vertical, 2)
+                .background(DesignSystem.Colors.glassSubtle)
+                .clipShape(Capsule())
+            }
         }
     }
 

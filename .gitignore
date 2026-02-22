@@ -50,3 +50,7 @@ docs/RELEASE.md
 .cursor/
 *.swp
 *~
+
+# Codex local context/skills
+CODEX.md
+.agents/
