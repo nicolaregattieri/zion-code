@@ -37,6 +37,7 @@ struct WelcomeScreen: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
+                .tint(DesignSystem.Colors.actionPrimary)
 
                 Button {
                     model.isCloneSheetVisible = true

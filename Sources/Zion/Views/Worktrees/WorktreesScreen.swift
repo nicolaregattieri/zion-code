@@ -45,7 +45,8 @@ struct WorktreesScreen: View {
                             }
                         }
                         .buttonStyle(.borderedProminent)
-                        
+                        .tint(DesignSystem.Colors.actionPrimary)
+
                         Button(L10n("Prune")) {
                             performGitAction(L10n("Prune worktrees"), L10n("Remover metadados de worktrees obsoletos?"), true) {
                                 model.pruneWorktrees()

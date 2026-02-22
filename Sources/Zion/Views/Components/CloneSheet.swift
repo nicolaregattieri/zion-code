@@ -175,6 +175,7 @@ struct CloneSheet: View {
                 )
             }
             .buttonStyle(.borderedProminent)
+            .tint(DesignSystem.Colors.actionPrimary)
             .disabled(!isValid || model.isCloning)
             .keyboardShortcut(.defaultAction)
         }

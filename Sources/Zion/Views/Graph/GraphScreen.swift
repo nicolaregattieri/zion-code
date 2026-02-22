@@ -493,6 +493,7 @@ struct GraphScreen: View {
                                         model.stashMessageInput = ""
                                         isShowingQuickStash = false
                                     }.buttonStyle(.borderedProminent)
+                                    .tint(DesignSystem.Colors.actionPrimary)
                                     .keyboardShortcut(.return, modifiers: [])
                                 }
                             }
