@@ -120,7 +120,7 @@ struct SidebarView: View {
 
     private func collapseToggle(isExpanded: Binding<Bool>) -> some View {
         Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
+            withAnimation(DesignSystem.Motion.panel) {
                 isExpanded.wrappedValue.toggle()
             }
         } label: {
@@ -128,7 +128,7 @@ struct SidebarView: View {
                 .font(.system(size: 9, weight: .bold))
                 .foregroundStyle(.secondary)
                 .rotationEffect(.degrees(isExpanded.wrappedValue ? 90 : 0))
-                .animation(.easeInOut(duration: 0.2), value: isExpanded.wrappedValue)
+                .animation(DesignSystem.Motion.panel, value: isExpanded.wrappedValue)
         }
         .buttonStyle(.plain)
         .frame(width: 20, height: 20)
@@ -268,7 +268,7 @@ struct SidebarView: View {
             .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 10).padding(.vertical, 8)
             .background(RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius).fill(isSelected ? DesignSystem.Colors.glassHover : Color.clear))
             .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius).stroke(isSelected ? Color.primary.opacity(0.15) : Color.clear, lineWidth: 1))
-            .animation(.easeInOut(duration: 0.15), value: isSelected)
+            .animation(DesignSystem.Motion.detail, value: isSelected)
         }
         .buttonStyle(.plain)
         .disabled(isDisabled)

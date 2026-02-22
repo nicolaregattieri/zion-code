@@ -26,7 +26,7 @@ struct HunkDiffView: View {
             // Hunk header row
             HStack(spacing: 6) {
                 Button {
-                    withAnimation(.snappy(duration: 0.15)) {
+                    withAnimation(DesignSystem.Motion.snappy) {
                         if isCollapsed {
                             collapsedHunks.remove(hunk.id)
                         } else {

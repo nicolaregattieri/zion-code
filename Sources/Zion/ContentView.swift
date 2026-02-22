@@ -15,6 +15,7 @@ struct ContentView: View {
     @AppStorage("zion.preferredTerminal") private var preferredTerminalRaw: String = ExternalTerminal.terminal.rawValue
     @AppStorage("zion.customTerminalPath") private var customTerminalPath: String = ""
     @AppStorage("zion.appearance") private var appearanceRaw: String = AppAppearance.system.rawValue
+    @AppStorage("zion.hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
 
     private var uiLanguage: AppLanguage { AppLanguage(rawValue: uiLanguageRaw) ?? .system }
     private var appearance: AppAppearance { AppAppearance(rawValue: appearanceRaw) ?? .system }
@@ -174,12 +175,19 @@ struct ContentView: View {
                     .transition(.opacity)
             }
         }
-        .animation(.easeInOut(duration: 0.2), value: selectedSection)
+        .animation(DesignSystem.Motion.panel, value: selectedSection)
     }
 
     @ViewBuilder
     private var nonCodeContent: some View {
-        if model.repositoryURL == nil {
+        if !hasCompletedOnboarding {
+            ClimbingZionView(
+                model: model,
+                onComplete: { hasCompletedOnboarding = true },
+                onOpen: { openRepositoryPanel() },
+                onInit: { initRepositoryPanel() }
+            )
+        } else if model.repositoryURL == nil {
             WelcomeScreen(model: model, onOpen: { openRepositoryPanel() }, onInit: { initRepositoryPanel() })
         } else if !model.isGitRepository {
             Color.clear.onAppear {

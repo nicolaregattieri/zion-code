@@ -1082,3 +1082,43 @@
 "map.code.filehistory.title" = "Histórico do Arquivo";
 "map.code.filehistory.description" = "Veja o histórico de commits de qualquer arquivo. Mostra hash, autor, data e mensagem de cada commit que tocou o arquivo.";
 "map.code.filehistory.tip1" = "Clique com botão direito em um arquivo e selecione Histórico do Arquivo, ou use o botão na toolbar.";
+
+// Climbing Zion — Onboarding
+"onboarding.title" = "Climbing Zion";
+"onboarding.subtitle" = "A vista do topo.";
+"onboarding.discover" = "Descobrir";
+"onboarding.skip" = "Pular";
+"onboarding.continue" = "Continuar";
+"onboarding.back" = "Voltar";
+"onboarding.skipOnboarding" = "Pular introdução";
+
+"onboarding.tree.title" = "Zion Tree";
+"onboarding.tree.subtitle" = "Seu histórico Git, visualizado.";
+"onboarding.tree.lanes" = "Lanes coloridas mostram o fluxo de branches de relance";
+"onboarding.tree.search" = "Busque commits, tags e branches instantaneamente";
+"onboarding.tree.pending" = "Veja mudanças pendentes direto no grafo";
+"onboarding.tree.stash" = "Gerenciamento de stash integrado à lista de commits";
+
+"onboarding.code.title" = "Zion Code";
+"onboarding.code.subtitle" = "Edite, revise e execute — tudo em um lugar.";
+"onboarding.code.editor" = "Syntax highlighting com 6 temas lindos";
+"onboarding.code.terminal" = "Terminal integrado com splits e tabs";
+"onboarding.code.blame" = "Git blame com anotações inline";
+"onboarding.code.clipboard" = "Clipboard inteligente para snippets e imagens";
+
+"onboarding.ai.title" = "Assistente IA";
+"onboarding.ai.subtitle" = "12 recursos com IA para turbinar seu workflow.";
+"onboarding.ai.optional" = "Isso é completamente opcional.";
+"onboarding.ai.laterHint" = "Você pode ativar isso depois em Configurações > IA.";
+"onboarding.ai.getKey" = "Obter Chave";
+"onboarding.ai.skipAI" = "Pular por agora";
+"onboarding.ai.keySaved" = "Chave salva!";
+"onboarding.ai.features" = "Mensagens de commit, explicação de diffs, code review, busca semântica, resolução de conflitos e mais.";
+
+"onboarding.ready.title" = "Você chegou ao topo!";
+"onboarding.ready.subtitle" = "Zion está pronto. Abra um repositório para começar.";
+"onboarding.ready.openRepo" = "Abrir Repositório";
+"onboarding.ready.cloneRepo" = "Clonar Repositório";
+"onboarding.ready.initRepo" = "Inicializar Repositório";
+"onboarding.ready.enabled" = "Ativado";
+"onboarding.ready.skipped" = "Não configurado";

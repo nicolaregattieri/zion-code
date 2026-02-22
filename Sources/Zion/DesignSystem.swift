@@ -196,6 +196,22 @@ struct DesignSystem {
         static let pressedBackground = Color.white.opacity(0.12)
     }
 
+    // MARK: - Motion Tokens
+
+    struct Motion {
+        static let springInteractive = Animation.spring(response: 0.25, dampingFraction: 0.8)
+        static let panel = Animation.easeInOut(duration: 0.2)
+        static let detail = Animation.easeInOut(duration: 0.15)
+        static let snappy = Animation.snappy(duration: 0.2)
+        static let graph = Animation.easeInOut(duration: 0.12)
+
+        @MainActor static let fade = AnyTransition.opacity
+        @MainActor static let slideFromTop = AnyTransition.move(edge: .top).combined(with: .opacity)
+        @MainActor static let slideFromLeading = AnyTransition.move(edge: .leading).combined(with: .opacity)
+        @MainActor static let slideFromBottom = AnyTransition.move(edge: .bottom).combined(with: .opacity)
+        @MainActor static let fadeScale = AnyTransition.opacity.combined(with: .scale(scale: 0.95))
+    }
+
     struct EditorThemes {
         static let dracula = ThemeColors(
             background: (r: 0.16, g: 0.16, b: 0.21),

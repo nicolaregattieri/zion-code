@@ -36,7 +36,7 @@ struct PRInboxCard: View {
                     }
 
                     Button {
-                        withAnimation(.easeInOut(duration: 0.2)) {
+                        withAnimation(DesignSystem.Motion.panel) {
                             isExpanded.toggle()
                         }
                     } label: {
@@ -44,7 +44,7 @@ struct PRInboxCard: View {
                             .font(.system(size: 9, weight: .bold))
                             .foregroundStyle(.secondary)
                             .rotationEffect(.degrees(isExpanded ? 90 : 0))
-                            .animation(.easeInOut(duration: 0.2), value: isExpanded)
+                            .animation(DesignSystem.Motion.panel, value: isExpanded)
                     }
                     .buttonStyle(.plain)
                     .frame(width: 20, height: 20)
