@@ -10,6 +10,7 @@ struct GraphScreen: View {
     
     @State private var currentMatchIndex: Int = 0
     @State private var searchMatchIDs: [String] = []
+    @State private var searchMatchIDSet: Set<String> = []
     @State private var isShowingQuickCommit: Bool = false
     @State private var isShowingQuickStash: Bool = false
     @State private var isShowingStashList: Bool = false
@@ -110,10 +111,10 @@ struct GraphScreen: View {
         if hasMain || hasDev {
             HStack(spacing: 8) {
                 if let mainName = findBranchName(matches: ["main", "master", "trunk"]) {
-                    jumpButton(icon: "shield.fill", color: .orange, label: mainName) { commitSearchQuery = mainName }
+                    jumpButton(icon: "shield.fill", color: DesignSystem.Colors.warning, label: mainName) { commitSearchQuery = mainName }
                 }
                 if let devName = findBranchName(matches: ["develop", "development", "dev"]) {
-                    jumpButton(icon: "flag.fill", color: .purple, label: devName) { commitSearchQuery = devName }
+                    jumpButton(icon: "flag.fill", color: DesignSystem.Colors.brandPrimary, label: devName) { commitSearchQuery = devName }
                 }
             }
             .padding(.horizontal, 8)
@@ -218,18 +219,19 @@ struct GraphScreen: View {
             .padding(.horizontal, 12).padding(.top, 12).padding(.bottom, 8)
             Divider()
             ScrollView([.horizontal, .vertical], showsIndicators: true) {
+                let remoteNames = model.remotes.map(\.name)
                 LazyVStack(spacing: 0) {
                     // PENDING CHANGES - TOP OF THE LIST
                     if !model.uncommittedChanges.isEmpty {
                         pendingChangesRow
                             .padding(.top, 8)
                     }
-                    
+
                     ForEach(model.commits) { commit in
                         CommitRowView(
                             commit: commit,
                             isSelected: model.selectedCommitID == commit.id,
-                            isSearchMatch: searchMatchIDs.contains(commit.id) || model.aiSemanticSearchResults.contains(where: { commit.shortHash.hasPrefix($0) || commit.id.hasPrefix($0) }),
+                            isSearchMatch: searchMatchIDSet.contains(commit.id) || model.aiSemanticSearchResults.contains(where: { commit.shortHash.hasPrefix($0) || commit.id.hasPrefix($0) }),
                             searchQuery: commitSearchQuery,
                             laneCount: model.maxLaneCount,
                             currentBranch: model.currentBranch,
@@ -268,7 +270,7 @@ struct GraphScreen: View {
                             contextMenu: commitContextMenu(commit),
                             branchContextMenu: branchContextMenu,
                             tagContextMenu: tagContextMenu,
-                            remotes: model.remotes.map(\.name)
+                            remotes: remoteNames
                         )
                         .id(commit.id)
                         .overlay(alignment: .trailing) {
@@ -342,15 +344,15 @@ struct GraphScreen: View {
 
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous)
-                    .fill(showingPendingChanges ? DesignSystem.Colors.statusOrangeBg : Color.orange.opacity(0.05))
+                    .fill(showingPendingChanges ? DesignSystem.Colors.statusOrangeBg : DesignSystem.Colors.warning.opacity(0.05))
                     .frame(height: 86)
                     .overlay(
                         RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous)
-                            .stroke(showingPendingChanges ? Color.orange.opacity(0.5) : Color.orange.opacity(0.2), lineWidth: 1.5)
+                            .stroke(showingPendingChanges ? DesignSystem.Colors.warning.opacity(0.5) : DesignSystem.Colors.warning.opacity(0.2), lineWidth: 1.5)
                     )
 
                 HStack(spacing: 12) {
-                    Image(systemName: "pencil.circle.fill").font(.title2).foregroundStyle(.orange.opacity(0.8))
+                    Image(systemName: "pencil.circle.fill").font(.title2).foregroundStyle(DesignSystem.Colors.warning.opacity(0.8))
 
                     VStack(alignment: .leading, spacing: 0) {
                         Text(L10n("Alteracoes Pendentes")).font(.system(size: 13, weight: .bold)).foregroundStyle(.primary.opacity(0.9))
@@ -466,7 +468,7 @@ struct GraphScreen: View {
                                     Text("\(model.stashes.count)")
                                         .font(.system(size: 9, weight: .bold))
                                         .padding(.horizontal, 4)
-                                        .background(Color.blue.opacity(0.5))
+                                        .background(DesignSystem.Colors.info.opacity(0.5))
                                         .clipShape(Capsule())
                                 }
                             }
@@ -583,28 +585,31 @@ struct GraphScreen: View {
 
     private func updateSearchMatches() {
         let query = commitSearchQuery.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        if query.isEmpty { searchMatchIDs = []; currentMatchIndex = 0; return }
-        
+        if query.isEmpty { searchMatchIDs = []; searchMatchIDSet = []; currentMatchIndex = 0; return }
+
         let priority1 = model.commits.filter { commit in
             commit.decorations.contains { d in
                 let cleaned = d.lowercased().replacingOccurrences(of: "head -> ", with: "").replacingOccurrences(of: "tag: ", with: "")
                 return cleaned == query || cleaned.hasSuffix("/" + query)
             }
         }.map(\.id)
-        
+
+        let p1Set = Set(priority1)
         let priority2 = model.commits.filter { commit in
-            !priority1.contains(commit.id) && commit.decorations.contains { $0.lowercased().contains(query) }
+            !p1Set.contains(commit.id) && commit.decorations.contains { $0.lowercased().contains(query) }
         }.map(\.id)
-        
+
+        let p2Set = Set(priority2)
         let priority3 = model.commits.filter { commit in
-            !priority1.contains(commit.id) && !priority2.contains(commit.id) && (
+            !p1Set.contains(commit.id) && !p2Set.contains(commit.id) && (
                 commit.shortHash.lowercased().contains(query) ||
                 commit.author.lowercased().contains(query) ||
                 commit.subject.lowercased().contains(query)
             )
         }.map(\.id)
-        
+
         searchMatchIDs = priority1 + priority2 + priority3
+        searchMatchIDSet = Set(searchMatchIDs)
         if currentMatchIndex >= searchMatchIDs.count { currentMatchIndex = 0 }
     }
     
