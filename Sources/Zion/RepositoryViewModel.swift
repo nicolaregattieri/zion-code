@@ -1157,6 +1157,10 @@ final class RepositoryViewModel {
         Task {
             let children = await loadFiles(at: itemURL, ignoredPaths: ignoredPaths, maxDepth: 0)
             repositoryFiles = updateTree(repositoryFiles, path: path, newChildren: children)
+            // Breadcrumb/path navigation can request deep expansions before parent nodes
+            // finish loading. Re-run pending expanded paths so deeper levels load as soon
+            // as they become discoverable in the tree.
+            reloadExpandedDirectories()
         }
     }
 

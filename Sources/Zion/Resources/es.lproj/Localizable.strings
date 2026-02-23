@@ -1392,3 +1392,5 @@
 "editor.navigation.definition.opened" = "Definicion abierta para '%@'.";
 "editor.navigation.references.notFound" = "No se encontraron referencias para '%@'.";
 "editor.navigation.references.found" = "%@ referencia(s) encontrada(s) para '%@'.";
+"settings.editor.showBreadcrumb" = "Mostrar breadcrumb de ruta";
+"editor.breadcrumb.path" = "Breadcrumb de ruta de archivo";
