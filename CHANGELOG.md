@@ -4,6 +4,20 @@ All notable changes to Zion are documented here.
 
 ---
 
+## 1.2.1 — 2026-02-23
+
+### New
+- **Zion Map Expanded Coverage** — Added missing detail cards for tree commit stats/avatars/branch search, advanced code actions/navigation/settings, terminal search, smart clipboard actions, repo init + stash badge, AI stash/branch/summary, and diagnostic sanitization.
+- **Shortcut Sheet Parity** — Documented `Ctrl+F` find alias in keyboard shortcuts.
+
+### Changed
+- **Release Versioning** — App bundle bumped to `1.2.1` (build `6`) for public distribution.
+- **Public Launch Messaging** — README release highlights updated for 1.2.1 and AI provider wording aligned with current support.
+
+### Fixed
+- **Help ↔ Map Drift** — HelpSheet bullets and Zion Map detail entries are now aligned with feature coverage.
+- **L10n Completeness** — New documentation keys added in pt-BR, en, and es with full parity.
+
 ## 1.2.0 — 2026-02-23
 
 ### New

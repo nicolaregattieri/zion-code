@@ -34,6 +34,11 @@ struct ZionMapContent {
                              tips: ["map.tree.navigation.tip1"]),
                 ZionMapEntry("map.tree.focus.title", description: "map.tree.focus.description",
                              tips: ["map.tree.focus.tip1"]),
+                ZionMapEntry("map.tree.commitstats.title", description: "map.tree.commitstats.description",
+                             tips: ["map.tree.commitstats.tip1"]),
+                ZionMapEntry("map.tree.avatars.title", description: "map.tree.avatars.description"),
+                ZionMapEntry("map.tree.branchsearch.title", description: "map.tree.branchsearch.description",
+                             tips: ["map.tree.branchsearch.tip1"]),
             ]
 
         case .code:
@@ -55,6 +60,16 @@ struct ZionMapContent {
                 ZionMapEntry("map.code.watcher.title", description: "map.code.watcher.description"),
                 ZionMapEntry("map.code.filehistory.title", description: "map.code.filehistory.description",
                              tips: ["map.code.filehistory.tip1"]),
+                ZionMapEntry("map.code.fileactions.title", description: "map.code.fileactions.description",
+                             tips: ["map.code.fileactions.tip1"]),
+                ZionMapEntry("map.code.searchreplace.title", description: "map.code.searchreplace.description",
+                             shortcut: "\u{2318}F / \u{2318}H / \u{2318}G",
+                             tips: ["map.code.searchreplace.tip1"]),
+                ZionMapEntry("map.code.navigation.title", description: "map.code.navigation.description",
+                             shortcut: "\u{2318}D / F12 / \u{21E7}F12",
+                             tips: ["map.code.navigation.tip1"]),
+                ZionMapEntry("map.code.editorsettings.title", description: "map.code.editorsettings.description",
+                             tips: ["map.code.editorsettings.tip1"]),
             ]
 
         case .terminal:
@@ -70,6 +85,8 @@ struct ZionMapContent {
                              shortcut: "\u{2303}+ / \u{2303}-"),
                 ZionMapEntry("map.terminal.persistence.title", description: "map.terminal.persistence.description",
                              tips: ["map.terminal.persistence.tip1"]),
+                ZionMapEntry("map.terminal.search.title", description: "map.terminal.search.description",
+                             shortcut: "\u{2318}F"),
             ]
 
         case .clipboard:
@@ -80,12 +97,15 @@ struct ZionMapContent {
                 ZionMapEntry("map.clipboard.drag.title", description: "map.clipboard.drag.description"),
                 ZionMapEntry("map.clipboard.images.title", description: "map.clipboard.images.description",
                              tips: ["map.clipboard.images.tip1"]),
+                ZionMapEntry("map.clipboard.smartactions.title", description: "map.clipboard.smartactions.description",
+                             tips: ["map.clipboard.smartactions.tip1"]),
             ]
 
         case .operations:
             return [
                 ZionMapEntry("map.ops.commit.title", description: "map.ops.commit.description",
                              tips: ["map.ops.commit.tip1"]),
+                ZionMapEntry("map.ops.init.title", description: "map.ops.init.description"),
                 ZionMapEntry("map.ops.hunk.title", description: "map.ops.hunk.description",
                              tips: ["map.ops.hunk.tip1"]),
                 ZionMapEntry("map.ops.branch.title", description: "map.ops.branch.description",
@@ -93,6 +113,7 @@ struct ZionMapContent {
                 ZionMapEntry("map.ops.rebase.title", description: "map.ops.rebase.description",
                              tips: ["map.ops.rebase.tip1"]),
                 ZionMapEntry("map.ops.stash.title", description: "map.ops.stash.description"),
+                ZionMapEntry("map.ops.stashbadge.title", description: "map.ops.stashbadge.description"),
                 ZionMapEntry("map.ops.recovery.title", description: "map.ops.recovery.description",
                              tips: ["map.ops.recovery.tip1"]),
                 ZionMapEntry("map.ops.tags.title", description: "map.ops.tags.description"),
@@ -112,13 +133,16 @@ struct ZionMapContent {
                 ZionMapEntry("map.ai.commit.title", description: "map.ai.commit.description",
                              tips: ["map.ai.commit.tip1"]),
                 ZionMapEntry("map.ai.diff.title", description: "map.ai.diff.description"),
+                ZionMapEntry("map.ai.summary.title", description: "map.ai.summary.description"),
                 ZionMapEntry("map.ai.pr.title", description: "map.ai.pr.description"),
+                ZionMapEntry("map.ai.stash.title", description: "map.ai.stash.description"),
                 ZionMapEntry("map.ai.review.title", description: "map.ai.review.description",
                              tips: ["map.ai.review.tip1"]),
                 ZionMapEntry("map.ai.conflict.title", description: "map.ai.conflict.description"),
                 ZionMapEntry("map.ai.changelog.title", description: "map.ai.changelog.description"),
                 ZionMapEntry("map.ai.search.title", description: "map.ai.search.description",
                              tips: ["map.ai.search.tip1"]),
+                ZionMapEntry("map.ai.branch.title", description: "map.ai.branch.description"),
                 ZionMapEntry("map.ai.blame.title", description: "map.ai.blame.description"),
                 ZionMapEntry("map.ai.split.title", description: "map.ai.split.description"),
                 ZionMapEntry("map.ai.style.title", description: "map.ai.style.description"),
@@ -143,6 +167,7 @@ struct ZionMapContent {
                 ZionMapEntry("map.diag.export.title", description: "map.diag.export.description",
                              tips: ["map.diag.export.tip1"]),
                 ZionMapEntry("map.diag.copy.title", description: "map.diag.copy.description"),
+                ZionMapEntry("map.diag.sanitize.title", description: "map.diag.sanitize.description"),
             ]
 
         case .conflicts:
