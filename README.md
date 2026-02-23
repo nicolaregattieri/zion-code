@@ -57,9 +57,9 @@ Zion doesn't make you choose.
 - Recovery Vault in Operations: list active/dangling safety snapshots, copy refs, and restore when needed.
 - Root-only recents: global list stays project-focused, with `WT n` badge per repo.
 
-### Pre-release Testing Mode (Beta Testers)
+### Launch Week Validation (Advanced Flows)
 
-Before tagging a release, run Zion as a release candidate and validate critical flows:
+Zion is ready for daily use. During launch week, we are asking users to help validate advanced Git workflows:
 
 1. Worktree create/switch/remove (including pending-change worktrees)
 2. Pending Changes actions (`Commit`, `Create Branch Here`, `Copy Changes`, `Stash`)
