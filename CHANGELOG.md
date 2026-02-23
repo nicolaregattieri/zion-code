@@ -4,6 +4,20 @@ All notable changes to Zion are documented here.
 
 ---
 
+## 1.2.2 — 2026-02-23
+
+### New
+- **Focus Mode Escape Affordance** — Added a compact in-screen exit control in Zion Code while in focus mode (`⌃⌘J`), reducing discoverability friction for new users.
+- **Launch Playbook 1.2.2** — Added an updated hype/positioning launch document for the current release narrative.
+
+### Changed
+- **Integrated-Only Positioning** — Removed external terminal/editor messaging from in-app documentation surfaces and aligned feature docs with the integrated editor + terminal workflow.
+- **Feature Reference Sync** — Updated `docs/FEATURES.md` for current editor themes and settings tab structure (General + Editor + AI + Notifications).
+- **Release Versioning** — App bundle bumped to `1.2.2` (build `7`) for Sparkle distribution.
+
+### Fixed
+- **Doc Drift** — Corrected stale settings/customization docs that still referenced external terminal/editor configuration.
+
 ## 1.2.1 — 2026-02-23
 
 ### New
