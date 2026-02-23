@@ -186,8 +186,9 @@ struct SourceCodeEditor: NSViewRepresentable {
 
         // Search highlighting
         let coord2 = context.coordinator
-        if searchQuery != coord2.lastSearchQuery {
+        if searchQuery != coord2.lastSearchQuery || currentText != coord2.lastSearchText {
             coord2.lastSearchQuery = searchQuery
+            coord2.lastSearchText = currentText
             coord2.updateSearchHighlights(in: textView, query: searchQuery, currentIndex: currentMatchIndex)
             onMatchCountChanged?(coord2.searchMatchRanges.count)
         } else if currentMatchIndex != coord2.lastCurrentMatchIndex {
@@ -229,6 +230,7 @@ struct SourceCodeEditor: NSViewRepresentable {
         var cachedColors: SourceCodeEditor.EditorColors?
         var cachedColorsTheme: EditorTheme?
         var lastSearchQuery: String = ""
+        var lastSearchText: String = ""
         var lastCurrentMatchIndex: Int = 0
         var searchMatchRanges: [NSRange] = []
         var lastGoToLine: Int = 0
@@ -553,6 +555,9 @@ struct SourceCodeEditor: NSViewRepresentable {
             if currentIndex < searchMatchRanges.count {
                 textView.scrollRangeToVisible(searchMatchRanges[currentIndex])
             }
+
+            // Keep navigation state in sync so previous/next does not accumulate "current" highlight.
+            lastCurrentMatchIndex = currentIndex
         }
     }
 
@@ -883,6 +888,33 @@ class ZionTextView: NSTextView {
     }
 
     // MARK: - Key Interception
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        let flags = event.modifierFlags.intersection([.command, .option, .shift, .control])
+        let key = event.charactersIgnoringModifiers?.lowercased()
+
+        if flags == .command, key == "f" {
+            onToggleFindUI?()
+            return true
+        }
+
+        if flags == .command, key == "g" {
+            onFindNextShortcut?()
+            return true
+        }
+
+        if flags == [.command, .shift], key == "g" {
+            onFindPreviousShortcut?()
+            return true
+        }
+
+        if flags == .command, key == "d" {
+            selectNextOccurrence()
+            return true
+        }
+
+        return super.performKeyEquivalent(with: event)
+    }
 
     override func keyDown(with event: NSEvent) {
         let flags = event.modifierFlags.intersection([.command, .option, .shift, .control])

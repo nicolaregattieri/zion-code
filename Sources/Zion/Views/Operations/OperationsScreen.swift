@@ -31,38 +31,43 @@ struct OperationsScreen: View {
                 commitCard
 
                 SectionLabel(title: L10n("Operacoes Principais"), icon: "arrow.triangle.turn.up.right.diamond")
-                HStack(alignment: .top, spacing: 20) {
-                    branchCard.frame(maxWidth: .infinity)
-                    historyCard.frame(maxWidth: .infinity)
+                adaptivePair {
+                    branchCard
+                } right: {
+                    historyCard
                 }
 
                 SectionLabel(title: L10n("Snapshots"), icon: "camera")
                 VStack(alignment: .leading, spacing: 12) {
-                    HStack(alignment: .top, spacing: 20) {
-                        stashCard.frame(maxWidth: .infinity)
-                        tagsCard.frame(maxWidth: .infinity)
+                    adaptivePair {
+                        stashCard
+                    } right: {
+                        tagsCard
                     }
                     recoveryVaultCard
                 }
 
                 SectionLabel(title: L10n("Infraestrutura"), icon: "network")
-                HStack(alignment: .top, spacing: 20) {
-                    remotesCard.frame(maxWidth: .infinity)
-                    worktreeCard.frame(maxWidth: .infinity)
+                adaptivePair {
+                    remotesCard
+                } right: {
+                    worktreeCard
                 }
 
                 if model.isAIConfigured {
                     SectionLabel(title: L10n("Inteligencia Artificial"), icon: "sparkles")
-                    HStack(alignment: .top, spacing: 20) {
-                        changelogCard.frame(maxWidth: .infinity)
-                        codeReviewCard.frame(maxWidth: .infinity)
+                    adaptivePair {
+                        changelogCard
+                    } right: {
+                        codeReviewCard
                     }
                 }
 
                 SectionLabel(title: L10n("Informacoes"), icon: "info.circle")
-                HStack(alignment: .top, spacing: 20) {
-                    SubmodulesCard(model: model).frame(maxWidth: .infinity)
-                    RepositoryStatsCard(model: model).frame(maxWidth: .infinity)
+                adaptivePair {
+                    SubmodulesCard(model: model)
+                } right: {
+                    RepositoryStatsCard(model: model)
                 }
 
                 SectionLabel(title: L10n("Manutencao"), icon: "wrench.and.screwdriver")
@@ -70,8 +75,31 @@ struct OperationsScreen: View {
             }
             .padding(24)
             .padding(.bottom, DesignSystem.Spacing.cardPadding)
-            .frame(maxWidth: DesignSystem.Layout.centeredContentMaxWidth, alignment: .leading)
+            .frame(maxWidth: DesignSystem.Layout.operationsContentMaxWidth, alignment: .leading)
             .frame(maxWidth: .infinity, alignment: .center)
+        }
+    }
+
+    @ViewBuilder
+    private func adaptivePair<Left: View, Right: View>(
+        spacing: CGFloat = DesignSystem.Spacing.sectionGap,
+        @ViewBuilder left: () -> Left,
+        @ViewBuilder right: () -> Right
+    ) -> some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .top, spacing: spacing) {
+                left()
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
+                right()
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
+            }
+
+            VStack(alignment: .leading, spacing: spacing) {
+                left()
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
+                right()
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
+            }
         }
     }
 
