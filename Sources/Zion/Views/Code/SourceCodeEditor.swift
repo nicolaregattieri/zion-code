@@ -83,14 +83,16 @@ struct SourceCodeEditor: NSViewRepresentable {
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         context.coordinator.parent = self
         guard let textView = nsView.documentView as? ZionTextView else { return }
+        let coord0 = context.coordinator
 
         // Sync text
+        var didSyncTextFromBinding = false
         if textView.string != text {
             textView.string = text
+            didSyncTextFromBinding = true
         }
 
         // Sync font (cached)
-        let coord0 = context.coordinator
         let font: NSFont
         if let cached = coord0.cachedFont, coord0.cachedFontSize == fontSize, coord0.cachedFontFamily == fontFamily {
             font = cached
@@ -108,17 +110,26 @@ struct SourceCodeEditor: NSViewRepresentable {
         // Handle Line Wrapping
         if isLineWrappingEnabled {
             let width = nsView.contentSize.width
-            nsView.hasHorizontalScroller = false
-            textView.isHorizontallyResizable = false
-            textView.textContainer?.widthTracksTextView = true
-            textView.maxSize = NSSize(width: width, height: CGFloat.greatestFiniteMagnitude)
-            textView.setFrameSize(NSSize(width: width, height: textView.frame.height))
+            let widthChanged = abs((coord0.lastWrappedWidth ?? -1) - width) > 0.5
+            if coord0.lastLineWrappingEnabled != true || widthChanged {
+                nsView.hasHorizontalScroller = false
+                textView.isHorizontallyResizable = false
+                textView.textContainer?.widthTracksTextView = true
+                textView.maxSize = NSSize(width: width, height: CGFloat.greatestFiniteMagnitude)
+                textView.setFrameSize(NSSize(width: width, height: textView.frame.height))
+            }
+            coord0.lastLineWrappingEnabled = true
+            coord0.lastWrappedWidth = width
         } else {
-            nsView.hasHorizontalScroller = true
-            textView.isHorizontallyResizable = true
-            textView.textContainer?.widthTracksTextView = false
-            textView.textContainer?.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
-            textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+            if coord0.lastLineWrappingEnabled != false {
+                nsView.hasHorizontalScroller = true
+                textView.isHorizontallyResizable = true
+                textView.textContainer?.widthTracksTextView = false
+                textView.textContainer?.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+                textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+            }
+            coord0.lastLineWrappingEnabled = false
+            coord0.lastWrappedWidth = nil
         }
 
         // Colors (cached)
@@ -135,6 +146,15 @@ struct SourceCodeEditor: NSViewRepresentable {
         nsView.drawsBackground = true
         nsView.backgroundColor = colors.background
         textView.insertionPointColor = colors.text
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineSpacing = CGFloat(lineSpacing)
+        textView.defaultParagraphStyle = paragraphStyle
+        textView.typingAttributes = [
+            .font: font,
+            .foregroundColor: colors.text,
+            .paragraphStyle: paragraphStyle,
+            .kern: CGFloat(letterSpacing)
+        ]
 
         // Editor settings
         textView.editorTabSize = tabSize
@@ -168,7 +188,10 @@ struct SourceCodeEditor: NSViewRepresentable {
         // Highlighting
         let coord = context.coordinator
         let currentText = textView.string
-        if currentText != coord.lastHighlightedText || theme != coord.lastHighlightedTheme || fileExtension != coord.lastHighlightedExtension {
+        let needsImmediateHighlight = didSyncTextFromBinding
+            || theme != coord.lastHighlightedTheme
+            || fileExtension != coord.lastHighlightedExtension
+        if needsImmediateHighlight {
             coord.applyHighlighting(to: textView, colors: colors)
             coord.lastHighlightedText = currentText
             coord.lastHighlightedTheme = theme
@@ -178,15 +201,13 @@ struct SourceCodeEditor: NSViewRepresentable {
         // Apply line spacing and letter spacing
         let range = NSRange(location: 0, length: textView.string.utf16.count)
         if range.length > 0 {
-            let paragraphStyle = NSMutableParagraphStyle()
-            paragraphStyle.lineSpacing = CGFloat(lineSpacing)
             textView.textStorage?.addAttribute(.paragraphStyle, value: paragraphStyle, range: range)
             textView.textStorage?.addAttribute(.kern, value: CGFloat(letterSpacing), range: range)
         }
 
         // Search highlighting
         let coord2 = context.coordinator
-        if searchQuery != coord2.lastSearchQuery || currentText != coord2.lastSearchText {
+        if searchQuery != coord2.lastSearchQuery || (!searchQuery.isEmpty && currentText != coord2.lastSearchText) {
             coord2.lastSearchQuery = searchQuery
             coord2.lastSearchText = currentText
             coord2.updateSearchHighlights(in: textView, query: searchQuery, currentIndex: currentMatchIndex)
@@ -232,6 +253,8 @@ struct SourceCodeEditor: NSViewRepresentable {
         var lastSearchText: String = ""
         var lastCurrentMatchIndex: Int = 0
         var searchMatchRanges: [NSRange] = []
+        var lastLineWrappingEnabled: Bool?
+        var lastWrappedWidth: CGFloat?
         var lastGoToLine: Int = 0
         var lastGoToLineRequestID: Int = 0
         private var highlightDebounceTask: DispatchWorkItem?
@@ -375,13 +398,17 @@ struct SourceCodeEditor: NSViewRepresentable {
             guard length > 0, let textStorage = textView.textStorage else { return }
             let range = NSRange(location: 0, length: length)
             let lang = detectLanguage(from: parent.fileExtension)
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.lineSpacing = CGFloat(parent.lineSpacing)
 
             textStorage.beginEditing()
 
             // 1. Reset all attributes
             textStorage.setAttributes([
                 .foregroundColor: colors.text,
-                .font: textView.font ?? NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
+                .font: textView.font ?? NSFont.monospacedSystemFont(ofSize: 13, weight: .regular),
+                .paragraphStyle: paragraphStyle,
+                .kern: CGFloat(parent.letterSpacing)
             ], range: range)
 
             // 2. Language highlighting
