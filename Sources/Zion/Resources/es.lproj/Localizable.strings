@@ -608,7 +608,7 @@
 
 // Zion Map — Section Subtitles
 "map.tree.subtitle" = "Visualiza el historial de Git con lanes coloreados, búsqueda y navegación de commits.";
-"map.code.subtitle" = "Editor de código con syntax highlighting, Quick Open, blame y múltiples pestañas.";
+"map.code.subtitle" = "Editor de código con syntax highlighting, Quick Open, blame, múltiples pestañas y vista previa Markdown.";
 "map.terminal.subtitle" = "Terminal real con PTY nativo, splits, pestañas y zoom independiente.";
 "map.clipboard.subtitle" = "Portapapeles que captura automáticamente y pega directo en el terminal.";
 "map.operations.subtitle" = "Commit, staging, branches, tags, stash, recovery vault, rebase interactivo y más.";
@@ -654,6 +654,9 @@
 "map.code.blame.tip1" = "Con IA configurada, haz clic en el blame para entender POR QUÉ se cambió el código.";
 "map.code.tabs.title" = "Múltiples Pestañas";
 "map.code.tabs.description" = "Abre varios archivos simultáneamente. Las pestañas con cambios no guardados muestran un indicador visual.";
+"map.code.markdownpreview.title" = "Vista previa Markdown";
+"map.code.markdownpreview.description" = "Para archivos .md, activa una vista renderizada en panel lado a lado sin salir del editor.";
+"map.code.markdownpreview.tip1" = "Usa el botón de vista previa en la toolbar para alternar entre edición pura y edición + vista previa.";
 "map.code.themes.title" = "Temas y Fuentes";
 "map.code.themes.description" = "Elige entre Dracula, GitHub Light, Catppuccin, One Dark Pro, Tokyo Night y City Lights. Fuente y tamaño configurables.";
 "map.code.themes.tip1" = "El tema también se aplica al terminal integrado.";
@@ -933,6 +936,7 @@
 "help.code.openineditor" = "Abrir archivos modificados en el editor desde cualquier pantalla";
 "help.code.contextmenu" = "Menú contextual completo en el navegador de archivos (nuevo, renombrar, copiar, pegar, eliminar)";
 "help.code.findreplace" = "Buscar y Reemplazar en el editor con resaltado de resultados (⌘F / ⌘H)";
+"help.code.markdownpreview" = "Vista previa Markdown lado a lado para archivos .md, con enlaces clicables e imágenes locales";
 "help.code.tabsize" = "Tamaño de tabulación y estilo de indentación configurables (2/4/8, espacios o tabs)";
 "help.code.columnruler" = "Regla de columna configurable (80/100/120) para referencia visual";
 "help.code.brackets" = "Resaltado de pares de paréntesis/corchetes/llaves al posicionar el cursor";
@@ -983,6 +987,11 @@
 "editor.replace.placeholder" = "Reemplazar...";
 "editor.replace.one" = "Reemplazar";
 "editor.replace.all" = "Reemplazar Todo";
+"editor.markdown.preview" = "Vista previa Markdown";
+"editor.markdown.showPreview" = "Mostrar vista previa de Markdown";
+"editor.markdown.hidePreview" = "Ocultar vista previa de Markdown";
+"editor.markdown.imageUnavailable" = "No se pudo cargar la imagen";
+"editor.markdown.empty" = "Nada para previsualizar todavía";
 
 // Per-Repo Config
 "editor.repoConfig.active" = "Ajustes del editor definidos por .zion/editor.json";

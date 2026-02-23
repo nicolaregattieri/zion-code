@@ -610,7 +610,7 @@
 
 // Zion Map — Section Subtitles
 "map.tree.subtitle" = "Visualize Git history with color-coded lanes, search, and commit navigation.";
-"map.code.subtitle" = "Code editor with syntax highlighting, Quick Open, blame, and multiple tabs.";
+"map.code.subtitle" = "Code editor with syntax highlighting, Quick Open, blame, multiple tabs, and Markdown preview.";
 "map.terminal.subtitle" = "Real terminal with native PTY, splits, tabs, and independent zoom.";
 "map.clipboard.subtitle" = "Clipboard that auto-captures and pastes directly into the terminal.";
 "map.operations.subtitle" = "Commit, staging, branches, tags, stash, recovery vault, interactive rebase, and more.";
@@ -656,6 +656,9 @@
 "map.code.blame.tip1" = "With AI configured, click blame to understand WHY the code was changed.";
 "map.code.tabs.title" = "Multiple Tabs";
 "map.code.tabs.description" = "Open multiple files simultaneously. Tabs with unsaved changes show a visual indicator.";
+"map.code.markdownpreview.title" = "Markdown Preview";
+"map.code.markdownpreview.description" = "For .md files, enable rendered preview in a side-by-side pane without leaving the editor.";
+"map.code.markdownpreview.tip1" = "Use the preview button in the toolbar to switch between plain edit and edit + preview.";
 "map.code.themes.title" = "Themes and Fonts";
 "map.code.themes.description" = "Choose from Dracula, GitHub Light, Catppuccin, One Dark Pro, Tokyo Night, and City Lights. Configurable font and size.";
 "map.code.themes.tip1" = "The theme also applies to the integrated terminal.";
@@ -935,6 +938,7 @@
 "help.code.openineditor" = "Open changed files in the editor from any screen";
 "help.code.contextmenu" = "Full context menu in the file browser (new, rename, copy, paste, delete)";
 "help.code.findreplace" = "Find and Replace in the editor with match highlighting (⌘F / ⌘H)";
+"help.code.markdownpreview" = "Side-by-side Markdown preview for .md files, with clickable links and local images";
 "help.code.tabsize" = "Configurable tab size and indent style (2/4/8, spaces or tabs)";
 "help.code.columnruler" = "Configurable column ruler (80/100/120) for visual reference";
 "help.code.brackets" = "Bracket pair highlighting when cursor is adjacent to ()[]{}";
@@ -985,6 +989,11 @@
 "editor.replace.placeholder" = "Replace...";
 "editor.replace.one" = "Replace";
 "editor.replace.all" = "Replace All";
+"editor.markdown.preview" = "Markdown Preview";
+"editor.markdown.showPreview" = "Show Markdown preview";
+"editor.markdown.hidePreview" = "Hide Markdown preview";
+"editor.markdown.imageUnavailable" = "Couldn't load image";
+"editor.markdown.empty" = "Nothing to preview yet";
 
 // Per-Repo Config
 "editor.repoConfig.active" = "Editor settings defined by .zion/editor.json";

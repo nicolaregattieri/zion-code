@@ -512,7 +512,7 @@
 
 // Zion Map — Section Subtitles
 "map.tree.subtitle" = "Visualize o histórico do Git com lanes coloridas, busca e navegação por commits.";
-"map.code.subtitle" = "Editor de código com syntax highlighting, Quick Open, blame e múltiplas abas.";
+"map.code.subtitle" = "Editor de código com syntax highlighting, Quick Open, blame, múltiplas abas e preview Markdown.";
 "map.terminal.subtitle" = "Terminal real com PTY nativo, splits, abas e zoom independente.";
 "map.clipboard.subtitle" = "Clipboard que captura automaticamente e cola direto no terminal.";
 "map.operations.subtitle" = "Commit, staging, branches, tags, stash, recovery vault, rebase interativo e mais.";
@@ -558,6 +558,9 @@
 "map.code.blame.tip1" = "Com IA configurada, clique no blame para entender POR QUE o código foi alterado.";
 "map.code.tabs.title" = "Múltiplas Abas";
 "map.code.tabs.description" = "Abra vários arquivos simultaneamente. Abas com mudanças não salvas exibem um indicador visual.";
+"map.code.markdownpreview.title" = "Preview Markdown";
+"map.code.markdownpreview.description" = "Para arquivos .md, ative preview renderizado em painel lado a lado sem sair do editor.";
+"map.code.markdownpreview.tip1" = "Use o botão de preview na toolbar para alternar entre edição pura e edição + visualização.";
 "map.code.themes.title" = "Temas e Fontes";
 "map.code.themes.description" = "Escolha entre Dracula, GitHub Light, Catppuccin, One Dark Pro, Tokyo Night e City Lights. Fonte e tamanho configuráveis.";
 "map.code.themes.tip1" = "O tema também se aplica ao terminal integrado.";
@@ -837,6 +840,7 @@
 "help.code.openineditor" = "Abrir arquivos alterados no editor a partir de qualquer tela";
 "help.code.contextmenu" = "Menu de contexto completo no navegador de arquivos (novo, renomear, copiar, colar, excluir)";
 "help.code.findreplace" = "Buscar e Substituir no editor com destaque de resultados (⌘F / ⌘H)";
+"help.code.markdownpreview" = "Preview Markdown lado a lado para arquivos .md, com links clicáveis e imagens locais";
 "help.code.tabsize" = "Tamanho de tab e estilo de indentação configuráveis (2/4/8, espaços ou tabs)";
 "help.code.columnruler" = "Régua de coluna configurável (80/100/120) para referência visual";
 "help.code.brackets" = "Destaque de pares de parênteses/colchetes/chaves ao posicionar o cursor";
@@ -887,6 +891,11 @@
 "editor.replace.placeholder" = "Substituir...";
 "editor.replace.one" = "Substituir";
 "editor.replace.all" = "Substituir Tudo";
+"editor.markdown.preview" = "Preview Markdown";
+"editor.markdown.showPreview" = "Mostrar preview de Markdown";
+"editor.markdown.hidePreview" = "Ocultar preview de Markdown";
+"editor.markdown.imageUnavailable" = "Não foi possível carregar a imagem";
+"editor.markdown.empty" = "Nada para visualizar ainda";
 
 // Per-Repo Config
 "editor.repoConfig.active" = "Configurações do editor definidas por .zion/editor.json";

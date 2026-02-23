@@ -51,6 +51,7 @@
 | File Browser Context Menu | Right-click: new file/folder, rename, duplicate, copy, cut, paste, delete, reveal in Finder | — |
 | File Watcher | Auto-reload on external changes | — |
 | Find/Replace | In-editor search with match highlighting and navigation | `⌘F` / `⌘H` |
+| Markdown Preview | Optional side-by-side rendered preview for `.md` files with links and local images | — |
 | Tab Size & Indent | Configurable 2/4/8 spaces or real tabs | Settings |
 | Column Ruler | Thin vertical line at configurable column (80/100/120) | Settings |
 | Bracket Pair Highlight | Highlights matching bracket when cursor is adjacent to `()[]{}` | Settings |

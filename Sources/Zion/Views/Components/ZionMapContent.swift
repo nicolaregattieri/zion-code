@@ -48,6 +48,8 @@ struct ZionMapContent {
                              tips: ["map.code.blame.tip1"]),
                 ZionMapEntry("map.code.tabs.title", description: "map.code.tabs.description",
                              shortcut: "\u{2318}S"),
+                ZionMapEntry("map.code.markdownpreview.title", description: "map.code.markdownpreview.description",
+                             tips: ["map.code.markdownpreview.tip1"]),
                 ZionMapEntry("map.code.themes.title", description: "map.code.themes.description",
                              tips: ["map.code.themes.tip1"]),
                 ZionMapEntry("map.code.watcher.title", description: "map.code.watcher.description"),
