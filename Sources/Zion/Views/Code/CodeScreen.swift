@@ -93,6 +93,7 @@ struct CodeScreen: View {
     @State private var replaceQuery: String = ""
     @State private var matchCount: Int = 0
     @State private var currentMatchIndex: Int = 0
+    @State private var findSearchFocusRequestID: Int = 0
     @FocusState private var isFileBrowserFocused: Bool
     @State private var selectedBrowserIndex: Int = -1
     @State private var showGoToLine: Bool = false
@@ -227,6 +228,17 @@ struct CodeScreen: View {
         .onChange(of: model.editorJumpToken) { _, _ in
             goToLineTarget = model.editorJumpLineTarget
             goToLineRequestID += 1
+        }
+        .onChange(of: searchQuery) { _, _ in
+            recomputeFindMatches()
+        }
+        .onChange(of: model.codeFileContent) { _, _ in
+            guard isSearchVisible, !searchQuery.isEmpty else { return }
+            recomputeFindMatches()
+        }
+        .onChange(of: isSearchVisible) { _, visible in
+            guard visible else { return }
+            recomputeFindMatches()
         }
     }
     
@@ -669,7 +681,13 @@ struct CodeScreen: View {
             showIndentGuides: model.effectiveShowIndentGuides,
             searchQuery: isSearchVisible ? searchQuery : "",
             currentMatchIndex: currentMatchIndex,
-            onMatchCountChanged: { count in matchCount = count },
+            onMatchCountChanged: { count in
+                matchCount = count
+                if count == 0, isSearchVisible, !searchQuery.isEmpty {
+                    // Keep UI count/navigation in sync even if editor callback lags behind rendered highlights.
+                    recomputeFindMatches()
+                }
+            },
             goToLine: goToLineTarget,
             goToLineRequestID: goToLineRequestID,
             currentFilePath: model.selectedCodeFile?.url.path,
@@ -734,20 +752,28 @@ struct CodeScreen: View {
                     Image(systemName: isReplaceVisible ? "chevron.down" : "chevron.right")
                         .font(.system(size: 9, weight: .bold))
                         .foregroundStyle(.secondary)
+                        .frame(width: 28, height: 24)
+                        .background(DesignSystem.Colors.glassSubtle)
+                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
                 }
                 .buttonStyle(.plain)
-                .frame(width: 16, height: 16)
+                .frame(width: 32, height: 26)
                 .contentShape(Rectangle())
+                .help(L10n("editor.replace.placeholder"))
 
                 // Search field
                 HStack(spacing: 4) {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)
-                    TextField(L10n("editor.search.placeholder"), text: $searchQuery)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 12))
-                        .onSubmit { navigateToNextMatch() }
+                    FindSearchTextField(
+                        text: $searchQuery,
+                        placeholder: L10n("editor.search.placeholder"),
+                        focusRequestID: findSearchFocusRequestID,
+                        onEnter: { navigateToNextMatch() },
+                        onShiftEnter: { navigateToPreviousMatch() }
+                    )
+                    .frame(height: 18)
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 5)
@@ -797,7 +823,7 @@ struct CodeScreen: View {
 
             if isReplaceVisible {
                 HStack(spacing: 8) {
-                    Spacer().frame(width: 16)
+                    Spacer().frame(width: 32)
 
                     HStack(spacing: 4) {
                         Image(systemName: "arrow.2.squarepath")
@@ -907,6 +933,8 @@ struct CodeScreen: View {
                     searchQuery = seededFindQuery
                     currentMatchIndex = 0
                 }
+                recomputeFindMatches()
+                findSearchFocusRequestID += 1
             } else {
                 closeSearch()
             }
@@ -937,6 +965,28 @@ struct CodeScreen: View {
     private func navigateToPreviousMatch() {
         guard matchCount > 0 else { return }
         currentMatchIndex = (currentMatchIndex - 1 + matchCount) % matchCount
+    }
+
+    private func recomputeFindMatches() {
+        guard isSearchVisible, !searchQuery.isEmpty else {
+            matchCount = 0
+            currentMatchIndex = 0
+            return
+        }
+        let escaped = NSRegularExpression.escapedPattern(for: searchQuery)
+        guard let regex = try? NSRegularExpression(pattern: escaped, options: .caseInsensitive) else {
+            matchCount = 0
+            currentMatchIndex = 0
+            return
+        }
+        let nsString = model.codeFileContent as NSString
+        let matches = regex.matches(in: model.codeFileContent, options: [], range: NSRange(location: 0, length: nsString.length))
+        matchCount = matches.count
+        if matchCount == 0 {
+            currentMatchIndex = 0
+        } else if currentMatchIndex >= matchCount {
+            currentMatchIndex = matchCount - 1
+        }
     }
 
     private func replaceCurrent() {
@@ -1578,6 +1628,98 @@ struct TerminalPaneView: View {
                     }
                 }
             }
+        }
+    }
+}
+
+private struct FindSearchTextField: NSViewRepresentable {
+    @Binding var text: String
+    let placeholder: String
+    let focusRequestID: Int
+    let onEnter: () -> Void
+    let onShiftEnter: () -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    func makeNSView(context: Context) -> KeyAwareTextField {
+        let field = KeyAwareTextField(frame: .zero)
+        field.isBordered = false
+        field.drawsBackground = false
+        field.focusRingType = .none
+        field.font = .systemFont(ofSize: 12)
+        field.lineBreakMode = .byClipping
+        field.maximumNumberOfLines = 1
+        field.usesSingleLineMode = true
+        field.delegate = context.coordinator
+        return field
+    }
+
+    func updateNSView(_ nsView: KeyAwareTextField, context: Context) {
+        if nsView.stringValue != text {
+            nsView.stringValue = text
+        }
+        nsView.placeholderString = placeholder
+
+        if focusRequestID != context.coordinator.lastFocusRequestID {
+            context.coordinator.lastFocusRequestID = focusRequestID
+            DispatchQueue.main.async {
+                nsView.window?.makeFirstResponder(nsView)
+            }
+        }
+    }
+
+    @MainActor
+    final class Coordinator: NSObject, NSTextFieldDelegate {
+        var parent: FindSearchTextField
+        var lastFocusRequestID: Int = 0
+
+        init(_ parent: FindSearchTextField) {
+            self.parent = parent
+        }
+
+        func controlTextDidChange(_ notification: Notification) {
+            guard let field = notification.object as? NSTextField else { return }
+            if parent.text != field.stringValue {
+                parent.text = field.stringValue
+            }
+        }
+
+        func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+            if commandSelector == #selector(NSResponder.insertNewline(_:)) || commandSelector == #selector(NSResponder.insertLineBreak(_:)) {
+                let flags = NSApp.currentEvent?.modifierFlags.intersection([.command, .option, .shift, .control]) ?? []
+                if flags.contains(.shift) {
+                    parent.onShiftEnter()
+                } else {
+                    parent.onEnter()
+                }
+                return true
+            }
+
+            if commandSelector == #selector(NSResponder.moveUp(_:)) {
+                parent.onShiftEnter()
+                return true
+            }
+
+            if commandSelector == #selector(NSResponder.moveDown(_:)) {
+                parent.onEnter()
+                return true
+            }
+
+            return false
+        }
+    }
+
+    final class KeyAwareTextField: NSTextField {
+        override func textDidEndEditing(_ notification: Notification) {
+            // Keep focus in the find box on Enter so repeated next/prev navigation stays fluid.
+            if let window {
+                DispatchQueue.main.async {
+                    window.makeFirstResponder(self)
+                }
+            }
+            super.textDidEndEditing(notification)
         }
     }
 }

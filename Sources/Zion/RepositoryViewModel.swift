@@ -492,7 +492,7 @@ final class RepositoryViewModel {
     @ObservationIgnored private var autoRefreshTask: Task<Void, Never>?
     @ObservationIgnored private var deferredRepositoryLoadTask: Task<Void, Never>?
     @ObservationIgnored private var repositorySwitchToken = UUID()
-    @ObservationIgnored private var isSwitchingRepository = false
+    private var isSwitchingRepository = false
     @ObservationIgnored private var cachedWorktreeStatusByPath: [String: (uncommittedCount: Int, hasConflicts: Bool)] = [:]
     @ObservationIgnored private var cachedIgnoredPaths: Set<String>?
     var isRepositorySwitching: Bool { isSwitchingRepository }
@@ -808,7 +808,11 @@ final class RepositoryViewModel {
         currentFileDiffHunks = []
         selectedHunkLines = []
 
-        refreshRepository(setBusy: true, options: .critical)
+        refreshRepository(
+            setBusy: true,
+            options: .critical,
+            clearRepositorySwitchStateOnBusyCompletion: false
+        )
         refreshFileTree()
         startFileWatcher(for: url)
         scheduleDeferredRepositoryLoads(for: url, switchToken: switchToken)
@@ -3500,6 +3504,7 @@ final class RepositoryViewModel {
     private func refreshRepository(
         setBusy: Bool,
         options: RepositoryLoadOptions = .full,
+        clearRepositorySwitchStateOnBusyCompletion: Bool = true,
         onFinish: (() -> Void)? = nil
     ) {
         guard let repositoryURL else {
@@ -3584,7 +3589,7 @@ final class RepositoryViewModel {
                 statusMessage = L10n("Repositorio carregado: %@ · %@ commits", repositoryURL.lastPathComponent, "\(payload.commits.count)")
                 if setBusy {
                     isBusy = false
-                    if isSwitchingRepository {
+                    if clearRepositorySwitchStateOnBusyCompletion, isSwitchingRepository {
                         isSwitchingRepository = false
                     }
                 }
@@ -3595,7 +3600,7 @@ final class RepositoryViewModel {
                 guard refreshRequestID == requestID else { return }
                 if setBusy {
                     isBusy = false
-                    if isSwitchingRepository {
+                    if clearRepositorySwitchStateOnBusyCompletion, isSwitchingRepository {
                         isSwitchingRepository = false
                     }
                 }
@@ -3606,7 +3611,7 @@ final class RepositoryViewModel {
                 guard refreshRequestID == requestID else { return }
                 if setBusy {
                     isBusy = false
-                    if isSwitchingRepository {
+                    if clearRepositorySwitchStateOnBusyCompletion, isSwitchingRepository {
                         isSwitchingRepository = false
                     }
                 }
