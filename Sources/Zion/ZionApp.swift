@@ -6,6 +6,7 @@ extension Notification.Name {
     static let showKeyboardShortcuts = Notification.Name("showKeyboardShortcuts")
     static let showHelp = Notification.Name("showHelp")
     static let showOnboarding = Notification.Name("showOnboarding")
+    static let toggleZenMode = Notification.Name("toggleZenMode")
 }
 
 @main
@@ -21,6 +22,13 @@ struct ZionApp: App {
         .windowToolbarStyle(.unified)
         .defaultSize(width: 1360, height: 840)
         .commands {
+            CommandMenu(L10n("focus.menu")) {
+                Button(L10n("focus.toggle")) {
+                    NotificationCenter.default.post(name: .toggleZenMode, object: nil)
+                }
+                .keyboardShortcut("j", modifiers: [.command, .control])
+            }
+
             CommandGroup(replacing: .help) {
                 Button(L10n("Conheca o Zion")) {
                     NotificationCenter.default.post(name: .showHelp, object: nil)

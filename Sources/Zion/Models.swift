@@ -867,22 +867,6 @@ enum CommitMessageStyle: String, CaseIterable, Identifiable {
     }
 }
 
-enum ExternalTerminal: String, CaseIterable, Identifiable {
-    case terminal = "com.apple.Terminal"
-    case iterm = "com.googlecode.iterm2"
-    case warp = "dev.warp.Warp-Stable"
-    case custom = "custom"
-    var id: String { rawValue }
-    var label: String {
-        switch self {
-        case .terminal: return "Terminal.app"
-        case .iterm: return "iTerm2"
-        case .warp: return "Warp"
-        case .custom: return L10n("Selecionar do Disco...")
-        }
-    }
-}
-
 // MARK: - Phase 2: Diff Explanation Models
 
 enum DiffExplanationDepth: String, CaseIterable, Identifiable {
