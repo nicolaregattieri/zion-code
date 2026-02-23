@@ -2120,17 +2120,48 @@ final class RepositoryViewModel {
             return
         }
 
+        let cleanedBranch = resolvedBranch.clean
+        let branchDecision: (branch: String, reuseExisting: Bool)
+        if localBranchExists(named: cleanedBranch) {
+            let alert = NSAlert()
+            alert.alertStyle = .informational
+            alert.messageText = L10n("worktree.smart.branchExists.title")
+            alert.informativeText = L10n("worktree.smart.branchExists.message", cleanedBranch)
+            alert.addButton(withTitle: L10n("worktree.smart.branchExists.reuse"))
+            alert.addButton(withTitle: L10n("worktree.smart.branchExists.createSuffix"))
+            alert.addButton(withTitle: L10n("Cancelar"))
+
+            let response = alert.runModal()
+            if response == .alertFirstButtonReturn {
+                branchDecision = (cleanedBranch, true)
+            } else if response == .alertSecondButtonReturn {
+                branchDecision = (uniqueBranchNameForWorktree(from: cleanedBranch), false)
+            } else {
+                statusMessage = L10n("worktree.smart.branchExists.cancelled")
+                return
+            }
+        } else {
+            branchDecision = (cleanedBranch, false)
+        }
+
         actionTask?.cancel()
         isBusy = true
         actionTask = Task {
             do {
+                let addArgs: [String]
+                if branchDecision.reuseExisting {
+                    addArgs = ["worktree", "add", resolvedPath, branchDecision.branch]
+                } else {
+                    addArgs = ["worktree", "add", "-b", branchDecision.branch, resolvedPath]
+                }
+
                 let _ = try await worker.runAction(
-                    args: ["worktree", "add", "-b", resolvedBranch.clean, resolvedPath],
+                    args: addArgs,
                     in: repositoryURL
                 )
                 try Task.checkCancellation()
                 clearError()
-                statusMessage = L10n("worktree.smart.created", resolvedBranch.clean)
+                statusMessage = L10n("worktree.smart.created", branchDecision.branch)
 
                 worktreeNameInput = ""
                 worktreePathInput = ""
@@ -2140,7 +2171,7 @@ final class RepositoryViewModel {
                 let created = WorktreeItem(
                     path: resolvedPath,
                     head: "",
-                    branch: resolvedBranch.clean,
+                    branch: branchDecision.branch,
                     isMainWorktree: false,
                     isDetached: false,
                     isLocked: false,
@@ -2157,6 +2188,18 @@ final class RepositoryViewModel {
                 handleError(error)
             }
         }
+    }
+
+    private func uniqueBranchNameForWorktree(from baseBranch: String) -> String {
+        let base = baseBranch.clean
+        guard !base.isEmpty else { return baseBranch }
+        var candidate = base
+        var suffix = 2
+        while localBranchExists(named: candidate) {
+            candidate = "\(base)-\(suffix)"
+            suffix += 1
+        }
+        return candidate
     }
 
     func removeWorktree(_ path: String, force: Bool = false) {

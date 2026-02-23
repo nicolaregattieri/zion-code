@@ -113,16 +113,29 @@ struct OperationsScreen: View {
                 }
 
                 HStack(alignment: .bottom, spacing: 8) {
-                    ScrollView(.vertical) {
-                        TextField(L10n("Mensagem do commit..."), text: $model.commitMessageInput, axis: .vertical)
-                            .textFieldStyle(.plain)
-                            .lineLimit(3...)
+                    ZStack(alignment: .topLeading) {
+                        TextEditor(text: $model.commitMessageInput)
+                            .font(DesignSystem.Typography.monoBody)
+                            .lineSpacing(4)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 4)
+                            .background(DesignSystem.Colors.glassInset)
+                            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous)
+                                    .stroke(DesignSystem.Colors.glassStroke, lineWidth: 1)
+                            )
+                            .frame(minHeight: 130, maxHeight: 170)
+
+                        if model.commitMessageInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            Text(L10n("Mensagem do commit..."))
+                                .font(DesignSystem.Typography.monoBody)
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 10)
+                                .allowsHitTesting(false)
+                        }
                     }
-                    .frame(maxHeight: 120)
-                    .padding(12)
-                    .background(DesignSystem.Colors.glassInset)
-                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius))
-                    .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius).stroke(DesignSystem.Colors.glassStroke, lineWidth: 1))
 
                     Button {
                         model.suggestCommitMessage()
