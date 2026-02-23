@@ -258,6 +258,12 @@
 | Branch Search | Filter branches by name in the sidebar branch explorer |
 | Commit Stats | Insertions (+N) and deletions (-M) shown per commit in the graph |
 | AI Pending Changes Summary | One-click AI summary of what you've been working on, with "Use as commit message" |
+
+## Known Edge Case (Revisit)
+
+| Topic | Current Behavior | Follow-up |
+|-------|------------------|-----------|
+| Stash transfer on same file/line across worktrees | Git may block `stash apply` with local-overwrite errors and no unmerged (`-U`) files. In this path, Zion shows support/recovery flow instead of opening conflict resolver. | Add deterministic same-file transfer strategy so users can resolve this case with less manual stash juggling. |
 | Smart Clipboard Actions | Context-aware actions: git hashes → Show in Graph, branch names → Checkout, file paths → Open in Editor |
 | Author Avatars | Gravatar identicons shown next to author names in the commit graph |
 

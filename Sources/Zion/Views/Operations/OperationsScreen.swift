@@ -37,9 +37,12 @@ struct OperationsScreen: View {
                 }
 
                 SectionLabel(title: L10n("Snapshots"), icon: "camera")
-                HStack(alignment: .top, spacing: 20) {
-                    stashCard.frame(maxWidth: .infinity)
-                    tagsCard.frame(maxWidth: .infinity)
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(alignment: .top, spacing: 20) {
+                        stashCard.frame(maxWidth: .infinity)
+                        tagsCard.frame(maxWidth: .infinity)
+                    }
+                    recoveryVaultCard
                 }
 
                 SectionLabel(title: L10n("Infraestrutura"), icon: "network")
@@ -434,6 +437,97 @@ struct OperationsScreen: View {
                 TextField("v1.0.0", text: $model.tagInput).textFieldStyle(.roundedBorder)
                 Button(L10n("Criar")) { performGitAction(L10n("Criar tag"), L10n("Criar tag no commit atual?"), false) { model.createTag() } }.buttonStyle(.borderedProminent).tint(DesignSystem.Colors.actionPrimary)
                 Button(L10n("Remover")) { performGitAction(L10n("Remover tag"), L10n("Deseja remover a tag informada?"), true) { model.deleteTag() } }.buttonStyle(.bordered).tint(DesignSystem.Colors.destructive)
+            }
+        }
+    }
+
+    private var recoveryVaultCard: some View {
+        GlassCard(spacing: 10, expanding: true) {
+            CardHeader(L10n("recovery.title"), icon: "lifepreserver", subtitle: L10n("recovery.subtitle")) {
+                Button {
+                    model.refreshRecoverySnapshots(includeDangling: true)
+                } label: {
+                    if model.isRecoverySnapshotsLoading {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 10, weight: .bold))
+                    }
+                }
+                .buttonStyle(.plain)
+                .help(L10n("recovery.refresh"))
+            }
+
+            if !model.recoverySnapshotsStatus.clean.isEmpty {
+                Text(model.recoverySnapshotsStatus)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            if model.recoverySnapshots.isEmpty && !model.isRecoverySnapshotsLoading {
+                Text(L10n("recovery.empty"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 8) {
+                        ForEach(model.recoverySnapshots.prefix(16)) { snapshot in
+                            HStack(spacing: 10) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    HStack(spacing: 6) {
+                                        Text(snapshot.shortHash)
+                                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                            .foregroundStyle(.primary)
+                                        Text(L10n(snapshot.source.l10nKey))
+                                            .font(.system(size: 9, weight: .semibold))
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(DesignSystem.Colors.glassInset)
+                                            .clipShape(Capsule())
+                                    }
+                                    Text(snapshot.subject)
+                                        .font(.system(size: 10))
+                                        .lineLimit(1)
+                                    Text(snapshot.date.formatted(date: .abbreviated, time: .shortened))
+                                        .font(.system(size: 9))
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                HStack(spacing: 8) {
+                                    Button(L10n("recovery.copy")) {
+                                        model.copyRecoverySnapshotReference(snapshot)
+                                    }
+                                    .buttonStyle(.bordered)
+                                    .controlSize(.small)
+
+                                    Button(L10n("recovery.restore")) {
+                                        performGitAction(
+                                            L10n("recovery.restore"),
+                                            L10n("recovery.restore.confirm", snapshot.shortHash),
+                                            true
+                                        ) {
+                                            model.restoreRecoverySnapshot(snapshot)
+                                        }
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .controlSize(.small)
+                                    .tint(DesignSystem.Colors.actionPrimary)
+                                }
+                            }
+                            .padding(8)
+                            .background(DesignSystem.Colors.glassMinimal)
+                            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
+                        }
+                    }
+                    .padding(.vertical, 2)
+                }
+                .frame(maxHeight: 220)
+            }
+        }
+        .onAppear {
+            if model.recoverySnapshots.isEmpty {
+                model.refreshRecoverySnapshots(includeDangling: true)
             }
         }
     }
