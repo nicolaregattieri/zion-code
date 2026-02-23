@@ -1425,3 +1425,4 @@
 
 "map.diag.sanitize.title" = "Data Sanitization";
 "map.diag.sanitize.description" = "Logs automatically remove credentials and sensitive values before export or copy.";
+"status.nav.settings" = "Settings";

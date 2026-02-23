@@ -124,6 +124,7 @@ struct TerminalTabView: NSViewRepresentable {
         var lastAppliedFontSize: Double?
         var lastAppliedFontFamily: String?
         private var pendingResizeTask: Task<Void, Never>?
+        private var shiftEnterMonitor: Any?
 
         init(_ parent: TerminalTabView) {
             self.parent = parent
@@ -133,6 +134,7 @@ struct TerminalTabView: NSViewRepresentable {
 
         func startProcess(view: SwiftTerm.TerminalView) {
             self.terminalView = view
+            installShiftEnterMonitor()
             let url = parent.session.workingDirectory
             let sessionID = parent.session.id
 
@@ -178,6 +180,7 @@ struct TerminalTabView: NSViewRepresentable {
         /// The coordinator (and its LocalProcess) survived via session._processBridge.
         func reattach(view: SwiftTerm.TerminalView) {
             self.terminalView = view
+            installShiftEnterMonitor()
 
             // Re-cache for future restructures (split → unsplit → split again)
             parent.session._cachedView = view
@@ -209,8 +212,44 @@ struct TerminalTabView: NSViewRepresentable {
                 kill(pid, SIGTERM)
             }
             process = nil
+            removeShiftEnterMonitor()
             parent.session._shellPid = 0
             parent.model?.unregisterTerminalSendCallback(sessionID: parent.session.id)
+        }
+
+        func insertSoftLineBreak() {
+            let continuation = "\\\n"
+            process?.send(data: ArraySlice(continuation.utf8))
+        }
+
+        private func installShiftEnterMonitor() {
+            guard shiftEnterMonitor == nil else { return }
+            shiftEnterMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+                guard let self else { return event }
+                guard self.isShiftReturn(event), self.isTerminalFocused else { return event }
+                self.insertSoftLineBreak()
+                return nil
+            }
+        }
+
+        private func removeShiftEnterMonitor() {
+            if let monitor = shiftEnterMonitor {
+                NSEvent.removeMonitor(monitor)
+                shiftEnterMonitor = nil
+            }
+        }
+
+        private func isShiftReturn(_ event: NSEvent) -> Bool {
+            let flags = event.modifierFlags.intersection([.command, .option, .control, .shift])
+            let isReturn = event.keyCode == 36 || event.keyCode == 76
+            return isReturn && flags == .shift
+        }
+
+        private var isTerminalFocused: Bool {
+            guard let terminalView,
+                  let window = terminalView.window,
+                  let firstResponder = window.firstResponder as? NSView else { return false }
+            return firstResponder === terminalView || firstResponder.isDescendant(of: terminalView)
         }
 
         // MARK: - TerminalViewDelegate

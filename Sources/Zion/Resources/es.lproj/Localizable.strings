@@ -1441,3 +1441,4 @@
 
 "map.diag.sanitize.title" = "Sanitización de Datos";
 "map.diag.sanitize.description" = "Los logs eliminan automáticamente credenciales y datos sensibles antes de exportar o copiar.";
+"status.nav.settings" = "Configuración";

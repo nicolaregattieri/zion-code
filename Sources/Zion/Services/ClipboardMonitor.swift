@@ -10,6 +10,7 @@ struct ClipboardItem: Identifiable, Sendable {
     let category: Category
     let isImage: Bool
     let imageSize: CGSize?
+    var imagePath: String? { isImage && !text.isEmpty ? text : nil }
 
     enum Category: Sendable {
         case command, path, hash, url, image, text
@@ -109,7 +110,7 @@ final class ClipboardMonitor {
     @ObservationIgnored private var lastPurge: Date = .distantPast
 
     private let maxItems = 20
-    private static let maxFileAge: TimeInterval = 3600 // 1 hour
+    private static let maxFileAge: TimeInterval = 60 * 60 // 1 hour
 
     private static let imageDir: URL = {
         let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
@@ -118,6 +119,14 @@ final class ClipboardMonitor {
 
     var isCollapsed: Bool = UserDefaults.standard.bool(forKey: "clipboard.collapsed") {
         didSet { UserDefaults.standard.set(isCollapsed, forKey: "clipboard.collapsed") }
+    }
+
+    static func purgeStaleFilesOnLaunch() {
+        purgeOldTempFiles(in: imageDir, maxAge: maxFileAge)
+    }
+
+    static func cleanupAllTempFiles() {
+        try? FileManager.default.removeItem(at: imageDir)
     }
 
     func start() {
@@ -191,8 +200,9 @@ final class ClipboardMonitor {
             if let first = items.first, first.isImage, first.imageSize == CGSize(width: w, height: h) {
                 return
             }
+            _ = imageType
             // Save image data to temp file so we have a draggable file path
-            let savedPath = saveImageToTemp(imageData, type: imageType)
+            let savedPath = saveImageToTemp(imageData, width: w, height: h)
             let item = ClipboardItem(imageWidth: w, imageHeight: h, filePath: savedPath)
             addItem(item)
             return
@@ -209,13 +219,11 @@ final class ClipboardMonitor {
         addItem(item)
     }
 
-    private func saveImageToTemp(_ data: Data, type: NSPasteboard.PasteboardType) -> String {
+    private func saveImageToTemp(_ data: Data, width: Int, height: Int) -> String {
         let dir = Self.imageDir
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
-        let name = formatter.string(from: Date())
-        let fileURL = dir.appendingPathComponent("\(name).jpg")
+        let name = friendlyImageFileName(width: width, height: height)
+        let fileURL = uniqueImageURL(in: dir, preferredName: name)
         if let image = NSImage(data: data),
            let tiffData = image.tiffRepresentation,
            let bitmap = NSBitmapImageRep(data: tiffData),
@@ -227,6 +235,31 @@ final class ClipboardMonitor {
         return fileURL.path
     }
 
+    private func friendlyImageFileName(width: Int, height: Int, now: Date = Date()) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyyMMdd_HHmmss"
+        let timestamp = formatter.string(from: now)
+        return "IMG_\(timestamp)_\(width)x\(height).jpg"
+    }
+
+    private func uniqueImageURL(in dir: URL, preferredName: String) -> URL {
+        let fm = FileManager.default
+        var candidate = dir.appendingPathComponent(preferredName)
+        if !fm.fileExists(atPath: candidate.path) {
+            return candidate
+        }
+        let base = (preferredName as NSString).deletingPathExtension
+        let ext = (preferredName as NSString).pathExtension
+        for index in 1...1000 {
+            let nextName = "\(base)-\(index).\(ext)"
+            candidate = dir.appendingPathComponent(nextName)
+            if !fm.fileExists(atPath: candidate.path) {
+                return candidate
+            }
+        }
+        return dir.appendingPathComponent(UUID().uuidString + ".jpg")
+    }
+
     /// Delete temp files belonging to specific clipboard items
     private func deleteTempFiles(for clipboardItems: [ClipboardItem]) {
         let fm = FileManager.default
@@ -236,15 +269,22 @@ final class ClipboardMonitor {
         }
     }
 
-    /// Delete temp files older than maxFileAge (1 hour)
+    /// Delete temp files older than maxFileAge (1h)
     private func purgeOldTempFiles() {
+        Self.purgeOldTempFiles(in: Self.imageDir, maxAge: Self.maxFileAge)
+    }
+
+    private static func purgeOldTempFiles(in dir: URL, maxAge: TimeInterval) {
         let fm = FileManager.default
-        let dir = Self.imageDir
-        guard let files = try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.creationDateKey]) else { return }
-        let cutoff = Date().addingTimeInterval(-Self.maxFileAge)
+        guard let files = try? fm.contentsOfDirectory(
+            at: dir,
+            includingPropertiesForKeys: [.creationDateKey, .contentModificationDateKey]
+        ) else { return }
+        let cutoff = Date().addingTimeInterval(-maxAge)
         for file in files {
-            if let created = (try? file.resourceValues(forKeys: [.creationDateKey]))?.creationDate,
-               created < cutoff {
+            let values = try? file.resourceValues(forKeys: [.creationDateKey, .contentModificationDateKey])
+            let date = values?.creationDate ?? values?.contentModificationDate
+            if let date, date < cutoff {
                 try? fm.removeItem(at: file)
             }
         }

@@ -83,8 +83,13 @@ struct ZionApp: App {
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         registerFonts()
+        ClipboardMonitor.purgeStaleFilesOnLaunch()
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        ClipboardMonitor.cleanupAllTempFiles()
     }
 
     private func registerFonts() {
