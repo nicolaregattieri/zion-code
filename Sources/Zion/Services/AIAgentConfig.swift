@@ -77,6 +77,9 @@ struct AIAgentConfigManager {
     private static let aiderEndMarker = "# ZION:NTFY:END"
 
     static func injectNtfyBlock(agents: [AIAgent], topic: String, serverURL: String, repoPath: URL) {
+        guard let endpoint = NtfyClient.buildNtfyURL(serverURL: serverURL, topic: topic)?.absoluteString else {
+            return
+        }
         var handledPaths = Set<String>()
 
         for agent in agents {
@@ -88,8 +91,8 @@ struct AIAgentConfigManager {
             handledPaths.insert(fullPath)
 
             let block = agent.isYAML
-                ? buildYAMLBlock(topic: topic, serverURL: serverURL)
-                : buildMarkdownBlock(topic: topic, serverURL: serverURL)
+                ? buildYAMLBlock(endpoint: endpoint)
+                : buildMarkdownBlock(endpoint: endpoint)
 
             injectBlock(at: filePath, block: block, isYAML: agent.isYAML)
         }
@@ -116,14 +119,14 @@ struct AIAgentConfigManager {
 
     // MARK: - Private
 
-    private static func buildMarkdownBlock(topic: String, serverURL: String) -> String {
-        let server = serverURL.hasSuffix("/") ? String(serverURL.dropLast()) : serverURL
+    private static func buildMarkdownBlock(endpoint: String) -> String {
+        let safeEndpoint = shellQuote(endpoint)
         return """
         \(startMarker)
         ## Push Notifications
         When you complete a significant task, notify the user:
         ```
-        curl -s -H "Title: Done" -H "Priority: 3" -H "Tags: white_check_mark" -d "[Brief description of what was completed]" \(server)/\(topic)
+        curl -s -H "Title: Done" -H "Priority: 3" -H "Tags: white_check_mark" -d "[Brief description of what was completed]" \(safeEndpoint)
         ```
         Send for: plan completion, implementation done, test results, migrations, errors.
         Do NOT send for: file reads, intermediate steps, questions.
@@ -131,16 +134,20 @@ struct AIAgentConfigManager {
         """
     }
 
-    private static func buildYAMLBlock(topic: String, serverURL: String) -> String {
-        let server = serverURL.hasSuffix("/") ? String(serverURL.dropLast()) : serverURL
+    private static func buildYAMLBlock(endpoint: String) -> String {
+        let safeEndpoint = shellQuote(endpoint)
         return """
         \(aiderStartMarker)
         # When you complete a significant task, notify the user:
-        # curl -s -H "Title: Done" -H "Priority: 3" -H "Tags: white_check_mark" -d "[Brief description]" \(server)/\(topic)
+        # curl -s -H "Title: Done" -H "Priority: 3" -H "Tags: white_check_mark" -d "[Brief description]" \(safeEndpoint)
         # Send for: plan completion, implementation done, test results, migrations, errors.
         # Do NOT send for: file reads, intermediate steps, questions.
         \(aiderEndMarker)
         """
+    }
+
+    private static func shellQuote(_ value: String) -> String {
+        "'" + value.replacingOccurrences(of: "'", with: "'\"'\"'") + "'"
     }
 
     private static func injectBlock(at fileURL: URL, block: String, isYAML: Bool) {
