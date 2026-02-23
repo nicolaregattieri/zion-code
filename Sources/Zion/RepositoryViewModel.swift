@@ -2129,6 +2129,7 @@ final class RepositoryViewModel {
                     path: resolvedPath,
                     head: "",
                     branch: resolvedBranch.clean,
+                    isMainWorktree: false,
                     isDetached: false,
                     isLocked: false,
                     lockReason: "",

@@ -1300,6 +1300,8 @@
 "worktree.smart.missing" = "Fill in a name (or path + branch in advanced mode).";
 "worktree.smart.created" = "Worktree created: %@";
 "worktree.smart.empty" = "No parallel worktrees yet. Create one above.";
+"worktree.main.badge" = "ROOT";
+"worktree.main.hint" = "Main worktree (repository root)";
 "worktree.prefix.feat" = "feat";
 "worktree.prefix.fix" = "fix";
 "worktree.prefix.chore" = "chore";
