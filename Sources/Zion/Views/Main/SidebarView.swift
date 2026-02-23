@@ -280,9 +280,21 @@ struct SidebarView: View {
             } label: {
                 HStack(spacing: 8) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(wt.branch.isEmpty ? URL(fileURLWithPath: wt.path).lastPathComponent : wt.branch)
-                            .font(.system(size: 12, weight: .bold, design: .monospaced))
-                            .lineLimit(1)
+                        HStack(spacing: 6) {
+                            Text(wt.branch.isEmpty ? URL(fileURLWithPath: wt.path).lastPathComponent : wt.branch)
+                                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                                .lineLimit(1)
+                            if wt.isMainWorktree {
+                                Text(L10n("worktree.main.badge"))
+                                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                    .padding(.horizontal, 5)
+                                    .padding(.vertical, 2)
+                                    .background(DesignSystem.Colors.success.opacity(0.18))
+                                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous))
+                                    .foregroundStyle(DesignSystem.Colors.success)
+                                    .help(L10n("worktree.main.hint"))
+                            }
+                        }
                         Text(wt.path)
                             .font(.system(size: 9, design: .monospaced))
                             .foregroundStyle(.secondary)

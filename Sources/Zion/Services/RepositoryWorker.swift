@@ -731,6 +731,7 @@ actor RepositoryWorker {
                     path: path,
                     head: String(head.prefix(8)),
                     branch: normalizedBranch.isEmpty ? "detached" : normalizedBranch,
+                    isMainWorktree: isMainWorktreePath(path),
                     isDetached: isDetached,
                     isLocked: isLocked,
                     lockReason: lockReason,
@@ -776,6 +777,13 @@ actor RepositoryWorker {
         return items
     }
 
+    private func isMainWorktreePath(_ path: String) -> Bool {
+        var isDirectory: ObjCBool = false
+        let gitPath = URL(fileURLWithPath: path).appendingPathComponent(".git").path
+        let exists = FileManager.default.fileExists(atPath: gitPath, isDirectory: &isDirectory)
+        return exists && isDirectory.boolValue
+    }
+
     private func enrichWorktreeStatus(for item: WorktreeItem, repositoryURL: URL) -> WorktreeItem {
         let statusResult = try? git.runAllowingFailure(
             args: ["-C", item.path, "status", "--porcelain"],
@@ -795,6 +803,7 @@ actor RepositoryWorker {
             path: item.path,
             head: item.head,
             branch: item.branch,
+            isMainWorktree: item.isMainWorktree,
             isDetached: item.isDetached,
             isLocked: item.isLocked,
             lockReason: item.lockReason,

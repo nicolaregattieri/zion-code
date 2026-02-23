@@ -108,6 +108,7 @@ struct GraphScreen: View {
                     ForEach(model.worktrees) { worktree in
                         WorktreePill(
                             branch: worktree.branch,
+                            isMainWorktree: worktree.isMainWorktree,
                             dirtyCount: worktree.uncommittedCount,
                             hasConflicts: worktree.hasConflicts,
                             isCurrent: worktree.isCurrent
@@ -1092,6 +1093,7 @@ struct GraphScreen: View {
 
 private struct WorktreePill: View {
     let branch: String
+    let isMainWorktree: Bool
     let dirtyCount: Int
     let hasConflicts: Bool
     let isCurrent: Bool
@@ -1134,6 +1136,15 @@ private struct WorktreePill: View {
                 Text(branch)
                     .font(.system(size: 11, weight: isCurrent ? .bold : .semibold, design: .monospaced))
                     .lineLimit(1)
+                if isMainWorktree {
+                    Text(L10n("worktree.main.badge"))
+                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(DesignSystem.Colors.success.opacity(0.18))
+                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous))
+                        .foregroundStyle(DesignSystem.Colors.success)
+                }
                 Circle()
                     .fill(statusColor)
                     .frame(width: 6, height: 6)
@@ -1161,5 +1172,6 @@ private struct WorktreePill: View {
         }
         .buttonStyle(.plain)
         .shadow(color: isCurrent ? currentAccent.opacity(0.24) : .clear, radius: 8, y: 2)
+        .help(isMainWorktree ? L10n("worktree.main.hint") : "")
     }
 }

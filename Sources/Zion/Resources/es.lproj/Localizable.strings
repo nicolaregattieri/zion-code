@@ -1316,6 +1316,8 @@
 "worktree.smart.missing" = "Completa un nombre (o ruta + rama en modo avanzado).";
 "worktree.smart.created" = "Worktree creado: %@";
 "worktree.smart.empty" = "Todavía no hay worktrees paralelos. Crea uno arriba.";
+"worktree.main.badge" = "ROOT";
+"worktree.main.hint" = "Worktree principal (raíz del repositorio)";
 "worktree.prefix.feat" = "feat";
 "worktree.prefix.fix" = "fix";
 "worktree.prefix.chore" = "chore";
