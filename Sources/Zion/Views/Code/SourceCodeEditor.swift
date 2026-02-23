@@ -31,6 +31,9 @@ struct SourceCodeEditor: NSViewRepresentable {
         scrollView.hasHorizontalScroller = true
         scrollView.autohidesScrollers = true
         scrollView.drawsBackground = true
+        // Keep ruler/gutter drawing strictly inside editor bounds.
+        scrollView.wantsLayer = true
+        scrollView.layer?.masksToBounds = true
 
         let textStorage = NSTextStorage()
         let layoutManager = NSLayoutManager()
