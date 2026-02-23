@@ -70,6 +70,8 @@ struct OperationsScreen: View {
             }
             .padding(24)
             .padding(.bottom, DesignSystem.Spacing.cardPadding)
+            .frame(maxWidth: DesignSystem.Layout.centeredContentMaxWidth, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .center)
         }
     }
 

@@ -1298,3 +1298,12 @@
 "recovery.copy.success" = "Referência de recuperação copiada: %@";
 "recovery.restore" = "Restaurar";
 "recovery.restore.confirm" = "Restaurar snapshot %@ no working tree atual? Isso pode sobrescrever mudanças locais.";
+"git.auth.title" = "Autenticacao Git HTTPS";
+"git.auth.azure.hint" = "No Azure DevOps, use um PAT no campo de senha.";
+"git.auth.username.label" = "Usuario ou email";
+"git.auth.username.placeholder" = "usuario@empresa.com";
+"git.auth.secret.label" = "Senha ou PAT";
+"git.auth.secret.placeholder" = "Cole o token aqui";
+"git.auth.continue" = "Continuar";
+"git.auth.cancelled" = "Autenticacao Git cancelada pelo usuario.";
+"git.auth.secretRequired" = "Informe uma senha ou PAT para continuar.";

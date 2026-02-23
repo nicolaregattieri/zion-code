@@ -44,8 +44,12 @@ actor RepositoryWorker {
         return formatter
     }()
 
-    func runGitCommand(in repositoryURL: URL, args: [String]) throws -> String {
-        try git.run(args: args, in: repositoryURL).stdout
+    func runGitCommand(
+        in repositoryURL: URL,
+        args: [String],
+        mode: GitExecutionMode = .normal
+    ) throws -> String {
+        try git.run(args: args, in: repositoryURL, mode: mode).stdout
     }
 
     func isGitRepository(at url: URL) -> Bool {
@@ -157,19 +161,32 @@ actor RepositoryWorker {
         )
     }
 
-    func runAction(args: [String], in repositoryURL: URL) throws -> String {
-        let result = try git.run(args: args, in: repositoryURL)
+    func runAction(
+        args: [String],
+        in repositoryURL: URL,
+        mode: GitExecutionMode = .normal
+    ) throws -> String {
+        let result = try git.run(args: args, in: repositoryURL, mode: mode)
         return result.stdout.clean.isEmpty ? result.stderr.clean : result.stdout.clean
     }
 
-    func runActionAllowingFailure(args: [String], in repositoryURL: URL) throws -> (output: String, status: Int32) {
-        let result = try git.runAllowingFailure(args: args, in: repositoryURL)
+    func runActionAllowingFailure(
+        args: [String],
+        in repositoryURL: URL,
+        mode: GitExecutionMode = .normal
+    ) throws -> (output: String, status: Int32) {
+        let result = try git.runAllowingFailure(args: args, in: repositoryURL, mode: mode)
         let output = result.stdout.clean.isEmpty ? result.stderr.clean : result.stdout.clean
         return (output, result.status)
     }
 
-    func runActionWithStdin(args: [String], stdin: String, in repositoryURL: URL) throws -> String {
-        let result = try git.runWithStdin(args: args, stdin: stdin, in: repositoryURL)
+    func runActionWithStdin(
+        args: [String],
+        stdin: String,
+        in repositoryURL: URL,
+        mode: GitExecutionMode = .normal
+    ) throws -> String {
+        let result = try git.runWithStdin(args: args, stdin: stdin, in: repositoryURL, mode: mode)
         return result.stdout.clean.isEmpty ? result.stderr.clean : result.stdout.clean
     }
 
@@ -226,10 +243,11 @@ actor RepositoryWorker {
     nonisolated func cloneRepository(
         remoteURL: String,
         destination: URL,
-        onProgress: @escaping @Sendable (String) -> Void
+        onProgress: @escaping @Sendable (String) -> Void,
+        mode: GitExecutionMode = .normal
     ) throws -> Process {
         let client = GitClient()
-        return try client.cloneWithProgress(remoteURL: remoteURL, destination: destination, onProgress: onProgress)
+        return try client.cloneWithProgress(remoteURL: remoteURL, destination: destination, onProgress: onProgress, mode: mode)
     }
 
     @available(*, deprecated, message: "Use runProcessStream(executable:args:in:onOutput:) for safe execution.")

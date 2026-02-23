@@ -14,6 +14,7 @@ struct SidebarView: View {
     @AppStorage("zion.sidebar.recentsExpanded") private var isRecentsExpanded: Bool = true
     @State private var branchSearchQuery: String = ""
     @State private var isNewWorktreeExpanded: Bool = false
+    @State private var hoveredSection: AppSection?
 
     let onOpen: () -> Void
     let onOpenInTerminal: () -> Void
@@ -365,6 +366,7 @@ struct SidebarView: View {
     private func workspaceButton(for section: AppSection) -> some View {
         let isSelected = selectedSection == section
         let isDisabled = section != .code && model.repositoryURL == nil
+        let isHovered = hoveredSection == section
         
         return Button { selectedSection = section } label: {
             HStack(alignment: .top, spacing: 10) {
@@ -413,12 +415,21 @@ struct SidebarView: View {
             }
             .contentShape(Rectangle())
             .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 10).padding(.vertical, 8)
-            .background(RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius).fill(isSelected ? DesignSystem.Colors.glassHover : Color.clear))
-            .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius).stroke(isSelected ? Color.primary.opacity(0.15) : Color.clear, lineWidth: 1))
+            .background(
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius)
+                    .fill(isSelected ? DesignSystem.Colors.glassHover : (isHovered ? DesignSystem.Colors.glassMinimal : Color.clear))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius)
+                    .stroke(isSelected ? Color.primary.opacity(0.15) : (isHovered ? DesignSystem.Colors.glassStroke : Color.clear), lineWidth: 1)
+            )
             .animation(DesignSystem.Motion.detail, value: isSelected)
         }
         .buttonStyle(.plain)
         .disabled(isDisabled)
+        .onHover { hovering in
+            hoveredSection = hovering ? section : nil
+        }
     }
 
     private var filteredBranchTree: [BranchTreeNode] {

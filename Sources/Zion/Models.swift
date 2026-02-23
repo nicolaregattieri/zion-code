@@ -270,6 +270,21 @@ struct RemoteInfo: Identifiable, Hashable, Sendable {
     var id: String { name }
 }
 
+struct GitAuthContext: Sendable {
+    let operationLabel: String
+    let commandSummary: String
+    let remoteURL: String
+    let host: String
+    let usernameHint: String?
+    let errorMessage: String
+    let isAzureDevOps: Bool
+}
+
+enum GitAuthPromptResult: Sendable {
+    case cancelled
+    case provided(username: String, secret: String)
+}
+
 struct FileItem: Identifiable, Hashable, Sendable {
     let url: URL
     let isDirectory: Bool
