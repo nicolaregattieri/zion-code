@@ -115,12 +115,14 @@ private struct BreadcrumbFolderSegmentButton: View {
 struct CodeScreen: View {
     @Bindable var model: RepositoryViewModel
     var onOpenFolder: (() -> Void)? = nil
+    var isZenMode: Bool = false
     @AppStorage("editor.showBreadcrumb") private var showBreadcrumbPath: Bool = true
     @State private var isQuickOpenVisible: Bool = false
     @State private var isFileBrowserVisible: Bool = true
     @State private var fileBrowserRatio: CGFloat = 0.25
     @State private var terminalRatio: CGFloat = 0.6
     @State private var layout: EditorTerminalLayout = .split
+    @State private var previousLayoutBeforeZen: EditorTerminalLayout?
     @State private var isSearchVisible: Bool = false
     @State private var isReplaceVisible: Bool = false
     @State private var searchQuery: String = ""
@@ -150,13 +152,15 @@ struct CodeScreen: View {
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
-                editorToolbar
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 8)
-                    .background(model.selectedTheme.colors.background)
-                    .environment(\.colorScheme, model.selectedTheme.isLightAppearance ? .light : .dark)
+                if !isZenMode {
+                    editorToolbar
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 8)
+                        .background(model.selectedTheme.colors.background)
+                        .environment(\.colorScheme, model.selectedTheme.isLightAppearance ? .light : .dark)
+                }
 
-                if isFileBrowserVisible {
+                if isFileBrowserVisible && !isZenMode {
                     DraggableSplitView(
                         axis: .horizontal,
                         ratio: $fileBrowserRatio,
@@ -207,12 +211,16 @@ struct CodeScreen: View {
                 .keyboardShortcut("p", modifiers: .command)
                 .frame(width: 0, height: 0).opacity(0)
 
-            Button("") { withAnimation(DesignSystem.Motion.panel) { isFileBrowserVisible.toggle() } }
+            Button("") {
+                guard !isZenMode else { return }
+                withAnimation(DesignSystem.Motion.panel) { isFileBrowserVisible.toggle() }
+            }
                 .keyboardShortcut("b", modifiers: .command)
                 .frame(width: 0, height: 0).opacity(0)
 
             // Toggle terminal visibility (Cmd+J)
             Button("") {
+                guard !isZenMode else { return }
                 withAnimation(DesignSystem.Motion.detail) {
                     layout = layout == .editorOnly ? .split : .editorOnly
                 }
@@ -222,6 +230,7 @@ struct CodeScreen: View {
 
             // Maximize terminal (Cmd+Shift+J)
             Button("") {
+                guard !isZenMode else { return }
                 withAnimation(DesignSystem.Motion.detail) {
                     layout = layout == .terminalOnly ? .split : .terminalOnly
                 }
@@ -277,6 +286,14 @@ struct CodeScreen: View {
             guard visible else { return }
             recomputeFindMatches()
         }
+        .onAppear {
+            applyZenModeState(isZenMode)
+        }
+        .onChange(of: isZenMode) { _, enabled in
+            withAnimation(DesignSystem.Motion.panel) {
+                applyZenModeState(enabled)
+            }
+        }
     }
     
     @ViewBuilder
@@ -298,6 +315,18 @@ struct CodeScreen: View {
         } else {
             terminalContainer
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+
+    private func applyZenModeState(_ enabled: Bool) {
+        if enabled {
+            if previousLayoutBeforeZen == nil {
+                previousLayoutBeforeZen = layout
+            }
+            layout = .terminalOnly
+        } else if let previousLayoutBeforeZen {
+            layout = previousLayoutBeforeZen
+            self.previousLayoutBeforeZen = nil
         }
     }
 

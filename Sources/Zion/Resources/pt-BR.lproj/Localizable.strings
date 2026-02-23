@@ -138,12 +138,9 @@
 "prunable" = "podável";
 
 // SidebarView
-"Ferramentas Externas" = "Ferramentas Externas";
 "Editor" = "Editor";
 "Branch" = "Branch";
 "current" = "atual";
-"Selecione seu Editor de Codigo favorito" = "Selecione seu Editor de Código favorito";
-"Selecione seu Terminal favorito" = "Selecione seu Terminal favorito";
 
 // ContentView
 "Abort" = "Abortar";
@@ -171,8 +168,7 @@
 "Zion Code" = "Zion Code";
 "Modo editor livre" = "Modo editor livre";
 "Abrir Pasta" = "Abrir Pasta";
-"Abrir Externamente" = "Abrir Externamente";
-"Abrir o repositorio no seu editor ou terminal favorito." = "Abrir o repositório no seu editor ou terminal favorito.";
+"Abrir o repositorio no seu editor ou terminal favorito." = "Abrir o repositório no editor integrado do Zion.";
 
 // Toolbar
 "Abrir repositório" = "Abrir repositório";
@@ -181,7 +177,6 @@
 "Pull: Puxa alterações da branch atual" = "Pull: Puxa alterações da branch atual";
 "Push: Envia alterações locais" = "Push: Envia alterações locais";
 "Abrir no Editor de Código" = "Abrir no Editor de Código";
-"Abrir Terminal" = "Abrir Terminal";
 
 // GraphScreen
 "Checkout Default" = "Checkout Default";
@@ -383,7 +378,6 @@
 // Customization
 "help.customization.title" = "Personalização";
 "help.customization.languages" = "Interface em Português, English e Español";
-"help.customization.editor" = "Escolha seu editor e terminal externo favorito";
 "help.customization.confirmation" = "Controle quando exibir diálogos de confirmação";
 "help.customization.reflog" = "Reflog visual com desfazer da última ação Git";
 
@@ -477,7 +471,6 @@
 
 // ntfy Push Notifications
 "Notificacoes Push" = "Notificações Push";
-"Terminal Externo" = "Terminal Externo";
 "ntfy.onboarding.hint" = "Receba notificações no celular e macOS via ntfy.sh";
 "ntfy.topic.configured" = "Tópico configurado";
 "ntfy.topic.placeholder" = "Seu tópico ntfy (ex: zion-meu-mac)";
@@ -521,7 +514,7 @@
 "map.operations.subtitle" = "Commit, staging, branches, tags, stash, recovery vault, rebase interativo e mais.";
 "map.worktrees.subtitle" = "Trabalhe em múltiplas branches simultaneamente com terminais dedicados.";
 "map.ai.subtitle" = "Assistente de IA para commits, diffs, code review, conflitos e mais.";
-"map.customization.subtitle" = "Idioma, aparência, editor externo, confirmações e reflog.";
+"map.customization.subtitle" = "Idioma, aparência, confirmações e reflog.";
 "map.diagnostics.subtitle" = "Log de diagnóstico com exportação e sanitização automática.";
 "map.conflicts.subtitle" = "Resolva conflitos de merge diretamente no Zion.";
 
@@ -658,9 +651,6 @@
 "map.custom.languages.description" = "Interface disponível em Português (BR), English e Español. Mude a qualquer momento nas configurações.";
 "map.custom.appearance.title" = "Aparência";
 "map.custom.appearance.description" = "Escolha entre modo claro, escuro ou automático do sistema. O tema do editor acompanha.";
-"map.custom.editor.title" = "Editor e Terminal Externos";
-"map.custom.editor.description" = "Configure seu editor (VS Code, Cursor, Xcode, etc.) e terminal (Terminal, iTerm, Warp) favoritos.";
-"map.custom.editor.tip1" = "Use 'Abrir Externamente' na sidebar para abrir o repo no editor configurado.";
 "map.custom.confirmation.title" = "Diálogos de Confirmação";
 "map.custom.confirmation.description" = "Controle quando exibir confirmação: nunca, apenas ações destrutivas, ou todas as ações.";
 "map.custom.reflog.title" = "Reflog e Desfazer";
@@ -1379,3 +1369,5 @@
 "map.diag.sanitize.title" = "Sanitização de Dados";
 "map.diag.sanitize.description" = "Logs removem automaticamente credenciais e dados sensíveis antes de exportar ou copiar.";
 "status.nav.settings" = "Configuracoes";
+"focus.menu" = "Visualizacao";
+"focus.toggle" = "Modo Foco";

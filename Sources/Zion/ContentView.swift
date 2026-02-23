@@ -30,16 +30,17 @@ struct ContentView: View {
     @State private var isShortcutsVisible: Bool = false
     @State private var isHelpVisible: Bool = false
     @State private var shouldPresentOnboardingFromHelp: Bool = false
+    @State private var splitViewVisibility: NavigationSplitViewVisibility = .all
 
     @AppStorage("zion.confirmationMode") private var confirmationModeRaw: String = ConfirmationMode.destructiveOnly.rawValue
     @AppStorage("zion.uiLanguage") private var uiLanguageRaw: String = AppLanguage.system.rawValue
-    @AppStorage("zion.preferredTerminal") private var preferredTerminalRaw: String = ExternalTerminal.terminal.rawValue
-    @AppStorage("zion.customTerminalPath") private var customTerminalPath: String = ""
     @AppStorage("zion.appearance") private var appearanceRaw: String = AppAppearance.system.rawValue
     @AppStorage("zion.hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
+    @AppStorage("zion.zenModeEnabled") private var zenModeEnabled: Bool = false
 
     private var uiLanguage: AppLanguage { AppLanguage(rawValue: uiLanguageRaw) ?? .system }
     private var appearance: AppAppearance { AppAppearance(rawValue: appearanceRaw) ?? .system }
+    private var statusBarClearance: CGFloat { zenModeEnabled ? 0 : DesignSystem.Spacing.statusBarClearance }
     private var rootPresentation: RootPresentation {
         // Explicit replay from Help always wins.
         if shouldPresentOnboardingFromHelp {
@@ -65,6 +66,10 @@ struct ContentView: View {
             selectedSection = model.nextSectionAfterRepositoryOpen ?? .code
             model.nextSectionAfterRepositoryOpen = nil
         case .requestSection(let section):
+            if zenModeEnabled && section != .code {
+                selectedSection = .code
+                return
+            }
             guard section == .code || model.repositoryURL != nil else {
                 model.statusMessage = L10n("Abra um repositorio para acessar %@", L10n(section.title))
                 return
@@ -75,7 +80,7 @@ struct ContentView: View {
             selectedSection = .code
             shouldPresentOnboardingFromHelp = true
         case .navigateToGraph:
-            selectedSection = .graph
+            selectedSection = zenModeEnabled ? .code : .graph
         case .navigateToCode:
             selectedSection = .code
         }
@@ -85,7 +90,7 @@ struct ContentView: View {
         ZStack {
             LiquidBackgroundView().ignoresSafeArea()
 
-            NavigationSplitView {
+            NavigationSplitView(columnVisibility: $splitViewVisibility) {
                 SidebarView(
                     model: model,
                     selectedSection: $selectedSection,
@@ -94,16 +99,15 @@ struct ContentView: View {
                     uiLanguageRaw: $uiLanguageRaw,
                     appearanceRaw: $appearanceRaw,
                     onOpen: { openRepositoryPanel() },
-                    onOpenInTerminal: { openRepositoryInTerminal() },
                     branchContextMenu: { branch in AnyView(branchContextMenu(for: branch)) }
                 )
-                .padding(.bottom, DesignSystem.Spacing.statusBarClearance)
+                .padding(.bottom, statusBarClearance)
             } detail: {
                 // RIGID LAYOUT: Detail view is a solid container
                 detailViewHost
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .allowsHitTesting(!model.isRepositorySwitching)
-                    .padding(.bottom, DesignSystem.Spacing.statusBarClearance)
+                    .padding(.bottom, statusBarClearance)
                     .background(Color(NSColor.windowBackgroundColor))
                     .overlay {
                         if model.isRepositorySwitching {
@@ -139,8 +143,16 @@ struct ContentView: View {
                     Text("")
                 }
             }
-            .toolbar { mainToolbar }
-            .safeAreaInset(edge: .bottom) { statusBar }
+            .toolbar {
+                if !zenModeEnabled {
+                    mainToolbar
+                }
+            }
+            .safeAreaInset(edge: .bottom) {
+                if !zenModeEnabled {
+                    statusBar
+                }
+            }
             .background {
                 // Cmd+1/2/3 tab switching (standard macOS convention)
                 Group {
@@ -159,6 +171,12 @@ struct ContentView: View {
                         }
                     }
                     .keyboardShortcut("r", modifiers: [.command, .shift])
+                    Button("") {
+                        withAnimation(DesignSystem.Motion.panel) {
+                            zenModeEnabled.toggle()
+                        }
+                    }
+                    .keyboardShortcut("j", modifiers: [.command, .control])
                 }
                 .frame(width: 0, height: 0)
                 .opacity(0)
@@ -188,9 +206,21 @@ struct ContentView: View {
                 }
                 NSApp.activate(ignoringOtherApps: true)
             }
+            splitViewVisibility = zenModeEnabled ? .detailOnly : .all
+            if zenModeEnabled {
+                selectedSection = .code
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
             model.syncEditorSettingsFromDefaults()
+        }
+        .onChange(of: zenModeEnabled) { _, enabled in
+            withAnimation(DesignSystem.Motion.panel) {
+                splitViewVisibility = enabled ? .detailOnly : .all
+                if enabled {
+                    selectedSection = .code
+                }
+            }
         }
         .onChange(of: model.repositoryURL) { _, url in
             if url != nil {
@@ -264,6 +294,11 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .showOnboarding)) { _ in
             route(.showOnboardingFromHelp)
         }
+        .onReceive(NotificationCenter.default.publisher(for: .toggleZenMode)) { _ in
+            withAnimation(DesignSystem.Motion.panel) {
+                zenModeEnabled.toggle()
+            }
+        }
         .animation(.easeInOut(duration: 0.15), value: model.isRepositorySwitching)
     }
 
@@ -303,7 +338,7 @@ struct ContentView: View {
     private var workspaceHost: some View {
         ZStack {
             // CodeScreen is always rendered to keep terminal sessions alive
-            CodeScreen(model: model, onOpenFolder: { openRepositoryPanel() })
+            CodeScreen(model: model, onOpenFolder: { openRepositoryPanel() }, isZenMode: zenModeEnabled)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .opacity(selectedSection == .code ? 1 : 0)
                 .allowsHitTesting(selectedSection == .code)
@@ -396,9 +431,13 @@ struct ContentView: View {
         ToolbarItemGroup(placement: .primaryAction) {
             if model.repositoryURL != nil {
                 ControlGroup {
-                    Button { openRepositoryInTerminal() } label: { Image(systemName: "terminal") }
-                        .help(L10n("Abrir Terminal"))
-                        .accessibilityLabel(L10n("Abrir Terminal"))
+                    Button {
+                        withAnimation(DesignSystem.Motion.panel) {
+                            zenModeEnabled = true
+                        }
+                    } label: { Image(systemName: "terminal") }
+                        .help(L10n("focus.toggle"))
+                        .accessibilityLabel(L10n("focus.toggle"))
                     Button {
                         model.loadReflog()
                         model.isReflogVisible = true
@@ -590,9 +629,7 @@ struct ContentView: View {
     }
 
     private var statusBarSettingsButton: some View {
-        Button {
-            openSettingsWindow()
-        } label: {
+        SettingsLink {
             HStack(spacing: 4) {
                 Image(systemName: "gearshape")
                     .font(.system(size: 9, weight: .semibold))
@@ -602,6 +639,7 @@ struct ContentView: View {
             }
             .padding(.horizontal, 6)
             .padding(.vertical, 3)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .help(L10n("settings.open.hint"))
@@ -610,37 +648,6 @@ struct ContentView: View {
 
     private func statusBarSectionLabel(_ section: AppSection) -> String {
         L10n(section.title)
-    }
-
-    private func openSettingsWindow() {
-        if #available(macOS 13.0, *) {
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        } else {
-            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
-        }
-    }
-
-    private func openRepositoryInTerminal() {
-        guard let url = model.repositoryURL else { return }
-        let terminal = ExternalTerminal(rawValue: preferredTerminalRaw) ?? .terminal
-        let ws = NSWorkspace.shared
-        
-        let appPath: String = (terminal == .custom) ? customTerminalPath : {
-            switch terminal {
-            case .terminal: return "/System/Applications/Utilities/Terminal.app"
-            case .iterm: return "/Applications/iTerm.app"
-            case .warp: return "/Applications/Warp.app"
-            default: return ""
-            }
-        }()
-
-        if !appPath.isEmpty, let appUrl = URL(string: "file://\(appPath.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? "")") {
-            ws.open([url], withApplicationAt: appUrl, configuration: NSWorkspace.OpenConfiguration())
-        } else if let appUrl = ws.urlForApplication(withBundleIdentifier: terminal.id) {
-            ws.open([url], withApplicationAt: appUrl, configuration: NSWorkspace.OpenConfiguration())
-        } else {
-            ws.open(url)
-        }
     }
 
     private func performGitAction(title: String, message: String, destructive: Bool = false, action: @escaping () -> Void) {

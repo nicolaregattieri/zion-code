@@ -69,6 +69,7 @@ struct KeyboardShortcutsSheet: View {
                     shortcutSection(L10n("shortcuts.general"), icon: "gearshape", shortcuts: [
                         (L10n("shortcuts.refreshRepository"), "⌘R"),
                         (L10n("shortcuts.codeReview"), "⇧⌘R"),
+                        (L10n("focus.toggle"), "⌃⌘J"),
                         (L10n("Atalhos de Teclado"), "⌘/"),
                     ])
                 }

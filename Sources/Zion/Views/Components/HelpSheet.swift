@@ -68,7 +68,7 @@ struct HelpSheet: View {
                     "help.aiSummary"]
         case .customization:
             return ["help.customization.languages", "help.customization.appearance",
-                    "help.customization.editor", "help.customization.confirmation",
+                    "help.customization.confirmation",
                     "help.customization.reflog"]
         case .diagnostics:
             return ["help.diagnostics.export", "help.diagnostics.copy", "help.diagnostics.sanitize"]

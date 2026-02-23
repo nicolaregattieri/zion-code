@@ -8,16 +8,12 @@ struct SidebarView: View {
     @Binding var uiLanguageRaw: String
     @Binding var appearanceRaw: String
 
-    @AppStorage("zion.preferredTerminal") private var preferredTerminalRaw: String = ExternalTerminal.terminal.rawValue
-    @AppStorage("zion.customTerminalPath") private var customTerminalPath: String = ""
-
     @AppStorage("zion.sidebar.recentsExpanded") private var isRecentsExpanded: Bool = true
     @State private var branchSearchQuery: String = ""
     @State private var isNewWorktreeExpanded: Bool = false
     @State private var hoveredSection: AppSection?
 
     let onOpen: () -> Void
-    let onOpenInTerminal: () -> Void
     let branchContextMenu: (String) -> AnyView
     
     var body: some View {
@@ -608,6 +604,7 @@ struct SidebarView: View {
         .padding(.horizontal, 10)
         .padding(.bottom, 14)
     }
+
 }
 
 private struct RecentProjectRow: View {

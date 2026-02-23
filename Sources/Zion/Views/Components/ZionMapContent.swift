@@ -154,8 +154,6 @@ struct ZionMapContent {
             return [
                 ZionMapEntry("map.custom.languages.title", description: "map.custom.languages.description"),
                 ZionMapEntry("map.custom.appearance.title", description: "map.custom.appearance.description"),
-                ZionMapEntry("map.custom.editor.title", description: "map.custom.editor.description",
-                             tips: ["map.custom.editor.tip1"]),
                 ZionMapEntry("map.custom.confirmation.title", description: "map.custom.confirmation.description"),
                 ZionMapEntry("map.custom.reflog.title", description: "map.custom.reflog.description",
                              tips: ["map.custom.reflog.tip1"]),
