@@ -5,6 +5,27 @@ import CryptoKit
 
 @Observable @MainActor
 final class RepositoryViewModel {
+    private enum RefreshOrigin: String {
+        case userInitiated
+        case autoTimer
+        case fileWatcher
+        case repositorySwitch
+
+        var usesSilentCommitDetails: Bool {
+            switch self {
+            case .autoTimer, .fileWatcher, .repositorySwitch:
+                return true
+            case .userInitiated:
+                return false
+            }
+        }
+    }
+
+    private enum CommitDetailsLoadPolicy {
+        case interactive
+        case silent
+    }
+
     var repositoryURL: URL?
     var currentBranch: String = "-"
     var headShortHash: String = "-"
@@ -817,6 +838,7 @@ final class RepositoryViewModel {
         refreshRepository(
             setBusy: true,
             options: .critical,
+            origin: .repositorySwitch,
             clearRepositorySwitchStateOnBusyCompletion: false
         )
         refreshFileTree()
@@ -857,6 +879,7 @@ final class RepositoryViewModel {
             self.refreshRepository(
                 setBusy: false,
                 options: .full,
+                origin: .repositorySwitch,
                 onFinish: { [weak self] in
                     guard let self else { return }
                     guard self.repositorySwitchToken == switchToken, self.repositoryURL == url else { return }
@@ -1075,7 +1098,7 @@ final class RepositoryViewModel {
     }
 
     func refreshRepository() {
-        refreshRepository(setBusy: true)
+        refreshRepository(setBusy: true, origin: .userInitiated)
     }
 
     func selectCommit(_ commitID: String?) {
@@ -1085,7 +1108,7 @@ final class RepositoryViewModel {
             currentCommitFileDiffHunks = []
         }
         selectedCommitID = commitID
-        loadCommitDetails(for: commitID)
+        loadCommitDetails(for: commitID, policy: .interactive)
     }
 
     func selectChangeFile(_ file: String?) {
@@ -3490,19 +3513,30 @@ final class RepositoryViewModel {
                 clearError()
                 commits = payload.commits
                 hasMoreCommits = payload.hasMore
-                if payload.selectedCommitID != selectedCommitSnapshot {
+                let didSelectedCommitChange = payload.selectedCommitID != selectedCommitSnapshot
+                if didSelectedCommitChange {
                     selectedCommitFile = nil
                     currentCommitFileDiff = ""
                     currentCommitFileDiffHunks = []
                 }
                 selectedCommitID = payload.selectedCommitID
+                let refreshedStatusMessage: String
                 if let focusedBranchSnapshot {
-                    statusMessage = L10n("Filtro de branch ativo: %@ · %@ commits", focusedBranchSnapshot, "\(payload.commits.count)")
+                    refreshedStatusMessage = L10n("Filtro de branch ativo: %@ · %@ commits", focusedBranchSnapshot, "\(payload.commits.count)")
                 } else {
-                    statusMessage = L10n("Visualizando todas as branches · %@ commits", "\(payload.commits.count)")
+                    refreshedStatusMessage = L10n("Visualizando todas as branches · %@ commits", "\(payload.commits.count)")
+                }
+                if statusMessage != refreshedStatusMessage {
+                    statusMessage = refreshedStatusMessage
                 }
                 isBusy = false
-                loadCommitDetails(for: payload.selectedCommitID)
+                if didSelectedCommitChange {
+                    let commitToken = payload.selectedCommitID.map { String($0.prefix(8)) } ?? "nil"
+                    logger.log(.info, "details.reload interactive", context: "origin=refreshCommitsOnly commit=\(commitToken)", source: #function)
+                    loadCommitDetails(for: payload.selectedCommitID, policy: .interactive)
+                } else {
+                    logger.log(.info, "details.reload skipped (same commit)", context: "origin=refreshCommitsOnly", source: #function)
+                }
                 loadCommitStats()
             } catch is CancellationError {
                 guard refreshRequestID == requestID else { return }
@@ -3520,6 +3554,7 @@ final class RepositoryViewModel {
     private func refreshRepository(
         setBusy: Bool,
         options: RepositoryLoadOptions = .full,
+        origin: RefreshOrigin = .userInitiated,
         clearRepositorySwitchStateOnBusyCompletion: Bool = true,
         onFinish: (() -> Void)? = nil
     ) {
@@ -3583,7 +3618,8 @@ final class RepositoryViewModel {
                 remotes = payload.remotes
                 commits = payload.commits
                 hasMoreCommits = payload.hasMoreCommits
-                if payload.selectedCommitID != selectedCommitSnapshot {
+                let didSelectedCommitChange = payload.selectedCommitID != selectedCommitSnapshot
+                if didSelectedCommitChange {
                     selectedCommitFile = nil
                     currentCommitFileDiff = ""
                     currentCommitFileDiffHunks = []
@@ -3607,14 +3643,30 @@ final class RepositoryViewModel {
                 if recoverySnapshotsRepositoryPath == repositoryURL.path {
                     refreshRecoverySnapshots(includeDangling: false)
                 }
-                statusMessage = L10n("Repositorio carregado: %@ · %@ commits", repositoryURL.lastPathComponent, "\(payload.commits.count)")
+                let refreshedStatusMessage = L10n("Repositorio carregado: %@ · %@ commits", repositoryURL.lastPathComponent, "\(payload.commits.count)")
+                if statusMessage != refreshedStatusMessage {
+                    statusMessage = refreshedStatusMessage
+                }
                 if setBusy {
                     isBusy = false
                     if clearRepositorySwitchStateOnBusyCompletion, isSwitchingRepository {
                         isSwitchingRepository = false
                     }
                 }
-                loadCommitDetails(for: payload.selectedCommitID)
+                if didSelectedCommitChange {
+                    let detailsPolicy: CommitDetailsLoadPolicy = origin.usesSilentCommitDetails ? .silent : .interactive
+                    let mode = origin.usesSilentCommitDetails ? "silent" : "interactive"
+                    let commitToken = payload.selectedCommitID.map { String($0.prefix(8)) } ?? "nil"
+                    logger.log(.info, "details.reload \(mode)", context: "origin=\(origin.rawValue) commit=\(commitToken)", source: #function)
+                    loadCommitDetails(for: payload.selectedCommitID, policy: detailsPolicy)
+                } else {
+                    switch origin {
+                    case .autoTimer, .fileWatcher:
+                        break
+                    case .userInitiated, .repositorySwitch:
+                        logger.log(.info, "details.reload skipped (same commit)", context: "origin=\(origin.rawValue)", source: #function)
+                    }
+                }
                 loadCommitStats()
                 onFinish?()
             } catch is CancellationError {
@@ -3844,7 +3896,7 @@ final class RepositoryViewModel {
         return String(hex.prefix(10))
     }
 
-    private func loadCommitDetails(for commitID: String?) {
+    private func loadCommitDetails(for commitID: String?, policy: CommitDetailsLoadPolicy = .interactive) {
         guard let repositoryURL else {
             commitDetails = L10n("Selecione um repositorio Git.")
             return
@@ -3858,20 +3910,30 @@ final class RepositoryViewModel {
         detailsTask?.cancel()
         let requestID = UUID()
         detailsRequestID = requestID
-        commitDetails = L10n("Carregando detalhes do commit...")
+        switch policy {
+        case .interactive:
+            commitDetails = L10n("Carregando detalhes do commit...")
+        case .silent:
+            break
+        }
 
         detailsTask = Task {
             do {
                 let details = try await worker.loadCommitDetails(in: repositoryURL, commitID: commitID)
                 try Task.checkCancellation()
                 guard detailsRequestID == requestID else { return }
-                commitDetails = details
+                if commitDetails != details {
+                    commitDetails = details
+                }
             } catch is CancellationError {
                 return
             } catch {
                 guard detailsRequestID == requestID else { return }
                 logger.log(.warn, "Failed to load commit details: \(error.localizedDescription)", context: commitID, source: #function)
-                commitDetails = error.localizedDescription
+                let message = error.localizedDescription
+                if commitDetails != message {
+                    commitDetails = message
+                }
             }
         }
     }
@@ -5911,7 +5973,7 @@ final class RepositoryViewModel {
         fileWatcher.onRepositoryChanged = { [weak self] in
             guard let self else { return }
             guard !self.isSwitchingRepository else { return }
-            self.refreshRepository(setBusy: false)
+            self.refreshRepository(setBusy: false, origin: .fileWatcher)
             self.refreshFileTree()
         }
         fileWatcher.watch(directory: url)
@@ -5929,7 +5991,7 @@ final class RepositoryViewModel {
                 if isSwitchingRepository { continue }
 
                 // Refresh without showing busy indicator to avoid UI flickering
-                refreshRepository(setBusy: false)
+                refreshRepository(setBusy: false, origin: .autoTimer)
             }
         }
     }
