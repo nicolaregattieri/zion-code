@@ -152,6 +152,11 @@ struct CodeScreen: View {
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
+                if isZenMode {
+                    focusModeExitBar
+                        .transition(DesignSystem.Motion.slideFromTop)
+                }
+
                 if !isZenMode {
                     editorToolbar
                         .padding(.horizontal, 8)
@@ -294,6 +299,41 @@ struct CodeScreen: View {
                 applyZenModeState(enabled)
             }
         }
+    }
+
+    private var focusModeExitBar: some View {
+        HStack {
+            Spacer(minLength: 0)
+            Button {
+                NotificationCenter.default.post(name: .toggleZenMode, object: nil)
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "scope")
+                        .font(.system(size: 11, weight: .semibold))
+                    Text(L10n("focus.toggle"))
+                        .font(.system(size: 11, weight: .semibold))
+                    Text("⌃⌘J")
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                        .fill(DesignSystem.Colors.glassSubtle)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                        .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+            .help("\(L10n("focus.toggle")) (⌃⌘J)")
+            .accessibilityLabel(L10n("focus.toggle"))
+        }
+        .padding(.horizontal, 8)
+        .padding(.top, 8)
+        .padding(.bottom, 6)
     }
     
     @ViewBuilder
