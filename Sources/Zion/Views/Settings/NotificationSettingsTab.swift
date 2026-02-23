@@ -13,6 +13,9 @@ struct NotificationSettingsTab: View {
     @State private var isTestingNtfy: Bool = false
 
     private var isConfigured: Bool { !ntfyTopic.isEmpty }
+    private var isTopicInputValid: Bool { NtfyClient.validateTopic(topicInput) }
+    private var isServerURLValid: Bool { NtfyClient.validateServerURL(ntfyServerURL) }
+    private var isCurrentConfigValid: Bool { NtfyClient.validateTopic(ntfyTopic) && isServerURLValid }
 
     var body: some View {
         Form {
@@ -45,7 +48,12 @@ struct NotificationSettingsTab: View {
                         Button(L10n("Salvar")) { saveTopic() }
                             .buttonStyle(.borderedProminent)
                             .tint(DesignSystem.Colors.actionPrimary)
-                            .disabled(topicInput.isEmpty)
+                            .disabled(!isTopicInputValid)
+                    }
+                    if !topicInput.isEmpty && !isTopicInputValid {
+                        Text("Topico invalido. Use apenas letras, numeros, '.', '_' ou '-' (1-64).")
+                            .font(.caption2)
+                            .foregroundStyle(.red)
                     }
                 }
 
@@ -94,6 +102,11 @@ struct NotificationSettingsTab: View {
                             .textFieldStyle(.roundedBorder)
                             .font(.system(.body, design: .monospaced))
                     }
+                    if !isServerURLValid {
+                        Text("Servidor invalido. Use URL HTTPS valida (ex: https://ntfy.sh).")
+                            .font(.caption2)
+                            .foregroundStyle(.red)
+                    }
                 }
 
                 Section(L10n("settings.notifications.events")) {
@@ -120,7 +133,12 @@ struct NotificationSettingsTab: View {
                             Text(L10n("ntfy.test.button"))
                         }
                     }
-                    .disabled(isTestingNtfy)
+                    .disabled(isTestingNtfy || !isCurrentConfigValid)
+                    if !isCurrentConfigValid {
+                        Text("Corrija topico e servidor para testar notificacoes.")
+                            .font(.caption2)
+                            .foregroundStyle(.red)
+                    }
                 }
 
                 Section(L10n("settings.notifications.pr")) {
@@ -141,7 +159,7 @@ struct NotificationSettingsTab: View {
     }
 
     private func saveTopic() {
-        guard !topicInput.isEmpty else { return }
+        guard isTopicInputValid else { return }
         ntfyTopic = topicInput
         isEditingTopic = false
         NtfyClient.writeGlobalConfig(topic: ntfyTopic, serverURL: ntfyServerURL)

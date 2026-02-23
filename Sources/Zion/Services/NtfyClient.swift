@@ -222,13 +222,24 @@ actor NtfyClient {
         priority: Int,
         tags: String
     ) async -> Bool {
-        let urlString = serverURL.hasSuffix("/") ? "\(serverURL)\(topic)" : "\(serverURL)/\(topic)"
-        guard let url = URL(string: urlString) else {
+        let resolvedURL: URL?
+        let loggingContext: String
+        if let strictURL = Self.buildNtfyURL(serverURL: serverURL, topic: topic) {
+            resolvedURL = strictURL
+            loggingContext = strictURL.absoluteString
+        } else if let fallbackURL = Self.buildLegacyCompatibleURL(serverURL: serverURL, topic: topic) {
+            resolvedURL = fallbackURL
+            loggingContext = fallbackURL.absoluteString
             await MainActor.run {
-                DiagnosticLogger.shared.log(.error, "Invalid ntfy URL: \(urlString)", source: "NtfyClient.send")
+                DiagnosticLogger.shared.log(.warn, "Using legacy ntfy URL normalization", context: loggingContext, source: "NtfyClient.send")
+            }
+        } else {
+            await MainActor.run {
+                DiagnosticLogger.shared.log(.error, "Invalid ntfy server/topic configuration", context: "\(serverURL) | \(topic)", source: "NtfyClient.send")
             }
             return false
         }
+        guard let url = resolvedURL else { return false }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -244,13 +255,13 @@ actor NtfyClient {
             let success = httpResponse?.statusCode == 200
             if !success {
                 await MainActor.run {
-                    DiagnosticLogger.shared.log(.warn, "ntfy response: \(httpResponse?.statusCode ?? -1)", context: urlString, source: "NtfyClient.send")
+                    DiagnosticLogger.shared.log(.warn, "ntfy response: \(httpResponse?.statusCode ?? -1)", context: loggingContext, source: "NtfyClient.send")
                 }
             }
             return success
         } catch {
             await MainActor.run {
-                DiagnosticLogger.shared.log(.error, "ntfy send failed: \(error.localizedDescription)", context: urlString, source: "NtfyClient.send")
+                DiagnosticLogger.shared.log(.error, "ntfy send failed: \(error.localizedDescription)", context: loggingContext, source: "NtfyClient.send")
             }
             return false
         }
@@ -263,10 +274,15 @@ actor NtfyClient {
         let configFile = configDir.appendingPathComponent("config.json")
 
         do {
-            try FileManager.default.createDirectory(at: configDir, withIntermediateDirectories: true)
+            try FileManager.default.createDirectory(
+                at: configDir,
+                withIntermediateDirectories: true,
+                attributes: [.posixPermissions: 0o700]
+            )
             let config: [String: String] = ["topic": topic, "server": serverURL]
             let data = try JSONSerialization.data(withJSONObject: config, options: [.prettyPrinted, .sortedKeys])
             try data.write(to: configFile, options: .atomic)
+            try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: configFile.path)
         } catch {
             // Non-critical, ignore
         }
@@ -282,5 +298,60 @@ actor NtfyClient {
             return nil
         }
         return (topic: topic, serverURL: json["server"] ?? "https://ntfy.sh")
+    }
+
+    static func validateTopic(_ topic: String) -> Bool {
+        let trimmed = topic.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+        return trimmed.range(of: #"^[A-Za-z0-9._-]{1,64}$"#, options: .regularExpression) != nil
+    }
+
+    static func validateServerURL(_ serverURL: String) -> Bool {
+        guard let components = URLComponents(string: serverURL.trimmingCharacters(in: .whitespacesAndNewlines)),
+              components.scheme?.lowercased() == "https",
+              let host = components.host,
+              !host.isEmpty else {
+            return false
+        }
+        return true
+    }
+
+    static func buildNtfyURL(serverURL: String, topic: String) -> URL? {
+        let trimmedServer = serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedTopic = topic.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard validateServerURL(trimmedServer), validateTopic(trimmedTopic),
+              var components = URLComponents(string: trimmedServer) else {
+            return nil
+        }
+
+        let encodedTopic = trimmedTopic.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? trimmedTopic
+        let cleanPath = components.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        components.path = cleanPath.isEmpty ? "/\(encodedTopic)" : "/\(cleanPath)/\(encodedTopic)"
+        return components.url
+    }
+
+    private static func buildLegacyCompatibleURL(serverURL: String, topic: String) -> URL? {
+        let rawServer = serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        let rawTopic = topic.trimmingCharacters(in: .whitespacesAndNewlines).trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        guard !rawTopic.isEmpty else { return nil }
+
+        let serverWithScheme: String
+        if rawServer.contains("://") {
+            serverWithScheme = rawServer
+        } else {
+            serverWithScheme = "https://\(rawServer)"
+        }
+
+        guard var components = URLComponents(string: serverWithScheme),
+              components.scheme?.lowercased() == "https",
+              let host = components.host,
+              !host.isEmpty else {
+            return nil
+        }
+
+        let encodedTopic = rawTopic.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? rawTopic
+        let cleanPath = components.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        components.path = cleanPath.isEmpty ? "/\(encodedTopic)" : "/\(cleanPath)/\(encodedTopic)"
+        return components.url
     }
 }
