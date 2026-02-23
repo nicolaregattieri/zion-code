@@ -93,14 +93,13 @@ struct GraphScreen: View {
 
     private var worktreeQuickSwitchBar: some View {
         GlassCard(spacing: 8) {
-            HStack(spacing: 10) {
-                Image(systemName: "square.split.2x2")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                Text(L10n("Worktrees"))
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                Spacer()
+            CardHeader(L10n("Worktrees"), icon: "square.split.2x2") {
+                Text("\(model.worktrees.count)")
+                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(DesignSystem.Colors.glassSubtle)
+                    .clipShape(Capsule())
             }
 
             ScrollView(.horizontal, showsIndicators: false) {

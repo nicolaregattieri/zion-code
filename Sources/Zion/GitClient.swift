@@ -39,16 +39,31 @@ struct GitCommandResult {
     let status: Int32
 }
 
+struct GitCredentialInput: Sendable {
+    let username: String?
+    let secret: String
+}
+
+enum GitExecutionMode: Sendable {
+    case normal
+    case withCredential(GitCredentialInput)
+}
+
 struct GitClient {
-    func runWithStdin(args: [String], stdin: String, in repositoryURL: URL) throws -> GitCommandResult {
+    func runWithStdin(
+        args: [String],
+        stdin: String,
+        in repositoryURL: URL,
+        mode: GitExecutionMode = .normal
+    ) throws -> GitCommandResult {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
         process.arguments = ["git"] + args
         process.currentDirectoryURL = repositoryURL
 
-        var environment = ProcessInfo.processInfo.environment
-        environment["LC_ALL"] = "C"
-        environment["LANG"] = "C"
+        let environmentSetup = try prepareEnvironment(for: mode)
+        defer { cleanupAskPassScript(at: environmentSetup.askPassScriptURL) }
+        let environment = environmentSetup.environment
         process.environment = environment
 
         let stdinPipe = Pipe()
@@ -97,20 +112,24 @@ struct GitClient {
             let message = stderr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 ? stdout.trimmingCharacters(in: .whitespacesAndNewlines)
                 : stderr.trimmingCharacters(in: .whitespacesAndNewlines)
-            let command = (["git"] + args).joined(separator: " ")
+            let command = commandSummary(for: args)
             throw GitClientError.commandFailed(command: command, message: message)
         }
 
         return GitCommandResult(stdout: stdout, stderr: stderr, status: process.terminationStatus)
     }
 
-    func run(args: [String], in repositoryURL: URL) throws -> GitCommandResult {
-        let result = try runAllowingFailure(args: args, in: repositoryURL)
+    func run(
+        args: [String],
+        in repositoryURL: URL,
+        mode: GitExecutionMode = .normal
+    ) throws -> GitCommandResult {
+        let result = try runAllowingFailure(args: args, in: repositoryURL, mode: mode)
         if result.status != 0 {
             let message = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 ? result.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
                 : result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
-            let command = (["git"] + args).joined(separator: " ")
+            let command = commandSummary(for: args)
             throw GitClientError.commandFailed(command: command, message: message)
         }
 
@@ -120,16 +139,16 @@ struct GitClient {
     func cloneWithProgress(
         remoteURL: String,
         destination: URL,
-        onProgress: @escaping @Sendable (String) -> Void
+        onProgress: @escaping @Sendable (String) -> Void,
+        mode: GitExecutionMode = .normal
     ) throws -> Process {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
         process.arguments = ["git", "clone", "--progress", remoteURL, destination.path]
         process.currentDirectoryURL = destination.deletingLastPathComponent()
 
-        var environment = ProcessInfo.processInfo.environment
-        environment["LC_ALL"] = "C"
-        environment["LANG"] = "C"
+        let environmentSetup = try prepareEnvironment(for: mode)
+        let environment = environmentSetup.environment
         process.environment = environment
 
         let stderrPipe = Pipe()
@@ -143,19 +162,34 @@ struct GitClient {
             }
         }
 
-        try process.run()
+        if let askPassScriptURL = environmentSetup.askPassScriptURL {
+            process.terminationHandler = { _ in
+                try? FileManager.default.removeItem(at: askPassScriptURL)
+            }
+        }
+
+        do {
+            try process.run()
+        } catch {
+            cleanupAskPassScript(at: environmentSetup.askPassScriptURL)
+            throw error
+        }
         return process
     }
 
-    func runAllowingFailure(args: [String], in repositoryURL: URL) throws -> GitCommandResult {
+    func runAllowingFailure(
+        args: [String],
+        in repositoryURL: URL,
+        mode: GitExecutionMode = .normal
+    ) throws -> GitCommandResult {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
         process.arguments = ["git"] + args
         process.currentDirectoryURL = repositoryURL
 
-        var environment = ProcessInfo.processInfo.environment
-        environment["LC_ALL"] = "C"
-        environment["LANG"] = "C"
+        let environmentSetup = try prepareEnvironment(for: mode)
+        defer { cleanupAskPassScript(at: environmentSetup.askPassScriptURL) }
+        let environment = environmentSetup.environment
         process.environment = environment
 
         let stdoutPipe = Pipe()
@@ -193,5 +227,51 @@ struct GitClient {
         let stderr = String(data: stderrData, encoding: .utf8) ?? ""
 
         return GitCommandResult(stdout: stdout, stderr: stderr, status: process.terminationStatus)
+    }
+
+    private func commandSummary(for args: [String]) -> String {
+        let subcommand = args.first ?? "command"
+        return "git \(subcommand) [args=\(args.count)]"
+    }
+
+    private func prepareEnvironment(for mode: GitExecutionMode) throws -> (environment: [String: String], askPassScriptURL: URL?) {
+        var environment = ProcessInfo.processInfo.environment
+        environment["LC_ALL"] = "C"
+        environment["LANG"] = "C"
+        environment["GIT_TERMINAL_PROMPT"] = "0"
+
+        switch mode {
+        case .normal:
+            return (environment, nil)
+        case .withCredential(let credential):
+            let scriptURL = URL(fileURLWithPath: NSTemporaryDirectory())
+                .appendingPathComponent("zion-git-askpass-\(UUID().uuidString).sh")
+
+            let script = """
+            #!/bin/sh
+            prompt="$1"
+            case "$prompt" in
+              *sername*|*USERNAME*) printf '%s\\n' "${ZION_GIT_USERNAME}" ;;
+              *assword*|*PASSWORD*) printf '%s\\n' "${ZION_GIT_SECRET}" ;;
+              *) printf '\\n' ;;
+            esac
+            """
+
+            try script.write(to: scriptURL, atomically: true, encoding: .utf8)
+            try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: scriptURL.path)
+
+            environment["GIT_ASKPASS"] = scriptURL.path
+            environment["SSH_ASKPASS"] = scriptURL.path
+            environment["GIT_ASKPASS_REQUIRE"] = "force"
+            environment["ZION_GIT_USERNAME"] = credential.username ?? ""
+            environment["ZION_GIT_SECRET"] = credential.secret
+
+            return (environment, scriptURL)
+        }
+    }
+
+    private func cleanupAskPassScript(at scriptURL: URL?) {
+        guard let scriptURL else { return }
+        try? FileManager.default.removeItem(at: scriptURL)
     }
 }

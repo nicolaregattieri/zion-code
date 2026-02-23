@@ -314,6 +314,10 @@ final class RepositoryViewModel {
     var cloneError: String?
     @ObservationIgnored private var cloneTask: Task<Void, Never>?
     @ObservationIgnored private var cloneProcess: Process?
+    var isGitAuthPromptVisible: Bool = false
+    var gitAuthContext: GitAuthContext?
+    @ObservationIgnored private var gitAuthPromptContinuation: CheckedContinuation<GitAuthPromptResult, Never>?
+    @ObservationIgnored private let gitCredentialStore = GitCredentialStore()
 
     // Zion Code state
     var repositoryFiles: [FileItem] = [] {
@@ -1581,7 +1585,12 @@ final class RepositoryViewModel {
                 }
                 
                 // 3. Pull changes
-                let _ = try await worker.runAction(args: ["pull"], in: url)
+                let _ = try await runActionWithCredentialRetry(
+                    label: "Pull",
+                    args: ["pull"],
+                    in: url,
+                    commandSummary: redactedGitCommandSummary(args: ["pull"])
+                )
                 
                 clearError()
                 statusMessage = L10n("Checkout e Pull concluídos para %@", localName)
@@ -3413,7 +3422,12 @@ final class RepositoryViewModel {
 
         actionTask = Task {
             do {
-                let output = try await worker.runAction(args: args, in: repositoryURL)
+                let output = try await runActionWithCredentialRetry(
+                    label: label,
+                    args: args,
+                    in: repositoryURL,
+                    commandSummary: commandSummary
+                )
                 try Task.checkCancellation()
 
                 clearError()
@@ -3432,6 +3446,155 @@ final class RepositoryViewModel {
                 handleError(error)
             }
         }
+    }
+
+    private func runActionWithCredentialRetry(
+        label: String,
+        args: [String],
+        in repositoryURL: URL,
+        commandSummary: String
+    ) async throws -> String {
+        do {
+            return try await worker.runAction(args: args, in: repositoryURL)
+        } catch {
+            guard shouldHandleCredentialPrompt(for: args),
+                  isCredentialFailure(error),
+                  let context = buildGitAuthContext(
+                    label: label,
+                    args: args,
+                    commandSummary: commandSummary,
+                    error: error
+                  ) else {
+                throw error
+            }
+
+            if let stored = gitCredentialStore.load(host: context.host, usernameHint: context.usernameHint) {
+                do {
+                    return try await worker.runAction(
+                        args: args,
+                        in: repositoryURL,
+                        mode: .withCredential(GitCredentialInput(username: stored.username, secret: stored.secret))
+                    )
+                } catch {
+                    if isCredentialFailure(error) {
+                        try? gitCredentialStore.delete(host: context.host, username: stored.username)
+                    } else {
+                        throw error
+                    }
+                }
+            }
+
+            let promptResult = await requestGitCredentials(context: context)
+            switch promptResult {
+            case .cancelled:
+                throw GitClientError.commandFailed(command: commandSummary, message: L10n("git.auth.cancelled"))
+            case .provided(let usernameRaw, let secretRaw):
+                let secret = secretRaw.clean
+                guard !secret.isEmpty else {
+                    throw GitClientError.commandFailed(command: commandSummary, message: L10n("git.auth.secretRequired"))
+                }
+
+                let normalizedUsername = usernameRaw.clean
+                let effectiveUsername = normalizedUsername.isEmpty ? context.usernameHint : normalizedUsername
+                let credential = GitCredentialInput(username: effectiveUsername, secret: secret)
+                let output = try await worker.runAction(args: args, in: repositoryURL, mode: .withCredential(credential))
+
+                if let effectiveUsername, !effectiveUsername.isEmpty {
+                    try? gitCredentialStore.save(host: context.host, username: effectiveUsername, secret: secret)
+                }
+                return output
+            }
+        }
+    }
+
+    private func shouldHandleCredentialPrompt(for args: [String]) -> Bool {
+        guard let subcommand = args.first?.lowercased() else { return false }
+        return subcommand == "fetch"
+            || subcommand == "pull"
+            || subcommand == "push"
+            || subcommand == "ls-remote"
+    }
+
+    private func buildGitAuthContext(
+        label: String,
+        args: [String],
+        commandSummary: String,
+        error: Error
+    ) -> GitAuthContext? {
+        guard let remoteURL = resolveRemoteURL(for: args),
+              let remote = parseHTTPSRemote(remoteURL) else {
+            return nil
+        }
+
+        let message: String
+        if case let GitClientError.commandFailed(_, m) = error {
+            message = m
+        } else {
+            message = error.localizedDescription
+        }
+
+        return GitAuthContext(
+            operationLabel: label,
+            commandSummary: commandSummary,
+            remoteURL: remoteURL,
+            host: remote.host,
+            usernameHint: remote.usernameHint,
+            errorMessage: message,
+            isAzureDevOps: remote.host.contains("dev.azure.com")
+        )
+    }
+
+    private func resolveRemoteURL(for args: [String]) -> String? {
+        guard !remotes.isEmpty else { return nil }
+        let remoteMap = Dictionary(uniqueKeysWithValues: remotes.map { ($0.name, $0.url) })
+
+        let nonOptionTokens = args.filter { !$0.hasPrefix("-") }
+        for token in nonOptionTokens.reversed() {
+            if let url = remoteMap[token] {
+                return url
+            }
+        }
+        return remotes.first?.url
+    }
+
+    private func parseHTTPSRemote(_ remoteURL: String) -> (host: String, usernameHint: String?)? {
+        guard let components = URLComponents(string: remoteURL),
+              let scheme = components.scheme?.lowercased(),
+              (scheme == "https" || scheme == "http"),
+              let host = components.host?.lowercased() else {
+            return nil
+        }
+
+        let user = components.user?.clean
+        return (host, user?.isEmpty == true ? nil : user)
+    }
+
+    private func requestGitCredentials(context: GitAuthContext) async -> GitAuthPromptResult {
+        if let existing = gitAuthPromptContinuation {
+            gitAuthPromptContinuation = nil
+            existing.resume(returning: .cancelled)
+        }
+        gitAuthContext = context
+        isGitAuthPromptVisible = true
+        return await withCheckedContinuation { continuation in
+            gitAuthPromptContinuation = continuation
+        }
+    }
+
+    func submitGitAuthPrompt(username: String, secret: String) {
+        guard let continuation = gitAuthPromptContinuation else { return }
+        gitAuthPromptContinuation = nil
+        isGitAuthPromptVisible = false
+        gitAuthContext = nil
+        continuation.resume(returning: .provided(username: username, secret: secret))
+    }
+
+    func cancelGitAuthPrompt() {
+        guard let continuation = gitAuthPromptContinuation else { return }
+        gitAuthPromptContinuation = nil
+        isGitAuthPromptVisible = false
+        gitAuthContext = nil
+        continuation.resume(returning: .cancelled)
     }
 
     private func redactedGitCommandSummary(args: [String]) -> String {
@@ -5241,7 +5404,9 @@ final class RepositoryViewModel {
         let lower = message.lowercased()
         return lower.contains("authentication failed")
             || lower.contains("could not read username")
+            || lower.contains("could not read password")
             || lower.contains("terminal prompts disabled")
+            || lower.contains("device not configured")
             || lower.contains("credential")
             || lower.contains("keychain")
             || lower.contains("git-credential-osxkeychain")

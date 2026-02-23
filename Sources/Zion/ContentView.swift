@@ -235,6 +235,19 @@ struct ContentView: View {
         .sheet(isPresented: $model.isCodeReviewVisible) {
             CodeReviewSheet(model: model)
         }
+        .sheet(isPresented: $model.isGitAuthPromptVisible) {
+            if let context = model.gitAuthContext {
+                GitAuthPromptSheet(
+                    context: context,
+                    onSubmit: { username, secret in
+                        model.submitGitAuthPrompt(username: username, secret: secret)
+                    },
+                    onCancel: {
+                        model.cancelGitAuthPrompt()
+                    }
+                )
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .showKeyboardShortcuts)) { _ in
             isShortcutsVisible = true
         }
