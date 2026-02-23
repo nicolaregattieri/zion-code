@@ -38,6 +38,10 @@ struct KeyboardShortcutsSheet: View {
                         (L10n("shortcuts.find"), "⌘F"),
                         (L10n("shortcuts.findReplace"), "⌘H"),
                         (L10n("shortcuts.goToLine"), "⌘G"),
+                        (L10n("shortcuts.selectNextOccurrence"), "⌘D"),
+                        (L10n("shortcuts.goToDefinition"), "F12"),
+                        (L10n("shortcuts.findReferences"), "⇧F12"),
+                        (L10n("shortcuts.cmdClickDefinition"), "⌘Click"),
                         (L10n("Git Blame"), "⇧⌘B"),
                     ])
 

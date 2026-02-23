@@ -427,6 +427,11 @@ final class RepositoryViewModel {
     // Performance caches
     private(set) var maxLaneCount: Int = 1
     private(set) var flatFileCache: [FileItem] = []
+    var editorJumpLineTarget: Int = 0
+    var editorJumpToken: Int = 0
+
+    @ObservationIgnored private let editorSymbolIndex = EditorSymbolIndex()
+    @ObservationIgnored private var editorSymbolIndexTask: Task<Void, Never>?
 
     var worktreeNameSlug: String {
         slugifiedWorktreeName(from: worktreeNameInput)
@@ -1014,6 +1019,7 @@ final class RepositoryViewModel {
             }
             repositoryFiles = files  // single assignment, single cache rebuild
             reloadExpandedDirectories()
+            scheduleEditorSymbolIndexRebuild(repositoryURL: url)
         }
     }
 
@@ -1140,6 +1146,37 @@ final class RepositoryViewModel {
             } catch {
                 codeFileContent = "Erro ao ler arquivo: \(error.localizedDescription)"
             }
+        }
+    }
+
+    func findEditorDefinitions(for query: EditorSymbolQuery) async -> [EditorSymbolLocation] {
+        guard let repositoryURL else { return [] }
+        return await editorSymbolIndex.definitions(for: query, repositoryURL: repositoryURL)
+    }
+
+    func findEditorReferences(for query: EditorSymbolQuery) async -> [EditorSymbolLocation] {
+        guard let repositoryURL else { return [] }
+        return await editorSymbolIndex.references(for: query, repositoryURL: repositoryURL)
+    }
+
+    func openEditorLocation(_ location: EditorSymbolLocation) {
+        guard let repositoryURL else { return }
+        let targetURL = repositoryURL.appendingPathComponent(location.relativePath)
+        let item = FileItem(url: targetURL, isDirectory: false, children: nil)
+        selectCodeFile(item)
+
+        let targetID = item.id
+        let targetLine = max(1, location.line)
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            for _ in 0..<50 {
+                if selectedCodeFile?.id == targetID, originalFileContents[targetID] != nil {
+                    break
+                }
+                try? await Task.sleep(for: .milliseconds(30))
+            }
+            editorJumpLineTarget = targetLine
+            editorJumpToken += 1
         }
     }
 
@@ -1442,6 +1479,13 @@ final class RepositoryViewModel {
             return result
         }
         flatFileCache = flatten(repositoryFiles)
+    }
+
+    private func scheduleEditorSymbolIndexRebuild(repositoryURL: URL) {
+        editorSymbolIndexTask?.cancel()
+        editorSymbolIndexTask = Task(priority: .utility) { [editorSymbolIndex] in
+            await editorSymbolIndex.rebuild(repositoryURL: repositoryURL)
+        }
     }
 
     func toggleExpansion(for path: String) {

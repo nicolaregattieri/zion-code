@@ -1359,3 +1359,17 @@
 "git.auth.continue" = "Continue";
 "git.auth.cancelled" = "Git authentication was cancelled by the user.";
 "git.auth.secretRequired" = "Provide a password or PAT to continue.";
+
+// Editor Navigation (VSCode-like)
+"shortcuts.selectNextOccurrence" = "Select next occurrence";
+"shortcuts.goToDefinition" = "Go to definition";
+"shortcuts.findReferences" = "Find references";
+"shortcuts.cmdClickDefinition" = "Cmd+Click go to definition";
+"help.code.navigation" = "Symbol navigation with Cmd+D, F12, Shift+F12 and Cmd+Click";
+"editor.navigation.definitions.title" = "Definitions: %@";
+"editor.navigation.references.title" = "References: %@";
+"editor.navigation.noResults" = "No results found.";
+"editor.navigation.definition.notFound" = "Definition not found for '%@'.";
+"editor.navigation.definition.opened" = "Opened definition for '%@'.";
+"editor.navigation.references.notFound" = "No references found for '%@'.";
+"editor.navigation.references.found" = "%@ reference(s) found for '%@'.";

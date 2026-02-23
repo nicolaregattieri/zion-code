@@ -41,6 +41,7 @@ struct HelpSheet: View {
                     "help.code.themes", "help.code.unsaved", "help.code.newfile",
                     "help.code.saveas", "help.code.openineditor", "help.code.contextmenu",
                     "help.code.findreplace", "help.code.markdownpreview",
+                    "help.code.navigation",
                     "help.code.tabsize", "help.code.columnruler",
                     "help.code.brackets", "help.code.indentguides", "help.code.repoconfig",
                     "help.code.filehistory"]
