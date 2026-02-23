@@ -1747,17 +1747,7 @@ private struct FindSearchTextField: NSViewRepresentable {
         }
     }
 
-    final class KeyAwareTextField: NSTextField {
-        override func textDidEndEditing(_ notification: Notification) {
-            // Keep focus in the find box on Enter so repeated next/prev navigation stays fluid.
-            if let window {
-                DispatchQueue.main.async {
-                    window.makeFirstResponder(self)
-                }
-            }
-            super.textDidEndEditing(notification)
-        }
-    }
+    final class KeyAwareTextField: NSTextField {}
 }
 
 struct CodeTab: View {
