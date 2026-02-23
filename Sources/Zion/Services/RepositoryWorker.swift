@@ -289,13 +289,11 @@ actor RepositoryWorker {
     }
 
     private func branchInfoList(in repositoryURL: URL) throws -> [BranchInfo] {
-        let recordSeparator = Character(UnicodeScalar(0x1e)!)
-        let fieldSeparator = Character(UnicodeScalar(0x1f)!)
         let output = try git.run(
             args: [
                 "for-each-ref",
                 "--sort=-committerdate",
-                "--format=%(refname)%x1F%(refname:short)%x1F%(objectname)%x1F%(upstream:short)%x1F%(committerdate:iso-strict)%x1E",
+                "--format=%(refname)\t%(refname:short)\t%(objectname)\t%(upstream:short)\t%(committerdate:iso-strict)",
                 "refs/heads",
                 "refs/remotes"
             ],
@@ -303,9 +301,9 @@ actor RepositoryWorker {
         ).stdout
 
         return output
-            .split(separator: recordSeparator, omittingEmptySubsequences: true)
+            .split(separator: "\n", omittingEmptySubsequences: true)
             .compactMap { rawRecord in
-                let fields = rawRecord.split(separator: fieldSeparator, omittingEmptySubsequences: false).map(String.init)
+                let fields = rawRecord.split(separator: "\t", omittingEmptySubsequences: false).map(String.init)
                 guard fields.count >= 5 else { return nil }
 
                 let fullRef = fields[0].clean

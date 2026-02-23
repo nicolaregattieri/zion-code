@@ -12,6 +12,8 @@ struct GraphScreen: View {
     @State private var searchMatchIDs: [String] = []
     @State private var searchMatchIDSet: Set<String> = []
     @State private var isShowingQuickCommit: Bool = false
+    @State private var isShowingCreateBranchFromPending: Bool = false
+    @State private var pendingBranchNameInput: String = ""
     @State private var isShowingQuickStash: Bool = false
     @State private var isShowingStashList: Bool = false
     @FocusState private var isSearchFocused: Bool
@@ -75,6 +77,12 @@ struct GraphScreen: View {
                     scrollToMatch(id: searchMatchIDs[0], proxy: proxy)
                 }
             }
+            .onChange(of: model.uncommittedChanges) { _, changes in
+                if changes.isEmpty, showingPendingChanges {
+                    showingPendingChanges = false
+                    model.selectChangeFile(nil)
+                }
+            }
             .background {
                 Button("") { isSearchFocused = true }
                     .keyboardShortcut("f", modifiers: .command)
@@ -104,7 +112,15 @@ struct GraphScreen: View {
                             hasConflicts: worktree.hasConflicts,
                             isCurrent: worktree.isCurrent
                         ) {
-                            model.openWorktreeInZion(worktree)
+                            showingPendingChanges = worktree.uncommittedCount > 0
+                            if showingPendingChanges {
+                                model.selectCommit(nil)
+                            }
+                            model.openWorktreeInZion(
+                                worktree,
+                                navigateToCode: false,
+                                sectionAfterOpen: .graph
+                            )
                         }
                     }
                 }
@@ -480,8 +496,75 @@ struct GraphScreen: View {
                             .frame(width: 450)
                         }
 
+                        Button {
+                            isShowingCreateBranchFromPending = true
+                        } label: {
+                            Label(L10n("pending.createBranchHere"), systemImage: "arrow.triangle.branch")
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .sheet(isPresented: $isShowingCreateBranchFromPending) {
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text(L10n("pending.createBranchHere"))
+                                    .font(.title3.bold())
+                                Text(L10n("pending.createBranchHere.subtitle"))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+
+                                TextField(L10n("pending.createBranch.placeholder"), text: $pendingBranchNameInput)
+                                    .textFieldStyle(.roundedBorder)
+                                    .onSubmit {
+                                        createBranchFromPending()
+                                    }
+
+                                HStack {
+                                    Button(L10n("Cancelar")) {
+                                        isShowingCreateBranchFromPending = false
+                                    }
+                                    .buttonStyle(.bordered)
+                                    .keyboardShortcut(.escape, modifiers: [])
+
+                                    Spacer()
+
+                                    Button(L10n("Criar branch")) {
+                                        createBranchFromPending()
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .tint(DesignSystem.Colors.actionPrimary)
+                                    .disabled(pendingBranchNameInput.clean.isEmpty)
+                                    .keyboardShortcut(.return, modifiers: [])
+                                }
+                            }
+                            .padding(24)
+                            .frame(width: 420)
+                        }
+
+                        Menu {
+                            pendingTransferMenuItems()
+                        } label: {
+                            Label(L10n("pending.copyChanges"), systemImage: "doc.on.doc")
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+
                         // STASH MENU - COMBINED
                         Menu {
+                            Button(role: .destructive) {
+                                performGitAction(
+                                    L10n("Descartar Mudanças"),
+                                    L10n("discardAll.confirm.current"),
+                                    true
+                                ) {
+                                    model.discardAllChanges()
+                                    showingPendingChanges = true
+                                    model.selectCommit(nil)
+                                }
+                            } label: {
+                                Label(L10n("Descartar"), systemImage: "trash.slash.fill")
+                            }
+
+                            Divider()
+
                             Button {
                                 isShowingQuickStash = true
                             } label: {
@@ -578,6 +661,95 @@ struct GraphScreen: View {
         .onTapGesture {
             showingPendingChanges = true
             model.selectCommit(nil)
+        }
+        .contextMenu {
+            Button {
+                isShowingCreateBranchFromPending = true
+            } label: {
+                Label(L10n("pending.createBranchHere"), systemImage: "arrow.triangle.branch")
+            }
+
+            Divider()
+
+            pendingTransferMenuItems()
+
+            Divider()
+
+            Button(role: .destructive) {
+                performGitAction(
+                    L10n("Descartar Mudanças"),
+                    L10n("discardAll.confirm.current"),
+                    true
+                ) {
+                    model.discardAllChanges()
+                    showingPendingChanges = true
+                    model.selectCommit(nil)
+                }
+            } label: {
+                Label(L10n("Descartar"), systemImage: "trash.slash.fill")
+            }
+        }
+    }
+
+    private var nonCurrentWorktrees: [WorktreeItem] {
+        model.worktrees.filter { !$0.isCurrent }
+    }
+
+    private func createBranchFromPending() {
+        let branchName = pendingBranchNameInput.clean
+        guard !branchName.isEmpty else { return }
+        model.createBranch(named: branchName, from: "HEAD", andCheckout: true)
+        pendingBranchNameInput = ""
+        isShowingCreateBranchFromPending = false
+        showingPendingChanges = true
+        model.selectCommit(nil)
+    }
+
+    @ViewBuilder
+    private func pendingTransferMenuItems() -> some View {
+        if nonCurrentWorktrees.isEmpty {
+            Button(L10n("pending.transfer.noWorktrees")) {}
+                .disabled(true)
+        } else {
+            Menu(L10n("pending.transfer.copy")) {
+                ForEach(nonCurrentWorktrees) { worktree in
+                    Button(worktree.branch.isEmpty ? URL(fileURLWithPath: worktree.path).lastPathComponent : worktree.branch) {
+                        transferPendingChanges(to: worktree, keepInCurrentWorktree: true)
+                    }
+                }
+            }
+
+            Divider()
+
+            Menu(L10n("pending.transfer.move")) {
+                ForEach(nonCurrentWorktrees) { worktree in
+                    Button(worktree.branch.isEmpty ? URL(fileURLWithPath: worktree.path).lastPathComponent : worktree.branch) {
+                        transferPendingChanges(to: worktree, keepInCurrentWorktree: false)
+                    }
+                }
+            }
+        }
+    }
+
+    private func transferPendingChanges(to worktree: WorktreeItem, keepInCurrentWorktree: Bool) {
+        let performTransfer = {
+            model.transferPendingChanges(toWorktree: worktree, keepInCurrentWorktree: keepInCurrentWorktree)
+            showingPendingChanges = true
+            model.selectCommit(nil)
+        }
+
+        if keepInCurrentWorktree {
+            performTransfer()
+            return
+        }
+
+        let targetName = worktree.branch.isEmpty ? URL(fileURLWithPath: worktree.path).lastPathComponent : worktree.branch
+        performGitAction(
+            L10n("pending.transfer.move.short"),
+            L10n("pending.transfer.move.confirm", targetName),
+            true
+        ) {
+            performTransfer()
         }
     }
 
@@ -925,15 +1097,26 @@ private struct WorktreePill: View {
     let isCurrent: Bool
     let action: () -> Void
 
+    private var isMainLine: Bool {
+        let normalized = branch.lowercased()
+        return normalized == "main" || normalized == "master"
+    }
+
+    private var currentAccent: Color {
+        isMainLine ? DesignSystem.Colors.success : DesignSystem.Colors.commitSplit
+    }
+
     private var borderColor: Color {
         if hasConflicts { return DesignSystem.Colors.destructive.opacity(0.8) }
         if dirtyCount > 0 { return DesignSystem.Colors.warning.opacity(0.8) }
-        if isCurrent { return DesignSystem.Colors.commitSplit.opacity(0.9) }
+        if isCurrent { return currentAccent.opacity(0.95) }
         return DesignSystem.Colors.glassBorderDark
     }
 
     private var backgroundColor: Color {
-        if isCurrent { return DesignSystem.Colors.commitSplit.opacity(0.18) }
+        if isCurrent {
+            return isMainLine ? DesignSystem.Colors.statusGreenBg : DesignSystem.Colors.selectionBackground
+        }
         return DesignSystem.Colors.glassSubtle
     }
 
@@ -947,9 +1130,9 @@ private struct WorktreePill: View {
         Button(action: action) {
             HStack(spacing: 6) {
                 Text("⊞")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.system(size: 11, weight: isCurrent ? .bold : .semibold))
                 Text(branch)
-                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                    .font(.system(size: 11, weight: isCurrent ? .bold : .semibold, design: .monospaced))
                     .lineLimit(1)
                 Circle()
                     .fill(statusColor)
@@ -973,9 +1156,10 @@ private struct WorktreePill: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
-                    .stroke(borderColor, lineWidth: 1)
+                    .stroke(borderColor, lineWidth: isCurrent ? 1.8 : 1)
             )
         }
         .buttonStyle(.plain)
+        .shadow(color: isCurrent ? currentAccent.opacity(0.24) : .clear, radius: 8, y: 2)
     }
 }

@@ -54,11 +54,17 @@ struct BranchReviewSheet: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(DesignSystem.Colors.ai)
-                .disabled(model.branchReviewSource.isEmpty || model.branchReviewTarget.isEmpty || model.isBranchReviewLoading)
+                .disabled(
+                    model.branchReviewSource.isEmpty
+                        || model.branchReviewTarget.isEmpty
+                        || model.branchReviewSource == model.branchReviewTarget
+                        || model.isBranchReviewLoading
+                )
             }
         }
         .padding(24)
         .frame(width: 600, height: 420)
+        .onAppear { model.ensureBranchReviewSelections() }
     }
 
     private var header: some View {
@@ -84,8 +90,24 @@ struct BranchReviewSheet: View {
                     .font(.caption).foregroundStyle(.secondary)
                 Picker("", selection: $model.branchReviewTarget) {
                     Text(L10n("Selecionar...")).tag("")
-                    ForEach(model.branches, id: \.self) { branch in
-                        Text(branch).tag(branch)
+                    if !model.localBranchOptions.isEmpty {
+                        Section(L10n("branch.group.local")) {
+                            ForEach(model.localBranchOptions, id: \.self) { branch in
+                                Text(branch).tag(branch)
+                            }
+                        }
+                    }
+                    if !model.remoteBranchOptions.isEmpty {
+                        Section(L10n("branch.group.remote")) {
+                            ForEach(model.remoteBranchOptions, id: \.self) { branch in
+                                Text(branch).tag(branch)
+                            }
+                        }
+                    }
+                    if model.localBranchOptions.isEmpty && model.remoteBranchOptions.isEmpty {
+                        ForEach(model.branches, id: \.self) { branch in
+                            Text(branch).tag(branch)
+                        }
                     }
                 }
                 .pickerStyle(.menu)
@@ -102,8 +124,24 @@ struct BranchReviewSheet: View {
                     .font(.caption).foregroundStyle(.secondary)
                 Picker("", selection: $model.branchReviewSource) {
                     Text(L10n("Selecionar...")).tag("")
-                    ForEach(model.branches, id: \.self) { branch in
-                        Text(branch).tag(branch)
+                    if !model.localBranchOptions.isEmpty {
+                        Section(L10n("branch.group.local")) {
+                            ForEach(model.localBranchOptions, id: \.self) { branch in
+                                Text(branch).tag(branch)
+                            }
+                        }
+                    }
+                    if !model.remoteBranchOptions.isEmpty {
+                        Section(L10n("branch.group.remote")) {
+                            ForEach(model.remoteBranchOptions, id: \.self) { branch in
+                                Text(branch).tag(branch)
+                            }
+                        }
+                    }
+                    if model.localBranchOptions.isEmpty && model.remoteBranchOptions.isEmpty {
+                        ForEach(model.branches, id: \.self) { branch in
+                            Text(branch).tag(branch)
+                        }
                     }
                 }
                 .pickerStyle(.menu)

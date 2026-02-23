@@ -51,6 +51,9 @@ Zion doesn't make you choose.
 - Smart worktree create: prefix + name derives branch/path automatically, with advanced manual mode.
 - Inline sidebar flow: `+ Novo Worktree` creates context without leaving the current screen.
 - Graph worktree pills: quick switch with in-pill dirty/conflict status (`⊞ branch ● N`).
+- Pending Changes actions: visible `Create Branch Here` plus contextual actions in Zion Tree.
+- Smart change transfer: **Copy Changes** to another worktree (safe default), with **Move Changes** as confirmed action.
+- Guided recovery for transfer/remove edge cases: conflict-friendly dialogs keep recovery stash refs and offer next steps.
 - Root-only recents: global list stays project-focused, with `WT n` badge per repo.
 
 ---
@@ -135,7 +138,7 @@ List open pull requests, create new PRs from your current branch, and let AI gen
 
 ### Worktree-First Workflow
 
-Create worktrees with a smart prefix+name flow, open directly into Zion Code, and keep a dedicated terminal context per worktree. Global Recents stays root-only while context switching happens in Worktrees.
+Create worktrees with a smart prefix+name flow, open directly into Zion Code, and keep a dedicated terminal context per worktree. In Zion Tree, switch context through worktree pills, create branches directly from Pending Changes, and copy/move pending work safely across worktrees. Global Recents stays root-only while context switching happens in Worktrees.
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/8e07e3bd-55ab-41ab-ac51-aecf82ede782" width="100%" alt="Quick Open fuzzy search overlay" />
@@ -209,7 +212,7 @@ Zion is keyboard-first. Press `Cmd+?` to see all shortcuts inside the app.
 
 | Area | Features |
 |------|----------|
-| **Graph** | Lane-colored commit cards, commit search, jump bar, branch focus, pending changes, status bar pills, signature verification, keyboard navigation, paginated loading (up to 5000 commits) |
+| **Graph** | Lane-colored commit cards, commit search, jump bar, branch focus, pending changes with quick actions (commit/stash/discard/create branch), worktree pills with dirty status, signature verification, keyboard navigation, paginated loading (up to 5000 commits) |
 | **Editor** | Syntax highlighting (regex-cached), Quick Open, Git Blame, 6 themes, 5+ font families, line spacing control, line wrapping, file watcher, multi-tab, unsaved indicator |
 | **Terminal** | Real PTY (`/bin/zsh -l`), split panes (H/V), multiple tabs, independent zoom, font config, clipboard paste/drag, process preservation across view changes |
 | **Clipboard** | Auto-capture (0.5s polling), smart categorization (command/path/hash/URL/image/text), click-to-paste, double-click-to-execute, drag-and-drop, image capture, auto-cleanup |
@@ -217,13 +220,13 @@ Zion is keyboard-first. Press `Cmd+?` to see all shortcuts inside the app.
 | **Conflicts** | Built-in resolver, ours/theirs/both/custom edit, file list with status icons, auto-continue merge/rebase/cherry-pick |
 | **Branches** | Checkout, create, merge, rebase, push, pull, rename, delete, remote tracking |
 | **Tags** | Create and delete lightweight tags |
-| **AI** | Commit messages, diff explanations, PR descriptions, stash messages, provider config (Anthropic/OpenAI), Keychain API key storage, heuristic fallback |
+| **AI** | Commit messages, diff explanations, PR descriptions, stash messages, provider config (Anthropic/OpenAI), Keychain API key storage, heuristic fallback, optional AI-ready hints for transfer support |
 | **GitHub** | PR list, create PR, AI-generated PR body |
-| **Worktrees** | Smart create (prefix+name), inline sidebar form, graph quick-switch pills with dirty status, remove/prune, dedicated terminal |
+| **Worktrees** | Smart create (prefix+name), inline sidebar form, graph quick-switch pills with dirty status, single remove flow with pending-changes guidance, copy/move pending changes across worktrees, remove/prune, dedicated terminal |
 | **Remotes** | Fetch all, pull, push (normal/force-with-lease/force), add/remove, connection test |
 | **Submodules** | Status, init, update (recursive), sync |
 | **Reflog** | Visual viewer (last 50), undo last action (soft reset) |
-| **Settings** | Language (PT-BR/EN/ES/System), external editor (VS Code/Cursor/Xcode/IntelliJ/Sublime/custom), external terminal (Terminal.app/iTerm/Warp/custom), confirmation mode, background fetch (60s), root-only recents (10) |
+| **Settings** | Language (PT-BR/EN/ES/System), external editor (VS Code/Cursor/Xcode/IntelliJ/Sublime/custom), external terminal (Terminal.app/iTerm/Warp/custom), confirmation mode, background fetch (60s), root-only recents (10), AI transfer-support hint toggle |
 | **Diagnostics** | Ring-buffer logger, export/copy sanitized logs |
 
 </details>
