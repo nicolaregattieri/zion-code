@@ -41,7 +41,7 @@
 | Multiple Tabs | Open/close files with tab bar | — |
 | Save File | Save current file to disk | `⌘S` |
 | Unsaved Indicator | Visual dot on tabs with unsaved changes | — |
-| Themes | Dracula, GitHub Light, Monokai, etc. | — |
+| Themes | Dracula, City Lights, GitHub Light, Catppuccin Mocha, One Dark Pro, Tokyo Night | — |
 | Fonts | SF Mono, Menlo, Monaco, Fira Code, JetBrains Mono | — |
 | Line Spacing | Adjustable 0.8x–3.0x | — |
 | Line Wrapping | Toggle on/off | — |
@@ -153,8 +153,9 @@
 
 | Feature | Description | Shortcut |
 |---------|-------------|----------|
-| Native Settings | macOS Settings window with 3 tabs: General, AI, Notifications | `⌘,` |
-| General Tab | Language, Appearance, External Terminal, Confirmation Mode | — |
+| Native Settings | macOS Settings window with 4 tabs: General, Editor, AI, Notifications | `⌘,` |
+| General Tab | Language, Appearance, Confirmation Mode | — |
+| Editor Tab | Theme, font family/size, spacing, tab/indent, ruler, wrap, guides, bracket highlight | — |
 | AI Tab | Provider, API key, Commit style, Diff explanation depth, Auto-explain | — |
 | Notifications Tab | ntfy topic, events, PR polling interval, Auto-review toggle | — |
 
@@ -237,11 +238,10 @@
 
 | Feature | Description |
 |---------|-------------|
-| Settings Window | Native macOS Settings window (`⌘,`) with General, AI, and Notifications tabs |
+| Settings Window | Native macOS Settings window (`⌘,`) with General, Editor, AI, and Notifications tabs |
 | Language | Portuguese (BR), English, Spanish, System |
 | Appearance Mode | System, Light, Dark |
-| External Editor | VS Code, Cursor, Antigravity, Xcode, IntelliJ, Sublime, custom |
-| External Terminal | Terminal.app, iTerm, Warp, custom |
+| Focus Mode | Full-screen code/terminal focus layout with explicit in-screen exit affordance (`⌃⌘J`) |
 | Confirmation Mode | Never / Destructive Only / All |
 | Background Fetch | Auto-checks remote every 60s |
 | Recent Repositories | Root-only list (up to 10) with per-project `WT n` badge |

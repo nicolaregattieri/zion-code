@@ -46,12 +46,12 @@ Zion doesn't make you choose.
 
 ---
 
-## What's New in 1.2.1
+## What's New in 1.2.2
 
-- Documentation parity release: Help Sheet, Zion Map, and localized help keys are now synchronized end-to-end.
-- Expanded Zion Map detail cards for advanced workflows (symbol navigation, editor settings, smart clipboard actions, stash/recovery flows, AI stash/branch summaries).
-- Keyboard shortcut sheet now includes the editor `Ctrl+F` find alias.
-- Public release package bumped to `1.2.1` (build `6`) for Sparkle distribution.
+- Focus Mode UX polish: added an explicit in-screen exit control (`⌃⌘J`) while keeping keyboard/menu toggles.
+- Product simplification: external terminal/editor references removed from app surfaces; Zion now presents the integrated workspace as the primary path.
+- Documentation synchronization pass: `FEATURES.md`, Help/Map messaging, and release docs updated to reflect current behavior.
+- Public release package bumped to `1.2.2` (build `7`) for Sparkle distribution.
 
 ### Launch Week Validation (Advanced Flows)
 
