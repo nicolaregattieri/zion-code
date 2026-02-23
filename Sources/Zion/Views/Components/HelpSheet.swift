@@ -40,7 +40,8 @@ struct HelpSheet: View {
             return ["help.code.editor", "help.code.quickopen", "help.code.blame",
                     "help.code.themes", "help.code.unsaved", "help.code.newfile",
                     "help.code.saveas", "help.code.openineditor", "help.code.contextmenu",
-                    "help.code.findreplace", "help.code.tabsize", "help.code.columnruler",
+                    "help.code.findreplace", "help.code.markdownpreview",
+                    "help.code.tabsize", "help.code.columnruler",
                     "help.code.brackets", "help.code.indentguides", "help.code.repoconfig",
                     "help.code.filehistory"]
         case .terminal:

@@ -94,6 +94,8 @@ struct CodeScreen: View {
     @State private var goToLineTarget: Int = 0
     @State private var isTerminalSearchVisible: Bool = false
     @State private var terminalSearchQuery: String = ""
+    @State private var markdownPreviewRatio: CGFloat = 0.5
+    @State private var isMarkdownPreviewVisible: Bool = false
     @FocusState private var isTerminalSearchFocused: Bool
 
     var body: some View {
@@ -180,6 +182,9 @@ struct CodeScreen: View {
             Button("") { showGoToLine = true; goToLineNumber = "" }
                 .keyboardShortcut("g", modifiers: .command)
                 .frame(width: 0, height: 0).opacity(0)
+        }
+        .onChange(of: model.activeFileID) { _, _ in
+            isMarkdownPreviewVisible = false
         }
     }
     
@@ -274,6 +279,21 @@ struct CodeScreen: View {
             .tint(model.isLineWrappingEnabled ? Color.accentColor : .secondary)
             .help(L10n("Quebra de Linha Automática"))
             .accessibilityLabel(L10n("Quebra de Linha Automática"))
+
+            if isMarkdownFile {
+                Button {
+                    withAnimation(DesignSystem.Motion.detail) {
+                        isMarkdownPreviewVisible.toggle()
+                    }
+                } label: {
+                    Image(systemName: isMarkdownPreviewVisible ? "doc.richtext.fill" : "doc.richtext")
+                        .font(.caption)
+                }
+                .buttonStyle(.bordered)
+                .tint(isMarkdownPreviewVisible ? Color.accentColor : .secondary)
+                .help(L10n(isMarkdownPreviewVisible ? "editor.markdown.hidePreview" : "editor.markdown.showPreview"))
+                .accessibilityLabel(L10n("editor.markdown.preview"))
+            }
 
             EditorSettingsPopoverButton(model: model)
 
@@ -531,31 +551,19 @@ struct CodeScreen: View {
                         model.navigateToGraphRequested = true
                     }
                     .background(model.selectedTheme.colors.background)
+                } else if isMarkdownPreviewActive {
+                    DraggableSplitView(
+                        axis: .horizontal,
+                        ratio: $markdownPreviewRatio,
+                        minLeading: 320,
+                        minTrailing: 300
+                    ) {
+                        sourceEditorView
+                    } trailing: {
+                        markdownPreviewPane
+                    }
                 } else {
-                    SourceCodeEditor(
-                        text: $model.codeFileContent,
-                        theme: model.effectiveTheme,
-                        fontSize: model.effectiveFontSize,
-                        fontFamily: model.editorFontFamily,
-                        lineSpacing: model.effectiveLineSpacing,
-                        isLineWrappingEnabled: model.isLineWrappingEnabled,
-                        activeFileID: model.activeFileID,
-                        fileExtension: model.selectedCodeFile?.url.pathExtension ?? "",
-                        tabSize: model.effectiveTabSize,
-                        useTabs: model.effectiveUseTabs,
-                        autoCloseBrackets: model.editorAutoCloseBrackets,
-                        autoCloseQuotes: model.editorAutoCloseQuotes,
-                        letterSpacing: model.editorLetterSpacing,
-                        highlightCurrentLine: model.editorHighlightCurrentLine,
-                        showRuler: model.effectiveShowRuler,
-                        rulerColumn: model.effectiveRulerColumn,
-                        bracketPairHighlight: model.editorBracketPairHighlight,
-                        showIndentGuides: model.effectiveShowIndentGuides,
-                        searchQuery: isSearchVisible ? searchQuery : "",
-                        currentMatchIndex: currentMatchIndex,
-                        onMatchCountChanged: { count in matchCount = count },
-                        goToLine: goToLineTarget
-                    )
+                    sourceEditorView
                 }
             } else {
                 emptyEditorView
@@ -577,6 +585,71 @@ struct CodeScreen: View {
             Button("") { toggleReplace() }
                 .keyboardShortcut("h", modifiers: .command)
                 .frame(width: 0, height: 0).opacity(0)
+        }
+    }
+
+    private var isMarkdownFile: Bool {
+        let ext = model.selectedCodeFile?.url.pathExtension.lowercased() ?? ""
+        return ext == "md" || ext == "markdown"
+    }
+
+    private var isMarkdownPreviewActive: Bool {
+        isMarkdownFile && isMarkdownPreviewVisible
+    }
+
+    private var sourceEditorView: some View {
+        SourceCodeEditor(
+            text: $model.codeFileContent,
+            theme: model.effectiveTheme,
+            fontSize: model.effectiveFontSize,
+            fontFamily: model.editorFontFamily,
+            lineSpacing: model.effectiveLineSpacing,
+            isLineWrappingEnabled: model.isLineWrappingEnabled,
+            activeFileID: model.activeFileID,
+            fileExtension: model.selectedCodeFile?.url.pathExtension ?? "",
+            tabSize: model.effectiveTabSize,
+            useTabs: model.effectiveUseTabs,
+            autoCloseBrackets: model.editorAutoCloseBrackets,
+            autoCloseQuotes: model.editorAutoCloseQuotes,
+            letterSpacing: model.editorLetterSpacing,
+            highlightCurrentLine: model.editorHighlightCurrentLine,
+            showRuler: model.effectiveShowRuler,
+            rulerColumn: model.effectiveRulerColumn,
+            bracketPairHighlight: model.editorBracketPairHighlight,
+            showIndentGuides: model.effectiveShowIndentGuides,
+            searchQuery: isSearchVisible ? searchQuery : "",
+            currentMatchIndex: currentMatchIndex,
+            onMatchCountChanged: { count in matchCount = count },
+            goToLine: goToLineTarget
+        )
+    }
+
+    private var markdownPreviewPane: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 8) {
+                Label(L10n("editor.markdown.preview"), systemImage: "doc.text.image")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(model.effectiveTheme.colors.background)
+
+            Divider()
+
+            MarkdownPreviewView(
+                markdownText: model.codeFileContent,
+                fileURL: model.selectedCodeFile?.url,
+                repositoryURL: model.repositoryURL,
+                theme: model.effectiveTheme
+            )
+        }
+        .background(model.effectiveTheme.colors.background)
+        .overlay(alignment: .leading) {
+            Rectangle()
+                .fill(DesignSystem.Colors.glassBorderDark)
+                .frame(width: 1)
         }
     }
 
