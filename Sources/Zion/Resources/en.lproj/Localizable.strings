@@ -1309,6 +1309,11 @@
 "worktree.smart.missing" = "Fill in a name (or path + branch in advanced mode).";
 "worktree.smart.created" = "Worktree created: %@";
 "worktree.smart.empty" = "No parallel worktrees yet. Create one above.";
+"worktree.smart.branchExists.title" = "Branch already exists";
+"worktree.smart.branchExists.message" = "Branch '%@' already exists in this repository. How do you want to continue?";
+"worktree.smart.branchExists.reuse" = "Reuse existing branch";
+"worktree.smart.branchExists.createSuffix" = "Create new with suffix";
+"worktree.smart.branchExists.cancelled" = "Worktree creation cancelled.";
 "worktree.main.badge" = "ROOT";
 "worktree.main.hint" = "Main worktree (repository root)";
 "worktree.prefix.feat" = "feat";

@@ -428,19 +428,29 @@ struct GraphScreen: View {
                                 Text(L10n("Suas alteracoes serao rastreadas automaticamente (git add -A).")).font(.caption).foregroundStyle(.secondary)
 
                                 HStack(alignment: .bottom, spacing: 8) {
-                                    ScrollView(.vertical) {
-                                        TextField(L10n("Mensagem do commit..."), text: $model.commitMessageInput, axis: .vertical)
-                                            .textFieldStyle(.roundedBorder)
-                                            .font(.system(.body, design: .monospaced))
-                                            .lineLimit(3...)
-                                    }
-                                    .frame(maxHeight: 120)
-                                        .onSubmit {
-                                            if !model.commitMessageInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                                model.commit(message: model.commitMessageInput)
-                                                isShowingQuickCommit = false
-                                            }
+                                    ZStack(alignment: .topLeading) {
+                                        TextEditor(text: $model.commitMessageInput)
+                                            .font(DesignSystem.Typography.monoBody)
+                                            .lineSpacing(4)
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 4)
+                                            .background(DesignSystem.Colors.glassInset)
+                                            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous)
+                                                    .stroke(DesignSystem.Colors.glassStroke, lineWidth: 1)
+                                            )
+                                            .frame(minHeight: 180, maxHeight: 220)
+
+                                        if model.commitMessageInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                            Text(L10n("Mensagem do commit..."))
+                                                .font(DesignSystem.Typography.monoBody)
+                                                .foregroundStyle(.secondary)
+                                                .padding(.horizontal, 12)
+                                                .padding(.vertical, 10)
+                                                .allowsHitTesting(false)
                                         }
+                                    }
 
                                     Button {
                                         model.suggestCommitMessage()
@@ -489,11 +499,12 @@ struct GraphScreen: View {
                                     .buttonStyle(.borderedProminent)
                                     .tint(DesignSystem.Colors.actionPrimary)
                                     .disabled(model.commitMessageInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                                    .keyboardShortcut(.return, modifiers: [])
+                                    .keyboardShortcut(.return, modifiers: [.command])
                                 }
                             }
                             .padding(24)
-                            .frame(width: 450)
+                            .frame(width: 560)
+                            .frame(minHeight: 360)
                         }
 
                         Button {

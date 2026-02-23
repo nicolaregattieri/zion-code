@@ -1325,6 +1325,11 @@
 "worktree.smart.missing" = "Completa un nombre (o ruta + rama en modo avanzado).";
 "worktree.smart.created" = "Worktree creado: %@";
 "worktree.smart.empty" = "Todavía no hay worktrees paralelos. Crea uno arriba.";
+"worktree.smart.branchExists.title" = "La rama ya existe";
+"worktree.smart.branchExists.message" = "La rama '%@' ya existe en este repositorio. ¿Como quieres continuar?";
+"worktree.smart.branchExists.reuse" = "Reutilizar rama existente";
+"worktree.smart.branchExists.createSuffix" = "Crear nueva con sufijo";
+"worktree.smart.branchExists.cancelled" = "Creacion de worktree cancelada.";
 "worktree.main.badge" = "ROOT";
 "worktree.main.hint" = "Worktree principal (raíz del repositorio)";
 "worktree.prefix.feat" = "feat";
