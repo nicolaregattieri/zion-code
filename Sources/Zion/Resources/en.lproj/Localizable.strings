@@ -419,6 +419,8 @@
 "Nenhum provedor de IA configurado" = "No AI provider configured";
 "Chave de API invalida" = "Invalid API key";
 "Resposta invalida da API" = "Invalid API response";
+"IA temporariamente indisponivel. Tente novamente em instantes." = "AI is temporarily unavailable. Try again shortly.";
+"IA temporariamente indisponivel. Sugestao local aplicada." = "AI is temporarily unavailable. Local suggestion applied.";
 "Anthropic (Claude)" = "Anthropic (Claude)";
 "OpenAI (GPT)" = "OpenAI (GPT)";
 "Google (Gemini)" = "Google (Gemini)";

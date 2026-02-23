@@ -192,7 +192,6 @@ struct SourceCodeEditor: NSViewRepresentable {
             coord2.updateSearchHighlights(in: textView, query: searchQuery, currentIndex: currentMatchIndex)
             onMatchCountChanged?(coord2.searchMatchRanges.count)
         } else if currentMatchIndex != coord2.lastCurrentMatchIndex {
-            coord2.lastCurrentMatchIndex = currentMatchIndex
             coord2.updateCurrentMatchHighlight(in: textView, currentIndex: currentMatchIndex)
         }
 
@@ -887,6 +886,22 @@ class ZionTextView: NSTextView {
         return nil
     }
 
+    private func currentFindSeedFromSelection() -> String? {
+        let range = selectedRange()
+        guard range.location != NSNotFound, range.length > 0 else { return nil }
+        let nsString = string as NSString
+        guard NSMaxRange(range) <= nsString.length else { return nil }
+        let selectedText = nsString.substring(with: range)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !selectedText.isEmpty else { return nil }
+        guard !selectedText.contains("\n"), !selectedText.contains("\r") else { return nil }
+        return selectedText
+    }
+
+    private func emitFindSeedFromSelection() {
+        onFindSeedFromMultiSelect?(currentFindSeedFromSelection() ?? "")
+    }
+
     // MARK: - Key Interception
 
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
@@ -894,6 +909,13 @@ class ZionTextView: NSTextView {
         let key = event.charactersIgnoringModifiers?.lowercased()
 
         if flags == .command, key == "f" {
+            emitFindSeedFromSelection()
+            onToggleFindUI?()
+            return true
+        }
+
+        if flags == .control, key == "f" {
+            emitFindSeedFromSelection()
             onToggleFindUI?()
             return true
         }
@@ -920,6 +942,13 @@ class ZionTextView: NSTextView {
         let flags = event.modifierFlags.intersection([.command, .option, .shift, .control])
 
         if flags == .command, event.charactersIgnoringModifiers?.lowercased() == "f" {
+            emitFindSeedFromSelection()
+            onToggleFindUI?()
+            return
+        }
+
+        if flags == .control, event.charactersIgnoringModifiers?.lowercased() == "f" {
+            emitFindSeedFromSelection()
             onToggleFindUI?()
             return
         }

@@ -139,7 +139,7 @@ struct CommitDetailContent: View {
                                         if model.isAIConfigured {
                                             HStack {
                                                 Button {
-                                                    model.explainDiffDetailed(fileName: file.path, diff: model.currentFileDiff)
+                                                    model.explainDiffDetailed(fileName: file.path, diff: model.currentCommitFileDiff)
                                                 } label: {
                                                     if model.isExplainingDiff {
                                                         ProgressView().controlSize(.small).frame(width: 12, height: 12)
@@ -148,7 +148,7 @@ struct CommitDetailContent: View {
                                                     }
                                                 }
                                                 .buttonStyle(.bordered).controlSize(.mini)
-                                                .disabled(model.isExplainingDiff || model.currentFileDiff.isEmpty)
+                                                .disabled(model.isExplainingDiff || model.currentCommitFileDiff.isEmpty)
                                                 .help(L10n("Explicar diff com IA"))
                                                 Spacer()
                                             }
@@ -168,8 +168,8 @@ struct CommitDetailContent: View {
                                                 .padding(.bottom, 4)
                                         }
 
-                                        if !model.currentFileDiffHunks.isEmpty {
-                                            HunkDiffView(model: model, file: file.path, hunks: model.currentFileDiffHunks)
+                                        if !model.currentCommitFileDiffHunks.isEmpty {
+                                            HunkDiffView(model: model, file: file.path, hunks: model.currentCommitFileDiffHunks)
                                                 .frame(maxHeight: 300)
                                         }
                                     }
@@ -182,6 +182,9 @@ struct CommitDetailContent: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .onChange(of: commitID) { _, _ in
+                expandedFile = nil
+            }
         }
     }
 

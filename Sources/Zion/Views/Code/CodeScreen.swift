@@ -639,8 +639,13 @@ struct CodeScreen: View {
                 .frame(width: 0, height: 0).opacity(0)
 
             // Find (Cmd+F)
-            Button("") { toggleSearch() }
+            Button("") { openSearch(applySeedIfPresent: false) }
                 .keyboardShortcut("f", modifiers: .command)
+                .frame(width: 0, height: 0).opacity(0)
+
+            // Find alias (Ctrl+F)
+            Button("") { openSearch(applySeedIfPresent: false) }
+                .keyboardShortcut("f", modifiers: .control)
                 .frame(width: 0, height: 0).opacity(0)
 
             // Replace (Cmd+H)
@@ -693,8 +698,10 @@ struct CodeScreen: View {
             currentFilePath: model.selectedCodeFile?.url.path,
             onRequestDefinition: { query in handleDefinitionRequest(query) },
             onRequestReferences: { query in handleReferencesRequest(query) },
-            onFindSeedFromMultiSelect: { query in seededFindQuery = query },
-            onToggleFindUI: { toggleSearch() },
+            onFindSeedFromMultiSelect: { query in
+                seededFindQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+            },
+            onToggleFindUI: { openSearch(applySeedIfPresent: true) },
             onFindNextShortcut: {
                 if isSearchVisible, !searchQuery.isEmpty {
                     navigateToNextMatch()
@@ -771,7 +778,8 @@ struct CodeScreen: View {
                         placeholder: L10n("editor.search.placeholder"),
                         focusRequestID: findSearchFocusRequestID,
                         onEnter: { navigateToNextMatch() },
-                        onShiftEnter: { navigateToPreviousMatch() }
+                        onShiftEnter: { navigateToPreviousMatch() },
+                        onCancel: { closeSearch() }
                     )
                     .frame(height: 18)
                 }
@@ -925,19 +933,27 @@ struct CodeScreen: View {
         }
     }
 
-    private func toggleSearch() {
+    private func openSearch(applySeedIfPresent: Bool) {
         withAnimation(DesignSystem.Motion.detail) {
-            isSearchVisible.toggle()
-            if isSearchVisible {
-                if searchQuery.isEmpty, !seededFindQuery.isEmpty {
-                    searchQuery = seededFindQuery
-                    currentMatchIndex = 0
-                }
-                recomputeFindMatches()
-                findSearchFocusRequestID += 1
-            } else {
+            isSearchVisible = true
+        }
+
+        if applySeedIfPresent, !seededFindQuery.isEmpty, searchQuery != seededFindQuery {
+            searchQuery = seededFindQuery
+            currentMatchIndex = 0
+        }
+
+        recomputeFindMatches()
+        findSearchFocusRequestID += 1
+    }
+
+    private func toggleSearch() {
+        if isSearchVisible {
+            withAnimation(DesignSystem.Motion.detail) {
                 closeSearch()
             }
+        } else {
+            openSearch(applySeedIfPresent: true)
         }
     }
 
@@ -958,12 +974,24 @@ struct CodeScreen: View {
     }
 
     private func navigateToNextMatch() {
+        if matchCount == 0 {
+            recomputeFindMatches()
+        }
         guard matchCount > 0 else { return }
+        if currentMatchIndex < 0 || currentMatchIndex >= matchCount {
+            currentMatchIndex = 0
+        }
         currentMatchIndex = (currentMatchIndex + 1) % matchCount
     }
 
     private func navigateToPreviousMatch() {
+        if matchCount == 0 {
+            recomputeFindMatches()
+        }
         guard matchCount > 0 else { return }
+        if currentMatchIndex < 0 || currentMatchIndex >= matchCount {
+            currentMatchIndex = 0
+        }
         currentMatchIndex = (currentMatchIndex - 1 + matchCount) % matchCount
     }
 
@@ -1638,6 +1666,7 @@ private struct FindSearchTextField: NSViewRepresentable {
     let focusRequestID: Int
     let onEnter: () -> Void
     let onShiftEnter: () -> Void
+    let onCancel: () -> Void
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -1657,6 +1686,8 @@ private struct FindSearchTextField: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: KeyAwareTextField, context: Context) {
+        context.coordinator.parent = self
+
         if nsView.stringValue != text {
             nsView.stringValue = text
         }
@@ -1704,6 +1735,11 @@ private struct FindSearchTextField: NSViewRepresentable {
 
             if commandSelector == #selector(NSResponder.moveDown(_:)) {
                 parent.onEnter()
+                return true
+            }
+
+            if commandSelector == #selector(NSResponder.cancelOperation(_:)) {
+                parent.onCancel()
                 return true
             }
 

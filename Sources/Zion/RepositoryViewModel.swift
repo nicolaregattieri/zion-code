@@ -39,6 +39,9 @@ final class RepositoryViewModel {
     var uncommittedCount: Int = 0
     var selectedChangeFile: String?
     var currentFileDiff: String = ""
+    var selectedCommitFile: String?
+    var currentCommitFileDiff: String = ""
+    var currentCommitFileDiffHunks: [DiffHunk] = []
 
     // Terminal — pane tree architecture
     var terminalTabs: [TerminalPaneNode] = []
@@ -806,6 +809,9 @@ final class RepositoryViewModel {
         selectedChangeFile = nil
         currentFileDiff = ""
         currentFileDiffHunks = []
+        selectedCommitFile = nil
+        currentCommitFileDiff = ""
+        currentCommitFileDiffHunks = []
         selectedHunkLines = []
 
         refreshRepository(
@@ -1073,6 +1079,11 @@ final class RepositoryViewModel {
     }
 
     func selectCommit(_ commitID: String?) {
+        if selectedCommitID != commitID {
+            selectedCommitFile = nil
+            currentCommitFileDiff = ""
+            currentCommitFileDiffHunks = []
+        }
         selectedCommitID = commitID
         loadCommitDetails(for: commitID)
     }
@@ -3479,6 +3490,11 @@ final class RepositoryViewModel {
                 clearError()
                 commits = payload.commits
                 hasMoreCommits = payload.hasMore
+                if payload.selectedCommitID != selectedCommitSnapshot {
+                    selectedCommitFile = nil
+                    currentCommitFileDiff = ""
+                    currentCommitFileDiffHunks = []
+                }
                 selectedCommitID = payload.selectedCommitID
                 if let focusedBranchSnapshot {
                     statusMessage = L10n("Filtro de branch ativo: %@ · %@ commits", focusedBranchSnapshot, "\(payload.commits.count)")
@@ -3567,6 +3583,11 @@ final class RepositoryViewModel {
                 remotes = payload.remotes
                 commits = payload.commits
                 hasMoreCommits = payload.hasMoreCommits
+                if payload.selectedCommitID != selectedCommitSnapshot {
+                    selectedCommitFile = nil
+                    currentCommitFileDiff = ""
+                    currentCommitFileDiffHunks = []
+                }
                 selectedCommitID = payload.selectedCommitID
                 hasConflicts = payload.hasConflicts
                 isMerging = payload.isMerging
@@ -4218,18 +4239,19 @@ final class RepositoryViewModel {
 
     func loadDiffForCommitFile(commitID: String, file: String) {
         guard let url = repositoryURL else { return }
+        selectedCommitFile = file
         Task {
             do {
                 let diff = try await worker.runAction(
                     args: ["diff", "\(commitID)~1", commitID, "--", file],
                     in: url
                 )
-                currentFileDiff = diff.isEmpty ? L10n("Nenhuma mudanca.") : diff
-                currentFileDiffHunks = Self.parseDiffHunks(diff)
+                currentCommitFileDiff = diff.isEmpty ? L10n("Nenhuma mudanca.") : diff
+                currentCommitFileDiffHunks = Self.parseDiffHunks(diff)
             } catch {
                 logger.log(.warn, "Failed to load commit file diff: \(error.localizedDescription)", context: "\(commitID):\(file)", source: #function)
-                currentFileDiff = "Erro: \(error.localizedDescription)"
-                currentFileDiffHunks = []
+                currentCommitFileDiff = "Erro: \(error.localizedDescription)"
+                currentCommitFileDiffHunks = []
             }
         }
     }
@@ -4676,6 +4698,8 @@ final class RepositoryViewModel {
             } catch {
                 if let aiErr = error as? AIError, case .quotaExceeded = aiErr {
                     aiQuotaExceeded = true
+                } else if let aiErr = error as? AIError, case .temporarilyUnavailable = aiErr {
+                    statusMessage = L10n("IA temporariamente indisponivel. Sugestao local aplicada.")
                 }
                 logger.log(.error, "AI commit message failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
                 // Fallback to heuristic on AI failure
