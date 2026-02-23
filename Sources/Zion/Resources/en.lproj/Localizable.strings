@@ -1378,3 +1378,50 @@
 "editor.navigation.references.found" = "%@ reference(s) found for '%@'.";
 "settings.editor.showBreadcrumb" = "Show path breadcrumb";
 "editor.breadcrumb.path" = "File path breadcrumb";
+
+// 1.2.1 — Documenter parity (HelpSheet x Zion Map x Shortcuts)
+"shortcuts.findAlias" = "Find (Ctrl+F alias)";
+
+"map.tree.commitstats.title" = "Commit Statistics";
+"map.tree.commitstats.description" = "See added (+) and removed (-) lines for each commit directly in the graph.";
+"map.tree.commitstats.tip1" = "Use this to quickly identify high-impact commits.";
+"map.tree.avatars.title" = "Author Avatars";
+"map.tree.avatars.description" = "Shows Gravatar identicons next to authors for faster visual scanning.";
+"map.tree.branchsearch.title" = "Branch Search";
+"map.tree.branchsearch.description" = "Filter branches by name in the sidebar to find references quickly.";
+"map.tree.branchsearch.tip1" = "Works with partial names and remotes, like origin/feature.";
+
+"map.code.fileactions.title" = "File Actions";
+"map.code.fileactions.description" = "Create files (⌘N), use Save As (⇧⌘S), open changed files in editor, and use the full file browser context menu.";
+"map.code.fileactions.tip1" = "Right-click files/folders for new, rename, duplicate, copy, paste, and delete actions.";
+"map.code.searchreplace.title" = "Find & Replace";
+"map.code.searchreplace.description" = "Search with highlighted matches, inline replace, and shortcut-based jump to a specific line.";
+"map.code.searchreplace.tip1" = "Use ⌘G/⇧⌘G to navigate matches while find is open.";
+"map.code.navigation.title" = "Symbol Navigation";
+"map.code.navigation.description" = "Navigate symbols with next occurrence, go to definition, find references, and Cmd+Click.";
+"map.code.navigation.tip1" = "Definitions and references open in a results list for fast navigation.";
+"map.code.editorsettings.title" = "Editor Preferences";
+"map.code.editorsettings.description" = "Control tab size, ruler column, bracket highlight, indent guides, and per-repo settings.";
+"map.code.editorsettings.tip1" = "Use .zion/editor.json to override global settings per project.";
+
+"map.terminal.search.title" = "Terminal Search";
+"map.terminal.search.description" = "Search text in the active terminal without leaving your command flow.";
+
+"map.clipboard.smartactions.title" = "Smart Actions";
+"map.clipboard.smartactions.description" = "Context-aware actions for hashes, branches, and paths speed up workflows without manual typing.";
+"map.clipboard.smartactions.tip1" = "Use hashes to open in graph and paths to open in editor.";
+
+"map.ops.init.title" = "Initialize Repository";
+"map.ops.init.description" = "Create a new Git repository directly from the welcome screen with one click.";
+"map.ops.stashbadge.title" = "Stash Badge";
+"map.ops.stashbadge.description" = "The sidebar shows a stash count badge whenever there are pending stash entries.";
+
+"map.ai.summary.title" = "Pending Changes Summary";
+"map.ai.summary.description" = "Generates a natural-language summary of recent changes to speed up commits and status updates.";
+"map.ai.stash.title" = "AI Stash Messages";
+"map.ai.stash.description" = "Suggests descriptive stash messages based on current changes.";
+"map.ai.branch.title" = "Branch Summary";
+"map.ai.branch.description" = "Generates a one-line explanation of what any branch is doing.";
+
+"map.diag.sanitize.title" = "Data Sanitization";
+"map.diag.sanitize.description" = "Logs automatically remove credentials and sensitive values before export or copy.";

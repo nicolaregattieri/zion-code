@@ -50,7 +50,7 @@
 | Open in Editor | Open changed files from commit details, staging, or operations | — |
 | File Browser Context Menu | Right-click: new file/folder, rename, duplicate, copy, cut, paste, delete, reveal in Finder | — |
 | File Watcher | Auto-reload on external changes | — |
-| Find/Replace | In-editor search with match highlighting and navigation | `⌘F` / `⌘H` / `⌘G` / `⇧⌘G` |
+| Find/Replace | In-editor search with match highlighting and navigation | `⌘F` (alias `⌃F`) / `⌘H` / `⌘G` / `⇧⌘G` |
 | Select Next Occurrence | Multi-cursor selection for next matching occurrence | `⌘D` |
 | Go to Definition | Jump to symbol definition (opens in new tab) | `F12` / `⌘Click` |
 | Find References | List references of the selected symbol across repository files | `⇧F12` |
@@ -295,6 +295,7 @@
 | `⌃+` | Terminal zoom in |
 | `⌃-` | Terminal zoom out |
 | `⌘F` | Context search (graph, editor, terminal) |
+| `⌃F` | Find alias in editor |
 | `⌘G` | Go to Line |
 | `⇧⌘R` | Code Review |
 | `↑↓` | Navigate commits |

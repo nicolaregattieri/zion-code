@@ -46,16 +46,12 @@ Zion doesn't make you choose.
 
 ---
 
-## What's New in 1.2.0
+## What's New in 1.2.1
 
-- Smart worktree create: prefix + name derives branch/path automatically, with advanced manual mode.
-- Inline sidebar flow: `+ Novo Worktree` creates context without leaving the current screen.
-- Graph worktree pills: quick switch with in-pill dirty/conflict status (`⊞ branch ● N`).
-- Pending Changes actions: visible `Create Branch Here` plus contextual actions in Zion Tree.
-- Smart change transfer: **Copy Changes** to another worktree (safe default), with **Move Changes** as confirmed action.
-- Guided recovery for transfer/remove edge cases: conflict-friendly dialogs keep recovery stash refs and offer next steps.
-- Recovery Vault in Operations: list active/dangling safety snapshots, copy refs, and restore when needed.
-- Root-only recents: global list stays project-focused, with `WT n` badge per repo.
+- Documentation parity release: Help Sheet, Zion Map, and localized help keys are now synchronized end-to-end.
+- Expanded Zion Map detail cards for advanced workflows (symbol navigation, editor settings, smart clipboard actions, stash/recovery flows, AI stash/branch summaries).
+- Keyboard shortcut sheet now includes the editor `Ctrl+F` find alias.
+- Public release package bumped to `1.2.1` (build `6`) for Sparkle distribution.
 
 ### Launch Week Validation (Advanced Flows)
 
@@ -139,7 +135,7 @@ When a merge, rebase, or cherry-pick hits conflicts, Zion opens a dedicated reso
 </p>
 
 ### AI Assistant
-> Works with Anthropic Claude or OpenAI GPT.
+> Works with Anthropic Claude, OpenAI GPT, or Google Gemini.
 
 Generate commit messages from your staged diff. Get plain-language explanations of file changes. Auto-draft PR titles and descriptions. Suggest descriptive stash messages. API key stored securely in macOS Keychain. Falls back to smart heuristics when AI is not configured.
 
@@ -212,6 +208,7 @@ Zion is keyboard-first. Press `Cmd+?` to see all shortcuts inside the app.
 | `Cmd+S` | Save file |
 | `Cmd+R` | Refresh repository status |
 | `Cmd+F` | Context search (graph / editor / terminal) |
+| `Ctrl+F` | Find alias in editor |
 | `Cmd+G` | Go to line |
 | `Shift+Cmd+R` | Open Code Review |
 | `Ctrl+Plus` / `Ctrl+Minus` | Terminal zoom in / out |

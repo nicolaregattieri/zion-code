@@ -1394,3 +1394,50 @@
 "editor.navigation.references.found" = "%@ referencia(s) encontrada(s) para '%@'.";
 "settings.editor.showBreadcrumb" = "Mostrar breadcrumb de ruta";
 "editor.breadcrumb.path" = "Breadcrumb de ruta de archivo";
+
+// 1.2.1 — Documenter parity (HelpSheet x Zion Map x Shortcuts)
+"shortcuts.findAlias" = "Buscar (alias Ctrl+F)";
+
+"map.tree.commitstats.title" = "Estadísticas por Commit";
+"map.tree.commitstats.description" = "Muestra líneas agregadas (+) y eliminadas (-) por commit directamente en el grafo.";
+"map.tree.commitstats.tip1" = "Úsalo para identificar rápidamente commits de alto impacto.";
+"map.tree.avatars.title" = "Avatares de Autor";
+"map.tree.avatars.description" = "Muestra identicons de Gravatar junto a los autores para lectura visual más rápida.";
+"map.tree.branchsearch.title" = "Búsqueda de Ramas";
+"map.tree.branchsearch.description" = "Filtra ramas por nombre en la sidebar para encontrar referencias rápido.";
+"map.tree.branchsearch.tip1" = "Funciona con nombres parciales y remotos, como origin/feature.";
+
+"map.code.fileactions.title" = "Acciones de Archivo";
+"map.code.fileactions.description" = "Crea archivos (⌘N), usa Guardar como (⇧⌘S), abre cambios en el editor y usa el menú contextual completo del navegador.";
+"map.code.fileactions.tip1" = "Haz clic derecho en archivos/carpetas para crear, renombrar, duplicar, copiar, pegar y eliminar.";
+"map.code.searchreplace.title" = "Buscar y Reemplazar";
+"map.code.searchreplace.description" = "Búsqueda con resaltado de resultados, reemplazo inline y atajos para saltar a una línea específica.";
+"map.code.searchreplace.tip1" = "Usa ⌘G/⇧⌘G para navegar resultados cuando la búsqueda esté abierta.";
+"map.code.navigation.title" = "Navegación de Símbolos";
+"map.code.navigation.description" = "Navega símbolos con siguiente ocurrencia, ir a definición, buscar referencias y Cmd+Click.";
+"map.code.navigation.tip1" = "Definiciones y referencias se abren en una lista de resultados para navegación rápida.";
+"map.code.editorsettings.title" = "Preferencias del Editor";
+"map.code.editorsettings.description" = "Controla tabulación, regla de columna, resaltado de brackets, guías de indentación y configuración por repositorio.";
+"map.code.editorsettings.tip1" = "Usa .zion/editor.json para sobrescribir ajustes globales por proyecto.";
+
+"map.terminal.search.title" = "Búsqueda en Terminal";
+"map.terminal.search.description" = "Busca texto en el terminal activo sin salir de tu flujo de comandos.";
+
+"map.clipboard.smartactions.title" = "Acciones Inteligentes";
+"map.clipboard.smartactions.description" = "Acciones contextuales para hashes, ramas y rutas aceleran tareas sin teclear manualmente.";
+"map.clipboard.smartactions.tip1" = "Usa hashes para abrir en el grafo y rutas para abrir en el editor.";
+
+"map.ops.init.title" = "Inicializar Repositorio";
+"map.ops.init.description" = "Crea un nuevo repositorio Git directamente desde la pantalla inicial con un clic.";
+"map.ops.stashbadge.title" = "Badge de Stash";
+"map.ops.stashbadge.description" = "La sidebar muestra un badge con el conteo de stashes cuando hay elementos pendientes.";
+
+"map.ai.summary.title" = "Resumen de Cambios Pendientes";
+"map.ai.summary.description" = "Genera un resumen en lenguaje natural de los cambios recientes para acelerar commits y status updates.";
+"map.ai.stash.title" = "Mensajes de Stash con IA";
+"map.ai.stash.description" = "Sugiere mensajes descriptivos para stashes basados en los cambios actuales.";
+"map.ai.branch.title" = "Resumen de Rama";
+"map.ai.branch.description" = "Genera una frase corta explicando el objetivo de cualquier rama.";
+
+"map.diag.sanitize.title" = "Sanitización de Datos";
+"map.diag.sanitize.description" = "Los logs eliminan automáticamente credenciales y datos sensibles antes de exportar o copiar.";
