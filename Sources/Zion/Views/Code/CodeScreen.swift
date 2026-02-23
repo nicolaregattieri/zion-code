@@ -78,9 +78,44 @@ private enum EditorSymbolResultsMode {
     case references
 }
 
+private struct EditorBreadcrumbItem: Identifiable {
+    let id: String
+    let title: String
+    let targetPath: String?
+    let isFile: Bool
+    let isEllipsis: Bool
+}
+
+private struct BreadcrumbFolderSegmentButton: View {
+    let title: String
+    let action: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 10, weight: .regular, design: .monospaced))
+                .lineLimit(1)
+                .foregroundStyle(isHovered ? Color.primary : DesignSystem.Colors.textSecondary)
+                .padding(.horizontal, 4)
+                .padding(.vertical, 2)
+                .background(isHovered ? DesignSystem.Colors.glassHover : Color.clear)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
+        }
+        .buttonStyle(.plain)
+        .contentShape(Rectangle())
+        .onHover { hovering in
+            withAnimation(DesignSystem.Motion.detail) {
+                isHovered = hovering
+            }
+        }
+    }
+}
+
 struct CodeScreen: View {
     @Bindable var model: RepositoryViewModel
     var onOpenFolder: (() -> Void)? = nil
+    @AppStorage("editor.showBreadcrumb") private var showBreadcrumbPath: Bool = true
     @State private var isQuickOpenVisible: Bool = false
     @State private var isFileBrowserVisible: Bool = true
     @State private var fileBrowserRatio: CGFloat = 0.25
@@ -96,6 +131,8 @@ struct CodeScreen: View {
     @State private var findSearchFocusRequestID: Int = 0
     @FocusState private var isFileBrowserFocused: Bool
     @State private var selectedBrowserIndex: Int = -1
+    @State private var fileBrowserScrollTargetID: String?
+    @State private var fileBrowserScrollRequestID: Int = 0
     @State private var showGoToLine: Bool = false
     @State private var goToLineNumber: String = ""
     @State private var goToLineTarget: Int = 0
@@ -349,7 +386,7 @@ struct CodeScreen: View {
                 .accessibilityLabel(L10n("editor.markdown.preview"))
             }
 
-            EditorSettingsPopoverButton(model: model)
+            EditorSettingsPopoverButton(model: model, showBreadcrumbPath: $showBreadcrumbPath)
 
             Button {
                 model.toggleBlame()
@@ -425,6 +462,10 @@ struct CodeScreen: View {
             .background(DesignSystem.Colors.glassSubtle)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
 
+            if showBreadcrumbPath, !breadcrumbItems.isEmpty {
+                breadcrumbPathBar
+            }
+
             Spacer()
 
             if model.hasRepoEditorConfig {
@@ -477,6 +518,154 @@ struct CodeScreen: View {
         }
         .controlSize(.small)
     }
+
+    private var breadcrumbPathBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 4) {
+                ForEach(Array(breadcrumbItems.enumerated()), id: \.offset) { index, item in
+                    if index > 0 {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 8, weight: .semibold))
+                            .foregroundStyle(DesignSystem.Colors.textTertiary)
+                    }
+                    breadcrumbSegmentView(item)
+                }
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+        }
+        .frame(minWidth: 140, idealWidth: 300, maxWidth: 520)
+        .layoutPriority(1)
+        .background(DesignSystem.Colors.glassSubtle)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
+        .help(L10n("editor.breadcrumb.path"))
+        .accessibilityLabel(L10n("editor.breadcrumb.path"))
+    }
+
+    @ViewBuilder
+    private func breadcrumbSegmentView(_ item: EditorBreadcrumbItem) -> some View {
+        if item.isEllipsis {
+            Text("...")
+                .font(.system(size: 10, weight: .regular, design: .monospaced))
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+        } else if !item.isFile, let path = item.targetPath {
+            BreadcrumbFolderSegmentButton(title: item.title) {
+                revealBreadcrumbTarget(path: path, isFile: false)
+            }
+        } else {
+            Text(item.title)
+                .font(.system(size: 10, weight: item.isFile ? .semibold : .regular, design: .monospaced))
+                .lineLimit(1)
+                .foregroundStyle(item.isFile ? Color.primary : DesignSystem.Colors.textSecondary)
+        }
+    }
+
+    private var breadcrumbItems: [EditorBreadcrumbItem] {
+        guard let fileURL = model.selectedCodeFile?.url else { return [] }
+        let full = fullBreadcrumbItems(for: fileURL)
+        guard full.count > 4 else { return full }
+
+        let ellipsis = EditorBreadcrumbItem(
+            id: "ellipsis-\(full.count)-\(full.last?.id ?? "")",
+            title: "...",
+            targetPath: nil,
+            isFile: false,
+            isEllipsis: true
+        )
+
+        return [full[0], full[1], ellipsis, full[full.count - 2], full[full.count - 1]]
+    }
+
+    private func fullBreadcrumbItems(for fileURL: URL) -> [EditorBreadcrumbItem] {
+        let relativePath = relativePathForBreadcrumb(fileURL: fileURL)
+        let segments = relativePath.split(separator: "/").map(String.init)
+        guard !segments.isEmpty else { return [] }
+
+        var items: [EditorBreadcrumbItem] = []
+        var partial = ""
+        for (index, segment) in segments.enumerated() {
+            if partial.isEmpty {
+                partial = segment
+            } else {
+                partial += "/\(segment)"
+            }
+            let targetPath = model.repositoryURL?.appendingPathComponent(partial).path
+            let isFile = index == segments.count - 1
+            items.append(
+                EditorBreadcrumbItem(
+                    id: "\(index)-\(partial)",
+                    title: segment,
+                    targetPath: targetPath,
+                    isFile: isFile,
+                    isEllipsis: false
+                )
+            )
+        }
+        return items
+    }
+
+    private func relativePathForBreadcrumb(fileURL: URL) -> String {
+        guard let repositoryURL = model.repositoryURL else {
+            return fileURL.lastPathComponent
+        }
+
+        let repoPath = repositoryURL.standardizedFileURL.path
+        let filePath = fileURL.standardizedFileURL.path
+        let prefix = repoPath.hasSuffix("/") ? repoPath : repoPath + "/"
+        guard filePath.hasPrefix(prefix) else {
+            return fileURL.lastPathComponent
+        }
+        return String(filePath.dropFirst(prefix.count))
+    }
+
+    private func revealBreadcrumbTarget(path: String, isFile: Bool) {
+        withAnimation(DesignSystem.Motion.panel) {
+            isFileBrowserVisible = true
+        }
+
+        guard let repositoryURL = model.repositoryURL else { return }
+
+        let repoPath = repositoryURL.standardizedFileURL.path
+        let normalizedPath = URL(fileURLWithPath: path).standardizedFileURL.path
+        guard normalizedPath.hasPrefix(repoPath) else { return }
+
+        let relativePath = String(normalizedPath.dropFirst(repoPath.count))
+            .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let components = relativePath.split(separator: "/").map(String.init)
+        guard !components.isEmpty else { return }
+
+        var currentURL = repositoryURL
+        let foldersToExpand = isFile ? max(components.count - 1, 0) : components.count
+        if foldersToExpand > 0 {
+            for index in 0..<foldersToExpand {
+                currentURL = currentURL.appendingPathComponent(components[index])
+                let folderPath = currentURL.path
+                if !model.expandedPaths.contains(folderPath) {
+                    model.toggleExpansion(for: folderPath)
+                }
+            }
+        }
+
+        if isFile {
+            let item = FileItem(url: URL(fileURLWithPath: normalizedPath), isDirectory: false, children: nil)
+            model.selectCodeFile(item)
+        }
+
+        requestFileBrowserAutoScroll(targetPath: normalizedPath)
+    }
+
+    private func requestFileBrowserAutoScroll(targetPath: String) {
+        Task { @MainActor in
+            for _ in 0..<24 {
+                if model.visibleFlatFiles().contains(where: { $0.id == targetPath }) {
+                    fileBrowserScrollTargetID = targetPath
+                    fileBrowserScrollRequestID += 1
+                    return
+                }
+                try? await Task.sleep(for: .milliseconds(50))
+            }
+        }
+    }
     
     private var fileBrowserPane: some View {
         VStack(spacing: 0) {
@@ -524,6 +713,12 @@ struct CodeScreen: View {
                 .focusable()
                 .focused($isFileBrowserFocused)
                 .focusEffectDisabled()
+                .onChange(of: fileBrowserScrollRequestID) { _, _ in
+                    guard let target = fileBrowserScrollTargetID else { return }
+                    withAnimation(DesignSystem.Motion.snappy) {
+                        scrollProxy.scrollTo(target, anchor: .center)
+                    }
+                }
                 .onMoveCommand { direction in
                     let flatFiles = model.visibleFlatFiles()
                     guard !flatFiles.isEmpty else { return }
@@ -1350,6 +1545,7 @@ struct CodeScreen: View {
 
 struct EditorSettingsPopoverButton: View {
     @Bindable var model: RepositoryViewModel
+    @Binding var showBreadcrumbPath: Bool
     @State private var isPresented = false
 
     var body: some View {
@@ -1409,6 +1605,9 @@ struct EditorSettingsPopoverButton: View {
                         .foregroundStyle(.secondary)
 
                     Toggle(L10n("settings.editor.lineWrap"), isOn: $model.isLineWrappingEnabled)
+                        .font(.system(size: 11))
+
+                    Toggle(L10n("settings.editor.showBreadcrumb"), isOn: $showBreadcrumbPath)
                         .font(.system(size: 11))
 
                     Toggle(L10n("settings.editor.highlightCurrentLine"), isOn: $model.editorHighlightCurrentLine)
