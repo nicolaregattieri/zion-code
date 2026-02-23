@@ -73,6 +73,11 @@ enum EditorTerminalLayout: String, CaseIterable {
     case terminalOnly
 }
 
+private enum EditorSymbolResultsMode {
+    case definitions
+    case references
+}
+
 struct CodeScreen: View {
     @Bindable var model: RepositoryViewModel
     var onOpenFolder: (() -> Void)? = nil
@@ -92,11 +97,16 @@ struct CodeScreen: View {
     @State private var showGoToLine: Bool = false
     @State private var goToLineNumber: String = ""
     @State private var goToLineTarget: Int = 0
+    @State private var goToLineRequestID: Int = 0
     @State private var isTerminalSearchVisible: Bool = false
     @State private var terminalSearchQuery: String = ""
     @State private var markdownPreviewRatio: CGFloat = 0.5
     @State private var isMarkdownPreviewVisible: Bool = false
     @FocusState private var isTerminalSearchFocused: Bool
+    @State private var isSymbolResultsVisible: Bool = false
+    @State private var symbolResultsMode: EditorSymbolResultsMode = .definitions
+    @State private var symbolResultsQuery: String = ""
+    @State private var symbolResults: [EditorSymbolLocation] = []
 
     var body: some View {
         ZStack {
@@ -135,6 +145,18 @@ struct CodeScreen: View {
         .background(DesignSystem.Colors.background)
         .sheet(isPresented: $showGoToLine) {
             goToLineSheet
+        }
+        .sheet(isPresented: $isSymbolResultsVisible) {
+            SymbolResultsSheet(
+                title: symbolResultsMode == .definitions
+                    ? L10n("editor.navigation.definitions.title", symbolResultsQuery)
+                    : L10n("editor.navigation.references.title", symbolResultsQuery),
+                emptyText: L10n("editor.navigation.noResults"),
+                locations: symbolResults
+            ) { location in
+                model.openEditorLocation(location)
+                isSymbolResultsVisible = false
+            }
         }
         .sheet(isPresented: $model.isFileHistoryVisible) {
             if let file = model.selectedCodeFile {
@@ -185,6 +207,10 @@ struct CodeScreen: View {
         }
         .onChange(of: model.activeFileID) { _, _ in
             isMarkdownPreviewVisible = false
+        }
+        .onChange(of: model.editorJumpToken) { _, _ in
+            goToLineTarget = model.editorJumpLineTarget
+            goToLineRequestID += 1
         }
     }
     
@@ -628,8 +654,13 @@ struct CodeScreen: View {
             searchQuery: isSearchVisible ? searchQuery : "",
             currentMatchIndex: currentMatchIndex,
             onMatchCountChanged: { count in matchCount = count },
-            goToLine: goToLineTarget
+            goToLine: goToLineTarget,
+            goToLineRequestID: goToLineRequestID,
+            currentFilePath: model.selectedCodeFile?.url.path,
+            onRequestDefinition: { query in handleDefinitionRequest(query) },
+            onRequestReferences: { query in handleReferencesRequest(query) }
         )
+        .help(L10n("help.code.navigation"))
     }
 
     private var markdownPreviewPane: some View {
@@ -793,7 +824,49 @@ struct CodeScreen: View {
     private func performGoToLine() {
         guard let line = Int(goToLineNumber), line > 0 else { return }
         goToLineTarget = line
+        goToLineRequestID += 1
         showGoToLine = false
+    }
+
+    private func handleDefinitionRequest(_ query: EditorSymbolQuery) {
+        Task {
+            let definitions = await model.findEditorDefinitions(for: query)
+            await MainActor.run {
+                guard !definitions.isEmpty else {
+                    model.statusMessage = L10n("editor.navigation.definition.notFound", query.symbol)
+                    return
+                }
+
+                if definitions.count == 1, let target = definitions.first {
+                    model.openEditorLocation(target)
+                    model.statusMessage = L10n("editor.navigation.definition.opened", query.symbol)
+                    return
+                }
+
+                symbolResultsMode = .definitions
+                symbolResultsQuery = query.symbol
+                symbolResults = definitions
+                isSymbolResultsVisible = true
+            }
+        }
+    }
+
+    private func handleReferencesRequest(_ query: EditorSymbolQuery) {
+        Task {
+            let references = await model.findEditorReferences(for: query)
+            await MainActor.run {
+                guard !references.isEmpty else {
+                    model.statusMessage = L10n("editor.navigation.references.notFound", query.symbol)
+                    return
+                }
+
+                symbolResultsMode = .references
+                symbolResultsQuery = query.symbol
+                symbolResults = references
+                isSymbolResultsVisible = true
+                model.statusMessage = L10n("editor.navigation.references.found", "\(references.count)", query.symbol)
+            }
+        }
     }
 
     private func toggleSearch() {
@@ -1681,6 +1754,59 @@ struct QuickOpenOverlay: View {
         guard selectedIndex < files.count else { return }
         model.selectCodeFile(files[selectedIndex])
         isVisible = false
+    }
+}
+
+struct SymbolResultsSheet: View {
+    let title: String
+    let emptyText: String
+    let locations: [EditorSymbolLocation]
+    let onSelect: (EditorSymbolLocation) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 10) {
+                Text(title)
+                    .font(.headline)
+                Spacer()
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(16)
+
+            Divider()
+
+            if locations.isEmpty {
+                Text(emptyText)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                List(locations) { location in
+                    Button {
+                        onSelect(location)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("\(location.relativePath):\(location.line)")
+                                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                            Text(location.preview)
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+                .listStyle(.inset)
+            }
+        }
+        .frame(width: 760, height: 460)
     }
 }
 

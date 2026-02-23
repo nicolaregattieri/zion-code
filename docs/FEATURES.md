@@ -51,6 +51,9 @@
 | File Browser Context Menu | Right-click: new file/folder, rename, duplicate, copy, cut, paste, delete, reveal in Finder | — |
 | File Watcher | Auto-reload on external changes | — |
 | Find/Replace | In-editor search with match highlighting and navigation | `⌘F` / `⌘H` |
+| Select Next Occurrence | Multi-cursor selection for next matching occurrence | `⌘D` |
+| Go to Definition | Jump to symbol definition (opens in new tab) | `F12` / `⌘Click` |
+| Find References | List references of the selected symbol across repository files | `⇧F12` |
 | Markdown Preview | Optional side-by-side rendered preview for `.md` files with links and local images | — |
 | Tab Size & Indent | Configurable 2/4/8 spaces or real tabs | Settings |
 | Column Ruler | Thin vertical line at configurable column (80/100/120) | Settings |

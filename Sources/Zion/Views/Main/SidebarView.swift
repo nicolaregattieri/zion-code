@@ -69,7 +69,10 @@ struct SidebarView: View {
                                         changedCount: model.backgroundRepoChangedFiles[url],
                                         worktreeCount: model.recentWorktreeCounts[url] ?? 0
                                     ) {
-                                        withAnimation { model.openRepository(url) }
+                                        withAnimation {
+                                            model.nextSectionAfterRepositoryOpen = selectedSection
+                                            model.openRepository(url)
+                                        }
                                     }
                                 }
                             }
