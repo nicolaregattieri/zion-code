@@ -4,6 +4,27 @@ All notable changes to Zion are documented here.
 
 ---
 
+## 1.2.0 — 2026-02-23
+
+### New
+- **Smart Worktree Creation** — Prefix picker (`feat/fix/chore/hotfix/exp`) + name with derived branch/path and optional advanced mode.
+- **Inline Worktree Flow in Sidebar** — `+ Novo Worktree` lets you create context without leaving current workspace.
+- **Graph Worktree Pills** — Worktree switch pills now show in-pill dirty/conflict count.
+- **Pending Changes Upgrades** — Visible `Create Branch Here` action and contextual menu improvements.
+- **Copy/Move Changes Across Worktrees** — Safer default copy flow with explicit move action.
+- **Recovery Vault (Operations)** — List active/dangling safety snapshots, copy references, and restore when needed.
+
+### Changed
+- **Recents Semantics** — Global recents remain root-only with per-project `WT n` badge.
+- **Launch Validation Messaging** — README now positions Zion as daily-use ready with focused advanced-flow validation.
+
+### Fixed
+- **Stash/Transfer Recovery UX** — Better user-facing guidance when apply/pop fails due to local overwrite collisions.
+- **Documentation Drift** — Help/Map/L10n/feature reference synchronized for worktree + recovery flows.
+
+### Known Edge Case (tracked)
+- Same-file/same-line edits across worktrees may block direct stash apply without generating unmerged (`-U`) entries. Recovery flow remains available via Operations + Recovery Vault references.
+
 ## 1.0.1 — 2026-02-20
 
 ### New
@@ -21,9 +42,6 @@ All notable changes to Zion are documented here.
 ### Fixed
 - App icon no longer shows double squircle border (uses full-bleed square PNG)
 - Internal logo uses raw PNG with `clipShape` instead of `NSApp.applicationIconImage` to avoid jagged edges at small sizes
-
-
-fasdfasdfsadfasd
 ---
 
 ## 1.0.0 — 2026-02-20
