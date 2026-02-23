@@ -630,6 +630,7 @@ actor AIClient {
         guard let http = response as? HTTPURLResponse else { throw AIError.invalidResponse }
 
         if http.statusCode == 400 || http.statusCode == 401 { throw AIError.invalidKey }
+        if http.statusCode == 503 { throw AIError.temporarilyUnavailable }
         if http.statusCode == 429 { throw AIError.quotaExceeded }
         guard http.statusCode == 200 else {
             let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
@@ -669,6 +670,7 @@ actor AIClient {
         guard let http = response as? HTTPURLResponse else { throw AIError.invalidResponse }
 
         if http.statusCode == 401 { throw AIError.invalidKey }
+        if http.statusCode == 503 { throw AIError.temporarilyUnavailable }
         if http.statusCode == 429 { throw AIError.quotaExceeded }
         guard http.statusCode == 200 else {
             let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
@@ -704,6 +706,7 @@ actor AIClient {
         guard let http = response as? HTTPURLResponse else { throw AIError.invalidResponse }
 
         if http.statusCode == 401 { throw AIError.invalidKey }
+        if http.statusCode == 503 { throw AIError.temporarilyUnavailable }
         if http.statusCode == 429 { throw AIError.quotaExceeded }
         guard http.statusCode == 200 else {
             let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
@@ -819,6 +822,7 @@ enum AIError: LocalizedError {
     case invalidKey
     case invalidResponse
     case quotaExceeded
+    case temporarilyUnavailable
     case apiError(String)
 
     var errorDescription: String? {
@@ -827,6 +831,7 @@ enum AIError: LocalizedError {
         case .invalidKey: return L10n("Chave de API invalida")
         case .invalidResponse: return L10n("Resposta invalida da API")
         case .quotaExceeded: return L10n("Cota da API excedida ou saldo insuficiente")
+        case .temporarilyUnavailable: return L10n("IA temporariamente indisponivel. Tente novamente em instantes.")
         case .apiError(let msg): return msg
         }
     }
