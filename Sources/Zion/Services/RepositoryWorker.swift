@@ -232,7 +232,12 @@ actor RepositoryWorker {
         return try client.cloneWithProgress(remoteURL: remoteURL, destination: destination, onProgress: onProgress)
     }
 
+    @available(*, deprecated, message: "Use runProcessStream(executable:args:in:onOutput:) for safe execution.")
     nonisolated func runShellStream(command: String, in repositoryURL: URL, onOutput: @escaping @Sendable (String) -> Void) throws {
+        if command.range(of: #"[;&|`]|&&|\|\||\$\("#, options: .regularExpression) != nil {
+            throw GitClientError.commandFailed(command: command, message: "Unsafe shell command blocked.")
+        }
+
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/zsh")
         process.arguments = ["-c", "export PATH=\"/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:$PATH\"; \(command)"]
@@ -249,6 +254,33 @@ actor RepositoryWorker {
             }
         }
         
+        try process.run()
+        process.waitUntilExit()
+        pipe.fileHandleForReading.readabilityHandler = nil
+    }
+
+    nonisolated func runProcessStream(
+        executable: String,
+        args: [String],
+        in repositoryURL: URL,
+        onOutput: @escaping @Sendable (String) -> Void
+    ) throws {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: executable)
+        process.arguments = args
+        process.currentDirectoryURL = repositoryURL
+
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = pipe
+
+        pipe.fileHandleForReading.readabilityHandler = { handle in
+            let data = handle.availableData
+            if let str = String(data: data, encoding: .utf8), !str.isEmpty {
+                onOutput(str)
+            }
+        }
+
         try process.run()
         process.waitUntilExit()
         pipe.fileHandleForReading.readabilityHandler = nil
