@@ -91,6 +91,8 @@ struct ZionMapContent {
                 ZionMapEntry("map.ops.rebase.title", description: "map.ops.rebase.description",
                              tips: ["map.ops.rebase.tip1"]),
                 ZionMapEntry("map.ops.stash.title", description: "map.ops.stash.description"),
+                ZionMapEntry("map.ops.recovery.title", description: "map.ops.recovery.description",
+                             tips: ["map.ops.recovery.tip1"]),
                 ZionMapEntry("map.ops.tags.title", description: "map.ops.tags.description"),
             ]
 

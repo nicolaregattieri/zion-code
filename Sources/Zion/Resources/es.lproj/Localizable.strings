@@ -409,6 +409,7 @@
 "help.ops.rebase" = "Rebase interactivo visual con pick, squash, fixup, drop y reordenamiento";
 "help.ops.hunk" = "Staging por hunk y por línea — control granular de lo que entra en el commit";
 "help.ops.init" = "Inicializa un nuevo repositorio Git directamente desde la pantalla de bienvenida";
+"help.ops.recovery" = "Recovery Vault con snapshots para restaurar cambios después de fallos";
 
 // Worktrees
 "help.worktree.parallel" = "Trabaja en múltiples branches simultáneamente sin cambiar de contexto";
@@ -610,7 +611,7 @@
 "map.code.subtitle" = "Editor de código con syntax highlighting, Quick Open, blame y múltiples pestañas.";
 "map.terminal.subtitle" = "Terminal real con PTY nativo, splits, pestañas y zoom independiente.";
 "map.clipboard.subtitle" = "Portapapeles que captura automáticamente y pega directo en el terminal.";
-"map.operations.subtitle" = "Commit, staging, branches, tags, stash, rebase interactivo y más.";
+"map.operations.subtitle" = "Commit, staging, branches, tags, stash, recovery vault, rebase interactivo y más.";
 "map.worktrees.subtitle" = "Trabaja en múltiples branches simultáneamente con terminales dedicados.";
 "map.ai.subtitle" = "Asistente de IA para commits, diffs, code review, conflictos y más.";
 "map.customization.subtitle" = "Idioma, apariencia, editor externo, confirmaciones y reflog.";
@@ -701,6 +702,9 @@
 "map.ops.rebase.tip1" = "Usa squash para combinar commits relacionados antes de hacer push.";
 "map.ops.stash.title" = "Gestión de Stash";
 "map.ops.stash.description" = "Crea stashes con mensajes descriptivos, aplica, pop o elimina. Ve stashes recientes en el grafo.";
+"map.ops.recovery.title" = "Recovery Vault";
+"map.ops.recovery.description" = "Lista snapshots activos y huérfanos para recuperar cambios después de fallos de stash, reset o transferencia.";
+"map.ops.recovery.tip1" = "Usa Copiar para guardar la referencia y Restaurar para reaplicarla en el working tree actual.";
 "map.ops.tags.title" = "Gestión de Tags";
 "map.ops.tags.description" = "Crea y elimina tags lightweight rápidamente. La lista muestra tags existentes como referencia.";
 

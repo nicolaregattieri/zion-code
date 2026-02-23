@@ -462,6 +462,7 @@
 "help.ops.rebase" = "Visual interactive rebase with pick, squash, fixup, drop, and reordering";
 "help.ops.hunk" = "Hunk and line staging — granular control over what goes into the commit";
 "help.ops.init" = "Initialize a new Git repository directly from the welcome screen";
+"help.ops.recovery" = "Recovery Vault with snapshots to restore changes after failures";
 
 // Worktrees
 "help.worktree.parallel" = "Work on multiple branches simultaneously without switching context";
@@ -612,7 +613,7 @@
 "map.code.subtitle" = "Code editor with syntax highlighting, Quick Open, blame, and multiple tabs.";
 "map.terminal.subtitle" = "Real terminal with native PTY, splits, tabs, and independent zoom.";
 "map.clipboard.subtitle" = "Clipboard that auto-captures and pastes directly into the terminal.";
-"map.operations.subtitle" = "Commit, staging, branches, tags, stash, interactive rebase, and more.";
+"map.operations.subtitle" = "Commit, staging, branches, tags, stash, recovery vault, interactive rebase, and more.";
 "map.worktrees.subtitle" = "Work on multiple branches simultaneously with dedicated terminals.";
 "map.ai.subtitle" = "AI assistant for commits, diffs, code review, conflicts, and more.";
 "map.customization.subtitle" = "Language, appearance, external editor, confirmations, and reflog.";
@@ -703,6 +704,9 @@
 "map.ops.rebase.tip1" = "Use squash to combine related commits before pushing.";
 "map.ops.stash.title" = "Stash Management";
 "map.ops.stash.description" = "Create stashes with descriptive messages, apply, pop, or drop. View recent stashes in the graph.";
+"map.ops.recovery.title" = "Recovery Vault";
+"map.ops.recovery.description" = "Lists active and dangling snapshots so you can recover changes after stash, reset, or transfer failures.";
+"map.ops.recovery.tip1" = "Use Copy to save the reference and Restore to reapply it in the current working tree.";
 "map.ops.tags.title" = "Tag Management";
 "map.ops.tags.description" = "Create and remove lightweight tags quickly. The list shows existing tags for reference.";
 
