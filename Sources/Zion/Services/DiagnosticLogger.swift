@@ -88,7 +88,7 @@ final class DiagnosticLogger {
         let home = NSHomeDirectory()
         result = result.replacingOccurrences(of: home, with: "~")
 
-        // Strip API keys (sk-ant-*, sk-*)
+        // Strip API keys and tokens
         result = result.replacingOccurrences(
             of: "sk-ant-[A-Za-z0-9_-]+",
             with: "[REDACTED]",
@@ -97,6 +97,31 @@ final class DiagnosticLogger {
         result = result.replacingOccurrences(
             of: "sk-[A-Za-z0-9_-]{20,}",
             with: "[REDACTED]",
+            options: .regularExpression
+        )
+        result = result.replacingOccurrences(
+            of: "ghp_[A-Za-z0-9]{20,}",
+            with: "[REDACTED]",
+            options: .regularExpression
+        )
+        result = result.replacingOccurrences(
+            of: "github_pat_[A-Za-z0-9_]{20,}",
+            with: "[REDACTED]",
+            options: .regularExpression
+        )
+        result = result.replacingOccurrences(
+            of: "AIza[0-9A-Za-z\\-_]{20,}",
+            with: "[REDACTED]",
+            options: .regularExpression
+        )
+        result = result.replacingOccurrences(
+            of: "(?i)Bearer\\s+[A-Za-z0-9._\\-~+/]+=*",
+            with: "Bearer [REDACTED]",
+            options: .regularExpression
+        )
+        result = result.replacingOccurrences(
+            of: "(?i)(https?://)[^/@\\s]+@",
+            with: "$1[REDACTED]@",
             options: .regularExpression
         )
 
