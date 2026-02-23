@@ -107,6 +107,7 @@ struct ContentView: View {
             }
             .navigationSplitViewStyle(.balanced)
             .frame(minWidth: 1360, minHeight: 840)
+            .allowsHitTesting(!model.isRepositorySwitching)
             .alert(L10n("Git não encontrado"), isPresented: Binding(get: { !model.isGitAvailable }, set: { _ in })) {
                 Button(L10n("Baixar Git")) {
                     if let url = URL(string: "https://git-scm.com/downloads") {
@@ -155,6 +156,12 @@ struct ContentView: View {
                 }
                 .frame(width: 0, height: 0)
                 .opacity(0)
+            }
+
+            if model.isRepositorySwitching {
+                repositorySwitchOverlay
+                    .transition(.opacity)
+                    .zIndex(10)
             }
         }
         .id(uiLanguageRaw)
@@ -257,6 +264,7 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .showOnboarding)) { _ in
             route(.showOnboardingFromHelp)
         }
+        .animation(.easeInOut(duration: 0.15), value: model.isRepositorySwitching)
     }
 
     @ViewBuilder
@@ -457,7 +465,7 @@ struct ContentView: View {
             Text(model.statusMessage).lineLimit(1).font(.caption).foregroundStyle(.secondary)
             Spacer()
 
-            if model.repositoryURL != nil {
+            if model.repositoryURL != nil && !model.isRepositorySwitching {
                 // Branch pill
                 HStack(spacing: 4) {
                     Image(systemName: "arrow.triangle.branch")
@@ -522,6 +530,31 @@ struct ContentView: View {
                 Text(repositoryURL.path).lineLimit(1).font(.system(.caption, design: .monospaced)).foregroundStyle(.tertiary)
             }
         }.padding(.horizontal, 16).padding(.vertical, 8).background(.ultraThinMaterial).overlay(alignment: .top) { Divider().opacity(0.45) }
+    }
+
+    private var repositorySwitchOverlay: some View {
+        ZStack {
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .ignoresSafeArea()
+            VStack(spacing: 10) {
+                ProgressView()
+                    .controlSize(.regular)
+                Text("Alternando projeto...")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(DesignSystem.Colors.glassElevated)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
+            )
+        }
     }
 
     private func openRepositoryInTerminal() {

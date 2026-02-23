@@ -30,6 +30,27 @@ struct RepositoryLoadPayload: Sendable {
     let uncommittedCount: Int
 }
 
+struct RepositoryLoadOptions: Sendable {
+    let includeWorktreeStatus: Bool
+    let includeBranchTree: Bool
+    let includeTagsAndStashes: Bool
+    let inferOrigins: Bool
+
+    static let full = RepositoryLoadOptions(
+        includeWorktreeStatus: true,
+        includeBranchTree: true,
+        includeTagsAndStashes: true,
+        inferOrigins: true
+    )
+
+    static let critical = RepositoryLoadOptions(
+        includeWorktreeStatus: false,
+        includeBranchTree: true,
+        includeTagsAndStashes: true,
+        inferOrigins: false
+    )
+}
+
 actor RepositoryWorker {
     private let git = GitClient()
     private let laneCalculator = GitGraphLaneCalculator()
@@ -79,7 +100,7 @@ actor RepositoryWorker {
         focusedBranch: String?,
         selectedCommitID: String?,
         selectedStash: String,
-        inferOrigins: Bool,
+        options: RepositoryLoadOptions = .full,
         limit: Int
     ) throws -> RepositoryLoadPayload {
         guard isGitRepository(at: repositoryURL) else {
@@ -113,11 +134,13 @@ actor RepositoryWorker {
         let infos = try branchInfoList(in: repositoryURL)
         let names = infos.map(\.name)
         let resolvedFocused = focusedBranch.flatMap { names.contains($0) ? $0 : nil }
-        let tree = try buildBranchTree(in: repositoryURL, using: infos, inferOrigins: inferOrigins)
-        let loadedTags = try tagList(in: repositoryURL)
-        let loadedStashes = try stashList(in: repositoryURL)
+        let tree = options.includeBranchTree
+            ? try buildBranchTree(in: repositoryURL, using: infos, inferOrigins: options.inferOrigins)
+            : []
+        let loadedTags = options.includeTagsAndStashes ? try tagList(in: repositoryURL) : []
+        let loadedStashes = options.includeTagsAndStashes ? try stashList(in: repositoryURL) : []
         let stashSelection = loadedStashes.contains(selectedStash) ? selectedStash : (loadedStashes.first ?? "")
-        let loadedWorktrees = try worktreeList(in: repositoryURL)
+        let loadedWorktrees = try worktreeList(in: repositoryURL, includeStatus: options.includeWorktreeStatus)
         let loadedRemotes = try remoteList(in: repositoryURL)
         let (loadedCommits, hasMore) = (try? commitList(in: repositoryURL, reference: resolvedFocused, limit: limit)) ?? ([], false)
         let selected = loadedCommits.contains(where: { $0.id == selectedCommitID })
@@ -399,10 +422,11 @@ actor RepositoryWorker {
             .map(String.init)
     }
 
-    private func worktreeList(in repositoryURL: URL) throws -> [WorktreeItem] {
+    private func worktreeList(in repositoryURL: URL, includeStatus: Bool) throws -> [WorktreeItem] {
         let output = try git.run(args: ["worktree", "list", "--porcelain"], in: repositoryURL).stdout
         let currentPath = repositoryURL.path
         let parsed = parseWorktrees(from: output, currentPath: currentPath)
+        guard includeStatus else { return parsed }
         return parsed.map { enrichWorktreeStatus(for: $0, repositoryURL: repositoryURL) }
     }
 

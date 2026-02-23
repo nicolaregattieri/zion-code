@@ -89,6 +89,7 @@ struct CodeScreen: View {
     @State private var isSearchVisible: Bool = false
     @State private var isReplaceVisible: Bool = false
     @State private var searchQuery: String = ""
+    @State private var seededFindQuery: String = ""
     @State private var replaceQuery: String = ""
     @State private var matchCount: Int = 0
     @State private var currentMatchIndex: Int = 0
@@ -201,9 +202,24 @@ struct CodeScreen: View {
                 .frame(width: 0, height: 0).opacity(0)
 
             // Go to Line (Cmd+G)
-            Button("") { showGoToLine = true; goToLineNumber = "" }
-                .keyboardShortcut("g", modifiers: .command)
-                .frame(width: 0, height: 0).opacity(0)
+            Button("") {
+                if isSearchVisible, !searchQuery.isEmpty {
+                    navigateToNextMatch()
+                } else {
+                    showGoToLine = true
+                    goToLineNumber = ""
+                }
+            }
+            .keyboardShortcut("g", modifiers: .command)
+            .frame(width: 0, height: 0).opacity(0)
+
+            // Previous find result (Shift+Cmd+G) while find UI is visible.
+            Button("") {
+                guard isSearchVisible, !searchQuery.isEmpty else { return }
+                navigateToPreviousMatch()
+            }
+            .keyboardShortcut("g", modifiers: [.command, .shift])
+            .frame(width: 0, height: 0).opacity(0)
         }
         .onChange(of: model.activeFileID) { _, _ in
             isMarkdownPreviewVisible = false
@@ -658,7 +674,21 @@ struct CodeScreen: View {
             goToLineRequestID: goToLineRequestID,
             currentFilePath: model.selectedCodeFile?.url.path,
             onRequestDefinition: { query in handleDefinitionRequest(query) },
-            onRequestReferences: { query in handleReferencesRequest(query) }
+            onRequestReferences: { query in handleReferencesRequest(query) },
+            onFindSeedFromMultiSelect: { query in seededFindQuery = query },
+            onToggleFindUI: { toggleSearch() },
+            onFindNextShortcut: {
+                if isSearchVisible, !searchQuery.isEmpty {
+                    navigateToNextMatch()
+                } else {
+                    showGoToLine = true
+                    goToLineNumber = ""
+                }
+            },
+            onFindPreviousShortcut: {
+                guard isSearchVisible, !searchQuery.isEmpty else { return }
+                navigateToPreviousMatch()
+            }
         )
         .help(L10n("help.code.navigation"))
     }
@@ -872,7 +902,14 @@ struct CodeScreen: View {
     private func toggleSearch() {
         withAnimation(DesignSystem.Motion.detail) {
             isSearchVisible.toggle()
-            if !isSearchVisible { closeSearch() }
+            if isSearchVisible {
+                if searchQuery.isEmpty, !seededFindQuery.isEmpty {
+                    searchQuery = seededFindQuery
+                    currentMatchIndex = 0
+                }
+            } else {
+                closeSearch()
+            }
         }
     }
 
