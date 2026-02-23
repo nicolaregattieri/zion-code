@@ -6,6 +6,7 @@ struct AISettingsTab: View {
     @AppStorage("zion.autoExplainDiffs") private var autoExplainDiffs: Bool = false
     @AppStorage("zion.diffExplanationDepth") private var diffDepthRaw: String = DiffExplanationDepth.quick.rawValue
     @AppStorage("zion.preCommitReview") private var preCommitReviewEnabled: Bool = false
+    @AppStorage("zion.aiTransferSupportHints") private var aiTransferSupportHints: Bool = true
 
     @State private var aiKeyInput: String = ""
     @State private var isEditingKey: Bool = false
@@ -96,6 +97,13 @@ struct AISettingsTab: View {
                         }
                     }
                 }
+            }
+
+            Section(L10n("settings.ai.transferSupport")) {
+                Toggle(L10n("settings.ai.transferSupport.toggle"), isOn: $aiTransferSupportHints)
+                Text(L10n("settings.ai.transferSupport.hint"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)

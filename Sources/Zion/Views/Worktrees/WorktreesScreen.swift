@@ -135,9 +135,7 @@ struct WorktreesScreen: View {
                                             model.openWorktreeInZion(worktree)
                                         },
                                         onRemove: {
-                                            performGitAction(L10n("Remover worktree"), L10n("Deseja remover o worktree %@?", worktree.path), true) {
-                                                model.removeWorktreeAndCloseTerminal(worktree)
-                                            }
+                                            model.requestWorktreeRemoval(worktree)
                                         },
                                         onOpenTerminal: {
                                             model.openWorktreeTerminal(worktree)

@@ -328,11 +328,11 @@ struct OperationsScreen: View {
                     }.buttonStyle(.borderedProminent).controlSize(.large).tint(DesignSystem.Colors.actionPrimary)
 
                     Button(action: {
-                        performGitAction(L10n("Merge"), L10n("Fazer merge da branch informada na atual?"), false) {
+                        performGitAction(L10n("Merge into Current"), L10n("Fazer merge da branch informada na atual?"), false) {
                             model.mergeBranch()
                         }
                     }) {
-                        Label(L10n("Merge"), systemImage: "arrow.merge").frame(maxWidth: .infinity)
+                        Label(L10n("Merge into Current"), systemImage: "arrow.merge").frame(maxWidth: .infinity)
                     }.buttonStyle(.bordered).controlSize(.large)
                 }
             }
@@ -420,7 +420,9 @@ struct OperationsScreen: View {
             HStack {
                 Button(L10n("Apply")) { performGitAction(L10n("Apply stash"), L10n("Aplicar o stash selecionado?"), false) { model.applySelectedStash() } }.buttonStyle(.bordered)
                 Button(L10n("Pop")) { performGitAction(L10n("Pop stash"), L10n("Aplicar e remover o stash selecionado?"), false) { model.popSelectedStash() } }.buttonStyle(.bordered)
-                Button(L10n("Drop")) { performGitAction(L10n("Drop stash"), L10n("Deseja remover permanentemente o stash selecionado?"), true) { model.dropSelectedStash() } }.buttonStyle(.bordered).tint(DesignSystem.Colors.destructive)
+                Button(L10n("Drop")) {
+                    performGitAction(L10n("Drop stash"), dropStashConfirmationMessage, true) { model.dropSelectedStash() }
+                }.buttonStyle(.bordered).tint(DesignSystem.Colors.destructive)
             }.disabled(model.stashes.isEmpty)
         }
     }
@@ -595,9 +597,7 @@ struct OperationsScreen: View {
                                     model.openWorktreeInZion(worktree)
                                 },
                                 onRemove: {
-                                    performGitAction(L10n("Remover worktree"), L10n("Deseja remover o worktree %@?", worktree.path), true) {
-                                        model.removeWorktreeAndCloseTerminal(worktree)
-                                    }
+                                    model.requestWorktreeRemoval(worktree)
                                 },
                                 onOpenTerminal: {
                                     model.openWorktreeTerminal(worktree)
@@ -675,8 +675,24 @@ struct OperationsScreen: View {
                         .font(.caption).foregroundStyle(.secondary)
                     Picker("", selection: $model.branchReviewTarget) {
                         Text(L10n("Selecionar...")).tag("")
-                        ForEach(model.branches, id: \.self) { branch in
-                            Text(branch).tag(branch)
+                        if !model.localBranchOptions.isEmpty {
+                            Section(L10n("branch.group.local")) {
+                                ForEach(model.localBranchOptions, id: \.self) { branch in
+                                    Text(branch).tag(branch)
+                                }
+                            }
+                        }
+                        if !model.remoteBranchOptions.isEmpty {
+                            Section(L10n("branch.group.remote")) {
+                                ForEach(model.remoteBranchOptions, id: \.self) { branch in
+                                    Text(branch).tag(branch)
+                                }
+                            }
+                        }
+                        if model.localBranchOptions.isEmpty && model.remoteBranchOptions.isEmpty {
+                            ForEach(model.branches, id: \.self) { branch in
+                                Text(branch).tag(branch)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
@@ -693,13 +709,38 @@ struct OperationsScreen: View {
                         .font(.caption).foregroundStyle(.secondary)
                     Picker("", selection: $model.branchReviewSource) {
                         Text(L10n("Selecionar...")).tag("")
-                        ForEach(model.branches, id: \.self) { branch in
-                            Text(branch).tag(branch)
+                        if !model.localBranchOptions.isEmpty {
+                            Section(L10n("branch.group.local")) {
+                                ForEach(model.localBranchOptions, id: \.self) { branch in
+                                    Text(branch).tag(branch)
+                                }
+                            }
+                        }
+                        if !model.remoteBranchOptions.isEmpty {
+                            Section(L10n("branch.group.remote")) {
+                                ForEach(model.remoteBranchOptions, id: \.self) { branch in
+                                    Text(branch).tag(branch)
+                                }
+                            }
+                        }
+                        if model.localBranchOptions.isEmpty && model.remoteBranchOptions.isEmpty {
+                            ForEach(model.branches, id: \.self) { branch in
+                                Text(branch).tag(branch)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
                     .labelsHidden()
                 }
+            }
+
+            if !model.branchReviewSource.isEmpty
+                && !model.branchReviewTarget.isEmpty
+                && model.branchReviewSource == model.branchReviewTarget {
+                Text(L10n("codereview.sameBranch.inline"))
+                    .font(.caption)
+                    .foregroundStyle(DesignSystem.Colors.warning)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             Button {
@@ -710,8 +751,13 @@ struct OperationsScreen: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(DesignSystem.Colors.ai)
-            .disabled(model.branchReviewSource.isEmpty || model.branchReviewTarget.isEmpty)
+            .disabled(
+                model.branchReviewSource.isEmpty
+                    || model.branchReviewTarget.isEmpty
+                    || model.branchReviewSource == model.branchReviewTarget
+            )
             .help(L10n("codereview.startReview.hint"))
+            .onAppear { model.ensureBranchReviewSelections() }
         }
     }
 
@@ -720,7 +766,7 @@ struct OperationsScreen: View {
             CardHeader(L10n("Limpeza"), icon: "leaf.fill", subtitle: L10n("Remover branches locais que ja foram mescladas na main."))
 
             Button(action: {
-                performGitAction(L10n("Prune"), L10n("Deseja remover todas as branches locais ja mescladas?"), true) {
+                performGitAction(L10n("Prune"), pruneMergedConfirmationMessage, true) {
                     model.pruneMergedBranches()
                 }
             }) {
@@ -744,10 +790,28 @@ struct OperationsScreen: View {
             HStack(spacing: 8) {
                 TextField("HEAD~1", text: $model.resetTargetInput).textFieldStyle(.roundedBorder)
                 Button(role: .destructive) {
-                    performGitAction(L10n("Reset --hard"), L10n("Esta acao e IRREVERSIVEL. Deseja continuar?"), true) { model.hardReset() }
+                    performGitAction(L10n("Reset --hard"), resetHardConfirmationMessage, true) { model.hardReset() }
                 } label: { Label(L10n("Reset --hard"), systemImage: "trash.fill") }.buttonStyle(.bordered).tint(DesignSystem.Colors.destructive)
             }
         }
+    }
+
+    private var resetHardConfirmationMessage: String {
+        let target = model.resetTargetInput.clean.isEmpty ? "HEAD" : model.resetTargetInput.clean
+        return L10n("reset.hard.confirm.withCount", target, "\(model.uncommittedCount)")
+    }
+
+    private var dropStashConfirmationMessage: String {
+        let reference = model.selectedStash.clean.isEmpty ? "stash@{0}" : model.selectedStash.clean
+        return L10n("stash.drop.confirm.withCount", reference, "\(model.stashes.count)")
+    }
+
+    private var pruneMergedConfirmationMessage: String {
+        let count = model.mergedBranchesPreview.count
+        if count == 0 {
+            return L10n("prune.merged.confirm.empty")
+        }
+        return L10n("prune.merged.confirm.withCount", "\(count)")
     }
 
     private func SectionLabel(title: String, icon: String) -> some View {

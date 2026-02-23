@@ -271,38 +271,40 @@ struct SidebarView: View {
 
     private func worktreeRow(_ wt: WorktreeItem) -> some View {
         HStack(spacing: 8) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(wt.branch.isEmpty ? URL(fileURLWithPath: wt.path).lastPathComponent : wt.branch)
-                    .font(.system(size: 12, weight: .bold, design: .monospaced))
-                    .lineLimit(1)
-                Text(wt.path)
-                    .font(.system(size: 9, design: .monospaced))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(worktreeStatusColor(wt))
-                        .frame(width: 6, height: 6)
-                    Text("\(wt.uncommittedCount)")
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
-                        .foregroundStyle(.secondary)
-                    if wt.hasConflicts {
-                        Text("⚠")
-                            .font(.system(size: 9, weight: .bold))
+            Button {
+                model.openWorktreeInZion(
+                    wt,
+                    navigateToCode: false,
+                    sectionAfterOpen: selectedSection
+                )
+            } label: {
+                HStack(spacing: 8) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(wt.branch.isEmpty ? URL(fileURLWithPath: wt.path).lastPathComponent : wt.branch)
+                            .font(.system(size: 12, weight: .bold, design: .monospaced))
+                            .lineLimit(1)
+                        Text(wt.path)
+                            .font(.system(size: 9, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(worktreeStatusColor(wt))
+                                .frame(width: 6, height: 6)
+                            Text("\(wt.uncommittedCount)")
+                                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                .foregroundStyle(.secondary)
+                            if wt.hasConflicts {
+                                Text("⚠")
+                                    .font(.system(size: 9, weight: .bold))
+                            }
+                        }
                     }
+                    Spacer(minLength: 0)
                 }
             }
-            Spacer(minLength: 0)
-            Button {
-                model.openWorktreeInZion(wt)
-                selectedSection = .code
-            } label: {
-                Image(systemName: "pencil.and.outline")
-                    .font(.system(size: 11))
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
+            .buttonStyle(.plain)
             .help(L10n("Abrir no Zion Code"))
 
             Button {
@@ -316,15 +318,7 @@ struct SidebarView: View {
             .help(L10n("Terminal"))
 
             Button {
-                let alert = NSAlert()
-                alert.alertStyle = .warning
-                alert.messageText = L10n("Remover worktree")
-                alert.informativeText = L10n("Deseja remover o worktree %@?", wt.path)
-                alert.addButton(withTitle: L10n("Remover"))
-                alert.addButton(withTitle: L10n("Cancelar"))
-                if alert.runModal() == .alertFirstButtonReturn {
-                    model.removeWorktreeAndCloseTerminal(wt)
-                }
+                model.requestWorktreeRemoval(wt)
             } label: {
                 Image(systemName: "trash")
                     .font(.system(size: 11))

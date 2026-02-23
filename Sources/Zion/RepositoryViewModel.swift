@@ -15,6 +15,7 @@ final class RepositoryViewModel {
     var commitDetails: String = "Selecione um commit para ver os detalhes."
     var branches: [String] = []
     var branchInfos: [BranchInfo] = []
+    var mergedBranchesPreview: [String] = []
     var branchTree: [BranchTreeNode] = []
     var focusedBranch: String?
     var inferBranchOrigins: Bool = true
@@ -81,6 +82,7 @@ final class RepositoryViewModel {
     // Navigation signals (consumed by ContentView to switch tabs)
     var navigateToGraphRequested: Bool = false
     var navigateToCodeRequested: Bool = false
+    var nextSectionAfterRepositoryOpen: AppSection?
 
     // GitHub PR integration
     var pullRequests: [GitHubPRInfo] = []
@@ -97,6 +99,20 @@ final class RepositoryViewModel {
     var isBranchReviewLoading: Bool = false
     var githubUsername: String = ""
     @ObservationIgnored private var lastNotifiedPRReviewIDs: Set<Int> = []
+
+    var localBranchOptions: [String] {
+        branchInfos
+            .filter { !$0.isRemote }
+            .map(\.name)
+            .sorted()
+    }
+
+    var remoteBranchOptions: [String] {
+        branchInfos
+            .filter(\.isRemote)
+            .map(\.name)
+            .sorted()
+    }
 
     // Code Review (Phase 3)
     var isCodeReviewVisible: Bool = false
@@ -154,6 +170,15 @@ final class RepositoryViewModel {
     var preCommitReviewEnabled: Bool {
         get { UserDefaults.standard.bool(forKey: "zion.preCommitReview") }
         set { UserDefaults.standard.set(newValue, forKey: "zion.preCommitReview") }
+    }
+    var aiTransferSupportHintsEnabled: Bool {
+        get {
+            if UserDefaults.standard.object(forKey: "zion.aiTransferSupportHints") == nil {
+                return true
+            }
+            return UserDefaults.standard.bool(forKey: "zion.aiTransferSupportHints")
+        }
+        set { UserDefaults.standard.set(newValue, forKey: "zion.aiTransferSupportHints") }
     }
     var preCommitReviewPending: Bool = false
     @ObservationIgnored private var preCommitDiffHash: String = ""
@@ -750,6 +775,12 @@ final class RepositoryViewModel {
         openedFiles.removeAll()
         activeFileID = nil
         selectedCodeFile = nil
+        selectedChangeFile = nil
+        currentFileDiff = ""
+        currentFileDiffHunks = []
+        selectedHunkLines = []
+        uncommittedChanges = []
+        uncommittedCount = 0
 
         refreshRepository()
         refreshFileTree()
@@ -1483,6 +1514,19 @@ final class RepositoryViewModel {
         }
 
         if localBranchExists(named: localName) {
+            if let occupied = worktrees.first(where: { !$0.isCurrent && $0.branch.clean == localName }) {
+                let alert = NSAlert()
+                alert.alertStyle = .informational
+                alert.messageText = L10n("checkout.worktree.inUse.title")
+                alert.informativeText = L10n("checkout.worktree.inUse.message", localName, occupied.path)
+                alert.addButton(withTitle: L10n("checkout.worktree.inUse.open"))
+                alert.addButton(withTitle: L10n("Cancelar"))
+                if alert.runModal() == .alertFirstButtonReturn {
+                    openWorktreeInZion(occupied, navigateToCode: false, sectionAfterOpen: .graph)
+                    statusMessage = L10n("checkout.worktree.redirected", localName)
+                }
+                return
+            }
             runGitAction(label: "Checkout", args: ["checkout", localName])
         } else if isRemoteRefName(target) {
             runGitAction(label: "Checkout", args: ["checkout", "-t", target])
@@ -1710,7 +1754,7 @@ final class RepositoryViewModel {
         Task {
             let ref = await resolveStashReference(selectedStash)
             guard let ref else { return }
-            runGitAction(label: "Apply stash", args: ["stash", "apply", ref])
+            runStashRestoreAction(reference: ref, pop: false)
         }
     }
 
@@ -1718,7 +1762,7 @@ final class RepositoryViewModel {
         Task {
             let ref = await resolveStashReference(selectedStash)
             guard let ref else { return }
-            runGitAction(label: "Pop stash", args: ["stash", "pop", ref])
+            runStashRestoreAction(reference: ref, pop: true)
         }
     }
 
@@ -1728,6 +1772,176 @@ final class RepositoryViewModel {
             guard let ref else { return }
             runGitAction(label: "Drop stash", args: ["stash", "drop", ref])
         }
+    }
+
+    private func runStashRestoreAction(reference: String, pop: Bool) {
+        guard let repositoryURL else {
+            lastError = GitClientError.repositoryNotSelected.localizedDescription
+            return
+        }
+
+        actionTask?.cancel()
+        isBusy = true
+        let verb = pop ? "pop" : "apply"
+
+        actionTask = Task {
+            do {
+                let _ = try await worker.runAction(args: ["stash", verb, reference], in: repositoryURL)
+                try Task.checkCancellation()
+                clearError()
+                statusMessage = pop ? L10n("stash.pop.success") : L10n("stash.apply.success")
+                refreshRepository(setBusy: true)
+            } catch is CancellationError {
+                return
+            } catch {
+                isBusy = false
+                if handleStashRestoreFailure(error, reference: reference, pop: pop) {
+                    return
+                }
+                if let friendly = friendlyStashRestoreErrorMessage(error, reference: reference, pop: pop) {
+                    clearError()
+                    lastError = friendly
+                    statusMessage = friendly
+                    logger.log(.error, friendly, source: #function)
+                    return
+                }
+                handleError(error)
+            }
+        }
+    }
+
+    @discardableResult
+    private func handleStashRestoreFailure(_ error: Error, reference: String, pop: Bool) -> Bool {
+        let raw = error.localizedDescription.lowercased()
+        let overwriteBlocked = raw.contains("would be overwritten by merge")
+            || raw.contains("please commit your changes or stash them before you merge")
+
+        guard overwriteBlocked else { return false }
+
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = L10n("stash.restore.blocked.title")
+        alert.informativeText = L10n("stash.restore.blocked.message", reference)
+        alert.addButton(withTitle: L10n("stash.restore.blocked.autoStashRetry"))
+        alert.addButton(withTitle: L10n("Cancelar"))
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            runAutoStashAndRetry(reference: reference, pop: pop)
+        } else {
+            clearError()
+            statusMessage = L10n("stash.restore.blocked.cancelled")
+        }
+        return true
+    }
+
+    private func runAutoStashAndRetry(reference: String, pop: Bool) {
+        guard let repositoryURL else {
+            lastError = GitClientError.repositoryNotSelected.localizedDescription
+            return
+        }
+
+        actionTask?.cancel()
+        isBusy = true
+        let safetyMessage = "zion-safety-\(UUID().uuidString.prefix(8))"
+        let verb = pop ? "pop" : "apply"
+
+        actionTask = Task {
+            do {
+                let isTransferFlow = await isTransferStash(reference: reference, in: repositoryURL)
+                let stableReference = await stableStashReferenceForRetry(reference, in: repositoryURL)
+                let _ = try await worker.runAction(
+                    args: ["stash", "push", "--include-untracked", "-m", safetyMessage],
+                    in: repositoryURL
+                )
+                let safetyRef = try? await latestStashReference(in: repositoryURL)
+                let _ = try await worker.runAction(args: ["stash", verb, stableReference], in: repositoryURL)
+
+                if isTransferFlow, let safetyRef, !safetyRef.clean.isEmpty {
+                    do {
+                        let _ = try await worker.runAction(args: ["stash", "apply", safetyRef], in: repositoryURL)
+                        statusMessage = L10n("stash.restore.blocked.transferRestored", safetyMessage)
+                    } catch {
+                        let files = (try? await worker.listConflictedFiles(in: repositoryURL)) ?? []
+                        if let first = files.first {
+                            conflictedFiles = files
+                            isConflictViewVisible = true
+                            selectConflictFile(first.path)
+                            statusMessage = L10n("stash.restore.blocked.transferConflicts")
+                        } else {
+                            statusMessage = L10n("stash.restore.blocked.transferPartial", safetyMessage)
+                        }
+                    }
+                } else {
+                    statusMessage = L10n("stash.restore.blocked.retried", safetyMessage)
+                }
+
+                try Task.checkCancellation()
+                clearError()
+                refreshRepository(setBusy: true)
+            } catch is CancellationError {
+                return
+            } catch {
+                isBusy = false
+                handleError(error)
+            }
+        }
+    }
+
+    private func isTransferStash(reference: String, in repositoryURL: URL) async -> Bool {
+        let normalized = reference.clean
+        guard !normalized.isEmpty else { return false }
+        let resolved = (await resolveStashReference(normalized)) ?? normalized
+
+        let output = (try? await worker.runAction(args: ["stash", "list", "--format=%H%x09%gD%x09%s"], in: repositoryURL)) ?? ""
+        for line in output.split(separator: "\n", omittingEmptySubsequences: true) {
+            let parts = line.split(separator: "\t", maxSplits: 2, omittingEmptySubsequences: false)
+            guard parts.count == 3 else { continue }
+            let hash = String(parts[0])
+            let ref = String(parts[1])
+            let subject = String(parts[2])
+            guard subject.contains("zion-transfer-") else { continue }
+
+            if normalized == ref || normalized == hash || hash.hasPrefix(normalized) || resolved == ref || resolved == hash {
+                return true
+            }
+        }
+        return false
+    }
+
+    private func stableStashReferenceForRetry(_ reference: String, in repositoryURL: URL) async -> String {
+        let cleaned = reference.clean
+        let isOrdinal = cleaned.range(of: "^stash@\\{\\d+\\}$", options: .regularExpression) != nil
+        guard isOrdinal else { return cleaned }
+
+        let hash = (try? await worker.runAction(args: ["rev-parse", cleaned], in: repositoryURL).clean) ?? ""
+        return hash.isEmpty ? cleaned : hash
+    }
+
+    private func friendlyStashRestoreErrorMessage(_ error: Error, reference: String, pop: Bool) -> String? {
+        guard case let GitClientError.commandFailed(_, message) = error else {
+            return nil
+        }
+
+        let normalized = message.lowercased()
+        if normalized.contains("no stash entries found") || normalized.contains("stash not found") {
+            return L10n("stash.restore.error.noEntries")
+        }
+        if normalized.contains("not a valid reference")
+            || normalized.contains("unknown revision")
+            || normalized.contains("bad revision") {
+            return L10n("stash.restore.error.invalidReference", reference)
+        }
+        if normalized.contains("conflict")
+            || normalized.contains("merge conflict")
+            || normalized.contains("could not apply") {
+            return pop
+                ? L10n("stash.restore.error.popConflict")
+                : L10n("stash.restore.error.applyConflict")
+        }
+
+        return pop
+            ? L10n("stash.restore.error.popGeneric")
+            : L10n("stash.restore.error.applyGeneric")
     }
 
     func addWorktree() {
@@ -1811,8 +2025,11 @@ final class RepositoryViewModel {
         }
     }
 
-    func removeWorktree(_ path: String) {
-        runGitAction(label: "Remover worktree", args: ["worktree", "remove", path])
+    func removeWorktree(_ path: String, force: Bool = false) {
+        var args = ["worktree", "remove"]
+        if force { args.append("--force") }
+        args.append(path)
+        runGitAction(label: "Remover worktree", args: args)
     }
 
     func openWorktreeTerminal(_ worktree: WorktreeItem) {
@@ -1821,8 +2038,9 @@ final class RepositoryViewModel {
         createTerminalSession(workingDirectory: url, label: label, worktreeID: worktree.id)
     }
 
-    func openWorktreeInZion(_ worktree: WorktreeItem) {
+    func openWorktreeInZion(_ worktree: WorktreeItem, navigateToCode: Bool = true, sectionAfterOpen: AppSection? = nil) {
         let url = URL(fileURLWithPath: worktree.path)
+        nextSectionAfterRepositoryOpen = sectionAfterOpen
         openRepository(url)
         let label = worktree.branch.isEmpty ? url.lastPathComponent : worktree.branch
         if let existing = terminalSessions.first(where: { $0.workingDirectory.path == url.path }) {
@@ -1830,12 +2048,446 @@ final class RepositoryViewModel {
         } else {
             createTerminalSession(workingDirectory: url, label: label, worktreeID: worktree.id)
         }
-        navigateToCodeRequested = true
+        if navigateToCode {
+            navigateToCodeRequested = true
+        }
     }
 
-    func removeWorktreeAndCloseTerminal(_ worktree: WorktreeItem) {
-        closeTerminalSession(forWorktree: worktree.id)
-        removeWorktree(worktree.path)
+    func discardAllChanges() {
+        guard let repositoryURL else { return }
+        discardAllChanges(in: repositoryURL, successMessage: L10n("discardAll.success.current"))
+    }
+
+    func discardAllChanges(inWorktree worktree: WorktreeItem) {
+        let targetURL = URL(fileURLWithPath: worktree.path)
+        let displayName = worktreeDisplayName(worktree)
+        discardAllChanges(in: targetURL, successMessage: L10n("discardAll.success.worktree", displayName))
+    }
+
+    func transferPendingChanges(toWorktree worktree: WorktreeItem, keepInCurrentWorktree: Bool) {
+        guard let repositoryURL else {
+            lastError = GitClientError.repositoryNotSelected.localizedDescription
+            return
+        }
+
+        let sourceURL = repositoryURL
+        let targetURL = URL(fileURLWithPath: worktree.path)
+        let marker = "zion-transfer-\(UUID().uuidString)"
+
+        actionTask?.cancel()
+        isBusy = true
+        actionTask = Task {
+            var stashRef: String?
+            var sourceWasStashed = false
+            var sourceRecoverySucceeded = false
+
+            do {
+                let status = try await worker.runAction(args: ["status", "--porcelain"], in: sourceURL)
+                if status.clean.isEmpty {
+                    clearError()
+                    statusMessage = L10n("pending.transfer.noChanges")
+                    isBusy = false
+                    return
+                }
+
+                let _ = try await worker.runAction(
+                    args: ["stash", "push", "--include-untracked", "-m", marker],
+                    in: sourceURL
+                )
+                sourceWasStashed = true
+
+                stashRef = try await transferStashReference(marker: marker, in: sourceURL)
+                guard let stashRef else {
+                    throw GitClientError.commandFailed(
+                        command: "stash list",
+                        message: L10n("pending.transfer.error.ref")
+                    )
+                }
+
+                if keepInCurrentWorktree {
+                    let _ = try await worker.runAction(args: ["stash", "apply", stashRef], in: sourceURL)
+                    sourceWasStashed = false
+                }
+
+                let _ = try await worker.runAction(args: ["stash", "apply", stashRef], in: targetURL)
+                let _ = try await worker.runAction(args: ["stash", "drop", stashRef], in: sourceURL)
+
+                try Task.checkCancellation()
+                clearError()
+                let worktreeName = worktreeDisplayName(worktree)
+                statusMessage = keepInCurrentWorktree
+                    ? L10n("pending.transfer.copy.success", worktreeName)
+                    : L10n("pending.transfer.move.success", worktreeName)
+                refreshRepository(setBusy: true)
+            } catch is CancellationError {
+                return
+            } catch {
+                if sourceWasStashed, let stashRef {
+                    if (try? await worker.runAction(args: ["stash", "apply", stashRef], in: sourceURL)) != nil {
+                        sourceRecoverySucceeded = true
+                    }
+                }
+                presentPendingTransferSupportAlert(
+                    targetWorktree: worktree,
+                    modeLabel: keepInCurrentWorktree ? L10n("pending.transfer.copy.short") : L10n("pending.transfer.move.short"),
+                    stashReference: stashRef,
+                    sourceRecovered: sourceRecoverySucceeded,
+                    sourceWasStashed: sourceWasStashed,
+                    errorDescription: error.localizedDescription
+                )
+                clearError()
+                statusMessage = L10n("pending.transfer.support.handled")
+                isBusy = false
+                logger.log(.warn, "Pending transfer requires manual resolution: \(error.localizedDescription)", source: #function)
+                refreshRepository(setBusy: false)
+            }
+        }
+    }
+
+    private func discardAllChanges(in targetURL: URL, successMessage: String) {
+        actionTask?.cancel()
+        isBusy = true
+        actionTask = Task {
+            do {
+                let _ = try await worker.runAction(args: ["reset", "--hard", "HEAD"], in: targetURL)
+                let _ = try await worker.runAction(args: ["clean", "-fd"], in: targetURL)
+                try Task.checkCancellation()
+                clearError()
+                statusMessage = successMessage
+                refreshRepository(setBusy: true)
+            } catch is CancellationError {
+                return
+            } catch {
+                isBusy = false
+                handleError(error)
+            }
+        }
+    }
+
+    func requestWorktreeRemoval(_ worktree: WorktreeItem) {
+        let displayName = worktreeDisplayName(worktree)
+
+        if worktree.uncommittedCount > 0 || worktree.hasConflicts {
+            let alert = NSAlert()
+            alert.alertStyle = .warning
+            alert.messageText = L10n("worktree.remove.pending.title")
+            alert.informativeText = L10n("worktree.remove.pending.message", displayName)
+            alert.addButton(withTitle: L10n("worktree.remove.discardAndRemove"))
+            alert.addButton(withTitle: L10n("worktree.remove.withoutDiscard"))
+            alert.addButton(withTitle: L10n("Cancelar"))
+
+            switch alert.runModal() {
+            case .alertFirstButtonReturn:
+                discardAllChangesAndRemoveWorktree(worktree)
+            case .alertSecondButtonReturn:
+                removeWorktreeAndCloseTerminal(worktree, force: true)
+            default:
+                return
+            }
+            return
+        }
+
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = L10n("Remover worktree")
+        alert.informativeText = L10n("Deseja remover o worktree %@?", worktree.path)
+        alert.addButton(withTitle: L10n("Remover"))
+        alert.addButton(withTitle: L10n("Cancelar"))
+        if alert.runModal() == .alertFirstButtonReturn {
+            removeWorktreeAndCloseTerminal(worktree)
+        }
+    }
+
+    func removeWorktreeAndCloseTerminal(_ worktree: WorktreeItem, force: Bool = false) {
+        guard let repositoryURL else {
+            lastError = GitClientError.repositoryNotSelected.localizedDescription
+            return
+        }
+
+        var args = ["worktree", "remove"]
+        if force { args.append("--force") }
+        args.append(worktree.path)
+
+        actionTask?.cancel()
+        isBusy = true
+        actionTask = Task {
+            do {
+                let _ = try await worker.runAction(args: args, in: repositoryURL)
+                try Task.checkCancellation()
+                closeTerminalSession(forWorktree: worktree.id)
+                clearError()
+                statusMessage = force
+                    ? L10n("worktree.remove.forced.success", worktreeDisplayName(worktree))
+                    : L10n("worktree.remove.success", worktreeDisplayName(worktree))
+                refreshRepository(setBusy: true)
+            } catch is CancellationError {
+                return
+            } catch {
+                isBusy = false
+                handleError(error)
+            }
+        }
+    }
+
+    private func discardAllChangesAndRemoveWorktree(_ worktree: WorktreeItem) {
+        guard let repositoryURL else {
+            lastError = GitClientError.repositoryNotSelected.localizedDescription
+            return
+        }
+
+        let targetURL = URL(fileURLWithPath: worktree.path)
+        actionTask?.cancel()
+        isBusy = true
+        actionTask = Task {
+            do {
+                let _ = try await worker.runAction(args: ["reset", "--hard", "HEAD"], in: targetURL)
+                let _ = try await worker.runAction(args: ["clean", "-fd"], in: targetURL)
+                let _ = try await worker.runAction(args: ["worktree", "remove", worktree.path], in: repositoryURL)
+                try Task.checkCancellation()
+                closeTerminalSession(forWorktree: worktree.id)
+                clearError()
+                statusMessage = L10n("worktree.remove.discarded.success", worktreeDisplayName(worktree))
+                refreshRepository(setBusy: true)
+            } catch is CancellationError {
+                return
+            } catch {
+                isBusy = false
+                handleError(error)
+            }
+        }
+    }
+
+    private func worktreeDisplayName(_ worktree: WorktreeItem) -> String {
+        if !worktree.branch.clean.isEmpty {
+            return worktree.branch
+        }
+        return URL(fileURLWithPath: worktree.path).lastPathComponent
+    }
+
+    private func transferStashReference(marker: String, in repositoryURL: URL) async throws -> String? {
+        let output = try await worker.runAction(args: ["stash", "list", "--format=%gD%x09%s"], in: repositoryURL)
+        for line in output.split(separator: "\n", omittingEmptySubsequences: true) {
+            let parts = line.split(separator: "\t", maxSplits: 1, omittingEmptySubsequences: false)
+            guard parts.count == 2 else { continue }
+            let ref = String(parts[0])
+            let subject = String(parts[1])
+            if subject == marker {
+                return ref
+            }
+        }
+        return nil
+    }
+
+    private func presentPendingTransferSupportAlert(
+        targetWorktree: WorktreeItem,
+        modeLabel: String,
+        stashReference: String?,
+        sourceRecovered: Bool,
+        sourceWasStashed: Bool,
+        errorDescription: String
+    ) {
+        let targetName = worktreeDisplayName(targetWorktree)
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = L10n("pending.transfer.support.title")
+
+        var details: [String] = [
+            L10n("pending.transfer.support.message", modeLabel, targetName),
+            L10n("pending.transfer.support.error", errorDescription)
+        ]
+
+        if sourceWasStashed {
+            if sourceRecovered {
+                details.append(L10n("pending.transfer.support.sourceRecovered"))
+            } else {
+                details.append(L10n("pending.transfer.support.sourceNotRecovered"))
+            }
+        }
+
+        if let stashReference, !stashReference.clean.isEmpty {
+            details.append(L10n("pending.transfer.support.stash", stashReference))
+            details.append(L10n("pending.transfer.support.keepStash"))
+        }
+
+        if aiTransferSupportHintsEnabled {
+            details.append(
+                isAIConfigured
+                    ? L10n("pending.transfer.support.ai.available")
+                    : L10n("pending.transfer.support.ai.optional")
+            )
+        }
+
+        alert.informativeText = details.joined(separator: "\n\n")
+        var actions: [() -> Void] = []
+
+        alert.addButton(withTitle: L10n("pending.transfer.support.openTarget"))
+        actions.append {
+            self.openTransferSupportTarget(targetWorktree, stashReference: stashReference, openConflictResolver: false)
+        }
+
+        let canUseAIAction = aiTransferSupportHintsEnabled && isAIConfigured
+        if canUseAIAction {
+            alert.addButton(withTitle: L10n("pending.transfer.support.openTargetAI"))
+            actions.append {
+                self.openTransferSupportTarget(targetWorktree, stashReference: stashReference, openConflictResolver: true)
+            }
+        }
+
+        if let stashReference, !stashReference.clean.isEmpty {
+            alert.addButton(withTitle: L10n("pending.transfer.support.copyStash"))
+            actions.append {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(stashReference, forType: .string)
+                self.statusMessage = L10n("pending.transfer.support.copied")
+            }
+        }
+
+        alert.addButton(withTitle: L10n("OK"))
+        actions.append {}
+
+        let response = alert.runModal()
+        let index = Int(response.rawValue - NSApplication.ModalResponse.alertFirstButtonReturn.rawValue)
+        guard index >= 0 && index < actions.count else { return }
+        actions[index]()
+    }
+
+    private func openTransferSupportTarget(
+        _ targetWorktree: WorktreeItem,
+        stashReference: String?,
+        openConflictResolver: Bool
+    ) {
+        openWorktreeInZion(targetWorktree, navigateToCode: false, sectionAfterOpen: .operations)
+        guard openConflictResolver else { return }
+
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 600_000_000)
+            guard let repositoryURL else { return }
+
+            var sourceStashApplyError: String?
+            var safetyStashApplyError: String?
+            var safetyRef: String?
+            if let stashReference, !stashReference.clean.isEmpty {
+                let safety = "zion-ai-support-\(UUID().uuidString.prefix(8))"
+                _ = try? await worker.runAction(
+                    args: ["stash", "push", "--include-untracked", "-m", safety],
+                    in: repositoryURL
+                )
+                safetyRef = try? await latestStashReference(in: repositoryURL)
+
+                // 1) Apply incoming/source stash.
+                do {
+                    let _ = try await worker.runAction(args: ["stash", "apply", stashReference], in: repositoryURL)
+                } catch {
+                    sourceStashApplyError = error.localizedDescription
+                }
+
+                // 2) Re-apply local/safety stash to preserve local work and surface real conflicts.
+                if sourceStashApplyError == nil, let safetyRef {
+                    do {
+                        let _ = try await worker.runAction(args: ["stash", "apply", safetyRef], in: repositoryURL)
+                    } catch {
+                        safetyStashApplyError = error.localizedDescription
+                    }
+                }
+            }
+
+            do {
+                let files = try await worker.listConflictedFiles(in: repositoryURL)
+                conflictedFiles = files
+                if let first = files.first(where: { !$0.isResolved }) {
+                    selectConflictFile(first.path)
+                } else {
+                    selectedConflictFile = nil
+                    conflictBlocks = []
+                }
+
+                if files.isEmpty {
+                    isConflictViewVisible = false
+                    let blockedByLocalChanges =
+                        Self.isStashApplyBlockedByLocalChanges(sourceStashApplyError)
+                        || Self.isStashApplyBlockedByLocalChanges(safetyStashApplyError)
+
+                    if blockedByLocalChanges {
+                        presentTransferLocalCollisionAlert(
+                            targetWorktree: targetWorktree,
+                            incomingStashRef: stashReference,
+                            safetyStashRef: safetyRef,
+                            sourceError: sourceStashApplyError,
+                            safetyError: safetyStashApplyError
+                        )
+                        statusMessage = L10n("pending.transfer.support.localCollision.status")
+                    } else if sourceStashApplyError != nil || safetyStashApplyError != nil {
+                        statusMessage = L10n("pending.transfer.support.ai.result.failed")
+                    } else {
+                        statusMessage = L10n("pending.transfer.support.ai.result.clean")
+                    }
+                } else {
+                    isConflictViewVisible = true
+                    statusMessage = L10n("pending.transfer.support.ai.result.conflicts")
+                }
+                refreshRepository(setBusy: false)
+            } catch {
+                isConflictViewVisible = false
+                handleError(error)
+            }
+        }
+    }
+
+    private func presentTransferLocalCollisionAlert(
+        targetWorktree: WorktreeItem,
+        incomingStashRef: String?,
+        safetyStashRef: String?,
+        sourceError: String?,
+        safetyError: String?
+    ) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = L10n("pending.transfer.support.localCollision.title")
+
+        var details: [String] = [
+            L10n("pending.transfer.support.localCollision.message", worktreeDisplayName(targetWorktree))
+        ]
+        if let sourceError, !sourceError.clean.isEmpty {
+            details.append(L10n("pending.transfer.support.localCollision.incomingError", sourceError))
+        }
+        if let safetyError, !safetyError.clean.isEmpty {
+            details.append(L10n("pending.transfer.support.localCollision.localError", safetyError))
+        }
+        if let safetyStashRef, !safetyStashRef.clean.isEmpty {
+            details.append(L10n("pending.transfer.support.localCollision.safetyRef", safetyStashRef))
+        }
+        if let incomingStashRef, !incomingStashRef.clean.isEmpty {
+            details.append(L10n("pending.transfer.support.localCollision.incomingRef", incomingStashRef))
+        }
+        alert.informativeText = details.joined(separator: "\n\n")
+
+        alert.addButton(withTitle: L10n("pending.transfer.support.localCollision.openOps"))
+        if let safetyStashRef, !safetyStashRef.clean.isEmpty {
+            alert.addButton(withTitle: L10n("pending.transfer.support.localCollision.copySafety"))
+            alert.addButton(withTitle: L10n("OK"))
+            let response = alert.runModal()
+            if response == .alertSecondButtonReturn {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(safetyStashRef, forType: .string)
+                statusMessage = L10n("pending.transfer.support.localCollision.copiedSafety")
+            }
+            return
+        }
+        _ = alert.runModal()
+    }
+
+    private static func isStashApplyBlockedByLocalChanges(_ description: String?) -> Bool {
+        guard let description else { return false }
+        let normalized = description.lowercased()
+        return normalized.contains("would be overwritten by merge")
+            || normalized.contains("please commit your changes or stash them before you merge")
+            || normalized.contains("local changes")
+    }
+
+    private func latestStashReference(in repositoryURL: URL) async throws -> String? {
+        let output = try await worker.runAction(args: ["stash", "list", "-1", "--format=%gD"], in: repositoryURL)
+        let ref = output.clean
+        return ref.isEmpty ? nil : ref
     }
 
     // MARK: - Terminal Session Management
@@ -2011,6 +2663,36 @@ final class RepositoryViewModel {
         runGitAction(label: "Worktree prune", args: ["worktree", "prune"])
     }
 
+    private func pruneMergeBaseRef() -> String {
+        let locals = Set(localBranchOptions)
+        if locals.contains("main") { return "main" }
+        if locals.contains("master") { return "master" }
+        if locals.contains(currentBranch) { return currentBranch }
+        return "HEAD"
+    }
+
+    private func computeMergedBranchesToPrune(from output: String, baseRef: String) -> [String] {
+        let protectedBranches = Set(["main", "master", "develop", "dev", baseRef, currentBranch])
+        return output
+            .split(separator: "\n")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .map { $0.replacingOccurrences(of: "* ", with: "").trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty && !protectedBranches.contains($0) }
+    }
+
+    private func refreshMergedBranchesPreview() {
+        guard let url = repositoryURL else {
+            mergedBranchesPreview = []
+            return
+        }
+        let baseRef = pruneMergeBaseRef()
+        Task {
+            let output = (try? await worker.runAction(args: ["branch", "--merged", baseRef], in: url)) ?? ""
+            guard self.repositoryURL?.path == url.path else { return }
+            self.mergedBranchesPreview = computeMergedBranchesToPrune(from: output, baseRef: baseRef)
+        }
+    }
+
     private func slugifiedWorktreeName(from input: String) -> String {
         let folded = input
             .clean
@@ -2050,11 +2732,9 @@ final class RepositoryViewModel {
         actionTask = Task {
             do {
                 guard let url else { return }
-                // 1. Get branches merged into main
-                let result = try await worker.runAction(args: ["branch", "--merged", "main"], in: url)
-                let branchesToDelete = result.split(separator: "\n")
-                    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-                    .filter { !$0.isEmpty && !$0.hasPrefix("*") && $0 != "main" && $0 != "master" }
+                let baseRef = pruneMergeBaseRef()
+                let result = try await worker.runAction(args: ["branch", "--merged", baseRef], in: url)
+                let branchesToDelete = computeMergedBranchesToPrune(from: result, baseRef: baseRef)
                 
                 if branchesToDelete.isEmpty {
                     statusMessage = L10n("Nenhuma branch mesclada encontrada.")
@@ -2062,7 +2742,6 @@ final class RepositoryViewModel {
                     return
                 }
                 
-                // 2. Delete them
                 let _ = try await worker.runAction(args: ["branch", "-d"] + branchesToDelete, in: url)
                 clearError()
                 let list = branchesToDelete.joined(separator: ", ")
@@ -2566,7 +3245,10 @@ final class RepositoryViewModel {
                 isGitRepository = payload.isGitRepository
                 uncommittedChanges = payload.uncommittedChanges
                 uncommittedCount = payload.uncommittedCount
+                syncSelectedChangeFileWithPendingChanges()
                 aiPendingChangesSummary = "" // Clear cached summary on refresh
+                ensureBranchReviewSelections()
+                refreshMergedBranchesPreview()
                 statusMessage = L10n("Repositorio carregado: %@ · %@ commits", repositoryURL.lastPathComponent, "\(payload.commits.count)")
                 if setBusy {
                     isBusy = false
@@ -3602,6 +4284,13 @@ final class RepositoryViewModel {
 
     func startCodeReview(source: String, target: String) {
         guard let url = repositoryURL else { return }
+        let sourceRef = source.clean
+        let targetRef = target.clean
+        guard !sourceRef.isEmpty, !targetRef.isEmpty else { return }
+        guard sourceRef != targetRef else {
+            statusMessage = L10n("codereview.sameBranch.error")
+            return
+        }
 
         codeReviewTask?.cancel()
         codeReviewTask = Task {
@@ -3610,14 +4299,14 @@ final class RepositoryViewModel {
             codeReviewFiles = []
 
             // Get diff stat for file list
-            let diffStatResult = try? git.run(args: ["diff", "--numstat", "\(target)...\(source)"], in: url)
+            let diffStatResult = try? git.run(args: ["diff", "--numstat", "\(targetRef)...\(sourceRef)"], in: url)
             let diffStat = diffStatResult?.stdout ?? ""
-            let files = parseDiffStatForCodeReview(diffStat, source: source, target: target, at: url)
+            let files = parseDiffStatForCodeReview(diffStat, source: sourceRef, target: targetRef, at: url)
             codeReviewFiles = files
             if let first = files.first { selectedReviewFileID = first.id }
 
             // Get commit count
-            let logCountResult = try? git.run(args: ["rev-list", "--count", "\(target)...\(source)"], in: url)
+            let logCountResult = try? git.run(args: ["rev-list", "--count", "\(targetRef)...\(sourceRef)"], in: url)
             let commitCount = Int((logCountResult?.stdout ?? "").trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
 
             recalculateCodeReviewStats(commitCount: commitCount)
@@ -4539,10 +5228,89 @@ final class RepositoryViewModel {
         lastError = nil
     }
 
+    func ensureBranchReviewSelections() {
+        let available = Set(branches)
+        guard !available.isEmpty else {
+            branchReviewSource = ""
+            branchReviewTarget = ""
+            return
+        }
+
+        if branchReviewTarget.isEmpty || !available.contains(branchReviewTarget) {
+            if available.contains(currentBranch) {
+                branchReviewTarget = currentBranch
+            } else if let preferred = localBranchOptions.first ?? branches.first {
+                branchReviewTarget = preferred
+            }
+        }
+
+        if branchReviewSource.isEmpty || !available.contains(branchReviewSource) || branchReviewSource == branchReviewTarget {
+            let preferredSource = localBranchOptions.first(where: { $0 != branchReviewTarget })
+                ?? remoteBranchOptions.first(where: { $0 != branchReviewTarget })
+                ?? branches.first(where: { $0 != branchReviewTarget })
+            branchReviewSource = preferredSource ?? ""
+        }
+    }
+
+    private func syncSelectedChangeFileWithPendingChanges() {
+        let files = uncommittedChanges.compactMap(Self.filePathFromStatusLine)
+        guard !files.isEmpty else {
+            selectedChangeFile = nil
+            currentFileDiff = ""
+            currentFileDiffHunks = []
+            selectedHunkLines = []
+            return
+        }
+
+        if let selectedChangeFile, files.contains(selectedChangeFile) {
+            loadDiff(for: selectedChangeFile)
+            return
+        }
+
+        selectedChangeFile = nil
+        currentFileDiff = ""
+        currentFileDiffHunks = []
+        selectedHunkLines = []
+    }
+
+    private static func filePathFromStatusLine(_ line: String) -> String? {
+        let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        guard trimmed.count >= 4 else { return trimmed }
+
+        let start = trimmed.index(trimmed.startIndex, offsetBy: 3)
+        var path = String(trimmed[start...]).trimmingCharacters(in: .whitespaces)
+        if let arrowRange = path.range(of: " -> ") {
+            path = String(path[arrowRange.upperBound...]).trimmingCharacters(in: .whitespaces)
+        }
+        return path.isEmpty ? nil : path
+    }
+
+    private func friendlyErrorMessage(for error: Error) -> String? {
+        guard case let GitClientError.commandFailed(command, message) = error else {
+            return nil
+        }
+
+        guard command.contains("git checkout") else { return nil }
+
+        let pattern = "'([^']+)' is already used by worktree at '([^']+)'"
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(in: message, range: NSRange(message.startIndex..., in: message)),
+              let branchRange = Range(match.range(at: 1), in: message),
+              let pathRange = Range(match.range(at: 2), in: message) else {
+            return nil
+        }
+
+        let branch = String(message[branchRange])
+        let path = String(message[pathRange])
+        return L10n("gitError.checkout.usedByWorktree", branch, path)
+    }
+
     private func handleError(_ error: Error, source: String = #function) {
-        lastError = error.localizedDescription
-        statusMessage = error.localizedDescription
-        logger.log(.error, error.localizedDescription, source: source)
+        let message = friendlyErrorMessage(for: error) ?? error.localizedDescription
+        lastError = message
+        statusMessage = message
+        logger.log(.error, message, source: source)
     }
 
     private func startFileWatcher(for url: URL) {

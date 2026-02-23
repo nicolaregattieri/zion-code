@@ -62,7 +62,8 @@ struct ContentView: View {
         case .repositoryOpened:
             hasCompletedOnboarding = true
             shouldPresentOnboardingFromHelp = false
-            selectedSection = .code
+            selectedSection = model.nextSectionAfterRepositoryOpen ?? .code
+            model.nextSectionAfterRepositoryOpen = nil
         case .requestSection(let section):
             guard section == .code || model.repositoryURL != nil else {
                 model.statusMessage = L10n("Abra um repositorio para acessar %@", L10n(section.title))
@@ -632,13 +633,13 @@ struct ContentView: View {
             Button(L10n("Pull")) { model.pullIntoCurrent(fromRemoteBranch: upstream) }
         }
 
-        Button(L10n("Merge")) { 
-            performGitAction(title: L10n("Merge"), message: L10n("Fazer merge da branch informada na atual?"), destructive: false) {
+        Button(L10n("Merge into Current")) {
+            performGitAction(title: L10n("Merge into Current"), message: L10n("Fazer merge da branch informada na atual?"), destructive: false) {
                 model.mergeBranch(named: branch) 
             }
         }
-        Button(L10n("Rebase")) {
-            performGitAction(title: L10n("Rebase"), message: L10n("Rebasear a branch atual no target informado?"), destructive: true) {
+        Button(L10n("Rebase Current onto This")) {
+            performGitAction(title: L10n("Rebase Current onto This"), message: L10n("Rebasear a branch atual no target informado?"), destructive: true) {
                 model.rebaseCurrentBranch(onto: branch)
             }
         }

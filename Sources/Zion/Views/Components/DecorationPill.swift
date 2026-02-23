@@ -15,7 +15,8 @@ struct DecorationPill: View {
         let isMain = ["main", "master", "develop", "dev"].contains(name.lowercased())
         let isSearchMatch = !highlightSearchQuery.isEmpty && name.lowercased().contains(highlightSearchQuery.lowercased())
         let pillColor = color(for: type)
-        
+        let isHighlighted = isCurrent || isSearchMatch
+
         HStack(spacing: 4) {
             if isMain {
                 Image(systemName: "shield.fill").font(.system(size: 8))
@@ -24,9 +25,12 @@ struct DecorationPill: View {
             } else if type == .remoteBranch {
                 Image(systemName: "icloud.fill").font(.system(size: 8))
             }
+            if isCurrent {
+                Image(systemName: "checkmark.circle.fill").font(.system(size: 8))
+            }
 
             Text(name)
-                .font(.system(size: 10, weight: (isCurrent || isSearchMatch) ? .black : .bold, design: .monospaced))
+                .font(.system(size: 10, weight: isHighlighted ? .heavy : .bold, design: .monospaced))
                 .lineLimit(1)
                 .frame(maxWidth: 200)
         }
@@ -34,13 +38,21 @@ struct DecorationPill: View {
         .padding(.vertical, 4)
         .background(
             Capsule()
-                .fill(isSearchMatch ? DesignSystem.Colors.statusYellowBg : pillColor.opacity(isCurrent ? 0.25 : 0.12))
+                .fill(
+                    isSearchMatch
+                        ? DesignSystem.Colors.statusYellowBg
+                        : (isCurrent ? DesignSystem.Colors.selectionBackground : pillColor.opacity(0.12))
+                )
         )
-        .foregroundStyle(isSearchMatch ? .primary : pillColor)
+        .foregroundStyle(isSearchMatch ? .primary : (isCurrent ? .primary : pillColor))
         .overlay(
             Capsule()
-                .strokeBorder(isSearchMatch ? DesignSystem.Colors.searchHighlight : pillColor.opacity(isCurrent ? 0.6 : 0.2), lineWidth: isSearchMatch ? 2 : 1)
+                .strokeBorder(
+                    isSearchMatch ? DesignSystem.Colors.searchHighlight : (isCurrent ? DesignSystem.Colors.selectionBorder : pillColor.opacity(0.2)),
+                    lineWidth: isHighlighted ? 1.5 : 1
+                )
         )
+        .shadow(color: isCurrent ? DesignSystem.Colors.selectionBackground : .clear, radius: 4, y: 1)
         .onTapGesture(count: 2) {
             if type != .tag { onCheckout(name) }
         }
