@@ -1275,7 +1275,7 @@ class ZionTextView: NSTextView {
         let nsString = string as NSString
         guard nsString.length > 0 else { return }
 
-        let existing = selectedRanges.compactMap { ($0 as? NSValue)?.rangeValue }
+        let existing = selectedRanges.map(\.rangeValue)
             .filter { $0.location != NSNotFound }
         let meaningfulSelections = existing.filter { $0.length > 0 }
 
