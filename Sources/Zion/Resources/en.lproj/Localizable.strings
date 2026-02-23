@@ -5,6 +5,7 @@
 "The view from the top." = "The view from the top.";
 "Operacoes" = "Operations";
 "Worktrees" = "Worktrees";
+"switch.overlay.loading" = "Switching project...";
 "Seguranca" = "Security";
 "Confirmacao" = "Confirmation";
 "Idioma" = "Language";

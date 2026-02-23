@@ -5,6 +5,7 @@
 "The view from the top." = "La vista desde la cima.";
 "Operacoes" = "Operaciones";
 "Worktrees" = "Worktrees";
+"switch.overlay.loading" = "Cambiando de proyecto...";
 "Historico visual, navega em commits e merges" = "Historial visual, navega commits y merges";
 "Fluxos de branch/tag/stash e comandos Git" = "Flujos de branch/tag/stash y comandos Git";
 "Gerencia worktrees paralelos" = "Gestiona worktrees paralelos";

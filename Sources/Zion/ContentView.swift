@@ -102,12 +102,18 @@ struct ContentView: View {
                 // RIGID LAYOUT: Detail view is a solid container
                 detailViewHost
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .allowsHitTesting(!model.isRepositorySwitching)
                     .padding(.bottom, DesignSystem.Spacing.statusBarClearance)
-                    .background(Color(NSColor.windowBackgroundColor)) 
+                    .background(Color(NSColor.windowBackgroundColor))
+                    .overlay {
+                        if model.isRepositorySwitching {
+                            ZionLoadingOverlay()
+                                .transition(.opacity)
+                        }
+                    }
             }
             .navigationSplitViewStyle(.balanced)
             .frame(minWidth: 1360, minHeight: 840)
-            .allowsHitTesting(!model.isRepositorySwitching)
             .alert(L10n("Git não encontrado"), isPresented: Binding(get: { !model.isGitAvailable }, set: { _ in })) {
                 Button(L10n("Baixar Git")) {
                     if let url = URL(string: "https://git-scm.com/downloads") {
@@ -156,12 +162,6 @@ struct ContentView: View {
                 }
                 .frame(width: 0, height: 0)
                 .opacity(0)
-            }
-
-            if model.isRepositorySwitching {
-                repositorySwitchOverlay
-                    .transition(.opacity)
-                    .zIndex(10)
             }
         }
         .id(uiLanguageRaw)
@@ -530,31 +530,6 @@ struct ContentView: View {
                 Text(repositoryURL.path).lineLimit(1).font(.system(.caption, design: .monospaced)).foregroundStyle(.tertiary)
             }
         }.padding(.horizontal, 16).padding(.vertical, 8).background(.ultraThinMaterial).overlay(alignment: .top) { Divider().opacity(0.45) }
-    }
-
-    private var repositorySwitchOverlay: some View {
-        ZStack {
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .ignoresSafeArea()
-            VStack(spacing: 10) {
-                ProgressView()
-                    .controlSize(.regular)
-                Text("Alternando projeto...")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 14)
-            .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(DesignSystem.Colors.glassElevated)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
-            )
-        }
     }
 
     private func openRepositoryInTerminal() {

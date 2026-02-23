@@ -843,16 +843,23 @@ final class RepositoryViewModel {
             guard !Task.isCancelled else { return }
             guard self.repositorySwitchToken == switchToken, self.repositoryURL == url else { return }
 
-            self.isSwitchingRepository = false
             self.logger.log(.info, "switch.deferred.begin", context: "repo=\(url.lastPathComponent) token=\(switchToken.uuidString.prefix(8))", source: #function)
-            self.loadPullRequests()
-            self.refreshPRReviewQueue()
-            self.startPRPollingTimer()
-            self.loadSubmodules()
-            self.loadSignatureStatuses()
-            self.startBackgroundFetch()
-            self.startAutoRefreshTimer()
-            self.refreshRepository(setBusy: false, options: .full)
+            self.refreshRepository(
+                setBusy: false,
+                options: .full,
+                onFinish: { [weak self] in
+                    guard let self else { return }
+                    guard self.repositorySwitchToken == switchToken, self.repositoryURL == url else { return }
+                    self.loadPullRequests()
+                    self.refreshPRReviewQueue()
+                    self.startPRPollingTimer()
+                    self.loadSubmodules()
+                    self.loadSignatureStatuses()
+                    self.startBackgroundFetch()
+                    self.startAutoRefreshTimer()
+                    self.isSwitchingRepository = false
+                }
+            )
         }
     }
 
@@ -3490,7 +3497,11 @@ final class RepositoryViewModel {
         }
     }
 
-    private func refreshRepository(setBusy: Bool, options: RepositoryLoadOptions = .full) {
+    private func refreshRepository(
+        setBusy: Bool,
+        options: RepositoryLoadOptions = .full,
+        onFinish: (() -> Void)? = nil
+    ) {
         guard let repositoryURL else {
             lastError = GitClientError.repositoryNotSelected.localizedDescription
             hasMoreCommits = false
@@ -3579,6 +3590,7 @@ final class RepositoryViewModel {
                 }
                 loadCommitDetails(for: payload.selectedCommitID)
                 loadCommitStats()
+                onFinish?()
             } catch is CancellationError {
                 guard refreshRequestID == requestID else { return }
                 if setBusy {
@@ -3588,6 +3600,7 @@ final class RepositoryViewModel {
                     }
                 }
                 logger.log(.info, "refreshRepository cancelled", context: "request=\(requestID.uuidString.prefix(8)) busy=\(setBusy)", source: #function)
+                onFinish?()
                 return
             } catch {
                 guard refreshRequestID == requestID else { return }
@@ -3598,6 +3611,7 @@ final class RepositoryViewModel {
                     }
                 }
                 handleError(error)
+                onFinish?()
             }
         }
     }
