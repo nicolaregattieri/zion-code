@@ -490,7 +490,12 @@ final class RepositoryViewModel {
     @ObservationIgnored private var detailsTask: Task<Void, Never>?
     @ObservationIgnored private var actionTask: Task<Void, Never>?
     @ObservationIgnored private var autoRefreshTask: Task<Void, Never>?
+    @ObservationIgnored private var deferredRepositoryLoadTask: Task<Void, Never>?
+    @ObservationIgnored private var repositorySwitchToken = UUID()
+    @ObservationIgnored private var isSwitchingRepository = false
+    @ObservationIgnored private var cachedWorktreeStatusByPath: [String: (uncommittedCount: Int, hasConflicts: Bool)] = [:]
     @ObservationIgnored private var cachedIgnoredPaths: Set<String>?
+    var isRepositorySwitching: Bool { isSwitchingRepository }
 
     func checkGitAvailability() {
         let process = Process()
@@ -723,6 +728,12 @@ final class RepositoryViewModel {
             return
         }
 
+        let switchToken = UUID()
+        repositorySwitchToken = switchToken
+        isSwitchingRepository = true
+        logger.log(.info, "switch.start", context: "target=\(url.lastPathComponent) token=\(switchToken.uuidString.prefix(8))", source: #function)
+        cancelRepositoryBackgroundActivityForSwitch()
+
         repositoryURL = url
         repoEditorConfig = EditorConfig.load(from: url)
         saveRecentRepository(url)
@@ -748,7 +759,7 @@ final class RepositoryViewModel {
                 fileWatcher: watcher,
                 monitorTask: nil
             )
-            backgroundRepoChangedFiles[previousURL] = 0
+            backgroundRepoChangedFiles[previousURL] = uncommittedCount
             startBackgroundMonitor(for: previousURL)
             // DON'T set terminalTabs = [] here — let the restore/create below do a direct swap
         } else if previousURL == nil {
@@ -796,19 +807,83 @@ final class RepositoryViewModel {
         currentFileDiff = ""
         currentFileDiffHunks = []
         selectedHunkLines = []
-        uncommittedChanges = []
-        uncommittedCount = 0
 
-        refreshRepository()
+        refreshRepository(setBusy: true, options: .critical)
         refreshFileTree()
-        startAutoRefreshTimer()
         startFileWatcher(for: url)
-        loadPullRequests()
-        refreshPRReviewQueue()
-        startPRPollingTimer()
-        loadSubmodules()
-        startBackgroundFetch()
-        loadSignatureStatuses()
+        scheduleDeferredRepositoryLoads(for: url, switchToken: switchToken)
+    }
+
+    private func cancelRepositoryBackgroundActivityForSwitch() {
+        deferredRepositoryLoadTask?.cancel()
+        refreshTask?.cancel()
+        prTask?.cancel()
+        prPollingTask?.cancel()
+        prPollingTimer?.cancel()
+        backgroundFetchTask?.cancel()
+        autoRefreshTask?.cancel()
+    }
+
+    private func scheduleDeferredRepositoryLoads(for url: URL, switchToken: UUID) {
+        deferredRepositoryLoadTask?.cancel()
+        deferredRepositoryLoadTask = Task { [weak self] in
+            guard let self else { return }
+
+            try? await Task.sleep(nanoseconds: 250_000_000)
+            guard !Task.isCancelled else { return }
+            guard self.repositorySwitchToken == switchToken, self.repositoryURL == url else { return }
+
+            for _ in 0..<40 {
+                if Task.isCancelled { return }
+                if !self.isBusy { break }
+                try? await Task.sleep(nanoseconds: 50_000_000)
+                guard self.repositorySwitchToken == switchToken, self.repositoryURL == url else { return }
+            }
+
+            guard !Task.isCancelled else { return }
+            guard self.repositorySwitchToken == switchToken, self.repositoryURL == url else { return }
+
+            self.isSwitchingRepository = false
+            self.logger.log(.info, "switch.deferred.begin", context: "repo=\(url.lastPathComponent) token=\(switchToken.uuidString.prefix(8))", source: #function)
+            self.loadPullRequests()
+            self.refreshPRReviewQueue()
+            self.startPRPollingTimer()
+            self.loadSubmodules()
+            self.loadSignatureStatuses()
+            self.startBackgroundFetch()
+            self.startAutoRefreshTimer()
+            self.refreshRepository(setBusy: false, options: .full)
+        }
+    }
+
+    private func mergeWorktreeStatusIfNeeded(_ incoming: [WorktreeItem], includeWorktreeStatus: Bool) -> [WorktreeItem] {
+        if includeWorktreeStatus {
+            for worktree in incoming {
+                cachedWorktreeStatusByPath[worktree.path] = (
+                    uncommittedCount: worktree.uncommittedCount,
+                    hasConflicts: worktree.hasConflicts
+                )
+            }
+            return incoming
+        }
+
+        return incoming.map { item in
+            guard let cached = cachedWorktreeStatusByPath[item.path] else { return item }
+            return WorktreeItem(
+                path: item.path,
+                head: item.head,
+                branch: item.branch,
+                isMainWorktree: item.isMainWorktree,
+                isDetached: item.isDetached,
+                isLocked: item.isLocked,
+                lockReason: item.lockReason,
+                isPrunable: item.isPrunable,
+                pruneReason: item.pruneReason,
+                isCurrent: item.isCurrent,
+                uncommittedCount: cached.uncommittedCount,
+                hasConflicts: cached.hasConflicts
+            )
+        }
     }
 
     func cloneRepository(remoteURL: String, destination: URL) {
@@ -3403,6 +3478,9 @@ final class RepositoryViewModel {
                 loadCommitDetails(for: payload.selectedCommitID)
                 loadCommitStats()
             } catch is CancellationError {
+                guard refreshRequestID == requestID else { return }
+                isBusy = false
+                logger.log(.info, "refreshCommitsOnly cancelled", context: "request=\(requestID.uuidString.prefix(8))", source: #function)
                 return
             } catch {
                 guard refreshRequestID == requestID else { return }
@@ -3412,7 +3490,7 @@ final class RepositoryViewModel {
         }
     }
 
-    private func refreshRepository(setBusy: Bool) {
+    private func refreshRepository(setBusy: Bool, options: RepositoryLoadOptions = .full) {
         guard let repositoryURL else {
             lastError = GitClientError.repositoryNotSelected.localizedDescription
             hasMoreCommits = false
@@ -3429,7 +3507,12 @@ final class RepositoryViewModel {
         let focusedBranchSnapshot = focusedBranch
         let selectedCommitSnapshot = selectedCommitID
         let selectedStashSnapshot = selectedStash
-        let inferOrigins = inferBranchOrigins
+        let effectiveOptions = RepositoryLoadOptions(
+            includeWorktreeStatus: options.includeWorktreeStatus,
+            includeBranchTree: options.includeBranchTree,
+            includeTagsAndStashes: options.includeTagsAndStashes,
+            inferOrigins: options.inferOrigins && inferBranchOrigins
+        )
         let commitLimitSnapshot = commitLimit
 
         refreshTask = Task {
@@ -3439,7 +3522,7 @@ final class RepositoryViewModel {
                     focusedBranch: focusedBranchSnapshot,
                     selectedCommitID: selectedCommitSnapshot,
                     selectedStash: selectedStashSnapshot,
-                    inferOrigins: inferOrigins,
+                    options: effectiveOptions,
                     limit: commitLimitSnapshot
                 )
                 try Task.checkCancellation()
@@ -3455,9 +3538,15 @@ final class RepositoryViewModel {
                 tags = payload.tags
                 stashes = payload.stashes
                 selectedStash = payload.selectedStash
-                worktrees = payload.worktrees
+                let resolvedWorktrees = mergeWorktreeStatusIfNeeded(
+                    payload.worktrees,
+                    includeWorktreeStatus: effectiveOptions.includeWorktreeStatus
+                )
+                if worktrees != resolvedWorktrees {
+                    worktrees = resolvedWorktrees
+                }
                 if let root = recentRepositoryRoot(for: repositoryURL) {
-                    recentWorktreeCounts[root] = max(payload.worktrees.count - 1, 0)
+                    recentWorktreeCounts[root] = max(resolvedWorktrees.count - 1, 0)
                 }
                 remotes = payload.remotes
                 commits = payload.commits
@@ -3468,8 +3557,12 @@ final class RepositoryViewModel {
                 isRebasing = payload.isRebasing
                 isCherryPicking = payload.isCherryPicking
                 isGitRepository = payload.isGitRepository
-                uncommittedChanges = payload.uncommittedChanges
-                uncommittedCount = payload.uncommittedCount
+                if uncommittedChanges != payload.uncommittedChanges {
+                    uncommittedChanges = payload.uncommittedChanges
+                }
+                if uncommittedCount != payload.uncommittedCount {
+                    uncommittedCount = payload.uncommittedCount
+                }
                 syncSelectedChangeFileWithPendingChanges()
                 aiPendingChangesSummary = "" // Clear cached summary on refresh
                 ensureBranchReviewSelections()
@@ -3480,15 +3573,29 @@ final class RepositoryViewModel {
                 statusMessage = L10n("Repositorio carregado: %@ · %@ commits", repositoryURL.lastPathComponent, "\(payload.commits.count)")
                 if setBusy {
                     isBusy = false
+                    if isSwitchingRepository {
+                        isSwitchingRepository = false
+                    }
                 }
                 loadCommitDetails(for: payload.selectedCommitID)
                 loadCommitStats()
             } catch is CancellationError {
+                guard refreshRequestID == requestID else { return }
+                if setBusy {
+                    isBusy = false
+                    if isSwitchingRepository {
+                        isSwitchingRepository = false
+                    }
+                }
+                logger.log(.info, "refreshRepository cancelled", context: "request=\(requestID.uuidString.prefix(8)) busy=\(setBusy)", source: #function)
                 return
             } catch {
                 guard refreshRequestID == requestID else { return }
                 if setBusy {
                     isBusy = false
+                    if isSwitchingRepository {
+                        isSwitchingRepository = false
+                    }
                 }
                 handleError(error)
             }
@@ -5424,6 +5531,7 @@ final class RepositoryViewModel {
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 60_000_000_000) // 60s
                 if Task.isCancelled { break }
+                if isSwitchingRepository { continue }
                 await checkBehindRemote()
                 await checkPRReviewRequests()
             }
@@ -5758,8 +5866,10 @@ final class RepositoryViewModel {
             }
         }
         fileWatcher.onRepositoryChanged = { [weak self] in
-            self?.refreshRepository(setBusy: false)
-            self?.refreshFileTree()
+            guard let self else { return }
+            guard !self.isSwitchingRepository else { return }
+            self.refreshRepository(setBusy: false)
+            self.refreshFileTree()
         }
         fileWatcher.watch(directory: url)
     }
@@ -5772,6 +5882,8 @@ final class RepositoryViewModel {
                 try? await Task.sleep(nanoseconds: 30_000_000_000)
 
                 if Task.isCancelled { break }
+
+                if isSwitchingRepository { continue }
 
                 // Refresh without showing busy indicator to avoid UI flickering
                 refreshRepository(setBusy: false)
@@ -5788,12 +5900,14 @@ final class RepositoryViewModel {
                 // Poll every 5 minutes
                 try? await Task.sleep(nanoseconds: 5 * 60 * 1_000_000_000)
                 if Task.isCancelled { break }
+                if isSwitchingRepository { continue }
                 refreshPRReviewQueue()
             }
         }
     }
 
     deinit {
+        deferredRepositoryLoadTask?.cancel()
         autoRefreshTask?.cancel()
         prPollingTimer?.cancel()
         let states = backgroundRepoStates

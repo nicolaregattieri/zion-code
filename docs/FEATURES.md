@@ -50,7 +50,7 @@
 | Open in Editor | Open changed files from commit details, staging, or operations | — |
 | File Browser Context Menu | Right-click: new file/folder, rename, duplicate, copy, cut, paste, delete, reveal in Finder | — |
 | File Watcher | Auto-reload on external changes | — |
-| Find/Replace | In-editor search with match highlighting and navigation | `⌘F` / `⌘H` |
+| Find/Replace | In-editor search with match highlighting and navigation | `⌘F` / `⌘H` / `⌘G` / `⇧⌘G` |
 | Select Next Occurrence | Multi-cursor selection for next matching occurrence | `⌘D` |
 | Go to Definition | Jump to symbol definition (opens in new tab) | `F12` / `⌘Click` |
 | Find References | List references of the selected symbol across repository files | `⇧F12` |

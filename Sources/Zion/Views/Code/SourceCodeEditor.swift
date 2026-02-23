@@ -28,6 +28,10 @@ struct SourceCodeEditor: NSViewRepresentable {
     var currentFilePath: String? = nil
     var onRequestDefinition: ((EditorSymbolQuery) -> Void)?
     var onRequestReferences: ((EditorSymbolQuery) -> Void)?
+    var onFindSeedFromMultiSelect: ((String) -> Void)?
+    var onToggleFindUI: (() -> Void)?
+    var onFindNextShortcut: (() -> Void)?
+    var onFindPreviousShortcut: (() -> Void)?
 
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSScrollView()
@@ -145,6 +149,10 @@ struct SourceCodeEditor: NSViewRepresentable {
         textView.currentFilePath = currentFilePath
         textView.onRequestDefinition = onRequestDefinition
         textView.onRequestReferences = onRequestReferences
+        textView.onFindSeedFromMultiSelect = onFindSeedFromMultiSelect
+        textView.onToggleFindUI = onToggleFindUI
+        textView.onFindNextShortcut = onFindNextShortcut
+        textView.onFindPreviousShortcut = onFindPreviousShortcut
 
         // Current line highlight color — theme-aware
         textView.currentLineHighlightColor = theme.isLightAppearance
@@ -640,6 +648,10 @@ class ZionTextView: NSTextView {
     var currentFilePath: String?
     var onRequestDefinition: ((EditorSymbolQuery) -> Void)?
     var onRequestReferences: ((EditorSymbolQuery) -> Void)?
+    var onFindSeedFromMultiSelect: ((String) -> Void)?
+    var onToggleFindUI: (() -> Void)?
+    var onFindNextShortcut: (() -> Void)?
+    var onFindPreviousShortcut: (() -> Void)?
 
     // Editor settings
     var editorTabSize: Int = 4
@@ -874,6 +886,21 @@ class ZionTextView: NSTextView {
 
     override func keyDown(with event: NSEvent) {
         let flags = event.modifierFlags.intersection([.command, .option, .shift, .control])
+
+        if flags == .command, event.charactersIgnoringModifiers?.lowercased() == "f" {
+            onToggleFindUI?()
+            return
+        }
+
+        if flags == .command, event.charactersIgnoringModifiers?.lowercased() == "g" {
+            onFindNextShortcut?()
+            return
+        }
+
+        if flags == [.command, .shift], event.charactersIgnoringModifiers?.lowercased() == "g" {
+            onFindPreviousShortcut?()
+            return
+        }
 
         // VSCode-like command: add next occurrence selection.
         if flags == .command, event.charactersIgnoringModifiers?.lowercased() == "d" {
@@ -1283,6 +1310,10 @@ class ZionTextView: NSTextView {
             if let seed = currentSymbolRange() {
                 setSelectedRange(seed)
                 scrollRangeToVisible(seed)
+                let value = nsString.substring(with: seed).trimmingCharacters(in: .whitespacesAndNewlines)
+                if !value.isEmpty {
+                    onFindSeedFromMultiSelect?(value)
+                }
             } else {
                 NSSound.beep()
             }
@@ -1298,6 +1329,10 @@ class ZionTextView: NSTextView {
         guard !selectedText.isEmpty else {
             NSSound.beep()
             return
+        }
+        let normalizedSelection = selectedText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !normalizedSelection.isEmpty {
+            onFindSeedFromMultiSelect?(normalizedSelection)
         }
 
         let enforceBoundary = selectedText.allSatisfy { $0.isLetter || $0.isNumber || $0 == "_" }

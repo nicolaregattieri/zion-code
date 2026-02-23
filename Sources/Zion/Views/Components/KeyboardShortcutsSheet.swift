@@ -36,6 +36,8 @@ struct KeyboardShortcutsSheet: View {
                         (L10n("Novo Arquivo"), "⌘N"),
                         (L10n("Salvar Como..."), "⇧⌘S"),
                         (L10n("shortcuts.find"), "⌘F"),
+                        (L10n("editor.search.next"), "⌘G"),
+                        (L10n("editor.search.previous"), "⇧⌘G"),
                         (L10n("shortcuts.findReplace"), "⌘H"),
                         (L10n("shortcuts.goToLine"), "⌘G"),
                         (L10n("shortcuts.selectNextOccurrence"), "⌘D"),
