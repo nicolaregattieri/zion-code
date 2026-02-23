@@ -248,6 +248,8 @@ final class RepositoryViewModel {
     @ObservationIgnored private var backgroundFetchTask: Task<Void, Never>?
     @ObservationIgnored private var lastNotifiedBehindCount: Int = 0
     @ObservationIgnored private var notifiedReviewRequestPRIDs: Set<Int> = []
+    @ObservationIgnored private var autoFetchCredentialFailures: Int = 0
+    @ObservationIgnored private var autoFetchSuspendedUntil: Date?
 
     // ntfy Push Notifications
     var ntfyTopic: String = "" {
@@ -675,8 +677,9 @@ final class RepositoryViewModel {
     func syncAIAgentConfigs() {
         guard let repoPath = repositoryURL else { return }
         let selectedAgents = ntfySelectedAgents.compactMap { AIAgent(rawValue: $0) }
+        let hasValidNtfyConfig = NtfyClient.validateTopic(ntfyTopic) && NtfyClient.validateServerURL(ntfyServerURL)
 
-        if ntfyExternalAgentsEnabled && isNtfyConfigured && !selectedAgents.isEmpty {
+        if ntfyExternalAgentsEnabled && hasValidNtfyConfig && !selectedAgents.isEmpty {
             AIAgentConfigManager.updateNtfyBlock(
                 agents: selectedAgents,
                 topic: ntfyTopic,
@@ -3405,8 +3408,8 @@ final class RepositoryViewModel {
         actionTask?.cancel()
         isBusy = true
 
-        let command = "git " + args.joined(separator: " ")
-        logger.log(.git, command, context: label)
+        let commandSummary = redactedGitCommandSummary(args: args)
+        logger.log(.git, commandSummary, context: label)
 
         actionTask = Task {
             do {
@@ -3419,16 +3422,29 @@ final class RepositoryViewModel {
                 } else {
                     statusMessage = "\(label): \(output.prefix(240))"
                 }
-                logger.log(.git, "\(label) OK", context: command)
+                logger.log(.git, "\(label) OK", context: commandSummary)
                 refreshRepository(setBusy: true)
             } catch is CancellationError {
                 return
             } catch {
                 isBusy = false
-                logger.log(.error, error.localizedDescription, context: command)
+                logger.log(.error, error.localizedDescription, context: commandSummary)
                 handleError(error)
             }
         }
+    }
+
+    private func redactedGitCommandSummary(args: [String]) -> String {
+        let subcommand = args.first ?? "command"
+        let fingerprint = gitArgsFingerprint(args)
+        return "git \(subcommand) [args=\(args.count), id=\(fingerprint)]"
+    }
+
+    private func gitArgsFingerprint(_ args: [String]) -> String {
+        let payload = args.joined(separator: "\u{1f}")
+        let digest = SHA256.hash(data: Data(payload.utf8))
+        let hex = digest.map { String(format: "%02x", $0) }.joined()
+        return String(hex.prefix(10))
     }
 
     private func loadCommitDetails(for commitID: String?) {
@@ -5166,6 +5182,10 @@ final class RepositoryViewModel {
 
     private func checkBehindRemote() async {
         guard let url = repositoryURL else { return }
+        if let suspendedUntil = autoFetchSuspendedUntil, suspendedUntil > Date() {
+            return
+        }
+
         do {
             // Dry-run fetch to check for updates
             let _ = try await worker.runAction(args: ["fetch", "--dry-run"], in: url)
@@ -5190,13 +5210,42 @@ final class RepositoryViewModel {
                     repoName: url.lastPathComponent
                 )
             }
+            autoFetchCredentialFailures = 0
+            autoFetchSuspendedUntil = nil
             lastNotifiedBehindCount = newCount
         } catch {
+            if isCredentialFailure(error) {
+                autoFetchCredentialFailures += 1
+                let pauseMinutes = autoFetchCredentialFailures == 1 ? 10 : 30
+                autoFetchSuspendedUntil = Date().addingTimeInterval(TimeInterval(pauseMinutes * 60))
+                logger.log(
+                    .warn,
+                    "Auto-fetch paused after credential error (\(pauseMinutes)m)",
+                    context: error.localizedDescription,
+                    source: #function
+                )
+                return
+            }
+
             logger.log(.info, "Behind remote check failed (expected if no upstream): \(error.localizedDescription)", source: #function)
             behindRemoteCount = 0
             aheadRemoteCount = 0
             lastNotifiedBehindCount = 0
         }
+    }
+
+    private func isCredentialFailure(_ error: Error) -> Bool {
+        guard case let GitClientError.commandFailed(_, message) = error else {
+            return false
+        }
+        let lower = message.lowercased()
+        return lower.contains("authentication failed")
+            || lower.contains("could not read username")
+            || lower.contains("terminal prompts disabled")
+            || lower.contains("credential")
+            || lower.contains("keychain")
+            || lower.contains("git-credential-osxkeychain")
+            || lower.contains("dev.azure.com")
     }
 
     private func checkPRReviewRequests() async {
