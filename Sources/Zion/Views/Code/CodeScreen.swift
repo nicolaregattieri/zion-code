@@ -535,36 +535,44 @@ struct CodeScreen: View {
         VStack(spacing: 0) {
             if !model.openedFiles.isEmpty {
                 codeTabBar
+                    .zIndex(2)
 
                 Divider()
+                    .zIndex(2)
 
                 if isSearchVisible {
                     findReplaceBar
                         .transition(DesignSystem.Motion.slideFromTop)
                         .background(model.selectedTheme.colors.background)
                         .environment(\.colorScheme, model.selectedTheme.isLightAppearance ? .light : .dark)
+                        .zIndex(2)
                 }
 
-                if model.isBlameVisible && !model.blameEntries.isEmpty {
-                    BlameView(entries: model.blameEntries, fileName: model.selectedCodeFile?.name ?? "", model: model) { commitHash in
-                        model.selectCommit(commitHash)
-                        model.navigateToGraphRequested = true
-                    }
-                    .background(model.selectedTheme.colors.background)
-                } else if isMarkdownPreviewActive {
-                    DraggableSplitView(
-                        axis: .horizontal,
-                        ratio: $markdownPreviewRatio,
-                        minLeading: 320,
-                        minTrailing: 300
-                    ) {
+                Group {
+                    if model.isBlameVisible && !model.blameEntries.isEmpty {
+                        BlameView(entries: model.blameEntries, fileName: model.selectedCodeFile?.name ?? "", model: model) { commitHash in
+                            model.selectCommit(commitHash)
+                            model.navigateToGraphRequested = true
+                        }
+                        .background(model.selectedTheme.colors.background)
+                    } else if isMarkdownPreviewActive {
+                        DraggableSplitView(
+                            axis: .horizontal,
+                            ratio: $markdownPreviewRatio,
+                            minLeading: 320,
+                            minTrailing: 300
+                        ) {
+                            sourceEditorView
+                        } trailing: {
+                            markdownPreviewPane
+                        }
+                    } else {
                         sourceEditorView
-                    } trailing: {
-                        markdownPreviewPane
                     }
-                } else {
-                    sourceEditorView
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
+                .zIndex(0)
             } else {
                 emptyEditorView
                     .background(model.selectedTheme.colors.background)
