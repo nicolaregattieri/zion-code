@@ -54,7 +54,18 @@ Zion doesn't make you choose.
 - Pending Changes actions: visible `Create Branch Here` plus contextual actions in Zion Tree.
 - Smart change transfer: **Copy Changes** to another worktree (safe default), with **Move Changes** as confirmed action.
 - Guided recovery for transfer/remove edge cases: conflict-friendly dialogs keep recovery stash refs and offer next steps.
+- Recovery Vault in Operations: list active/dangling safety snapshots, copy refs, and restore when needed.
 - Root-only recents: global list stays project-focused, with `WT n` badge per repo.
+
+### Pre-release Testing Mode (Beta Testers)
+
+Before tagging a release, run Zion as a release candidate and validate critical flows:
+
+1. Worktree create/switch/remove (including pending-change worktrees)
+2. Pending Changes actions (`Commit`, `Create Branch Here`, `Copy Changes`, `Stash`)
+3. Stash apply/pop/drop and Recovery Vault restore path
+4. Graph pills + details/changes panel refresh when switching worktrees
+5. Operations conflict flow (manual + AI-assisted where available)
 
 ---
 
@@ -139,6 +150,8 @@ List open pull requests, create new PRs from your current branch, and let AI gen
 ### Worktree-First Workflow
 
 Create worktrees with a smart prefix+name flow, open directly into Zion Code, and keep a dedicated terminal context per worktree. In Zion Tree, switch context through worktree pills, create branches directly from Pending Changes, and copy/move pending work safely across worktrees. Global Recents stays root-only while context switching happens in Worktrees.
+
+Current known edge case: if both worktrees change the same file/line, Git can block direct stash apply without generating a merge-conflict file list. In this scenario, use Operations + Recovery Vault refs to restore safely.
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/8e07e3bd-55ab-41ab-ac51-aecf82ede782" width="100%" alt="Quick Open fuzzy search overlay" />

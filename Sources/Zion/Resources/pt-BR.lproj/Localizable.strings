@@ -364,6 +364,7 @@
 "help.ops.rebase" = "Rebase interativo visual com pick, squash, fixup, drop e reordenação";
 "help.ops.hunk" = "Staging por hunk e por linha — controle granular do que entra no commit";
 "help.ops.init" = "Inicialize um novo repositório Git diretamente pela tela inicial";
+"help.ops.recovery" = "Recovery Vault com snapshots para restaurar mudanças após falhas";
 
 // Worktrees
 "help.worktree.parallel" = "Trabalhe em múltiplas branches simultaneamente sem trocar contexto";
@@ -514,7 +515,7 @@
 "map.code.subtitle" = "Editor de código com syntax highlighting, Quick Open, blame e múltiplas abas.";
 "map.terminal.subtitle" = "Terminal real com PTY nativo, splits, abas e zoom independente.";
 "map.clipboard.subtitle" = "Clipboard que captura automaticamente e cola direto no terminal.";
-"map.operations.subtitle" = "Commit, staging, branches, tags, stash, rebase interativo e mais.";
+"map.operations.subtitle" = "Commit, staging, branches, tags, stash, recovery vault, rebase interativo e mais.";
 "map.worktrees.subtitle" = "Trabalhe em múltiplas branches simultaneamente com terminais dedicados.";
 "map.ai.subtitle" = "Assistente de IA para commits, diffs, code review, conflitos e mais.";
 "map.customization.subtitle" = "Idioma, aparência, editor externo, confirmações e reflog.";
@@ -605,6 +606,9 @@
 "map.ops.rebase.tip1" = "Use squash para combinar commits relacionados antes de fazer push.";
 "map.ops.stash.title" = "Gerenciamento de Stash";
 "map.ops.stash.description" = "Crie stashes com mensagens descritivas, aplique, pop ou remova. Veja stashes recentes no grafo.";
+"map.ops.recovery.title" = "Recovery Vault";
+"map.ops.recovery.description" = "Lista snapshots ativos e órfãos para recuperar mudanças após falhas de stash, reset ou transferência.";
+"map.ops.recovery.tip1" = "Use Copiar para guardar a referência e Restaurar para reaplicar no working tree atual.";
 "map.ops.tags.title" = "Gerenciamento de Tags";
 "map.ops.tags.description" = "Crie e remova tags lightweight rapidamente. A lista exibe tags existentes para referência.";
 
