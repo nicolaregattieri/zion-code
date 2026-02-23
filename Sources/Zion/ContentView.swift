@@ -463,6 +463,9 @@ struct ContentView: View {
         HStack(spacing: 12) {
             if model.isBusy { ProgressView().controlSize(.small) }
             Text(model.statusMessage).lineLimit(1).font(.caption).foregroundStyle(.secondary)
+
+            statusBarQuickNavigation
+
             Spacer()
 
             if model.repositoryURL != nil && !model.isRepositorySwitching {
@@ -530,6 +533,91 @@ struct ContentView: View {
                 Text(repositoryURL.path).lineLimit(1).font(.system(.caption, design: .monospaced)).foregroundStyle(.tertiary)
             }
         }.padding(.horizontal, 16).padding(.vertical, 8).background(.ultraThinMaterial).overlay(alignment: .top) { Divider().opacity(0.45) }
+    }
+
+    private var statusBarQuickNavigation: some View {
+        HStack(spacing: 4) {
+            statusBarSectionButton(.code)
+            statusBarSectionButton(.graph)
+            statusBarSectionButton(.operations)
+
+            Divider()
+                .frame(height: 14)
+                .padding(.horizontal, 2)
+
+            statusBarSettingsButton
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 4)
+        .background(DesignSystem.Colors.glassSubtle)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous)
+                .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
+        )
+    }
+
+    private func statusBarSectionButton(_ section: AppSection) -> some View {
+        let isSelected = selectedSection == section
+        let isDisabled = section != .code && model.repositoryURL == nil
+
+        return Button {
+            route(.requestSection(section))
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: section.icon)
+                    .font(.system(size: 9, weight: .semibold))
+                Text(statusBarSectionLabel(section))
+                    .font(.system(size: 10, weight: .semibold))
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background(
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous)
+                    .fill(isSelected ? DesignSystem.Colors.selectionBackground : Color.clear)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous)
+                    .stroke(isSelected ? DesignSystem.Colors.selectionBorder : Color.clear, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .disabled(isDisabled)
+        .opacity(isDisabled ? 0.45 : 1)
+        .help(statusBarSectionLabel(section))
+        .accessibilityLabel(statusBarSectionLabel(section))
+    }
+
+    private var statusBarSettingsButton: some View {
+        Button {
+            openSettingsWindow()
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 9, weight: .semibold))
+                Text(L10n("status.nav.settings"))
+                    .font(.system(size: 10, weight: .semibold))
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+        }
+        .buttonStyle(.plain)
+        .help(L10n("settings.open.hint"))
+        .accessibilityLabel(L10n("status.nav.settings"))
+    }
+
+    private func statusBarSectionLabel(_ section: AppSection) -> String {
+        L10n(section.title)
+    }
+
+    private func openSettingsWindow() {
+        if #available(macOS 13.0, *) {
+            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        } else {
+            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+        }
     }
 
     private func openRepositoryInTerminal() {

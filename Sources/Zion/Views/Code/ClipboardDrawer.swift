@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct ClipboardDrawer: View {
     var model: RepositoryViewModel
@@ -142,8 +143,11 @@ struct ClipboardDrawer: View {
                 .frame(width: 14)
 
             if item.isImage {
-                Text(L10n("Imagem") + " (\(item.preview))")
-                    .font(.system(size: 11, design: .monospaced))
+                if let path = item.imagePath {
+                    ClipboardImageThumb(path: path)
+                }
+                Text(item.preview)
+                    .font(.system(size: 10, weight: .medium, design: .monospaced))
                     .lineLimit(1)
                     .foregroundStyle(.secondary)
             } else {
@@ -182,7 +186,7 @@ struct ClipboardDrawer: View {
                 .foregroundStyle(.tertiary)
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, 5)
+        .padding(.vertical, 4)
         .background(isHovered ? DesignSystem.Colors.glassHover : Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
         .contentShape(Rectangle())
@@ -307,5 +311,40 @@ struct ClipboardDrawer: View {
         let hours = minutes / 60
         if hours < 24 { return "\(hours)h" }
         return "\(hours / 24)d"
+    }
+}
+
+private struct ClipboardImageThumb: View {
+    let path: String
+    @State private var image: NSImage?
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(nsImage: image)
+                    .resizable()
+                    .interpolation(.medium)
+                    .scaledToFill()
+            } else {
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous)
+                    .fill(DesignSystem.Colors.glassSubtle)
+                    .overlay(
+                        Image(systemName: "photo")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                    )
+            }
+        }
+        .frame(width: 40, height: 40)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous)
+                .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
+        )
+        .onAppear {
+            if image == nil {
+                image = NSImage(contentsOfFile: path)
+            }
+        }
     }
 }
