@@ -1317,3 +1317,16 @@
 "stash.drop.confirm.withCount" = "Permanently remove '%@'? Current stash total: %@.";
 "prune.merged.confirm.empty" = "No merged local branches were detected to prune.";
 "prune.merged.confirm.withCount" = "Remove %@ merged local branch(es)?";
+"recovery.title" = "Recovery Vault";
+"recovery.subtitle" = "Safety snapshots to restore changes after failed flows.";
+"recovery.refresh" = "Refresh recovery snapshots";
+"recovery.empty" = "No recovery snapshots found.";
+"recovery.status.loaded" = "%@ snapshot(s) loaded.";
+"recovery.status.empty" = "No snapshots available.";
+"recovery.status.failed" = "Failed to load recovery snapshots.";
+"recovery.source.activeStash" = "Active stash";
+"recovery.source.danglingSnapshot" = "Dangling snapshot";
+"recovery.copy" = "Copy";
+"recovery.copy.success" = "Recovery reference copied: %@";
+"recovery.restore" = "Restore";
+"recovery.restore.confirm" = "Restore snapshot %@ into current working tree? This may overwrite local changes.";

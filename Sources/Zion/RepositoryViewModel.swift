@@ -23,6 +23,9 @@ final class RepositoryViewModel {
     var tags: [String] = []
     var stashes: [String] = []
     var selectedStash: String = ""
+    var recoverySnapshots: [RecoverySnapshot] = []
+    var isRecoverySnapshotsLoading: Bool = false
+    var recoverySnapshotsStatus: String = ""
     var worktrees: [WorktreeItem] = []
     var statusMessage: String = "Selecione um repositorio para iniciar."
     var lastError: String?
@@ -188,6 +191,8 @@ final class RepositoryViewModel {
     var isFileHistoryVisible: Bool = false
     var isFileHistoryLoading: Bool = false
     @ObservationIgnored private var fileHistoryTask: Task<Void, Never>?
+    @ObservationIgnored private var recoverySnapshotsTask: Task<Void, Never>?
+    @ObservationIgnored private var recoverySnapshotsRepositoryPath: String?
 
     var aiProvider: AIProvider = .none {
         didSet { 
@@ -1774,6 +1779,122 @@ final class RepositoryViewModel {
         }
     }
 
+    func refreshRecoverySnapshots(includeDangling: Bool = true) {
+        guard let repositoryURL else {
+            recoverySnapshots = []
+            recoverySnapshotsStatus = ""
+            return
+        }
+
+        recoverySnapshotsTask?.cancel()
+        isRecoverySnapshotsLoading = true
+        recoverySnapshotsTask = Task {
+            do {
+                let active = try await loadActiveRecoverySnapshots(in: repositoryURL)
+                let dangling = includeDangling ? (try await loadDanglingRecoverySnapshots(in: repositoryURL)) : []
+
+                var byHash: [String: RecoverySnapshot] = [:]
+                for item in active { byHash[item.hash] = item }
+                for item in dangling where byHash[item.hash] == nil { byHash[item.hash] = item }
+
+                let merged = byHash.values.sorted { $0.date > $1.date }
+                recoverySnapshots = merged
+                recoverySnapshotsRepositoryPath = repositoryURL.path
+                recoverySnapshotsStatus = merged.isEmpty
+                    ? L10n("recovery.status.empty")
+                    : L10n("recovery.status.loaded", "\(merged.count)")
+                isRecoverySnapshotsLoading = false
+            } catch is CancellationError {
+                return
+            } catch {
+                isRecoverySnapshotsLoading = false
+                recoverySnapshotsStatus = L10n("recovery.status.failed")
+                logger.log(.warn, "Recovery snapshot scan failed: \(error.localizedDescription)", source: #function)
+            }
+        }
+    }
+
+    func copyRecoverySnapshotReference(_ snapshot: RecoverySnapshot) {
+        let value = snapshot.reference ?? snapshot.hash
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(value, forType: .string)
+        statusMessage = L10n("recovery.copy.success", value)
+    }
+
+    func restoreRecoverySnapshot(_ snapshot: RecoverySnapshot) {
+        if let reference = snapshot.reference, !reference.clean.isEmpty {
+            selectedStash = reference
+            applySelectedStash()
+            return
+        }
+        runGitAction(label: "Restore snapshot", args: ["checkout", snapshot.hash, "--", "."])
+    }
+
+    private func loadActiveRecoverySnapshots(in repositoryURL: URL) async throws -> [RecoverySnapshot] {
+        let output = try await worker.runAction(
+            args: ["stash", "list", "--format=%gD%x1F%H%x1F%ct%x1F%gs"],
+            in: repositoryURL
+        )
+
+        return output.split(separator: "\n", omittingEmptySubsequences: true).compactMap { line in
+            let fields = line.split(separator: Character(UnicodeScalar(0x1F)!), omittingEmptySubsequences: false).map(String.init)
+            guard fields.count >= 4 else { return nil }
+            let ref = fields[0].clean
+            let hash = fields[1].clean
+            let timestamp = TimeInterval(fields[2].clean) ?? 0
+            let subject = fields[3].clean
+            guard !ref.isEmpty, !hash.isEmpty else { return nil }
+            return RecoverySnapshot(
+                hash: hash,
+                shortHash: String(hash.prefix(8)),
+                reference: ref,
+                subject: subject,
+                date: Date(timeIntervalSince1970: timestamp),
+                source: .activeStash
+            )
+        }
+    }
+
+    private func loadDanglingRecoverySnapshots(in repositoryURL: URL) async throws -> [RecoverySnapshot] {
+        let fsck = try await worker.runActionAllowingFailure(
+            args: ["fsck", "--no-reflogs", "--full", "--unreachable", "--no-progress"],
+            in: repositoryURL
+        )
+        let hashes = fsck.output
+            .split(separator: "\n", omittingEmptySubsequences: true)
+            .compactMap { line -> String? in
+                let text = String(line)
+                guard text.hasPrefix("unreachable commit ") else { return nil }
+                return String(text.dropFirst("unreachable commit ".count)).clean
+            }
+            .filter { !$0.isEmpty }
+
+        guard !hashes.isEmpty else { return [] }
+        let limited = Array(hashes.prefix(180))
+        let showOutput = try await worker.runAction(
+            args: ["show", "-s", "--format=%H%x1F%h%x1F%ct%x1F%s"] + limited,
+            in: repositoryURL
+        )
+
+        return showOutput.split(separator: "\n", omittingEmptySubsequences: true).compactMap { line in
+            let fields = line.split(separator: Character(UnicodeScalar(0x1F)!), omittingEmptySubsequences: false).map(String.init)
+            guard fields.count >= 4 else { return nil }
+            let hash = fields[0].clean
+            let shortHash = fields[1].clean
+            let timestamp = TimeInterval(fields[2].clean) ?? 0
+            let subject = fields[3].clean
+            guard subject.contains("zion-safety-") || subject.contains("zion-transfer-") else { return nil }
+            return RecoverySnapshot(
+                hash: hash,
+                shortHash: shortHash.isEmpty ? String(hash.prefix(8)) : shortHash,
+                reference: nil,
+                subject: subject,
+                date: Date(timeIntervalSince1970: timestamp),
+                source: .danglingSnapshot
+            )
+        }
+    }
+
     private func runStashRestoreAction(reference: String, pop: Bool) {
         guard let repositoryURL else {
             lastError = GitClientError.repositoryNotSelected.localizedDescription
@@ -2406,6 +2527,10 @@ final class RepositoryViewModel {
                     let blockedByLocalChanges =
                         Self.isStashApplyBlockedByLocalChanges(sourceStashApplyError)
                         || Self.isStashApplyBlockedByLocalChanges(safetyStashApplyError)
+
+                    // NOTE (release follow-up): when two worktrees edit the same file/line, Git can block stash apply
+                    // without producing unmerged (-U) entries. In that case we do not get conflict files and must
+                    // guide users through local-overwrite recovery. Revisit this flow with a deterministic same-file resolver.
 
                     if blockedByLocalChanges {
                         presentTransferLocalCollisionAlert(
@@ -3249,6 +3374,9 @@ final class RepositoryViewModel {
                 aiPendingChangesSummary = "" // Clear cached summary on refresh
                 ensureBranchReviewSelections()
                 refreshMergedBranchesPreview()
+                if recoverySnapshotsRepositoryPath == repositoryURL.path {
+                    refreshRecoverySnapshots(includeDangling: false)
+                }
                 statusMessage = L10n("Repositorio carregado: %@ · %@ commits", repositoryURL.lastPathComponent, "\(payload.commits.count)")
                 if setBusy {
                     isBusy = false

@@ -162,6 +162,12 @@ actor RepositoryWorker {
         return result.stdout.clean.isEmpty ? result.stderr.clean : result.stdout.clean
     }
 
+    func runActionAllowingFailure(args: [String], in repositoryURL: URL) throws -> (output: String, status: Int32) {
+        let result = try git.runAllowingFailure(args: args, in: repositoryURL)
+        let output = result.stdout.clean.isEmpty ? result.stderr.clean : result.stdout.clean
+        return (output, result.status)
+    }
+
     func runActionWithStdin(args: [String], stdin: String, in repositoryURL: URL) throws -> String {
         let result = try git.runWithStdin(args: args, stdin: stdin, in: repositoryURL)
         return result.stdout.clean.isEmpty ? result.stderr.clean : result.stdout.clean

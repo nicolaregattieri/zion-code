@@ -225,6 +225,32 @@ struct BranchInfo: Identifiable, Hashable, Sendable {
     var shortHead: String { String(head.prefix(8)) }
 }
 
+enum RecoverySnapshotSource: String, CaseIterable, Sendable {
+    case activeStash
+    case danglingSnapshot
+
+    var l10nKey: String {
+        switch self {
+        case .activeStash: return "recovery.source.activeStash"
+        case .danglingSnapshot: return "recovery.source.danglingSnapshot"
+        }
+    }
+}
+
+struct RecoverySnapshot: Identifiable, Hashable, Sendable {
+    let hash: String
+    let shortHash: String
+    let reference: String?
+    let subject: String
+    let date: Date
+    let source: RecoverySnapshotSource
+
+    var id: String { hash + "::" + (reference ?? "dangling") }
+    var isZionManaged: Bool {
+        subject.contains("zion-safety-") || subject.contains("zion-transfer-")
+    }
+}
+
 struct BranchTreeNode: Identifiable, Hashable, Sendable {
     let id: String
     let title: String

@@ -1270,3 +1270,16 @@
 "stash.drop.confirm.withCount" = "Remover permanentemente '%@'? Total de stashes atuais: %@.";
 "prune.merged.confirm.empty" = "Nenhuma branch local mesclada foi detectada para remover.";
 "prune.merged.confirm.withCount" = "Remover %@ branch(es) locais já mescladas?";
+"recovery.title" = "Recovery Vault";
+"recovery.subtitle" = "Snapshots de segurança para restaurar mudanças após falhas.";
+"recovery.refresh" = "Atualizar snapshots de recuperação";
+"recovery.empty" = "Nenhum snapshot de recuperação encontrado.";
+"recovery.status.loaded" = "%@ snapshot(s) carregados.";
+"recovery.status.empty" = "Nenhum snapshot disponível.";
+"recovery.status.failed" = "Falha ao carregar snapshots de recuperação.";
+"recovery.source.activeStash" = "Stash ativo";
+"recovery.source.danglingSnapshot" = "Snapshot órfão";
+"recovery.copy" = "Copiar";
+"recovery.copy.success" = "Referência de recuperação copiada: %@";
+"recovery.restore" = "Restaurar";
+"recovery.restore.confirm" = "Restaurar snapshot %@ no working tree atual? Isso pode sobrescrever mudanças locais.";
