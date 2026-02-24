@@ -46,12 +46,12 @@ Zion doesn't make you choose.
 
 ---
 
-## What's New in 1.2.2
+## What's New in 1.2.3
 
-- Focus Mode UX polish: added an explicit in-screen exit control (`⌃⌘J`) while keeping keyboard/menu toggles.
-- Product simplification: external terminal/editor references removed from app surfaces; Zion now presents the integrated workspace as the primary path.
-- Documentation synchronization pass: `FEATURES.md`, Help/Map messaging, and release docs updated to reflect current behavior.
-- Public release package bumped to `1.2.2` (build `7`) for Sparkle distribution.
+- UX consistency pass in critical navigation surfaces: `Changes` now uses a structured `CardHeader` hierarchy and cleaner action grouping.
+- Better interaction feedback for daily flows: file rows in `Changes` and worktree rows in `Sidebar` now provide clearer hover and selection states.
+- Conflict visibility upgrade in worktree list: semantic warning icon replaces ambiguous text warning marker.
+- Public release package bumped to `1.2.3` (build `8`) for Sparkle distribution.
 
 ### Launch Week Validation (Advanced Flows)
 

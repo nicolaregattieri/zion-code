@@ -12,6 +12,7 @@ struct SidebarView: View {
     @State private var branchSearchQuery: String = ""
     @State private var isNewWorktreeExpanded: Bool = false
     @State private var hoveredSection: AppSection?
+    @State private var hoveredWorktreePath: String?
 
     let onOpen: () -> Void
     let branchContextMenu: (String) -> AnyView
@@ -270,7 +271,9 @@ struct SidebarView: View {
     }
 
     private func worktreeRow(_ wt: WorktreeItem) -> some View {
-        HStack(spacing: 8) {
+        let isHovered = hoveredWorktreePath == wt.path
+
+        return HStack(spacing: 8) {
             Button {
                 model.openWorktreeInZion(
                     wt,
@@ -308,8 +311,10 @@ struct SidebarView: View {
                                 .font(.system(size: 9, weight: .bold, design: .monospaced))
                                 .foregroundStyle(.secondary)
                             if wt.hasConflicts {
-                                Text("⚠")
+                                Image(systemName: "exclamationmark.triangle.fill")
                                     .font(.system(size: 9, weight: .bold))
+                                    .foregroundStyle(DesignSystem.Colors.destructive)
+                                    .help(L10n("Conflitos"))
                             }
                         }
                     }
@@ -341,8 +346,17 @@ struct SidebarView: View {
         }
         .padding(.vertical, 4)
         .padding(.horizontal, 8)
-        .background(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous).fill(DesignSystem.Colors.glassSubtle))
-        .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous).stroke(DesignSystem.Colors.glassHover, lineWidth: 1))
+        .background(
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                .fill(isHovered ? DesignSystem.Colors.glassHover : DesignSystem.Colors.glassSubtle)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                .stroke(isHovered ? DesignSystem.Colors.glassStroke : DesignSystem.Colors.glassHover, lineWidth: 1)
+        )
+        .onHover { hovering in
+            hoveredWorktreePath = hovering ? wt.path : nil
+        }
     }
 
     private func worktreeStatusColor(_ worktree: WorktreeItem) -> Color {
