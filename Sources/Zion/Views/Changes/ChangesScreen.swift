@@ -5,6 +5,7 @@ struct ChangesScreen: View {
     @State private var splitRatio: CGFloat = 0.25
     @FocusState private var isFileListFocused: Bool
     @State private var selectedFileIndex: Int = -1
+    @State private var hoveredFilePath: String?
 
     var body: some View {
         DraggableSplitView(
@@ -24,37 +25,42 @@ struct ChangesScreen: View {
 
     private var fileListPane: some View {
         GlassCard(spacing: 0) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(L10n("Changes")).font(.headline)
-                    Text("\(model.uncommittedCount) \(L10n("arquivos modificados"))")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-                Spacer()
+            CardHeader(
+                L10n("Changes"),
+                icon: "square.stack.3d.up",
+                subtitle: "\(model.uncommittedCount) \(L10n("arquivos modificados"))"
+            ) {
+                HStack(spacing: 6) {
+                    Button {
+                        model.stageAllFiles()
+                    } label: {
+                        Label(L10n("Stage All"), systemImage: "plus.circle.fill")
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.mini)
+                    .help(L10n("Adicionar todos ao stage"))
+                    .accessibilityLabel(L10n("Adicionar todos ao stage"))
 
-                Button {
-                    model.stageAllFiles()
-                } label: {
-                    Label(L10n("Stage All"), systemImage: "plus.circle.fill")
-                }
-                .buttonStyle(.bordered).controlSize(.mini)
-                .help(L10n("Adicionar todos ao stage"))
-                .accessibilityLabel(L10n("Adicionar todos ao stage"))
+                    Button {
+                        model.unstageAllFiles()
+                    } label: {
+                        Label(L10n("Unstage All"), systemImage: "minus.circle.fill")
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.mini)
+                    .help(L10n("Remover todos do stage"))
+                    .accessibilityLabel(L10n("Remover todos do stage"))
 
-                Button {
-                    model.unstageAllFiles()
-                } label: {
-                    Label(L10n("Unstage All"), systemImage: "minus.circle.fill")
+                    Button {
+                        model.refreshRepository()
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                    .buttonStyle(.plain)
+                    .cursorArrow()
+                    .help(L10n("Atualizar"))
+                    .accessibilityLabel(L10n("Atualizar"))
                 }
-                .buttonStyle(.bordered).controlSize(.mini)
-                .help(L10n("Remover todos do stage"))
-                .accessibilityLabel(L10n("Remover todos do stage"))
-
-                Button {
-                    model.refreshRepository()
-                } label: {
-                    Image(systemName: "arrow.clockwise")
-                }.buttonStyle(.plain).cursorArrow().help(L10n("Atualizar")).accessibilityLabel(L10n("Atualizar"))
             }
             .padding(12)
 
@@ -117,6 +123,7 @@ struct ChangesScreen: View {
     private func fileRow(line: String) -> some View {
         let (indexStatus, workTreeStatus, file) = parseGitStatus(line)
         let isSelected = model.selectedChangeFile == file
+        let isHovered = hoveredFilePath == file
         let isStaged = indexStatus != " " && indexStatus != "?"
 
         return Button {
@@ -146,11 +153,18 @@ struct ChangesScreen: View {
             .padding(.horizontal, 10).padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius)
-                    .fill(isSelected ? DesignSystem.Colors.selectionBackground : Color.clear)
+                    .fill(isSelected ? DesignSystem.Colors.selectionBackground : (isHovered ? DesignSystem.Colors.glassHover : Color.clear))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius)
+                    .stroke(isSelected ? DesignSystem.Colors.selectionBorder : Color.clear, lineWidth: 1)
             )
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .onHover { hovering in
+            hoveredFilePath = hovering ? file : nil
+        }
         .contextMenu {
             Button {
                 model.stageFile(file)

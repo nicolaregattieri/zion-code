@@ -4,6 +4,14 @@ All notable changes to Zion are documented here.
 
 ---
 
+## 1.2.3 — 2026-02-24
+
+### Changed
+- **Changes Screen Hierarchy** — Promoted the file list header to the shared `CardHeader` pattern with grouped actions for clearer scanability and stronger visual consistency.
+- **Interaction Feedback** — Added explicit hover + selection affordances to file rows in Changes and worktree rows in Sidebar to reduce ambiguous click targets.
+- **Worktree Conflict Affordance** — Replaced the generic warning glyph with a semantic conflict icon for faster risk recognition.
+- **Release Versioning** — App bundle bumped to `1.2.3` (build `8`) for Sparkle distribution.
+
 ## 1.2.2 — 2026-02-23
 
 ### New
