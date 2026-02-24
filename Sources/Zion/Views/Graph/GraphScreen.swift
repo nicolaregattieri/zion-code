@@ -24,6 +24,20 @@ struct GraphScreen: View {
     @State private var inlineSplitRatio: CGFloat = 0.35
     @FocusState private var isGraphFocused: Bool
 
+    private var commitRowMinWidth: CGFloat {
+        let laneWidth = CGFloat(max(model.maxLaneCount, 1)) * 20
+        return max(520, laneWidth + 300)
+    }
+
+    private var commitRowMaxWidth: CGFloat {
+        DesignSystem.Layout.centeredContentMaxWidth
+    }
+
+    private func commitRowWidth(for containerWidth: CGFloat) -> CGFloat {
+        let available = max(containerWidth - 18, 0)
+        return min(max(available, commitRowMinWidth), commitRowMaxWidth)
+    }
+
     var body: some View {
         ScrollViewReader { proxy in
             VStack(spacing: 14) {
@@ -267,76 +281,82 @@ struct GraphScreen: View {
             }
             .padding(.horizontal, 12).padding(.top, 12).padding(.bottom, 8)
             Divider()
-            ScrollView([.horizontal, .vertical], showsIndicators: true) {
-                let remoteNames = model.remotes.map(\.name)
-                LazyVStack(spacing: 0) {
-                    // PENDING CHANGES - TOP OF THE LIST
-                    if !model.uncommittedChanges.isEmpty {
-                        pendingChangesRow
-                            .padding(.top, 8)
-                    }
+            GeometryReader { geometry in
+                let rowWidth = commitRowWidth(for: geometry.size.width)
 
-                    ForEach(model.commits) { commit in
-                        CommitRowView(
-                            commit: commit,
-                            isSelected: model.selectedCommitID == commit.id,
-                            isSearchMatch: searchMatchIDSet.contains(commit.id) || model.aiSemanticSearchResults.contains(where: { commit.shortHash.hasPrefix($0) || commit.id.hasPrefix($0) }),
-                            searchQuery: commitSearchQuery,
-                            laneCount: model.maxLaneCount,
-                            currentBranch: model.currentBranch,
-                            isAIConfigured: model.isAIConfigured,
-                            isReviewingThisCommit: model.reviewingCommitID == commit.id,
-                            onCheckout: { branch in
-                                let isRemote = model.isRemoteRefName(branch)
-                                let title = isRemote ? L10n("Checkout & Pull") : L10n("Checkout")
-                                
-                                var localName = branch
-                                if isRemote {
-                                    for remote in model.remotes {
-                                        if branch.hasPrefix("\(remote.name)/") {
-                                            localName = String(branch.dropFirst(remote.name.count + 1))
-                                            break
+                ScrollView([.horizontal, .vertical], showsIndicators: true) {
+                    let remoteNames = model.remotes.map(\.name)
+                    LazyVStack(spacing: 0) {
+                        // PENDING CHANGES - TOP OF THE LIST
+                        if !model.uncommittedChanges.isEmpty {
+                            pendingChangesRow
+                                .padding(.top, 8)
+                                .frame(width: rowWidth, alignment: .leading)
+                        }
+
+                        ForEach(model.commits) { commit in
+                            CommitRowView(
+                                commit: commit,
+                                isSelected: model.selectedCommitID == commit.id,
+                                isSearchMatch: searchMatchIDSet.contains(commit.id) || model.aiSemanticSearchResults.contains(where: { commit.shortHash.hasPrefix($0) || commit.id.hasPrefix($0) }),
+                                searchQuery: commitSearchQuery,
+                                laneCount: model.maxLaneCount,
+                                currentBranch: model.currentBranch,
+                                isAIConfigured: model.isAIConfigured,
+                                isReviewingThisCommit: model.reviewingCommitID == commit.id,
+                                onCheckout: { branch in
+                                    let isRemote = model.isRemoteRefName(branch)
+                                    let title = isRemote ? L10n("Checkout & Pull") : L10n("Checkout")
+                                    
+                                    var localName = branch
+                                    if isRemote {
+                                        for remote in model.remotes {
+                                            if branch.hasPrefix("\(remote.name)/") {
+                                                localName = String(branch.dropFirst(remote.name.count + 1))
+                                                break
+                                            }
                                         }
                                     }
-                                }
 
-                                let message = isRemote 
-                                    ? L10n("Deseja fazer checkout de %@ e puxar as alterações?", localName)
-                                    : L10n("Deseja fazer checkout para %@?", branch)
-                                
-                                performGitAction(title, message, false) {
-                                    if isRemote {
-                                        model.checkoutAndPull(reference: branch)
-                                    } else {
-                                        model.checkout(reference: branch)
+                                    let message = isRemote
+                                        ? L10n("Deseja fazer checkout de %@ e puxar as alterações?", localName)
+                                        : L10n("Deseja fazer checkout para %@?", branch)
+                                    
+                                    performGitAction(title, message, false) {
+                                        if isRemote {
+                                            model.checkoutAndPull(reference: branch)
+                                        } else {
+                                            model.checkout(reference: branch)
+                                        }
                                     }
+                                },
+                                onReviewCommit: { commitID in
+                                    model.reviewCommitChanges(commitID: commitID)
+                                },
+                                onSelect: {
+                                    showingPendingChanges = false
+                                    withAnimation(DesignSystem.Motion.graph) {
+                                        model.selectCommit(commit.id)
+                                    }
+                                },
+                                contextMenu: commitContextMenu(commit),
+                                branchContextMenu: branchContextMenu,
+                                tagContextMenu: tagContextMenu,
+                                remotes: remoteNames,
+                                avatarImage: model.avatarImage(for: commit.email)
+                            )
+                            .frame(width: rowWidth, alignment: .leading)
+                            .id(commit.id)
+                            .overlay(alignment: .trailing) {
+                                if !searchMatchIDs.isEmpty && searchMatchIDs[currentMatchIndex] == commit.id {
+                                    Image(systemName: "arrow.left").foregroundStyle(DesignSystem.Colors.searchHighlight).padding(.trailing, 32)
                                 }
-                            },
-                            onReviewCommit: { commitID in
-                                model.reviewCommitChanges(commitID: commitID)
-                            },
-                            onSelect: {
-                                showingPendingChanges = false
-                                withAnimation(DesignSystem.Motion.graph) {
-                                    model.selectCommit(commit.id)
-                                }
-                            },
-                            contextMenu: commitContextMenu(commit),
-                            branchContextMenu: branchContextMenu,
-                            tagContextMenu: tagContextMenu,
-                            remotes: remoteNames,
-                            avatarImage: model.avatarImage(for: commit.email)
-                        )
-                        .id(commit.id)
-                        .overlay(alignment: .trailing) {
-                            if !searchMatchIDs.isEmpty && searchMatchIDs[currentMatchIndex] == commit.id {
-                                Image(systemName: "arrow.left").foregroundStyle(DesignSystem.Colors.searchHighlight).padding(.trailing, 32)
                             }
                         }
                     }
+                    .padding(.vertical, 8)
+                    .frame(minWidth: rowWidth, alignment: .leading)
                 }
-                .padding(.vertical, 8)
-                .frame(minWidth: 1000, alignment: .leading)
             }
             if model.hasMoreCommits { loadMoreButton }
         }

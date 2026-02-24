@@ -6,7 +6,7 @@ struct SourceCodeEditor: NSViewRepresentable {
     var theme: EditorTheme
     var fontSize: Double = 13.0
     var fontFamily: String = "SF Mono"
-    var lineSpacing: Double = 1.2
+    var lineSpacing: Double = 4.0
     var isLineWrappingEnabled: Bool = true
     var activeFileID: String?
     var fileExtension: String = ""

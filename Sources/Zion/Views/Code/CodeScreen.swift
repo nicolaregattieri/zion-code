@@ -430,11 +430,11 @@ struct CodeScreen: View {
 
                 Divider().frame(height: 14)
 
-                Slider(value: $model.editorLineSpacing, in: 0.0...5.0, step: 0.1)
+                Slider(value: $model.editorLineSpacing, in: 0.0...20.0, step: 0.5)
                     .frame(width: 60)
-                Text(String(format: "%.1fx", model.editorLineSpacing))
+                Text(String(format: "%.1fpt", model.editorLineSpacing))
                     .font(.system(size: 10, design: .monospaced))
-                    .frame(width: 30)
+                    .frame(width: 40)
             }
             .padding(.horizontal, 6)
             .padding(.vertical, 4)
@@ -1722,6 +1722,20 @@ struct EditorSettingsPopoverButton: View {
                             .frame(width: 120)
                         }
                     }
+                }
+
+                Divider()
+
+                // Line spacing
+                HStack(spacing: 6) {
+                    Text(L10n("settings.editor.lineSpacing"))
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                    Slider(value: $model.editorLineSpacing, in: 0.0...20.0, step: 0.5)
+                        .frame(width: 100)
+                    Text(String(format: "%.1fpt", model.editorLineSpacing))
+                        .font(.system(size: 10, design: .monospaced))
+                        .frame(width: 42)
                 }
 
                 Divider()

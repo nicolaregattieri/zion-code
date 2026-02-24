@@ -145,25 +145,13 @@ struct GitGraphLaneCalculator {
                 return LaneColor(lane: laneIndex, colorKey: colorKey)
             }
 
-            let incomingLanesSet = Set(incomingLaneColors.map(\.lane))
-            let edgeTargets = Set(edges.filter { $0.from != $0.to }.map(\.to))
-            
-            // Only filter out the outgoing lane if it's being "started" by a diagonal edge here.
-            // If it was already active (in incomingLanes), it must continue as a straight line.
-            let finalOutgoingLanes = outgoingLaneColors.map(\.lane).filter { l in
-                if edgeTargets.contains(l) && !incomingLanesSet.contains(l) {
-                    return false
-                }
-                return true
-            }
-
             rows.append(
                 CommitGraphLayout(
                     id: commit.hash,
                     lane: lane,
                     nodeColorKey: nodeColorKey,
                     incomingLanes: incomingLaneColors.map(\.lane).sorted(),
-                    outgoingLanes: Array(Set(finalOutgoingLanes)).sorted(),
+                    outgoingLanes: Array(Set(outgoingLaneColors.map(\.lane))).sorted(),
                     laneColors: laneColors,
                     outgoingEdges: edges
                 )
@@ -225,18 +213,6 @@ struct GitGraphLaneCalculator {
                         colorKeyByHash: &colorKeyByHash,
                         nextColorKey: &nextColorKey
                     )
-            }
-
-            // Relocate misplaced main-chain parent to lane 0 if it's available
-            if isMain && existing != 0 {
-                ensureCapacity(0, hashes: &hashes, colorKeys: &colorKeys)
-                if hashes[0] == nil {
-                    hashes[existing] = nil
-                    colorKeys[existing] = nil
-                    hashes[0] = hash
-                    colorKeys[0] = colorKey
-                    return (0, colorKey)
-                }
             }
 
             colorKeys[existing] = colorKey
