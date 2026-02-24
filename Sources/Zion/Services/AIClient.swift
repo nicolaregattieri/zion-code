@@ -21,7 +21,9 @@ actor AIClient {
 
         var add = query
         add[kSecValueData as String] = data
-        SecItemAdd(add as CFDictionary, nil)
+        add[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+        add[kSecUseDataProtectionKeychain as String] = true
+        _ = SecItemAdd(add as CFDictionary, nil)
     }
 
     static func loadAPIKey(for provider: AIProvider) -> String? {
@@ -633,8 +635,7 @@ actor AIClient {
         if http.statusCode == 503 { throw AIError.temporarilyUnavailable }
         if http.statusCode == 429 { throw AIError.quotaExceeded }
         guard http.statusCode == 200 else {
-            let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
-            throw AIError.apiError("Gemini \(http.statusCode): \(msg)")
+            throw AIError.apiError("Gemini request failed (\(http.statusCode)).")
         }
 
         let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
@@ -673,8 +674,7 @@ actor AIClient {
         if http.statusCode == 503 { throw AIError.temporarilyUnavailable }
         if http.statusCode == 429 { throw AIError.quotaExceeded }
         guard http.statusCode == 200 else {
-            let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
-            throw AIError.apiError("Anthropic \(http.statusCode): \(msg)")
+            throw AIError.apiError("Anthropic request failed (\(http.statusCode)).")
         }
 
         let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
@@ -709,8 +709,7 @@ actor AIClient {
         if http.statusCode == 503 { throw AIError.temporarilyUnavailable }
         if http.statusCode == 429 { throw AIError.quotaExceeded }
         guard http.statusCode == 200 else {
-            let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
-            throw AIError.apiError("OpenAI \(http.statusCode): \(msg)")
+            throw AIError.apiError("OpenAI request failed (\(http.statusCode)).")
         }
 
         let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]

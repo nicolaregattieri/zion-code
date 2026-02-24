@@ -46,10 +46,11 @@ Zion doesn't make you choose.
 
 ---
 
-## What's New in 1.2.4
+## What's New in 1.2.5
 
-- Quick commit flow fix: when committing from the graph pending-changes modal, the newly created commit is now selected and highlighted immediately.
-- Public release package bumped to `1.2.4` (build `9`) for Sparkle distribution.
+- Security hardening patch: HTTPS-only credential retry flow, stricter file/folder name validation, and deprecated shell-string execution path disabled.
+- AI provider failures now avoid exposing raw upstream payload bodies in user-facing/logged errors.
+- Public release package bumped to `1.2.5` (build `10`) for Sparkle distribution.
 
 ### Launch Week Validation (Advanced Flows)
 
