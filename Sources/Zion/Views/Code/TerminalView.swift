@@ -97,10 +97,8 @@ struct TerminalTabView: NSViewRepresentable {
 
         // Font with fallback chain
         let size = CGFloat(fontSize)
-        let font = NSFont(name: fontFamily, size: size)
-                  ?? NSFont(name: "Menlo", size: size)
-                  ?? NSFont.monospacedSystemFont(ofSize: size, weight: .regular)
-        view.font = font
+        let resolvedFont = MonospaceFontResolver.resolve(name: fontFamily, size: size)
+        view.font = resolvedFont.font
 
         // Force redraw — setters above don't trigger needsDisplay
         view.needsDisplay = true

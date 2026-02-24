@@ -3,6 +3,27 @@ import SwiftUI
 import CryptoKit
 @preconcurrency import SwiftTerm
 
+enum TerminalShellEscaping {
+    static func quotePath(_ path: String) -> String {
+        "'" + path.replacingOccurrences(of: "'", with: "'\\''") + "'"
+    }
+
+    static func joinQuotedPaths(_ paths: [String]) -> String {
+        paths
+            .filter { !$0.isEmpty }
+            .map(quotePath)
+            .joined(separator: " ")
+    }
+
+    static func joinQuotedFileURLs(_ urls: [URL]) -> String {
+        joinQuotedPaths(
+            urls
+                .filter { $0.isFileURL }
+                .map(\.path)
+        )
+    }
+}
+
 @Observable @MainActor
 final class RepositoryViewModel {
     enum CommitDetailTab {
@@ -428,7 +449,7 @@ final class RepositoryViewModel {
         didSet { UserDefaults.standard.set(terminalFontFamily, forKey: "terminal.fontFamily") }
     }
     var isTerminalFontAvailable: Bool {
-        NSFont(name: terminalFontFamily, size: 13) != nil
+        MonospaceFontResolver.isAvailable(name: terminalFontFamily)
     }
 
     var branchInput: String = ""
@@ -603,7 +624,7 @@ final class RepositoryViewModel {
             terminalFontSize = defaults.double(forKey: "terminal.fontSize")
         }
         if let family = defaults.string(forKey: "terminal.fontFamily") {
-            terminalFontFamily = family
+            terminalFontFamily = MonospaceFontResolver.migratedTerminalName(family)
         }
         // AI provider
         if let aiRaw = defaults.string(forKey: "zion.aiProvider"),
@@ -4075,6 +4096,14 @@ final class RepositoryViewModel {
 
     func terminalClearSearch() {
         focusedTerminalView?.clearSearch()
+    }
+
+    func focusActiveTerminal() {
+        guard let terminalView = focusedTerminalView else { return }
+        DispatchQueue.main.async { [weak terminalView] in
+            guard let terminalView else { return }
+            terminalView.window?.makeFirstResponder(terminalView)
+        }
     }
 
     // MARK: - AI Pending Changes Summary

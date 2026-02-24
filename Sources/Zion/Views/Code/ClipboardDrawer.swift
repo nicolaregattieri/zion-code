@@ -194,7 +194,7 @@ struct ClipboardDrawer: View {
             if hasText {
                 let isFile = item.isImage || item.category == .path
                 if isFile {
-                    model.sendTextToActiveTerminal("open \(shellQuote(item.text))\n")
+                    model.sendTextToActiveTerminal("open \(TerminalShellEscaping.quotePath(item.text))\n")
                 } else {
                     model.sendTextToActiveTerminal(item.text + "\n")
                 }
@@ -203,7 +203,7 @@ struct ClipboardDrawer: View {
         .onTapGesture {
             if hasText {
                 let isFile = item.isImage || item.category == .path
-                model.sendTextToActiveTerminal(isFile ? "open \(shellQuote(item.text))" : item.text)
+                model.sendTextToActiveTerminal(isFile ? "open \(TerminalShellEscaping.quotePath(item.text))" : item.text)
             }
         }
         .draggable(item.text)
@@ -240,10 +240,6 @@ struct ClipboardDrawer: View {
         case .image: return DesignSystem.Colors.semanticSearch
         case .text: return .secondary
         }
-    }
-
-    private func shellQuote(_ path: String) -> String {
-        "'" + path.replacingOccurrences(of: "'", with: "'\\''") + "'"
     }
 
     // MARK: - Smart Clipboard Actions
