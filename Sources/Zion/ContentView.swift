@@ -435,7 +435,7 @@ struct ContentView: View {
                         withAnimation(DesignSystem.Motion.panel) {
                             zenModeEnabled = true
                         }
-                    } label: { Image(systemName: "terminal") }
+                    } label: { Image(systemName: "scope") }
                         .help(L10n("focus.toggle"))
                         .accessibilityLabel(L10n("focus.toggle"))
                     Button {
