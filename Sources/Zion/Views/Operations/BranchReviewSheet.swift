@@ -17,7 +17,10 @@ struct BranchReviewSheet: View {
                 ScrollView {
                     ReviewFindingsView(
                         findings: model.branchReviewFindings,
-                        tintColor: DesignSystem.Colors.ai
+                        tintColor: DesignSystem.Colors.ai,
+                        onOpenFile: { file, snippet in
+                            model.openFileInEditor(relativePath: file, highlightQuery: snippet)
+                        }
                     )
                 }
             } else {

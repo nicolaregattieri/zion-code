@@ -1417,4 +1417,14 @@
 "map.diag.sanitize.description" = "Logs automatically remove credentials and sensitive values before export or copy.";
 "status.nav.settings" = "Settings";
 "focus.menu" = "View";
-"focus.toggle" = "Focus Mode";
+"focus.toggle" = "Zen Mode";
+"zen.mode" = "Zen Mode";
+"zen.enter" = "Enter Zen Mode";
+"zen.exit" = "Exit Zen Mode";
+"graph.commit.review" = "Review this commit with AI";
+"graph.commit.review.cached" = "cached";
+"graph.commit.review.tab.details" = "Details";
+"graph.commit.review.tab.ai" = "AI Review";
+"graph.commit.review.empty" = "No cached review for this commit yet.";
+"graph.commit.review.loading" = "Reviewing commit changes with AI...";
+"graph.commit.review.nodiff" = "No commit diff available to review.";

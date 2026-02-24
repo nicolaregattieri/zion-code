@@ -23,7 +23,7 @@ struct ZionApp: App {
         .defaultSize(width: 1360, height: 840)
         .commands {
             CommandMenu(L10n("focus.menu")) {
-                Button(L10n("focus.toggle")) {
+                Button(L10n("zen.mode")) {
                     NotificationCenter.default.post(name: .toggleZenMode, object: nil)
                 }
                 .keyboardShortcut("j", modifiers: [.command, .control])

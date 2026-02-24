@@ -286,6 +286,12 @@ struct CodeScreen: View {
             guard visible else { return }
             recomputeFindMatches()
         }
+        .onChange(of: model.editorFindSeedRequestID) { _, _ in
+            let query = model.editorFindSeedQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !query.isEmpty else { return }
+            seededFindQuery = query
+            openSearch(applySeedIfPresent: true)
+        }
         .onAppear {
             applyZenModeState(isZenMode)
         }
@@ -299,36 +305,47 @@ struct CodeScreen: View {
     private var focusModeExitBar: some View {
         HStack {
             Spacer(minLength: 0)
-            Button {
-                NotificationCenter.default.post(name: .toggleZenMode, object: nil)
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "scope")
-                        .font(.system(size: 11, weight: .semibold))
-                    Text(L10n("focus.toggle"))
-                        .font(.system(size: 11, weight: .semibold))
-                    Text("⌃⌘J")
-                        .font(.system(size: 10, design: .monospaced))
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(
-                    RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
-                        .fill(DesignSystem.Colors.glassSubtle)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
-                        .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
-                )
-            }
-            .buttonStyle(.plain)
-            .help("\(L10n("focus.toggle")) (⌃⌘J)")
-            .accessibilityLabel(L10n("focus.toggle"))
+            zenModeExitButton(showsShortcutHint: true)
         }
         .padding(.horizontal, 8)
         .padding(.top, 8)
         .padding(.bottom, 6)
+    }
+
+    private func zenModeExitButton(showsDismissGlyph: Bool = false, showsShortcutHint: Bool = false) -> some View {
+        Button {
+            NotificationCenter.default.post(name: .toggleZenMode, object: nil)
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "arrow.down.right.and.arrow.up.left")
+                    .font(DesignSystem.IconSize.toolbar)
+                Text(L10n("zen.exit"))
+                    .font(DesignSystem.Typography.bodyMedium)
+                if showsShortcutHint {
+                    Text("⌃⌘J")
+                        .font(DesignSystem.Typography.monoLabel)
+                        .foregroundStyle(.secondary)
+                }
+                if showsDismissGlyph {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(DesignSystem.IconSize.toolbar)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                    .fill(DesignSystem.Colors.glassSubtle)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                    .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .help(L10n("zen.exit") + " (⌃⌘J)")
+        .accessibilityLabel(L10n("zen.exit"))
     }
     
     @ViewBuilder
@@ -1607,31 +1624,7 @@ struct CodeScreen: View {
                 Spacer()
                     .frame(width: 12)
 
-                Button {
-                    NotificationCenter.default.post(name: .toggleZenMode, object: nil)
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "scope")
-                            .font(.system(size: 11, weight: .semibold))
-                        Text(L10n("focus.toggle"))
-                            .font(.system(size: 11, weight: .semibold))
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 11))
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(
-                        RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
-                            .fill(DesignSystem.Colors.glassSubtle)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
-                            .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
-                    )
-                }
-                .buttonStyle(.plain)
-                .help("\(L10n("focus.toggle")) (⌃⌘J)")
+                zenModeExitButton(showsDismissGlyph: true)
                 .padding(.trailing, 16)
             }
         }

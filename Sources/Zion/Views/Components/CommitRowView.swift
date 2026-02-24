@@ -7,7 +7,10 @@ struct CommitRowView: View {
     let searchQuery: String
     let laneCount: Int
     let currentBranch: String
+    let isAIConfigured: Bool
+    let isReviewingThisCommit: Bool
     let onCheckout: (String) -> Void
+    let onReviewCommit: (String) -> Void
     let onSelect: () -> Void
     let contextMenu: AnyView
     let branchContextMenu: (String) -> AnyView
@@ -82,6 +85,43 @@ struct CommitRowView: View {
             }
             .padding(.horizontal, 16)
             .frame(height: cardHeight)
+
+            if isAIConfigured {
+                HStack {
+                    Spacer()
+                    Button {
+                        onSelect()
+                        onReviewCommit(commit.id)
+                    } label: {
+                        Group {
+                            if isReviewingThisCommit {
+                                ProgressView()
+                                    .controlSize(.mini)
+                                    .frame(width: 12, height: 12)
+                            } else {
+                                Image(systemName: "sparkles")
+                                    .font(.system(size: 10, weight: .bold))
+                            }
+                        }
+                        .foregroundStyle(DesignSystem.Colors.ai)
+                        .padding(6)
+                        .background(DesignSystem.Colors.glassSubtle)
+                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius)
+                                .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .cursorArrow()
+                    .disabled(isReviewingThisCommit)
+                    .help(L10n("graph.commit.review"))
+                    .accessibilityLabel(L10n("graph.commit.review"))
+                    .padding(.top, 6)
+                    .padding(.trailing, 8)
+                }
+                .frame(height: cardHeight, alignment: .topTrailing)
+            }
         }
         .contentShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius))
         .scaleEffect(isHovered && !isSelected ? 1.015 : 1.0)

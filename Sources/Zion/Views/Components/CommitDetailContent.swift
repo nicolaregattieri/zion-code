@@ -11,7 +11,9 @@ struct CommitDetailContent: View {
     var body: some View {
         let detail = parsed
 
-        if detail.isPlaceholder {
+        if model?.isAIConfigured == true, model?.selectedCommitDetailTab == .aiReview, let model, let commitID {
+            aiReviewContent(model: model, commitID: commitID)
+        } else if detail.isPlaceholder {
             VStack(spacing: 16) {
                 Image(systemName: "arrow.left.circle")
                     .font(.system(size: 36))
@@ -184,6 +186,76 @@ struct CommitDetailContent: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .onChange(of: commitID) { _, _ in
                 expandedFile = nil
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func aiReviewContent(model: RepositoryViewModel, commitID: String) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(DesignSystem.Colors.ai)
+                Text(L10n("graph.commit.review.tab.ai"))
+                    .font(.system(size: 12, weight: .bold))
+                Spacer()
+                Button {
+                    model.reviewCommitChanges(commitID: commitID)
+                } label: {
+                    if model.reviewingCommitID == commitID {
+                        ProgressView()
+                            .controlSize(.mini)
+                            .frame(width: 12, height: 12)
+                    } else {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 10, weight: .bold))
+                    }
+                }
+                .buttonStyle(.plain)
+                .cursorArrow()
+                .foregroundStyle(.secondary)
+                .help(L10n("graph.commit.review"))
+                .accessibilityLabel(L10n("graph.commit.review"))
+            }
+
+            if model.reviewingCommitID == commitID {
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text(L10n("graph.commit.review.loading"))
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 8)
+            } else if let findings = model.cachedReviewFindings(for: commitID) {
+                ReviewFindingsView(
+                    findings: findings,
+                    onOpenFile: { file, snippet in
+                        model.openFileInEditor(relativePath: file, highlightQuery: snippet)
+                    },
+                    onDismiss: nil
+                )
+            } else {
+                VStack(spacing: 10) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 28))
+                        .foregroundStyle(.tertiary)
+                    Text(L10n("graph.commit.review.empty"))
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                    Button {
+                        model.reviewCommitChanges(commitID: commitID)
+                    } label: {
+                        Label(L10n("graph.commit.review"), systemImage: "sparkles")
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .tint(DesignSystem.Colors.ai)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 20)
             }
         }
     }

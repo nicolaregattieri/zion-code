@@ -36,7 +36,13 @@ struct CodeReviewDiffPane: View {
 
                     // Findings
                     if !file.findings.isEmpty {
-                        ReviewFindingsView(findings: file.findings, tintColor: DesignSystem.Colors.codeReview)
+                        ReviewFindingsView(
+                            findings: file.findings,
+                            tintColor: DesignSystem.Colors.codeReview,
+                            onOpenFile: { _, snippet in
+                                model.openFileInEditor(relativePath: file.path, highlightQuery: snippet)
+                            }
+                        )
                             .padding(.horizontal, 12)
                     }
 

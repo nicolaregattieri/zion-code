@@ -435,9 +435,9 @@ struct ContentView: View {
                         withAnimation(DesignSystem.Motion.panel) {
                             zenModeEnabled = true
                         }
-                    } label: { Image(systemName: "scope") }
-                        .help(L10n("focus.toggle"))
-                        .accessibilityLabel(L10n("focus.toggle"))
+                    } label: { Image(systemName: "arrow.up.left.and.arrow.down.right") }
+                        .help(L10n("zen.enter") + " (⌃⌘J)")
+                        .accessibilityLabel(L10n("zen.enter"))
                     Button {
                         model.loadReflog()
                         model.isReflogVisible = true
