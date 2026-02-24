@@ -1429,6 +1429,28 @@ final class RepositoryViewModel {
 
     // MARK: - File Browser Context Menu Operations
 
+    private func isSafeFileOrFolderName(_ name: String) -> Bool {
+        guard !name.isEmpty else { return false }
+        guard name != ".", name != ".." else { return false }
+        guard !name.contains("/"), !name.contains("\\") else { return false }
+        guard !name.contains("\0") else { return false }
+        return true
+    }
+
+    private func isDirectChild(_ candidateURL: URL, of parentURL: URL) -> Bool {
+        let parentPath = parentURL.standardizedFileURL.path
+        let candidatePath = candidateURL.standardizedFileURL.path
+        return candidatePath.hasPrefix(parentPath + "/")
+    }
+
+    private func reportInvalidFileOperationName() {
+        handleError(NSError(
+            domain: "ZionSecurity",
+            code: 400,
+            userInfo: [NSLocalizedDescriptionKey: "Nome de arquivo/pasta invalido."]
+        ))
+    }
+
     func createNewFileInFolder(parentURL: URL) {
         let alert = NSAlert()
         alert.messageText = L10n("Novo Arquivo")
@@ -1442,8 +1464,15 @@ final class RepositoryViewModel {
         alert.window.initialFirstResponder = input
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         let name = input.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty else { return }
+        guard isSafeFileOrFolderName(name) else {
+            reportInvalidFileOperationName()
+            return
+        }
         let fileURL = parentURL.appendingPathComponent(name)
+        guard isDirectChild(fileURL, of: parentURL) else {
+            reportInvalidFileOperationName()
+            return
+        }
         do {
             try "".write(to: fileURL, atomically: true, encoding: .utf8)
             refreshFileTree()
@@ -1467,8 +1496,15 @@ final class RepositoryViewModel {
         alert.window.initialFirstResponder = input
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         let name = input.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty else { return }
+        guard isSafeFileOrFolderName(name) else {
+            reportInvalidFileOperationName()
+            return
+        }
         let folderURL = parentURL.appendingPathComponent(name)
+        guard isDirectChild(folderURL, of: parentURL) else {
+            reportInvalidFileOperationName()
+            return
+        }
         do {
             try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
             refreshFileTree()
@@ -1509,8 +1545,16 @@ final class RepositoryViewModel {
         alert.window.initialFirstResponder = input
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         let newName = input.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !newName.isEmpty, newName != item.name else { return }
+        guard newName != item.name else { return }
+        guard isSafeFileOrFolderName(newName) else {
+            reportInvalidFileOperationName()
+            return
+        }
         let newURL = item.url.deletingLastPathComponent().appendingPathComponent(newName)
+        guard isDirectChild(newURL, of: item.url.deletingLastPathComponent()) else {
+            reportInvalidFileOperationName()
+            return
+        }
         do {
             try FileManager.default.moveItem(at: item.url, to: newURL)
             // Update tab if open
@@ -3877,7 +3921,7 @@ final class RepositoryViewModel {
     private func parseHTTPSRemote(_ remoteURL: String) -> (host: String, usernameHint: String?)? {
         guard let components = URLComponents(string: remoteURL),
               let scheme = components.scheme?.lowercased(),
-              (scheme == "https" || scheme == "http"),
+              scheme == "https",
               let host = components.host?.lowercased() else {
             return nil
         }

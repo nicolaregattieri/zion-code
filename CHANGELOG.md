@@ -4,6 +4,18 @@ All notable changes to Zion are documented here.
 
 ---
 
+## 1.2.5 — 2026-02-24
+
+### Fixed
+- **Credential Transport Hardening** — Git credential retry/prompt flow now only runs for `https://` remotes, preventing credential handling on insecure `http://` remotes.
+- **File Operation Validation** — File/folder create and rename now reject traversal/separator patterns that could escape the selected directory.
+- **Shell Execution Surface** — Deprecated shell-string execution path was disabled in favor of argument-based process execution only.
+- **AI Error Leakage Reduction** — Provider failure messages now avoid returning raw upstream payload bodies.
+
+### Changed
+- **Keychain Hardening** — AI API keys are now saved with stricter Keychain accessibility/data-protection attributes.
+- **Release Versioning** — App bundle bumped to `1.2.5` (build `10`) for Sparkle distribution.
+
 ## 1.2.4 — 2026-02-24
 
 ### Fixed
