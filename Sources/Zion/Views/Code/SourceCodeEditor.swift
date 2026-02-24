@@ -64,8 +64,7 @@ struct SourceCodeEditor: NSViewRepresentable {
         textView.isSelectable = true
         textView.isRichText = false
         textView.allowsUndo = true
-        textView.font = NSFont(name: fontFamily, size: fontSize)
-            ?? .monospacedSystemFont(ofSize: fontSize, weight: .regular)
+        textView.font = MonospaceFontResolver.resolve(name: fontFamily, size: fontSize).font
         textView.usesAdaptiveColorMappingForDarkAppearance = false
 
         scrollView.documentView = textView
@@ -97,8 +96,7 @@ struct SourceCodeEditor: NSViewRepresentable {
         if let cached = coord0.cachedFont, coord0.cachedFontSize == fontSize, coord0.cachedFontFamily == fontFamily {
             font = cached
         } else {
-            font = NSFont(name: fontFamily, size: fontSize)
-                ?? .monospacedSystemFont(ofSize: fontSize, weight: .regular)
+            font = MonospaceFontResolver.resolve(name: fontFamily, size: fontSize).font
             coord0.cachedFont = font
             coord0.cachedFontSize = fontSize
             coord0.cachedFontFamily = fontFamily

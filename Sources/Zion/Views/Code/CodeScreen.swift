@@ -1462,6 +1462,7 @@ struct CodeScreen: View {
             .dropDestination(for: String.self) { items, _ in
                 guard let text = items.first, !text.isEmpty else { return false }
                 model.sendTextToActiveTerminal(text)
+                model.focusActiveTerminal()
                 return true
             }
         }
@@ -1849,7 +1850,8 @@ struct TerminalFontPopoverButton: View {
                         Text("Monaco").tag("Monaco")
                         Text("Fira Code").tag("Fira Code")
                         Text("JetBrains Mono").tag("JetBrains Mono")
-                        Text("Hack Nerd Font").tag("HackNerdFontMono-Regular")
+                        Text("Hack").tag("Hack")
+                        Text("Roboto Mono").tag("Roboto Mono")
                     }
                     .pickerStyle(.menu)
                     .frame(width: 140)
@@ -2364,6 +2366,7 @@ struct FileTreeNodeView: View {
             }
             .buttonStyle(.plain)
             .onHover { h in isHovered = h }
+            .draggable(TerminalShellEscaping.quotePath(item.url.path))
             .contextMenu {
                 if item.isDirectory {
                     Button { model.createNewFileInFolder(parentURL: item.url) } label: {
