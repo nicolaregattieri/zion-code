@@ -4,6 +4,14 @@ All notable changes to Zion are documented here.
 
 ---
 
+## 1.2.4 — 2026-02-24
+
+### Fixed
+- **Quick Commit Selection** — After committing from the graph pending-changes modal, the newly created commit is now selected/highlighted in the graph instead of keeping the previous selection.
+
+### Changed
+- **Release Versioning** — App bundle bumped to `1.2.4` (build `9`) for Sparkle distribution.
+
 ## 1.2.3 — 2026-02-24
 
 ### Changed

@@ -46,12 +46,10 @@ Zion doesn't make you choose.
 
 ---
 
-## What's New in 1.2.3
+## What's New in 1.2.4
 
-- UX consistency pass in critical navigation surfaces: `Changes` now uses a structured `CardHeader` hierarchy and cleaner action grouping.
-- Better interaction feedback for daily flows: file rows in `Changes` and worktree rows in `Sidebar` now provide clearer hover and selection states.
-- Conflict visibility upgrade in worktree list: semantic warning icon replaces ambiguous text warning marker.
-- Public release package bumped to `1.2.3` (build `8`) for Sparkle distribution.
+- Quick commit flow fix: when committing from the graph pending-changes modal, the newly created commit is now selected and highlighted immediately.
+- Public release package bumped to `1.2.4` (build `9`) for Sparkle distribution.
 
 ### Launch Week Validation (Advanced Flows)
 
