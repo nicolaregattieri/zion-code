@@ -5,6 +5,11 @@ import CryptoKit
 
 @Observable @MainActor
 final class RepositoryViewModel {
+    enum CommitDetailTab {
+        case details
+        case aiReview
+    }
+
     private enum RefreshOrigin: String {
         case userInitiated
         case autoTimer
@@ -181,6 +186,9 @@ final class RepositoryViewModel {
     var aiConflictResolution: String = ""
     var aiReviewFindings: [ReviewFinding] = []
     var isReviewVisible: Bool = false
+    var commitReviewCache: [String: [ReviewFinding]] = [:]
+    var reviewingCommitID: String?
+    var selectedCommitDetailTab: CommitDetailTab = .details
     var aiChangelog: String = ""
     var isChangelogSheetVisible: Bool = false
     var changelogFromRef: String = ""
@@ -353,6 +361,8 @@ final class RepositoryViewModel {
     var codeFileContent: String = "" {
         didSet { markCurrentFileUnsavedIfChanged() }
     }
+    var editorFindSeedQuery: String = ""
+    var editorFindSeedRequestID: Int = 0
     var expandedPaths: Set<String> = []
 
     // Tracking unsaved changes per file
@@ -1106,6 +1116,7 @@ final class RepositoryViewModel {
             selectedCommitFile = nil
             currentCommitFileDiff = ""
             currentCommitFileDiffHunks = []
+            clearCommitReviewSelectionStateOnCommitChange()
         }
         selectedCommitID = commitID
         loadCommitDetails(for: commitID, policy: .interactive)
@@ -1353,11 +1364,18 @@ final class RepositoryViewModel {
         }
     }
 
-    func openFileInEditor(relativePath: String) {
+    func openFileInEditor(relativePath: String, highlightQuery: String? = nil) {
         guard let repoURL = repositoryURL else { return }
         let fileURL = repoURL.appendingPathComponent(relativePath)
         let item = FileItem(url: fileURL, isDirectory: false, children: nil)
         selectCodeFile(item)
+        if let highlightQuery {
+            let query = highlightQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !query.isEmpty {
+                editorFindSeedQuery = query
+                editorFindSeedRequestID += 1
+            }
+        }
         navigateToCodeRequested = true
     }
 
@@ -3522,6 +3540,7 @@ final class RepositoryViewModel {
                     selectedCommitFile = nil
                     currentCommitFileDiff = ""
                     currentCommitFileDiffHunks = []
+                    clearCommitReviewSelectionStateOnCommitChange()
                 }
                 selectedCommitID = payload.selectedCommitID
                 let refreshedStatusMessage: String
@@ -3627,6 +3646,7 @@ final class RepositoryViewModel {
                     selectedCommitFile = nil
                     currentCommitFileDiff = ""
                     currentCommitFileDiffHunks = []
+                    clearCommitReviewSelectionStateOnCommitChange()
                 }
                 selectedCommitID = payload.selectedCommitID
                 hasConflicts = payload.hasConflicts
@@ -5221,6 +5241,84 @@ final class RepositoryViewModel {
                     aiQuotaExceeded = true
                 }
                 logger.log(.error, "AI code review failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
+                lastError = error.localizedDescription
+            }
+        }
+    }
+
+    func cachedReviewFindings(for commitID: String) -> [ReviewFinding]? {
+        commitReviewCache[commitID]
+    }
+
+    func clearCommitReviewSelectionStateOnCommitChange() {
+        selectedCommitDetailTab = .details
+    }
+
+    func reviewCommitChanges(commitID: String) {
+        guard let url = repositoryURL, isAIConfigured else { return }
+
+        aiTask?.cancel()
+        reviewingCommitID = commitID
+
+        aiTask = Task {
+            isGeneratingAIMessage = true
+            defer {
+                isGeneratingAIMessage = false
+                if reviewingCommitID == commitID {
+                    reviewingCommitID = nil
+                }
+            }
+
+            do {
+                logger.log(.ai, "Requesting commit review", context: "\(aiProvider.rawValue): \(commitID)")
+
+                var diff: String = ""
+                var diffStat: String = ""
+
+                do {
+                    diff = try await worker.runAction(args: ["diff", "\(commitID)~1", commitID], in: url)
+                    diffStat = try await worker.runAction(args: ["diff", "--stat", "\(commitID)~1", commitID], in: url)
+                } catch {
+                    // Root commit or missing parent: fallback to commit patch output.
+                    diff = try await worker.runAction(args: ["show", "--format=", "--patch", commitID], in: url)
+                    diffStat = try await worker.runAction(args: ["show", "--format=", "--stat", commitID], in: url)
+                }
+
+                guard !diff.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                    let findings = [ReviewFinding(
+                        severity: .suggestion,
+                        file: "general",
+                        message: L10n("graph.commit.review.nodiff")
+                    )]
+                    commitReviewCache[commitID] = findings
+                    aiReviewFindings = findings
+                    isReviewVisible = true
+                    if selectedCommitID == commitID {
+                        selectedCommitDetailTab = .aiReview
+                    }
+                    return
+                }
+
+                let findings = try await aiClient.reviewDiff(
+                    diff: diff,
+                    diffStat: diffStat,
+                    branchName: currentBranch,
+                    provider: aiProvider,
+                    apiKey: aiAPIKey
+                )
+
+                logger.log(.ai, "Commit review generated OK: \(findings.count) findings", context: commitID)
+                commitReviewCache[commitID] = findings
+                aiReviewFindings = findings
+                isReviewVisible = true
+                if selectedCommitID == commitID {
+                    selectedCommitDetailTab = .aiReview
+                }
+            } catch {
+                if let aiErr = error as? AIError, case .quotaExceeded = aiErr {
+                    aiQuotaExceeded = true
+                }
+                logger.log(.error, "AI commit review failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
                 lastError = error.localizedDescription
             }
         }

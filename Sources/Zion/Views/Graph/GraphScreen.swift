@@ -284,6 +284,8 @@ struct GraphScreen: View {
                             searchQuery: commitSearchQuery,
                             laneCount: model.maxLaneCount,
                             currentBranch: model.currentBranch,
+                            isAIConfigured: model.isAIConfigured,
+                            isReviewingThisCommit: model.reviewingCommitID == commit.id,
                             onCheckout: { branch in
                                 let isRemote = model.isRemoteRefName(branch)
                                 let title = isRemote ? L10n("Checkout & Pull") : L10n("Checkout")
@@ -309,6 +311,9 @@ struct GraphScreen: View {
                                         model.checkout(reference: branch)
                                     }
                                 }
+                            },
+                            onReviewCommit: { commitID in
+                                model.reviewCommitChanges(commitID: commitID)
                             },
                             onSelect: {
                                 showingPendingChanges = false
@@ -860,10 +865,44 @@ struct GraphScreen: View {
     private var commitDetailsPane: some View {
         if showingPendingChanges {
             inlineChangesPane
-        } else if model.selectedCommitID != nil {
+        } else if let selectedCommitID = model.selectedCommitID {
             GlassCard(spacing: 0) {
                 CardHeader(L10n("Detalhes"), icon: "doc.text.magnifyingglass") {
-                    if let selectedCommitID = model.selectedCommitID {
+                    HStack(spacing: 6) {
+                        if model.isAIConfigured {
+                            Button {
+                                model.reviewCommitChanges(commitID: selectedCommitID)
+                            } label: {
+                                if model.reviewingCommitID == selectedCommitID {
+                                    ProgressView()
+                                        .controlSize(.mini)
+                                        .frame(width: 10, height: 10)
+                                } else {
+                                    Image(systemName: "sparkles")
+                                        .font(.system(size: 10, weight: .bold))
+                                }
+                            }
+                            .buttonStyle(.plain)
+                            .cursorArrow()
+                            .foregroundStyle(DesignSystem.Colors.ai)
+                            .help(L10n("graph.commit.review"))
+                            .accessibilityLabel(L10n("graph.commit.review"))
+                        }
+
+                        if model.cachedReviewFindings(for: selectedCommitID) != nil {
+                            Text(L10n("graph.commit.review.cached"))
+                                .font(.system(size: 9, weight: .bold))
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 2)
+                                .background(DesignSystem.Colors.glassSubtle)
+                                .clipShape(Capsule())
+                                .overlay(
+                                    Capsule()
+                                        .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
+                                )
+                                .foregroundStyle(.secondary)
+                        }
+
                         Text(String(selectedCommitID.prefix(8)))
                             .font(.system(.caption, design: .monospaced))
                             .foregroundStyle(.secondary)
@@ -871,10 +910,30 @@ struct GraphScreen: View {
                 }
                 .padding(.horizontal, 12).padding(.top, 12).padding(.bottom, 8)
 
+                if model.isAIConfigured {
+                    HStack(spacing: 8) {
+                        detailTabButton(
+                            title: L10n("graph.commit.review.tab.details"),
+                            isSelected: model.selectedCommitDetailTab == .details
+                        ) {
+                            model.selectedCommitDetailTab = .details
+                        }
+
+                        detailTabButton(
+                            title: L10n("graph.commit.review.tab.ai"),
+                            isSelected: model.selectedCommitDetailTab == .aiReview
+                        ) {
+                            model.selectedCommitDetailTab = .aiReview
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 8)
+                }
+
                 Divider()
 
                 ScrollView {
-                    CommitDetailContent(rawDetails: model.commitDetails, model: model, commitID: model.selectedCommitID)
+                    CommitDetailContent(rawDetails: model.commitDetails, model: model, commitID: selectedCommitID)
                         .padding(12)
                 }
             }
@@ -892,6 +951,25 @@ struct GraphScreen: View {
                 .padding(40)
             }
         }
+    }
+
+    private func detailTabButton(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 10, weight: .semibold))
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(
+                    RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous)
+                        .fill(isSelected ? DesignSystem.Colors.selectionBackground : DesignSystem.Colors.glassSubtle)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous)
+                        .stroke(isSelected ? DesignSystem.Colors.selectionBorder : DesignSystem.Colors.glassBorderDark, lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
+        .cursorArrow()
     }
 
     // MARK: - Inline Changes Pane (replaces detail when pending changes selected)

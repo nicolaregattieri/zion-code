@@ -232,42 +232,16 @@ struct OperationsScreen: View {
 
                 // AI Code Review Results
                 if model.isReviewVisible && !model.aiReviewFindings.isEmpty {
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack {
-                            Image(systemName: "sparkles").foregroundStyle(DesignSystem.Colors.ai)
-                            Text(L10n("Code Review")).font(.system(size: 11, weight: .bold))
-                            Spacer()
-                            Button { model.isReviewVisible = false } label: {
-                                Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
-                            }.buttonStyle(.plain)
+                    ReviewFindingsView(
+                        findings: model.aiReviewFindings,
+                        tintColor: DesignSystem.Colors.ai,
+                        onOpenFile: { file, snippet in
+                            model.openFileInEditor(relativePath: file, highlightQuery: snippet)
+                        },
+                        onDismiss: {
+                            model.isReviewVisible = false
                         }
-                        ForEach(model.aiReviewFindings) { finding in
-                            HStack(alignment: .top, spacing: 8) {
-                                Image(systemName: finding.severity.icon)
-                                    .font(.system(size: 10))
-                                    .foregroundStyle(finding.severity.color)
-                                    .frame(width: 14)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    if finding.file != "general" {
-                                        Text(finding.file)
-                                            .font(.system(size: 9, weight: .bold, design: .monospaced))
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    Text(finding.message)
-                                        .font(.system(size: 10))
-                                        .fixedSize(horizontal: false, vertical: true)
-                                }
-                            }
-                            .padding(8)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(finding.severity.color.opacity(0.06))
-                            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
-                            .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius).stroke(finding.severity.color.opacity(0.2)))
-                        }
-                    }
-                    .padding(10)
-                    .background(DesignSystem.Colors.glassSubtle)
-                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius))
+                    )
                 }
 
                 // AI Commit Split Suggestions
