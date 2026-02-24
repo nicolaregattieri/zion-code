@@ -383,7 +383,7 @@ final class RepositoryViewModel {
     var editorFontFamily: String = "SF Mono" {
         didSet { UserDefaults.standard.set(editorFontFamily, forKey: "editor.fontFamily") }
     }
-    var editorLineSpacing: Double = 1.2 {
+    var editorLineSpacing: Double = 4.0 {
         didSet { UserDefaults.standard.set(editorLineSpacing, forKey: "editor.lineSpacing") }
     }
     var isLineWrappingEnabled: Bool = true {
@@ -673,8 +673,10 @@ final class RepositoryViewModel {
         if let family = defaults.string(forKey: "editor.fontFamily"), family != editorFontFamily {
             editorFontFamily = family
         }
-        let ls = defaults.double(forKey: "editor.lineSpacing")
-        if ls > 0 && ls != editorLineSpacing { editorLineSpacing = ls }
+        if defaults.object(forKey: "editor.lineSpacing") != nil {
+            let ls = defaults.double(forKey: "editor.lineSpacing")
+            if ls != editorLineSpacing { editorLineSpacing = ls }
+        }
 
         let lw = defaults.bool(forKey: "editor.lineWrap")
         if lw != isLineWrappingEnabled { isLineWrappingEnabled = lw }

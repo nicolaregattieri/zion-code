@@ -4,7 +4,7 @@ struct EditorSettingsTab: View {
     @AppStorage("editor.theme") private var themeRaw: String = EditorTheme.dracula.rawValue
     @AppStorage("editor.fontFamily") private var fontFamily: String = "SF Mono"
     @AppStorage("editor.fontSize") private var fontSize: Double = 13.0
-    @AppStorage("editor.lineSpacing") private var lineSpacing: Double = 1.2
+    @AppStorage("editor.lineSpacing") private var lineSpacing: Double = 4.0
     @AppStorage("editor.letterSpacing") private var letterSpacing: Double = 0.0
 
     @AppStorage("editor.tabSize") private var tabSize: Int = 4
@@ -50,11 +50,11 @@ struct EditorSettingsTab: View {
                 HStack {
                     Text(L10n("settings.editor.lineSpacing"))
                     Spacer()
-                    Slider(value: $lineSpacing, in: 0.0...5.0, step: 0.1)
+                    Slider(value: $lineSpacing, in: 0.0...20.0, step: 0.5)
                         .frame(width: 120)
-                    Text(String(format: "%.1fx", lineSpacing))
+                    Text(String(format: "%.1fpt", lineSpacing))
                         .font(.system(size: 11, design: .monospaced))
-                        .frame(width: 36, alignment: .trailing)
+                        .frame(width: 46, alignment: .trailing)
                 }
 
                 HStack {

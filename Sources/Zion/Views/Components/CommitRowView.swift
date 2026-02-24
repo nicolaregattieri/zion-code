@@ -33,7 +33,9 @@ struct CommitRowView: View {
         HStack(spacing: 0) {
             graphColumn
             cardContent
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: rowHeight)
         .clipped()
     }
