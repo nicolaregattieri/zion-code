@@ -152,11 +152,6 @@ struct CodeScreen: View {
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
-                if isZenMode {
-                    focusModeExitBar
-                        .transition(DesignSystem.Motion.slideFromTop)
-                }
-
                 if !isZenMode {
                     editorToolbar
                         .padding(.horizontal, 8)
@@ -189,7 +184,7 @@ struct CodeScreen: View {
                 .transition(DesignSystem.Motion.fadeScale)
             }
         }
-        .padding(12)
+        .padding(isZenMode ? 0 : 12)
         .background(DesignSystem.Colors.background)
         .sheet(isPresented: $showGoToLine) {
             goToLineSheet
@@ -1607,6 +1602,38 @@ struct CodeScreen: View {
             .help(L10n("Novo terminal") + " (⌘T)")
             .accessibilityLabel(L10n("Novo terminal"))
             .padding(.trailing, 8)
+
+            if isZenMode {
+                Spacer()
+                    .frame(width: 12)
+
+                Button {
+                    NotificationCenter.default.post(name: .toggleZenMode, object: nil)
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "scope")
+                            .font(.system(size: 11, weight: .semibold))
+                        Text(L10n("focus.toggle"))
+                            .font(.system(size: 11, weight: .semibold))
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                            .fill(DesignSystem.Colors.glassSubtle)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                            .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                .help("\(L10n("focus.toggle")) (⌃⌘J)")
+                .padding(.trailing, 16)
+            }
         }
         .padding(.vertical, 8)
     }
