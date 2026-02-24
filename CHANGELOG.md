@@ -4,6 +4,12 @@ All notable changes to Zion are documented here.
 
 ---
 
+## 1.2.6 — 2026-02-24
+
+### Changed
+- **Code Review Panel Polish** — Improved spacing, typography, icon sizing, and snippet chip rhythm in `ReviewFindingsView` for better readability and scanability.
+- **Release Versioning** — App bundle bumped to `1.2.6` (build `11`) for Sparkle distribution.
+
 ## 1.2.5 — 2026-02-24
 
 ### Fixed

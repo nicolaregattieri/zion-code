@@ -46,11 +46,10 @@ Zion doesn't make you choose.
 
 ---
 
-## What's New in 1.2.5
+## What's New in 1.2.6
 
-- Security hardening patch: HTTPS-only credential retry flow, stricter file/folder name validation, and deprecated shell-string execution path disabled.
-- AI provider failures now avoid exposing raw upstream payload bodies in user-facing/logged errors.
-- Public release package bumped to `1.2.5` (build `10`) for Sparkle distribution.
+- Code Review panel polish: improved spacing, typography, icon sizing, and snippet chip rhythm for clearer scanability.
+- Public release package bumped to `1.2.6` (build `11`) for Sparkle distribution.
 
 ### Launch Week Validation (Advanced Flows)
 

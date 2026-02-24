@@ -7,10 +7,10 @@ struct ReviewFindingsView: View {
     var onDismiss: (() -> Void)?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: "sparkles").foregroundStyle(tintColor)
-                Text(L10n("Code Review")).font(.system(size: 11, weight: .bold))
+                Text(L10n("Code Review")).font(DesignSystem.Typography.sectionTitle)
                 Spacer()
                 summaryBadges
                 if let onDismiss {
@@ -20,12 +20,12 @@ struct ReviewFindingsView: View {
                 }
             }
             ForEach(findings) { finding in
-                HStack(alignment: .top, spacing: 8) {
+                HStack(alignment: .top, spacing: 10) {
                     Image(systemName: finding.severity.icon)
-                        .font(.system(size: 10))
+                        .font(DesignSystem.IconSize.inline)
                         .foregroundStyle(finding.severity.color)
-                        .frame(width: 14)
-                    VStack(alignment: .leading, spacing: 2) {
+                        .frame(width: 16)
+                    VStack(alignment: .leading, spacing: 4) {
                         if finding.file != "general" {
                             HStack(spacing: 6) {
                                 if let onOpenFile {
@@ -37,9 +37,9 @@ struct ReviewFindingsView: View {
                                                 .lineLimit(1)
                                                 .truncationMode(.middle)
                                             Image(systemName: "arrow.up.right.square")
-                                                .font(.system(size: 8, weight: .semibold))
+                                                .font(DesignSystem.IconSize.tiny)
                                         }
-                                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                        .font(DesignSystem.Typography.monoLabelBold)
                                         .foregroundStyle(.secondary)
                                     }
                                     .buttonStyle(.plain)
@@ -48,14 +48,15 @@ struct ReviewFindingsView: View {
                                     .accessibilityLabel(L10n("Abrir no Editor"))
                                 } else {
                                     Text(finding.file)
-                                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                        .font(DesignSystem.Typography.monoLabelBold)
                                         .foregroundStyle(.secondary)
                                 }
                                 Spacer(minLength: 0)
                             }
                         }
                         Text(finding.message)
-                            .font(.system(size: 10))
+                            .font(DesignSystem.Typography.body)
+                            .lineSpacing(3)
                             .fixedSize(horizontal: false, vertical: true)
 
                         let snippets = codeSnippets(from: finding.message)
@@ -71,14 +72,14 @@ struct ReviewFindingsView: View {
                         }
                     }
                 }
-                .padding(8)
+                .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(finding.severity.color.opacity(0.06))
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
                 .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius).stroke(finding.severity.color.opacity(0.2)))
             }
         }
-        .padding(10)
+        .padding(12)
         .background(DesignSystem.Colors.glassSubtle)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius))
     }
@@ -104,12 +105,12 @@ struct ReviewFindingsView: View {
     private func badge(count: Int, color: Color, label: String) -> some View {
         HStack(spacing: 3) {
             Text("\(count)")
-                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                .font(DesignSystem.Typography.monoLabelBold)
             Text(label)
-                .font(.system(size: 8))
+                .font(DesignSystem.Typography.meta)
         }
         .padding(.horizontal, 6)
-        .padding(.vertical, 2)
+        .padding(.vertical, 3)
         .background(color.opacity(0.12))
         .foregroundStyle(color)
         .clipShape(Capsule())
@@ -122,10 +123,10 @@ struct ReviewFindingsView: View {
                 onOpenFile(file, snippet)
             } label: {
                 Text(snippet)
-                    .font(.system(size: 9, weight: .medium, design: .monospaced))
+                    .font(DesignSystem.Typography.monoLabel)
                     .lineLimit(1)
                     .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
+                    .padding(.vertical, 3)
                     .background(DesignSystem.Colors.glassOverlay)
                     .foregroundStyle(.secondary)
                     .clipShape(Capsule())
@@ -140,10 +141,10 @@ struct ReviewFindingsView: View {
             .accessibilityLabel(L10n("Abrir no Editor"))
         } else {
             Text(snippet)
-                .font(.system(size: 9, weight: .medium, design: .monospaced))
+                .font(DesignSystem.Typography.monoLabel)
                 .lineLimit(1)
                 .padding(.horizontal, 6)
-                .padding(.vertical, 2)
+                .padding(.vertical, 3)
                 .background(DesignSystem.Colors.glassOverlay)
                 .foregroundStyle(.secondary)
                 .clipShape(Capsule())
