@@ -160,6 +160,20 @@ Current known edge case: if both worktrees change the same file/line, Git can bl
 
 Grab the latest `.dmg` from [**Releases**](../../releases), open it, and drag **Zion.app** to Applications.
 
+### Security Note (Current Test Distribution)
+
+Zion releases are open source and currently distributed without Apple Developer ID notarization.
+
+- Download only from the official [**Releases**](../../releases) page.
+- Verify checksum before opening:
+
+```bash
+shasum -a 256 dist/Zion.dmg
+```
+
+- On first launch, macOS Gatekeeper may block the app. Use **Right click > Open** for a per-app override.
+- For maximum trust, build from source locally.
+
 ### Build from Source
 
 ```bash
