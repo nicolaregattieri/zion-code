@@ -3168,6 +3168,11 @@ final class RepositoryViewModel {
                 
                 // 3. Execute commit
                 let _ = try await worker.runAction(args: commitArgs, in: url)
+
+                if let newHeadCommitID = try? await worker.runAction(args: ["rev-parse", "HEAD"], in: url).clean,
+                   !newHeadCommitID.isEmpty {
+                    selectCommit(newHeadCommitID)
+                }
                 
                 clearError()
                 statusMessage = shouldAmend ? L10n("Commit corrigido com sucesso.") : L10n("Commit realizado com sucesso.")
