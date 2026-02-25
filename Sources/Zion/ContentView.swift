@@ -37,6 +37,8 @@ struct ContentView: View {
     @AppStorage("zion.appearance") private var appearanceRaw: String = AppAppearance.system.rawValue
     @AppStorage("zion.hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
     @AppStorage("zion.zenModeEnabled") private var zenModeEnabled: Bool = false
+    @AppStorage("zion.zionModeEnabled") private var zionModeEnabled: Bool = false
+    @AppStorage("zion.preZionModeTheme") private var preZionModeTheme: String = ""
 
     private var uiLanguage: AppLanguage { AppLanguage(rawValue: uiLanguageRaw) ?? .system }
     private var appearance: AppAppearance { AppAppearance(rawValue: appearanceRaw) ?? .system }
@@ -177,14 +179,19 @@ struct ContentView: View {
                         }
                     }
                     .keyboardShortcut("j", modifiers: [.command, .control])
+                    Button("") {
+                        zionModeEnabled.toggle()
+                    }
+                    .keyboardShortcut("z", modifiers: [.command, .control])
                 }
                 .frame(width: 0, height: 0)
                 .opacity(0)
             }
         }
         .id(uiLanguageRaw)
-        .preferredColorScheme(appearance.colorScheme)
+        .preferredColorScheme(zionModeEnabled ? .dark : appearance.colorScheme)
         .environment(\.locale, uiLanguage.locale)
+        .environment(\.zionModeEnabled, zionModeEnabled)
         .onAppear {
             logger.log(.info, "Boot: starting", source: "ContentView")
             model.restoreEditorSettings()
@@ -297,6 +304,31 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .toggleZenMode)) { _ in
             withAnimation(DesignSystem.Motion.panel) {
                 zenModeEnabled.toggle()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .toggleZionMode)) { _ in
+            zionModeEnabled.toggle()
+        }
+        .onChange(of: zionModeEnabled) { oldValue, enabled in
+            if enabled {
+                preZionModeTheme = UserDefaults.standard.string(forKey: "editor.theme") ?? EditorTheme.dracula.rawValue
+                UserDefaults.standard.set(EditorTheme.synthwave.rawValue, forKey: "editor.theme")
+            } else if oldValue {
+                // Only restore if explicitly toggled off (not auto-disabled by theme change)
+                let currentTheme = UserDefaults.standard.string(forKey: "editor.theme") ?? ""
+                if currentTheme == EditorTheme.synthwave.rawValue {
+                    let restore = preZionModeTheme.isEmpty ? EditorTheme.dracula.rawValue : preZionModeTheme
+                    UserDefaults.standard.set(restore, forKey: "editor.theme")
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
+            // Auto-disable Zion Mode if user manually picks a different theme
+            if zionModeEnabled {
+                let currentTheme = UserDefaults.standard.string(forKey: "editor.theme") ?? ""
+                if currentTheme != EditorTheme.synthwave.rawValue {
+                    zionModeEnabled = false
+                }
             }
         }
         .animation(.easeInOut(duration: 0.15), value: model.isRepositorySwitching)
@@ -518,8 +550,8 @@ struct ContentView: View {
                 .font(.system(.caption, design: .monospaced))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
-                .background(DesignSystem.Colors.statusGreenBg)
-                .foregroundStyle(DesignSystem.Colors.success)
+                .background(zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(0.12) : DesignSystem.Colors.statusGreenBg)
+                .foregroundStyle(zionModeEnabled ? DesignSystem.ZionMode.neonMagenta : DesignSystem.Colors.success)
                 .clipShape(Capsule())
 
                 // Ahead remote badge
@@ -532,8 +564,16 @@ struct ContentView: View {
                     .font(.caption)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
-                    .background(model.behindRemoteCount > 0 ? DesignSystem.Colors.statusOrangeBg : DesignSystem.Colors.statusBlueBg)
-                    .foregroundStyle(model.behindRemoteCount > 0 ? DesignSystem.Colors.warning : DesignSystem.Colors.info)
+                    .background(
+                        zionModeEnabled
+                            ? DesignSystem.ZionMode.neonGold.opacity(0.12)
+                            : (model.behindRemoteCount > 0 ? DesignSystem.Colors.statusOrangeBg : DesignSystem.Colors.statusBlueBg)
+                    )
+                    .foregroundStyle(
+                        zionModeEnabled
+                            ? DesignSystem.ZionMode.neonGold
+                            : (model.behindRemoteCount > 0 ? DesignSystem.Colors.warning : DesignSystem.Colors.info)
+                    )
                     .clipShape(Capsule())
                 }
 
@@ -547,8 +587,8 @@ struct ContentView: View {
                     .font(.caption)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
-                    .background(DesignSystem.Colors.statusOrangeBg)
-                    .foregroundStyle(DesignSystem.Colors.warning)
+                    .background(zionModeEnabled ? DesignSystem.ZionMode.neonOrange.opacity(0.12) : DesignSystem.Colors.statusOrangeBg)
+                    .foregroundStyle(zionModeEnabled ? DesignSystem.ZionMode.neonOrange : DesignSystem.Colors.warning)
                     .clipShape(Capsule())
                 }
 
@@ -571,7 +611,26 @@ struct ContentView: View {
             if let repositoryURL = model.repositoryURL {
                 Text(repositoryURL.path).lineLimit(1).font(.system(.caption, design: .monospaced)).foregroundStyle(.tertiary)
             }
-        }.padding(.horizontal, 16).padding(.vertical, 8).background(.ultraThinMaterial).overlay(alignment: .top) { Divider().opacity(0.45) }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background {
+            if zionModeEnabled {
+                ZStack {
+                    DesignSystem.ZionMode.neonBase
+                    Rectangle().fill(.ultraThinMaterial)
+                }
+            } else {
+                Rectangle().fill(.ultraThinMaterial)
+            }
+        }
+        .overlay(alignment: .top) {
+            if zionModeEnabled {
+                DesignSystem.ZionMode.neonMagenta.opacity(0.25).frame(height: 1)
+            } else {
+                Divider().opacity(0.45)
+            }
+        }
     }
 
     private var statusBarQuickNavigation: some View {
@@ -588,11 +647,11 @@ struct ContentView: View {
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 4)
-        .background(DesignSystem.Colors.glassSubtle)
+        .background(zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(0.03) : DesignSystem.Colors.glassSubtle)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous)
-                .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
+                .stroke(zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(0.12) : DesignSystem.Colors.glassBorderDark, lineWidth: 1)
         )
     }
 
@@ -614,11 +673,11 @@ struct ContentView: View {
             .padding(.vertical, 3)
             .background(
                 RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous)
-                    .fill(isSelected ? DesignSystem.Colors.selectionBackground : Color.clear)
+                    .fill(isSelected ? (zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(0.12) : DesignSystem.Colors.selectionBackground) : Color.clear)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous)
-                    .stroke(isSelected ? DesignSystem.Colors.selectionBorder : Color.clear, lineWidth: 1)
+                    .stroke(isSelected ? (zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(0.35) : DesignSystem.Colors.selectionBorder) : Color.clear, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -868,20 +927,38 @@ struct ContentView: View {
 
 struct LiquidBackgroundView: View {
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.zionModeEnabled) private var zionMode
     @State private var phase: Bool = false
 
     var body: some View {
         ZStack {
             if colorScheme == .dark {
-                Color(red: 0.05, green: 0.02, blue: 0.10).ignoresSafeArea()
-                Circle()
-                    .fill(DesignSystem.Colors.brandPrimary.opacity(phase ? 0.17 : 0.14))
-                    .frame(width: 520).blur(radius: 80)
-                    .offset(x: phase ? -310 : -370, y: phase ? -200 : -240)
-                Circle()
-                    .fill(DesignSystem.Colors.brandInk.opacity(0.12))
-                    .frame(width: 420).blur(radius: 70)
-                    .offset(x: phase ? 310 : 260, y: phase ? -260 : -300)
+                if zionMode {
+                    // Zion Mode: deep purple base with neon orbs
+                    DesignSystem.ZionMode.neonBaseDark.ignoresSafeArea()
+                    Circle()
+                        .fill(DesignSystem.ZionMode.neonMagenta.opacity(phase ? 0.20 : 0.16))
+                        .frame(width: 600).blur(radius: 100)
+                        .offset(x: phase ? -310 : -370, y: phase ? -200 : -240)
+                    Circle()
+                        .fill(DesignSystem.ZionMode.neonCyan.opacity(phase ? 0.15 : 0.11))
+                        .frame(width: 500).blur(radius: 90)
+                        .offset(x: phase ? 310 : 260, y: phase ? -260 : -300)
+                    Circle()
+                        .fill(DesignSystem.ZionMode.neonGold.opacity(phase ? 0.08 : 0.05))
+                        .frame(width: 350).blur(radius: 70)
+                        .offset(x: phase ? 280 : 320, y: phase ? 220 : 260)
+                } else {
+                    Color(red: 0.05, green: 0.02, blue: 0.10).ignoresSafeArea()
+                    Circle()
+                        .fill(DesignSystem.Colors.brandPrimary.opacity(phase ? 0.17 : 0.14))
+                        .frame(width: 520).blur(radius: 80)
+                        .offset(x: phase ? -310 : -370, y: phase ? -200 : -240)
+                    Circle()
+                        .fill(DesignSystem.Colors.brandInk.opacity(0.12))
+                        .frame(width: 420).blur(radius: 70)
+                        .offset(x: phase ? 310 : 260, y: phase ? -260 : -300)
+                }
             } else {
                 Color(red: 0.96, green: 0.94, blue: 1.00).ignoresSafeArea()
                 Circle()

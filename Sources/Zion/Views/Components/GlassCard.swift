@@ -2,6 +2,7 @@ import SwiftUI
 
 struct GlassCard<Content: View>: View {
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.zionModeEnabled) private var zionMode
     let spacing: CGFloat
     let borderTint: Color?
     let expanding: Bool
@@ -26,11 +27,15 @@ struct GlassCard<Content: View>: View {
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous)
                 .stroke(
-                    borderTint ?? (colorScheme == .dark ? DesignSystem.Colors.glassBorderDark : DesignSystem.Colors.glassBorderLight),
+                    borderTint ?? (zionMode ? DesignSystem.ZionMode.glowBorder : (colorScheme == .dark ? DesignSystem.Colors.glassBorderDark : DesignSystem.Colors.glassBorderLight)),
                     lineWidth: borderTint != nil ? 1.5 : 1
                 )
         )
-        .shadow(color: colorScheme == .dark ? DesignSystem.Colors.shadowDark : DesignSystem.Colors.shadowLight, radius: 12, y: 4)
+        .shadow(
+            color: zionMode ? DesignSystem.ZionMode.glowShadow : (colorScheme == .dark ? DesignSystem.Colors.shadowDark : DesignSystem.Colors.shadowLight),
+            radius: 12,
+            y: zionMode ? 2 : 4
+        )
     }
 }
 
