@@ -111,12 +111,6 @@ struct ContentView: View {
                     .allowsHitTesting(!model.isRepositorySwitching)
                     .padding(.bottom, statusBarClearance)
                     .background(Color(NSColor.windowBackgroundColor))
-                    .overlay {
-                        if model.isRepositorySwitching {
-                            ZionLoadingOverlay(detail: model.currentRepositorySwitchTargetName)
-                                .transition(.opacity)
-                        }
-                    }
             }
             .navigationSplitViewStyle(.balanced)
             .frame(minWidth: 1360, minHeight: 840)
@@ -188,6 +182,16 @@ struct ContentView: View {
                 }
                 .frame(width: 0, height: 0)
                 .opacity(0)
+            }
+
+            if model.isRepositorySwitching {
+                ZionLoadingOverlay(
+                    detail: model.currentRepositorySwitchTargetName,
+                    phase: model.currentRepositorySwitchPhaseTitle
+                )
+                    .ignoresSafeArea()
+                    .zIndex(20)
+                    .transition(.opacity)
             }
         }
         .id(uiLanguageRaw)

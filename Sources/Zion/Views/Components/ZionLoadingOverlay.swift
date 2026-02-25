@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ZionLoadingOverlay: View {
     var detail: String? = nil
+    var phase: String? = nil
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var dashPhase: CGFloat = 0
 
@@ -17,6 +18,13 @@ struct ZionLoadingOverlay: View {
                 Text(L10n("switch.overlay.loading"))
                     .font(DesignSystem.Typography.bodyMedium)
                     .foregroundStyle(DesignSystem.Colors.brandWhite.opacity(0.78))
+
+                if let phase, !phase.isEmpty {
+                    Text(phase)
+                        .font(DesignSystem.Typography.meta)
+                        .foregroundStyle(DesignSystem.Colors.brandWhite.opacity(0.70))
+                        .lineLimit(1)
+                }
 
                 if let detail, !detail.isEmpty {
                     Text(L10n("switch.overlay.target", detail))

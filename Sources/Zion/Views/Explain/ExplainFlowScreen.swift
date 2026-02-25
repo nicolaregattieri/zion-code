@@ -21,6 +21,7 @@ struct ExplainFlowScreen: View {
     @State private var splitRatio: CGFloat = 0.64
     @State private var selectedNodeID: String?
     @State private var detailTab: DetailTab = .delta
+    @State private var isGuideExpanded: Bool = true
 
     private var selectedTerm: ExplainGlossaryTerm? {
         if let id = model.explainSelectedTermID {
@@ -84,6 +85,34 @@ struct ExplainFlowScreen: View {
                     .background(DesignSystem.Colors.warning.opacity(0.16))
                     .foregroundStyle(DesignSystem.Colors.warning)
                     .clipShape(Capsule())
+            }
+
+            if let graph = model.explainGraph {
+                Text(graph.renderBudgetLevel.title)
+                    .font(.system(size: 9, weight: .bold))
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 4)
+                    .background(DesignSystem.Colors.info.opacity(0.16))
+                    .foregroundStyle(DesignSystem.Colors.info)
+                    .clipShape(Capsule())
+
+                Text(graph.detailSource.title)
+                    .font(.system(size: 9, weight: .bold))
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 4)
+                    .background(DesignSystem.Colors.glassSubtle)
+                    .foregroundStyle(.secondary)
+                    .clipShape(Capsule())
+
+                if graph.truncated {
+                    Text(L10n("explain.truncated"))
+                        .font(.system(size: 9, weight: .bold))
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 4)
+                        .background(DesignSystem.Colors.warning.opacity(0.16))
+                        .foregroundStyle(DesignSystem.Colors.warning)
+                        .clipShape(Capsule())
+                }
             }
 
             if model.isExplainFlowLoading || model.isExplainAIEnriching {
@@ -230,6 +259,8 @@ struct ExplainFlowScreen: View {
 
     private func detailPane(graph: ExplainGraph, story: ExplainStory) -> some View {
         GlassCard(spacing: 12) {
+            flowGuide
+
             HStack {
                 Picker("", selection: $detailTab) {
                     ForEach(DetailTab.allCases) { tab in
@@ -257,6 +288,44 @@ struct ExplainFlowScreen: View {
                 technicalPanel(graph: graph)
             }
         }
+    }
+
+    private var flowGuide: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: "compass.drawing")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(DesignSystem.Colors.info)
+                Text(L10n("explain.guide.title"))
+                    .font(.system(size: 12, weight: .semibold))
+                Spacer()
+                Button {
+                    withAnimation(DesignSystem.Motion.detail) {
+                        isGuideExpanded.toggle()
+                    }
+                } label: {
+                    Image(systemName: isGuideExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+
+            if isGuideExpanded {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("• \(L10n("explain.guide.anchor"))")
+                    Text("• \(L10n("explain.guide.operations"))")
+                    Text("• \(L10n("explain.guide.files"))")
+                    Text("• \(L10n("explain.guide.symbols"))")
+                    Text("• \(L10n("explain.guide.risks"))")
+                }
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+            }
+        }
+        .padding(10)
+        .background(DesignSystem.Colors.glassSubtle)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
     }
 
     private func deltaPanel() -> some View {
@@ -293,7 +362,9 @@ struct ExplainFlowScreen: View {
                     }
                 }
                 .font(.system(size: 12))
+                .lineSpacing(3)
                 .foregroundStyle(.secondary)
+                .textSelection(.enabled)
                 .environment(\.openURL, OpenURLAction { url in
                     guard url.scheme == "zion-glossary" else { return .systemAction }
                     let id = (url.host ?? url.path).replacingOccurrences(of: "/", with: "")
@@ -361,6 +432,15 @@ struct ExplainFlowScreen: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text(L10n("explain.technical.notes"))
                     .font(.system(size: 13, weight: .bold))
+                Text(L10n("explain.technical.budget", graph.renderBudgetLevel.title))
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                Text(L10n("explain.technical.source", graph.detailSource.title))
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                Text(graph.truncated ? L10n("explain.technical.truncated.yes") : L10n("explain.technical.truncated.no"))
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
                 ForEach(graph.technicalNotes, id: \.self) { note in
                     Text("• \(note)")
                         .font(.system(size: 11))
@@ -409,18 +489,28 @@ struct ExplainFlowScreen: View {
         var positions: [String: CGPoint] = [:]
         let commitNodes = nodes.filter { $0.kind == .commit }
         let kindNodes = nodes.filter { $0.id.hasPrefix("kind.") }
+        let operationNodes = nodes.filter { $0.kind == .operation }
         let fileNodes = nodes.filter { $0.kind == .file }
         let symbolNodes = nodes.filter { $0.kind == .symbol }
+        let insightNodes = nodes.filter { $0.kind == .insight }
         let remainingNodes = nodes.filter {
-            $0.kind != .commit && !$0.id.hasPrefix("kind.") && $0.kind != .file && $0.kind != .symbol
+            $0.kind != .commit
+            && !$0.id.hasPrefix("kind.")
+            && $0.kind != .operation
+            && $0.kind != .file
+            && $0.kind != .symbol
+            && $0.kind != .insight
         }
 
         if commitNodes.count == 1, let single = commitNodes.first {
             positions[single.id] = CGPoint(x: size.width * 0.24, y: size.height * 0.5)
         } else if !commitNodes.isEmpty {
+            let count = commitNodes.count
+            let spacing = max(72.0, (size.height - 120) / CGFloat(max(count, 1)))
+            let startY = (size.height - (CGFloat(count - 1) * spacing)) / 2
             for (index, node) in commitNodes.enumerated() {
-                let x = size.width * (0.16 + (CGFloat(index) * 0.2))
-                let y = size.height * 0.5
+                let x = size.width * 0.2
+                let y = startY + CGFloat(index) * spacing
                 positions[node.id] = CGPoint(x: x, y: y)
             }
         }
@@ -438,9 +528,11 @@ struct ExplainFlowScreen: View {
             }
         }
 
-        placeColumn(kindNodes, x: 0.52)
-        placeColumn(fileNodes, x: 0.75)
-        placeColumn(symbolNodes, x: 0.9)
+        placeColumn(kindNodes, x: 0.48)
+        placeColumn(operationNodes, x: 0.62)
+        placeColumn(fileNodes, x: 0.74)
+        placeColumn(symbolNodes, x: 0.86)
+        placeColumn(insightNodes, x: 0.94)
         placeColumn(remainingNodes, x: 0.68)
         return positions
     }

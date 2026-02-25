@@ -775,6 +775,8 @@ enum ExplainNodeKind: String, CaseIterable, Codable, Sendable {
     case commit
     case file
     case symbol
+    case operation
+    case insight
     case ui
     case service
     case data
@@ -787,6 +789,8 @@ enum ExplainNodeKind: String, CaseIterable, Codable, Sendable {
         case .commit: return "point.bottomleft.forward.to.point.topright.scurvepath"
         case .file: return "doc.text"
         case .symbol: return "function"
+        case .operation: return "slider.horizontal.3"
+        case .insight: return "lightbulb"
         case .ui: return "rectangle.on.rectangle"
         case .service: return "gearshape.2"
         case .data: return "cylinder.split.1x2"
@@ -801,6 +805,8 @@ enum ExplainNodeKind: String, CaseIterable, Codable, Sendable {
         case .commit: return DesignSystem.Colors.brandPrimary
         case .file: return DesignSystem.Colors.codeReview
         case .symbol: return DesignSystem.Colors.ai
+        case .operation: return DesignSystem.Colors.warning
+        case .insight: return DesignSystem.Colors.info
         case .ui: return DesignSystem.Colors.success
         case .service: return DesignSystem.Colors.info
         case .data: return DesignSystem.Colors.warning
@@ -815,6 +821,8 @@ enum ExplainNodeKind: String, CaseIterable, Codable, Sendable {
         case .commit: return L10n("explain.kind.commit")
         case .file: return L10n("explain.kind.file")
         case .symbol: return L10n("explain.kind.symbol")
+        case .operation: return L10n("explain.kind.operation")
+        case .insight: return L10n("explain.kind.insight")
         case .ui: return L10n("explain.kind.ui")
         case .service: return L10n("explain.kind.service")
         case .data: return L10n("explain.kind.data")
@@ -876,6 +884,34 @@ enum ExplainFlowSource: String, Codable, Sendable {
     case branchRange
 }
 
+enum ExplainRenderBudgetLevel: String, Codable, Sendable {
+    case low
+    case medium
+    case high
+
+    var title: String {
+        switch self {
+        case .low: return L10n("explain.budget.low")
+        case .medium: return L10n("explain.budget.medium")
+        case .high: return L10n("explain.budget.high")
+        }
+    }
+}
+
+enum ExplainDetailSource: String, Codable, Sendable {
+    case fresh
+    case memory
+    case disk
+
+    var title: String {
+        switch self {
+        case .fresh: return L10n("explain.source.fresh")
+        case .memory: return L10n("explain.source.memory")
+        case .disk: return L10n("explain.source.disk")
+        }
+    }
+}
+
 struct ExplainContextWindow: Codable, Sendable {
     let anchorCommitID: String
     let commitIDs: [String]
@@ -895,6 +931,9 @@ struct ExplainGraph: Codable, Sendable {
     let commitID: String
     let scopeMode: ExplainScopeMode
     let source: ExplainFlowSource
+    let renderBudgetLevel: ExplainRenderBudgetLevel
+    let detailSource: ExplainDetailSource
+    let truncated: Bool
     let anchorCommitID: String
     let contextCommitIDs: [String]
     let branchBaseCommitID: String?

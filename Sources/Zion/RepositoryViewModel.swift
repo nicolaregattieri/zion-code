@@ -52,6 +52,20 @@ final class RepositoryViewModel {
         case silent
     }
 
+    private enum RepositorySwitchPhase {
+        case preparing
+        case loading
+        case finalizing
+
+        var title: String {
+            switch self {
+            case .preparing: return L10n("switch.phase.preparing")
+            case .loading: return L10n("switch.phase.loading")
+            case .finalizing: return L10n("switch.phase.finalizing")
+            }
+        }
+    }
+
     var repositoryURL: URL?
     var currentBranch: String = "-"
     var headShortHash: String = "-"
@@ -239,7 +253,7 @@ final class RepositoryViewModel {
     @ObservationIgnored private var explainBuildTask: Task<Void, Never>?
     @ObservationIgnored private var explainEnrichTask: Task<Void, Never>?
     @ObservationIgnored private var explainMemoryCache: [String: ExplainCommitBundle] = [:]
-    @ObservationIgnored private let explainSchemaVersion: Int = 2
+    @ObservationIgnored private let explainSchemaVersion: Int = 5
 
     // Pre-Commit AI Review Gate
     var preCommitReviewEnabled: Bool {
@@ -569,10 +583,14 @@ final class RepositoryViewModel {
     private var isSwitchingRepository = false
     private var repositorySwitchTargetName: String?
     @ObservationIgnored private var repositorySwitchStartedAt: Date?
+    private var repositorySwitchPhase: RepositorySwitchPhase = .preparing
     @ObservationIgnored private var cachedWorktreeStatusByPath: [String: (uncommittedCount: Int, hasConflicts: Bool)] = [:]
     @ObservationIgnored private var cachedIgnoredPaths: Set<String>?
     var isRepositorySwitching: Bool { isSwitchingRepository }
     var currentRepositorySwitchTargetName: String? { repositorySwitchTargetName }
+    var currentRepositorySwitchPhaseTitle: String {
+        repositorySwitchPhase.title
+    }
 
     func checkGitAvailability() {
         let process = Process()
@@ -812,8 +830,21 @@ final class RepositoryViewModel {
         isSwitchingRepository = true
         repositorySwitchTargetName = url.lastPathComponent
         repositorySwitchStartedAt = Date()
+        repositorySwitchPhase = .preparing
         logger.log(.info, "switch.start", context: "target=\(url.lastPathComponent) token=\(switchToken.uuidString.prefix(8))", source: #function)
         cancelRepositoryBackgroundActivityForSwitch()
+
+        Task { [weak self] in
+            guard let self else { return }
+            await Task.yield()
+            guard self.repositorySwitchToken == switchToken else { return }
+            self.startRepositorySwitch(to: url, previousURL: previousURL, switchToken: switchToken)
+        }
+    }
+
+    private func startRepositorySwitch(to url: URL, previousURL: URL?, switchToken: UUID) {
+        guard repositorySwitchToken == switchToken else { return }
+        repositorySwitchPhase = .loading
 
         repositoryURL = url
         repoEditorConfig = EditorConfig.load(from: url)
@@ -922,7 +953,12 @@ final class RepositoryViewModel {
         let target = repositorySwitchTargetName ?? repositoryURL?.lastPathComponent ?? "unknown"
         let durationMs = repositorySwitchStartedAt.map { Int(Date().timeIntervalSince($0) * 1000.0) } ?? -1
         let durationLabel = durationMs >= 0 ? "\(durationMs)" : "n/a"
-        logger.log(.info, "switch.\(event)", context: "target=\(target) durationMs=\(durationLabel)", source: #function)
+        logger.log(
+            .info,
+            "switch.\(event)",
+            context: "target=\(target) phase=\(repositorySwitchPhase.title) durationMs=\(durationLabel)",
+            source: #function
+        )
     }
 
     private func finishRepositorySwitch(event: String) {
@@ -931,6 +967,7 @@ final class RepositoryViewModel {
         isSwitchingRepository = false
         repositorySwitchTargetName = nil
         repositorySwitchStartedAt = nil
+        repositorySwitchPhase = .preparing
     }
 
     private func scheduleDeferredRepositoryLoads(for url: URL, switchToken: UUID) {
@@ -960,6 +997,7 @@ final class RepositoryViewModel {
                 onFinish: { [weak self] in
                     guard let self else { return }
                     guard self.repositorySwitchToken == switchToken, self.repositoryURL == url else { return }
+                    self.repositorySwitchPhase = .finalizing
                     self.loadPullRequests()
                     self.refreshPRReviewQueue()
                     self.startPRPollingTimer()
@@ -1437,13 +1475,34 @@ final class RepositoryViewModel {
         let item = FileItem(url: fileURL, isDirectory: false, children: nil)
         selectCodeFile(item)
         if let highlightQuery {
-            let query = highlightQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+            let query = normalizeEditorHighlightQuery(highlightQuery)
             if !query.isEmpty {
                 editorFindSeedQuery = query
                 editorFindSeedRequestID += 1
             }
         }
         navigateToCodeRequested = true
+    }
+
+    private func normalizeEditorHighlightQuery(_ raw: String) -> String {
+        var query = raw
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .first
+            .map(String.init) ?? raw
+        query = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        if query.hasPrefix("@@") {
+            return ""
+        }
+        if let first = query.first, first == "+" || first == "-" || first == " " {
+            query.removeFirst()
+        }
+        query = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        query = query.replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+        if query.count > 140 {
+            query = String(query.prefix(140))
+        }
+        return query
     }
 
     func createNewFile() {
@@ -5473,9 +5532,68 @@ final class RepositoryViewModel {
         let count: Int
     }
 
+    private enum ExplainOperationBucket: String, CaseIterable {
+        case added
+        case modified
+        case removed
+        case renamed
+        case other
+
+        var title: String {
+            switch self {
+            case .added: return L10n("explain.operation.added")
+            case .modified: return L10n("explain.operation.modified")
+            case .removed: return L10n("explain.operation.removed")
+            case .renamed: return L10n("explain.operation.renamed")
+            case .other: return L10n("explain.operation.other")
+            }
+        }
+    }
+
+    private struct ExplainBuildBudget {
+        let level: ExplainRenderBudgetLevel
+        let analysisFileLimit: Int
+        let fileNodeLimit: Int
+        let symbolLimit: Int
+        let diffLinesLimit: Int
+        let contextNodeLimit: Int
+        let maxNodeCount: Int
+
+        var signature: String {
+            "\(level.rawValue)-a\(analysisFileLimit)-f\(fileNodeLimit)-s\(symbolLimit)-d\(diffLinesLimit)-c\(contextNodeLimit)-n\(maxNodeCount)"
+        }
+    }
+
     func setExplainScope(_ mode: ExplainScopeMode) {
         explainScopeMode = mode
         loadExplainFlow(commitID: explainSelectedCommitID ?? selectedCommitID, scopeMode: mode)
+    }
+
+    private func explainBundle(_ bundle: ExplainCommitBundle, withDetailSource source: ExplainDetailSource) -> ExplainCommitBundle {
+        let graph = ExplainGraph(
+            commitID: bundle.graph.commitID,
+            scopeMode: bundle.graph.scopeMode,
+            source: bundle.graph.source,
+            renderBudgetLevel: bundle.graph.renderBudgetLevel,
+            detailSource: source,
+            truncated: bundle.graph.truncated,
+            anchorCommitID: bundle.graph.anchorCommitID,
+            contextCommitIDs: bundle.graph.contextCommitIDs,
+            branchBaseCommitID: bundle.graph.branchBaseCommitID,
+            highlightedNodeIDs: bundle.graph.highlightedNodeIDs,
+            nodes: bundle.graph.nodes,
+            edges: bundle.graph.edges,
+            technicalNotes: bundle.graph.technicalNotes,
+            generatedAt: bundle.graph.generatedAt
+        )
+        return ExplainCommitBundle(
+            schemaVersion: bundle.schemaVersion,
+            commitID: bundle.commitID,
+            graph: graph,
+            story: bundle.story,
+            glossary: bundle.glossary,
+            delta: bundle.delta
+        )
     }
 
     func loadExplainFlow(commitID: String?, scopeMode requestedScope: ExplainScopeMode? = nil) {
@@ -5518,24 +5636,26 @@ final class RepositoryViewModel {
 
                 let cacheKey = self.explainCacheKey(repositoryURL: repositoryURL, context: context)
                 if let cached = self.explainMemoryCache[cacheKey] {
-                    self.applyExplainBundle(cached, context: context)
+                    let memoryBundle = self.explainBundle(cached, withDetailSource: .memory)
+                    self.applyExplainBundle(memoryBundle, context: context)
                     let durationMs = Int(Date().timeIntervalSince(explainLoadStartedAt) * 1000.0)
                     self.logger.log(
                         .info,
                         "explain.load.ready",
-                        context: "commit=\(String(commitID.prefix(8))) scope=\(mode.rawValue) source=memory durationMs=\(durationMs) nodes=\(cached.graph.nodes.count) edges=\(cached.graph.edges.count)",
+                        context: "commit=\(String(commitID.prefix(8))) scope=\(mode.rawValue) source=memory durationMs=\(durationMs) budget=\(memoryBundle.graph.renderBudgetLevel.rawValue) truncated=\(memoryBundle.graph.truncated) nodes=\(memoryBundle.graph.nodes.count) edges=\(memoryBundle.graph.edges.count)",
                         source: #function
                     )
                     return
                 }
                 if let diskCached = self.loadExplainBundleFromDisk(repositoryURL: repositoryURL, cacheKey: cacheKey) {
                     self.explainMemoryCache[cacheKey] = diskCached
-                    self.applyExplainBundle(diskCached, context: context)
+                    let diskBundle = self.explainBundle(diskCached, withDetailSource: .disk)
+                    self.applyExplainBundle(diskBundle, context: context)
                     let durationMs = Int(Date().timeIntervalSince(explainLoadStartedAt) * 1000.0)
                     self.logger.log(
                         .info,
                         "explain.load.ready",
-                        context: "commit=\(String(commitID.prefix(8))) scope=\(mode.rawValue) source=disk durationMs=\(durationMs) nodes=\(diskCached.graph.nodes.count) edges=\(diskCached.graph.edges.count)",
+                        context: "commit=\(String(commitID.prefix(8))) scope=\(mode.rawValue) source=disk durationMs=\(durationMs) budget=\(diskBundle.graph.renderBudgetLevel.rawValue) truncated=\(diskBundle.graph.truncated) nodes=\(diskBundle.graph.nodes.count) edges=\(diskBundle.graph.edges.count)",
                         source: #function
                     )
                     return
@@ -5551,7 +5671,7 @@ final class RepositoryViewModel {
                 self.logger.log(
                     .info,
                     "explain.load.ready",
-                    context: "commit=\(String(commitID.prefix(8))) scope=\(mode.rawValue) source=fresh durationMs=\(durationMs) nodes=\(bundle.graph.nodes.count) edges=\(bundle.graph.edges.count)",
+                    context: "commit=\(String(commitID.prefix(8))) scope=\(mode.rawValue) source=fresh durationMs=\(durationMs) budget=\(bundle.graph.renderBudgetLevel.rawValue) truncated=\(bundle.graph.truncated) nodes=\(bundle.graph.nodes.count) edges=\(bundle.graph.edges.count)",
                     source: #function
                 )
             } catch is CancellationError {
@@ -5638,6 +5758,9 @@ final class RepositoryViewModel {
                     commitID: graph.commitID,
                     scopeMode: graph.scopeMode,
                     source: graph.source,
+                    renderBudgetLevel: graph.renderBudgetLevel,
+                    detailSource: graph.detailSource,
+                    truncated: graph.truncated,
                     anchorCommitID: graph.anchorCommitID,
                     contextCommitIDs: graph.contextCommitIDs,
                     branchBaseCommitID: graph.branchBaseCommitID,
@@ -5680,7 +5803,7 @@ final class RepositoryViewModel {
                 self.logger.log(
                     .info,
                     "explain.ai.ready",
-                    context: "commit=\(String(commitID.prefix(8))) scope=\(graph.scopeMode.rawValue) durationMs=\(durationMs) notes=\(enrichment.technicalNotes.count) terms=\(enrichment.terms.count)",
+                    context: "commit=\(String(commitID.prefix(8))) scope=\(graph.scopeMode.rawValue) durationMs=\(durationMs) budget=\(graph.renderBudgetLevel.rawValue) truncated=\(graph.truncated) notes=\(enrichment.technicalNotes.count) terms=\(enrichment.terms.count)",
                     source: #function
                 )
             } catch is CancellationError {
@@ -5694,7 +5817,7 @@ final class RepositoryViewModel {
                 self.logger.log(
                     .warn,
                     "explain.ai.failed",
-                    context: "commit=\(String(commitID.prefix(8))) scope=\(graph.scopeMode.rawValue) durationMs=\(durationMs) error=\(error.localizedDescription)",
+                    context: "commit=\(String(commitID.prefix(8))) scope=\(graph.scopeMode.rawValue) durationMs=\(durationMs) budget=\(graph.renderBudgetLevel.rawValue) truncated=\(graph.truncated) error=\(error.localizedDescription)",
                     source: #function
                 )
             }
@@ -5921,6 +6044,11 @@ final class RepositoryViewModel {
             repositoryURL: repositoryURL
         )
         let anchorChanges = changeSets.filter { $0.commitID == anchorCommitID }
+        let budget = explainBuildBudget(
+            anchorChangeCount: anchorChanges.count,
+            contextCommitCount: context.commitIDs.count
+        )
+        var wasTruncated = false
 
         var allKindFiles: [ExplainNodeKind: Set<String>] = [:]
         var anchorKindFiles: [ExplainNodeKind: Set<String>] = [:]
@@ -5930,8 +6058,10 @@ final class RepositoryViewModel {
         var anchorStatusByFile: [String: String] = [:]
         var anchorFileChangeScore: [String: Int] = [:]
 
-        let explainAnalysisFileLimit = 10
-        for change in anchorChanges.prefix(explainAnalysisFileLimit) {
+        if anchorChanges.count > budget.analysisFileLimit {
+            wasTruncated = true
+        }
+        for change in anchorChanges.prefix(budget.analysisFileLimit) {
             let diff = try await loadCommitDiffForExplain(
                 commitID: anchorCommitID,
                 file: change.path,
@@ -5980,6 +6110,33 @@ final class RepositoryViewModel {
             )
         )
 
+        var contextCommitNodeIDs: [String] = []
+        if context.commitIDs.count > 1 {
+            let anchorIndex = context.commitIDs.firstIndex(of: anchorCommitID) ?? 0
+            let lower = max(0, anchorIndex - 2)
+            let upper = min(context.commitIDs.count - 1, anchorIndex + 2)
+            let nearby = context.commitIDs[lower...upper]
+                .filter { $0 != anchorCommitID && $0 != context.branchBaseCommitID }
+            if nearby.count > budget.contextNodeLimit {
+                wasTruncated = true
+            }
+            for (index, commit) in nearby.prefix(budget.contextNodeLimit).enumerated() {
+                let contextID = "commit.ctx.\(index)"
+                contextCommitNodeIDs.append(contextID)
+                nodes.append(
+                    ExplainNode(
+                        id: contextID,
+                        title: L10n("explain.node.contextCommit", String(commit.prefix(8))),
+                        subtitle: L10n("explain.node.contextStep", "\(index + 1)", "\(min(budget.contextNodeLimit, nearby.count))"),
+                        kind: .commit,
+                        touched: false,
+                        inferred: true,
+                        evidence: []
+                    )
+                )
+            }
+        }
+
         let orderedKinds: [ExplainNodeKind] = [.ui, .service, .data, .external, .infrastructure, .other]
         for kind in orderedKinds {
             guard let files = allKindFiles[kind], !files.isEmpty else { continue }
@@ -6016,6 +6173,17 @@ final class RepositoryViewModel {
             )
         }
 
+        for contextID in contextCommitNodeIDs {
+            edges.append(
+                ExplainEdge(
+                    from: contextID,
+                    to: "commit.anchor",
+                    label: L10n("explain.edge.context.anchor"),
+                    inferred: true
+                )
+            )
+        }
+
         for kind in highlightedKinds {
             edges.append(
                 ExplainEdge(
@@ -6028,14 +6196,32 @@ final class RepositoryViewModel {
         }
 
         var fileNodeIDByPath: [String: String] = [:]
-        let topAnchorFiles = anchorChanges
+        let prioritizedAnchorChanges = anchorChanges.sorted {
+            let leftScore = explainFlowSignalScore(path: $0.path)
+            let rightScore = explainFlowSignalScore(path: $1.path)
+            if leftScore != rightScore { return leftScore > rightScore }
+            return $0.path < $1.path
+        }
+        let signalAnchorChanges: [ExplainChange] = {
+            let filtered = prioritizedAnchorChanges.filter { explainFlowSignalScore(path: $0.path) > 0 }
+            return filtered.isEmpty ? prioritizedAnchorChanges : filtered
+        }()
+        let skippedLowSignalFiles = max(0, prioritizedAnchorChanges.count - signalAnchorChanges.count)
+
+        let topAnchorFiles = Array(signalAnchorChanges
             .sorted {
                 let left = anchorFileChangeScore[$0.path] ?? 0
                 let right = anchorFileChangeScore[$1.path] ?? 0
                 if left != right { return left > right }
+                let leftScore = explainFlowSignalScore(path: $0.path)
+                let rightScore = explainFlowSignalScore(path: $1.path)
+                if leftScore != rightScore { return leftScore > rightScore }
                 return $0.path < $1.path
             }
-            .prefix(8)
+            .prefix(budget.fileNodeLimit))
+        if signalAnchorChanges.count > budget.fileNodeLimit {
+            wasTruncated = true
+        }
 
         for change in topAnchorFiles {
             let path = change.path
@@ -6076,7 +6262,55 @@ final class RepositoryViewModel {
             }
         }
 
-        let hotSymbols = extractHotSymbols(anchorDiffByFile: anchorDiffByFile, limit: 6)
+        var operationNodeCount = 0
+        for bucket in ExplainOperationBucket.allCases {
+            let bucketChanges = topAnchorFiles.filter { explainOperationBucket(forStatus: $0.status) == bucket }
+            guard !bucketChanges.isEmpty else { continue }
+            operationNodeCount += 1
+            let id = "op.\(bucket.rawValue)"
+            let evidence = bucketChanges.prefix(2).compactMap { evidenceByFile[$0.path] }
+            nodes.append(
+                ExplainNode(
+                    id: id,
+                    title: bucket.title,
+                    subtitle: L10n("explain.node.operation.files", "\(bucketChanges.count)"),
+                    kind: .operation,
+                    touched: true,
+                    inferred: false,
+                    evidence: evidence
+                )
+            )
+            highlightedNodeIDs.append(id)
+            edges.append(
+                ExplainEdge(
+                    from: "commit.anchor",
+                    to: id,
+                    label: L10n("explain.edge.commit.operation"),
+                    inferred: false
+                )
+            )
+            for change in bucketChanges {
+                guard let fileID = fileNodeIDByPath[change.path] else { continue }
+                edges.append(
+                    ExplainEdge(
+                        from: id,
+                        to: fileID,
+                        label: L10n("explain.edge.operation.file"),
+                        inferred: false
+                    )
+                )
+            }
+        }
+
+        let hotSymbolsResult = extractHotSymbols(
+            anchorDiffByFile: anchorDiffByFile,
+            limit: budget.symbolLimit,
+            diffLinesLimit: budget.diffLinesLimit
+        )
+        let hotSymbols = hotSymbolsResult.symbols
+        if hotSymbolsResult.truncated {
+            wasTruncated = true
+        }
         for symbol in hotSymbols {
             let id = explainStableNodeID(prefix: "symbol", raw: "\(symbol.filePath)|\(symbol.name)")
             let evidence = evidenceByFile[symbol.filePath].map { [$0] } ?? []
@@ -6102,6 +6336,57 @@ final class RepositoryViewModel {
             )
         }
 
+        nodes.append(
+            ExplainNode(
+                id: "insight.scope",
+                title: L10n("explain.node.scope.summary"),
+                subtitle: L10n("explain.node.scope.summary.subtitle", context.mode.title, "\(context.commitIDs.count)"),
+                kind: .insight,
+                touched: false,
+                inferred: true,
+                evidence: []
+            )
+        )
+        edges.append(
+            ExplainEdge(
+                from: "commit.anchor",
+                to: "insight.scope",
+                label: L10n("explain.edge.commit.scope"),
+                inferred: true
+            )
+        )
+
+        if let hottest = hotSymbols.first {
+            let hotspotID = "insight.hotspot"
+            let sourceID = explainStableNodeID(prefix: "symbol", raw: "\(hottest.filePath)|\(hottest.name)")
+            let evidence = evidenceByFile[hottest.filePath].map { [$0] } ?? []
+            nodes.append(
+                ExplainNode(
+                    id: hotspotID,
+                    title: L10n("explain.node.hotspot"),
+                    subtitle: L10n(
+                        "explain.node.hotspot.subtitle",
+                        hottest.name,
+                        explainShortPath(hottest.filePath, components: 2),
+                        "\(hottest.count)"
+                    ),
+                    kind: .insight,
+                    touched: true,
+                    inferred: true,
+                    evidence: evidence
+                )
+            )
+            highlightedNodeIDs.append(hotspotID)
+            edges.append(
+                ExplainEdge(
+                    from: nodes.contains(where: { $0.id == sourceID }) ? sourceID : "commit.anchor",
+                    to: hotspotID,
+                    label: L10n("explain.edge.symbol.hotspot"),
+                    inferred: true
+                )
+            )
+        }
+
         let hasUI = allKindFiles[.ui]?.isEmpty == false
         let hasService = allKindFiles[.service]?.isEmpty == false
         let hasData = allKindFiles[.data]?.isEmpty == false
@@ -6121,28 +6406,48 @@ final class RepositoryViewModel {
             edges.append(ExplainEdge(from: "kind.infrastructure", to: "kind.service", label: L10n("explain.edge.infrastructure.service"), inferred: true))
         }
 
-        let notes = [
+        var notes = [
             L10n("explain.note.scope", context.mode.title),
+            L10n("explain.note.budget", budget.level.title),
             L10n("explain.note.filesChanged", "\(anchorChanges.count)"),
             L10n("explain.note.filesDetailed", "\(fileNodeIDByPath.count)"),
+            L10n("explain.note.operations", "\(operationNodeCount)"),
             L10n("explain.note.kindsInvolved", "\(nodes.filter { $0.id.hasPrefix("kind.") }.count)"),
             L10n("explain.note.symbolsDetected", "\(hotSymbols.count)"),
             L10n("explain.note.contextCommits", "\(context.commitIDs.count)"),
             L10n("explain.note.inference")
         ]
+        if skippedLowSignalFiles > 0 {
+            notes.append(L10n("explain.note.lowSignalSkipped", "\(skippedLowSignalFiles)"))
+        }
         var highlightedSeen: Set<String> = []
         highlightedNodeIDs = highlightedNodeIDs.filter { highlightedSeen.insert($0).inserted }
+        let trimmedGraph = trimExplainGraph(
+            nodes: nodes,
+            edges: edges,
+            highlightedNodeIDs: highlightedNodeIDs,
+            maxNodeCount: budget.maxNodeCount
+        )
+        if trimmedGraph.wasTruncated {
+            wasTruncated = true
+        }
+        if wasTruncated {
+            notes.append(L10n("explain.note.truncated"))
+        }
 
         let graph = ExplainGraph(
             commitID: anchorCommitID,
             scopeMode: context.mode,
             source: context.source,
+            renderBudgetLevel: budget.level,
+            detailSource: .fresh,
+            truncated: wasTruncated,
             anchorCommitID: anchorCommitID,
             contextCommitIDs: context.commitIDs,
             branchBaseCommitID: context.branchBaseCommitID,
-            highlightedNodeIDs: highlightedNodeIDs,
-            nodes: nodes,
-            edges: edges,
+            highlightedNodeIDs: trimmedGraph.highlightedNodeIDs,
+            nodes: trimmedGraph.nodes,
+            edges: trimmedGraph.edges,
             technicalNotes: notes,
             generatedAt: Date()
         )
@@ -6255,6 +6560,58 @@ final class RepositoryViewModel {
             || lower.contains("request(")
     }
 
+    private func explainOperationBucket(forStatus status: String) -> ExplainOperationBucket {
+        let normalized = status.uppercased()
+        if normalized.hasPrefix("A") { return .added }
+        if normalized.hasPrefix("M") { return .modified }
+        if normalized.hasPrefix("D") { return .removed }
+        if normalized.hasPrefix("R") { return .renamed }
+        return .other
+    }
+
+    private func explainFlowSignalScore(path: String) -> Int {
+        let lower = path.lowercased()
+        let filename = URL(fileURLWithPath: path).lastPathComponent.lowercased()
+        let ext = URL(fileURLWithPath: path).pathExtension.lowercased()
+
+        if filename.contains("changelog")
+            || filename == "readme.md"
+            || filename == "readme"
+            || filename == "license"
+            || filename == "license.md"
+            || lower.contains("/docs/")
+            || lower.contains("/documentation/")
+            || lower.contains("/.changeset/")
+            || lower.hasSuffix(".md")
+            || lower.hasSuffix(".rst")
+            || lower.hasSuffix(".adoc")
+            || lower.hasSuffix(".txt")
+            || filename.hasSuffix(".lock")
+            || filename == "package-lock.json"
+            || filename == "yarn.lock"
+            || filename == "pnpm-lock.yaml"
+            || filename == "podfile.lock" {
+            return 0
+        }
+
+        if lower.contains("/views/")
+            || lower.contains("/viewmodels/")
+            || lower.contains("/models/")
+            || lower.contains("/services/")
+            || lower.contains("/controllers/")
+            || lower.contains("/components/") {
+            return 5
+        }
+
+        if ["swift", "m", "mm", "h", "c", "cpp", "cc", "hpp", "ts", "tsx", "js", "jsx", "py", "go", "rs", "java", "kt", "rb", "php", "cs", "sql"].contains(ext) {
+            return 5
+        }
+        if ["json", "yaml", "yml", "xml", "toml", "plist", "ini", "cfg"].contains(ext) {
+            return 2
+        }
+        return 3
+    }
+
     private func explainStableNodeID(prefix: String, raw: String) -> String {
         let hash = SHA256.hash(data: Data(raw.utf8))
             .map { String(format: "%02x", $0) }
@@ -6283,12 +6640,82 @@ final class RepositoryViewModel {
         return max(1, count)
     }
 
-    private func extractHotSymbols(anchorDiffByFile: [String: String], limit: Int) -> [ExplainHotSymbol] {
+    private func explainBuildBudget(anchorChangeCount: Int, contextCommitCount: Int) -> ExplainBuildBudget {
+        if anchorChangeCount > 28 || contextCommitCount > 60 {
+            return ExplainBuildBudget(
+                level: .low,
+                analysisFileLimit: 6,
+                fileNodeLimit: 5,
+                symbolLimit: 3,
+                diffLinesLimit: 80,
+                contextNodeLimit: 2,
+                maxNodeCount: 26
+            )
+        }
+        if anchorChangeCount > 12 || contextCommitCount > 20 {
+            return ExplainBuildBudget(
+                level: .medium,
+                analysisFileLimit: 9,
+                fileNodeLimit: 7,
+                symbolLimit: 5,
+                diffLinesLimit: 120,
+                contextNodeLimit: 3,
+                maxNodeCount: 34
+            )
+        }
+        return ExplainBuildBudget(
+            level: .high,
+            analysisFileLimit: 12,
+            fileNodeLimit: 10,
+            symbolLimit: 8,
+            diffLinesLimit: 180,
+            contextNodeLimit: 4,
+            maxNodeCount: 46
+        )
+    }
+
+    private func trimExplainGraph(
+        nodes: [ExplainNode],
+        edges: [ExplainEdge],
+        highlightedNodeIDs: [String],
+        maxNodeCount: Int
+    ) -> (nodes: [ExplainNode], edges: [ExplainEdge], highlightedNodeIDs: [String], wasTruncated: Bool) {
+        guard nodes.count > maxNodeCount else {
+            return (nodes, edges, highlightedNodeIDs, false)
+        }
+
+        var keepIDs: Set<String> = []
+        let commitIDs = nodes.filter { $0.kind == .commit }.map(\.id)
+        let kindIDs = nodes.filter { $0.id.hasPrefix("kind.") }.map(\.id)
+        commitIDs.forEach { keepIDs.insert($0) }
+        kindIDs.forEach { keepIDs.insert($0) }
+
+        for node in nodes where node.kind == .file && keepIDs.count < maxNodeCount {
+            keepIDs.insert(node.id)
+        }
+        for node in nodes where node.kind == .symbol && keepIDs.count < maxNodeCount {
+            keepIDs.insert(node.id)
+        }
+        for node in nodes where keepIDs.count < maxNodeCount {
+            keepIDs.insert(node.id)
+        }
+
+        let keptNodes = nodes.filter { keepIDs.contains($0.id) }
+        let keptEdges = edges.filter { keepIDs.contains($0.from) && keepIDs.contains($0.to) }
+        let keptHighlights = highlightedNodeIDs.filter { keepIDs.contains($0) }
+        return (keptNodes, keptEdges, keptHighlights, true)
+    }
+
+    private func extractHotSymbols(
+        anchorDiffByFile: [String: String],
+        limit: Int,
+        diffLinesLimit: Int
+    ) -> (symbols: [ExplainHotSymbol], truncated: Bool) {
         var symbolHits: [String: Int] = [:]
         var symbolFileHits: [String: [String: Int]] = [:]
 
         for (filePath, diff) in anchorDiffByFile {
-            let symbols = extractSymbols(from: diff)
+            let symbols = extractSymbols(from: diff, diffLinesLimit: diffLinesLimit)
             for symbol in symbols {
                 symbolHits[symbol, default: 0] += 1
                 var files = symbolFileHits[symbol] ?? [:]
@@ -6297,11 +6724,12 @@ final class RepositoryViewModel {
             }
         }
 
-        return symbolHits
+        let sorted = symbolHits
             .sorted {
                 if $0.value != $1.value { return $0.value > $1.value }
                 return $0.key < $1.key
             }
+        let selected: [ExplainHotSymbol] = sorted
             .prefix(limit)
             .compactMap { entry in
                 let files = symbolFileHits[entry.key] ?? [:]
@@ -6309,9 +6737,10 @@ final class RepositoryViewModel {
                 guard !filePath.isEmpty else { return nil }
                 return ExplainHotSymbol(name: entry.key, filePath: filePath, count: entry.value)
             }
+        return (selected, sorted.count > limit)
     }
 
-    private func extractSymbols(from diff: String) -> [String] {
+    private func extractSymbols(from diff: String, diffLinesLimit: Int) -> [String] {
         let lines = diff.split(separator: "\n", omittingEmptySubsequences: true)
         var symbols: [String] = []
         let excluded: Set<String> = [
@@ -6329,7 +6758,7 @@ final class RepositoryViewModel {
         var analyzedLineCount = 0
 
         for rawLine in lines {
-            if analyzedLineCount >= 120 { break }
+            if analyzedLineCount >= diffLinesLimit { break }
             guard (rawLine.hasPrefix("+") || rawLine.hasPrefix("-")),
                   !rawLine.hasPrefix("+++"),
                   !rawLine.hasPrefix("---") else { continue }
@@ -6364,8 +6793,10 @@ final class RepositoryViewModel {
 
     private func buildLocalGlossary(nodes: [ExplainNode]) -> [ExplainGlossaryTerm] {
         var terms: [ExplainGlossaryTerm] = []
+        var seenTermIDs: Set<String> = []
         for node in nodes where node.kind != .commit && node.kind != .file && node.kind != .symbol {
             let termID = node.kind.rawValue
+            guard seenTermIDs.insert(termID).inserted else { continue }
             let definition = defaultDefinition(for: node.kind)
             terms.append(
                 ExplainGlossaryTerm(
@@ -6384,6 +6815,8 @@ final class RepositoryViewModel {
         case .commit: return L10n("explain.term.commit.definition")
         case .file: return L10n("explain.term.file.definition")
         case .symbol: return L10n("explain.term.symbol.definition")
+        case .operation: return L10n("explain.term.operation.definition")
+        case .insight: return L10n("explain.term.insight.definition")
         case .ui: return L10n("explain.term.ui.definition")
         case .service: return L10n("explain.term.service.definition")
         case .data: return L10n("explain.term.data.definition")
@@ -6400,13 +6833,73 @@ final class RepositoryViewModel {
         diffStat: String,
         delta: ExplainDelta
     ) -> ExplainStory {
-        let terms = glossary.prefix(3).map { "[\($0.term)](zion-glossary://\($0.id))" }
-        let termsSentence = terms.isEmpty ? L10n("explain.story.noTerms") : terms.joined(separator: ", ")
-        let deltaLine = delta.impactNotes.first ?? L10n("explain.delta.none")
+        let touchedLayers = graph.nodes
+            .filter { $0.id.hasPrefix("kind.") && $0.touched }
+            .prefix(4)
+        let layerSummary = touchedLayers.isEmpty
+            ? L10n("explain.story.flow.none")
+            : touchedLayers.map { "[\($0.title)](zion-glossary://\($0.kind.rawValue))" }.joined(separator: ", ")
+
+        let topFiles = graph.nodes
+            .filter { $0.kind == .file }
+            .prefix(5)
+            .map { storyFilePath(fromFileNodeSubtitle: $0.subtitle) }
+        let fileSummary = topFiles.isEmpty
+            ? L10n("explain.story.files.none")
+            : topFiles.map { "`\($0)`" }.joined(separator: ", ")
+
+        let hotSymbols = graph.nodes
+            .filter { $0.kind == .symbol }
+            .prefix(4)
+            .map(\.title)
+        let symbolSummary = hotSymbols.isEmpty
+            ? L10n("explain.story.symbols.none")
+            : hotSymbols.map { "`\($0)`" }.joined(separator: ", ")
+
+        let statLine = diffStat
+            .split(separator: "\n")
+            .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+            .first(where: { !$0.isEmpty }) ?? L10n("explain.story.statUnavailable")
+
+        let totalChanged = delta.addedPaths.count + delta.changedPaths.count + delta.removedPaths.count
+        let operationSummary = L10n(
+            "explain.story.operation.breakdown",
+            "\(delta.addedPaths.count)",
+            "\(delta.changedPaths.count)",
+            "\(delta.removedPaths.count)"
+        )
+        let contextSummary: String
+        if let base = graph.branchBaseCommitID {
+            contextSummary = L10n(
+                "explain.story.context.base",
+                String(base.prefix(8)),
+                "\(graph.contextCommitIDs.count)"
+            )
+        } else if graph.contextCommitIDs.count > 1 {
+            contextSummary = L10n("explain.story.context.window", "\(graph.contextCommitIDs.count)")
+        } else {
+            contextSummary = L10n("explain.story.context.single")
+        }
+        let checks = delta.riskNotes.isEmpty ? [L10n("explain.story.verify.none")] : Array(delta.riskNotes.prefix(3))
+        let checkList = checks.map { "- \($0)" }.joined(separator: "\n")
         let markdown = """
+        ### \(L10n("explain.story.section.summary"))
         \(L10n("explain.story.commitPrefix")) **\(commitSubject)**.
 
-        \(L10n("explain.story.flowPrefix")) \(termsSentence). \(L10n("explain.story.deltaPrefix")) \(deltaLine). \(L10n("explain.story.statPrefix")) \(diffStat.split(separator: "\n").first.map(String.init) ?? L10n("explain.story.statUnavailable"))
+        \(L10n("explain.story.summary.files", "\(totalChanged)", "\(delta.addedPaths.count)", "\(delta.changedPaths.count)", "\(delta.removedPaths.count)"))
+        \(L10n("explain.story.summary.layers", layerSummary))
+        \(L10n("explain.story.summary.stats", statLine))
+
+        ### \(L10n("explain.story.section.flow"))
+        1. \(L10n("explain.story.flow.operations", operationSummary))
+        2. \(L10n("explain.story.flow.files", fileSummary))
+        3. \(L10n("explain.story.flow.symbols", symbolSummary))
+
+        ### \(L10n("explain.story.section.context"))
+        \(contextSummary)
+
+        ### \(L10n("explain.story.section.verify"))
+        \(checkList)
         """
         return ExplainStory(
             title: L10n("explain.story.title"),
@@ -6414,6 +6907,14 @@ final class RepositoryViewModel {
             generatedByAI: false,
             generatedAt: Date()
         )
+    }
+
+    private func storyFilePath(fromFileNodeSubtitle subtitle: String) -> String {
+        guard let separator = subtitle.range(of: "·") else {
+            return subtitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return subtitle[separator.upperBound...]
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func mergeGlossary(
@@ -6476,6 +6977,9 @@ final class RepositoryViewModel {
             .joined(separator: "\n")
         return """
         Scope: \(graph.scopeMode.rawValue)
+        Budget: \(graph.renderBudgetLevel.rawValue)
+        Detail source: \(graph.detailSource.rawValue)
+        Truncated: \(graph.truncated)
         Anchor: \(graph.anchorCommitID)
         Context commits: \(graph.contextCommitIDs.count)
         Branch base: \(graph.branchBaseCommitID ?? "N/A")
@@ -6541,7 +7045,7 @@ final class RepositoryViewModel {
         let first = context.commitIDs.first ?? "-"
         let last = context.commitIDs.last ?? "-"
         let base = context.branchBaseCommitID ?? "-"
-        return "\(repositoryURL.path)#\(context.anchorCommitID)#\(context.mode.rawValue)#\(first)#\(last)#\(context.commitIDs.count)#\(base)"
+        return "\(repositoryURL.path)#v\(explainSchemaVersion)#\(context.anchorCommitID)#\(context.mode.rawValue)#\(first)#\(last)#\(context.commitIDs.count)#\(base)"
     }
 
     private func explainCacheDirectory(repositoryURL: URL) -> URL? {
