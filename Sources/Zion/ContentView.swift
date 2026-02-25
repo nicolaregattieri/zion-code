@@ -502,7 +502,7 @@ struct ContentView: View {
             Button(L10n("push.pullFirst")) { model.pull() }
             Button(L10n("Cancelar"), role: .cancel) {}
         case .diverged:
-            Button(L10n("push.pullFirst")) { model.pull() }
+            Button(L10n("Rebase")) { model.pullRebase() }
             Button(L10n("push.forceWithLease")) { model.forceWithLeasePush() }
             Button(L10n("Cancelar"), role: .cancel) {}
         case .clear:

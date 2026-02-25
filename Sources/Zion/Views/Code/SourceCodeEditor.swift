@@ -64,6 +64,14 @@ struct SourceCodeEditor: NSViewRepresentable {
         textView.isSelectable = true
         textView.isRichText = false
         textView.allowsUndo = true
+        // Keep code input deterministic regardless of macOS substitution settings.
+        textView.isAutomaticQuoteSubstitutionEnabled = false
+        textView.isAutomaticDashSubstitutionEnabled = false
+        textView.isAutomaticTextReplacementEnabled = false
+        textView.isAutomaticSpellingCorrectionEnabled = false
+        textView.isContinuousSpellCheckingEnabled = false
+        textView.isGrammarCheckingEnabled = false
+        textView.smartInsertDeleteEnabled = false
         textView.font = MonospaceFontResolver.resolve(name: fontFamily, size: fontSize).font
         textView.usesAdaptiveColorMappingForDarkAppearance = false
 
@@ -177,6 +185,15 @@ struct SourceCodeEditor: NSViewRepresentable {
             ? NSColor.black.withAlphaComponent(0.06)
             : NSColor.white.withAlphaComponent(0.04)
         textView.isLightTheme = theme.isLightAppearance
+
+        // Enforce code-editor semantics if app-level substitutions are toggled at runtime.
+        textView.isAutomaticQuoteSubstitutionEnabled = false
+        textView.isAutomaticDashSubstitutionEnabled = false
+        textView.isAutomaticTextReplacementEnabled = false
+        textView.isAutomaticSpellingCorrectionEnabled = false
+        textView.isContinuousSpellCheckingEnabled = false
+        textView.isGrammarCheckingEnabled = false
+        textView.smartInsertDeleteEnabled = false
 
         if let ruler = nsView.verticalRulerView as? LineNumberRulerView {
             ruler.theme = theme
