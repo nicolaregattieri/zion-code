@@ -544,6 +544,7 @@ final class RepositoryViewModel {
     @ObservationIgnored private var refreshTask: Task<Void, Never>?
     @ObservationIgnored private var detailsTask: Task<Void, Never>?
     @ObservationIgnored private var actionTask: Task<Void, Never>?
+    @ObservationIgnored private var pushPreflightTask: Task<Void, Never>?
     @ObservationIgnored private var autoRefreshTask: Task<Void, Never>?
     @ObservationIgnored private var deferredRepositoryLoadTask: Task<Void, Never>?
     @ObservationIgnored private var repositorySwitchToken = UUID()
@@ -1708,18 +1709,39 @@ final class RepositoryViewModel {
 
     func fetch() { runGitAction(label: "Fetch", args: ["fetch", "--all", "--prune"]) }
     func pull() { runGitAction(label: "Pull", args: ["pull", "--ff-only"]) }
+    func pullRebase() { runGitAction(label: "Pull (rebase)", args: ["pull", "--rebase"]) }
     func requestPush() {
-        let behind = behindRemoteCount
-        let ahead = aheadRemoteCount
-        if behind > 0 && ahead > 0 {
-            pushDivergenceState = .diverged(ahead: ahead, behind: behind)
-            showPushDivergenceWarning = true
-        } else if behind > 0 {
-            pushDivergenceState = .behind(behind)
-            showPushDivergenceWarning = true
-        } else {
-            pushDivergenceState = .clear
+        guard let repositoryURL else {
             push()
+            return
+        }
+
+        pushPreflightTask?.cancel()
+        isBusy = true
+        pushPreflightTask = Task {
+            do {
+                try await refreshPushDivergence(in: repositoryURL)
+                try Task.checkCancellation()
+                isBusy = false
+
+                let behind = behindRemoteCount
+                let ahead = aheadRemoteCount
+                if behind > 0 && ahead > 0 {
+                    pushDivergenceState = .diverged(ahead: ahead, behind: behind)
+                    showPushDivergenceWarning = true
+                } else if behind > 0 {
+                    pushDivergenceState = .behind(behind)
+                    showPushDivergenceWarning = true
+                } else {
+                    pushDivergenceState = .clear
+                    push()
+                }
+            } catch is CancellationError {
+                isBusy = false
+            } catch {
+                isBusy = false
+                handleError(error)
+            }
         }
     }
 
@@ -5872,10 +5894,50 @@ final class RepositoryViewModel {
                 return
             }
 
+            if isNoUpstreamConfigured(error) {
+                behindRemoteCount = 0
+                aheadRemoteCount = 0
+                lastNotifiedBehindCount = 0
+                return
+            }
+
             logger.log(.info, "Behind remote check failed (expected if no upstream): \(error.localizedDescription)", source: #function)
             behindRemoteCount = 0
             aheadRemoteCount = 0
             lastNotifiedBehindCount = 0
+        }
+    }
+
+    private func refreshPushDivergence(in repositoryURL: URL) async throws {
+        let fetchArgs = ["fetch", "--all", "--prune"]
+        let fetchSummary = redactedGitCommandSummary(args: fetchArgs)
+        logger.log(.git, fetchSummary, context: "Push preflight")
+        _ = try await runActionWithCredentialRetry(
+            label: "Fetch",
+            args: fetchArgs,
+            in: repositoryURL,
+            commandSummary: fetchSummary
+        )
+
+        do {
+            let behindOutput = try await worker.runAction(
+                args: ["rev-list", "--count", "HEAD..@{upstream}"],
+                in: repositoryURL
+            )
+            behindRemoteCount = Int(behindOutput.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
+
+            let aheadOutput = try await worker.runAction(
+                args: ["rev-list", "--count", "@{upstream}..HEAD"],
+                in: repositoryURL
+            )
+            aheadRemoteCount = Int(aheadOutput.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
+        } catch {
+            if isNoUpstreamConfigured(error) {
+                behindRemoteCount = 0
+                aheadRemoteCount = 0
+                return
+            }
+            throw error
         }
     }
 
@@ -5893,6 +5955,13 @@ final class RepositoryViewModel {
             || lower.contains("keychain")
             || lower.contains("git-credential-osxkeychain")
             || lower.contains("dev.azure.com")
+    }
+
+    private func isNoUpstreamConfigured(_ error: Error) -> Bool {
+        guard case let GitClientError.commandFailed(_, message) = error else {
+            return false
+        }
+        return message.lowercased().contains("no upstream configured")
     }
 
     private func checkPRReviewRequests() async {
