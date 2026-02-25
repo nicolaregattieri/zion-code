@@ -273,6 +273,17 @@ struct DesignSystem {
             number: (r: 0.820, g: 0.604, b: 0.400)        // #d19a66 orange
         )
 
+        // SynthWave '84 — neon synthwave / cyberpunk
+        static let synthwave = ThemeColors(
+            background: (r: 0.149, g: 0.137, b: 0.208),   // #262335
+            text: (r: 1.0, g: 1.0, b: 1.0),               // #ffffff
+            keyword: (r: 0.996, g: 0.871, b: 0.365),      // #fede5d gold
+            type: (r: 0.212, g: 0.976, b: 0.965),         // #36f9f6 cyan
+            string: (r: 1.0, g: 0.545, b: 0.224),         // #ff8b39 orange
+            comment: (r: 0.518, g: 0.545, b: 0.741),      // #848bbd gray-purple
+            number: (r: 0.976, g: 0.494, b: 0.447)        // #f97e72 salmon
+        )
+
         // Tokyo Night — indigo dark, "screenshot theme"
         static let tokyoNight = ThemeColors(
             background: (r: 0.102, g: 0.106, b: 0.149),   // #1a1b26
@@ -408,6 +419,47 @@ struct DesignSystem {
             backgroundSwiftUI: swHex(0x1a1b26),
             accentSwiftUI: swHex(0x9ece6a)
         )
+
+        static let synthwave = TerminalPalette(
+            foreground: nsHex(0xffffff),
+            background: nsHex(0x262335),
+            cursorColor: nsHex(0xff7edb),
+            cursorTextColor: nsHex(0x262335),
+            selectionBackground: nsHex(0x463465),
+            selectionForeground: nsHex(0xffffff),
+            ansiColors: [
+                stColor(0x262335), stColor(0xfe4450), stColor(0x72f1b8), stColor(0xfede5d),
+                stColor(0x36f9f6), stColor(0xff7edb), stColor(0x36f9f6), stColor(0xffffff),
+                stColor(0x848bbd), stColor(0xfe4450), stColor(0x72f1b8), stColor(0xfede5d),
+                stColor(0x36f9f6), stColor(0xff7edb), stColor(0x36f9f6), stColor(0xffffff),
+            ],
+            backgroundSwiftUI: swHex(0x262335),
+            accentSwiftUI: swHex(0x72f1b8)
+        )
+    }
+
+    struct ZionMode {
+        static let neonCyan = SwiftUI.Color(red: 0.212, green: 0.976, blue: 0.965)       // #36f9f6
+        static let neonMagenta = SwiftUI.Color(red: 1.0, green: 0.494, blue: 0.859)      // #ff7edb
+        static let neonGold = SwiftUI.Color(red: 0.996, green: 0.871, blue: 0.365)       // #fede5d
+        static let neonOrange = SwiftUI.Color(red: 1.0, green: 0.545, blue: 0.224)       // #ff8b39
+        static let neonBase = SwiftUI.Color(red: 0.149, green: 0.137, blue: 0.208)       // #262335
+        static let neonBaseDark = SwiftUI.Color(red: 0.071, green: 0.059, blue: 0.114)   // #120f1d
+        static let glowBorder = neonMagenta.opacity(0.14)
+        static let glowShadow = neonMagenta.opacity(0.08)
+    }
+}
+
+// MARK: - Zion Mode Environment Key
+
+private struct ZionModeKey: EnvironmentKey {
+    static let defaultValue: Bool = false
+}
+
+extension EnvironmentValues {
+    var zionModeEnabled: Bool {
+        get { self[ZionModeKey.self] }
+        set { self[ZionModeKey.self] = newValue }
     }
 }
 
