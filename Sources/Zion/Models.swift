@@ -538,7 +538,7 @@ struct FileHistoryEntry: Identifiable {
 }
 
 enum EditorTheme: String, CaseIterable, Identifiable {
-    case dracula, cityLights, githubLight, catppuccinMocha, oneDarkPro, tokyoNight
+    case dracula, cityLights, githubLight, catppuccinMocha, oneDarkPro, tokyoNight, synthwave
     var id: String { rawValue }
     var label: String {
         switch self {
@@ -548,6 +548,7 @@ enum EditorTheme: String, CaseIterable, Identifiable {
         case .catppuccinMocha: return "Catppuccin Mocha"
         case .oneDarkPro: return "One Dark Pro"
         case .tokyoNight: return "Tokyo Night"
+        case .synthwave: return "SynthWave '84"
         }
     }
     var isDark: Bool { true } // GOLDEN RULE — always true for ALL themes
@@ -556,7 +557,7 @@ enum EditorTheme: String, CaseIterable, Identifiable {
     var isLightAppearance: Bool {
         switch self {
         case .githubLight: return true
-        case .dracula, .cityLights, .catppuccinMocha, .oneDarkPro, .tokyoNight: return false
+        case .dracula, .cityLights, .catppuccinMocha, .oneDarkPro, .tokyoNight, .synthwave: return false
         }
     }
 }
@@ -616,6 +617,7 @@ extension EditorTheme {
         case .catppuccinMocha: return DesignSystem.EditorThemes.catppuccinMocha
         case .oneDarkPro: return DesignSystem.EditorThemes.oneDarkPro
         case .tokyoNight: return DesignSystem.EditorThemes.tokyoNight
+        case .synthwave: return DesignSystem.EditorThemes.synthwave
         }
     }
 
@@ -627,6 +629,7 @@ extension EditorTheme {
         case .catppuccinMocha: return DesignSystem.TerminalPalettes.catppuccinMocha
         case .oneDarkPro: return DesignSystem.TerminalPalettes.oneDarkPro
         case .tokyoNight: return DesignSystem.TerminalPalettes.tokyoNight
+        case .synthwave: return DesignSystem.TerminalPalettes.synthwave
         }
     }
 }
@@ -666,7 +669,7 @@ enum PushDivergenceState {
 enum FeatureSection: String, CaseIterable, Identifiable {
     case tree, code, terminal, clipboard, operations, worktrees, ai,
          customization, diagnostics, conflicts, settings, diffExplanation,
-         codeReview, prInbox, autoUpdates
+         codeReview, prInbox, autoUpdates, zionMode
     var id: String { rawValue }
 
     var icon: String {
@@ -686,6 +689,7 @@ enum FeatureSection: String, CaseIterable, Identifiable {
         case .codeReview: return "doc.text.magnifyingglass"
         case .prInbox: return "tray.full.fill"
         case .autoUpdates: return "arrow.triangle.2.circlepath"
+        case .zionMode: return "bolt.fill"
         }
     }
 
@@ -706,6 +710,7 @@ enum FeatureSection: String, CaseIterable, Identifiable {
         case .codeReview: return DesignSystem.Colors.codeReview
         case .prInbox: return DesignSystem.Colors.commitSplit
         case .autoUpdates: return DesignSystem.Colors.success
+        case .zionMode: return .purple
         }
     }
 
@@ -726,6 +731,7 @@ enum FeatureSection: String, CaseIterable, Identifiable {
         case .codeReview: return "help.codeReview.title"
         case .prInbox: return "help.prInbox.title"
         case .autoUpdates: return "help.updates.title"
+        case .zionMode: return "help.zionMode.title"
         }
     }
 

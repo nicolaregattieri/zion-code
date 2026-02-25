@@ -7,6 +7,7 @@ extension Notification.Name {
     static let showHelp = Notification.Name("showHelp")
     static let showOnboarding = Notification.Name("showOnboarding")
     static let toggleZenMode = Notification.Name("toggleZenMode")
+    static let toggleZionMode = Notification.Name("toggleZionMode")
 }
 
 @main
@@ -27,6 +28,11 @@ struct ZionApp: App {
                     NotificationCenter.default.post(name: .toggleZenMode, object: nil)
                 }
                 .keyboardShortcut("j", modifiers: [.command, .control])
+
+                Button("Zion Mode") {
+                    NotificationCenter.default.post(name: .toggleZionMode, object: nil)
+                }
+                .keyboardShortcut("z", modifiers: [.command, .control])
             }
 
             CommandGroup(replacing: .help) {

@@ -664,6 +664,17 @@ struct SourceCodeEditor: NSViewRepresentable {
                 number: NSColor(srgbRed: 1.0, green: 0.620, blue: 0.392, alpha: 1.0),
                 call: NSColor(srgbRed: 0.478, green: 0.635, blue: 0.969, alpha: 1.0)
             )
+        case .synthwave:
+            return EditorColors(
+                background: NSColor(srgbRed: 0.149, green: 0.137, blue: 0.208, alpha: 1.0),
+                text: NSColor(srgbRed: 1.0, green: 1.0, blue: 1.0, alpha: 1.0),
+                keyword: NSColor(srgbRed: 0.996, green: 0.871, blue: 0.365, alpha: 1.0),
+                type: NSColor(srgbRed: 0.212, green: 0.976, blue: 0.965, alpha: 1.0),
+                string: NSColor(srgbRed: 1.0, green: 0.545, blue: 0.224, alpha: 1.0),
+                comment: NSColor(srgbRed: 0.518, green: 0.545, blue: 0.741, alpha: 1.0),
+                number: NSColor(srgbRed: 0.976, green: 0.494, blue: 0.447, alpha: 1.0),
+                call: NSColor(srgbRed: 0.447, green: 0.945, blue: 0.722, alpha: 1.0)
+            )
         }
     }
 }
