@@ -213,6 +213,14 @@ struct ZionMapContent {
                 ZionMapEntry("map.updates.auto.title", description: "map.updates.auto.description"),
                 ZionMapEntry("map.updates.delta.title", description: "map.updates.delta.description"),
             ]
+        case .zionMode:
+            return [
+                ZionMapEntry("map.zionMode.toggle.title", description: "map.zionMode.toggle.description",
+                             shortcut: "\u{2303}\u{2318}Z"),
+                ZionMapEntry("map.zionMode.settings.title", description: "map.zionMode.settings.description"),
+                ZionMapEntry("map.zionMode.restore.title", description: "map.zionMode.restore.description"),
+                ZionMapEntry("map.zionMode.theme.title", description: "map.zionMode.theme.description"),
+            ]
         }
     }
 }

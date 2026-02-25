@@ -1428,3 +1428,22 @@
 "graph.commit.review.empty" = "No cached review for this commit yet.";
 "graph.commit.review.loading" = "Reviewing commit changes with AI...";
 "graph.commit.review.nodiff" = "No commit diff available to review.";
+
+"settings.zionMode.subtitle" = "Premium SynthWave '84 theme — a neon cyberpunk experience";
+"zionMode.toggle" = "Zion Mode";
+"zionMode.enter" = "Enter Zion Mode";
+"zionMode.exit" = "Exit Zion Mode";
+"help.zionMode.title" = "Zion Mode";
+"help.zionMode.toggle" = "Toggle from Settings > General or the View menu";
+"help.zionMode.shortcut" = "Quick toggle with ⌃⌘Z from anywhere";
+"help.zionMode.restore" = "Automatically restores your previous theme when disabled";
+"help.zionMode.theme" = "Activates the SynthWave '84 editor and terminal palette";
+"map.zionMode.subtitle" = "Premium neon cyberpunk theme experience";
+"map.zionMode.toggle.title" = "Quick Toggle";
+"map.zionMode.toggle.description" = "Activate or deactivate the SynthWave '84 theme instantly with a keyboard shortcut or menu item.";
+"map.zionMode.settings.title" = "Settings Toggle";
+"map.zionMode.settings.description" = "Enable Zion Mode from Settings > General with a prominent gradient bolt icon and switch.";
+"map.zionMode.restore.title" = "Theme Restore";
+"map.zionMode.restore.description" = "Your previous theme is automatically saved and restored when Zion Mode is disabled.";
+"map.zionMode.theme.title" = "SynthWave '84 Theme";
+"map.zionMode.theme.description" = "Neon cyberpunk palette with purple background, gold keywords, cyan types, orange strings, and pink terminal cursor.";

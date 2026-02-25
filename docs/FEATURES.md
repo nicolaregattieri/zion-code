@@ -41,7 +41,7 @@
 | Multiple Tabs | Open/close files with tab bar | — |
 | Save File | Save current file to disk | `⌘S` |
 | Unsaved Indicator | Visual dot on tabs with unsaved changes | — |
-| Themes | Dracula, City Lights, GitHub Light, Catppuccin Mocha, One Dark Pro, Tokyo Night | — |
+| Themes | Dracula, City Lights, GitHub Light, Catppuccin Mocha, One Dark Pro, Tokyo Night, SynthWave '84 | — |
 | Fonts | SF Mono, Menlo, Monaco, Fira Code, JetBrains Mono | — |
 | Line Spacing | Adjustable 0.8x–3.0x | — |
 | Line Wrapping | Toggle on/off | — |
@@ -148,6 +148,16 @@
 | Commit Message Style | Toggle between compact (single-line) and detailed (header + bullet points) AI-generated messages |
 | Pre-Commit Review Gate | Automatic AI review before committing — shows findings and lets you fix or commit anyway |
 | Provider Config | Anthropic (Claude), OpenAI (GPT), Google (Gemini), API keys in Keychain |
+
+## Zion Mode
+
+| Feature | Description | Shortcut |
+|---------|-------------|----------|
+| Toggle | Activates SynthWave '84 neon cyberpunk theme across editor and terminal | `⌃⌘Z` |
+| Settings Toggle | Available in Settings > General with gradient bolt icon | `⌘,` |
+| Menu Item | Toggle from View > Zion Mode | `⌃⌘Z` |
+| Theme Restore | Previous theme is saved and restored when Zion Mode is disabled | — |
+| Auto-Disable | Picking a different theme in Editor Settings automatically disables Zion Mode | — |
 
 ## Settings Window
 
@@ -298,5 +308,6 @@
 | `⌃F` | Find alias in editor |
 | `⌘G` | Go to Line |
 | `⇧⌘R` | Code Review |
+| `⌃⌘Z` | Toggle Zion Mode |
 | `↑↓` | Navigate commits |
 | `Esc` | Deselect / close |

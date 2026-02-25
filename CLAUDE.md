@@ -1,150 +1,26 @@
-# Zion - Project Context
+# Zion - macOS Git Client
 
-Zion is a native Git client for macOS, focusing on a visual representation of the Git graph, branch management, and streamlined operations like commits, stashing, and worktree management.
+- **Build:** `swift build` / **Release:** `./scripts/make-app.sh` → `dist/Zion.app`
+- **Localization:** 3 locales (pt-BR, en, es) via `L10n()` helper
 
-## Project Overview
+## @Observable (NOT ObservableObject)
+- Owner: `@State private var model` | Bindings: `@Bindable var model` | Read-only: `var model`
+- `@AppStorage` doesn't work — use computed + `UserDefaults` directly
 
-- **Type:** macOS Executable (SwiftUI)
-- **Platform:** macOS 14+ (Sonoma)
-- **Build:** `swift build` / `swift run` / `swift test`
-- **Release:** `./scripts/make-app.sh` generates `Zion.app` in `dist/`
-- **Architecture:** MVVM with `@Observable` (Swift Observation framework) — `RepositoryViewModel` is the central state hub
-- **Concurrency:** Swift Concurrency (Actors, Tasks). `RepositoryWorker` handles background Git ops
-- **Git Integration:** Direct Git CLI interface through `GitClient`
-- **Localization:** Portuguese (BR), English, Spanish via `.lproj` files and `L10n()` helper
+## Critical Traps
 
-## Key Filesas dfasdfasd
+### isDark GOLDEN RULE
+`EditorTheme.isDark` must ALWAYS return `true` for ALL themes including light ones.
+Use `isLightAppearance` for SwiftUI styling. Never apply `.environment(\.colorScheme)` to SourceCodeEditor.
 
-| File | Purpose |
-|------|---------|
-| `Sources/Zion/ContentView.swift` | Main app layout, navigation, toolbar |
-| `Sources/Zion/Models.swift` | `EditorTheme`, `ThemeColors`, enums |
-| `Sources/Zion/DesignSystem.swift` | Design tokens: glass borders, spacing, colors |
-| `Sources/Zion/RepositoryViewModel.swift` | Central app state and git operations |
-| `Sources/Zion/Views/Code/SourceCodeEditor.swift` | NSTextView wrapper with syntax highlighting |
-| `Sources/Zion/Views/Code/CodeScreen.swift` | Editor UI: toolbar, file browser, terminal |
-| `Sources/Zion/Views/Components/GlassCard.swift` | `GlassCard` + `CardHeader` reusable components |
-| `Sources/Zion/Views/Components/CommitDetailContent.swift` | Structured commit details parser/view |
-| `Sources/Zion/Views/Components/CommitRowView.swift` | Commit row with hover states |
-| `Sources/Zion/Views/Components/ZionMapContent.swift` | Zion Map data model (detail entries per section) |
-| `Sources/Zion/Views/Components/ZionMapDetailPage.swift` | Zion Map detail page (feature documentation) |
-
-## Custom Skills
-
-| Skill | Usage | Purpose |
-|-------|-------|---------|
-| `/ux-review` | `/ux-review [paste screenshots or describe screen]` | UX/UI expert analysis with actionable SwiftUI code suggestions |
-| `/hype-analyst` | `/hype-analyst [describe what to analyze or compare]` | Product hype analysis: feature audit, competitive positioning, launch strategy |
-| `/regression-check` | `/regression-check [after any change]` | Verify 6 critical paths: terminal, graph, themes, staging, clipboard, @Observable |
-| `/perf-audit` | `/perf-audit [area or concern]` | Profile hot paths: commit list, file tree, diff parsing, search, highlighting |
-| `/l10n-check` | `/l10n-check` | Scan for hardcoded strings missing L10n() and missing translation keys |
-| `/competitor-watch` | `/competitor-watch Fork` | Compare Zion vs a competitor — gaps, opportunities, threats |
-| `/launch-checklist` | `/launch-checklist` | Go/no-go audit: signing, notarization, stability, UX, marketing, legal |
-| `/accessibility-audit` | `/accessibility-audit` | VoiceOver labels, keyboard nav, color contrast, dynamic type check |
-| `/documenter` | `/documenter` or `/documenter audit-only` | Audit & sync all doc surfaces: FEATURES.md, HelpSheet, ZionMap, shortcuts, L10n keys |
-
-## @Observable Patterns (CRITICAL)
-
-The codebase uses Swift's `@Observable` macro (NOT legacy `ObservableObject`). Follow these rules:
-
-### View Property Wrappers
-
-| Pattern | When to use |
-|---------|-------------|
-| `@State private var model = RepositoryViewModel()` | Owning view (ContentView) — replaces `@StateObject` |
-| `@Bindable var model: RepositoryViewModel` | Child views that need `$model.property` bindings (TextField, Picker, Toggle, etc.) |
-| `var model: RepositoryViewModel` | Child views that only read properties (no bindings) |
-| `var session: TerminalSession` | Any child view referencing `@Observable` classes |
-
-**Key rule:** If a view uses `$model.someProperty`, the property must be `@Bindable`. If it only reads `model.someProperty`, use plain `var`. Using `@ObservedObject` or `@StateObject` is WRONG with `@Observable`.
-
-### RepositoryViewModel Conventions
-
-- Marked `@Observable @MainActor`
-- Use `@ObservationIgnored` on private implementation properties (git client, worker, tasks, file watchers) to avoid tracking overhead
-- `@AppStorage` does NOT work in `@Observable` — use computed properties with direct `UserDefaults` access instead
-- Performance caches use `didSet` for invalidation (e.g., `commits { didSet { recalculateMaxLaneCount() } }`)
-
-### onChange Syntax
-
-Always use the two-parameter form (macOS 14+):
-```swift
-.onChange(of: value) { _, newValue in ... }
-```
-
-## Critical Rules
-
-### Light Themes in Dark Mode (GOLDEN RULE)
-
-`EditorTheme.isDark` must ALWAYS return `true` for ALL themes — including light themes like GitHub Light. SwiftUI's internal compositing of `NSViewRepresentable` makes NSTextView text completely invisible when `isDark = false` in macOS dark mode. This is a SwiftUI framework bug/behavior that cannot be worked around at the NSView level.
-
-**Pattern:** Use two properties on `EditorTheme`:
-- `isDark: Bool` — always `true` — controls NSTextView rendering context
-- `isLightAppearance: Bool` — actual visual truth — controls SwiftUI UI styling
-
-```swift
-// In CodeScreen — apply .light colorScheme ONLY to pure SwiftUI views
-editorToolbar
-    .background(theme.colors.background)
-    .environment(\.colorScheme, theme.isLightAppearance ? .light : .dark)
-
-// NEVER apply .environment(\.colorScheme) to SourceCodeEditor
-```
-
-### NSTextView Rendering
-
-- Use `NSTextView.scrollableTextView()` factory method
-- Set `usesAdaptiveColorMappingForDarkAppearance = false` in `makeNSView`
-- Always `drawsBackground = true` with explicit `backgroundColor` for ALL themes
-- Use `NSColor(srgbRed:green:blue:alpha:)` for text storage attributes — NEVER bridge through `SwiftUI.Color -> NSColor`
-- Apply `.paragraphStyle` AFTER highlighting via `addAttribute`, not inside `setAttributes`
-
-### Terminal
-
-Uses `SwiftTerm` with real PTY via `LocalProcess`. Must be initialized as login shell (`-l`) with `TERM=xterm-256color`. Route all delegate callbacks to `DispatchQueue.main`.
-
-## Design System
-
-### Glass Tokens (`DesignSystem.Colors`)
-
-Always use design tokens instead of hardcoded opacity values:
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| `glassBorderDark` | `white @ 0.12` | Card borders in dark mode |
-| `glassBorderLight` | `white @ 0.55` | Card borders in light mode |
-| `glassHover` | `white @ 0.08` | Hover background |
-| `glassSubtle` | `white @ 0.04` | Subtle element backgrounds |
-| `glassOverlay` | `black @ 0.15` | Overlay/inset backgrounds |
-| `dangerBackground` | `red @ 0.06` | Danger zone backgrounds |
-| `dangerBorder` | `red @ 0.25` | Danger zone borders |
-
-### Component Patterns
-
-- **Card headers:** Always use `CardHeader("Title", icon: "sf.symbol", subtitle: "optional")` inside `GlassCard`
-- **Danger cards:** Use `GlassCard(borderTint: DesignSystem.Colors.dangerBorder)` for destructive sections
-- **Toolbar groups:** Wrap related controls in `HStack` with `.background(DesignSystem.Colors.glassSubtle).clipShape(RoundedRectangle(cornerRadius: 8))`
-
-## Performance Patterns
-
-- **`maxLaneCount`:** Cached stored property, recalculated via `didSet` on `commits` — avoids O(n) per row
-- **`flatFileCache`:** Cached flat file list, rebuilt via `didSet` on `repositoryFiles` — avoids recomputation on every QuickOpen render
-- **Syntax highlighting:** Coordinator uses `regexCache` dictionary and dirty tracking (`lastHighlightedText/Theme/Extension`) to skip redundant work in `updateNSView`
-- **File I/O:** `selectCodeFile` and `saveCurrentCodeFile` run I/O in `Task { }` to avoid blocking main thread
+### NSTextView
+- `NSColor(srgbRed:green:blue:alpha:)` for text attributes — NEVER bridge `SwiftUI.Color → NSColor`
+- `.paragraphStyle` AFTER highlighting via `addAttribute`, not inside `setAttributes`
+- `usesAdaptiveColorMappingForDarkAppearance = false` in `makeNSView`
 
 ## New Feature Checklist (MANDATORY)
-
-**Run this checklist against EVERY code change before marking as done.** Don't trust plans or summaries — always verify each item yourself. This applies to new features, bug fixes that touch UI, and audit fixes.
-
 1. Keyboard shortcut (hidden button pattern) where applicable
-2. `.help()` tooltip with shortcut hint (except context menu items — SwiftUI limitation)
-3. L10n keys in all 3 locales (pt-BR, en, es)
-4. Add entry to `HelpSheet.swift` (feature card) + L10n `help.*` keys in all 3 locales
-5. Update `docs/FEATURES.md` with the new feature description
-
-## Development Conventions
-
-- **UI Style:** Glassmorphism aesthetic with `ultraThinMaterial` and `GlassCard` containers
-- **Git Safety:** Critical operations use `performGitAction` for confirmation alerts
-- **Staging:** Supports individual file staging (`stageFile`) and batch operations
-- **Language:** UI text uses Portuguese (BR) via `L10n()` localization helper
+2. `.help()` tooltip with shortcut hint (except context menu items)
+3. L10n keys in all 3 locales
+4. Entry in `HelpSheet.swift` + `help.*` L10n keys in all 3 locales
+5. Update `docs/FEATURES.md`

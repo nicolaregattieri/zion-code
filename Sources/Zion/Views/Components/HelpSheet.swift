@@ -84,6 +84,8 @@ struct HelpSheet: View {
             return L10n("help.prInbox.features").split(separator: "|").map(String.init)
         case .autoUpdates:
             return ["help.updates.check", "help.updates.auto", "help.updates.delta"]
+        case .zionMode:
+            return ["help.zionMode.toggle", "help.zionMode.shortcut", "help.zionMode.restore", "help.zionMode.theme"]
         }
     }
 
