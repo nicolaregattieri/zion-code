@@ -113,7 +113,7 @@ struct ContentView: View {
                     .background(Color(NSColor.windowBackgroundColor))
                     .overlay {
                         if model.isRepositorySwitching {
-                            ZionLoadingOverlay()
+                            ZionLoadingOverlay(detail: model.currentRepositorySwitchTargetName)
                                 .transition(.opacity)
                         }
                     }
@@ -164,6 +164,8 @@ struct ContentView: View {
                         .keyboardShortcut("2", modifiers: .command)
                     Button("") { route(.requestSection(.operations)) }
                         .keyboardShortcut("3", modifiers: .command)
+                    Button("") { route(.requestSection(.explain)) }
+                        .keyboardShortcut("4", modifiers: .command)
                     Button("") { isShortcutsVisible = true }
                         .keyboardShortcut("/", modifiers: .command)
                     Button("") {
@@ -421,6 +423,8 @@ struct ContentView: View {
                 performGitAction: { t, m, d, a in performGitAction(title: t, message: m, destructive: d, action: a) },
                 branchContextMenu: { branch in AnyView(branchContextMenu(for: branch)) }
             )
+        case .explain:
+            ExplainFlowScreen(model: model)
         case .code:
             EmptyView() // Handled by ZStack above
         }
@@ -638,6 +642,7 @@ struct ContentView: View {
             statusBarSectionButton(.code)
             statusBarSectionButton(.graph)
             statusBarSectionButton(.operations)
+            statusBarSectionButton(.explain)
 
             Divider()
                 .frame(height: 14)

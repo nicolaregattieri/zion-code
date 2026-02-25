@@ -27,6 +27,7 @@ struct KeyboardShortcutsSheet: View {
                         (L10n("Codigo"), "⌘1"),
                         (L10n("Grafo"), "⌘2"),
                         (L10n("Operacoes"), "⌘3"),
+                        (L10n("Explain Flow"), "⌘4"),
                     ])
 
                     shortcutSection(L10n("Editor"), icon: "doc.text", shortcuts: [

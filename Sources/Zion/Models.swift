@@ -741,13 +741,14 @@ enum FeatureSection: String, CaseIterable, Identifiable {
 }
 
 enum AppSection: String, CaseIterable, Identifiable {
-    case code, graph, operations
+    case code, graph, operations, explain
     var id: String { rawValue }
     var title: String {
         switch self {
         case .code: return "Zion Code"
         case .graph: return "Zion Tree"
         case .operations: return "Operacoes"
+        case .explain: return "Explain Flow"
         }
     }
     var icon: String {
@@ -755,6 +756,7 @@ enum AppSection: String, CaseIterable, Identifiable {
         case .graph: return "point.3.connected.trianglepath.dotted"
         case .code: return "terminal.fill"
         case .operations: return "gearshape"
+        case .explain: return "point.bottomleft.forward.to.point.topright.scurvepath.fill"
         }
     }
     var subtitle: String {
@@ -762,8 +764,182 @@ enum AppSection: String, CaseIterable, Identifiable {
         case .graph: return "Historico visual"
         case .code: return "Editor e Terminal"
         case .operations: return "Acoes e Comandos"
+        case .explain: return "Fluxo e narrativa do commit"
         }
     }
+}
+
+// MARK: - Explain Flow Models
+
+enum ExplainNodeKind: String, CaseIterable, Codable, Sendable {
+    case commit
+    case file
+    case symbol
+    case ui
+    case service
+    case data
+    case external
+    case infrastructure
+    case other
+
+    var icon: String {
+        switch self {
+        case .commit: return "point.bottomleft.forward.to.point.topright.scurvepath"
+        case .file: return "doc.text"
+        case .symbol: return "function"
+        case .ui: return "rectangle.on.rectangle"
+        case .service: return "gearshape.2"
+        case .data: return "cylinder.split.1x2"
+        case .external: return "network"
+        case .infrastructure: return "shippingbox"
+        case .other: return "square.grid.2x2"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .commit: return DesignSystem.Colors.brandPrimary
+        case .file: return DesignSystem.Colors.codeReview
+        case .symbol: return DesignSystem.Colors.ai
+        case .ui: return DesignSystem.Colors.success
+        case .service: return DesignSystem.Colors.info
+        case .data: return DesignSystem.Colors.warning
+        case .external: return DesignSystem.Colors.ai
+        case .infrastructure: return DesignSystem.Colors.commitSplit
+        case .other: return .secondary
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .commit: return L10n("explain.kind.commit")
+        case .file: return L10n("explain.kind.file")
+        case .symbol: return L10n("explain.kind.symbol")
+        case .ui: return L10n("explain.kind.ui")
+        case .service: return L10n("explain.kind.service")
+        case .data: return L10n("explain.kind.data")
+        case .external: return L10n("explain.kind.external")
+        case .infrastructure: return L10n("explain.kind.infrastructure")
+        case .other: return L10n("explain.kind.other")
+        }
+    }
+}
+
+struct ExplainEvidenceRef: Identifiable, Hashable, Codable, Sendable {
+    let filePath: String
+    let snippet: String
+    let lineStart: Int?
+
+    var id: String {
+        "\(filePath)#\(lineStart ?? 0)#\(snippet.prefix(24))"
+    }
+}
+
+struct ExplainNode: Identifiable, Hashable, Codable, Sendable {
+    let id: String
+    let title: String
+    let subtitle: String
+    let kind: ExplainNodeKind
+    let touched: Bool
+    let inferred: Bool
+    let evidence: [ExplainEvidenceRef]
+}
+
+struct ExplainEdge: Identifiable, Hashable, Codable, Sendable {
+    let from: String
+    let to: String
+    let label: String
+    let inferred: Bool
+
+    var id: String { "\(from)->\(to):\(label)" }
+}
+
+enum ExplainScopeMode: String, CaseIterable, Codable, Sendable, Identifiable {
+    case commit
+    case commitContext
+    case branchStory
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .commit: return L10n("explain.scope.commit")
+        case .commitContext: return L10n("explain.scope.commitContext")
+        case .branchStory: return L10n("explain.scope.branchStory")
+        }
+    }
+}
+
+enum ExplainFlowSource: String, Codable, Sendable {
+    case commitOnly
+    case contextWindow
+    case branchRange
+}
+
+struct ExplainContextWindow: Codable, Sendable {
+    let anchorCommitID: String
+    let commitIDs: [String]
+    let selectedIndex: Int
+    let windowSize: Int
+}
+
+struct ExplainDelta: Codable, Sendable {
+    let addedPaths: [String]
+    let changedPaths: [String]
+    let removedPaths: [String]
+    let impactNotes: [String]
+    let riskNotes: [String]
+}
+
+struct ExplainGraph: Codable, Sendable {
+    let commitID: String
+    let scopeMode: ExplainScopeMode
+    let source: ExplainFlowSource
+    let anchorCommitID: String
+    let contextCommitIDs: [String]
+    let branchBaseCommitID: String?
+    let highlightedNodeIDs: [String]
+    let nodes: [ExplainNode]
+    let edges: [ExplainEdge]
+    let technicalNotes: [String]
+    let generatedAt: Date
+}
+
+struct ExplainGlossaryTerm: Identifiable, Hashable, Codable, Sendable {
+    let id: String
+    let term: String
+    let definition: String
+    let evidence: [ExplainEvidenceRef]
+}
+
+struct ExplainStory: Codable, Sendable {
+    let title: String
+    let markdown: String
+    let generatedByAI: Bool
+    let generatedAt: Date
+}
+
+struct ExplainCommitBundle: Codable, Sendable {
+    let schemaVersion: Int
+    let commitID: String
+    let graph: ExplainGraph
+    let story: ExplainStory
+    let glossary: [ExplainGlossaryTerm]
+    let delta: ExplainDelta?
+}
+
+struct ExplainAIEnrichment: Codable, Sendable {
+    struct Term: Codable, Sendable {
+        let id: String
+        let term: String
+        let definition: String
+        let evidenceFiles: [String]
+    }
+
+    let summary: String
+    let storyMarkdown: String
+    let technicalNotes: [String]
+    let terms: [Term]
 }
 
 enum AppLanguage: String, CaseIterable, Identifiable {

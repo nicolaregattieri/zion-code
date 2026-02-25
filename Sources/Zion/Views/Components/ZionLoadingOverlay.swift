@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ZionLoadingOverlay: View {
+    var detail: String? = nil
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var dashPhase: CGFloat = 0
 
@@ -16,6 +17,14 @@ struct ZionLoadingOverlay: View {
                 Text(L10n("switch.overlay.loading"))
                     .font(DesignSystem.Typography.bodyMedium)
                     .foregroundStyle(DesignSystem.Colors.brandWhite.opacity(0.78))
+
+                if let detail, !detail.isEmpty {
+                    Text(L10n("switch.overlay.target", detail))
+                        .font(DesignSystem.Typography.meta)
+                        .foregroundStyle(DesignSystem.Colors.brandWhite.opacity(0.62))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
             }
             .padding(.horizontal, DesignSystem.Spacing.cardPadding)
             .padding(.vertical, DesignSystem.Spacing.smallCornerRadius)
@@ -66,7 +75,9 @@ struct ZionLoadingOverlay: View {
         .frame(width: 72, height: 72)
         .drawingGroup()
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(L10n("switch.overlay.loading"))
+        .accessibilityLabel(
+            detail.map { L10n("switch.overlay.target", $0) } ?? L10n("switch.overlay.loading")
+        )
     }
 }
 

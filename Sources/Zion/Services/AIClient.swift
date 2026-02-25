@@ -533,6 +533,77 @@ actor AIClient {
         return parseDiffExplanation(raw)
     }
 
+    func explainCommitFlowStructured(
+        commitID: String,
+        commitSubject: String,
+        diffStat: String,
+        changedFiles: [String],
+        graphSummary: String,
+        scopeMode: String,
+        branchBaseCommitID: String?,
+        contextCommitIDs: [String],
+        deltaSummary: String,
+        provider: AIProvider,
+        apiKey: String
+    ) async throws -> ExplainAIEnrichment {
+        let filesList = changedFiles.prefix(40).joined(separator: "\n")
+        let contextList = contextCommitIDs.prefix(24).joined(separator: ", ")
+        let prompt = """
+        You are an expert software architect explaining a commit as a flow.
+
+        Commit: \(commitID)
+        Subject: \(commitSubject)
+        Scope mode: \(scopeMode)
+        Branch base: \(branchBaseCommitID ?? "N/A")
+        Context commits: \(contextList)
+        Delta summary: \(deltaSummary)
+
+        Changed files:
+        \(filesList)
+
+        Diff stat:
+        \(diffStat.prefix(5000))
+
+        Deterministic graph summary:
+        \(graphSummary.prefix(5000))
+
+        Output ONLY valid JSON (no markdown, no code fences) with this exact schema:
+        {
+          "summary": "string",
+          "storyMarkdown": "string",
+          "technicalNotes": ["string"],
+          "terms": [
+            {
+              "id": "stable-kebab-id",
+              "term": "string",
+              "definition": "string",
+              "evidenceFiles": ["relative/path.ext"]
+            }
+          ]
+        }
+
+        Rules:
+        - summary: 1-2 concise sentences.
+        - storyMarkdown: one short paragraph explaining data/flow impact, and include glossary links using [term](zion-glossary://id).
+        - technicalNotes: 2-6 bullet-style strings with concrete implications.
+        - terms: 2-8 domain/architecture terms present in this commit context.
+        - evidenceFiles must come only from changed files.
+        - Never include keys beyond schema.
+        """
+
+        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 900)
+        let cleaned = stripCodeFences(raw)
+        guard let data = cleaned.data(using: .utf8) else {
+            throw AIError.invalidResponse
+        }
+
+        do {
+            return try JSONDecoder().decode(ExplainAIEnrichment.self, from: data)
+        } catch {
+            throw AIError.invalidResponse
+        }
+    }
+
     // MARK: - Per-file Code Review (Phase 3)
 
     func reviewFile(
@@ -811,6 +882,18 @@ actor AIClient {
         }
 
         return (title, bodyLines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines))
+    }
+
+    private func stripCodeFences(_ raw: String) -> String {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.hasPrefix("```") {
+            let lines = trimmed.components(separatedBy: "\n")
+            var content = lines
+            if !content.isEmpty { content.removeFirst() }
+            if !content.isEmpty, content.last?.hasPrefix("```") == true { content.removeLast() }
+            return content.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return trimmed
     }
 }
 

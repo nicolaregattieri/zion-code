@@ -222,6 +222,25 @@ final class RepositoryViewModel {
     var aiCommitSplitSuggestions: [CommitSuggestion] = []
     var isSplitVisible: Bool = false
 
+    // Explain Flow
+    var explainSelectedCommitID: String?
+    var explainScopeMode: ExplainScopeMode = .commitContext
+    var explainAutoContextApplied: Bool = false
+    var explainContextWindow: ExplainContextWindow?
+    var explainBranchBaseCommitID: String?
+    var explainGraph: ExplainGraph?
+    var explainStory: ExplainStory?
+    var explainGlossary: [ExplainGlossaryTerm] = []
+    var explainDelta: ExplainDelta?
+    var explainSelectedTermID: String?
+    var isExplainFlowLoading: Bool = false
+    var isExplainAIEnriching: Bool = false
+    var explainLastError: String?
+    @ObservationIgnored private var explainBuildTask: Task<Void, Never>?
+    @ObservationIgnored private var explainEnrichTask: Task<Void, Never>?
+    @ObservationIgnored private var explainMemoryCache: [String: ExplainCommitBundle] = [:]
+    @ObservationIgnored private let explainSchemaVersion: Int = 2
+
     // Pre-Commit AI Review Gate
     var preCommitReviewEnabled: Bool {
         get { UserDefaults.standard.bool(forKey: "zion.preCommitReview") }
@@ -548,9 +567,12 @@ final class RepositoryViewModel {
     @ObservationIgnored private var deferredRepositoryLoadTask: Task<Void, Never>?
     @ObservationIgnored private var repositorySwitchToken = UUID()
     private var isSwitchingRepository = false
+    private var repositorySwitchTargetName: String?
+    @ObservationIgnored private var repositorySwitchStartedAt: Date?
     @ObservationIgnored private var cachedWorktreeStatusByPath: [String: (uncommittedCount: Int, hasConflicts: Bool)] = [:]
     @ObservationIgnored private var cachedIgnoredPaths: Set<String>?
     var isRepositorySwitching: Bool { isSwitchingRepository }
+    var currentRepositorySwitchTargetName: String? { repositorySwitchTargetName }
 
     func checkGitAvailability() {
         let process = Process()
@@ -788,6 +810,8 @@ final class RepositoryViewModel {
         let switchToken = UUID()
         repositorySwitchToken = switchToken
         isSwitchingRepository = true
+        repositorySwitchTargetName = url.lastPathComponent
+        repositorySwitchStartedAt = Date()
         logger.log(.info, "switch.start", context: "target=\(url.lastPathComponent) token=\(switchToken.uuidString.prefix(8))", source: #function)
         cancelRepositoryBackgroundActivityForSwitch()
 
@@ -867,12 +891,16 @@ final class RepositoryViewModel {
         currentCommitFileDiff = ""
         currentCommitFileDiffHunks = []
         selectedHunkLines = []
+        clearExplainFlowState(clearCache: true)
 
         refreshRepository(
             setBusy: true,
             options: .critical,
             origin: .repositorySwitch,
-            clearRepositorySwitchStateOnBusyCompletion: false
+            clearRepositorySwitchStateOnBusyCompletion: false,
+            onFinish: { [weak self] in
+                self?.logRepositorySwitchTelemetry(event: "critical.ready")
+            }
         )
         refreshFileTree()
         startFileWatcher(for: url)
@@ -887,6 +915,22 @@ final class RepositoryViewModel {
         prPollingTimer?.cancel()
         backgroundFetchTask?.cancel()
         autoRefreshTask?.cancel()
+    }
+
+    private func logRepositorySwitchTelemetry(event: String) {
+        guard isSwitchingRepository else { return }
+        let target = repositorySwitchTargetName ?? repositoryURL?.lastPathComponent ?? "unknown"
+        let durationMs = repositorySwitchStartedAt.map { Int(Date().timeIntervalSince($0) * 1000.0) } ?? -1
+        let durationLabel = durationMs >= 0 ? "\(durationMs)" : "n/a"
+        logger.log(.info, "switch.\(event)", context: "target=\(target) durationMs=\(durationLabel)", source: #function)
+    }
+
+    private func finishRepositorySwitch(event: String) {
+        guard isSwitchingRepository else { return }
+        logRepositorySwitchTelemetry(event: event)
+        isSwitchingRepository = false
+        repositorySwitchTargetName = nil
+        repositorySwitchStartedAt = nil
     }
 
     private func scheduleDeferredRepositoryLoads(for url: URL, switchToken: UUID) {
@@ -923,7 +967,7 @@ final class RepositoryViewModel {
                     self.loadSignatureStatuses()
                     self.startBackgroundFetch()
                     self.startAutoRefreshTimer()
-                    self.isSwitchingRepository = false
+                    self.finishRepositorySwitch(event: "ready")
                 }
             )
         }
@@ -3746,7 +3790,7 @@ final class RepositoryViewModel {
                 if setBusy {
                     isBusy = false
                     if clearRepositorySwitchStateOnBusyCompletion, isSwitchingRepository {
-                        isSwitchingRepository = false
+                        finishRepositorySwitch(event: "critical.done")
                     }
                 }
                 if didSelectedCommitChange {
@@ -3770,7 +3814,7 @@ final class RepositoryViewModel {
                 if setBusy {
                     isBusy = false
                     if clearRepositorySwitchStateOnBusyCompletion, isSwitchingRepository {
-                        isSwitchingRepository = false
+                        finishRepositorySwitch(event: "critical.cancelled")
                     }
                 }
                 logger.log(.info, "refreshRepository cancelled", context: "request=\(requestID.uuidString.prefix(8)) busy=\(setBusy)", source: #function)
@@ -3781,7 +3825,7 @@ final class RepositoryViewModel {
                 if setBusy {
                     isBusy = false
                     if clearRepositorySwitchStateOnBusyCompletion, isSwitchingRepository {
-                        isSwitchingRepository = false
+                        finishRepositorySwitch(event: "critical.failed")
                     }
                 }
                 handleError(error)
@@ -5401,6 +5445,1153 @@ final class RepositoryViewModel {
                 logger.log(.error, "AI commit review failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
                 lastError = error.localizedDescription
             }
+        }
+    }
+
+    // MARK: - Explain Flow
+
+    private struct ExplainContextResolved {
+        let mode: ExplainScopeMode
+        let source: ExplainFlowSource
+        let anchorCommitID: String
+        let commitIDs: [String]
+        let branchBaseCommitID: String?
+        let autoContextApplied: Bool
+        let windowSize: Int?
+        let selectedIndex: Int?
+    }
+
+    private struct ExplainChange {
+        let commitID: String
+        let status: String
+        let path: String
+    }
+
+    private struct ExplainHotSymbol {
+        let name: String
+        let filePath: String
+        let count: Int
+    }
+
+    func setExplainScope(_ mode: ExplainScopeMode) {
+        explainScopeMode = mode
+        loadExplainFlow(commitID: explainSelectedCommitID ?? selectedCommitID, scopeMode: mode)
+    }
+
+    func loadExplainFlow(commitID: String?, scopeMode requestedScope: ExplainScopeMode? = nil) {
+        guard let repositoryURL else {
+            clearExplainFlowState(clearCache: false)
+            return
+        }
+
+        guard let commitID, !commitID.isEmpty else {
+            clearExplainFlowState(clearCache: false)
+            return
+        }
+        guard isSafeExplainCommitReference(commitID) else {
+            isExplainFlowLoading = false
+            explainLastError = L10n("explain.status.invalidCommit")
+            statusMessage = L10n("explain.status.invalidCommit")
+            return
+        }
+
+        let mode = requestedScope ?? explainScopeMode
+        explainScopeMode = mode
+        explainSelectedCommitID = commitID
+        explainLastError = nil
+        explainAutoContextApplied = false
+        explainContextWindow = nil
+        explainBranchBaseCommitID = nil
+        let explainLoadStartedAt = Date()
+
+        isExplainFlowLoading = true
+        explainBuildTask?.cancel()
+        explainBuildTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                let context = try await self.resolveExplainContext(
+                    anchorCommitID: commitID,
+                    mode: mode,
+                    repositoryURL: repositoryURL
+                )
+                try Task.checkCancellation()
+
+                let cacheKey = self.explainCacheKey(repositoryURL: repositoryURL, context: context)
+                if let cached = self.explainMemoryCache[cacheKey] {
+                    self.applyExplainBundle(cached, context: context)
+                    let durationMs = Int(Date().timeIntervalSince(explainLoadStartedAt) * 1000.0)
+                    self.logger.log(
+                        .info,
+                        "explain.load.ready",
+                        context: "commit=\(String(commitID.prefix(8))) scope=\(mode.rawValue) source=memory durationMs=\(durationMs) nodes=\(cached.graph.nodes.count) edges=\(cached.graph.edges.count)",
+                        source: #function
+                    )
+                    return
+                }
+                if let diskCached = self.loadExplainBundleFromDisk(repositoryURL: repositoryURL, cacheKey: cacheKey) {
+                    self.explainMemoryCache[cacheKey] = diskCached
+                    self.applyExplainBundle(diskCached, context: context)
+                    let durationMs = Int(Date().timeIntervalSince(explainLoadStartedAt) * 1000.0)
+                    self.logger.log(
+                        .info,
+                        "explain.load.ready",
+                        context: "commit=\(String(commitID.prefix(8))) scope=\(mode.rawValue) source=disk durationMs=\(durationMs) nodes=\(diskCached.graph.nodes.count) edges=\(diskCached.graph.edges.count)",
+                        source: #function
+                    )
+                    return
+                }
+
+                let bundle = try await self.buildExplainFlowBundleLocal(context: context, repositoryURL: repositoryURL)
+                try Task.checkCancellation()
+                guard self.explainSelectedCommitID == commitID else { return }
+                self.explainMemoryCache[cacheKey] = bundle
+                self.persistExplainBundleToDisk(bundle, repositoryURL: repositoryURL, cacheKey: cacheKey)
+                self.applyExplainBundle(bundle, context: context)
+                let durationMs = Int(Date().timeIntervalSince(explainLoadStartedAt) * 1000.0)
+                self.logger.log(
+                    .info,
+                    "explain.load.ready",
+                    context: "commit=\(String(commitID.prefix(8))) scope=\(mode.rawValue) source=fresh durationMs=\(durationMs) nodes=\(bundle.graph.nodes.count) edges=\(bundle.graph.edges.count)",
+                    source: #function
+                )
+            } catch is CancellationError {
+                return
+            } catch {
+                guard self.explainSelectedCommitID == commitID else { return }
+                self.isExplainFlowLoading = false
+                self.explainLastError = error.localizedDescription
+                self.statusMessage = L10n("explain.status.failed")
+                let durationMs = Int(Date().timeIntervalSince(explainLoadStartedAt) * 1000.0)
+                self.logger.log(
+                    .warn,
+                    "explain.load.failed",
+                    context: "commit=\(String(commitID.prefix(8))) scope=\(mode.rawValue) durationMs=\(durationMs) error=\(error.localizedDescription)",
+                    source: #function
+                )
+            }
+        }
+    }
+
+    func enrichExplainFlowWithAI() {
+        guard let repositoryURL, let commitID = explainSelectedCommitID else { return }
+        guard isAIConfigured else {
+            explainLastError = L10n("Nenhum provedor de IA configurado")
+            return
+        }
+        guard let graph = explainGraph, let story = explainStory else { return }
+
+        isExplainAIEnriching = true
+        explainLastError = nil
+        let explainAIStartedAt = Date()
+        explainEnrichTask?.cancel()
+        explainEnrichTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                let commitSubject: String
+                if let subject = self.commits.first(where: { $0.id == commitID })?.subject {
+                    commitSubject = subject
+                } else {
+                    commitSubject = try await self.worker.runAction(
+                        args: ["show", "-s", "--format=%s", commitID],
+                        in: repositoryURL
+                    )
+                }
+                let diffStat = try await self.worker.runAction(
+                    args: ["show", "--no-color", "--stat", "--format=", commitID],
+                    in: repositoryURL
+                )
+                let changedFiles = Array(Set(
+                    graph.nodes
+                        .flatMap(\.evidence)
+                        .map(\.filePath)
+                        .filter { !$0.isEmpty }
+                )).sorted()
+                let graphSummary = buildGraphSummary(graph)
+                let deltaSummary = deltaSummaryText(explainDelta)
+                let enrichment = try await self.aiClient.explainCommitFlowStructured(
+                    commitID: commitID,
+                    commitSubject: commitSubject,
+                    diffStat: diffStat,
+                    changedFiles: changedFiles,
+                    graphSummary: graphSummary,
+                    scopeMode: graph.scopeMode.rawValue,
+                    branchBaseCommitID: graph.branchBaseCommitID,
+                    contextCommitIDs: graph.contextCommitIDs,
+                    deltaSummary: deltaSummary,
+                    provider: self.aiProvider,
+                    apiKey: self.aiAPIKey
+                )
+                try Task.checkCancellation()
+                guard self.explainSelectedCommitID == commitID else { return }
+
+                let enrichedGlossary = self.mergeGlossary(
+                    existing: self.explainGlossary,
+                    aiTerms: enrichment.terms,
+                    graph: graph
+                )
+                let enrichedMarkdown = self.ensureGlossaryLinks(
+                    markdown: enrichment.storyMarkdown.isEmpty ? story.markdown : enrichment.storyMarkdown,
+                    glossary: enrichedGlossary
+                )
+                let mergedNotes = Array(NSOrderedSet(array: graph.technicalNotes + enrichment.technicalNotes)) as? [String] ?? graph.technicalNotes
+                let mergedGraph = ExplainGraph(
+                    commitID: graph.commitID,
+                    scopeMode: graph.scopeMode,
+                    source: graph.source,
+                    anchorCommitID: graph.anchorCommitID,
+                    contextCommitIDs: graph.contextCommitIDs,
+                    branchBaseCommitID: graph.branchBaseCommitID,
+                    highlightedNodeIDs: graph.highlightedNodeIDs,
+                    nodes: graph.nodes,
+                    edges: graph.edges,
+                    technicalNotes: mergedNotes,
+                    generatedAt: graph.generatedAt
+                )
+                let enrichedStory = ExplainStory(
+                    title: story.title,
+                    markdown: enrichedMarkdown,
+                    generatedByAI: true,
+                    generatedAt: Date()
+                )
+                let bundle = ExplainCommitBundle(
+                    schemaVersion: self.explainSchemaVersion,
+                    commitID: commitID,
+                    graph: mergedGraph,
+                    story: enrichedStory,
+                    glossary: enrichedGlossary,
+                    delta: self.explainDelta
+                )
+                let context = ExplainContextResolved(
+                    mode: graph.scopeMode,
+                    source: graph.source,
+                    anchorCommitID: graph.anchorCommitID,
+                    commitIDs: graph.contextCommitIDs,
+                    branchBaseCommitID: graph.branchBaseCommitID,
+                    autoContextApplied: self.explainAutoContextApplied,
+                    windowSize: self.explainContextWindow?.windowSize,
+                    selectedIndex: self.explainContextWindow?.selectedIndex
+                )
+                let cacheKey = self.explainCacheKey(repositoryURL: repositoryURL, context: context)
+                self.explainMemoryCache[cacheKey] = bundle
+                self.persistExplainBundleToDisk(bundle, repositoryURL: repositoryURL, cacheKey: cacheKey)
+                self.applyExplainBundle(bundle, context: context)
+                self.statusMessage = L10n("explain.status.ai.ready")
+                let durationMs = Int(Date().timeIntervalSince(explainAIStartedAt) * 1000.0)
+                self.logger.log(
+                    .info,
+                    "explain.ai.ready",
+                    context: "commit=\(String(commitID.prefix(8))) scope=\(graph.scopeMode.rawValue) durationMs=\(durationMs) notes=\(enrichment.technicalNotes.count) terms=\(enrichment.terms.count)",
+                    source: #function
+                )
+            } catch is CancellationError {
+                return
+            } catch {
+                guard self.explainSelectedCommitID == commitID else { return }
+                self.isExplainAIEnriching = false
+                self.explainLastError = error.localizedDescription
+                self.statusMessage = L10n("explain.status.ai.failed")
+                let durationMs = Int(Date().timeIntervalSince(explainAIStartedAt) * 1000.0)
+                self.logger.log(
+                    .warn,
+                    "explain.ai.failed",
+                    context: "commit=\(String(commitID.prefix(8))) scope=\(graph.scopeMode.rawValue) durationMs=\(durationMs) error=\(error.localizedDescription)",
+                    source: #function
+                )
+            }
+        }
+    }
+
+    func openExplainEvidence(_ evidence: ExplainEvidenceRef) {
+        openFileInEditor(relativePath: evidence.filePath, highlightQuery: evidence.snippet)
+    }
+
+    func selectExplainTerm(_ termID: String?) {
+        explainSelectedTermID = termID
+    }
+
+    private func resolveExplainContext(
+        anchorCommitID: String,
+        mode: ExplainScopeMode,
+        repositoryURL: URL
+    ) async throws -> ExplainContextResolved {
+        switch mode {
+        case .commit:
+            return ExplainContextResolved(
+                mode: mode,
+                source: .commitOnly,
+                anchorCommitID: anchorCommitID,
+                commitIDs: [anchorCommitID],
+                branchBaseCommitID: nil,
+                autoContextApplied: false,
+                windowSize: nil,
+                selectedIndex: nil
+            )
+        case .commitContext:
+            let shouldExpand = try await shouldAutoExpandContext(anchorCommitID: anchorCommitID, repositoryURL: repositoryURL)
+            let windowSize = shouldExpand ? 5 : 2
+            let commitIDs = try await loadContextCommits(anchorCommitID: anchorCommitID, windowSize: windowSize, repositoryURL: repositoryURL)
+            let selectedIndex = commitIDs.firstIndex(of: anchorCommitID) ?? 0
+            return ExplainContextResolved(
+                mode: mode,
+                source: .contextWindow,
+                anchorCommitID: anchorCommitID,
+                commitIDs: commitIDs.isEmpty ? [anchorCommitID] : commitIDs,
+                branchBaseCommitID: nil,
+                autoContextApplied: shouldExpand,
+                windowSize: windowSize,
+                selectedIndex: selectedIndex
+            )
+        case .branchStory:
+            let base = try await computeBranchBaseCommitID(repositoryURL: repositoryURL)
+            guard let base else {
+                return ExplainContextResolved(
+                    mode: mode,
+                    source: .commitOnly,
+                    anchorCommitID: anchorCommitID,
+                    commitIDs: [anchorCommitID],
+                    branchBaseCommitID: nil,
+                    autoContextApplied: false,
+                    windowSize: nil,
+                    selectedIndex: nil
+                )
+            }
+            let commits = try await loadBranchStoryCommits(anchorCommitID: anchorCommitID, baseCommitID: base, repositoryURL: repositoryURL)
+            let selectedIndex = commits.firstIndex(of: anchorCommitID) ?? 0
+            return ExplainContextResolved(
+                mode: mode,
+                source: .branchRange,
+                anchorCommitID: anchorCommitID,
+                commitIDs: commits.isEmpty ? [anchorCommitID] : commits,
+                branchBaseCommitID: base,
+                autoContextApplied: false,
+                windowSize: nil,
+                selectedIndex: selectedIndex
+            )
+        }
+    }
+
+    private func shouldAutoExpandContext(anchorCommitID: String, repositoryURL: URL) async throws -> Bool {
+        let output = try await worker.runAction(
+            args: ["show", "--numstat", "--format=", anchorCommitID],
+            in: repositoryURL
+        )
+        var files = 0
+        var lineDelta = 0
+        for line in output.split(separator: "\n", omittingEmptySubsequences: true) {
+            let parts = line.split(separator: "\t", omittingEmptySubsequences: false)
+            guard parts.count >= 3 else { continue }
+            files += 1
+            let adds = Int(parts[0]) ?? 0
+            let dels = Int(parts[1]) ?? 0
+            lineDelta += adds + dels
+        }
+        return files <= 3 && lineDelta <= 60
+    }
+
+    private func loadContextCommits(anchorCommitID: String, windowSize: Int, repositoryURL: URL) async throws -> [String] {
+        let output = try await worker.runAction(
+            args: ["log", "--first-parent", "--pretty=%H", "HEAD"],
+            in: repositoryURL
+        )
+        let all = output
+            .split(separator: "\n", omittingEmptySubsequences: true)
+            .map(String.init)
+            .filter(isSafeExplainCommitReference)
+        guard let anchorIndex = all.firstIndex(of: anchorCommitID) else {
+            return [anchorCommitID]
+        }
+        let lower = max(0, anchorIndex - windowSize)
+        let upper = min(all.count - 1, anchorIndex + windowSize)
+        return Array(all[lower...upper])
+    }
+
+    private func computeBranchBaseCommitID(repositoryURL: URL) async throws -> String? {
+        let preferredRefs = ["main", "master", "develop", "development", "trunk"]
+        let localNames = Set(branchInfos.filter { !$0.isRemote }.map(\.name))
+        let candidate = preferredRefs.first(where: { localNames.contains($0) })
+            ?? branchInfos.first(where: { !$0.isRemote && !$0.upstream.clean.isEmpty })?.upstream.clean
+        guard let candidate, !candidate.isEmpty else { return nil }
+        let base = try await worker.runAction(args: ["merge-base", "HEAD", candidate], in: repositoryURL)
+        let cleaned = base.clean
+        guard isSafeExplainCommitReference(cleaned) else { return nil }
+        return cleaned
+    }
+
+    private func loadBranchStoryCommits(anchorCommitID: String, baseCommitID: String?, repositoryURL: URL) async throws -> [String] {
+        guard let baseCommitID, !baseCommitID.isEmpty else {
+            return [anchorCommitID]
+        }
+        var commits = try await worker.runAction(
+            args: ["rev-list", "--first-parent", "--reverse", "\(baseCommitID)..HEAD"],
+            in: repositoryURL
+        )
+            .split(separator: "\n", omittingEmptySubsequences: true)
+            .map(String.init)
+            .filter(isSafeExplainCommitReference)
+
+        if !commits.contains(anchorCommitID) {
+            commits = try await worker.runAction(
+                args: ["rev-list", "--reverse", "\(baseCommitID)..HEAD"],
+                in: repositoryURL
+            )
+                .split(separator: "\n", omittingEmptySubsequences: true)
+                .map(String.init)
+                .filter(isSafeExplainCommitReference)
+        }
+
+        if commits.isEmpty {
+            return [anchorCommitID]
+        }
+        if commits.count > 120 {
+            if let index = commits.firstIndex(of: anchorCommitID) {
+                let lower = max(0, index - 60)
+                let upper = min(commits.count - 1, index + 59)
+                commits = Array(commits[lower...upper])
+            } else {
+                commits = Array(commits.suffix(120))
+            }
+        }
+        return commits
+    }
+
+    private func applyExplainBundle(_ bundle: ExplainCommitBundle, context: ExplainContextResolved) {
+        explainScopeMode = context.mode
+        explainSelectedCommitID = context.anchorCommitID
+        explainGraph = bundle.graph
+        explainStory = bundle.story
+        explainGlossary = bundle.glossary
+        explainDelta = bundle.delta
+        explainSelectedTermID = bundle.glossary.first?.id
+        explainAutoContextApplied = context.autoContextApplied
+        explainBranchBaseCommitID = context.branchBaseCommitID
+        if let windowSize = context.windowSize, let selectedIndex = context.selectedIndex {
+            explainContextWindow = ExplainContextWindow(
+                anchorCommitID: context.anchorCommitID,
+                commitIDs: context.commitIDs,
+                selectedIndex: selectedIndex,
+                windowSize: windowSize
+            )
+        } else {
+            explainContextWindow = nil
+        }
+        isExplainFlowLoading = false
+        isExplainAIEnriching = false
+        explainLastError = nil
+        if context.mode == .branchStory && context.source == .commitOnly {
+            statusMessage = L10n("explain.status.branchFallback")
+        }
+    }
+
+    private func clearExplainFlowState(clearCache: Bool) {
+        explainBuildTask?.cancel()
+        explainEnrichTask?.cancel()
+        explainSelectedCommitID = nil
+        explainGraph = nil
+        explainStory = nil
+        explainGlossary = []
+        explainDelta = nil
+        explainSelectedTermID = nil
+        explainAutoContextApplied = false
+        explainContextWindow = nil
+        explainBranchBaseCommitID = nil
+        isExplainFlowLoading = false
+        isExplainAIEnriching = false
+        explainLastError = nil
+        if clearCache {
+            explainMemoryCache.removeAll()
+        }
+    }
+
+    private func buildExplainFlowBundleLocal(
+        context: ExplainContextResolved,
+        repositoryURL: URL
+    ) async throws -> ExplainCommitBundle {
+        let anchorCommitID = context.anchorCommitID
+        let commitSubject = try await worker.runAction(
+            args: ["show", "-s", "--format=%s", anchorCommitID],
+            in: repositoryURL
+        )
+        let anchorDiffStat = try await worker.runAction(
+            args: ["show", "--no-color", "--stat", "--format=", anchorCommitID],
+            in: repositoryURL
+        )
+
+        let changeSets = try await loadExplainChanges(
+            commitIDs: context.commitIDs,
+            repositoryURL: repositoryURL
+        )
+        let anchorChanges = changeSets.filter { $0.commitID == anchorCommitID }
+
+        var allKindFiles: [ExplainNodeKind: Set<String>] = [:]
+        var anchorKindFiles: [ExplainNodeKind: Set<String>] = [:]
+        var evidenceByFile: [String: ExplainEvidenceRef] = [:]
+        var anchorDiffByFile: [String: String] = [:]
+        var anchorKindByFile: [String: ExplainNodeKind] = [:]
+        var anchorStatusByFile: [String: String] = [:]
+        var anchorFileChangeScore: [String: Int] = [:]
+
+        let explainAnalysisFileLimit = 10
+        for change in anchorChanges.prefix(explainAnalysisFileLimit) {
+            let diff = try await loadCommitDiffForExplain(
+                commitID: anchorCommitID,
+                file: change.path,
+                repositoryURL: repositoryURL
+            )
+            anchorDiffByFile[change.path] = diff
+            anchorStatusByFile[change.path] = change.status
+            anchorKindByFile[change.path] = explainKind(forPath: change.path, diff: diff)
+            anchorFileChangeScore[change.path] = countChangedDiffLines(diff)
+            evidenceByFile[change.path] = makeEvidence(filePath: change.path, diff: diff)
+        }
+
+        for change in changeSets {
+            let kind = (change.commitID == anchorCommitID)
+                ? (anchorKindByFile[change.path] ?? explainKind(forPath: change.path, diff: ""))
+                : explainKind(forPath: change.path, diff: "")
+            allKindFiles[kind, default: []].insert(change.path)
+            if change.commitID == anchorCommitID {
+                anchorKindFiles[kind, default: []].insert(change.path)
+            }
+        }
+
+        var nodes: [ExplainNode] = []
+        if let base = context.branchBaseCommitID {
+            nodes.append(
+                ExplainNode(
+                    id: "commit.base",
+                    title: L10n("explain.node.base"),
+                    subtitle: String(base.prefix(8)),
+                    kind: .commit,
+                    touched: false,
+                    inferred: false,
+                    evidence: []
+                )
+            )
+        }
+        nodes.append(
+            ExplainNode(
+                id: "commit.anchor",
+                title: commitSubject,
+                subtitle: String(anchorCommitID.prefix(8)),
+                kind: .commit,
+                touched: true,
+                inferred: false,
+                evidence: []
+            )
+        )
+
+        let orderedKinds: [ExplainNodeKind] = [.ui, .service, .data, .external, .infrastructure, .other]
+        for kind in orderedKinds {
+            guard let files = allKindFiles[kind], !files.isEmpty else { continue }
+            let anchorFiles = anchorKindFiles[kind] ?? []
+            let evidence = files.prefix(3).compactMap { evidenceByFile[$0] }
+            let subtitle = anchorFiles.isEmpty
+                ? L10n("explain.node.contextOnly", "\(files.count)")
+                : L10n("explain.node.anchorAndContext", "\(anchorFiles.count)", "\(files.count)")
+            nodes.append(
+                ExplainNode(
+                    id: "kind.\(kind.rawValue)",
+                    title: kind.label,
+                    subtitle: subtitle,
+                    kind: kind,
+                    touched: !anchorFiles.isEmpty,
+                    inferred: false,
+                    evidence: evidence
+                )
+            )
+        }
+
+        let highlightedKinds = Set(anchorKindFiles.keys)
+        var highlightedNodeIDs = ["commit.anchor"] + highlightedKinds.map { "kind.\($0.rawValue)" }.sorted()
+        var edges: [ExplainEdge] = []
+
+        if context.branchBaseCommitID != nil {
+            edges.append(
+                ExplainEdge(
+                    from: "commit.base",
+                    to: "commit.anchor",
+                    label: L10n("explain.edge.base.anchor"),
+                    inferred: false
+                )
+            )
+        }
+
+        for kind in highlightedKinds {
+            edges.append(
+                ExplainEdge(
+                    from: "commit.anchor",
+                    to: "kind.\(kind.rawValue)",
+                    label: L10n("explain.edge.commit.delta"),
+                    inferred: false
+                )
+            )
+        }
+
+        var fileNodeIDByPath: [String: String] = [:]
+        let topAnchorFiles = anchorChanges
+            .sorted {
+                let left = anchorFileChangeScore[$0.path] ?? 0
+                let right = anchorFileChangeScore[$1.path] ?? 0
+                if left != right { return left > right }
+                return $0.path < $1.path
+            }
+            .prefix(8)
+
+        for change in topAnchorFiles {
+            let path = change.path
+            let status = anchorStatusByFile[path] ?? change.status
+            let id = explainStableNodeID(prefix: "file", raw: path)
+            fileNodeIDByPath[path] = id
+            let shortPath = explainShortPath(path, components: 2)
+            let evidence = evidenceByFile[path].map { [$0] } ?? []
+            nodes.append(
+                ExplainNode(
+                    id: id,
+                    title: shortPath,
+                    subtitle: "\(status.uppercased()) · \(path)",
+                    kind: .file,
+                    touched: true,
+                    inferred: false,
+                    evidence: evidence
+                )
+            )
+            highlightedNodeIDs.append(id)
+            edges.append(
+                ExplainEdge(
+                    from: "commit.anchor",
+                    to: id,
+                    label: L10n("explain.edge.commit.file"),
+                    inferred: false
+                )
+            )
+            if let kind = anchorKindByFile[path] {
+                edges.append(
+                    ExplainEdge(
+                        from: id,
+                        to: "kind.\(kind.rawValue)",
+                        label: L10n("explain.edge.file.kind"),
+                        inferred: false
+                    )
+                )
+            }
+        }
+
+        let hotSymbols = extractHotSymbols(anchorDiffByFile: anchorDiffByFile, limit: 6)
+        for symbol in hotSymbols {
+            let id = explainStableNodeID(prefix: "symbol", raw: "\(symbol.filePath)|\(symbol.name)")
+            let evidence = evidenceByFile[symbol.filePath].map { [$0] } ?? []
+            nodes.append(
+                ExplainNode(
+                    id: id,
+                    title: symbol.name,
+                    subtitle: "\(explainShortPath(symbol.filePath, components: 2)) · x\(symbol.count)",
+                    kind: .symbol,
+                    touched: true,
+                    inferred: false,
+                    evidence: evidence
+                )
+            )
+            highlightedNodeIDs.append(id)
+            edges.append(
+                ExplainEdge(
+                    from: fileNodeIDByPath[symbol.filePath] ?? "commit.anchor",
+                    to: id,
+                    label: L10n("explain.edge.file.symbol"),
+                    inferred: false
+                )
+            )
+        }
+
+        let hasUI = allKindFiles[.ui]?.isEmpty == false
+        let hasService = allKindFiles[.service]?.isEmpty == false
+        let hasData = allKindFiles[.data]?.isEmpty == false
+        let hasExternal = allKindFiles[.external]?.isEmpty == false
+        let hasInfra = allKindFiles[.infrastructure]?.isEmpty == false
+
+        if hasUI && hasService {
+            edges.append(ExplainEdge(from: "kind.ui", to: "kind.service", label: L10n("explain.edge.ui.service"), inferred: true))
+        }
+        if hasService && hasData {
+            edges.append(ExplainEdge(from: "kind.service", to: "kind.data", label: L10n("explain.edge.service.data"), inferred: true))
+        }
+        if hasService && hasExternal {
+            edges.append(ExplainEdge(from: "kind.service", to: "kind.external", label: L10n("explain.edge.service.external"), inferred: true))
+        }
+        if hasInfra && hasService {
+            edges.append(ExplainEdge(from: "kind.infrastructure", to: "kind.service", label: L10n("explain.edge.infrastructure.service"), inferred: true))
+        }
+
+        let notes = [
+            L10n("explain.note.scope", context.mode.title),
+            L10n("explain.note.filesChanged", "\(anchorChanges.count)"),
+            L10n("explain.note.filesDetailed", "\(fileNodeIDByPath.count)"),
+            L10n("explain.note.kindsInvolved", "\(nodes.filter { $0.id.hasPrefix("kind.") }.count)"),
+            L10n("explain.note.symbolsDetected", "\(hotSymbols.count)"),
+            L10n("explain.note.contextCommits", "\(context.commitIDs.count)"),
+            L10n("explain.note.inference")
+        ]
+        var highlightedSeen: Set<String> = []
+        highlightedNodeIDs = highlightedNodeIDs.filter { highlightedSeen.insert($0).inserted }
+
+        let graph = ExplainGraph(
+            commitID: anchorCommitID,
+            scopeMode: context.mode,
+            source: context.source,
+            anchorCommitID: anchorCommitID,
+            contextCommitIDs: context.commitIDs,
+            branchBaseCommitID: context.branchBaseCommitID,
+            highlightedNodeIDs: highlightedNodeIDs,
+            nodes: nodes,
+            edges: edges,
+            technicalNotes: notes,
+            generatedAt: Date()
+        )
+
+        let delta = buildExplainDelta(
+            anchorChanges: anchorChanges,
+            highlightedKinds: highlightedKinds,
+            contextCommitCount: context.commitIDs.count
+        )
+        let glossary = buildLocalGlossary(nodes: nodes)
+        let story = buildLocalStory(
+            commitSubject: commitSubject,
+            graph: graph,
+            glossary: glossary,
+            diffStat: anchorDiffStat,
+            delta: delta
+        )
+        return ExplainCommitBundle(
+            schemaVersion: explainSchemaVersion,
+            commitID: anchorCommitID,
+            graph: graph,
+            story: story,
+            glossary: glossary,
+            delta: delta
+        )
+    }
+
+    private func loadExplainChanges(
+        commitIDs: [String],
+        repositoryURL: URL
+    ) async throws -> [ExplainChange] {
+        var changes: [ExplainChange] = []
+        for commitID in commitIDs {
+            let output = try await worker.runAction(
+                args: ["show", "--no-color", "--name-status", "--format=", commitID],
+                in: repositoryURL
+            )
+            for line in output.split(separator: "\n", omittingEmptySubsequences: true) {
+                let parts = line.split(separator: "\t", omittingEmptySubsequences: false)
+                guard parts.count >= 2 else { continue }
+                let status = String(parts[0]).clean
+                let path = String(parts.last ?? "").clean
+                guard !status.isEmpty, !path.isEmpty else { continue }
+                changes.append(ExplainChange(commitID: commitID, status: status, path: path))
+            }
+        }
+        return changes
+    }
+
+    private func loadCommitDiffForExplain(commitID: String, file: String, repositoryURL: URL) async throws -> String {
+        if let diff = try? await worker.runAction(
+            args: ["diff", "--no-color", "\(commitID)~1", commitID, "--", file],
+            in: repositoryURL
+        ), !diff.isEmpty {
+            return diff
+        }
+        return try await worker.runAction(
+            args: ["show", "--no-color", "--format=", commitID, "--", file],
+            in: repositoryURL
+        )
+    }
+
+    private func makeEvidence(filePath: String, diff: String) -> ExplainEvidenceRef {
+        let lines = diff.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        let headerLine = lines.first(where: { $0.hasPrefix("@@") }) ?? ""
+        var lineStart: Int?
+        if let range = headerLine.range(of: #"\+([0-9]+)"#, options: .regularExpression) {
+            let number = headerLine[range].dropFirst()
+            lineStart = Int(number)
+        }
+        let snippet = lines.first(where: {
+            ($0.hasPrefix("+") || $0.hasPrefix("-"))
+            && !$0.hasPrefix("+++")
+            && !$0.hasPrefix("---")
+        }) ?? lines.first(where: { !$0.hasPrefix("@@") && !$0.isEmpty }) ?? L10n("explain.evidence.none")
+
+        return ExplainEvidenceRef(
+            filePath: filePath,
+            snippet: snippet.trimmingCharacters(in: .whitespacesAndNewlines),
+            lineStart: lineStart
+        )
+    }
+
+    private func explainKind(forPath path: String, diff: String) -> ExplainNodeKind {
+        let lower = path.lowercased()
+        if lower.contains("/views/") || lower.contains("screen.swift") || lower.hasSuffix("view.swift") {
+            return .ui
+        }
+        if lower.contains("/services/") || lower.contains("viewmodel") || lower.contains("client.swift") {
+            return .service
+        }
+        if lower.contains("/models/") || lower.contains("localizable.strings") || lower.contains("/resources/") {
+            return .data
+        }
+        if lower.contains("package.swift") || lower.contains("/scripts/") || lower.contains("gitclient.swift") || lower.contains("repositoryworker.swift") {
+            return .infrastructure
+        }
+        if containsExternalSignal(diff: diff) || lower.contains("github") || lower.contains("api") || lower.contains("ntfy") {
+            return .external
+        }
+        return .other
+    }
+
+    private func containsExternalSignal(diff: String) -> Bool {
+        let lower = diff.lowercased()
+        return lower.contains("urlsession")
+            || lower.contains("https://")
+            || lower.contains("http://")
+            || lower.contains("api.")
+            || lower.contains("request(")
+    }
+
+    private func explainStableNodeID(prefix: String, raw: String) -> String {
+        let hash = SHA256.hash(data: Data(raw.utf8))
+            .map { String(format: "%02x", $0) }
+            .joined()
+        return "\(prefix).\(String(hash.prefix(12)))"
+    }
+
+    private func explainShortPath(_ path: String, components: Int) -> String {
+        let parts = path.split(separator: "/").map(String.init)
+        guard !parts.isEmpty else { return path }
+        if parts.count <= components {
+            return path
+        }
+        return parts.suffix(components).joined(separator: "/")
+    }
+
+    private func countChangedDiffLines(_ diff: String) -> Int {
+        let count = diff
+            .split(separator: "\n", omittingEmptySubsequences: true)
+            .filter {
+                ($0.hasPrefix("+") || $0.hasPrefix("-"))
+                && !$0.hasPrefix("+++")
+                && !$0.hasPrefix("---")
+            }
+            .count
+        return max(1, count)
+    }
+
+    private func extractHotSymbols(anchorDiffByFile: [String: String], limit: Int) -> [ExplainHotSymbol] {
+        var symbolHits: [String: Int] = [:]
+        var symbolFileHits: [String: [String: Int]] = [:]
+
+        for (filePath, diff) in anchorDiffByFile {
+            let symbols = extractSymbols(from: diff)
+            for symbol in symbols {
+                symbolHits[symbol, default: 0] += 1
+                var files = symbolFileHits[symbol] ?? [:]
+                files[filePath, default: 0] += 1
+                symbolFileHits[symbol] = files
+            }
+        }
+
+        return symbolHits
+            .sorted {
+                if $0.value != $1.value { return $0.value > $1.value }
+                return $0.key < $1.key
+            }
+            .prefix(limit)
+            .compactMap { entry in
+                let files = symbolFileHits[entry.key] ?? [:]
+                let filePath = files.max(by: { $0.value < $1.value })?.key ?? ""
+                guard !filePath.isEmpty else { return nil }
+                return ExplainHotSymbol(name: entry.key, filePath: filePath, count: entry.value)
+            }
+    }
+
+    private func extractSymbols(from diff: String) -> [String] {
+        let lines = diff.split(separator: "\n", omittingEmptySubsequences: true)
+        var symbols: [String] = []
+        let excluded: Set<String> = [
+            "if", "for", "while", "switch", "return", "guard", "catch", "where", "init",
+            "print", "true", "false", "nil", "self", "super", "await", "try"
+        ]
+        guard let declarationRegex = try? NSRegularExpression(
+            pattern: #"\b(?:func|class|struct|enum|protocol|extension)\s+([A-Za-z_][A-Za-z0-9_]*)"#
+        ), let callRegex = try? NSRegularExpression(
+            pattern: #"\b([A-Za-z_][A-Za-z0-9_]{2,})\s*\("#
+        ) else {
+            return []
+        }
+
+        var analyzedLineCount = 0
+
+        for rawLine in lines {
+            if analyzedLineCount >= 120 { break }
+            guard (rawLine.hasPrefix("+") || rawLine.hasPrefix("-")),
+                  !rawLine.hasPrefix("+++"),
+                  !rawLine.hasPrefix("---") else { continue }
+
+            let line = rawLine.dropFirst().trimmingCharacters(in: .whitespaces)
+            guard line.count <= 240, !line.hasPrefix("//"), !line.hasPrefix("#") else { continue }
+            analyzedLineCount += 1
+
+            let declarations = regexCaptureValues(in: line, regex: declarationRegex, group: 1)
+            for symbol in declarations where symbol.count >= 3 {
+                symbols.append(symbol)
+            }
+
+            let calls = regexCaptureValues(in: line, regex: callRegex, group: 1)
+            for symbol in calls where !excluded.contains(symbol.lowercased()) {
+                symbols.append(symbol)
+            }
+        }
+        return symbols
+    }
+
+    private func regexCaptureValues(in text: String, regex: NSRegularExpression, group: Int) -> [String] {
+        let range = NSRange(text.startIndex..<text.endIndex, in: text)
+        return regex.matches(in: text, range: range).compactMap { match in
+            guard match.numberOfRanges > group,
+                  let captureRange = Range(match.range(at: group), in: text) else {
+                return nil
+            }
+            return String(text[captureRange])
+        }
+    }
+
+    private func buildLocalGlossary(nodes: [ExplainNode]) -> [ExplainGlossaryTerm] {
+        var terms: [ExplainGlossaryTerm] = []
+        for node in nodes where node.kind != .commit && node.kind != .file && node.kind != .symbol {
+            let termID = node.kind.rawValue
+            let definition = defaultDefinition(for: node.kind)
+            terms.append(
+                ExplainGlossaryTerm(
+                    id: termID,
+                    term: node.title,
+                    definition: definition,
+                    evidence: Array(node.evidence.prefix(3))
+                )
+            )
+        }
+        return terms
+    }
+
+    private func defaultDefinition(for kind: ExplainNodeKind) -> String {
+        switch kind {
+        case .commit: return L10n("explain.term.commit.definition")
+        case .file: return L10n("explain.term.file.definition")
+        case .symbol: return L10n("explain.term.symbol.definition")
+        case .ui: return L10n("explain.term.ui.definition")
+        case .service: return L10n("explain.term.service.definition")
+        case .data: return L10n("explain.term.data.definition")
+        case .external: return L10n("explain.term.external.definition")
+        case .infrastructure: return L10n("explain.term.infrastructure.definition")
+        case .other: return L10n("explain.term.other.definition")
+        }
+    }
+
+    private func buildLocalStory(
+        commitSubject: String,
+        graph: ExplainGraph,
+        glossary: [ExplainGlossaryTerm],
+        diffStat: String,
+        delta: ExplainDelta
+    ) -> ExplainStory {
+        let terms = glossary.prefix(3).map { "[\($0.term)](zion-glossary://\($0.id))" }
+        let termsSentence = terms.isEmpty ? L10n("explain.story.noTerms") : terms.joined(separator: ", ")
+        let deltaLine = delta.impactNotes.first ?? L10n("explain.delta.none")
+        let markdown = """
+        \(L10n("explain.story.commitPrefix")) **\(commitSubject)**.
+
+        \(L10n("explain.story.flowPrefix")) \(termsSentence). \(L10n("explain.story.deltaPrefix")) \(deltaLine). \(L10n("explain.story.statPrefix")) \(diffStat.split(separator: "\n").first.map(String.init) ?? L10n("explain.story.statUnavailable"))
+        """
+        return ExplainStory(
+            title: L10n("explain.story.title"),
+            markdown: markdown,
+            generatedByAI: false,
+            generatedAt: Date()
+        )
+    }
+
+    private func mergeGlossary(
+        existing: [ExplainGlossaryTerm],
+        aiTerms: [ExplainAIEnrichment.Term],
+        graph: ExplainGraph
+    ) -> [ExplainGlossaryTerm] {
+        var byID: [String: ExplainGlossaryTerm] = Dictionary(uniqueKeysWithValues: existing.map { ($0.id, $0) })
+
+        for term in aiTerms {
+            let normalizedID = normalizeGlossaryID(term.id.isEmpty ? term.term : term.id)
+            let evidence = term.evidenceFiles.compactMap { file in
+                graph.nodes
+                    .flatMap(\.evidence)
+                    .first(where: { $0.filePath == file })
+            }
+            byID[normalizedID] = ExplainGlossaryTerm(
+                id: normalizedID,
+                term: term.term,
+                definition: term.definition,
+                evidence: evidence
+            )
+        }
+
+        return byID.values.sorted { $0.term.localizedCaseInsensitiveCompare($1.term) == .orderedAscending }
+    }
+
+    private func normalizeGlossaryID(_ raw: String) -> String {
+        let lower = raw.lowercased()
+        let scalars = lower.unicodeScalars.map { scalar -> Character in
+            if CharacterSet.alphanumerics.contains(scalar) {
+                return Character(scalar)
+            }
+            return "-"
+        }
+        let compact = String(scalars).replacingOccurrences(of: "-+", with: "-", options: .regularExpression)
+        return compact.trimmingCharacters(in: CharacterSet(charactersIn: "-"))
+    }
+
+    private func ensureGlossaryLinks(markdown: String, glossary: [ExplainGlossaryTerm]) -> String {
+        var output = markdown
+        for term in glossary {
+            if output.localizedCaseInsensitiveContains("zion-glossary://\(term.id)") {
+                continue
+            }
+            if let range = output.range(of: term.term, options: [.caseInsensitive]) {
+                output.replaceSubrange(range, with: "[\(term.term)](zion-glossary://\(term.id))")
+            }
+        }
+        return output
+    }
+
+    private func buildGraphSummary(_ graph: ExplainGraph) -> String {
+        let nodes = graph.nodes
+            .filter { $0.kind != .commit }
+            .map { "\($0.title): touched=\($0.touched), inferred=\($0.inferred), evidence=\($0.evidence.map(\.filePath).joined(separator: ", "))" }
+            .joined(separator: "\n")
+        let edges = graph.edges
+            .map { "\($0.from) -> \($0.to) (\($0.label)) inferred=\($0.inferred)" }
+            .joined(separator: "\n")
+        return """
+        Scope: \(graph.scopeMode.rawValue)
+        Anchor: \(graph.anchorCommitID)
+        Context commits: \(graph.contextCommitIDs.count)
+        Branch base: \(graph.branchBaseCommitID ?? "N/A")
+
+        Nodes:
+        \(nodes)
+
+        Edges:
+        \(edges)
+        """
+    }
+
+    private func buildExplainDelta(
+        anchorChanges: [ExplainChange],
+        highlightedKinds: Set<ExplainNodeKind>,
+        contextCommitCount: Int
+    ) -> ExplainDelta {
+        let added = anchorChanges.filter { $0.status.hasPrefix("A") }.map(\.path)
+        let removed = anchorChanges.filter { $0.status.hasPrefix("D") }.map(\.path)
+        let changed = anchorChanges
+            .filter { !$0.status.hasPrefix("A") && !$0.status.hasPrefix("D") }
+            .map(\.path)
+        let impact = [
+            L10n("explain.delta.impact.kinds", "\(highlightedKinds.count)"),
+            L10n("explain.delta.impact.context", "\(contextCommitCount)")
+        ]
+        var risks: [String] = []
+        if highlightedKinds.contains(.external) {
+            risks.append(L10n("explain.delta.risk.external"))
+        }
+        if highlightedKinds.contains(.infrastructure) {
+            risks.append(L10n("explain.delta.risk.infrastructure"))
+        }
+        if risks.isEmpty {
+            risks.append(L10n("explain.delta.risk.none"))
+        }
+        return ExplainDelta(
+            addedPaths: added,
+            changedPaths: changed,
+            removedPaths: removed,
+            impactNotes: impact,
+            riskNotes: risks
+        )
+    }
+
+    private func deltaSummaryText(_ delta: ExplainDelta?) -> String {
+        guard let delta else { return "" }
+        let added = delta.addedPaths.count
+        let changed = delta.changedPaths.count
+        let removed = delta.removedPaths.count
+        return "added=\(added), changed=\(changed), removed=\(removed), impact=\(delta.impactNotes.joined(separator: "; "))"
+    }
+
+    private func isSafeExplainCommitReference(_ value: String) -> Bool {
+        let cleaned = value.clean
+        guard !cleaned.isEmpty, !cleaned.hasPrefix("-"), cleaned.count <= 64 else {
+            return false
+        }
+        return cleaned.range(of: #"^[0-9a-fA-F]{7,64}$"#, options: .regularExpression) != nil
+    }
+
+    private func explainCacheKey(repositoryURL: URL, context: ExplainContextResolved) -> String {
+        let first = context.commitIDs.first ?? "-"
+        let last = context.commitIDs.last ?? "-"
+        let base = context.branchBaseCommitID ?? "-"
+        return "\(repositoryURL.path)#\(context.anchorCommitID)#\(context.mode.rawValue)#\(first)#\(last)#\(context.commitIDs.count)#\(base)"
+    }
+
+    private func explainCacheDirectory(repositoryURL: URL) -> URL? {
+        guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            return nil
+        }
+        let repoHash = SHA256.hash(data: Data(repositoryURL.path.utf8))
+            .map { String(format: "%02x", $0) }
+            .joined()
+        return appSupport
+            .appendingPathComponent("Zion", isDirectory: true)
+            .appendingPathComponent("ExplainCache", isDirectory: true)
+            .appendingPathComponent(repoHash, isDirectory: true)
+    }
+
+    private func explainCacheFileURL(repositoryURL: URL, cacheKey: String) -> URL? {
+        let keyHash = SHA256.hash(data: Data(cacheKey.utf8))
+            .map { String(format: "%02x", $0) }
+            .joined()
+        return explainCacheDirectory(repositoryURL: repositoryURL)?
+            .appendingPathComponent("\(keyHash).json")
+    }
+
+    private func loadExplainBundleFromDisk(repositoryURL: URL, cacheKey: String) -> ExplainCommitBundle? {
+        guard let fileURL = explainCacheFileURL(repositoryURL: repositoryURL, cacheKey: cacheKey) else {
+            return nil
+        }
+        guard let data = try? Data(contentsOf: fileURL) else {
+            return nil
+        }
+        guard let bundle = try? JSONDecoder().decode(ExplainCommitBundle.self, from: data) else {
+            return nil
+        }
+        guard bundle.schemaVersion == explainSchemaVersion else {
+            return nil
+        }
+        return bundle
+    }
+
+    private func persistExplainBundleToDisk(_ bundle: ExplainCommitBundle, repositoryURL: URL, cacheKey: String) {
+        guard let directory = explainCacheDirectory(repositoryURL: repositoryURL),
+              let fileURL = explainCacheFileURL(repositoryURL: repositoryURL, cacheKey: cacheKey) else {
+            return
+        }
+        do {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            let data = try JSONEncoder().encode(bundle)
+            try data.write(to: fileURL, options: .atomic)
+        } catch {
+            logger.log(.warn, "Explain cache write failed: \(error.localizedDescription)", context: fileURL.path, source: #function)
         }
     }
 
