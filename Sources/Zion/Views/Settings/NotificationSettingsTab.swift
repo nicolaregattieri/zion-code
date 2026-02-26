@@ -4,7 +4,6 @@ struct NotificationSettingsTab: View {
     @AppStorage("zion.ntfy.topic") private var ntfyTopic: String = ""
     @AppStorage("zion.ntfy.serverURL") private var ntfyServerURL: String = "https://ntfy.sh"
     @AppStorage("zion.ntfy.localNotifications") private var localNotifications: Bool = true
-    @AppStorage("zion.ntfy.externalAgents") private var externalAgentsEnabled: Bool = false
     @AppStorage("zion.prPollingInterval") private var prPollingInterval: Int = 5
     @AppStorage("zion.autoReviewAssignedPRs") private var autoReviewPRs: Bool = false
 
@@ -12,10 +11,20 @@ struct NotificationSettingsTab: View {
     @State private var isEditingTopic: Bool = false
     @State private var isTestingNtfy: Bool = false
 
+    // AI agent rules state
+    @State private var agentStates: [AIAgent: Bool] = [:]
+    @State private var consentAgent: AIAgent?
+    @State private var consentIsEnabling: Bool = true
+    @State private var showAgentConsentAlert: Bool = false
+
     private var isConfigured: Bool { !ntfyTopic.isEmpty }
     private var isTopicInputValid: Bool { NtfyClient.validateTopic(topicInput) }
     private var isServerURLValid: Bool { NtfyClient.validateServerURL(ntfyServerURL) }
     private var isCurrentConfigValid: Bool { NtfyClient.validateTopic(ntfyTopic) && isServerURLValid }
+
+    private var detectedAgents: [AIAgent] {
+        AIAgent.allCases.filter(\.isInstalled)
+    }
 
     var body: some View {
         Form {
@@ -126,6 +135,21 @@ struct NotificationSettingsTab: View {
                     }
                 }
 
+                Section(L10n("ntfy.agents.section")) {
+                    if detectedAgents.isEmpty {
+                        Text(L10n("ntfy.agents.none"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(detectedAgents) { agent in
+                            Toggle(agent.label, isOn: agentToggleBinding(for: agent))
+                        }
+                    }
+                    Text(L10n("ntfy.agents.hint"))
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+
                 Section(L10n("settings.notifications.test")) {
                     Button {
                         isTestingNtfy = true
@@ -167,7 +191,20 @@ struct NotificationSettingsTab: View {
         .formStyle(.grouped)
         .toggleStyle(SwitchToggleStyle(tint: DesignSystem.Colors.actionPrimary))
         .tint(DesignSystem.Colors.actionPrimary)
+        .onAppear { loadAgentStates() }
+        .alert(
+            L10n("ntfy.agents.consent.title"),
+            isPresented: $showAgentConsentAlert,
+            presenting: consentAgent
+        ) { agent in
+            Button(L10n("ntfy.agents.consent.allow")) { commitAgentChange(agent: agent, enable: consentIsEnabling) }
+            Button(L10n("Cancelar"), role: .cancel) { revertAgentToggle(agent: agent) }
+        } message: { agent in
+            Text(String(format: L10n("ntfy.agents.consent.message"), agent.label, agent.globalConfigURL.path))
+        }
     }
+
+    // MARK: - Topic
 
     private func saveTopic() {
         guard isTopicInputValid else { return }
@@ -175,6 +212,8 @@ struct NotificationSettingsTab: View {
         isEditingTopic = false
         NtfyClient.writeGlobalConfig(topic: ntfyTopic, serverURL: ntfyServerURL)
     }
+
+    // MARK: - Event Bindings
 
     private func ntfyEventBinding(for event: NtfyEvent) -> Binding<Bool> {
         Binding<Bool>(
@@ -192,5 +231,44 @@ struct NotificationSettingsTab: View {
                 UserDefaults.standard.set(events, forKey: "zion.ntfy.enabledEvents")
             }
         )
+    }
+
+    // MARK: - Agent Rules
+
+    private func loadAgentStates() {
+        for agent in AIAgent.allCases {
+            agentStates[agent] = AIAgentConfigManager.isGlobalRuleInstalled(for: agent)
+        }
+    }
+
+    private func agentToggleBinding(for agent: AIAgent) -> Binding<Bool> {
+        Binding<Bool>(
+            get: { agentStates[agent] ?? false },
+            set: { newValue in
+                // Optimistically update UI, then ask for consent if enabling
+                agentStates[agent] = newValue
+                if newValue {
+                    consentAgent = agent
+                    consentIsEnabling = true
+                    showAgentConsentAlert = true
+                } else {
+                    // Removal is always safe — no consent needed
+                    commitAgentChange(agent: agent, enable: false)
+                }
+            }
+        )
+    }
+
+    private func commitAgentChange(agent: AIAgent, enable: Bool) {
+        if enable {
+            AIAgentConfigManager.installGlobalRule(for: agent)
+        } else {
+            AIAgentConfigManager.removeGlobalRule(for: agent)
+        }
+        agentStates[agent] = enable
+    }
+
+    private func revertAgentToggle(agent: AIAgent) {
+        agentStates[agent] = AIAgentConfigManager.isGlobalRuleInstalled(for: agent)
     }
 }

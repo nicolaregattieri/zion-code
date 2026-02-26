@@ -489,9 +489,12 @@
 "ntfy.events.title" = "Eventos Notificados";
 "ntfy.test.button" = "Enviar Notificação de Teste";
 "ntfy.test.failed" = "Falha ao enviar notificação de teste. Verifique o tópico e a conexão.";
-"ntfy.agents.title" = "Agentes Externos";
-"ntfy.agents.description" = "Permite que agentes externos (CI, scripts) enviem notificações via ntfy usando seu tópico configurado.";
-"ntfy.agents.enable" = "Habilitar agentes externos";
+"ntfy.agents.section" = "Notificações de Agentes IA";
+"ntfy.agents.hint" = "Adiciona uma regra de notificação na config global de cada agente para que notifiquem via ntfy.";
+"ntfy.agents.none" = "Nenhum agente de código IA detectado neste sistema.";
+"ntfy.agents.consent.title" = "Permitir que Zion gerencie regras do agente?";
+"ntfy.agents.consent.message" = "Zion adicionará uma regra de notificação na config global de %@ em:\n\n%@\n\nVocê pode desativar a qualquer momento.";
+"ntfy.agents.consent.allow" = "Permitir";
 "ntfy.group.gitOps" = "Operações Git";
 "ntfy.group.ai" = "IA";
 "ntfy.group.github" = "GitHub";
