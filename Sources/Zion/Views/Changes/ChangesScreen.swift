@@ -6,6 +6,7 @@ struct ChangesScreen: View {
     @FocusState private var isFileListFocused: Bool
     @State private var selectedFileIndex: Int = -1
     @State private var hoveredFilePath: String?
+    @Environment(\.zionModeEnabled) private var zionModeEnabled
 
     var body: some View {
         DraggableSplitView(
@@ -252,6 +253,16 @@ struct ChangesScreen: View {
                 }.buttonStyle(.bordered).controlSize(.small)
             }
             .padding(12)
+
+            if zionModeEnabled && model.isExplainingDiff {
+                NeonProgressLine(
+                    gradient: DesignSystem.ZionMode.neonAIGradient,
+                    mode: .pulse
+                )
+                .padding(.horizontal, 12)
+                .padding(.top, 4)
+                .transition(.opacity.animation(.easeOut(duration: 0.3)))
+            }
 
             // Detailed diff explanation card (Phase 2)
             if let explanation = model.currentDiffExplanation {

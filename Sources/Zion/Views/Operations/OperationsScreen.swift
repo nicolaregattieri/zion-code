@@ -5,7 +5,8 @@ struct OperationsScreen: View {
     @Bindable var model: RepositoryViewModel
     let performGitAction: (String, String, Bool, @escaping () -> Void) -> Void
     let branchContextMenu: (String) -> AnyView
-    
+    @Environment(\.zionModeEnabled) private var zionModeEnabled
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
@@ -228,6 +229,15 @@ struct OperationsScreen: View {
                         .disabled(model.isGeneratingAIMessage)
                         .help(L10n("Sugerir divisao de commits com IA"))
                     }
+                }
+
+                if zionModeEnabled && model.isGeneratingAIMessage {
+                    NeonProgressLine(
+                        gradient: DesignSystem.ZionMode.neonAIGradient,
+                        mode: .pulse
+                    )
+                    .padding(.top, 4)
+                    .transition(.opacity.animation(.easeOut(duration: 0.3)))
                 }
 
                 // AI Code Review Results
