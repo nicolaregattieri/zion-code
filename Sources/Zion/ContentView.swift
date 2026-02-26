@@ -226,7 +226,7 @@ struct ContentView: View {
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
-            model.syncEditorSettingsFromDefaults()
+            model.syncSettingsFromDefaults()
         }
         .onChange(of: zenModeEnabled) { _, enabled in
             withAnimation(DesignSystem.Motion.panel) {

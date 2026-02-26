@@ -448,7 +448,7 @@
 "help.terminal.tabs" = "Multiple terminal tabs with live process status";
 "help.terminal.zoom" = "Independent zoom with Ctrl+/- and configurable font";
 "help.terminal.persistence" = "Terminals persist across repo switches with live change badges";
-"help.terminal.transparency" = "Optional background transparency with blur effect and adjustable opacity";
+"help.terminal.transparency" = "Background transparency with blur effect, automatically enabled in Zen Mode";
 
 // Clipboard
 "help.clipboard.capture" = "Automatically captures everything you copy to the clipboard";
@@ -979,9 +979,9 @@
 "settings.editor.formatting" = "Formatting";
 "settings.editor.formatOnSave" = "Format on Save";
 "settings.editor.jsonSortKeys" = "JSON: Sort keys";
-"settings.editor.terminal" = "Terminal";
-"settings.editor.terminalTransparency" = "Terminal Transparency";
-"settings.editor.terminalOpacity" = "Opacity";
+"fileBrowser.toggleHidden" = "Toggle Hidden Files";
+"settings.editor.fileBrowser" = "File Browser";
+"settings.editor.showDotfiles" = "Show Hidden Files (.env, .gitignore, etc.)";
 
 // Find/Replace
 "editor.search.placeholder" = "Find...";
@@ -1217,6 +1217,7 @@
 "help.code.filehistory" = "View commit history for any file with one click";
 "help.code.openwith" = "Open files from Finder (Open With) or drag-and-drop onto the editor";
 "help.code.format" = "Format code with ⇧⌥F — supports JSON, XML, HTML, CSS, JavaScript, Python, and more";
+"help.code.dotfiles" = "Smart file visibility: toggle dotfiles with eye button or ⇧⌘H. node_modules and .git always hidden for performance";
 
 // Zion Map — Pre-Commit Review
 "map.ai.precommit.title" = "Pre-Commit Review Gate";

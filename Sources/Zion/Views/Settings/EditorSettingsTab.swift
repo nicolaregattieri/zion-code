@@ -22,8 +22,7 @@ struct EditorSettingsTab: View {
     @AppStorage("editor.formatOnSave") private var formatOnSave: Bool = false
     @AppStorage("editor.jsonSortKeys") private var jsonSortKeys: Bool = false
 
-    @AppStorage("terminal.transparencyEnabled") private var transparencyEnabled: Bool = false
-    @AppStorage("terminal.opacity") private var terminalOpacity: Double = 0.92
+    @AppStorage("fileBrowser.showHiddenFiles") private var showDotfiles: Bool = true
 
     var body: some View {
         Form {
@@ -110,27 +109,16 @@ struct EditorSettingsTab: View {
                 }
             }
 
+            Section(L10n("settings.editor.fileBrowser")) {
+                Toggle(L10n("settings.editor.showDotfiles"), isOn: $showDotfiles)
+            }
+
             Section(L10n("settings.editor.formatting")) {
                 Toggle(L10n("settings.editor.formatOnSave"), isOn: $formatOnSave)
 
                 Toggle(L10n("settings.editor.jsonSortKeys"), isOn: $jsonSortKeys)
             }
 
-            Section(L10n("settings.editor.terminal")) {
-                Toggle(L10n("settings.editor.terminalTransparency"), isOn: $transparencyEnabled)
-
-                if transparencyEnabled {
-                    HStack {
-                        Text(L10n("settings.editor.terminalOpacity"))
-                        Spacer()
-                        Slider(value: $terminalOpacity, in: 0.5...1.0, step: 0.01)
-                            .frame(width: 120)
-                        Text(String(format: "%.0f%%", terminalOpacity * 100))
-                            .font(.system(size: 11, design: .monospaced))
-                            .frame(width: 36, alignment: .trailing)
-                    }
-                }
-            }
         }
         .formStyle(.grouped)
         .toggleStyle(SwitchToggleStyle(tint: DesignSystem.Colors.actionPrimary))

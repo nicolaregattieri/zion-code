@@ -289,8 +289,16 @@ struct FileItem: Identifiable, Hashable, Sendable {
     let url: URL
     let isDirectory: Bool
     let children: [FileItem]?
+    let isGitIgnored: Bool
     var id: String { url.path }
     var name: String { url.lastPathComponent }
+
+    init(url: URL, isDirectory: Bool, children: [FileItem]?, isGitIgnored: Bool = false) {
+        self.url = url
+        self.isDirectory = isDirectory
+        self.children = children
+        self.isGitIgnored = isGitIgnored
+    }
 }
 
 // MARK: - Diff Models

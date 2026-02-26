@@ -97,8 +97,8 @@ struct TerminalTabView: NSViewRepresentable {
         view.nativeForegroundColor = palette.foreground
         view.nativeBackgroundColor = transparentBackground ? NSColor.clear : palette.background
 
-        // ANSI 16-color palette
-        view.getTerminal().installPalette(colors: palette.ansiColors)
+        // ANSI 16-color palette (installColors clears attributed-string caches + forces full redraw)
+        view.installColors(palette.ansiColors)
 
         // Cursor
         view.caretColor = palette.cursorColor

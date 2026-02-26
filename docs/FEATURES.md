@@ -62,7 +62,7 @@
 |---------|-------------|----------|
 | Syntax Highlighting | NSTextView-based editor with regex caching | — |
 | Quick Open | Fuzzy file search overlay | `⌘P` |
-| File Browser | Tree view with `.gitignore` respect | `⌘B` toggle |
+| File Browser | Tree view with smart 3-tier visibility, `.gitignore` respect, and dotfile toggle | `⌘B` toggle / `⇧⌘H` dotfiles |
 | Git Blame | Inline per-line blame with author colors | `⇧⌘B` |
 | Multiple Tabs | Open/close files with tab bar | — |
 | Save File | Save current file to disk | `⌘S` |
@@ -108,7 +108,7 @@
 | Zoom In/Out | Independent terminal font size | `⌃+` / `⌃-` |
 | Font Settings | Configurable family and size | — |
 | Session Persistence | Terminal sessions persist across repo switches with live processes | — |
-| Transparency | Optional background transparency with blur effect and adjustable opacity (auto-enabled by Zion Mode) | Settings |
+| Transparency | Background transparency with blur effect, automatically enabled in Zen Mode | — |
 | Background Badges | Orange badge on recent repos showing changed file count | — |
 | Paste from Clipboard | Click clipboard item to paste | — |
 | Drag to Terminal | Drag clipboard items into terminal | — |
@@ -340,6 +340,7 @@
 | `⌃F` | Find alias in editor |
 | `⌘G` | Go to Line |
 | `⇧⌘R` | Code Review |
+| `⇧⌘H` | Toggle dotfiles visibility |
 | `⇧⌘B` | Toggle Git Blame |
 | `⇧⌥F` | Format Document |
 | `⌃⌘Z` | Toggle Zion Mode |

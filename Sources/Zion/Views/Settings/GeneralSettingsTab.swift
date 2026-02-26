@@ -41,7 +41,7 @@ struct GeneralSettingsTab: View {
                                     endPoint: .bottomTrailing
                                 )
                         )
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
                         .shadow(
                             color: zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(glowPulse ? 0.35 : 0.15) : .clear,
                             radius: glowPulse ? 6 : 3

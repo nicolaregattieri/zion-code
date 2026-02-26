@@ -136,7 +136,7 @@ struct AuthErrorSheet: View {
                     }
                     .padding(6)
                     .background(DesignSystem.Colors.glassOverlay)
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius))
                 }
             }
         }

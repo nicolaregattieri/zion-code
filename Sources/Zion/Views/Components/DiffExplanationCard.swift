@@ -113,8 +113,8 @@ struct DiffExplanationShimmer: View {
             }
 
             ForEach(0..<3, id: \.self) { i in
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Color.white.opacity(isAnimating ? 0.08 : 0.03))
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius)
+                    .fill(isAnimating ? DesignSystem.Colors.glassHover : DesignSystem.Colors.glassSubtle)
                     .frame(height: 12)
                     .frame(maxWidth: i == 2 ? 200 : .infinity)
             }

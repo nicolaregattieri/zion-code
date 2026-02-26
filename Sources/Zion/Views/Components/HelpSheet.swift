@@ -45,7 +45,7 @@ struct HelpSheet: View {
                     "help.code.tabsize", "help.code.columnruler",
                     "help.code.brackets", "help.code.indentguides", "help.code.repoconfig",
                     "help.code.filehistory", "help.code.openwith",
-                    "help.code.format"]
+                    "help.code.format", "help.code.dotfiles"]
         case .terminal:
             return ["help.terminal.pty", "help.terminal.splits", "help.terminal.tabs",
                     "help.terminal.zoom", "help.terminal.persistence",

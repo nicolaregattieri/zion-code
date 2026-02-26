@@ -186,14 +186,12 @@ final class RepositoryViewModel {
     var isExplainingDiff: Bool = false
     @ObservationIgnored private var explainDiffTask: Task<Void, Never>?
 
-    // Auto-explain setting (reads UserDefaults)
-    var autoExplainDiffs: Bool {
-        get { UserDefaults.standard.bool(forKey: "zion.autoExplainDiffs") }
-        set { UserDefaults.standard.set(newValue, forKey: "zion.autoExplainDiffs") }
+    // Auto-explain setting
+    var autoExplainDiffs: Bool = false {
+        didSet { UserDefaults.standard.set(autoExplainDiffs, forKey: "zion.autoExplainDiffs") }
     }
-    var diffExplanationDepth: DiffExplanationDepth {
-        get { DiffExplanationDepth(rawValue: UserDefaults.standard.string(forKey: "zion.diffExplanationDepth") ?? "quick") ?? .quick }
-        set { UserDefaults.standard.set(newValue.rawValue, forKey: "zion.diffExplanationDepth") }
+    var diffExplanationDepth: DiffExplanationDepth = .quick {
+        didSet { UserDefaults.standard.set(diffExplanationDepth.rawValue, forKey: "zion.diffExplanationDepth") }
     }
 
     // Submodule state
@@ -225,18 +223,11 @@ final class RepositoryViewModel {
     var isSplitVisible: Bool = false
 
     // Pre-Commit AI Review Gate
-    var preCommitReviewEnabled: Bool {
-        get { UserDefaults.standard.bool(forKey: "zion.preCommitReview") }
-        set { UserDefaults.standard.set(newValue, forKey: "zion.preCommitReview") }
+    var preCommitReviewEnabled: Bool = false {
+        didSet { UserDefaults.standard.set(preCommitReviewEnabled, forKey: "zion.preCommitReview") }
     }
-    var aiTransferSupportHintsEnabled: Bool {
-        get {
-            if UserDefaults.standard.object(forKey: "zion.aiTransferSupportHints") == nil {
-                return true
-            }
-            return UserDefaults.standard.bool(forKey: "zion.aiTransferSupportHints")
-        }
-        set { UserDefaults.standard.set(newValue, forKey: "zion.aiTransferSupportHints") }
+    var aiTransferSupportHintsEnabled: Bool = true {
+        didSet { UserDefaults.standard.set(aiTransferSupportHintsEnabled, forKey: "zion.aiTransferSupportHints") }
     }
     var preCommitReviewPending: Bool = false
     @ObservationIgnored private var preCommitDiffHash: String = ""
@@ -339,9 +330,8 @@ final class RepositoryViewModel {
         }
     }
 
-    var ntfyLocalNotificationsEnabled: Bool {
-        get { UserDefaults.standard.object(forKey: "zion.ntfy.localNotifications") as? Bool ?? true }
-        set { UserDefaults.standard.set(newValue, forKey: "zion.ntfy.localNotifications") }
+    var ntfyLocalNotificationsEnabled: Bool = true {
+        didSet { UserDefaults.standard.set(ntfyLocalNotificationsEnabled, forKey: "zion.ntfy.localNotifications") }
     }
 
     var isNtfyConfigured: Bool { !ntfyTopic.isEmpty }
@@ -462,12 +452,15 @@ final class RepositoryViewModel {
         MonospaceFontResolver.isAvailable(name: terminalFontFamily)
     }
 
-    // Terminal transparency settings
-    var terminalTransparencyEnabled: Bool = false {
-        didSet { UserDefaults.standard.set(terminalTransparencyEnabled, forKey: "terminal.transparencyEnabled") }
-    }
     var terminalOpacity: Double = 0.92 {
         didSet { UserDefaults.standard.set(terminalOpacity, forKey: "terminal.opacity") }
+    }
+
+    var showDotfiles: Bool = true {
+        didSet {
+            UserDefaults.standard.set(showDotfiles, forKey: "fileBrowser.showHiddenFiles")
+            refreshFileTree()
+        }
     }
 
     var branchInput: String = ""
@@ -652,9 +645,6 @@ final class RepositoryViewModel {
             terminalFontFamily = MonospaceFontResolver.migratedTerminalName(family)
         }
         // Terminal transparency settings
-        if defaults.object(forKey: "terminal.transparencyEnabled") != nil {
-            terminalTransparencyEnabled = defaults.bool(forKey: "terminal.transparencyEnabled")
-        }
         if defaults.object(forKey: "terminal.opacity") != nil {
             terminalOpacity = defaults.double(forKey: "terminal.opacity")
         }
@@ -687,6 +677,27 @@ final class RepositoryViewModel {
         if let agents = defaults.stringArray(forKey: "zion.ntfy.selectedAgents") {
             ntfySelectedAgents = agents
         }
+        if defaults.object(forKey: "zion.ntfy.localNotifications") != nil {
+            ntfyLocalNotificationsEnabled = defaults.bool(forKey: "zion.ntfy.localNotifications")
+        }
+        // AI review settings
+        if defaults.object(forKey: "zion.preCommitReview") != nil {
+            preCommitReviewEnabled = defaults.bool(forKey: "zion.preCommitReview")
+        }
+        if defaults.object(forKey: "zion.autoExplainDiffs") != nil {
+            autoExplainDiffs = defaults.bool(forKey: "zion.autoExplainDiffs")
+        }
+        if let depthRaw = defaults.string(forKey: "zion.diffExplanationDepth"),
+           let depth = DiffExplanationDepth(rawValue: depthRaw) {
+            diffExplanationDepth = depth
+        }
+        if defaults.object(forKey: "zion.aiTransferSupportHints") != nil {
+            aiTransferSupportHintsEnabled = defaults.bool(forKey: "zion.aiTransferSupportHints")
+        }
+        // File browser
+        if defaults.object(forKey: "fileBrowser.showHiddenFiles") != nil {
+            showDotfiles = defaults.bool(forKey: "fileBrowser.showHiddenFiles")
+        }
     }
 
     enum RestoreLastRepositoryResult {
@@ -714,9 +725,11 @@ final class RepositoryViewModel {
         return FileManager.default.fileExists(atPath: lastURL.path)
     }
 
-    /// Sync editor settings from UserDefaults (called when Settings window changes values via @AppStorage)
-    func syncEditorSettingsFromDefaults() {
+    /// Sync all settings from UserDefaults (called when Settings window changes values via @AppStorage)
+    func syncSettingsFromDefaults() {
         let defaults = UserDefaults.standard
+
+        // MARK: Editor settings
         if let themeRaw = defaults.string(forKey: "editor.theme"),
            let theme = EditorTheme(rawValue: themeRaw), theme != selectedTheme {
             selectedTheme = theme
@@ -754,6 +767,70 @@ final class RepositoryViewModel {
         if bph != editorBracketPairHighlight { editorBracketPairHighlight = bph }
         let sig = defaults.bool(forKey: "editor.showIndentGuides")
         if sig != editorShowIndentGuides { editorShowIndentGuides = sig }
+        let fos = defaults.bool(forKey: "editor.formatOnSave")
+        if fos != editorFormatOnSave { editorFormatOnSave = fos }
+        let jsk = defaults.bool(forKey: "editor.jsonSortKeys")
+        if jsk != editorJsonSortKeys { editorJsonSortKeys = jsk }
+
+        // MARK: Terminal settings
+        let tfs = defaults.double(forKey: "terminal.fontSize")
+        if tfs > 0 && tfs != terminalFontSize { terminalFontSize = tfs }
+        if let tFamily = defaults.string(forKey: "terminal.fontFamily") {
+            let migrated = MonospaceFontResolver.migratedTerminalName(tFamily)
+            if migrated != terminalFontFamily { terminalFontFamily = migrated }
+        }
+        if defaults.object(forKey: "terminal.opacity") != nil {
+            let top = defaults.double(forKey: "terminal.opacity")
+            if top != terminalOpacity { terminalOpacity = top }
+        }
+
+        // MARK: AI settings
+        if let aiRaw = defaults.string(forKey: "zion.aiProvider"),
+           let provider = AIProvider(rawValue: aiRaw), provider != aiProvider {
+            aiProvider = provider
+        }
+        if let styleRaw = defaults.string(forKey: "zion.commitMessageStyle"),
+           let style = CommitMessageStyle(rawValue: styleRaw), style != commitMessageStyle {
+            commitMessageStyle = style
+        }
+        let pcr = defaults.bool(forKey: "zion.preCommitReview")
+        if pcr != preCommitReviewEnabled { preCommitReviewEnabled = pcr }
+        let aed = defaults.bool(forKey: "zion.autoExplainDiffs")
+        if aed != autoExplainDiffs { autoExplainDiffs = aed }
+        if let depthRaw = defaults.string(forKey: "zion.diffExplanationDepth"),
+           let depth = DiffExplanationDepth(rawValue: depthRaw), depth != diffExplanationDepth {
+            diffExplanationDepth = depth
+        }
+        if defaults.object(forKey: "zion.aiTransferSupportHints") != nil {
+            let ath = defaults.bool(forKey: "zion.aiTransferSupportHints")
+            if ath != aiTransferSupportHintsEnabled { aiTransferSupportHintsEnabled = ath }
+        }
+
+        // MARK: ntfy settings
+        if let topic = defaults.string(forKey: "zion.ntfy.topic"), topic != ntfyTopic {
+            ntfyTopic = topic
+        }
+        if let server = defaults.string(forKey: "zion.ntfy.serverURL"), !server.isEmpty, server != ntfyServerURL {
+            ntfyServerURL = server
+        }
+        if let events = defaults.stringArray(forKey: "zion.ntfy.enabledEvents"), events != ntfyEnabledEvents {
+            ntfyEnabledEvents = events
+        }
+        let nea = defaults.bool(forKey: "zion.ntfy.externalAgents")
+        if nea != ntfyExternalAgentsEnabled { ntfyExternalAgentsEnabled = nea }
+        if let agents = defaults.stringArray(forKey: "zion.ntfy.selectedAgents"), agents != ntfySelectedAgents {
+            ntfySelectedAgents = agents
+        }
+        if defaults.object(forKey: "zion.ntfy.localNotifications") != nil {
+            let nln = defaults.bool(forKey: "zion.ntfy.localNotifications")
+            if nln != ntfyLocalNotificationsEnabled { ntfyLocalNotificationsEnabled = nln }
+        }
+
+        // MARK: File browser
+        if defaults.object(forKey: "fileBrowser.showHiddenFiles") != nil {
+            let sd = defaults.bool(forKey: "fileBrowser.showHiddenFiles")
+            if sd != showDotfiles { showDotfiles = sd }
+        }
     }
 
     // MARK: - ntfy Helpers
@@ -1253,22 +1330,27 @@ final class RepositoryViewModel {
     private func updateTree(_ items: [FileItem], path: String, newChildren: [FileItem]) -> [FileItem] {
         items.map { item in
             if item.id == path {
-                return FileItem(url: item.url, isDirectory: item.isDirectory, children: newChildren)
+                return FileItem(url: item.url, isDirectory: item.isDirectory, children: newChildren, isGitIgnored: item.isGitIgnored)
             }
             if let children = item.children {
                 return FileItem(url: item.url, isDirectory: item.isDirectory,
-                              children: updateTree(children, path: path, newChildren: newChildren))
+                              children: updateTree(children, path: path, newChildren: newChildren), isGitIgnored: item.isGitIgnored)
             }
             return item
         }
     }
 
-    private static let ignoredDirectories: Set<String> = [
-        "node_modules", ".build", ".git", "dist", "__pycache__", ".next", "build",
-        ".swiftpm", ".DS_Store", "Pods", ".gradle", ".idea", ".vscode",
-        "DerivedData", ".cache", "vendor", ".eggs", "*.egg-info",
-        ".tox", ".mypy_cache", ".pytest_cache", "coverage", ".nuxt",
-        ".output", ".turbo", ".vercel", ".expo"
+    // Always hidden — performance/safety, never hand-edited
+    private static let alwaysHiddenEntries: Set<String> = [
+        "node_modules", ".git", ".DS_Store", "__pycache__", "DerivedData",
+        ".build", ".swiftpm", "Pods", ".gradle", ".tox",
+        ".mypy_cache", ".pytest_cache"
+    ]
+
+    // Build/tool directories — hidden by default
+    private static let toolDirectories: Set<String> = [
+        "dist", "build", ".next", ".turbo", ".vercel", ".expo",
+        ".nuxt", ".output", "coverage", ".cache", "vendor", ".idea", ".vscode"
     ]
 
     private func loadGitIgnoredPaths() async -> Set<String> {
@@ -1292,16 +1374,18 @@ final class RepositoryViewModel {
     private func loadFiles(at url: URL, ignoredPaths: Set<String>? = nil, maxDepth: Int = .max) async -> [FileItem] {
         let fm = FileManager.default
         do {
-            let contents = try fm.contentsOfDirectory(at: url, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
+            let options: FileManager.DirectoryEnumerationOptions = showDotfiles ? [] : [.skipsHiddenFiles]
+            let contents = try fm.contentsOfDirectory(at: url, includingPropertiesForKeys: [.isDirectoryKey], options: options)
             var items: [FileItem] = []
             for item in contents {
                 let name = item.lastPathComponent
 
-                // Skip hardcoded ignored directories
-                if Self.ignoredDirectories.contains(name) { continue }
+                // Skip always-hidden entries (node_modules, .git, etc.)
+                if Self.alwaysHiddenEntries.contains(name) || name.hasSuffix(".egg-info") { continue }
+                // Skip build/tool directories
+                if Self.toolDirectories.contains(name) { continue }
 
-                // Skip git-ignored paths
-                if let ignored = ignoredPaths, ignored.contains(item.path) { continue }
+                let isIgnored = ignoredPaths?.contains(item.path) ?? false
 
                 let isDir = (try? item.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
                 let children: [FileItem]?
@@ -1312,7 +1396,7 @@ final class RepositoryViewModel {
                 } else {
                     children = nil
                 }
-                items.append(FileItem(url: item, isDirectory: isDir, children: children?.sorted(by: { $0.name.lowercased() < $1.name.lowercased() })))
+                items.append(FileItem(url: item, isDirectory: isDir, children: children?.sorted(by: { $0.name.lowercased() < $1.name.lowercased() }), isGitIgnored: isIgnored))
             }
             return items.sorted { a, b in
                 if a.isDirectory != b.isDirectory { return a.isDirectory }
@@ -1717,7 +1801,7 @@ final class RepositoryViewModel {
             try FileManager.default.moveItem(at: item.url, to: newURL)
             // Update tab if open
             if let idx = openedFiles.firstIndex(where: { $0.id == item.id }) {
-                let newItem = FileItem(url: newURL, isDirectory: item.isDirectory, children: item.children)
+                let newItem = FileItem(url: newURL, isDirectory: item.isDirectory, children: item.children, isGitIgnored: item.isGitIgnored)
                 openedFiles[idx] = newItem
                 if activeFileID == item.id {
                     activeFileID = newItem.id
