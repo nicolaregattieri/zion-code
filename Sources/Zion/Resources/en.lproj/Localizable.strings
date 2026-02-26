@@ -587,9 +587,12 @@
 "ntfy.events.title" = "Notified Events";
 "ntfy.test.button" = "Send Test Notification";
 "ntfy.test.failed" = "Failed to send test notification. Check your topic and connection.";
-"ntfy.agents.title" = "External Agents";
-"ntfy.agents.description" = "Allow external agents (CI, scripts) to send notifications via ntfy using your configured topic.";
-"ntfy.agents.enable" = "Enable external agents";
+"ntfy.agents.section" = "AI Agent Notifications";
+"ntfy.agents.hint" = "Adds a notification rule to each agent's global config so they notify you via ntfy.";
+"ntfy.agents.none" = "No AI coding agents detected on this system.";
+"ntfy.agents.consent.title" = "Allow Zion to manage agent rules?";
+"ntfy.agents.consent.message" = "Zion will add a notification rule to %@'s global config at:\n\n%@\n\nYou can disable this at any time.";
+"ntfy.agents.consent.allow" = "Allow";
 "ntfy.group.gitOps" = "Git Operations";
 "ntfy.group.ai" = "AI";
 "ntfy.group.github" = "GitHub";

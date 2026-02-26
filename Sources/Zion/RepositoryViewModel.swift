@@ -317,18 +317,6 @@ final class RepositoryViewModel {
     var ntfyEnabledEvents: [String] = NtfyEvent.defaultEnabledEvents {
         didSet { UserDefaults.standard.set(ntfyEnabledEvents, forKey: "zion.ntfy.enabledEvents") }
     }
-    var ntfyExternalAgentsEnabled: Bool = false {
-        didSet {
-            UserDefaults.standard.set(ntfyExternalAgentsEnabled, forKey: "zion.ntfy.externalAgents")
-            syncAIAgentConfigs()
-        }
-    }
-    var ntfySelectedAgents: [String] = [] {
-        didSet {
-            UserDefaults.standard.set(ntfySelectedAgents, forKey: "zion.ntfy.selectedAgents")
-            syncAIAgentConfigs()
-        }
-    }
 
     var ntfyLocalNotificationsEnabled: Bool = true {
         didSet { UserDefaults.standard.set(ntfyLocalNotificationsEnabled, forKey: "zion.ntfy.localNotifications") }
@@ -671,12 +659,6 @@ final class RepositoryViewModel {
         if let events = defaults.stringArray(forKey: "zion.ntfy.enabledEvents") {
             ntfyEnabledEvents = events
         }
-        if defaults.object(forKey: "zion.ntfy.externalAgents") != nil {
-            ntfyExternalAgentsEnabled = defaults.bool(forKey: "zion.ntfy.externalAgents")
-        }
-        if let agents = defaults.stringArray(forKey: "zion.ntfy.selectedAgents") {
-            ntfySelectedAgents = agents
-        }
         if defaults.object(forKey: "zion.ntfy.localNotifications") != nil {
             ntfyLocalNotificationsEnabled = defaults.bool(forKey: "zion.ntfy.localNotifications")
         }
@@ -816,11 +798,6 @@ final class RepositoryViewModel {
         if let events = defaults.stringArray(forKey: "zion.ntfy.enabledEvents"), events != ntfyEnabledEvents {
             ntfyEnabledEvents = events
         }
-        let nea = defaults.bool(forKey: "zion.ntfy.externalAgents")
-        if nea != ntfyExternalAgentsEnabled { ntfyExternalAgentsEnabled = nea }
-        if let agents = defaults.stringArray(forKey: "zion.ntfy.selectedAgents"), agents != ntfySelectedAgents {
-            ntfySelectedAgents = agents
-        }
         if defaults.object(forKey: "zion.ntfy.localNotifications") != nil {
             let nln = defaults.bool(forKey: "zion.ntfy.localNotifications")
             if nln != ntfyLocalNotificationsEnabled { ntfyLocalNotificationsEnabled = nln }
@@ -842,6 +819,17 @@ final class RepositoryViewModel {
         }
     }
 
+    /// One-time migration: remove old per-repo ntfy blocks injected by previous versions.
+    private func migratePerRepoNtfyBlocks(repoPath: URL) {
+        let key = "zion.ntfy.migratedRepos"
+        var migrated = UserDefaults.standard.stringArray(forKey: key) ?? []
+        let repoID = repoPath.path
+        guard !migrated.contains(repoID) else { return }
+        AIAgentConfigManager.removeLegacyRepoBlocks(repoPath: repoPath)
+        migrated.append(repoID)
+        UserDefaults.standard.set(migrated, forKey: key)
+    }
+
     func notifyPRCreated(title: String, url: String) {
         let repoName = repositoryURL?.lastPathComponent ?? ""
         Task {
@@ -851,24 +839,6 @@ final class RepositoryViewModel {
                 body: "\(title)\n\(url)",
                 repoName: repoName
             )
-        }
-    }
-
-    func syncAIAgentConfigs() {
-        guard let repoPath = repositoryURL else { return }
-        let selectedAgents = ntfySelectedAgents.compactMap { AIAgent(rawValue: $0) }
-        let hasValidNtfyConfig = NtfyClient.validateTopic(ntfyTopic) && NtfyClient.validateServerURL(ntfyServerURL)
-
-        if ntfyExternalAgentsEnabled && hasValidNtfyConfig && !selectedAgents.isEmpty {
-            AIAgentConfigManager.updateNtfyBlock(
-                agents: selectedAgents,
-                topic: ntfyTopic,
-                serverURL: ntfyServerURL,
-                repoPath: repoPath
-            )
-        } else {
-            // Remove from all agents when disabled
-            AIAgentConfigManager.removeNtfyBlock(agents: AIAgent.allCases, repoPath: repoPath)
         }
     }
 
@@ -902,6 +872,7 @@ final class RepositoryViewModel {
 
         repositoryURL = url
         repoEditorConfig = EditorConfig.load(from: url)
+        migratePerRepoNtfyBlocks(repoPath: url)
         saveRecentRepository(url)
         commitLimit = defaultCommitLimit(for: nil)
         worktreeNameInput = ""
