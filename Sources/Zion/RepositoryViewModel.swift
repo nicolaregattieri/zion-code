@@ -462,6 +462,14 @@ final class RepositoryViewModel {
         MonospaceFontResolver.isAvailable(name: terminalFontFamily)
     }
 
+    // Terminal transparency settings
+    var terminalTransparencyEnabled: Bool = false {
+        didSet { UserDefaults.standard.set(terminalTransparencyEnabled, forKey: "terminal.transparencyEnabled") }
+    }
+    var terminalOpacity: Double = 0.92 {
+        didSet { UserDefaults.standard.set(terminalOpacity, forKey: "terminal.opacity") }
+    }
+
     var branchInput: String = ""
     var tagInput: String = ""
     var stashMessageInput: String = ""
@@ -642,6 +650,13 @@ final class RepositoryViewModel {
         }
         if let family = defaults.string(forKey: "terminal.fontFamily") {
             terminalFontFamily = MonospaceFontResolver.migratedTerminalName(family)
+        }
+        // Terminal transparency settings
+        if defaults.object(forKey: "terminal.transparencyEnabled") != nil {
+            terminalTransparencyEnabled = defaults.bool(forKey: "terminal.transparencyEnabled")
+        }
+        if defaults.object(forKey: "terminal.opacity") != nil {
+            terminalOpacity = defaults.double(forKey: "terminal.opacity")
         }
         // AI provider
         if let aiRaw = defaults.string(forKey: "zion.aiProvider"),
@@ -4984,8 +4999,8 @@ final class RepositoryViewModel {
                         return
                     }
 
-                    let logOutput = try await worker.runAction(args: ["log", "--oneline", "-10"], in: url)
-                    let recentMessages = logOutput.split(separator: "\n").map { line in
+                    let logOutput = try? await worker.runAction(args: ["log", "--oneline", "-10"], in: url)
+                    let recentMessages = (logOutput ?? "").split(separator: "\n").map { line in
                         let parts = line.split(separator: " ", maxSplits: 1)
                         return parts.count > 1 ? String(parts[1]) : String(line)
                     }

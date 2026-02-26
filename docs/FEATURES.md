@@ -108,6 +108,7 @@
 | Zoom In/Out | Independent terminal font size | `⌃+` / `⌃-` |
 | Font Settings | Configurable family and size | — |
 | Session Persistence | Terminal sessions persist across repo switches with live processes | — |
+| Transparency | Optional background transparency with blur effect and adjustable opacity (auto-enabled by Zion Mode) | Settings |
 | Background Badges | Orange badge on recent repos showing changed file count | — |
 | Paste from Clipboard | Click clipboard item to paste | — |
 | Drag to Terminal | Drag clipboard items into terminal | — |

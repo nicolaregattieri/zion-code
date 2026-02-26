@@ -150,8 +150,13 @@ struct CodeScreen: View {
     @State private var symbolResultsQuery: String = ""
     @State private var symbolResults: [EditorSymbolLocation] = []
 
-    /// Ghostty-style terminal: slight transparency + blur when Zion Mode + Zen Mode are both active
-    private var isGhosttyTerminal: Bool { isZenMode && zionModeEnabled }
+    @AppStorage("terminal.transparencyEnabled") private var transparencyEnabled: Bool = false
+    @AppStorage("terminal.opacity") private var terminalOpacity: Double = 0.92
+
+    /// Ghostty-style terminal transparency: enabled via Settings toggle or automatically by Zion Mode
+    private var isTerminalTransparent: Bool {
+        transparencyEnabled || zionModeEnabled
+    }
 
     var body: some View {
         ZStack {
@@ -1480,15 +1485,15 @@ struct CodeScreen: View {
                             fontFamily: model.terminalFontFamily,
                             focusedSessionID: model.focusedSessionID,
                             model: model,
-                            transparentBackground: isGhosttyTerminal
+                            transparentBackground: isTerminalTransparent
                         )
                         .opacity(tab.id == model.activeTabID ? 1 : 0)
                         .allowsHitTesting(tab.id == model.activeTabID)
                     }
                 }
             }
-            .padding(.horizontal, isGhosttyTerminal ? 16 : 8)
-            .padding(.bottom, isGhosttyTerminal ? 12 : 16)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 12)
             .dropDestination(for: String.self) { items, _ in
                 guard let text = items.first, !text.isEmpty else { return false }
                 model.sendTextToActiveTerminal(text)
@@ -1496,12 +1501,12 @@ struct CodeScreen: View {
                 return true
             }
         }
-        .padding(.top, isGhosttyTerminal ? 12 : 0)
+        .padding(.top, 12)
         .background {
-            if isGhosttyTerminal {
+            if isTerminalTransparent {
                 ZStack {
                     VisualEffectBlur(material: .hudWindow, blendingMode: .behindWindow)
-                    model.selectedTheme.terminalPalette.backgroundSwiftUI.opacity(0.92)
+                    model.selectedTheme.terminalPalette.backgroundSwiftUI.opacity(terminalOpacity)
                 }
             } else {
                 model.selectedTheme.terminalPalette.backgroundSwiftUI
