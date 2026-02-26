@@ -3,6 +3,19 @@ import SwiftUI
 struct ExplainFlowScreen: View {
     @Bindable var model: RepositoryViewModel
 
+    private enum VisualMode: String, CaseIterable, Identifiable {
+        case guided
+        case full
+
+        var id: String { rawValue }
+        var title: String {
+            switch self {
+            case .guided: return L10n("zionflow.visual.guided")
+            case .full: return L10n("zionflow.visual.full")
+            }
+        }
+    }
+
     private enum DetailTab: String, CaseIterable, Identifiable {
         case delta
         case story
@@ -20,8 +33,9 @@ struct ExplainFlowScreen: View {
 
     @State private var splitRatio: CGFloat = 0.64
     @State private var selectedNodeID: String?
-    @State private var detailTab: DetailTab = .delta
+    @State private var detailTab: DetailTab = .story
     @State private var isGuideExpanded: Bool = true
+    @State private var visualMode: VisualMode = .guided
 
     private var selectedTerm: ExplainGlossaryTerm? {
         if let id = model.explainSelectedTermID {
@@ -178,14 +192,36 @@ struct ExplainFlowScreen: View {
     }
 
     private func graphPane(graph: ExplainGraph) -> some View {
-        GlassCard(spacing: 12) {
+        let display = displayGraphData(for: graph)
+        return GlassCard(spacing: 12) {
             CardHeader(L10n("explain.graph.title"), icon: "point.3.filled.connected.trianglepath.dotted")
+            HStack(spacing: 10) {
+                Picker("", selection: $visualMode) {
+                    ForEach(VisualMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 220)
+
+                Text(
+                    visualMode == .guided
+                        ? L10n("zionflow.visual.hint.guided")
+                        : L10n("zionflow.visual.hint.full")
+                )
+                .font(.system(size: 10))
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+                Spacer(minLength: 0)
+            }
             GeometryReader { geo in
-                let positions = nodePositions(for: graph.nodes, in: geo.size)
-                let highlighted = Set(graph.highlightedNodeIDs)
+                let positions = visualMode == .guided
+                    ? guidedNodePositions(for: display.nodes, in: geo.size)
+                    : nodePositions(for: display.nodes, in: geo.size)
+                let highlighted = Set(display.highlightedNodeIDs)
                 ZStack {
                     Canvas { context, _ in
-                        for edge in graph.edges {
+                        for edge in display.edges {
                             guard let from = positions[edge.from], let to = positions[edge.to] else { continue }
                             var path = Path()
                             path.move(to: from)
@@ -203,7 +239,7 @@ struct ExplainFlowScreen: View {
                         }
                     }
 
-                    ForEach(graph.nodes) { node in
+                    ForEach(display.nodes) { node in
                         let point = positions[node.id] ?? .zero
                         let isHighlighted = highlighted.contains(node.id)
                         let isSelected = selectedNodeID == node.id
@@ -211,6 +247,8 @@ struct ExplainFlowScreen: View {
                             switch node.kind {
                             case .symbol: return 160
                             case .file: return 200
+                            case .operation: return 170
+                            case .insight: return 220
                             default: return 210
                             }
                         }()
@@ -253,7 +291,7 @@ struct ExplainFlowScreen: View {
                     }
                 }
             }
-            .frame(minHeight: 420)
+            .frame(minHeight: visualMode == .guided ? 520 : 420)
         }
     }
 
@@ -483,6 +521,69 @@ struct ExplainFlowScreen: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+
+    private func displayGraphData(for graph: ExplainGraph) -> (nodes: [ExplainNode], edges: [ExplainEdge], highlightedNodeIDs: [String]) {
+        guard visualMode == .guided else {
+            return (graph.nodes, graph.edges, graph.highlightedNodeIDs)
+        }
+
+        let guidedKinds: Set<ExplainNodeKind> = [.commit, .operation, .file, .symbol, .insight]
+        var keepIDs: Set<String> = []
+        if graph.nodes.contains(where: { $0.id == "commit.anchor" }) {
+            keepIDs.insert("commit.anchor")
+        }
+        if graph.nodes.contains(where: { $0.id == "commit.base" }) {
+            keepIDs.insert("commit.base")
+        }
+        if let contextCommit = graph.nodes.first(where: { $0.id.hasPrefix("commit.ctx.") }) {
+            keepIDs.insert(contextCommit.id)
+        }
+        for node in graph.nodes where guidedKinds.contains(node.kind) && node.kind != .commit {
+            keepIDs.insert(node.id)
+        }
+
+        let nodes = graph.nodes.filter { keepIDs.contains($0.id) }
+        let edges = graph.edges
+            .filter { keepIDs.contains($0.from) && keepIDs.contains($0.to) }
+            .filter { edge in
+                !edge.inferred || edge.to.hasPrefix("insight.") || edge.from == "commit.base"
+            }
+        let highlighted = graph.highlightedNodeIDs.filter { keepIDs.contains($0) }
+        return (nodes, edges, highlighted)
+    }
+
+    private func guidedNodePositions(for nodes: [ExplainNode], in size: CGSize) -> [String: CGPoint] {
+        var positions: [String: CGPoint] = [:]
+        let commitNodes = nodes.filter { $0.kind == .commit }
+        let operationNodes = nodes.filter { $0.kind == .operation }
+        let fileNodes = nodes.filter { $0.kind == .file }
+        let symbolNodes = nodes.filter { $0.kind == .symbol }
+        let insightNodes = nodes.filter { $0.kind == .insight }
+
+        func placeRow(_ rowNodes: [ExplainNode], yRatio: CGFloat, minXRatio: CGFloat = 0.16, maxXRatio: CGFloat = 0.92) {
+            guard !rowNodes.isEmpty else { return }
+            if rowNodes.count == 1, let single = rowNodes.first {
+                positions[single.id] = CGPoint(x: size.width * 0.54, y: size.height * yRatio)
+                return
+            }
+            let minX = size.width * minXRatio
+            let maxX = size.width * maxXRatio
+            let step = (maxX - minX) / CGFloat(max(1, rowNodes.count - 1))
+            for (index, node) in rowNodes.enumerated() {
+                positions[node.id] = CGPoint(
+                    x: minX + CGFloat(index) * step,
+                    y: size.height * yRatio
+                )
+            }
+        }
+
+        placeRow(commitNodes, yRatio: 0.12, minXRatio: 0.28, maxXRatio: 0.82)
+        placeRow(operationNodes, yRatio: 0.30)
+        placeRow(fileNodes, yRatio: 0.50)
+        placeRow(symbolNodes, yRatio: 0.70)
+        placeRow(insightNodes, yRatio: 0.86, minXRatio: 0.26, maxXRatio: 0.88)
+        return positions
     }
 
     private func nodePositions(for nodes: [ExplainNode], in size: CGSize) -> [String: CGPoint] {

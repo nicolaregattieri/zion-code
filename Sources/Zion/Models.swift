@@ -748,7 +748,7 @@ enum AppSection: String, CaseIterable, Identifiable {
         case .code: return "Zion Code"
         case .graph: return "Zion Tree"
         case .operations: return "Operacoes"
-        case .explain: return "Explain Flow"
+        case .explain: return "Zion Flow"
         }
     }
     var icon: String {

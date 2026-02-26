@@ -1471,7 +1471,11 @@
 // Explain Flow
 "Explain Flow" = "Explain Flow";
 "Fluxo e narrativa do commit" = "Flujo y narrativa del commit";
-"explain.title" = "Explain Flow";
+"explain.title" = "Zion Flow";
+"zionflow.visual.guided" = "Guiado";
+"zionflow.visual.full" = "Grafo Completo";
+"zionflow.visual.hint.guided" = "El modo guiado muestra solo la ruta principal del cambio.";
+"zionflow.visual.hint.full" = "Grafo completo muestra todos los enlaces inferidos/de contexto.";
 "explain.subtitle.commit" = "Commit seleccionado: %@";
 "explain.subtitle.placeholder" = "Selecciona un commit para visualizar el flujo.";
 "explain.action.reload" = "Recargar";
