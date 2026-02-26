@@ -116,6 +116,7 @@ struct CodeScreen: View {
     @Bindable var model: RepositoryViewModel
     var onOpenFolder: (() -> Void)? = nil
     var isZenMode: Bool = false
+    @Environment(\.zionModeEnabled) private var zionModeEnabled
     @AppStorage("editor.showBreadcrumb") private var showBreadcrumbPath: Bool = true
     @State private var isQuickOpenVisible: Bool = false
     @State private var isFileBrowserVisible: Bool = true
@@ -148,6 +149,9 @@ struct CodeScreen: View {
     @State private var symbolResultsMode: EditorSymbolResultsMode = .definitions
     @State private var symbolResultsQuery: String = ""
     @State private var symbolResults: [EditorSymbolLocation] = []
+
+    /// Ghostty-style terminal: slight transparency + blur when Zion Mode + Zen Mode are both active
+    private var isGhosttyTerminal: Bool { isZenMode && zionModeEnabled }
 
     var body: some View {
         ZStack {
@@ -299,6 +303,9 @@ struct CodeScreen: View {
             withAnimation(DesignSystem.Motion.panel) {
                 applyZenModeState(enabled)
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .formatDocument)) { _ in
+            model.formatCurrentFile()
         }
     }
 
@@ -494,6 +501,17 @@ struct CodeScreen: View {
             .help(L10n("filehistory.title"))
             .accessibilityLabel(L10n("filehistory.title"))
             .disabled(model.activeFileID == nil)
+
+            Button {
+                model.formatCurrentFile()
+            } label: {
+                Image(systemName: "text.alignleft")
+                    .font(.caption)
+            }
+            .buttonStyle(.bordered)
+            .help(L10n("format.document") + " (⇧⌥F)")
+            .accessibilityLabel(L10n("format.document"))
+            .disabled(model.activeFileID == nil || !CodeFormatter.canFormat(fileExtension: model.selectedCodeFile?.url.pathExtension ?? ""))
 
             Divider().frame(height: 14).padding(.horizontal, 4)
 
@@ -933,6 +951,11 @@ struct CodeScreen: View {
             // Replace (Cmd+H)
             Button("") { toggleReplace() }
                 .keyboardShortcut("h", modifiers: .command)
+                .frame(width: 0, height: 0).opacity(0)
+
+            // Format Document (Shift+Option+F)
+            Button("") { model.formatCurrentFile() }
+                .keyboardShortcut("f", modifiers: [.shift, .option])
                 .frame(width: 0, height: 0).opacity(0)
         }
     }
@@ -1456,15 +1479,16 @@ struct CodeScreen: View {
                             fontSize: model.terminalFontSize,
                             fontFamily: model.terminalFontFamily,
                             focusedSessionID: model.focusedSessionID,
-                            model: model
+                            model: model,
+                            transparentBackground: isGhosttyTerminal
                         )
                         .opacity(tab.id == model.activeTabID ? 1 : 0)
                         .allowsHitTesting(tab.id == model.activeTabID)
                     }
                 }
             }
-            .padding(.horizontal, 8)
-            .padding(.bottom, 16)
+            .padding(.horizontal, isGhosttyTerminal ? 16 : 8)
+            .padding(.bottom, isGhosttyTerminal ? 12 : 16)
             .dropDestination(for: String.self) { items, _ in
                 guard let text = items.first, !text.isEmpty else { return false }
                 model.sendTextToActiveTerminal(text)
@@ -1472,7 +1496,17 @@ struct CodeScreen: View {
                 return true
             }
         }
-        .background(model.selectedTheme.terminalPalette.backgroundSwiftUI)
+        .padding(.top, isGhosttyTerminal ? 12 : 0)
+        .background {
+            if isGhosttyTerminal {
+                ZStack {
+                    VisualEffectBlur(material: .hudWindow, blendingMode: .behindWindow)
+                    model.selectedTheme.terminalPalette.backgroundSwiftUI.opacity(0.92)
+                }
+            } else {
+                model.selectedTheme.terminalPalette.backgroundSwiftUI
+            }
+        }
         .onAppear {
             model.createDefaultTerminalSession(repositoryURL: model.repositoryURL, branchName: model.currentBranch.isEmpty ? "zsh" : model.currentBranch)
         }
@@ -1733,6 +1767,21 @@ struct EditorSettingsPopoverButton: View {
 
                 Divider()
 
+                // Formatting section
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(L10n("settings.editor.formatting"))
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.secondary)
+
+                    Toggle(L10n("settings.editor.formatOnSave"), isOn: $model.editorFormatOnSave)
+                        .font(.system(size: 11))
+
+                    Toggle(L10n("settings.editor.jsonSortKeys"), isOn: $model.editorJsonSortKeys)
+                        .font(.system(size: 11))
+                }
+
+                Divider()
+
                 // Line spacing
                 HStack(spacing: 6) {
                     Text(L10n("settings.editor.lineSpacing"))
@@ -1898,6 +1947,7 @@ struct TerminalPaneView: View {
     var fontFamily: String
     var focusedSessionID: UUID?
     var model: RepositoryViewModel
+    var transparentBackground: Bool = false
 
     var body: some View {
         switch node.content {
@@ -1907,7 +1957,8 @@ struct TerminalPaneView: View {
                 theme: theme,
                 fontSize: fontSize,
                 fontFamily: fontFamily,
-                model: model
+                model: model,
+                transparentBackground: transparentBackground
             )
             .overlay(alignment: .topLeading) {
                 if focusedSessionID == session.id, model.terminalSessions.count > 1 {
@@ -1948,7 +1999,7 @@ struct TerminalPaneView: View {
                             if index > 0 {
                                 Divider().frame(width: dividerThickness)
                             }
-                            TerminalPaneView(node: child, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model)
+                            TerminalPaneView(node: child, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model, transparentBackground: transparentBackground)
                                 .frame(width: max(0, paneWidth))
                         }
                     }
@@ -1960,13 +2011,33 @@ struct TerminalPaneView: View {
                             if index > 0 {
                                 Divider().frame(height: dividerThickness)
                             }
-                            TerminalPaneView(node: child, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model)
+                            TerminalPaneView(node: child, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model, transparentBackground: transparentBackground)
                                 .frame(height: max(0, paneHeight))
                         }
                     }
                 }
             }
         }
+    }
+}
+
+// MARK: - Visual Effect Blur (Ghostty-style terminal)
+
+private struct VisualEffectBlur: NSViewRepresentable {
+    var material: NSVisualEffectView.Material
+    var blendingMode: NSVisualEffectView.BlendingMode
+
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.material = material
+        view.blendingMode = blendingMode
+        view.state = .active
+        return view
+    }
+
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
+        nsView.material = material
+        nsView.blendingMode = blendingMode
     }
 }
 

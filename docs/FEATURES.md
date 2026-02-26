@@ -90,6 +90,9 @@
 | Go to Line | Jump to a specific line number | `⌘G` |
 | File History | View commit history for any file from context menu or toolbar | — |
 | Open With / Drag & Drop | Open files from Finder (Open With, double-click) or drag onto editor; auto-detects Git repo | — |
+| Format Document | Built-in code formatting for 16+ languages (JSON, XML, HTML, CSS, JS/TS, Python, Go, Rust, Swift, SQL, YAML, and more) | `⇧⌥F` |
+| Format on Save | Automatically format code when saving a file | Settings |
+| JSON Sort Keys | Optional alphabetical key sorting for JSON formatting | Settings |
 
 ## Integrated Terminal
 
@@ -336,6 +339,7 @@
 | `⌘G` | Go to Line |
 | `⇧⌘R` | Code Review |
 | `⇧⌘B` | Toggle Git Blame |
+| `⇧⌥F` | Format Document |
 | `⌃⌘Z` | Toggle Zion Mode |
 | `⌃⌘J` | Focus/Zen Mode |
 | `↑↓` | Navigate commits |

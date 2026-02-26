@@ -10,6 +10,7 @@ struct TerminalTabView: NSViewRepresentable {
     var fontSize: Double = 13.0
     var fontFamily: String = "SF Mono"
     var model: RepositoryViewModel?
+    var transparentBackground: Bool = false
 
     private static let log = DiagnosticLogger.shared
 
@@ -73,20 +74,28 @@ struct TerminalTabView: NSViewRepresentable {
     private func applyTheme(to view: SwiftTerm.TerminalView, context: Context) {
         let palette = theme.terminalPalette
 
-        // Always keep layer bg in sync (cheap — setter doesn't touch layer)
-        view.layer?.backgroundColor = palette.background.cgColor
+        // Transparent background for Ghostty-style terminal (Zion + Zen mode)
+        if transparentBackground {
+            view.layer?.backgroundColor = NSColor.clear.cgColor
+            view.layer?.isOpaque = false
+        } else {
+            view.layer?.backgroundColor = palette.background.cgColor
+            view.layer?.isOpaque = true
+        }
 
         // Only apply expensive operations when theme or font actually changes
         let fontChanged = fontSize != context.coordinator.lastAppliedFontSize
                        || fontFamily != context.coordinator.lastAppliedFontFamily
-        guard theme != context.coordinator.lastAppliedTheme || fontChanged else { return }
+        let transparencyChanged = transparentBackground != context.coordinator.lastAppliedTransparent
+        guard theme != context.coordinator.lastAppliedTheme || fontChanged || transparencyChanged else { return }
         context.coordinator.lastAppliedTheme = theme
         context.coordinator.lastAppliedFontSize = fontSize
         context.coordinator.lastAppliedFontFamily = fontFamily
+        context.coordinator.lastAppliedTransparent = transparentBackground
 
         // Base colors (must be set BEFORE installPalette — palette generation uses these)
         view.nativeForegroundColor = palette.foreground
-        view.nativeBackgroundColor = palette.background
+        view.nativeBackgroundColor = transparentBackground ? NSColor.clear : palette.background
 
         // ANSI 16-color palette
         view.getTerminal().installPalette(colors: palette.ansiColors)
@@ -121,6 +130,7 @@ struct TerminalTabView: NSViewRepresentable {
         var lastAppliedTheme: EditorTheme?
         var lastAppliedFontSize: Double?
         var lastAppliedFontFamily: String?
+        var lastAppliedTransparent: Bool = false
         private var pendingResizeTask: Task<Void, Never>?
         private var shiftEnterMonitor: Any?
 

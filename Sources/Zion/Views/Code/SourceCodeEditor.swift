@@ -76,6 +76,7 @@ struct SourceCodeEditor: NSViewRepresentable {
         textView.usesAdaptiveColorMappingForDarkAppearance = false
 
         scrollView.documentView = textView
+        context.coordinator.installedTextView = textView
 
         // Setup Line Numbers
         scrollView.hasVerticalRuler = true
@@ -254,6 +255,7 @@ struct SourceCodeEditor: NSViewRepresentable {
 
     class Coordinator: NSObject, NSTextViewDelegate {
         var parent: SourceCodeEditor
+        weak var installedTextView: NSTextView?
         var lastActiveFileID: String?
         var lastHighlightedText: String?
         var lastHighlightedTheme: EditorTheme?
@@ -273,7 +275,30 @@ struct SourceCodeEditor: NSViewRepresentable {
         var lastGoToLine: Int = 0
         var lastGoToLineRequestID: Int = 0
         private var highlightDebounceTask: DispatchWorkItem?
-        init(_ parent: SourceCodeEditor) { self.parent = parent }
+        init(_ parent: SourceCodeEditor) {
+            self.parent = parent
+            super.init()
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(handleFormatCodeFile(_:)),
+                name: .formatCodeFile,
+                object: nil
+            )
+        }
+
+        deinit {
+            NotificationCenter.default.removeObserver(self, name: .formatCodeFile, object: nil)
+        }
+
+        @MainActor @objc private func handleFormatCodeFile(_ notification: Notification) {
+            guard let textView = installedTextView,
+                  let formatted = notification.userInfo?["formatted"] as? String else { return }
+            let fullRange = NSRange(location: 0, length: (textView.string as NSString).length)
+            if textView.shouldChangeText(in: fullRange, replacementString: formatted) {
+                textView.replaceCharacters(in: fullRange, with: formatted)
+                textView.didChangeText()
+            }
+        }
 
         @MainActor
         func scrollToLine(_ lineNumber: Int, in textView: NSTextView) {
@@ -985,6 +1010,12 @@ class ZionTextView: NSTextView {
 
         if flags == .command, key == "d" {
             selectNextOccurrence()
+            return true
+        }
+
+        // Format Document (⇧⌥F)
+        if flags == [.shift, .option], key == "f" {
+            NotificationCenter.default.post(name: .formatDocument, object: nil)
             return true
         }
 

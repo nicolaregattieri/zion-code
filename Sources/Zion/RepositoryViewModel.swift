@@ -443,6 +443,14 @@ final class RepositoryViewModel {
         didSet { UserDefaults.standard.set(editorShowIndentGuides, forKey: "editor.showIndentGuides") }
     }
 
+    // Formatting settings
+    var editorFormatOnSave: Bool = false {
+        didSet { UserDefaults.standard.set(editorFormatOnSave, forKey: "editor.formatOnSave") }
+    }
+    var editorJsonSortKeys: Bool = false {
+        didSet { UserDefaults.standard.set(editorJsonSortKeys, forKey: "editor.jsonSortKeys") }
+    }
+
     // Terminal font settings
     var terminalFontSize: Double = 13.0 {
         didSet { UserDefaults.standard.set(terminalFontSize, forKey: "terminal.fontSize") }
@@ -621,6 +629,12 @@ final class RepositoryViewModel {
         }
         if defaults.object(forKey: "editor.showIndentGuides") != nil {
             editorShowIndentGuides = defaults.bool(forKey: "editor.showIndentGuides")
+        }
+        if defaults.object(forKey: "editor.formatOnSave") != nil {
+            editorFormatOnSave = defaults.bool(forKey: "editor.formatOnSave")
+        }
+        if defaults.object(forKey: "editor.jsonSortKeys") != nil {
+            editorJsonSortKeys = defaults.bool(forKey: "editor.jsonSortKeys")
         }
         // Terminal font settings
         if defaults.object(forKey: "terminal.fontSize") != nil {
@@ -1382,7 +1396,22 @@ final class RepositoryViewModel {
             saveCurrentFileAs()
             return
         }
-        let content = codeFileContent
+        var content = codeFileContent
+        // Format on save (direct assignment — no undo needed since we're saving)
+        if editorFormatOnSave {
+            let ext = file.url.pathExtension
+            if CodeFormatter.canFormat(fileExtension: ext) {
+                let opts = FormatOptions(
+                    tabSize: effectiveTabSize,
+                    useTabs: editorUseTabs,
+                    jsonSortKeys: editorJsonSortKeys
+                )
+                if case .success(let formatted) = CodeFormatter.format(content, fileExtension: ext, options: opts) {
+                    content = formatted
+                    codeFileContent = formatted
+                }
+            }
+        }
         let fileURL = file.url
         let fileID = file.id
         let fileName = file.name
@@ -1395,6 +1424,36 @@ final class RepositoryViewModel {
                 refreshRepository()
             } catch {
                 handleError(error)
+            }
+        }
+    }
+
+    func formatCurrentFile() {
+        guard let file = selectedCodeFile else { return }
+        let ext = file.url.pathExtension
+        guard CodeFormatter.canFormat(fileExtension: ext) else {
+            statusMessage = L10n("format.unsupported")
+            return
+        }
+        let opts = FormatOptions(
+            tabSize: effectiveTabSize,
+            useTabs: editorUseTabs,
+            jsonSortKeys: editorJsonSortKeys
+        )
+        switch CodeFormatter.format(codeFileContent, fileExtension: ext, options: opts) {
+        case .success(let formatted):
+            // Post notification for undo-aware replacement in SourceCodeEditor
+            NotificationCenter.default.post(
+                name: .formatCodeFile,
+                object: nil,
+                userInfo: ["formatted": formatted]
+            )
+            statusMessage = L10n("format.success")
+        case .failure(let error):
+            if case .noChanges = error {
+                statusMessage = L10n("format.noChanges")
+            } else {
+                statusMessage = String(format: L10n("format.error"), error.localizedDescription)
             }
         }
     }

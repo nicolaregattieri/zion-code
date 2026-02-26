@@ -9,6 +9,8 @@ extension Notification.Name {
     static let toggleZenMode = Notification.Name("toggleZenMode")
     static let toggleZionMode = Notification.Name("toggleZionMode")
     static let openFilesFromFinder = Notification.Name("openFilesFromFinder")
+    static let formatDocument = Notification.Name("formatDocument")
+    static let formatCodeFile = Notification.Name("formatCodeFile")
 }
 
 @main
@@ -28,6 +30,13 @@ struct ZionApp: App {
                 Button(L10n("Sobre o Zion")) {
                     showAboutPanel()
                 }
+            }
+
+            CommandMenu(L10n("format.menu")) {
+                Button(L10n("format.document")) {
+                    NotificationCenter.default.post(name: .formatDocument, object: nil)
+                }
+                .keyboardShortcut("f", modifiers: [.shift, .option])
             }
 
             CommandMenu(L10n("focus.menu")) {

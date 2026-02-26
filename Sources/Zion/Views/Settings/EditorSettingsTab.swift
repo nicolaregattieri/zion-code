@@ -19,6 +19,9 @@ struct EditorSettingsTab: View {
     @AppStorage("editor.highlightCurrentLine") private var highlightCurrentLine: Bool = true
     @AppStorage("editor.showIndentGuides") private var showIndentGuides: Bool = false
 
+    @AppStorage("editor.formatOnSave") private var formatOnSave: Bool = false
+    @AppStorage("editor.jsonSortKeys") private var jsonSortKeys: Bool = false
+
     var body: some View {
         Form {
             Section(L10n("settings.editor.appearance")) {
@@ -102,6 +105,12 @@ struct EditorSettingsTab: View {
                     }
                     .pickerStyle(.segmented)
                 }
+            }
+
+            Section(L10n("settings.editor.formatting")) {
+                Toggle(L10n("settings.editor.formatOnSave"), isOn: $formatOnSave)
+
+                Toggle(L10n("settings.editor.jsonSortKeys"), isOn: $jsonSortKeys)
             }
         }
         .formStyle(.grouped)
