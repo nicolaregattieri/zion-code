@@ -447,6 +447,23 @@ struct DesignSystem {
         static let neonBaseDark = SwiftUI.Color(red: 0.071, green: 0.059, blue: 0.114)   // #120f1d
         static let glowBorder = neonMagenta.opacity(0.14)
         static let glowShadow = neonMagenta.opacity(0.08)
+
+        // Gradients
+        static let neonGradient = LinearGradient(
+            colors: [neonCyan, neonMagenta],
+            startPoint: .leading, endPoint: .trailing
+        )
+        static let neonAIGradient = LinearGradient(
+            colors: [neonGold, neonMagenta],
+            startPoint: .leading, endPoint: .trailing
+        )
+
+        // Line tokens
+        static let neonLineHeight: CGFloat = 2
+        static let neonLineIdleHeight: CGFloat = 1
+        static let neonLineCornerRadius: CGFloat = 1
+        static let neonGlowBlur: CGFloat = 2
+        static let neonGlowOpacity: Double = 0.25
     }
 }
 
