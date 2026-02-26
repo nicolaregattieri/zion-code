@@ -395,6 +395,7 @@
 "help.terminal.tabs" = "Múltiples pestañas de terminal con estado de proceso vivo";
 "help.terminal.zoom" = "Zoom independiente con Ctrl+/- y fuente configurable";
 "help.terminal.persistence" = "Los terminales persisten al cambiar de repositorio, con badges de cambios";
+"help.terminal.transparency" = "Transparencia de fondo opcional con efecto de desenfoque y opacidad ajustable";
 
 // Clipboard
 "help.clipboard.capture" = "Captura automáticamente todo lo que copias al portapapeles";
@@ -976,6 +977,9 @@
 "settings.editor.formatting" = "Formato";
 "settings.editor.formatOnSave" = "Formatear al Guardar";
 "settings.editor.jsonSortKeys" = "JSON: Ordenar claves";
+"settings.editor.terminal" = "Terminal";
+"settings.editor.terminalTransparency" = "Transparencia del Terminal";
+"settings.editor.terminalOpacity" = "Opacidad";
 
 // Find/Replace
 "editor.search.placeholder" = "Buscar...";

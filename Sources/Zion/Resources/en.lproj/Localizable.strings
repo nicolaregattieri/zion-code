@@ -448,6 +448,7 @@
 "help.terminal.tabs" = "Multiple terminal tabs with live process status";
 "help.terminal.zoom" = "Independent zoom with Ctrl+/- and configurable font";
 "help.terminal.persistence" = "Terminals persist across repo switches with live change badges";
+"help.terminal.transparency" = "Optional background transparency with blur effect and adjustable opacity";
 
 // Clipboard
 "help.clipboard.capture" = "Automatically captures everything you copy to the clipboard";
@@ -978,6 +979,9 @@
 "settings.editor.formatting" = "Formatting";
 "settings.editor.formatOnSave" = "Format on Save";
 "settings.editor.jsonSortKeys" = "JSON: Sort keys";
+"settings.editor.terminal" = "Terminal";
+"settings.editor.terminalTransparency" = "Terminal Transparency";
+"settings.editor.terminalOpacity" = "Opacity";
 
 // Find/Replace
 "editor.search.placeholder" = "Find...";

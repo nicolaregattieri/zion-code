@@ -49,7 +49,7 @@ struct HelpSheet: View {
         case .terminal:
             return ["help.terminal.pty", "help.terminal.splits", "help.terminal.tabs",
                     "help.terminal.zoom", "help.terminal.persistence",
-                    "help.terminalSearch"]
+                    "help.terminal.transparency", "help.terminalSearch"]
         case .clipboard:
             return ["help.clipboard.capture", "help.clipboard.paste",
                     "help.clipboard.drag", "help.clipboard.images",
