@@ -89,6 +89,7 @@
 | Per-Repo Config | `.zion/editor.json` overrides global editor settings | — |
 | Go to Line | Jump to a specific line number | `⌘G` |
 | File History | View commit history for any file from context menu or toolbar | — |
+| Open With / Drag & Drop | Open files from Finder (Open With, double-click) or drag onto editor; auto-detects Git repo | — |
 
 ## Integrated Terminal
 

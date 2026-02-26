@@ -8,6 +8,7 @@ extension Notification.Name {
     static let showOnboarding = Notification.Name("showOnboarding")
     static let toggleZenMode = Notification.Name("toggleZenMode")
     static let toggleZionMode = Notification.Name("toggleZionMode")
+    static let openFilesFromFinder = Notification.Name("openFilesFromFinder")
 }
 
 @main
@@ -152,6 +153,19 @@ struct ZionApp: App {
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
+    @MainActor static var pendingOpenURLs: [URL] = []
+
+    func application(_ application: NSApplication, open urls: [URL]) {
+        let fileURLs = urls.filter { $0.isFileURL && !$0.hasDirectoryPath }
+        guard !fileURLs.isEmpty else { return }
+        AppDelegate.pendingOpenURLs = fileURLs
+        NotificationCenter.default.post(
+            name: .openFilesFromFinder,
+            object: nil,
+            userInfo: ["urls": fileURLs]
+        )
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         registerFonts()
         ClipboardMonitor.purgeStaleFilesOnLaunch()

@@ -909,6 +909,12 @@ struct CodeScreen: View {
                     .environment(\.colorScheme, model.selectedTheme.isLightAppearance ? .light : .dark)
             }
         }
+        .dropDestination(for: URL.self) { urls, _ in
+            let fileURLs = urls.filter { !$0.hasDirectoryPath }
+            guard !fileURLs.isEmpty else { return false }
+            model.openExternalFiles(fileURLs)
+            return true
+        }
         .background {
             Button("") { model.saveCurrentCodeFile() }
                 .keyboardShortcut("s", modifiers: .command)
