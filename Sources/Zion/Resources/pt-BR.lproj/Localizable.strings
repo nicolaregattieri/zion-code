@@ -294,6 +294,7 @@
 "shortcuts.closeOrDeselect" = "Fechar / desselecionar";
 "shortcuts.refreshRepository" = "Atualizar repositório";
 "shortcuts.codeReview" = "Code Review";
+"shortcuts.zionMode" = "Zion Mode";
 "shortcuts.general" = "Geral";
 "Pressione" = "Pressione";
 "para ver todos os atalhos" = "para ver todos os atalhos";
@@ -757,7 +758,7 @@
 
 // Phase 5: Help Sheet
 "help.settings.title" = "Janela de Configurações";
-"help.settings.features" = "Atalho Cmd+,|Abas: Geral, IA, Notificações|Idioma, aparência, terminal|Gerenciamento de chave API";
+"help.settings.features" = "Atalho Cmd+,|Abas: Geral, Editor, IA, Notificações|Idioma, aparência, terminal|Gerenciamento de chave API";
 "help.diffExplanation.title" = "Explicação de Diff com IA";
 "help.diffExplanation.features" = "Intenção, Riscos, Narrativa|Badges de severidade|Explicar automaticamente ao selecionar|Copiar para área de transferência";
 "help.codeReview.title" = "Code Review";
@@ -767,11 +768,11 @@
 
 
 // Zion Map — Settings
-"map.settings.subtitle" = "Janela de configurações nativa do macOS com 3 abas organizadas.";
+"map.settings.subtitle" = "Janela de configurações nativa do macOS com 4 abas organizadas.";
 "map.settings.window.title" = "Janela de Configurações";
-"map.settings.window.description" = "Janela de Configurações completa do macOS acessível via Cmd+, com abas Geral, IA e Notificações.";
+"map.settings.window.description" = "Janela de Configurações completa do macOS acessível via Cmd+, com abas Geral, Editor, IA e Notificações.";
 "map.settings.tabs.title" = "Abas Organizadas";
-"map.settings.tabs.description" = "Configurações divididas em grupos lógicos: Interface e Ferramentas, Provedor e estilo de IA, Notificações e polling de PRs.";
+"map.settings.tabs.description" = "Configurações divididas em grupos lógicos: Interface e Ferramentas, Temas e preferências do editor, Provedor e estilo de IA, Notificações e polling de PRs.";
 "map.settings.api.title" = "Gerenciamento de Chave API";
 "map.settings.api.description" = "Gerencie chaves API de provedores de IA armazenadas no Keychain do macOS com segurança.";
 

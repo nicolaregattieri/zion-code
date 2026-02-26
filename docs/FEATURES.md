@@ -5,6 +5,32 @@
 
 ---
 
+## Clone Repository
+
+| Feature | Description |
+|---------|-------------|
+| Clone Sheet | Clone from URL with protocol detection (SSH/HTTPS) and destination picker |
+| Welcome Screen | Available from the welcome screen for quick repository setup |
+
+## Repository Statistics
+
+| Feature | Description |
+|---------|-------------|
+| Stats Card | Commits, branches, tags, contributors, and language breakdown |
+| Language Breakdown | Visual display of repository language composition |
+
+## Branch Review (AI)
+
+| Feature | Description |
+|---------|-------------|
+| Branch Diff Review | AI-powered branch-to-branch diff analysis with findings |
+
+## Git Auth Prompt
+
+| Feature | Description |
+|---------|-------------|
+| Credential Prompt | UI for entering credentials when remote operations fail (username/password or token) |
+
 ## Climbing Zion (First-Time Onboarding)
 
 | Feature | Description |
@@ -37,7 +63,7 @@
 | Syntax Highlighting | NSTextView-based editor with regex caching | — |
 | Quick Open | Fuzzy file search overlay | `⌘P` |
 | File Browser | Tree view with `.gitignore` respect | `⌘B` toggle |
-| Git Blame | Inline per-line blame with author colors | — |
+| Git Blame | Inline per-line blame with author colors | `⇧⌘B` |
 | Multiple Tabs | Open/close files with tab bar | — |
 | Save File | Save current file to disk | `⌘S` |
 | Unsaved Indicator | Visual dot on tabs with unsaved changes | — |
@@ -289,7 +315,7 @@
 | `⌘1` | Code workspace |
 | `⌘2` | Graph workspace |
 | `⌘3` | Operations workspace |
-| `⌘?` | Keyboard shortcuts sheet |
+| `⌘/` | Keyboard shortcuts sheet |
 | `⌘P` | Quick Open |
 | `⌘B` | Toggle file browser |
 | `⌘N` | New file |
@@ -308,6 +334,8 @@
 | `⌃F` | Find alias in editor |
 | `⌘G` | Go to Line |
 | `⇧⌘R` | Code Review |
+| `⇧⌘B` | Toggle Git Blame |
 | `⌃⌘Z` | Toggle Zion Mode |
+| `⌃⌘J` | Focus/Zen Mode |
 | `↑↓` | Navigate commits |
 | `Esc` | Deselect / close |

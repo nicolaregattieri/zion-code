@@ -392,6 +392,7 @@
 "shortcuts.closeOrDeselect" = "Close / deselect";
 "shortcuts.refreshRepository" = "Refresh repository";
 "shortcuts.codeReview" = "Code Review";
+"shortcuts.zionMode" = "Zion Mode";
 "shortcuts.general" = "General";
 "Pressione" = "Press";
 "para ver todos os atalhos" = "to see all shortcuts";
@@ -855,7 +856,7 @@
 
 // Phase 5: Help Sheet
 "help.settings.title" = "Settings Window";
-"help.settings.features" = "Cmd+, shortcut|General, AI, Notifications tabs|Language, appearance, terminal|API key management";
+"help.settings.features" = "Cmd+, shortcut|General, Editor, AI, Notifications tabs|Language, appearance, terminal|API key management";
 "help.diffExplanation.title" = "AI Diff Explanation";
 "help.diffExplanation.features" = "Intent, Risks, Narrative|Risk severity badges|Auto-explain on selection|Copy to clipboard";
 "help.codeReview.title" = "Code Review";
@@ -865,11 +866,11 @@
 
 
 // Zion Map — Settings
-"map.settings.subtitle" = "Native macOS settings window with 3 organized tabs.";
+"map.settings.subtitle" = "Native macOS settings window with 4 organized tabs.";
 "map.settings.window.title" = "Settings Window";
-"map.settings.window.description" = "Full macOS Settings window accessible via Cmd+, with General, AI, and Notifications tabs.";
+"map.settings.window.description" = "Full macOS Settings window accessible via Cmd+, with General, Editor, AI, and Notifications tabs.";
 "map.settings.tabs.title" = "Organized Tabs";
-"map.settings.tabs.description" = "Settings split into logical groups: Interface & Tools, AI provider & style, Notifications & PR polling.";
+"map.settings.tabs.description" = "Settings split into logical groups: Interface & Tools, Theme & editor preferences, AI provider & style, Notifications & PR polling.";
 "map.settings.api.title" = "API Key Management";
 "map.settings.api.description" = "Securely manage AI provider API keys stored in macOS Keychain.";
 

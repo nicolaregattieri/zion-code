@@ -339,6 +339,7 @@
 "shortcuts.closeOrDeselect" = "Cerrar / deseleccionar";
 "shortcuts.refreshRepository" = "Actualizar repositorio";
 "shortcuts.codeReview" = "Code Review";
+"shortcuts.zionMode" = "Zion Mode";
 "shortcuts.general" = "General";
 "Pressione" = "Presiona";
 "para ver todos os atalhos" = "para ver todos los atajos";
@@ -853,7 +854,7 @@
 
 // Phase 5: Help Sheet
 "help.settings.title" = "Ventana de Configuración";
-"help.settings.features" = "Atajo Cmd+,|Pestañas: General, IA, Notificaciones|Idioma, apariencia, terminal|Gestión de clave API";
+"help.settings.features" = "Atajo Cmd+,|Pestañas: General, Editor, IA, Notificaciones|Idioma, apariencia, terminal|Gestión de clave API";
 "help.diffExplanation.title" = "Explicación de Diff con IA";
 "help.diffExplanation.features" = "Intención, Riesgos, Narrativa|Insignias de severidad|Explicar automáticamente al seleccionar|Copiar al portapapeles";
 "help.codeReview.title" = "Code Review";
@@ -863,11 +864,11 @@
 
 
 // Zion Map — Settings
-"map.settings.subtitle" = "Ventana de configuración nativa de macOS con 3 pestañas organizadas.";
+"map.settings.subtitle" = "Ventana de configuración nativa de macOS con 4 pestañas organizadas.";
 "map.settings.window.title" = "Ventana de Configuración";
-"map.settings.window.description" = "Ventana de Configuración completa de macOS accesible vía Cmd+, con pestañas General, IA y Notificaciones.";
+"map.settings.window.description" = "Ventana de Configuración completa de macOS accesible vía Cmd+, con pestañas General, Editor, IA y Notificaciones.";
 "map.settings.tabs.title" = "Pestañas Organizadas";
-"map.settings.tabs.description" = "Configuración dividida en grupos lógicos: Interfaz y Herramientas, Proveedor y estilo de IA, Notificaciones y polling de PRs.";
+"map.settings.tabs.description" = "Configuración dividida en grupos lógicos: Interfaz y Herramientas, Tema y preferencias del editor, Proveedor y estilo de IA, Notificaciones y polling de PRs.";
 "map.settings.api.title" = "Gestión de Clave API";
 "map.settings.api.description" = "Gestione claves API de proveedores de IA almacenadas en el Keychain de macOS de forma segura.";
 
