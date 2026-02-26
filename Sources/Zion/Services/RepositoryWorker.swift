@@ -225,17 +225,23 @@ actor RepositoryWorker {
     }
 
     func readConflictFileContent(path: String, in repositoryURL: URL) throws -> String {
-        let fileURL = repositoryURL.appendingPathComponent(path)
+        let fileURL = repositoryURL.appendingPathComponent(path).standardizedFileURL
+        guard fileURL.path.hasPrefix(repositoryURL.standardizedFileURL.path + "/") else {
+            throw GitClientError.commandFailed(command: "read", message: "Invalid path: \(path)")
+        }
         return try String(contentsOf: fileURL, encoding: .utf8)
     }
 
     func writeResolvedFile(path: String, content: String, in repositoryURL: URL) throws {
-        let fileURL = repositoryURL.appendingPathComponent(path)
+        let fileURL = repositoryURL.appendingPathComponent(path).standardizedFileURL
+        guard fileURL.path.hasPrefix(repositoryURL.standardizedFileURL.path + "/") else {
+            throw GitClientError.commandFailed(command: "write", message: "Invalid path: \(path)")
+        }
         try content.write(to: fileURL, atomically: true, encoding: .utf8)
     }
 
     func markFileResolved(path: String, in repositoryURL: URL) throws {
-        _ = try git.run(args: ["add", path], in: repositoryURL)
+        _ = try git.run(args: ["add", "--", path], in: repositoryURL)
     }
 
     func detectActiveOperation(in repositoryURL: URL) -> String? {
@@ -306,7 +312,10 @@ actor RepositoryWorker {
     }
 
     func loadCommitDetails(in repositoryURL: URL, commitID: String) throws -> String {
-        try git.run(
+        guard commitID.allSatisfy({ $0.isHexDigit }) else {
+            throw GitClientError.commandFailed(command: "show", message: "Invalid commit ID: \(commitID)")
+        }
+        return try git.run(
             args: ["show", "--no-color", "--name-status", "--pretty=fuller", commitID],
             in: repositoryURL
         ).stdout
@@ -413,6 +422,7 @@ actor RepositoryWorker {
         let format = "%H%x1F%P%x1F%an%x1F%ae%x1F%ad%x1F%s%x1F%D%x1E"
         var args = ["log"]
         if let reference, !reference.clean.isEmpty {
+            args.append("--")
             args.append(reference.clean)
         } else {
             args.append("--all")

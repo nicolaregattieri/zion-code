@@ -253,7 +253,7 @@ struct HelpSheet: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Text("\u{2318}?")
+            Text("\u{2318}/")
                 .font(.system(size: 13, weight: .medium, design: .monospaced))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
