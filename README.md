@@ -14,6 +14,7 @@ run commands — without switching apps.
 
 **No Electron. No subscriptions. No bloat. Just Swift.**
 
+[![Website](https://img.shields.io/badge/Website-zioncode.dev-7c3aed?style=flat-square&logo=vercel&logoColor=white)](https://zioncode.dev)
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&logo=apple&logoColor=white)](https://www.apple.com/macos/sonoma/)
 [![Swift 6](https://img.shields.io/badge/Swift-6-F05138?style=flat-square&logo=swift&logoColor=white)](https://swift.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)

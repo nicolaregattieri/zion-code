@@ -1464,3 +1464,9 @@
 "map.zionMode.restore.description" = "Tu tema anterior se guarda y restaura automáticamente al desactivar Zion Mode.";
 "map.zionMode.theme.title" = "Tema SynthWave '84";
 "map.zionMode.theme.description" = "Paleta neon cyberpunk con fondo púrpura, keywords doradas, tipos cian, strings naranja y cursor rosa en la terminal.";
+
+"Sobre o Zion" = "Acerca de Zion";
+"about.version" = "Versión %@ (%@)";
+"about.website" = "Visitar Sitio Web";
+"about.madeWith" = "Hecho con SwiftUI";
+"help.visitWebsite" = "Visitar Sitio Web";

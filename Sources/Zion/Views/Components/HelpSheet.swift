@@ -155,14 +155,22 @@ struct HelpSheet: View {
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            Button {
-                dismiss()
-                NotificationCenter.default.post(name: .showOnboarding, object: nil)
-            } label: {
-                Label(L10n("help.openOnboarding"), systemImage: "sparkles.rectangle.stack")
+            HStack(spacing: 8) {
+                Button {
+                    dismiss()
+                    NotificationCenter.default.post(name: .showOnboarding, object: nil)
+                } label: {
+                    Label(L10n("help.openOnboarding"), systemImage: "sparkles.rectangle.stack")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+
+                Link(destination: URL(string: "https://zioncode.dev")!) {
+                    Label(L10n("help.visitWebsite"), systemImage: "globe")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
             }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
         }
     }
 
