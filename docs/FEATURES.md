@@ -126,6 +126,7 @@
 | Auto-Cleanup | Temp images purged after 1h, full cleanup on quit |
 | Item Limit | Keeps up to 20 items, evicts oldest |
 | Search/Filter | Filter clipboard items by text content |
+| Zen Mode Popover | Clipboard accessible via toolbar popover in zen mode |
 
 ## Operations Center
 

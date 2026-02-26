@@ -1667,6 +1667,8 @@ struct CodeScreen: View {
             .padding(.trailing, 8)
 
             if isZenMode {
+                ClipboardPopoverButton(model: model, accentColor: accentColor)
+
                 Spacer()
                     .frame(width: 12)
 
@@ -1675,6 +1677,38 @@ struct CodeScreen: View {
             }
         }
         .padding(.vertical, 8)
+    }
+}
+
+private struct ClipboardPopoverButton: View {
+    @Bindable var model: RepositoryViewModel
+    var accentColor: Color
+    @State private var isPresented = false
+
+    var body: some View {
+        Button { isPresented.toggle() } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "clipboard")
+                    .font(.system(size: 11, weight: .medium))
+                if !model.clipboardMonitor.items.isEmpty {
+                    Text("\(model.clipboardMonitor.items.count)")
+                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 1)
+                        .background(DesignSystem.Colors.selectionBackground)
+                        .clipShape(Capsule())
+                }
+            }
+            .foregroundStyle(isPresented ? Color.accentColor : accentColor)
+        }
+        .buttonStyle(.borderless)
+        .frame(height: 24)
+        .contentShape(Rectangle())
+        .help(L10n("Clipboard"))
+        .popover(isPresented: $isPresented) {
+            ClipboardDrawer(model: model)
+                .frame(width: 280, height: 350)
+        }
     }
 }
 
