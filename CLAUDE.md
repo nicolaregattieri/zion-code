@@ -1,5 +1,6 @@
 # Zion - macOS Git Client
 
+- **Website:** [zioncode.dev](https://zioncode.dev) (Next.js on Vercel, source at `/Users/nicolaregattieri/Developer/zion-website`)
 - **Build:** `swift build` / **Release:** `./scripts/make-app.sh` → `dist/Zion.app`
 - **Localization:** 3 locales (pt-BR, en, es) via `L10n()` helper
 

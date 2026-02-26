@@ -23,6 +23,12 @@ struct ZionApp: App {
         .windowToolbarStyle(.unified)
         .defaultSize(width: 1360, height: 840)
         .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button(L10n("Sobre o Zion")) {
+                    showAboutPanel()
+                }
+            }
+
             CommandMenu(L10n("focus.menu")) {
                 Button(L10n("zen.mode")) {
                     NotificationCenter.default.post(name: .toggleZenMode, object: nil)
@@ -91,6 +97,57 @@ struct ZionApp: App {
         let log = DiagnosticLogger.shared.exportLog()
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(log, forType: .string)
+    }
+
+    private func showAboutPanel() {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+
+        var options: [NSApplication.AboutPanelOptionKey: Any] = [
+            .applicationName: "Zion",
+            .applicationVersion: version,
+            .version: build,
+        ]
+
+        // Build credits with website link
+        let credits = NSMutableAttributedString()
+
+        let tagline = NSAttributedString(
+            string: "Graph. Code. Terminal. One window.\n\n",
+            attributes: [
+                .font: NSFont.systemFont(ofSize: 11, weight: .medium),
+                .foregroundColor: NSColor.secondaryLabelColor,
+            ]
+        )
+        credits.append(tagline)
+
+        let websiteString = NSAttributedString(
+            string: "zioncode.dev",
+            attributes: [
+                .font: NSFont.systemFont(ofSize: 11),
+                .foregroundColor: NSColor.linkColor,
+                .link: URL(string: "https://zioncode.dev")!,
+            ]
+        )
+        credits.append(websiteString)
+
+        let madeWith = NSAttributedString(
+            string: "\n\n" + L10n("about.madeWith") + "\n",
+            attributes: [
+                .font: NSFont.systemFont(ofSize: 10),
+                .foregroundColor: NSColor.tertiaryLabelColor,
+            ]
+        )
+        credits.append(madeWith)
+
+        // Center-align all text
+        let style = NSMutableParagraphStyle()
+        style.alignment = .center
+        credits.addAttribute(.paragraphStyle, value: style, range: NSRange(location: 0, length: credits.length))
+
+        options[.credits] = credits
+
+        NSApp.orderFrontStandardAboutPanel(options: options)
     }
 }
 
