@@ -574,6 +574,7 @@
 "ntfy.topic.configured" = "Tópico configurado";
 "ntfy.topic.placeholder" = "Tu tópico ntfy (ej: zion-mi-mac)";
 "ntfy.topic.privacy" = "Usa un nombre único y difícil de adivinar. Cualquiera con el nombre del tópico puede enviar/recibir notificaciones.";
+"ntfy.generate.tooltip" = "Generar tópico seguro aleatorio";
 "ntfy.server.hint" = "Deja en blanco para usar el servidor predeterminado (ntfy.sh)";
 "ntfy.advanced" = "Avanzado";
 "ntfy.whatIs.title" = "¿Qué es ntfy?";

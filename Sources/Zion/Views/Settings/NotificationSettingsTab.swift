@@ -34,8 +34,19 @@ struct NotificationSettingsTab: View {
                         .foregroundStyle(DesignSystem.Colors.info)
                     }
                 } else {
-                    TextField(L10n("ntfy.topic.placeholder"), text: $topicInput)
-                        .onSubmit { saveTopic() }
+                    HStack {
+                        TextField(L10n("ntfy.topic.placeholder"), text: $topicInput)
+                            .onSubmit { saveTopic() }
+                        Button {
+                            topicInput = NtfyClient.generateSecureTopic()
+                        } label: {
+                            Image(systemName: "dice.fill")
+                        }
+                        .buttonStyle(.plain)
+                        .cursorArrow()
+                        .foregroundStyle(DesignSystem.Colors.info)
+                        .help(L10n("ntfy.generate.tooltip"))
+                    }
 
                     HStack {
                         if isEditingTopic {

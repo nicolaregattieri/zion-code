@@ -300,6 +300,15 @@ actor NtfyClient {
         return (topic: topic, serverURL: json["server"] ?? "https://ntfy.sh")
     }
 
+    /// Generate a secure random topic like `zion-code-3Y3k8If`
+    static func generateSecureTopic() -> String {
+        let chars = Array("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
+        var bytes = [UInt8](repeating: 0, count: 7)
+        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        let suffix = String(bytes.map { chars[Int($0) % chars.count] })
+        return "zion-code-\(suffix)"
+    }
+
     static func validateTopic(_ topic: String) -> Bool {
         let trimmed = topic.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return false }
