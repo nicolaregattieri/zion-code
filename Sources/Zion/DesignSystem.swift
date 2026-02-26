@@ -147,6 +147,7 @@ struct DesignSystem {
         static let mediumCornerRadius: CGFloat = 10     // Panels, explanation cards, status chips
         static let elementCornerRadius: CGFloat = 8     // Buttons, search bars, inline items
         static let smallCornerRadius: CGFloat = 6       // Tags, tiny pills, code blocks
+        static let microCornerRadius: CGFloat = 4       // Badges, progress bars, icon frames
     }
 
     // MARK: - Typography Tokens

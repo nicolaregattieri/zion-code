@@ -291,7 +291,7 @@ struct CommitDetailContent: View {
             .foregroundStyle(color)
             .frame(width: 18, height: 18)
             .background(color.opacity(0.15))
-            .clipShape(RoundedRectangle(cornerRadius: 4))
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius))
     }
 }
 

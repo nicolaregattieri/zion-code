@@ -150,12 +150,11 @@ struct CodeScreen: View {
     @State private var symbolResultsQuery: String = ""
     @State private var symbolResults: [EditorSymbolLocation] = []
 
-    @AppStorage("terminal.transparencyEnabled") private var transparencyEnabled: Bool = false
     @AppStorage("terminal.opacity") private var terminalOpacity: Double = 0.92
 
-    /// Ghostty-style terminal transparency: enabled via Settings toggle or automatically by Zion Mode
+    /// Ghostty-style terminal transparency: automatically enabled in Zen Mode
     private var isTerminalTransparent: Bool {
-        transparencyEnabled || zionModeEnabled
+        zionModeEnabled
     }
 
     var body: some View {
@@ -276,6 +275,11 @@ struct CodeScreen: View {
             }
             .keyboardShortcut("g", modifiers: [.command, .shift])
             .frame(width: 0, height: 0).opacity(0)
+
+            // Toggle dotfiles visibility (Shift+Cmd+H)
+            Button("") { model.showDotfiles.toggle() }
+                .keyboardShortcut("h", modifiers: [.command, .shift])
+                .frame(width: 0, height: 0).opacity(0)
         }
         .onChange(of: model.activeFileID) { _, _ in
             isMarkdownPreviewVisible = false
@@ -775,6 +779,13 @@ struct CodeScreen: View {
         VStack(spacing: 0) {
             // File tree header
             CardHeader(L10n("Arquivos"), icon: "folder.fill") {
+                Button { model.showDotfiles.toggle() } label: {
+                    Image(systemName: model.showDotfiles ? "eye" : "eye.slash")
+                }
+                .buttonStyle(.plain).cursorArrow().foregroundStyle(.secondary)
+                .help(L10n("fileBrowser.toggleHidden") + " (⇧⌘H)")
+                .accessibilityLabel(L10n("fileBrowser.toggleHidden"))
+
                 Button { model.refreshFileTree() } label: { Image(systemName: "arrow.clockwise") }
                     .buttonStyle(.plain).cursorArrow().foregroundStyle(.secondary)
                     .help(L10n("Atualizar arvore de arquivos"))
@@ -1884,7 +1895,7 @@ struct TerminalTabChip: View {
                     .padding(.horizontal, 4)
                     .padding(.vertical, 1)
                     .background(accentColor.opacity(0.15))
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius))
             }
 
             Button {
@@ -1904,7 +1915,7 @@ struct TerminalTabChip: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius)
-                .stroke(isActive ? accentColor.opacity(0.5) : Color.clear, lineWidth: 1)
+                .stroke(isActive ? DesignSystem.Colors.selectionBorder : Color.clear, lineWidth: 1)
         )
         .contentShape(Rectangle())
         .onTapGesture { onActivate() }
@@ -2308,8 +2319,8 @@ struct QuickOpenOverlay: View {
             .frame(width: 500)
             .background(.ultraThinMaterial)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius, style: .continuous).stroke(Color.accentColor.opacity(0.3), lineWidth: 1))
-            .shadow(color: .black.opacity(0.3), radius: 20, y: 10)
+            .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius, style: .continuous).stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1))
+            .shadow(color: DesignSystem.Colors.shadowDark, radius: 20, y: 10)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(.top, 60)
@@ -2446,6 +2457,7 @@ struct FileTreeNodeView: View {
         let isSelected = model.activeFileID == item.id
         let isDark = model.selectedTheme.isDark
         let isModified = model.uncommittedChanges.contains { $0.hasSuffix(item.name) }
+        let isIgnored = item.isGitIgnored
 
         VStack(alignment: .leading, spacing: 0) {
             Button {
@@ -2475,6 +2487,7 @@ struct FileTreeNodeView: View {
                         .lineLimit(1)
                         .foregroundStyle(isSelected ? (isDark ? .white : DesignSystem.Colors.info) : (isModified ? DesignSystem.Colors.warning : .primary))
                 }
+                .opacity(isIgnored && !isSelected ? 0.5 : 1.0)
                 .padding(.horizontal, 12).padding(.vertical, 6).padding(.leading, CGFloat(level) * 12)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())

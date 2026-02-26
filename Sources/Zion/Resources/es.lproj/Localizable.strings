@@ -395,7 +395,7 @@
 "help.terminal.tabs" = "Múltiples pestañas de terminal con estado de proceso vivo";
 "help.terminal.zoom" = "Zoom independiente con Ctrl+/- y fuente configurable";
 "help.terminal.persistence" = "Los terminales persisten al cambiar de repositorio, con badges de cambios";
-"help.terminal.transparency" = "Transparencia de fondo opcional con efecto de desenfoque y opacidad ajustable";
+"help.terminal.transparency" = "Transparencia de fondo con efecto de desenfoque, activada automáticamente en Modo Zen";
 
 // Clipboard
 "help.clipboard.capture" = "Captura automáticamente todo lo que copias al portapapeles";
@@ -977,9 +977,9 @@
 "settings.editor.formatting" = "Formato";
 "settings.editor.formatOnSave" = "Formatear al Guardar";
 "settings.editor.jsonSortKeys" = "JSON: Ordenar claves";
-"settings.editor.terminal" = "Terminal";
-"settings.editor.terminalTransparency" = "Transparencia del Terminal";
-"settings.editor.terminalOpacity" = "Opacidad";
+"fileBrowser.toggleHidden" = "Alternar Archivos Ocultos";
+"settings.editor.fileBrowser" = "Explorador de Archivos";
+"settings.editor.showDotfiles" = "Mostrar Archivos Ocultos (.env, .gitignore, etc.)";
 
 // Find/Replace
 "editor.search.placeholder" = "Buscar...";
@@ -1230,6 +1230,7 @@
 "help.code.filehistory" = "Visualiza el historial de commits de cualquier archivo con un clic";
 "help.code.openwith" = "Abrir archivos desde Finder (Abrir Con) o arrastrar al editor";
 "help.code.format" = "Formatear código con ⇧⌥F — soporta JSON, XML, HTML, CSS, JavaScript, Python y más";
+"help.code.dotfiles" = "Visibilidad inteligente: alterne dotfiles con el botón o ⇧⌘H. node_modules y .git siempre ocultos por rendimiento";
 
 // Zion Map — Pre-Commit Review
 "map.ai.precommit.title" = "Gate de Review Pre-Commit";

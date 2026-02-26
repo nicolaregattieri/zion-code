@@ -98,7 +98,7 @@ struct RepositoryStatsCard: View {
                         }
                     }
                     .frame(height: 12)
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius))
 
                     // Legend
                     let topLangs = Array(stats.languageBreakdown.prefix(6))
