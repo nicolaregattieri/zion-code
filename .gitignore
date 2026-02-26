@@ -51,6 +51,9 @@ docs/RELEASE.md
 *.swp
 *~
 
-# Codex local context/skills
+# AI assistant context
 CODEX.md
+CLAUDE.md
+GEMINI.md
+.geminiignore
 .agents/
