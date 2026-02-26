@@ -149,3 +149,13 @@ After big changes (distribution):
 3. L10n keys in all 3 locales (pt-BR, en, es)
 4. Entry in `HelpSheet.swift` + `help.*` L10n keys
 5. Update `docs/FEATURES.md`
+
+<!-- ZION:NTFY:START (managed by Zion Git Client) -->
+## Push Notifications
+When you complete a significant task, notify the user:
+```
+curl -s -H "Title: Done" -H "Priority: 3" -H "Tags: white_check_mark" -d "[Brief description of what was completed]" 'https://ntfy.sh/zion-code-n87dhe'
+```
+Send for: plan completion, implementation done, test results, migrations, errors.
+Do NOT send for: file reads, intermediate steps, questions.
+<!-- ZION:NTFY:END -->

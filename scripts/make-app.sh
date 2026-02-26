@@ -81,6 +81,28 @@ cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
   <true/>
   <key>SUScheduledCheckInterval</key>
   <integer>86400</integer>
+  <key>CFBundleDocumentTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleTypeName</key>
+      <string>Source Code</string>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>LSHandlerRank</key>
+      <string>Alternate</string>
+      <key>LSItemContentTypes</key>
+      <array>
+        <string>public.source-code</string>
+        <string>public.shell-script</string>
+        <string>public.script</string>
+        <string>public.text</string>
+        <string>public.plain-text</string>
+        <string>public.json</string>
+        <string>public.xml</string>
+        <string>public.yaml</string>
+      </array>
+    </dict>
+  </array>
 </dict>
 </plist>
 PLIST

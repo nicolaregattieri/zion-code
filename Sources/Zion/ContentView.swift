@@ -52,6 +52,7 @@ struct ContentView: View {
         if !hasCompletedOnboarding && model.repositoryURL == nil && selectedSection == .code {
             return .onboarding
         }
+        if !model.openedFiles.isEmpty { return .workspace }
         if model.repositoryURL == nil || !model.isGitRepository {
             return .welcome
         }
@@ -206,6 +207,12 @@ struct ContentView: View {
                 logger.log(.info, "Boot: no recent repo", source: "ContentView")
             }
             launchPhase = .ready
+            if !AppDelegate.pendingOpenURLs.isEmpty {
+                let urls = AppDelegate.pendingOpenURLs
+                AppDelegate.pendingOpenURLs = []
+                model.openExternalFiles(urls)
+                selectedSection = .code
+            }
             // Robust window activation
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 if let window = NSApp.windows.first(where: { $0.isVisible }) {
@@ -308,6 +315,10 @@ struct ContentView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .toggleZionMode)) { _ in
             zionModeEnabled.toggle()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openFilesFromFinder)) { notification in
+            guard let urls = notification.userInfo?["urls"] as? [URL] else { return }
+            model.openExternalFiles(urls)
         }
         .onChange(of: zionModeEnabled) { oldValue, enabled in
             if enabled {
