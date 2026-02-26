@@ -1161,6 +1161,7 @@
 "filehistory.empty" = "Nenhum commit encontrado para este arquivo.";
 "filehistory.showInGraph" = "Mostrar no Grafo";
 "help.code.filehistory" = "Visualize o histórico de commits de qualquer arquivo com um clique";
+"help.code.openwith" = "Abrir arquivos pelo Finder (Abrir Com) ou arrastando para o editor";
 
 // Zion Map — Pre-Commit Review
 "map.ai.precommit.title" = "Gate de Review Pré-Commit";

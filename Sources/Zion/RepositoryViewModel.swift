@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import CryptoKit
+import UniformTypeIdentifiers
 @preconcurrency import SwiftTerm
 
 enum TerminalShellEscaping {
@@ -136,6 +137,7 @@ final class RepositoryViewModel {
     var navigateToGraphRequested: Bool = false
     var navigateToCodeRequested: Bool = false
     var nextSectionAfterRepositoryOpen: AppSection?
+    var pendingExternalFiles: [URL] = []
 
     // GitHub PR integration
     var pullRequests: [GitHubPRInfo] = []
@@ -878,6 +880,15 @@ final class RepositoryViewModel {
         refreshFileTree()
         startFileWatcher(for: url)
         scheduleDeferredRepositoryLoads(for: url, switchToken: switchToken)
+
+        if !pendingExternalFiles.isEmpty {
+            let pending = pendingExternalFiles
+            pendingExternalFiles = []
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(100))
+                openFilesAsTabs(pending)
+            }
+        }
     }
 
     private func cancelRepositoryBackgroundActivityForSwitch() {
@@ -1401,6 +1412,57 @@ final class RepositoryViewModel {
             }
         }
         navigateToCodeRequested = true
+    }
+
+    private static let acceptedTextTypes: [UTType] = [
+        .text, .plainText, .sourceCode, .shellScript, .script,
+        .json, .xml, .yaml, .html,
+    ]
+
+    private func isTextFile(_ url: URL) -> Bool {
+        guard let resourceValues = try? url.resourceValues(forKeys: [.contentTypeKey]),
+              let contentType = resourceValues.contentType else {
+            return false
+        }
+        return Self.acceptedTextTypes.contains { contentType.conforms(to: $0) }
+    }
+
+    func openExternalFiles(_ urls: [URL]) {
+        let fileURLs = urls.filter { !$0.hasDirectoryPath && isTextFile($0) }
+        guard !fileURLs.isEmpty else { return }
+
+        let repoRoot = findGitRepository(containing: fileURLs[0])
+
+        if let repoRoot {
+            if repositoryURL == repoRoot {
+                openFilesAsTabs(fileURLs)
+            } else {
+                pendingExternalFiles = fileURLs
+                openRepository(repoRoot)
+            }
+        } else {
+            openFilesAsTabs(fileURLs)
+        }
+        navigateToCodeRequested = true
+    }
+
+    private func findGitRepository(containing fileURL: URL) -> URL? {
+        var current = fileURL.deletingLastPathComponent()
+        while current.path != "/" {
+            let gitDir = current.appendingPathComponent(".git")
+            if FileManager.default.fileExists(atPath: gitDir.path) {
+                return current
+            }
+            current = current.deletingLastPathComponent()
+        }
+        return nil
+    }
+
+    private func openFilesAsTabs(_ urls: [URL]) {
+        for url in urls {
+            let item = FileItem(url: url, isDirectory: false, children: nil)
+            selectCodeFile(item)
+        }
     }
 
     func createNewFile() {
