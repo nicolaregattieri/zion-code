@@ -44,6 +44,7 @@ struct KeyboardShortcutsSheet: View {
                         (L10n("shortcuts.findReferences"), "⇧F12"),
                         (L10n("shortcuts.cmdClickDefinition"), "⌘Click"),
                         (L10n("Git Blame"), "⇧⌘B"),
+                        (L10n("shortcuts.formatDocument"), "⇧⌥F"),
                     ])
 
                     shortcutSection(L10n("Terminal"), icon: "terminal", shortcuts: [

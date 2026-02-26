@@ -295,6 +295,7 @@
 "shortcuts.refreshRepository" = "Atualizar repositório";
 "shortcuts.codeReview" = "Code Review";
 "shortcuts.zionMode" = "Zion Mode";
+"shortcuts.formatDocument" = "Formatar Documento";
 "shortcuts.general" = "Geral";
 "Pressione" = "Pressione";
 "para ver todos os atalhos" = "para ver todos os atalhos";
@@ -876,6 +877,9 @@
 "settings.editor.letterSpacing" = "Espaçamento de Letras";
 "settings.editor.autoCloseQuotes" = "Fechar aspas automaticamente";
 "settings.editor.popover.title" = "Configurações do Editor";
+"settings.editor.formatting" = "Formatação";
+"settings.editor.formatOnSave" = "Formatar ao Salvar";
+"settings.editor.jsonSortKeys" = "JSON: Ordenar chaves";
 
 // Find/Replace
 "editor.search.placeholder" = "Buscar...";
@@ -1162,6 +1166,7 @@
 "filehistory.showInGraph" = "Mostrar no Grafo";
 "help.code.filehistory" = "Visualize o histórico de commits de qualquer arquivo com um clique";
 "help.code.openwith" = "Abrir arquivos pelo Finder (Abrir Com) ou arrastando para o editor";
+"help.code.format" = "Formatar código com ⇧⌥F — suporta JSON, XML, HTML, CSS, JavaScript, Python e mais";
 
 // Zion Map — Pre-Commit Review
 "map.ai.precommit.title" = "Gate de Review Pré-Commit";
@@ -1371,6 +1376,12 @@
 "map.diag.sanitize.title" = "Sanitização de Dados";
 "map.diag.sanitize.description" = "Logs removem automaticamente credenciais e dados sensíveis antes de exportar ou copiar.";
 "status.nav.settings" = "Configuracoes";
+"format.menu" = "Formatar";
+"format.document" = "Formatar Documento";
+"format.success" = "Documento formatado";
+"format.noChanges" = "Já está formatado";
+"format.unsupported" = "Nenhum formatador disponível para este tipo de arquivo";
+"format.error" = "Erro de formatação: %@";
 "focus.menu" = "Visualizacao";
 "focus.toggle" = "Modo Zen";
 "zen.mode" = "Modo Zen";
