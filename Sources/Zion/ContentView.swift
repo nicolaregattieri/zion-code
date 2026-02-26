@@ -626,11 +626,19 @@ struct ContentView: View {
         }
         .overlay(alignment: .top) {
             if zionModeEnabled {
-                DesignSystem.ZionMode.neonMagenta.opacity(0.25).frame(height: 1)
+                if model.isBusy {
+                    NeonProgressLine(mode: .shimmer)
+                        .transition(.opacity.animation(.easeOut(duration: 0.3)))
+                } else {
+                    DesignSystem.ZionMode.neonMagenta.opacity(0.25)
+                        .frame(height: 1)
+                        .transition(.opacity.animation(.easeIn(duration: 0.5)))
+                }
             } else {
                 Divider().opacity(0.45)
             }
         }
+        .animation(.easeInOut(duration: 0.3), value: model.isBusy)
     }
 
     private var statusBarQuickNavigation: some View {
@@ -677,8 +685,21 @@ struct ContentView: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous)
-                    .stroke(isSelected ? (zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(0.35) : DesignSystem.Colors.selectionBorder) : Color.clear, lineWidth: 1)
+                    .stroke(isSelected ? (zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(0.15) : DesignSystem.Colors.selectionBorder) : Color.clear, lineWidth: 1)
             )
+            .overlay(alignment: .bottom) {
+                if isSelected && zionModeEnabled {
+                    DesignSystem.ZionMode.neonGradient
+                        .frame(height: DesignSystem.ZionMode.neonLineHeight)
+                        .padding(.horizontal, 4)
+                        .clipShape(Capsule())
+                        .opacity(0.7)
+                        .shadow(color: DesignSystem.ZionMode.neonMagenta.opacity(0.2),
+                                radius: 1, y: 1)
+                        .transition(.opacity)
+                        .animation(DesignSystem.Motion.detail, value: isSelected)
+                }
+            }
         }
         .buttonStyle(.plain)
         .disabled(isDisabled)
