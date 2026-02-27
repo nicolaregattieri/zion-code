@@ -39,7 +39,7 @@ DerivedData/
 *.xcuserstate
 *.xcworkspace/
 
-# GraphForge Specific
+# Zion Specific
 dist/
 docs/RELEASE.md
 docs/NTFY-QA-CHECKLIST.md
