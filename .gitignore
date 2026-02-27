@@ -42,17 +42,12 @@ DerivedData/
 # GraphForge Specific
 dist/
 docs/RELEASE.md
-<<<<<<< Updated upstream
-docs/ZION-CENTRAL.md
 docs/NTFY-QA-CHECKLIST.md
+docs/ZION-CENTRAL.md
 docs/STORY.md
 docs/LAUNCH-*.md
 ROADMAP.md
 ZION-HEALTH.md
-=======
-docs/NTFY-QA-CHECKLIST.md
-docs/ZION-CENTRAL.md
->>>>>>> Stashed changes
 *.log
 *.skill
 
