@@ -531,11 +531,12 @@ struct CodeScreen: View {
                 } label: {
                     Image(systemName: "rectangle.topthird.inset.filled")
                         .font(DesignSystem.Typography.bodyMedium)
+                        .frame(width: DesignSystem.IconSize.editorToolbarFrame.width,
+                               height: DesignSystem.IconSize.editorToolbarFrame.height)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(layout == .editorOnly ? Color.accentColor : .secondary)
-                .frame(width: 26, height: 22)
-                .contentShape(Rectangle())
                 .help(L10n("Somente editor") + " (⌘J)")
                 .accessibilityLabel(L10n("Somente editor"))
 
@@ -544,11 +545,12 @@ struct CodeScreen: View {
                 } label: {
                     Image(systemName: "rectangle.split.1x2")
                         .font(DesignSystem.Typography.bodyMedium)
+                        .frame(width: DesignSystem.IconSize.editorToolbarFrame.width,
+                               height: DesignSystem.IconSize.editorToolbarFrame.height)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(layout == .split ? Color.accentColor : .secondary)
-                .frame(width: 26, height: 22)
-                .contentShape(Rectangle())
                 .help(L10n("Editor e terminal"))
                 .accessibilityLabel(L10n("Editor e terminal"))
 
@@ -557,11 +559,12 @@ struct CodeScreen: View {
                 } label: {
                     Image(systemName: "rectangle.bottomthird.inset.filled")
                         .font(DesignSystem.Typography.bodyMedium)
+                        .frame(width: DesignSystem.IconSize.editorToolbarFrame.width,
+                               height: DesignSystem.IconSize.editorToolbarFrame.height)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(layout == .terminalOnly ? Color.accentColor : .secondary)
-                .frame(width: 26, height: 22)
-                .contentShape(Rectangle())
                 .help(L10n("Somente terminal") + " (⇧⌘J)")
                 .accessibilityLabel(L10n("Somente terminal"))
             }
@@ -1565,7 +1568,7 @@ struct CodeScreen: View {
 
     private var terminalTabBar: some View {
         let accentColor = model.selectedTheme.isLightAppearance ? DesignSystem.Colors.info : Color.accentColor
-        return HStack(spacing: 0) {
+        return HStack(alignment: .center, spacing: 0) {
             Image(systemName: "terminal.fill")
                 .font(DesignSystem.Typography.label)
                 .foregroundStyle(model.selectedTheme.terminalPalette.accentSwiftUI.opacity(0.7))
@@ -1589,22 +1592,39 @@ struct CodeScreen: View {
                 }
                 .padding(.horizontal, 4)
             }
+            .fixedSize(horizontal: false, vertical: true)
 
             Spacer()
 
             // Split buttons grouped
             HStack(spacing: 2) {
-                TerminalToolbarButton(
-                    icon: "square.split.2x1",
-                    color: accentColor,
-                    tooltip: L10n("Dividir verticalmente") + " (⇧⌘D)"
-                ) { model.splitFocusedTerminal(direction: .vertical) }
+                Button {
+                    model.splitFocusedTerminal(direction: .vertical)
+                } label: {
+                    Image(systemName: "square.split.2x1")
+                        .font(DesignSystem.Typography.bodyMedium)
+                        .frame(width: DesignSystem.IconSize.editorToolbarFrame.width,
+                               height: DesignSystem.IconSize.editorToolbarFrame.height)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(.secondary)
+                .help(L10n("Dividir verticalmente") + " (⇧⌘D)")
+                .accessibilityLabel(L10n("Dividir verticalmente"))
 
-                TerminalToolbarButton(
-                    icon: "square.split.1x2",
-                    color: accentColor,
-                    tooltip: L10n("Dividir horizontalmente") + " (⇧⌘E)"
-                ) { model.splitFocusedTerminal(direction: .horizontal) }
+                Button {
+                    model.splitFocusedTerminal(direction: .horizontal)
+                } label: {
+                    Image(systemName: "square.split.1x2")
+                        .font(DesignSystem.Typography.bodyMedium)
+                        .frame(width: DesignSystem.IconSize.editorToolbarFrame.width,
+                               height: DesignSystem.IconSize.editorToolbarFrame.height)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(.secondary)
+                .help(L10n("Dividir horizontalmente") + " (⇧⌘E)")
+                .accessibilityLabel(L10n("Dividir horizontalmente"))
             }
             .padding(.horizontal, 4)
             .padding(.vertical, 3)
@@ -1645,7 +1665,7 @@ struct CodeScreen: View {
                 .padding(.trailing, 16)
             }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 4)
     }
 }
 
@@ -1898,13 +1918,13 @@ private struct TerminalToolbarButton: View {
             Image(systemName: icon)
                 .font(DesignSystem.IconSize.toolbar)
                 .foregroundStyle(color)
+                .frame(width: DesignSystem.IconSize.terminalToolbarFrame.width,
+                       height: DesignSystem.IconSize.terminalToolbarFrame.height)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .frame(width: DesignSystem.IconSize.terminalToolbarFrame.width,
-               height: DesignSystem.IconSize.terminalToolbarFrame.height)
         .background(isHovered ? DesignSystem.Interactive.hoverBackground : Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius))
-        .contentShape(Rectangle())
         .onHover { h in isHovered = h }
         .help(tooltip)
         .accessibilityLabel(accessLabel ?? tooltip)
@@ -1950,13 +1970,13 @@ struct TerminalFontPopoverButton: View {
             Image(systemName: "textformat.size")
                 .font(DesignSystem.IconSize.toolbar)
                 .foregroundStyle(accentColor)
+                .frame(width: DesignSystem.IconSize.terminalToolbarFrame.width,
+                       height: DesignSystem.IconSize.terminalToolbarFrame.height)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .frame(width: DesignSystem.IconSize.terminalToolbarFrame.width,
-               height: DesignSystem.IconSize.terminalToolbarFrame.height)
         .background(isHovered ? DesignSystem.Interactive.hoverBackground : Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius))
-        .contentShape(Rectangle())
         .onHover { h in isHovered = h }
         .help(L10n("Fonte do terminal"))
         .accessibilityLabel(L10n("Fonte do terminal"))

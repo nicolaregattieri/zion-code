@@ -192,8 +192,8 @@ struct DesignSystem {
         static let tiny = Font.system(size: 8)
 
         // Tap target frames
-        static let terminalToolbarFrame = CGSize(width: 28, height: 24)
-        static let editorToolbarFrame = CGSize(width: 26, height: 22)
+        static let terminalToolbarFrame = CGSize(width: 30, height: 28)
+        static let editorToolbarFrame = CGSize(width: 28, height: 24)
         static let standardFrame = CGSize(width: 24, height: 24)
         static let compactFrame = CGSize(width: 20, height: 20)
         static let smallFrame = CGSize(width: 16, height: 16)
