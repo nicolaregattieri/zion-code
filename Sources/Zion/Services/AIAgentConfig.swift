@@ -61,8 +61,12 @@ enum AIAgent: String, CaseIterable, Identifiable, Sendable {
 
     /// Absolute URL for this agent's global config file.
     var globalConfigURL: URL {
-        FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(globalConfigRelativePath)
+        globalConfigURL(baseDirectory: FileManager.default.homeDirectoryForCurrentUser)
+    }
+
+    /// Absolute URL for this agent's global config file, relative to a custom base directory.
+    func globalConfigURL(baseDirectory: URL) -> URL {
+        baseDirectory.appendingPathComponent(globalConfigRelativePath)
     }
 
     /// The directory whose existence signals this agent is installed.
@@ -136,7 +140,14 @@ struct AIAgentConfigManager {
 
     /// Install ntfy rule into the agent's global config directory.
     static func installGlobalRule(for agent: AIAgent) {
-        let fileURL = agent.globalConfigURL
+        installGlobalRule(for: agent, baseDirectory: FileManager.default.homeDirectoryForCurrentUser)
+    }
+
+    /// Install ntfy rule using a custom base directory (for testing).
+    static func installGlobalRule(for agent: AIAgent, baseDirectory: URL) {
+        let fileURL = agent.globalConfigURL(baseDirectory: baseDirectory)
+        // Refuse to write through symlinks
+        guard !isSymlink(at: fileURL.path) else { return }
         let block = agent.isYAML ? buildYAMLBlock() : buildMarkdownBlock()
 
         if agent.usesDedicatedFile {
@@ -144,6 +155,7 @@ struct AIAgentConfigManager {
             let parentDir = fileURL.deletingLastPathComponent()
             try? FileManager.default.createDirectory(at: parentDir, withIntermediateDirectories: true)
             try? block.write(to: fileURL, atomically: true, encoding: .utf8)
+            try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: fileURL.path)
         } else {
             injectBlock(at: fileURL, block: block, isYAML: agent.isYAML)
         }
@@ -151,7 +163,12 @@ struct AIAgentConfigManager {
 
     /// Remove ntfy rule from the agent's global config directory.
     static func removeGlobalRule(for agent: AIAgent) {
-        let fileURL = agent.globalConfigURL
+        removeGlobalRule(for: agent, baseDirectory: FileManager.default.homeDirectoryForCurrentUser)
+    }
+
+    /// Remove ntfy rule using a custom base directory (for testing).
+    static func removeGlobalRule(for agent: AIAgent, baseDirectory: URL) {
+        let fileURL = agent.globalConfigURL(baseDirectory: baseDirectory)
 
         if agent.usesDedicatedFile {
             // Delete the whole file; also remove parent dir if now empty
@@ -167,7 +184,12 @@ struct AIAgentConfigManager {
 
     /// Check if the global rule is currently installed for this agent.
     static func isGlobalRuleInstalled(for agent: AIAgent) -> Bool {
-        let fileURL = agent.globalConfigURL
+        isGlobalRuleInstalled(for: agent, baseDirectory: FileManager.default.homeDirectoryForCurrentUser)
+    }
+
+    /// Check if the global rule is installed using a custom base directory (for testing).
+    static func isGlobalRuleInstalled(for agent: AIAgent, baseDirectory: URL) -> Bool {
+        let fileURL = agent.globalConfigURL(baseDirectory: baseDirectory)
         guard FileManager.default.fileExists(atPath: fileURL.path) else { return false }
 
         if agent.usesDedicatedFile {
@@ -200,6 +222,13 @@ struct AIAgentConfigManager {
 
     // MARK: - Private
 
+    private static func isSymlink(at path: String) -> Bool {
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: path) else { return false }
+        let attrs = try? fm.attributesOfItem(atPath: path)
+        return attrs?[.type] as? FileAttributeType == .typeSymbolicLink
+    }
+
     private static func buildMarkdownBlock() -> String {
         """
         \(startMarker)
@@ -226,6 +255,8 @@ struct AIAgentConfigManager {
     }
 
     private static func injectBlock(at fileURL: URL, block: String, isYAML: Bool) {
+        // Refuse to write through symlinks
+        guard !isSymlink(at: fileURL.path) else { return }
         // Ensure parent directory exists
         let parentDir = fileURL.deletingLastPathComponent()
         try? FileManager.default.createDirectory(at: parentDir, withIntermediateDirectories: true)

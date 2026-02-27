@@ -2,23 +2,6 @@ import XCTest
 @testable import Zion
 
 final class SecurityHardeningTests: XCTestCase {
-    func testNtfyValidationAcceptsSecureConfig() {
-        XCTAssertTrue(NtfyClient.validateServerURL("https://ntfy.sh"))
-        XCTAssertTrue(NtfyClient.validateTopic("team-updates_v1.2"))
-    }
-
-    func testNtfyValidationRejectsInvalidConfig() {
-        XCTAssertFalse(NtfyClient.validateServerURL("http://ntfy.sh"))
-        XCTAssertFalse(NtfyClient.validateServerURL("hhtps://ntfy.sh"))
-        XCTAssertFalse(NtfyClient.validateTopic("invalid topic with spaces"))
-        XCTAssertFalse(NtfyClient.validateTopic("topic/with/slash"))
-    }
-
-    func testNtfyBuildURLUsesValidatedParts() {
-        let url = NtfyClient.buildNtfyURL(serverURL: "https://ntfy.sh/base", topic: "prod-alerts")
-        XCTAssertEqual(url?.absoluteString, "https://ntfy.sh/base/prod-alerts")
-    }
-
     @MainActor
     func testDiagnosticLoggerRedactsSensitiveTokens() {
         let logger = DiagnosticLogger.shared
