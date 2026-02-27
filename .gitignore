@@ -43,6 +43,7 @@ DerivedData/
 dist/
 docs/RELEASE.md
 docs/ZION-CENTRAL.md
+docs/NTFY-QA-CHECKLIST.md
 *.log
 *.skill
 
