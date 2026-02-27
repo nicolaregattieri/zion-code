@@ -13,7 +13,7 @@ struct OperationsScreen: View {
                 HStack(alignment: .bottom) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(L10n("Centro de Operacoes"))
-                            .font(.system(size: 28, weight: .bold))
+                            .font(DesignSystem.Typography.screenTitle)
                         Text(L10n("Gerencie branches, tags, stashes e alteracoes de historico."))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
@@ -74,7 +74,7 @@ struct OperationsScreen: View {
                 SectionLabel(title: L10n("Manutencao"), icon: "wrench.and.screwdriver")
                 maintenanceCard
             }
-            .padding(24)
+            .padding(DesignSystem.Spacing.screenEdge)
             .padding(.bottom, DesignSystem.Spacing.cardPadding)
             .frame(maxWidth: DesignSystem.Layout.operationsContentMaxWidth, alignment: .leading)
             .frame(maxWidth: .infinity, alignment: .center)
@@ -117,12 +117,12 @@ struct OperationsScreen: View {
                             HStack(spacing: 12) {
                                 Button(L10n("Selecionar Tudo")) { model.stageAllFiles() }
                                     .buttonStyle(.plain)
-                                    .font(.system(size: 10, weight: .bold))
+                                    .font(DesignSystem.Typography.labelBold)
                                     .foregroundStyle(Color.accentColor)
                                 
                                 Button(L10n("Desmarcar Tudo")) { model.unstageAllFiles() }
                                     .buttonStyle(.plain)
-                                    .font(.system(size: 10, weight: .bold))
+                                    .font(DesignSystem.Typography.labelBold)
                                     .foregroundStyle(.secondary)
                             }
                         }
@@ -204,7 +204,7 @@ struct OperationsScreen: View {
                                 ProgressView().controlSize(.small).frame(width: 12, height: 12)
                             } else {
                                 Label(L10n("Review"), systemImage: "sparkles")
-                                    .font(.system(size: 10, weight: .bold))
+                                    .font(DesignSystem.Typography.labelBold)
                             }
                         }
                         .buttonStyle(.bordered)
@@ -220,7 +220,7 @@ struct OperationsScreen: View {
                                 ProgressView().controlSize(.small).frame(width: 12, height: 12)
                             } else {
                                 Label(L10n("Split"), systemImage: "sparkles")
-                                    .font(.system(size: 10, weight: .bold))
+                                    .font(DesignSystem.Typography.labelBold)
                             }
                         }
                         .buttonStyle(.bordered)
@@ -259,7 +259,7 @@ struct OperationsScreen: View {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
                             Image(systemName: "sparkles").foregroundStyle(DesignSystem.Colors.commitSplit)
-                            Text(L10n("Sugestao de Split")).font(.system(size: 11, weight: .bold))
+                            Text(L10n("Sugestao de Split")).font(DesignSystem.Typography.bodyMedium)
                             Spacer()
                             Button { model.isSplitVisible = false } label: {
                                 Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
@@ -268,11 +268,11 @@ struct OperationsScreen: View {
                         ForEach(model.aiCommitSplitSuggestions) { suggestion in
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(suggestion.message)
-                                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                                    .font(DesignSystem.Typography.monoSmall)
                                 HStack(spacing: 4) {
                                     ForEach(suggestion.files, id: \.self) { file in
                                         Text(file)
-                                            .font(.system(size: 9, design: .monospaced))
+                                            .font(DesignSystem.Typography.monoMeta)
                                             .padding(.horizontal, 6)
                                             .padding(.vertical, 2)
                                             .background(DesignSystem.Colors.commitSplit.opacity(0.1))
@@ -307,7 +307,7 @@ struct OperationsScreen: View {
                     HStack(spacing: 8) {
                         ProgressView().controlSize(.small)
                         Text(L10n("precommit.reviewing"))
-                            .font(.system(size: 11, weight: .medium))
+                            .font(DesignSystem.Typography.bodyMedium)
                             .foregroundStyle(.secondary)
                     }
                     .padding(10)
@@ -478,7 +478,7 @@ struct OperationsScreen: View {
                         ProgressView().controlSize(.small)
                     } else {
                         Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(DesignSystem.Typography.labelBold)
                     }
                 }
                 .buttonStyle(.plain)
@@ -504,10 +504,10 @@ struct OperationsScreen: View {
                                 VStack(alignment: .leading, spacing: 2) {
                                     HStack(spacing: 6) {
                                         Text(snapshot.shortHash)
-                                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                            .font(DesignSystem.Typography.monoLabelBold)
                                             .foregroundStyle(.primary)
                                         Text(L10n(snapshot.source.l10nKey))
-                                            .font(.system(size: 9, weight: .semibold))
+                                            .font(DesignSystem.Typography.metaBold)
                                             .padding(.horizontal, 6)
                                             .padding(.vertical, 2)
                                             .background(DesignSystem.Colors.glassInset)
@@ -602,7 +602,7 @@ struct OperationsScreen: View {
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(remote.name).font(.system(.caption, design: .monospaced)).fontWeight(.bold)
-                                Text(remote.url).font(.system(size: 9, design: .monospaced)).foregroundStyle(.secondary).lineLimit(1)
+                                Text(remote.url).font(DesignSystem.Typography.monoMeta).foregroundStyle(.secondary).lineLimit(1)
                             }
                             Spacer()
                             HStack(spacing: 8) {
@@ -635,7 +635,7 @@ struct OperationsScreen: View {
         GlassCard(spacing: 10, expanding: true) {
             CardHeader(L10n("Worktrees"), icon: "square.split.2x2", subtitle: L10n("Contextos paralelos")) {
                 Text("\(model.worktrees.count)")
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .font(DesignSystem.Typography.monoLabelBold)
                     .foregroundStyle(.secondary)
             }
 
@@ -670,13 +670,13 @@ struct OperationsScreen: View {
                 HStack(spacing: 10) {
                     if !model.derivedWorktreeBranch.isEmpty {
                         Text("branch: \(model.derivedWorktreeBranch)")
-                            .font(.system(size: 10, design: .monospaced))
+                            .font(DesignSystem.Typography.monoLabel)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
                     if !model.derivedWorktreePath.isEmpty {
                         Text(model.derivedWorktreePath)
-                            .font(.system(size: 10, design: .monospaced))
+                            .font(DesignSystem.Typography.monoLabel)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                             .truncationMode(.middle)
@@ -693,7 +693,7 @@ struct OperationsScreen: View {
                     L10n("worktree.smart.advanced"),
                     systemImage: model.isWorktreeAdvancedExpanded ? "chevron.down" : "chevron.right"
                 )
-                .font(.system(size: 10, weight: .semibold))
+                .font(DesignSystem.Typography.label)
                 .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
@@ -781,7 +781,7 @@ struct OperationsScreen: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            .padding(24)
+            .padding(DesignSystem.Spacing.screenEdge)
             .frame(width: 550, height: 450)
         }
     }
@@ -938,9 +938,9 @@ struct OperationsScreen: View {
     private func SectionLabel(title: String, icon: String) -> some View {
         HStack(spacing: 6) {
             Image(systemName: icon)
-                .font(.system(size: 10, weight: .semibold))
+                .font(DesignSystem.Typography.label)
             Text(title)
-                .font(.system(size: 11, weight: .bold))
+                .font(DesignSystem.Typography.bodyMedium)
                 .textCase(.uppercase)
                 .tracking(0.5)
         }
@@ -973,7 +973,7 @@ struct FileStatusRow: View {
             .buttonStyle(.plain)
 
             Text(file)
-                .font(.system(size: 10, design: .monospaced))
+                .font(DesignSystem.Typography.monoLabel)
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .foregroundStyle(isStaged ? .primary : .secondary)
@@ -1081,7 +1081,7 @@ struct PreCommitCheckCard: View {
                         Image(systemName: "xmark.octagon.fill").font(.system(size: 10))
                             .foregroundStyle(DesignSystem.Colors.destructive)
                         Text("\(criticalCount) \(L10n("Critico"))")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(DesignSystem.Typography.labelBold)
                             .foregroundStyle(DesignSystem.Colors.destructive)
                     }
                 }
@@ -1090,7 +1090,7 @@ struct PreCommitCheckCard: View {
                         Image(systemName: "exclamationmark.triangle.fill").font(.system(size: 10))
                             .foregroundStyle(DesignSystem.Colors.warning)
                         Text("\(warningCount) \(L10n("Aviso"))")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(DesignSystem.Typography.labelBold)
                             .foregroundStyle(DesignSystem.Colors.warning)
                     }
                 }
@@ -1099,7 +1099,7 @@ struct PreCommitCheckCard: View {
                         Image(systemName: "checkmark.circle.fill").font(.system(size: 10))
                             .foregroundStyle(DesignSystem.Colors.info)
                         Text("\(safeCount) \(L10n("Sugestao"))")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(DesignSystem.Typography.labelBold)
                             .foregroundStyle(DesignSystem.Colors.info)
                     }
                 }
@@ -1114,7 +1114,7 @@ struct PreCommitCheckCard: View {
                     VStack(alignment: .leading, spacing: 2) {
                         if finding.file != "general" {
                             Text(finding.file)
-                                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                .font(DesignSystem.Typography.monoMeta)
                                 .foregroundStyle(.secondary)
                         }
                         Text(finding.message)

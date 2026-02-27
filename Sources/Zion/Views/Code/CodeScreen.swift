@@ -94,7 +94,7 @@ private struct BreadcrumbFolderSegmentButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 10, weight: .regular, design: .monospaced))
+                .font(DesignSystem.Typography.monoLabel)
                 .lineLimit(1)
                 .foregroundStyle(isHovered ? Color.primary : DesignSystem.Colors.textSecondary)
                 .padding(.horizontal, 4)
@@ -192,7 +192,7 @@ struct CodeScreen: View {
                 .transition(DesignSystem.Motion.fadeScale)
             }
         }
-        .padding(isZenMode ? 0 : 12)
+        .padding(isZenMode ? 0 : DesignSystem.Spacing.cardPadding)
         .background(DesignSystem.Colors.background)
         .sheet(isPresented: $showGoToLine) {
             goToLineSheet
@@ -440,7 +440,7 @@ struct CodeScreen: View {
             HStack(spacing: 6) {
                 Stepper(value: $model.editorFontSize, in: 8...32, step: 1) {
                     Text("\(Int(model.editorFontSize))pt")
-                        .font(.system(size: 11, design: .monospaced))
+                        .font(DesignSystem.Typography.monoSmall)
                         .frame(width: 30)
                 }
 
@@ -449,7 +449,7 @@ struct CodeScreen: View {
                 Slider(value: $model.editorLineSpacing, in: 0.0...20.0, step: 0.5)
                     .frame(width: 60)
                 Text(String(format: "%.1fpt", model.editorLineSpacing))
-                    .font(.system(size: 10, design: .monospaced))
+                    .font(DesignSystem.Typography.monoLabel)
                     .frame(width: 40)
             }
             .padding(.horizontal, 6)
@@ -530,7 +530,7 @@ struct CodeScreen: View {
                     withAnimation(DesignSystem.Motion.detail) { layout = .editorOnly }
                 } label: {
                     Image(systemName: "rectangle.topthird.inset.filled")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(DesignSystem.Typography.bodyMedium)
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(layout == .editorOnly ? Color.accentColor : .secondary)
@@ -543,7 +543,7 @@ struct CodeScreen: View {
                     withAnimation(DesignSystem.Motion.detail) { layout = .split }
                 } label: {
                     Image(systemName: "rectangle.split.1x2")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(DesignSystem.Typography.bodyMedium)
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(layout == .split ? Color.accentColor : .secondary)
@@ -556,7 +556,7 @@ struct CodeScreen: View {
                     withAnimation(DesignSystem.Motion.detail) { layout = .terminalOnly }
                 } label: {
                     Image(systemName: "rectangle.bottomthird.inset.filled")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(DesignSystem.Typography.bodyMedium)
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(layout == .terminalOnly ? Color.accentColor : .secondary)
@@ -581,7 +581,7 @@ struct CodeScreen: View {
                     Image(systemName: "doc.text.magnifyingglass")
                         .font(.system(size: 9))
                     Text(".zion")
-                        .font(.system(size: 9, weight: .medium, design: .monospaced))
+                        .font(DesignSystem.Typography.monoMeta)
                 }
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 6)
@@ -654,7 +654,7 @@ struct CodeScreen: View {
     private func breadcrumbSegmentView(_ item: EditorBreadcrumbItem) -> some View {
         if item.isEllipsis {
             Text("...")
-                .font(.system(size: 10, weight: .regular, design: .monospaced))
+                .font(DesignSystem.Typography.monoLabel)
                 .foregroundStyle(DesignSystem.Colors.textSecondary)
         } else if !item.isFile, let path = item.targetPath {
             BreadcrumbFolderSegmentButton(title: item.title) {
@@ -791,7 +791,7 @@ struct CodeScreen: View {
                     .help(L10n("Atualizar arvore de arquivos"))
                     .accessibilityLabel(L10n("Atualizar arvore de arquivos"))
             }
-            .padding(12)
+            .padding(DesignSystem.Spacing.cardPadding)
 
             Divider()
 
@@ -810,7 +810,7 @@ struct CodeScreen: View {
                                 .buttonStyle(.bordered)
                                 .controlSize(.small)
                             }
-                            .padding(20)
+                            .padding(DesignSystem.Spacing.sectionGap)
                             .frame(maxWidth: .infinity)
                         } else {
                             ForEach(model.repositoryFiles) { item in
@@ -820,9 +820,9 @@ struct CodeScreen: View {
                         }
 
                         ClipboardDrawer(model: model)
-                            .padding(.top, 8)
+                            .padding(.top, DesignSystem.Spacing.standard)
                     }
-                    .padding(.top, 8)
+                    .padding(.top, DesignSystem.Spacing.standard)
                     .padding(.bottom, DesignSystem.Spacing.clipboardDrawerClearance)
                 }
                 .focusable()
@@ -1043,7 +1043,7 @@ struct CodeScreen: View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
                 Label(L10n("editor.markdown.preview"), systemImage: "doc.text.image")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(DesignSystem.Typography.bodyMedium)
                     .foregroundStyle(.secondary)
                 Spacer(minLength: 0)
             }
@@ -1078,7 +1078,7 @@ struct CodeScreen: View {
                     withAnimation(DesignSystem.Motion.detail) { isReplaceVisible.toggle() }
                 } label: {
                     Image(systemName: isReplaceVisible ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 9, weight: .bold))
+                        .font(DesignSystem.Typography.metaBold)
                         .foregroundStyle(.secondary)
                         .frame(width: 28, height: 24)
                         .background(DesignSystem.Colors.glassSubtle)
@@ -1113,7 +1113,7 @@ struct CodeScreen: View {
                 // Match count
                 if !searchQuery.isEmpty {
                     Text(matchCount > 0 ? "\(currentMatchIndex + 1)/\(matchCount)" : L10n("editor.search.noResults"))
-                        .font(.system(size: 10, design: .monospaced))
+                        .font(DesignSystem.Typography.monoLabel)
                         .foregroundStyle(.secondary)
                         .frame(width: 50)
                 }
@@ -1203,7 +1203,7 @@ struct CodeScreen: View {
                     .disabled(Int(goToLineNumber) == nil)
             }
         }
-        .padding(20)
+        .padding(DesignSystem.Spacing.sectionGap)
     }
 
     private func performGoToLine() {
@@ -1370,40 +1370,23 @@ struct CodeScreen: View {
     private var terminalSearchBar: some View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 11))
+                .font(DesignSystem.IconSize.inline)
                 .foregroundStyle(.secondary)
 
             TextField(L10n("Buscar no terminal..."), text: $terminalSearchQuery)
                 .textFieldStyle(.plain)
-                .font(.system(size: 12, design: .monospaced))
+                .font(DesignSystem.Typography.monoBody)
                 .focused($isTerminalSearchFocused)
                 .onSubmit { terminalFindNext() }
 
             if !terminalSearchQuery.isEmpty {
-                Button { terminalFindPrevious() } label: {
-                    Image(systemName: "chevron.up")
-                        .font(.system(size: 10, weight: .semibold))
-                }
-                .buttonStyle(.plain)
-                .help(L10n("Resultado anterior"))
-
-                Button { terminalFindNext() } label: {
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 10, weight: .semibold))
-                }
-                .buttonStyle(.plain)
-                .help(L10n("Proximo resultado"))
+                SearchNavButton(icon: "chevron.up", tooltip: L10n("Resultado anterior"), action: terminalFindPrevious)
+                SearchNavButton(icon: "chevron.down", tooltip: L10n("Proximo resultado"), action: terminalFindNext)
             }
 
-            Button { closeTerminalSearch() } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-            .help(L10n("Fechar busca"))
+            SearchNavButton(icon: "xmark", tooltip: L10n("Fechar busca"), isSecondary: true, action: closeTerminalSearch)
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, DesignSystem.Spacing.cardPadding)
         .padding(.vertical, 6)
         .background(model.selectedTheme.terminalPalette.backgroundSwiftUI.opacity(0.9))
     }
@@ -1503,8 +1486,7 @@ struct CodeScreen: View {
                     }
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 12)
+            .padding(.bottom, DesignSystem.Spacing.compact)
             .dropDestination(for: String.self) { items, _ in
                 guard let text = items.first, !text.isEmpty else { return false }
                 model.sendTextToActiveTerminal(text)
@@ -1512,7 +1494,7 @@ struct CodeScreen: View {
                 return true
             }
         }
-        .padding(.top, 12)
+        .padding(.top, DesignSystem.Spacing.cardPadding)
         .background {
             if isTerminalTransparent {
                 ZStack {
@@ -1585,7 +1567,7 @@ struct CodeScreen: View {
         let accentColor = model.selectedTheme.isLightAppearance ? DesignSystem.Colors.info : Color.accentColor
         return HStack(spacing: 0) {
             Image(systemName: "terminal.fill")
-                .font(.system(size: 10, weight: .semibold))
+                .font(DesignSystem.Typography.label)
                 .foregroundStyle(model.selectedTheme.terminalPalette.accentSwiftUI.opacity(0.7))
                 .padding(.leading, 10)
                 .padding(.trailing, 4)
@@ -1612,31 +1594,17 @@ struct CodeScreen: View {
 
             // Split buttons grouped
             HStack(spacing: 2) {
-                Button {
-                    model.splitFocusedTerminal(direction: .vertical)
-                } label: {
-                    Image(systemName: "square.split.2x1")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(accentColor)
-                }
-                .buttonStyle(.borderless)
-                .frame(width: 28, height: 24)
-                .contentShape(Rectangle())
-                .help(L10n("Dividir verticalmente") + " (⇧⌘D)")
-                .accessibilityLabel(L10n("Dividir verticalmente"))
+                TerminalToolbarButton(
+                    icon: "square.split.2x1",
+                    color: accentColor,
+                    tooltip: L10n("Dividir verticalmente") + " (⇧⌘D)"
+                ) { model.splitFocusedTerminal(direction: .vertical) }
 
-                Button {
-                    model.splitFocusedTerminal(direction: .horizontal)
-                } label: {
-                    Image(systemName: "square.split.1x2")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(accentColor)
-                }
-                .buttonStyle(.borderless)
-                .frame(width: 28, height: 24)
-                .contentShape(Rectangle())
-                .help(L10n("Dividir horizontalmente") + " (⇧⌘E)")
-                .accessibilityLabel(L10n("Dividir horizontalmente"))
+                TerminalToolbarButton(
+                    icon: "square.split.1x2",
+                    color: accentColor,
+                    tooltip: L10n("Dividir horizontalmente") + " (⇧⌘E)"
+                ) { model.splitFocusedTerminal(direction: .horizontal) }
             }
             .padding(.horizontal, 4)
             .padding(.vertical, 3)
@@ -1648,33 +1616,23 @@ struct CodeScreen: View {
                 .padding(.horizontal, 4)
 
             // Quick worktree
-            Button { model.quickCreateWorktree() } label: {
-                Image(systemName: "arrow.triangle.branch")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(accentColor)
-            }
-            .buttonStyle(.borderless)
-            .frame(width: 28, height: 24)
-            .contentShape(Rectangle())
-            .help(L10n("Criar worktree rapido"))
-            .accessibilityLabel(L10n("Criar worktree rapido"))
-            .disabled(model.repositoryURL == nil)
+            TerminalToolbarButton(
+                icon: "arrow.triangle.branch",
+                color: accentColor,
+                tooltip: L10n("Criar worktree rapido"),
+                disabled: model.repositoryURL == nil
+            ) { model.quickCreateWorktree() }
 
             // New tab
-            Button {
+            TerminalToolbarButton(
+                icon: "plus",
+                color: accentColor,
+                tooltip: L10n("Novo terminal") + " (⌘T)"
+            ) {
                 let url = model.repositoryURL ?? URL(fileURLWithPath: NSHomeDirectory())
                 let label = model.currentBranch.isEmpty ? "zsh" : model.currentBranch
                 model.createTerminalSession(workingDirectory: url, label: label)
-            } label: {
-                Image(systemName: "plus")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(accentColor)
             }
-            .buttonStyle(.borderless)
-            .frame(width: 28, height: 24)
-            .contentShape(Rectangle())
-            .help(L10n("Novo terminal") + " (⌘T)")
-            .accessibilityLabel(L10n("Novo terminal"))
             .padding(.trailing, 8)
 
             if isZenMode {
@@ -1700,10 +1658,10 @@ private struct ClipboardPopoverButton: View {
         Button { isPresented.toggle() } label: {
             HStack(spacing: 4) {
                 Image(systemName: "clipboard")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(DesignSystem.Typography.bodyMedium)
                 if !model.clipboardMonitor.items.isEmpty {
                     Text("\(model.clipboardMonitor.items.count)")
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .font(DesignSystem.Typography.monoMeta)
                         .padding(.horizontal, 4)
                         .padding(.vertical, 1)
                         .background(DesignSystem.Colors.selectionBackground)
@@ -1742,7 +1700,7 @@ struct EditorSettingsPopoverButton: View {
         .popover(isPresented: $isPresented) {
             VStack(alignment: .leading, spacing: 12) {
                 Text(L10n("settings.editor.popover.title"))
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(DesignSystem.Typography.bodyMedium)
 
                 // Editing section
                 VStack(alignment: .leading, spacing: 6) {
@@ -1840,7 +1798,7 @@ struct EditorSettingsPopoverButton: View {
                     Slider(value: $model.editorLineSpacing, in: 0.0...20.0, step: 0.5)
                         .frame(width: 100)
                     Text(String(format: "%.1fpt", model.editorLineSpacing))
-                        .font(.system(size: 10, design: .monospaced))
+                        .font(DesignSystem.Typography.monoLabel)
                         .frame(width: 42)
                 }
 
@@ -1854,7 +1812,7 @@ struct EditorSettingsPopoverButton: View {
                     Slider(value: $model.editorLetterSpacing, in: -1.0...5.0, step: 0.1)
                         .frame(width: 100)
                     Text(String(format: "%.1f", model.editorLetterSpacing))
-                        .font(.system(size: 10, design: .monospaced))
+                        .font(DesignSystem.Typography.monoLabel)
                         .frame(width: 30)
                 }
             }
@@ -1874,6 +1832,8 @@ struct TerminalTabChip: View {
     let onActivate: () -> Void
     let onClose: () -> Void
 
+    @State private var isHovered = false
+
     private var sessions: [TerminalSession] { tab.allSessions() }
     private var title: String { sessions.first?.title ?? "zsh" }
     private var hasAlive: Bool { sessions.contains(where: { $0.isAlive }) }
@@ -1890,7 +1850,7 @@ struct TerminalTabChip: View {
 
             if sessions.count > 1 {
                 Text("\(sessions.count)")
-                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    .font(DesignSystem.Typography.micro)
                     .foregroundStyle(accentColor)
                     .padding(.horizontal, 4)
                     .padding(.vertical, 1)
@@ -1902,7 +1862,7 @@ struct TerminalTabChip: View {
                 onClose()
             } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 8, weight: .bold))
+                    .font(DesignSystem.Typography.micro)
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
@@ -1911,7 +1871,7 @@ struct TerminalTabChip: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
-        .background(isActive ? accentColor.opacity(0.25) : DesignSystem.Colors.glassSubtle)
+        .background(isActive ? accentColor.opacity(0.25) : (isHovered ? DesignSystem.Colors.glassHover : DesignSystem.Colors.glassSubtle))
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius)
@@ -1919,6 +1879,61 @@ struct TerminalTabChip: View {
         )
         .contentShape(Rectangle())
         .onTapGesture { onActivate() }
+        .onHover { h in isHovered = h }
+    }
+}
+
+private struct TerminalToolbarButton: View {
+    let icon: String
+    let color: Color
+    let tooltip: String
+    var accessLabel: String? = nil
+    var disabled: Bool = false
+    let action: () -> Void
+
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(DesignSystem.IconSize.toolbar)
+                .foregroundStyle(color)
+        }
+        .buttonStyle(.plain)
+        .frame(width: DesignSystem.IconSize.terminalToolbarFrame.width,
+               height: DesignSystem.IconSize.terminalToolbarFrame.height)
+        .background(isHovered ? DesignSystem.Interactive.hoverBackground : Color.clear)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius))
+        .contentShape(Rectangle())
+        .onHover { h in isHovered = h }
+        .help(tooltip)
+        .accessibilityLabel(accessLabel ?? tooltip)
+        .disabled(disabled)
+    }
+}
+
+private struct SearchNavButton: View {
+    let icon: String
+    let tooltip: String
+    var isSecondary: Bool = false
+    let action: () -> Void
+
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(DesignSystem.Typography.label)
+                .foregroundStyle(isSecondary ? .secondary : .primary)
+        }
+        .buttonStyle(.plain)
+        .frame(width: 20, height: 20)
+        .background(isHovered ? DesignSystem.Interactive.hoverBackground : Color.clear)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius))
+        .contentShape(Rectangle())
+        .onHover { h in isHovered = h }
+        .help(tooltip)
+        .accessibilityLabel(tooltip)
     }
 }
 
@@ -1926,24 +1941,29 @@ struct TerminalFontPopoverButton: View {
     @Bindable var model: RepositoryViewModel
     let accentColor: Color
     @State private var isPresented = false
+    @State private var isHovered = false
 
     var body: some View {
         Button {
             isPresented.toggle()
         } label: {
             Image(systemName: "textformat.size")
-                .font(.system(size: 11, weight: .medium))
+                .font(DesignSystem.IconSize.toolbar)
                 .foregroundStyle(accentColor)
         }
         .buttonStyle(.plain)
-        .frame(width: 28, height: 24)
+        .frame(width: DesignSystem.IconSize.terminalToolbarFrame.width,
+               height: DesignSystem.IconSize.terminalToolbarFrame.height)
+        .background(isHovered ? DesignSystem.Interactive.hoverBackground : Color.clear)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius))
         .contentShape(Rectangle())
+        .onHover { h in isHovered = h }
         .help(L10n("Fonte do terminal"))
         .accessibilityLabel(L10n("Fonte do terminal"))
         .popover(isPresented: $isPresented) {
             VStack(alignment: .leading, spacing: 10) {
                 Text(L10n("Fonte do terminal"))
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(DesignSystem.Typography.bodyMedium)
 
                 HStack(spacing: 6) {
                     Text(L10n("Fonte"))
@@ -1979,7 +1999,7 @@ struct TerminalFontPopoverButton: View {
                         .foregroundStyle(.secondary)
                     Stepper(value: $model.terminalFontSize, in: 8...32, step: 1) {
                         Text("\(Int(model.terminalFontSize))pt")
-                            .font(.system(size: 11, design: .monospaced))
+                            .font(DesignSystem.Typography.monoSmall)
                     }
                 }
             }
@@ -2010,30 +2030,25 @@ struct TerminalPaneView: View {
                 model: model,
                 transparentBackground: transparentBackground
             )
-            .overlay(alignment: .topLeading) {
+            .overlay(alignment: .top) {
                 if focusedSessionID == session.id, model.terminalSessions.count > 1 {
-                    RoundedRectangle(cornerRadius: 2)
+                    Capsule()
                         .fill(Color.accentColor)
-                        .frame(width: 3, height: 20)
+                        .frame(width: 24, height: 3)
                         .padding(.top, 4)
-                        .padding(.leading, 2)
                 }
             }
             .overlay(alignment: .topTrailing) {
                 if model.terminalSessions.count > 1 {
-                    Button { model.closeTerminalSession(session) } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                    .frame(width: 24, height: 24)
-                    .contentShape(Rectangle())
-                    .help(L10n("Fechar painel") + " (⇧⌘W)")
-                    .accessibilityLabel(L10n("Fechar painel"))
+                    SearchNavButton(
+                        icon: "xmark",
+                        tooltip: L10n("Fechar painel") + " (⇧⌘W)",
+                        isSecondary: true
+                    ) { model.closeTerminalSession(session) }
                     .padding(4)
                 }
             }
+            .padding(.horizontal, DesignSystem.Spacing.micro)
             .contentShape(Rectangle())
             .onTapGesture { model.focusedSessionID = session.id }
 
@@ -2050,6 +2065,7 @@ struct TerminalPaneView: View {
                                 Divider().frame(width: dividerThickness)
                             }
                             TerminalPaneView(node: child, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model, transparentBackground: transparentBackground)
+                                .padding(.horizontal, DesignSystem.Spacing.micro)
                                 .frame(width: max(0, paneWidth))
                         }
                     }
@@ -2062,6 +2078,7 @@ struct TerminalPaneView: View {
                                 Divider().frame(height: dividerThickness)
                             }
                             TerminalPaneView(node: child, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model, transparentBackground: transparentBackground)
+                                .padding(.horizontal, DesignSystem.Spacing.micro)
                                 .frame(height: max(0, paneHeight))
                         }
                     }
@@ -2210,7 +2227,7 @@ struct CodeTab: View {
                 onClose()
             } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 8, weight: .bold))
+                    .font(DesignSystem.Typography.micro)
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
@@ -2467,7 +2484,7 @@ struct FileTreeNodeView: View {
             } label: {
                 HStack(spacing: 6) {
                     if item.isDirectory {
-                        Image(systemName: isExpanded ? "chevron.down" : "chevron.right").font(.system(size: 8, weight: .bold)).foregroundStyle(.secondary.opacity(0.5)).frame(width: 12)
+                        Image(systemName: isExpanded ? "chevron.down" : "chevron.right").font(DesignSystem.Typography.micro).foregroundStyle(.secondary.opacity(0.5)).frame(width: 12)
                     } else { Spacer().frame(width: 12) }
 
                     if item.isDirectory {

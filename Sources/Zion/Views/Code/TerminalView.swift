@@ -23,6 +23,10 @@ struct TerminalTabView: NSViewRepresentable {
             context.coordinator.reattach(view: cachedView)
             // Don't clear cache — reattach re-populates it for future restructures
             applyTheme(to: cachedView, context: context)
+            // Hide SwiftTerm's legacy scroller (we don't need a visible scrollbar)
+            for subview in cachedView.subviews where subview is NSScroller {
+                subview.isHidden = true
+            }
             return cachedView
         }
 
@@ -39,6 +43,10 @@ struct TerminalTabView: NSViewRepresentable {
 
         context.coordinator.startProcess(view: terminalView)
 
+        // Hide SwiftTerm's legacy scroller (we don't need a visible scrollbar)
+        for subview in terminalView.subviews where subview is NSScroller {
+            subview.isHidden = true
+        }
         return terminalView
     }
 

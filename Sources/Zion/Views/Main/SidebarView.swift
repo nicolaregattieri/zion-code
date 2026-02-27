@@ -96,8 +96,8 @@ struct SidebarView: View {
                 .frame(width: 44, height: 44)
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(model.repositoryURL?.lastPathComponent ?? L10n("Zion Code")).font(.system(size: 16, weight: .bold)).lineLimit(1)
-                    Text(model.repositoryURL?.path ?? L10n("Modo editor livre")).font(.system(size: 10, design: .monospaced)).foregroundStyle(.secondary).lineLimit(1)
+                    Text(model.repositoryURL?.lastPathComponent ?? L10n("Zion Code")).font(DesignSystem.Typography.sheetTitle).lineLimit(1)
+                    Text(model.repositoryURL?.path ?? L10n("Modo editor livre")).font(DesignSystem.Typography.monoLabel).foregroundStyle(.secondary).lineLimit(1)
                 }
                 Spacer(minLength: 0)
                 
@@ -139,7 +139,7 @@ struct SidebarView: View {
             }
         } label: {
             Image(systemName: "chevron.right")
-                .font(.system(size: 9, weight: .bold))
+                .font(DesignSystem.Typography.metaBold)
                 .foregroundStyle(.secondary)
                 .rotationEffect(.degrees(isExpanded.wrappedValue ? 90 : 0))
                 .animation(DesignSystem.Motion.panel, value: isExpanded.wrappedValue)
@@ -158,7 +158,7 @@ struct SidebarView: View {
             CardHeader(L10n("Worktrees"), icon: "square.split.2x2") {
                 HStack(spacing: 6) {
                     Text("\(nonCurrentWorktrees.count)")
-                        .font(.system(size: 10, weight: .bold))
+                        .font(DesignSystem.Typography.labelBold)
                         .foregroundStyle(.white)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
@@ -169,7 +169,7 @@ struct SidebarView: View {
                         }
                     } label: {
                         Label(L10n("worktree.smart.new"), systemImage: "plus")
-                            .font(.system(size: 10, weight: .semibold))
+                            .font(DesignSystem.Typography.label)
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
@@ -222,13 +222,13 @@ struct SidebarView: View {
                 HStack(spacing: 10) {
                     if !model.derivedWorktreeBranch.isEmpty {
                         Text("branch: \(model.derivedWorktreeBranch)")
-                            .font(.system(size: 9, design: .monospaced))
+                            .font(DesignSystem.Typography.monoMeta)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
                     if !model.derivedWorktreePath.isEmpty {
                         Text(model.derivedWorktreePath)
-                            .font(.system(size: 9, design: .monospaced))
+                            .font(DesignSystem.Typography.monoMeta)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                             .truncationMode(.middle)
@@ -245,7 +245,7 @@ struct SidebarView: View {
                     L10n("worktree.smart.advanced"),
                     systemImage: model.isWorktreeAdvancedExpanded ? "chevron.down" : "chevron.right"
                 )
-                .font(.system(size: 10, weight: .semibold))
+                .font(DesignSystem.Typography.label)
                 .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
@@ -266,7 +266,7 @@ struct SidebarView: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
-                .stroke(DesignSystem.Colors.glassHover, lineWidth: 1)
+                .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
         )
     }
 
@@ -285,11 +285,11 @@ struct SidebarView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         HStack(spacing: 6) {
                             Text(wt.branch.isEmpty ? URL(fileURLWithPath: wt.path).lastPathComponent : wt.branch)
-                                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                                .font(DesignSystem.Typography.monoBody)
                                 .lineLimit(1)
                             if wt.isMainWorktree {
                                 Text(L10n("worktree.main.badge"))
-                                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                    .font(DesignSystem.Typography.monoMeta)
                                     .padding(.horizontal, 5)
                                     .padding(.vertical, 2)
                                     .background(DesignSystem.Colors.success.opacity(0.18))
@@ -299,7 +299,7 @@ struct SidebarView: View {
                             }
                         }
                         Text(wt.path)
-                            .font(.system(size: 9, design: .monospaced))
+                            .font(DesignSystem.Typography.monoMeta)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                             .truncationMode(.middle)
@@ -308,11 +308,11 @@ struct SidebarView: View {
                                 .fill(worktreeStatusColor(wt))
                                 .frame(width: 6, height: 6)
                             Text("\(wt.uncommittedCount)")
-                                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                .font(DesignSystem.Typography.monoMeta)
                                 .foregroundStyle(.secondary)
                             if wt.hasConflicts {
                                 Image(systemName: "exclamationmark.triangle.fill")
-                                    .font(.system(size: 9, weight: .bold))
+                                    .font(DesignSystem.Typography.metaBold)
                                     .foregroundStyle(DesignSystem.Colors.destructive)
                                     .help(L10n("Conflitos"))
                             }
@@ -384,14 +384,14 @@ struct SidebarView: View {
         return Button { selectedSection = section } label: {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: section.icon)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(DesignSystem.Typography.sectionTitle)
                     .frame(width: 18)
                     .padding(.top, 2)
                     .foregroundStyle(isSelected ? .primary : .secondary)
                     .opacity(isDisabled ? 0.3 : 1.0)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(L10n(section.title)).font(.system(size: 13, weight: .bold)).lineLimit(1)
+                    Text(L10n(section.title)).font(DesignSystem.Typography.sectionTitle).lineLimit(1)
                         .foregroundStyle(isSelected ? .primary : .secondary)
                     Text(L10n(section.subtitle)).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(2)
                         .opacity(isSelected ? 1.0 : (isDisabled ? 0.3 : 0.7))
@@ -408,7 +408,7 @@ struct SidebarView: View {
                         .padding(.top, 4)
                 } else if section == .graph && model.behindRemoteCount > 0 {
                     Text("\(model.behindRemoteCount)")
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .font(DesignSystem.Typography.monoMeta)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 2)
                         .background(DesignSystem.Colors.warning.opacity(0.2))
@@ -417,7 +417,7 @@ struct SidebarView: View {
                         .padding(.top, 4)
                 } else if section == .operations && model.stashes.count > 0 {
                     Text("\(model.stashes.count)")
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .font(DesignSystem.Typography.monoMeta)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 2)
                         .background(DesignSystem.Colors.info.opacity(0.2))
@@ -530,7 +530,7 @@ struct SidebarView: View {
                     HStack(spacing: 6) {
                         Image(systemName: isMain ? "shield.fill" : "arrow.triangle.branch").font(.caption).foregroundStyle(isMain ? DesignSystem.Colors.warning : (isCurrent ? Color.accentColor : Color.secondary))
                         Text(node.title).font(.system(.caption, design: .monospaced)).fontWeight(isCurrent || isMain ? .bold : .regular).lineLimit(1)
-                        if isCurrent { Text(L10n("current")).font(.system(size: 8, weight: .bold)).padding(.horizontal, 4).padding(.vertical, 1).background(DesignSystem.Colors.selectionBackground).foregroundStyle(Color.accentColor).clipShape(Capsule()) }
+                        if isCurrent { Text(L10n("current")).font(DesignSystem.Typography.micro).padding(.horizontal, 4).padding(.vertical, 1).background(DesignSystem.Colors.selectionBackground).foregroundStyle(Color.accentColor).clipShape(Capsule()) }
                     }
                 }
                 if !node.subtitle.isEmpty { Text(node.subtitle).font(.caption2).foregroundStyle(.secondary).lineLimit(1) }
@@ -562,7 +562,7 @@ struct SidebarView: View {
                 .fill(isCurrent ? DesignSystem.Colors.selectionBackground : Color.clear)
         )
         .overlay(
-            isCurrent ? RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius).stroke(DesignSystem.Colors.hoverAccent, lineWidth: 1) : nil
+            isCurrent ? RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius).stroke(DesignSystem.Colors.selectionBorder, lineWidth: 1) : nil
         )
         .contentShape(Rectangle())
         .onTapGesture { if let branch = node.branchName { selectedBranchTreeNodeID = node.id; model.branchInput = branch } }
@@ -643,7 +643,7 @@ private struct RecentProjectRow: View {
                     .foregroundStyle(isCurrent ? DesignSystem.Colors.success : Color.accentColor.opacity(0.8))
                 VStack(alignment: .leading, spacing: 1) {
                     Text(url.lastPathComponent)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(DesignSystem.Typography.sectionTitle)
                         .lineLimit(1)
                     Text(url.path)
                         .font(.system(size: 9))
@@ -653,7 +653,7 @@ private struct RecentProjectRow: View {
                 }
                 if worktreeCount > 0 {
                     Text("WT \(worktreeCount)")
-                        .font(.system(size: 8, weight: .bold, design: .monospaced))
+                        .font(DesignSystem.Typography.micro)
                         .padding(.horizontal, 4)
                         .padding(.vertical, 2)
                         .background(DesignSystem.Colors.commitSplit.opacity(0.2))
@@ -664,7 +664,7 @@ private struct RecentProjectRow: View {
 
                 if let count = changedCount, count > 0 {
                     Text("\(count)")
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .font(DesignSystem.Typography.monoMeta)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 2)
                         .background(DesignSystem.Colors.warning.opacity(0.2))
@@ -678,7 +678,7 @@ private struct RecentProjectRow: View {
                         .foregroundStyle(DesignSystem.Colors.success)
                 } else {
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 8, weight: .bold))
+                        .font(DesignSystem.Typography.micro)
                         .foregroundStyle(.secondary)
                 }
             }

@@ -136,8 +136,12 @@ struct DesignSystem {
     }
 
     struct Spacing {
+        static let micro: CGFloat = 4
+        static let compact: CGFloat = 6
+        static let standard: CGFloat = 8
         static let cardPadding: CGFloat = 12
         static let sectionGap: CGFloat = 20
+        static let screenEdge: CGFloat = 24
         static let statusBarClearance: CGFloat = 44
         static let clipboardDrawerClearance: CGFloat = 40
 
