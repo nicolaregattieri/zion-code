@@ -1484,3 +1484,4 @@
 "about.website" = "Visit Website";
 "about.madeWith" = "Made with SwiftUI";
 "help.visitWebsite" = "Visit Website";
+"Arquivo binario ou nao legivel." = "Binary or unreadable file.";

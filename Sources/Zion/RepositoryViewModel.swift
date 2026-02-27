@@ -4247,6 +4247,35 @@ final class RepositoryViewModel {
         }
     }
 
+    private func statusForFile(_ file: String) -> String? {
+        uncommittedChanges.first { line in
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard trimmed.count >= 4 else { return false }
+            let start = trimmed.index(trimmed.startIndex, offsetBy: 3)
+            var path = String(trimmed[start...]).trimmingCharacters(in: .whitespaces)
+            if let arrowRange = path.range(of: " -> ") {
+                path = String(path[arrowRange.upperBound...]).trimmingCharacters(in: .whitespaces)
+            }
+            return path == file
+        }.map { line in
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            return String(trimmed.prefix(2))
+        }
+    }
+
+    private static func buildSyntheticNewFileDiff(file: String, lines: [String]) -> String {
+        let count = lines.count
+        var result = "diff --git a/\(file) b/\(file)\n"
+        result += "new file mode 100644\n"
+        result += "--- /dev/null\n"
+        result += "+++ b/\(file)\n"
+        result += "@@ -0,0 +1,\(count) @@\n"
+        for line in lines {
+            result += "+\(line)\n"
+        }
+        return result
+    }
+
     private func loadDiff(for file: String) {
         guard let url = repositoryURL else { return }
 
@@ -4255,8 +4284,15 @@ final class RepositoryViewModel {
                 // Get diff including staged changes
                 let diff = try await worker.runAction(args: ["diff", "HEAD", "--", file], in: url)
                 if diff.isEmpty {
-                    currentFileDiff = L10n("Nenhuma mudanca detectada (ou arquivo novo nao rastreado).")
-                    currentFileDiffHunks = []
+                    let status = statusForFile(file)
+                    let resolvedDiff: String? = await resolveMissingDiff(for: file, status: status, in: url)
+                    if let resolvedDiff, !resolvedDiff.isEmpty {
+                        currentFileDiff = resolvedDiff
+                        currentFileDiffHunks = Self.parseDiffHunks(resolvedDiff)
+                    } else {
+                        currentFileDiff = L10n("Nenhuma mudanca detectada (ou arquivo novo nao rastreado).")
+                        currentFileDiffHunks = []
+                    }
                 } else {
                     currentFileDiff = diff
                     currentFileDiffHunks = Self.parseDiffHunks(diff)
@@ -4268,6 +4304,69 @@ final class RepositoryViewModel {
                 currentFileDiffHunks = []
             }
         }
+    }
+
+    private func resolveMissingDiff(for file: String, status: String?, in url: URL) async -> String? {
+        if status == "??" {
+            return await resolveUntrackedDiff(for: file, in: url)
+        } else if status?.hasPrefix("A") == true {
+            return await resolveStagedNewFileDiff(for: file, in: url)
+        }
+        return nil
+    }
+
+    private func resolveUntrackedDiff(for file: String, in url: URL) async -> String? {
+        let fullPath = url.appendingPathComponent(file).path
+        let fm = FileManager.default
+        var isDir: ObjCBool = false
+
+        // Directory: list contents as synthetic diff
+        if fm.fileExists(atPath: fullPath, isDirectory: &isDir), isDir.boolValue {
+            if let entries = try? fm.contentsOfDirectory(atPath: fullPath) {
+                let lines = entries.sorted().map { "  \($0)" }
+                return Self.buildSyntheticNewFileDiff(file: file, lines: ["[\(file)]"] + lines)
+            }
+            return nil
+        }
+
+        // Try git diff --no-index (exits 1 on success for new files)
+        if let result = try? await worker.runActionAllowingFailure(
+            args: ["diff", "--no-index", "--", "/dev/null", file],
+            in: url
+        ), result.status == 1, !result.output.isEmpty {
+            return result.output
+        }
+
+        // Fallback: read file directly
+        return readFileAsSyntheticDiff(file: file, fullPath: fullPath)
+    }
+
+    private func resolveStagedNewFileDiff(for file: String, in url: URL) async -> String? {
+        // Try git diff --cached for staged new files
+        if let diff = try? await worker.runAction(args: ["diff", "--cached", "--", file], in: url),
+           !diff.isEmpty {
+            return diff
+        }
+
+        // Fallback: git show :<file> (index version)
+        if let content = try? await worker.runAction(args: ["show", ":\(file)"], in: url),
+           !content.isEmpty {
+            let lines = content.components(separatedBy: "\n")
+            return Self.buildSyntheticNewFileDiff(file: file, lines: lines)
+        }
+
+        return nil
+    }
+
+    private func readFileAsSyntheticDiff(file: String, fullPath: String) -> String? {
+        guard let data = FileManager.default.contents(atPath: fullPath) else { return nil }
+        // Check for binary content
+        if data.contains(0) {
+            return L10n("Arquivo binario ou nao legivel.")
+        }
+        guard let content = String(data: data, encoding: .utf8), !content.isEmpty else { return nil }
+        let lines = content.components(separatedBy: "\n")
+        return Self.buildSyntheticNewFileDiff(file: file, lines: lines)
     }
 
     // MARK: - Terminal Paste
@@ -4481,6 +4580,13 @@ final class RepositoryViewModel {
 
     func stageHunk(_ hunk: DiffHunk, file: String) {
         guard let url = repositoryURL else { return }
+
+        // Hunk-level staging doesn't work for untracked files — fall back to full stage
+        if statusForFile(file) == "??" {
+            stageFile(file)
+            return
+        }
+
         let patch = buildPatch(file: file, hunks: [hunk])
 
         actionTask?.cancel()
