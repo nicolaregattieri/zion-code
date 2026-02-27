@@ -84,13 +84,21 @@ actor GitHubClient {
         return nil
     }
 
+    /// Percent-encode a path segment for safe GitHub API URL interpolation.
+    private static func encodePathSegment(_ segment: String) -> String? {
+        segment.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)
+    }
+
     /// Fetch open PRs for a repo
     func fetchPullRequests(remote: GitHubRemote) async -> [GitHubPRInfo] {
         let token = await getToken()
-        let urlString = "https://api.github.com/repos/\(remote.owner)/\(remote.repo)/pulls?state=open&per_page=30"
+        guard let owner = Self.encodePathSegment(remote.owner),
+              let repo = Self.encodePathSegment(remote.repo) else { return [] }
+        let urlString = "https://api.github.com/repos/\(owner)/\(repo)/pulls?state=open&per_page=30"
         guard let url = URL(string: urlString) else { return [] }
 
         var request = URLRequest(url: url)
+        request.timeoutInterval = 15
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
         if let token {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -134,7 +142,9 @@ actor GitHubClient {
         guard let token = await getToken() else { return [] }
         guard let username = await fetchAuthenticatedUsername(token: token) else { return [] }
 
-        let query = "type:pr+state:open+review-requested:\(username)+repo:\(remote.owner)/\(remote.repo)"
+        guard let owner = Self.encodePathSegment(remote.owner),
+              let repo = Self.encodePathSegment(remote.repo) else { return [] }
+        let query = "type:pr+state:open+review-requested:\(username)+repo:\(owner)/\(repo)"
         let urlString = "https://api.github.com/search/issues?q=\(query)&per_page=30"
         guard let url = URL(string: urlString) else { return [] }
 
@@ -197,7 +207,9 @@ actor GitHubClient {
     /// Fetch the diff for a specific PR
     func fetchPRDiff(remote: GitHubRemote, prNumber: Int) async -> String? {
         guard let token = await getToken() else { return nil }
-        let urlString = "https://api.github.com/repos/\(remote.owner)/\(remote.repo)/pulls/\(prNumber)"
+        guard let owner = Self.encodePathSegment(remote.owner),
+              let repo = Self.encodePathSegment(remote.repo) else { return nil }
+        let urlString = "https://api.github.com/repos/\(owner)/\(repo)/pulls/\(prNumber)"
         guard let url = URL(string: urlString) else { return nil }
 
         var request = URLRequest(url: url)
@@ -217,7 +229,9 @@ actor GitHubClient {
     /// Fetch files changed in a PR
     func fetchPRFiles(remote: GitHubRemote, prNumber: Int) async -> [(filename: String, status: String, additions: Int, deletions: Int, patch: String)] {
         guard let token = await getToken() else { return [] }
-        let urlString = "https://api.github.com/repos/\(remote.owner)/\(remote.repo)/pulls/\(prNumber)/files?per_page=100"
+        guard let owner = Self.encodePathSegment(remote.owner),
+              let repo = Self.encodePathSegment(remote.repo) else { return [] }
+        let urlString = "https://api.github.com/repos/\(owner)/\(repo)/pulls/\(prNumber)/files?per_page=100"
         guard let url = URL(string: urlString) else { return [] }
 
         var request = URLRequest(url: url)
@@ -249,7 +263,11 @@ actor GitHubClient {
             throw GitHubError.noToken
         }
 
-        let urlString = "https://api.github.com/repos/\(remote.owner)/\(remote.repo)/pulls"
+        guard let owner = Self.encodePathSegment(remote.owner),
+              let repo = Self.encodePathSegment(remote.repo) else {
+            throw GitHubError.invalidURL
+        }
+        let urlString = "https://api.github.com/repos/\(owner)/\(repo)/pulls"
         guard let url = URL(string: urlString) else {
             throw GitHubError.invalidURL
         }
