@@ -18,24 +18,32 @@ struct LaneGraphView: View {
             let incomingLanes = Set(commit.incomingLanes)
             let outgoingLanes = Set(commit.outgoingLanes)
             let allActiveLanes = incomingLanes.union(outgoingLanes).union([commit.lane])
-            
+
+            // Lanes newly created by cross-lane edges (merge targets with no incoming line).
+            // The Bezier curve already handles the visual connection, so the vertical
+            // outgoing stub would create a visible spike — skip it.
+            let newEdgeTargetLanes: Set<Int> = {
+                let targets = Set(commit.outgoingEdges.filter { $0.from != $0.to }.map(\.to))
+                return targets.subtracting(incomingLanes)
+            }()
+
             for lane in allActiveLanes {
                 let colorKey = laneColorByLane[lane] ?? lane
                 let laneColor = color(forKey: colorKey)
                 let x = laneX(lane) + safePadding
-                
+
                 let hasIncoming = incomingLanes.contains(lane)
                 let hasOutgoing = outgoingLanes.contains(lane)
                 let isCommitLane = (lane == commit.lane)
-                
+
                 if hasIncoming {
                     var path = Path()
                     path.move(to: CGPoint(x: x, y: 0))
                     path.addLine(to: CGPoint(x: x, y: centerY))
                     context.stroke(path, with: .color(laneColor.opacity(isCommitLane ? 1.0 : 0.4)), style: StrokeStyle(lineWidth: isCommitLane ? 2.5 : 1.4, lineCap: .butt))
                 }
-                
-                if hasOutgoing {
+
+                if hasOutgoing && !newEdgeTargetLanes.contains(lane) {
                     var path = Path()
                     path.move(to: CGPoint(x: x, y: centerY))
                     path.addLine(to: CGPoint(x: x, y: size.height))

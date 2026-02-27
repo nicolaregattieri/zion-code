@@ -123,7 +123,7 @@ struct DesignSystem {
 
         // Lane color palette (shared between graph and commit cards — harmonized)
         static let lanePalette: [SwiftUI.Color] = [
-            info, destructive, success, warning, commitSplit, brandPrimary, ai, codeReview, searchHighlight, semanticSearch,
+            info, SwiftUI.Color.orange, success, warning, commitSplit, brandPrimary, ai, codeReview, searchHighlight, semanticSearch,
             SwiftUI.Color(red: 0.55, green: 0.42, blue: 0.32), // warm brown
             .gray
         ]
