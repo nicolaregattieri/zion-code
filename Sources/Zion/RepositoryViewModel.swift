@@ -3939,14 +3939,27 @@ final class RepositoryViewModel {
                 isRebasing = payload.isRebasing
                 isCherryPicking = payload.isCherryPicking
                 isGitRepository = payload.isGitRepository
-                if uncommittedChanges != payload.uncommittedChanges {
-                    uncommittedChanges = payload.uncommittedChanges
+                // Guard against transient empty results from `git status`
+                // (e.g. lock-file conflicts during concurrent git operations).
+                // Only accept an empty list from user-initiated or repo-switch refreshes.
+                let isBackgroundRefresh = origin == .autoTimer || origin == .fileWatcher
+                let payloadChanges = (isBackgroundRefresh && payload.uncommittedChanges.isEmpty && !uncommittedChanges.isEmpty)
+                    ? uncommittedChanges // keep current list
+                    : payload.uncommittedChanges
+                let didUncommittedChangesChange = uncommittedChanges != payloadChanges
+                if didUncommittedChangesChange {
+                    uncommittedChanges = payloadChanges
                 }
                 if uncommittedCount != payload.uncommittedCount {
                     uncommittedCount = payload.uncommittedCount
                 }
-                syncSelectedChangeFileWithPendingChanges()
-                aiPendingChangesSummary = "" // Clear cached summary on refresh
+                syncSelectedChangeFileWithPendingChanges(
+                    origin: origin,
+                    didUncommittedChangesChange: didUncommittedChangesChange
+                )
+                if !aiPendingChangesSummary.isEmpty {
+                    aiPendingChangesSummary = "" // Clear cached summary on refresh
+                }
                 ensureBranchReviewSelections()
                 refreshMergedBranchesPreview()
                 if recoverySnapshotsRepositoryPath == repositoryURL.path {
@@ -4283,21 +4296,29 @@ final class RepositoryViewModel {
             do {
                 // Get diff including staged changes
                 let diff = try await worker.runAction(args: ["diff", "HEAD", "--", file], in: url)
+                let newDiff: String
+                let newHunks: [DiffHunk]
                 if diff.isEmpty {
                     let status = statusForFile(file)
                     let resolvedDiff: String? = await resolveMissingDiff(for: file, status: status, in: url)
                     if let resolvedDiff, !resolvedDiff.isEmpty {
-                        currentFileDiff = resolvedDiff
-                        currentFileDiffHunks = Self.parseDiffHunks(resolvedDiff)
+                        newDiff = resolvedDiff
+                        newHunks = Self.parseDiffHunks(resolvedDiff)
                     } else {
-                        currentFileDiff = L10n("Nenhuma mudanca detectada (ou arquivo novo nao rastreado).")
-                        currentFileDiffHunks = []
+                        newDiff = L10n("Nenhuma mudanca detectada (ou arquivo novo nao rastreado).")
+                        newHunks = []
                     }
                 } else {
-                    currentFileDiff = diff
-                    currentFileDiffHunks = Self.parseDiffHunks(diff)
+                    newDiff = diff
+                    newHunks = Self.parseDiffHunks(diff)
                 }
-                selectedHunkLines = []
+                // Only update UI when the diff content actually changed,
+                // preventing flicker and preserving hunk selection on auto-refresh.
+                if newDiff != currentFileDiff {
+                    currentFileDiff = newDiff
+                    currentFileDiffHunks = newHunks
+                    selectedHunkLines = []
+                }
             } catch {
                 logger.log(.warn, "Failed to load diff: \(error.localizedDescription)", context: file, source: #function)
                 currentFileDiff = "Erro ao carregar diff: \(error.localizedDescription)"
@@ -6470,7 +6491,16 @@ final class RepositoryViewModel {
         }
     }
 
-    private func syncSelectedChangeFileWithPendingChanges() {
+    private func syncSelectedChangeFileWithPendingChanges(
+        origin: RefreshOrigin,
+        didUncommittedChangesChange: Bool
+    ) {
+        // When the uncommitted-changes list hasn't changed, the file list and
+        // diff content are identical — skip entirely to prevent diff flicker.
+        guard didUncommittedChangesChange || origin == .userInitiated || origin == .repositorySwitch else {
+            return
+        }
+
         let files = uncommittedChanges.compactMap(Self.filePathFromStatusLine)
         guard !files.isEmpty else {
             selectedChangeFile = nil
