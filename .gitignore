@@ -42,6 +42,8 @@ DerivedData/
 # GraphForge Specific
 dist/
 docs/RELEASE.md
+docs/NTFY-QA-CHECKLIST.md
+docs/ZION-CENTRAL.md
 *.log
 *.skill
 

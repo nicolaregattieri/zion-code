@@ -57,5 +57,14 @@ struct CodeReviewSheet: View {
             .padding(16)
         }
         .frame(minWidth: 1000, idealWidth: 1200, minHeight: 700, idealHeight: 800)
+        .onAppear {
+            guard model.codeReviewFiles.isEmpty else { return }
+            model.ensureBranchReviewSelections()
+            let source = model.branchReviewSource
+            let target = model.branchReviewTarget
+            if !source.isEmpty, !target.isEmpty {
+                model.startCodeReview(source: source, target: target)
+            }
+        }
     }
 }

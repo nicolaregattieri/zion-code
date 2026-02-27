@@ -7834,7 +7834,10 @@ final class RepositoryViewModel {
         }
 
         if branchReviewSource.isEmpty || !available.contains(branchReviewSource) || branchReviewSource == branchReviewTarget {
-            let preferredSource = localBranchOptions.first(where: { $0 != branchReviewTarget })
+            // Prefer common base branches as the comparison source
+            let baseBranches = ["master", "main", "develop"]
+            let preferredSource = baseBranches.first(where: { available.contains($0) && $0 != branchReviewTarget })
+                ?? localBranchOptions.first(where: { $0 != branchReviewTarget })
                 ?? remoteBranchOptions.first(where: { $0 != branchReviewTarget })
                 ?? branches.first(where: { $0 != branchReviewTarget })
             branchReviewSource = preferredSource ?? ""
