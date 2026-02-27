@@ -4773,32 +4773,56 @@ final class RepositoryViewModel {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss Z"
 
-        return lines.compactMap { line in
-            let parts = line.split(separator: "|", maxSplits: 5).map(String.init)
-            guard parts.count >= 6 else { return nil }
-
-            let hash = parts[0]
-            let shortHash = parts[1]
-            let refName = parts[2]
-            let message = parts[3]
-            let dateStr = parts[4]
-            let relDate = parts[5]
-
-            // Parse action type from message (e.g. "commit: ..." -> "commit")
-            let action = message.split(separator: ":", maxSplits: 1).first.map(String.init) ?? message
-
-            let date = dateFormatter.date(from: dateStr) ?? Date.distantPast
-
-            return ReflogEntry(
-                hash: hash,
-                shortHash: shortHash,
-                refName: refName,
-                action: action,
-                message: message,
-                date: date,
-                relativeDate: relDate
-            )
+        // First pass: parse raw entries
+        struct RawEntry {
+            let hash, shortHash, refName, action, message, relDate: String
+            let date: Date
         }
+        var rawEntries: [RawEntry] = []
+        for line in lines {
+            let parts = line.split(separator: "|", maxSplits: 5).map(String.init)
+            guard parts.count >= 6 else { continue }
+            let action = parts[3].split(separator: ":", maxSplits: 1).first.map(String.init) ?? parts[3]
+            rawEntries.append(RawEntry(
+                hash: parts[0], shortHash: parts[1], refName: parts[2],
+                action: action, message: parts[3],
+                relDate: parts[5],
+                date: dateFormatter.date(from: parts[4]) ?? .distantPast
+            ))
+        }
+
+        // Second pass: walk entries (newest→oldest) tracking which branch HEAD was on.
+        // When we see "checkout: moving from X to Y", entries above were on Y, entries below on X.
+        var branchStack = ""
+        // Find the first checkout to seed the current branch
+        for entry in rawEntries where entry.action.lowercased() == "checkout" {
+            if let branches = ReflogEntry.parseCheckoutBranches(from: entry.message) {
+                branchStack = branches.to
+                break
+            }
+        }
+
+        var results: [ReflogEntry] = []
+        for entry in rawEntries {
+            if entry.action.lowercased() == "checkout",
+               let branches = ReflogEntry.parseCheckoutBranches(from: entry.message) {
+                let detail = ReflogEntry.humanDetail(from: entry.message, action: entry.action)
+                results.append(ReflogEntry(
+                    hash: entry.hash, shortHash: entry.shortHash, refName: entry.refName,
+                    action: entry.action, message: entry.message, detail: detail,
+                    branch: branches.to, date: entry.date, relativeDate: entry.relDate
+                ))
+                branchStack = branches.from
+            } else {
+                let detail = ReflogEntry.humanDetail(from: entry.message, action: entry.action)
+                results.append(ReflogEntry(
+                    hash: entry.hash, shortHash: entry.shortHash, refName: entry.refName,
+                    action: entry.action, message: entry.message, detail: detail,
+                    branch: branchStack, date: entry.date, relativeDate: entry.relDate
+                ))
+            }
+        }
+        return results
     }
 
     // MARK: - Interactive Rebase

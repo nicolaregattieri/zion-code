@@ -10,7 +10,7 @@ struct ReflogSheet: View {
             // Header
             HStack {
                 Image(systemName: "clock.arrow.circlepath")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(DesignSystem.IconSize.sectionHeader)
                     .foregroundStyle(.secondary)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(L10n("Reflog")).font(.headline)
@@ -29,18 +29,19 @@ struct ReflogSheet: View {
                 .controlSize(.small)
                 .tint(DesignSystem.Colors.warning)
                 .disabled(model.reflogEntries.count < 2)
+                .help(L10n("Voltar ao estado anterior (git reset --soft)"))
 
                 Button(L10n("Fechar")) { dismiss() }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
             }
-            .padding(16)
+            .padding(DesignSystem.Spacing.screenEdge - 8)
 
             Divider()
 
             // Timeline
             if model.reflogEntries.isEmpty {
-                VStack(spacing: 12) {
+                VStack(spacing: DesignSystem.Spacing.cardPadding) {
                     ProgressView()
                     Text(L10n("Carregando reflog..."))
                         .font(.caption).foregroundStyle(.secondary)
@@ -53,7 +54,7 @@ struct ReflogSheet: View {
                             reflogRow(entry, index: index)
                         }
                     }
-                    .padding(12)
+                    .padding(DesignSystem.Spacing.cardPadding)
                 }
             }
         }
@@ -64,50 +65,58 @@ struct ReflogSheet: View {
         let isHovered = hoveredEntryID == entry.id
         let actionColor = colorForAction(entry.action)
 
-        return HStack(spacing: 12) {
+        return HStack(spacing: DesignSystem.Spacing.cardPadding) {
             // Timeline dot + line
             VStack(spacing: 0) {
                 if index > 0 {
-                    Rectangle().fill(Color.secondary.opacity(0.2)).frame(width: 2)
+                    Rectangle().fill(DesignSystem.Colors.glassStroke).frame(width: 2)
                 }
                 Circle()
                     .fill(actionColor)
                     .frame(width: 10, height: 10)
                 if index < model.reflogEntries.count - 1 {
-                    Rectangle().fill(Color.secondary.opacity(0.2)).frame(width: 2)
+                    Rectangle().fill(DesignSystem.Colors.glassStroke).frame(width: 2)
                 }
             }
             .frame(width: 10)
 
             // Content
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.micro) {
+                HStack(spacing: DesignSystem.Spacing.standard) {
                     // Action badge
                     Text(entry.action)
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .padding(.horizontal, 6)
+                        .font(DesignSystem.Typography.monoLabelBold)
+                        .padding(.horizontal, DesignSystem.Spacing.compact)
                         .padding(.vertical, 2)
                         .background(actionColor.opacity(0.15))
                         .foregroundStyle(actionColor)
                         .clipShape(Capsule())
+                        .help(ReflogEntry.tooltip(for: entry.action) ?? "")
 
                     Text(entry.shortHash)
-                        .font(.system(size: 11, design: .monospaced))
+                        .font(DesignSystem.Typography.monoSmall)
                         .foregroundStyle(.secondary)
 
                     Spacer()
 
                     Text(entry.relativeDate)
-                        .font(.system(size: 10))
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(.tertiary)
                 }
 
-                Text(entry.message)
-                    .font(.system(size: 12))
+                Text(entry.detail)
+                    .font(DesignSystem.Typography.body)
+                    .fontWeight(.medium)
                     .lineLimit(2)
                     .foregroundStyle(.primary)
+
+                if !entry.branch.isEmpty, entry.action.lowercased() != "checkout" {
+                    Text(L10n("na branch %@", entry.branch))
+                        .font(DesignSystem.Typography.label)
+                        .foregroundStyle(.tertiary)
+                }
             }
-            .padding(10)
+            .padding(DesignSystem.Spacing.standard + 2)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(isHovered ? DesignSystem.Colors.glassHover : Color.clear)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
@@ -139,7 +148,8 @@ struct ReflogSheet: View {
 
     private func colorForAction(_ action: String) -> Color {
         switch action.lowercased() {
-        case "commit": return DesignSystem.Colors.success
+        case "commit", "commit (initial)": return DesignSystem.Colors.success
+        case "commit (amend)": return DesignSystem.Colors.warning
         case "pull": return DesignSystem.Colors.info
         case "checkout": return DesignSystem.Colors.warning
         case "merge": return DesignSystem.Colors.ai

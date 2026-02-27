@@ -37,6 +37,7 @@
 "Tags" = "Tags";
 "Stash" = "Stash";
 "Historico" = "Histórico";
+"Reescrita" = "Reescrita";
 "Danger Zone" = "Zona de Perigo";
 "Reset --hard" = "Reset --hard";
 "Executar" = "Executar";
@@ -1035,6 +1036,8 @@
 "Reflog" = "Reflog";
 "Historico de acoes do repositorio" = "Histórico de ações do repositório";
 "Desfazer Ultima Acao" = "Desfazer Última Ação";
+"Voltar ao estado anterior (git reset --soft)" = "Voltar ao estado anterior (git reset --soft)";
+"na branch %@" = "na branch %@";
 "Carregando reflog..." = "Carregando reflog...";
 "Reset --soft para aqui" = "Reset --soft para aqui";
 "Reset --hard para aqui" = "Reset --hard para aqui";
@@ -1139,6 +1142,12 @@
 "Prune" = "Prune";
 "Prune worktrees" = "Prune worktrees";
 "Rebase e cherry-pick" = "Rebase e cherry-pick";
+"Nome da branch ou commit onde rebasear (ex: main, origin/main)" = "Nome da branch ou commit onde rebasear (ex: main, origin/main)";
+"Replay seus commits em cima da branch informada" = "Replay seus commits em cima da branch informada";
+"Hash do commit a aplicar (ex: a1b2c3d)" = "Hash do commit a aplicar (ex: a1b2c3d)";
+"Copiar um commit de outra branch para a branch atual" = "Copiar um commit de outra branch para a branch atual";
+"Referencia do commit (ex: HEAD~1, hash, branch)" = "Referência do commit (ex: HEAD~1, hash, branch)";
+"Descartar TODAS as alteracoes e voltar ao commit informado" = "Descartar TODAS as alterações e voltar ao commit informado";
 "Remover" = "Remover";
 "Remover metadados de worktrees obsoletos?" = "Remover metadados de worktrees obsoletos?";
 "Remover tag" = "Remover tag";

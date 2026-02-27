@@ -32,6 +32,7 @@
 "Tags" = "Tags";
 "Stash" = "Stash";
 "Historico" = "History";
+"Reescrita" = "Rewrite";
 "Danger Zone" = "Danger Zone";
 "Reset --hard" = "Reset --hard";
 "Executar" = "Execute";
@@ -89,6 +90,12 @@
 "mensagem do stash" = "stash message";
 "Criar stash" = "Create stash";
 "Rebase e cherry-pick" = "Rebase and cherry-pick";
+"Nome da branch ou commit onde rebasear (ex: main, origin/main)" = "Branch name or commit to rebase onto (e.g. main, origin/main)";
+"Replay seus commits em cima da branch informada" = "Replay your commits on top of the target branch";
+"Hash do commit a aplicar (ex: a1b2c3d)" = "Commit hash to apply (e.g. a1b2c3d)";
+"Copiar um commit de outra branch para a branch atual" = "Copy a commit from another branch to the current branch";
+"Referencia do commit (ex: HEAD~1, hash, branch)" = "Commit reference (e.g. HEAD~1, hash, branch)";
+"Descartar TODAS as alteracoes e voltar ao commit informado" = "Discard ALL changes and reset to the specified commit";
 "rebase target" = "rebase target";
 "cherry-pick hash" = "cherry-pick hash";
 "Cherry-pick" = "Cherry-pick";
@@ -1134,6 +1141,8 @@
 "Reflog" = "Reflog";
 "Historico de acoes do repositorio" = "Repository action history";
 "Desfazer Ultima Acao" = "Undo Last Action";
+"Voltar ao estado anterior (git reset --soft)" = "Revert to previous state (git reset --soft)";
+"na branch %@" = "on %@";
 "Carregando reflog..." = "Loading reflog...";
 "Reset --soft para aqui" = "Reset --soft to here";
 "Reset --hard para aqui" = "Reset --hard to here";
