@@ -339,7 +339,7 @@ actor RepositoryWorker {
         try git.run(args: ["rev-parse", "--short", "HEAD"], in: repositoryURL).stdout.clean
     }
 
-    private func remoteList(in repositoryURL: URL) throws -> [RemoteInfo] {
+    func remoteList(in repositoryURL: URL) throws -> [RemoteInfo] {
         let output = try git.run(args: ["remote", "-v"], in: repositoryURL).stdout
         var remotesMap: [String: String] = [:]
         for line in output.split(separator: "\n") {
@@ -354,7 +354,7 @@ actor RepositoryWorker {
         return remotesMap.map { RemoteInfo(name: $0.key, url: $0.value) }.sorted { $0.name < $1.name }
     }
 
-    private func branchInfoList(in repositoryURL: URL) throws -> [BranchInfo] {
+    func branchInfoList(in repositoryURL: URL) throws -> [BranchInfo] {
         let output = try git.run(
             args: [
                 "for-each-ref",
@@ -718,7 +718,7 @@ actor RepositoryWorker {
         }
     }
 
-    private func guessBestParent(for branch: String, preferredRoots: [String]) -> String? {
+    func guessBestParent(for branch: String, preferredRoots: [String]) -> String? {
         guard !branch.clean.isEmpty else { return nil }
 
         if branch.hasPrefix("hotfix/") || branch.hasPrefix("release/") {
@@ -734,7 +734,7 @@ actor RepositoryWorker {
             ?? preferredRoots.first
     }
 
-    private func parseCommits(from output: String) -> [ParsedCommit] {
+    func parseCommits(from output: String) -> [ParsedCommit] {
         let recordSeparator = Character(UnicodeScalar(0x1e)!)
         let fieldSeparator = Character(UnicodeScalar(0x1f)!)
 
@@ -771,7 +771,7 @@ actor RepositoryWorker {
             }
     }
 
-    private func parseWorktrees(from output: String, currentPath: String) -> [WorktreeItem] {
+    func parseWorktrees(from output: String, currentPath: String) -> [WorktreeItem] {
         var items: [WorktreeItem] = []
         var path = ""
         var head = ""
@@ -877,7 +877,7 @@ actor RepositoryWorker {
         )
     }
 
-    private func parseISODate(_ value: String) -> Date {
+    func parseISODate(_ value: String) -> Date {
         if let parsed = isoDateWithFractions.date(from: value) {
             return parsed
         }
@@ -887,7 +887,7 @@ actor RepositoryWorker {
         return Date(timeIntervalSince1970: 0)
     }
 
-    private func sortTagsDescending(_ tags: [String]) -> [String] {
+    func sortTagsDescending(_ tags: [String]) -> [String] {
         tags.sorted { lhs, rhs in
             let lhsVersion = versionComponents(from: lhs)
             let rhsVersion = versionComponents(from: rhs)
@@ -919,7 +919,7 @@ actor RepositoryWorker {
         return .orderedSame
     }
 
-    private func versionComponents(from tag: String) -> [Int] {
+    func versionComponents(from tag: String) -> [Int] {
         let normalized = tag.hasPrefix("v") || tag.hasPrefix("V")
             ? String(tag.dropFirst())
             : tag
