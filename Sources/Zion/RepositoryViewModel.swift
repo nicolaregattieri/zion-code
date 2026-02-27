@@ -3943,7 +3943,7 @@ final class RepositoryViewModel {
                 // (e.g. lock-file conflicts during concurrent git operations).
                 // Only accept an empty list from user-initiated or repo-switch refreshes.
                 let isBackgroundRefresh = origin == .autoTimer || origin == .fileWatcher
-                let payloadChanges = (isBackgroundRefresh && payload.uncommittedChanges.isEmpty && !uncommittedChanges.isEmpty)
+                let payloadChanges = (isBackgroundRefresh && payload.uncommittedChanges.isEmpty && !uncommittedChanges.isEmpty && payload.uncommittedCount > 0)
                     ? uncommittedChanges // keep current list
                     : payload.uncommittedChanges
                 let didUncommittedChangesChange = uncommittedChanges != payloadChanges
