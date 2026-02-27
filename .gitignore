@@ -44,6 +44,9 @@ dist/
 docs/RELEASE.md
 docs/ZION-CENTRAL.md
 docs/NTFY-QA-CHECKLIST.md
+docs/STORY.md
+docs/LAUNCH-*.md
+ROADMAP.md
 *.log
 *.skill
 
