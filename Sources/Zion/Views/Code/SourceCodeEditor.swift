@@ -986,16 +986,9 @@ class ZionTextView: NSTextView {
         let flags = event.modifierFlags.intersection([.command, .option, .shift, .control])
         let key = event.charactersIgnoringModifiers?.lowercased()
 
-        if flags == .command, key == "f" {
+        if (flags == .command || flags == .control), key == "f" {
             emitFindSeedFromSelection()
-            onToggleFindUI?()
-            return true
-        }
-
-        if flags == .control, key == "f" {
-            emitFindSeedFromSelection()
-            onToggleFindUI?()
-            return true
+            return false
         }
 
         if flags == .command, key == "g" {
@@ -1024,18 +1017,6 @@ class ZionTextView: NSTextView {
 
     override func keyDown(with event: NSEvent) {
         let flags = event.modifierFlags.intersection([.command, .option, .shift, .control])
-
-        if flags == .command, event.charactersIgnoringModifiers?.lowercased() == "f" {
-            emitFindSeedFromSelection()
-            onToggleFindUI?()
-            return
-        }
-
-        if flags == .control, event.charactersIgnoringModifiers?.lowercased() == "f" {
-            emitFindSeedFromSelection()
-            onToggleFindUI?()
-            return
-        }
 
         if flags == .command, event.charactersIgnoringModifiers?.lowercased() == "g" {
             onFindNextShortcut?()

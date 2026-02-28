@@ -1143,3 +1143,18 @@ struct EditorConfig: Codable {
         return config
     }
 }
+
+// MARK: - Find in Files
+
+struct FindInFilesMatch: Identifiable {
+    let file: String
+    let line: Int
+    let preview: String
+    var id: String { "\(file):\(line)" }
+}
+
+struct FindInFilesFileResult: Identifiable {
+    let file: String
+    let matches: [FindInFilesMatch]
+    var id: String { file }
+}

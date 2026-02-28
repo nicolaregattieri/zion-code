@@ -1434,6 +1434,98 @@ final class RepositoryViewModel {
         }
     }
 
+    // MARK: - Find in Files
+
+    /// Trigger property: set a folder path to open Find in Files scoped to that folder.
+    var findInFilesScopeRequest: String? = nil
+
+    func findInFiles(
+        query: String,
+        includePattern: String = "",
+        excludePattern: String = "",
+        scopePath: String? = nil
+    ) async -> [FindInFilesFileResult] {
+        guard let repositoryURL, !query.isEmpty else { return [] }
+
+        var args = ["grep", "-n", "-I", "--no-color", "-e", query]
+
+        // Include patterns (e.g. "*.swift" or "*.ts,*.js")
+        let includes = includePattern.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        // Exclude patterns
+        let excludes = excludePattern.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+
+        // Separator between flags and pathspecs
+        args.append("--")
+
+        // Include pathspecs
+        for inc in includes {
+            args.append(inc)
+        }
+
+        // Exclude pathspecs
+        for exc in excludes {
+            args.append(":(exclude)\(exc)")
+        }
+
+        // Scope to a specific sub-directory
+        if let scopePath {
+            let relative = scopePath.hasPrefix(repositoryURL.path)
+                ? String(scopePath.dropFirst(repositoryURL.path.count).drop(while: { $0 == "/" }))
+                : scopePath
+            if !relative.isEmpty {
+                args.append(relative)
+            }
+        }
+
+        do {
+            let output = try await worker.runGitCommand(in: repositoryURL, args: args)
+            return Self.parseFindInFilesOutput(output, maxMatches: 1000)
+        } catch {
+            // git grep returns non-zero when no matches — not a real error
+            return []
+        }
+    }
+
+    static func parseFindInFilesOutput(_ output: String, maxMatches: Int) -> [FindInFilesFileResult] {
+        var byFile: [String: [FindInFilesMatch]] = [:]
+        var fileOrder: [String] = []
+        var totalMatches = 0
+
+        for line in output.split(separator: "\n", omittingEmptySubsequences: true) {
+            guard totalMatches < maxMatches else { break }
+
+            // Format: file:lineNo:content
+            let str = String(line)
+            guard let firstColon = str.firstIndex(of: ":") else { continue }
+            let file = String(str[str.startIndex..<firstColon])
+
+            let afterFile = str[str.index(after: firstColon)...]
+            guard let secondColon = afterFile.firstIndex(of: ":") else { continue }
+            let lineNoStr = String(afterFile[afterFile.startIndex..<secondColon])
+            guard let lineNo = Int(lineNoStr) else { continue }
+
+            let content = String(afterFile[afterFile.index(after: secondColon)...])
+                .trimmingCharacters(in: .init(charactersIn: "\r"))
+
+            let match = FindInFilesMatch(
+                file: file,
+                line: lineNo,
+                preview: String(content.prefix(200))
+            )
+
+            if byFile[file] == nil {
+                fileOrder.append(file)
+            }
+            byFile[file, default: []].append(match)
+            totalMatches += 1
+        }
+
+        return fileOrder.compactMap { file in
+            guard let matches = byFile[file] else { return nil }
+            return FindInFilesFileResult(file: file, matches: matches)
+        }
+    }
+
     func markCurrentFileUnsavedIfChanged() {
         guard let fileID = activeFileID else { return }
         if let original = originalFileContents[fileID], original != codeFileContent {

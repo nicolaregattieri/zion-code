@@ -150,6 +150,16 @@ struct CodeScreen: View {
     @State private var symbolResultsQuery: String = ""
     @State private var symbolResults: [EditorSymbolLocation] = []
 
+    // Find in Files
+    enum SidebarMode { case fileTree, findInFiles }
+    @State private var sidebarMode: SidebarMode = .fileTree
+    @State private var findInFilesQuery: String = ""
+    @State private var findInFilesInclude: String = ""
+    @State private var findInFilesExclude: String = ""
+    @State private var findInFilesResults: [FindInFilesFileResult] = []
+    @State private var isFindInFilesSearching: Bool = false
+    @State private var findInFilesScopePath: String? = nil
+
     @AppStorage("terminal.opacity") private var terminalOpacity: Double = 0.92
 
     /// Ghostty-style terminal transparency: automatically enabled in Zen Mode
@@ -279,6 +289,27 @@ struct CodeScreen: View {
             // Toggle dotfiles visibility (Shift+Cmd+H)
             Button("") { model.showDotfiles.toggle() }
                 .keyboardShortcut("h", modifiers: [.command, .shift])
+                .frame(width: 0, height: 0).opacity(0)
+
+            // Find in Files (Cmd+Shift+F)
+            Button("") {
+                guard !isZenMode else { return }
+                sidebarMode = .findInFiles
+                if !isFileBrowserVisible {
+                    withAnimation(DesignSystem.Motion.panel) { isFileBrowserVisible = true }
+                }
+            }
+            .keyboardShortcut("f", modifiers: [.command, .shift])
+            .frame(width: 0, height: 0).opacity(0)
+
+            // Focus-aware Cmd+F routing
+            Button("") { routeFindShortcut() }
+                .keyboardShortcut("f", modifiers: .command)
+                .frame(width: 0, height: 0).opacity(0)
+
+            // Focus-aware Ctrl+F alias
+            Button("") { routeFindShortcut() }
+                .keyboardShortcut("f", modifiers: .control)
                 .frame(width: 0, height: 0).opacity(0)
         }
         .onChange(of: model.activeFileID) { _, _ in
@@ -780,23 +811,43 @@ struct CodeScreen: View {
     
     private var fileBrowserPane: some View {
         VStack(spacing: 0) {
-            // File tree header
-            CardHeader(L10n("Arquivos"), icon: "folder.fill") {
-                Button { model.showDotfiles.toggle() } label: {
-                    Image(systemName: model.showDotfiles ? "eye" : "eye.slash")
-                }
-                .buttonStyle(.plain).cursorArrow().foregroundStyle(.secondary)
-                .help(L10n("fileBrowser.toggleHidden") + " (⇧⌘H)")
-                .accessibilityLabel(L10n("fileBrowser.toggleHidden"))
+            // Sidebar mode bar
+            HStack(spacing: 0) {
+                sidebarModeButton(mode: .fileTree, icon: "folder.fill", tooltip: L10n("Arquivos"))
+                sidebarModeButton(mode: .findInFiles, icon: "magnifyingglass", tooltip: L10n("Buscar nos Arquivos") + " (⇧⌘F)")
 
-                Button { model.refreshFileTree() } label: { Image(systemName: "arrow.clockwise") }
+                Spacer()
+
+                if sidebarMode == .fileTree {
+                    Button { model.showDotfiles.toggle() } label: {
+                        Image(systemName: model.showDotfiles ? "eye" : "eye.slash")
+                    }
                     .buttonStyle(.plain).cursorArrow().foregroundStyle(.secondary)
-                    .help(L10n("Atualizar arvore de arquivos"))
-                    .accessibilityLabel(L10n("Atualizar arvore de arquivos"))
+                    .help(L10n("fileBrowser.toggleHidden") + " (⇧⌘H)")
+                    .accessibilityLabel(L10n("fileBrowser.toggleHidden"))
+
+                    Button { model.refreshFileTree() } label: { Image(systemName: "arrow.clockwise") }
+                        .buttonStyle(.plain).cursorArrow().foregroundStyle(.secondary)
+                        .help(L10n("Atualizar arvore de arquivos"))
+                        .accessibilityLabel(L10n("Atualizar arvore de arquivos"))
+                }
             }
-            .padding(DesignSystem.Spacing.cardPadding)
+            .padding(.horizontal, DesignSystem.Spacing.cardPadding)
+            .padding(.vertical, 6)
 
             Divider()
+
+            if sidebarMode == .findInFiles {
+                FindInFilesView(
+                    model: model,
+                    query: $findInFilesQuery,
+                    includePattern: $findInFilesInclude,
+                    excludePattern: $findInFilesExclude,
+                    results: $findInFilesResults,
+                    isSearching: $isFindInFilesSearching,
+                    scopePath: $findInFilesScopePath
+                )
+            } else {
 
             // File tree scroll — fills available space
             ScrollViewReader { scrollProxy in
@@ -822,11 +873,8 @@ struct CodeScreen: View {
                             }
                         }
 
-                        ClipboardDrawer(model: model)
-                            .padding(.top, DesignSystem.Spacing.standard)
                     }
                     .padding(.top, DesignSystem.Spacing.standard)
-                    .padding(.bottom, DesignSystem.Spacing.clipboardDrawerClearance)
                 }
                 .focusable()
                 .focused($isFileBrowserFocused)
@@ -877,6 +925,20 @@ struct CodeScreen: View {
                         withAnimation { scrollProxy.scrollTo(item.id, anchor: .center) }
                     }
                 }
+            }
+            } // end else (fileTree mode)
+
+            ClipboardDrawer(model: model)
+                .frame(maxHeight: 280)
+        }
+        .onChange(of: model.findInFilesScopeRequest) { _, newValue in
+            if let scope = newValue {
+                findInFilesScopePath = scope
+                sidebarMode = .findInFiles
+                if !isFileBrowserVisible {
+                    withAnimation(DesignSystem.Motion.panel) { isFileBrowserVisible = true }
+                }
+                model.findInFilesScopeRequest = nil
             }
         }
         .background(DesignSystem.Colors.background.opacity(0.3))
@@ -955,16 +1017,6 @@ struct CodeScreen: View {
         .background {
             Button("") { model.saveCurrentCodeFile() }
                 .keyboardShortcut("s", modifiers: .command)
-                .frame(width: 0, height: 0).opacity(0)
-
-            // Find (Cmd+F)
-            Button("") { openSearch(applySeedIfPresent: false) }
-                .keyboardShortcut("f", modifiers: .command)
-                .frame(width: 0, height: 0).opacity(0)
-
-            // Find alias (Ctrl+F)
-            Button("") { openSearch(applySeedIfPresent: false) }
-                .keyboardShortcut("f", modifiers: .control)
                 .frame(width: 0, height: 0).opacity(0)
 
             // Replace (Cmd+H)
@@ -1255,6 +1307,50 @@ struct CodeScreen: View {
                 model.statusMessage = L10n("editor.navigation.references.found", "\(references.count)", query.symbol)
             }
         }
+    }
+
+    private func sidebarModeButton(mode: SidebarMode, icon: String, tooltip: String) -> some View {
+        Button {
+            withAnimation(DesignSystem.Motion.detail) { sidebarMode = mode }
+        } label: {
+            Image(systemName: icon)
+                .font(.system(size: 11))
+                .frame(width: 26, height: 22)
+                .contentShape(Rectangle())
+                .foregroundStyle(sidebarMode == mode ? .primary : .secondary)
+                .background(sidebarMode == mode ? DesignSystem.Colors.selectionBackground : Color.clear)
+                .clipShape(RoundedRectangle(cornerRadius: 4))
+        }
+        .buttonStyle(.plain)
+        .help(tooltip)
+    }
+
+    /// Routes Cmd+F / Ctrl+F to the correct pane based on current focus.
+    private func routeFindShortcut() {
+        if layout == .terminalOnly {
+            toggleTerminalSearch()
+        } else if layout == .editorOnly {
+            openSearch(applySeedIfPresent: true)
+        } else {
+            // Split layout — check which pane has focus
+            if isTerminalFocused() {
+                toggleTerminalSearch()
+            } else {
+                openSearch(applySeedIfPresent: true)
+            }
+        }
+    }
+
+    /// Walks the responder chain to detect if a SwiftTerm TerminalView has focus.
+    private func isTerminalFocused() -> Bool {
+        guard let window = NSApp.keyWindow,
+              let resp = window.firstResponder as? NSView else { return false }
+        var current: NSView? = resp
+        while let v = current {
+            if String(describing: type(of: v)).contains("TerminalView") { return true }
+            current = v.superview
+        }
+        return false
     }
 
     private func openSearch(applySeedIfPresent: Bool) {
@@ -1554,11 +1650,6 @@ struct CodeScreen: View {
                 .keyboardShortcut("b", modifiers: [.command, .shift])
                 .frame(width: 0, height: 0).opacity(0)
 
-            // Terminal Search (Cmd+F when terminal focused)
-            Button("") { toggleTerminalSearch() }
-                .keyboardShortcut("f", modifiers: .command)
-                .frame(width: 0, height: 0).opacity(0)
-
             // Close terminal search (Escape)
             Button("") { closeTerminalSearch() }
                 .keyboardShortcut(.escape, modifiers: [])
@@ -1655,9 +1746,9 @@ struct CodeScreen: View {
             }
             .padding(.trailing, 8)
 
-            if isZenMode {
-                ClipboardPopoverButton(model: model, accentColor: accentColor)
+            ClipboardPopoverButton(model: model, accentColor: accentColor)
 
+            if isZenMode {
                 Spacer()
                     .frame(width: 12)
 
@@ -2575,6 +2666,14 @@ struct FileTreeNodeView: View {
 
                     Button { NSWorkspace.shared.activateFileViewerSelecting([item.url]) } label: {
                         Label(L10n("Revelar no Finder"), systemImage: "folder")
+                    }
+
+                    Divider()
+
+                    Button {
+                        model.findInFilesScopeRequest = item.url.path
+                    } label: {
+                        Label(L10n("Buscar na Pasta"), systemImage: "magnifyingglass")
                     }
                 } else {
                     Button { model.selectCodeFile(item) } label: {

@@ -1486,3 +1486,11 @@
 "about.madeWith" = "Made with SwiftUI";
 "help.visitWebsite" = "Visit Website";
 "Arquivo binario ou nao legivel." = "Binary or unreadable file.";
+
+"Buscar nos Arquivos" = "Find in Files";
+"Buscar na Pasta" = "Find in Folder";
+"Incluir arquivos" = "Include";
+"Excluir arquivos" = "Exclude";
+"findInFiles.summary" = "%@ results in %@ files";
+"Nenhum resultado" = "No results";
+"Filtros" = "Filters";
