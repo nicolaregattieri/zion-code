@@ -291,12 +291,16 @@ struct CodeScreen: View {
                 .keyboardShortcut("h", modifiers: [.command, .shift])
                 .frame(width: 0, height: 0).opacity(0)
 
-            // Find in Files (Cmd+Shift+F)
+            // Find in Files (Cmd+Shift+F) — toggle
             Button("") {
                 guard !isZenMode else { return }
-                sidebarMode = .findInFiles
-                if !isFileBrowserVisible {
-                    withAnimation(DesignSystem.Motion.panel) { isFileBrowserVisible = true }
+                if sidebarMode == .findInFiles && isFileBrowserVisible {
+                    sidebarMode = .fileTree
+                } else {
+                    sidebarMode = .findInFiles
+                    if !isFileBrowserVisible {
+                        withAnimation(DesignSystem.Motion.panel) { isFileBrowserVisible = true }
+                    }
                 }
             }
             .keyboardShortcut("f", modifiers: [.command, .shift])
@@ -929,7 +933,8 @@ struct CodeScreen: View {
             } // end else (fileTree mode)
 
             ClipboardDrawer(model: model)
-                .frame(maxHeight: 280)
+                .fixedSize(horizontal: false, vertical: model.clipboardMonitor.isCollapsed)
+                .frame(maxHeight: model.clipboardMonitor.isCollapsed ? nil : 280)
         }
         .onChange(of: model.findInFilesScopeRequest) { _, newValue in
             if let scope = newValue {
@@ -1330,13 +1335,13 @@ struct CodeScreen: View {
         if layout == .terminalOnly {
             toggleTerminalSearch()
         } else if layout == .editorOnly {
-            openSearch(applySeedIfPresent: true)
+            toggleSearch()
         } else {
             // Split layout — check which pane has focus
             if isTerminalFocused() {
                 toggleTerminalSearch()
             } else {
-                openSearch(applySeedIfPresent: true)
+                toggleSearch()
             }
         }
     }
