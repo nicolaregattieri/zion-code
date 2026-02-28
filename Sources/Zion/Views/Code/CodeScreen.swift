@@ -933,8 +933,8 @@ struct CodeScreen: View {
             } // end else (fileTree mode)
 
             ClipboardDrawer(model: model)
-                .fixedSize(horizontal: false, vertical: model.clipboardMonitor.isCollapsed)
-                .frame(maxHeight: model.clipboardMonitor.isCollapsed ? nil : 280)
+                .frame(maxHeight: 280, alignment: .top)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .onChange(of: model.findInFilesScopeRequest) { _, newValue in
             if let scope = newValue {
@@ -1337,8 +1337,9 @@ struct CodeScreen: View {
         } else if layout == .editorOnly {
             toggleSearch()
         } else {
-            // Split layout — check which pane has focus
-            if isTerminalFocused() {
+            // Split: if terminal search is already visible, keep toggling it
+            // (the search TextField has focus, not TerminalView itself)
+            if isTerminalSearchVisible || isTerminalFocused() {
                 toggleTerminalSearch()
             } else {
                 toggleSearch()
