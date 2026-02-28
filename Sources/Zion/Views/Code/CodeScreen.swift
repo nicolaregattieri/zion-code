@@ -879,6 +879,11 @@ struct CodeScreen: View {
 
                     }
                     .padding(.top, DesignSystem.Spacing.standard)
+                    .background {
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .onTapGesture { model.clearFileSelection() }
+                    }
                 }
                 .focusable()
                 .focused($isFileBrowserFocused)
@@ -892,6 +897,7 @@ struct CodeScreen: View {
                 .onMoveCommand { direction in
                     let flatFiles = model.visibleFlatFiles()
                     guard !flatFiles.isEmpty else { return }
+                    let isShift = NSApp.currentEvent?.modifierFlags.contains(.shift) == true
                     switch direction {
                     case .up:
                         if selectedBrowserIndex > 0 {
@@ -902,7 +908,6 @@ struct CodeScreen: View {
                             selectedBrowserIndex += 1
                         }
                     case .left:
-                        // Collapse folder
                         if selectedBrowserIndex >= 0 && selectedBrowserIndex < flatFiles.count {
                             let item = flatFiles[selectedBrowserIndex]
                             if item.isDirectory && model.expandedPaths.contains(item.id) {
@@ -911,7 +916,6 @@ struct CodeScreen: View {
                         }
                         return
                     case .right:
-                        // Expand folder
                         if selectedBrowserIndex >= 0 && selectedBrowserIndex < flatFiles.count {
                             let item = flatFiles[selectedBrowserIndex]
                             if item.isDirectory && !model.expandedPaths.contains(item.id) {
@@ -923,8 +927,10 @@ struct CodeScreen: View {
                     }
                     if selectedBrowserIndex >= 0 && selectedBrowserIndex < flatFiles.count {
                         let item = flatFiles[selectedBrowserIndex]
-                        if !item.isDirectory {
-                            model.selectCodeFile(item)
+                        if isShift {
+                            model.extendSelection(to: item)
+                        } else {
+                            model.plainClickFile(item)
                         }
                         withAnimation { scrollProxy.scrollTo(item.id, anchor: .center) }
                     }
@@ -2600,16 +2606,22 @@ struct FileTreeNodeView: View {
 
     var body: some View {
         let isExpanded = model.expandedPaths.contains(item.id)
-        let isSelected = model.activeFileID == item.id
+        let isSelected = model.selectedFileIDs.contains(item.id) ||
+                         (model.selectedFileIDs.isEmpty && model.activeFileID == item.id)
         let isDark = model.selectedTheme.isDark
         let isModified = model.uncommittedChanges.contains { $0.hasSuffix(item.name) }
         let isIgnored = item.isGitIgnored
 
         VStack(alignment: .leading, spacing: 0) {
             Button {
-                if item.isDirectory {
-                    withAnimation(DesignSystem.Motion.snappy) { model.toggleExpansion(for: item.id) }
-                } else { model.selectCodeFile(item) }
+                let flags = NSApp.currentEvent?.modifierFlags.intersection([.command, .shift]) ?? []
+                if flags.contains(.command) {
+                    model.toggleFileSelection(item)
+                } else if flags.contains(.shift) {
+                    model.rangeSelectFile(item)
+                } else {
+                    model.plainClickFile(item)
+                }
             } label: {
                 HStack(spacing: 6) {
                     if item.isDirectory {
@@ -2633,7 +2645,7 @@ struct FileTreeNodeView: View {
                         .lineLimit(1)
                         .foregroundStyle(isSelected ? (isDark ? .white : DesignSystem.Colors.info) : (isModified ? DesignSystem.Colors.warning : .primary))
                 }
-                .opacity(isIgnored && !isSelected ? 0.5 : 1.0)
+                .opacity((isIgnored || model.isFileInCutClipboard(item.id)) && !isSelected ? 0.5 : 1.0)
                 .padding(.horizontal, 12).padding(.vertical, 6).padding(.leading, CGFloat(level) * 12)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())
@@ -2643,7 +2655,16 @@ struct FileTreeNodeView: View {
             .onHover { h in isHovered = h }
             .draggable(TerminalShellEscaping.quotePath(item.url.path))
             .contextMenu {
-                if item.isDirectory {
+                let effectiveSelection: [FileItem] = {
+                    if model.selectedFileIDs.contains(item.id) && model.selectedFileIDs.count > 1 {
+                        return model.selectedFileItems()
+                    }
+                    return [item]
+                }()
+                let isMulti = effectiveSelection.count > 1
+                let pasteTarget = item.isDirectory ? item.url : item.url.deletingLastPathComponent()
+
+                if item.isDirectory && !isMulti {
                     Button { model.createNewFileInFolder(parentURL: item.url) } label: {
                         Label(L10n("Novo Arquivo"), systemImage: "doc.badge.plus")
                     }
@@ -2652,48 +2673,9 @@ struct FileTreeNodeView: View {
                     }
 
                     Divider()
+                }
 
-                    Button { model.copyFileItem(item) } label: {
-                        Label(L10n("Copiar"), systemImage: "doc.on.doc")
-                    }
-                    Button { model.cutFileItem(item) } label: {
-                        Label(L10n("Recortar"), systemImage: "scissors")
-                    }
-                    if model.hasFileBrowserClipboard {
-                        Button { model.pasteFileItem(into: item.url) } label: {
-                            Label(L10n("Colar"), systemImage: "doc.on.clipboard")
-                        }
-                    }
-
-                    Divider()
-
-                    Button { model.renameFileItem(item) } label: {
-                        Label(L10n("Renomear..."), systemImage: "pencil")
-                    }
-                    Button { model.duplicateFileItem(item) } label: {
-                        Label(L10n("Duplicar"), systemImage: "plus.square.on.square")
-                    }
-
-                    Divider()
-
-                    Button(role: .destructive) { model.deleteFileItem(item) } label: {
-                        Label(L10n("Excluir"), systemImage: "trash")
-                    }
-
-                    Divider()
-
-                    Button { NSWorkspace.shared.activateFileViewerSelecting([item.url]) } label: {
-                        Label(L10n("Revelar no Finder"), systemImage: "folder")
-                    }
-
-                    Divider()
-
-                    Button {
-                        model.findInFilesScopeRequest = item.url.path
-                    } label: {
-                        Label(L10n("Buscar na Pasta"), systemImage: "magnifyingglass")
-                    }
-                } else {
+                if !item.isDirectory && !isMulti {
                     Button { model.selectCodeFile(item) } label: {
                         Label(L10n("Abrir no Editor"), systemImage: "pencil.and.outline")
                     }
@@ -2717,38 +2699,72 @@ struct FileTreeNodeView: View {
                     }
 
                     Divider()
+                }
 
-                    Button { model.copyFileItem(item) } label: {
-                        Label(L10n("Copiar"), systemImage: "doc.on.doc")
+                // Copy / Cut / Paste
+                Button { model.copyFileItems(effectiveSelection) } label: {
+                    Label(isMulti ? String(format: L10n("Copiar %d Itens"), effectiveSelection.count) : L10n("Copiar"), systemImage: "doc.on.doc")
+                }
+                Button { model.cutFileItems(effectiveSelection) } label: {
+                    Label(isMulti ? String(format: L10n("Recortar %d Itens"), effectiveSelection.count) : L10n("Recortar"), systemImage: "scissors")
+                }
+                if model.hasFileBrowserClipboard && !isMulti {
+                    Button { model.pasteFileItem(into: pasteTarget) } label: {
+                        Label(L10n("Colar"), systemImage: "doc.on.clipboard")
                     }
-                    Button { model.cutFileItem(item) } label: {
-                        Label(L10n("Recortar"), systemImage: "scissors")
-                    }
-                    if model.hasFileBrowserClipboard {
-                        Button { model.pasteFileItem(into: item.url.deletingLastPathComponent()) } label: {
-                            Label(L10n("Colar"), systemImage: "doc.on.clipboard")
-                        }
-                    }
+                }
 
-                    Divider()
+                Divider()
 
+                // Rename (single only) / Duplicate
+                if !isMulti {
                     Button { model.renameFileItem(item) } label: {
                         Label(L10n("Renomear..."), systemImage: "pencil")
                     }
-                    Button { model.duplicateFileItem(item) } label: {
-                        Label(L10n("Duplicar"), systemImage: "plus.square.on.square")
-                    }
+                }
+                Button { model.duplicateFileItems(effectiveSelection) } label: {
+                    Label(isMulti ? String(format: L10n("Duplicar %d Itens"), effectiveSelection.count) : L10n("Duplicar"), systemImage: "plus.square.on.square")
+                }
 
+                Divider()
+
+                // Delete
+                Button(role: .destructive) { model.deleteFileItems(effectiveSelection) } label: {
+                    Label(isMulti ? String(format: L10n("Excluir %d Itens"), effectiveSelection.count) : L10n("Excluir"), systemImage: "trash")
+                }
+
+                Divider()
+
+                // Reveal in Finder
+                Button { NSWorkspace.shared.activateFileViewerSelecting(effectiveSelection.map(\.url)) } label: {
+                    Label(L10n("Revelar no Finder"), systemImage: "folder")
+                }
+
+                // Find in Folder (directory only, single only)
+                if item.isDirectory && !isMulti {
                     Divider()
 
-                    Button(role: .destructive) { model.deleteFileItem(item) } label: {
-                        Label(L10n("Excluir"), systemImage: "trash")
+                    Button {
+                        model.findInFilesScopeRequest = item.url.path
+                    } label: {
+                        Label(L10n("Buscar na Pasta"), systemImage: "magnifyingglass")
                     }
+                }
 
-                    Divider()
+                // Add to .gitignore
+                if let repoURL = model.repositoryURL {
+                    let nonIgnoredItems = effectiveSelection.filter { !$0.isGitIgnored }
+                    if !nonIgnoredItems.isEmpty {
+                        Divider()
 
-                    Button { NSWorkspace.shared.activateFileViewerSelecting([item.url]) } label: {
-                        Label(L10n("Revelar no Finder"), systemImage: "folder")
+                        Button {
+                            for fileItem in nonIgnoredItems {
+                                let relativePath = fileItem.url.path.replacingOccurrences(of: repoURL.path + "/", with: "")
+                                model.addToGitIgnore(path: relativePath)
+                            }
+                        } label: {
+                            Label(L10n("Adicionar ao .gitignore"), systemImage: "eye.slash")
+                        }
                     }
                 }
             }

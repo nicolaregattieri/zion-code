@@ -854,6 +854,12 @@
 "Nome da pasta:" = "Nome da pasta:";
 "Novo nome:" = "Novo nome:";
 "Deseja excluir '%@'?" = "Deseja excluir '%@'?";
+"Deseja excluir %d itens?" = "Deseja excluir %d itens?";
+"Copiar %d Itens" = "Copiar %d Itens";
+"Recortar %d Itens" = "Recortar %d Itens";
+"Duplicar %d Itens" = "Duplicar %d Itens";
+"Excluir %d Itens" = "Excluir %d Itens";
+"Adicionar ao .gitignore" = "Adicionar ao .gitignore";
 "Esta acao nao pode ser desfeita." = "Esta ação não pode ser desfeita.";
 
 // Editor Settings Tab

@@ -358,6 +358,8 @@ final class RepositoryViewModel {
     }
     var openedFiles: [FileItem] = []
     var activeFileID: String?
+    var selectedFileIDs: Set<String> = []
+    @ObservationIgnored var lastClickedFileID: String?
     var selectedCodeFile: FileItem?
     var codeFileContent: String = "" {
         didSet { markCurrentFileUnsavedIfChanged() }
@@ -372,7 +374,7 @@ final class RepositoryViewModel {
     @ObservationIgnored private var untitledCounter: Int = 0
 
     // File browser clipboard (cut/copy/paste)
-    @ObservationIgnored private var fileBrowserClipboard: (url: URL, isCut: Bool)?
+    @ObservationIgnored private var fileBrowserClipboard: (urls: [URL], isCut: Bool)?
 
     // Editor Settings (persisted via UserDefaults)
     var selectedTheme: EditorTheme = .dracula {
@@ -1250,6 +1252,7 @@ final class RepositoryViewModel {
             }
             repositoryFiles = files  // single assignment, single cache rebuild
             reloadExpandedDirectories()
+            pruneStaleSelections()
             scheduleEditorSymbolIndexRebuild(repositoryURL: url)
         }
     }
@@ -1389,6 +1392,54 @@ final class RepositoryViewModel {
                 codeFileContent = "Erro ao ler arquivo: \(error.localizedDescription)"
             }
         }
+    }
+
+    // MARK: - Multi-Selection
+
+    func plainClickFile(_ item: FileItem) {
+        selectedFileIDs = [item.id]
+        lastClickedFileID = item.id
+        if item.isDirectory {
+            withAnimation(DesignSystem.Motion.snappy) { toggleExpansion(for: item.id) }
+        } else {
+            selectCodeFile(item)
+        }
+    }
+
+    func toggleFileSelection(_ item: FileItem) {
+        if selectedFileIDs.contains(item.id) {
+            selectedFileIDs.remove(item.id)
+        } else {
+            selectedFileIDs.insert(item.id)
+        }
+        lastClickedFileID = item.id
+    }
+
+    func rangeSelectFile(_ item: FileItem) {
+        let flat = visibleFlatFiles()
+        guard let anchorID = lastClickedFileID,
+              let anchorIdx = flat.firstIndex(where: { $0.id == anchorID }),
+              let targetIdx = flat.firstIndex(where: { $0.id == item.id }) else {
+            plainClickFile(item)
+            return
+        }
+        let range = min(anchorIdx, targetIdx)...max(anchorIdx, targetIdx)
+        selectedFileIDs = Set(flat[range].map(\.id))
+    }
+
+    func extendSelection(to item: FileItem) {
+        selectedFileIDs.insert(item.id)
+        lastClickedFileID = item.id
+    }
+
+    func clearFileSelection() {
+        selectedFileIDs.removeAll()
+        lastClickedFileID = nil
+    }
+
+    func selectedFileItems() -> [FileItem] {
+        let flat = visibleFlatFiles()
+        return flat.filter { selectedFileIDs.contains($0.id) }
     }
 
     func findEditorDefinitions(for query: EditorSymbolQuery) async -> [EditorSymbolLocation] {
@@ -1807,23 +1858,34 @@ final class RepositoryViewModel {
     }
 
     func deleteFileItem(_ item: FileItem) {
+        deleteFileItems([item])
+    }
+
+    func deleteFileItems(_ items: [FileItem]) {
+        guard !items.isEmpty else { return }
         let alert = NSAlert()
-        alert.messageText = String(format: L10n("Deseja excluir '%@'?"), item.name)
+        if items.count == 1 {
+            alert.messageText = String(format: L10n("Deseja excluir '%@'?"), items[0].name)
+        } else {
+            alert.messageText = String(format: L10n("Deseja excluir %d itens?"), items.count)
+        }
         alert.informativeText = L10n("Esta acao nao pode ser desfeita.")
         alert.alertStyle = .critical
         alert.addButton(withTitle: L10n("Excluir"))
         alert.addButton(withTitle: L10n("Cancelar"))
         guard alert.runModal() == .alertFirstButtonReturn else { return }
-        do {
-            try FileManager.default.removeItem(at: item.url)
-            // Close tab if open
-            if let idx = openedFiles.firstIndex(where: { $0.id == item.id }) {
-                closeFile(id: openedFiles[idx].id)
+        for item in items {
+            do {
+                try FileManager.default.removeItem(at: item.url)
+                if let idx = openedFiles.firstIndex(where: { $0.id == item.id }) {
+                    closeFile(id: openedFiles[idx].id)
+                }
+            } catch {
+                handleError(error)
             }
-            refreshFileTree()
-        } catch {
-            handleError(error)
         }
+        selectedFileIDs.subtract(items.map(\.id))
+        refreshFileTree()
     }
 
     func renameFileItem(_ item: FileItem) {
@@ -1870,58 +1932,77 @@ final class RepositoryViewModel {
     }
 
     func duplicateFileItem(_ item: FileItem) {
-        let parentURL = item.url.deletingLastPathComponent()
-        let ext = item.url.pathExtension
-        let baseName = ext.isEmpty ? item.name : String(item.name.dropLast(ext.count + 1))
-        let newName = ext.isEmpty ? "\(baseName) copy" : "\(baseName) copy.\(ext)"
-        let newURL = parentURL.appendingPathComponent(newName)
-        do {
-            try FileManager.default.copyItem(at: item.url, to: newURL)
-            refreshFileTree()
-        } catch {
-            handleError(error)
+        duplicateFileItems([item])
+    }
+
+    func duplicateFileItems(_ items: [FileItem]) {
+        guard !items.isEmpty else { return }
+        for item in items {
+            let parentURL = item.url.deletingLastPathComponent()
+            let ext = item.url.pathExtension
+            let baseName = ext.isEmpty ? item.name : String(item.name.dropLast(ext.count + 1))
+            let newName = ext.isEmpty ? "\(baseName) copy" : "\(baseName) copy.\(ext)"
+            let newURL = parentURL.appendingPathComponent(newName)
+            do {
+                try FileManager.default.copyItem(at: item.url, to: newURL)
+            } catch { handleError(error) }
         }
+        refreshFileTree()
     }
 
     func copyFileItem(_ item: FileItem) {
-        fileBrowserClipboard = (url: item.url, isCut: false)
+        copyFileItems([item])
+    }
+
+    func copyFileItems(_ items: [FileItem]) {
+        fileBrowserClipboard = (urls: items.map(\.url), isCut: false)
     }
 
     func cutFileItem(_ item: FileItem) {
-        fileBrowserClipboard = (url: item.url, isCut: true)
+        cutFileItems([item])
+    }
+
+    func cutFileItems(_ items: [FileItem]) {
+        fileBrowserClipboard = (urls: items.map(\.url), isCut: true)
     }
 
     var hasFileBrowserClipboard: Bool {
         fileBrowserClipboard != nil
     }
 
+    func isFileInCutClipboard(_ id: String) -> Bool {
+        guard let clipboard = fileBrowserClipboard, clipboard.isCut else { return false }
+        return clipboard.urls.contains { $0.path == id }
+    }
+
     func pasteFileItem(into parentURL: URL) {
         guard let clipboard = fileBrowserClipboard else { return }
-        let destURL = parentURL.appendingPathComponent(clipboard.url.lastPathComponent)
-        do {
-            if clipboard.isCut {
-                try FileManager.default.moveItem(at: clipboard.url, to: destURL)
-                // Close tab if the moved file was open
-                let oldPath = clipboard.url.path
-                if let idx = openedFiles.firstIndex(where: { $0.id == oldPath }) {
-                    let newItem = FileItem(url: destURL, isDirectory: false, children: nil)
-                    openedFiles[idx] = newItem
-                    if activeFileID == oldPath {
-                        activeFileID = newItem.id
-                        selectedCodeFile = newItem
-                        if let content = originalFileContents.removeValue(forKey: oldPath) {
-                            originalFileContents[newItem.id] = content
+        for url in clipboard.urls {
+            let destURL = parentURL.appendingPathComponent(url.lastPathComponent)
+            do {
+                if clipboard.isCut {
+                    try FileManager.default.moveItem(at: url, to: destURL)
+                    let oldPath = url.path
+                    if let idx = openedFiles.firstIndex(where: { $0.id == oldPath }) {
+                        let newItem = FileItem(url: destURL, isDirectory: false, children: nil)
+                        openedFiles[idx] = newItem
+                        if activeFileID == oldPath {
+                            activeFileID = newItem.id
+                            selectedCodeFile = newItem
+                            if let content = originalFileContents.removeValue(forKey: oldPath) {
+                                originalFileContents[newItem.id] = content
+                            }
                         }
                     }
+                } else {
+                    try FileManager.default.copyItem(at: url, to: destURL)
                 }
-            } else {
-                try FileManager.default.copyItem(at: clipboard.url, to: destURL)
+            } catch {
+                handleError(error)
             }
-            fileBrowserClipboard = nil
-            refreshFileTree()
-        } catch {
-            handleError(error)
         }
+        fileBrowserClipboard = nil
+        refreshFileTree()
     }
 
     func allFlatFiles() -> [FileItem] {
@@ -1943,6 +2024,12 @@ final class RepositoryViewModel {
             return result
         }
         return walk(repositoryFiles)
+    }
+
+    private func pruneStaleSelections() {
+        guard !selectedFileIDs.isEmpty else { return }
+        let validIDs = Set(allFlatFiles().map(\.id))
+        selectedFileIDs.formIntersection(validIDs)
     }
 
     private func rebuildFlatFileCache() {
