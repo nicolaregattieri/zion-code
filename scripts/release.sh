@@ -37,6 +37,24 @@ if [ ! -f "$SPARKLE_BIN/sign_update" ]; then
     exit 1
 fi
 
+# --- Pre-flight checks ---
+echo ""
+echo "=== Pre-flight: Running tests ==="
+if ! swift test --quiet 2>&1; then
+    echo "WARNING: Tests failed. Continue anyway? (y/N)"
+    read -r ans
+    case "$ans" in
+        [Yy]*) echo "Continuing despite test failures..." ;;
+        *) echo "Aborted."; exit 1 ;;
+    esac
+fi
+
+echo ""
+echo "=== Pre-flight: Documentation reminder ==="
+echo "  Have you run /documenter to sync docs with recent changes?"
+echo "  Press Enter to continue or Ctrl+C to abort..."
+read -r
+
 # --- Step 1: Build app ---
 echo ""
 echo "=== Step 1/5: Building Zion.app ==="
