@@ -414,9 +414,22 @@ struct TerminalTabView: NSViewRepresentable {
                         ;;
                     image/svg+xml)
                         tmp=$(mktemp "${TMPDIR:-/tmp}/zion_img_XXXXXX.png")
+                        # Try qlmanage first (best quality for SVGs)
                         qlmanage -t -s "$_zd_maxpx" -o "${TMPDIR:-/tmp}" "$f" >/dev/null 2>&1 \\
                             && mv "${TMPDIR:-/tmp}/$(basename "$f").png" "$tmp" 2>/dev/null
-                        [ ! -f "$tmp" ] && { echo "zion_display: SVG conversion failed" >&2; exit 1; }
+                        # Fallback 1: sips (uses ImageIO, handles simpler SVGs)
+                        if [ ! -s "$tmp" ]; then
+                            sips -s format png -Z "$_zd_maxpx" "$f" --out "$tmp" >/dev/null 2>&1
+                        fi
+                        # Fallback 2: rsvg-convert (if installed via Homebrew)
+                        if [ ! -s "$tmp" ] && command -v rsvg-convert >/dev/null 2>&1; then
+                            rsvg-convert -w "$_zd_maxpx" -o "$tmp" "$f" 2>/dev/null
+                        fi
+                        if [ ! -s "$tmp" ]; then
+                            rm -f "$tmp"
+                            echo "zion_display: SVG conversion failed (tried qlmanage, sips, rsvg-convert)" >&2
+                            exit 1
+                        fi
                         f="$tmp"; _zd_cleanup=1
                         ;;
                     *) echo "zion_display: unsupported type: $mime" >&2; exit 1 ;;
@@ -441,23 +454,6 @@ struct TerminalTabView: NSViewRepresentable {
                     _zd_render_w="$_zd_actual_w"
                 fi
 
-                # Compute image height in terminal rows for stdout spacer.
-                # When writing via ZION_TTY the image bypasses the calling
-                # process (e.g. Claude Code), so its TUI layout does not know
-                # the cursor moved. Emitting matching newlines on stdout lets
-                # the caller advance its own layout past the image area.
-                _zd_img_h=$(sips -g pixelHeight "$f" 2>/dev/null | awk '/pixelHeight/{print $2}')
-                if [ -n "$_zd_img_h" ] && [ -n "$_zd_actual_w" ] && [ "$_zd_actual_w" -gt 0 ] 2>/dev/null; then
-                    if [ "$_zd_render_w" -lt "$_zd_actual_w" ] 2>/dev/null; then
-                        _zd_img_h=$(( _zd_img_h * _zd_render_w / _zd_actual_w ))
-                    fi
-                fi
-                _zd_cell_h=18
-                _zd_rows=1
-                if [ -n "$_zd_img_h" ] && [ "$_zd_img_h" -gt 0 ] 2>/dev/null; then
-                    _zd_rows=$(( (_zd_img_h + _zd_cell_h - 1) / _zd_cell_h ))
-                fi
-
                 # Resolve output target: ZION_TTY > /dev/tty > stdout
                 _zd_out=""
                 if [ -n "$ZION_TTY" ] && [ -w "$ZION_TTY" ]; then
@@ -476,14 +472,6 @@ struct TerminalTabView: NSViewRepresentable {
                 }
                 if [ -n "$_zd_out" ]; then
                     _zd_send > "$_zd_out"
-                    # Emit spacer newlines on stdout so the calling process
-                    # (whose stdout is captured, not the terminal) advances
-                    # its layout past the image rows.
-                    _zd_i=0
-                    while [ "$_zd_i" -lt "$_zd_rows" ]; do
-                        echo ""
-                        _zd_i=$(( _zd_i + 1 ))
-                    done
                 else
                     _zd_send
                 fi
@@ -520,10 +508,16 @@ struct TerminalTabView: NSViewRepresentable {
                 2. Run: `zion_display <filepath>`
 
                 **If the input is a description**:
-                1. Create an SVG file based on the description. Use rich colors, clean shapes, and proper viewBox.
-                2. Save to a temp file using Bash `cat > /tmp/zion_img_<name>.svg << 'EOF'` (NOT the Write tool). Always use `/tmp/` to avoid polluting the project directory.
+                1. Create an SVG that macOS can render. Follow these rules strictly:
+                   - Use `xmlns="http://www.w3.org/2000/svg"` on the root `<svg>` element
+                   - Use only basic SVG elements: `<rect>`, `<circle>`, `<ellipse>`, `<line>`, `<polyline>`, `<polygon>`, `<path>`, `<text>`, `<g>`, `<defs>`, `<linearGradient>`, `<radialGradient>`, `<clipPath>`
+                   - Do NOT use `<foreignObject>`, `<filter>`, `<feGaussianBlur>`, `<mask>`, CSS `@import`, or external references
+                   - Set a proper `viewBox` (e.g. `viewBox="0 0 600 400"`)
+                   - Keep it under 50KB — prefer clean shapes over excessive detail
+                2. Save using Bash `mkdir -p ~/Library/Caches/Zion/images && cat > ~/Library/Caches/Zion/images/<name>.svg << 'SVGEOF'` (NOT the Write tool). Always use `~/Library/Caches/Zion/images/`.
                 3. Briefly describe what you drew.
-                4. Run: `zion_display /tmp/zion_img_<name>.svg`
+                4. Run: `zion_display ~/Library/Caches/Zion/images/<name>.svg`
+                5. If `zion_display` fails with "SVG conversion failed", simplify the SVG (remove gradients, complex paths, or text) and retry.
 
                 If the request mentions "--save", use `zion_display --save <file>` instead.
 
