@@ -71,11 +71,11 @@ extension RepositoryViewModel {
                                 return String(line.dropFirst(3)).trimmingCharacters(in: .whitespaces)
                             }
 
-                            for file in untrackedFiles.prefix(5) { // Limit to first 5 files for brevity
+                            for file in untrackedFiles.prefix(Constants.Limits.maxUntrackedFilesForContext) {
                                 if let content = try? await worker.runAction(args: ["show", ":\(file)"], in: url) {
-                                    untrackedContext += "--- \(file) ---\n\(content.prefix(500))\n"
+                                    untrackedContext += "--- \(file) ---\n\(content.prefix(Constants.Limits.maxFileContentPreviewLength))\n"
                                 } else if let localContent = try? String(contentsOf: url.appendingPathComponent(file), encoding: .utf8) {
-                                    untrackedContext += "--- \(file) ---\n\(localContent.prefix(500))\n"
+                                    untrackedContext += "--- \(file) ---\n\(localContent.prefix(Constants.Limits.maxFileContentPreviewLength))\n"
                                 }
                             }
                             diff = untrackedContext

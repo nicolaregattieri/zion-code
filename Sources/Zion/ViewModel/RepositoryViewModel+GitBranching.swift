@@ -660,7 +660,7 @@ extension RepositoryViewModel {
         guard openConflictResolver else { return }
 
         Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 600_000_000)
+            try? await Task.sleep(nanoseconds: Constants.Timing.transferSupportDelay)
             guard let repositoryURL else { return }
 
             var sourceStashApplyError: String?

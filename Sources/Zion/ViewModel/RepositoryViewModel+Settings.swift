@@ -539,7 +539,7 @@ extension RepositoryViewModel {
         backgroundFetchTask?.cancel()
         backgroundFetchTask = Task {
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 60_000_000_000) // 60s
+                try? await Task.sleep(nanoseconds: Constants.Timing.backgroundFetchInterval)
                 if Task.isCancelled { break }
                 if isSwitchingRepository { continue }
                 await checkBehindRemote()
@@ -696,7 +696,7 @@ extension RepositoryViewModel {
         // Periodic check every 30s (catches changes FileWatcher might miss)
         state.monitorTask = Task { [weak self] in
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 30_000_000_000)
+                try? await Task.sleep(nanoseconds: Constants.Timing.backgroundMonitorInterval)
                 if Task.isCancelled { break }
                 await self?.updateChangedFileCount(for: url)
             }
@@ -818,8 +818,7 @@ extension RepositoryViewModel {
         autoRefreshTask?.cancel()
         autoRefreshTask = Task {
             while !Task.isCancelled {
-                // Wait for 30 seconds
-                try? await Task.sleep(nanoseconds: 30_000_000_000)
+                try? await Task.sleep(nanoseconds: Constants.Timing.backgroundMonitorInterval)
 
                 if Task.isCancelled { break }
 
@@ -837,8 +836,7 @@ extension RepositoryViewModel {
         prPollingTimer?.cancel()
         prPollingTimer = Task {
             while !Task.isCancelled {
-                // Poll every 5 minutes
-                try? await Task.sleep(nanoseconds: 5 * 60 * 1_000_000_000)
+                try? await Task.sleep(nanoseconds: Constants.Timing.prPollingInterval)
                 if Task.isCancelled { break }
                 if isSwitchingRepository { continue }
                 refreshPRReviewQueue()

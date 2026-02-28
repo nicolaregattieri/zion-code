@@ -735,8 +735,8 @@ actor RepositoryWorker {
     }
 
     func parseCommits(from output: String) -> [ParsedCommit] {
-        let recordSeparator = Character(UnicodeScalar(0x1e)!)
-        let fieldSeparator = Character(UnicodeScalar(0x1f)!)
+        let recordSeparator = Constants.gitRecordSeparator
+        let fieldSeparator = Constants.gitFieldSeparator
 
         return output
             .split(separator: recordSeparator, omittingEmptySubsequences: true)

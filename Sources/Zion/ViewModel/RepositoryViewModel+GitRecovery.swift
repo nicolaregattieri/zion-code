@@ -63,7 +63,7 @@ extension RepositoryViewModel {
         )
 
         return output.split(separator: "\n", omittingEmptySubsequences: true).compactMap { line in
-            let fields = line.split(separator: Character(UnicodeScalar(0x1F)!), omittingEmptySubsequences: false).map(String.init)
+            let fields = line.split(separator: Constants.gitFieldSeparator, omittingEmptySubsequences: false).map(String.init)
             guard fields.count >= 4 else { return nil }
             let ref = fields[0].clean
             let hash = fields[1].clean
@@ -96,14 +96,14 @@ extension RepositoryViewModel {
             .filter { !$0.isEmpty }
 
         guard !hashes.isEmpty else { return [] }
-        let limited = Array(hashes.prefix(180))
+        let limited = Array(hashes.prefix(Constants.Limits.maxDanglingSnapshots))
         let showOutput = try await worker.runAction(
             args: ["show", "-s", "--format=%H%x1F%h%x1F%ct%x1F%s"] + limited,
             in: repositoryURL
         )
 
         return showOutput.split(separator: "\n", omittingEmptySubsequences: true).compactMap { line in
-            let fields = line.split(separator: Character(UnicodeScalar(0x1F)!), omittingEmptySubsequences: false).map(String.init)
+            let fields = line.split(separator: Constants.gitFieldSeparator, omittingEmptySubsequences: false).map(String.init)
             guard fields.count >= 4 else { return nil }
             let hash = fields[0].clean
             let shortHash = fields[1].clean

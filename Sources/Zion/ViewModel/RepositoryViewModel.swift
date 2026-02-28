@@ -675,14 +675,14 @@ final class RepositoryViewModel {
         deferredRepositoryLoadTask = Task { [weak self] in
             guard let self else { return }
 
-            try? await Task.sleep(nanoseconds: 250_000_000)
+            try? await Task.sleep(nanoseconds: Constants.Timing.repositorySwitchDeferral)
             guard !Task.isCancelled else { return }
             guard self.repositorySwitchToken == switchToken, self.repositoryURL == url else { return }
 
-            for _ in 0..<40 {
+            for _ in 0..<Constants.Timing.maxRepositorySwitchAttempts {
                 if Task.isCancelled { return }
                 if !self.isBusy { break }
-                try? await Task.sleep(nanoseconds: 50_000_000)
+                try? await Task.sleep(nanoseconds: Constants.Timing.repositorySwitchPollInterval)
                 guard self.repositorySwitchToken == switchToken, self.repositoryURL == url else { return }
             }
 

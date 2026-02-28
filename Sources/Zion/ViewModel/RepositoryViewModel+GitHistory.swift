@@ -410,7 +410,7 @@ extension RepositoryViewModel {
         reflogTask = Task {
             do {
                 let output = try await worker.runAction(
-                    args: ["reflog", "--format=%H|%h|%gD|%gs|%ci|%cr", "-n", "50"],
+                    args: ["reflog", "--format=%H|%h|%gD|%gs|%ci|%cr", "-n", "\(Constants.Limits.reflogEntryLimit)"],
                     in: url
                 )
                 let entries = Self.parseReflogOutput(output)

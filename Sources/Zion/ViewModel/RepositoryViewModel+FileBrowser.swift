@@ -235,11 +235,11 @@ extension RepositoryViewModel {
         let targetLine = max(1, location.line)
         Task { @MainActor [weak self] in
             guard let self else { return }
-            for _ in 0..<50 {
+            for _ in 0..<Constants.Limits.maxEditorLocationWaitAttempts {
                 if selectedCodeFile?.id == targetID, originalFileContents[targetID] != nil {
                     break
                 }
-                try? await Task.sleep(for: .milliseconds(30))
+                try? await Task.sleep(for: .milliseconds(Constants.Limits.editorLocationWaitIntervalMs))
             }
             editorJumpLineTarget = targetLine
             editorJumpToken += 1
@@ -288,7 +288,7 @@ extension RepositoryViewModel {
 
         do {
             let output = try await worker.runGitCommand(in: repositoryURL, args: args)
-            return Self.parseFindInFilesOutput(output, maxMatches: 1000)
+            return Self.parseFindInFilesOutput(output, maxMatches: Constants.Limits.maxFindInFilesMatches)
         } catch {
             // git grep returns non-zero when no matches — not a real error
             return []
