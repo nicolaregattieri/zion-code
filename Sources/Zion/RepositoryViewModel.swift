@@ -331,6 +331,7 @@ final class RepositoryViewModel {
     // Repository statistics
     var repoStats: RepositoryStats?
     var isGitAvailable: Bool = true
+    var showGitNotFoundAlert: Bool = false
 
     // Conflict resolution state
     var conflictedFiles: [ConflictFile] = []
@@ -560,7 +561,7 @@ final class RepositoryViewModel {
         process.arguments = ["git"]
         let pipe = Pipe()
         process.standardOutput = pipe
-        
+
         do {
             try process.run()
             process.waitUntilExit()
@@ -568,6 +569,17 @@ final class RepositoryViewModel {
         } catch {
             isGitAvailable = false
         }
+
+        if !isGitAvailable {
+            showGitNotFoundAlert = true
+        }
+    }
+
+    func installCommandLineTools() {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/xcode-select")
+        process.arguments = ["--install"]
+        try? process.run()
     }
 
     // Restore persisted editor settings from UserDefaults
@@ -1389,7 +1401,7 @@ final class RepositoryViewModel {
                 codeFileContent = content
                 originalFileContents[itemID] = content
             } catch {
-                codeFileContent = "Erro ao ler arquivo: \(error.localizedDescription)"
+                codeFileContent = L10n("error.readFile", error.localizedDescription)
             }
         }
     }
@@ -4488,7 +4500,7 @@ final class RepositoryViewModel {
                 }
             } catch {
                 logger.log(.warn, "Failed to load diff: \(error.localizedDescription)", context: file, source: #function)
-                currentFileDiff = "Erro ao carregar diff: \(error.localizedDescription)"
+                currentFileDiff = L10n("error.loadDiff", error.localizedDescription)
                 currentFileDiffHunks = []
             }
         }
@@ -4923,7 +4935,7 @@ final class RepositoryViewModel {
                 currentCommitFileDiffHunks = Self.parseDiffHunks(diff)
             } catch {
                 logger.log(.warn, "Failed to load commit file diff: \(error.localizedDescription)", context: "\(commitID):\(file)", source: #function)
-                currentCommitFileDiff = "Erro: \(error.localizedDescription)"
+                currentCommitFileDiff = L10n("error.generic", error.localizedDescription)
                 currentCommitFileDiffHunks = []
             }
         }

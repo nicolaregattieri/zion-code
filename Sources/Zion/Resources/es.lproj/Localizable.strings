@@ -1,4 +1,7 @@
 "Erro" = "Error";
+"error.readFile" = "Error al leer archivo: %@";
+"error.loadDiff" = "Error al cargar diff: %@";
+"error.generic" = "Error: %@";
 "Workspace" = "Espacio de trabajo";
 "Zion Tree" = "Zion Tree";
 "Seu cliente Git nativo para macOS." = "Tu cliente Git nativo para macOS.";
@@ -360,6 +363,9 @@
 "Git não encontrado" = "Git no encontrado";
 "Baixar Git" = "Descargar Git";
 "O Zion precisa do Git instalado para funcionar. Por favor, instale o Git e reinicie o app." = "Zion requiere que Git esté instalado. Por favor, instala Git y reinicia la aplicación.";
+"git.installCLT" = "Instalar Command Line Tools";
+"git.checkAgain" = "Verificar de Nuevo";
+"git.notFound.message" = "Zion necesita Git para funcionar. En macOS, la forma más fácil de instalar Git es mediante Command Line Tools. También puedes descargarlo de git-scm.com.";
 "Chave registrada" = "Clave registrada";
 "Alterar" = "Cambiar";
 "Chave de API" = "Clave de API";
@@ -848,6 +854,14 @@
 "pr.inbox.openGitHub" = "Abrir en GitHub";
 "pr.inbox.empty" = "Ningún PR esperando revisión";
 "pr.inbox.setup.hint" = "Requiere gh CLI autenticado (gh auth login)";
+"pr.gh.notInstalled" = "GitHub CLI no encontrado";
+"pr.gh.notInstalled.hint" = "Instalar con: brew install gh";
+"pr.gh.notAuthenticated" = "GitHub CLI no autenticado";
+"pr.gh.notAuthenticated.hint" = "Ejecutar en terminal: gh auth login";
+"github.error.noToken" = "Token de GitHub no encontrado. Ejecuta 'gh auth login' en la terminal.";
+"github.error.invalidURL" = "URL inválida.";
+"github.error.api" = "GitHub API: %@";
+"github.error.parseError" = "Error al procesar la respuesta de GitHub.";
 "pr.status.pending" = "Pendiente";
 "pr.status.reviewing" = "Revisando...";
 "pr.status.reviewed" = "Revisado";
@@ -1528,6 +1542,8 @@
 "settings.terminal.imageRendering" = "Renderizado de Imágenes Inline";
 "settings.terminal.imageRendering.hint" = "Renderiza imágenes Sixel, iTerm2 y Kitty inline. Los cambios se aplican en nuevas sesiones.";
 "settings.terminal.aiImageDisplay" = "Imágenes IA Inline";
-"settings.terminal.aiImageDisplay.hint" = "Permite que las herramientas de IA muestren imágenes directamente en la terminal. Configura automáticamente los archivos de herramientas IA detectados (CLAUDE.md, .cursorrules, etc.) en la próxima sesión de terminal.";
+"settings.terminal.aiImageDisplay.hint" = "Permite que las herramientas de IA muestren imágenes directamente en la terminal. Instala zion_display en ~/.zion/bin/. Los cambios se aplican en nuevas sesiones.";
+"settings.terminal.autoAppendAIConfig" = "Configurar Archivos IA Automáticamente";
+"settings.terminal.autoAppendAIConfig.hint" = "Agrega automáticamente instrucciones de Zion a los archivos de configuración IA (CLAUDE.md, .cursorrules, etc.) en la raíz del proyecto. Cuando está desactivado, usa zion_ai_setup manualmente.";
 "settings.terminal.selection" = "Selección";
 "settings.terminal.copyOnSelect" = "Copiar al Seleccionar";

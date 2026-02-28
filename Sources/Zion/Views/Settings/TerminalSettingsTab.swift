@@ -7,6 +7,7 @@ struct TerminalSettingsTab: View {
     @AppStorage("terminal.imageRendering") private var imageRendering: Bool = true
     @AppStorage("terminal.copyOnSelect") private var copyOnSelect: Bool = false
     @AppStorage("terminal.aiImageDisplay") private var aiImageDisplay: Bool = false
+    @AppStorage("terminal.autoAppendAIConfig") private var autoAppendAIConfig: Bool = false
 
     var body: some View {
         Form {
@@ -52,6 +53,12 @@ struct TerminalSettingsTab: View {
                 Toggle(L10n("settings.terminal.aiImageDisplay"), isOn: $aiImageDisplay)
 
                 Text(L10n("settings.terminal.aiImageDisplay.hint"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Toggle(L10n("settings.terminal.autoAppendAIConfig"), isOn: $autoAppendAIConfig)
+
+                Text(L10n("settings.terminal.autoAppendAIConfig.hint"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } header: {

@@ -144,6 +144,14 @@ struct DesignSystem {
         static let screenEdge: CGFloat = 24
         static let statusBarClearance: CGFloat = 44
         static let clipboardDrawerClearance: CGFloat = 40
+        static let toolbarTrailing: CGFloat = 8
+
+        // Icon spacing by context
+        static let iconTextGap: CGFloat = 8        // Icon + text in normal rows (CardHeader, sidebar items)
+        static let iconLabelGap: CGFloat = 6       // Icon + label in compact rows, tag groups
+        static let iconInlineGap: CGFloat = 4      // Icon + badge, tight icon pairs
+        static let toolbarItemGap: CGFloat = 10    // Spaced toolbar button groups
+        static let iconGroupedGap: CGFloat = 2     // Grouped icon pills (split view toggle)
 
         // Corner radii (5 tiers)
         static let cardCornerRadius: CGFloat = 14       // GlassCards, commit row cards

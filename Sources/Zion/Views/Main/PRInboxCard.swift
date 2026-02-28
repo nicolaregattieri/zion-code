@@ -9,6 +9,8 @@ struct PRInboxCard: View {
     var model: RepositoryViewModel
     @State private var isExpanded: Bool = true
     @State private var selectedTab: PRTab = .forReview
+    @State private var ghInstalled: Bool = true
+    @State private var ghAuthenticated: Bool = true
 
     private var totalCount: Int {
         switch selectedTab {
@@ -71,15 +73,32 @@ struct PRInboxCard: View {
             }
         }
         .padding(.horizontal, 10)
+        .onAppear {
+            let status = GitHubClient.checkGHStatus()
+            ghInstalled = status.installed
+            ghAuthenticated = status.authenticated
+        }
     }
 
     @ViewBuilder
     private var forReviewContent: some View {
-        if model.prReviewQueue.isEmpty {
+        if !ghInstalled {
+            tabEmptyState(
+                icon: "exclamationmark.triangle",
+                message: L10n("pr.gh.notInstalled"),
+                hint: L10n("pr.gh.notInstalled.hint")
+            )
+        } else if !ghAuthenticated {
+            tabEmptyState(
+                icon: "person.crop.circle.badge.questionmark",
+                message: L10n("pr.gh.notAuthenticated"),
+                hint: L10n("pr.gh.notAuthenticated.hint")
+            )
+        } else if model.prReviewQueue.isEmpty {
             tabEmptyState(
                 icon: "tray",
                 message: L10n("pr.inbox.empty"),
-                hint: L10n("pr.inbox.setup.hint")
+                hint: nil
             )
         } else {
             VStack(spacing: 4) {

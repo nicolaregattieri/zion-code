@@ -121,7 +121,13 @@ struct ContentView: View {
             }
             .navigationSplitViewStyle(.balanced)
             .frame(minWidth: 1360, minHeight: 840)
-            .alert(L10n("Git não encontrado"), isPresented: Binding(get: { !model.isGitAvailable }, set: { _ in })) {
+            .alert(L10n("Git não encontrado"), isPresented: $model.showGitNotFoundAlert) {
+                Button(L10n("git.installCLT")) {
+                    model.installCommandLineTools()
+                }
+                Button(L10n("git.checkAgain")) {
+                    model.checkGitAvailability()
+                }
                 Button(L10n("Baixar Git")) {
                     if let url = URL(string: "https://git-scm.com/downloads") {
                         NSWorkspace.shared.open(url)
@@ -129,7 +135,7 @@ struct ContentView: View {
                 }
                 Button(L10n("OK"), role: .cancel) {}
             } message: {
-                Text(L10n("O Zion precisa do Git instalado para funcionar. Por favor, instale o Git e reinicie o app."))
+                Text(L10n("git.notFound.message"))
             }
             .alert(L10n("Erro"), isPresented: Binding(get: { model.lastError != nil }, set: { show in if !show { model.lastError = nil } })) {
                 Button(L10n("OK"), role: .cancel) {}

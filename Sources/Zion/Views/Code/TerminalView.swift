@@ -197,7 +197,7 @@ struct TerminalTabView: NSViewRepresentable {
                     env["ZION_NTFY_SERVER"] = ntfyServer
                 }
 
-                // Install standalone scripts to ~/.zion/bin/ and auto-append config blocks
+                // Install standalone scripts to ~/.zion/bin/
                 let hasFeatures = aiImageDisplay || !ntfyTopic.isEmpty
                 if hasFeatures {
                     Self.installScripts(
@@ -205,12 +205,17 @@ struct TerminalTabView: NSViewRepresentable {
                         ntfyTopic: ntfyTopic,
                         ntfyServer: ntfyServer
                     )
-                    Self.appendZionBlock(
-                        projectRoot: url,
-                        aiImageDisplay: aiImageDisplay,
-                        ntfyTopic: ntfyTopic,
-                        ntfyServer: ntfyServer
-                    )
+
+                    // Only auto-append AI config blocks to project files if user opted in
+                    let autoAppend = UserDefaults.standard.bool(forKey: "terminal.autoAppendAIConfig")
+                    if autoAppend {
+                        Self.appendZionBlock(
+                            projectRoot: url,
+                            aiImageDisplay: aiImageDisplay,
+                            ntfyTopic: ntfyTopic,
+                            ntfyServer: ntfyServer
+                        )
+                    }
                 }
 
                 let envArray = env.map { "\($0.key)=\($0.value)" }

@@ -823,17 +823,27 @@ struct CodeScreen: View {
                 Spacer()
 
                 if sidebarMode == .fileTree {
-                    Button { model.showDotfiles.toggle() } label: {
-                        Image(systemName: model.showDotfiles ? "eye" : "eye.slash")
-                    }
-                    .buttonStyle(.plain).cursorArrow().foregroundStyle(.secondary)
-                    .help(L10n("fileBrowser.toggleHidden") + " (⇧⌘H)")
-                    .accessibilityLabel(L10n("fileBrowser.toggleHidden"))
+                    HStack(spacing: DesignSystem.Spacing.micro) {
+                        Button { model.showDotfiles.toggle() } label: {
+                            Image(systemName: model.showDotfiles ? "eye" : "eye.slash")
+                                .frame(width: DesignSystem.IconSize.editorToolbarFrame.width,
+                                       height: DesignSystem.IconSize.editorToolbarFrame.height)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain).cursorArrow().foregroundStyle(.secondary)
+                        .help(L10n("fileBrowser.toggleHidden") + " (⇧⌘H)")
+                        .accessibilityLabel(L10n("fileBrowser.toggleHidden"))
 
-                    Button { model.refreshFileTree() } label: { Image(systemName: "arrow.clockwise") }
+                        Button { model.refreshFileTree() } label: {
+                            Image(systemName: "arrow.clockwise")
+                                .frame(width: DesignSystem.IconSize.editorToolbarFrame.width,
+                                       height: DesignSystem.IconSize.editorToolbarFrame.height)
+                                .contentShape(Rectangle())
+                        }
                         .buttonStyle(.plain).cursorArrow().foregroundStyle(.secondary)
                         .help(L10n("Atualizar arvore de arquivos"))
                         .accessibilityLabel(L10n("Atualizar arvore de arquivos"))
+                    }
                 }
             }
             .padding(.horizontal, DesignSystem.Spacing.cardPadding)
@@ -1771,6 +1781,7 @@ struct CodeScreen: View {
             .padding(.trailing, 8)
 
             ClipboardPopoverButton(model: model, accentColor: accentColor)
+                .padding(.trailing, DesignSystem.Spacing.toolbarTrailing)
 
             if isZenMode {
                 Spacer()
