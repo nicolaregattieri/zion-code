@@ -20,7 +20,7 @@ struct WorktreesScreen: View {
                 }
 
                 GlassCard(spacing: 10) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                         Image(systemName: "plus.square")
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(.secondary)
@@ -34,7 +34,7 @@ struct WorktreesScreen: View {
                         Spacer()
                     }
 
-                    HStack(spacing: 8) {
+                    HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                         Picker(L10n("worktree.smart.prefix"), selection: $model.worktreePrefix) {
                             ForEach(WorktreePrefix.allCases) { prefix in
                                 Text(L10n(prefix.l10nKey)).tag(prefix)
@@ -64,7 +64,7 @@ struct WorktreesScreen: View {
                     }
 
                     if !model.derivedWorktreeBranch.isEmpty || !model.derivedWorktreePath.isEmpty {
-                        HStack(spacing: 10) {
+                        HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                             if !model.derivedWorktreeBranch.isEmpty {
                                 Text("branch: \(model.derivedWorktreeBranch)")
                                     .font(.system(size: 10, design: .monospaced))
@@ -96,7 +96,7 @@ struct WorktreesScreen: View {
                     .buttonStyle(.plain)
 
                     if model.isWorktreeAdvancedExpanded {
-                        HStack(spacing: 8) {
+                        HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                             TextField(L10n("/caminho/para/worktree"), text: $model.worktreePathInput)
                                 .textFieldStyle(.roundedBorder)
                             TextField(L10n("branch (opcional)"), text: $model.worktreeBranchInput)

@@ -70,7 +70,7 @@ struct CommitDetailContent: View {
                 // Changed files
                 if !detail.changedFiles.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
-                        HStack(spacing: 6) {
+                        HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                             Image(systemName: "doc.on.doc")
                                 .font(.system(size: 10, weight: .semibold))
                                 .foregroundStyle(.secondary)
@@ -96,7 +96,7 @@ struct CommitDetailContent: View {
                                             }
                                         }
                                     } label: {
-                                        HStack(spacing: 8) {
+                                        HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                                             fileStatusBadge(file.status)
                                             Text(file.path)
                                                 .font(.system(size: 11, design: .monospaced))
@@ -193,7 +193,7 @@ struct CommitDetailContent: View {
     @ViewBuilder
     private func aiReviewContent(model: RepositoryViewModel, commitID: String) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 Image(systemName: "sparkles")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(DesignSystem.Colors.ai)
@@ -220,7 +220,7 @@ struct CommitDetailContent: View {
             }
 
             if model.reviewingCommitID == commitID {
-                HStack(spacing: 8) {
+                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                     ProgressView()
                         .controlSize(.small)
                     Text(L10n("graph.commit.review.loading"))

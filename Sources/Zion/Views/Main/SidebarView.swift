@@ -115,7 +115,7 @@ struct SidebarView: View {
                 }
             }
             if model.repositoryURL != nil {
-                HStack(spacing: 8) {
+                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                     let isDetached = model.currentBranch.contains("detached")
                     StatusChip(
                         title: isDetached ? "HEAD" : L10n("Branch"),
@@ -156,7 +156,7 @@ struct SidebarView: View {
     private var worktreesCard: some View {
         GlassCard(spacing: 10) {
             CardHeader(L10n("Worktrees"), icon: "square.split.2x2") {
-                HStack(spacing: 6) {
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     Text("\(nonCurrentWorktrees.count)")
                         .font(DesignSystem.Typography.labelBold)
                         .foregroundStyle(.white)
@@ -194,7 +194,7 @@ struct SidebarView: View {
 
     private var smartWorktreeInlineForm: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 Picker(L10n("worktree.smart.prefix"), selection: $model.worktreePrefix) {
                     ForEach(WorktreePrefix.allCases) { prefix in
                         Text(L10n(prefix.l10nKey)).tag(prefix)
@@ -219,7 +219,7 @@ struct SidebarView: View {
             }
 
             if !model.derivedWorktreeBranch.isEmpty || !model.derivedWorktreePath.isEmpty {
-                HStack(spacing: 10) {
+                HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                     if !model.derivedWorktreeBranch.isEmpty {
                         Text("branch: \(model.derivedWorktreeBranch)")
                             .font(DesignSystem.Typography.monoMeta)
@@ -251,7 +251,7 @@ struct SidebarView: View {
             .buttonStyle(.plain)
 
             if model.isWorktreeAdvancedExpanded {
-                HStack(spacing: 8) {
+                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                     TextField(L10n("/caminho/para/worktree"), text: $model.worktreePathInput)
                         .textFieldStyle(.roundedBorder)
                     TextField(L10n("branch (opcional)"), text: $model.worktreeBranchInput)
@@ -273,7 +273,7 @@ struct SidebarView: View {
     private func worktreeRow(_ wt: WorktreeItem) -> some View {
         let isHovered = hoveredWorktreePath == wt.path
 
-        return HStack(spacing: 8) {
+        return HStack(spacing: DesignSystem.Spacing.iconTextGap) {
             Button {
                 model.openWorktreeInZion(
                     wt,
@@ -281,9 +281,9 @@ struct SidebarView: View {
                     sectionAfterOpen: selectedSection
                 )
             } label: {
-                HStack(spacing: 8) {
+                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                     VStack(alignment: .leading, spacing: 2) {
-                        HStack(spacing: 6) {
+                        HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                             Text(wt.branch.isEmpty ? URL(fileURLWithPath: wt.path).lastPathComponent : wt.branch)
                                 .font(DesignSystem.Typography.monoBody)
                                 .lineLimit(1)
@@ -303,7 +303,7 @@ struct SidebarView: View {
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                             .truncationMode(.middle)
-                        HStack(spacing: 6) {
+                        HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                             Circle()
                                 .fill(worktreeStatusColor(wt))
                                 .frame(width: 6, height: 6)
@@ -382,7 +382,7 @@ struct SidebarView: View {
         let isHovered = hoveredSection == section
         
         return Button { selectedSection = section } label: {
-            HStack(alignment: .top, spacing: 10) {
+            HStack(alignment: .top, spacing: DesignSystem.Spacing.toolbarItemGap) {
                 Image(systemName: section.icon)
                     .font(DesignSystem.Typography.sectionTitle)
                     .frame(width: 18)
@@ -474,7 +474,7 @@ struct SidebarView: View {
             }
             .padding(.horizontal, 12).padding(.top, 12).padding(.bottom, 8)
 
-            HStack(spacing: 4) {
+            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 9))
                     .foregroundStyle(.secondary)
@@ -524,10 +524,10 @@ struct SidebarView: View {
     private func branchTreeNodeRow(_ node: BranchTreeNode) -> some View {
         let isMain = ["main", "master", "develop", "dev"].contains(node.title.lowercased())
         let isCurrent = node.branchName == model.currentBranch
-        return HStack(spacing: 6) {
+        return HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
             VStack(alignment: .leading, spacing: 2) {
                 if node.isGroup { Text(node.title).font(.headline) } else {
-                    HStack(spacing: 6) {
+                    HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                         Image(systemName: isMain ? "shield.fill" : "arrow.triangle.branch").font(.caption).foregroundStyle(isMain ? DesignSystem.Colors.warning : (isCurrent ? Color.accentColor : Color.secondary))
                         Text(node.title).font(.system(.caption, design: .monospaced)).fontWeight(isCurrent || isMain ? .bold : .regular).lineLimit(1)
                         if isCurrent { Text(L10n("current")).font(DesignSystem.Typography.micro).padding(.horizontal, 4).padding(.vertical, 1).background(DesignSystem.Colors.selectionBackground).foregroundStyle(Color.accentColor).clipShape(Capsule()) }
@@ -637,7 +637,7 @@ private struct RecentProjectRow: View {
 
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: 10) {
+            HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                 Image(systemName: "folder.fill")
                     .font(.system(size: 12))
                     .foregroundStyle(isCurrent ? DesignSystem.Colors.success : Color.accentColor.opacity(0.8))

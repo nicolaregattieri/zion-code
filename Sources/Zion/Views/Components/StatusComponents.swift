@@ -44,7 +44,7 @@ struct StatusChip: View {
     let icon: String
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DesignSystem.Spacing.iconTextGap) {
             Image(systemName: icon)
                 .font(.caption)
                 .foregroundStyle(tint)

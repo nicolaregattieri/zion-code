@@ -367,7 +367,7 @@ struct CodeScreen: View {
         Button {
             NotificationCenter.default.post(name: .toggleZenMode, object: nil)
         } label: {
-            HStack(spacing: 6) {
+            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 Image(systemName: "arrow.down.right.and.arrow.up.left")
                     .font(DesignSystem.IconSize.toolbar)
                 Text(L10n("zen.exit"))
@@ -434,7 +434,7 @@ struct CodeScreen: View {
     }
 
     private var editorToolbar: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
             Button {
                 withAnimation(DesignSystem.Motion.panel) { isFileBrowserVisible.toggle() }
             } label: {
@@ -446,7 +446,7 @@ struct CodeScreen: View {
             .accessibilityLabel(L10n("Alternar painel de arquivos"))
 
             // Theme & Font group
-            HStack(spacing: 6) {
+            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 Picker("", selection: $model.selectedTheme) {
                     ForEach(EditorTheme.allCases) { theme in
                         Text(theme.label).tag(theme)
@@ -472,7 +472,7 @@ struct CodeScreen: View {
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
 
             // Size & Spacing group
-            HStack(spacing: 6) {
+            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 Stepper(value: $model.editorFontSize, in: 8...32, step: 1) {
                     Text("\(Int(model.editorFontSize))pt")
                         .font(DesignSystem.Typography.monoSmall)
@@ -560,7 +560,7 @@ struct CodeScreen: View {
             Divider().frame(height: 14).padding(.horizontal, 4)
 
             // Layout toggle: editor / split / terminal
-            HStack(spacing: 2) {
+            HStack(spacing: DesignSystem.Spacing.iconGroupedGap) {
                 Button {
                     withAnimation(DesignSystem.Motion.detail) { layout = .editorOnly }
                 } label: {
@@ -615,7 +615,7 @@ struct CodeScreen: View {
             Spacer()
 
             if model.hasRepoEditorConfig {
-                HStack(spacing: 4) {
+                HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                     Image(systemName: "doc.text.magnifyingglass")
                         .font(.system(size: 9))
                     Text(".zion")
@@ -667,7 +667,7 @@ struct CodeScreen: View {
 
     private var breadcrumbPathBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 4) {
+            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 ForEach(Array(breadcrumbItems.enumerated()), id: \.offset) { index, item in
                     if index > 0 {
                         Image(systemName: "chevron.right")
@@ -823,7 +823,7 @@ struct CodeScreen: View {
                 Spacer()
 
                 if sidebarMode == .fileTree {
-                    HStack(spacing: DesignSystem.Spacing.micro) {
+                    HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                         Button { model.showDotfiles.toggle() } label: {
                             Image(systemName: model.showDotfiles ? "eye" : "eye.slash")
                                 .frame(width: DesignSystem.IconSize.editorToolbarFrame.width,
@@ -1117,7 +1117,7 @@ struct CodeScreen: View {
 
     private var markdownPreviewPane: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 Label(L10n("editor.markdown.preview"), systemImage: "doc.text.image")
                     .font(DesignSystem.Typography.bodyMedium)
                     .foregroundStyle(.secondary)
@@ -1148,7 +1148,7 @@ struct CodeScreen: View {
 
     private var findReplaceBar: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 // Toggle replace visibility
                 Button {
                     withAnimation(DesignSystem.Motion.detail) { isReplaceVisible.toggle() }
@@ -1166,7 +1166,7 @@ struct CodeScreen: View {
                 .help(L10n("editor.replace.placeholder"))
 
                 // Search field
-                HStack(spacing: 4) {
+                HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)
@@ -1227,10 +1227,10 @@ struct CodeScreen: View {
             .padding(.vertical, 6)
 
             if isReplaceVisible {
-                HStack(spacing: 8) {
+                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                     Spacer().frame(width: 32)
 
-                    HStack(spacing: 4) {
+                    HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                         Image(systemName: "arrow.2.squarepath")
                             .font(.system(size: 10))
                             .foregroundStyle(.secondary)
@@ -1268,7 +1268,7 @@ struct CodeScreen: View {
         VStack(spacing: 12) {
             Text(L10n("Ir para Linha"))
                 .font(.headline)
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 TextField(L10n("Numero da linha..."), text: $goToLineNumber)
                     .textFieldStyle(.roundedBorder)
                     .frame(width: 140)
@@ -1489,7 +1489,7 @@ struct CodeScreen: View {
     // MARK: - Terminal Search
 
     private var terminalSearchBar: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DesignSystem.Spacing.iconTextGap) {
             Image(systemName: "magnifyingglass")
                 .font(DesignSystem.IconSize.inline)
                 .foregroundStyle(.secondary)
@@ -1701,7 +1701,7 @@ struct CodeScreen: View {
                 .padding(.trailing, 4)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 2) {
+                HStack(spacing: DesignSystem.Spacing.iconGroupedGap) {
                     ForEach(model.terminalTabs) { tab in
                         TerminalTabChip(
                             tab: tab,
@@ -1722,7 +1722,7 @@ struct CodeScreen: View {
             Spacer()
 
             // Split buttons grouped
-            HStack(spacing: 2) {
+            HStack(spacing: DesignSystem.Spacing.iconGroupedGap) {
                 Button {
                     model.splitFocusedTerminal(direction: .vertical)
                 } label: {
@@ -1802,7 +1802,7 @@ private struct ClipboardPopoverButton: View {
 
     var body: some View {
         Button { isPresented.toggle() } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 Image(systemName: "clipboard")
                     .font(DesignSystem.Typography.bodyMedium)
                 if !model.clipboardMonitor.items.isEmpty {
@@ -1854,7 +1854,7 @@ struct EditorSettingsPopoverButton: View {
                         .font(.system(size: 10, weight: .medium))
                         .foregroundStyle(.secondary)
 
-                    HStack(spacing: 6) {
+                    HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                         Text(L10n("settings.editor.tabSize"))
                             .font(.system(size: 10))
                             .foregroundStyle(.secondary)
@@ -1904,7 +1904,7 @@ struct EditorSettingsPopoverButton: View {
                         .font(.system(size: 11))
 
                     if model.editorShowRuler {
-                        HStack(spacing: 6) {
+                        HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                             Text(L10n("settings.editor.rulerColumn"))
                                 .font(.system(size: 10))
                                 .foregroundStyle(.secondary)
@@ -1937,7 +1937,7 @@ struct EditorSettingsPopoverButton: View {
                 Divider()
 
                 // Line spacing
-                HStack(spacing: 6) {
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     Text(L10n("settings.editor.lineSpacing"))
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)
@@ -1951,7 +1951,7 @@ struct EditorSettingsPopoverButton: View {
                 Divider()
 
                 // Letter spacing
-                HStack(spacing: 6) {
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     Text(L10n("settings.editor.letterSpacing"))
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)
@@ -1985,7 +1985,7 @@ struct TerminalTabChip: View {
     private var hasAlive: Bool { sessions.contains(where: { $0.isAlive }) }
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
             Circle()
                 .fill(hasAlive ? DesignSystem.Colors.success : DesignSystem.Colors.destructive)
                 .frame(width: 6, height: 6)
@@ -2111,7 +2111,7 @@ struct TerminalFontPopoverButton: View {
                 Text(L10n("Fonte do terminal"))
                     .font(DesignSystem.Typography.bodyMedium)
 
-                HStack(spacing: 6) {
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     Text(L10n("Fonte"))
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)
@@ -2129,7 +2129,7 @@ struct TerminalFontPopoverButton: View {
                 }
 
                 if !model.isTerminalFontAvailable {
-                    HStack(spacing: 4) {
+                    HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.system(size: 9))
                             .foregroundStyle(DesignSystem.Colors.warning)
@@ -2139,7 +2139,7 @@ struct TerminalFontPopoverButton: View {
                     }
                 }
 
-                HStack(spacing: 6) {
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     Text(L10n("Tamanho"))
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)
@@ -2356,7 +2356,7 @@ struct CodeTab: View {
     private var isUnsaved: Bool { model.unsavedFiles.contains(file.id) }
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DesignSystem.Spacing.iconTextGap) {
             if isUnsaved {
                 Circle().fill(DesignSystem.Colors.warning).frame(width: 6, height: 6)
             }
@@ -2442,7 +2442,7 @@ struct QuickOpenOverlay: View {
     var body: some View {
         VStack(spacing: 0) {
             VStack(spacing: 0) {
-                HStack(spacing: 10) {
+                HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                     Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
                     TextField(L10n("Buscar arquivo..."), text: $query)
                         .textFieldStyle(.plain)
@@ -2534,7 +2534,7 @@ struct QuickOpenOverlay: View {
             return file.url.path.replacingOccurrences(of: repoURL.path + "/", with: "")
         }()
 
-        return HStack(spacing: 10) {
+        return HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
             Image(systemName: "doc.text").foregroundStyle(.secondary).font(.system(size: 12))
             VStack(alignment: .leading, spacing: 1) {
                 Text(file.name).font(.system(size: 13, weight: .medium))
@@ -2565,7 +2565,7 @@ struct SymbolResultsSheet: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 10) {
+            HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                 Text(title)
                     .font(.headline)
                 Spacer()
@@ -2634,7 +2634,7 @@ struct FileTreeNodeView: View {
                     model.plainClickFile(item)
                 }
             } label: {
-                HStack(spacing: 6) {
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     if item.isDirectory {
                         Image(systemName: isExpanded ? "chevron.down" : "chevron.right").font(DesignSystem.Typography.micro).foregroundStyle(.secondary.opacity(0.5)).frame(width: 12)
                     } else { Spacer().frame(width: 12) }

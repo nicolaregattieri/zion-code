@@ -60,7 +60,7 @@ struct CardHeader: View {
     }
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DesignSystem.Spacing.iconTextGap) {
             Image(systemName: icon)
                 .font(DesignSystem.IconSize.sectionHeader)
                 .foregroundStyle(.secondary)

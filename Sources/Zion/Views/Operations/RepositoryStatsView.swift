@@ -39,7 +39,7 @@ struct RepositoryStatsCard: View {
             if let first = stats.firstCommitDate, let last = stats.lastCommitDate {
                 let formatter = DateFormatter()
                 let _ = { formatter.dateStyle = .medium }()
-                HStack(spacing: 8) {
+                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                     Image(systemName: "calendar").foregroundStyle(.secondary).font(.system(size: 10))
                     Text("\(formatter.string(from: first)) — \(formatter.string(from: last))")
                         .font(.system(size: 11))
@@ -56,7 +56,7 @@ struct RepositoryStatsCard: View {
                     let maxCount = topContributors.first?.commitCount ?? 1
 
                     ForEach(topContributors) { contributor in
-                        HStack(spacing: 8) {
+                        HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                             Text(contributor.name)
                                 .font(.system(size: 11))
                                 .frame(width: 120, alignment: .trailing)
@@ -104,7 +104,7 @@ struct RepositoryStatsCard: View {
                     let topLangs = Array(stats.languageBreakdown.prefix(6))
                     HStack(spacing: 12) {
                         ForEach(Array(topLangs.enumerated()), id: \.element.id) { index, lang in
-                            HStack(spacing: 4) {
+                            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                                 Circle().fill(colors[index % colors.count]).frame(width: 6, height: 6)
                                 Text("\(lang.language) \(String(format: "%.0f", lang.percentage))%")
                                     .font(.system(size: 9))

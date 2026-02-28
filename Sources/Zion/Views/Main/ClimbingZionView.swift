@@ -93,7 +93,7 @@ struct ClimbingZionView: View {
             Button {
                 advanceStep()
             } label: {
-                HStack(spacing: 6) {
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     Text(L10n("onboarding.discover"))
                     Image(systemName: "arrow.right")
                 }
@@ -326,7 +326,7 @@ struct ClimbingZionView: View {
                         currentStep -= 1
                     }
                 } label: {
-                    HStack(spacing: 4) {
+                    HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                         Image(systemName: "chevron.left")
                         Text(L10n("onboarding.back"))
                     }
@@ -354,7 +354,7 @@ struct ClimbingZionView: View {
                 Button {
                     advanceStep()
                 } label: {
-                    HStack(spacing: 4) {
+                    HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                         Text(L10n("onboarding.continue"))
                         Image(systemName: "chevron.right")
                     }
@@ -396,7 +396,7 @@ struct ClimbingZionView: View {
     }
 
     private func featureBullet(_ text: String, color: Color) -> some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .top, spacing: DesignSystem.Spacing.toolbarItemGap) {
             Circle()
                 .fill(color.opacity(0.6))
                 .frame(width: 6, height: 6)
@@ -461,7 +461,7 @@ struct ClimbingZionView: View {
     }
 
     private func recapRow(_ icon: String, _ title: String, enabled: Bool) -> some View {
-        HStack(spacing: 10) {
+        HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
             Image(systemName: icon)
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)

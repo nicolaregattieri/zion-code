@@ -7,7 +7,7 @@ struct DiffExplanationCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             // Header with severity badge
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 Image(systemName: "sparkles")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(DesignSystem.Colors.ai)
@@ -101,7 +101,7 @@ struct DiffExplanationShimmer: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 Image(systemName: "sparkles")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(DesignSystem.Colors.ai)

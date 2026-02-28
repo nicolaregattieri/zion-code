@@ -27,12 +27,12 @@ struct ReviewFindingsView: View {
                         .frame(width: 16)
                     VStack(alignment: .leading, spacing: 4) {
                         if finding.file != "general" {
-                            HStack(spacing: 6) {
+                            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                                 if let onOpenFile {
                                     Button {
                                         onOpenFile(finding.file, nil)
                                     } label: {
-                                        HStack(spacing: 4) {
+                                        HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                                             Text(finding.file)
                                                 .lineLimit(1)
                                                 .truncationMode(.middle)
@@ -62,7 +62,7 @@ struct ReviewFindingsView: View {
                         let snippets = codeSnippets(from: finding.message)
                         if !snippets.isEmpty {
                             ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 6) {
+                                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                                     ForEach(Array(snippets.prefix(3)), id: \.self) { snippet in
                                         snippetChip(snippet: snippet, file: finding.file)
                                     }
@@ -85,7 +85,7 @@ struct ReviewFindingsView: View {
     }
 
     private var summaryBadges: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
             let criticalCount = findings.filter { $0.severity == .critical }.count
             let warningCount = findings.filter { $0.severity == .warning }.count
             let suggestionCount = findings.filter { $0.severity == .suggestion }.count

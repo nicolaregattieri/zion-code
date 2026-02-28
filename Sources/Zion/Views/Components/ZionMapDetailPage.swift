@@ -32,7 +32,7 @@ struct ZionMapDetailPage: View {
             Button {
                 dismiss()
             } label: {
-                HStack(spacing: 6) {
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 12, weight: .semibold))
                     Text(L10n("Voltar"))
@@ -44,7 +44,7 @@ struct ZionMapDetailPage: View {
 
             Spacer()
 
-            HStack(spacing: 6) {
+            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 Image(systemName: section.icon)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(section.color)
@@ -86,7 +86,7 @@ struct ZionMapDetailPage: View {
     private func entryCard(_ entry: ZionMapEntry) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             // Title row with optional shortcut badge
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 Text(L10n(entry.titleKey))
                     .font(.system(size: 13, weight: .bold))
 

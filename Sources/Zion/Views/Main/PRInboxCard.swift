@@ -27,7 +27,7 @@ struct PRInboxCard: View {
     var body: some View {
         GlassCard(spacing: 10) {
             CardHeader(L10n("pr.inbox.title"), icon: "arrow.triangle.pull") {
-                HStack(spacing: 6) {
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     if totalCount > 0 {
                         Text("\(totalCount)")
                             .font(.system(size: 10, weight: .bold))
@@ -171,11 +171,11 @@ private struct PROpenRow: View {
 
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 authorAvatar
 
                 VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 4) {
+                    HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                         Text("#\(pr.number)")
                             .font(.system(size: 10, weight: .bold, design: .monospaced))
                             .foregroundStyle(.secondary)
@@ -184,7 +184,7 @@ private struct PROpenRow: View {
                             .lineLimit(1)
                     }
 
-                    HStack(spacing: 6) {
+                    HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                         Text("@\(pr.author)")
                             .font(.system(size: 9, design: .monospaced))
                             .foregroundStyle(.tertiary)

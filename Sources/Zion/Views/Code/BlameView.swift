@@ -49,7 +49,7 @@ struct BlameView: View {
 
         return HStack(spacing: 0) {
             // Blame gutter
-            HStack(spacing: 6) {
+            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 // Color bar for author
                 RoundedRectangle(cornerRadius: 1)
                     .fill(color)
@@ -83,7 +83,7 @@ struct BlameView: View {
                         set: { if !$0 { explanationEntryID = nil; model.aiBlameEntryID = nil } }
                     )) {
                         VStack(alignment: .leading, spacing: 8) {
-                            HStack(spacing: 4) {
+                            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                                 Image(systemName: "sparkles").font(.system(size: 10)).foregroundStyle(DesignSystem.Colors.semanticSearch)
                                 Text(entry.shortHash).font(.system(size: 10, weight: .bold, design: .monospaced))
                             }

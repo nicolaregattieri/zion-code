@@ -90,7 +90,7 @@ struct WelcomeScreen: View {
                                 Button {
                                     model.openRepository(url)
                                 } label: {
-                                    HStack(spacing: 10) {
+                                    HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                                         Image(systemName: "folder.fill")
                                             .font(.system(size: 12))
                                             .foregroundStyle(Color.accentColor.opacity(0.8))

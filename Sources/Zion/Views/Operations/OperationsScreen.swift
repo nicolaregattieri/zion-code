@@ -269,7 +269,7 @@ struct OperationsScreen: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(suggestion.message)
                                     .font(DesignSystem.Typography.monoSmall)
-                                HStack(spacing: 4) {
+                                HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                                     ForEach(suggestion.files, id: \.self) { file in
                                         Text(file)
                                             .font(DesignSystem.Typography.monoMeta)
@@ -304,7 +304,7 @@ struct OperationsScreen: View {
                 }
 
                 if model.preCommitReviewPending && model.isGeneratingAIMessage {
-                    HStack(spacing: 8) {
+                    HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                         ProgressView().controlSize(.small)
                         Text(L10n("precommit.reviewing"))
                             .font(DesignSystem.Typography.bodyMedium)
@@ -340,7 +340,7 @@ struct OperationsScreen: View {
             CardHeader(L10n("Branches"), icon: "arrow.triangle.branch", subtitle: L10n("Checkout e integracao"))
 
             VStack(spacing: 10) {
-                HStack(spacing: 8) {
+                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                     Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
                     TextField(L10n("Selecionar branch ou hash..."), text: $model.branchInput)
                         .textFieldStyle(.plain)
@@ -348,7 +348,7 @@ struct OperationsScreen: View {
                 }
                 .padding(8).background(DesignSystem.Colors.glassInset).clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
 
-                HStack(spacing: 10) {
+                HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                     Button(action: {
                         performGitAction(L10n("Checkout"), L10n("Fazer checkout da referencia informada?"), false) {
                             model.checkoutBranch()
@@ -422,7 +422,7 @@ struct OperationsScreen: View {
     private var stashCard: some View {
         GlassCard(spacing: 10, expanding: true) {
             CardHeader(L10n("Stash"), icon: "archivebox", subtitle: L10n("Salvar e restaurar alteracoes temporarias"))
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 TextField(L10n("mensagem do stash"), text: $model.stashMessageInput).textFieldStyle(.roundedBorder)
                 if model.isAIConfigured {
                     Button {
@@ -460,7 +460,7 @@ struct OperationsScreen: View {
     private var tagsCard: some View {
         GlassCard(spacing: 10, expanding: true) {
             CardHeader(L10n("Tags"), icon: "tag", subtitle: L10n("Marcar pontos importantes no historico"))
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 TextField("v1.0.0", text: $model.tagInput).textFieldStyle(.roundedBorder)
                 Button(L10n("Criar")) { performGitAction(L10n("Criar tag"), L10n("Criar tag no commit atual?"), false) { model.createTag() } }.buttonStyle(.borderedProminent).tint(DesignSystem.Colors.actionPrimary)
                 Button(L10n("Remover")) { performGitAction(L10n("Remover tag"), L10n("Deseja remover a tag informada?"), true) { model.deleteTag() } }.buttonStyle(.bordered).tint(DesignSystem.Colors.destructive)
@@ -500,9 +500,9 @@ struct OperationsScreen: View {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 8) {
                         ForEach(model.recoverySnapshots.prefix(16)) { snapshot in
-                            HStack(spacing: 10) {
+                            HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                                 VStack(alignment: .leading, spacing: 2) {
-                                    HStack(spacing: 6) {
+                                    HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                                         Text(snapshot.shortHash)
                                             .font(DesignSystem.Typography.monoLabelBold)
                                             .foregroundStyle(.primary)
@@ -521,7 +521,7 @@ struct OperationsScreen: View {
                                         .foregroundStyle(.secondary)
                                 }
                                 Spacer()
-                                HStack(spacing: 8) {
+                                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                                     Button(L10n("recovery.copy")) {
                                         model.copyRecoverySnapshotReference(snapshot)
                                     }
@@ -562,13 +562,13 @@ struct OperationsScreen: View {
     private var historyCard: some View {
         GlassCard(spacing: 10, expanding: true) {
             CardHeader(L10n("Reescrita"), icon: "arrow.triangle.branch", subtitle: L10n("Rebase e cherry-pick"))
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 TextField(L10n("rebase target"), text: $model.rebaseTargetInput).textFieldStyle(.roundedBorder)
                     .help(L10n("Nome da branch ou commit onde rebasear (ex: main, origin/main)"))
                 Button(L10n("Rebase")) { performGitAction(L10n("Rebase"), L10n("Rebasear a branch atual no target informado?"), true) { model.rebaseOntoTarget() } }.buttonStyle(.bordered).tint(DesignSystem.Colors.warning)
                     .help(L10n("Replay seus commits em cima da branch informada"))
             }
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 TextField(L10n("cherry-pick hash"), text: $model.cherryPickInput).textFieldStyle(.roundedBorder)
                     .help(L10n("Hash do commit a aplicar (ex: a1b2c3d)"))
                 Button(L10n("Cherry-pick")) { performGitAction(L10n("Cherry-pick"), L10n("Aplicar o commit informado na branch atual?"), false) { model.cherryPick() } }.buttonStyle(.borderedProminent).tint(DesignSystem.Colors.actionPrimary)
@@ -582,7 +582,7 @@ struct OperationsScreen: View {
             CardHeader(L10n("Remotes"), icon: "network", subtitle: L10n("Repositorios remotos conectados"))
             
             VStack(spacing: 8) {
-                HStack(spacing: 8) {
+                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                     TextField(L10n("nome"), text: $model.remoteNameInput)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 100)
@@ -609,7 +609,7 @@ struct OperationsScreen: View {
                                 Text(remote.url).font(DesignSystem.Typography.monoMeta).foregroundStyle(.secondary).lineLimit(1)
                             }
                             Spacer()
-                            HStack(spacing: 8) {
+                            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                                 Button {
                                     model.testRemote(named: remote.name)
                                 } label: {
@@ -643,7 +643,7 @@ struct OperationsScreen: View {
                     .foregroundStyle(.secondary)
             }
 
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 Picker(L10n("worktree.smart.prefix"), selection: $model.worktreePrefix) {
                     ForEach(WorktreePrefix.allCases) { prefix in
                         Text(L10n(prefix.l10nKey)).tag(prefix)
@@ -671,7 +671,7 @@ struct OperationsScreen: View {
             }
 
             if !model.derivedWorktreeBranch.isEmpty || !model.derivedWorktreePath.isEmpty {
-                HStack(spacing: 10) {
+                HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                     if !model.derivedWorktreeBranch.isEmpty {
                         Text("branch: \(model.derivedWorktreeBranch)")
                             .font(DesignSystem.Typography.monoLabel)
@@ -703,7 +703,7 @@ struct OperationsScreen: View {
             .buttonStyle(.plain)
 
             if model.isWorktreeAdvancedExpanded {
-                HStack(spacing: 8) {
+                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                     TextField(L10n("/caminho/para/worktree"), text: $model.worktreePathInput)
                         .textFieldStyle(.roundedBorder)
                     TextField(L10n("branch (opcional)"), text: $model.worktreeBranchInput)
@@ -741,7 +741,7 @@ struct OperationsScreen: View {
     private var changelogCard: some View {
         GlassCard(spacing: 10, expanding: true) {
             CardHeader(L10n("Changelog"), icon: "sparkles", subtitle: L10n("Gerar notas de release com IA"))
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 TextField(L10n("De (tag/hash)"), text: $model.changelogFromRef)
                     .textFieldStyle(.roundedBorder)
                 TextField(L10n("Ate (tag/hash)"), text: $model.changelogToRef)
@@ -794,7 +794,7 @@ struct OperationsScreen: View {
         GlassCard(spacing: 10, expanding: true) {
             CardHeader(L10n("codereview.card.title"), icon: "magnifyingglass", subtitle: L10n("codereview.card.subtitle"))
 
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(L10n("branch.review.target"))
                         .font(.caption).foregroundStyle(.secondary)
@@ -912,7 +912,7 @@ struct OperationsScreen: View {
                 .background(DesignSystem.Colors.dangerBackground)
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
 
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 TextField("HEAD~1", text: $model.resetTargetInput).textFieldStyle(.roundedBorder)
                     .help(L10n("Referencia do commit (ex: HEAD~1, hash, branch)"))
                 Button(role: .destructive) {
@@ -942,7 +942,7 @@ struct OperationsScreen: View {
     }
 
     private func SectionLabel(title: String, icon: String) -> some View {
-        HStack(spacing: 6) {
+        HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
             Image(systemName: icon)
                 .font(DesignSystem.Typography.label)
             Text(title)
@@ -965,7 +965,7 @@ struct FileStatusRow: View {
         let (indexStatus, workTreeStatus, file) = parseGitStatus(line)
         let isStaged = indexStatus != " " && indexStatus != "?"
         
-        HStack(spacing: 10) {
+        HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
             Button {
                 if isStaged {
                     model.unstageFile(file)
@@ -1069,7 +1069,7 @@ struct PreCommitCheckCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 Image(systemName: "shield.checkered")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(criticalCount > 0 ? DesignSystem.Colors.destructive : DesignSystem.Colors.ai)
@@ -1083,7 +1083,7 @@ struct PreCommitCheckCard: View {
 
             HStack(spacing: 12) {
                 if criticalCount > 0 {
-                    HStack(spacing: 4) {
+                    HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                         Image(systemName: "xmark.octagon.fill").font(.system(size: 10))
                             .foregroundStyle(DesignSystem.Colors.destructive)
                         Text("\(criticalCount) \(L10n("Critico"))")
@@ -1092,7 +1092,7 @@ struct PreCommitCheckCard: View {
                     }
                 }
                 if warningCount > 0 {
-                    HStack(spacing: 4) {
+                    HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                         Image(systemName: "exclamationmark.triangle.fill").font(.system(size: 10))
                             .foregroundStyle(DesignSystem.Colors.warning)
                         Text("\(warningCount) \(L10n("Aviso"))")
@@ -1101,7 +1101,7 @@ struct PreCommitCheckCard: View {
                     }
                 }
                 if safeCount > 0 {
-                    HStack(spacing: 4) {
+                    HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                         Image(systemName: "checkmark.circle.fill").font(.system(size: 10))
                             .foregroundStyle(DesignSystem.Colors.info)
                         Text("\(safeCount) \(L10n("Sugestao"))")
@@ -1112,7 +1112,7 @@ struct PreCommitCheckCard: View {
             }
 
             ForEach(model.aiReviewFindings.prefix(5)) { finding in
-                HStack(alignment: .top, spacing: 8) {
+                HStack(alignment: .top, spacing: DesignSystem.Spacing.iconTextGap) {
                     Image(systemName: finding.severity.icon)
                         .font(.system(size: 10))
                         .foregroundStyle(finding.severity.color)
@@ -1140,7 +1140,7 @@ struct PreCommitCheckCard: View {
                     .foregroundStyle(.secondary)
             }
 
-            HStack(spacing: 10) {
+            HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                 Button(action: onFixIssues) {
                     Label(L10n("precommit.fixIssues"), systemImage: "wrench.and.screwdriver")
                         .frame(maxWidth: .infinity)

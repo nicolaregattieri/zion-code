@@ -527,7 +527,7 @@ struct ContentView: View {
                 Text(L10n("Resolva os conflitos na sua IDE favorita.")).font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 Button {
                     model.loadConflictedFiles()
                     model.isConflictViewVisible = true
@@ -558,7 +558,7 @@ struct ContentView: View {
 
             if model.repositoryURL != nil && !model.isRepositorySwitching {
                 // Branch pill
-                HStack(spacing: 4) {
+                HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                     Image(systemName: "arrow.triangle.branch")
                         .font(.system(size: 9))
                     Text(model.currentBranch)
@@ -659,7 +659,7 @@ struct ContentView: View {
     }
 
     private var statusBarQuickNavigation: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
             statusBarSectionButton(.code)
             statusBarSectionButton(.graph)
             statusBarSectionButton(.operations)
@@ -687,7 +687,7 @@ struct ContentView: View {
         return Button {
             route(.requestSection(section))
         } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 Image(systemName: section.icon)
                     .font(.system(size: 9, weight: .semibold))
                 Text(statusBarSectionLabel(section))
@@ -727,7 +727,7 @@ struct ContentView: View {
 
     private var statusBarSettingsButton: some View {
         SettingsLink {
-            HStack(spacing: 4) {
+            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 Image(systemName: "gearshape")
                     .font(.system(size: 9, weight: .semibold))
                 Text(L10n("status.nav.settings"))

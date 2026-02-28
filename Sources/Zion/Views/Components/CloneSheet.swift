@@ -85,7 +85,7 @@ struct CloneSheet: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(L10n("Pasta de destino"))
                     .font(.subheadline.weight(.medium))
-                HStack(spacing: 8) {
+                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                     TextField("~/Developer", text: $destinationPath)
                         .textFieldStyle(.roundedBorder)
                     Button(L10n("Escolher...")) {
@@ -107,7 +107,7 @@ struct CloneSheet: View {
 
             // Clone path preview
             if !destinationPath.isEmpty {
-                HStack(spacing: 4) {
+                HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                     Image(systemName: "folder.fill")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -138,7 +138,7 @@ struct CloneSheet: View {
 
             // Error
             if let error = model.cloneError {
-                HStack(spacing: 8) {
+                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(DesignSystem.Colors.error)
                     Text(error)

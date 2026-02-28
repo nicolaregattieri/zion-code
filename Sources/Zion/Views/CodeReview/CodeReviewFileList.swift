@@ -42,7 +42,7 @@ struct CodeReviewFileList: View {
         return Button {
             selectedID = file.id
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 Image(systemName: file.status.icon)
                     .font(.system(size: 11))
                     .foregroundStyle(file.status.color)
@@ -72,7 +72,7 @@ struct CodeReviewFileList: View {
                 }
 
                 // +/- count
-                HStack(spacing: 2) {
+                HStack(spacing: DesignSystem.Spacing.iconGroupedGap) {
                     Text("+\(file.additions)")
                         .font(.system(size: 9, design: .monospaced))
                         .foregroundStyle(DesignSystem.Colors.diffAddition)

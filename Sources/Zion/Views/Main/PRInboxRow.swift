@@ -7,12 +7,12 @@ struct PRInboxRow: View {
 
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 // Author initial in colored circle
                 authorAvatar
 
                 VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 4) {
+                    HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                         Text("#\(item.pr.number)")
                             .font(.system(size: 10, weight: .bold, design: .monospaced))
                             .foregroundStyle(.secondary)
@@ -21,7 +21,7 @@ struct PRInboxRow: View {
                             .lineLimit(1)
                     }
 
-                    HStack(spacing: 6) {
+                    HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                         Text("@\(item.pr.author)")
                             .font(.system(size: 9, design: .monospaced))
                             .foregroundStyle(.tertiary)

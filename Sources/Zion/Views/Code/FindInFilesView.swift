@@ -28,7 +28,7 @@ struct FindInFilesView: View {
     private var searchFields: some View {
         VStack(spacing: 6) {
             // Query field
-            HStack(spacing: 6) {
+            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 10))
                     .foregroundStyle(.secondary)
@@ -68,7 +68,7 @@ struct FindInFilesView: View {
 
             // Scope indicator
             if let scope = scopePath {
-                HStack(spacing: 4) {
+                HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                     Image(systemName: "folder")
                         .font(.system(size: 9))
                     Text(URL(fileURLWithPath: scope).lastPathComponent)
@@ -109,7 +109,7 @@ struct FindInFilesView: View {
 
     private var filterFields: some View {
         VStack(spacing: 4) {
-            HStack(spacing: 6) {
+            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 Text(L10n("Incluir arquivos"))
                     .font(DesignSystem.Typography.monoMeta)
                     .foregroundStyle(.secondary)
@@ -123,7 +123,7 @@ struct FindInFilesView: View {
                     .background(DesignSystem.Colors.glassBackground)
                     .clipShape(RoundedRectangle(cornerRadius: 4))
             }
-            HStack(spacing: 6) {
+            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 Text(L10n("Excluir arquivos"))
                     .font(DesignSystem.Typography.monoMeta)
                     .foregroundStyle(.secondary)
@@ -173,7 +173,7 @@ struct FindInFilesView: View {
                     }
                 }
             } label: {
-                HStack(spacing: 4) {
+                HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                         .font(.system(size: 8, weight: .bold))
                         .foregroundStyle(.secondary)
@@ -215,7 +215,7 @@ struct FindInFilesView: View {
         Button {
             openMatch(match)
         } label: {
-            HStack(spacing: 6) {
+            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 Text("\(match.line)")
                     .font(DesignSystem.Typography.monoMeta)
                     .foregroundStyle(.tertiary)
