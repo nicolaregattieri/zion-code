@@ -511,17 +511,19 @@ struct TerminalTabView: NSViewRepresentable {
                 let commandContent = """
                 Display an image inline in this terminal.
 
+                IMPORTANT: Always describe the image BEFORE running `zion_display`. The image renders directly on the terminal and any text printed after it will overlap. Write your description first, then display.
+
                 First, determine if the request is a **file path** or a **description**:
 
                 **If the input is a file path** (contains `/` or `.png`, `.jpg`, `.jpeg`, `.gif`, `.svg`):
-                1. Run: `zion_display <filepath>`
-                2. Briefly describe what the image shows.
+                1. Briefly describe what the image shows.
+                2. Run: `zion_display <filepath>`
 
                 **If the input is a description**:
                 1. Create an SVG file based on the description. Use rich colors, clean shapes, and proper viewBox.
                 2. Save to a temp file using Bash `cat > /tmp/zion_img_<name>.svg << 'EOF'` (NOT the Write tool). Always use `/tmp/` to avoid polluting the project directory.
-                3. Run: `zion_display /tmp/zion_img_<name>.svg`
-                4. Briefly describe what you drew.
+                3. Briefly describe what you drew.
+                4. Run: `zion_display /tmp/zion_img_<name>.svg`
 
                 If the request mentions "--save", use `zion_display --save <file>` instead.
 
