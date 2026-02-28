@@ -234,8 +234,8 @@ struct TerminalTabView: NSViewRepresentable {
         }
 
         func insertSoftLineBreak() {
-            let continuation = "\\\n"
-            process?.send(data: ArraySlice(continuation.utf8))
+            let newline: [UInt8] = [0x0A]  // LF
+            process?.send(data: ArraySlice(newline))
         }
 
         private func installShiftEnterMonitor() {
