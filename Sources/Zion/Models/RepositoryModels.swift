@@ -93,3 +93,13 @@ struct LanguageStat: Identifiable {
     let percentage: Double
     var id: String { language }
 }
+
+// MARK: - Background Repo State
+
+struct BackgroundRepoState {
+    var terminalTabs: [TerminalPaneNode]
+    var activeTabID: UUID?
+    var focusedSessionID: UUID?
+    var fileWatcher: FileWatcher
+    var monitorTask: Task<Void, Never>?
+}
