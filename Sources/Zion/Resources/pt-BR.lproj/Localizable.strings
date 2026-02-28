@@ -1464,5 +1464,7 @@
 "settings.terminal.openHyperlinks.hint" = "Links OSC 8 abrem no navegador padrão ao clicar com Cmd.";
 "settings.terminal.imageRendering" = "Renderização de Imagens Inline";
 "settings.terminal.imageRendering.hint" = "Renderiza imagens Sixel, iTerm2 e Kitty inline. Alterações aplicam em novas sessões.";
+"settings.terminal.aiImageDisplay" = "Exibição de Imagens IA";
+"settings.terminal.aiImageDisplay.hint" = "Injeta a função shell zion_display para que ferramentas IA exibam imagens inline. Define ZION_IMAGE_DISPLAY=1 para detecção. Aplica em novas sessões.";
 "settings.terminal.selection" = "Seleção";
 "settings.terminal.copyOnSelect" = "Copiar ao Selecionar";

@@ -185,6 +185,11 @@ struct TerminalTabView: NSViewRepresentable {
                 env["LANG"] = "en_US.UTF-8"
                 env["PATH"] = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:" + (env["PATH"] ?? "")
 
+                let aiImageDisplay = UserDefaults.standard.bool(forKey: "terminal.aiImageDisplay")
+                if aiImageDisplay {
+                    env["ZION_IMAGE_DISPLAY"] = "1"
+                }
+
                 let envArray = env.map { "\($0.key)=\($0.value)" }
 
                 process.startProcess(
@@ -203,6 +208,16 @@ struct TerminalTabView: NSViewRepresentable {
 
                 // Force theme re-application on next updateNSView cycle
                 self.lastAppliedTheme = nil
+
+                // Inject zion_display shell function for AI image display
+                if aiImageDisplay {
+                    Task {
+                        try? await Task.sleep(for: .milliseconds(300))
+                        guard self.process != nil else { return }
+                        let bytes = Array(Self.zionDisplayInjection.utf8)
+                        self.process?.send(data: ArraySlice(bytes))
+                    }
+                }
             }
         }
 
@@ -301,6 +316,17 @@ struct TerminalTabView: NSViewRepresentable {
                   let firstResponder = window.firstResponder as? NSView else { return false }
             return firstResponder === terminalView || firstResponder.isDescendant(of: terminalView)
         }
+
+        // MARK: - AI Image Display injection
+
+        /// Shell function injected via stdin when AI Image Display is enabled.
+        /// Prefixed with space so zsh HIST_IGNORE_SPACE skips it from history.
+        /// Ends with `clear` to hide the injection noise.
+        private static let zionDisplayInjection: String = """
+         zion_display() { case "$1" in -h|--help) printf 'zion_display — display images inline in Zion terminal\\n\\nUsage: zion_display <file>\\n\\nSupported formats: PNG, JPEG, GIF, SVG\\nSVG files are converted to PNG via macOS qlmanage (no dependencies).\\nUses iTerm2 inline image protocol (OSC 1337).\\n\\nEnvironment:\\n  ZION_IMAGE_DISPLAY=1  Set when this feature is active\\n\\nExamples:\\n  zion_display screenshot.png\\n  zion_display diagram.svg\\n'; return 0;; esac; local f="$1"; [ -z "$f" ] && { echo "Usage: zion_display <file> (--help for details)" >&2; return 1; }; [ ! -f "$f" ] && { echo "zion_display: file not found: $f" >&2; return 1; }; local mime; mime=$(file -b --mime-type "$f"); case "$mime" in image/png|image/jpeg|image/gif) ;; image/svg+xml) local tmp; tmp=$(mktemp /tmp/zion_img_XXXXXX.png); qlmanage -t -s 1200 -o /tmp "$f" >/dev/null 2>&1 && mv "/tmp/$(basename "$f").png" "$tmp" 2>/dev/null; [ ! -f "$tmp" ] && { echo "zion_display: SVG conversion failed" >&2; return 1; }; f="$tmp"; local _zd_cleanup=1;; *) echo "zion_display: unsupported type: $mime" >&2; return 1;; esac; local data; data=$(base64 < "$f"); printf '\\e]1337;File=inline=1;size=%d:%s\\a' "${#data}" "$data"; [ "${_zd_cleanup:-0}" = 1 ] && rm -f "$f"; }
+        clear
+
+        """
 
         // MARK: - TerminalViewDelegate
 

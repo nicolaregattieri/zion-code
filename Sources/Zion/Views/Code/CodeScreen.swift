@@ -1603,6 +1603,13 @@ struct CodeScreen: View {
                 model.focusActiveTerminal()
                 return true
             }
+            .dropDestination(for: URL.self) { urls, _ in
+                let paths = urls.filter { $0.isFileURL }.map { TerminalShellEscaping.quotePath($0.path) }
+                guard !paths.isEmpty else { return false }
+                model.sendTextToActiveTerminal(paths.joined(separator: " "))
+                model.focusActiveTerminal()
+                return true
+            }
         }
         .padding(.top, DesignSystem.Spacing.cardPadding)
         .background {

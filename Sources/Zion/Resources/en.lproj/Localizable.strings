@@ -1511,5 +1511,7 @@
 "settings.terminal.openHyperlinks.hint" = "OSC 8 links open in the default browser when Cmd+clicked.";
 "settings.terminal.imageRendering" = "Inline Image Rendering";
 "settings.terminal.imageRendering.hint" = "Render Sixel, iTerm2, and Kitty inline images. Changes apply to new sessions.";
+"settings.terminal.aiImageDisplay" = "AI Image Display";
+"settings.terminal.aiImageDisplay.hint" = "Injects a zion_display shell function so AI tools can show images inline. Sets ZION_IMAGE_DISPLAY=1 for detection. Applies to new sessions.";
 "settings.terminal.selection" = "Selection";
 "settings.terminal.copyOnSelect" = "Copy on Select";

@@ -182,6 +182,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             "terminal.openHyperlinks": true,
             "terminal.imageRendering": true,
             "terminal.copyOnSelect": false,
+            "terminal.aiImageDisplay": false,
         ])
 
         registerFonts()

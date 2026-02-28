@@ -6,6 +6,7 @@ struct TerminalSettingsTab: View {
     @AppStorage("terminal.openHyperlinks") private var openHyperlinks: Bool = true
     @AppStorage("terminal.imageRendering") private var imageRendering: Bool = true
     @AppStorage("terminal.copyOnSelect") private var copyOnSelect: Bool = false
+    @AppStorage("terminal.aiImageDisplay") private var aiImageDisplay: Bool = false
 
     var body: some View {
         Form {
@@ -45,6 +46,12 @@ struct TerminalSettingsTab: View {
                 Toggle(L10n("settings.terminal.imageRendering"), isOn: $imageRendering)
 
                 Text(L10n("settings.terminal.imageRendering.hint"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Toggle(L10n("settings.terminal.aiImageDisplay"), isOn: $aiImageDisplay)
+
+                Text(L10n("settings.terminal.aiImageDisplay.hint"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } header: {
