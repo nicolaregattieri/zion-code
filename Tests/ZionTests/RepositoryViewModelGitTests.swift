@@ -316,4 +316,372 @@ final class RepositoryViewModelGitTests: XCTestCase {
         let path = RepositoryViewModel.filePathFromStatusLine("")
         XCTAssertNil(path)
     }
+
+    // MARK: - buildMergedContent
+
+    private func makeConflictBlocks(choice: ConflictChoice) -> [ConflictBlock] {
+        let region = ConflictRegion(
+            oursLines: ["our line"],
+            theirsLines: ["their line"],
+            oursLabel: "HEAD",
+            theirsLabel: "feature",
+            choice: choice
+        )
+        return [
+            .context(["before"]),
+            .conflict(region),
+            .context(["after"]),
+        ]
+    }
+
+    func testBuildMergedContentOurs() {
+        let vm = RepositoryViewModel()
+        vm.conflictBlocks = makeConflictBlocks(choice: .ours)
+        let result = vm.buildMergedContent()
+        XCTAssertEqual(result, "before\nour line\nafter")
+    }
+
+    func testBuildMergedContentTheirs() {
+        let vm = RepositoryViewModel()
+        vm.conflictBlocks = makeConflictBlocks(choice: .theirs)
+        let result = vm.buildMergedContent()
+        XCTAssertEqual(result, "before\ntheir line\nafter")
+    }
+
+    func testBuildMergedContentBoth() {
+        let vm = RepositoryViewModel()
+        vm.conflictBlocks = makeConflictBlocks(choice: .both)
+        let result = vm.buildMergedContent()
+        XCTAssertEqual(result, "before\nour line\ntheir line\nafter")
+    }
+
+    func testBuildMergedContentBothReverse() {
+        let vm = RepositoryViewModel()
+        vm.conflictBlocks = makeConflictBlocks(choice: .bothReverse)
+        let result = vm.buildMergedContent()
+        XCTAssertEqual(result, "before\ntheir line\nour line\nafter")
+    }
+
+    func testBuildMergedContentCustom() {
+        let vm = RepositoryViewModel()
+        vm.conflictBlocks = makeConflictBlocks(choice: .custom("custom resolution"))
+        let result = vm.buildMergedContent()
+        XCTAssertEqual(result, "before\ncustom resolution\nafter")
+    }
+
+    func testBuildMergedContentUndecidedKeepsMarkers() {
+        let vm = RepositoryViewModel()
+        vm.conflictBlocks = makeConflictBlocks(choice: .undecided)
+        let result = vm.buildMergedContent()
+        XCTAssertTrue(result.contains("<<<<<<< HEAD"))
+        XCTAssertTrue(result.contains("======="))
+        XCTAssertTrue(result.contains(">>>>>>> feature"))
+        XCTAssertTrue(result.contains("our line"))
+        XCTAssertTrue(result.contains("their line"))
+    }
+
+    // MARK: - resolveRegion
+
+    func testResolveRegionUpdatesChoice() {
+        let vm = RepositoryViewModel()
+        let region = ConflictRegion(
+            oursLines: ["a"],
+            theirsLines: ["b"],
+            oursLabel: "HEAD",
+            theirsLabel: "feat"
+        )
+        let regionID = region.id
+        vm.conflictBlocks = [.conflict(region)]
+
+        vm.resolveRegion(regionID, choice: .theirs)
+
+        if case .conflict(let updated) = vm.conflictBlocks[0] {
+            XCTAssertEqual(updated.choice, .theirs)
+        } else {
+            XCTFail("Expected conflict block after resolveRegion")
+        }
+    }
+
+    // MARK: - allConflictsResolved / unresolvedConflictCount / currentFileAllRegionsChosen
+
+    func testAllConflictsResolvedTrue() {
+        let vm = RepositoryViewModel()
+        vm.conflictedFiles = [
+            ConflictFile(path: "a.swift", isResolved: true),
+            ConflictFile(path: "b.swift", isResolved: true),
+        ]
+        XCTAssertTrue(vm.allConflictsResolved)
+    }
+
+    func testAllConflictsResolvedFalseWhenPartial() {
+        let vm = RepositoryViewModel()
+        vm.conflictedFiles = [
+            ConflictFile(path: "a.swift", isResolved: true),
+            ConflictFile(path: "b.swift", isResolved: false),
+        ]
+        XCTAssertFalse(vm.allConflictsResolved)
+    }
+
+    func testAllConflictsResolvedFalseWhenEmpty() {
+        let vm = RepositoryViewModel()
+        vm.conflictedFiles = []
+        XCTAssertFalse(vm.allConflictsResolved)
+    }
+
+    func testUnresolvedConflictCount() {
+        let vm = RepositoryViewModel()
+        vm.conflictedFiles = [
+            ConflictFile(path: "a.swift", isResolved: true),
+            ConflictFile(path: "b.swift", isResolved: false),
+            ConflictFile(path: "c.swift", isResolved: false),
+        ]
+        XCTAssertEqual(vm.unresolvedConflictCount, 2)
+    }
+
+    func testCurrentFileAllRegionsChosenTrue() {
+        let vm = RepositoryViewModel()
+        vm.conflictBlocks = [
+            .context(["line"]),
+            .conflict(ConflictRegion(
+                oursLines: ["a"], theirsLines: ["b"],
+                oursLabel: "HEAD", theirsLabel: "feat",
+                choice: .ours
+            )),
+        ]
+        XCTAssertTrue(vm.currentFileAllRegionsChosen)
+    }
+
+    func testCurrentFileAllRegionsChosenFalseWithUndecided() {
+        let vm = RepositoryViewModel()
+        vm.conflictBlocks = [
+            .conflict(ConflictRegion(
+                oursLines: ["a"], theirsLines: ["b"],
+                oursLabel: "HEAD", theirsLabel: "feat",
+                choice: .undecided
+            )),
+        ]
+        XCTAssertFalse(vm.currentFileAllRegionsChosen)
+    }
+
+    // MARK: - isStashApplyBlockedByLocalChanges
+
+    func testIsStashApplyBlockedByOverwrittenByMerge() {
+        XCTAssertTrue(RepositoryViewModel.isStashApplyBlockedByLocalChanges(
+            "error: Your local changes to 'file.swift' would be overwritten by merge"
+        ))
+    }
+
+    func testIsStashApplyBlockedByPleaseCommit() {
+        XCTAssertTrue(RepositoryViewModel.isStashApplyBlockedByLocalChanges(
+            "error: please commit your changes or stash them before you merge"
+        ))
+    }
+
+    func testIsStashApplyBlockedByLocalChanges() {
+        XCTAssertTrue(RepositoryViewModel.isStashApplyBlockedByLocalChanges(
+            "Cannot apply stash: your index contains local changes"
+        ))
+    }
+
+    func testIsStashApplyBlockedNilReturnsFalse() {
+        XCTAssertFalse(RepositoryViewModel.isStashApplyBlockedByLocalChanges(nil))
+    }
+
+    func testIsStashApplyBlockedUnrelatedMessage() {
+        XCTAssertFalse(RepositoryViewModel.isStashApplyBlockedByLocalChanges(
+            "everything is fine"
+        ))
+    }
+
+    // MARK: - friendlyStashRestoreErrorMessage
+
+    func testFriendlyStashErrorNoEntries() {
+        let vm = RepositoryViewModel()
+        let error = GitClientError.commandFailed(command: "stash pop", message: "error: No stash entries found.")
+        let result = vm.friendlyStashRestoreErrorMessage(error, reference: "stash@{0}", pop: true)
+        XCTAssertNotNil(result)
+    }
+
+    func testFriendlyStashErrorInvalidReference() {
+        let vm = RepositoryViewModel()
+        let error = GitClientError.commandFailed(command: "stash apply", message: "error: not a valid reference: stash@{99}")
+        let result = vm.friendlyStashRestoreErrorMessage(error, reference: "stash@{99}", pop: false)
+        XCTAssertNotNil(result)
+    }
+
+    func testFriendlyStashErrorConflictPop() {
+        let vm = RepositoryViewModel()
+        let error = GitClientError.commandFailed(command: "stash pop", message: "CONFLICT (content): merge conflict in file.swift")
+        let result = vm.friendlyStashRestoreErrorMessage(error, reference: "stash@{0}", pop: true)
+        XCTAssertNotNil(result)
+    }
+
+    func testFriendlyStashErrorConflictApply() {
+        let vm = RepositoryViewModel()
+        let error = GitClientError.commandFailed(command: "stash apply", message: "CONFLICT (content): merge conflict in file.swift")
+        let result = vm.friendlyStashRestoreErrorMessage(error, reference: "stash@{0}", pop: false)
+        XCTAssertNotNil(result)
+    }
+
+    func testFriendlyStashErrorGenericPop() {
+        let vm = RepositoryViewModel()
+        let error = GitClientError.commandFailed(command: "stash pop", message: "some random error from git")
+        let result = vm.friendlyStashRestoreErrorMessage(error, reference: "stash@{0}", pop: true)
+        XCTAssertNotNil(result, "Generic errors should still return a friendly message")
+    }
+
+    func testFriendlyStashErrorGenericApply() {
+        let vm = RepositoryViewModel()
+        let error = GitClientError.commandFailed(command: "stash apply", message: "some random error from git")
+        let result = vm.friendlyStashRestoreErrorMessage(error, reference: "stash@{0}", pop: false)
+        XCTAssertNotNil(result, "Generic errors should still return a friendly message")
+    }
+
+    func testFriendlyStashErrorNonGitError() {
+        let vm = RepositoryViewModel()
+        let error = NSError(domain: "test", code: 1, userInfo: [NSLocalizedDescriptionKey: "not a git error"])
+        let result = vm.friendlyStashRestoreErrorMessage(error, reference: "stash@{0}", pop: true)
+        XCTAssertNil(result, "Non-GitClientError should return nil")
+    }
+
+    // MARK: - slugifiedWorktreeName
+
+    func testSlugifiedWorktreeNameSimple() {
+        let vm = RepositoryViewModel()
+        XCTAssertEqual(vm.slugifiedWorktreeName(from: "My Feature"), "my-feature")
+    }
+
+    func testSlugifiedWorktreeNameDiacritics() {
+        let vm = RepositoryViewModel()
+        XCTAssertEqual(vm.slugifiedWorktreeName(from: "café résumé"), "cafe-resume")
+    }
+
+    func testSlugifiedWorktreeNameCompressesDashes() {
+        let vm = RepositoryViewModel()
+        let result = vm.slugifiedWorktreeName(from: "hello---world")
+        XCTAssertEqual(result, "hello-world")
+    }
+
+    func testSlugifiedWorktreeNameTrimsDots() {
+        let vm = RepositoryViewModel()
+        let result = vm.slugifiedWorktreeName(from: ".hidden.")
+        XCTAssertEqual(result, "hidden")
+    }
+
+    func testSlugifiedWorktreeNameEmpty() {
+        let vm = RepositoryViewModel()
+        XCTAssertEqual(vm.slugifiedWorktreeName(from: ""), "")
+    }
+
+    // MARK: - computeMergedBranchesToPrune
+
+    func testComputeMergedBranchesToPruneExcludesProtected() {
+        let vm = RepositoryViewModel()
+        let output = "  main\n  develop\n  feature-done\n* current\n  dev\n"
+        vm.currentBranch = "current"
+        let result = vm.computeMergedBranchesToPrune(from: output, baseRef: "main")
+        XCTAssertEqual(result, ["feature-done"])
+    }
+
+    func testComputeMergedBranchesToPruneStripsAsterisk() {
+        let vm = RepositoryViewModel()
+        let output = "* some-branch\n  another-branch\n"
+        vm.currentBranch = "some-branch"
+        let result = vm.computeMergedBranchesToPrune(from: output, baseRef: "main")
+        XCTAssertEqual(result, ["another-branch"])
+    }
+
+    func testComputeMergedBranchesToPruneEmptyOutput() {
+        let vm = RepositoryViewModel()
+        vm.currentBranch = "main"
+        let result = vm.computeMergedBranchesToPrune(from: "", baseRef: "main")
+        XCTAssertTrue(result.isEmpty)
+    }
+
+    // MARK: - pruneMergeBaseRef
+
+    func testPruneMergeBaseRefPrefersMain() {
+        let vm = RepositoryViewModel()
+        vm.branchInfos = [
+            BranchInfo(name: "main", fullRef: "refs/heads/main", head: "abc", upstream: "", committerDate: Date(), isRemote: false),
+            BranchInfo(name: "master", fullRef: "refs/heads/master", head: "def", upstream: "", committerDate: Date(), isRemote: false),
+        ]
+        XCTAssertEqual(vm.pruneMergeBaseRef(), "main")
+    }
+
+    func testPruneMergeBaseRefFallsBackToMaster() {
+        let vm = RepositoryViewModel()
+        vm.branchInfos = [
+            BranchInfo(name: "master", fullRef: "refs/heads/master", head: "def", upstream: "", committerDate: Date(), isRemote: false),
+        ]
+        XCTAssertEqual(vm.pruneMergeBaseRef(), "master")
+    }
+
+    func testPruneMergeBaseRefFallsBackToCurrentBranch() {
+        let vm = RepositoryViewModel()
+        vm.currentBranch = "develop"
+        vm.branchInfos = [
+            BranchInfo(name: "develop", fullRef: "refs/heads/develop", head: "abc", upstream: "", committerDate: Date(), isRemote: false),
+        ]
+        XCTAssertEqual(vm.pruneMergeBaseRef(), "develop")
+    }
+
+    func testPruneMergeBaseRefFallsBackToHEAD() {
+        let vm = RepositoryViewModel()
+        vm.currentBranch = "missing"
+        vm.branchInfos = []
+        XCTAssertEqual(vm.pruneMergeBaseRef(), "HEAD")
+    }
+
+    // MARK: - isCredentialFailure / isNoUpstreamConfigured
+
+    func testIsCredentialFailureDetectsAuthFailed() {
+        let vm = RepositoryViewModel()
+        let error = GitClientError.commandFailed(command: "push", message: "Authentication failed for 'https://github.com'")
+        XCTAssertTrue(vm.isCredentialFailure(error))
+    }
+
+    func testIsCredentialFailureReturnsFalseForUnrelated() {
+        let vm = RepositoryViewModel()
+        let error = GitClientError.commandFailed(command: "push", message: "non-fast-forward")
+        XCTAssertFalse(vm.isCredentialFailure(error))
+    }
+
+    func testIsCredentialFailureReturnsFalseForNonGitError() {
+        let vm = RepositoryViewModel()
+        let error = NSError(domain: "test", code: 1)
+        XCTAssertFalse(vm.isCredentialFailure(error))
+    }
+
+    func testIsNoUpstreamConfiguredDetectsPattern() {
+        let vm = RepositoryViewModel()
+        let error = GitClientError.commandFailed(command: "rev-list", message: "fatal: no upstream configured for branch 'feature'")
+        XCTAssertTrue(vm.isNoUpstreamConfigured(error))
+    }
+
+    func testIsNoUpstreamConfiguredReturnsFalseForUnrelated() {
+        let vm = RepositoryViewModel()
+        let error = GitClientError.commandFailed(command: "rev-list", message: "something else")
+        XCTAssertFalse(vm.isNoUpstreamConfigured(error))
+    }
+
+    // MARK: - defaultCommitLimit
+
+    func testDefaultCommitLimitWithReference() {
+        let vm = RepositoryViewModel()
+        let result = vm.defaultCommitLimit(for: "main")
+        XCTAssertEqual(result, 450) // defaultCommitLimitFocused
+    }
+
+    func testDefaultCommitLimitWithNil() {
+        let vm = RepositoryViewModel()
+        let result = vm.defaultCommitLimit(for: nil)
+        XCTAssertEqual(result, 700) // defaultCommitLimitAll
+    }
+
+    func testDefaultCommitLimitWithEmptyString() {
+        let vm = RepositoryViewModel()
+        let result = vm.defaultCommitLimit(for: "")
+        XCTAssertEqual(result, 700) // empty cleans to empty, so treated as nil
+    }
 }
