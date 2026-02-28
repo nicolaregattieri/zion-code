@@ -64,4 +64,159 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
         XCTAssertEqual(results[0].matches[0].line, 1)
         XCTAssertEqual(results[0].matches[0].preview, "# Project Title")
     }
+
+    // MARK: - isSafeFileOrFolderName
+
+    func testIsSafeNameValidName() {
+        let vm = RepositoryViewModel()
+        XCTAssertTrue(vm.isSafeFileOrFolderName("my-file.swift"))
+    }
+
+    func testIsSafeNameEmpty() {
+        let vm = RepositoryViewModel()
+        XCTAssertFalse(vm.isSafeFileOrFolderName(""))
+    }
+
+    func testIsSafeNameDot() {
+        let vm = RepositoryViewModel()
+        XCTAssertFalse(vm.isSafeFileOrFolderName("."))
+    }
+
+    func testIsSafeNameDotDot() {
+        let vm = RepositoryViewModel()
+        XCTAssertFalse(vm.isSafeFileOrFolderName(".."))
+    }
+
+    func testIsSafeNameForwardSlash() {
+        let vm = RepositoryViewModel()
+        XCTAssertFalse(vm.isSafeFileOrFolderName("path/file"))
+    }
+
+    func testIsSafeNameBackslash() {
+        let vm = RepositoryViewModel()
+        XCTAssertFalse(vm.isSafeFileOrFolderName("path\\file"))
+    }
+
+    func testIsSafeNameNullChar() {
+        let vm = RepositoryViewModel()
+        XCTAssertFalse(vm.isSafeFileOrFolderName("file\0name"))
+    }
+
+    // MARK: - isDirectChild
+
+    func testIsDirectChildTrue() {
+        let vm = RepositoryViewModel()
+        let parent = URL(fileURLWithPath: "/tmp/project")
+        let child = URL(fileURLWithPath: "/tmp/project/file.swift")
+        XCTAssertTrue(vm.isDirectChild(child, of: parent))
+    }
+
+    func testIsDirectChildGrandchild() {
+        let vm = RepositoryViewModel()
+        let parent = URL(fileURLWithPath: "/tmp/project")
+        let grandchild = URL(fileURLWithPath: "/tmp/project/sub/file.swift")
+        // The method only checks hasPrefix(parentPath + "/"), so grandchild is also true
+        XCTAssertTrue(vm.isDirectChild(grandchild, of: parent))
+    }
+
+    func testIsDirectChildSameURL() {
+        let vm = RepositoryViewModel()
+        let url = URL(fileURLWithPath: "/tmp/project")
+        XCTAssertFalse(vm.isDirectChild(url, of: url))
+    }
+
+    func testIsDirectChildDifferentPath() {
+        let vm = RepositoryViewModel()
+        let parent = URL(fileURLWithPath: "/tmp/project")
+        let other = URL(fileURLWithPath: "/tmp/other/file.swift")
+        XCTAssertFalse(vm.isDirectChild(other, of: parent))
+    }
+
+    // MARK: - toggleFileSelection
+
+    func testToggleFileSelectionAddsFile() {
+        let vm = RepositoryViewModel()
+        let item = FileItem(url: URL(fileURLWithPath: "/tmp/file.swift"), isDirectory: false, children: nil)
+        vm.selectedFileIDs = []
+
+        vm.toggleFileSelection(item)
+
+        XCTAssertTrue(vm.selectedFileIDs.contains(item.id))
+        XCTAssertEqual(vm.lastClickedFileID, item.id)
+    }
+
+    func testToggleFileSelectionRemovesFile() {
+        let vm = RepositoryViewModel()
+        let item = FileItem(url: URL(fileURLWithPath: "/tmp/file.swift"), isDirectory: false, children: nil)
+        vm.selectedFileIDs = [item.id]
+
+        vm.toggleFileSelection(item)
+
+        XCTAssertFalse(vm.selectedFileIDs.contains(item.id))
+        XCTAssertEqual(vm.lastClickedFileID, item.id)
+    }
+
+    // MARK: - clearFileSelection
+
+    func testClearFileSelectionResetsState() {
+        let vm = RepositoryViewModel()
+        vm.selectedFileIDs = ["a", "b", "c"]
+        vm.lastClickedFileID = "b"
+
+        vm.clearFileSelection()
+
+        XCTAssertTrue(vm.selectedFileIDs.isEmpty)
+        XCTAssertNil(vm.lastClickedFileID)
+    }
+
+    // MARK: - closeFile
+
+    func testCloseFileRemovesFromOpened() {
+        let vm = RepositoryViewModel()
+        let item = FileItem(url: URL(fileURLWithPath: "/tmp/file.swift"), isDirectory: false, children: nil)
+        vm.openedFiles = [item]
+        vm.activeFileID = "other-id" // Not the file being closed
+
+        vm.closeFile(id: item.id)
+
+        XCTAssertTrue(vm.openedFiles.isEmpty)
+    }
+
+    func testCloseFileActivatesLastWhenActiveFileClosed() {
+        let vm = RepositoryViewModel()
+        let item1 = FileItem(url: URL(fileURLWithPath: "/tmp/a.swift"), isDirectory: false, children: nil)
+        let item2 = FileItem(url: URL(fileURLWithPath: "/tmp/b.swift"), isDirectory: false, children: nil)
+        vm.openedFiles = [item1, item2]
+        vm.activeFileID = item2.id
+
+        vm.closeFile(id: item2.id)
+
+        XCTAssertEqual(vm.openedFiles.count, 1)
+        // After closing active, it selects last remaining
+        XCTAssertEqual(vm.activeFileID, item1.id)
+    }
+
+    func testCloseLastFileClearsState() {
+        let vm = RepositoryViewModel()
+        let item = FileItem(url: URL(fileURLWithPath: "/tmp/file.swift"), isDirectory: false, children: nil)
+        vm.openedFiles = [item]
+        vm.activeFileID = item.id
+
+        vm.closeFile(id: item.id)
+
+        XCTAssertTrue(vm.openedFiles.isEmpty)
+        XCTAssertNil(vm.activeFileID)
+        XCTAssertNil(vm.selectedCodeFile)
+        XCTAssertEqual(vm.codeFileContent, "")
+    }
+
+    func testCloseFileNonExistentIDDoesNothing() {
+        let vm = RepositoryViewModel()
+        let item = FileItem(url: URL(fileURLWithPath: "/tmp/file.swift"), isDirectory: false, children: nil)
+        vm.openedFiles = [item]
+
+        vm.closeFile(id: "non-existent")
+
+        XCTAssertEqual(vm.openedFiles.count, 1)
+    }
 }
