@@ -187,6 +187,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         registerFonts()
         ClipboardMonitor.purgeStaleFilesOnLaunch()
+        ZionTemp.purgeStaleFiles()
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
     }

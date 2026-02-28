@@ -819,17 +819,6 @@ final class RepositoryViewModel {
         }
     }
 
-    /// One-time migration: remove old per-repo ntfy blocks injected by previous versions.
-    private func migratePerRepoNtfyBlocks(repoPath: URL) {
-        let key = "zion.ntfy.migratedRepos"
-        var migrated = UserDefaults.standard.stringArray(forKey: key) ?? []
-        let repoID = repoPath.path
-        guard !migrated.contains(repoID) else { return }
-        AIAgentConfigManager.removeLegacyRepoBlocks(repoPath: repoPath)
-        migrated.append(repoID)
-        UserDefaults.standard.set(migrated, forKey: key)
-    }
-
     func notifyPRCreated(title: String, url: String) {
         let repoName = repositoryURL?.lastPathComponent ?? ""
         Task {
@@ -872,7 +861,6 @@ final class RepositoryViewModel {
 
         repositoryURL = url
         repoEditorConfig = EditorConfig.load(from: url)
-        migratePerRepoNtfyBlocks(repoPath: url)
         saveRecentRepository(url)
         commitLimit = defaultCommitLimit(for: nil)
         worktreeNameInput = ""
@@ -1554,7 +1542,7 @@ final class RepositoryViewModel {
     func saveCurrentCodeFile() {
         guard let file = selectedCodeFile else { return }
         // Untitled files redirect to Save As
-        if file.url.path.hasPrefix(NSTemporaryDirectory()) {
+        if file.url.path.hasPrefix(ZionTemp.directory.path) {
             saveCurrentFileAs()
             return
         }
@@ -1689,7 +1677,7 @@ final class RepositoryViewModel {
     func createNewFile() {
         untitledCounter += 1
         let name = untitledCounter == 1 ? L10n("Sem titulo") : "\(L10n("Sem titulo")) \(untitledCounter)"
-        let tempURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(name)
+        let tempURL = ZionTemp.directory.appendingPathComponent(name)
         let item = FileItem(url: tempURL, isDirectory: false, children: nil)
         if !openedFiles.contains(where: { $0.id == item.id }) {
             openedFiles.append(item)
@@ -5086,7 +5074,7 @@ final class RepositoryViewModel {
             do {
                 // Use GIT_SEQUENCE_EDITOR to pass the todo list
                 // We write the todo to a temp file and use a script that replaces the editor
-                let tempDir = FileManager.default.temporaryDirectory
+                let tempDir = ZionTemp.directory
                 let todoFile = tempDir.appendingPathComponent("zion-rebase-todo-\(UUID().uuidString)")
                 try todoList.write(to: todoFile, atomically: true, encoding: .utf8)
 

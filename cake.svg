@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <!-- Table surface -->
+  <ellipse cx="200" cy="340" rx="180" ry="20" fill="#8B6914"/>
+  
+  <!-- Bottom tier -->
+  <rect x="80" y="240" width="240" height="100" rx="8" fill="#F5E6CA"/>
+  <rect x="80" y="240" width="240" height="15" rx="4" fill="#E8A0BF"/>
+  
+  <!-- Bottom tier frosting drips -->
+  <circle cx="110" cy="255" r="10" fill="#E8A0BF"/>
+  <circle cx="150" cy="260" r="12" fill="#E8A0BF"/>
+  <circle cx="200" cy="258" r="11" fill="#E8A0BF"/>
+  <circle cx="250" cy="262" r="13" fill="#E8A0BF"/>
+  <circle cx="290" cy="256" r="10" fill="#E8A0BF"/>
+  
+  <!-- Middle tier -->
+  <rect x="120" y="160" width="160" height="80" rx="8" fill="#FFF0DB"/>
+  <rect x="120" y="160" width="160" height="15" rx="4" fill="#A8D8EA"/>
+  
+  <!-- Middle tier frosting drips -->
+  <circle cx="145" cy="175" r="9" fill="#A8D8EA"/>
+  <circle cx="185" cy="178" r="10" fill="#A8D8EA"/>
+  <circle cx="230" cy="176" r="11" fill="#A8D8EA"/>
+  <circle cx="260" cy="179" r="9" fill="#A8D8EA"/>
+  
+  <!-- Top tier -->
+  <rect x="155" y="95" width="90" height="65" rx="8" fill="#FFDDD2"/>
+  <rect x="155" y="95" width="90" height="12" rx="4" fill="#FFB7B2"/>
+  
+  <!-- Top tier frosting drips -->
+  <circle cx="175" cy="107" r="7" fill="#FFB7B2"/>
+  <circle cx="200" cy="109" r="8" fill="#FFB7B2"/>
+  <circle cx="225" cy="106" r="7" fill="#FFB7B2"/>
+  
+  <!-- Candles -->
+  <rect x="178" y="50" width="6" height="45" rx="2" fill="#FF6B6B"/>
+  <rect x="197" y="40" width="6" height="55" rx="2" fill="#4ECDC4"/>
+  <rect x="216" y="50" width="6" height="45" rx="2" fill="#FFE66D"/>
+  
+  <!-- Flames -->
+  <ellipse cx="181" cy="42" rx="5" ry="10" fill="#FF9F43"/>
+  <ellipse cx="181" cy="44" rx="3" ry="6" fill="#FECA57"/>
+  <ellipse cx="200" cy="32" rx="5" ry="10" fill="#FF9F43"/>
+  <ellipse cx="200" cy="34" rx="3" ry="6" fill="#FECA57"/>
+  <ellipse cx="219" cy="42" rx="5" ry="10" fill="#FF9F43"/>
+  <ellipse cx="219" cy="44" rx="3" ry="6" fill="#FECA57"/>
+  
+  <!-- Decorative dots on bottom tier -->
+  <circle cx="120" cy="290" r="4" fill="#FFD93D"/>
+  <circle cx="145" cy="290" r="4" fill="#FF6B6B"/>
+  <circle cx="170" cy="290" r="4" fill="#FFD93D"/>
+  <circle cx="195" cy="290" r="4" fill="#FF6B6B"/>
+  <circle cx="220" cy="290" r="4" fill="#FFD93D"/>
+  <circle cx="245" cy="290" r="4" fill="#FF6B6B"/>
+  <circle cx="270" cy="290" r="4" fill="#FFD93D"/>
+  
+  <!-- Cherry on top -->
+  <circle cx="200" cy="18" r="8" fill="#FF4757"/>
+  <path d="M200 18 Q205 5 210 0" stroke="#2d8a4e" stroke-width="2" fill="none"/>
+  <ellipse cx="196" cy="15" rx="2" ry="1.5" fill="#FF6B81" opacity="0.6"/>
+</svg>

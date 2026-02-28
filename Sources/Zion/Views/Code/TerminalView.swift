@@ -183,18 +183,44 @@ struct TerminalTabView: NSViewRepresentable {
                 env["TERM_PROGRAM"] = "Zion"
                 env["TERM_PROGRAM_VERSION"] = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
                 env["LANG"] = "en_US.UTF-8"
-                env["PATH"] = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:" + (env["PATH"] ?? "")
+                env["PATH"] = "\(Self.zionBinDir):/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:" + (env["PATH"] ?? "")
 
                 let aiImageDisplay = UserDefaults.standard.bool(forKey: "terminal.aiImageDisplay")
                 if aiImageDisplay {
                     env["ZION_IMAGE_DISPLAY"] = "1"
                 }
 
+                let ntfyTopic = UserDefaults.standard.string(forKey: "zion.ntfy.topic") ?? ""
+                let ntfyServer = UserDefaults.standard.string(forKey: "zion.ntfy.serverURL") ?? "https://ntfy.sh"
+                if !ntfyTopic.isEmpty {
+                    env["ZION_NTFY_TOPIC"] = ntfyTopic
+                    env["ZION_NTFY_SERVER"] = ntfyServer
+                }
+
+                // Install standalone scripts to ~/.zion/bin/ and auto-append config blocks
+                let hasFeatures = aiImageDisplay || !ntfyTopic.isEmpty
+                if hasFeatures {
+                    Self.installScripts(
+                        aiImageDisplay: aiImageDisplay,
+                        ntfyTopic: ntfyTopic,
+                        ntfyServer: ntfyServer
+                    )
+                    Self.appendZionBlock(
+                        projectRoot: url,
+                        aiImageDisplay: aiImageDisplay,
+                        ntfyTopic: ntfyTopic,
+                        ntfyServer: ntfyServer
+                    )
+                }
+
                 let envArray = env.map { "\($0.key)=\($0.value)" }
 
+                // Launch via wrapper that exports ZION_TTY=$(tty) so child processes
+                // (e.g. Claude Code's Bash) can write escape sequences to the pty
+                // even when /dev/tty isn't available.
                 process.startProcess(
                     executable: "/bin/zsh",
-                    args: ["-l"],
+                    args: ["-c", "export ZION_TTY=$(tty); exec /bin/zsh -l"],
                     environment: envArray,
                     currentDirectory: url.path
                 )
@@ -209,15 +235,6 @@ struct TerminalTabView: NSViewRepresentable {
                 // Force theme re-application on next updateNSView cycle
                 self.lastAppliedTheme = nil
 
-                // Inject zion_display shell function for AI image display
-                if aiImageDisplay {
-                    Task {
-                        try? await Task.sleep(for: .milliseconds(300))
-                        guard self.process != nil else { return }
-                        let bytes = Array(Self.zionDisplayInjection.utf8)
-                        self.process?.send(data: ArraySlice(bytes))
-                    }
-                }
             }
         }
 
@@ -317,16 +334,374 @@ struct TerminalTabView: NSViewRepresentable {
             return firstResponder === terminalView || firstResponder.isDescendant(of: terminalView)
         }
 
-        // MARK: - AI Image Display injection
+        // MARK: - Standalone scripts (~/.zion/bin/)
 
-        /// Shell function injected via stdin when AI Image Display is enabled.
-        /// Prefixed with space so zsh HIST_IGNORE_SPACE skips it from history.
-        /// Ends with `clear` to hide the injection noise.
-        private static let zionDisplayInjection: String = """
-         zion_display() { case "$1" in -h|--help) printf 'zion_display — display images inline in Zion terminal\\n\\nUsage: zion_display <file>\\n\\nSupported formats: PNG, JPEG, GIF, SVG\\nSVG files are converted to PNG via macOS qlmanage (no dependencies).\\nUses iTerm2 inline image protocol (OSC 1337).\\n\\nEnvironment:\\n  ZION_IMAGE_DISPLAY=1  Set when this feature is active\\n\\nExamples:\\n  zion_display screenshot.png\\n  zion_display diagram.svg\\n'; return 0;; esac; local f="$1"; [ -z "$f" ] && { echo "Usage: zion_display <file> (--help for details)" >&2; return 1; }; [ ! -f "$f" ] && { echo "zion_display: file not found: $f" >&2; return 1; }; local mime; mime=$(file -b --mime-type "$f"); case "$mime" in image/png|image/jpeg|image/gif) ;; image/svg+xml) local tmp; tmp=$(mktemp /tmp/zion_img_XXXXXX.png); qlmanage -t -s 1200 -o /tmp "$f" >/dev/null 2>&1 && mv "/tmp/$(basename "$f").png" "$tmp" 2>/dev/null; [ ! -f "$tmp" ] && { echo "zion_display: SVG conversion failed" >&2; return 1; }; f="$tmp"; local _zd_cleanup=1;; *) echo "zion_display: unsupported type: $mime" >&2; return 1;; esac; local data; data=$(base64 < "$f"); printf '\\e]1337;File=inline=1;size=%d:%s\\a' "${#data}" "$data"; [ "${_zd_cleanup:-0}" = 1 ] && rm -f "$f"; }
-        clear
+        private static let zionBinDir: String = {
+            let home = FileManager.default.homeDirectoryForCurrentUser.path
+            return "\(home)/.zion/bin"
+        }()
 
-        """
+        /// Install standalone scripts to ~/.zion/bin/ so they're available via PATH
+        /// with zero terminal injection. Scripts are overwritten each time to stay current.
+        private static func installScripts(
+            aiImageDisplay: Bool,
+            ntfyTopic: String,
+            ntfyServer: String
+        ) {
+            let fm = FileManager.default
+            try? fm.createDirectory(atPath: zionBinDir, withIntermediateDirectories: true)
+
+            if aiImageDisplay {
+                let script = """
+                #!/bin/zsh
+                # zion_display — display images inline in Zion terminal (iTerm2 OSC 1337)
+                # Installed by Zion Git Client
+
+                _zd_save=0
+                _zd_maxpx=600         # max render width (keeps base64 payload small)
+                _zd_maxb64=2097152    # 2 MB base64 limit (prevents terminal flooding)
+
+                case "$1" in
+                    -h|--help)
+                        cat <<'HELP'
+                zion_display — display images inline in Zion terminal
+
+                Usage: zion_display [--save] <file>
+
+                Options:
+                  --save    Save a copy to .zion/previews/ in the current git repo
+                  --help    Show this help
+
+                Supported formats: PNG, JPEG, GIF, SVG
+                SVG files are converted to PNG via macOS qlmanage (no dependencies).
+                Large raster images are downscaled to 600px width automatically.
+                Uses iTerm2 inline image protocol (OSC 1337).
+
+                Environment:
+                  ZION_IMAGE_DISPLAY=1  Set when this feature is active
+                  ZION_TTY              Terminal device path (set by Zion)
+
+                Examples:
+                  zion_display screenshot.png
+                  zion_display --save diagram.svg
+                HELP
+                        exit 0
+                        ;;
+                    --save) _zd_save=1; shift ;;
+                esac
+
+                f="$1"
+                [ -z "$f" ] && { echo "Usage: zion_display [--save] <file> (--help for details)" >&2; exit 1; }
+                [ ! -f "$f" ] && { echo "zion_display: file not found: $f" >&2; exit 1; }
+
+                _zd_orig="$f"
+                mime=$(file -b --mime-type "$f")
+                _zd_cleanup=0
+
+                case "$mime" in
+                    image/png|image/jpeg|image/gif)
+                        # Downscale large raster images to keep payload manageable
+                        _zd_w=$(sips -g pixelWidth "$f" 2>/dev/null | awk '/pixelWidth/{print $2}')
+                        if [ -n "$_zd_w" ] && [ "$_zd_w" -gt "$_zd_maxpx" ] 2>/dev/null; then
+                            tmp=$(mktemp "${TMPDIR:-/tmp}/zion_img_XXXXXX.png")
+                            sips --resampleWidth "$_zd_maxpx" "$f" --out "$tmp" >/dev/null 2>&1
+                            if [ -f "$tmp" ] && [ -s "$tmp" ]; then
+                                f="$tmp"; _zd_cleanup=1
+                            else
+                                rm -f "$tmp"
+                            fi
+                        fi
+                        ;;
+                    image/svg+xml)
+                        tmp=$(mktemp "${TMPDIR:-/tmp}/zion_img_XXXXXX.png")
+                        qlmanage -t -s "$_zd_maxpx" -o "${TMPDIR:-/tmp}" "$f" >/dev/null 2>&1 \\
+                            && mv "${TMPDIR:-/tmp}/$(basename "$f").png" "$tmp" 2>/dev/null
+                        [ ! -f "$tmp" ] && { echo "zion_display: SVG conversion failed" >&2; exit 1; }
+                        f="$tmp"; _zd_cleanup=1
+                        ;;
+                    *) echo "zion_display: unsupported type: $mime" >&2; exit 1 ;;
+                esac
+
+                # Base64 encode and check size guard
+                data=$(base64 -b 0 < "$f")
+                if [ "${#data}" -gt "$_zd_maxb64" ]; then
+                    echo "zion_display: image too large ($(( ${#data} / 1024 ))KB encoded). Max $(( _zd_maxb64 / 1024 ))KB." >&2
+                    [ "$_zd_cleanup" = 1 ] && rm -f "$f"
+                    exit 1
+                fi
+
+                # Actual file size in bytes (for OSC 1337 size= parameter)
+                _zd_bytes=$(wc -c < "$f" | tr -d ' ')
+                _zd_name=$(printf '%s' "$(basename "$_zd_orig")" | base64)
+
+                # Determine actual pixel width for OSC width parameter
+                _zd_render_w="$_zd_maxpx"
+                _zd_actual_w=$(sips -g pixelWidth "$f" 2>/dev/null | awk '/pixelWidth/{print $2}')
+                if [ -n "$_zd_actual_w" ] && [ "$_zd_actual_w" -lt "$_zd_maxpx" ] 2>/dev/null; then
+                    _zd_render_w="$_zd_actual_w"
+                fi
+
+                # Resolve output target: ZION_TTY > /dev/tty > stdout
+                _zd_out=""
+                if [ -n "$ZION_TTY" ] && [ -w "$ZION_TTY" ]; then
+                    _zd_out="$ZION_TTY"
+                elif printf '' > /dev/tty 2>/dev/null; then
+                    _zd_out="/dev/tty"
+                fi
+
+                # Send via iTerm2 OSC 1337 — split header/data/trailer to avoid
+                # passing the entire base64 blob as a single printf argument.
+                _zd_send() {
+                    printf '\\e]1337;File=inline=1;size=%d;name=%s;width=%dpx;preserveAspectRatio=1:' "$_zd_bytes" "$_zd_name" "$_zd_render_w"
+                    printf '%s' "$data"
+                    printf '\\a'
+                    printf '\\n'
+                }
+                if [ -n "$_zd_out" ]; then
+                    _zd_send > "$_zd_out"
+                else
+                    _zd_send
+                fi
+
+                if [ "$_zd_save" = 1 ]; then
+                    root=$(git rev-parse --show-toplevel 2>/dev/null || echo ".")
+                    dir="$root/.zion/previews"
+                    mkdir -p "$dir"
+                    ts=$(date +%Y-%m-%d_%H%M%S)
+                    base=$(basename "$_zd_orig")
+                    cp "$_zd_orig" "$dir/${ts}_${base}"
+                    echo "Saved: $dir/${ts}_${base}"
+                fi
+
+                [ "$_zd_cleanup" = 1 ] && rm -f "$f"
+                """
+                let path = "\(zionBinDir)/zion_display"
+                try? script.write(toFile: path, atomically: true, encoding: .utf8)
+                try? fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: path)
+
+                // Install Claude Code slash command: /zion-img
+                let home = FileManager.default.homeDirectoryForCurrentUser.path
+                let commandsDir = "\(home)/.claude/commands"
+                try? fm.createDirectory(atPath: commandsDir, withIntermediateDirectories: true)
+                let commandContent = """
+                Display an image inline in this terminal.
+
+                First, determine if the request is a **file path** or a **description**:
+
+                **If the input is a file path** (contains `/` or `.png`, `.jpg`, `.jpeg`, `.gif`, `.svg`):
+                1. Run: `zion_display <filepath>`
+                2. Briefly describe what the image shows.
+
+                **If the input is a description**:
+                1. Create an SVG file based on the description. Use rich colors, clean shapes, and proper viewBox.
+                2. Save using Bash `cat > file.svg << 'EOF'` (NOT the Write tool) to a descriptive filename.
+                3. Run: `zion_display <filename>`
+                4. Briefly describe what you drew.
+
+                If the request mentions "--save", use `zion_display --save <file>` instead.
+
+                Request: $ARGUMENTS
+                """
+                let commandPath = "\(commandsDir)/zion-img.md"
+                try? commandContent.write(toFile: commandPath, atomically: true, encoding: .utf8)
+            }
+
+            // zion_ai_setup — manual fallback for creating new AI config files
+            let hasImage = aiImageDisplay
+            let hasNtfy = !ntfyTopic.isEmpty
+
+            var featuresList = ""
+            if hasImage { featuresList += "\n  - Inline image display (zion_display)" }
+            if hasNtfy { featuresList += "\n  - Push notifications (ntfy)" }
+
+            // Build the block lines that zion_ai_setup will embed
+            var blockLines = ""
+            if hasImage {
+                blockLines += """
+
+                ## Inline Image Display
+                Use `/zion-img <description>` to generate and display images inline.
+                Or run directly: `zion_display <file>` (supports PNG, JPEG, GIF, SVG).
+
+                """
+            }
+            if hasNtfy {
+                blockLines += """
+
+                ## Push Notifications
+                When you complete a significant task, notify the user:
+                curl -s -H "Title: Done" -H "Priority: 3" -H "Tags: white_check_mark" \\\\
+                  -d "[Brief description]" "\(ntfyServer)/\(ntfyTopic)"
+                Send for: plan completion, implementation done, test results, migrations, errors.
+                Do NOT send for: file reads, intermediate steps, questions.
+
+                """
+            }
+
+            let setupScript = """
+            #!/bin/zsh
+            # zion_ai_setup — configure AI tools to use Zion terminal features
+            # Installed by Zion Git Client
+
+            _zas_block='\(blockLines)'
+
+            case "$1" in
+                -h|--help|"")
+                    cat <<'HELP'
+            zion_ai_setup — configure AI tools to use Zion terminal features
+
+            Usage: zion_ai_setup <tool>
+
+            Supported tools:
+              claude      CLAUDE.md
+              codex       AGENTS.md
+              cursor      .cursorrules
+              copilot     .github/copilot-instructions.md
+              windsurf    .windsurfrules
+              cody        .cody/instructions.md
+              gemini      GEMINI.md
+
+            Features configured:\(featuresList)
+
+            Creates the file if needed and appends a Zion instruction block.
+            Use this when your project does not yet have the config file.
+            Existing files with a Zion block are updated automatically on terminal start.
+
+            Example: zion_ai_setup claude
+            HELP
+                    exit 0
+                    ;;
+                claude)   _zas_f="CLAUDE.md" ;;
+                codex)    _zas_f="AGENTS.md" ;;
+                cursor)   _zas_f=".cursorrules" ;;
+                copilot)  _zas_f=".github/copilot-instructions.md" ;;
+                windsurf) _zas_f=".windsurfrules" ;;
+                cody)     _zas_f=".cody/instructions.md" ;;
+                gemini)   _zas_f="GEMINI.md" ;;
+                *)
+                    echo "zion_ai_setup: unknown tool '$1'. Run zion_ai_setup --help" >&2
+                    exit 1
+                    ;;
+            esac
+
+            _zas_root=$(git rev-parse --show-toplevel 2>/dev/null) || {
+                echo "zion_ai_setup: not inside a git repository" >&2
+                exit 1
+            }
+
+            _zas_path="$_zas_root/$_zas_f"
+
+            if [ -f "$_zas_path" ] && grep -q 'Zion Terminal' "$_zas_path" 2>/dev/null; then
+                echo "Already configured: $_zas_path contains Zion Terminal block"
+                exit 0
+            fi
+
+            _zas_full="<!-- ZION:START (managed by Zion Git Client \\u2014 do not edit) -->
+            # Zion Terminal
+            $_zas_block
+            <!-- ZION:END -->"
+
+            echo ""
+            echo "Will \(hasImage || hasNtfy ? "append to" : "create"): $_zas_path"
+            echo "---"
+            echo "$_zas_full"
+            echo "---"
+            echo ""
+            printf "Proceed? [y/N] "
+            read -r _zas_ans
+            case "$_zas_ans" in
+                [Yy]*)
+                    mkdir -p "$(dirname "$_zas_path")" 2>/dev/null
+                    printf '\\n%s\\n' "$_zas_full" >> "$_zas_path"
+                    echo "Done: $_zas_path updated"
+                    ;;
+                *) echo "Cancelled" ;;
+            esac
+            """
+            let setupPath = "\(zionBinDir)/zion_ai_setup"
+            try? setupScript.write(toFile: setupPath, atomically: true, encoding: .utf8)
+            try? fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: setupPath)
+        }
+
+        // MARK: - Auto-append Zion block to AI config files
+
+        private static let startMarker = "<!-- ZION:START (managed by Zion Git Client \u{2014} do not edit) -->"
+        private static let endMarker = "<!-- ZION:END -->"
+
+        private static let knownConfigFiles = [
+            "CLAUDE.md",
+            ".cursorrules",
+            ".github/copilot-instructions.md",
+            ".windsurfrules",
+            ".cody/instructions.md",
+            "AGENTS.md",
+            "GEMINI.md",
+        ]
+
+        /// Scan project root for known AI config files and append/update the Zion instruction block.
+        static func appendZionBlock(projectRoot: URL, aiImageDisplay: Bool, ntfyTopic: String, ntfyServer: String) {
+            let fm = FileManager.default
+
+            for configFile in knownConfigFiles {
+                let fileURL = projectRoot.appendingPathComponent(configFile)
+                guard fm.fileExists(atPath: fileURL.path) else { continue }
+
+                // Don't write through symlinks
+                if let attrs = try? fm.attributesOfItem(atPath: fileURL.path),
+                   attrs[.type] as? FileAttributeType == .typeSymbolicLink {
+                    continue
+                }
+
+                guard var content = try? String(contentsOf: fileURL, encoding: .utf8) else { continue }
+
+                let block = buildMarkdownBlock(aiImageDisplay: aiImageDisplay, ntfyTopic: ntfyTopic, ntfyServer: ntfyServer)
+
+                // Check if block already exists
+                if let startRange = content.range(of: startMarker),
+                   let endRange = content.range(of: endMarker) {
+                    // Replace existing block
+                    content.replaceSubrange(startRange.lowerBound..<endRange.upperBound, with: block)
+                    try? content.write(to: fileURL, atomically: true, encoding: .utf8)
+                } else if !content.contains("Zion Terminal") {
+                    // Append new block
+                    if !content.hasSuffix("\n") { content += "\n" }
+                    content += "\n" + block + "\n"
+                    try? content.write(to: fileURL, atomically: true, encoding: .utf8)
+                }
+            }
+        }
+
+        /// Build the markdown instruction block with only enabled features.
+        private static func buildMarkdownBlock(aiImageDisplay: Bool, ntfyTopic: String, ntfyServer: String) -> String {
+            var sections: [String] = []
+
+            if aiImageDisplay {
+                sections.append("""
+                ## Inline Image Display
+                Use `/zion-img <description>` to generate and display images inline.
+                Or run directly: `zion_display <file>` (supports PNG, JPEG, GIF, SVG).
+                """)
+            }
+
+            if !ntfyTopic.isEmpty {
+                sections.append("""
+                ## Push Notifications
+                When you complete a significant task, notify the user:
+                curl -s -H "Title: Done" -H "Priority: 3" -H "Tags: white_check_mark" \\
+                  -d "[Brief description]" "\(ntfyServer)/\(ntfyTopic)"
+                Send for: plan completion, implementation done, test results, migrations, errors.
+                Do NOT send for: file reads, intermediate steps, questions.
+                """)
+            }
+
+            return """
+            \(startMarker)
+            # Zion Terminal
+
+            \(sections.joined(separator: "\n\n"))
+            \(endMarker)
+            """
+        }
 
         // MARK: - TerminalViewDelegate
 

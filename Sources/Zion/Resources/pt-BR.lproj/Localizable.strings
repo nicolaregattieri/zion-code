@@ -490,12 +490,6 @@
 "ntfy.events.title" = "Eventos Notificados";
 "ntfy.test.button" = "Enviar Notificação de Teste";
 "ntfy.test.failed" = "Falha ao enviar notificação de teste. Verifique o tópico e a conexão.";
-"ntfy.agents.section" = "Notificações de Agentes IA";
-"ntfy.agents.hint" = "Adiciona uma regra de notificação na config global de cada agente para que notifiquem via ntfy.";
-"ntfy.agents.none" = "Nenhum agente de código IA detectado neste sistema.";
-"ntfy.agents.consent.title" = "Permitir que Zion gerencie regras do agente?";
-"ntfy.agents.consent.message" = "Zion adicionará uma regra de notificação na config global de %@ em:\n\n%@\n\nVocê pode desativar a qualquer momento.";
-"ntfy.agents.consent.allow" = "Permitir";
 "ntfy.group.gitOps" = "Operações Git";
 "ntfy.group.ai" = "IA";
 "ntfy.group.github" = "GitHub";
@@ -1464,7 +1458,7 @@
 "settings.terminal.openHyperlinks.hint" = "Links OSC 8 abrem no navegador padrão ao clicar com Cmd.";
 "settings.terminal.imageRendering" = "Renderização de Imagens Inline";
 "settings.terminal.imageRendering.hint" = "Renderiza imagens Sixel, iTerm2 e Kitty inline. Alterações aplicam em novas sessões.";
-"settings.terminal.aiImageDisplay" = "Exibição de Imagens IA";
-"settings.terminal.aiImageDisplay.hint" = "Injeta a função shell zion_display para que ferramentas IA exibam imagens inline. Define ZION_IMAGE_DISPLAY=1 para detecção. Aplica em novas sessões.";
+"settings.terminal.aiImageDisplay" = "Imagens IA Inline";
+"settings.terminal.aiImageDisplay.hint" = "Permite que ferramentas de IA exibam imagens diretamente no terminal. Configura automaticamente os arquivos de ferramentas IA detectados (CLAUDE.md, .cursorrules, etc.) na próxima sessão de terminal.";
 "settings.terminal.selection" = "Seleção";
 "settings.terminal.copyOnSelect" = "Copiar ao Selecionar";

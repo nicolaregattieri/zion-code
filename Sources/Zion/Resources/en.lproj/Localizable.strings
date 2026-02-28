@@ -594,12 +594,6 @@
 "ntfy.events.title" = "Notified Events";
 "ntfy.test.button" = "Send Test Notification";
 "ntfy.test.failed" = "Failed to send test notification. Check your topic and connection.";
-"ntfy.agents.section" = "AI Agent Notifications";
-"ntfy.agents.hint" = "Adds a notification rule to each agent's global config so they notify you via ntfy.";
-"ntfy.agents.none" = "No AI coding agents detected on this system.";
-"ntfy.agents.consent.title" = "Allow Zion to manage agent rules?";
-"ntfy.agents.consent.message" = "Zion will add a notification rule to %@'s global config at:\n\n%@\n\nYou can disable this at any time.";
-"ntfy.agents.consent.allow" = "Allow";
 "ntfy.group.gitOps" = "Git Operations";
 "ntfy.group.ai" = "AI";
 "ntfy.group.github" = "GitHub";
@@ -1511,7 +1505,7 @@
 "settings.terminal.openHyperlinks.hint" = "OSC 8 links open in the default browser when Cmd+clicked.";
 "settings.terminal.imageRendering" = "Inline Image Rendering";
 "settings.terminal.imageRendering.hint" = "Render Sixel, iTerm2, and Kitty inline images. Changes apply to new sessions.";
-"settings.terminal.aiImageDisplay" = "AI Image Display";
-"settings.terminal.aiImageDisplay.hint" = "Injects a zion_display shell function so AI tools can show images inline. Sets ZION_IMAGE_DISPLAY=1 for detection. Applies to new sessions.";
+"settings.terminal.aiImageDisplay" = "AI Inline Images";
+"settings.terminal.aiImageDisplay.hint" = "Let AI tools render images directly in the terminal. Automatically configures detected AI tool configs (CLAUDE.md, .cursorrules, etc.) on next terminal session.";
 "settings.terminal.selection" = "Selection";
 "settings.terminal.copyOnSelect" = "Copy on Select";
