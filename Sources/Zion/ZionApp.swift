@@ -176,6 +176,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        UserDefaults.standard.register(defaults: [
+            "terminal.scrollbackSize": 5000,
+            "terminal.bellMode": "system",
+            "terminal.openHyperlinks": true,
+            "terminal.imageRendering": true,
+            "terminal.copyOnSelect": false,
+        ])
+
         registerFonts()
         ClipboardMonitor.purgeStaleFilesOnLaunch()
         NSApp.setActivationPolicy(.regular)

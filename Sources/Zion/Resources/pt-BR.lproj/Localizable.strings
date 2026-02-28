@@ -1447,3 +1447,22 @@
 "findInFiles.summary" = "%@ resultados em %@ arquivos";
 "Nenhum resultado" = "Nenhum resultado";
 "Filtros" = "Filtros";
+
+// MARK: - Terminal Settings
+"settings.tab.terminal" = "Terminal";
+"settings.terminal.buffer" = "Buffer";
+"settings.terminal.scrollback" = "Linhas de Scrollback";
+"settings.terminal.scrollback.unlimited" = "Ilimitado";
+"settings.terminal.scrollback.hint" = "Número de linhas mantidas no buffer de rolagem. Alterações aplicam em novas sessões.";
+"settings.terminal.bell" = "Campainha";
+"settings.terminal.bellMode" = "Modo da Campainha";
+"settings.terminal.bell.off" = "Desligado";
+"settings.terminal.bell.visual" = "Flash Visual";
+"settings.terminal.bell.system" = "Beep do Sistema";
+"settings.terminal.advanced" = "Avançado";
+"settings.terminal.openHyperlinks" = "Abrir Hyperlinks com Cmd+Clique";
+"settings.terminal.openHyperlinks.hint" = "Links OSC 8 abrem no navegador padrão ao clicar com Cmd.";
+"settings.terminal.imageRendering" = "Renderização de Imagens Inline";
+"settings.terminal.imageRendering.hint" = "Renderiza imagens Sixel, iTerm2 e Kitty inline. Alterações aplicam em novas sessões.";
+"settings.terminal.selection" = "Seleção";
+"settings.terminal.copyOnSelect" = "Copiar ao Selecionar";

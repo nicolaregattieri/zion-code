@@ -41,6 +41,14 @@ struct TerminalTabView: NSViewRepresentable {
         // Cursor style only on initial setup (don't override shell programs in updateNSView)
         terminalView.getTerminal().setCursorStyle(.blinkBlock)
 
+        // Apply custom terminal options before starting the process
+        let scrollback = UserDefaults.standard.integer(forKey: "terminal.scrollbackSize")
+        let imageRendering = UserDefaults.standard.bool(forKey: "terminal.imageRendering")
+        var opts = SwiftTerm.TerminalOptions()
+        opts.scrollback = scrollback == Int.max ? Int.max : max(100, scrollback)
+        opts.enableSixelReported = imageRendering
+        terminalView.applyCustomOptions(opts)
+
         context.coordinator.startProcess(view: terminalView)
 
         // Hide SwiftTerm's legacy scroller (we don't need a visible scrollbar)
@@ -141,6 +149,7 @@ struct TerminalTabView: NSViewRepresentable {
         var lastAppliedTransparent: Bool = false
         private var pendingResizeTask: Task<Void, Never>?
         private var shiftEnterMonitor: Any?
+        private var mouseUpMonitor: Any?
 
         init(_ parent: TerminalTabView) {
             self.parent = parent
@@ -151,6 +160,7 @@ struct TerminalTabView: NSViewRepresentable {
         func startProcess(view: SwiftTerm.TerminalView) {
             self.terminalView = view
             installShiftEnterMonitor()
+            installMouseUpMonitor()
             let url = parent.session.workingDirectory
             let sessionID = parent.session.id
 
@@ -168,6 +178,9 @@ struct TerminalTabView: NSViewRepresentable {
 
                 var env = ProcessInfo.processInfo.environment
                 env["TERM"] = "xterm-256color"
+                env["COLORTERM"] = "truecolor"
+                env["TERM_PROGRAM"] = "Zion"
+                env["TERM_PROGRAM_VERSION"] = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
                 env["LANG"] = "en_US.UTF-8"
                 env["PATH"] = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:" + (env["PATH"] ?? "")
 
@@ -197,6 +210,7 @@ struct TerminalTabView: NSViewRepresentable {
         func reattach(view: SwiftTerm.TerminalView) {
             self.terminalView = view
             installShiftEnterMonitor()
+            installMouseUpMonitor()
 
             // Re-cache for future restructures (split → unsplit → split again)
             parent.session._cachedView = view
@@ -229,6 +243,7 @@ struct TerminalTabView: NSViewRepresentable {
             }
             process = nil
             removeShiftEnterMonitor()
+            removeMouseUpMonitor()
             parent.session._shellPid = 0
             parent.model?.unregisterTerminalSendCallback(sessionID: parent.session.id)
         }
@@ -252,6 +267,24 @@ struct TerminalTabView: NSViewRepresentable {
             if let monitor = shiftEnterMonitor {
                 NSEvent.removeMonitor(monitor)
                 shiftEnterMonitor = nil
+            }
+        }
+
+        private func installMouseUpMonitor() {
+            guard mouseUpMonitor == nil else { return }
+            mouseUpMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseUp) { [weak self] event in
+                guard let self, self.isTerminalFocused else { return event }
+                guard UserDefaults.standard.bool(forKey: "terminal.copyOnSelect") else { return event }
+                guard let view = self.terminalView, view.selectedRange().length > 0 else { return event }
+                view.copy(self)
+                return event
+            }
+        }
+
+        private func removeMouseUpMonitor() {
+            if let monitor = mouseUpMonitor {
+                NSEvent.removeMonitor(monitor)
+                mouseUpMonitor = nil
             }
         }
 
@@ -336,6 +369,38 @@ struct TerminalTabView: NSViewRepresentable {
         }
         nonisolated func rangeChanged(source: SwiftTerm.TerminalView, startY: Int, endY: Int) {}
         nonisolated func hostCurrentDirectoryUpdate(source: SwiftTerm.TerminalView, directory: String?) {}
+
+        nonisolated func bell(source: SwiftTerm.TerminalView) {
+            let mode = UserDefaults.standard.string(forKey: "terminal.bellMode") ?? "system"
+            switch mode {
+            case "off":
+                break
+            case "visual":
+                DispatchQueue.main.async {
+                    guard let layer = source.layer else { return }
+                    let flash = CALayer()
+                    flash.frame = layer.bounds
+                    flash.backgroundColor = NSColor.white.withAlphaComponent(0.15).cgColor
+                    layer.addSublayer(flash)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+                        flash.removeFromSuperlayer()
+                    }
+                }
+            default:
+                NSSound.beep()
+            }
+        }
+
+        nonisolated func requestOpenLink(source: SwiftTerm.TerminalView, link: String, params: [String: String]) {
+            guard UserDefaults.standard.bool(forKey: "terminal.openHyperlinks") else { return }
+            if let fixedup = link.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
+                if let url = NSURLComponents(string: fixedup) {
+                    if let actualUrl = url.url {
+                        NSWorkspace.shared.open(actualUrl)
+                    }
+                }
+            }
+        }
 
         // MARK: - LocalProcessDelegate
 

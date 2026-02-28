@@ -13,6 +13,11 @@ struct SettingsView: View {
                     Label(L10n("settings.tab.editor"), systemImage: "pencil.and.outline")
                 }
 
+            TerminalSettingsTab()
+                .tabItem {
+                    Label(L10n("settings.tab.terminal"), systemImage: "apple.terminal")
+                }
+
             AISettingsTab()
                 .tabItem {
                     Label(L10n("settings.tab.ai"), systemImage: "sparkles")
