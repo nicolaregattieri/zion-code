@@ -19,6 +19,8 @@ struct CommitRowView: View {
     var avatarImage: NSImage? = nil
     
     @State private var isHovered = false
+    @State private var decorationOverflow: Int = 0
+    @State private var showOverflowPopover = false
     
     private let rowHeight: CGFloat = 102
     private let cardHeight: CGFloat = 86
@@ -201,27 +203,88 @@ struct CommitRowView: View {
         }
     }
 
+    private var sortedDecorations: [String] {
+        commit.decorations.sorted { a, b in
+            decorationPriority(a) < decorationPriority(b)
+        }
+    }
+
+    private func decorationPriority(_ decoration: String) -> Int {
+        let trimmed = decoration.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.hasPrefix("HEAD -> ") { return 0 }
+        if trimmed == currentBranch { return 1 }
+        if trimmed.hasPrefix("tag: ") { return 3 }
+        for remote in remotes {
+            if trimmed.hasPrefix("\(remote)/") { return 4 }
+        }
+        return 2 // local branches
+    }
+
     private var decorationRow: some View {
         Group {
             if !commit.decorations.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 10) {
-                        ForEach(commit.decorations, id: \.self) { decoration in
-                            DecorationPill(
-                                decoration: decoration, 
-                                currentBranch: currentBranch, 
-                                highlightSearchQuery: searchQuery,
-                                onCheckout: { branch in
-                                    onCheckout(branch)
-                                },
-                                branchContextMenu: branchContextMenu,
-                                tagContextMenu: tagContextMenu,
-                                remotes: remotes
-                            )
-                        }
+                TruncatingHStack(spacing: 10, overflowCount: $decorationOverflow) {
+                    ForEach(sortedDecorations, id: \.self) { decoration in
+                        DecorationPill(
+                            decoration: decoration,
+                            currentBranch: currentBranch,
+                            highlightSearchQuery: searchQuery,
+                            onCheckout: { branch in
+                                onCheckout(branch)
+                            },
+                            branchContextMenu: branchContextMenu,
+                            tagContextMenu: tagContextMenu,
+                            remotes: remotes
+                        )
                     }
+                    overflowPill
                 }
             }
         }
+    }
+
+    private var overflowPill: some View {
+        Button {
+            showOverflowPopover = true
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 8, weight: .bold))
+                Text("+\(decorationOverflow)")
+                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(Capsule().fill(DesignSystem.Colors.glassSubtle))
+            .foregroundStyle(.secondary)
+            .overlay(Capsule().strokeBorder(DesignSystem.Colors.glassBorderDark, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .help(L10n("graph.decoration.overflow", decorationOverflow))
+        .popover(isPresented: $showOverflowPopover, arrowEdge: .bottom) {
+            overflowPopoverContent
+        }
+    }
+
+    private var overflowPopoverContent: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(sortedDecorations, id: \.self) { decoration in
+                DecorationPill(
+                    decoration: decoration,
+                    currentBranch: currentBranch,
+                    highlightSearchQuery: searchQuery,
+                    onCheckout: { branch in
+                        showOverflowPopover = false
+                        onCheckout(branch)
+                    },
+                    branchContextMenu: branchContextMenu,
+                    tagContextMenu: tagContextMenu,
+                    remotes: remotes
+                )
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: 320)
     }
 }

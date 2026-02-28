@@ -1452,6 +1452,7 @@
 "zen.mode" = "Zen Mode";
 "zen.enter" = "Enter Zen Mode";
 "zen.exit" = "Exit Zen Mode";
+"graph.decoration.overflow" = "+%d more refs";
 "graph.commit.review" = "Review this commit with AI";
 "graph.commit.review.cached" = "cached";
 "graph.commit.review.tab.details" = "Details";
