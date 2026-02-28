@@ -36,18 +36,19 @@ struct TerminalTabView: NSViewRepresentable {
         terminalView.allowMouseReporting = true
         terminalView.terminalDelegate = context.coordinator
 
-        applyTheme(to: terminalView, context: context)
-
-        // Cursor style only on initial setup (don't override shell programs in updateNSView)
-        terminalView.getTerminal().setCursorStyle(.blinkBlock)
-
-        // Apply custom terminal options before starting the process
+        // Apply custom terminal options BEFORE theme — applyCustomOptions replaces the
+        // Terminal instance with default colors, so theme must come after.
         let scrollback = UserDefaults.standard.integer(forKey: "terminal.scrollbackSize")
         let imageRendering = UserDefaults.standard.bool(forKey: "terminal.imageRendering")
         var opts = SwiftTerm.TerminalOptions()
         opts.scrollback = scrollback == Int.max ? Int.max : max(100, scrollback)
         opts.enableSixelReported = imageRendering
         terminalView.applyCustomOptions(opts)
+
+        applyTheme(to: terminalView, context: context)
+
+        // Cursor style only on initial setup (don't override shell programs in updateNSView)
+        terminalView.getTerminal().setCursorStyle(.blinkBlock)
 
         context.coordinator.startProcess(view: terminalView)
 
