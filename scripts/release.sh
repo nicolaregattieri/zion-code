@@ -124,12 +124,37 @@ if [ "${1:-}" = "upload" ]; then
         gh release delete "$TAG" --yes --cleanup-tag --repo "$GITHUB_REPO"
     fi
 
-    gh release create "$TAG" \
-        --title "Zion $VERSION" \
-        --generate-notes \
-        "$DMG_PATH" \
-        "$APPCAST_PATH" \
-        --repo "$GITHUB_REPO"
+    # Build "What's Changed" from commits since last tag.
+    # Works for both PRs and direct commits to master — nothing gets lost.
+    PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+    NOTES_BODY=""
+    if [ -n "$PREV_TAG" ]; then
+        COMMIT_LOG=$(git log --pretty=format:"* %s" "$PREV_TAG..HEAD" --no-merges 2>/dev/null || echo "")
+        if [ -n "$COMMIT_LOG" ]; then
+            NOTES_BODY="## What's Changed
+
+$COMMIT_LOG
+
+**Full Changelog**: https://github.com/$GITHUB_REPO/compare/$PREV_TAG...$TAG"
+        fi
+    fi
+
+    if [ -n "$NOTES_BODY" ]; then
+        gh release create "$TAG" \
+            --title "Zion $VERSION" \
+            --notes "$NOTES_BODY" \
+            "$DMG_PATH" \
+            "$APPCAST_PATH" \
+            --repo "$GITHUB_REPO"
+    else
+        # First release or no previous tag — let GitHub generate notes
+        gh release create "$TAG" \
+            --title "Zion $VERSION" \
+            --generate-notes \
+            "$DMG_PATH" \
+            "$APPCAST_PATH" \
+            --repo "$GITHUB_REPO"
+    fi
 
     echo ""
     echo "Release published: https://github.com/$GITHUB_REPO/releases/tag/$TAG"

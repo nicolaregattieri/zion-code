@@ -441,6 +441,23 @@ struct TerminalTabView: NSViewRepresentable {
                     _zd_render_w="$_zd_actual_w"
                 fi
 
+                # Compute image height in terminal rows for stdout spacer.
+                # When writing via ZION_TTY the image bypasses the calling
+                # process (e.g. Claude Code), so its TUI layout does not know
+                # the cursor moved. Emitting matching newlines on stdout lets
+                # the caller advance its own layout past the image area.
+                _zd_img_h=$(sips -g pixelHeight "$f" 2>/dev/null | awk '/pixelHeight/{print $2}')
+                if [ -n "$_zd_img_h" ] && [ -n "$_zd_actual_w" ] && [ "$_zd_actual_w" -gt 0 ] 2>/dev/null; then
+                    if [ "$_zd_render_w" -lt "$_zd_actual_w" ] 2>/dev/null; then
+                        _zd_img_h=$(( _zd_img_h * _zd_render_w / _zd_actual_w ))
+                    fi
+                fi
+                _zd_cell_h=18
+                _zd_rows=1
+                if [ -n "$_zd_img_h" ] && [ "$_zd_img_h" -gt 0 ] 2>/dev/null; then
+                    _zd_rows=$(( (_zd_img_h + _zd_cell_h - 1) / _zd_cell_h ))
+                fi
+
                 # Resolve output target: ZION_TTY > /dev/tty > stdout
                 _zd_out=""
                 if [ -n "$ZION_TTY" ] && [ -w "$ZION_TTY" ]; then
@@ -449,16 +466,24 @@ struct TerminalTabView: NSViewRepresentable {
                     _zd_out="/dev/tty"
                 fi
 
-                # Send via iTerm2 OSC 1337 — split header/data/trailer to avoid
-                # passing the entire base64 blob as a single printf argument.
+                # Send via iTerm2 OSC 1337.
+                # CR+LF after the image resets the terminal cursor to column 0.
                 _zd_send() {
                     printf '\\e]1337;File=inline=1;size=%d;name=%s;width=%dpx;preserveAspectRatio=1:' "$_zd_bytes" "$_zd_name" "$_zd_render_w"
                     printf '%s' "$data"
                     printf '\\a'
-                    printf '\\n'
+                    printf '\\r\\n'
                 }
                 if [ -n "$_zd_out" ]; then
                     _zd_send > "$_zd_out"
+                    # Emit spacer newlines on stdout so the calling process
+                    # (whose stdout is captured, not the terminal) advances
+                    # its layout past the image rows.
+                    _zd_i=0
+                    while [ "$_zd_i" -lt "$_zd_rows" ]; do
+                        echo ""
+                        _zd_i=$(( _zd_i + 1 ))
+                    done
                 else
                     _zd_send
                 fi
@@ -494,8 +519,8 @@ struct TerminalTabView: NSViewRepresentable {
 
                 **If the input is a description**:
                 1. Create an SVG file based on the description. Use rich colors, clean shapes, and proper viewBox.
-                2. Save using Bash `cat > file.svg << 'EOF'` (NOT the Write tool) to a descriptive filename.
-                3. Run: `zion_display <filename>`
+                2. Save to a temp file using Bash `cat > /tmp/zion_img_<name>.svg << 'EOF'` (NOT the Write tool). Always use `/tmp/` to avoid polluting the project directory.
+                3. Run: `zion_display /tmp/zion_img_<name>.svg`
                 4. Briefly describe what you drew.
 
                 If the request mentions "--save", use `zion_display --save <file>` instead.
