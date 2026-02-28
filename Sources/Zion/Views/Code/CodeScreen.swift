@@ -1502,8 +1502,13 @@ struct CodeScreen: View {
             if isTerminalSearchVisible {
                 isTerminalSearchFocused = true
             } else {
-                closeTerminalSearch()
+                terminalSearchQuery = ""
+                isTerminalSearchFocused = false
+                model.terminalClearSearch()
             }
+        }
+        if !isTerminalSearchVisible {
+            model.focusActiveTerminal()
         }
     }
 
