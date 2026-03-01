@@ -172,10 +172,12 @@ struct DesignSystem {
 
         // Body
         static let body = Font.system(size: 12)
+        static let bodySmall = Font.system(size: 11)
         static let bodyMedium = Font.system(size: 11, weight: .medium)
 
         // Labels & Meta
         static let label = Font.system(size: 10)
+        static let labelMedium = Font.system(size: 10, weight: .medium)
         static let labelBold = Font.system(size: 10, weight: .bold)
         static let meta = Font.system(size: 9)
         static let metaBold = Font.system(size: 9, weight: .bold)
@@ -187,6 +189,19 @@ struct DesignSystem {
         static let monoLabel = Font.system(size: 10, design: .monospaced)
         static let monoLabelBold = Font.system(size: 10, weight: .bold, design: .monospaced)
         static let monoMeta = Font.system(size: 9, design: .monospaced)
+    }
+
+    // MARK: - Opacity Tokens
+
+    struct Opacity {
+        static let full: Double = 1.0
+        static let high: Double = 0.9
+        static let visible: Double = 0.7
+        static let muted: Double = 0.5
+        static let subtle: Double = 0.45
+        static let dim: Double = 0.3
+        static let faint: Double = 0.15
+        static let ghost: Double = 0.08
     }
 
     // MARK: - Icon Size Tokens
