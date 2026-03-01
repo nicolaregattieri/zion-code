@@ -13,70 +13,131 @@ enum MobileWebClient {
 <title>Zion Remote</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0d1117;--surface:#161b22;--border:#30363d;--text:#e6edf3;--text2:#8b949e;--accent:#7c3aed;--accent2:#a78bfa;--success:#22c55e;--warn:#f59e0b;--error:#ef4444;--font:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;--mono:'SF Mono',SFMono-Regular,Menlo,monospace}
+:root{
+  --bg:#110b1f;--surface:#1a1229;--surface2:#221838;--border:rgba(255,255,255,0.10);--border2:rgba(255,255,255,0.06);
+  --text:#e8e4f0;--text2:#9a8fad;--text3:#6b5f80;
+  --accent:#7c3aed;--accent2:#a78bfa;--accent-glow:rgba(124,58,237,0.25);--accent-subtle:rgba(124,58,237,0.10);
+  --brand-dark:#1a004e;--brand-ink:#2a016c;--brand-primary:#65449b;
+  --success:#4dcc7a;--warn:#e6a23c;--error:#e05252;
+  --font:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;
+  --mono:'SF Mono',SFMono-Regular,Menlo,monospace;
+  --radius:12px;--radius-sm:8px
+}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);overflow:hidden;-webkit-text-size-adjust:100%}
 #app{display:flex;flex-direction:column;height:100%;height:100dvh}
 
-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border)}
-header h1{font-size:16px;font-weight:600}
-#status{font-size:12px;padding:4px 10px;border-radius:12px;font-weight:500}
-#status.connecting{background:#f59e0b22;color:var(--warn)}
-#status.connected{background:#22c55e22;color:var(--success)}
-#status.error{background:#ef444422;color:var(--error)}
+/* ── Header ── */
+header{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--border);position:relative;z-index:10}
+header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#36f9f6,#ff7edb);opacity:0.5}
+#menu-btn{width:36px;height:36px;border:none;background:var(--accent-subtle);border-radius:var(--radius-sm);color:var(--accent2);font-size:18px;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
+#menu-btn:active{background:var(--accent-glow)}
+#header-info{flex:1;min-width:0}
+#header-title{font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px}
+#header-context{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#status{font-size:11px;padding:4px 10px;border-radius:12px;font-weight:600;flex-shrink:0;letter-spacing:0.3px}
+#status.connecting{background:rgba(230,162,60,0.15);color:var(--warn)}
+#status.connected{background:rgba(77,204,122,0.15);color:var(--success)}
+#status.error{background:rgba(224,82,82,0.15);color:var(--error)}
 
-#sessions{display:flex;gap:6px;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch}
-#sessions:empty{display:none}
-.sess-tab{padding:6px 12px;border-radius:8px;font-size:13px;background:var(--bg);border:1px solid var(--border);color:var(--text2);white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.sess-tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+/* ── Drawer overlay + panel ── */
+#drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:20;opacity:0;pointer-events:none;transition:opacity .25s ease;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+#drawer-overlay.open{opacity:1;pointer-events:auto}
+#drawer{position:fixed;top:0;left:0;bottom:0;width:min(300px,80vw);background:var(--surface);border-right:1px solid var(--border);z-index:21;transform:translateX(-100%);transition:transform .25s cubic-bezier(.4,0,.2,1);overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column}
+#drawer.open{transform:translateX(0)}
 
+#drawer-header{padding:20px 16px 16px;border-bottom:1px solid var(--border);position:relative}
+#drawer-header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#36f9f6,#ff7edb);opacity:0.35}
+#drawer-brand{display:flex;align-items:center;gap:10px}
+#drawer-logo{width:28px;height:28px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--brand-ink),var(--accent));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff}
+#drawer-brand h2{font-size:17px;font-weight:700;background:linear-gradient(135deg,var(--accent2),#36f9f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#drawer-subtitle{font-size:12px;color:var(--text3);margin-top:4px}
+
+#drawer-list{flex:1;padding:12px 0;overflow-y:auto}
+.drawer-repo{padding:0 12px;margin-bottom:4px}
+.drawer-repo-header{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s}
+.drawer-repo-header:active{background:var(--accent-subtle)}
+.drawer-repo-header.active{color:var(--accent2)}
+.drawer-repo-icon{font-size:14px;opacity:0.6}
+.drawer-repo-count{margin-left:auto;font-size:11px;font-weight:500;background:var(--border);padding:2px 7px;border-radius:10px;color:var(--text3)}
+.drawer-session{display:flex;align-items:center;gap:8px;padding:10px 12px 10px 38px;margin:2px 12px;border-radius:var(--radius-sm);font-size:14px;color:var(--text2);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s;border:1px solid transparent}
+.drawer-session:active{background:var(--accent-subtle)}
+.drawer-session.active{background:var(--accent-subtle);border-color:var(--accent);color:var(--text);font-weight:500}
+.drawer-session-icon{font-size:12px;opacity:0.5}
+.drawer-session-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── Terminal ── */
 #terminal-wrap{flex:1;overflow:hidden;position:relative}
 #terminal{height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 16px;font-family:var(--mono);font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-all;color:var(--text)}
-#terminal:empty::before{content:'Waiting for terminal output...';color:var(--text2);font-family:var(--font);font-style:italic}
+#terminal:empty::before{content:'Waiting for terminal output...';color:var(--text3);font-family:var(--font);font-style:italic}
 
+/* ── Quick actions ── */
 #quick-actions{display:none;padding:8px 16px;background:var(--surface);border-top:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap}
 #quick-actions.visible{display:flex;gap:6px}
-.qa-btn{min-width:44px;min-height:44px;padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14px;font-weight:500;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center}
-.qa-btn:active{background:var(--accent);border-color:var(--accent);color:#fff}
+.qa-btn{min-width:44px;min-height:44px;padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:var(--mono);font-size:14px;font-weight:500;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.qa-btn:active{background:var(--accent);border-color:var(--accent);color:#fff;transform:scale(0.95)}
 
-#project-nav{display:flex;gap:6px;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch}
-#project-nav:empty{display:none}
-.proj-pill{padding:6px 12px;border-radius:8px;font-size:13px;background:var(--bg);border:1px solid var(--border);color:var(--text2);white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;gap:4px}
-.proj-pill.active{background:var(--accent);border-color:var(--accent);color:#fff}
-.proj-count{font-size:11px;opacity:0.7}
-
-#prompt-banner{display:none;padding:12px 16px;background:#7c3aed22;border-top:1px solid var(--accent)}
+/* ── Prompt banner ── */
+#prompt-banner{display:none;padding:12px 16px;background:var(--accent-subtle);border-top:1px solid rgba(124,58,237,0.3)}
 #prompt-banner.visible{display:block}
 #prompt-text{font-size:13px;color:var(--accent2);margin-bottom:10px;font-family:var(--mono)}
 #prompt-actions{display:flex;gap:8px}
-#prompt-actions button{flex:1;padding:10px;border-radius:10px;border:none;font-size:14px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#prompt-actions button{flex:1;padding:10px;border-radius:var(--radius);border:none;font-size:14px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .1s}
+#prompt-actions button:active{transform:scale(0.97)}
 #btn-approve{background:var(--success);color:#fff}
-#btn-deny{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+#btn-deny{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
 #btn-abort{background:var(--error);color:#fff}
 
+/* ── Input bar ── */
 #input-bar{display:flex;gap:8px;padding:10px 16px;background:var(--surface);border-top:1px solid var(--border);padding-bottom:max(10px,env(safe-area-inset-bottom))}
-#cmd-input{flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14px;outline:none;-webkit-appearance:none}
-#cmd-input:focus{border-color:var(--accent)}
-#btn-send{padding:10px 16px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-weight:600;font-size:14px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#cmd-input{flex:1;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14px;outline:none;-webkit-appearance:none;transition:border-color .15s}
+#cmd-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-subtle)}
+#btn-send{padding:10px 18px;border-radius:var(--radius);border:none;background:var(--accent);color:#fff;font-weight:600;font-size:14px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .1s}
+#btn-send:active{transform:scale(0.95)}
 
+/* ── Pairing screen ── */
 #pairing{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;padding:32px}
-#pairing h2{font-size:20px}
-#pairing p{color:var(--text2);font-size:14px;text-align:center}
+#pairing h2{font-size:20px;font-weight:700}
+#pairing p{color:var(--text2);font-size:14px;text-align:center;max-width:280px;line-height:1.5}
 .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
 .spinner.hidden{display:none}
 @keyframes spin{to{transform:rotate(360deg)}}
-#btn-retry{display:none;padding:12px 24px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-weight:600;font-size:15px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-top:8px}
+#btn-retry{display:none;padding:12px 24px;border-radius:var(--radius);border:none;background:var(--accent);color:#fff;font-weight:600;font-size:15px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-top:8px;transition:transform .1s}
+#btn-retry:active{transform:scale(0.95)}
+
+/* ── Zion branding on pairing ── */
+#pair-brand{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+#pair-logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--brand-ink),var(--accent));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;color:#fff}
+#pair-brand-name{font-size:22px;font-weight:700;background:linear-gradient(135deg,var(--accent2),#36f9f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 </style>
 </head>
 <body>
 <div id="app">
 <header>
-<h1>Zion Remote</h1>
+<button id="menu-btn" onclick="toggleDrawer()" aria-label="Menu">&#9776;</button>
+<div id="header-info">
+<div id="header-title">Zion Remote</div>
+<div id="header-context">No session</div>
+</div>
 <span id="status" class="connecting">Connecting</span>
 </header>
-<div id="project-nav"></div>
-<div id="sessions"></div>
+
+<div id="drawer-overlay" onclick="closeDrawer()"></div>
+<nav id="drawer">
+<div id="drawer-header">
+<div id="drawer-brand"><div id="drawer-logo">Z</div><h2>Zion</h2></div>
+<div id="drawer-subtitle">Remote Terminal Access</div>
+</div>
+<div id="drawer-list"></div>
+</nav>
+
 <div id="terminal-wrap">
-<div id="pairing"><div class="spinner" id="pair-spinner"></div><h2 id="pair-title">Connecting...</h2><p id="pair-desc">Establishing secure connection to your Mac</p><button id="btn-retry" onclick="retryConnect()">Refresh</button></div>
+<div id="pairing">
+<div id="pair-brand"><div id="pair-logo">Z</div><span id="pair-brand-name">Zion</span></div>
+<div class="spinner" id="pair-spinner"></div>
+<h2 id="pair-title">Connecting...</h2>
+<p id="pair-desc">Establishing secure connection to your Mac</p>
+<button id="btn-retry" onclick="retryConnect()">Refresh</button>
+</div>
 <div id="terminal" style="display:none"></div>
 </div>
 <div id="prompt-banner">
@@ -115,6 +176,20 @@ const BASE = location.origin;
 
 let cryptoKey, activeSession = null, sessions = [];
 let polling = false, pollErrors = 0, maxPollErrors = 5, activeProject = null;
+let drawerOpen = false;
+
+// -- Drawer --
+function toggleDrawer() { drawerOpen ? closeDrawer() : openDrawer(); }
+function openDrawer() {
+  drawerOpen = true;
+  $('#drawer').classList.add('open');
+  $('#drawer-overlay').classList.add('open');
+}
+function closeDrawer() {
+  drawerOpen = false;
+  $('#drawer').classList.remove('open');
+  $('#drawer-overlay').classList.remove('open');
+}
 
 // -- Crypto (AES-256-GCM via Web Crypto API, skipped in LAN mode) --
 async function importKey(b64url) {
@@ -263,6 +338,7 @@ function showDisconnected() {
   $('#pair-desc').textContent = 'The connection to your Mac was lost. Tap Reconnect to try again.';
   $('#btn-retry').textContent = 'Reconnect';
   $('#btn-retry').style.display = '';
+  updateHeaderContext();
 }
 
 // -- Helpers --
@@ -295,12 +371,12 @@ function handleMessage(msg) {
       if (!activeProject || !repos.has(activeProject)) {
         activeProject = repos.size > 0 ? [...repos.keys()][0] : null;
       }
-      renderProjectNav();
-      renderSessions();
+      renderDrawerList();
       if (!activeSession || !sessions.some(s => s.id === activeSession)) {
         const projSessions = sessions.filter(s => (s.repoName || 'Unknown') === activeProject);
         if (projSessions.length > 0) selectSession(projSessions[0].id);
       }
+      updateHeaderContext();
       break;
     case 'screenUpdate':
       if (p.sessionID === activeSession) {
@@ -325,63 +401,75 @@ function getRepoMap() {
   return repos;
 }
 
-function renderProjectNav() {
-  const el = $('#project-nav');
+function updateHeaderContext() {
+  const ctx = $('#header-context');
+  if (!activeSession) { ctx.textContent = 'No session'; return; }
+  const s = sessions.find(s => s.id === activeSession);
+  if (s) {
+    const label = s.label || s.title || 'Terminal';
+    const repo = s.repoName || '';
+    ctx.textContent = repo ? repo + ' \\u2022 ' + label : label;
+  }
+}
+
+function renderDrawerList() {
+  const el = $('#drawer-list');
   el.innerHTML = '';
   const repos = getRepoMap();
-  if (repos.size <= 1) {
-    activeProject = repos.size === 1 ? [...repos.keys()][0] : null;
-    return;
-  }
-  // Sort: active project first, then alphabetical
   const sorted = [...repos.entries()].sort((a, b) => {
     if (a[0] === activeProject) return -1;
     if (b[0] === activeProject) return 1;
     return a[0].localeCompare(b[0]);
   });
   sorted.forEach(([repoName, repoSessions]) => {
-    const pill = document.createElement('div');
-    pill.className = 'proj-pill' + (repoName === activeProject ? ' active' : '');
-    const name = document.createTextNode(repoName);
-    pill.appendChild(name);
+    const group = document.createElement('div');
+    group.className = 'drawer-repo';
+
+    const header = document.createElement('div');
+    header.className = 'drawer-repo-header' + (repoName === activeProject ? ' active' : '');
+
+    const icon = document.createElement('span');
+    icon.className = 'drawer-repo-icon';
+    icon.textContent = '\\u{1F4C1}';
+    header.appendChild(icon);
+
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = repoName;
+    header.appendChild(nameSpan);
+
     const count = document.createElement('span');
-    count.className = 'proj-count';
-    count.textContent = '(' + repoSessions.length + ')';
-    pill.appendChild(count);
-    pill.onclick = () => selectProject(repoName);
-    el.appendChild(pill);
-  });
-}
+    count.className = 'drawer-repo-count';
+    count.textContent = repoSessions.length;
+    header.appendChild(count);
+    group.appendChild(header);
 
-function renderSessions() {
-  const el = $('#sessions');
-  el.innerHTML = '';
-  const filtered = sessions.filter(s => (s.repoName || 'Unknown') === activeProject);
-  filtered.forEach(s => {
-    const tab = document.createElement('div');
-    tab.className = 'sess-tab' + (s.id === activeSession ? ' active' : '');
-    tab.textContent = s.label || s.title || 'Terminal';
-    tab.onclick = () => selectSession(s.id);
-    el.appendChild(tab);
-  });
-}
+    repoSessions.forEach(s => {
+      const item = document.createElement('div');
+      item.className = 'drawer-session' + (s.id === activeSession ? ' active' : '');
 
-function selectProject(repoName) {
-  activeProject = repoName;
-  renderProjectNav();
-  renderSessions();
-  const projSessions = sessions.filter(s => (s.repoName || 'Unknown') === activeProject);
-  if (projSessions.length > 0 && !projSessions.some(s => s.id === activeSession)) {
-    selectSession(projSessions[0].id);
-  }
+      const sIcon = document.createElement('span');
+      sIcon.className = 'drawer-session-icon';
+      sIcon.textContent = '\\u276F';
+      item.appendChild(sIcon);
+
+      const label = document.createElement('span');
+      label.className = 'drawer-session-label';
+      label.textContent = s.label || s.title || 'Terminal';
+      item.appendChild(label);
+      item.onclick = () => { selectSession(s.id); closeDrawer(); };
+      group.appendChild(item);
+    });
+
+    el.appendChild(group);
+  });
 }
 
 function selectSession(id) {
   activeSession = id;
   const s = sessions.find(s => s.id === id);
   if (s) activeProject = s.repoName || 'Unknown';
-  renderProjectNav();
-  renderSessions();
+  renderDrawerList();
+  updateHeaderContext();
   $('#terminal').textContent = '';
   hidePrompt();
 }
