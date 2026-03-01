@@ -1,7 +1,7 @@
 import SwiftUI
 
 private enum SettingsTab: String, CaseIterable {
-    case general, editor, terminal, ai, notifications
+    case general, editor, terminal, ai, notifications, mobileAccess
 
     var label: String {
         switch self {
@@ -10,6 +10,7 @@ private enum SettingsTab: String, CaseIterable {
         case .terminal:      return L10n("settings.tab.terminal")
         case .ai:            return L10n("settings.tab.ai")
         case .notifications: return L10n("settings.tab.notifications")
+        case .mobileAccess:  return L10n("settings.tab.mobileAccess")
         }
     }
 
@@ -20,6 +21,7 @@ private enum SettingsTab: String, CaseIterable {
         case .terminal:      return "apple.terminal"
         case .ai:            return "sparkles"
         case .notifications: return "bell.badge"
+        case .mobileAccess:  return "iphone.and.arrow.forward"
         }
     }
 }
@@ -68,6 +70,7 @@ struct SettingsView: View {
                 case .terminal:      TerminalSettingsTab()
                 case .ai:            AISettingsTab()
                 case .notifications: NotificationSettingsTab()
+                case .mobileAccess:  MobileAccessSettingsTab()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
