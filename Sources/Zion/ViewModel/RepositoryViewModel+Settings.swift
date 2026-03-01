@@ -287,7 +287,20 @@ extension RepositoryViewModel {
         // MARK: Mobile Remote Access
         if defaults.object(forKey: "zion.mobileAccess.enabled") != nil {
             let mae = defaults.bool(forKey: "zion.mobileAccess.enabled")
-            if mae != isMobileAccessEnabled { isMobileAccessEnabled = mae }
+            if mae != isMobileAccessEnabled {
+                isMobileAccessEnabled = mae
+                if mae {
+                    enableRemoteAccess()
+                } else {
+                    disableRemoteAccess()
+                }
+            }
+        }
+
+        // Handle regenerate key request from Settings
+        if RemoteAccessState.shared.shouldRegenerateKey {
+            RemoteAccessState.shared.shouldRegenerateKey = false
+            regeneratePairingKey()
         }
     }
 

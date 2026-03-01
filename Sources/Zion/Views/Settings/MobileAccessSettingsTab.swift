@@ -2,18 +2,15 @@ import SwiftUI
 
 struct MobileAccessSettingsTab: View {
     @AppStorage("zion.mobileAccess.enabled") private var isEnabled: Bool = false
-    @State private var isCheckingCloudflared: Bool = true
-    @State private var isCloudflaredInstalled: Bool = false
-    @State private var connectionState: RemoteAccessConnectionState = .disabled
-    @State private var tunnelURL: String = ""
-    @State private var qrImage: NSImage?
+
+    private var state: RemoteAccessState { RemoteAccessState.shared }
 
     private var currentStep: OnboardingStep {
-        if isCheckingCloudflared { return .checking }
-        if !isCloudflaredInstalled { return .installCloudflared }
+        if !state.hasCheckedCloudflared { return .checking }
+        if !state.isCloudflaredInstalled { return .installCloudflared }
         if !isEnabled { return .ready }
 
-        switch connectionState {
+        switch state.connectionState {
         case .disabled: return .ready
         case .starting: return .starting
         case .waitingForPairing: return .scanQR
@@ -76,10 +73,8 @@ struct MobileAccessSettingsTab: View {
                     }
 
                     Button(L10n("mobile.access.step.install.recheck")) {
-                        isCheckingCloudflared = true
                         Task {
-                            isCloudflaredInstalled = await CloudflareTunnelManager.isCloudflaredInstalled()
-                            isCheckingCloudflared = false
+                            await state.checkCloudflared()
                         }
                     }
                     .font(.caption)
@@ -87,19 +82,12 @@ struct MobileAccessSettingsTab: View {
 
             case .ready:
                 stepSection(
-                    number: isCloudflaredInstalled ? 1 : 2,
+                    number: state.isCloudflaredInstalled ? 1 : 2,
                     title: L10n("mobile.access.step.enable.title"),
                     icon: "power.circle.fill",
                     color: DesignSystem.Colors.info
                 ) {
                     Toggle(L10n("mobile.access.enable"), isOn: $isEnabled)
-                        .onChange(of: isEnabled) { _, newValue in
-                            NotificationCenter.default.post(
-                                name: .mobileAccessToggled,
-                                object: nil,
-                                userInfo: ["enabled": newValue]
-                            )
-                        }
 
                     Text(L10n("mobile.access.step.enable.description"))
                         .font(.caption)
@@ -127,7 +115,7 @@ struct MobileAccessSettingsTab: View {
                     icon: "qrcode",
                     color: DesignSystem.Colors.actionPrimary
                 ) {
-                    if let qrImage {
+                    if let qrImage = state.qrImage {
                         HStack {
                             Spacer()
                             Image(nsImage: qrImage)
@@ -142,9 +130,9 @@ struct MobileAccessSettingsTab: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
-                    if !tunnelURL.isEmpty {
+                    if !state.tunnelURL.isEmpty {
                         HStack {
-                            Text(tunnelURL)
+                            Text(state.tunnelURL)
                                 .font(.system(.caption, design: .monospaced))
                                 .foregroundStyle(.tertiary)
                                 .lineLimit(1)
@@ -152,7 +140,7 @@ struct MobileAccessSettingsTab: View {
                             Spacer()
                             Button {
                                 NSPasteboard.general.clearContents()
-                                NSPasteboard.general.setString(tunnelURL, forType: .string)
+                                NSPasteboard.general.setString(state.tunnelURL, forType: .string)
                             } label: {
                                 Image(systemName: "doc.on.doc")
                             }
@@ -172,7 +160,7 @@ struct MobileAccessSettingsTab: View {
                     icon: "iphone.radiowaves.left.and.right",
                     color: DesignSystem.Colors.success
                 ) {
-                    if case .connected(let count) = connectionState {
+                    if case .connected(let count) = state.connectionState {
                         Label(
                             L10n("mobile.access.state.connected", count),
                             systemImage: "checkmark.circle.fill"
@@ -194,7 +182,7 @@ struct MobileAccessSettingsTab: View {
                     icon: "exclamationmark.triangle.fill",
                     color: DesignSystem.Colors.error
                 ) {
-                    if case .error(let message) = connectionState {
+                    if case .error(let message) = state.connectionState {
                         Text(message)
                             .font(.caption)
                             .foregroundStyle(DesignSystem.Colors.error)
@@ -205,11 +193,6 @@ struct MobileAccessSettingsTab: View {
                         Task {
                             try? await Task.sleep(nanoseconds: 200_000_000)
                             isEnabled = true
-                            NotificationCenter.default.post(
-                                name: .mobileAccessToggled,
-                                object: nil,
-                                userInfo: ["enabled": true]
-                            )
                         }
                     }
                     .font(.caption)
@@ -222,8 +205,9 @@ struct MobileAccessSettingsTab: View {
         .toggleStyle(SwitchToggleStyle(tint: DesignSystem.Colors.actionPrimary))
         .tint(DesignSystem.Colors.actionPrimary)
         .task {
-            isCloudflaredInstalled = await CloudflareTunnelManager.isCloudflaredInstalled()
-            isCheckingCloudflared = false
+            if !state.hasCheckedCloudflared {
+                await state.checkCloudflared()
+            }
         }
     }
 
@@ -254,19 +238,11 @@ struct MobileAccessSettingsTab: View {
         Section {
             Button(L10n("mobile.access.step.disable")) {
                 isEnabled = false
-                NotificationCenter.default.post(
-                    name: .mobileAccessToggled,
-                    object: nil,
-                    userInfo: ["enabled": false]
-                )
             }
             .font(.caption)
 
             Button(L10n("mobile.access.regenerateKey")) {
-                NotificationCenter.default.post(
-                    name: .mobileAccessRegenerateKey,
-                    object: nil
-                )
+                RemoteAccessState.shared.shouldRegenerateKey = true
             }
             .font(.caption)
             .foregroundStyle(DesignSystem.Colors.destructive)
@@ -304,11 +280,4 @@ struct MobileAccessSettingsTab: View {
         case connected
         case error
     }
-}
-
-// MARK: - Notification Names
-
-extension Notification.Name {
-    static let mobileAccessToggled = Notification.Name("zion.mobileAccess.toggled")
-    static let mobileAccessRegenerateKey = Notification.Name("zion.mobileAccess.regenerateKey")
 }

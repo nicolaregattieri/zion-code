@@ -7,6 +7,7 @@ extension RepositoryViewModel {
     func enableRemoteAccess() {
         isMobileAccessEnabled = true
         mobileAccessConnectionState = .starting
+        syncRemoteAccessState()
 
         Task {
             do {
@@ -33,6 +34,7 @@ extension RepositoryViewModel {
                             } else {
                                 self.mobileAccessConnectionState = .waitingForPairing
                             }
+                            self.syncRemoteAccessState()
                         }
                     }
                 )
@@ -58,14 +60,17 @@ extension RepositoryViewModel {
                 )
 
                 mobileAccessConnectionState = .waitingForPairing
+                syncRemoteAccessState()
                 startHeartbeat()
 
             } catch let error as CloudflareTunnelManager.TunnelError where error == .cloudflaredNotFound {
                 mobileAccessConnectionState = .error(L10n("mobile.access.cloudflared.notFound"))
                 isMobileAccessEnabled = false
+                syncRemoteAccessState()
             } catch {
                 mobileAccessConnectionState = .error(error.localizedDescription)
                 isMobileAccessEnabled = false
+                syncRemoteAccessState()
                 logger.log(.error, "Failed to start remote access", context: error.localizedDescription, source: #function)
             }
         }
@@ -90,6 +95,7 @@ extension RepositoryViewModel {
         mobileAccessQRImage = nil
         terminalOutputBuffers.removeAll()
         PromptDetector.resetDedup()
+        syncRemoteAccessState()
     }
 
     func regeneratePairingKey() {
@@ -314,6 +320,15 @@ extension RepositoryViewModel {
                 await remoteAccessServer?.broadcast(message)
             }
         }
+    }
+
+    // MARK: - State Sync
+
+    private func syncRemoteAccessState() {
+        let shared = RemoteAccessState.shared
+        shared.connectionState = mobileAccessConnectionState
+        shared.tunnelURL = mobileAccessTunnelURL
+        shared.qrImage = mobileAccessQRImage
     }
 
     // MARK: - Helpers
