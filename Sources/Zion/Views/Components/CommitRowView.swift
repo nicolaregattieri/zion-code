@@ -80,7 +80,7 @@ struct CommitRowView: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(commit.subject)
-                    .font(.system(size: 13, weight: .bold))
+                    .font(DesignSystem.Typography.sectionTitle)
                     .lineLimit(1)
                     .foregroundStyle(.primary)
                 
@@ -104,7 +104,7 @@ struct CommitRowView: View {
                                     .frame(width: 12, height: 12)
                             } else {
                                 Image(systemName: "sparkles")
-                                    .font(.system(size: 10, weight: .bold))
+                                    .font(DesignSystem.Typography.labelBold)
                             }
                         }
                         .foregroundStyle(DesignSystem.Colors.ai)
@@ -168,15 +168,15 @@ struct CommitRowView: View {
                         .frame(width: 18, height: 18)
                         .clipShape(Circle())
                 } else {
-                    Image(systemName: "person.fill").font(.system(size: 9))
+                    Image(systemName: "person.fill").font(DesignSystem.Typography.meta)
                 }
                 Text(commit.author)
             }
-            .font(.system(size: 11, weight: .medium))
+            .font(DesignSystem.Typography.bodyMedium)
             .foregroundStyle(.secondary)
 
             HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
-                Image(systemName: "calendar").font(.system(size: 9))
+                Image(systemName: "calendar").font(DesignSystem.Typography.meta)
                 Text(Self.dateFormatter.string(from: commit.date))
             }
             .font(.system(size: 10, design: .monospaced))

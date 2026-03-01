@@ -36,7 +36,7 @@ struct CommitDetailContent: View {
 
                 if !detail.body.isEmpty {
                     Text(detail.body)
-                        .font(.system(size: 12))
+                        .font(DesignSystem.Typography.body)
                         .foregroundStyle(.secondary)
                         .textSelection(.enabled)
                         .fixedSize(horizontal: false, vertical: true)
@@ -108,7 +108,7 @@ struct CommitDetailContent: View {
                                                     model.openFileInEditor(relativePath: file.path)
                                                 } label: {
                                                     Image(systemName: "pencil.and.outline")
-                                                        .font(.system(size: 9, weight: .bold))
+                                                        .font(DesignSystem.Typography.metaBold)
                                                         .foregroundStyle(.secondary)
                                                 }
                                                 .buttonStyle(.plain)
@@ -209,7 +209,7 @@ struct CommitDetailContent: View {
                             .frame(width: 12, height: 12)
                     } else {
                         Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(DesignSystem.Typography.labelBold)
                     }
                 }
                 .buttonStyle(.plain)
@@ -224,7 +224,7 @@ struct CommitDetailContent: View {
                     ProgressView()
                         .controlSize(.small)
                     Text(L10n("graph.commit.review.loading"))
-                        .font(.system(size: 11))
+                        .font(DesignSystem.Typography.bodySmall)
                         .foregroundStyle(.secondary)
                 }
                 .padding(.vertical, 8)
@@ -242,7 +242,7 @@ struct CommitDetailContent: View {
                         .font(.system(size: 28))
                         .foregroundStyle(.tertiary)
                     Text(L10n("graph.commit.review.empty"))
-                        .font(.system(size: 11))
+                        .font(DesignSystem.Typography.bodySmall)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                     Button {
@@ -263,7 +263,7 @@ struct CommitDetailContent: View {
     private func metadataRow(label: String, value: String, mono: Bool = false) -> some View {
         HStack(alignment: .top, spacing: 8) {
             Text(label)
-                .font(.system(size: 10, weight: .bold))
+                .font(DesignSystem.Typography.labelBold)
                 .foregroundStyle(.secondary)
                 .frame(width: 80, alignment: .trailing)
             Text(value)
@@ -287,7 +287,7 @@ struct CommitDetailContent: View {
         }()
 
         Image(systemName: icon)
-            .font(.system(size: 9, weight: .bold))
+            .font(DesignSystem.Typography.metaBold)
             .foregroundStyle(color)
             .frame(width: 18, height: 18)
             .background(color.opacity(0.15))

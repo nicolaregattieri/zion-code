@@ -49,7 +49,7 @@ struct AuthErrorSheet: View {
                             ForEach(remotes) { remote in
                                 HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                                     Image(systemName: remote.url.contains("git@") ? "key.fill" : "globe")
-                                        .font(.system(size: 10))
+                                        .font(DesignSystem.Typography.label)
                                         .foregroundStyle(.secondary)
                                     Text(remote.name)
                                         .font(.system(size: 11, weight: .bold, design: .monospaced))
@@ -59,7 +59,7 @@ struct AuthErrorSheet: View {
                                         .lineLimit(1)
                                     Spacer()
                                     Text(remote.url.contains("git@") ? "SSH" : "HTTPS")
-                                        .font(.system(size: 9, weight: .bold))
+                                        .font(DesignSystem.Typography.metaBold)
                                         .padding(.horizontal, 6)
                                         .padding(.vertical, 2)
                                         .background(DesignSystem.Colors.statusBlueBg)
@@ -113,13 +113,13 @@ struct AuthErrorSheet: View {
     private func helpItem(icon: String, title: String, description: String, command: String?) -> some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: icon)
-                .font(.system(size: 12))
+                .font(DesignSystem.Typography.body)
                 .foregroundStyle(DesignSystem.Colors.info)
                 .frame(width: 18)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title).font(.system(size: 12, weight: .semibold))
-                Text(description).font(.system(size: 11)).foregroundStyle(.secondary)
+                Text(description).font(DesignSystem.Typography.bodySmall).foregroundStyle(.secondary)
                 if let command {
                     HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                         Text(command)
@@ -130,7 +130,7 @@ struct AuthErrorSheet: View {
                             NSPasteboard.general.setString(command, forType: .string)
                         } label: {
                             Image(systemName: "doc.on.doc")
-                                .font(.system(size: 9))
+                                .font(DesignSystem.Typography.meta)
                         }
                         .buttonStyle(.plain).foregroundStyle(.secondary)
                     }
