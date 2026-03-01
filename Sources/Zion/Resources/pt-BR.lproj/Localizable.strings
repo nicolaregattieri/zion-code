@@ -839,6 +839,8 @@
 "push.warning.diverged" = "Sua branch divergiu: %@ commits à frente, %@ atrás do remoto.";
 "push.pullFirst" = "Fazer Pull primeiro";
 "push.forceWithLease" = "Force Push (seguro)";
+"push.force" = "Force Push";
+"push.force.confirm" = "Isso vai sobrescrever a branch remota %@. Quaisquer commits no remoto que não estejam na sua branch local serão perdidos permanentemente. Tem certeza?";
 
 // New File / Save As / Open in Editor
 "Novo Arquivo" = "Novo Arquivo";

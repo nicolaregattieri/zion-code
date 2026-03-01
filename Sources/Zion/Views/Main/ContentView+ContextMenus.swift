@@ -150,8 +150,22 @@ extension ContentView {
                 }
             }
         } else {
-            Button(L10n("Push to Remote")) {
-                model.pushBranch(branch, to: "origin", setUpstream: true, mode: .normal)
+            Menu(L10n("Push to Remote")) {
+                Button(L10n("Push")) {
+                    model.pushBranch(branch, to: "origin", setUpstream: true, mode: .normal)
+                }
+                Button(L10n("push.forceWithLease")) {
+                    model.pushBranch(branch, to: "origin", setUpstream: true, mode: .forceWithLease)
+                }
+                Button(L10n("push.force")) {
+                    performGitAction(
+                        title: L10n("push.force"),
+                        message: String(format: L10n("push.force.confirm"), branch),
+                        destructive: true
+                    ) {
+                        model.pushBranch(branch, to: "origin", setUpstream: true, mode: .force)
+                    }
+                }
             }
             Divider()
             Button(L10n("Remover branch local"), role: .destructive) {
