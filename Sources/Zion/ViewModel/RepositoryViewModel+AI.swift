@@ -457,8 +457,8 @@ extension RepositoryViewModel {
                     let repoName = url.lastPathComponent
                     await ntfyClient.sendIfEnabled(
                         event: .prAutoReviewComplete,
-                        title: L10n("PR #\(item.pr.number) reviewed"),
-                        body: "\(item.pr.title) — \(findings.count) findings",
+                        title: "PR #\(item.pr.number) reviewed",
+                        body: buildReviewNotificationBody(prTitle: item.pr.title, findings: findings),
                         repoName: repoName
                     )
                 } catch {
@@ -987,5 +987,23 @@ extension RepositoryViewModel {
         }
 
         return "\(type)\(scope): \(description)"
+    }
+
+    // MARK: - Notification Helpers
+
+    private func buildReviewNotificationBody(prTitle: String, findings: [ReviewFinding]) -> String {
+        if findings.isEmpty {
+            return "\(prTitle) — clean, no issues found"
+        }
+        var lines = ["\(prTitle) — \(findings.count) finding\(findings.count == 1 ? "" : "s")"]
+        for f in findings.prefix(3) {
+            let icon = f.severity == .critical ? "🔴" : f.severity == .warning ? "🟡" : "🔵"
+            let file = f.file.split(separator: "/").last.map(String.init) ?? f.file
+            lines.append("\(icon) \(file): \(f.message.prefix(60))")
+        }
+        if findings.count > 3 {
+            lines.append("… and \(findings.count - 3) more")
+        }
+        return lines.joined(separator: "\n")
     }
 }
