@@ -465,6 +465,7 @@ extension RepositoryViewModel {
     }
 
     func requestWorktreeRemoval(_ worktree: WorktreeItem) {
+        guard !worktree.isMainWorktree else { return }
         let displayName = worktreeDisplayName(worktree)
 
         if worktree.uncommittedCount > 0 || worktree.hasConflicts {
