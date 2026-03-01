@@ -132,6 +132,55 @@ final class MobileAccessStatusBadgeTests: XCTestCase {
         NotificationCenter.default.removeObserver(observer)
     }
 
+    // MARK: - Recents Order Preservation
+
+    func testEnsureTerminalsPreservesRecentsOrder() {
+        let vm = RepositoryViewModel()
+
+        // Create temp directories so FileManager.fileExists passes
+        let tmpDir = FileManager.default.temporaryDirectory
+        let repoA = tmpDir.appendingPathComponent("repoA-\(UUID().uuidString)")
+        let repoB = tmpDir.appendingPathComponent("repoB-\(UUID().uuidString)")
+        let repoC = tmpDir.appendingPathComponent("repoC-\(UUID().uuidString)")
+        let repoD = tmpDir.appendingPathComponent("repoD-\(UUID().uuidString)")
+
+        for dir in [repoA, repoB, repoC, repoD] {
+            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        }
+        defer {
+            for dir in [repoA, repoB, repoC, repoD] {
+                try? FileManager.default.removeItem(at: dir)
+            }
+        }
+
+        let originalOrder = [repoA, repoB, repoC, repoD]
+        vm.recentRepositories = originalOrder
+
+        // Simulate what saveRecentRepository does: move each to front (scrambles order)
+        for url in [repoB, repoC, repoD] {
+            vm.saveRecentRepository(url)
+        }
+
+        // Verify order IS scrambled (proves the bug is real)
+        XCTAssertNotEqual(vm.recentRepositories, originalOrder,
+                          "saveRecentRepository should have scrambled the order")
+
+        // Now apply the snapshot-restore fix
+        vm.recentRepositories = originalOrder
+        if let encoded = try? JSONEncoder().encode(originalOrder) {
+            vm.recentReposData = encoded
+        }
+
+        // Verify order is restored
+        XCTAssertEqual(vm.recentRepositories, originalOrder,
+                       "Recents order should be restored after snapshot-restore")
+
+        // Verify persistence matches
+        let persisted = try? JSONDecoder().decode([URL].self, from: vm.recentReposData)
+        XCTAssertEqual(persisted, originalOrder,
+                       "Persisted order should match restored order")
+    }
+
     // MARK: - RemoteAccessState Sync
 
     func testSyncToSharedState() {

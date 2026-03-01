@@ -228,6 +228,9 @@ extension RepositoryViewModel {
 
         guard !missing.isEmpty else { return }
 
+        // Snapshot recents order — openRepository moves repos to front
+        let savedOrder = recentRepositories
+
         for url in missing {
             openRepository(url)
         }
@@ -235,6 +238,12 @@ extension RepositoryViewModel {
         // Switch back to the original repo
         if let originalURL {
             openRepository(originalURL)
+        }
+
+        // Restore original order
+        recentRepositories = savedOrder
+        if let encoded = try? JSONEncoder().encode(savedOrder) {
+            recentReposData = encoded
         }
     }
 
