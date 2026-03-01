@@ -52,13 +52,13 @@ extension RepositoryViewModel {
     func rebaseOntoTarget() {
         let target = rebaseTargetInput.clean
         guard !target.isEmpty else { return }
-        runGitAction(label: "Rebase", args: ["rebase", target])
+        runDestructiveGitAction(label: "Rebase", args: ["rebase", target], operationTag: "rebase", targetHint: target)
     }
 
     func rebaseCurrentBranch(onto reference: String) {
         let target = reference.clean
         guard !target.isEmpty else { return }
-        runGitAction(label: "Rebase", args: ["rebase", target])
+        runDestructiveGitAction(label: "Rebase", args: ["rebase", target], operationTag: "rebase", targetHint: target)
     }
 
     func cherryPick() {
@@ -70,7 +70,7 @@ extension RepositoryViewModel {
     func cherryPick(commitHash: String) {
         let target = commitHash.clean
         guard !target.isEmpty else { return }
-        runGitAction(label: "Cherry-pick", args: ["cherry-pick", target])
+        runDestructiveGitAction(label: "Cherry-pick", args: ["cherry-pick", target], operationTag: "cherry-pick", targetHint: String(target.prefix(8)))
     }
 
     func revert(commitHash: String) {
@@ -88,17 +88,20 @@ extension RepositoryViewModel {
     func hardReset(to target: String) {
         let cleanedTarget = target.clean
         guard !cleanedTarget.isEmpty else { return }
-        runGitAction(label: "Reset --hard", args: ["reset", "--hard", cleanedTarget])
+        runDestructiveGitAction(label: "Reset --hard", args: ["reset", "--hard", cleanedTarget], operationTag: "reset-hard", targetHint: String(cleanedTarget.prefix(8)))
     }
 
     func resetToCommit(_ commitID: String, shouldHardReset: Bool) {
-        let args = shouldHardReset ? ["reset", "--hard", commitID] : ["reset", "--soft", commitID]
-        runGitAction(label: shouldHardReset ? "Reset --hard" : "Reset --soft", args: args)
+        if shouldHardReset {
+            runDestructiveGitAction(label: "Reset --hard", args: ["reset", "--hard", commitID], operationTag: "reset-hard", targetHint: String(commitID.prefix(8)))
+        } else {
+            runGitAction(label: "Reset --soft", args: ["reset", "--soft", commitID])
+        }
     }
 
     func discardChanges(in path: String) {
         let file = path.trimmingCharacters(in: .whitespaces)
-        runGitAction(label: "Discard", args: ["checkout", "--", file])
+        runDestructiveGitAction(label: "Discard", args: ["checkout", "--", file], operationTag: "discard")
     }
 
     // MARK: - Stash
@@ -412,6 +415,69 @@ extension RepositoryViewModel {
 
         actionTask = Task {
             do {
+                let output = try await runActionWithCredentialRetry(
+                    label: label,
+                    args: args,
+                    in: repositoryURL,
+                    commandSummary: commandSummary
+                )
+                try Task.checkCancellation()
+
+                clearError()
+                if output.isEmpty {
+                    statusMessage = "\(label) executado com sucesso."
+                } else {
+                    statusMessage = "\(label): \(output.prefix(240))"
+                }
+                logger.log(.git, "\(label) OK", context: commandSummary)
+                refreshRepository(setBusy: true)
+            } catch is CancellationError {
+                return
+            } catch {
+                isBusy = false
+                logger.log(.error, error.localizedDescription, context: commandSummary)
+                handleError(error)
+            }
+        }
+    }
+
+    // MARK: - Destructive Git Action Runner
+
+    func runDestructiveGitAction(label: String, args: [String], operationTag: String, targetHint: String = "") {
+        guard let repositoryURL else {
+            lastError = GitClientError.repositoryNotSelected.localizedDescription
+            return
+        }
+
+        guard uncommittedCount > 0 else {
+            runGitAction(label: label, args: args)
+            return
+        }
+
+        actionTask?.cancel()
+        isBusy = true
+
+        let commandSummary = redactedGitCommandSummary(args: args)
+        logger.log(.git, commandSummary, context: label)
+
+        let snapshotTag = targetHint.isEmpty ? "zion-pre-\(operationTag)" : "zion-pre-\(operationTag)-\(targetHint)"
+
+        actionTask = Task {
+            do {
+                // 1. Create stash commit without modifying working tree
+                let stashHash = try await worker.runAction(args: ["stash", "create"], in: repositoryURL)
+                let trimmedHash = stashHash.clean
+
+                // 2. Store the stash commit in the stash reflog
+                if !trimmedHash.isEmpty {
+                    let _ = try await worker.runAction(
+                        args: ["stash", "store", "-m", snapshotTag, trimmedHash],
+                        in: repositoryURL
+                    )
+                    logger.log(.info, "Pre-snapshot created: \(snapshotTag)", context: trimmedHash, source: #function)
+                }
+
+                // 3. Run the destructive command
                 let output = try await runActionWithCredentialRetry(
                     label: label,
                     args: args,

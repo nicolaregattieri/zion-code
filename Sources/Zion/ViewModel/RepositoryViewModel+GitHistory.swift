@@ -527,6 +527,19 @@ extension RepositoryViewModel {
 
         actionTask = Task {
             do {
+                // Pre-snapshot: protect uncommitted work before interactive rebase
+                if uncommittedCount > 0 {
+                    let stashHash = try await worker.runAction(args: ["stash", "create"], in: url)
+                    let trimmedHash = stashHash.clean
+                    if !trimmedHash.isEmpty {
+                        let _ = try await worker.runAction(
+                            args: ["stash", "store", "-m", "zion-pre-rebase-interactive", trimmedHash],
+                            in: url
+                        )
+                        logger.log(.info, "Pre-snapshot created: zion-pre-rebase-interactive", context: trimmedHash, source: #function)
+                    }
+                }
+
                 // Use GIT_SEQUENCE_EDITOR to pass the todo list
                 // We write the todo to a temp file and use a script that replaces the editor
                 let tempDir = ZionTemp.directory

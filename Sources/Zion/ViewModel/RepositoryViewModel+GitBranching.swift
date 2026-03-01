@@ -151,7 +151,7 @@ extension RepositoryViewModel {
     func mergeBranch(named branch: String) {
         let target = branch.clean
         guard !target.isEmpty else { return }
-        runGitAction(label: "Merge", args: ["merge", target])
+        runDestructiveGitAction(label: "Merge", args: ["merge", target], operationTag: "merge", targetHint: target)
     }
 
     func pullIntoCurrent(fromRemoteBranch remoteBranch: String) {
@@ -473,6 +473,20 @@ extension RepositoryViewModel {
         isBusy = true
         actionTask = Task {
             do {
+                // Snapshot with --include-untracked since clean -fd deletes untracked files.
+                // stash push captures both tracked and untracked changes into one entry,
+                // then reset + clean ensure the tree is fully clean.
+                let status = try await worker.runAction(args: ["status", "--porcelain"], in: targetURL)
+                if !status.clean.isEmpty {
+                    let _ = try await worker.runAction(
+                        args: ["stash", "push", "--include-untracked", "-m", "zion-pre-discard-all"],
+                        in: targetURL
+                    )
+                    logger.log(.info, "Pre-snapshot created: zion-pre-discard-all", source: #function)
+                }
+
+                // Ensure tree is fully clean (stash push already cleans, but reset + clean
+                // handle edge cases like staged-only changes or ignored-but-tracked files)
                 let _ = try await worker.runAction(args: ["reset", "--hard", "HEAD"], in: targetURL)
                 let _ = try await worker.runAction(args: ["clean", "-fd"], in: targetURL)
                 try Task.checkCancellation()
@@ -565,6 +579,16 @@ extension RepositoryViewModel {
         isBusy = true
         actionTask = Task {
             do {
+                // Snapshot with --include-untracked before discarding worktree changes
+                let status = try await worker.runAction(args: ["status", "--porcelain"], in: targetURL)
+                if !status.clean.isEmpty {
+                    let _ = try await worker.runAction(
+                        args: ["stash", "push", "--include-untracked", "-m", "zion-pre-discard-worktree"],
+                        in: targetURL
+                    )
+                    logger.log(.info, "Pre-snapshot created: zion-pre-discard-worktree", source: #function)
+                }
+
                 let _ = try await worker.runAction(args: ["reset", "--hard", "HEAD"], in: targetURL)
                 let _ = try await worker.runAction(args: ["clean", "-fd"], in: targetURL)
                 let _ = try await worker.runAction(args: ["worktree", "remove", worktree.path], in: repositoryURL)

@@ -109,7 +109,7 @@ extension RepositoryViewModel {
             let shortHash = fields[1].clean
             let timestamp = TimeInterval(fields[2].clean) ?? 0
             let subject = fields[3].clean
-            guard subject.contains("zion-safety-") || subject.contains("zion-transfer-") else { return nil }
+            guard subject.contains("zion-safety-") || subject.contains("zion-transfer-") || subject.contains("zion-pre-") else { return nil }
             return RecoverySnapshot(
                 hash: hash,
                 shortHash: shortHash.isEmpty ? String(hash.prefix(8)) : shortHash,
