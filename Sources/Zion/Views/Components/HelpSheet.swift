@@ -56,8 +56,8 @@ struct HelpSheet: View {
                     "help.smartClipboard"]
         case .operations:
             return ["help.ops.commit", "help.ops.branch", "help.ops.stash",
-                    "help.ops.rebase", "help.ops.hunk", "help.ops.init",
-                    "help.ops.recovery",
+                    "help.ops.rebase", "help.ops.hunk", "help.ops.tags",
+                    "help.ops.init", "help.ops.recovery",
                     "help.stashBadge"]
         case .worktrees:
             return ["help.worktree.parallel", "help.worktree.quick", "help.worktree.terminal"]

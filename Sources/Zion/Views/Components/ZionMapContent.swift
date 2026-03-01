@@ -116,7 +116,8 @@ struct ZionMapContent {
                 ZionMapEntry("map.ops.stashbadge.title", description: "map.ops.stashbadge.description"),
                 ZionMapEntry("map.ops.recovery.title", description: "map.ops.recovery.description",
                              tips: ["map.ops.recovery.tip1"]),
-                ZionMapEntry("map.ops.tags.title", description: "map.ops.tags.description"),
+                ZionMapEntry("map.ops.tags.title", description: "map.ops.tags.description",
+                             tips: ["map.ops.tags.tip1"]),
             ]
 
         case .worktrees:
@@ -197,12 +198,17 @@ struct ZionMapContent {
                 ZionMapEntry("map.codereview.fullscreen.title", description: "map.codereview.fullscreen.description",
                              shortcut: "\u{21E7}\u{2318}R"),
                 ZionMapEntry("map.codereview.perfile.title", description: "map.codereview.perfile.description"),
+                ZionMapEntry("map.codereview.comments.title", description: "map.codereview.comments.description",
+                             tips: ["map.codereview.comments.tip1"]),
+                ZionMapEntry("map.codereview.review.title", description: "map.codereview.review.description"),
                 ZionMapEntry("map.codereview.export.title", description: "map.codereview.export.description"),
             ]
 
         case .prInbox:
             return [
                 ZionMapEntry("map.prinbox.queue.title", description: "map.prinbox.queue.description"),
+                ZionMapEntry("map.prinbox.hosting.title", description: "map.prinbox.hosting.description",
+                             tips: ["map.prinbox.hosting.tip1"]),
                 ZionMapEntry("map.prinbox.autoreview.title", description: "map.prinbox.autoreview.description"),
                 ZionMapEntry("map.prinbox.notifications.title", description: "map.prinbox.notifications.description"),
             ]

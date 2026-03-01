@@ -118,10 +118,13 @@ final class RepositoryViewModel {
     var nextSectionAfterRepositoryOpen: AppSection?
     var pendingExternalFiles: [URL] = []
 
-    // GitHub PR integration
-    var pullRequests: [GitHubPRInfo] = []
+    // Git Hosting Provider integration
+    var pullRequests: [HostedPRInfo] = []
     var isPRSheetVisible: Bool = false
     @ObservationIgnored let githubClient = GitHubClient()
+    @ObservationIgnored let gitlabClient = GitLabClient()
+    @ObservationIgnored let bitbucketClient = BitbucketClient()
+    @ObservationIgnored var hostingProvider: (any GitHostingProvider)?
     @ObservationIgnored let ntfyClient = NtfyClient()
     @ObservationIgnored var prTask: Task<Void, Never>?
 
@@ -156,9 +159,14 @@ final class RepositoryViewModel {
     var codeReviewStats: CodeReviewStats = CodeReviewStats(totalFiles: 0, totalAdditions: 0, totalDeletions: 0, commitCount: 0, criticalCount: 0, warningCount: 0, suggestionCount: 0)
     @ObservationIgnored var codeReviewTask: Task<Void, Never>?
 
-    // PR Review Queue (Phase 4)
+    // PR Review Queue
     var prReviewQueue: [PRReviewItem] = []
     @ObservationIgnored var prPollingTask: Task<Void, Never>?
+
+    // PR Comments & Review (inline review)
+    var prComments: [PRComment] = []
+    var pendingReviewComments: [PRReviewDraftComment] = []
+    var isPRReviewSubmitSheetVisible: Bool = false
 
     // Diff Explanation (Phase 2)
     var currentDiffExplanation: DiffExplanation?
@@ -306,7 +314,6 @@ final class RepositoryViewModel {
     // Background repo persistence (terminal sessions + change badges)
     @ObservationIgnored var backgroundRepoStates: [URL: BackgroundRepoState] = [:]
     var backgroundRepoChangedFiles: [URL: Int] = [:]
-    var activeBackgroundRepoURLs: Set<URL> = []
 
     // Repository statistics
     var repoStats: RepositoryStats?
@@ -437,6 +444,10 @@ final class RepositoryViewModel {
 
     var branchInput: String = ""
     var tagInput: String = ""
+    var tagMessage: String = ""
+    var tagType: TagType = .lightweight
+    var tagPushAfterCreate: Bool = false
+    var isTagDetailSheetVisible: Bool = false
     var stashMessageInput: String = ""
     var cherryPickInput: String = ""
     var resetTargetInput: String = "HEAD~1"
@@ -590,7 +601,6 @@ final class RepositoryViewModel {
                 monitorTask: nil
             )
             backgroundRepoChangedFiles[previousURL] = uncommittedCount
-            activeBackgroundRepoURLs.insert(previousURL)
             startBackgroundMonitor(for: previousURL)
             // DON'T set terminalTabs = [] here — let the restore/create below do a direct swap
         } else if previousURL == nil {
@@ -613,7 +623,6 @@ final class RepositoryViewModel {
             activeTabID = restored.activeTabID
             focusedSessionID = restored.focusedSessionID
             backgroundRepoChangedFiles.removeValue(forKey: url)
-            activeBackgroundRepoURLs.remove(url)
             // Reset isAlive for sessions that died while stashed — lets updateNSView restart them
             for tab in terminalTabs {
                 for session in tab.allSessions() where !session.isAlive {

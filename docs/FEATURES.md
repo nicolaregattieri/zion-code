@@ -136,7 +136,7 @@
 | Hunk Staging | Stage/unstage individual diff hunks |
 | Line Staging | Stage selected lines from a hunk |
 | Branch Management | Checkout, create, merge, rebase, push, pull, rename, delete |
-| Tag Management | Create and delete lightweight tags |
+| Tag Management | Create lightweight, annotated, and GPG-signed tags with message editor; push tags to remote; delete local and remote tags |
 | Stash Management | Create (with message), apply, pop, drop stashes |
 | Recovery Vault | Inspect active/dangling snapshots, copy refs, and restore recovery snapshots safely |
 | Interactive Rebase | Visual UI: pick, reword, edit, squash, fixup, drop + reorder |
@@ -216,6 +216,8 @@
 |---------|-------------|----------|
 | Full-Window Review | Dedicated 1000x700 window with file list and diff viewer | `⇧⌘R` |
 | Per-File AI Analysis | Individual AI review for each changed file |  — |
+| Inline PR Comments | View and post inline comments on PR diffs with reply threads | — |
+| Review Submission | Submit reviews (Comment, Approve, Request Changes) with draft comments | — |
 | Review Statistics | Files changed, additions/deletions, commit count, risk badge | — |
 | Export Markdown | Export full review as Markdown for PR comments | — |
 | Copy Summary | Copy review summary to clipboard | — |
@@ -240,13 +242,19 @@
 | Delta Updates | Smart downloads that only transfer version differences |
 | EdDSA Signing | Secure update verification with EdDSA public key |
 
-## GitHub Integration
+## Git Hosting Integration
 
 | Feature | Description |
 |---------|-------------|
+| Provider Abstraction | Protocol-based provider system supporting GitHub, GitLab, and Bitbucket |
+| Auto-Detection | Automatically detects hosting provider from remote URLs (SSH and HTTPS) |
+| GitHub | Full support via `gh` CLI token — PRs, comments, reviews |
+| GitLab | PAT authentication, self-hosted instance support, PR list and creation |
+| Bitbucket | App password authentication, PR list and creation |
 | PR List | Fetch and display open PRs for current repo |
 | Create PR | Sheet to create PR from current branch |
 | AI PR Description | Auto-generate title and body |
+| Settings | Dedicated Git Hosting section in Settings for GitLab and Bitbucket credentials |
 
 ## Remote Management
 

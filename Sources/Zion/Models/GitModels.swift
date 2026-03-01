@@ -201,3 +201,30 @@ struct ReflogEntry: Identifiable {
         }
     }
 }
+
+// MARK: - Tags
+
+enum TagType: String, CaseIterable, Identifiable, Sendable {
+    case lightweight
+    case annotated
+    case signed
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .lightweight: return L10n("tag.detail.type.lightweight")
+        case .annotated: return L10n("tag.detail.type.annotated")
+        case .signed: return L10n("tag.detail.type.signed")
+        }
+    }
+}
+
+struct TagInfo: Identifiable, Sendable {
+    let name: String
+    let type: TagType
+    let message: String
+    let tagger: String
+    let date: Date?
+    var id: String { name }
+}

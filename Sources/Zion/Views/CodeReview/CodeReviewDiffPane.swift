@@ -3,6 +3,7 @@ import SwiftUI
 struct CodeReviewDiffPane: View {
     var model: RepositoryViewModel
     let file: CodeReviewFile?
+    @State private var activeCommentLine: Int?
 
     var body: some View {
         if let file {
@@ -16,6 +17,15 @@ struct CodeReviewDiffPane: View {
                             .font(.system(.subheadline, design: .monospaced))
                             .fontWeight(.bold)
                         Spacer()
+                        if !file.inlineComments.isEmpty {
+                            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
+                                Image(systemName: "text.bubble")
+                                    .font(.system(size: 10))
+                                Text("\(file.inlineComments.count)")
+                                    .font(.system(size: 10, weight: .bold))
+                            }
+                            .foregroundStyle(DesignSystem.Colors.info)
+                        }
                         Text("+\(file.additions)")
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(DesignSystem.Colors.diffAddition)
@@ -46,7 +56,7 @@ struct CodeReviewDiffPane: View {
                             .padding(.horizontal, 12)
                     }
 
-                    // Diff hunks
+                    // Diff hunks with inline comments
                     if !file.hunks.isEmpty {
                         VStack(alignment: .leading, spacing: 0) {
                             ForEach(file.hunks) { hunk in
@@ -60,7 +70,7 @@ struct CodeReviewDiffPane: View {
                                         .background(DesignSystem.Colors.diffHunkHeaderBgLight)
 
                                     ForEach(hunk.lines) { line in
-                                        diffLineView(line)
+                                        diffLineView(line, file: file)
                                     }
                                 }
                             }
@@ -94,40 +104,112 @@ struct CodeReviewDiffPane: View {
         }
     }
 
-    private func diffLineView(_ line: DiffLine) -> some View {
-        let bg: Color
-        let fg: Color
-        switch line.type {
-        case .addition:
-            bg = DesignSystem.Colors.diffAdditionBg
-            fg = DesignSystem.Colors.diffAddition
-        case .deletion:
-            bg = DesignSystem.Colors.diffDeletionBg
-            fg = DesignSystem.Colors.diffDeletion
-        case .context:
-            bg = .clear
-            fg = DesignSystem.Colors.diffContext
-        }
-
-        return HStack(spacing: 0) {
-            // Line numbers
-            HStack(spacing: DesignSystem.Spacing.iconGroupedGap) {
-                Text(line.oldLineNumber.map { String($0) } ?? "")
-                    .frame(width: 36, alignment: .trailing)
-                Text(line.newLineNumber.map { String($0) } ?? "")
-                    .frame(width: 36, alignment: .trailing)
+    private func diffLineView(_ line: DiffLine, file: CodeReviewFile) -> some View {
+        let bg: Color = {
+            switch line.type {
+            case .addition: return DesignSystem.Colors.diffAdditionBg
+            case .deletion: return DesignSystem.Colors.diffDeletionBg
+            case .context: return .clear
             }
-            .font(.system(size: 9, design: .monospaced))
-            .foregroundStyle(.tertiary)
-            .padding(.trailing, 8)
+        }()
+        let fg: Color = {
+            switch line.type {
+            case .addition: return DesignSystem.Colors.diffAddition
+            case .deletion: return DesignSystem.Colors.diffDeletion
+            case .context: return DesignSystem.Colors.diffContext
+            }
+        }()
 
-            Text(line.content)
-                .font(.system(size: 11, design: .monospaced))
-                .foregroundStyle(fg)
-                .frame(maxWidth: .infinity, alignment: .leading)
+        let lineNumber = line.newLineNumber ?? line.oldLineNumber
+        let commentsForLine = file.inlineComments.filter { $0.line == lineNumber }
+
+        return VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 0) {
+                // Add comment button (hover gutter)
+                addCommentGutter(line: line)
+
+                // Line numbers
+                HStack(spacing: DesignSystem.Spacing.iconGroupedGap) {
+                    Text(line.oldLineNumber.map { String($0) } ?? "")
+                        .frame(width: 36, alignment: .trailing)
+                    Text(line.newLineNumber.map { String($0) } ?? "")
+                        .frame(width: 36, alignment: .trailing)
+                }
+                .font(.system(size: 9, design: .monospaced))
+                .foregroundStyle(.tertiary)
+                .padding(.trailing, 8)
+
+                Text(line.content)
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(fg)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 1)
+            .background(bg)
+
+            // Inline comments
+            if !commentsForLine.isEmpty {
+                PRCommentThread(comments: commentsForLine) { replyBody in
+                    if let ln = lineNumber {
+                        model.postPRComment(
+                            prNumber: currentPRNumber ?? 0,
+                            body: replyBody,
+                            path: file.path,
+                            line: ln
+                        )
+                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 4)
+            }
+
+            // Inline comment input
+            if activeCommentLine == lineNumber, let ln = lineNumber {
+                PRInlineCommentInput(
+                    path: file.path,
+                    line: ln,
+                    onPost: { body in
+                        model.postPRComment(
+                            prNumber: currentPRNumber ?? 0,
+                            body: body,
+                            path: file.path,
+                            line: ln
+                        )
+                        activeCommentLine = nil
+                    },
+                    onCancel: {
+                        activeCommentLine = nil
+                    }
+                )
+                .padding(.horizontal, 12)
+                .padding(.vertical, 4)
+            }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 1)
-        .background(bg)
+    }
+
+    @ViewBuilder
+    private func addCommentGutter(line: DiffLine) -> some View {
+        let lineNumber = line.newLineNumber ?? line.oldLineNumber
+        if lineNumber != nil, currentPRNumber != nil {
+            Button {
+                activeCommentLine = lineNumber
+            } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundStyle(DesignSystem.Colors.info)
+                    .frame(width: 16, height: 16)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .opacity(0.4)
+        } else {
+            Color.clear.frame(width: 16)
+        }
+    }
+
+    /// Resolve the current PR number from the review context.
+    private var currentPRNumber: Int? {
+        model.pullRequests.first(where: { $0.headBranch == model.branchReviewSource })?.number
     }
 }
