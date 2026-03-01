@@ -5,8 +5,9 @@ import Network
 actor RemoteAccessServer {
     private var listener: NWListener?
     private var pairingKey: SymmetricKey?
-    private var validPairingTokens: Set<String> = []
+    private var validPairingTokens: [String: ContinuousClock.Instant] = [:]  // token → creation time
     private var authenticatedTokens: Set<String> = []
+    private static let tokenTTL = Duration.seconds(Constants.RemoteAccess.pairingTokenTTLSeconds)
     private var connectionCount: Int = 0
     private var isLANMode: Bool = false
 
@@ -66,7 +67,7 @@ actor RemoteAccessServer {
     }
 
     func addPairingToken(_ token: String) {
-        validPairingTokens.insert(token)
+        validPairingTokens[token] = ContinuousClock.now
     }
 
     /// Disconnect all authenticated clients (used when switching modes)
@@ -77,6 +78,15 @@ actor RemoteAccessServer {
         requestTimestamps.removeAll()
         let count = 0
         Task { await onConnectionCountChanged?(count) }
+    }
+
+    private func isValidPairingToken(_ token: String) -> Bool {
+        guard let created = validPairingTokens[token] else { return false }
+        if ContinuousClock.now - created > Self.tokenTTL {
+            validPairingTokens.removeValue(forKey: token)
+            return false
+        }
+        return true
     }
 
     // MARK: - Rate Limiting
@@ -331,14 +341,23 @@ actor RemoteAccessServer {
     }
 
     private func handlePair(params: [String: String], connection: NWConnection) {
-        guard let token = params["t"],
-              validPairingTokens.contains(token) || authenticatedTokens.contains(token) else {
+        guard let token = params["t"] else {
             sendJSON(connection: connection, status: "403 Forbidden", json: #"{"error":"invalid_token"}"#)
             return
         }
 
-        // Keep token in validPairingTokens so the same QR code can be reused
-        // (e.g., phone disconnects and reconnects, or scanned again)
+        // Rate limit pairing attempts to prevent brute-force
+        if isRateLimited(token: token) {
+            sendJSON(connection: connection, status: "429 Too Many Requests", json: #"{"error":"rate_limited"}"#)
+            return
+        }
+
+        // Already authenticated — allow re-pair (e.g., browser refresh)
+        guard authenticatedTokens.contains(token) || isValidPairingToken(token) else {
+            sendJSON(connection: connection, status: "403 Forbidden", json: #"{"error":"invalid_token"}"#)
+            return
+        }
+
         authenticatedTokens.insert(token)
         pendingEvents[token] = []
         let count = authenticatedTokens.count

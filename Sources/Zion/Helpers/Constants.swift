@@ -49,6 +49,7 @@ enum Constants {
         static let heartbeatIntervalNanoseconds: UInt64 = 15_000_000_000
         static let tunnelURLTimeoutNanoseconds: UInt64 = 30_000_000_000
         static let tokenRotationInterval: TimeInterval = 86_400
+        static let pairingTokenTTLSeconds: Int = 300
         static let maxConcurrentConnections = 2
         static let maxMessagesPerSecond = 20
         static let screenUpdateDebounceNanoseconds: UInt64 = 200_000_000

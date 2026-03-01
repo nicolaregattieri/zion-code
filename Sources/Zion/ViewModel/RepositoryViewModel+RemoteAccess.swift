@@ -411,13 +411,18 @@ extension RepositoryViewModel {
     // MARK: - Payload Builders
 
     func buildSessionListPayload() -> SessionListPayload {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
         let sessions = terminalSessions.map { session in
-            SessionInfo(
+            // Redact full home path to prevent leaking username to remote client
+            let sanitizedPath = session.workingDirectory.path.hasPrefix(home)
+                ? "~" + session.workingDirectory.path.dropFirst(home.count)
+                : session.workingDirectory.path
+            return SessionInfo(
                 id: session.id,
                 label: session.label,
                 title: session.title,
                 isAlive: session.isAlive,
-                workingDirectory: session.workingDirectory.path
+                workingDirectory: sanitizedPath
             )
         }
         return SessionListPayload(sessions: sessions)
