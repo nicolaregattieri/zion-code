@@ -18,18 +18,24 @@ struct NeonProgressLine: View {
     @State private var pulseOpacity: Double = 0.4
     @State private var pulseGradientShift: CGFloat = 0
 
+    private var activeGradient: LinearGradient {
+        zionModeEnabled ? gradient : DesignSystem.Colors.brandGradient
+    }
+
+    private var glowColor: SwiftUI.Color {
+        zionModeEnabled ? DesignSystem.ZionMode.neonMagenta : DesignSystem.Colors.brandPrimary
+    }
+
     var body: some View {
-        if zionModeEnabled {
-            gradientBar
-                .frame(height: height)
-                .clipShape(Capsule())
-                .shadow(
-                    color: DesignSystem.ZionMode.neonMagenta.opacity(DesignSystem.ZionMode.neonGlowOpacity),
-                    radius: DesignSystem.ZionMode.neonGlowBlur,
-                    y: 1
-                )
-                .onAppear { startAnimation() }
-        }
+        gradientBar
+            .frame(height: height)
+            .clipShape(Capsule())
+            .shadow(
+                color: glowColor.opacity(DesignSystem.ZionMode.neonGlowOpacity),
+                radius: DesignSystem.ZionMode.neonGlowBlur,
+                y: 1
+            )
+            .onAppear { startAnimation() }
     }
 
     @ViewBuilder
@@ -38,7 +44,7 @@ struct NeonProgressLine: View {
 
         switch effectiveMode {
         case .shimmer:
-            gradient
+            activeGradient
                 .overlay(shimmerOverlay)
 
         case .pulse:
@@ -53,7 +59,7 @@ struct NeonProgressLine: View {
             .opacity(pulseOpacity)
 
         case .static:
-            gradient
+            activeGradient
                 .opacity(0.7)
         }
     }
