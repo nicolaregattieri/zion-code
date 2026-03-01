@@ -54,6 +54,7 @@ enum Constants {
         static let screenUpdateDebounceNanoseconds: UInt64 = 200_000_000
         static let aes256KeyByteLength = 32
         static let qrCodeSize: CGFloat = 200
+        static let httpRequestBufferSize = 8192
     }
 
     enum UI {

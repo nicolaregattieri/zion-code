@@ -4,16 +4,18 @@ import Network
 
 actor RemoteAccessServer {
     private var listener: NWListener?
-    private var connections: [ObjectIdentifier: NWConnection] = [:]
     private var pairingKey: SymmetricKey?
     private var validPairingTokens: Set<String> = []
-    private var authenticatedConnections: Set<ObjectIdentifier> = []
-    private var messageTimestamps: [ObjectIdentifier: [Date]] = [:]
+    private var authenticatedTokens: Set<String> = []
+    private var connectionCount: Int = 0
+
+    // Pending events queue per token (consumed on poll)
+    private var pendingEvents: [String: [RemoteMessage]] = [:]
 
     var onMessageReceived: (@Sendable (RemoteMessage) async -> Void)?
     var onConnectionCountChanged: (@Sendable (Int) async -> Void)?
 
-    var connectedDeviceCount: Int { authenticatedConnections.count }
+    var connectedDeviceCount: Int { authenticatedTokens.count }
 
     // MARK: - Lifecycle
 
@@ -21,10 +23,6 @@ actor RemoteAccessServer {
         pairingKey = key
 
         let parameters = NWParameters.tcp
-        let wsOptions = NWProtocolWebSocket.Options()
-        wsOptions.autoReplyPing = true
-        parameters.defaultProtocolStack.applicationProtocols.insert(wsOptions, at: 0)
-
         let nwPort = NWEndpoint.Port(rawValue: port)!
         let newListener = try NWListener(using: parameters, on: nwPort)
 
@@ -45,13 +43,9 @@ actor RemoteAccessServer {
     func stop() {
         listener?.cancel()
         listener = nil
-        for (_, connection) in connections {
-            connection.cancel()
-        }
-        connections.removeAll()
-        authenticatedConnections.removeAll()
-        messageTimestamps.removeAll()
+        authenticatedTokens.removeAll()
         validPairingTokens.removeAll()
+        pendingEvents.removeAll()
     }
 
     func addPairingToken(_ token: String) {
@@ -61,21 +55,14 @@ actor RemoteAccessServer {
     // MARK: - Broadcasting
 
     func broadcast(_ message: RemoteMessage) async {
-        guard let key = pairingKey else { return }
-        do {
-            let jsonData = try JSONEncoder().encode(message)
-            let encrypted = try RemoteAccessEncryption.encrypt(jsonData, using: key)
-
-            for connectionID in authenticatedConnections {
-                guard let connection = connections[connectionID] else { continue }
-                let metadata = NWProtocolWebSocket.Metadata(opcode: .binary)
-                let context = NWConnection.ContentContext(identifier: "broadcast", metadata: [metadata])
-                connection.send(content: encrypted, contentContext: context, completion: .idempotent)
+        for token in authenticatedTokens {
+            var queue = pendingEvents[token] ?? []
+            queue.append(message)
+            // Keep last N events to prevent memory growth
+            if queue.count > Constants.RemoteAccess.maxScreenUpdateLines {
+                queue = Array(queue.suffix(Constants.RemoteAccess.maxScreenUpdateLines))
             }
-        } catch {
-            await MainActor.run {
-                DiagnosticLogger.shared.log(.warn, "Broadcast encrypt failed", context: error.localizedDescription, source: "RemoteAccessServer")
-            }
+            pendingEvents[token] = queue
         }
     }
 
@@ -85,11 +72,11 @@ actor RemoteAccessServer {
         switch state {
         case .ready:
             Task { @MainActor in
-                DiagnosticLogger.shared.log(.info, "WebSocket server ready", source: "RemoteAccessServer")
+                DiagnosticLogger.shared.log(.info, "Remote access server ready", source: "RemoteAccessServer")
             }
         case .failed(let error):
             Task { @MainActor in
-                DiagnosticLogger.shared.log(.error, "WebSocket listener failed", context: error.localizedDescription, source: "RemoteAccessServer")
+                DiagnosticLogger.shared.log(.error, "Remote access listener failed", context: error.localizedDescription, source: "RemoteAccessServer")
             }
         default:
             break
@@ -97,118 +84,251 @@ actor RemoteAccessServer {
     }
 
     private func handleNewConnection(_ connection: NWConnection) {
-        let connectionID = ObjectIdentifier(connection)
-
-        if connections.count >= Constants.RemoteAccess.maxConcurrentConnections {
-            connection.cancel()
-            return
-        }
-
-        connections[connectionID] = connection
-
         connection.stateUpdateHandler = { [weak self] state in
             guard let self else { return }
-            Task { await self.handleConnectionState(connectionID, state: state) }
+            switch state {
+            case .ready:
+                Task { await self.readHTTPRequest(connection: connection) }
+            case .failed, .cancelled:
+                connection.cancel()
+            default:
+                break
+            }
         }
-
         connection.start(queue: .global(qos: .userInitiated))
-        receiveMessage(from: connection, id: connectionID)
     }
 
-    private func handleConnectionState(_ id: ObjectIdentifier, state: NWConnection.State) {
-        switch state {
-        case .ready:
-            Task { @MainActor in
-                DiagnosticLogger.shared.log(.info, "Client connected", source: "RemoteAccessServer")
-            }
-        case .failed, .cancelled:
-            connections.removeValue(forKey: id)
-            authenticatedConnections.remove(id)
-            messageTimestamps.removeValue(forKey: id)
-            let count = authenticatedConnections.count
-            Task {
-                await onConnectionCountChanged?(count)
-            }
-        default:
-            break
-        }
-    }
+    // MARK: - HTTP Request Reading
 
-    // MARK: - Receiving
-
-    private func receiveMessage(from connection: NWConnection, id: ObjectIdentifier) {
-        connection.receiveMessage { [weak self] data, context, _, error in
+    private func readHTTPRequest(connection: NWConnection) {
+        connection.receive(minimumIncompleteLength: 1, maximumLength: Constants.RemoteAccess.httpRequestBufferSize) { [weak self] data, _, _, error in
             guard let self else { return }
             Task {
-                if let error {
-                    await MainActor.run {
-                        DiagnosticLogger.shared.log(.warn, "Receive error", context: error.localizedDescription, source: "RemoteAccessServer")
-                    }
+                guard error == nil, let data else {
+                    connection.cancel()
                     return
                 }
 
-                guard let data else { return }
+                let request = String(data: data, encoding: .utf8) ?? ""
 
-                // Rate limiting
-                if await self.isRateLimited(id) { return }
+                // Check if we need to read more data (body not yet received)
+                if let contentLength = RemoteAccessServer.parseContentLength(from: request),
+                   let headerEndRange = request.range(of: "\r\n\r\n") {
+                    let headerByteCount = request[request.startIndex..<headerEndRange.upperBound].utf8.count
+                    let bodyBytesReceived = data.count - headerByteCount
+                    let remaining = contentLength - bodyBytesReceived
 
-                if await !self.authenticatedConnections.contains(id) {
-                    await self.handlePairingAttempt(data: data, connectionID: id)
-                } else {
-                    await self.handleAuthenticatedMessage(data: data)
+                    if remaining > 0 {
+                        // Need to read the rest of the body
+                        await self.readRemainingBody(
+                            connection: connection,
+                            headerData: data,
+                            request: request,
+                            remaining: remaining
+                        )
+                        return
+                    }
                 }
 
-                await self.receiveMessage(from: connection, id: id)
+                await self.routeRequest(request, body: data, connection: connection)
             }
         }
     }
 
-    private func isRateLimited(_ id: ObjectIdentifier) -> Bool {
-        let now = Date()
-        let cutoff = now.addingTimeInterval(-1)
-        var timestamps = messageTimestamps[id] ?? []
-        timestamps = timestamps.filter { $0 > cutoff }
-        timestamps.append(now)
-        messageTimestamps[id] = timestamps
-        return timestamps.count > Constants.RemoteAccess.maxMessagesPerSecond
+    private static func parseContentLength(from request: String) -> Int? {
+        for line in request.components(separatedBy: "\r\n") {
+            let lower = line.lowercased()
+            if lower.hasPrefix("content-length:") {
+                let value = line.dropFirst("content-length:".count).trimmingCharacters(in: .whitespaces)
+                return Int(value)
+            }
+        }
+        return nil
     }
 
-    // MARK: - Pairing
+    private func readRemainingBody(connection: NWConnection, headerData: Data, request: String, remaining: Int) {
+        connection.receive(minimumIncompleteLength: remaining, maximumLength: remaining) { [weak self] data, _, _, error in
+            guard let self else { return }
+            Task {
+                guard error == nil, let bodyData = data else {
+                    connection.cancel()
+                    return
+                }
 
-    private func handlePairingAttempt(data: Data, connectionID: ObjectIdentifier) {
-        guard let tokenString = String(data: data, encoding: .utf8),
-              validPairingTokens.contains(tokenString) else {
-            connections[connectionID]?.cancel()
-            connections.removeValue(forKey: connectionID)
+                var fullData = headerData
+                fullData.append(bodyData)
+                await self.routeRequest(request, body: fullData, connection: connection)
+            }
+        }
+    }
+
+    // MARK: - HTTP Router
+
+    private func routeRequest(_ request: String, body: Data, connection: NWConnection) {
+        let firstLine = request.components(separatedBy: "\r\n").first ?? ""
+        let parts = firstLine.components(separatedBy: " ")
+        let method = parts.first ?? ""
+        let path = parts.count > 1 ? parts[1] : "/"
+
+        // Parse query params from path
+        let pathComponents = path.components(separatedBy: "?")
+        let basePath = pathComponents.first ?? "/"
+        let queryString = pathComponents.count > 1 ? pathComponents[1] : ""
+        let params = parseQuery(queryString)
+
+        switch (method, basePath) {
+        case ("GET", "/"):
+            serveHTML(connection: connection)
+
+        case ("GET", "/pair"):
+            handlePair(params: params, connection: connection)
+
+        case ("GET", "/poll"):
+            handlePoll(params: params, connection: connection)
+
+        case ("POST", "/input"):
+            handleInput(request: request, body: body, connection: connection)
+
+        case ("POST", "/action"):
+            handleAction(request: request, body: body, connection: connection)
+
+        case ("OPTIONS", _):
+            sendJSON(connection: connection, status: "204 No Content", json: "")
+
+        default:
+            sendHTTP(connection: connection, status: "404 Not Found", body: "Not Found")
+        }
+    }
+
+    private func parseQuery(_ query: String) -> [String: String] {
+        var result: [String: String] = [:]
+        for pair in query.components(separatedBy: "&") {
+            let kv = pair.components(separatedBy: "=")
+            if kv.count == 2 {
+                result[kv[0]] = kv[1].removingPercentEncoding ?? kv[1]
+            }
+        }
+        return result
+    }
+
+    // MARK: - Routes
+
+    private func serveHTML(connection: NWConnection) {
+        let body = Data(MobileWebClient.html.utf8)
+        let headers = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: \(body.count)\r\nConnection: close\r\nCache-Control: no-cache\r\n\r\n"
+        var responseData = Data(headers.utf8)
+        responseData.append(body)
+        connection.send(content: responseData, completion: .contentProcessed { _ in
+            connection.cancel()
+        })
+    }
+
+    private func handlePair(params: [String: String], connection: NWConnection) {
+        guard let token = params["t"],
+              validPairingTokens.contains(token) else {
+            sendJSON(connection: connection, status: "403 Forbidden", json: #"{"error":"invalid_token"}"#)
             return
         }
 
-        validPairingTokens.remove(tokenString)
-        authenticatedConnections.insert(connectionID)
-        let count = authenticatedConnections.count
-        Task {
-            await onConnectionCountChanged?(count)
+        validPairingTokens.remove(token)
+        authenticatedTokens.insert(token)
+        pendingEvents[token] = []
+        let count = authenticatedTokens.count
+        Task { await onConnectionCountChanged?(count) }
+
+        sendJSON(connection: connection, status: "200 OK", json: #"{"status":"paired"}"#)
+    }
+
+    private func handlePoll(params: [String: String], connection: NWConnection) {
+        guard let token = params["t"],
+              authenticatedTokens.contains(token) else {
+            sendJSON(connection: connection, status: "403 Forbidden", json: #"{"error":"not_authenticated"}"#)
+            return
         }
 
-        // Send ACK
-        if let connection = connections[connectionID] {
-            let ack = "paired".data(using: .utf8)!
-            let metadata = NWProtocolWebSocket.Metadata(opcode: .text)
-            let context = NWConnection.ContentContext(identifier: "ack", metadata: [metadata])
-            connection.send(content: ack, contentContext: context, completion: .idempotent)
+        guard let key = pairingKey else {
+            sendJSON(connection: connection, status: "500 Internal Server Error", json: #"{"error":"no_key"}"#)
+            return
+        }
+
+        // Drain pending events
+        let events = pendingEvents[token] ?? []
+        pendingEvents[token] = []
+
+        // Encrypt each event and send as JSON array
+        var encryptedEvents: [String] = []
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        for event in events {
+            if let jsonData = try? encoder.encode(event),
+               let encrypted = try? RemoteAccessEncryption.encrypt(jsonData, using: key) {
+                encryptedEvents.append(encrypted.base64EncodedString())
+            }
+        }
+
+        let jsonArray = "[" + encryptedEvents.map { #""\#($0)""# }.joined(separator: ",") + "]"
+        sendJSON(connection: connection, status: "200 OK", json: jsonArray)
+    }
+
+    private func handleInput(request: String, body: Data, connection: NWConnection) {
+        guard let key = pairingKey,
+              let httpBody = extractHTTPBody(from: request, fullData: body) else {
+            sendJSON(connection: connection, status: "400 Bad Request", json: #"{"error":"bad_request"}"#)
+            return
+        }
+
+        do {
+            let decrypted = try RemoteAccessEncryption.decrypt(httpBody, using: key)
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            let message = try decoder.decode(RemoteMessage.self, from: decrypted)
+            Task { await onMessageReceived?(message) }
+            sendJSON(connection: connection, status: "200 OK", json: #"{"status":"ok"}"#)
+        } catch {
+            sendJSON(connection: connection, status: "400 Bad Request", json: #"{"error":"decrypt_failed"}"#)
         }
     }
 
-    private func handleAuthenticatedMessage(data: Data) async {
-        guard let key = pairingKey else { return }
-        do {
-            let decrypted = try RemoteAccessEncryption.decrypt(data, using: key)
-            let message = try JSONDecoder().decode(RemoteMessage.self, from: decrypted)
-            await onMessageReceived?(message)
-        } catch {
-            await MainActor.run {
-                DiagnosticLogger.shared.log(.warn, "Failed to decrypt/decode message", context: error.localizedDescription, source: "RemoteAccessServer")
-            }
+    private func handleAction(request: String, body: Data, connection: NWConnection) {
+        // Same as handleInput — both go through onMessageReceived
+        handleInput(request: request, body: body, connection: connection)
+    }
+
+    // MARK: - HTTP Helpers
+
+    private func sendHTTP(connection: NWConnection, status: String, body: String) {
+        let bodyData = Data(body.utf8)
+        let headers = "HTTP/1.1 \(status)\r\nContent-Type: text/plain\r\nContent-Length: \(bodyData.count)\r\nConnection: close\r\nAccess-Control-Allow-Origin: *\r\n\r\n"
+        var response = Data(headers.utf8)
+        response.append(bodyData)
+        connection.send(content: response, completion: .contentProcessed { _ in
+            connection.cancel()
+        })
+    }
+
+    private func sendJSON(connection: NWConnection, status: String, json: String) {
+        let bodyData = Data(json.utf8)
+        let headers = "HTTP/1.1 \(status)\r\nContent-Type: application/json\r\nContent-Length: \(bodyData.count)\r\nConnection: close\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type\r\n\r\n"
+        var response = Data(headers.utf8)
+        response.append(bodyData)
+        connection.send(content: response, completion: .contentProcessed { _ in
+            connection.cancel()
+        })
+    }
+
+    private func extractHTTPBody(from request: String, fullData: Data) -> Data? {
+        // Find the double CRLF that separates headers from body
+        guard let headerEnd = request.range(of: "\r\n\r\n") else { return nil }
+        let headerByteCount = request[request.startIndex..<headerEnd.upperBound].utf8.count
+        guard fullData.count > headerByteCount else { return nil }
+        let bodyBytes = fullData.subdata(in: headerByteCount..<fullData.count)
+        // Body is base64-encoded encrypted data — trim whitespace before decoding
+        let bodyString = (String(data: bodyBytes, encoding: .utf8) ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !bodyString.isEmpty else { return nil }
+        guard let decoded = Data(base64Encoded: bodyString) else {
+            return bodyBytes
         }
+        return decoded
     }
 }

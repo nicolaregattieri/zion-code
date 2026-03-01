@@ -34,11 +34,14 @@ enum QRCodeGenerator {
         pairingToken: String,
         size: CGFloat = Constants.RemoteAccess.qrCodeSize
     ) -> NSImage? {
-        let payload = QRPayload(url: tunnelURL, key: keyBase64, token: pairingToken, version: 1)
-        guard let jsonData = try? JSONEncoder().encode(payload),
-              let jsonString = String(data: jsonData, encoding: .utf8) else {
-            return nil
-        }
-        return generate(from: jsonString, size: size)
+        // Encode key and token in URL fragment — fragment is never sent to server,
+        // keeping the encryption key client-side only.
+        // URL-safe base64 (RFC 4648 §5): replace +→-, /→_, strip = padding
+        let urlSafeKey = keyBase64
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+        let pairingURL = "\(tunnelURL)/#k=\(urlSafeKey)&t=\(pairingToken)&v=1"
+        return generate(from: pairingURL, size: size)
     }
 }
