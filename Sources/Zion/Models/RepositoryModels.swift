@@ -25,7 +25,7 @@ struct RecoverySnapshot: Identifiable, Hashable, Sendable {
 
     var id: String { hash + "::" + (reference ?? "dangling") }
     var isZionManaged: Bool {
-        subject.contains("zion-safety-") || subject.contains("zion-transfer-")
+        subject.contains("zion-safety-") || subject.contains("zion-transfer-") || subject.contains("zion-pre-")
     }
 }
 
