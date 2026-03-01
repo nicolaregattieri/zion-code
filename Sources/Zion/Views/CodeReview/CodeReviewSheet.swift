@@ -5,6 +5,10 @@ struct CodeReviewSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var splitRatio: CGFloat = 0.25
 
+    private var currentPRNumber: Int? {
+        model.pullRequests.first(where: { $0.headBranch == model.branchReviewSource })?.number
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             CodeReviewStatsBar(stats: model.codeReviewStats, source: model.branchReviewSource, target: model.branchReviewTarget)
@@ -37,7 +41,40 @@ struct CodeReviewSheet: View {
                     .buttonStyle(.bordered)
                     .keyboardShortcut(.escape, modifiers: [])
 
+                // Comment count badge
+                if !model.prComments.isEmpty {
+                    HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
+                        Image(systemName: "text.bubble.fill")
+                            .font(.system(size: 10))
+                        Text("\(model.prComments.count)")
+                            .font(.system(size: 10, weight: .bold))
+                    }
+                    .foregroundStyle(DesignSystem.Colors.info)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(DesignSystem.Colors.info.opacity(0.1))
+                    .clipShape(Capsule())
+                }
+
                 Spacer()
+
+                // Submit Review button (only when viewing a PR)
+                if currentPRNumber != nil {
+                    Button {
+                        model.isPRReviewSubmitSheetVisible = true
+                    } label: {
+                        HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
+                            Image(systemName: "checkmark.message")
+                            Text(L10n("pr.review.submit"))
+                            if !model.pendingReviewComments.isEmpty {
+                                Text("(\(model.pendingReviewComments.count))")
+                                    .font(.system(size: 9, weight: .bold))
+                            }
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(DesignSystem.Colors.codeReview)
+                }
 
                 Button {
                     model.copyCodeReviewSummary()
@@ -57,6 +94,9 @@ struct CodeReviewSheet: View {
             .padding(16)
         }
         .frame(minWidth: 1000, idealWidth: 1200, minHeight: 700, idealHeight: 800)
+        .sheet(isPresented: $model.isPRReviewSubmitSheetVisible) {
+            PRReviewSubmitSheet(model: model)
+        }
         .onAppear {
             guard model.codeReviewFiles.isEmpty else { return }
             model.ensureBranchReviewSelections()
@@ -64,6 +104,11 @@ struct CodeReviewSheet: View {
             let target = model.branchReviewTarget
             if !source.isEmpty, !target.isEmpty {
                 model.startCodeReview(source: source, target: target)
+            }
+
+            // Load PR comments if viewing a PR
+            if let prNumber = currentPRNumber {
+                model.loadPRComments(prNumber: prNumber)
             }
         }
     }

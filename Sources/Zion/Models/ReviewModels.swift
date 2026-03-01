@@ -57,6 +57,7 @@ struct CodeReviewFile: Identifiable {
     var diff: String = ""
     var hunks: [DiffHunk] = []
     var isReviewed: Bool = false
+    var inlineComments: [PRComment] = []
 }
 
 enum FileChangeStatus: String, Sendable {
