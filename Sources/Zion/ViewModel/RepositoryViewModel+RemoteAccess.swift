@@ -10,12 +10,6 @@ extension RepositoryViewModel {
         syncRemoteAccessState()
 
         Task {
-            // Clean up any existing server/tunnel before starting fresh
-            await remoteAccessServer?.stop()
-            remoteAccessServer = nil
-            await tunnelManager?.stop()
-            tunnelManager = nil
-
             do {
                 // 1. Generate or load pairing key
                 let key = RemoteAccessEncryption.loadPairingKey() ?? {
@@ -24,47 +18,49 @@ extension RepositoryViewModel {
                     return newKey
                 }()
 
-                // 2. Start WebSocket server
-                let server = RemoteAccessServer()
-                remoteAccessServer = server
+                // 2. Start HTTP server (reuse if already running)
+                if remoteAccessServer == nil {
+                    let server = RemoteAccessServer()
+                    remoteAccessServer = server
 
-                await server.setCallbacks(
-                    onMessage: { [weak self] message in
-                        await self?.handleRemoteMessage(message)
-                    },
-                    onConnectionCount: { [weak self] count in
-                        await MainActor.run { [weak self] in
-                            guard let self else { return }
-                            if count > 0 {
-                                self.mobileAccessConnectionState = .connected(deviceCount: count)
-                                // Send session list + current screen state so the phone has data immediately
-                                self.sendSessionList()
-                                self.sendAllScreenUpdates()
-                            } else {
-                                self.mobileAccessConnectionState = .waitingForPairing
+                    await server.setCallbacks(
+                        onMessage: { [weak self] message in
+                            await self?.handleRemoteMessage(message)
+                        },
+                        onConnectionCount: { [weak self] count in
+                            await MainActor.run { [weak self] in
+                                guard let self else { return }
+                                // Skip connection updates during active mode switch
+                                if self.isSwitchingMode { return }
+                                if count > 0 {
+                                    self.mobileAccessConnectionState = .connected(deviceCount: count)
+                                    self.sendSessionList()
+                                    self.sendAllScreenUpdates()
+                                } else {
+                                    self.mobileAccessConnectionState = .waitingForPairing
+                                }
+                                self.syncRemoteAccessState()
                             }
-                            self.syncRemoteAccessState()
                         }
-                    }
-                )
+                    )
 
-                try await server.start(port: Constants.RemoteAccess.defaultPort, key: key)
+                    try await server.start(port: Constants.RemoteAccess.defaultPort, key: key, lanMode: isMobileAccessLANMode)
+                }
 
-                // 3. Start Cloudflare tunnel
-                let tunnel = CloudflareTunnelManager()
-                tunnelManager = tunnel
-                let tunnelURL = try await tunnel.start(localPort: Constants.RemoteAccess.defaultPort)
+                // 3. Resolve tunnel URL
+                let tunnelURL = try await resolveTunnelURL()
                 mobileAccessTunnelURL = tunnelURL
 
                 // 4. Generate pairing token and QR code
                 let pairingToken = UUID().uuidString
-                await server.addPairingToken(pairingToken)
+                await remoteAccessServer?.addPairingToken(pairingToken)
 
                 let keyBase64 = RemoteAccessEncryption.exportKey(key)
                 mobileAccessQRImage = QRCodeGenerator.generatePairingQR(
                     tunnelURL: tunnelURL,
                     keyBase64: keyBase64,
                     pairingToken: pairingToken,
+                    lanMode: isMobileAccessLANMode,
                     size: Constants.RemoteAccess.qrCodeSize
                 )
 
@@ -81,6 +77,26 @@ extension RepositoryViewModel {
                 logger.log(.error, "Failed to start remote access", context: error.localizedDescription, source: #function)
             }
         }
+    }
+
+    /// Resolve tunnel URL: reuse existing Cloudflare tunnel if alive, or use LAN IP
+    private func resolveTunnelURL() async throws -> String {
+        if isMobileAccessLANMode {
+            // LAN mode: keep tunnel alive for quick switch-back, just use local IP
+            let localIP = Self.getLocalIPAddress() ?? "localhost"
+            return "http://\(localIP):\(Constants.RemoteAccess.defaultPort)"
+        }
+
+        // Cloudflare mode: reuse tunnel if still alive
+        if let tunnel = tunnelManager, await tunnel.isRunning, let url = await tunnel.currentURL {
+            return url
+        }
+
+        // Need a new tunnel
+        await tunnelManager?.stop()
+        let tunnel = CloudflareTunnelManager()
+        tunnelManager = tunnel
+        return try await tunnel.start(localPort: Constants.RemoteAccess.defaultPort)
     }
 
     func disableRemoteAccess() {
@@ -104,6 +120,73 @@ extension RepositoryViewModel {
         terminalOutputBuffers.removeAll()
         PromptDetector.resetDedup()
         syncRemoteAccessState()
+    }
+
+    /// Switch between LAN and Cloudflare mode without restarting the HTTP server
+    func switchRemoteAccessMode() {
+        guard isMobileAccessEnabled, remoteAccessServer != nil else { return }
+
+        // Clear stale QR/URL immediately so the UI doesn't flash old values
+        mobileAccessConnectionState = .starting
+        mobileAccessQRImage = nil
+        mobileAccessTunnelURL = ""
+        isSwitchingMode = true
+        syncRemoteAccessState()
+
+        Task {
+            defer { isSwitchingMode = false }
+
+            do {
+                // Disconnect all clients — they need to re-pair with the new URL
+                await remoteAccessServer?.disconnectAll()
+
+                // Update server's LAN mode flag (no restart needed)
+                await remoteAccessServer?.setLANMode(isMobileAccessLANMode)
+
+                // Resolve new tunnel URL with timeout so .starting doesn't persist forever
+                let tunnelURL = try await withThrowingTaskGroup(of: String.self) { group in
+                    group.addTask { try await self.resolveTunnelURL() }
+                    group.addTask {
+                        try await Task.sleep(nanoseconds: Constants.RemoteAccess.tunnelURLTimeoutNanoseconds)
+                        throw CancellationError()
+                    }
+                    guard let result = try await group.next() else {
+                        throw CancellationError()
+                    }
+                    group.cancelAll()
+                    return result
+                }
+                mobileAccessTunnelURL = tunnelURL
+
+                // Regenerate QR with new URL but reuse key
+                guard let key = RemoteAccessEncryption.loadPairingKey() else {
+                    mobileAccessConnectionState = .error(L10n("mobile.access.error.keyNotFound"))
+                    syncRemoteAccessState()
+                    return
+                }
+                let pairingToken = UUID().uuidString
+                await remoteAccessServer?.addPairingToken(pairingToken)
+
+                let keyBase64 = RemoteAccessEncryption.exportKey(key)
+                mobileAccessQRImage = QRCodeGenerator.generatePairingQR(
+                    tunnelURL: tunnelURL,
+                    keyBase64: keyBase64,
+                    pairingToken: pairingToken,
+                    lanMode: isMobileAccessLANMode,
+                    size: Constants.RemoteAccess.qrCodeSize
+                )
+
+                mobileAccessConnectionState = .waitingForPairing
+                syncRemoteAccessState()
+
+            } catch is CancellationError {
+                mobileAccessConnectionState = .error(L10n("mobile.access.error.timeout"))
+                syncRemoteAccessState()
+            } catch {
+                mobileAccessConnectionState = .error(error.localizedDescription)
+                syncRemoteAccessState()
+            }
+        }
     }
 
     func regeneratePairingKey() {
@@ -177,18 +260,26 @@ extension RepositoryViewModel {
         guard let callback = terminalSendCallbacks[sessionID] else { return }
 
         // Split text from trailing CR/LF so TUI apps don't treat it as pasted text
-        // Send the text content first, then the Enter keystroke separately
+        // Send the text content first, then the Enter keystroke after a short delay
+        // so the TUI processes the text before receiving the submit key
         let trimmed = text.replacingOccurrences(of: "\r", with: "")
                          .replacingOccurrences(of: "\n", with: "")
+
+        let needsEnter = text.hasSuffix("\r") || text.hasSuffix("\n")
 
         if !trimmed.isEmpty, let textData = trimmed.data(using: .utf8) {
             callback(textData)
         }
 
-        // Send Enter as a separate write (CR = what real keyboard sends)
-        if text.hasSuffix("\r") || text.hasSuffix("\n") {
-            if let enterData = "\r".data(using: .utf8) {
-                callback(enterData)
+        // Send Enter as a separate write after a delay (CR = what real keyboard sends)
+        // The 50ms gap lets TUI apps (Claude, Gemini, Aider) process the text input
+        // before the submit keystroke arrives, preventing "paste with newline" behavior
+        if needsEnter {
+            Task {
+                try? await Task.sleep(nanoseconds: 50_000_000)
+                if let enterData = "\r".data(using: .utf8) {
+                    callback(enterData)
+                }
             }
         }
     }
@@ -377,9 +468,35 @@ extension RepositoryViewModel {
         shared.connectionState = mobileAccessConnectionState
         shared.tunnelURL = mobileAccessTunnelURL
         shared.qrImage = mobileAccessQRImage
+        shared.isLANMode = isMobileAccessLANMode
     }
 
     // MARK: - Helpers
+
+    static func getLocalIPAddress() -> String? {
+        var address: String?
+        var ifaddr: UnsafeMutablePointer<ifaddrs>?
+        guard getifaddrs(&ifaddr) == 0, let firstAddr = ifaddr else { return nil }
+        defer { freeifaddrs(ifaddr) }
+
+        for ptr in sequence(first: firstAddr, next: { $0.pointee.ifa_next }) {
+            let sa = ptr.pointee.ifa_addr.pointee
+            guard sa.sa_family == UInt8(AF_INET) else { continue }
+            let name = String(cString: ptr.pointee.ifa_name)
+            // Prefer en0 (Wi-Fi) or en1 (Ethernet)
+            guard name.hasPrefix("en") else { continue }
+            var addr = ptr.pointee.ifa_addr.pointee
+            var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+            if getnameinfo(&addr, socklen_t(addr.sa_len), &hostname, socklen_t(hostname.count), nil, 0, NI_NUMERICHOST) == 0 {
+                let ip = String(decoding: hostname.prefix(while: { $0 != 0 }).map(UInt8.init), as: UTF8.self)
+                if !ip.hasPrefix("127.") {
+                    address = ip
+                    break
+                }
+            }
+        }
+        return address
+    }
 
     private func stripANSI(_ text: String) -> String {
         // Comprehensive ANSI/VT escape stripping:

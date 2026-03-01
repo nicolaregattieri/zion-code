@@ -1629,6 +1629,9 @@
 "mobile.access.error.parseFailed" = "No se pudo extraer la URL del túnel de la salida de cloudflared";
 "mobile.access.error.timeout" = "Tiempo de espera agotado para el túnel de Cloudflare";
 "mobile.access.error.rateLimited" = "Límite de solicitudes de Cloudflare alcanzado. Espera unos minutos e inténtalo de nuevo.";
+"mobile.access.error.keyNotFound" = "Clave de cifrado no encontrada. Intenta regenerar la clave de emparejamiento.";
+"mobile.access.lanMode" = "Modo LAN";
+"mobile.access.lanMode.hint" = "Conectar por red local (mismo Wi-Fi) sin túnel Cloudflare. Usa para pruebas o cuando el teléfono está en la misma red.";
 "ntfy.event.terminalPromptDetected" = "Prompt detectado en la terminal";
 
 // Mobile Access — Onboarding Steps
