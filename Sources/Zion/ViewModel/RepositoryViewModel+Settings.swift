@@ -661,7 +661,6 @@ extension RepositoryViewModel {
             logger.log(.info, "Behind remote check failed (expected if no upstream): \(error.localizedDescription)", source: #function)
             behindRemoteCount = 0
             aheadRemoteCount = 0
-            lastNotifiedBehindCount = 0
         }
     }
 

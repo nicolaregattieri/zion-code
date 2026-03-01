@@ -594,6 +594,7 @@ final class RepositoryViewModel {
         isSwitchingRepository = true
         logger.log(.info, "switch.start", context: "target=\(url.lastPathComponent) token=\(switchToken.uuidString.prefix(8))", source: #function)
         cancelRepositoryBackgroundActivityForSwitch()
+        lastNotifiedBehindCount = 0
 
         repositoryURL = url
         repoEditorConfig = EditorConfig.load(from: url)
