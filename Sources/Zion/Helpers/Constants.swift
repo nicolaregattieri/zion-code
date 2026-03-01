@@ -46,11 +46,14 @@ enum Constants {
     enum RemoteAccess {
         static let defaultPort: UInt16 = 19_847
         static let maxScreenUpdateLines = 50
-        static let heartbeatIntervalSeconds = 15
+        static let heartbeatIntervalNanoseconds: UInt64 = 15_000_000_000
+        static let tunnelURLTimeoutNanoseconds: UInt64 = 30_000_000_000
         static let tokenRotationInterval: TimeInterval = 86_400
         static let maxConcurrentConnections = 2
         static let maxMessagesPerSecond = 20
         static let screenUpdateDebounceNanoseconds: UInt64 = 200_000_000
+        static let aes256KeyByteLength = 32
+        static let qrCodeSize: CGFloat = 200
     }
 
     enum UI {

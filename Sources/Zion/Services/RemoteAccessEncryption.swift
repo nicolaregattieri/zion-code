@@ -17,7 +17,7 @@ enum RemoteAccessEncryption {
     }
 
     static func importKey(_ base64: String) -> SymmetricKey? {
-        guard let data = Data(base64Encoded: base64), data.count == 32 else { return nil }
+        guard let data = Data(base64Encoded: base64), data.count == Constants.RemoteAccess.aes256KeyByteLength else { return nil }
         return SymmetricKey(data: data)
     }
 
@@ -66,7 +66,7 @@ enum RemoteAccessEncryption {
 
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
-        guard status == errSecSuccess, let data = result as? Data, data.count == 32 else {
+        guard status == errSecSuccess, let data = result as? Data, data.count == Constants.RemoteAccess.aes256KeyByteLength else {
             return nil
         }
         return SymmetricKey(data: data)

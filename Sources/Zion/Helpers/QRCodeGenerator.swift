@@ -3,7 +3,7 @@ import CoreImage
 import CoreImage.CIFilterBuiltins
 
 enum QRCodeGenerator {
-    static func generate(from string: String, size: CGFloat = 200) -> NSImage? {
+    static func generate(from string: String, size: CGFloat = Constants.RemoteAccess.qrCodeSize) -> NSImage? {
         let context = CIContext()
         let filter = CIFilter.qrCodeGenerator()
         filter.message = Data(string.utf8)
@@ -32,7 +32,7 @@ enum QRCodeGenerator {
         tunnelURL: String,
         keyBase64: String,
         pairingToken: String,
-        size: CGFloat = 200
+        size: CGFloat = Constants.RemoteAccess.qrCodeSize
     ) -> NSImage? {
         let payload = QRPayload(url: tunnelURL, key: keyBase64, token: pairingToken, version: 1)
         guard let jsonData = try? JSONEncoder().encode(payload),

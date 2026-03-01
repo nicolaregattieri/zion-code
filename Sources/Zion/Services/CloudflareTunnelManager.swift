@@ -124,7 +124,7 @@ actor CloudflareTunnelManager {
 
             // Timeout after 30 seconds
             Task { [state] in
-                try? await Task.sleep(nanoseconds: 30_000_000_000)
+                try? await Task.sleep(nanoseconds: Constants.RemoteAccess.tunnelURLTimeoutNanoseconds)
                 if state.tryResume() {
                     handle.readabilityHandler = nil
                     continuation.resume(throwing: TunnelError.timeout)

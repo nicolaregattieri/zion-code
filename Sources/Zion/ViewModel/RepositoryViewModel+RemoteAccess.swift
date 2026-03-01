@@ -54,7 +54,7 @@ extension RepositoryViewModel {
                     tunnelURL: tunnelURL,
                     keyBase64: keyBase64,
                     pairingToken: pairingToken,
-                    size: 200
+                    size: Constants.RemoteAccess.qrCodeSize
                 )
 
                 mobileAccessConnectionState = .waitingForPairing
@@ -302,7 +302,7 @@ extension RepositoryViewModel {
         heartbeatTask?.cancel()
         heartbeatTask = Task {
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: UInt64(Constants.RemoteAccess.heartbeatIntervalSeconds) * 1_000_000_000)
+                try? await Task.sleep(nanoseconds: Constants.RemoteAccess.heartbeatIntervalNanoseconds)
                 if Task.isCancelled { break }
 
                 let message = RemoteMessage(
