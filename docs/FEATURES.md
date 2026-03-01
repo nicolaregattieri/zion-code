@@ -195,7 +195,7 @@
 
 | Feature | Description | Shortcut |
 |---------|-------------|----------|
-| Native Settings | macOS Settings window with 4 tabs: General, Editor, AI, Notifications | `⌘,` |
+| Native Settings | macOS Settings window with 6 tabs: General, Editor, Terminal, AI, Notifications, Mobile | `⌘,` |
 | General Tab | Language, Appearance, Confirmation Mode | — |
 | Editor Tab | Theme, font family/size, spacing, tab/indent, ruler, wrap, guides, bracket highlight | — |
 | AI Tab | Provider, API key, Commit style, Diff explanation depth, Auto-explain | — |
@@ -241,6 +241,21 @@
 | Automatic Checks | Background update check every 24 hours |
 | Delta Updates | Smart downloads that only transfer version differences |
 | EdDSA Signing | Secure update verification with EdDSA public key |
+
+## Mobile Remote Access
+
+| Feature | Description |
+|---------|-------------|
+| QR Pairing | Scan QR code from iPhone to pair with secure AES-256-GCM encrypted connection |
+| Terminal Streaming | Live terminal output streamed to phone with throttled screen updates |
+| Prompt Actions | Approve, Deny, and Abort buttons appear when Claude/AI prompts are detected |
+| Quick Actions | Always-visible toolbar with Ctrl+C, Ctrl+D, Esc, Tab, Arrow Up, Arrow Down |
+| Multi-Project Sessions | Sessions from all open repos (active + background) visible on phone, grouped by repo name |
+| Text Input | Send commands and text to any terminal session from phone |
+| LAN Mode | Connect over local Wi-Fi without Cloudflare tunnel |
+| Cloudflare Tunnel | Secure remote access via Cloudflare tunnel (no port forwarding needed) |
+| Prevent Sleep | Optional setting to keep Mac awake while remote server is active |
+| Settings Tab | Dedicated Mobile tab in Settings with progressive onboarding |
 
 ## Git Hosting Integration
 
@@ -288,7 +303,7 @@
 
 | Feature | Description |
 |---------|-------------|
-| Settings Window | Native macOS Settings window (`⌘,`) with General, Editor, AI, and Notifications tabs |
+| Settings Window | Native macOS Settings window (`⌘,`) with General, Editor, Terminal, AI, Notifications, and Mobile tabs |
 | Language | Portuguese (BR), English, Spanish, System |
 | Appearance Mode | System, Light, Dark |
 | Focus Mode | Full-screen code/terminal focus layout with explicit in-screen exit affordance (`⌃⌘J`) |

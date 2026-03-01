@@ -1634,6 +1634,14 @@
 "mobile.access.error.keyNotFound" = "Clave de cifrado no encontrada. Intenta regenerar la clave de emparejamiento.";
 "mobile.access.lanMode" = "Modo LAN";
 "mobile.access.lanMode.hint" = "Conectar por red local (mismo Wi-Fi) sin túnel Cloudflare. Usa para pruebas o cuando el teléfono está en la misma red.";
+"mobile.access.keepAwake" = "Evitar Suspensión";
+"mobile.access.keepAwake.hint" = "Mantener la Mac activa mientras el servidor remoto esté activo.";
+"keepAwake.duration.off" = "Desactivado";
+"keepAwake.duration.1h" = "1 Hora";
+"keepAwake.duration.2h" = "2 Horas";
+"keepAwake.duration.4h" = "4 Horas";
+"keepAwake.duration.8h" = "8 Horas";
+"keepAwake.duration.indefinite" = "Indefinido";
 "ntfy.event.terminalPromptDetected" = "Prompt detectado en la terminal";
 
 // Mobile Access — Onboarding Steps
@@ -1656,3 +1664,33 @@
 "mobile.access.step.error.retry" = "Intentar de nuevo";
 "mobile.access.step.disable" = "Desactivar Acceso Móvil";
 "mobile.access.copy" = "Copiar al portapapeles";
+
+// Mobile Remote Access — Help Sheet & Zion Map
+"help.mobileAccess.title" = "Acceso Remoto Móvil";
+"help.mobile.pairing" = "Emparejamiento por QR code con cifrado AES-256-GCM";
+"help.mobile.terminal" = "Salida del terminal transmitida en tiempo real al teléfono";
+"help.mobile.quickActions" = "Botones de acción rápida: Ctrl+C, Ctrl+D, Esc, Tab, flechas";
+"help.mobile.multiProject" = "Sesiones de múltiples proyectos agrupadas por repositorio";
+"help.mobile.preventSleep" = "Evitar suspensión del Mac mientras el servidor esté activo";
+
+"map.mobileAccess.subtitle" = "Controla sesiones de terminal desde tu iPhone";
+"map.mobile.pairing.title" = "Emparejamiento por QR Code";
+"map.mobile.pairing.description" = "Escanea un código QR con tu iPhone para establecer una conexión segura. Todos los datos se cifran con AES-256-GCM de extremo a extremo.";
+"map.mobile.pairing.tip1" = "Abre Configuración > Móvil y escanea el QR code con la cámara del teléfono.";
+"map.mobile.terminal.title" = "Transmisión del Terminal";
+"map.mobile.terminal.description" = "La salida del terminal se transmite en tiempo real al teléfono con actualizaciones controladas. Envía comandos, aprueba prompts y monitorea la salida remotamente.";
+"map.mobile.quickActions.title" = "Botones de Acción Rápida";
+"map.mobile.quickActions.description" = "Barra de herramientas siempre visible con controles comunes del terminal: Ctrl+C, Ctrl+D, Esc, Tab, Flecha Arriba y Flecha Abajo.";
+"map.mobile.quickActions.tip1" = "Las acciones rápidas envían bytes crudos al terminal — sin retraso, respuesta instantánea.";
+"map.mobile.multiProject.title" = "Sesiones Multi-Proyecto";
+"map.mobile.multiProject.description" = "Las sesiones de todos los repositorios abiertos aparecen en el teléfono, agrupadas por nombre del repositorio. Cambia entre proyectos sin tocar la Mac.";
+"map.mobile.lanMode.title" = "Modo LAN";
+"map.mobile.lanMode.description" = "Conéctate por red local sin túnel Cloudflare. Ideal para pruebas o cuando el teléfono está en la misma red.";
+"map.mobile.preventSleep.title" = "Evitar Suspensión";
+"map.mobile.preventSleep.description" = "Configuración opcional para mantener la Mac activa mientras el servidor remoto esté activo, evitando desconexión por suspensión.";
+
+// Mobile Access — Status Bar Badge
+"mobile.status.starting" = "Acceso Móvil: Iniciando...";
+"mobile.status.waitingForPairing" = "Acceso Móvil: Esperando emparejamiento";
+"mobile.status.connected" = "Acceso Móvil: %lld dispositivo(s) conectado(s)";
+"mobile.status.error" = "Acceso Móvil: Error";

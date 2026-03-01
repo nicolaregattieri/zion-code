@@ -1618,6 +1618,14 @@
 "mobile.access.error.keyNotFound" = "Encryption key not found. Try regenerating the pairing key.";
 "mobile.access.lanMode" = "LAN Mode";
 "mobile.access.lanMode.hint" = "Connect over local network (same Wi-Fi) without Cloudflare tunnel. Use for testing or when your phone is on the same network.";
+"mobile.access.keepAwake" = "Prevent Sleep";
+"mobile.access.keepAwake.hint" = "Keep your Mac awake while the remote server is active.";
+"keepAwake.duration.off" = "Off";
+"keepAwake.duration.1h" = "1 Hour";
+"keepAwake.duration.2h" = "2 Hours";
+"keepAwake.duration.4h" = "4 Hours";
+"keepAwake.duration.8h" = "8 Hours";
+"keepAwake.duration.indefinite" = "Indefinite";
 "ntfy.event.terminalPromptDetected" = "Terminal prompt detected";
 
 // Mobile Access — Onboarding Steps
@@ -1640,3 +1648,33 @@
 "mobile.access.step.error.retry" = "Try again";
 "mobile.access.step.disable" = "Turn off Mobile Access";
 "mobile.access.copy" = "Copy to clipboard";
+
+// Mobile Remote Access — Help Sheet & Zion Map
+"help.mobileAccess.title" = "Mobile Remote Access";
+"help.mobile.pairing" = "QR code pairing with AES-256-GCM encryption";
+"help.mobile.terminal" = "Live terminal output streaming to your phone";
+"help.mobile.quickActions" = "Quick action buttons: Ctrl+C, Ctrl+D, Esc, Tab, arrows";
+"help.mobile.multiProject" = "Multi-project sessions grouped by repo";
+"help.mobile.preventSleep" = "Prevent Mac sleep while server is active";
+
+"map.mobileAccess.subtitle" = "Control terminal sessions from your iPhone";
+"map.mobile.pairing.title" = "QR Code Pairing";
+"map.mobile.pairing.description" = "Scan a QR code with your iPhone to establish a secure connection. All data is encrypted with AES-256-GCM end-to-end.";
+"map.mobile.pairing.tip1" = "Open Settings > Mobile and scan the QR code with your phone's camera.";
+"map.mobile.terminal.title" = "Terminal Streaming";
+"map.mobile.terminal.description" = "Live terminal output is streamed to your phone with throttled updates. Send commands, approve prompts, and monitor output remotely.";
+"map.mobile.quickActions.title" = "Quick Action Buttons";
+"map.mobile.quickActions.description" = "Always-visible toolbar with common terminal controls: Ctrl+C, Ctrl+D, Esc, Tab, Arrow Up, and Arrow Down.";
+"map.mobile.quickActions.tip1" = "Quick actions send raw terminal bytes — no delay needed, instant response.";
+"map.mobile.multiProject.title" = "Multi-Project Sessions";
+"map.mobile.multiProject.description" = "Sessions from all open repos appear on your phone, grouped by repository name. Switch between projects without touching your Mac.";
+"map.mobile.lanMode.title" = "LAN Mode";
+"map.mobile.lanMode.description" = "Connect over local Wi-Fi without a Cloudflare tunnel. Ideal for testing or when your phone is on the same network.";
+"map.mobile.preventSleep.title" = "Prevent Sleep";
+"map.mobile.preventSleep.description" = "Optional setting to keep your Mac awake while the remote server is active, preventing disconnection from idle sleep.";
+
+// Mobile Access — Status Bar Badge
+"mobile.status.starting" = "Mobile Access: Starting...";
+"mobile.status.waitingForPairing" = "Mobile Access: Waiting for pairing";
+"mobile.status.connected" = "Mobile Access: %lld device(s) connected";
+"mobile.status.error" = "Mobile Access: Error";
