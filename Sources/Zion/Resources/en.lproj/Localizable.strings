@@ -1611,3 +1611,24 @@
 "mobile.access.cloudflared.notFound" = "cloudflared not found";
 "mobile.access.cloudflared.install" = "Install cloudflared to enable secure tunnel access. Run the following command in your terminal:";
 "ntfy.event.terminalPromptDetected" = "Terminal prompt detected";
+
+// Mobile Access — Onboarding Steps
+"mobile.access.step.header" = "Step %lld — %@";
+"mobile.access.step.checking" = "Checking requirements...";
+"mobile.access.step.install.title" = "Install cloudflared";
+"mobile.access.step.install.description" = "Cloudflare Tunnel creates a secure connection between your Mac and your phone. Install it with Homebrew:";
+"mobile.access.step.install.recheck" = "I've installed it — check again";
+"mobile.access.step.enable.title" = "Turn on Mobile Access";
+"mobile.access.step.enable.description" = "Starts a secure tunnel so your phone can reach this Mac. No ports to open, no router config needed.";
+"mobile.access.step.starting.title" = "Setting up...";
+"mobile.access.step.starting.server" = "Starting local server";
+"mobile.access.step.starting.tunnel" = "Opening Cloudflare tunnel";
+"mobile.access.step.starting.qr" = "Generating pairing code";
+"mobile.access.step.scan.title" = "Scan to connect";
+"mobile.access.step.scan.description" = "Open the Zion companion app on your iPhone and scan this QR code to pair.";
+"mobile.access.step.connected.title" = "Connected";
+"mobile.access.step.connected.description" = "Your phone can now see terminal output, approve prompts, and send commands.";
+"mobile.access.step.error.title" = "Something went wrong";
+"mobile.access.step.error.retry" = "Try again";
+"mobile.access.step.disable" = "Turn off Mobile Access";
+"mobile.access.copy" = "Copy to clipboard";
