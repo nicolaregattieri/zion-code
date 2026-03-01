@@ -174,8 +174,8 @@ struct PullRequestSheet: View {
     }
 
     private func createPR() {
-        guard let remote = detectGitHubRemote() else {
-            errorMessage = L10n("Nenhum remote GitHub detectado.")
+        guard let (provider, remote) = model.detectHostingProvider() else {
+            errorMessage = L10n("hosting.notConnected")
             return
         }
 
@@ -184,7 +184,7 @@ struct PullRequestSheet: View {
 
         Task {
             do {
-                let pr = try await model.githubClient.createPullRequest(
+                let pr = try await provider.createPullRequest(
                     remote: remote,
                     title: title,
                     body: body_,
@@ -199,14 +199,5 @@ struct PullRequestSheet: View {
                 isCreating = false
             }
         }
-    }
-
-    private func detectGitHubRemote() -> GitHubRemote? {
-        for remote in model.remotes {
-            if let gh = GitHubClient.parseRemote(remote.url) {
-                return gh
-            }
-        }
-        return nil
     }
 }

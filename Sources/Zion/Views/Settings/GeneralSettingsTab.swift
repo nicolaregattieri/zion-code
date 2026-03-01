@@ -5,6 +5,10 @@ struct GeneralSettingsTab: View {
     @AppStorage("zion.appearance") private var appearanceRaw: String = AppAppearance.system.rawValue
     @AppStorage("zion.confirmationMode") private var confirmationModeRaw: String = ConfirmationMode.destructiveOnly.rawValue
     @AppStorage("zion.zionModeEnabled") private var zionModeEnabled: Bool = false
+    @AppStorage("zion.gitlab.pat") private var gitlabPAT: String = ""
+    @AppStorage("zion.gitlab.host") private var gitlabHost: String = ""
+    @AppStorage("zion.bitbucket.username") private var bitbucketUsername: String = ""
+    @AppStorage("zion.bitbucket.appPassword") private var bitbucketAppPassword: String = ""
     @State private var glowPulse: Bool = false
 
     var body: some View {
@@ -75,6 +79,22 @@ struct GeneralSettingsTab: View {
                     ForEach(AppAppearance.allCases) { mode in
                         Text(mode.label).tag(mode.rawValue)
                     }
+                }
+            }
+
+            // Git Hosting
+            Section(L10n("settings.hosting.title")) {
+                DisclosureGroup(L10n("settings.hosting.gitlab")) {
+                    SecureField(L10n("hosting.gitlab.pat"), text: $gitlabPAT)
+                        .textFieldStyle(.roundedBorder)
+                    TextField(L10n("hosting.gitlab.host"), text: $gitlabHost)
+                        .textFieldStyle(.roundedBorder)
+                }
+                DisclosureGroup(L10n("settings.hosting.bitbucket")) {
+                    TextField(L10n("hosting.bitbucket.username"), text: $bitbucketUsername)
+                        .textFieldStyle(.roundedBorder)
+                    SecureField(L10n("hosting.bitbucket.appPassword"), text: $bitbucketAppPassword)
+                        .textFieldStyle(.roundedBorder)
                 }
             }
 

@@ -504,33 +504,50 @@ extension RepositoryViewModel {
         return nil
     }
 
-    // MARK: - GitHub PR Integration
+    // MARK: - Git Hosting Provider Integration
 
     func loadPullRequests() {
-        guard let remote = detectGitHubRemote() else { return }
+        guard let (provider, remote) = detectHostingProvider() else { return }
+        hostingProvider = provider
 
         prTask?.cancel()
         prTask = Task {
-            let prs = await githubClient.fetchPullRequests(remote: remote)
+            let prs = await provider.fetchPullRequests(remote: remote)
             pullRequests = prs
         }
     }
 
-    func prForBranch(_ branch: String) -> GitHubPRInfo? {
+    func prForBranch(_ branch: String) -> HostedPRInfo? {
         pullRequests.first { $0.headBranch == branch }
     }
 
-    var hasGitHubRemote: Bool {
-        detectGitHubRemote() != nil
+    var hasHostingProvider: Bool {
+        detectHostingProvider() != nil
     }
 
-    func detectGitHubRemote() -> GitHubRemote? {
+    /// Legacy alias for backward compatibility.
+    var hasGitHubRemote: Bool { hasHostingProvider }
+
+    /// Detect which hosting provider matches the current remotes.
+    /// Tries GitHub (via `gh` CLI), then GitLab, then Bitbucket.
+    func detectHostingProvider() -> (provider: any GitHostingProvider, remote: HostedRemote)? {
         for remote in remotes {
-            if let gh = GitHubClient.parseRemote(remote.url) {
-                return gh
+            if let hosted = GitHubClient.parseRemote(remote.url) {
+                return (githubClient, hosted)
+            }
+            if let hosted = GitLabClient.parseRemote(remote.url) {
+                return (gitlabClient, hosted)
+            }
+            if let hosted = BitbucketClient.parseRemote(remote.url) {
+                return (bitbucketClient, hosted)
             }
         }
         return nil
+    }
+
+    /// Detect the hosted remote for the current repository (without the provider reference).
+    func detectHostedRemote() -> HostedRemote? {
+        detectHostingProvider()?.remote
     }
 
     // MARK: - Background Fetch
@@ -666,8 +683,8 @@ extension RepositoryViewModel {
     }
 
     func checkPRReviewRequests() async {
-        guard let remote = detectGitHubRemote() else { return }
-        let prs = await githubClient.fetchPRsRequestingMyReview(remote: remote)
+        guard let (provider, remote) = detectHostingProvider() else { return }
+        let prs = await provider.fetchPRsRequestingMyReview(remote: remote)
         for pr in prs {
             if !notifiedReviewRequestPRIDs.contains(pr.id) {
                 notifiedReviewRequestPRIDs.insert(pr.id)
@@ -730,7 +747,6 @@ extension RepositoryViewModel {
         }
         backgroundRepoStates.removeAll()
         backgroundRepoChangedFiles.removeAll()
-        activeBackgroundRepoURLs.removeAll()
     }
 
     // MARK: - Repository Statistics

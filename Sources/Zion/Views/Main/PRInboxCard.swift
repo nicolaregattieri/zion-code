@@ -74,6 +74,7 @@ struct PRInboxCard: View {
         }
         .padding(.horizontal, 10)
         .onAppear {
+            // checkGHStatus() is nonisolated static — safe to call synchronously
             let status = GitHubClient.checkGHStatus()
             ghInstalled = status.installed
             ghAuthenticated = status.authenticated
