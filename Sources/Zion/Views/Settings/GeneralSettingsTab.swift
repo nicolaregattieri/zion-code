@@ -90,14 +90,14 @@ struct GeneralSettingsTab: View {
         .formStyle(.grouped)
         .onAppear {
             if zionModeEnabled {
-                withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                withAnimation(DesignSystem.Motion.glowPulse) {
                     glowPulse = true
                 }
             }
         }
         .onChange(of: zionModeEnabled) { _, enabled in
             if enabled {
-                withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                withAnimation(DesignSystem.Motion.glowPulse) {
                     glowPulse = true
                 }
             } else {

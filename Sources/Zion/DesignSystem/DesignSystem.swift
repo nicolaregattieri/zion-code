@@ -117,6 +117,15 @@ struct DesignSystem {
         static let shadowDark = Color.black.opacity(0.14)
         static let shadowLight = Color.black.opacity(0.08)
 
+        // Glow pulse tokens (active session indicator)
+        static let glowBorderActive: Double = 0.2
+        static let glowBorderIdle: Double = 0.06
+        static let glowShadowActive: Double = 0.15
+        static let glowShadowIdle: Double = 0.03
+        static let glowRadiusActive: CGFloat = 5
+        static let glowRadiusIdle: CGFloat = 2
+        static let glowStaticHint: Double = 0.12
+
         // Danger zone
         static let dangerBackground = destructive.opacity(0.06)
         static let dangerBorder = destructive.opacity(0.25)
@@ -240,6 +249,8 @@ struct DesignSystem {
         static let detail = Animation.easeInOut(duration: 0.15)
         static let snappy = Animation.snappy(duration: 0.2)
         static let graph = Animation.easeInOut(duration: 0.12)
+
+        static let glowPulse = Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: true)
 
         @MainActor static let fade = AnyTransition.opacity
         @MainActor static let slideFromTop = AnyTransition.move(edge: .top).combined(with: .opacity)

@@ -1531,3 +1531,4 @@
 "settings.terminal.autoAppendAIConfig.hint" = "Automatically add Zion instructions to AI config files (CLAUDE.md, .cursorrules, etc.) in your project root. When off, use zion_ai_setup manually.";
 "settings.terminal.selection" = "Selection";
 "settings.terminal.copyOnSelect" = "Copy on Select";
+"recent.active.hint" = "Active session";

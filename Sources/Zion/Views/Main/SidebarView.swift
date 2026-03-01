@@ -63,6 +63,7 @@ struct SidebarView: View {
                                     RecentProjectRow(
                                         url: url,
                                         isCurrent: model.recentRepositoryRoot(for: model.repositoryURL) == url,
+                                        isBackgroundActive: model.activeBackgroundRepoURLs.contains(url),
                                         changedCount: model.backgroundRepoChangedFiles[url],
                                         worktreeCount: model.recentWorktreeCounts[url] ?? 0
                                     ) {
@@ -334,15 +335,17 @@ struct SidebarView: View {
             .controlSize(.small)
             .help(L10n("Terminal"))
 
-            Button {
-                model.requestWorktreeRemoval(wt)
-            } label: {
-                Image(systemName: "trash")
-                    .font(.system(size: 11))
+            if !wt.isMainWorktree {
+                Button {
+                    model.requestWorktreeRemoval(wt)
+                } label: {
+                    Image(systemName: "trash")
+                        .font(.system(size: 11))
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .help(L10n("Remover worktree"))
             }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            .help(L10n("Remover worktree"))
         }
         .padding(.vertical, 4)
         .padding(.horizontal, 8)
@@ -434,7 +437,7 @@ struct SidebarView: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius)
-                    .stroke(isSelected ? Color.primary.opacity(0.15) : (isHovered ? DesignSystem.Colors.glassStroke : Color.clear), lineWidth: 1)
+                    .stroke(isSelected ? DesignSystem.Colors.selectionBackground : (isHovered ? DesignSystem.Colors.glassStroke : Color.clear), lineWidth: 1)
             )
             .animation(DesignSystem.Motion.detail, value: isSelected)
         }
@@ -624,10 +627,16 @@ struct SidebarView: View {
 private struct RecentProjectRow: View {
     let url: URL
     let isCurrent: Bool
+    let isBackgroundActive: Bool
     let changedCount: Int?
     let worktreeCount: Int
     let onTap: () -> Void
+    @Environment(\.zionModeEnabled) private var zionMode
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isHovered = false
+    @State private var glowPulse = false
+
+    private var showIndicator: Bool { isBackgroundActive && !isCurrent }
 
     private var rowBackground: Color {
         if isCurrent { return DesignSystem.Colors.glassHover }
@@ -638,6 +647,18 @@ private struct RecentProjectRow: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
+                // Zion mode: neon accent line
+                if showIndicator && zionMode {
+                    RoundedRectangle(cornerRadius: DesignSystem.ZionMode.neonLineCornerRadius)
+                        .fill(DesignSystem.ZionMode.neonGradient)
+                        .frame(width: 2.5)
+                        .padding(.vertical, 4)
+                        .shadow(
+                            color: DesignSystem.ZionMode.neonCyan.opacity(DesignSystem.ZionMode.neonGlowOpacity),
+                            radius: DesignSystem.ZionMode.neonGlowBlur
+                        )
+                }
+
                 Image(systemName: "folder.fill")
                     .font(.system(size: 12))
                     .foregroundStyle(isCurrent ? DesignSystem.Colors.success : Color.accentColor.opacity(0.8))
@@ -686,12 +707,33 @@ private struct RecentProjectRow: View {
             .padding(.vertical, 8)
             .background(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius).fill(rowBackground))
             .overlay(
-                isCurrent ? RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius).strokeBorder(DesignSystem.Colors.glassBorderDark, lineWidth: 1) : nil
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius)
+                    .strokeBorder(
+                        isCurrent ? DesignSystem.Colors.glassBorderDark :
+                        (showIndicator && !zionMode) ? DesignSystem.Colors.info.opacity(
+                            glowPulse ? DesignSystem.Colors.glowBorderActive : DesignSystem.Colors.glowBorderIdle
+                        ) :
+                        Color.clear,
+                        lineWidth: 1
+                    )
+            )
+            .shadow(
+                color: (showIndicator && !zionMode)
+                    ? DesignSystem.Colors.info.opacity(
+                        glowPulse ? DesignSystem.Colors.glowShadowActive : DesignSystem.Colors.glowShadowIdle
+                    )
+                    : .clear,
+                radius: glowPulse ? DesignSystem.Colors.glowRadiusActive : DesignSystem.Colors.glowRadiusIdle
             )
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .disabled(isCurrent)
         .onHover { h in isHovered = h }
+        .help(showIndicator ? L10n("recent.active.hint") : "")
+        .onAppear {
+            guard showIndicator, !reduceMotion else { return }
+            withAnimation(DesignSystem.Motion.glowPulse) { glowPulse = true }
+        }
     }
 }

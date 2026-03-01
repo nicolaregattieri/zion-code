@@ -1484,3 +1484,4 @@
 "settings.terminal.autoAppendAIConfig.hint" = "Adiciona automaticamente instruções do Zion em arquivos de configuração IA (CLAUDE.md, .cursorrules, etc.) no root do projeto. Quando desativado, use zion_ai_setup manualmente.";
 "settings.terminal.selection" = "Seleção";
 "settings.terminal.copyOnSelect" = "Copiar ao Selecionar";
+"recent.active.hint" = "Sessão ativa";

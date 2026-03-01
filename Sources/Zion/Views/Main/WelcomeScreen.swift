@@ -5,6 +5,7 @@ struct WelcomeScreen: View {
     let onOpen: () -> Void
     let onInit: () -> Void
 
+    @Environment(\.zionModeEnabled) private var zionMode
     @State private var hoveredURL: URL?
 
     var body: some View {
@@ -91,6 +92,16 @@ struct WelcomeScreen: View {
                                     model.openRepository(url)
                                 } label: {
                                     HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
+                                        if model.activeBackgroundRepoURLs.contains(url) && zionMode {
+                                            RoundedRectangle(cornerRadius: DesignSystem.ZionMode.neonLineCornerRadius)
+                                                .fill(DesignSystem.ZionMode.neonGradient)
+                                                .frame(width: 2.5)
+                                                .padding(.vertical, 4)
+                                                .shadow(
+                                                    color: DesignSystem.ZionMode.neonCyan.opacity(DesignSystem.ZionMode.neonGlowOpacity),
+                                                    radius: DesignSystem.ZionMode.neonGlowBlur
+                                                )
+                                        }
                                         Image(systemName: "folder.fill")
                                             .font(.system(size: 12))
                                             .foregroundStyle(Color.accentColor.opacity(0.8))
@@ -115,10 +126,19 @@ struct WelcomeScreen: View {
                                         RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius)
                                             .fill(hoveredURL == url ? DesignSystem.Colors.glassHover : DesignSystem.Colors.glassMinimal)
                                     )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius)
+                                            .strokeBorder(
+                                                (model.activeBackgroundRepoURLs.contains(url) && !zionMode)
+                                                    ? DesignSystem.Colors.info.opacity(DesignSystem.Colors.glowStaticHint) : Color.clear,
+                                                lineWidth: 1
+                                            )
+                                    )
                                     .contentShape(Rectangle())
                                 }
                                 .buttonStyle(.plain)
                                 .onHover { h in hoveredURL = h ? url : nil }
+                                .help(model.activeBackgroundRepoURLs.contains(url) ? L10n("recent.active.hint") : "")
                             }
                         }
                     }
