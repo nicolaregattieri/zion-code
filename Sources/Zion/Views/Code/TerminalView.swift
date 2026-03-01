@@ -863,6 +863,7 @@ struct TerminalTabView: NSViewRepresentable {
         nonisolated func dataReceived(slice: ArraySlice<UInt8>) {
             Task { @MainActor in
                 terminalView?.feed(byteArray: slice)
+                parent.model?.notifyTerminalOutput(sessionID: parent.session.id, data: Data(slice))
             }
         }
 

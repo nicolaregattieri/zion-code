@@ -43,6 +43,16 @@ enum Constants {
         static let clipboardPreviewTruncationLength = 60
     }
 
+    enum RemoteAccess {
+        static let defaultPort: UInt16 = 19_847
+        static let maxScreenUpdateLines = 50
+        static let heartbeatIntervalSeconds = 15
+        static let tokenRotationInterval: TimeInterval = 86_400
+        static let maxConcurrentConnections = 2
+        static let maxMessagesPerSecond = 20
+        static let screenUpdateDebounceNanoseconds: UInt64 = 200_000_000
+    }
+
     enum UI {
         /// Standard frame for NSTextField inputs in alert dialogs
         static let alertInputFieldFrame = NSRect(x: 0, y: 0, width: 260, height: 24)
