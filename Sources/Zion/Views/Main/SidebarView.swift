@@ -30,7 +30,7 @@ struct SidebarView: View {
                     worktreesCard
                 }
 
-                if model.repositoryURL != nil, model.hasGitHubRemote {
+                if model.repositoryURL != nil, model.hasHostingProvider {
                     PRInboxCard(model: model)
                 }
 
@@ -63,7 +63,6 @@ struct SidebarView: View {
                                     RecentProjectRow(
                                         url: url,
                                         isCurrent: model.recentRepositoryRoot(for: model.repositoryURL) == url,
-                                        isBackgroundActive: model.activeBackgroundRepoURLs.contains(url),
                                         changedCount: model.backgroundRepoChangedFiles[url],
                                         worktreeCount: model.recentWorktreeCounts[url] ?? 0
                                     ) {
@@ -627,16 +626,10 @@ struct SidebarView: View {
 private struct RecentProjectRow: View {
     let url: URL
     let isCurrent: Bool
-    let isBackgroundActive: Bool
     let changedCount: Int?
     let worktreeCount: Int
     let onTap: () -> Void
-    @Environment(\.zionModeEnabled) private var zionMode
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isHovered = false
-    @State private var glowPulse = false
-
-    private var showIndicator: Bool { isBackgroundActive && !isCurrent }
 
     private var rowBackground: Color {
         if isCurrent { return DesignSystem.Colors.glassHover }
@@ -647,18 +640,6 @@ private struct RecentProjectRow: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
-                // Zion mode: neon accent line
-                if showIndicator && zionMode {
-                    RoundedRectangle(cornerRadius: DesignSystem.ZionMode.neonLineCornerRadius)
-                        .fill(DesignSystem.ZionMode.neonGradient)
-                        .frame(width: 2.5)
-                        .padding(.vertical, 4)
-                        .shadow(
-                            color: DesignSystem.ZionMode.neonCyan.opacity(DesignSystem.ZionMode.neonGlowOpacity),
-                            radius: DesignSystem.ZionMode.neonGlowBlur
-                        )
-                }
-
                 Image(systemName: "folder.fill")
                     .font(.system(size: 12))
                     .foregroundStyle(isCurrent ? DesignSystem.Colors.success : Color.accentColor.opacity(0.8))
@@ -709,31 +690,14 @@ private struct RecentProjectRow: View {
             .overlay(
                 RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius)
                     .strokeBorder(
-                        isCurrent ? DesignSystem.Colors.glassBorderDark :
-                        (showIndicator && !zionMode) ? DesignSystem.Colors.info.opacity(
-                            glowPulse ? DesignSystem.Colors.glowBorderActive : DesignSystem.Colors.glowBorderIdle
-                        ) :
-                        Color.clear,
+                        isCurrent ? DesignSystem.Colors.glassBorderDark : Color.clear,
                         lineWidth: 1
                     )
-            )
-            .shadow(
-                color: (showIndicator && !zionMode)
-                    ? DesignSystem.Colors.info.opacity(
-                        glowPulse ? DesignSystem.Colors.glowShadowActive : DesignSystem.Colors.glowShadowIdle
-                    )
-                    : .clear,
-                radius: glowPulse ? DesignSystem.Colors.glowRadiusActive : DesignSystem.Colors.glowRadiusIdle
             )
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .disabled(isCurrent)
         .onHover { h in isHovered = h }
-        .help(showIndicator ? L10n("recent.active.hint") : "")
-        .onAppear {
-            guard showIndicator, !reduceMotion else { return }
-            withAnimation(DesignSystem.Motion.glowPulse) { glowPulse = true }
-        }
     }
 }

@@ -117,15 +117,6 @@ struct DesignSystem {
         static let shadowDark = Color.black.opacity(0.14)
         static let shadowLight = Color.black.opacity(0.08)
 
-        // Glow pulse tokens (active session indicator)
-        static let glowBorderActive: Double = 0.2
-        static let glowBorderIdle: Double = 0.06
-        static let glowShadowActive: Double = 0.15
-        static let glowShadowIdle: Double = 0.03
-        static let glowRadiusActive: CGFloat = 5
-        static let glowRadiusIdle: CGFloat = 2
-        static let glowStaticHint: Double = 0.12
-
         // Danger zone
         static let dangerBackground = destructive.opacity(0.06)
         static let dangerBorder = destructive.opacity(0.25)

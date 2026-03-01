@@ -4,7 +4,6 @@ extension ContentView {
 
     var statusBar: some View {
         HStack(spacing: 12) {
-            if model.isBusy { ProgressView().controlSize(.small) }
             Text(model.statusMessage).lineLimit(1).font(.caption).foregroundStyle(.secondary)
 
             statusBarQuickNavigation
@@ -107,7 +106,14 @@ extension ContentView {
                         .transition(.opacity.animation(.easeIn(duration: 0.5)))
                 }
             } else {
-                Divider().opacity(0.45)
+                if model.isBusy {
+                    ProgressView()
+                        .progressViewStyle(.linear)
+                        .tint(DesignSystem.Colors.info)
+                        .transition(.opacity.animation(.easeOut(duration: 0.3)))
+                } else {
+                    Divider().opacity(0.45)
+                }
             }
         }
         .animation(.easeInOut(duration: 0.3), value: model.isBusy)
