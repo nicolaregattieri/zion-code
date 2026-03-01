@@ -10,6 +10,12 @@ extension RepositoryViewModel {
         syncRemoteAccessState()
 
         Task {
+            // Clean up any existing server/tunnel before starting fresh
+            await remoteAccessServer?.stop()
+            remoteAccessServer = nil
+            await tunnelManager?.stop()
+            tunnelManager = nil
+
             do {
                 // 1. Generate or load pairing key
                 let key = RemoteAccessEncryption.loadPairingKey() ?? {
@@ -31,6 +37,9 @@ extension RepositoryViewModel {
                             guard let self else { return }
                             if count > 0 {
                                 self.mobileAccessConnectionState = .connected(deviceCount: count)
+                                // Send session list + current screen state so the phone has data immediately
+                                self.sendSessionList()
+                                self.sendAllScreenUpdates()
                             } else {
                                 self.mobileAccessConnectionState = .waitingForPairing
                             }
@@ -65,11 +74,9 @@ extension RepositoryViewModel {
 
             } catch let error as CloudflareTunnelManager.TunnelError where error == .cloudflaredNotFound {
                 mobileAccessConnectionState = .error(L10n("mobile.access.cloudflared.notFound"))
-                isMobileAccessEnabled = false
                 syncRemoteAccessState()
             } catch {
                 mobileAccessConnectionState = .error(error.localizedDescription)
-                isMobileAccessEnabled = false
                 syncRemoteAccessState()
                 logger.log(.error, "Failed to start remote access", context: error.localizedDescription, source: #function)
             }
@@ -80,8 +87,9 @@ extension RepositoryViewModel {
         isMobileAccessEnabled = false
         heartbeatTask?.cancel()
         heartbeatTask = nil
-        screenUpdateDebounceTask?.cancel()
-        screenUpdateDebounceTask = nil
+        screenUpdateDebounceTasks.values.forEach { $0.cancel() }
+        screenUpdateDebounceTasks.removeAll()
+        screenUpdateThrottleDeadlines.removeAll()
 
         Task {
             await remoteAccessServer?.stop()
@@ -130,8 +138,8 @@ extension RepositoryViewModel {
             sendPromptDetected(sessionID: sessionID, detection: detection)
         }
 
-        // Debounce screen updates
-        debounceScreenUpdate(for: sessionID)
+        // Throttle screen updates (fires immediately, then coalesces)
+        throttleScreenUpdate(for: sessionID)
     }
 
     // MARK: - Remote Message Handling
@@ -166,9 +174,23 @@ extension RepositoryViewModel {
     }
 
     private func handleRemoteInput(sessionID: UUID, text: String) {
-        guard let callback = terminalSendCallbacks[sessionID],
-              let data = text.data(using: .utf8) else { return }
-        callback(data)
+        guard let callback = terminalSendCallbacks[sessionID] else { return }
+
+        // Split text from trailing CR/LF so TUI apps don't treat it as pasted text
+        // Send the text content first, then the Enter keystroke separately
+        let trimmed = text.replacingOccurrences(of: "\r", with: "")
+                         .replacingOccurrences(of: "\n", with: "")
+
+        if !trimmed.isEmpty, let textData = trimmed.data(using: .utf8) {
+            callback(textData)
+        }
+
+        // Send Enter as a separate write (CR = what real keyboard sends)
+        if text.hasSuffix("\r") || text.hasSuffix("\n") {
+            if let enterData = "\r".data(using: .utf8) {
+                callback(enterData)
+            }
+        }
     }
 
     func handleRemoteAction(sessionID: UUID, action: RemoteAction) {
@@ -177,9 +199,9 @@ extension RepositoryViewModel {
         let inputData: Data?
         switch action {
         case .approve:
-            inputData = "y\n".data(using: .utf8)
+            inputData = "y\r".data(using: .utf8)
         case .deny:
-            inputData = "n\n".data(using: .utf8)
+            inputData = "n\r".data(using: .utf8)
         case .abort:
             inputData = Data([0x03]) // Ctrl+C
         }
@@ -190,6 +212,12 @@ extension RepositoryViewModel {
     }
 
     // MARK: - Sending Messages
+
+    private func sendAllScreenUpdates() {
+        for sessionID in terminalOutputBuffers.keys {
+            Task { await sendScreenUpdate(for: sessionID) }
+        }
+    }
 
     private func sendSessionList() {
         let payload = buildSessionListPayload()
@@ -207,12 +235,26 @@ extension RepositoryViewModel {
         }
     }
 
-    private func debounceScreenUpdate(for sessionID: UUID) {
-        screenUpdateDebounceTask?.cancel()
-        screenUpdateDebounceTask = Task {
-            try? await Task.sleep(nanoseconds: Constants.RemoteAccess.screenUpdateDebounceNanoseconds)
-            guard !Task.isCancelled else { return }
-            await sendScreenUpdate(for: sessionID)
+    private func throttleScreenUpdate(for sessionID: UUID) {
+        let now = ContinuousClock.now
+        let cooldown = Duration.nanoseconds(Constants.RemoteAccess.screenUpdateDebounceNanoseconds)
+
+        // If we're past the throttle deadline, fire immediately (leading edge)
+        if let deadline = screenUpdateThrottleDeadlines[sessionID], now < deadline {
+            // Still in cooldown — schedule a trailing-edge fire (cancel previous pending)
+            screenUpdateDebounceTasks[sessionID]?.cancel()
+            screenUpdateDebounceTasks[sessionID] = Task {
+                try? await Task.sleep(until: deadline, clock: .continuous)
+                guard !Task.isCancelled else { return }
+                screenUpdateThrottleDeadlines[sessionID] = ContinuousClock.now + cooldown
+                await sendScreenUpdate(for: sessionID)
+            }
+        } else {
+            // No active cooldown — fire immediately and set deadline
+            screenUpdateThrottleDeadlines[sessionID] = now + cooldown
+            screenUpdateDebounceTasks[sessionID]?.cancel()
+            screenUpdateDebounceTasks[sessionID] = nil
+            Task { await sendScreenUpdate(for: sessionID) }
         }
     }
 
@@ -291,7 +333,13 @@ extension RepositoryViewModel {
     }
 
     func buildScreenUpdate(for sessionID: UUID) -> ScreenUpdatePayload {
-        let lines = terminalOutputBuffers[sessionID] ?? []
+        // Read directly from the terminal's rendered buffer (properly decoded, no ANSI codes)
+        let lines: [String]
+        if let reader = terminalScreenReaders[sessionID] {
+            lines = reader()
+        } else {
+            lines = terminalOutputBuffers[sessionID] ?? []
+        }
         return ScreenUpdatePayload(
             sessionID: sessionID,
             lines: Array(lines.suffix(Constants.RemoteAccess.maxScreenUpdateLines)),
@@ -334,7 +382,13 @@ extension RepositoryViewModel {
     // MARK: - Helpers
 
     private func stripANSI(_ text: String) -> String {
-        guard let regex = try? NSRegularExpression(pattern: #"\x1B\[[0-9;]*[a-zA-Z]"#) else {
+        // Comprehensive ANSI/VT escape stripping:
+        // 1. CSI sequences: ESC [ (with optional ? / >) params letter  (colors, cursor, DEC modes)
+        // 2. OSC sequences: ESC ] ... BEL or ESC ] ... ST            (window title, hyperlinks)
+        // 3. Character set: ESC ( digit/letter                        (G0/G1 charset)
+        // 4. Simple escapes: ESC followed by single char              (save/restore cursor, etc.)
+        let pattern = #"\x1B(?:\[[0-9;?]*[ -/]*[A-Z@a-z]|\][^\x07\x1B]*(?:\x07|\x1B\\)?|\([0-9A-B]|[^\[\](])"#
+        guard let regex = try? NSRegularExpression(pattern: pattern) else {
             return text
         }
         return regex.stringByReplacingMatches(

@@ -161,8 +161,13 @@ extension RepositoryViewModel {
         terminalSendCallbacks[sessionID] = callback
     }
 
+    func registerTerminalScreenReader(sessionID: UUID, reader: @escaping () -> [String]) {
+        terminalScreenReaders[sessionID] = reader
+    }
+
     func unregisterTerminalSendCallback(sessionID: UUID) {
         terminalSendCallbacks.removeValue(forKey: sessionID)
+        terminalScreenReaders.removeValue(forKey: sessionID)
     }
 
     // MARK: - Terminal Search

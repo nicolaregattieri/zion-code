@@ -88,6 +88,7 @@ final class RepositoryViewModel {
     // Clipboard
     let clipboardMonitor = ClipboardMonitor()
     @ObservationIgnored var terminalSendCallbacks: [UUID: (Data) -> Void] = [:]
+    @ObservationIgnored var terminalScreenReaders: [UUID: () -> [String]] = [:]
 
     // Avatar cache (Gravatar)
     @ObservationIgnored var avatarCache: [String: NSImage] = [:]
@@ -322,7 +323,8 @@ final class RepositoryViewModel {
     @ObservationIgnored var remoteAccessServer: RemoteAccessServer?
     @ObservationIgnored var tunnelManager: CloudflareTunnelManager?
     @ObservationIgnored var terminalOutputBuffers: [UUID: [String]] = [:]
-    @ObservationIgnored var screenUpdateDebounceTask: Task<Void, Never>?
+    @ObservationIgnored var screenUpdateDebounceTasks: [UUID: Task<Void, Never>] = [:]
+    @ObservationIgnored var screenUpdateThrottleDeadlines: [UUID: ContinuousClock.Instant] = [:]
     @ObservationIgnored var heartbeatTask: Task<Void, Never>?
 
     // Background repo persistence (terminal sessions + change badges)
