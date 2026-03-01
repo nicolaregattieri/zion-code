@@ -573,7 +573,7 @@ extension RepositoryViewModel {
         alert.informativeText = L10n("Nome do arquivo:")
         alert.addButton(withTitle: L10n("Criar"))
         alert.addButton(withTitle: L10n("Cancelar"))
-        let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        let input = NSTextField(frame: Constants.UI.alertInputFieldFrame)
         input.stringValue = ""
         input.placeholderString = "filename.swift"
         alert.accessoryView = input
@@ -605,7 +605,7 @@ extension RepositoryViewModel {
         alert.informativeText = L10n("Nome da pasta:")
         alert.addButton(withTitle: L10n("Criar"))
         alert.addButton(withTitle: L10n("Cancelar"))
-        let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        let input = NSTextField(frame: Constants.UI.alertInputFieldFrame)
         input.stringValue = ""
         input.placeholderString = "new-folder"
         alert.accessoryView = input
@@ -666,7 +666,7 @@ extension RepositoryViewModel {
         alert.informativeText = L10n("Novo nome:")
         alert.addButton(withTitle: L10n("Confirmar"))
         alert.addButton(withTitle: L10n("Cancelar"))
-        let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        let input = NSTextField(frame: Constants.UI.alertInputFieldFrame)
         input.stringValue = item.name
         alert.accessoryView = input
         alert.window.initialFirstResponder = input

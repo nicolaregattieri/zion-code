@@ -55,8 +55,9 @@ struct ClipboardItem: Identifiable, Sendable {
     private static func makePreview(_ text: String) -> String {
         let singleLine = text.replacingOccurrences(of: "\n", with: " ")
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        if singleLine.count > 60 {
-            return String(singleLine.prefix(57)) + "..."
+        let maxLength = Constants.Limits.clipboardPreviewTruncationLength
+        if singleLine.count > maxLength {
+            return String(singleLine.prefix(maxLength - 3)) + "..."
         }
         return singleLine
     }

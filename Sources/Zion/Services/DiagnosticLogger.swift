@@ -126,8 +126,8 @@ final class DiagnosticLogger {
         )
 
         // Truncate very long lines
-        if result.count > 500 {
-            result = String(result.prefix(500)) + "...[truncated]"
+        if result.count > maxEntries {
+            result = String(result.prefix(maxEntries)) + "...[truncated]"
         }
 
         return result

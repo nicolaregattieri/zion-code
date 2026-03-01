@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 enum Constants {
@@ -38,5 +39,12 @@ enum Constants {
         static let maxUntrackedFilesForContext = 5
         /// Maximum characters of file content to include in AI context
         static let maxFileContentPreviewLength = 500
+        /// Maximum characters to show in clipboard preview text
+        static let clipboardPreviewTruncationLength = 60
+    }
+
+    enum UI {
+        /// Standard frame for NSTextField inputs in alert dialogs
+        static let alertInputFieldFrame = NSRect(x: 0, y: 0, width: 260, height: 24)
     }
 }
