@@ -88,7 +88,7 @@ struct ZionMapDetailPage: View {
             // Title row with optional shortcut badge
             HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 Text(L10n(entry.titleKey))
-                    .font(.system(size: 13, weight: .bold))
+                    .font(DesignSystem.Typography.sectionTitle)
 
                 if let shortcut = entry.shortcut {
                     Text(shortcut)
@@ -104,7 +104,7 @@ struct ZionMapDetailPage: View {
 
             // Description
             Text(L10n(entry.descriptionKey))
-                .font(.system(size: 12))
+                .font(DesignSystem.Typography.body)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -114,11 +114,11 @@ struct ZionMapDetailPage: View {
                     ForEach(entry.tips, id: \.self) { tipKey in
                         HStack(alignment: .top, spacing: 6) {
                             Image(systemName: "lightbulb.fill")
-                                .font(.system(size: 9))
+                                .font(DesignSystem.Typography.meta)
                                 .foregroundStyle(DesignSystem.Colors.searchHighlight.opacity(0.8))
                                 .padding(.top, 3)
                             Text(L10n(tipKey))
-                                .font(.system(size: 11))
+                                .font(DesignSystem.Typography.bodySmall)
                                 .foregroundStyle(.tertiary)
                                 .fixedSize(horizontal: false, vertical: true)
                         }

@@ -14,7 +14,7 @@ struct ContentView: View {
         case ready
     }
 
-    private enum NavigationEvent {
+    enum NavigationEvent {
         case repositoryOpened
         case requestSection(AppSection)
         case showOnboardingFromHelp
@@ -22,9 +22,9 @@ struct ContentView: View {
         case navigateToCode
     }
 
-    @State private var model = RepositoryViewModel()
+    @State var model = RepositoryViewModel()
     @State private var launchPhase: LaunchPhase = .bootstrapping
-    @State private var selectedSection: AppSection = .code
+    @State var selectedSection: AppSection = .code
     @State private var commitSearchQuery: String = ""
     @State private var selectedBranchTreeNodeID: String?
     @State private var isShortcutsVisible: Bool = false
@@ -32,12 +32,12 @@ struct ContentView: View {
     @State private var shouldPresentOnboardingFromHelp: Bool = false
     @State private var splitViewVisibility: NavigationSplitViewVisibility = .all
 
-    @AppStorage("zion.confirmationMode") private var confirmationModeRaw: String = ConfirmationMode.destructiveOnly.rawValue
+    @AppStorage("zion.confirmationMode") var confirmationModeRaw: String = ConfirmationMode.destructiveOnly.rawValue
     @AppStorage("zion.uiLanguage") private var uiLanguageRaw: String = AppLanguage.system.rawValue
     @AppStorage("zion.appearance") private var appearanceRaw: String = AppAppearance.system.rawValue
     @AppStorage("zion.hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
     @AppStorage("zion.zenModeEnabled") private var zenModeEnabled: Bool = false
-    @AppStorage("zion.zionModeEnabled") private var zionModeEnabled: Bool = false
+    @AppStorage("zion.zionModeEnabled") var zionModeEnabled: Bool = false
     @AppStorage("zion.preZionModeTheme") private var preZionModeTheme: String = ""
 
     private var uiLanguage: AppLanguage { AppLanguage(rawValue: uiLanguageRaw) ?? .system }
@@ -61,7 +61,7 @@ struct ContentView: View {
 
     private let logger = DiagnosticLogger.shared
 
-    private func route(_ event: NavigationEvent) {
+    func route(_ event: NavigationEvent) {
         switch event {
         case .repositoryOpened:
             hasCompletedOnboarding = true
@@ -547,381 +547,6 @@ struct ContentView: View {
         .overlay(alignment: .bottom) { Divider() }
     }
 
-    private var statusBar: some View {
-        HStack(spacing: 12) {
-            if model.isBusy { ProgressView().controlSize(.small) }
-            Text(model.statusMessage).lineLimit(1).font(.caption).foregroundStyle(.secondary)
-
-            statusBarQuickNavigation
-
-            Spacer()
-
-            if model.repositoryURL != nil && !model.isRepositorySwitching {
-                // Branch pill
-                HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
-                    Image(systemName: "arrow.triangle.branch")
-                        .font(.system(size: 9))
-                    Text(model.currentBranch)
-                        .lineLimit(1)
-                }
-                .font(.system(.caption, design: .monospaced))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
-                .background(zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(0.12) : DesignSystem.Colors.statusGreenBg)
-                .foregroundStyle(zionModeEnabled ? DesignSystem.ZionMode.neonMagenta : DesignSystem.Colors.success)
-                .clipShape(Capsule())
-
-                // Ahead remote badge
-                if model.aheadRemoteCount > 0 {
-                    HStack(spacing: 3) {
-                        Image(systemName: "arrow.up.circle.fill")
-                            .font(.system(size: 9))
-                        Text("\(model.aheadRemoteCount)")
-                    }
-                    .font(.caption)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 3)
-                    .background(
-                        zionModeEnabled
-                            ? DesignSystem.ZionMode.neonGold.opacity(0.12)
-                            : (model.behindRemoteCount > 0 ? DesignSystem.Colors.statusOrangeBg : DesignSystem.Colors.statusBlueBg)
-                    )
-                    .foregroundStyle(
-                        zionModeEnabled
-                            ? DesignSystem.ZionMode.neonGold
-                            : (model.behindRemoteCount > 0 ? DesignSystem.Colors.warning : DesignSystem.Colors.info)
-                    )
-                    .clipShape(Capsule())
-                }
-
-                // Behind remote badge
-                if model.behindRemoteCount > 0 {
-                    HStack(spacing: 3) {
-                        Image(systemName: "arrow.down.circle.fill")
-                            .font(.system(size: 9))
-                        Text("\(model.behindRemoteCount)")
-                    }
-                    .font(.caption)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 3)
-                    .background(zionModeEnabled ? DesignSystem.ZionMode.neonOrange.opacity(0.12) : DesignSystem.Colors.statusOrangeBg)
-                    .foregroundStyle(zionModeEnabled ? DesignSystem.ZionMode.neonOrange : DesignSystem.Colors.warning)
-                    .clipShape(Capsule())
-                }
-
-                // Uncommitted changes count
-                if model.uncommittedCount > 0 {
-                    HStack(spacing: 3) {
-                        Image(systemName: "pencil.circle.fill")
-                            .font(.system(size: 9))
-                        Text("\(model.uncommittedCount)")
-                    }
-                    .font(.caption)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 3)
-                    .background(DesignSystem.Colors.statusBlueBg)
-                    .foregroundStyle(DesignSystem.Colors.info)
-                    .clipShape(Capsule())
-                }
-            }
-
-            if let repositoryURL = model.repositoryURL {
-                Text(repositoryURL.path).lineLimit(1).font(.system(.caption, design: .monospaced)).foregroundStyle(.tertiary)
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background {
-            if zionModeEnabled {
-                ZStack {
-                    DesignSystem.ZionMode.neonBase
-                    Rectangle().fill(.ultraThinMaterial)
-                }
-            } else {
-                Rectangle().fill(.ultraThinMaterial)
-            }
-        }
-        .overlay(alignment: .top) {
-            if zionModeEnabled {
-                if model.isBusy {
-                    NeonProgressLine(mode: .shimmer)
-                        .transition(.opacity.animation(.easeOut(duration: 0.3)))
-                } else {
-                    DesignSystem.ZionMode.neonMagenta.opacity(0.25)
-                        .frame(height: 1)
-                        .transition(.opacity.animation(.easeIn(duration: 0.5)))
-                }
-            } else {
-                Divider().opacity(0.45)
-            }
-        }
-        .animation(.easeInOut(duration: 0.3), value: model.isBusy)
-    }
-
-    private var statusBarQuickNavigation: some View {
-        HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
-            statusBarSectionButton(.code)
-            statusBarSectionButton(.graph)
-            statusBarSectionButton(.operations)
-
-            Divider()
-                .frame(height: 14)
-                .padding(.horizontal, 2)
-
-            statusBarSettingsButton
-        }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 4)
-        .background(zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(0.03) : DesignSystem.Colors.glassSubtle)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous)
-                .stroke(zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(0.12) : DesignSystem.Colors.glassBorderDark, lineWidth: 1)
-        )
-    }
-
-    private func statusBarSectionButton(_ section: AppSection) -> some View {
-        let isSelected = selectedSection == section
-        let isDisabled = section != .code && model.repositoryURL == nil
-
-        return Button {
-            route(.requestSection(section))
-        } label: {
-            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
-                Image(systemName: section.icon)
-                    .font(.system(size: 9, weight: .semibold))
-                Text(statusBarSectionLabel(section))
-                    .font(.system(size: 10, weight: .semibold))
-                    .lineLimit(1)
-            }
-            .padding(.horizontal, 6)
-            .padding(.vertical, 3)
-            .background(
-                RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous)
-                    .fill(isSelected ? (zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(0.12) : DesignSystem.Colors.selectionBackground) : Color.clear)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous)
-                    .stroke(isSelected ? (zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(0.15) : DesignSystem.Colors.selectionBorder) : Color.clear, lineWidth: 1)
-            )
-            .overlay(alignment: .bottom) {
-                if isSelected && zionModeEnabled {
-                    DesignSystem.ZionMode.neonGradient
-                        .frame(height: DesignSystem.ZionMode.neonLineHeight)
-                        .padding(.horizontal, 4)
-                        .clipShape(Capsule())
-                        .opacity(0.7)
-                        .shadow(color: DesignSystem.ZionMode.neonMagenta.opacity(0.2),
-                                radius: 1, y: 1)
-                        .transition(.opacity)
-                        .animation(DesignSystem.Motion.detail, value: isSelected)
-                }
-            }
-        }
-        .buttonStyle(.plain)
-        .disabled(isDisabled)
-        .opacity(isDisabled ? 0.45 : 1)
-        .help(statusBarSectionLabel(section))
-        .accessibilityLabel(statusBarSectionLabel(section))
-    }
-
-    private var statusBarSettingsButton: some View {
-        SettingsLink {
-            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
-                Image(systemName: "gearshape")
-                    .font(.system(size: 9, weight: .semibold))
-                Text(L10n("status.nav.settings"))
-                    .font(.system(size: 10, weight: .semibold))
-                    .lineLimit(1)
-            }
-            .padding(.horizontal, 6)
-            .padding(.vertical, 3)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .help(L10n("settings.open.hint"))
-        .accessibilityLabel(L10n("status.nav.settings"))
-    }
-
-    private func statusBarSectionLabel(_ section: AppSection) -> String {
-        L10n(section.title)
-    }
-
-    private func performGitAction(title: String, message: String, destructive: Bool = false, action: @escaping () -> Void) {
-        if shouldConfirmAction(destructive: destructive) {
-            let alert = NSAlert()
-            alert.alertStyle = destructive ? .warning : .informational
-            alert.messageText = title; alert.informativeText = message
-            alert.addButton(withTitle: destructive ? L10n("Confirmar") : L10n("Continuar")); alert.addButton(withTitle: L10n("Cancelar"))
-            if alert.runModal() != .alertFirstButtonReturn { return }
-        }
-        action()
-    }
-
-    private func shouldConfirmAction(destructive: Bool) -> Bool {
-        let mode = ConfirmationMode(rawValue: confirmationModeRaw) ?? .destructiveOnly
-        switch mode {
-        case .never: return false
-        case .destructiveOnly: return destructive
-        case .all: return true
-        }
-    }
-
-    @ViewBuilder
-    private func commitContextMenu(for commit: Commit) -> some View {
-        let isStash = commit.decorations.contains { $0.contains("refs/stash") }
-        
-        if isStash {
-            Button(L10n("Apply Stash")) {
-                performGitAction(title: L10n("Apply Stash"), message: L10n("Aplicar as mudancas deste stash na branch atual?"), destructive: false) {
-                    model.selectedStash = commit.id // Use the hash
-                    model.applySelectedStash()
-                }
-            }
-            Button(L10n("Pop Stash")) {
-                performGitAction(title: L10n("Pop Stash"), message: L10n("Aplicar as mudancas deste stash e REMOVER da lista?"), destructive: false) {
-                    model.selectedStash = commit.id // Use the hash
-                    model.popSelectedStash()
-                }
-            }
-            Divider()
-            Button(L10n("Drop Stash"), role: .destructive) {
-                performGitAction(title: L10n("Drop Stash"), message: L10n("Remover permanentemente este stash?"), destructive: true) {
-                    model.selectedStash = commit.id // Use the hash
-                    model.dropSelectedStash()
-                }
-            }
-            Divider()
-            Button(L10n("Checkout Stash (Inspecionar)")) {
-                model.checkout(reference: commit.id)
-            }
-        } else {
-            Button(L10n("Reset Branch to here (Soft)")) { 
-                performGitAction(title: L10n("Reset --soft"), message: L10n("Resetar a branch atual para este commit mantendo as mudancas no stage?"), destructive: true) {
-                    model.resetToCommit(commit.id, shouldHardReset: false)
-                }
-            }
-            Button(L10n("Reset Branch to here (Hard)"), role: .destructive) { 
-                performGitAction(title: L10n("Reset --hard"), message: L10n("AVISO: Isso apagara todas as mudancas nao salvas. Continuar?"), destructive: true) {
-                    model.resetToCommit(commit.id, shouldHardReset: true)
-                }
-            }
-            Divider()
-            Button(L10n("Adicionar Tag...")) { if let name = promptForText(title: L10n("Nova tag"), message: L10n("Nome:"), defaultValue: "v") { model.createTag(named: name, at: commit.id) } }
-            Button(L10n("Criar Branch...")) { if let res = promptForBranchCreation(from: commit.shortHash) { model.createBranch(named: res.name, from: commit.id, andCheckout: res.checkout) } }
-            Divider()
-            Button(L10n("Cherry-pick")) {
-                performGitAction(title: L10n("Cherry-pick"), message: L10n("Aplicar este commit na branch atual?"), destructive: false) {
-                    model.cherryPick(commitHash: commit.id)
-                }
-            }
-            Button(L10n("Revert")) {
-                performGitAction(title: L10n("Revert"), message: L10n("Reverter este commit criando um novo commit?"), destructive: false) {
-                    model.revert(commitHash: commit.id)
-                }
-            }
-            Divider()
-            Button(L10n("Rebase Interativo a partir daqui...")) {
-                model.prepareInteractiveRebase(from: commit.id)
-            }
-        }
-        
-        Divider()
-        Button(L10n("Copiar Assunto")) { copyToPasteboard(commit.subject) }
-        Button(L10n("Copiar Hash")) { copyToPasteboard(commit.id) }
-    }
-
-    @ViewBuilder
-    private func branchContextMenu(for branch: String) -> some View {
-        Button(L10n("Copiar Nome da Branch")) { copyToPasteboard(branch) }
-        Divider()
-        Button(L10n("Checkout")) { model.checkout(reference: branch) }
-        
-        let info = model.branchInfo(named: branch)
-        let isRemote = info?.isRemote ?? (branch.contains("/") && !branch.hasPrefix("feature/") && !branch.hasPrefix("bugfix/"))
-        
-        if isRemote {
-            Button(L10n("Pull")) { model.pullIntoCurrent(fromRemoteBranch: branch) }
-        } else if let upstream = info?.upstream, !upstream.isEmpty {
-            Button(L10n("Pull")) { model.pullIntoCurrent(fromRemoteBranch: upstream) }
-        }
-
-        Button(L10n("Merge into Current")) {
-            performGitAction(title: L10n("Merge into Current"), message: L10n("Fazer merge da branch informada na atual?"), destructive: false) {
-                model.mergeBranch(named: branch) 
-            }
-        }
-        Button(L10n("Rebase Current onto This")) {
-            performGitAction(title: L10n("Rebase Current onto This"), message: L10n("Rebasear a branch atual no target informado?"), destructive: true) {
-                model.rebaseCurrentBranch(onto: branch)
-            }
-        }
-        Divider()
-        Button(L10n("New Branch")) {
-            if let res = promptForBranchCreation(from: branch) {
-                model.createBranch(named: res.name, from: branch, andCheckout: res.checkout)
-            }
-        }
-        Divider()
-
-        if !isRemote {
-            Button(L10n("Criar Pull Request...")) {
-                model.isPRSheetVisible = true
-            }
-        }
-
-        if model.isAIConfigured {
-            Divider()
-            Button {
-                model.summarizeBranch(branch)
-            } label: {
-                if model.isGeneratingAIMessage {
-                    Label(L10n("Resumindo..."), systemImage: "sparkles")
-                } else if let summary = model.branchSummaries[branch] {
-                    Label(summary, systemImage: "sparkles")
-                } else {
-                    Label(L10n("Resumir com IA"), systemImage: "sparkles")
-                }
-            }
-            .disabled(model.isGeneratingAIMessage)
-        }
-
-        Divider()
-
-        if isRemote {
-            Button(L10n("Remover branch remota"), role: .destructive) {
-                performGitAction(title: L10n("Remover branch remota"), message: String(format: L10n("Deseja remover permanentemente a branch remota %@?"), branch), destructive: true) {
-                    model.deleteRemoteBranch(reference: branch)
-                }
-            }
-        } else {
-            Button(L10n("Push to Remote")) {
-                model.pushBranch(branch, to: "origin", setUpstream: true, mode: .normal)
-            }
-            Divider()
-            Button(L10n("Remover branch local"), role: .destructive) {
-                performGitAction(title: L10n("Remover branch local"), message: String(format: L10n("Deseja remover a branch local %@?"), branch), destructive: true) {
-                    model.deleteLocalBranch(branch, force: false)
-                }
-            }
-            Button(L10n("Remover branch local (Force)"), role: .destructive) {
-                performGitAction(title: L10n("Remover branch local (Force)"), message: String(format: L10n("Deseja remover FORCADO a branch local %@?"), branch), destructive: true) {
-                    model.deleteLocalBranch(branch, force: true)
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func tagContextMenu(for tag: String) -> some View {
-        Button(L10n("Remover tag"), role: .destructive) {
-            performGitAction(title: L10n("Remover tag"), message: String(format: L10n("Deseja remover a tag informada?"), tag), destructive: true) {
-                model.tagInput = tag
-                model.deleteTag()
-            }
-        }
-    }
-
     private func openRepositoryPanel() {
         let panel = NSOpenPanel()
         panel.canChooseFiles = false; panel.canChooseDirectories = true; panel.canCreateDirectories = true
@@ -938,77 +563,4 @@ struct ContentView: View {
         }
     }
 
-    private func copyToPasteboard(_ value: String) {
-        let pb = NSPasteboard.general; pb.clearContents(); pb.setString(value, forType: .string)
-    }
-
-    private func promptForText(title: String, message: String, defaultValue: String) -> String? {
-        let alert = NSAlert()
-        alert.messageText = title; alert.informativeText = message
-        alert.addButton(withTitle: L10n("OK")); alert.addButton(withTitle: L10n("Cancelar"))
-        let field = NSTextField(string: defaultValue)
-        field.frame = NSRect(x: 0, y: 0, width: 320, height: 24); alert.accessoryView = field
-        return alert.runModal() == .alertFirstButtonReturn ? field.stringValue : nil
-    }
-
-    private func promptForBranchCreation(from source: String) -> (name: String, checkout: Bool)? {
-        let alert = NSAlert()
-        alert.messageText = L10n("Nova branch")
-        alert.informativeText = L10n("Nome da branch a partir de %@", source)
-        alert.addButton(withTitle: L10n("Criar")); alert.addButton(withTitle: L10n("Cancelar"))
-        let field = NSTextField(string: "feature/")
-        let check = NSButton(checkboxWithTitle: L10n("Fazer checkout"), target: nil, action: nil); check.state = .on
-        let stack = NSStackView(views: [field, check]); stack.orientation = .vertical; stack.alignment = .leading; stack.frame = NSRect(x: 0, y: 0, width: 320, height: 60); alert.accessoryView = stack
-        return alert.runModal() == .alertFirstButtonReturn ? (field.stringValue, check.state == .on) : nil
-    }
-}
-
-struct LiquidBackgroundView: View {
-    @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.zionModeEnabled) private var zionMode
-    @State private var phase: Bool = false
-
-    var body: some View {
-        ZStack {
-            if colorScheme == .dark {
-                if zionMode {
-                    // Zion Mode: deep purple base with neon orbs
-                    DesignSystem.ZionMode.neonBaseDark.ignoresSafeArea()
-                    Circle()
-                        .fill(DesignSystem.ZionMode.neonMagenta.opacity(phase ? 0.20 : 0.16))
-                        .frame(width: 600).blur(radius: 100)
-                        .offset(x: phase ? -310 : -370, y: phase ? -200 : -240)
-                    Circle()
-                        .fill(DesignSystem.ZionMode.neonCyan.opacity(phase ? 0.15 : 0.11))
-                        .frame(width: 500).blur(radius: 90)
-                        .offset(x: phase ? 310 : 260, y: phase ? -260 : -300)
-                    Circle()
-                        .fill(DesignSystem.ZionMode.neonGold.opacity(phase ? 0.08 : 0.05))
-                        .frame(width: 350).blur(radius: 70)
-                        .offset(x: phase ? 280 : 320, y: phase ? 220 : 260)
-                } else {
-                    Color(red: 0.05, green: 0.02, blue: 0.10).ignoresSafeArea()
-                    Circle()
-                        .fill(DesignSystem.Colors.brandPrimary.opacity(phase ? 0.17 : 0.14))
-                        .frame(width: 520).blur(radius: 80)
-                        .offset(x: phase ? -310 : -370, y: phase ? -200 : -240)
-                    Circle()
-                        .fill(DesignSystem.Colors.brandInk.opacity(0.12))
-                        .frame(width: 420).blur(radius: 70)
-                        .offset(x: phase ? 310 : 260, y: phase ? -260 : -300)
-                }
-            } else {
-                Color(red: 0.96, green: 0.94, blue: 1.00).ignoresSafeArea()
-                Circle()
-                    .fill(DesignSystem.Colors.brandPrimary.opacity(phase ? 0.12 : 0.09))
-                    .frame(width: 520).blur(radius: 80)
-                    .offset(x: phase ? -310 : -370, y: phase ? -200 : -240)
-            }
-        }
-        .onAppear {
-            withAnimation(.easeInOut(duration: 8).repeatForever(autoreverses: true)) {
-                phase.toggle()
-            }
-        }
-    }
 }

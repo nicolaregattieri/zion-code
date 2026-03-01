@@ -730,6 +730,7 @@ extension RepositoryViewModel {
         }
         backgroundRepoStates.removeAll()
         backgroundRepoChangedFiles.removeAll()
+        activeBackgroundRepoURLs.removeAll()
     }
 
     // MARK: - Repository Statistics

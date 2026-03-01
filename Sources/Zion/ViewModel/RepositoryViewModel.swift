@@ -306,6 +306,7 @@ final class RepositoryViewModel {
     // Background repo persistence (terminal sessions + change badges)
     @ObservationIgnored var backgroundRepoStates: [URL: BackgroundRepoState] = [:]
     var backgroundRepoChangedFiles: [URL: Int] = [:]
+    var activeBackgroundRepoURLs: Set<URL> = []
 
     // Repository statistics
     var repoStats: RepositoryStats?
@@ -589,6 +590,7 @@ final class RepositoryViewModel {
                 monitorTask: nil
             )
             backgroundRepoChangedFiles[previousURL] = uncommittedCount
+            activeBackgroundRepoURLs.insert(previousURL)
             startBackgroundMonitor(for: previousURL)
             // DON'T set terminalTabs = [] here — let the restore/create below do a direct swap
         } else if previousURL == nil {
@@ -611,6 +613,7 @@ final class RepositoryViewModel {
             activeTabID = restored.activeTabID
             focusedSessionID = restored.focusedSessionID
             backgroundRepoChangedFiles.removeValue(forKey: url)
+            activeBackgroundRepoURLs.remove(url)
             // Reset isAlive for sessions that died while stashed — lets updateNSView restart them
             for tab in terminalTabs {
                 for session in tab.allSessions() where !session.isAlive {

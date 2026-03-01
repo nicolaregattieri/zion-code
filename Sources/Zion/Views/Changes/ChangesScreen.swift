@@ -354,13 +354,20 @@ struct ChangesScreen: View {
     @ViewBuilder
     private func statusIcon(index: String, worktree: String) -> some View {
         if index != " " && index != "?" {
-            Image(systemName: "checkmark.circle.fill").foregroundStyle(DesignSystem.Colors.fileStaged)
+            // Staged: filled icons differentiated by operation
+            switch index {
+            case "D": Image(systemName: "minus.circle.fill").foregroundStyle(DesignSystem.Colors.fileDeleted)
+            case "A": Image(systemName: "plus.circle.fill").foregroundStyle(DesignSystem.Colors.fileStaged)
+            case "R": Image(systemName: "arrow.right.circle.fill").foregroundStyle(DesignSystem.Colors.fileRenamed)
+            default:  Image(systemName: "checkmark.circle.fill").foregroundStyle(DesignSystem.Colors.fileStaged)
+            }
         } else {
+            // Unstaged: outline icons
             switch worktree {
             case "?": Image(systemName: "plus.circle").foregroundStyle(.secondary)
             case "M": Image(systemName: "pencil.circle").foregroundStyle(DesignSystem.Colors.fileModified)
             case "D": Image(systemName: "minus.circle").foregroundStyle(DesignSystem.Colors.fileDeleted)
-            default: Image(systemName: "questionmark.circle").foregroundStyle(.secondary)
+            default:  Image(systemName: "questionmark.circle").foregroundStyle(.secondary)
             }
         }
     }

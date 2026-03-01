@@ -117,6 +117,15 @@ struct DesignSystem {
         static let shadowDark = Color.black.opacity(0.14)
         static let shadowLight = Color.black.opacity(0.08)
 
+        // Glow pulse tokens (active session indicator)
+        static let glowBorderActive: Double = 0.2
+        static let glowBorderIdle: Double = 0.06
+        static let glowShadowActive: Double = 0.15
+        static let glowShadowIdle: Double = 0.03
+        static let glowRadiusActive: CGFloat = 5
+        static let glowRadiusIdle: CGFloat = 2
+        static let glowStaticHint: Double = 0.12
+
         // Danger zone
         static let dangerBackground = destructive.opacity(0.06)
         static let dangerBorder = destructive.opacity(0.25)
@@ -172,10 +181,12 @@ struct DesignSystem {
 
         // Body
         static let body = Font.system(size: 12)
+        static let bodySmall = Font.system(size: 11)
         static let bodyMedium = Font.system(size: 11, weight: .medium)
 
         // Labels & Meta
         static let label = Font.system(size: 10)
+        static let labelMedium = Font.system(size: 10, weight: .medium)
         static let labelBold = Font.system(size: 10, weight: .bold)
         static let meta = Font.system(size: 9)
         static let metaBold = Font.system(size: 9, weight: .bold)
@@ -187,6 +198,19 @@ struct DesignSystem {
         static let monoLabel = Font.system(size: 10, design: .monospaced)
         static let monoLabelBold = Font.system(size: 10, weight: .bold, design: .monospaced)
         static let monoMeta = Font.system(size: 9, design: .monospaced)
+    }
+
+    // MARK: - Opacity Tokens
+
+    struct Opacity {
+        static let full: Double = 1.0
+        static let high: Double = 0.9
+        static let visible: Double = 0.7
+        static let muted: Double = 0.5
+        static let subtle: Double = 0.45
+        static let dim: Double = 0.3
+        static let faint: Double = 0.15
+        static let ghost: Double = 0.08
     }
 
     // MARK: - Icon Size Tokens
@@ -225,6 +249,8 @@ struct DesignSystem {
         static let detail = Animation.easeInOut(duration: 0.15)
         static let snappy = Animation.snappy(duration: 0.2)
         static let graph = Animation.easeInOut(duration: 0.12)
+
+        static let glowPulse = Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: true)
 
         @MainActor static let fade = AnyTransition.opacity
         @MainActor static let slideFromTop = AnyTransition.move(edge: .top).combined(with: .opacity)

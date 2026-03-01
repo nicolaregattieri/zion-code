@@ -416,7 +416,7 @@ struct ClimbingZionView: View {
                 .foregroundStyle(isSelected ? DesignSystem.Colors.ai : .secondary)
                 .frame(width: 40, height: 40)
                 .background(isSelected ? DesignSystem.Colors.ai.opacity(0.15) : DesignSystem.Colors.glassSubtle)
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous))
 
             Text(provider.label)
                 .font(.system(size: 11, weight: .semibold))

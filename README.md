@@ -305,7 +305,9 @@ Design pattern: **MVVM** with Swift Observation (`@Observable`).
 
 ## Contributing
 
-Zion is open source and contributions are welcome. Before submitting a PR:
+Zion is open source and contributions are welcome. The `master` branch is protected — all changes must go through pull requests.
+
+Before submitting a PR:
 
 1. Make sure `swift build` passes
 2. Test your changes with `./scripts/make-app.sh && open dist/Zion.app`

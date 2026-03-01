@@ -171,6 +171,17 @@ struct WorktreeCardView: View {
                     .font(.system(.body, design: .monospaced))
                     .lineLimit(1)
 
+                if worktree.isMainWorktree {
+                    Text(L10n("worktree.main.badge"))
+                        .font(DesignSystem.Typography.monoMeta)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(DesignSystem.Colors.success.opacity(0.18))
+                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous))
+                        .foregroundStyle(DesignSystem.Colors.success)
+                        .help(L10n("worktree.main.hint"))
+                }
+
                 if worktree.isCurrent {
                     Text(L10n("ATUAL"))
                         .font(.caption2.weight(.semibold))
@@ -198,9 +209,11 @@ struct WorktreeCardView: View {
                     }
                     .menuStyle(.borderlessButton)
                 }
-                Button(L10n("Remover")) { onRemove() }
-                    .buttonStyle(.bordered)
-                    .tint(DesignSystem.Colors.destructive)
+                if !worktree.isMainWorktree {
+                    Button(L10n("Remover")) { onRemove() }
+                        .buttonStyle(.bordered)
+                        .tint(DesignSystem.Colors.destructive)
+                }
             }
 
             HStack(spacing: 12) {

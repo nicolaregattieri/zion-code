@@ -17,7 +17,7 @@ struct DiffExplanationCard: View {
 
                 // Severity badge
                 Text(explanation.severity.label)
-                    .font(.system(size: 9, weight: .bold))
+                    .font(DesignSystem.Typography.metaBold)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
                     .background(explanation.severity.color.opacity(0.15))
@@ -27,7 +27,7 @@ struct DiffExplanationCard: View {
                 if let onDismiss {
                     Button { onDismiss() } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 12))
+                            .font(DesignSystem.Typography.body)
                             .foregroundStyle(.tertiary)
                     }
                     .buttonStyle(.plain)
@@ -40,7 +40,7 @@ struct DiffExplanationCard: View {
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(.secondary)
                 Text(explanation.intent)
-                    .font(.system(size: 11))
+                    .font(DesignSystem.Typography.bodySmall)
                     .textSelection(.enabled)
             }
 
@@ -50,7 +50,7 @@ struct DiffExplanationCard: View {
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(explanation.severity.color)
                 Text(explanation.risks)
-                    .font(.system(size: 11))
+                    .font(DesignSystem.Typography.bodySmall)
                     .textSelection(.enabled)
             }
 
@@ -60,7 +60,7 @@ struct DiffExplanationCard: View {
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(.secondary)
                 Text(explanation.narrative)
-                    .font(.system(size: 11))
+                    .font(DesignSystem.Typography.bodySmall)
                     .textSelection(.enabled)
             }
 
@@ -77,7 +77,7 @@ struct DiffExplanationCard: View {
                     NSPasteboard.general.setString(text, forType: .string)
                 } label: {
                     Label(L10n("diff.explanation.copy"), systemImage: "doc.on.doc")
-                        .font(.system(size: 10))
+                        .font(DesignSystem.Typography.label)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.mini)

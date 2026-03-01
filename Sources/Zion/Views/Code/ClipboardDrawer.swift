@@ -69,7 +69,7 @@ struct ClipboardDrawer: View {
                     model.clipboardMonitor.clearAll()
                 } label: {
                     Image(systemName: "trash")
-                        .font(.system(size: 10))
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
@@ -91,7 +91,7 @@ struct ClipboardDrawer: View {
                     featureRow("cursorarrow.click.2", DesignSystem.Colors.warning, L10n("Duplo clique para executar"))
                     featureRow("hand.draw", DesignSystem.Colors.brandPrimary, L10n("Arraste para o terminal"))
                     Text(L10n("Copie algo para comecar"))
-                        .font(.system(size: 10)).foregroundStyle(.tertiary)
+                        .font(DesignSystem.Typography.label).foregroundStyle(.tertiary)
                         .frame(maxWidth: .infinity, alignment: .center).padding(.top, 4)
                 }
                 .padding(.horizontal, 12).padding(.vertical, 10)
@@ -99,11 +99,11 @@ struct ClipboardDrawer: View {
                 VStack(spacing: 0) {
                     HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                         Image(systemName: "magnifyingglass")
-                            .font(.system(size: 9))
+                            .font(DesignSystem.Typography.meta)
                             .foregroundStyle(.secondary)
                         TextField(L10n("Filtrar clipboard..."), text: $searchQuery)
                             .textFieldStyle(.plain)
-                            .font(.system(size: 11))
+                            .font(DesignSystem.Typography.bodySmall)
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 5)
@@ -127,8 +127,8 @@ struct ClipboardDrawer: View {
 
     private func featureRow(_ icon: String, _ color: Color, _ text: String) -> some View {
         HStack(spacing: DesignSystem.Spacing.iconTextGap) {
-            Image(systemName: icon).font(.system(size: 11)).foregroundStyle(color).frame(width: 16)
-            Text(text).font(.system(size: 10)).foregroundStyle(.secondary)
+            Image(systemName: icon).font(DesignSystem.Typography.bodySmall).foregroundStyle(color).frame(width: 16)
+            Text(text).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
         }
     }
 
@@ -138,7 +138,7 @@ struct ClipboardDrawer: View {
 
         return HStack(spacing: DesignSystem.Spacing.iconTextGap) {
             Image(systemName: item.category.icon)
-                .font(.system(size: 10))
+                .font(DesignSystem.Typography.label)
                 .foregroundStyle(categoryColor(item.category))
                 .frame(width: 14)
 
@@ -163,7 +163,7 @@ struct ClipboardDrawer: View {
                 if let action = smartAction(for: item) {
                     Button { action.handler() } label: {
                         Image(systemName: action.icon)
-                            .font(.system(size: 10))
+                            .font(DesignSystem.Typography.label)
                             .foregroundStyle(action.tint)
                     }
                     .buttonStyle(.plain)
@@ -174,7 +174,7 @@ struct ClipboardDrawer: View {
                     model.sendTextToActiveTerminal(item.text)
                 } label: {
                     Image(systemName: "text.insert")
-                        .font(.system(size: 10))
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(Color.accentColor)
                 }
                 .buttonStyle(.plain)
@@ -182,7 +182,7 @@ struct ClipboardDrawer: View {
             }
 
             Text(relativeTime(item.timestamp))
-                .font(.system(size: 9))
+                .font(DesignSystem.Typography.meta)
                 .foregroundStyle(.tertiary)
         }
         .padding(.horizontal, 8)
@@ -326,7 +326,7 @@ private struct ClipboardImageThumb: View {
                     .fill(DesignSystem.Colors.glassSubtle)
                     .overlay(
                         Image(systemName: "photo")
-                            .font(.system(size: 11))
+                            .font(DesignSystem.Typography.bodySmall)
                             .foregroundStyle(.secondary)
                     )
             }
