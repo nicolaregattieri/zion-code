@@ -121,7 +121,13 @@ struct ContentView: View {
             }
             .navigationSplitViewStyle(.balanced)
             .frame(minWidth: 1360, minHeight: 840)
-            .alert(L10n("Git não encontrado"), isPresented: Binding(get: { !model.isGitAvailable }, set: { _ in })) {
+            .alert(L10n("Git não encontrado"), isPresented: $model.showGitNotFoundAlert) {
+                Button(L10n("git.installCLT")) {
+                    model.installCommandLineTools()
+                }
+                Button(L10n("git.checkAgain")) {
+                    model.checkGitAvailability()
+                }
                 Button(L10n("Baixar Git")) {
                     if let url = URL(string: "https://git-scm.com/downloads") {
                         NSWorkspace.shared.open(url)
@@ -129,7 +135,7 @@ struct ContentView: View {
                 }
                 Button(L10n("OK"), role: .cancel) {}
             } message: {
-                Text(L10n("O Zion precisa do Git instalado para funcionar. Por favor, instale o Git e reinicie o app."))
+                Text(L10n("git.notFound.message"))
             }
             .alert(L10n("Erro"), isPresented: Binding(get: { model.lastError != nil }, set: { show in if !show { model.lastError = nil } })) {
                 Button(L10n("OK"), role: .cancel) {}
@@ -521,7 +527,7 @@ struct ContentView: View {
                 Text(L10n("Resolva os conflitos na sua IDE favorita.")).font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 Button {
                     model.loadConflictedFiles()
                     model.isConflictViewVisible = true
@@ -552,7 +558,7 @@ struct ContentView: View {
 
             if model.repositoryURL != nil && !model.isRepositorySwitching {
                 // Branch pill
-                HStack(spacing: 4) {
+                HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                     Image(systemName: "arrow.triangle.branch")
                         .font(.system(size: 9))
                     Text(model.currentBranch)
@@ -653,7 +659,7 @@ struct ContentView: View {
     }
 
     private var statusBarQuickNavigation: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
             statusBarSectionButton(.code)
             statusBarSectionButton(.graph)
             statusBarSectionButton(.operations)
@@ -681,7 +687,7 @@ struct ContentView: View {
         return Button {
             route(.requestSection(section))
         } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 Image(systemName: section.icon)
                     .font(.system(size: 9, weight: .semibold))
                 Text(statusBarSectionLabel(section))
@@ -721,7 +727,7 @@ struct ContentView: View {
 
     private var statusBarSettingsButton: some View {
         SettingsLink {
-            HStack(spacing: 4) {
+            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 Image(systemName: "gearshape")
                     .font(.system(size: 9, weight: .semibold))
                 Text(L10n("status.nav.settings"))
@@ -792,12 +798,12 @@ struct ContentView: View {
         } else {
             Button(L10n("Reset Branch to here (Soft)")) { 
                 performGitAction(title: L10n("Reset --soft"), message: L10n("Resetar a branch atual para este commit mantendo as mudancas no stage?"), destructive: true) {
-                    model.resetToCommit(commit.id, hard: false)
+                    model.resetToCommit(commit.id, shouldHardReset: false)
                 }
             }
             Button(L10n("Reset Branch to here (Hard)"), role: .destructive) { 
                 performGitAction(title: L10n("Reset --hard"), message: L10n("AVISO: Isso apagara todas as mudancas nao salvas. Continuar?"), destructive: true) {
-                    model.resetToCommit(commit.id, hard: true)
+                    model.resetToCommit(commit.id, shouldHardReset: true)
                 }
             }
             Divider()

@@ -88,7 +88,7 @@ struct KeyboardShortcutsSheet: View {
 
     private func shortcutSection(_ title: String, icon: String, shortcuts: [(String, String)]) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) {
+            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 Image(systemName: icon)
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.secondary)

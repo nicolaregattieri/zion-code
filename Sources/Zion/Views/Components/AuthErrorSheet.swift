@@ -47,7 +47,7 @@ struct AuthErrorSheet: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Text(L10n("Remotes")).font(.system(size: 11, weight: .bold)).foregroundStyle(.secondary)
                             ForEach(remotes) { remote in
-                                HStack(spacing: 8) {
+                                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                                     Image(systemName: remote.url.contains("git@") ? "key.fill" : "globe")
                                         .font(.system(size: 10))
                                         .foregroundStyle(.secondary)
@@ -121,7 +121,7 @@ struct AuthErrorSheet: View {
                 Text(title).font(.system(size: 12, weight: .semibold))
                 Text(description).font(.system(size: 11)).foregroundStyle(.secondary)
                 if let command {
-                    HStack(spacing: 6) {
+                    HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                         Text(command)
                             .font(.system(size: 10, design: .monospaced))
                             .foregroundStyle(DesignSystem.Colors.warning)

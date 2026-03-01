@@ -31,13 +31,13 @@ struct ClipboardDrawer: View {
     }
 
     private var header: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DesignSystem.Spacing.iconTextGap) {
             Button {
                 withAnimation(DesignSystem.Motion.snappy) {
                     model.clipboardMonitor.isCollapsed.toggle()
                 }
             } label: {
-                HStack(spacing: 6) {
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     Image(systemName: model.clipboardMonitor.isCollapsed ? "chevron.right" : "chevron.down")
                         .font(.system(size: 8, weight: .bold))
                         .foregroundStyle(.secondary)
@@ -97,7 +97,7 @@ struct ClipboardDrawer: View {
                 .padding(.horizontal, 12).padding(.vertical, 10)
             } else {
                 VStack(spacing: 0) {
-                    HStack(spacing: 4) {
+                    HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 9))
                             .foregroundStyle(.secondary)
@@ -126,7 +126,7 @@ struct ClipboardDrawer: View {
     }
 
     private func featureRow(_ icon: String, _ color: Color, _ text: String) -> some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DesignSystem.Spacing.iconTextGap) {
             Image(systemName: icon).font(.system(size: 11)).foregroundStyle(color).frame(width: 16)
             Text(text).font(.system(size: 10)).foregroundStyle(.secondary)
         }
@@ -136,7 +136,7 @@ struct ClipboardDrawer: View {
         let isHovered = hoveredItemID == item.id
         let hasText = !item.text.isEmpty
 
-        return HStack(spacing: 8) {
+        return HStack(spacing: DesignSystem.Spacing.iconTextGap) {
             Image(systemName: item.category.icon)
                 .font(.system(size: 10))
                 .foregroundStyle(categoryColor(item.category))

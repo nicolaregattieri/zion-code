@@ -71,7 +71,7 @@ struct BranchReviewSheet: View {
     }
 
     private var header: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
             Image(systemName: "arrow.triangle.branch")
                 .font(.title3)
                 .foregroundStyle(DesignSystem.Colors.ai)

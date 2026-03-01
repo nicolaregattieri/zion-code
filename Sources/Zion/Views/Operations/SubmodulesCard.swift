@@ -22,7 +22,7 @@ struct SubmodulesCard: View {
             } else {
                 VStack(spacing: 4) {
                     ForEach(model.submodules) { sub in
-                        HStack(spacing: 10) {
+                        HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                             Image(systemName: sub.status.icon)
                                 .font(.system(size: 12))
                                 .foregroundStyle(sub.status.color)
@@ -55,7 +55,7 @@ struct SubmodulesCard: View {
 
                 Divider()
 
-                HStack(spacing: 8) {
+                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                     Button {
                         model.submoduleInit()
                     } label: {

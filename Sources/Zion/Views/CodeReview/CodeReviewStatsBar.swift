@@ -8,7 +8,7 @@ struct CodeReviewStatsBar: View {
     var body: some View {
         HStack(spacing: 16) {
             // Branch flow
-            HStack(spacing: 6) {
+            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 Text(source.isEmpty ? "?" : source)
                     .font(.system(size: 12, weight: .bold, design: .monospaced))
                     .foregroundStyle(DesignSystem.Colors.success)
@@ -36,7 +36,7 @@ struct CodeReviewStatsBar: View {
             Spacer()
 
             // Overall risk badge
-            HStack(spacing: 4) {
+            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 Image(systemName: stats.overallRisk == .risky ? "exclamationmark.octagon.fill" :
                                   stats.overallRisk == .moderate ? "exclamationmark.triangle.fill" :
                                   "checkmark.shield.fill")

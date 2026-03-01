@@ -17,7 +17,7 @@ struct DecorationPill: View {
         let pillColor = color(for: type)
         let isHighlighted = isCurrent || isSearchMatch
 
-        HStack(spacing: 4) {
+        HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
             if isMain {
                 Image(systemName: "shield.fill").font(.system(size: 8))
             } else if type == .tag {

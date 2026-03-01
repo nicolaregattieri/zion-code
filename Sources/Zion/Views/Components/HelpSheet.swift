@@ -156,7 +156,7 @@ struct HelpSheet: View {
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 Button {
                     dismiss()
                     NotificationCenter.default.post(name: .showOnboarding, object: nil)
@@ -182,7 +182,7 @@ struct HelpSheet: View {
         let features = featureKeys(for: section).map { L10n($0) }
 
         return VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 Image(systemName: section.icon)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(section.color)

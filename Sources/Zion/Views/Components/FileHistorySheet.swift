@@ -44,7 +44,7 @@ struct FileHistorySheet: View {
     }
 
     private var header: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
             Image(systemName: "clock.arrow.circlepath")
                 .font(.title3)
                 .foregroundStyle(DesignSystem.Colors.info)
@@ -73,7 +73,7 @@ struct FileHistorySheet: View {
 
     private func entryRow(_ entry: FileHistoryEntry) -> some View {
         let isHovered = hoveredID == entry.id
-        return HStack(spacing: 10) {
+        return HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
             Text(entry.shortHash)
                 .font(.system(size: 11, weight: .bold, design: .monospaced))
                 .foregroundStyle(DesignSystem.Colors.info)
@@ -83,7 +83,7 @@ struct FileHistorySheet: View {
                 Text(entry.message)
                     .font(.system(size: 11, weight: .medium))
                     .lineLimit(2)
-                HStack(spacing: 8) {
+                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                     Text(entry.author)
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)

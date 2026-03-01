@@ -1,6 +1,37 @@
 import Foundation
 import Security
 
+private enum AILimits {
+    static let maxDiffStatLength = 2000
+    static let maxDiffContentLength = 10_000
+    static let maxCommitLogLength = 3000
+    static let maxChangelogLogLength = 5000
+    static let maxSemanticSearchLogLength = 8000
+    static let maxBlameRegionLength = 1000
+    static let maxBlameDiffLength = 5000
+    static let maxPendingChangesFileListLength = 3000
+    static let maxPendingChangesDiffStatLength = 5000
+    static let maxSurroundingContextLength = 3000
+
+    // Token limits per operation
+    static let compactMessageTokens = 100
+    static let detailedMessageTokens = 400
+    static let prDescriptionTokens = 600
+    static let stashMessageTokens = 60
+    static let diffExplanationTokens = 200
+    static let conflictResolutionTokens = 500
+    static let codeReviewTokens = 800
+    static let branchReviewTokens = 1000
+    static let changelogTokens = 1000
+    static let semanticSearchTokens = 200
+    static let branchSummaryTokens = 60
+    static let blameExplanationTokens = 200
+    static let commitSplitTokens = 600
+    static let detailedDiffTokens = 400
+    static let fileReviewTokens = 400
+    static let pendingSummaryTokens = 150
+}
+
 actor AIClient {
 
     // MARK: - Keychain
@@ -94,10 +125,10 @@ actor AIClient {
             Branch: \(branchName)
 
             Diff stat:
-            \(diffStat.prefix(2000))
+            \(diffStat.prefix(AILimits.maxDiffStatLength))
 
             Diff / Content summary (truncated):
-            \(diff.prefix(10000))
+            \(diff.prefix(AILimits.maxDiffContentLength))
 
             Rules:
             - Output EXACTLY one line. NO "Commit:" or "Message:" prefix.
@@ -108,7 +139,7 @@ actor AIClient {
             - MAX 72 characters.
             - NEVER output generic messages like "update files" if you can infer intent from the diff content.
             """
-            maxTokens = 100
+            maxTokens = AILimits.compactMessageTokens
 
         case .detailed:
             prompt = """
@@ -120,10 +151,10 @@ actor AIClient {
             Branch: \(branchName)
 
             Diff stat:
-            \(diffStat.prefix(2000))
+            \(diffStat.prefix(AILimits.maxDiffStatLength))
 
             Diff / Content summary (truncated):
-            \(diff.prefix(10000))
+            \(diff.prefix(AILimits.maxDiffContentLength))
 
             Rules:
             - First line: type(scope): short summary (Conventional Commits, max 72 chars).
@@ -135,7 +166,7 @@ actor AIClient {
             - NO "Commit:" or "Message:" prefix. Output ONLY the commit message.
             - NEVER output generic messages like "update files" if you can infer intent from the diff content.
             """
-            maxTokens = 400
+            maxTokens = AILimits.detailedMessageTokens
         }
 
         return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: maxTokens)
@@ -153,10 +184,10 @@ actor AIClient {
         You are a Pull Request description generator. Generate a PR title and body for merging \(branchName) into \(baseBranch).
 
         Commits:
-        \(commitLog.prefix(3000))
+        \(commitLog.prefix(AILimits.maxCommitLogLength))
 
         Diff stat:
-        \(diffStat.prefix(2000))
+        \(diffStat.prefix(AILimits.maxDiffStatLength))
 
         Output format (exactly):
         TITLE: <short PR title, max 70 chars>
@@ -175,7 +206,7 @@ actor AIClient {
         - Focus on the "why" and user impact
         - Keep it professional and clear
         """
-        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 600)
+        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.prDescriptionTokens)
         return parsePRResponse(raw)
     }
 
@@ -189,10 +220,10 @@ actor AIClient {
         You are a Git stash message generator. Write a short, descriptive stash name for the following work-in-progress changes.
 
         Diff stat:
-        \(diffStat.prefix(2000))
+        \(diffStat.prefix(AILimits.maxDiffStatLength))
 
         Diff (truncated):
-        \(diff.prefix(3000))
+        \(diff.prefix(AILimits.maxCommitLogLength))
 
         Rules:
         - Output ONLY the stash message, nothing else
@@ -200,7 +231,7 @@ actor AIClient {
         - Describe WHAT the changes are about
         - Example style: "WIP: refactor auth flow" or "Add user avatar upload"
         """
-        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 60)
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.stashMessageTokens)
     }
 
     func explainDiff(
@@ -213,7 +244,7 @@ actor AIClient {
         You are a code reviewer. Explain the following diff for the file "\(fileName)" in 2-3 plain-English sentences. Focus on WHAT changed and WHY it matters.
 
         Diff:
-        \(fileDiff.prefix(10000))
+        \(fileDiff.prefix(AILimits.maxDiffContentLength))
 
         Rules:
         - 2-3 sentences maximum
@@ -221,7 +252,7 @@ actor AIClient {
         - Focus on the intent behind the changes
         - Output ONLY the explanation
         """
-        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 200)
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.diffExplanationTokens)
     }
 
     // MARK: - Smart Conflict Resolution
@@ -250,7 +281,7 @@ actor AIClient {
         >>>>>>> \(theirsLabel) (THEIRS)
 
         Surrounding context:
-        \(surroundingContext.prefix(3000))
+        \(surroundingContext.prefix(AILimits.maxSurroundingContextLength))
 
         Rules:
         - Output ONLY the resolved code, nothing else. No explanation, no markers.
@@ -259,7 +290,7 @@ actor AIClient {
         - Preserve indentation and coding style from the surrounding context.
         - Do NOT include conflict markers in the output.
         """
-        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 500)
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.conflictResolutionTokens)
     }
 
     // MARK: - Code Review
@@ -277,10 +308,10 @@ actor AIClient {
         Branch: \(branchName)
 
         Diff stat:
-        \(diffStat.prefix(2000))
+        \(diffStat.prefix(AILimits.maxDiffStatLength))
 
         Diff:
-        \(diff.prefix(10000))
+        \(diff.prefix(AILimits.maxDiffContentLength))
 
         Output format — one finding per line, pipe-delimited:
         SEVERITY|FILE|MESSAGE
@@ -296,7 +327,7 @@ actor AIClient {
         - Maximum 10 findings
         - If the code looks good, output a single line: suggestion|general|Code looks good — no issues found.
         """
-        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 800)
+        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.codeReviewTokens)
         return parseReviewFindings(raw)
     }
 
@@ -315,10 +346,10 @@ actor AIClient {
         Target: \(targetBranch)
 
         Diff stat:
-        \(diffStat.prefix(2000))
+        \(diffStat.prefix(AILimits.maxDiffStatLength))
 
         Diff:
-        \(diff.prefix(10000))
+        \(diff.prefix(AILimits.maxDiffContentLength))
 
         Output format — one finding per line, pipe-delimited:
         SEVERITY|FILE|MESSAGE
@@ -333,7 +364,7 @@ actor AIClient {
         - Maximum 15 findings
         - If the code looks good, output a single line: suggestion|general|No issues found between branches.
         """
-        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 1000)
+        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.branchReviewTokens)
         return parseReviewFindings(raw)
     }
 
@@ -352,7 +383,7 @@ actor AIClient {
         Range: \(fromRef)..\(toRef)
 
         Commits:
-        \(commitLog.prefix(5000))
+        \(commitLog.prefix(AILimits.maxChangelogLogLength))
 
         Output format (markdown):
         ## What's New
@@ -376,7 +407,7 @@ actor AIClient {
         - Be concise but informative
         - Output ONLY the markdown, nothing else
         """
-        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 1000)
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.changelogTokens)
     }
 
     // MARK: - Semantic Search
@@ -393,7 +424,7 @@ actor AIClient {
         Query: "\(query)"
 
         Commit log (hash subject):
-        \(commitLog.prefix(8000))
+        \(commitLog.prefix(AILimits.maxSemanticSearchLogLength))
 
         Output the SHORT HASHES (first column) of commits that match the query, one per line.
 
@@ -403,7 +434,7 @@ actor AIClient {
         - Match semantically — "auth flow changes" should match commits about login, authentication, OAuth, etc.
         - If no commits match, output: NONE
         """
-        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 200)
+        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.semanticSearchTokens)
         if raw.trimmingCharacters(in: .whitespacesAndNewlines) == "NONE" { return [] }
         return raw.split(separator: "\n").map { String($0).trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
     }
@@ -423,10 +454,10 @@ actor AIClient {
         Branch: \(branchName)
 
         Commits since diverging:
-        \(commitLog.prefix(3000))
+        \(commitLog.prefix(AILimits.maxCommitLogLength))
 
         Diff stat:
-        \(diffStat.prefix(2000))
+        \(diffStat.prefix(AILimits.maxDiffStatLength))
 
         Rules:
         - Output EXACTLY one sentence, max 100 characters
@@ -434,7 +465,7 @@ actor AIClient {
         - Be specific and informative
         - Output ONLY the sentence, nothing else
         """
-        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 60)
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.branchSummaryTokens)
     }
 
     // MARK: - Blame Explainer
@@ -455,10 +486,10 @@ actor AIClient {
         File: \(fileName)
 
         Blame region content:
-        \(regionContent.prefix(1000))
+        \(regionContent.prefix(AILimits.maxBlameRegionLength))
 
         Commit diff for this file:
-        \(commitDiff.prefix(5000))
+        \(commitDiff.prefix(AILimits.maxBlameDiffLength))
 
         Rules:
         - 2-3 sentences explaining the intent behind the change
@@ -466,7 +497,7 @@ actor AIClient {
         - Plain English, no code blocks
         - Output ONLY the explanation
         """
-        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 200)
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.blameExplanationTokens)
     }
 
     // MARK: - Commit Split Advisor
@@ -481,10 +512,10 @@ actor AIClient {
         You are a Git best practices advisor. The user has staged a large change. Suggest how to split it into atomic commits.
 
         Diff stat:
-        \(diffStat.prefix(2000))
+        \(diffStat.prefix(AILimits.maxDiffStatLength))
 
         Diff:
-        \(diff.prefix(10000))
+        \(diff.prefix(AILimits.maxDiffContentLength))
 
         Output format — one commit per block, separated by blank lines:
         MESSAGE: commit message here
@@ -497,7 +528,7 @@ actor AIClient {
         - List exact file paths from the diff stat
         - Output ONLY the formatted blocks, nothing else
         """
-        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 600)
+        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.commitSplitTokens)
         return parseCommitSuggestions(raw)
     }
 
@@ -513,7 +544,7 @@ actor AIClient {
         You are a senior code reviewer explaining a diff to a tech lead. Analyze the diff for "\(fileName)" and provide a structured explanation.
 
         Diff:
-        \(fileDiff.prefix(10000))
+        \(fileDiff.prefix(AILimits.maxDiffContentLength))
 
         Output format (exactly — each section on its own line):
         INTENT: <1-2 sentences explaining the purpose/motivation of this change>
@@ -529,7 +560,7 @@ actor AIClient {
         - "risky" = breaking changes, security implications, or complex logic
         - Be specific and technical, not generic
         """
-        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 400)
+        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.detailedDiffTokens)
         return parseDiffExplanation(raw)
     }
 
@@ -545,7 +576,7 @@ actor AIClient {
         You are a senior code reviewer. Analyze the diff for the file "\(fileName)" and find bugs, security issues, and problems.
 
         Diff:
-        \(fileDiff.prefix(10000))
+        \(fileDiff.prefix(AILimits.maxDiffContentLength))
 
         Output format — one finding per line, pipe-delimited:
         SEVERITY|FILE|MESSAGE
@@ -560,7 +591,7 @@ actor AIClient {
         - Maximum 5 findings per file
         - If the code looks good, output: suggestion|\(fileName)|No issues found.
         """
-        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 400)
+        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.fileReviewTokens)
         return parseReviewFindings(raw)
     }
 
@@ -576,10 +607,10 @@ actor AIClient {
         You are a developer assistant. Summarize what the developer has been working on based on their pending (uncommitted) changes.
 
         Changed files:
-        \(fileList.prefix(3000))
+        \(fileList.prefix(AILimits.maxPendingChangesFileListLength))
 
         Diff stat:
-        \(diffStat.prefix(5000))
+        \(diffStat.prefix(AILimits.maxPendingChangesDiffStatLength))
 
         Rules:
         - 1-2 sentences, plain English, conversational tone
@@ -587,7 +618,7 @@ actor AIClient {
         - Example: "You've been refactoring the auth module and fixing sidebar CSS."
         - Output ONLY the summary, nothing else
         """
-        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: 150)
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.pendingSummaryTokens)
     }
 
     // MARK: - Private

@@ -153,7 +153,7 @@ struct CommitRowView: View {
     }
 
     private var metadataRow: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
             Text(commit.shortHash)
                 .font(.system(size: 10, weight: .bold, design: .monospaced))
                 .padding(.horizontal, 6).padding(.vertical, 2)
@@ -161,7 +161,7 @@ struct CommitRowView: View {
                 .clipShape(Capsule())
                 .foregroundStyle(Color.accentColor)
 
-            HStack(spacing: 4) {
+            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 if let avatar = avatarImage {
                     Image(nsImage: avatar)
                         .resizable()
@@ -175,7 +175,7 @@ struct CommitRowView: View {
             .font(.system(size: 11, weight: .medium))
             .foregroundStyle(.secondary)
 
-            HStack(spacing: 4) {
+            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 Image(systemName: "calendar").font(.system(size: 9))
                 Text(Self.dateFormatter.string(from: commit.date))
             }
@@ -183,7 +183,7 @@ struct CommitRowView: View {
             .foregroundStyle(Color.secondary.opacity(0.7))
 
             if let ins = commit.insertions, let del = commit.deletions, (ins > 0 || del > 0) {
-                HStack(spacing: 4) {
+                HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                     if ins > 0 {
                         Text("+\(ins)")
                             .font(.system(size: 9, weight: .bold, design: .monospaced))
@@ -223,7 +223,7 @@ struct CommitRowView: View {
     private var decorationRow: some View {
         Group {
             if !commit.decorations.isEmpty {
-                TruncatingHStack(spacing: 10, overflowCount: $decorationOverflow) {
+                TruncatingHStack(spacing: DesignSystem.Spacing.toolbarItemGap, overflowCount: $decorationOverflow) {
                     ForEach(sortedDecorations, id: \.self) { decoration in
                         DecorationPill(
                             decoration: decoration,
@@ -247,7 +247,7 @@ struct CommitRowView: View {
         Button {
             showOverflowPopover = true
         } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 8, weight: .bold))
                 Text("+\(decorationOverflow)")

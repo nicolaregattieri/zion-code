@@ -46,7 +46,7 @@ struct InteractiveRebaseSheet: View {
     }
 
     private func rebaseRow(item: RebaseItem, index: Int) -> some View {
-        HStack(spacing: 10) {
+        HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
             // Drag handle
             Image(systemName: "line.3.horizontal")
                 .font(.system(size: 10))
@@ -63,7 +63,7 @@ struct InteractiveRebaseSheet: View {
                     }
                 }
             } label: {
-                HStack(spacing: 4) {
+                HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                     Image(systemName: item.action.icon)
                         .font(.system(size: 10, weight: .bold))
                     Text(item.action.label)
@@ -94,7 +94,7 @@ struct InteractiveRebaseSheet: View {
             Spacer()
 
             // Quick action buttons
-            HStack(spacing: 4) {
+            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 Button {
                     if index > 0 {
                         model.rebaseItems.swapAt(index, index - 1)
@@ -133,7 +133,7 @@ struct InteractiveRebaseSheet: View {
             // Legend
             HStack(spacing: 12) {
                 ForEach(RebaseAction.allCases) { action in
-                    HStack(spacing: 4) {
+                    HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                         Circle().fill(action.color).frame(width: 6, height: 6)
                         Text(action.label)
                             .font(.system(size: 9, design: .monospaced))

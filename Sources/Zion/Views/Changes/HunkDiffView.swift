@@ -24,7 +24,7 @@ struct HunkDiffView: View {
 
         return VStack(alignment: .leading, spacing: 0) {
             // Hunk header row
-            HStack(spacing: 6) {
+            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 Button {
                     withAnimation(DesignSystem.Motion.snappy) {
                         if isCollapsed {

@@ -367,7 +367,7 @@ struct CodeScreen: View {
         Button {
             NotificationCenter.default.post(name: .toggleZenMode, object: nil)
         } label: {
-            HStack(spacing: 6) {
+            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 Image(systemName: "arrow.down.right.and.arrow.up.left")
                     .font(DesignSystem.IconSize.toolbar)
                 Text(L10n("zen.exit"))
@@ -434,7 +434,7 @@ struct CodeScreen: View {
     }
 
     private var editorToolbar: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
             Button {
                 withAnimation(DesignSystem.Motion.panel) { isFileBrowserVisible.toggle() }
             } label: {
@@ -446,7 +446,7 @@ struct CodeScreen: View {
             .accessibilityLabel(L10n("Alternar painel de arquivos"))
 
             // Theme & Font group
-            HStack(spacing: 6) {
+            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 Picker("", selection: $model.selectedTheme) {
                     ForEach(EditorTheme.allCases) { theme in
                         Text(theme.label).tag(theme)
@@ -472,7 +472,7 @@ struct CodeScreen: View {
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
 
             // Size & Spacing group
-            HStack(spacing: 6) {
+            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 Stepper(value: $model.editorFontSize, in: 8...32, step: 1) {
                     Text("\(Int(model.editorFontSize))pt")
                         .font(DesignSystem.Typography.monoSmall)
@@ -560,7 +560,7 @@ struct CodeScreen: View {
             Divider().frame(height: 14).padding(.horizontal, 4)
 
             // Layout toggle: editor / split / terminal
-            HStack(spacing: 2) {
+            HStack(spacing: DesignSystem.Spacing.iconGroupedGap) {
                 Button {
                     withAnimation(DesignSystem.Motion.detail) { layout = .editorOnly }
                 } label: {
@@ -615,7 +615,7 @@ struct CodeScreen: View {
             Spacer()
 
             if model.hasRepoEditorConfig {
-                HStack(spacing: 4) {
+                HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                     Image(systemName: "doc.text.magnifyingglass")
                         .font(.system(size: 9))
                     Text(".zion")
@@ -667,7 +667,7 @@ struct CodeScreen: View {
 
     private var breadcrumbPathBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 4) {
+            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 ForEach(Array(breadcrumbItems.enumerated()), id: \.offset) { index, item in
                     if index > 0 {
                         Image(systemName: "chevron.right")
@@ -823,17 +823,27 @@ struct CodeScreen: View {
                 Spacer()
 
                 if sidebarMode == .fileTree {
-                    Button { model.showDotfiles.toggle() } label: {
-                        Image(systemName: model.showDotfiles ? "eye" : "eye.slash")
-                    }
-                    .buttonStyle(.plain).cursorArrow().foregroundStyle(.secondary)
-                    .help(L10n("fileBrowser.toggleHidden") + " (⇧⌘H)")
-                    .accessibilityLabel(L10n("fileBrowser.toggleHidden"))
+                    HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
+                        Button { model.showDotfiles.toggle() } label: {
+                            Image(systemName: model.showDotfiles ? "eye" : "eye.slash")
+                                .frame(width: DesignSystem.IconSize.editorToolbarFrame.width,
+                                       height: DesignSystem.IconSize.editorToolbarFrame.height)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain).cursorArrow().foregroundStyle(.secondary)
+                        .help(L10n("fileBrowser.toggleHidden") + " (⇧⌘H)")
+                        .accessibilityLabel(L10n("fileBrowser.toggleHidden"))
 
-                    Button { model.refreshFileTree() } label: { Image(systemName: "arrow.clockwise") }
+                        Button { model.refreshFileTree() } label: {
+                            Image(systemName: "arrow.clockwise")
+                                .frame(width: DesignSystem.IconSize.editorToolbarFrame.width,
+                                       height: DesignSystem.IconSize.editorToolbarFrame.height)
+                                .contentShape(Rectangle())
+                        }
                         .buttonStyle(.plain).cursorArrow().foregroundStyle(.secondary)
                         .help(L10n("Atualizar arvore de arquivos"))
                         .accessibilityLabel(L10n("Atualizar arvore de arquivos"))
+                    }
                 }
             }
             .padding(.horizontal, DesignSystem.Spacing.cardPadding)
@@ -879,6 +889,11 @@ struct CodeScreen: View {
 
                     }
                     .padding(.top, DesignSystem.Spacing.standard)
+                    .background {
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .onTapGesture { model.clearFileSelection() }
+                    }
                 }
                 .focusable()
                 .focused($isFileBrowserFocused)
@@ -892,6 +907,7 @@ struct CodeScreen: View {
                 .onMoveCommand { direction in
                     let flatFiles = model.visibleFlatFiles()
                     guard !flatFiles.isEmpty else { return }
+                    let isShift = NSApp.currentEvent?.modifierFlags.contains(.shift) == true
                     switch direction {
                     case .up:
                         if selectedBrowserIndex > 0 {
@@ -902,7 +918,6 @@ struct CodeScreen: View {
                             selectedBrowserIndex += 1
                         }
                     case .left:
-                        // Collapse folder
                         if selectedBrowserIndex >= 0 && selectedBrowserIndex < flatFiles.count {
                             let item = flatFiles[selectedBrowserIndex]
                             if item.isDirectory && model.expandedPaths.contains(item.id) {
@@ -911,7 +926,6 @@ struct CodeScreen: View {
                         }
                         return
                     case .right:
-                        // Expand folder
                         if selectedBrowserIndex >= 0 && selectedBrowserIndex < flatFiles.count {
                             let item = flatFiles[selectedBrowserIndex]
                             if item.isDirectory && !model.expandedPaths.contains(item.id) {
@@ -923,8 +937,10 @@ struct CodeScreen: View {
                     }
                     if selectedBrowserIndex >= 0 && selectedBrowserIndex < flatFiles.count {
                         let item = flatFiles[selectedBrowserIndex]
-                        if !item.isDirectory {
-                            model.selectCodeFile(item)
+                        if isShift {
+                            model.extendSelection(to: item)
+                        } else {
+                            model.plainClickFile(item)
                         }
                         withAnimation { scrollProxy.scrollTo(item.id, anchor: .center) }
                     }
@@ -1101,7 +1117,7 @@ struct CodeScreen: View {
 
     private var markdownPreviewPane: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 Label(L10n("editor.markdown.preview"), systemImage: "doc.text.image")
                     .font(DesignSystem.Typography.bodyMedium)
                     .foregroundStyle(.secondary)
@@ -1132,7 +1148,7 @@ struct CodeScreen: View {
 
     private var findReplaceBar: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 // Toggle replace visibility
                 Button {
                     withAnimation(DesignSystem.Motion.detail) { isReplaceVisible.toggle() }
@@ -1150,7 +1166,7 @@ struct CodeScreen: View {
                 .help(L10n("editor.replace.placeholder"))
 
                 // Search field
-                HStack(spacing: 4) {
+                HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)
@@ -1211,10 +1227,10 @@ struct CodeScreen: View {
             .padding(.vertical, 6)
 
             if isReplaceVisible {
-                HStack(spacing: 8) {
+                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                     Spacer().frame(width: 32)
 
-                    HStack(spacing: 4) {
+                    HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                         Image(systemName: "arrow.2.squarepath")
                             .font(.system(size: 10))
                             .foregroundStyle(.secondary)
@@ -1252,7 +1268,7 @@ struct CodeScreen: View {
         VStack(spacing: 12) {
             Text(L10n("Ir para Linha"))
                 .font(.headline)
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 TextField(L10n("Numero da linha..."), text: $goToLineNumber)
                     .textFieldStyle(.roundedBorder)
                     .frame(width: 140)
@@ -1473,7 +1489,7 @@ struct CodeScreen: View {
     // MARK: - Terminal Search
 
     private var terminalSearchBar: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DesignSystem.Spacing.iconTextGap) {
             Image(systemName: "magnifyingglass")
                 .font(DesignSystem.IconSize.inline)
                 .foregroundStyle(.secondary)
@@ -1603,6 +1619,13 @@ struct CodeScreen: View {
                 model.focusActiveTerminal()
                 return true
             }
+            .dropDestination(for: URL.self) { urls, _ in
+                let paths = urls.filter { $0.isFileURL }.map { TerminalShellEscaping.quotePath($0.path) }
+                guard !paths.isEmpty else { return false }
+                model.sendTextToActiveTerminal(paths.joined(separator: " "))
+                model.focusActiveTerminal()
+                return true
+            }
         }
         .padding(.top, DesignSystem.Spacing.cardPadding)
         .background {
@@ -1678,7 +1701,7 @@ struct CodeScreen: View {
                 .padding(.trailing, 4)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 2) {
+                HStack(spacing: DesignSystem.Spacing.iconGroupedGap) {
                     ForEach(model.terminalTabs) { tab in
                         TerminalTabChip(
                             tab: tab,
@@ -1699,7 +1722,7 @@ struct CodeScreen: View {
             Spacer()
 
             // Split buttons grouped
-            HStack(spacing: 2) {
+            HStack(spacing: DesignSystem.Spacing.iconGroupedGap) {
                 Button {
                     model.splitFocusedTerminal(direction: .vertical)
                 } label: {
@@ -1758,6 +1781,7 @@ struct CodeScreen: View {
             .padding(.trailing, 8)
 
             ClipboardPopoverButton(model: model, accentColor: accentColor)
+                .padding(.trailing, DesignSystem.Spacing.toolbarTrailing)
 
             if isZenMode {
                 Spacer()
@@ -1778,7 +1802,7 @@ private struct ClipboardPopoverButton: View {
 
     var body: some View {
         Button { isPresented.toggle() } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 Image(systemName: "clipboard")
                     .font(DesignSystem.Typography.bodyMedium)
                 if !model.clipboardMonitor.items.isEmpty {
@@ -1830,7 +1854,7 @@ struct EditorSettingsPopoverButton: View {
                         .font(.system(size: 10, weight: .medium))
                         .foregroundStyle(.secondary)
 
-                    HStack(spacing: 6) {
+                    HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                         Text(L10n("settings.editor.tabSize"))
                             .font(.system(size: 10))
                             .foregroundStyle(.secondary)
@@ -1880,7 +1904,7 @@ struct EditorSettingsPopoverButton: View {
                         .font(.system(size: 11))
 
                     if model.editorShowRuler {
-                        HStack(spacing: 6) {
+                        HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                             Text(L10n("settings.editor.rulerColumn"))
                                 .font(.system(size: 10))
                                 .foregroundStyle(.secondary)
@@ -1913,7 +1937,7 @@ struct EditorSettingsPopoverButton: View {
                 Divider()
 
                 // Line spacing
-                HStack(spacing: 6) {
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     Text(L10n("settings.editor.lineSpacing"))
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)
@@ -1927,7 +1951,7 @@ struct EditorSettingsPopoverButton: View {
                 Divider()
 
                 // Letter spacing
-                HStack(spacing: 6) {
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     Text(L10n("settings.editor.letterSpacing"))
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)
@@ -1961,7 +1985,7 @@ struct TerminalTabChip: View {
     private var hasAlive: Bool { sessions.contains(where: { $0.isAlive }) }
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
             Circle()
                 .fill(hasAlive ? DesignSystem.Colors.success : DesignSystem.Colors.destructive)
                 .frame(width: 6, height: 6)
@@ -2087,7 +2111,7 @@ struct TerminalFontPopoverButton: View {
                 Text(L10n("Fonte do terminal"))
                     .font(DesignSystem.Typography.bodyMedium)
 
-                HStack(spacing: 6) {
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     Text(L10n("Fonte"))
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)
@@ -2105,7 +2129,7 @@ struct TerminalFontPopoverButton: View {
                 }
 
                 if !model.isTerminalFontAvailable {
-                    HStack(spacing: 4) {
+                    HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.system(size: 9))
                             .foregroundStyle(DesignSystem.Colors.warning)
@@ -2115,7 +2139,7 @@ struct TerminalFontPopoverButton: View {
                     }
                 }
 
-                HStack(spacing: 6) {
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     Text(L10n("Tamanho"))
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)
@@ -2332,7 +2356,7 @@ struct CodeTab: View {
     private var isUnsaved: Bool { model.unsavedFiles.contains(file.id) }
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DesignSystem.Spacing.iconTextGap) {
             if isUnsaved {
                 Circle().fill(DesignSystem.Colors.warning).frame(width: 6, height: 6)
             }
@@ -2386,26 +2410,26 @@ struct QuickOpenOverlay: View {
     private var filteredFiles: [FileItem] {
         let allFiles = model.allFlatFiles()
         guard !query.isEmpty else { return Array(allFiles.prefix(15)) }
-        let q = query.lowercased()
+        let lowercasedQuery = query.lowercased()
 
         return allFiles
             .map { file -> (FileItem, Int) in
                 let path = file.url.path.lowercased()
                 let name = file.name.lowercased()
                 var score = 0
-                if name == q { score = 1000 }
-                else if name.hasPrefix(q) { score = 500 }
-                else if name.contains(q) { score = 200 }
-                else if path.contains(q) { score = 100 }
+                if name == lowercasedQuery { score = 1000 }
+                else if name.hasPrefix(lowercasedQuery) { score = 500 }
+                else if name.contains(lowercasedQuery) { score = 200 }
+                else if path.contains(lowercasedQuery) { score = 100 }
                 else {
-                    var qi = q.startIndex
+                    var queryIndex = lowercasedQuery.startIndex
                     for ch in name {
-                        if qi < q.endIndex && ch == q[qi] {
-                            qi = q.index(after: qi)
+                        if queryIndex < lowercasedQuery.endIndex && ch == lowercasedQuery[queryIndex] {
+                            queryIndex = lowercasedQuery.index(after: queryIndex)
                             score += 1
                         }
                     }
-                    if qi < q.endIndex { score = 0 }
+                    if queryIndex < lowercasedQuery.endIndex { score = 0 }
                 }
                 return (file, score)
             }
@@ -2418,7 +2442,7 @@ struct QuickOpenOverlay: View {
     var body: some View {
         VStack(spacing: 0) {
             VStack(spacing: 0) {
-                HStack(spacing: 10) {
+                HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                     Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
                     TextField(L10n("Buscar arquivo..."), text: $query)
                         .textFieldStyle(.plain)
@@ -2510,7 +2534,7 @@ struct QuickOpenOverlay: View {
             return file.url.path.replacingOccurrences(of: repoURL.path + "/", with: "")
         }()
 
-        return HStack(spacing: 10) {
+        return HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
             Image(systemName: "doc.text").foregroundStyle(.secondary).font(.system(size: 12))
             VStack(alignment: .leading, spacing: 1) {
                 Text(file.name).font(.system(size: 13, weight: .medium))
@@ -2541,7 +2565,7 @@ struct SymbolResultsSheet: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 10) {
+            HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                 Text(title)
                     .font(.headline)
                 Spacer()
@@ -2593,18 +2617,24 @@ struct FileTreeNodeView: View {
 
     var body: some View {
         let isExpanded = model.expandedPaths.contains(item.id)
-        let isSelected = model.activeFileID == item.id
+        let isSelected = model.selectedFileIDs.contains(item.id) ||
+                         (model.selectedFileIDs.isEmpty && model.activeFileID == item.id)
         let isDark = model.selectedTheme.isDark
         let isModified = model.uncommittedChanges.contains { $0.hasSuffix(item.name) }
         let isIgnored = item.isGitIgnored
 
         VStack(alignment: .leading, spacing: 0) {
             Button {
-                if item.isDirectory {
-                    withAnimation(DesignSystem.Motion.snappy) { model.toggleExpansion(for: item.id) }
-                } else { model.selectCodeFile(item) }
+                let flags = NSApp.currentEvent?.modifierFlags.intersection([.command, .shift]) ?? []
+                if flags.contains(.command) {
+                    model.toggleFileSelection(item)
+                } else if flags.contains(.shift) {
+                    model.rangeSelectFile(item)
+                } else {
+                    model.plainClickFile(item)
+                }
             } label: {
-                HStack(spacing: 6) {
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     if item.isDirectory {
                         Image(systemName: isExpanded ? "chevron.down" : "chevron.right").font(DesignSystem.Typography.micro).foregroundStyle(.secondary.opacity(0.5)).frame(width: 12)
                     } else { Spacer().frame(width: 12) }
@@ -2626,7 +2656,7 @@ struct FileTreeNodeView: View {
                         .lineLimit(1)
                         .foregroundStyle(isSelected ? (isDark ? .white : DesignSystem.Colors.info) : (isModified ? DesignSystem.Colors.warning : .primary))
                 }
-                .opacity(isIgnored && !isSelected ? 0.5 : 1.0)
+                .opacity((isIgnored || model.isFileInCutClipboard(item.id)) && !isSelected ? 0.5 : 1.0)
                 .padding(.horizontal, 12).padding(.vertical, 6).padding(.leading, CGFloat(level) * 12)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())
@@ -2636,7 +2666,16 @@ struct FileTreeNodeView: View {
             .onHover { h in isHovered = h }
             .draggable(TerminalShellEscaping.quotePath(item.url.path))
             .contextMenu {
-                if item.isDirectory {
+                let effectiveSelection: [FileItem] = {
+                    if model.selectedFileIDs.contains(item.id) && model.selectedFileIDs.count > 1 {
+                        return model.selectedFileItems()
+                    }
+                    return [item]
+                }()
+                let isMulti = effectiveSelection.count > 1
+                let pasteTarget = item.isDirectory ? item.url : item.url.deletingLastPathComponent()
+
+                if item.isDirectory && !isMulti {
                     Button { model.createNewFileInFolder(parentURL: item.url) } label: {
                         Label(L10n("Novo Arquivo"), systemImage: "doc.badge.plus")
                     }
@@ -2645,48 +2684,9 @@ struct FileTreeNodeView: View {
                     }
 
                     Divider()
+                }
 
-                    Button { model.copyFileItem(item) } label: {
-                        Label(L10n("Copiar"), systemImage: "doc.on.doc")
-                    }
-                    Button { model.cutFileItem(item) } label: {
-                        Label(L10n("Recortar"), systemImage: "scissors")
-                    }
-                    if model.hasFileBrowserClipboard {
-                        Button { model.pasteFileItem(into: item.url) } label: {
-                            Label(L10n("Colar"), systemImage: "doc.on.clipboard")
-                        }
-                    }
-
-                    Divider()
-
-                    Button { model.renameFileItem(item) } label: {
-                        Label(L10n("Renomear..."), systemImage: "pencil")
-                    }
-                    Button { model.duplicateFileItem(item) } label: {
-                        Label(L10n("Duplicar"), systemImage: "plus.square.on.square")
-                    }
-
-                    Divider()
-
-                    Button(role: .destructive) { model.deleteFileItem(item) } label: {
-                        Label(L10n("Excluir"), systemImage: "trash")
-                    }
-
-                    Divider()
-
-                    Button { NSWorkspace.shared.activateFileViewerSelecting([item.url]) } label: {
-                        Label(L10n("Revelar no Finder"), systemImage: "folder")
-                    }
-
-                    Divider()
-
-                    Button {
-                        model.findInFilesScopeRequest = item.url.path
-                    } label: {
-                        Label(L10n("Buscar na Pasta"), systemImage: "magnifyingglass")
-                    }
-                } else {
+                if !item.isDirectory && !isMulti {
                     Button { model.selectCodeFile(item) } label: {
                         Label(L10n("Abrir no Editor"), systemImage: "pencil.and.outline")
                     }
@@ -2710,38 +2710,72 @@ struct FileTreeNodeView: View {
                     }
 
                     Divider()
+                }
 
-                    Button { model.copyFileItem(item) } label: {
-                        Label(L10n("Copiar"), systemImage: "doc.on.doc")
+                // Copy / Cut / Paste
+                Button { model.copyFileItems(effectiveSelection) } label: {
+                    Label(isMulti ? String(format: L10n("Copiar %d Itens"), effectiveSelection.count) : L10n("Copiar"), systemImage: "doc.on.doc")
+                }
+                Button { model.cutFileItems(effectiveSelection) } label: {
+                    Label(isMulti ? String(format: L10n("Recortar %d Itens"), effectiveSelection.count) : L10n("Recortar"), systemImage: "scissors")
+                }
+                if model.hasFileBrowserClipboard && !isMulti {
+                    Button { model.pasteFileItem(into: pasteTarget) } label: {
+                        Label(L10n("Colar"), systemImage: "doc.on.clipboard")
                     }
-                    Button { model.cutFileItem(item) } label: {
-                        Label(L10n("Recortar"), systemImage: "scissors")
-                    }
-                    if model.hasFileBrowserClipboard {
-                        Button { model.pasteFileItem(into: item.url.deletingLastPathComponent()) } label: {
-                            Label(L10n("Colar"), systemImage: "doc.on.clipboard")
-                        }
-                    }
+                }
 
-                    Divider()
+                Divider()
 
+                // Rename (single only) / Duplicate
+                if !isMulti {
                     Button { model.renameFileItem(item) } label: {
                         Label(L10n("Renomear..."), systemImage: "pencil")
                     }
-                    Button { model.duplicateFileItem(item) } label: {
-                        Label(L10n("Duplicar"), systemImage: "plus.square.on.square")
-                    }
+                }
+                Button { model.duplicateFileItems(effectiveSelection) } label: {
+                    Label(isMulti ? String(format: L10n("Duplicar %d Itens"), effectiveSelection.count) : L10n("Duplicar"), systemImage: "plus.square.on.square")
+                }
 
+                Divider()
+
+                // Delete
+                Button(role: .destructive) { model.deleteFileItems(effectiveSelection) } label: {
+                    Label(isMulti ? String(format: L10n("Excluir %d Itens"), effectiveSelection.count) : L10n("Excluir"), systemImage: "trash")
+                }
+
+                Divider()
+
+                // Reveal in Finder
+                Button { NSWorkspace.shared.activateFileViewerSelecting(effectiveSelection.map(\.url)) } label: {
+                    Label(L10n("Revelar no Finder"), systemImage: "folder")
+                }
+
+                // Find in Folder (directory only, single only)
+                if item.isDirectory && !isMulti {
                     Divider()
 
-                    Button(role: .destructive) { model.deleteFileItem(item) } label: {
-                        Label(L10n("Excluir"), systemImage: "trash")
+                    Button {
+                        model.findInFilesScopeRequest = item.url.path
+                    } label: {
+                        Label(L10n("Buscar na Pasta"), systemImage: "magnifyingglass")
                     }
+                }
 
-                    Divider()
+                // Add to .gitignore
+                if let repoURL = model.repositoryURL {
+                    let nonIgnoredItems = effectiveSelection.filter { !$0.isGitIgnored }
+                    if !nonIgnoredItems.isEmpty {
+                        Divider()
 
-                    Button { NSWorkspace.shared.activateFileViewerSelecting([item.url]) } label: {
-                        Label(L10n("Revelar no Finder"), systemImage: "folder")
+                        Button {
+                            for fileItem in nonIgnoredItems {
+                                let relativePath = fileItem.url.path.replacingOccurrences(of: repoURL.path + "/", with: "")
+                                model.addToGitIgnore(path: relativePath)
+                            }
+                        } label: {
+                            Label(L10n("Adicionar ao .gitignore"), systemImage: "eye.slash")
+                        }
                     }
                 }
             }

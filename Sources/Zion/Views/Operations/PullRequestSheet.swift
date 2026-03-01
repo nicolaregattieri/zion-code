@@ -68,7 +68,7 @@ struct PullRequestSheet: View {
                                         isGeneratingAI = false
                                     }
                                 } label: {
-                                    HStack(spacing: 4) {
+                                    HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                                         if isGeneratingAI {
                                             ProgressView().controlSize(.small).frame(width: 10, height: 10)
                                         } else {
@@ -98,7 +98,7 @@ struct PullRequestSheet: View {
 
                     // Error
                     if let error = errorMessage {
-                        HStack(spacing: 8) {
+                        HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                             Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(DesignSystem.Colors.warning)
                             Text(error)
                                 .font(.caption)
@@ -111,7 +111,7 @@ struct PullRequestSheet: View {
 
                     // Success
                     if let url = createdPRURL {
-                        HStack(spacing: 8) {
+                        HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                             Image(systemName: "checkmark.circle.fill").foregroundStyle(DesignSystem.Colors.success)
                             Text(L10n("PR criado com sucesso!"))
                                 .font(.system(size: 12, weight: .semibold))

@@ -55,8 +55,9 @@ struct ClipboardItem: Identifiable, Sendable {
     private static func makePreview(_ text: String) -> String {
         let singleLine = text.replacingOccurrences(of: "\n", with: " ")
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        if singleLine.count > 60 {
-            return String(singleLine.prefix(57)) + "..."
+        let maxLength = Constants.Limits.clipboardPreviewTruncationLength
+        if singleLine.count > maxLength {
+            return String(singleLine.prefix(maxLength - 3)) + "..."
         }
         return singleLine
     }
@@ -134,13 +135,13 @@ final class ClipboardMonitor {
         purgeOldTempFiles()
         lastChangeCount = NSPasteboard.general.changeCount
         // Use .common mode so the timer fires even during UI interactions (scrolling, resizing)
-        let t = Timer(timeInterval: 0.5, repeats: true) { [weak self] _ in
+        let pollTimer = Timer(timeInterval: 0.5, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.poll()
             }
         }
-        RunLoop.main.add(t, forMode: .common)
-        timer = t
+        RunLoop.main.add(pollTimer, forMode: .common)
+        timer = pollTimer
     }
 
     func stop() {
@@ -177,10 +178,10 @@ final class ClipboardMonitor {
             let ext = firstURL.pathExtension.lowercased()
             let imageExtensions: Set<String> = ["png", "jpg", "jpeg", "gif", "webp", "svg", "tiff", "bmp", "ico", "heic"]
             if imageExtensions.contains(ext), let image = NSImage(contentsOf: firstURL) {
-                let w = Int(image.size.width)
-                let h = Int(image.size.height)
+                let imageWidth = Int(image.size.width)
+                let imageHeight = Int(image.size.height)
                 if let first = items.first, first.isImage, first.text == path { return }
-                let item = ClipboardItem(imageWidth: w, imageHeight: h, filePath: path)
+                let item = ClipboardItem(imageWidth: imageWidth, imageHeight: imageHeight, filePath: path)
                 addItem(item)
                 return
             }
@@ -195,15 +196,15 @@ final class ClipboardMonitor {
         if let imageType = pb.availableType(from: [.tiff, .png]),
            let imageData = pb.data(forType: imageType),
            let image = NSImage(data: imageData) {
-            let w = Int(image.size.width)
-            let h = Int(image.size.height)
-            if let first = items.first, first.isImage, first.imageSize == CGSize(width: w, height: h) {
+            let imageWidth = Int(image.size.width)
+            let imageHeight = Int(image.size.height)
+            if let first = items.first, first.isImage, first.imageSize == CGSize(width: imageWidth, height: imageHeight) {
                 return
             }
             _ = imageType
             // Save image data to temp file so we have a draggable file path
-            let savedPath = saveImageToTemp(imageData, width: w, height: h)
-            let item = ClipboardItem(imageWidth: w, imageHeight: h, filePath: savedPath)
+            let savedPath = saveImageToTemp(imageData, width: imageWidth, height: imageHeight)
+            let item = ClipboardItem(imageWidth: imageWidth, imageHeight: imageHeight, filePath: savedPath)
             addItem(item)
             return
         }

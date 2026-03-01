@@ -21,7 +21,7 @@ struct GitAuthPromptSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 10) {
+            HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                 Image(systemName: "key.fill")
                     .font(.system(size: 18))
                     .foregroundStyle(DesignSystem.Colors.warning)

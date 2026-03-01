@@ -244,7 +244,7 @@ struct GitClient {
         case .normal:
             return (environment, nil)
         case .withCredential(let credential):
-            let scriptURL = URL(fileURLWithPath: NSTemporaryDirectory())
+            let scriptURL = ZionTemp.directory
                 .appendingPathComponent("zion-git-askpass-\(UUID().uuidString).sh")
 
             let script = """

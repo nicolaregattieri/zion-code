@@ -37,7 +37,7 @@ struct ConflictRegionCard: View {
     }
 
     private var header: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DesignSystem.Spacing.iconTextGap) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 11))
                 .foregroundStyle(DesignSystem.Colors.warning)
@@ -120,7 +120,7 @@ struct ConflictRegionCard: View {
 
     private var actionButtons: some View {
         VStack(spacing: 8) {
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 choiceButton(L10n("Aceitar Nosso"), icon: "checkmark", color: DesignSystem.Colors.success, choice: .ours)
                 choiceButton(L10n("Aceitar Deles"), icon: "checkmark", color: DesignSystem.Colors.conflictTheirs, choice: .theirs)
                 choiceButton(L10n("Aceitar Ambos"), icon: "arrow.up.arrow.down", color: DesignSystem.Colors.ai, choice: .both)

@@ -117,7 +117,7 @@ struct GraphScreen: View {
             }
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
+                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                     ForEach(model.worktrees) { worktree in
                         WorktreePill(
                             branch: worktree.branch,
@@ -172,7 +172,7 @@ struct GraphScreen: View {
         let hasDev = findBranchName(matches: ["develop", "development", "dev"]) != nil
 
         if hasMain || hasDev {
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 if let mainName = findBranchName(matches: ["main", "master", "trunk"]) {
                     jumpButton(icon: "shield.fill", color: DesignSystem.Colors.warning, label: mainName) { commitSearchQuery = mainName }
                 }
@@ -189,7 +189,7 @@ struct GraphScreen: View {
 
     private func actionButtonSmall(title: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 4) {
+            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 Image(systemName: icon).font(.system(size: 10, weight: .bold))
                 Text(L10n(title)).font(.system(size: 10, weight: .semibold))
             }
@@ -218,7 +218,7 @@ struct GraphScreen: View {
 
     
     private func searchBar(proxy: ScrollViewProxy) -> some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DesignSystem.Spacing.iconTextGap) {
             HStack {
                 Image(systemName: model.isSemanticSearchActive ? "sparkles" : "magnifyingglass")
                     .foregroundStyle(model.isSemanticSearchActive ? DesignSystem.Colors.semanticSearch : .secondary)
@@ -246,7 +246,7 @@ struct GraphScreen: View {
                     .stroke(model.isSemanticSearchActive ? DesignSystem.Colors.semanticSearch.opacity(0.3) : Color.clear, lineWidth: 1)
             )
 
-            HStack(spacing: 4) {
+            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 if !model.isSemanticSearchActive {
                     Button(action: { navigateSearch(direction: -1, proxy: proxy) }) { Image(systemName: "chevron.up") }.disabled(searchMatchIDs.isEmpty).help(L10n("Resultado anterior")).accessibilityLabel(L10n("Resultado anterior"))
                     Button(action: { navigateSearch(direction: 1, proxy: proxy) }) { Image(systemName: "chevron.down") }.disabled(searchMatchIDs.isEmpty).help(L10n("Proximo resultado")).accessibilityLabel(L10n("Proximo resultado"))
@@ -438,7 +438,7 @@ struct GraphScreen: View {
 
                     Spacer()
 
-                    HStack(spacing: 6) {
+                    HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                         Button {
                             isShowingQuickCommit = true
                         } label: {
@@ -500,7 +500,7 @@ struct GraphScreen: View {
                                 }
 
                                 if model.aiQuotaExceeded {
-                                    HStack(spacing: 4) {
+                                    HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                                         Image(systemName: "exclamationmark.triangle.fill")
                                             .font(.system(size: 10))
                                         Text(L10n("Cota da API excedida. Usando sugestao local."))
@@ -616,7 +616,7 @@ struct GraphScreen: View {
                                 }
                             }
                         } label: {
-                            HStack(spacing: 4) {
+                            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                                 Image(systemName: "archivebox.fill")
                                 Text(L10n("Stash"))
                                 if !model.stashes.isEmpty {
@@ -673,7 +673,7 @@ struct GraphScreen: View {
                                                     Text(stash).font(.system(size: 12, design: .monospaced)).lineLimit(2)
                                                 }
                                                 Spacer()
-                                                HStack(spacing: 8) {
+                                                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                                                     Button(L10n("Apply")) { model.selectedStash = stash; model.applySelectedStash(); isShowingStashList = false }.buttonStyle(.bordered).controlSize(.small)
                                                     Button(L10n("Pop")) { model.selectedStash = stash; model.popSelectedStash(); isShowingStashList = false }.buttonStyle(.bordered).controlSize(.small)
                                                     Button { model.selectedStash = stash; model.dropSelectedStash() } label: { Image(systemName: "trash") }.buttonStyle(.bordered).tint(DesignSystem.Colors.destructive).controlSize(.small).accessibilityLabel(L10n("Drop Stash"))
@@ -888,7 +888,7 @@ struct GraphScreen: View {
         } else if let selectedCommitID = model.selectedCommitID {
             GlassCard(spacing: 0) {
                 CardHeader(L10n("Detalhes"), icon: "doc.text.magnifyingglass") {
-                    HStack(spacing: 6) {
+                    HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                         if model.isAIConfigured {
                             Button {
                                 model.reviewCommitChanges(commitID: selectedCommitID)
@@ -931,7 +931,7 @@ struct GraphScreen: View {
                 .padding(.horizontal, 12).padding(.top, 12).padding(.bottom, 8)
 
                 if model.isAIConfigured {
-                    HStack(spacing: 8) {
+                    HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                         detailTabButton(
                             title: L10n("graph.commit.review.tab.details"),
                             isSelected: model.selectedCommitDetailTab == .details
@@ -1012,7 +1012,7 @@ struct GraphScreen: View {
     private var inlineFileList: some View {
         GlassCard(spacing: 0) {
             CardHeader(L10n("Changes"), icon: "pencil.circle", subtitle: "\(model.uncommittedCount) \(L10n("arquivos modificados"))") {
-                HStack(spacing: 6) {
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     if model.isAIConfigured && !model.uncommittedChanges.isEmpty {
                         Button { model.summarizePendingChanges() } label: {
                             Image(systemName: "sparkles")
@@ -1031,7 +1031,7 @@ struct GraphScreen: View {
             .padding(12)
 
             if model.isLoadingPendingChangesSummary {
-                HStack(spacing: 8) {
+                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                     ProgressView().controlSize(.small)
                     Text(L10n("Analisando mudancas..."))
                         .font(.system(size: 11))
@@ -1041,7 +1041,7 @@ struct GraphScreen: View {
                 .padding(.bottom, 8)
             } else if !model.aiPendingChangesSummary.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 6) {
+                    HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                         Image(systemName: "sparkles")
                             .font(.system(size: 10))
                             .foregroundStyle(DesignSystem.Colors.ai)
@@ -1090,7 +1090,7 @@ struct GraphScreen: View {
         return Button {
             model.selectChangeFile(file)
         } label: {
-            HStack(spacing: 10) {
+            HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                 inlineStatusIcon(index: indexStatus, worktree: workTreeStatus).font(.system(size: 14))
                 Text(file).font(.system(size: 12, weight: isSelected ? .bold : .regular, design: .monospaced)).lineLimit(1).truncationMode(.middle)
                 Spacer()
@@ -1238,7 +1238,7 @@ private struct WorktreePill: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 6) {
+            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 Text("⊞")
                     .font(.system(size: 11, weight: isCurrent ? .bold : .semibold))
                 Text(branch)

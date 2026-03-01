@@ -32,6 +32,31 @@ struct GitHubRemote: Sendable {
 actor GitHubClient {
     private var cachedToken: String?
 
+    /// Check if `gh` CLI is installed and authenticated
+    nonisolated static func checkGHStatus() -> (installed: Bool, authenticated: Bool) {
+        let whichProcess = Process()
+        whichProcess.executableURL = URL(fileURLWithPath: "/usr/bin/which")
+        whichProcess.arguments = ["gh"]
+        whichProcess.standardOutput = Pipe()
+        whichProcess.standardError = Pipe()
+        do {
+            try whichProcess.run()
+            whichProcess.waitUntilExit()
+            guard whichProcess.terminationStatus == 0 else { return (false, false) }
+        } catch { return (false, false) }
+
+        let authProcess = Process()
+        authProcess.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        authProcess.arguments = ["gh", "auth", "status"]
+        authProcess.standardOutput = Pipe()
+        authProcess.standardError = Pipe()
+        do {
+            try authProcess.run()
+            authProcess.waitUntilExit()
+            return (true, authProcess.terminationStatus == 0)
+        } catch { return (true, false) }
+    }
+
     /// Parse GitHub owner/repo from a remote URL
     static func parseRemote(_ urlString: String) -> GitHubRemote? {
         // SSH: git@github.com:owner/repo.git
@@ -316,10 +341,10 @@ enum GitHubError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .noToken: return "GitHub token nao encontrado. Execute 'gh auth login' no terminal."
-        case .invalidURL: return "URL invalida."
-        case .apiError(let msg): return "GitHub API: \(msg)"
-        case .parseError: return "Erro ao processar resposta do GitHub."
+        case .noToken: return L10n("github.error.noToken")
+        case .invalidURL: return L10n("github.error.invalidURL")
+        case .apiError(let msg): return L10n("github.error.api", msg)
+        case .parseError: return L10n("github.error.parseError")
         }
     }
 }

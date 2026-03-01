@@ -58,9 +58,9 @@ final class FileWatcher {
 
     deinit {
         let fd = fileDescriptor
-        let s = source
+        let dispatchSource = source
         Task { @MainActor in
-            s?.cancel()
+            dispatchSource?.cancel()
             if fd >= 0 {
                 close(fd)
             }

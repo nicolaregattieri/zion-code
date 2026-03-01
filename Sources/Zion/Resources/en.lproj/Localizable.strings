@@ -1,4 +1,7 @@
 "Erro" = "Error";
+"error.readFile" = "Error reading file: %@";
+"error.loadDiff" = "Error loading diff: %@";
+"error.generic" = "Error: %@";
 "Workspace" = "Workspace";
 "Zion Tree" = "Zion Tree";
 "Seu cliente Git nativo para macOS." = "Your native Git client for macOS.";
@@ -413,6 +416,9 @@
 "Git não encontrado" = "Git not found";
 "Baixar Git" = "Download Git";
 "O Zion precisa do Git instalado para funcionar. Por favor, instale o Git e reinicie o app." = "Zion requires Git to be installed. Please install Git and restart the app.";
+"git.installCLT" = "Install Command Line Tools";
+"git.checkAgain" = "Check Again";
+"git.notFound.message" = "Zion requires Git to work. On macOS, the easiest way to install Git is via Command Line Tools. You can also download it from git-scm.com.";
 "Chave registrada" = "Key registered";
 "Alterar" = "Change";
 "Chave de API" = "API Key";
@@ -594,12 +600,6 @@
 "ntfy.events.title" = "Notified Events";
 "ntfy.test.button" = "Send Test Notification";
 "ntfy.test.failed" = "Failed to send test notification. Check your topic and connection.";
-"ntfy.agents.section" = "AI Agent Notifications";
-"ntfy.agents.hint" = "Adds a notification rule to each agent's global config so they notify you via ntfy.";
-"ntfy.agents.none" = "No AI coding agents detected on this system.";
-"ntfy.agents.consent.title" = "Allow Zion to manage agent rules?";
-"ntfy.agents.consent.message" = "Zion will add a notification rule to %@'s global config at:\n\n%@\n\nYou can disable this at any time.";
-"ntfy.agents.consent.allow" = "Allow";
 "ntfy.group.gitOps" = "Git Operations";
 "ntfy.group.ai" = "AI";
 "ntfy.group.github" = "GitHub";
@@ -856,6 +856,14 @@
 "pr.inbox.openGitHub" = "Open on GitHub";
 "pr.inbox.empty" = "No PRs awaiting review";
 "pr.inbox.setup.hint" = "Requires gh CLI authenticated (gh auth login)";
+"pr.gh.notInstalled" = "GitHub CLI not found";
+"pr.gh.notInstalled.hint" = "Install with: brew install gh";
+"pr.gh.notAuthenticated" = "GitHub CLI not authenticated";
+"pr.gh.notAuthenticated.hint" = "Run in terminal: gh auth login";
+"github.error.noToken" = "GitHub token not found. Run 'gh auth login' in the terminal.";
+"github.error.invalidURL" = "Invalid URL.";
+"github.error.api" = "GitHub API: %@";
+"github.error.parseError" = "Error parsing GitHub response.";
 "pr.status.pending" = "Pending";
 "pr.status.reviewing" = "Reviewing...";
 "pr.status.reviewed" = "Reviewed";
@@ -964,6 +972,12 @@
 "Nome da pasta:" = "Folder name:";
 "Novo nome:" = "New name:";
 "Deseja excluir '%@'?" = "Delete '%@'?";
+"Deseja excluir %d itens?" = "Delete %d items?";
+"Copiar %d Itens" = "Copy %d Items";
+"Recortar %d Itens" = "Cut %d Items";
+"Duplicar %d Itens" = "Duplicate %d Items";
+"Excluir %d Itens" = "Delete %d Items";
+"Adicionar ao .gitignore" = "Add to .gitignore";
 "Esta acao nao pode ser desfeita." = "This action cannot be undone.";
 
 // Editor Settings Tab
@@ -1511,5 +1525,9 @@
 "settings.terminal.openHyperlinks.hint" = "OSC 8 links open in the default browser when Cmd+clicked.";
 "settings.terminal.imageRendering" = "Inline Image Rendering";
 "settings.terminal.imageRendering.hint" = "Render Sixel, iTerm2, and Kitty inline images. Changes apply to new sessions.";
+"settings.terminal.aiImageDisplay" = "AI Inline Images";
+"settings.terminal.aiImageDisplay.hint" = "Let AI tools render images directly in the terminal. Installs zion_display to ~/.zion/bin/. Changes apply to new sessions.";
+"settings.terminal.autoAppendAIConfig" = "Auto-configure AI Tool Files";
+"settings.terminal.autoAppendAIConfig.hint" = "Automatically add Zion instructions to AI config files (CLAUDE.md, .cursorrules, etc.) in your project root. When off, use zion_ai_setup manually.";
 "settings.terminal.selection" = "Selection";
 "settings.terminal.copyOnSelect" = "Copy on Select";

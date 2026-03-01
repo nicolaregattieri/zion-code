@@ -111,7 +111,7 @@ struct CodeReviewDiffPane: View {
 
         return HStack(spacing: 0) {
             // Line numbers
-            HStack(spacing: 2) {
+            HStack(spacing: DesignSystem.Spacing.iconGroupedGap) {
                 Text(line.oldLineNumber.map { String($0) } ?? "")
                     .frame(width: 36, alignment: .trailing)
                 Text(line.newLineNumber.map { String($0) } ?? "")

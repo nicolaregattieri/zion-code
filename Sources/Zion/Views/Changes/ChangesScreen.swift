@@ -31,7 +31,7 @@ struct ChangesScreen: View {
                 icon: "square.stack.3d.up",
                 subtitle: "\(model.uncommittedCount) \(L10n("arquivos modificados"))"
             ) {
-                HStack(spacing: 6) {
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     Button {
                         model.stageAllFiles()
                     } label: {
@@ -130,7 +130,7 @@ struct ChangesScreen: View {
         return Button {
             model.selectChangeFile(file)
         } label: {
-            HStack(spacing: 10) {
+            HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                 statusIcon(index: indexStatus, worktree: workTreeStatus)
                     .font(.system(size: 14))
 
@@ -276,7 +276,7 @@ struct ChangesScreen: View {
                     .padding(.horizontal, 12)
                     .padding(.bottom, 8)
             } else if !model.aiDiffExplanation.isEmpty {
-                HStack(alignment: .top, spacing: 8) {
+                HStack(alignment: .top, spacing: DesignSystem.Spacing.iconTextGap) {
                     Image(systemName: "sparkles")
                         .font(.system(size: 10))
                         .foregroundStyle(DesignSystem.Colors.ai)

@@ -97,7 +97,7 @@ struct ConflictResolutionScreen: View {
                 model.selectConflictFile(file.path)
             }
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 Image(systemName: file.isResolved ? "checkmark.circle.fill" : "xmark.circle.fill")
                     .font(.system(size: 12))
                     .foregroundStyle(file.isResolved ? DesignSystem.Colors.success : DesignSystem.Colors.destructive)
