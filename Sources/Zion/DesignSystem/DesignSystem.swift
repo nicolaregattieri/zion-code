@@ -79,6 +79,12 @@ struct DesignSystem {
         static let diffHunkHeaderBg = info.opacity(0.08)
         static let diffHunkHeaderBgLight = info.opacity(0.05)
 
+        // ── Brand gradient ──
+        static let brandGradient = LinearGradient(
+            colors: [brandInk, brandPrimary, ai],
+            startPoint: .leading, endPoint: .trailing
+        )
+
         // ── Feature accents (brand-derived) ──
         static let ai = SwiftUI.Color(red: 161.0/255.0, green: 123.0/255.0, blue: 223.0/255.0)            // Light purple #a17bdf (265° lighter)
         static let actionPrimary = brandPrimary  // Rebecca Purple for standard prominent buttons

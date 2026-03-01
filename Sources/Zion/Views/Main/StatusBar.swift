@@ -96,21 +96,14 @@ extension ContentView {
             }
         }
         .overlay(alignment: .top) {
-            if zionModeEnabled {
-                if model.isBusy {
-                    NeonProgressLine(mode: .shimmer)
-                        .transition(.opacity.animation(.easeOut(duration: 0.3)))
-                } else {
+            if model.isBusy {
+                NeonProgressLine(mode: .shimmer)
+                    .transition(.opacity.animation(.easeOut(duration: 0.3)))
+            } else {
+                if zionModeEnabled {
                     DesignSystem.ZionMode.neonMagenta.opacity(0.25)
                         .frame(height: 1)
                         .transition(.opacity.animation(.easeIn(duration: 0.5)))
-                }
-            } else {
-                if model.isBusy {
-                    ProgressView()
-                        .progressViewStyle(.linear)
-                        .tint(DesignSystem.Colors.info)
-                        .transition(.opacity.animation(.easeOut(duration: 0.3)))
                 } else {
                     Divider().opacity(0.45)
                 }
