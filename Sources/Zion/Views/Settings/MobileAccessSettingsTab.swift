@@ -2,13 +2,16 @@ import SwiftUI
 
 struct MobileAccessSettingsTab: View {
     @AppStorage("zion.mobileAccess.enabled") private var isEnabled: Bool = false
+    @AppStorage("zion.mobileAccess.lanMode") private var isLANMode: Bool = false
 
     private var state: RemoteAccessState { RemoteAccessState.shared }
 
     private var currentStep: OnboardingStep {
         if !isEnabled { return .off }
-        if !state.hasCheckedCloudflared { return .checking }
-        if !state.isCloudflaredInstalled { return .installCloudflared }
+        if !state.isLANMode {
+            if !state.hasCheckedCloudflared { return .checking }
+            if !state.isCloudflaredInstalled { return .installCloudflared }
+        }
 
         switch state.connectionState {
         case .disabled, .starting: return .starting
@@ -29,6 +32,20 @@ struct MobileAccessSettingsTab: View {
                         Text(L10n("mobile.access.description"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            if isEnabled {
+                Section {
+                    Toggle(isOn: $isLANMode) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Label(L10n("mobile.access.lanMode"), systemImage: "wifi")
+                                .font(.subheadline)
+                            Text(L10n("mobile.access.lanMode.hint"))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }
@@ -80,7 +97,9 @@ struct MobileAccessSettingsTab: View {
                 Section(L10n("mobile.access.step.starting.title")) {
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
                         progressRow(L10n("mobile.access.step.starting.server"), isDone: true)
-                        progressRow(L10n("mobile.access.step.starting.tunnel"), isDone: false)
+                        if !state.isLANMode {
+                            progressRow(L10n("mobile.access.step.starting.tunnel"), isDone: false)
+                        }
                         progressRow(L10n("mobile.access.step.starting.qr"), isDone: false)
                     }
                 }
@@ -165,8 +184,13 @@ struct MobileAccessSettingsTab: View {
         .toggleStyle(SwitchToggleStyle(tint: DesignSystem.Colors.actionPrimary))
         .tint(DesignSystem.Colors.actionPrimary)
         .task {
-            if !state.hasCheckedCloudflared {
+            if !isLANMode && !state.hasCheckedCloudflared {
                 await state.checkCloudflared()
+            }
+        }
+        .onChange(of: isLANMode) { _, newValue in
+            if !newValue && !state.hasCheckedCloudflared {
+                Task { await state.checkCloudflared() }
             }
         }
     }

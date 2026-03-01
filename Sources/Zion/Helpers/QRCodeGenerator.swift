@@ -32,16 +32,19 @@ enum QRCodeGenerator {
         tunnelURL: String,
         keyBase64: String,
         pairingToken: String,
+        lanMode: Bool = false,
         size: CGFloat = Constants.RemoteAccess.qrCodeSize
     ) -> NSImage? {
-        // Encode key and token in URL fragment — fragment is never sent to server,
-        // keeping the encryption key client-side only.
+        // Pass key and token as query params (survive QR scanners, redirects, refreshes).
         // URL-safe base64 (RFC 4648 §5): replace +→-, /→_, strip = padding
         let urlSafeKey = keyBase64
             .replacingOccurrences(of: "+", with: "-")
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "=", with: "")
-        let pairingURL = "\(tunnelURL)/#k=\(urlSafeKey)&t=\(pairingToken)&v=1"
+        var pairingURL = "\(tunnelURL)/?k=\(urlSafeKey)&t=\(pairingToken)&v=1"
+        if lanMode {
+            pairingURL += "&m=lan"
+        }
         return generate(from: pairingURL, size: size)
     }
 }

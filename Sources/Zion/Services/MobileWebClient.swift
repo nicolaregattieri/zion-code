@@ -51,7 +51,9 @@ header h1{font-size:16px;font-weight:600}
 #pairing h2{font-size:20px}
 #pairing p{color:var(--text2);font-size:14px;text-align:center}
 .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+.spinner.hidden{display:none}
 @keyframes spin{to{transform:rotate(360deg)}}
+#btn-retry{display:none;padding:12px 24px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-weight:600;font-size:15px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-top:8px}
 </style>
 </head>
 <body>
@@ -62,7 +64,7 @@ header h1{font-size:16px;font-weight:600}
 </header>
 <div id="sessions"></div>
 <div id="terminal-wrap">
-<div id="pairing"><div class="spinner"></div><h2 id="pair-title">Connecting...</h2><p id="pair-desc">Establishing secure connection to your Mac</p></div>
+<div id="pairing"><div class="spinner" id="pair-spinner"></div><h2 id="pair-title">Connecting...</h2><p id="pair-desc">Establishing secure connection to your Mac</p><button id="btn-retry" onclick="retryConnect()">Refresh</button></div>
 <div id="terminal" style="display:none"></div>
 </div>
 <div id="prompt-banner">
@@ -82,17 +84,21 @@ header h1{font-size:16px;font-weight:600}
 'use strict';
 const $ = s => document.querySelector(s);
 
-// Parse fragment params
-const frag = new URLSearchParams(location.hash.slice(1));
-const KEY_B64URL = frag.get('k');
-const TOKEN = frag.get('t');
+// Parse params: prefer query/server-injected (survives QR scanners), fallback to fragment
+const qp = new URLSearchParams(location.search);
+const fp = new URLSearchParams(location.hash.slice(1));
+const P = window.PAIRING || {};
+const KEY_B64URL = qp.get('k') || P.k || fp.get('k');
+const TOKEN = qp.get('t') || P.t || fp.get('t');
+const LAN_MODE = (qp.get('m') || P.m || fp.get('m')) === 'lan';
 const BASE = location.origin;
 
 let cryptoKey, activeSession = null, sessions = [];
-let polling = false;
+let polling = false, pollErrors = 0, maxPollErrors = 5;
 
-// -- Crypto (AES-256-GCM via Web Crypto API) --
+// -- Crypto (AES-256-GCM via Web Crypto API, skipped in LAN mode) --
 async function importKey(b64url) {
+  if (LAN_MODE) return null;
   let b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
   while (b64.length % 4) b64 += '=';
   const raw = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
@@ -100,6 +106,7 @@ async function importKey(b64url) {
 }
 
 async function encrypt(data) {
+  if (LAN_MODE) return data;
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const ct = await crypto.subtle.encrypt({name:'AES-GCM',iv}, cryptoKey, data);
   const combined = new Uint8Array(12 + ct.byteLength);
@@ -109,6 +116,7 @@ async function encrypt(data) {
 }
 
 async function decrypt(combined) {
+  if (LAN_MODE) return combined;
   const iv = combined.slice(0, 12);
   const ct = combined.slice(12);
   return crypto.subtle.decrypt({name:'AES-GCM',iv}, cryptoKey, ct);
@@ -119,15 +127,38 @@ function b64ToBytes(b64) {
 }
 
 // -- Connection --
+function showRetry(title, desc) {
+  setStatus('error', 'Error');
+  $('#pair-title').textContent = title;
+  $('#pair-desc').textContent = desc;
+  $('#pair-spinner').classList.add('hidden');
+  $('#btn-retry').style.display = '';
+}
+
+function retryConnect() {
+  // Reset state and re-pair (avoids full reload which may lose server-injected PAIRING data)
+  pollErrors = 0;
+  polling = false;
+  $('#pair-spinner').classList.remove('hidden');
+  $('#btn-retry').style.display = 'none';
+  $('#pair-title').textContent = 'Reconnecting...';
+  $('#pair-desc').textContent = 'Establishing secure connection to your Mac';
+  setStatus('connecting', 'Connecting');
+  connect();
+}
+
 async function connect() {
   if (!KEY_B64URL || !TOKEN) {
-    setStatus('error', 'Invalid QR');
-    $('#pair-title').textContent = 'Invalid QR Code';
-    $('#pair-desc').textContent = 'Scan the QR code from Zion Settings again.';
+    showRetry('Connection Error', 'Pairing data not found. Tap Refresh or re-scan the QR code from Zion Settings.');
     return;
   }
 
-  cryptoKey = await importKey(KEY_B64URL);
+  try {
+    cryptoKey = await importKey(KEY_B64URL);
+  } catch(e) {
+    showRetry('Crypto Error', 'Failed to initialize encryption. Tap to retry.');
+    return;
+  }
   setStatus('connecting', 'Pairing...');
 
   try {
@@ -140,14 +171,11 @@ async function connect() {
       $('#input-bar').style.display = '';
       startPolling();
     } else {
-      setStatus('error', 'Pair failed');
-      $('#pair-title').textContent = 'Pairing Failed';
-      $('#pair-desc').textContent = data.error || 'Unknown error';
+      showRetry('Pairing Failed', (data.error || 'Unknown error') + '. Tap to retry.');
     }
   } catch(e) {
-    setStatus('error', 'Error');
-    $('#pair-title').textContent = 'Connection Failed';
-    $('#pair-desc').textContent = e.message;
+    showRetry('Connection Failed', e.message + '. Tap to retry.');
+    // Also auto-retry after 3 seconds
     setTimeout(connect, 3000);
   }
 }
@@ -169,7 +197,18 @@ async function poll() {
   if (!polling) return;
   try {
     const res = await fetch(BASE + '/poll?t=' + TOKEN);
-    if (!res.ok) { polling = false; setStatus('error', 'Disconnected'); return; }
+    if (!res.ok) {
+      pollErrors++;
+      if (pollErrors >= maxPollErrors) {
+        polling = false;
+        showDisconnected();
+        return;
+      }
+      setTimeout(poll, Math.min(1000 * pollErrors, 5000));
+      return;
+    }
+    pollErrors = 0;
+    setStatus('connected', 'Connected');
     const events = await res.json();
     for (const b64 of events) {
       try {
@@ -179,9 +218,29 @@ async function poll() {
       } catch(e) { console.warn('[Zion] Decrypt error:', e); }
     }
   } catch(e) {
+    pollErrors++;
     console.warn('[Zion] Poll error:', e);
+    if (pollErrors >= maxPollErrors) {
+      polling = false;
+      showDisconnected();
+      return;
+    }
+    setTimeout(poll, Math.min(1000 * pollErrors, 5000));
+    return;
   }
   setTimeout(poll, 500);
+}
+
+function showDisconnected() {
+  setStatus('error', 'Disconnected');
+  $('#terminal').style.display = 'none';
+  $('#input-bar').style.display = 'none';
+  $('#pairing').style.display = '';
+  $('#pair-spinner').classList.add('hidden');
+  $('#pair-title').textContent = 'Connection Lost';
+  $('#pair-desc').textContent = 'The connection to your Mac was lost. Tap Reconnect to try again.';
+  $('#btn-retry').textContent = 'Reconnect';
+  $('#btn-retry').style.display = '';
 }
 
 // -- Helpers --
@@ -265,9 +324,10 @@ function hidePrompt() {
 async function sendEncrypted(msg) {
   const data = new TextEncoder().encode(JSON.stringify(msg));
   const encrypted = await encrypt(data);
-  // Send as base64 in POST body
+  // Send as base64 in POST body, include auth token
   const b64 = btoa(String.fromCharCode(...encrypted));
-  await fetch(BASE + '/input', {method:'POST', body: b64});
+  const endpoint = msg.type === 'sendAction' ? '/action' : '/input';
+  await fetch(BASE + endpoint + '?t=' + TOKEN, {method:'POST', body: b64});
 }
 
 async function sendInput() {
