@@ -266,6 +266,12 @@ extension RepositoryViewModel {
 
         refreshTask = Task {
             do {
+                // Fetch remote refs on user-initiated refresh so origin/* branches update
+                if origin == .userInitiated {
+                    _ = try? await worker.runAction(args: ["fetch", "--all", "--prune"], in: repositoryURL)
+                    try Task.checkCancellation()
+                }
+
                 let payload = try await worker.loadRepository(
                     in: repositoryURL,
                     focusedBranch: focusedBranchSnapshot,
