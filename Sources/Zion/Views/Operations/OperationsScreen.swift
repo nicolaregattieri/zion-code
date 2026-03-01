@@ -462,9 +462,16 @@ struct OperationsScreen: View {
             CardHeader(L10n("Tags"), icon: "tag", subtitle: L10n("Marcar pontos importantes no historico"))
             HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 TextField("v1.0.0", text: $model.tagInput).textFieldStyle(.roundedBorder)
-                Button(L10n("Criar")) { performGitAction(L10n("Criar tag"), L10n("Criar tag no commit atual?"), false) { model.createTag() } }.buttonStyle(.borderedProminent).tint(DesignSystem.Colors.actionPrimary)
+                Button(L10n("Criar")) {
+                    model.isTagDetailSheetVisible = true
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(DesignSystem.Colors.actionPrimary)
                 Button(L10n("Remover")) { performGitAction(L10n("Remover tag"), L10n("Deseja remover a tag informada?"), true) { model.deleteTag() } }.buttonStyle(.bordered).tint(DesignSystem.Colors.destructive)
             }
+        }
+        .sheet(isPresented: $model.isTagDetailSheetVisible) {
+            TagDetailSheet(model: model)
         }
     }
 

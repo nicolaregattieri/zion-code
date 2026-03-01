@@ -169,6 +169,30 @@ extension ContentView {
 
     @ViewBuilder
     func tagContextMenu(for tag: String) -> some View {
+        Button {
+            model.pushTag(named: tag, to: "origin")
+        } label: {
+            Label(L10n("tag.push.action"), systemImage: "arrow.up.circle")
+        }
+
+        if model.remotes.count > 1 {
+            Menu(L10n("tag.push.action")) {
+                ForEach(model.remotes) { remote in
+                    Button(remote.name) {
+                        model.pushTag(named: tag, to: remote.name)
+                    }
+                }
+            }
+        }
+
+        Divider()
+
+        Button(L10n("tag.delete.remote"), role: .destructive) {
+            performGitAction(title: L10n("tag.delete.remote"), message: String(format: L10n("Deseja remover a tag informada?"), tag), destructive: true) {
+                model.deleteRemoteTag(named: tag, from: "origin")
+            }
+        }
+
         Button(L10n("Remover tag"), role: .destructive) {
             performGitAction(title: L10n("Remover tag"), message: String(format: L10n("Deseja remover a tag informada?"), tag), destructive: true) {
                 model.tagInput = tag
