@@ -326,21 +326,21 @@ private enum CSSFormatter {
             // Split compound statements (multiple declarations on one line)
             let parts = splitCSSStatements(trimmed)
             for part in parts {
-                let t = part.trimmingCharacters(in: .whitespaces)
-                if t.isEmpty { continue }
+                let trimmedPart = part.trimmingCharacters(in: .whitespaces)
+                if trimmedPart.isEmpty { continue }
 
-                if t.hasPrefix("}") {
+                if trimmedPart.hasPrefix("}") {
                     depth = max(0, depth - 1)
-                    result.append(String(repeating: indent, count: depth) + t)
+                    result.append(String(repeating: indent, count: depth) + trimmedPart)
                 } else {
-                    result.append(String(repeating: indent, count: depth) + t)
+                    result.append(String(repeating: indent, count: depth) + trimmedPart)
                 }
 
-                if t.hasSuffix("{") {
+                if trimmedPart.hasSuffix("{") {
                     depth += 1
-                } else if t.contains("}") && !t.hasPrefix("}") {
-                    let opens = t.filter { $0 == "{" }.count
-                    let closes = t.filter { $0 == "}" }.count
+                } else if trimmedPart.contains("}") && !trimmedPart.hasPrefix("}") {
+                    let opens = trimmedPart.filter { $0 == "{" }.count
+                    let closes = trimmedPart.filter { $0 == "}" }.count
                     depth += opens - closes
                     if depth < 0 { depth = 0 }
                 }

@@ -91,9 +91,9 @@ extension RepositoryViewModel {
         runGitAction(label: "Reset --hard", args: ["reset", "--hard", cleanedTarget])
     }
 
-    func resetToCommit(_ commitID: String, hard: Bool) {
-        let args = hard ? ["reset", "--hard", commitID] : ["reset", "--soft", commitID]
-        runGitAction(label: hard ? "Reset --hard" : "Reset --soft", args: args)
+    func resetToCommit(_ commitID: String, shouldHardReset: Bool) {
+        let args = shouldHardReset ? ["reset", "--hard", commitID] : ["reset", "--soft", commitID]
+        runGitAction(label: shouldHardReset ? "Reset --hard" : "Reset --soft", args: args)
     }
 
     func discardChanges(in path: String) {
@@ -121,7 +121,7 @@ extension RepositoryViewModel {
         Task {
             let ref = await resolveStashReference(selectedStash)
             guard let ref else { return }
-            runStashRestoreAction(reference: ref, pop: false)
+            runStashRestoreAction(reference: ref, shouldPop: false)
         }
     }
 
@@ -129,7 +129,7 @@ extension RepositoryViewModel {
         Task {
             let ref = await resolveStashReference(selectedStash)
             guard let ref else { return }
-            runStashRestoreAction(reference: ref, pop: true)
+            runStashRestoreAction(reference: ref, shouldPop: true)
         }
     }
 

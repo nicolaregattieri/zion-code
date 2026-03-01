@@ -622,14 +622,14 @@ extension RepositoryViewModel {
 
         alert.addButton(withTitle: L10n("pending.transfer.support.openTarget"))
         actions.append {
-            self.openTransferSupportTarget(targetWorktree, stashReference: stashReference, openConflictResolver: false)
+            self.openTransferSupportTarget(targetWorktree, stashReference: stashReference, shouldOpenConflictResolver: false)
         }
 
         let canUseAIAction = aiTransferSupportHintsEnabled && isAIConfigured
         if canUseAIAction {
             alert.addButton(withTitle: L10n("pending.transfer.support.openTargetAI"))
             actions.append {
-                self.openTransferSupportTarget(targetWorktree, stashReference: stashReference, openConflictResolver: true)
+                self.openTransferSupportTarget(targetWorktree, stashReference: stashReference, shouldOpenConflictResolver: true)
             }
         }
 
@@ -654,10 +654,10 @@ extension RepositoryViewModel {
     func openTransferSupportTarget(
         _ targetWorktree: WorktreeItem,
         stashReference: String?,
-        openConflictResolver: Bool
+        shouldOpenConflictResolver: Bool
     ) {
         openWorktreeInZion(targetWorktree, navigateToCode: false, sectionAfterOpen: .operations)
-        guard openConflictResolver else { return }
+        guard shouldOpenConflictResolver else { return }
 
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: Constants.Timing.transferSupportDelay)
@@ -800,12 +800,12 @@ extension RepositoryViewModel {
         guard let repositoryURL else { return }
         let repoName = repositoryURL.lastPathComponent
         let parentDir = repositoryURL.deletingLastPathComponent()
-        var n = 1
-        while FileManager.default.fileExists(atPath: parentDir.appendingPathComponent("\(repoName)-wt-\(n)").path) {
-            n += 1
+        var worktreeCounter = 1
+        while FileManager.default.fileExists(atPath: parentDir.appendingPathComponent("\(repoName)-wt-\(worktreeCounter)").path) {
+            worktreeCounter += 1
         }
-        let wtPath = parentDir.appendingPathComponent("\(repoName)-wt-\(n)").path
-        let branchName = "wt-\(n)"
+        let wtPath = parentDir.appendingPathComponent("\(repoName)-wt-\(worktreeCounter)").path
+        let branchName = "wt-\(worktreeCounter)"
 
         actionTask?.cancel()
         isBusy = true
@@ -816,7 +816,7 @@ extension RepositoryViewModel {
                 clearError()
                 let wtSession = TerminalSession(workingDirectory: URL(fileURLWithPath: wtPath), label: branchName, worktreeID: wtPath)
                 splitFocusedWithSession(wtSession, direction: .vertical)
-                statusMessage = "Worktree criado: \(repoName)-wt-\(n)"
+                statusMessage = "Worktree criado: \(repoName)-wt-\(worktreeCounter)"
                 refreshRepository(setBusy: true)
             } catch is CancellationError { return }
             catch { isBusy = false; handleError(error) }

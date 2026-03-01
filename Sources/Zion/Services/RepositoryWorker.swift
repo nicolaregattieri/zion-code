@@ -910,10 +910,10 @@ actor RepositoryWorker {
     private func compareVersionComponents(_ lhs: [Int], _ rhs: [Int]) -> ComparisonResult {
         let count = max(lhs.count, rhs.count)
         for index in 0..<count {
-            let l = index < lhs.count ? lhs[index] : 0
-            let r = index < rhs.count ? rhs[index] : 0
-            if l != r {
-                return l < r ? .orderedAscending : .orderedDescending
+            let leftValue = index < lhs.count ? lhs[index] : 0
+            let rightValue = index < rhs.count ? rhs[index] : 0
+            if leftValue != rightValue {
+                return leftValue < rightValue ? .orderedAscending : .orderedDescending
             }
         }
         return .orderedSame

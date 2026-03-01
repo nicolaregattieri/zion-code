@@ -2410,26 +2410,26 @@ struct QuickOpenOverlay: View {
     private var filteredFiles: [FileItem] {
         let allFiles = model.allFlatFiles()
         guard !query.isEmpty else { return Array(allFiles.prefix(15)) }
-        let q = query.lowercased()
+        let lowercasedQuery = query.lowercased()
 
         return allFiles
             .map { file -> (FileItem, Int) in
                 let path = file.url.path.lowercased()
                 let name = file.name.lowercased()
                 var score = 0
-                if name == q { score = 1000 }
-                else if name.hasPrefix(q) { score = 500 }
-                else if name.contains(q) { score = 200 }
-                else if path.contains(q) { score = 100 }
+                if name == lowercasedQuery { score = 1000 }
+                else if name.hasPrefix(lowercasedQuery) { score = 500 }
+                else if name.contains(lowercasedQuery) { score = 200 }
+                else if path.contains(lowercasedQuery) { score = 100 }
                 else {
-                    var qi = q.startIndex
+                    var queryIndex = lowercasedQuery.startIndex
                     for ch in name {
-                        if qi < q.endIndex && ch == q[qi] {
-                            qi = q.index(after: qi)
+                        if queryIndex < lowercasedQuery.endIndex && ch == lowercasedQuery[queryIndex] {
+                            queryIndex = lowercasedQuery.index(after: queryIndex)
                             score += 1
                         }
                     }
-                    if qi < q.endIndex { score = 0 }
+                    if queryIndex < lowercasedQuery.endIndex { score = 0 }
                 }
                 return (file, score)
             }

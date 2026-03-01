@@ -121,7 +121,7 @@ extension RepositoryViewModel {
         }
     }
 
-    func runStashRestoreAction(reference: String, pop: Bool) {
+    func runStashRestoreAction(reference: String, shouldPop: Bool) {
         guard let repositoryURL else {
             lastError = GitClientError.repositoryNotSelected.localizedDescription
             return
@@ -129,23 +129,23 @@ extension RepositoryViewModel {
 
         actionTask?.cancel()
         isBusy = true
-        let verb = pop ? "pop" : "apply"
+        let verb = shouldPop ? "pop" : "apply"
 
         actionTask = Task {
             do {
                 let _ = try await worker.runAction(args: ["stash", verb, reference], in: repositoryURL)
                 try Task.checkCancellation()
                 clearError()
-                statusMessage = pop ? L10n("stash.pop.success") : L10n("stash.apply.success")
+                statusMessage = shouldPop ? L10n("stash.pop.success") : L10n("stash.apply.success")
                 refreshRepository(setBusy: true)
             } catch is CancellationError {
                 return
             } catch {
                 isBusy = false
-                if handleStashRestoreFailure(error, reference: reference, pop: pop) {
+                if handleStashRestoreFailure(error, reference: reference, pop: shouldPop) {
                     return
                 }
-                if let friendly = friendlyStashRestoreErrorMessage(error, reference: reference, pop: pop) {
+                if let friendly = friendlyStashRestoreErrorMessage(error, reference: reference, pop: shouldPop) {
                     clearError()
                     lastError = friendly
                     statusMessage = friendly

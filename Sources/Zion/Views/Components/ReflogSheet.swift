@@ -124,13 +124,13 @@ struct ReflogSheet: View {
             .onHover { h in hoveredEntryID = h ? entry.id : nil }
             .contextMenu {
                 Button {
-                    model.resetToCommit(entry.hash, hard: false)
+                    model.resetToCommit(entry.hash, shouldHardReset: false)
                     dismiss()
                 } label: {
                     Label(L10n("Reset --soft para aqui"), systemImage: "arrow.uturn.backward")
                 }
                 Button(role: .destructive) {
-                    model.resetToCommit(entry.hash, hard: true)
+                    model.resetToCommit(entry.hash, shouldHardReset: true)
                     dismiss()
                 } label: {
                     Label(L10n("Reset --hard para aqui"), systemImage: "exclamationmark.triangle")

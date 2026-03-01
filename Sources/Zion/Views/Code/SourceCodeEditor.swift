@@ -91,7 +91,7 @@ struct SourceCodeEditor: NSViewRepresentable {
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         context.coordinator.parent = self
         guard let textView = nsView.documentView as? ZionTextView else { return }
-        let coord0 = context.coordinator
+        let coordinator = context.coordinator
 
         // Sync text
         var didSyncTextFromBinding = false
@@ -102,13 +102,13 @@ struct SourceCodeEditor: NSViewRepresentable {
 
         // Sync font (cached)
         let font: NSFont
-        if let cached = coord0.cachedFont, coord0.cachedFontSize == fontSize, coord0.cachedFontFamily == fontFamily {
+        if let cached = coordinator.cachedFont, coordinator.cachedFontSize == fontSize, coordinator.cachedFontFamily == fontFamily {
             font = cached
         } else {
             font = MonospaceFontResolver.resolve(name: fontFamily, size: fontSize).font
-            coord0.cachedFont = font
-            coord0.cachedFontSize = fontSize
-            coord0.cachedFontFamily = fontFamily
+            coordinator.cachedFont = font
+            coordinator.cachedFontSize = fontSize
+            coordinator.cachedFontFamily = fontFamily
         }
         if textView.font != font {
             textView.font = font
@@ -117,36 +117,36 @@ struct SourceCodeEditor: NSViewRepresentable {
         // Handle Line Wrapping
         if isLineWrappingEnabled {
             let width = nsView.contentSize.width
-            let widthChanged = abs((coord0.lastWrappedWidth ?? -1) - width) > 0.5
-            if coord0.lastLineWrappingEnabled != true || widthChanged {
+            let widthChanged = abs((coordinator.lastWrappedWidth ?? -1) - width) > 0.5
+            if coordinator.lastLineWrappingEnabled != true || widthChanged {
                 nsView.hasHorizontalScroller = false
                 textView.isHorizontallyResizable = false
                 textView.textContainer?.widthTracksTextView = true
                 textView.maxSize = NSSize(width: width, height: CGFloat.greatestFiniteMagnitude)
                 textView.setFrameSize(NSSize(width: width, height: textView.frame.height))
             }
-            coord0.lastLineWrappingEnabled = true
-            coord0.lastWrappedWidth = width
+            coordinator.lastLineWrappingEnabled = true
+            coordinator.lastWrappedWidth = width
         } else {
-            if coord0.lastLineWrappingEnabled != false {
+            if coordinator.lastLineWrappingEnabled != false {
                 nsView.hasHorizontalScroller = true
                 textView.isHorizontallyResizable = true
                 textView.textContainer?.widthTracksTextView = false
                 textView.textContainer?.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
                 textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
             }
-            coord0.lastLineWrappingEnabled = false
-            coord0.lastWrappedWidth = nil
+            coordinator.lastLineWrappingEnabled = false
+            coordinator.lastWrappedWidth = nil
         }
 
         // Colors (cached)
         let colors: EditorColors
-        if let cached = coord0.cachedColors, coord0.cachedColorsTheme == theme {
+        if let cached = coordinator.cachedColors, coordinator.cachedColorsTheme == theme {
             colors = cached
         } else {
             colors = getEditorColors(for: theme)
-            coord0.cachedColors = colors
-            coord0.cachedColorsTheme = theme
+            coordinator.cachedColors = colors
+            coordinator.cachedColorsTheme = theme
         }
         textView.drawsBackground = true
         textView.backgroundColor = colors.background

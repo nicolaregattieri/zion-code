@@ -798,12 +798,12 @@ struct ContentView: View {
         } else {
             Button(L10n("Reset Branch to here (Soft)")) { 
                 performGitAction(title: L10n("Reset --soft"), message: L10n("Resetar a branch atual para este commit mantendo as mudancas no stage?"), destructive: true) {
-                    model.resetToCommit(commit.id, hard: false)
+                    model.resetToCommit(commit.id, shouldHardReset: false)
                 }
             }
             Button(L10n("Reset Branch to here (Hard)"), role: .destructive) { 
                 performGitAction(title: L10n("Reset --hard"), message: L10n("AVISO: Isso apagara todas as mudancas nao salvas. Continuar?"), destructive: true) {
-                    model.resetToCommit(commit.id, hard: true)
+                    model.resetToCommit(commit.id, shouldHardReset: true)
                 }
             }
             Divider()
