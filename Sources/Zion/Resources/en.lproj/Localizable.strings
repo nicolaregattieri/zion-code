@@ -943,6 +943,8 @@
 "push.warning.diverged" = "Your branch has diverged: %@ ahead, %@ behind remote.";
 "push.pullFirst" = "Pull First";
 "push.forceWithLease" = "Force Push (safe)";
+"push.force" = "Force Push";
+"push.force.confirm" = "This will overwrite the remote branch %@. Any commits on the remote that are not in your local branch will be permanently lost. Are you sure?";
 
 // New File / Save As / Open in Editor
 "Novo Arquivo" = "New File";

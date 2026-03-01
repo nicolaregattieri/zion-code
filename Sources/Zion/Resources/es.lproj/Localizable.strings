@@ -941,6 +941,8 @@
 "push.warning.diverged" = "Tu rama ha divergido: %@ commits adelante, %@ detrás del remoto.";
 "push.pullFirst" = "Hacer Pull primero";
 "push.forceWithLease" = "Force Push (seguro)";
+"push.force" = "Force Push";
+"push.force.confirm" = "Esto sobrescribirá la rama remota %@. Cualquier commit en el remoto que no esté en tu rama local se perderá permanentemente. ¿Estás seguro?";
 
 // New File / Save As / Open in Editor
 "Novo Arquivo" = "Nuevo Archivo";
