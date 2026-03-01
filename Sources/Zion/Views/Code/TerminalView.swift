@@ -20,6 +20,11 @@ struct TerminalTabView: NSViewRepresentable {
             Self.log.log(.info, "makeNSView CACHED", context: "\(session.label)(\(session.id.uuidString.prefix(4))) alive=\(session.isAlive) preserve=\(session._shouldPreserve) pid=\(session._shellPid)", source: "TerminalTabView")
             cachedView.removeFromSuperview()
             cachedView.terminalDelegate = context.coordinator
+            if let zionView = cachedView as? ZionTerminalView {
+                zionView.onFileDrop = { [coordinator = context.coordinator] text in
+                    coordinator.sendText(text)
+                }
+            }
             context.coordinator.reattach(view: cachedView)
             // Don't clear cache — reattach re-populates it for future restructures
             applyTheme(to: cachedView, context: context)
@@ -31,8 +36,11 @@ struct TerminalTabView: NSViewRepresentable {
         }
 
         Self.log.log(.info, "makeNSView FRESH", context: "\(session.label)(\(session.id.uuidString.prefix(4)))", source: "TerminalTabView")
-        // Fresh terminal
-        let terminalView = SwiftTerm.TerminalView(frame: .zero)
+        // Fresh terminal (ZionTerminalView adds Finder drag-and-drop support)
+        let terminalView = ZionTerminalView(frame: .zero)
+        terminalView.onFileDrop = { [coordinator = context.coordinator] text in
+            coordinator.sendText(text)
+        }
         terminalView.allowMouseReporting = true
         terminalView.terminalDelegate = context.coordinator
 
@@ -250,6 +258,13 @@ struct TerminalTabView: NSViewRepresentable {
             installShiftEnterMonitor()
             installMouseUpMonitor()
 
+            // Re-wire file drop handler for Finder drag-and-drop
+            if let zionView = view as? ZionTerminalView {
+                zionView.onFileDrop = { [weak self] text in
+                    self?.sendText(text)
+                }
+            }
+
             // Re-cache for future restructures (split → unsplit → split again)
             parent.session._cachedView = view
             parent.session._processBridge = self
@@ -289,6 +304,11 @@ struct TerminalTabView: NSViewRepresentable {
         func insertSoftLineBreak() {
             let newline: [UInt8] = [0x0A]  // LF
             process?.send(data: ArraySlice(newline))
+        }
+
+        func sendText(_ text: String) {
+            guard let data = text.data(using: .utf8) else { return }
+            process?.send(data: ArraySlice(data))
         }
 
         private func installShiftEnterMonitor() {
