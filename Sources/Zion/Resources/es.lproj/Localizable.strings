@@ -1547,6 +1547,7 @@
 "settings.terminal.autoAppendAIConfig.hint" = "Agrega automáticamente instrucciones de Zion a los archivos de configuración IA (CLAUDE.md, .cursorrules, etc.) en la raíz del proyecto. Cuando está desactivado, usa zion_ai_setup manualmente.";
 "settings.terminal.selection" = "Selección";
 "settings.terminal.copyOnSelect" = "Copiar al Seleccionar";
+"recent.active.hint" = "Sesión activa";
 
 // MARK: - Git Hosting Provider
 "hosting.provider.github" = "GitHub";
@@ -1605,3 +1606,24 @@
 "map.prinbox.hosting.title" = "Soporte Multi-Proveedor";
 "map.prinbox.hosting.description" = "Funciona con GitHub, GitLab y Bitbucket. El proveedor se detecta automáticamente desde las URLs de tus remotos.";
 "map.prinbox.hosting.tip1" = "Configura el PAT de GitLab o las credenciales de Bitbucket en Configuración > Git Hosting.";
+
+// MARK: - Mobile Remote Access
+"settings.tab.mobileAccess" = "Móvil";
+"mobile.access.title" = "Acceso Remoto Móvil";
+"mobile.access.enable" = "Activar Acceso Móvil";
+"mobile.access.description" = "Controla tus sesiones de terminal desde tu iPhone. Aprueba prompts, envía comandos y monitorea la salida remotamente a través de un túnel Cloudflare seguro.";
+"mobile.access.status" = "Estado de Conexión";
+"mobile.access.state.disabled" = "Desactivado";
+"mobile.access.state.starting" = "Iniciando...";
+"mobile.access.state.waitingForPairing" = "Esperando emparejamiento del dispositivo";
+"mobile.access.state.connected" = "%lld dispositivo(s) conectado(s)";
+"mobile.access.qrCode" = "Emparejar Dispositivo";
+"mobile.access.qrCode.hint" = "Escanea este código QR con la app Zion en tu iPhone para emparejar.";
+"mobile.access.tunnelURL" = "URL del Túnel";
+"mobile.access.security" = "Seguridad";
+"mobile.access.regenerateKey" = "Regenerar Clave de Encriptación";
+"mobile.access.regenerateKey.hint" = "Genera una nueva clave de encriptación e invalida todos los dispositivos emparejados. Necesitarás emparejar nuevamente.";
+"mobile.access.requirements" = "Requisitos";
+"mobile.access.cloudflared.notFound" = "cloudflared no encontrado";
+"mobile.access.cloudflared.install" = "Instala cloudflared para habilitar acceso seguro por túnel. Ejecuta el siguiente comando en tu terminal:";
+"ntfy.event.terminalPromptDetected" = "Prompt detectado en la terminal";
