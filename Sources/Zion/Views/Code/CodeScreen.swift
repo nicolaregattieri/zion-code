@@ -516,7 +516,7 @@ struct CodeScreen: View {
             if model.hasRepoEditorConfig {
                 HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                     Image(systemName: "doc.text.magnifyingglass")
-                        .font(.system(size: 9))
+                        .font(DesignSystem.Typography.meta)
                     Text(".zion")
                         .font(DesignSystem.Typography.monoMeta)
                 }
@@ -1067,7 +1067,7 @@ struct CodeScreen: View {
                 // Search field
                 HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                     Image(systemName: "magnifyingglass")
-                        .font(.system(size: 10))
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
                     FindSearchTextField(
                         text: $searchQuery,
@@ -1095,7 +1095,7 @@ struct CodeScreen: View {
 
                 // Nav buttons
                 Button { navigateToPreviousMatch() } label: {
-                    Image(systemName: "chevron.up").font(.system(size: 10, weight: .medium))
+                    Image(systemName: "chevron.up").font(DesignSystem.Typography.labelMedium)
                 }
                 .buttonStyle(.borderless)
                 .disabled(matchCount == 0)
@@ -1103,7 +1103,7 @@ struct CodeScreen: View {
                 .accessibilityLabel(L10n("editor.search.previous"))
 
                 Button { navigateToNextMatch() } label: {
-                    Image(systemName: "chevron.down").font(.system(size: 10, weight: .medium))
+                    Image(systemName: "chevron.down").font(DesignSystem.Typography.labelMedium)
                 }
                 .buttonStyle(.borderless)
                 .disabled(matchCount == 0)
@@ -1114,7 +1114,7 @@ struct CodeScreen: View {
 
                 // Close
                 Button { closeSearch() } label: {
-                    Image(systemName: "xmark").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary)
+                    Image(systemName: "xmark").font(DesignSystem.Typography.labelBold).foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
                 .frame(width: 20, height: 20)
@@ -1131,11 +1131,11 @@ struct CodeScreen: View {
 
                     HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                         Image(systemName: "arrow.2.squarepath")
-                            .font(.system(size: 10))
+                            .font(DesignSystem.Typography.label)
                             .foregroundStyle(.secondary)
                         TextField(L10n("editor.replace.placeholder"), text: $replaceQuery)
                             .textFieldStyle(.plain)
-                            .font(.system(size: 12))
+                            .font(DesignSystem.Typography.body)
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 5)
@@ -1234,7 +1234,7 @@ struct CodeScreen: View {
             withAnimation(DesignSystem.Motion.detail) { sidebarMode = mode }
         } label: {
             Image(systemName: icon)
-                .font(.system(size: 11))
+                .font(DesignSystem.Typography.bodySmall)
                 .frame(width: 26, height: 22)
                 .contentShape(Rectangle())
                 .foregroundStyle(sidebarMode == mode ? .primary : .secondary)

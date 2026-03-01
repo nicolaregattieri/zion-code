@@ -38,7 +38,7 @@ struct FileTreeNodeView: View {
                         )
                     } else {
                         Image(systemName: "doc.text")
-                            .font(.system(size: 12))
+                            .font(DesignSystem.Typography.body)
                             .foregroundStyle(isModified ? DesignSystem.Colors.warning : .secondary)
                     }
 

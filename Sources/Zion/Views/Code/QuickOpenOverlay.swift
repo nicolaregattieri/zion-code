@@ -136,10 +136,10 @@ struct QuickOpenOverlay: View {
         }()
 
         return HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
-            Image(systemName: "doc.text").foregroundStyle(.secondary).font(.system(size: 12))
+            Image(systemName: "doc.text").foregroundStyle(.secondary).font(DesignSystem.Typography.body)
             VStack(alignment: .leading, spacing: 1) {
                 Text(file.name).font(.system(size: 13, weight: .medium))
-                Text(relativePath).font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(1)
+                Text(relativePath).font(DesignSystem.Typography.label).foregroundStyle(.secondary).lineLimit(1)
             }
             Spacer()
         }

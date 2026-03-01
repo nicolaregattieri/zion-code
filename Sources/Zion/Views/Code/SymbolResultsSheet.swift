@@ -39,7 +39,7 @@ struct SymbolResultsSheet: View {
                             Text("\(location.relativePath):\(location.line)")
                                 .font(.system(size: 12, weight: .semibold, design: .monospaced))
                             Text(location.preview)
-                                .font(.system(size: 11))
+                                .font(DesignSystem.Typography.bodySmall)
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
                         }

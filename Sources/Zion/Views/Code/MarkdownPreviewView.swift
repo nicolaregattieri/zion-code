@@ -118,7 +118,7 @@ struct MarkdownPreviewView: View {
                 .font(.system(size: 22))
                 .foregroundStyle(.secondary)
             Text(L10n("editor.markdown.empty"))
-                .font(.system(size: 12))
+                .font(DesignSystem.Typography.body)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, minHeight: 180)
@@ -386,7 +386,7 @@ private struct MarkdownImageView: View {
                 .foregroundStyle(theme.colors.comment.opacity(0.9))
             if !altText.isEmpty {
                 Text(altText)
-                    .font(.system(size: 11))
+                    .font(DesignSystem.Typography.bodySmall)
                     .foregroundStyle(theme.colors.comment)
             }
         }

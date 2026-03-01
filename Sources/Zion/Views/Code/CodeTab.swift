@@ -18,7 +18,7 @@ struct CodeTab: View {
             }
 
             Image(systemName: "doc.text")
-                .font(.system(size: 11))
+                .font(DesignSystem.Typography.bodySmall)
                 .foregroundStyle(isActive ? accentColor : .secondary)
 
             Text(file.name)

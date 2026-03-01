@@ -30,7 +30,7 @@ struct TerminalFontPopoverButton: View {
 
                 HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     Text(L10n("Fonte"))
-                        .font(.system(size: 10))
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
                     Picker("", selection: $model.terminalFontFamily) {
                         Text("SF Mono").tag("SF Mono")
@@ -48,17 +48,17 @@ struct TerminalFontPopoverButton: View {
                 if !model.isTerminalFontAvailable {
                     HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                         Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.system(size: 9))
+                            .font(DesignSystem.Typography.meta)
                             .foregroundStyle(DesignSystem.Colors.warning)
                         Text(L10n("Fonte nao encontrada, usando fallback"))
-                            .font(.system(size: 10))
+                            .font(DesignSystem.Typography.label)
                             .foregroundStyle(DesignSystem.Colors.warning)
                     }
                 }
 
                 HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     Text(L10n("Tamanho"))
-                        .font(.system(size: 10))
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
                     Stepper(value: $model.terminalFontSize, in: 8...32, step: 1) {
                         Text("\(Int(model.terminalFontSize))pt")

@@ -60,7 +60,7 @@ struct BlameView: View {
                         .font(.system(size: 9, weight: .medium, design: .monospaced))
                         .foregroundStyle(color)
                     Text(entry.author.components(separatedBy: " ").first ?? entry.author)
-                        .font(.system(size: 9))
+                        .font(DesignSystem.Typography.meta)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
@@ -84,11 +84,11 @@ struct BlameView: View {
                     )) {
                         VStack(alignment: .leading, spacing: 8) {
                             HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
-                                Image(systemName: "sparkles").font(.system(size: 10)).foregroundStyle(DesignSystem.Colors.semanticSearch)
+                                Image(systemName: "sparkles").font(DesignSystem.Typography.label).foregroundStyle(DesignSystem.Colors.semanticSearch)
                                 Text(entry.shortHash).font(.system(size: 10, weight: .bold, design: .monospaced))
                             }
                             Text(model.aiBlameExplanation)
-                                .font(.system(size: 11))
+                                .font(DesignSystem.Typography.bodySmall)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         .padding(12)

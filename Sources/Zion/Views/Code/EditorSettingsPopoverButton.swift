@@ -24,12 +24,12 @@ struct EditorSettingsPopoverButton: View {
                 // Editing section
                 VStack(alignment: .leading, spacing: 6) {
                     Text(L10n("settings.editor.editing"))
-                        .font(.system(size: 10, weight: .medium))
+                        .font(DesignSystem.Typography.labelMedium)
                         .foregroundStyle(.secondary)
 
                     HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                         Text(L10n("settings.editor.tabSize"))
-                            .font(.system(size: 10))
+                            .font(DesignSystem.Typography.label)
                             .foregroundStyle(.secondary)
                         Picker("", selection: $model.editorTabSize) {
                             Text("2").tag(2)
@@ -41,16 +41,16 @@ struct EditorSettingsPopoverButton: View {
                     }
 
                     Toggle(L10n("settings.editor.useTabs"), isOn: $model.editorUseTabs)
-                        .font(.system(size: 11))
+                        .font(DesignSystem.Typography.bodySmall)
 
                     Toggle(L10n("settings.editor.autoCloseBrackets"), isOn: $model.editorAutoCloseBrackets)
-                        .font(.system(size: 11))
+                        .font(DesignSystem.Typography.bodySmall)
 
                     Toggle(L10n("settings.editor.autoCloseQuotes"), isOn: $model.editorAutoCloseQuotes)
-                        .font(.system(size: 11))
+                        .font(DesignSystem.Typography.bodySmall)
 
                     Toggle(L10n("settings.editor.bracketPairHighlight"), isOn: $model.editorBracketPairHighlight)
-                        .font(.system(size: 11))
+                        .font(DesignSystem.Typography.bodySmall)
                 }
 
                 Divider()
@@ -58,28 +58,28 @@ struct EditorSettingsPopoverButton: View {
                 // Display section
                 VStack(alignment: .leading, spacing: 6) {
                     Text(L10n("settings.editor.display"))
-                        .font(.system(size: 10, weight: .medium))
+                        .font(DesignSystem.Typography.labelMedium)
                         .foregroundStyle(.secondary)
 
                     Toggle(L10n("settings.editor.lineWrap"), isOn: $model.isLineWrappingEnabled)
-                        .font(.system(size: 11))
+                        .font(DesignSystem.Typography.bodySmall)
 
                     Toggle(L10n("settings.editor.showBreadcrumb"), isOn: $showBreadcrumbPath)
-                        .font(.system(size: 11))
+                        .font(DesignSystem.Typography.bodySmall)
 
                     Toggle(L10n("settings.editor.highlightCurrentLine"), isOn: $model.editorHighlightCurrentLine)
-                        .font(.system(size: 11))
+                        .font(DesignSystem.Typography.bodySmall)
 
                     Toggle(L10n("settings.editor.showIndentGuides"), isOn: $model.editorShowIndentGuides)
-                        .font(.system(size: 11))
+                        .font(DesignSystem.Typography.bodySmall)
 
                     Toggle(L10n("settings.editor.showRuler"), isOn: $model.editorShowRuler)
-                        .font(.system(size: 11))
+                        .font(DesignSystem.Typography.bodySmall)
 
                     if model.editorShowRuler {
                         HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                             Text(L10n("settings.editor.rulerColumn"))
-                                .font(.system(size: 10))
+                                .font(DesignSystem.Typography.label)
                                 .foregroundStyle(.secondary)
                             Picker("", selection: $model.editorRulerColumn) {
                                 Text("80").tag(80)
@@ -97,14 +97,14 @@ struct EditorSettingsPopoverButton: View {
                 // Formatting section
                 VStack(alignment: .leading, spacing: 6) {
                     Text(L10n("settings.editor.formatting"))
-                        .font(.system(size: 10, weight: .medium))
+                        .font(DesignSystem.Typography.labelMedium)
                         .foregroundStyle(.secondary)
 
                     Toggle(L10n("settings.editor.formatOnSave"), isOn: $model.editorFormatOnSave)
-                        .font(.system(size: 11))
+                        .font(DesignSystem.Typography.bodySmall)
 
                     Toggle(L10n("settings.editor.jsonSortKeys"), isOn: $model.editorJsonSortKeys)
-                        .font(.system(size: 11))
+                        .font(DesignSystem.Typography.bodySmall)
                 }
 
                 Divider()
@@ -112,7 +112,7 @@ struct EditorSettingsPopoverButton: View {
                 // Line spacing
                 HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     Text(L10n("settings.editor.lineSpacing"))
-                        .font(.system(size: 10))
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
                     Slider(value: $model.editorLineSpacing, in: 0.0...20.0, step: 0.5)
                         .frame(width: 100)
@@ -126,7 +126,7 @@ struct EditorSettingsPopoverButton: View {
                 // Letter spacing
                 HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     Text(L10n("settings.editor.letterSpacing"))
-                        .font(.system(size: 10))
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
                     Slider(value: $model.editorLetterSpacing, in: -1.0...5.0, step: 0.1)
                         .frame(width: 100)

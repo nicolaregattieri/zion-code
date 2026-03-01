@@ -30,7 +30,7 @@ struct FindInFilesView: View {
             // Query field
             HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 10))
+                    .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
 
                 TextField(L10n("Buscar nos Arquivos"), text: $query)
@@ -49,7 +49,7 @@ struct FindInFilesView: View {
                     showFilters.toggle()
                 } label: {
                     Image(systemName: "line.3.horizontal.decrease.circle\(showFilters ? ".fill" : "")")
-                        .font(.system(size: 12))
+                        .font(DesignSystem.Typography.body)
                         .foregroundStyle(showFilters ? .primary : .secondary)
                         .frame(width: 18, height: 18)
                         .contentShape(Rectangle())
@@ -70,7 +70,7 @@ struct FindInFilesView: View {
             if let scope = scopePath {
                 HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                     Image(systemName: "folder")
-                        .font(.system(size: 9))
+                        .font(DesignSystem.Typography.meta)
                     Text(URL(fileURLWithPath: scope).lastPathComponent)
                         .font(DesignSystem.Typography.monoMeta)
                         .lineLimit(1)
@@ -80,7 +80,7 @@ struct FindInFilesView: View {
                         triggerSearch()
                     } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 10))
+                            .font(DesignSystem.Typography.label)
                             .foregroundStyle(.secondary)
                             .frame(width: 14, height: 14)
                             .contentShape(Rectangle())
@@ -180,7 +180,7 @@ struct FindInFilesView: View {
                         .frame(width: 12)
 
                     Image(systemName: "doc.text")
-                        .font(.system(size: 10))
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
 
                     Text(fileResult.file)
