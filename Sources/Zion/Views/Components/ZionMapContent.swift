@@ -219,6 +219,18 @@ struct ZionMapContent {
                 ZionMapEntry("map.updates.auto.title", description: "map.updates.auto.description"),
                 ZionMapEntry("map.updates.delta.title", description: "map.updates.delta.description"),
             ]
+        case .mobileAccess:
+            return [
+                ZionMapEntry("map.mobile.pairing.title", description: "map.mobile.pairing.description",
+                             tips: ["map.mobile.pairing.tip1"]),
+                ZionMapEntry("map.mobile.terminal.title", description: "map.mobile.terminal.description"),
+                ZionMapEntry("map.mobile.quickActions.title", description: "map.mobile.quickActions.description",
+                             tips: ["map.mobile.quickActions.tip1"]),
+                ZionMapEntry("map.mobile.multiProject.title", description: "map.mobile.multiProject.description"),
+                ZionMapEntry("map.mobile.lanMode.title", description: "map.mobile.lanMode.description"),
+                ZionMapEntry("map.mobile.preventSleep.title", description: "map.mobile.preventSleep.description"),
+            ]
+
         case .zionMode:
             return [
                 ZionMapEntry("map.zionMode.toggle.title", description: "map.zionMode.toggle.description",

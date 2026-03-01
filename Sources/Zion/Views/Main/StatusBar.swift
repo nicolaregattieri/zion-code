@@ -77,6 +77,33 @@ extension ContentView {
                     .foregroundStyle(DesignSystem.Colors.info)
                     .clipShape(Capsule())
                 }
+
+                // Mobile Access indicator
+                if model.isMobileAccessEnabled {
+                    Button {
+                        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            NotificationCenter.default.post(name: .openMobileAccessSettings, object: nil)
+                        }
+                    } label: {
+                        HStack(spacing: 3) {
+                            Image(systemName: mobileAccessIcon)
+                                .font(.system(size: 9))
+                            if case .connected(let count) = model.mobileAccessConnectionState {
+                                Text("\(count)")
+                            }
+                        }
+                        .font(.caption)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(mobileAccessBadgeBg)
+                        .foregroundStyle(mobileAccessBadgeFg)
+                        .clipShape(Capsule())
+                        .contentShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .help(mobileAccessTooltip)
+                }
             }
 
             if let repositoryURL = model.repositoryURL {
@@ -199,5 +226,59 @@ extension ContentView {
 
     func statusBarSectionLabel(_ section: AppSection) -> String {
         L10n(section.title)
+    }
+
+    // MARK: - Mobile Access Badge Helpers
+
+    private var mobileAccessIcon: String {
+        if case .error = model.mobileAccessConnectionState {
+            return "iphone.slash"
+        }
+        return "iphone.radiowaves.left.and.right"
+    }
+
+    private var mobileAccessBadgeBg: Color {
+        switch model.mobileAccessConnectionState {
+        case .disabled:
+            return .clear
+        case .starting:
+            return zionModeEnabled ? DesignSystem.ZionMode.neonCyan.opacity(0.12) : DesignSystem.Colors.statusBlueBg
+        case .waitingForPairing:
+            return zionModeEnabled ? DesignSystem.ZionMode.neonOrange.opacity(0.12) : DesignSystem.Colors.statusOrangeBg
+        case .connected:
+            return zionModeEnabled ? DesignSystem.ZionMode.neonCyan.opacity(0.12) : DesignSystem.Colors.statusGreenBg
+        case .error:
+            return zionModeEnabled ? DesignSystem.ZionMode.neonOrange.opacity(0.12) : DesignSystem.Colors.error.opacity(0.12)
+        }
+    }
+
+    private var mobileAccessBadgeFg: Color {
+        switch model.mobileAccessConnectionState {
+        case .disabled:
+            return .secondary
+        case .starting:
+            return zionModeEnabled ? DesignSystem.ZionMode.neonCyan : DesignSystem.Colors.info
+        case .waitingForPairing:
+            return zionModeEnabled ? DesignSystem.ZionMode.neonOrange : DesignSystem.Colors.warning
+        case .connected:
+            return zionModeEnabled ? DesignSystem.ZionMode.neonCyan : DesignSystem.Colors.success
+        case .error:
+            return zionModeEnabled ? DesignSystem.ZionMode.neonOrange : DesignSystem.Colors.error
+        }
+    }
+
+    private var mobileAccessTooltip: String {
+        switch model.mobileAccessConnectionState {
+        case .disabled:
+            return ""
+        case .starting:
+            return L10n("mobile.status.starting")
+        case .waitingForPairing:
+            return L10n("mobile.status.waitingForPairing")
+        case .connected(let count):
+            return L10n("mobile.status.connected", count)
+        case .error:
+            return L10n("mobile.status.error")
+        }
     }
 }

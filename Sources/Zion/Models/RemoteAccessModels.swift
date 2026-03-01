@@ -24,6 +24,7 @@ struct SessionInfo: Codable, Sendable {
     let title: String
     let isAlive: Bool
     let workingDirectory: String
+    let repoName: String
 }
 
 struct SessionListPayload: Codable, Sendable {
@@ -47,6 +48,12 @@ enum RemoteAction: String, Codable, Sendable {
     case approve
     case deny
     case abort
+    case ctrlc
+    case ctrld
+    case escape
+    case tab
+    case arrowUp
+    case arrowDown
 }
 
 struct SendActionPayload: Codable, Sendable {

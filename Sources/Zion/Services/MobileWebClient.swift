@@ -33,6 +33,17 @@ header h1{font-size:16px;font-weight:600}
 #terminal{height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 16px;font-family:var(--mono);font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-all;color:var(--text)}
 #terminal:empty::before{content:'Waiting for terminal output...';color:var(--text2);font-family:var(--font);font-style:italic}
 
+#quick-actions{display:none;padding:8px 16px;background:var(--surface);border-top:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap}
+#quick-actions.visible{display:flex;gap:6px}
+.qa-btn{min-width:44px;min-height:44px;padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14px;font-weight:500;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.qa-btn:active{background:var(--accent);border-color:var(--accent);color:#fff}
+
+#project-nav{display:flex;gap:6px;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch}
+#project-nav:empty{display:none}
+.proj-pill{padding:6px 12px;border-radius:8px;font-size:13px;background:var(--bg);border:1px solid var(--border);color:var(--text2);white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;gap:4px}
+.proj-pill.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.proj-count{font-size:11px;opacity:0.7}
+
 #prompt-banner{display:none;padding:12px 16px;background:#7c3aed22;border-top:1px solid var(--accent)}
 #prompt-banner.visible{display:block}
 #prompt-text{font-size:13px;color:var(--accent2);margin-bottom:10px;font-family:var(--mono)}
@@ -62,6 +73,7 @@ header h1{font-size:16px;font-weight:600}
 <h1>Zion Remote</h1>
 <span id="status" class="connecting">Connecting</span>
 </header>
+<div id="project-nav"></div>
 <div id="sessions"></div>
 <div id="terminal-wrap">
 <div id="pairing"><div class="spinner" id="pair-spinner"></div><h2 id="pair-title">Connecting...</h2><p id="pair-desc">Establishing secure connection to your Mac</p><button id="btn-retry" onclick="retryConnect()">Refresh</button></div>
@@ -74,6 +86,14 @@ header h1{font-size:16px;font-weight:600}
 <button id="btn-deny" onclick="sendAction('deny')">Deny</button>
 <button id="btn-abort" onclick="sendAction('abort')">Abort</button>
 </div>
+</div>
+<div id="quick-actions">
+<button class="qa-btn" onclick="sendAction('ctrlc')">&#x2303;C</button>
+<button class="qa-btn" onclick="sendAction('ctrld')">&#x2303;D</button>
+<button class="qa-btn" onclick="sendAction('escape')">Esc</button>
+<button class="qa-btn" onclick="sendAction('tab')">Tab</button>
+<button class="qa-btn" onclick="sendAction('arrowUp')">&#x2191;</button>
+<button class="qa-btn" onclick="sendAction('arrowDown')">&#x2193;</button>
 </div>
 <div id="input-bar" style="display:none">
 <input id="cmd-input" type="text" placeholder="Type command..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
@@ -94,7 +114,7 @@ const LAN_MODE = (qp.get('m') || P.m || fp.get('m')) === 'lan';
 const BASE = location.origin;
 
 let cryptoKey, activeSession = null, sessions = [];
-let polling = false, pollErrors = 0, maxPollErrors = 5;
+let polling = false, pollErrors = 0, maxPollErrors = 5, activeProject = null;
 
 // -- Crypto (AES-256-GCM via Web Crypto API, skipped in LAN mode) --
 async function importKey(b64url) {
@@ -169,6 +189,7 @@ async function connect() {
       $('#pairing').style.display = 'none';
       $('#terminal').style.display = '';
       $('#input-bar').style.display = '';
+      $('#quick-actions').classList.add('visible');
       startPolling();
     } else {
       showRetry('Pairing Failed', (data.error || 'Unknown error') + '. Tap to retry.');
@@ -235,6 +256,7 @@ function showDisconnected() {
   setStatus('error', 'Disconnected');
   $('#terminal').style.display = 'none';
   $('#input-bar').style.display = 'none';
+  $('#quick-actions').classList.remove('visible');
   $('#pairing').style.display = '';
   $('#pair-spinner').classList.add('hidden');
   $('#pair-title').textContent = 'Connection Lost';
@@ -269,8 +291,16 @@ function handleMessage(msg) {
   switch(msg.type) {
     case 'sessionList':
       sessions = p.sessions || [];
+      const repos = getRepoMap();
+      if (!activeProject || !repos.has(activeProject)) {
+        activeProject = repos.size > 0 ? [...repos.keys()][0] : null;
+      }
+      renderProjectNav();
       renderSessions();
-      if (!activeSession && sessions.length > 0) selectSession(sessions[0].id);
+      if (!activeSession || !sessions.some(s => s.id === activeSession)) {
+        const projSessions = sessions.filter(s => (s.repoName || 'Unknown') === activeProject);
+        if (projSessions.length > 0) selectSession(projSessions[0].id);
+      }
       break;
     case 'screenUpdate':
       if (p.sessionID === activeSession) {
@@ -285,10 +315,49 @@ function handleMessage(msg) {
 }
 
 // -- UI --
+function getRepoMap() {
+  const repos = new Map();
+  sessions.forEach(s => {
+    const rn = s.repoName || 'Unknown';
+    if (!repos.has(rn)) repos.set(rn, []);
+    repos.get(rn).push(s);
+  });
+  return repos;
+}
+
+function renderProjectNav() {
+  const el = $('#project-nav');
+  el.innerHTML = '';
+  const repos = getRepoMap();
+  if (repos.size <= 1) {
+    activeProject = repos.size === 1 ? [...repos.keys()][0] : null;
+    return;
+  }
+  // Sort: active project first, then alphabetical
+  const sorted = [...repos.entries()].sort((a, b) => {
+    if (a[0] === activeProject) return -1;
+    if (b[0] === activeProject) return 1;
+    return a[0].localeCompare(b[0]);
+  });
+  sorted.forEach(([repoName, repoSessions]) => {
+    const pill = document.createElement('div');
+    pill.className = 'proj-pill' + (repoName === activeProject ? ' active' : '');
+    const name = document.createTextNode(repoName);
+    pill.appendChild(name);
+    const count = document.createElement('span');
+    count.className = 'proj-count';
+    count.textContent = '(' + repoSessions.length + ')';
+    pill.appendChild(count);
+    pill.onclick = () => selectProject(repoName);
+    el.appendChild(pill);
+  });
+}
+
 function renderSessions() {
   const el = $('#sessions');
   el.innerHTML = '';
-  sessions.forEach(s => {
+  const filtered = sessions.filter(s => (s.repoName || 'Unknown') === activeProject);
+  filtered.forEach(s => {
     const tab = document.createElement('div');
     tab.className = 'sess-tab' + (s.id === activeSession ? ' active' : '');
     tab.textContent = s.label || s.title || 'Terminal';
@@ -297,8 +366,21 @@ function renderSessions() {
   });
 }
 
+function selectProject(repoName) {
+  activeProject = repoName;
+  renderProjectNav();
+  renderSessions();
+  const projSessions = sessions.filter(s => (s.repoName || 'Unknown') === activeProject);
+  if (projSessions.length > 0 && !projSessions.some(s => s.id === activeSession)) {
+    selectSession(projSessions[0].id);
+  }
+}
+
 function selectSession(id) {
   activeSession = id;
+  const s = sessions.find(s => s.id === id);
+  if (s) activeProject = s.repoName || 'Unknown';
+  renderProjectNav();
   renderSessions();
   $('#terminal').textContent = '';
   hidePrompt();

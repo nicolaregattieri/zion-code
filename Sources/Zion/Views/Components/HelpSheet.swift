@@ -87,6 +87,9 @@ struct HelpSheet: View {
             return ["help.updates.check", "help.updates.auto", "help.updates.delta"]
         case .zionMode:
             return ["help.zionMode.toggle", "help.zionMode.shortcut", "help.zionMode.restore", "help.zionMode.theme"]
+        case .mobileAccess:
+            return ["help.mobile.pairing", "help.mobile.terminal", "help.mobile.quickActions",
+                    "help.mobile.multiProject", "help.mobile.preventSleep"]
         }
     }
 

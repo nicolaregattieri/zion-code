@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import CryptoKit
 import UniformTypeIdentifiers
+import IOKit.pwr_mgt
 @preconcurrency import SwiftTerm
 
 @Observable @MainActor
@@ -241,8 +242,8 @@ final class RepositoryViewModel {
     @ObservationIgnored let aiClient = AIClient()
     @ObservationIgnored var aiTask: Task<Void, Never>?
 
-    @ObservationIgnored private var _cachedAIKey: String?
-    @ObservationIgnored private var _cachedAIKeyProvider: AIProvider?
+    @ObservationIgnored var _cachedAIKey: String?
+    @ObservationIgnored var _cachedAIKeyProvider: AIProvider?
     private var _aiKeyRevision: Int = 0
     var aiAPIKey: String {
         get {
@@ -330,6 +331,9 @@ final class RepositoryViewModel {
     @ObservationIgnored var screenUpdateThrottleDeadlines: [UUID: ContinuousClock.Instant] = [:]
     @ObservationIgnored var heartbeatTask: Task<Void, Never>?
     @ObservationIgnored var isSwitchingMode = false
+    @ObservationIgnored var hasEnsuredRemoteTerminals = false
+    @ObservationIgnored var sleepAssertionID: IOPMAssertionID = 0
+    @ObservationIgnored var sleepTimerTask: Task<Void, Never>?
 
     // Background repo persistence (terminal sessions + change badges)
     @ObservationIgnored var backgroundRepoStates: [URL: BackgroundRepoState] = [:]
