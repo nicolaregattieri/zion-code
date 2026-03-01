@@ -147,6 +147,10 @@ extension RepositoryViewModel {
         if defaults.object(forKey: "fileBrowser.showHiddenFiles") != nil {
             showDotfiles = defaults.bool(forKey: "fileBrowser.showHiddenFiles")
         }
+        // Mobile Remote Access
+        if defaults.object(forKey: "zion.mobileAccess.enabled") != nil {
+            isMobileAccessEnabled = defaults.bool(forKey: "zion.mobileAccess.enabled")
+        }
     }
 
     // MARK: - Restore Last Repository
@@ -278,6 +282,12 @@ extension RepositoryViewModel {
         if defaults.object(forKey: "fileBrowser.showHiddenFiles") != nil {
             let sd = defaults.bool(forKey: "fileBrowser.showHiddenFiles")
             if sd != showDotfiles { showDotfiles = sd }
+        }
+
+        // MARK: Mobile Remote Access
+        if defaults.object(forKey: "zion.mobileAccess.enabled") != nil {
+            let mae = defaults.bool(forKey: "zion.mobileAccess.enabled")
+            if mae != isMobileAccessEnabled { isMobileAccessEnabled = mae }
         }
     }
 

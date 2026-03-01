@@ -311,6 +311,20 @@ final class RepositoryViewModel {
 
     var isNtfyConfigured: Bool { !ntfyTopic.isEmpty }
 
+    // Mobile Remote Access
+    var isMobileAccessEnabled: Bool = false {
+        didSet { UserDefaults.standard.set(isMobileAccessEnabled, forKey: "zion.mobileAccess.enabled") }
+    }
+    var mobileAccessConnectionState: RemoteAccessConnectionState = .disabled
+    var mobileAccessTunnelURL: String = ""
+    var mobileAccessQRImage: NSImage?
+    var pairedDevices: [PairedDevice] = []
+    @ObservationIgnored var remoteAccessServer: RemoteAccessServer?
+    @ObservationIgnored var tunnelManager: CloudflareTunnelManager?
+    @ObservationIgnored var terminalOutputBuffers: [UUID: [String]] = [:]
+    @ObservationIgnored var screenUpdateDebounceTask: Task<Void, Never>?
+    @ObservationIgnored var heartbeatTask: Task<Void, Never>?
+
     // Background repo persistence (terminal sessions + change badges)
     @ObservationIgnored var backgroundRepoStates: [URL: BackgroundRepoState] = [:]
     var backgroundRepoChangedFiles: [URL: Int] = [:]
