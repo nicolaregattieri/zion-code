@@ -14,6 +14,7 @@ final class RemoteAccessState {
     var isCloudflaredInstalled: Bool = false
     var hasCheckedCloudflared: Bool = false
     var shouldRegenerateKey: Bool = false
+    var keepAwakeChanged: Bool = false
     var isLANMode: Bool = false
 
     private init() {}

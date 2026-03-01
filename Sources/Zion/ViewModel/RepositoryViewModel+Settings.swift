@@ -108,6 +108,9 @@ extension RepositoryViewModel {
            let provider = AIProvider(rawValue: aiRaw) {
             aiProvider = provider
         }
+        // Pre-warm keychain caches off the main thread so SecItemCopyMatching
+        // never blocks the UI if macOS shows a Keychain authorization dialog.
+        warmKeychainCaches()
         // Commit message style
         if let styleRaw = defaults.string(forKey: "zion.commitMessageStyle"),
            let style = CommitMessageStyle(rawValue: styleRaw) {
@@ -155,6 +158,30 @@ extension RepositoryViewModel {
             isMobileAccessEnabled = defaults.bool(forKey: "zion.mobileAccess.enabled")
             if isMobileAccessEnabled {
                 enableRemoteAccess()
+            }
+        }
+    }
+
+    // MARK: - Keychain Pre-Warm
+
+    /// Load keychain items off the main thread to avoid blocking the UI
+    /// when macOS shows the Keychain authorization dialog on first launch.
+    private func warmKeychainCaches() {
+        let provider = aiProvider
+        let mobileEnabled = isMobileAccessEnabled
+
+        Task.detached {
+            // AI API key
+            let aiKey = AIClient.loadAPIKey(for: provider)
+            // Pairing key (touch it so macOS grants access before we need it)
+            if mobileEnabled {
+                let _ = RemoteAccessEncryption.loadPairingKey()
+            }
+
+            await MainActor.run { [weak self] in
+                guard let self else { return }
+                self._cachedAIKey = aiKey ?? ""
+                self._cachedAIKeyProvider = provider
             }
         }
     }
@@ -317,6 +344,14 @@ extension RepositoryViewModel {
         if RemoteAccessState.shared.shouldRegenerateKey {
             RemoteAccessState.shared.shouldRegenerateKey = false
             regeneratePairingKey()
+        }
+
+        // Handle keep-awake duration change from Settings
+        if RemoteAccessState.shared.keepAwakeChanged {
+            RemoteAccessState.shared.keepAwakeChanged = false
+            if isMobileAccessEnabled {
+                acquireSleepAssertionIfNeeded()
+            }
         }
     }
 

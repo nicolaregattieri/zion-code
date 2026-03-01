@@ -88,6 +88,35 @@ enum AppAppearance: String, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - Keep Awake
+
+enum KeepAwakeDuration: String, CaseIterable, Identifiable {
+    case off, oneHour, twoHours, fourHours, eightHours, indefinite
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .off: return L10n("keepAwake.duration.off")
+        case .oneHour: return L10n("keepAwake.duration.1h")
+        case .twoHours: return L10n("keepAwake.duration.2h")
+        case .fourHours: return L10n("keepAwake.duration.4h")
+        case .eightHours: return L10n("keepAwake.duration.8h")
+        case .indefinite: return L10n("keepAwake.duration.indefinite")
+        }
+    }
+
+    var seconds: TimeInterval? {
+        switch self {
+        case .off: return 0
+        case .oneHour: return 3600
+        case .twoHours: return 7200
+        case .fourHours: return 14400
+        case .eightHours: return 28800
+        case .indefinite: return nil
+        }
+    }
+}
+
 // MARK: - Settings Enums
 
 enum ConfirmationMode: String, CaseIterable, Identifiable, Sendable {
@@ -151,7 +180,7 @@ enum CommitMessageStyle: String, CaseIterable, Identifiable {
 enum FeatureSection: String, CaseIterable, Identifiable {
     case tree, code, terminal, clipboard, operations, worktrees, ai,
          customization, diagnostics, conflicts, settings, diffExplanation,
-         codeReview, prInbox, autoUpdates, zionMode
+         codeReview, prInbox, autoUpdates, zionMode, mobileAccess
     var id: String { rawValue }
 
     var icon: String {
@@ -172,6 +201,7 @@ enum FeatureSection: String, CaseIterable, Identifiable {
         case .prInbox: return "tray.full.fill"
         case .autoUpdates: return "arrow.triangle.2.circlepath"
         case .zionMode: return "bolt.fill"
+        case .mobileAccess: return "iphone.and.arrow.forward"
         }
     }
 
@@ -193,6 +223,7 @@ enum FeatureSection: String, CaseIterable, Identifiable {
         case .prInbox: return DesignSystem.Colors.commitSplit
         case .autoUpdates: return DesignSystem.Colors.success
         case .zionMode: return .purple
+        case .mobileAccess: return DesignSystem.Colors.info
         }
     }
 
@@ -214,6 +245,7 @@ enum FeatureSection: String, CaseIterable, Identifiable {
         case .prInbox: return "help.prInbox.title"
         case .autoUpdates: return "help.updates.title"
         case .zionMode: return "help.zionMode.title"
+        case .mobileAccess: return "help.mobileAccess.title"
         }
     }
 

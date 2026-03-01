@@ -3,6 +3,7 @@ import SwiftUI
 struct MobileAccessSettingsTab: View {
     @AppStorage("zion.mobileAccess.enabled") private var isEnabled: Bool = false
     @AppStorage("zion.mobileAccess.lanMode") private var isLANMode: Bool = false
+    @AppStorage("zion.mobileAccess.keepAwakeDuration") private var keepAwakeDuration: String = "off"
 
     private var state: RemoteAccessState { RemoteAccessState.shared }
 
@@ -47,6 +48,21 @@ struct MobileAccessSettingsTab: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
+
+                    Picker(selection: $keepAwakeDuration) {
+                        ForEach(KeepAwakeDuration.allCases) { duration in
+                            Text(duration.label).tag(duration.rawValue)
+                        }
+                    } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Label(L10n("mobile.access.keepAwake"), systemImage: "moon.zzz")
+                                .font(.subheadline)
+                            Text(L10n("mobile.access.keepAwake.hint"))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .pickerStyle(.menu)
                 }
             }
 
@@ -192,6 +208,9 @@ struct MobileAccessSettingsTab: View {
             if !newValue && !state.hasCheckedCloudflared {
                 Task { await state.checkCloudflared() }
             }
+        }
+        .onChange(of: keepAwakeDuration) { _, _ in
+            RemoteAccessState.shared.keepAwakeChanged = true
         }
     }
 

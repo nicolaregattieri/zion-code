@@ -1,22 +1,29 @@
 import Foundation
+import CryptoKit
+import IOKit.pwr_mgt
 
 extension RepositoryViewModel {
 
     // MARK: - Enable / Disable
 
     func enableRemoteAccess() {
+        acquireSleepAssertionIfNeeded()
         isMobileAccessEnabled = true
         mobileAccessConnectionState = .starting
         syncRemoteAccessState()
 
         Task {
             do {
-                // 1. Generate or load pairing key
-                let key = RemoteAccessEncryption.loadPairingKey() ?? {
+                // 1. Generate or load pairing key (detached to avoid blocking MainActor
+                //    if macOS shows a Keychain authorization dialog)
+                let key: SymmetricKey = await Task.detached {
+                    if let existing = RemoteAccessEncryption.loadPairingKey() {
+                        return existing
+                    }
                     let newKey = RemoteAccessEncryption.generatePairingKey()
                     RemoteAccessEncryption.savePairingKey(newKey)
                     return newKey
-                }()
+                }.value
 
                 // 2. Start HTTP server (reuse if already running)
                 if remoteAccessServer == nil {
@@ -34,6 +41,7 @@ extension RepositoryViewModel {
                                 if self.isSwitchingMode { return }
                                 if count > 0 {
                                     self.mobileAccessConnectionState = .connected(deviceCount: count)
+                                    self.ensureRecentProjectsHaveTerminals()
                                     self.sendSessionList()
                                     self.sendAllScreenUpdates()
                                 } else {
@@ -101,6 +109,7 @@ extension RepositoryViewModel {
 
     func disableRemoteAccess() {
         isMobileAccessEnabled = false
+        releaseSleepAssertion()
         heartbeatTask?.cancel()
         heartbeatTask = nil
         screenUpdateDebounceTasks.values.forEach { $0.cancel() }
@@ -118,6 +127,7 @@ extension RepositoryViewModel {
         mobileAccessTunnelURL = ""
         mobileAccessQRImage = nil
         terminalOutputBuffers.removeAll()
+        hasEnsuredRemoteTerminals = false
         PromptDetector.resetDedup()
         syncRemoteAccessState()
     }
@@ -195,6 +205,36 @@ extension RepositoryViewModel {
         if isMobileAccessEnabled {
             disableRemoteAccess()
             enableRemoteAccess()
+        }
+    }
+
+    // MARK: - Auto-Open Terminals for Recent Projects
+
+    /// Ensures each recent project has at least one terminal session so they all
+    /// appear in the mobile project nav on first connect.
+    private func ensureRecentProjectsHaveTerminals() {
+        guard !hasEnsuredRemoteTerminals else { return }
+        hasEnsuredRemoteTerminals = true
+
+        let originalURL = repositoryURL
+        let reposWithTerminals = Set(
+            [repositoryURL].compactMap { $0 } + Array(backgroundRepoStates.keys)
+        )
+
+        let missing = recentRepositories.filter { url in
+            !reposWithTerminals.contains(url)
+                && FileManager.default.fileExists(atPath: url.path)
+        }
+
+        guard !missing.isEmpty else { return }
+
+        for url in missing {
+            openRepository(url)
+        }
+
+        // Switch back to the original repo
+        if let originalURL {
+            openRepository(originalURL)
         }
     }
 
@@ -295,6 +335,18 @@ extension RepositoryViewModel {
             inputData = "n\r".data(using: .utf8)
         case .abort:
             inputData = Data([0x03]) // Ctrl+C
+        case .ctrlc:
+            inputData = Data([0x03])
+        case .ctrld:
+            inputData = Data([0x04])
+        case .escape:
+            inputData = Data([0x1B])
+        case .tab:
+            inputData = Data([0x09])
+        case .arrowUp:
+            inputData = Data([0x1B, 0x5B, 0x41]) // ESC[A
+        case .arrowDown:
+            inputData = Data([0x1B, 0x5B, 0x42]) // ESC[B
         }
 
         if let data = inputData {
@@ -412,20 +464,43 @@ extension RepositoryViewModel {
 
     func buildSessionListPayload() -> SessionListPayload {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
-        let sessions = terminalSessions.map { session in
-            // Redact full home path to prevent leaking username to remote client
-            let sanitizedPath = session.workingDirectory.path.hasPrefix(home)
-                ? "~" + session.workingDirectory.path.dropFirst(home.count)
-                : session.workingDirectory.path
+        let activeRepoName = repositoryURL?.lastPathComponent ?? ""
+
+        func sanitizePath(_ path: String) -> String {
+            path.hasPrefix(home) ? "~" + path.dropFirst(home.count) : path
+        }
+
+        // Active repo sessions
+        var allSessions: [SessionInfo] = terminalSessions.compactMap { session in
+            guard terminalSendCallbacks[session.id] != nil else { return nil }
             return SessionInfo(
                 id: session.id,
                 label: session.label,
                 title: session.title,
                 isAlive: session.isAlive,
-                workingDirectory: sanitizedPath
+                workingDirectory: sanitizePath(session.workingDirectory.path),
+                repoName: activeRepoName
             )
         }
-        return SessionListPayload(sessions: sessions)
+
+        // Background repo sessions
+        for (url, state) in backgroundRepoStates {
+            let repoName = url.lastPathComponent
+            let bgSessions: [SessionInfo] = state.terminalTabs.flatMap { $0.allSessions() }.compactMap { session in
+                guard terminalSendCallbacks[session.id] != nil else { return nil }
+                return SessionInfo(
+                    id: session.id,
+                    label: session.label,
+                    title: session.title,
+                    isAlive: session.isAlive,
+                    workingDirectory: sanitizePath(session.workingDirectory.path),
+                    repoName: repoName
+                )
+            }
+            allSessions.append(contentsOf: bgSessions)
+        }
+
+        return SessionListPayload(sessions: allSessions)
     }
 
     func buildScreenUpdate(for sessionID: UUID) -> ScreenUpdatePayload {
@@ -501,6 +576,50 @@ extension RepositoryViewModel {
             }
         }
         return address
+    }
+
+    // MARK: - Sleep Assertion
+
+    func acquireSleepAssertionIfNeeded() {
+        let raw = UserDefaults.standard.string(forKey: "zion.mobileAccess.keepAwakeDuration") ?? "off"
+        let duration = KeepAwakeDuration(rawValue: raw) ?? .off
+
+        guard duration != .off else {
+            releaseSleepAssertion()
+            return
+        }
+
+        // Acquire assertion if not already held
+        if sleepAssertionID == 0 {
+            var assertionID: IOPMAssertionID = 0
+            let result = IOPMAssertionCreateWithName(
+                kIOPMAssertionTypePreventUserIdleSystemSleep as CFString,
+                IOPMAssertionLevel(kIOPMAssertionLevelOn),
+                "Zion Remote Access server is active" as CFString,
+                &assertionID
+            )
+            if result == kIOReturnSuccess {
+                sleepAssertionID = assertionID
+            }
+        }
+
+        // Auto-release after duration (cancel any previous timer first)
+        sleepTimerTask?.cancel()
+        if let seconds = duration.seconds, seconds > 0 {
+            sleepTimerTask = Task {
+                try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                guard !Task.isCancelled else { return }
+                releaseSleepAssertion()
+            }
+        }
+    }
+
+    func releaseSleepAssertion() {
+        sleepTimerTask?.cancel()
+        sleepTimerTask = nil
+        guard sleepAssertionID != 0 else { return }
+        IOPMAssertionRelease(sleepAssertionID)
+        sleepAssertionID = 0
     }
 
     private func stripANSI(_ text: String) -> String {
