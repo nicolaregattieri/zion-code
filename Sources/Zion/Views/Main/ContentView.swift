@@ -464,7 +464,7 @@ struct ContentView: View {
 
             if model.repositoryURL != nil {
                 ControlGroup {
-                    Button { model.fetch() } label: { Image(systemName: "arrow.down.circle") }
+                    Button { model.fetch() } label: { Image(systemName: "arrow.triangle.2.circlepath") }
                         .help(L10n("Fetch: Busca atualizações remotas"))
                         .accessibilityLabel(L10n("Fetch: Busca atualizações remotas"))
                     Button { model.pull() } label: { Image(systemName: "arrow.down.to.line") }
