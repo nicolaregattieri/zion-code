@@ -80,12 +80,7 @@ extension ContentView {
 
                 // Mobile Access indicator
                 if model.isMobileAccessEnabled {
-                    Button {
-                        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            NotificationCenter.default.post(name: .openMobileAccessSettings, object: nil)
-                        }
-                    } label: {
+                    SettingsLink {
                         HStack(spacing: 3) {
                             Image(systemName: mobileAccessIcon)
                                 .font(.system(size: 9))
@@ -103,6 +98,11 @@ extension ContentView {
                     }
                     .buttonStyle(.plain)
                     .help(mobileAccessTooltip)
+                    .simultaneousGesture(TapGesture().onEnded {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            NotificationCenter.default.post(name: .openMobileAccessSettings, object: nil)
+                        }
+                    })
                 }
             }
 
