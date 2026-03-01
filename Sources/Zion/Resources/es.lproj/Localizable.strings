@@ -719,7 +719,7 @@
 "map.ops.recovery.description" = "Lista snapshots activos y huérfanos para recuperar cambios después de fallos de stash, reset o transferencia.";
 "map.ops.recovery.tip1" = "Usa Copiar para guardar la referencia y Restaurar para reaplicarla en el working tree actual.";
 "map.ops.tags.title" = "Gestión de Tags";
-"map.ops.tags.description" = "Crea y elimina tags lightweight rápidamente. La lista muestra tags existentes como referencia.";
+"map.ops.tags.description" = "Crea tags lightweight, anotadas o firmadas con GPG y editor de mensaje. Envía tags al remoto o elimina del remoto.";
 
 // Zion Map — Worktrees
 "map.worktree.parallel.title" = "Contextos Paralelos";
@@ -879,9 +879,9 @@
 "help.diffExplanation.title" = "Explicación de Diff con IA";
 "help.diffExplanation.features" = "Intención, Riesgos, Narrativa|Insignias de severidad|Explicar automáticamente al seleccionar|Copiar al portapapeles";
 "help.codeReview.title" = "Code Review";
-"help.codeReview.features" = "Revisión a pantalla completa por archivo|Análisis IA por archivo|Exportar como Markdown|Atajo Cmd+Shift+R";
+"help.codeReview.features" = "Revisión a pantalla completa por archivo|Análisis IA por archivo|Comentarios inline en PRs con hilos de respuesta|Enviar reviews (Aprobar/Solicitar Cambios/Comentar)|Exportar como Markdown|Atajo Cmd+Shift+R";
 "help.prInbox.title" = "Bandeja de PRs";
-"help.prInbox.features" = "Cola de PRs asignados|Explorar todos los PRs abiertos|Revisión automática con IA|Clic para abrir en Code Review|Notificaciones macOS + ntfy";
+"help.prInbox.features" = "Soporte para GitHub, GitLab y Bitbucket|Cola de PRs asignados|Explorar todos los PRs abiertos|Revisión automática con IA|Clic para abrir en Code Review|Notificaciones macOS + ntfy";
 
 
 // Zion Map — Settings
@@ -1547,4 +1547,61 @@
 "settings.terminal.autoAppendAIConfig.hint" = "Agrega automáticamente instrucciones de Zion a los archivos de configuración IA (CLAUDE.md, .cursorrules, etc.) en la raíz del proyecto. Cuando está desactivado, usa zion_ai_setup manualmente.";
 "settings.terminal.selection" = "Selección";
 "settings.terminal.copyOnSelect" = "Copiar al Seleccionar";
-"recent.active.hint" = "Sesión activa";
+
+// MARK: - Git Hosting Provider
+"hosting.provider.github" = "GitHub";
+"hosting.provider.gitlab" = "GitLab";
+"hosting.provider.bitbucket" = "Bitbucket";
+"hosting.gitlab.pat" = "Token de Acceso Personal";
+"hosting.gitlab.host" = "Host (predeterminado: gitlab.com)";
+"hosting.bitbucket.username" = "Nombre de usuario";
+"hosting.bitbucket.appPassword" = "Contraseña de App";
+"hosting.notConnected" = "No se detectó ningún proveedor de hosting.";
+"hosting.notSupported" = "Esta acción no está soportada por el proveedor actual.";
+"settings.hosting.title" = "Hosting Git";
+"settings.hosting.gitlab" = "GitLab";
+"settings.hosting.bitbucket" = "Bitbucket";
+
+// MARK: - PR Comments & Reviews
+"pr.comment.reply" = "Responder";
+"pr.comment.post" = "Publicar";
+"pr.comment.cancel" = "Cancelar";
+"pr.comment.placeholder" = "Escribe un comentario...";
+"pr.review.submit" = "Enviar Review";
+"pr.review.state.comment" = "Comentar";
+"pr.review.state.approve" = "Aprobar";
+"pr.review.state.requestChanges" = "Solicitar Cambios";
+"pr.review.body.placeholder" = "Deja un comentario de review...";
+"pr.review.submitting" = "Enviando review...";
+"pr.review.submitted" = "Review enviada";
+"pr.review.comments.count" = "%d comentarios";
+"pr.review.addComment" = "Agregar Comentario";
+
+// MARK: - Tags
+"tag.detail.title" = "Crear Tag";
+"tag.detail.type" = "Tipo";
+"tag.detail.type.lightweight" = "Ligera";
+"tag.detail.type.annotated" = "Anotada";
+"tag.detail.type.signed" = "Firmada (GPG)";
+"tag.detail.message" = "Mensaje";
+"tag.detail.message.placeholder" = "Mensaje del tag...";
+"tag.detail.pushAfterCreate" = "Push después de crear";
+"tag.detail.targetRemote" = "Remoto Destino";
+"tag.push.success" = "Tag enviado exitosamente";
+"tag.push.action" = "Enviar Tag";
+"tag.delete.remote" = "Eliminar del Remoto";
+
+// MARK: - Help & Map: Documentación de Nuevas Features
+"help.ops.tags" = "Crea tags lightweight, anotadas o firmadas con push al remoto";
+
+"map.ops.tags.tip1" = "Usa tags anotadas para releases — almacenan autor, fecha y mensaje.";
+
+"map.codereview.comments.title" = "Comentarios Inline en PRs";
+"map.codereview.comments.description" = "Visualiza y publica comentarios inline directamente en las líneas del diff de PRs. Responde a hilos existentes sin salir de Zion.";
+"map.codereview.comments.tip1" = "Pasa el mouse sobre una línea del diff y haz clic en + para agregar un comentario inline.";
+"map.codereview.review.title" = "Envío de Reviews";
+"map.codereview.review.description" = "Envía reviews formales con Comentar, Aprobar o Solicitar Cambios. Los comentarios borrador se agrupan y envían juntos.";
+
+"map.prinbox.hosting.title" = "Soporte Multi-Proveedor";
+"map.prinbox.hosting.description" = "Funciona con GitHub, GitLab y Bitbucket. El proveedor se detecta automáticamente desde las URLs de tus remotos.";
+"map.prinbox.hosting.tip1" = "Configura el PAT de GitLab o las credenciales de Bitbucket en Configuración > Git Hosting.";

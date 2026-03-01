@@ -721,7 +721,7 @@
 "map.ops.recovery.description" = "Lists active and dangling snapshots so you can recover changes after stash, reset, or transfer failures.";
 "map.ops.recovery.tip1" = "Use Copy to save the reference and Restore to reapply it in the current working tree.";
 "map.ops.tags.title" = "Tag Management";
-"map.ops.tags.description" = "Create and remove lightweight tags quickly. The list shows existing tags for reference.";
+"map.ops.tags.description" = "Create lightweight, annotated, or GPG-signed tags with message editor. Push tags to remote or delete from remote.";
 
 // Zion Map — Worktrees
 "map.worktree.parallel.title" = "Parallel Contexts";
@@ -881,9 +881,9 @@
 "help.diffExplanation.title" = "AI Diff Explanation";
 "help.diffExplanation.features" = "Intent, Risks, Narrative|Risk severity badges|Auto-explain on selection|Copy to clipboard";
 "help.codeReview.title" = "Code Review";
-"help.codeReview.features" = "Full-window file-by-file review|Per-file AI analysis|Export as Markdown|Cmd+Shift+R shortcut";
+"help.codeReview.features" = "Full-window file-by-file review|Per-file AI analysis|Inline PR comments with reply threads|Submit reviews (Approve/Request Changes/Comment)|Export as Markdown|Cmd+Shift+R shortcut";
 "help.prInbox.title" = "PR Inbox";
-"help.prInbox.features" = "Assigned PR queue|Browse all open PRs|Auto-review with AI|Click to open in Code Review|macOS + ntfy notifications";
+"help.prInbox.features" = "GitHub, GitLab, and Bitbucket support|Assigned PR queue|Browse all open PRs|Auto-review with AI|Click to open in Code Review|macOS + ntfy notifications";
 
 
 // Zion Map — Settings
@@ -1531,4 +1531,61 @@
 "settings.terminal.autoAppendAIConfig.hint" = "Automatically add Zion instructions to AI config files (CLAUDE.md, .cursorrules, etc.) in your project root. When off, use zion_ai_setup manually.";
 "settings.terminal.selection" = "Selection";
 "settings.terminal.copyOnSelect" = "Copy on Select";
-"recent.active.hint" = "Active session";
+
+// MARK: - Git Hosting Provider
+"hosting.provider.github" = "GitHub";
+"hosting.provider.gitlab" = "GitLab";
+"hosting.provider.bitbucket" = "Bitbucket";
+"hosting.gitlab.pat" = "Personal Access Token";
+"hosting.gitlab.host" = "Host (default: gitlab.com)";
+"hosting.bitbucket.username" = "Username";
+"hosting.bitbucket.appPassword" = "App Password";
+"hosting.notConnected" = "No hosting provider detected.";
+"hosting.notSupported" = "This action is not supported by the current provider.";
+"settings.hosting.title" = "Git Hosting";
+"settings.hosting.gitlab" = "GitLab";
+"settings.hosting.bitbucket" = "Bitbucket";
+
+// MARK: - PR Comments & Reviews
+"pr.comment.reply" = "Reply";
+"pr.comment.post" = "Post";
+"pr.comment.cancel" = "Cancel";
+"pr.comment.placeholder" = "Write a comment...";
+"pr.review.submit" = "Submit Review";
+"pr.review.state.comment" = "Comment";
+"pr.review.state.approve" = "Approve";
+"pr.review.state.requestChanges" = "Request Changes";
+"pr.review.body.placeholder" = "Leave a review comment...";
+"pr.review.submitting" = "Submitting review...";
+"pr.review.submitted" = "Review submitted";
+"pr.review.comments.count" = "%d comments";
+"pr.review.addComment" = "Add Comment";
+
+// MARK: - Tags
+"tag.detail.title" = "Create Tag";
+"tag.detail.type" = "Type";
+"tag.detail.type.lightweight" = "Lightweight";
+"tag.detail.type.annotated" = "Annotated";
+"tag.detail.type.signed" = "Signed (GPG)";
+"tag.detail.message" = "Message";
+"tag.detail.message.placeholder" = "Tag message...";
+"tag.detail.pushAfterCreate" = "Push after create";
+"tag.detail.targetRemote" = "Target Remote";
+"tag.push.success" = "Tag pushed successfully";
+"tag.push.action" = "Push Tag";
+"tag.delete.remote" = "Delete from Remote";
+
+// MARK: - Help & Map: New Feature Documentation
+"help.ops.tags" = "Create lightweight, annotated, or signed tags with push to remote";
+
+"map.ops.tags.tip1" = "Use annotated tags for releases — they store the author, date, and message.";
+
+"map.codereview.comments.title" = "Inline PR Comments";
+"map.codereview.comments.description" = "View and post inline comments directly on PR diff lines. Reply to existing threads without leaving Zion.";
+"map.codereview.comments.tip1" = "Hover over a diff line and click + to add an inline comment.";
+"map.codereview.review.title" = "Review Submission";
+"map.codereview.review.description" = "Submit formal reviews with Comment, Approve, or Request Changes. Draft comments are batched and submitted together.";
+
+"map.prinbox.hosting.title" = "Multi-Provider Support";
+"map.prinbox.hosting.description" = "Works with GitHub, GitLab, and Bitbucket. Provider is auto-detected from your remote URLs.";
+"map.prinbox.hosting.tip1" = "Configure GitLab PAT or Bitbucket credentials in Settings > Git Hosting.";
