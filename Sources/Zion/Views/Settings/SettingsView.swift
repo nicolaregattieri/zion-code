@@ -77,5 +77,8 @@ struct SettingsView: View {
         }
         .frame(width: 480, height: 580)
         .tint(DesignSystem.Colors.actionPrimary)
+        .onReceive(NotificationCenter.default.publisher(for: .openMobileAccessSettings)) { _ in
+            selectedTab = .mobileAccess
+        }
     }
 }
