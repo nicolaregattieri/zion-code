@@ -10,9 +10,15 @@ actor CloudflareTunnelManager {
     // MARK: - Lifecycle
 
     func start(localPort: UInt16) async throws -> String {
+        // Kill any existing tunnel process (ours or orphaned)
         if let process, process.isRunning {
             process.terminate()
+            process.waitUntilExit()
         }
+        self.process = nil
+
+        // Also kill any orphaned cloudflared processes on the same port
+        Self.killOrphanedProcesses(port: localPort)
 
         guard let binaryPath = await Self.findCloudflaredBinary() else {
             throw TunnelError.cloudflaredNotFound
@@ -44,9 +50,19 @@ actor CloudflareTunnelManager {
     func stop() {
         if let process, process.isRunning {
             process.terminate()
+            process.waitUntilExit()
         }
         process = nil
         tunnelURL = nil
+    }
+
+    /// Kill any orphaned cloudflared tunnel processes targeting the same port
+    private static func killOrphanedProcesses(port: UInt16) {
+        let proc = Process()
+        proc.executableURL = URL(fileURLWithPath: "/usr/bin/pkill")
+        proc.arguments = ["-f", "cloudflared tunnel --url http://localhost:\(port)"]
+        try? proc.run()
+        proc.waitUntilExit()
     }
 
     // MARK: - Binary Detection
@@ -111,6 +127,15 @@ actor CloudflareTunnelManager {
                 state.appendData(newData)
                 guard let text = state.currentText() else { return }
 
+                // Check for rate limiting or other errors
+                if text.contains("429") || text.contains("Too Many Requests") {
+                    if state.tryResume() {
+                        fileHandle.readabilityHandler = nil
+                        continuation.resume(throwing: TunnelError.rateLimited)
+                    }
+                    return
+                }
+
                 let range = NSRange(text.startIndex..., in: text)
                 if let match = urlPattern.firstMatch(in: text, range: range),
                    let matchRange = Range(match.range, in: text) {
@@ -162,19 +187,22 @@ actor CloudflareTunnelManager {
 
     // MARK: - Errors
 
-    enum TunnelError: Error, LocalizedError {
+    enum TunnelError: Error, Equatable, LocalizedError {
         case cloudflaredNotFound
         case urlParsingFailed
         case timeout
+        case rateLimited
 
         var errorDescription: String? {
             switch self {
             case .cloudflaredNotFound:
                 return L10n("mobile.access.cloudflared.notFound")
             case .urlParsingFailed:
-                return "Failed to parse tunnel URL from cloudflared output"
+                return L10n("mobile.access.error.parseFailed")
             case .timeout:
-                return "Timed out waiting for cloudflared tunnel URL"
+                return L10n("mobile.access.error.timeout")
+            case .rateLimited:
+                return L10n("mobile.access.error.rateLimited")
             }
         }
     }

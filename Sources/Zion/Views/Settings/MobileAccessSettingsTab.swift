@@ -6,13 +6,12 @@ struct MobileAccessSettingsTab: View {
     private var state: RemoteAccessState { RemoteAccessState.shared }
 
     private var currentStep: OnboardingStep {
+        if !isEnabled { return .off }
         if !state.hasCheckedCloudflared { return .checking }
         if !state.isCloudflaredInstalled { return .installCloudflared }
-        if !isEnabled { return .ready }
 
         switch state.connectionState {
-        case .disabled: return .ready
-        case .starting: return .starting
+        case .disabled, .starting: return .starting
         case .waitingForPairing: return .scanQR
         case .connected: return .connected
         case .error: return .error
@@ -21,20 +20,24 @@ struct MobileAccessSettingsTab: View {
 
     var body: some View {
         Form {
-            // Step indicator
+            // Always-visible header with toggle
             Section {
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.standard) {
-                    Label(L10n("mobile.access.title"), systemImage: "iphone.and.arrow.forward")
-                        .font(.headline)
-
-                    Text(L10n("mobile.access.description"))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                Toggle(isOn: $isEnabled) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Label(L10n("mobile.access.title"), systemImage: "iphone.and.arrow.forward")
+                            .font(.headline)
+                        Text(L10n("mobile.access.description"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
 
-            // Progressive content based on current step
+            // Progressive content when enabled
             switch currentStep {
+            case .off:
+                EmptyView()
+
             case .checking:
                 Section {
                     HStack {
@@ -44,12 +47,7 @@ struct MobileAccessSettingsTab: View {
                 }
 
             case .installCloudflared:
-                stepSection(
-                    number: 1,
-                    title: L10n("mobile.access.step.install.title"),
-                    icon: "arrow.down.circle.fill",
-                    color: DesignSystem.Colors.warning
-                ) {
+                Section(L10n("mobile.access.step.install.title")) {
                     Text(L10n("mobile.access.step.install.description"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -73,34 +71,13 @@ struct MobileAccessSettingsTab: View {
                     }
 
                     Button(L10n("mobile.access.step.install.recheck")) {
-                        Task {
-                            await state.checkCloudflared()
-                        }
+                        Task { await state.checkCloudflared() }
                     }
                     .font(.caption)
                 }
 
-            case .ready:
-                stepSection(
-                    number: state.isCloudflaredInstalled ? 1 : 2,
-                    title: L10n("mobile.access.step.enable.title"),
-                    icon: "power.circle.fill",
-                    color: DesignSystem.Colors.info
-                ) {
-                    Toggle(L10n("mobile.access.enable"), isOn: $isEnabled)
-
-                    Text(L10n("mobile.access.step.enable.description"))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
             case .starting:
-                stepSection(
-                    number: 2,
-                    title: L10n("mobile.access.step.starting.title"),
-                    icon: "bolt.horizontal.circle.fill",
-                    color: DesignSystem.Colors.info
-                ) {
+                Section(L10n("mobile.access.step.starting.title")) {
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
                         progressRow(L10n("mobile.access.step.starting.server"), isDone: true)
                         progressRow(L10n("mobile.access.step.starting.tunnel"), isDone: false)
@@ -109,12 +86,7 @@ struct MobileAccessSettingsTab: View {
                 }
 
             case .scanQR:
-                stepSection(
-                    number: 2,
-                    title: L10n("mobile.access.step.scan.title"),
-                    icon: "qrcode",
-                    color: DesignSystem.Colors.actionPrimary
-                ) {
+                Section(L10n("mobile.access.step.scan.title")) {
                     if let qrImage = state.qrImage {
                         HStack {
                             Spacer()
@@ -151,15 +123,10 @@ struct MobileAccessSettingsTab: View {
                     }
                 }
 
-                disableSection
+                securitySection
 
             case .connected:
-                stepSection(
-                    number: 3,
-                    title: L10n("mobile.access.step.connected.title"),
-                    icon: "iphone.radiowaves.left.and.right",
-                    color: DesignSystem.Colors.success
-                ) {
+                Section(L10n("mobile.access.step.connected.title")) {
                     if case .connected(let count) = state.connectionState {
                         Label(
                             L10n("mobile.access.state.connected", count),
@@ -173,15 +140,10 @@ struct MobileAccessSettingsTab: View {
                         .foregroundStyle(.secondary)
                 }
 
-                disableSection
+                securitySection
 
             case .error:
-                stepSection(
-                    number: 2,
-                    title: L10n("mobile.access.step.error.title"),
-                    icon: "exclamationmark.triangle.fill",
-                    color: DesignSystem.Colors.error
-                ) {
+                Section(L10n("mobile.access.step.error.title")) {
                     if case .error(let message) = state.connectionState {
                         Text(message)
                             .font(.caption)
@@ -197,8 +159,6 @@ struct MobileAccessSettingsTab: View {
                     }
                     .font(.caption)
                 }
-
-                disableSection
             }
         }
         .formStyle(.grouped)
@@ -211,43 +171,15 @@ struct MobileAccessSettingsTab: View {
         }
     }
 
-    // MARK: - Reusable Step Section
+    // MARK: - Security Section
 
-    private func stepSection<Content: View>(
-        number: Int,
-        title: String,
-        icon: String,
-        color: Color,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-        Section {
-            content()
-        } header: {
-            Label {
-                Text(L10n("mobile.access.step.header", number, title))
-            } icon: {
-                Image(systemName: icon)
-                    .foregroundStyle(color)
-            }
-        }
-    }
-
-    // MARK: - Disable / Security Section
-
-    private var disableSection: some View {
-        Section {
-            Button(L10n("mobile.access.step.disable")) {
-                isEnabled = false
-            }
-            .font(.caption)
-
+    private var securitySection: some View {
+        Section(L10n("mobile.access.security")) {
             Button(L10n("mobile.access.regenerateKey")) {
                 RemoteAccessState.shared.shouldRegenerateKey = true
             }
             .font(.caption)
             .foregroundStyle(DesignSystem.Colors.destructive)
-        } header: {
-            Text(L10n("mobile.access.security"))
         }
     }
 
@@ -272,9 +204,9 @@ struct MobileAccessSettingsTab: View {
     // MARK: - Steps
 
     private enum OnboardingStep {
+        case off
         case checking
         case installCloudflared
-        case ready
         case starting
         case scanQR
         case connected

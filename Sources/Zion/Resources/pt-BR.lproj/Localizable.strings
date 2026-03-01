@@ -1555,7 +1555,7 @@
 "mobile.access.state.waitingForPairing" = "Aguardando pareamento do dispositivo";
 "mobile.access.state.connected" = "%lld dispositivo(s) conectado(s)";
 "mobile.access.qrCode" = "Parear Dispositivo";
-"mobile.access.qrCode.hint" = "Escaneie este QR code com o app Zion no seu iPhone para parear.";
+"mobile.access.qrCode.hint" = "Escaneie este QR code com seu iPhone para parear.";
 "mobile.access.tunnelURL" = "URL do Túnel";
 "mobile.access.security" = "Segurança";
 "mobile.access.regenerateKey" = "Regenerar Chave de Criptografia";
@@ -1563,6 +1563,9 @@
 "mobile.access.requirements" = "Requisitos";
 "mobile.access.cloudflared.notFound" = "cloudflared não encontrado";
 "mobile.access.cloudflared.install" = "Instale o cloudflared para habilitar acesso seguro por túnel. Execute o seguinte comando no terminal:";
+"mobile.access.error.parseFailed" = "Falha ao extrair URL do túnel da saída do cloudflared";
+"mobile.access.error.timeout" = "Tempo esgotado aguardando túnel Cloudflare";
+"mobile.access.error.rateLimited" = "Limite de requisições Cloudflare atingido. Aguarde alguns minutos e tente novamente.";
 "ntfy.event.terminalPromptDetected" = "Prompt detectado no terminal";
 
 // Mobile Access — Onboarding Steps
@@ -1578,7 +1581,7 @@
 "mobile.access.step.starting.tunnel" = "Abrindo túnel Cloudflare";
 "mobile.access.step.starting.qr" = "Gerando código de pareamento";
 "mobile.access.step.scan.title" = "Escaneie para conectar";
-"mobile.access.step.scan.description" = "Abra o app Zion no seu iPhone e escaneie este QR code para parear.";
+"mobile.access.step.scan.description" = "Escaneie este QR code com seu iPhone para parear.";
 "mobile.access.step.connected.title" = "Conectado";
 "mobile.access.step.connected.description" = "Seu celular agora pode ver a saída do terminal, aprovar prompts e enviar comandos.";
 "mobile.access.step.error.title" = "Algo deu errado";

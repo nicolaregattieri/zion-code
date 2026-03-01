@@ -1602,7 +1602,7 @@
 "mobile.access.state.waitingForPairing" = "Waiting for device pairing";
 "mobile.access.state.connected" = "%lld device(s) connected";
 "mobile.access.qrCode" = "Pair Device";
-"mobile.access.qrCode.hint" = "Scan this QR code with the Zion companion app on your iPhone to pair.";
+"mobile.access.qrCode.hint" = "Scan this QR code with your iPhone to pair.";
 "mobile.access.tunnelURL" = "Tunnel URL";
 "mobile.access.security" = "Security";
 "mobile.access.regenerateKey" = "Regenerate Encryption Key";
@@ -1610,6 +1610,9 @@
 "mobile.access.requirements" = "Requirements";
 "mobile.access.cloudflared.notFound" = "cloudflared not found";
 "mobile.access.cloudflared.install" = "Install cloudflared to enable secure tunnel access. Run the following command in your terminal:";
+"mobile.access.error.parseFailed" = "Failed to parse tunnel URL from cloudflared output";
+"mobile.access.error.timeout" = "Timed out waiting for Cloudflare tunnel";
+"mobile.access.error.rateLimited" = "Cloudflare rate limit reached. Wait a few minutes and try again.";
 "ntfy.event.terminalPromptDetected" = "Terminal prompt detected";
 
 // Mobile Access — Onboarding Steps
@@ -1625,7 +1628,7 @@
 "mobile.access.step.starting.tunnel" = "Opening Cloudflare tunnel";
 "mobile.access.step.starting.qr" = "Generating pairing code";
 "mobile.access.step.scan.title" = "Scan to connect";
-"mobile.access.step.scan.description" = "Open the Zion companion app on your iPhone and scan this QR code to pair.";
+"mobile.access.step.scan.description" = "Scan this QR code with your iPhone to pair.";
 "mobile.access.step.connected.title" = "Connected";
 "mobile.access.step.connected.description" = "Your phone can now see terminal output, approve prompts, and send commands.";
 "mobile.access.step.error.title" = "Something went wrong";

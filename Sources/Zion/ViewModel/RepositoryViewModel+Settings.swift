@@ -150,6 +150,9 @@ extension RepositoryViewModel {
         // Mobile Remote Access
         if defaults.object(forKey: "zion.mobileAccess.enabled") != nil {
             isMobileAccessEnabled = defaults.bool(forKey: "zion.mobileAccess.enabled")
+            if isMobileAccessEnabled {
+                enableRemoteAccess()
+            }
         }
     }
 
