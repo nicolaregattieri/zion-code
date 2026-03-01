@@ -24,7 +24,6 @@ final class GitCredentialStore {
         var add = query
         add[kSecValueData as String] = Data(secret.utf8)
         add[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
-        add[kSecUseDataProtectionKeychain as String] = true
 
         let status = SecItemAdd(add as CFDictionary, nil)
         guard status == errSecSuccess else {

@@ -53,7 +53,6 @@ actor AIClient {
         var add = query
         add[kSecValueData as String] = data
         add[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
-        add[kSecUseDataProtectionKeychain as String] = true
         _ = SecItemAdd(add as CFDictionary, nil)
     }
 

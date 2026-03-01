@@ -46,12 +46,14 @@ enum RemoteAccessEncryption {
             kSecAttrAccount as String: pairingKeyAccount,
         ]
 
+        // Delete any existing key first (legacy or Data Protection keychain)
         SecItemDelete(query as CFDictionary)
 
         var add = query
         add[kSecValueData as String] = data
         add[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
-        add[kSecUseDataProtectionKeychain as String] = true
+        // Note: kSecUseDataProtectionKeychain requires App Sandbox entitlement.
+        // Zion is not sandboxed, so we use the legacy keychain.
         _ = SecItemAdd(add as CFDictionary, nil)
     }
 
