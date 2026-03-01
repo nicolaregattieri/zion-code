@@ -77,7 +77,7 @@ struct MobileAccessSettingsTab: View {
                             object: nil
                         )
                     }
-                    .foregroundStyle(.red)
+                    .foregroundStyle(DesignSystem.Colors.destructive)
 
                     Text(L10n("mobile.access.regenerateKey.hint"))
                         .font(.caption)
@@ -87,9 +87,9 @@ struct MobileAccessSettingsTab: View {
 
             if !isCloudflaredInstalled && !isCheckingCloudflared {
                 Section(L10n("mobile.access.requirements")) {
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.standard) {
                         Label(L10n("mobile.access.cloudflared.notFound"), systemImage: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(DesignSystem.Colors.warning)
 
                         Text(L10n("mobile.access.cloudflared.install"))
                             .font(.caption)
@@ -100,7 +100,7 @@ struct MobileAccessSettingsTab: View {
                                 .font(.system(.caption, design: .monospaced))
                                 .padding(6)
                                 .background(.quaternary)
-                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius))
 
                             Button {
                                 NSPasteboard.general.clearContents()
@@ -146,7 +146,7 @@ struct MobileAccessSettingsTab: View {
             .foregroundStyle(DesignSystem.Colors.success)
         case .error(let message):
             Label(message, systemImage: "exclamationmark.triangle.fill")
-                .foregroundStyle(.red)
+                .foregroundStyle(DesignSystem.Colors.error)
         }
     }
 }
