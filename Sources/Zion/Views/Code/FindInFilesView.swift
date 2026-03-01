@@ -121,7 +121,7 @@ struct FindInFilesView: View {
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
                     .background(DesignSystem.Colors.glassBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius))
             }
             HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 Text(L10n("Excluir arquivos"))
@@ -135,7 +135,7 @@ struct FindInFilesView: View {
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
                     .background(DesignSystem.Colors.glassBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius))
             }
         }
     }

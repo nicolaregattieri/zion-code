@@ -199,7 +199,7 @@ private struct PROpenRow: View {
                                 .font(.system(size: 8, weight: .bold))
                                 .padding(.horizontal, 4)
                                 .padding(.vertical, 1)
-                                .background(Color.gray.opacity(0.2))
+                                .background(DesignSystem.Colors.glassHover)
                                 .foregroundStyle(.secondary)
                                 .clipShape(Capsule())
                         }

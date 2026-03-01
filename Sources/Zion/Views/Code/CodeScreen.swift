@@ -1239,7 +1239,7 @@ struct CodeScreen: View {
                 .contentShape(Rectangle())
                 .foregroundStyle(sidebarMode == mode ? .primary : .secondary)
                 .background(sidebarMode == mode ? DesignSystem.Colors.selectionBackground : Color.clear)
-                .clipShape(RoundedRectangle(cornerRadius: 4))
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius))
         }
         .buttonStyle(.plain)
         .help(tooltip)

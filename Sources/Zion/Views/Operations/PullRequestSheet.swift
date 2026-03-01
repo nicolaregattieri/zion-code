@@ -85,7 +85,7 @@ struct PullRequestSheet: View {
                         TextEditor(text: $body_)
                             .font(.system(size: 12, design: .monospaced))
                             .frame(minHeight: 120)
-                            .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius).stroke(Color.secondary.opacity(0.2)))
+                            .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius).stroke(DesignSystem.Colors.glassBorderDark))
                     }
 
                     // Draft toggle

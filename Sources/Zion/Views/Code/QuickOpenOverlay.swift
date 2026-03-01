@@ -88,7 +88,7 @@ struct QuickOpenOverlay: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(.top, 60)
-        .background(Color.black.opacity(0.3))
+        .background(DesignSystem.Colors.shadowDark)
         .contentShape(Rectangle())
         .onTapGesture { isVisible = false }
         .onAppear {

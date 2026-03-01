@@ -66,7 +66,7 @@ struct CommitRowView: View {
                     RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous)
                         .stroke(cardStroke, lineWidth: 1.5)
                 )
-                .shadow(color: isSelected ? Color.accentColor.opacity(0.3) : DesignSystem.Colors.shadowLight, radius: isSelected ? 8 : 4, y: 2)
+                .shadow(color: isSelected ? DesignSystem.Colors.hoverAccent : DesignSystem.Colors.shadowLight, radius: isSelected ? 8 : 4, y: 2)
 
             // Lane color left stripe
             HStack(spacing: 0) {
@@ -180,7 +180,7 @@ struct CommitRowView: View {
                 Text(Self.dateFormatter.string(from: commit.date))
             }
             .font(.system(size: 10, design: .monospaced))
-            .foregroundStyle(Color.secondary.opacity(0.7))
+            .foregroundStyle(DesignSystem.Colors.textTertiary)
 
             if let ins = commit.insertions, let del = commit.deletions, (ins > 0 || del > 0) {
                 HStack(spacing: DesignSystem.Spacing.iconInlineGap) {

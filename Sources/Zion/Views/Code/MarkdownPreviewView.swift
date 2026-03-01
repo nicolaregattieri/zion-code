@@ -78,7 +78,7 @@ struct MarkdownPreviewView: View {
             .background(theme.colors.comment.opacity(theme.isLightAppearance ? 0.12 : 0.2))
             .overlay(
                 RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius)
-                    .stroke(DesignSystem.Colors.glassBorderDark.opacity(0.7), lineWidth: 1)
+                    .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
             )
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
         case .image(let alt, let source):
@@ -395,7 +395,7 @@ private struct MarkdownImageView: View {
         .background(theme.colors.comment.opacity(theme.isLightAppearance ? 0.12 : 0.18))
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius)
-                .stroke(DesignSystem.Colors.glassBorderDark.opacity(0.7), lineWidth: 1)
+                .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
     }
