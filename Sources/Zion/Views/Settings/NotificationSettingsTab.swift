@@ -63,7 +63,7 @@ struct NotificationSettingsTab: View {
                     if !topicInput.isEmpty && !isTopicInputValid {
                         Text("Topico invalido. Use apenas letras, numeros, '.', '_' ou '-' (1-64).")
                             .font(.caption2)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(DesignSystem.Colors.error)
                     }
                 }
 
@@ -115,7 +115,7 @@ struct NotificationSettingsTab: View {
                     if !isServerURLValid {
                         Text("Servidor invalido. Use URL HTTPS valida (ex: https://ntfy.sh).")
                             .font(.caption2)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(DesignSystem.Colors.error)
                     }
                 }
 
@@ -147,7 +147,7 @@ struct NotificationSettingsTab: View {
                     if !isCurrentConfigValid {
                         Text("Corrija topico e servidor para testar notificacoes.")
                             .font(.caption2)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(DesignSystem.Colors.error)
                     }
                 }
 

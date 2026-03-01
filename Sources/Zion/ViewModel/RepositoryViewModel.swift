@@ -88,6 +88,7 @@ final class RepositoryViewModel {
     // Clipboard
     let clipboardMonitor = ClipboardMonitor()
     @ObservationIgnored var terminalSendCallbacks: [UUID: (Data) -> Void] = [:]
+    @ObservationIgnored var terminalScreenReaders: [UUID: () -> [String]] = [:]
 
     // Avatar cache (Gravatar)
     @ObservationIgnored var avatarCache: [String: NSImage] = [:]
@@ -310,6 +311,25 @@ final class RepositoryViewModel {
     }
 
     var isNtfyConfigured: Bool { !ntfyTopic.isEmpty }
+
+    // Mobile Remote Access
+    var isMobileAccessEnabled: Bool = false {
+        didSet { UserDefaults.standard.set(isMobileAccessEnabled, forKey: "zion.mobileAccess.enabled") }
+    }
+    var isMobileAccessLANMode: Bool = false {
+        didSet { UserDefaults.standard.set(isMobileAccessLANMode, forKey: "zion.mobileAccess.lanMode") }
+    }
+    var mobileAccessConnectionState: RemoteAccessConnectionState = .disabled
+    var mobileAccessTunnelURL: String = ""
+    var mobileAccessQRImage: NSImage?
+    var pairedDevices: [PairedDevice] = []
+    @ObservationIgnored var remoteAccessServer: RemoteAccessServer?
+    @ObservationIgnored var tunnelManager: CloudflareTunnelManager?
+    @ObservationIgnored var terminalOutputBuffers: [UUID: [String]] = [:]
+    @ObservationIgnored var screenUpdateDebounceTasks: [UUID: Task<Void, Never>] = [:]
+    @ObservationIgnored var screenUpdateThrottleDeadlines: [UUID: ContinuousClock.Instant] = [:]
+    @ObservationIgnored var heartbeatTask: Task<Void, Never>?
+    @ObservationIgnored var isSwitchingMode = false
 
     // Background repo persistence (terminal sessions + change badges)
     @ObservationIgnored var backgroundRepoStates: [URL: BackgroundRepoState] = [:]

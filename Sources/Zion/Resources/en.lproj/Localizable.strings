@@ -1531,6 +1531,7 @@
 "settings.terminal.autoAppendAIConfig.hint" = "Automatically add Zion instructions to AI config files (CLAUDE.md, .cursorrules, etc.) in your project root. When off, use zion_ai_setup manually.";
 "settings.terminal.selection" = "Selection";
 "settings.terminal.copyOnSelect" = "Copy on Select";
+"recent.active.hint" = "Active session";
 
 // MARK: - Git Hosting Provider
 "hosting.provider.github" = "GitHub";
@@ -1589,3 +1590,51 @@
 "map.prinbox.hosting.title" = "Multi-Provider Support";
 "map.prinbox.hosting.description" = "Works with GitHub, GitLab, and Bitbucket. Provider is auto-detected from your remote URLs.";
 "map.prinbox.hosting.tip1" = "Configure GitLab PAT or Bitbucket credentials in Settings > Git Hosting.";
+
+// MARK: - Mobile Remote Access
+"settings.tab.mobileAccess" = "Mobile";
+"mobile.access.title" = "Mobile Remote Access";
+"mobile.access.enable" = "Enable Mobile Access";
+"mobile.access.description" = "Control your terminal sessions from your iPhone. Approve prompts, send commands, and monitor output remotely over a secure Cloudflare tunnel.";
+"mobile.access.status" = "Connection Status";
+"mobile.access.state.disabled" = "Disabled";
+"mobile.access.state.starting" = "Starting...";
+"mobile.access.state.waitingForPairing" = "Waiting for device pairing";
+"mobile.access.state.connected" = "%lld device(s) connected";
+"mobile.access.qrCode" = "Pair Device";
+"mobile.access.qrCode.hint" = "Scan this QR code with your iPhone to pair.";
+"mobile.access.tunnelURL" = "Tunnel URL";
+"mobile.access.security" = "Security";
+"mobile.access.regenerateKey" = "Regenerate Encryption Key";
+"mobile.access.regenerateKey.hint" = "Generates a new encryption key and invalidates all paired devices. You will need to re-pair.";
+"mobile.access.requirements" = "Requirements";
+"mobile.access.cloudflared.notFound" = "cloudflared not found";
+"mobile.access.cloudflared.install" = "Install cloudflared to enable secure tunnel access. Run the following command in your terminal:";
+"mobile.access.error.parseFailed" = "Failed to parse tunnel URL from cloudflared output";
+"mobile.access.error.timeout" = "Timed out waiting for Cloudflare tunnel";
+"mobile.access.error.rateLimited" = "Cloudflare rate limit reached. Wait a few minutes and try again.";
+"mobile.access.error.keyNotFound" = "Encryption key not found. Try regenerating the pairing key.";
+"mobile.access.lanMode" = "LAN Mode";
+"mobile.access.lanMode.hint" = "Connect over local network (same Wi-Fi) without Cloudflare tunnel. Use for testing or when your phone is on the same network.";
+"ntfy.event.terminalPromptDetected" = "Terminal prompt detected";
+
+// Mobile Access — Onboarding Steps
+"mobile.access.step.header" = "Step %lld — %@";
+"mobile.access.step.checking" = "Checking requirements...";
+"mobile.access.step.install.title" = "Install cloudflared";
+"mobile.access.step.install.description" = "Cloudflare Tunnel creates a secure connection between your Mac and your phone. Install it with Homebrew:";
+"mobile.access.step.install.recheck" = "I've installed it — check again";
+"mobile.access.step.enable.title" = "Turn on Mobile Access";
+"mobile.access.step.enable.description" = "Starts a secure tunnel so your phone can reach this Mac. No ports to open, no router config needed.";
+"mobile.access.step.starting.title" = "Setting up...";
+"mobile.access.step.starting.server" = "Starting local server";
+"mobile.access.step.starting.tunnel" = "Opening Cloudflare tunnel";
+"mobile.access.step.starting.qr" = "Generating pairing code";
+"mobile.access.step.scan.title" = "Scan to connect";
+"mobile.access.step.scan.description" = "Scan this QR code with your iPhone to pair.";
+"mobile.access.step.connected.title" = "Connected";
+"mobile.access.step.connected.description" = "Your phone can now see terminal output, approve prompts, and send commands.";
+"mobile.access.step.error.title" = "Something went wrong";
+"mobile.access.step.error.retry" = "Try again";
+"mobile.access.step.disable" = "Turn off Mobile Access";
+"mobile.access.copy" = "Copy to clipboard";

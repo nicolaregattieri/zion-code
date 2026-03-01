@@ -45,6 +45,8 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
     // AI — Branch Review
     case branchReviewComplete = "branchReviewComplete"
     case prAutoReviewComplete = "prAutoReviewComplete"
+    // Terminal
+    case terminalPromptDetected = "terminalPromptDetected"
 
     var id: String { rawValue }
 
@@ -58,6 +60,8 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
             return .ai
         case .prCreated, .prReviewRequested:
             return .github
+        case .terminalPromptDetected:
+            return .gitOps
         }
     }
 
@@ -78,6 +82,7 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
         case .prReviewRequested: return L10n("ntfy.event.prReviewRequested")
         case .branchReviewComplete: return L10n("ntfy.event.branchReviewComplete")
         case .prAutoReviewComplete: return L10n("ntfy.event.prAutoReviewComplete")
+        case .terminalPromptDetected: return L10n("ntfy.event.terminalPromptDetected")
         }
     }
 
@@ -98,6 +103,7 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
         case .prReviewRequested: return 4
         case .branchReviewComplete: return 4
         case .prAutoReviewComplete: return 4
+        case .terminalPromptDetected: return 5
         }
     }
 
@@ -118,6 +124,7 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
         case .prReviewRequested: return "eyes"
         case .branchReviewComplete: return "mag"
         case .prAutoReviewComplete: return "mag"
+        case .terminalPromptDetected: return "bell"
         }
     }
 
@@ -126,7 +133,8 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
     var isUserConfigurable: Bool {
         switch self {
         case .newRemoteCommits,
-             .prCreated, .prReviewRequested, .prAutoReviewComplete:
+             .prCreated, .prReviewRequested, .prAutoReviewComplete,
+             .terminalPromptDetected:
             return true
         case .cloneComplete, .pushComplete, .pullComplete,
              .codeReviewComplete, .branchReviewComplete,
@@ -140,7 +148,8 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .cloneComplete, .pushComplete, .pullComplete, .newRemoteCommits,
              .codeReviewComplete, .conflictResolutionReady, .prCreated,
-             .prReviewRequested, .branchReviewComplete, .prAutoReviewComplete:
+             .prReviewRequested, .branchReviewComplete, .prAutoReviewComplete,
+             .terminalPromptDetected:
             return true
         case .commitMessageReady, .changelogReady, .blameExplanationReady,
              .diffExplanationReady, .commitSplitReady:

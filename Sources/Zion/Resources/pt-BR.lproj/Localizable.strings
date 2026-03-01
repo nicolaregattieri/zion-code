@@ -1484,6 +1484,7 @@
 "settings.terminal.autoAppendAIConfig.hint" = "Adiciona automaticamente instruções do Zion em arquivos de configuração IA (CLAUDE.md, .cursorrules, etc.) no root do projeto. Quando desativado, use zion_ai_setup manualmente.";
 "settings.terminal.selection" = "Seleção";
 "settings.terminal.copyOnSelect" = "Copiar ao Selecionar";
+"recent.active.hint" = "Sessão ativa";
 
 // MARK: - Git Hosting Provider
 "hosting.provider.github" = "GitHub";
@@ -1542,3 +1543,51 @@
 "map.prinbox.hosting.title" = "Suporte Multi-Provedor";
 "map.prinbox.hosting.description" = "Funciona com GitHub, GitLab e Bitbucket. O provedor é detectado automaticamente pelas URLs dos seus remotos.";
 "map.prinbox.hosting.tip1" = "Configure o PAT do GitLab ou credenciais do Bitbucket em Configurações > Git Hosting.";
+
+// MARK: - Mobile Remote Access
+"settings.tab.mobileAccess" = "Mobile";
+"mobile.access.title" = "Acesso Remoto Mobile";
+"mobile.access.enable" = "Ativar Acesso Mobile";
+"mobile.access.description" = "Controle suas sessões de terminal pelo iPhone. Aprove prompts, envie comandos e monitore a saída remotamente por um túnel Cloudflare seguro.";
+"mobile.access.status" = "Status da Conexão";
+"mobile.access.state.disabled" = "Desativado";
+"mobile.access.state.starting" = "Iniciando...";
+"mobile.access.state.waitingForPairing" = "Aguardando pareamento do dispositivo";
+"mobile.access.state.connected" = "%lld dispositivo(s) conectado(s)";
+"mobile.access.qrCode" = "Parear Dispositivo";
+"mobile.access.qrCode.hint" = "Escaneie este QR code com seu iPhone para parear.";
+"mobile.access.tunnelURL" = "URL do Túnel";
+"mobile.access.security" = "Segurança";
+"mobile.access.regenerateKey" = "Regenerar Chave de Criptografia";
+"mobile.access.regenerateKey.hint" = "Gera uma nova chave de criptografia e invalida todos os dispositivos pareados. Será necessário parear novamente.";
+"mobile.access.requirements" = "Requisitos";
+"mobile.access.cloudflared.notFound" = "cloudflared não encontrado";
+"mobile.access.cloudflared.install" = "Instale o cloudflared para habilitar acesso seguro por túnel. Execute o seguinte comando no terminal:";
+"mobile.access.error.parseFailed" = "Falha ao extrair URL do túnel da saída do cloudflared";
+"mobile.access.error.timeout" = "Tempo esgotado aguardando túnel Cloudflare";
+"mobile.access.error.rateLimited" = "Limite de requisições Cloudflare atingido. Aguarde alguns minutos e tente novamente.";
+"mobile.access.error.keyNotFound" = "Chave de criptografia não encontrada. Tente regenerar a chave de pareamento.";
+"mobile.access.lanMode" = "Modo LAN";
+"mobile.access.lanMode.hint" = "Conectar pela rede local (mesmo Wi-Fi) sem túnel Cloudflare. Use para testes ou quando o celular está na mesma rede.";
+"ntfy.event.terminalPromptDetected" = "Prompt detectado no terminal";
+
+// Mobile Access — Onboarding Steps
+"mobile.access.step.header" = "Passo %lld — %@";
+"mobile.access.step.checking" = "Verificando requisitos...";
+"mobile.access.step.install.title" = "Instalar cloudflared";
+"mobile.access.step.install.description" = "O Cloudflare Tunnel cria uma conexão segura entre seu Mac e seu celular. Instale com Homebrew:";
+"mobile.access.step.install.recheck" = "Já instalei — verificar novamente";
+"mobile.access.step.enable.title" = "Ativar Acesso Mobile";
+"mobile.access.step.enable.description" = "Inicia um túnel seguro para seu celular acessar este Mac. Sem portas para abrir, sem configurar roteador.";
+"mobile.access.step.starting.title" = "Configurando...";
+"mobile.access.step.starting.server" = "Iniciando servidor local";
+"mobile.access.step.starting.tunnel" = "Abrindo túnel Cloudflare";
+"mobile.access.step.starting.qr" = "Gerando código de pareamento";
+"mobile.access.step.scan.title" = "Escaneie para conectar";
+"mobile.access.step.scan.description" = "Escaneie este QR code com seu iPhone para parear.";
+"mobile.access.step.connected.title" = "Conectado";
+"mobile.access.step.connected.description" = "Seu celular agora pode ver a saída do terminal, aprovar prompts e enviar comandos.";
+"mobile.access.step.error.title" = "Algo deu errado";
+"mobile.access.step.error.retry" = "Tentar novamente";
+"mobile.access.step.disable" = "Desativar Acesso Mobile";
+"mobile.access.copy" = "Copiar para área de transferência";
