@@ -178,6 +178,80 @@ final class GraphLayoutTests: XCTestCase {
         XCTAssertTrue(layout.isEmpty)
     }
 
+    // MARK: - Main Chain Lane 0 Enforcement
+
+    func testMainChainStaysAtLaneZeroThroughSequentialMerges() {
+        // Topology (newest first):
+        //   merge3 ---> merge2 ---> merge1 ---> base
+        //     \            \            \
+        //   feat-c       feat-b       feat-a
+        //     |            |            |
+        //   feat-c-base  feat-b-base  base (fork point)
+        //
+        // feat-c forks from merge1 (not merge2), so when processing feat-c-base's
+        // parent reservation, merge1 could get displaced from lane 0.
+        let commits = [
+            makeCommit(hash: "merge3", parents: ["merge2", "feat-c"], decorations: ["HEAD -> main"]),
+            makeCommit(hash: "feat-c", parents: ["feat-c-base"], decorations: ["feature-c"]),
+            makeCommit(hash: "feat-c-base", parents: ["merge1"]),
+            makeCommit(hash: "merge2", parents: ["merge1", "feat-b"], decorations: []),
+            makeCommit(hash: "feat-b", parents: ["feat-b-base"], decorations: ["feature-b"]),
+            makeCommit(hash: "feat-b-base", parents: ["base"]),
+            makeCommit(hash: "merge1", parents: ["base", "feat-a"], decorations: []),
+            makeCommit(hash: "feat-a", parents: ["base"], decorations: ["feature-a"]),
+            makeCommit(hash: "base", parents: []),
+        ]
+        let mainChain = GitGraphLaneCalculator.mainFirstParentChain(from: commits)
+        let layout = calculator.layout(for: commits, mainChain: mainChain)
+        let layoutByID = Dictionary(uniqueKeysWithValues: layout.map { ($0.id, $0) })
+
+        // Every main-chain commit must be at lane 0
+        let mainHashes = ["merge3", "merge2", "merge1", "base"]
+        for hash in mainHashes {
+            XCTAssertEqual(layoutByID[hash]?.lane, 0, "\(hash) should be at lane 0")
+        }
+
+        // Feature commits must NOT be at lane 0
+        let featureHashes = ["feat-c", "feat-c-base", "feat-b", "feat-b-base", "feat-a"]
+        for hash in featureHashes {
+            XCTAssertNotEqual(layoutByID[hash]?.lane, 0, "\(hash) should not be at lane 0")
+        }
+    }
+
+    func testMainChainLaneZeroWithLongLivedBranch() {
+        // Long-lived branch with multiple commits between merge points:
+        //   merge ---> m3 ---> m2 ---> m1 ---> base
+        //     \
+        //   f5 -> f4 -> f3 -> f2 -> f1
+        //                              \
+        //                             base (fork)
+        let commits = [
+            makeCommit(hash: "merge", parents: ["m3", "f5"], decorations: ["HEAD -> main"]),
+            makeCommit(hash: "f5", parents: ["f4"], decorations: ["long-lived"]),
+            makeCommit(hash: "f4", parents: ["f3"]),
+            makeCommit(hash: "f3", parents: ["f2"]),
+            makeCommit(hash: "m3", parents: ["m2"]),
+            makeCommit(hash: "f2", parents: ["f1"]),
+            makeCommit(hash: "m2", parents: ["m1"]),
+            makeCommit(hash: "f1", parents: ["base"]),
+            makeCommit(hash: "m1", parents: ["base"]),
+            makeCommit(hash: "base", parents: []),
+        ]
+        let mainChain = GitGraphLaneCalculator.mainFirstParentChain(from: commits)
+        let layout = calculator.layout(for: commits, mainChain: mainChain)
+        let layoutByID = Dictionary(uniqueKeysWithValues: layout.map { ($0.id, $0) })
+
+        // All main-chain commits at lane 0
+        for hash in ["merge", "m3", "m2", "m1", "base"] {
+            XCTAssertEqual(layoutByID[hash]?.lane, 0, "\(hash) should be at lane 0")
+        }
+
+        // All main-chain commits share color key 0
+        for hash in ["merge", "m3", "m2", "m1", "base"] {
+            XCTAssertEqual(layoutByID[hash]?.nodeColorKey, 0, "\(hash) should have colorKey 0")
+        }
+    }
+
     // MARK: - Lane Colors
 
     func testLayoutProducesLaneColors() {

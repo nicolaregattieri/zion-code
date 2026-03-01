@@ -161,18 +161,61 @@ struct GitGraphLaneCalculator {
         return rows
     }
 
+    /// Ensures a main-chain hash occupies lane 0 by relocating whatever is currently there.
+    private func evictToLane0(
+        _ hash: String,
+        hashes: inout [String?],
+        colorKeys: inout [Int?]
+    ) -> Int {
+        ensureCapacity(0, hashes: &hashes, colorKeys: &colorKeys)
+
+        // Already at lane 0 — nothing to do
+        if hashes[0] == hash {
+            return 0
+        }
+
+        // Find the lane this hash currently occupies (if any) so we can relocate the occupant there
+        let previousLane = hashes.firstIndex(where: { $0 == hash })
+
+        if let occupant = hashes[0] {
+            // Lane 0 is occupied by another hash — relocate it
+            let targetLane: Int
+            if let previousLane {
+                // Swap: put the occupant where the main-chain hash was
+                targetLane = previousLane
+            } else {
+                // Main-chain hash wasn't reserved yet — find a new lane for the occupant
+                targetLane = firstAvailableLane(preferred: 1, hashes: &hashes, colorKeys: &colorKeys)
+            }
+            hashes[targetLane] = occupant
+            colorKeys[targetLane] = colorKeys[0]
+        }
+
+        // Clear the previous lane if the main-chain hash was already reserved elsewhere
+        if let previousLane {
+            hashes[previousLane] = nil
+            colorKeys[previousLane] = nil
+        }
+
+        // Place the main-chain hash at lane 0
+        hashes[0] = hash
+        return 0
+    }
+
     private func laneForCommit(
         _ hash: String,
         isMainChain: Bool,
         hashes: inout [String?],
         colorKeys: inout [Int?]
     ) -> Int {
+        if isMainChain {
+            return evictToLane0(hash, hashes: &hashes, colorKeys: &colorKeys)
+        }
         if let existing = hashes.firstIndex(where: { $0 == hash }) {
             return existing
         }
-        // Main-chain commits prefer lane 0; non-main commits prefer lane 1+ to leave room
-        let preferred = isMainChain ? 0 : 1
-        return firstAvailableLane(preferred: preferred, hashes: &hashes, colorKeys: &colorKeys)
+        // Non-main commits prefer lane 1+ to leave room
+        return firstAvailableLane(preferred: 1, hashes: &hashes, colorKeys: &colorKeys)
     }
 
     private func consumeCommitIfReserved(
@@ -198,14 +241,22 @@ struct GitGraphLaneCalculator {
         colorKeyByHash: inout [String: Int],
         nextColorKey: inout Int
     ) -> (lane: Int, colorKey: Int) {
+        let isMain = mainChain.contains(hash)
+
         if let existing = hashes.firstIndex(where: { $0 == hash }) {
-            // For main-chain commits, always use pre-assigned color 0 regardless of what a feature branch set
-            let isMain = mainChain.contains(hash)
+            // Main-chain commit already reserved at wrong lane — evict to lane 0
+            let lane: Int
+            if isMain && existing != 0 {
+                lane = evictToLane0(hash, hashes: &hashes, colorKeys: &colorKeys)
+            } else {
+                lane = existing
+            }
+
             let colorKey: Int
             if isMain, let mainColor = colorKeyByHash[hash] {
                 colorKey = mainColor
             } else {
-                colorKey = colorKeys[existing]
+                colorKey = colorKeys[lane]
                     ?? colorKeyByHash[hash]
                     ?? assignedColorKey(
                         for: hash,
@@ -215,11 +266,16 @@ struct GitGraphLaneCalculator {
                     )
             }
 
-            colorKeys[existing] = colorKey
-            return (existing, colorKey)
+            colorKeys[lane] = colorKey
+            return (lane, colorKey)
         }
 
-        let lane = firstAvailableLane(preferred: preferred, hashes: &hashes, colorKeys: &colorKeys)
+        let lane: Int
+        if isMain {
+            lane = evictToLane0(hash, hashes: &hashes, colorKeys: &colorKeys)
+        } else {
+            lane = firstAvailableLane(preferred: preferred, hashes: &hashes, colorKeys: &colorKeys)
+        }
         let colorKey = assignedColorKey(
             for: hash,
             preferredColorKey: preferredColorKey,
