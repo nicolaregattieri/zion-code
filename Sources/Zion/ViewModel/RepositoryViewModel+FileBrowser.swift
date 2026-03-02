@@ -29,6 +29,9 @@ extension RepositoryViewModel {
     }
 
     func reloadExpandedDirectories() {
+        guard !_isReloadingExpandedDirs else { return }
+        _isReloadingExpandedDirs = true
+        defer { _isReloadingExpandedDirs = false }
         for path in expandedPaths {
             loadChildrenIfNeeded(for: path)
         }

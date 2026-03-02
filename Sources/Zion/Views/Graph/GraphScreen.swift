@@ -11,6 +11,8 @@ struct GraphScreen: View {
     @State private var currentMatchIndex: Int = 0
     @State private var searchMatchIDs: [String] = []
     @State private var searchMatchIDSet: Set<String> = []
+    @State private var aiMatchIDSet: Set<String> = []
+    @State private var searchDebounceTask: Task<Void, Never>?
     @State private var isShowingQuickCommit: Bool = false
     @State private var isShowingCreateBranchFromPending: Bool = false
     @State private var pendingBranchNameInput: String = ""
@@ -86,9 +88,14 @@ struct GraphScreen: View {
                 }
             }
             .onChange(of: commitSearchQuery) { _, _ in
-                updateSearchMatches()
-                if !searchMatchIDs.isEmpty {
-                    scrollToMatch(id: searchMatchIDs[0], proxy: proxy)
+                searchDebounceTask?.cancel()
+                searchDebounceTask = Task {
+                    try? await Task.sleep(nanoseconds: 150_000_000)
+                    guard !Task.isCancelled else { return }
+                    updateSearchMatches()
+                    if !searchMatchIDs.isEmpty {
+                        scrollToMatch(id: searchMatchIDs[0], proxy: proxy)
+                    }
                 }
             }
             .onChange(of: model.uncommittedChanges) { _, changes in
@@ -109,7 +116,7 @@ struct GraphScreen: View {
         GlassCard(spacing: 8) {
             CardHeader(L10n("Worktrees"), icon: "square.split.2x2") {
                 Text("\(model.worktrees.count)")
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .font(DesignSystem.Typography.monoLabelBold)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
                     .background(DesignSystem.Colors.glassSubtle)
@@ -190,7 +197,7 @@ struct GraphScreen: View {
     private func actionButtonSmall(title: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
-                Image(systemName: icon).font(.system(size: 10, weight: .bold))
+                Image(systemName: icon).font(DesignSystem.Typography.labelBold)
                 Text(L10n(title)).font(.system(size: 10, weight: .semibold))
             }
             .foregroundStyle(color)
@@ -232,9 +239,9 @@ struct GraphScreen: View {
                 if !commitSearchQuery.isEmpty {
                     Button { commitSearchQuery = ""; model.clearSemanticSearch() } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).cursorArrow().help(L10n("Limpar busca")).accessibilityLabel(L10n("Limpar busca"))
                     if !model.isSemanticSearchActive && !searchMatchIDs.isEmpty {
-                        Text("\(currentMatchIndex + 1)/\(searchMatchIDs.count)").font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundStyle(.secondary)
+                        Text("\(currentMatchIndex + 1)/\(searchMatchIDs.count)").font(DesignSystem.Typography.monoLabelBold).foregroundStyle(.secondary)
                     } else if !model.aiSemanticSearchResults.isEmpty {
-                        Text("\(model.aiSemanticSearchResults.count) \(L10n("resultados"))").font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundStyle(DesignSystem.Colors.semanticSearch)
+                        Text("\(model.aiSemanticSearchResults.count) \(L10n("resultados"))").font(DesignSystem.Typography.monoLabelBold).foregroundStyle(DesignSystem.Colors.semanticSearch)
                     }
                 }
             }
@@ -277,7 +284,7 @@ struct GraphScreen: View {
     private func commitListPane(proxy: ScrollViewProxy) -> some View {
         GlassCard(spacing: 0) {
             CardHeader(L10n("Commits"), icon: "list.bullet") {
-                Text("\(model.commits.count) \(L10n("itens"))").font(.caption).foregroundStyle(.secondary)
+                Text("\(model.commits.count) \(L10n("itens"))").font(DesignSystem.Typography.label).foregroundStyle(.secondary)
             }
             .padding(.horizontal, 12).padding(.top, 12).padding(.bottom, 8)
             Divider()
@@ -298,7 +305,7 @@ struct GraphScreen: View {
                             CommitRowView(
                                 commit: commit,
                                 isSelected: model.selectedCommitID == commit.id,
-                                isSearchMatch: searchMatchIDSet.contains(commit.id) || model.aiSemanticSearchResults.contains(where: { commit.shortHash.hasPrefix($0) || commit.id.hasPrefix($0) }),
+                                isSearchMatch: searchMatchIDSet.contains(commit.id) || aiMatchIDSet.contains(commit.id),
                                 searchQuery: commitSearchQuery,
                                 laneCount: model.maxLaneCount,
                                 currentBranch: model.currentBranch,
@@ -432,8 +439,8 @@ struct GraphScreen: View {
                     Image(systemName: "pencil.circle.fill").font(.title2).foregroundStyle(DesignSystem.Colors.warning.opacity(0.8))
 
                     VStack(alignment: .leading, spacing: 0) {
-                        Text(L10n("Alteracoes Pendentes")).font(.system(size: 13, weight: .bold)).foregroundStyle(.primary.opacity(0.9))
-                        Text("\(model.uncommittedCount) \(L10n("arquivos modificados"))").font(.system(size: 10)).foregroundStyle(.secondary)
+                        Text(L10n("Alteracoes Pendentes")).font(DesignSystem.Typography.sectionTitle).foregroundStyle(.primary.opacity(0.9))
+                        Text("\(model.uncommittedCount) \(L10n("arquivos modificados"))").font(DesignSystem.Typography.label).foregroundStyle(.secondary)
                     }
 
                     Spacer()
@@ -450,7 +457,7 @@ struct GraphScreen: View {
                         .sheet(isPresented: $isShowingQuickCommit) {
                             VStack(alignment: .leading, spacing: 16) {
                                 Text(L10n("Criar Commit Rapido")).font(.title3.bold())
-                                Text(L10n("Suas alteracoes serao rastreadas automaticamente (git add -A).")).font(.caption).foregroundStyle(.secondary)
+                                Text(L10n("Suas alteracoes serao rastreadas automaticamente (git add -A).")).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
 
                                 HStack(alignment: .bottom, spacing: 8) {
                                     ZStack(alignment: .topLeading) {
@@ -483,7 +490,7 @@ struct GraphScreen: View {
                                         if model.isGeneratingAIMessage {
                                             ProgressView().controlSize(.small).frame(width: 12, height: 12)
                                         } else {
-                                            Image(systemName: "sparkles").font(.system(size: 12))
+                                            Image(systemName: "sparkles").font(DesignSystem.Typography.body)
                                         }
                                     }
                                     .buttonStyle(.bordered)
@@ -502,9 +509,9 @@ struct GraphScreen: View {
                                 if model.aiQuotaExceeded {
                                     HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                                         Image(systemName: "exclamationmark.triangle.fill")
-                                            .font(.system(size: 10))
+                                            .font(DesignSystem.Typography.label)
                                         Text(L10n("Cota da API excedida. Usando sugestao local."))
-                                            .font(.system(size: 10, weight: .medium))
+                                            .font(DesignSystem.Typography.labelMedium)
                                     }
                                     .foregroundStyle(DesignSystem.Colors.warning)
                                     .padding(.top, -8)
@@ -544,7 +551,7 @@ struct GraphScreen: View {
                                 Text(L10n("pending.createBranchHere"))
                                     .font(.title3.bold())
                                 Text(L10n("pending.createBranchHere.subtitle"))
-                                    .font(.caption)
+                                    .font(DesignSystem.Typography.label)
                                     .foregroundStyle(.secondary)
 
                                 TextField(L10n("pending.createBranch.placeholder"), text: $pendingBranchNameInput)
@@ -621,7 +628,7 @@ struct GraphScreen: View {
                                 Text(L10n("Stash"))
                                 if !model.stashes.isEmpty {
                                     Text("\(model.stashes.count)")
-                                        .font(.system(size: 9, weight: .bold))
+                                        .font(DesignSystem.Typography.metaBold)
                                         .padding(.horizontal, 4)
                                         .background(DesignSystem.Colors.info.opacity(0.5))
                                         .clipShape(Capsule())
@@ -670,7 +677,7 @@ struct GraphScreen: View {
                                         ForEach(model.stashes, id: \.self) { stash in
                                             HStack {
                                                 VStack(alignment: .leading, spacing: 2) {
-                                                    Text(stash).font(.system(size: 12, design: .monospaced)).lineLimit(2)
+                                                    Text(stash).font(DesignSystem.Typography.monoBody).lineLimit(2)
                                                 }
                                                 Spacer()
                                                 HStack(spacing: DesignSystem.Spacing.iconTextGap) {
@@ -855,6 +862,20 @@ struct GraphScreen: View {
         searchMatchIDs = priority1 + priority2 + priority3
         searchMatchIDSet = Set(searchMatchIDs)
         if currentMatchIndex >= searchMatchIDs.count { currentMatchIndex = 0 }
+
+        // Pre-compute AI semantic search matches as a Set for O(1) lookup
+        let aiResults = model.aiSemanticSearchResults
+        if aiResults.isEmpty {
+            aiMatchIDSet = []
+        } else {
+            var idSet = Set<String>()
+            for commit in model.commits {
+                if aiResults.contains(where: { commit.shortHash.hasPrefix($0) || commit.id.hasPrefix($0) }) {
+                    idSet.insert(commit.id)
+                }
+            }
+            aiMatchIDSet = idSet
+        }
     }
     
     private func navigateSearch(direction: Int, proxy: ScrollViewProxy) {
@@ -899,7 +920,7 @@ struct GraphScreen: View {
                                         .frame(width: 10, height: 10)
                                 } else {
                                     Image(systemName: "sparkles")
-                                        .font(.system(size: 10, weight: .bold))
+                                        .font(DesignSystem.Typography.labelBold)
                                 }
                             }
                             .buttonStyle(.plain)
@@ -911,7 +932,7 @@ struct GraphScreen: View {
 
                         if model.cachedReviewFindings(for: selectedCommitID) != nil {
                             Text(L10n("graph.commit.review.cached"))
-                                .font(.system(size: 9, weight: .bold))
+                                .font(DesignSystem.Typography.metaBold)
                                 .padding(.horizontal, 5)
                                 .padding(.vertical, 2)
                                 .background(DesignSystem.Colors.glassSubtle)
@@ -1016,7 +1037,7 @@ struct GraphScreen: View {
                     if model.isAIConfigured && !model.uncommittedChanges.isEmpty {
                         Button { model.summarizePendingChanges() } label: {
                             Image(systemName: "sparkles")
-                                .font(.system(size: 11))
+                                .font(DesignSystem.Typography.bodySmall)
                                 .foregroundStyle(DesignSystem.Colors.ai)
                         }
                         .buttonStyle(.plain)
@@ -1034,7 +1055,7 @@ struct GraphScreen: View {
                 HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                     ProgressView().controlSize(.small)
                     Text(L10n("Analisando mudancas..."))
-                        .font(.system(size: 11))
+                        .font(DesignSystem.Typography.bodySmall)
                         .foregroundStyle(.secondary)
                 }
                 .padding(.horizontal, 12)
@@ -1043,10 +1064,10 @@ struct GraphScreen: View {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                         Image(systemName: "sparkles")
-                            .font(.system(size: 10))
+                            .font(DesignSystem.Typography.label)
                             .foregroundStyle(DesignSystem.Colors.ai)
                         Text(model.aiPendingChangesSummary)
-                            .font(.system(size: 11))
+                            .font(DesignSystem.Typography.bodySmall)
                             .foregroundStyle(.secondary)
                             .lineLimit(3)
                         Spacer()
@@ -1055,7 +1076,7 @@ struct GraphScreen: View {
                         model.commitMessageInput = model.aiPendingChangesSummary
                     } label: {
                         Label(L10n("Usar como mensagem de commit"), systemImage: "text.insert")
-                            .font(.system(size: 10))
+                            .font(DesignSystem.Typography.label)
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
@@ -1068,8 +1089,8 @@ struct GraphScreen: View {
             if model.uncommittedChanges.isEmpty {
                 VStack(spacing: 12) {
                     Image(systemName: "checkmark.circle.fill").font(.system(size: 32)).foregroundStyle(DesignSystem.Colors.success.opacity(0.6))
-                    Text(L10n("Tudo limpo!")).font(.headline)
-                    Text(L10n("Nenhuma alteração pendente no momento.")).font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                    Text(L10n("Tudo limpo!")).font(DesignSystem.Typography.sheetTitle)
+                    Text(L10n("Nenhuma alteração pendente no momento.")).font(DesignSystem.Typography.label).foregroundStyle(.secondary).multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity).padding(20)
             } else {
@@ -1091,7 +1112,7 @@ struct GraphScreen: View {
             model.selectChangeFile(file)
         } label: {
             HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
-                inlineStatusIcon(index: indexStatus, worktree: workTreeStatus).font(.system(size: 14))
+                inlineStatusIcon(index: indexStatus, worktree: workTreeStatus).font(DesignSystem.Typography.bodyLarge)
                 Text(file).font(.system(size: 12, weight: isSelected ? .bold : .regular, design: .monospaced)).lineLimit(1).truncationMode(.middle)
                 Spacer()
                 if indexStatus != " " && indexStatus != "?" {
@@ -1172,7 +1193,7 @@ struct GraphScreen: View {
         } else {
             backgroundColor = Color.clear; textColor = .primary.opacity(0.8)
         }
-        return Text(line).font(.system(size: 12, design: .monospaced)).padding(.horizontal, 8).padding(.vertical, 1)
+        return Text(line).font(DesignSystem.Typography.monoBody).padding(.horizontal, 8).padding(.vertical, 1)
             .frame(maxWidth: .infinity, alignment: .leading).background(backgroundColor).foregroundStyle(textColor)
     }
 
@@ -1257,14 +1278,14 @@ private struct WorktreePill: View {
                     .fill(statusColor)
                     .frame(width: 6, height: 6)
                 Text("\(dirtyCount)")
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .font(DesignSystem.Typography.monoLabelBold)
                 if hasConflicts {
                     Text("⚠")
-                        .font(.system(size: 10, weight: .bold))
+                        .font(DesignSystem.Typography.labelBold)
                 }
                 if isCurrent {
                     Text("*")
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .font(DesignSystem.Typography.monoLabelBold)
                 }
             }
             .padding(.horizontal, 10)
