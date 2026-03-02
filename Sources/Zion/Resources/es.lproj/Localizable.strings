@@ -1625,6 +1625,7 @@
 "mobile.access.security" = "Seguridad";
 "mobile.access.regenerateKey" = "Regenerar Clave de Encriptación";
 "mobile.access.regenerateKey.hint" = "Genera una nueva clave de encriptación e invalida todos los dispositivos emparejados. Necesitarás emparejar nuevamente.";
+"mobile.access.regenerateKey.confirm" = "Regenerar";
 "mobile.access.requirements" = "Requisitos";
 "mobile.access.cloudflared.notFound" = "cloudflared no encontrado";
 "mobile.access.cloudflared.install" = "Instala cloudflared para habilitar acceso seguro por túnel. Ejecuta el siguiente comando en tu terminal:";

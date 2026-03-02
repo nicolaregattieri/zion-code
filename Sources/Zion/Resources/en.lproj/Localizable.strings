@@ -1609,6 +1609,7 @@
 "mobile.access.security" = "Security";
 "mobile.access.regenerateKey" = "Regenerate Encryption Key";
 "mobile.access.regenerateKey.hint" = "Generates a new encryption key and invalidates all paired devices. You will need to re-pair.";
+"mobile.access.regenerateKey.confirm" = "Regenerate";
 "mobile.access.requirements" = "Requirements";
 "mobile.access.cloudflared.notFound" = "cloudflared not found";
 "mobile.access.cloudflared.install" = "Install cloudflared to enable secure tunnel access. Run the following command in your terminal:";

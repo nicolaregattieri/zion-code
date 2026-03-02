@@ -1562,6 +1562,7 @@
 "mobile.access.security" = "Segurança";
 "mobile.access.regenerateKey" = "Regenerar Chave de Criptografia";
 "mobile.access.regenerateKey.hint" = "Gera uma nova chave de criptografia e invalida todos os dispositivos pareados. Será necessário parear novamente.";
+"mobile.access.regenerateKey.confirm" = "Regenerar";
 "mobile.access.requirements" = "Requisitos";
 "mobile.access.cloudflared.notFound" = "cloudflared não encontrado";
 "mobile.access.cloudflared.install" = "Instale o cloudflared para habilitar acesso seguro por túnel. Execute o seguinte comando no terminal:";

@@ -4,6 +4,7 @@ struct MobileAccessSettingsTab: View {
     @AppStorage("zion.mobileAccess.enabled") private var isEnabled: Bool = false
     @AppStorage("zion.mobileAccess.lanMode") private var isLANMode: Bool = false
     @AppStorage("zion.mobileAccess.keepAwakeDuration") private var keepAwakeDuration: String = "off"
+    @State private var showRegenerateConfirm = false
 
     private var state: RemoteAccessState { RemoteAccessState.shared }
 
@@ -219,10 +220,21 @@ struct MobileAccessSettingsTab: View {
     private var securitySection: some View {
         Section(L10n("mobile.access.security")) {
             Button(L10n("mobile.access.regenerateKey")) {
-                RemoteAccessState.shared.shouldRegenerateKey = true
+                showRegenerateConfirm = true
             }
             .font(DesignSystem.Typography.label)
             .foregroundStyle(DesignSystem.Colors.destructive)
+            .alert(
+                L10n("mobile.access.regenerateKey"),
+                isPresented: $showRegenerateConfirm
+            ) {
+                Button(L10n("Cancelar"), role: .cancel) {}
+                Button(L10n("mobile.access.regenerateKey.confirm"), role: .destructive) {
+                    RemoteAccessState.shared.shouldRegenerateKey = true
+                }
+            } message: {
+                Text(L10n("mobile.access.regenerateKey.hint"))
+            }
         }
     }
 
