@@ -52,7 +52,7 @@ enum Constants {
         static let pairingTokenTTLSeconds: Int = 300
         static let maxConcurrentConnections = 2
         static let maxMessagesPerSecond = 20
-        static let screenUpdateDebounceNanoseconds: UInt64 = 200_000_000
+        static let screenUpdateDebounceNanoseconds: UInt64 = 500_000_000
         static let aes256KeyByteLength = 32
         static let qrCodeSize: CGFloat = 200
         static let httpRequestBufferSize = 8192

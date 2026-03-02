@@ -131,6 +131,7 @@ extension RepositoryViewModel {
         mobileAccessTunnelURL = ""
         mobileAccessQRImage = nil
         terminalOutputBuffers.removeAll()
+        terminalLastSentRows.removeAll()
         hasEnsuredRemoteTerminals = false
         PromptDetector.resetDedup()
         syncRemoteAccessState()
@@ -487,7 +488,8 @@ extension RepositoryViewModel {
     // MARK: - Sending Messages
 
     private func sendAllScreenUpdates() {
-        // Send a fresh screen snapshot for every active session
+        // Clear last-sent rows so new client gets a full snapshot
+        terminalLastSentRows.removeAll()
         let sessionIDs = Array(terminalOutputBuffers.keys)
         for sessionID in sessionIDs {
             Task { await sendScreenUpdate(for: sessionID) }
@@ -535,6 +537,10 @@ extension RepositoryViewModel {
 
     private func sendScreenUpdate(for sessionID: UUID) async {
         let payload = buildScreenUpdate(for: sessionID)
+
+        // Skip if nothing changed (diff produced empty data)
+        if payload.data.isEmpty { return }
+
         guard let payloadData = try? JSONEncoder().encode(payload) else { return }
 
         let message = RemoteMessage(
@@ -633,18 +639,51 @@ extension RepositoryViewModel {
     }
 
     func buildScreenUpdate(for sessionID: UUID) -> ScreenUpdatePayload {
-        // Read the terminal's current visible screen with full ANSI formatting
-        let screenData: Data
-        if let terminal = terminalForSession(sessionID) {
-            screenData = serializeTerminalScreen(terminal: terminal)
-        } else {
-            screenData = Data()
+        guard let terminal = terminalForSession(sessionID) else {
+            return ScreenUpdatePayload(
+                sessionID: sessionID, data: "", fullSync: true,
+                hasPrompt: false, promptText: nil
+            )
         }
+
+        // Serialize each row independently for diff comparison
+        let rows = terminal.rows
+        let cols = terminal.cols
+        var currentRows: [String] = []
+        for row in 0..<rows {
+            if let line = terminal.getLine(row: row) {
+                currentRows.append(serializeBufferLine(line, cols: cols, terminal: terminal))
+            } else {
+                currentRows.append("")
+            }
+        }
+
+        let lastRows = terminalLastSentRows[sessionID]
+        let isFullSync = (lastRows == nil)
+
+        let screenData: Data
+        if isFullSync {
+            // First send: all rows as plain lines (client clears + writes)
+            let output = currentRows.joined(separator: "\r\n")
+            screenData = Data(output.utf8)
+        } else {
+            // Diff: only send rows that changed, with cursor positioning
+            var output = ""
+            for (i, row) in currentRows.enumerated() {
+                if i >= lastRows!.count || row != lastRows![i] {
+                    output += "\u{1B}[\(i + 1);1H\u{1B}[2K" // Position + erase line
+                    output += row
+                }
+            }
+            screenData = Data(output.utf8)
+        }
+
+        terminalLastSentRows[sessionID] = currentRows
 
         return ScreenUpdatePayload(
             sessionID: sessionID,
             data: screenData.base64EncodedString(),
-            fullSync: true, // Always full screen snapshot
+            fullSync: isFullSync,
             hasPrompt: false,
             promptText: nil
         )
