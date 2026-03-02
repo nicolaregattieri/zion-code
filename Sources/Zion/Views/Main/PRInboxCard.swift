@@ -30,7 +30,7 @@ struct PRInboxCard: View {
                 HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     if totalCount > 0 {
                         Text("\(totalCount)")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(DesignSystem.Typography.labelBold)
                             .foregroundStyle(.white)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
@@ -43,7 +43,7 @@ struct PRInboxCard: View {
                         }
                     } label: {
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 9, weight: .bold))
+                            .font(DesignSystem.Typography.metaBold)
                             .foregroundStyle(.secondary)
                             .rotationEffect(.degrees(isExpanded ? 90 : 0))
                             .animation(DesignSystem.Motion.panel, value: isExpanded)
@@ -51,6 +51,7 @@ struct PRInboxCard: View {
                     .buttonStyle(.plain)
                     .frame(width: 20, height: 20)
                     .contentShape(Rectangle())
+                    .accessibilityLabel(isExpanded ? L10n("accessibility.collapse") : L10n("accessibility.expand"))
                 }
             }
 
@@ -115,7 +116,7 @@ struct PRInboxCard: View {
                     model.reviewAllPRs()
                 } label: {
                     Label(L10n("pr.inbox.reviewAll"), systemImage: "sparkles")
-                        .font(.system(size: 10, weight: .medium))
+                        .font(DesignSystem.Typography.labelMedium)
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
@@ -150,12 +151,12 @@ struct PRInboxCard: View {
                 .font(.system(size: 18))
                 .foregroundStyle(.secondary)
             Text(message)
-                .font(.system(size: 11))
+                .font(DesignSystem.Typography.bodySmall)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             if let hint {
                 Text(hint)
-                    .font(.system(size: 10))
+                    .font(DesignSystem.Typography.label)
                     .foregroundStyle(.tertiary)
                     .multilineTextAlignment(.center)
             }
@@ -178,26 +179,26 @@ private struct PROpenRow: View {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                         Text("#\(pr.number)")
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .font(DesignSystem.Typography.monoLabelBold)
                             .foregroundStyle(.secondary)
                         Text(pr.title)
-                            .font(.system(size: 11, weight: .medium))
+                            .font(DesignSystem.Typography.bodyMedium)
                             .lineLimit(1)
                     }
 
                     HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                         Text("@\(pr.author)")
-                            .font(.system(size: 9, design: .monospaced))
+                            .font(DesignSystem.Typography.monoMeta)
                             .foregroundStyle(.tertiary)
 
                         Text("\(pr.headBranch) \u{2192} \(pr.baseBranch)")
-                            .font(.system(size: 9, design: .monospaced))
+                            .font(DesignSystem.Typography.monoMeta)
                             .foregroundStyle(.tertiary)
                             .lineLimit(1)
 
                         if pr.isDraft {
                             Text(L10n("pr.draft"))
-                                .font(.system(size: 8, weight: .bold))
+                                .font(DesignSystem.Typography.micro)
                                 .padding(.horizontal, 4)
                                 .padding(.vertical, 1)
                                 .background(DesignSystem.Colors.glassHover)
@@ -210,11 +211,11 @@ private struct PROpenRow: View {
                 Spacer(minLength: 4)
 
                 Image(systemName: "sparkles")
-                    .font(.system(size: 11))
+                    .font(DesignSystem.Typography.bodySmall)
                     .foregroundStyle(DesignSystem.Colors.ai)
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 8, weight: .bold))
+                    .font(DesignSystem.Typography.micro)
                     .foregroundStyle(.secondary.opacity(0.5))
             }
             .padding(.horizontal, 10)
@@ -247,7 +248,7 @@ private struct PROpenRow: View {
         let hue = Double(abs(pr.author.hashValue) % 360) / 360.0
 
         return Text(initial)
-            .font(.system(size: 10, weight: .bold))
+            .font(DesignSystem.Typography.labelBold)
             .foregroundStyle(.white)
             .frame(width: 22, height: 22)
             .background(Circle().fill(Color(hue: hue, saturation: 0.6, brightness: 0.8)))

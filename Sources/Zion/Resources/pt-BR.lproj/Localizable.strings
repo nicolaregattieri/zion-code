@@ -1631,3 +1631,81 @@
 "mobile.status.waitingForPairing" = "Acesso Mobile: Aguardando pareamento";
 "mobile.status.connected" = "Acesso Mobile: %lld dispositivo(s) conectado(s)";
 "mobile.status.error" = "Acesso Mobile: Erro";
+
+// Accessibility Labels — icon-only buttons
+"accessibility.dismiss" = "Fechar";
+"accessibility.expand" = "Expandir";
+"accessibility.collapse" = "Recolher";
+"accessibility.commit.suggestMessage" = "Sugerir mensagem de commit com IA";
+"accessibility.stash.suggestMessage" = "Sugerir mensagem de stash com IA";
+"accessibility.recovery.refresh" = "Atualizar snapshots de recuperação";
+"accessibility.remote.add" = "Adicionar remote";
+"accessibility.remote.testConnection" = "Testar conexão";
+"accessibility.remote.delete" = "Remover remote";
+
+// Empty state hints
+"worktrees.emptyHint" = "Use o formulário acima para criar seu primeiro worktree.";
+"branches.emptyHint" = "As branches aparecem após o primeiro commit.";
+
+// Sidebar tooltip
+"sidebar.locked.hint" = "Abra um repositório para desbloquear esta seção.";
+
+// Git error messages (ErrorClassifier)
+"error.git.authFailed" = "Falha na autenticação. Verifique suas credenciais ou chave SSH.";
+"error.git.sshDenied" = "Acesso SSH negado. Verifique se sua chave SSH está adicionada e tem acesso.";
+"error.git.noHost" = "Não foi possível conectar ao servidor remoto. Verifique sua conexão.";
+"error.git.networkError" = "Erro de rede. Verifique sua conexão e tente novamente.";
+"error.git.mergeConflict" = "Existem conflitos de merge. Resolva-os antes de continuar.";
+"error.git.uncommittedChanges" = "Você tem alterações não commitadas. Faça commit ou stash primeiro.";
+"error.git.alreadyExists" = "Uma branch ou tag com esse nome já existe.";
+"error.git.invalidBranchName" = "Esse não é um nome de branch válido.";
+"error.git.worktreeInUse" = "Essa branch já está em uso por um worktree em %@.";
+"error.git.lockFile" = "Outro processo Git está rodando. Aguarde ou remova o arquivo de lock.";
+"error.git.pushRejected" = "Push rejeitado. Faça pull das últimas alterações e tente novamente.";
+"A lista abaixo mostra tags existentes. Clique em uma tag para preencher o campo." = "A lista abaixo mostra tags existentes. Clique em uma tag para preencher o campo.";
+"Abra um repositorio com refs para visualizar a arvore." = "Abra um repositorio com refs para visualizar a arvore.";
+"Abrir repositorio" = "Abrir repositorio";
+"Ajuste a busca para visualizar commits." = "Ajuste a busca para visualizar commits.";
+"Atualiza a branch atual com commits do remoto via fast-forward." = "Atualiza a branch atual com commits do remoto via fast-forward.";
+"Baixa atualizacoes dos remotos sem alterar sua branch local." = "Baixa atualizacoes dos remotos sem alterar sua branch local.";
+"branch/ref" = "branch/ref";
+"Buscar por hash, autor ou mensagem" = "Buscar por hash, autor ou mensagem";
+"Carregar mais commits (+300)" = "Carregar mais commits (+300)";
+"Checkout, criacao e merge" = "Checkout, criacao e merge";
+"Clique em Abrir para selecionar um repositorio Git" = "Clique em Abrir para selecionar um repositorio Git";
+"Comando personalizado" = "Comando personalizado";
+"Confirmar acoes criticas" = "Confirmar acoes criticas";
+"Confirmar todas as acoes" = "Confirmar todas as acoes";
+"Controla quando mostrar dialogo de confirmacao antes de executar comandos Git." = "Controla quando mostrar dialogo de confirmacao antes de executar comandos Git.";
+"Cria e remove tags rapidamente" = "Cria e remove tags rapidamente";
+"Crie un novo worktree para comecar a trabalhar em paralelo." = "Crie un novo worktree para comecar a trabalhar em paralelo.";
+"Define o idioma da interface (pt-BR, English ou Espanol)." = "Define o idioma da interface (pt-BR, English ou Espanol).";
+"Detalhes do commit" = "Detalhes do commit";
+"Digite uma branch/ref manualmente ou clique em uma da lista para preencher o campo." = "Digite uma branch/ref manualmente ou clique em uma da lista para preencher o campo.";
+"Envia commits locais da branch atual para o remoto." = "Envia commits locais da branch atual para o remoto.";
+"Executa qualquer comando git" = "Executa qualquer comando git";
+"Executar comando git custom informado?" = "Executar comando git custom informado?";
+"Executar comando" = "Executar comando";
+"Filtro:" = "Filtro:";
+"Fluxos de branch/tag/stash e comandos Git" = "Fluxos de branch/tag/stash e comandos Git";
+"Fluxos organizados por context para reduzir erros operacionais." = "Fluxos organizados por context para reduzir erros operacionais.";
+"Gerencia worktrees paralelos" = "Gerencia worktrees paralelos";
+"Historico visual, navega em commits e merges" = "Historico visual, navega em commits e merges";
+"Inferir origem da arvore (best practice)" = "Inferir origem da arvore (best practice)";
+"Inferir origem da arvore" = "Inferir origem da arvore";
+"Limpar" = "Limpar";
+"Navegue no historico, inspecione commits e veja origem das branches." = "Navegue no historico, inspecione commits e veja origem das branches.";
+"Nenhum commit encontrado" = "Nenhum commit encontrado";
+"Nenhum repositorio" = "Nenhum repositorio";
+"Nova" = "Nova";
+"Operacoes Git" = "Operacoes Git";
+"Quando ativo, tenta inferir branch de origem e ponto de fork na arvore de branches." = "Quando ativo, tenta inferir branch de origem e ponto de fork na arvore de branches.";
+"Recarrega branches, commits, tags, stashes e worktrees do repositorio atual." = "Recarrega branches, commits, tags, stashes e worktrees do repositorio atual.";
+"Reset" = "Reset";
+"Salva e reaplica alteracoes locais" = "Salva e reaplica alteracoes locais";
+"Seleciona um repositorio Git para abrir no Zion." = "Seleciona um repositorio Git para abrir no Zion.";
+"Selecione um repositorio" = "Selecione um repositorio";
+"Seu Git Graph nativo para macOS. Abra um repositorio para visualizar historico, executar comandos e gerenciar worktrees." = "Seu Git Graph nativo para macOS. Abra um repositorio para visualizar historico, executar comandos e gerenciar worktrees.";
+"Seu Git Graph nativo para macOS." = "Seu Git Graph nativo para macOS.";
+"status" = "status";
+"Zona sensivel: altera historico local" = "Zona sensivel: altera historico local";

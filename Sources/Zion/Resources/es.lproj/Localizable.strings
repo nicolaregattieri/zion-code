@@ -1694,3 +1694,34 @@
 "mobile.status.waitingForPairing" = "Acceso Móvil: Esperando emparejamiento";
 "mobile.status.connected" = "Acceso Móvil: %lld dispositivo(s) conectado(s)";
 "mobile.status.error" = "Acceso Móvil: Error";
+
+// Accessibility Labels — icon-only buttons
+"accessibility.dismiss" = "Cerrar";
+"accessibility.expand" = "Expandir";
+"accessibility.collapse" = "Contraer";
+"accessibility.commit.suggestMessage" = "Sugerir mensaje de commit con IA";
+"accessibility.stash.suggestMessage" = "Sugerir mensaje de stash con IA";
+"accessibility.recovery.refresh" = "Actualizar instantáneas de recuperación";
+"accessibility.remote.add" = "Agregar remote";
+"accessibility.remote.testConnection" = "Probar conexión";
+"accessibility.remote.delete" = "Eliminar remote";
+
+// Empty state hints
+"worktrees.emptyHint" = "Usa el formulario de arriba para crear tu primer worktree.";
+"branches.emptyHint" = "Las ramas aparecen después del primer commit.";
+
+// Sidebar tooltip
+"sidebar.locked.hint" = "Abre un repositorio para desbloquear esta sección.";
+
+// Git error messages (ErrorClassifier)
+"error.git.authFailed" = "Error de autenticación. Verifica tus credenciales o clave SSH.";
+"error.git.sshDenied" = "Acceso SSH denegado. Asegúrate de que tu clave SSH esté añadida y tenga acceso.";
+"error.git.noHost" = "No se pudo conectar al servidor remoto. Verifica tu conexión.";
+"error.git.networkError" = "Error de red. Verifica tu conexión e inténtalo de nuevo.";
+"error.git.mergeConflict" = "Hay conflictos de merge. Resuélvelos antes de continuar.";
+"error.git.uncommittedChanges" = "Tienes cambios sin commitear. Haz commit o stash primero.";
+"error.git.alreadyExists" = "Ya existe una rama o tag con ese nombre.";
+"error.git.invalidBranchName" = "Ese no es un nombre de rama válido.";
+"error.git.worktreeInUse" = "Esa rama ya está en uso por un worktree en %@.";
+"error.git.lockFile" = "Otro proceso Git está ejecutándose. Espera a que termine o elimina el archivo de lock.";
+"error.git.pushRejected" = "Push rechazado. Haz pull de los últimos cambios e inténtalo de nuevo.";
