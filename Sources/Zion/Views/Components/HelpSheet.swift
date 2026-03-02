@@ -40,7 +40,8 @@ struct HelpSheet: View {
             return ["help.code.editor", "help.code.quickopen", "help.code.blame",
                     "help.code.themes", "help.code.unsaved", "help.code.newfile",
                     "help.code.saveas", "help.code.openineditor", "help.code.contextmenu",
-                    "help.code.findreplace", "help.code.markdownpreview",
+                    "help.code.findreplace", "help.code.findinfiles",
+                    "help.code.markdownpreview",
                     "help.code.navigation",
                     "help.code.tabsize", "help.code.columnruler",
                     "help.code.brackets", "help.code.indentguides", "help.code.repoconfig",
@@ -49,7 +50,8 @@ struct HelpSheet: View {
         case .terminal:
             return ["help.terminal.pty", "help.terminal.splits", "help.terminal.tabs",
                     "help.terminal.zoom", "help.terminal.persistence",
-                    "help.terminal.transparency", "help.terminalSearch"]
+                    "help.terminal.transparency", "help.terminal.finderdrag",
+                    "help.terminalSearch"]
         case .clipboard:
             return ["help.clipboard.capture", "help.clipboard.paste",
                     "help.clipboard.drag", "help.clipboard.images",
@@ -57,6 +59,7 @@ struct HelpSheet: View {
         case .operations:
             return ["help.ops.commit", "help.ops.branch", "help.ops.stash",
                     "help.ops.rebase", "help.ops.hunk", "help.ops.tags",
+                    "help.ops.forcepush",
                     "help.ops.init", "help.ops.recovery",
                     "help.stashBadge"]
         case .worktrees:
@@ -66,6 +69,7 @@ struct HelpSheet: View {
                     "help.ai.conflict", "help.ai.review", "help.ai.changelog",
                     "help.ai.search", "help.ai.branch", "help.ai.blame",
                     "help.ai.split", "help.ai.style", "help.ai.precommit",
+                    "help.ai.slashcommands",
                     "help.aiSummary"]
         case .customization:
             return ["help.customization.languages", "help.customization.appearance",

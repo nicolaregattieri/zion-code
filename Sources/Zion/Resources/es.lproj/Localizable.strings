@@ -1726,3 +1726,26 @@
 "error.git.worktreeInUse" = "Esa rama ya está en uso por un worktree en %@.";
 "error.git.lockFile" = "Otro proceso Git está ejecutándose. Espera a que termine o elimina el archivo de lock.";
 "error.git.pushRejected" = "Push rechazado. Haz pull de los últimos cambios e inténtalo de nuevo.";
+
+// Documentation sync — 1.4.0
+"help.code.findinfiles" = "Buscar en Archivos en todo el repositorio (⇧⌘F)";
+"help.terminal.finderdrag" = "Arrastra archivos desde Finder directamente al terminal";
+"help.ops.forcepush" = "Force Push con Lease (seguro) y Force Push (sobrescribir) disponibles";
+"help.ai.slashcommands" = "Comandos slash para IA: /zion-img para Claude, Gemini y Codex";
+"shortcuts.findInFiles" = "Buscar en Archivos";
+
+"map.code.findinfiles.title" = "Buscar en Archivos";
+"map.code.findinfiles.description" = "Busca en todos los archivos del repositorio con resultados resaltados. Haz clic en un resultado para abrir el archivo en esa línea.";
+"map.code.findinfiles.tip1" = "Usa ⇧⌘F desde cualquier pantalla para iniciar una búsqueda en todo el proyecto.";
+"map.code.formatter.title" = "Formateador de Código";
+"map.code.formatter.description" = "Formatea código con ⇧⌥F. Soporta 16+ lenguajes incluyendo JSON, XML, HTML, CSS, JavaScript, Python, Swift, Go y más. Formato al guardar opcional.";
+"map.code.formatter.tip1" = "Activa formato al guardar en Configuración > Editor para formateo automático.";
+"map.terminal.finderdrag.title" = "Arrastrar desde Finder";
+"map.terminal.finderdrag.description" = "Arrastra archivos o carpetas desde Finder directamente al terminal. La ruta se pega automáticamente en la posición del cursor.";
+"map.terminal.finderdrag.tip1" = "Funciona con cualquier tipo de archivo — ideal para comandos rápidos de cd o open.";
+"map.ops.forcepush.title" = "Opciones de Force Push";
+"map.ops.forcepush.description" = "Force Push con Lease (seguro, rechaza si el remoto tiene commits nuevos) y Force Push (sobrescribir) disponibles en el menú contextual de la rama.";
+"map.ops.forcepush.tip1" = "Siempre prefiere Force con Lease — evita sobrescribir commits de compañeros.";
+"map.ai.slashcommands.title" = "Comandos Slash para IA";
+"map.ai.slashcommands.description" = "Comando /zion-img instalado automáticamente para Claude Code, Gemini CLI y Codex CLI. Muestra imágenes inline y genera SVGs en el terminal.";
+"map.ai.slashcommands.tip1" = "Activa Imágenes Inline de IA en Configuración para instalar comandos automáticamente al iniciar el terminal.";
