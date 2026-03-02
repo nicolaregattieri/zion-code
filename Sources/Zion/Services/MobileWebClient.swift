@@ -541,6 +541,8 @@ async function sendInput() {
     payload: payload,
     timestamp: new Date().toISOString()
   });
+  // Trigger immediate poll so the user sees their input echo without waiting 500ms
+  scheduleEagerPoll();
 }
 
 async function sendAction(action) {
@@ -553,6 +555,23 @@ async function sendAction(action) {
     payload: payload,
     timestamp: new Date().toISOString()
   });
+  scheduleEagerPoll();
+}
+
+// After user input, poll aggressively for a short burst to pick up the echo quickly.
+// Fires 3 rapid polls (150ms apart) then falls back to normal 500ms cadence.
+let eagerPollTimer = null;
+function scheduleEagerPoll() {
+  if (eagerPollTimer) return; // already in eager mode
+  let remaining = 3;
+  eagerPollTimer = setInterval(() => {
+    if (--remaining <= 0 || !polling) {
+      clearInterval(eagerPollTimer);
+      eagerPollTimer = null;
+      return;
+    }
+    poll();
+  }, 150);
 }
 
 $('#cmd-input').addEventListener('keydown', e => {

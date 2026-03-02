@@ -446,6 +446,13 @@ extension RepositoryViewModel {
     private func handleRemoteInput(sessionID: UUID, text: String) {
         guard let callback = terminalSendCallbacks[sessionID] else { return }
 
+        // Reset throttle so the terminal echo fires immediately on the next output,
+        // and clear last-sent rows so the diff can't be skipped as "unchanged"
+        screenUpdateThrottleDeadlines[sessionID] = nil
+        screenUpdateDebounceTasks[sessionID]?.cancel()
+        screenUpdateDebounceTasks[sessionID] = nil
+        terminalLastSentRows[sessionID] = nil
+
         // Split text from trailing CR/LF so TUI apps don't treat it as pasted text
         // Send the text content first, then the Enter keystroke after a short delay
         // so the TUI processes the text before receiving the submit key
@@ -473,6 +480,13 @@ extension RepositoryViewModel {
 
     func handleRemoteAction(sessionID: UUID, action: RemoteAction) {
         guard let callback = terminalSendCallbacks[sessionID] else { return }
+
+        // Reset throttle so the terminal response fires immediately,
+        // and clear last-sent rows so the diff can't be skipped as "unchanged"
+        screenUpdateThrottleDeadlines[sessionID] = nil
+        screenUpdateDebounceTasks[sessionID]?.cancel()
+        screenUpdateDebounceTasks[sessionID] = nil
+        terminalLastSentRows[sessionID] = nil
 
         let inputData: Data?
         switch action {
