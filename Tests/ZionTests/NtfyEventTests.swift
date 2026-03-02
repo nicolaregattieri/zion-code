@@ -24,7 +24,7 @@ final class NtfyEventTests: XCTestCase {
 
     func testGitOpsGroupCount() {
         let gitOps = NtfyEvent.allCases.filter { $0.group == .gitOps }
-        XCTAssertEqual(gitOps.count, 4, "Expected 4 gitOps events")
+        XCTAssertEqual(gitOps.count, 5, "Expected 5 gitOps events")
     }
 
     func testAIGroupCount() {
@@ -45,7 +45,7 @@ final class NtfyEventTests: XCTestCase {
 
     func testCaseCountGuard() {
         // If a new event is added, this test reminds you to update the test suite
-        XCTAssertEqual(NtfyEvent.allCases.count, 15, "Event count changed — update tests")
+        XCTAssertEqual(NtfyEvent.allCases.count, 16, "Event count changed — update tests")
     }
 
     func testDefaultEnabledEventsMatchEnabledByDefault() {
