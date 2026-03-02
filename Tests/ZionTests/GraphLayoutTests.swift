@@ -252,12 +252,11 @@ final class GraphLayoutTests: XCTestCase {
         }
     }
 
-    // MARK: - Merge Edge Eviction Regression
+    // MARK: - Merge Edge & Virtual Reservation
 
-    func testMergeEdgesPointToDistinctLanesAfterEviction() {
-        // Reproduces the bug: merge commit with two mainChain parents.
-        // Parent 7831c34 is reserved at lane 0, then 7f16d84 evicts it to lane 1.
-        // Before the fix, the edge for 7831c34 still pointed to lane 0 (stale).
+    func testMergeWithTwoMainChainParentsEdgesAllReachLaneZero() {
+        // Two mainChain parents: the second uses a virtual reservation instead
+        // of evicting the first. Both edges should target lane 0 (the main line).
         let commits = [
             makeCommit(hash: "2e0f174", parents: ["7831c34", "7f16d84"], decorations: ["HEAD -> main"]),
             makeCommit(hash: "7831c34", parents: ["base"]),
@@ -271,18 +270,18 @@ final class GraphLayoutTests: XCTestCase {
         let mergeEdges = layoutByID["2e0f174"]?.outgoingEdges ?? []
         XCTAssertEqual(mergeEdges.count, 2, "Merge should have 2 outgoing edges")
 
-        let targetLanes = Set(mergeEdges.map(\.to))
-        XCTAssertEqual(targetLanes.count, 2, "Edges must point to 2 distinct lanes (was broken by stale eviction)")
+        // Both mainChain parents should be reached at lane 0
+        XCTAssertTrue(mergeEdges.allSatisfy { $0.to == 0 },
+                       "Both edges should target lane 0 (main line)")
 
-        // Each edge target must match the actual lane of its parent
-        let p1Lane = layoutByID["7831c34"]?.lane
-        let p2Lane = layoutByID["7f16d84"]?.lane
-        XCTAssertTrue(targetLanes.contains(p1Lane!), "Edge must reach 7831c34 at lane \(p1Lane!)")
-        XCTAssertTrue(targetLanes.contains(p2Lane!), "Edge must reach 7f16d84 at lane \(p2Lane!)")
+        // Both parents should be at lane 0 when processed
+        XCTAssertEqual(layoutByID["7831c34"]?.lane, 0)
+        XCTAssertEqual(layoutByID["7f16d84"]?.lane, 0)
     }
 
-    func testOctopusMergeEdgesAllDistinct() {
-        // 3-parent merge where all parents are mainChain — verifies the fix generalizes.
+    func testOctopusMergeMainChainParentsAllTargetLaneZero() {
+        // 3-parent merge where all parents are mainChain.
+        // Virtual reservation ensures no eviction — all edges target lane 0.
         let commits = [
             makeCommit(hash: "octopus", parents: ["p1", "p2", "p3"], decorations: ["HEAD -> main"]),
             makeCommit(hash: "p1", parents: ["root"]),
@@ -297,16 +296,86 @@ final class GraphLayoutTests: XCTestCase {
         let edges = layoutByID["octopus"]?.outgoingEdges ?? []
         XCTAssertEqual(edges.count, 3, "Octopus merge should have 3 outgoing edges")
 
-        let targetLanes = Set(edges.map(\.to))
-        XCTAssertEqual(targetLanes.count, 3, "All 3 edges must point to distinct lanes")
+        // All mainChain parents target lane 0
+        XCTAssertTrue(edges.allSatisfy { $0.to == 0 },
+                       "All edges should target lane 0 (main line)")
 
-        // Each edge must reach the actual lane of its parent
-        for parentHash in ["p1", "p2", "p3"] {
-            guard let parentLane = layoutByID[parentHash]?.lane else {
-                XCTFail("\(parentHash) missing from layout")
-                continue
-            }
-            XCTAssertTrue(targetLanes.contains(parentLane), "Edge must reach \(parentHash) at lane \(parentLane)")
+        // All parents should be at lane 0 when processed
+        for hash in ["p1", "p2", "p3"] {
+            XCTAssertEqual(layoutByID[hash]?.lane, 0, "\(hash) should be at lane 0")
+        }
+    }
+
+    // MARK: - Branch Tip Spike Prevention
+
+    func testBranchTipNoDownwardSpike() {
+        // Branch tip's mainChain parent uses virtual reservation instead
+        // of evicting the existing mainChain commit from lane 0.
+        // No spike (evicted commit at tip's lane) or orphan line.
+        let commits = [
+            makeCommit(hash: "merge", parents: ["fp", "tip"], decorations: ["HEAD -> main"]),
+            makeCommit(hash: "tip", parents: ["far"]),
+            makeCommit(hash: "fp", parents: ["far"]),
+            makeCommit(hash: "far", parents: ["root"]),
+            makeCommit(hash: "root", parents: []),
+        ]
+        let mainChain: Set<String> = ["merge", "fp", "far", "root"]
+        let layout = calculator.layout(for: commits, mainChain: mainChain)
+        let layoutByID = Dictionary(uniqueKeysWithValues: layout.map { ($0.id, $0) })
+
+        let tipLayout = layoutByID["tip"]!
+
+        // Branch tip should NOT have its own lane in outgoingLanes
+        // (parent is mainChain at lane 0, connected via cross-lane edge)
+        XCTAssertFalse(
+            tipLayout.outgoingLanes.contains(tipLayout.lane),
+            "Branch tip should not have downward spike at lane \(tipLayout.lane)"
+        )
+
+        // The edge from the tip should go to lane 0 (main line)
+        XCTAssertEqual(tipLayout.outgoingEdges.count, 1)
+        XCTAssertEqual(tipLayout.outgoingEdges.first?.to, 0,
+                       "Branch tip edge should target lane 0")
+    }
+
+    func testBranchTipSpikeWithRealTopology() {
+        // Full topology from the actual repo that showed the spike:
+        //   merge35 [merge34, test_mobile]
+        //   test_mobile [feat_mobile]
+        //   merge34 [merge33, docs_sync]      ← docs_sync spike here
+        //   docs_sync [merge32]
+        //   merge33 [merge32, feat_mobile]
+        //   feat_mobile [merge32]
+        //   merge32 [base]
+        let commits = [
+            makeCommit(hash: "merge35", parents: ["merge34", "test_mobile"], decorations: ["HEAD -> main"]),
+            makeCommit(hash: "test_mobile", parents: ["feat_mobile"]),
+            makeCommit(hash: "merge34", parents: ["merge33", "docs_sync"]),
+            makeCommit(hash: "docs_sync", parents: ["merge32"]),
+            makeCommit(hash: "merge33", parents: ["merge32", "feat_mobile"]),
+            makeCommit(hash: "feat_mobile", parents: ["merge32"]),
+            makeCommit(hash: "merge32", parents: ["base"]),
+            makeCommit(hash: "base", parents: []),
+        ]
+        let mainChain: Set<String> = ["merge35", "merge34", "merge33", "merge32", "base"]
+        let layout = calculator.layout(for: commits, mainChain: mainChain)
+        let layoutByID = Dictionary(uniqueKeysWithValues: layout.map { ($0.id, $0) })
+
+        // docs_sync is a branch tip — no spike at its own lane
+        let docsLayout = layoutByID["docs_sync"]!
+        let docsHasContinuation = docsLayout.outgoingEdges.contains {
+            $0.from == docsLayout.lane && $0.to == docsLayout.lane
+        }
+        if !docsHasContinuation {
+            XCTAssertFalse(
+                docsLayout.outgoingLanes.contains(docsLayout.lane),
+                "docs_sync should not have downward spike at lane \(docsLayout.lane)"
+            )
+        }
+
+        // All mainChain commits must still be at lane 0
+        for hash in ["merge35", "merge34", "merge33", "merge32", "base"] {
+            XCTAssertEqual(layoutByID[hash]?.lane, 0, "\(hash) should be at lane 0")
         }
     }
 
