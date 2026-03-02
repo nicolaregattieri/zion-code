@@ -189,12 +189,15 @@ extension RepositoryViewModel {
             do {
                 let stats = try await worker.fetchCommitStats(in: url, hashes: hashes)
                 try Task.checkCancellation()
-                for i in commits.indices {
-                    if let stat = stats[commits[i].id] {
-                        commits[i].insertions = stat.0
-                        commits[i].deletions = stat.1
+                // Build updated array in one pass to trigger a single observation notification
+                var updated = commits
+                for i in updated.indices {
+                    if let stat = stats[updated[i].id] {
+                        updated[i].insertions = stat.0
+                        updated[i].deletions = stat.1
                     }
                 }
+                commits = updated
             } catch {
                 // Silently fail — stats are optional enhancement
             }
@@ -546,7 +549,7 @@ extension RepositoryViewModel {
                 let todoFile = tempDir.appendingPathComponent("zion-rebase-todo-\(UUID().uuidString)")
                 try todoList.write(to: todoFile, atomically: true, encoding: .utf8)
 
-                let scriptContent = "#!/bin/sh\ncp \"\(todoFile.path)\" \"$1\""
+                let scriptContent = "#!/bin/sh\ncp \"$ZION_TODO_FILE\" \"$1\""
                 let scriptFile = tempDir.appendingPathComponent("zion-rebase-editor-\(UUID().uuidString).sh")
                 try scriptContent.write(to: scriptFile, atomically: true, encoding: .utf8)
                 try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: scriptFile.path)
@@ -558,6 +561,7 @@ extension RepositoryViewModel {
                 process.currentDirectoryURL = url
                 var env = ProcessInfo.processInfo.environment
                 env["GIT_SEQUENCE_EDITOR"] = scriptFile.path
+                env["ZION_TODO_FILE"] = todoFile.path
                 env["LC_ALL"] = "C"
                 env["LANG"] = "C"
                 process.environment = env

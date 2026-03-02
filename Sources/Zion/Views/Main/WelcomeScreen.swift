@@ -92,21 +92,21 @@ struct WelcomeScreen: View {
                                 } label: {
                                     HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                                         Image(systemName: "folder.fill")
-                                            .font(.system(size: 12))
+                                            .font(DesignSystem.Typography.body)
                                             .foregroundStyle(Color.accentColor.opacity(0.8))
                                         VStack(alignment: .leading, spacing: 1) {
                                             Text(url.lastPathComponent)
                                                 .font(.system(size: 13, weight: .semibold))
                                                 .lineLimit(1)
                                             Text(url.path)
-                                                .font(.system(size: 9))
+                                                .font(DesignSystem.Typography.meta)
                                                 .foregroundStyle(.secondary)
                                                 .lineLimit(1)
                                                 .truncationMode(.middle)
                                         }
                                         Spacer()
                                         Image(systemName: "chevron.right")
-                                            .font(.system(size: 8, weight: .bold))
+                                            .font(DesignSystem.Typography.micro)
                                             .foregroundStyle(.secondary)
                                     }
                                     .padding(.horizontal, 10)

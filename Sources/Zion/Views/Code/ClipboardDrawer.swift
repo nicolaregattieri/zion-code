@@ -39,7 +39,7 @@ struct ClipboardDrawer: View {
             } label: {
                 HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     Image(systemName: model.clipboardMonitor.isCollapsed ? "chevron.right" : "chevron.down")
-                        .font(.system(size: 8, weight: .bold))
+                        .font(DesignSystem.Typography.micro)
                         .foregroundStyle(.secondary)
                         .frame(width: 12)
 
@@ -152,7 +152,7 @@ struct ClipboardDrawer: View {
                     .foregroundStyle(.secondary)
             } else {
                 Text(item.preview)
-                    .font(.system(size: 11, design: .monospaced))
+                    .font(DesignSystem.Typography.monoSmall)
                     .lineLimit(1)
                     .foregroundStyle(.primary)
             }

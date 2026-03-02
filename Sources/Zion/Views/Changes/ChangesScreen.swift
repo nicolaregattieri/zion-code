@@ -73,9 +73,9 @@ struct ChangesScreen: View {
                         .font(.system(size: 32))
                         .foregroundStyle(DesignSystem.Colors.success.opacity(0.6))
                     Text(L10n("Tudo limpo!"))
-                        .font(.headline)
+                        .font(DesignSystem.Typography.sheetTitle)
                     Text(L10n("Nenhuma alteração pendente no momento."))
-                        .font(.caption)
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                 }
@@ -132,7 +132,7 @@ struct ChangesScreen: View {
         } label: {
             HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                 statusIcon(index: indexStatus, worktree: workTreeStatus)
-                    .font(.system(size: 14))
+                    .font(DesignSystem.Typography.bodyLarge)
 
                 Text(file)
                     .font(.system(size: 12, weight: isSelected ? .bold : .regular, design: .monospaced))
@@ -233,7 +233,7 @@ struct ChangesScreen: View {
                         if model.isExplainingDiff {
                             ProgressView().controlSize(.small).frame(width: 12, height: 12)
                         } else {
-                            Image(systemName: "sparkles").font(.system(size: 12))
+                            Image(systemName: "sparkles").font(DesignSystem.Typography.body)
                         }
                     }
                     .buttonStyle(.bordered).controlSize(.small)
@@ -278,10 +278,10 @@ struct ChangesScreen: View {
             } else if !model.aiDiffExplanation.isEmpty {
                 HStack(alignment: .top, spacing: DesignSystem.Spacing.iconTextGap) {
                     Image(systemName: "sparkles")
-                        .font(.system(size: 10))
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(DesignSystem.Colors.ai)
                     Text(model.aiDiffExplanation)
-                        .font(.system(size: 11))
+                        .font(DesignSystem.Typography.bodySmall)
                         .foregroundStyle(.secondary)
                         .textSelection(.enabled)
                     Spacer()
@@ -289,7 +289,7 @@ struct ChangesScreen: View {
                         model.aiDiffExplanation = ""
                     } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 10))
+                            .font(DesignSystem.Typography.label)
                             .foregroundStyle(.tertiary)
                     }
                     .buttonStyle(.plain)
@@ -334,7 +334,7 @@ struct ChangesScreen: View {
         }
 
         return Text(line)
-            .font(.system(size: 12, design: .monospaced))
+            .font(DesignSystem.Typography.monoBody)
             .padding(.horizontal, 8)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(backgroundColor)

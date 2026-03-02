@@ -16,7 +16,7 @@ struct CodeReviewFileList: View {
                     onReviewAll()
                 } label: {
                     Label(L10n("codereview.reviewAll"), systemImage: "sparkles")
-                        .font(.system(size: 10))
+                        .font(DesignSystem.Typography.label)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.mini)
@@ -44,7 +44,7 @@ struct CodeReviewFileList: View {
         } label: {
             HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 Image(systemName: file.status.icon)
-                    .font(.system(size: 11))
+                    .font(DesignSystem.Typography.bodySmall)
                     .foregroundStyle(file.status.color)
                     .frame(width: 16)
 
@@ -54,7 +54,7 @@ struct CodeReviewFileList: View {
                         .lineLimit(1)
 
                     Text(file.path)
-                        .font(.system(size: 9, design: .monospaced))
+                        .font(DesignSystem.Typography.monoMeta)
                         .foregroundStyle(.tertiary)
                         .lineLimit(1)
                         .truncationMode(.head)
@@ -74,10 +74,10 @@ struct CodeReviewFileList: View {
                 // +/- count
                 HStack(spacing: DesignSystem.Spacing.iconGroupedGap) {
                     Text("+\(file.additions)")
-                        .font(.system(size: 9, design: .monospaced))
+                        .font(DesignSystem.Typography.monoMeta)
                         .foregroundStyle(DesignSystem.Colors.diffAddition)
                     Text("-\(file.deletions)")
-                        .font(.system(size: 9, design: .monospaced))
+                        .font(DesignSystem.Typography.monoMeta)
                         .foregroundStyle(DesignSystem.Colors.diffDeletion)
                 }
             }

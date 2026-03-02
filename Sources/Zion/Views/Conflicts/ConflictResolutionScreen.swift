@@ -32,10 +32,10 @@ struct ConflictResolutionScreen: View {
                 .foregroundStyle(DesignSystem.Colors.warning)
             VStack(alignment: .leading, spacing: 2) {
                 Text(L10n("Resolver Conflitos"))
-                    .font(.headline)
+                    .font(DesignSystem.Typography.sheetTitle)
                 if !model.activeOperationLabel.isEmpty {
                     Text(model.activeOperationLabel)
-                        .font(.caption)
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -43,11 +43,11 @@ struct ConflictResolutionScreen: View {
 
             if model.allConflictsResolved {
                 Label(L10n("Todos os conflitos resolvidos!"), systemImage: "checkmark.circle.fill")
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
                     .foregroundStyle(DesignSystem.Colors.success)
             } else {
                 Text("\(model.unresolvedConflictCount) \(L10n("conflitos restantes"))")
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
                     .foregroundStyle(DesignSystem.Colors.warning)
             }
 
@@ -60,6 +60,7 @@ struct ConflictResolutionScreen: View {
             }
             .buttonStyle(.plain)
             .keyboardShortcut(.escape, modifiers: [])
+            .accessibilityLabel(L10n("accessibility.dismiss"))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
@@ -99,10 +100,10 @@ struct ConflictResolutionScreen: View {
         } label: {
             HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 Image(systemName: file.isResolved ? "checkmark.circle.fill" : "xmark.circle.fill")
-                    .font(.system(size: 12))
+                    .font(DesignSystem.Typography.body)
                     .foregroundStyle(file.isResolved ? DesignSystem.Colors.success : DesignSystem.Colors.destructive)
                 Text(file.path)
-                    .font(.system(size: 11, design: .monospaced))
+                    .font(DesignSystem.Typography.monoSmall)
                     .lineLimit(1)
                     .truncationMode(.middle)
                 Spacer()
@@ -192,7 +193,7 @@ struct ConflictResolutionScreen: View {
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
                         Text(line.isEmpty ? " " : line)
-                            .font(.system(size: 11, design: .monospaced))
+                            .font(DesignSystem.Typography.monoSmall)
                             .lineLimit(1)
                             .foregroundStyle(.secondary.opacity(0.7))
                             .frame(maxWidth: .infinity, alignment: .leading)

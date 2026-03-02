@@ -164,10 +164,13 @@ final class RemoteAccessServerTests: XCTestCase {
     func testMultipleDevicesCount() async throws {
         let t1 = "DEV1-\(UUID().uuidString)"
         let t2 = "DEV2-\(UUID().uuidString)"
-        await server.addPairingToken(t1)
-        await server.addPairingToken(t2)
 
+        // Pair first device before generating second token
+        // (addPairingToken clears previous tokens for security)
+        await server.addPairingToken(t1)
         _ = try await httpGET("/pair?t=\(t1)")
+
+        await server.addPairingToken(t2)
         _ = try await httpGET("/pair?t=\(t2)")
 
         let count = await server.connectedDeviceCount

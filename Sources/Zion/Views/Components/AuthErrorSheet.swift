@@ -17,9 +17,9 @@ struct AuthErrorSheet: View {
                     .font(.system(size: 28))
                     .foregroundStyle(DesignSystem.Colors.warning)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(L10n("Erro de Autenticacao")).font(.headline)
+                    Text(L10n("Erro de Autenticacao")).font(DesignSystem.Typography.sheetTitle)
                     Text(L10n("Nao foi possivel acessar o repositorio remoto."))
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(DesignSystem.Typography.label).foregroundStyle(.secondary)
                 }
                 Spacer()
             }
@@ -34,7 +34,7 @@ struct AuthErrorSheet: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundStyle(DesignSystem.Colors.error)
                         Text(errorMessage)
-                            .font(.system(size: 11, design: .monospaced))
+                            .font(DesignSystem.Typography.monoSmall)
                             .foregroundStyle(.secondary)
                             .textSelection(.enabled)
                     }
@@ -54,7 +54,7 @@ struct AuthErrorSheet: View {
                                     Text(remote.name)
                                         .font(.system(size: 11, weight: .bold, design: .monospaced))
                                     Text(remote.url)
-                                        .font(.system(size: 10, design: .monospaced))
+                                        .font(DesignSystem.Typography.monoLabel)
                                         .foregroundStyle(.secondary)
                                         .lineLimit(1)
                                     Spacer()
@@ -123,7 +123,7 @@ struct AuthErrorSheet: View {
                 if let command {
                     HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                         Text(command)
-                            .font(.system(size: 10, design: .monospaced))
+                            .font(DesignSystem.Typography.monoLabel)
                             .foregroundStyle(DesignSystem.Colors.warning)
                         Button {
                             NSPasteboard.general.clearContents()

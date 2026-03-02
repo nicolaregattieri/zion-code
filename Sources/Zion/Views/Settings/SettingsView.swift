@@ -41,7 +41,7 @@ struct SettingsView: View {
                             Image(systemName: tab.icon)
                                 .font(.system(size: 22))
                             Text(tab.label)
-                                .font(.caption)
+                                .font(DesignSystem.Typography.label)
                         }
                         .frame(maxWidth: .infinity)
                         .frame(height: 48)

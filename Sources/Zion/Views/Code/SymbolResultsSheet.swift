@@ -11,7 +11,7 @@ struct SymbolResultsSheet: View {
         VStack(spacing: 0) {
             HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                 Text(title)
-                    .font(.headline)
+                    .font(DesignSystem.Typography.sheetTitle)
                 Spacer()
                 Button {
                     dismiss()

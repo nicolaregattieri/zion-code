@@ -17,12 +17,12 @@ struct PullRequestSheet: View {
             // Header
             HStack {
                 Image(systemName: "arrow.triangle.pull")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(DesignSystem.Typography.sheetTitle)
                     .foregroundStyle(DesignSystem.Colors.success)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(L10n("Criar Pull Request")).font(.headline)
+                    Text(L10n("Criar Pull Request")).font(DesignSystem.Typography.sheetTitle)
                     Text(model.currentBranch)
-                        .font(.system(size: 11, design: .monospaced))
+                        .font(DesignSystem.Typography.monoSmall)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
@@ -72,9 +72,9 @@ struct PullRequestSheet: View {
                                         if isGeneratingAI {
                                             ProgressView().controlSize(.small).frame(width: 10, height: 10)
                                         } else {
-                                            Image(systemName: "sparkles").font(.system(size: 10))
+                                            Image(systemName: "sparkles").font(DesignSystem.Typography.label)
                                         }
-                                        Text(L10n("Gerar com IA")).font(.system(size: 10))
+                                        Text(L10n("Gerar com IA")).font(DesignSystem.Typography.label)
                                     }
                                 }
                                 .buttonStyle(.bordered)
@@ -83,7 +83,7 @@ struct PullRequestSheet: View {
                             }
                         }
                         TextEditor(text: $body_)
-                            .font(.system(size: 12, design: .monospaced))
+                            .font(DesignSystem.Typography.monoBody)
                             .frame(minHeight: 120)
                             .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius).stroke(DesignSystem.Colors.glassBorderDark))
                     }
@@ -91,7 +91,7 @@ struct PullRequestSheet: View {
                     // Draft toggle
                     Toggle(isOn: $isDraft) {
                         Text(L10n("Criar como Draft"))
-                            .font(.system(size: 12))
+                            .font(DesignSystem.Typography.body)
                     }
                     .toggleStyle(SwitchToggleStyle(tint: DesignSystem.Colors.actionPrimary))
                     .tint(DesignSystem.Colors.actionPrimary)
@@ -101,7 +101,7 @@ struct PullRequestSheet: View {
                         HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                             Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(DesignSystem.Colors.warning)
                             Text(error)
-                                .font(.caption)
+                                .font(DesignSystem.Typography.label)
                                 .foregroundStyle(.secondary)
                         }
                         .padding(10)

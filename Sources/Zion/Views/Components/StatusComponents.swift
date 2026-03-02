@@ -46,12 +46,12 @@ struct StatusChip: View {
     var body: some View {
         HStack(spacing: DesignSystem.Spacing.iconTextGap) {
             Image(systemName: icon)
-                .font(.caption)
+                .font(DesignSystem.Typography.label)
                 .foregroundStyle(tint)
             
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
-                    .font(.system(size: 9, weight: .bold))
+                    .font(DesignSystem.Typography.metaBold)
                     .foregroundStyle(.secondary)
                     .textCase(.uppercase)
                 Text(value)

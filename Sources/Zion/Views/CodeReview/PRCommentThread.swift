@@ -42,7 +42,7 @@ struct PRCommentThread: View {
                     isReplying = true
                 } label: {
                     Label(L10n("pr.comment.reply"), systemImage: "arrowshape.turn.up.left")
-                        .font(.system(size: 10))
+                        .font(DesignSystem.Typography.label)
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
@@ -67,18 +67,18 @@ private struct PRCommentBubble: View {
                 authorAvatar
 
                 Text("@\(comment.author)")
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .font(DesignSystem.Typography.monoLabelBold)
                     .foregroundStyle(.secondary)
 
                 Spacer()
 
                 Text(comment.createdAt, style: .relative)
-                    .font(.system(size: 9))
+                    .font(DesignSystem.Typography.meta)
                     .foregroundStyle(.tertiary)
             }
 
             Text(comment.body)
-                .font(.system(size: 11))
+                .font(DesignSystem.Typography.bodySmall)
                 .textSelection(.enabled)
         }
         .padding(.vertical, DesignSystem.Spacing.micro)
@@ -89,7 +89,7 @@ private struct PRCommentBubble: View {
         let hue = Double(abs(comment.author.hashValue) % 360) / 360.0
 
         return Text(initial)
-            .font(.system(size: 8, weight: .bold))
+            .font(DesignSystem.Typography.micro)
             .foregroundStyle(.white)
             .frame(width: 18, height: 18)
             .background(Circle().fill(Color(hue: hue, saturation: 0.6, brightness: 0.8)))

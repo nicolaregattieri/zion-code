@@ -118,11 +118,11 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;ba
 <div id="header-title">Zion Remote</div>
 <div id="header-context">No session</div>
 </div>
-<span id="status" class="connecting">Connecting</span>
+<span id="status" class="connecting" aria-live="polite">Connecting</span>
 </header>
 
 <div id="drawer-overlay" onclick="closeDrawer()"></div>
-<nav id="drawer">
+<nav id="drawer" role="navigation">
 <div id="drawer-header">
 <div id="drawer-brand"><div id="drawer-logo">Z</div><h2>Zion</h2></div>
 <div id="drawer-subtitle">Remote Terminal Access</div>
@@ -138,7 +138,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;ba
 <p id="pair-desc">Establishing secure connection to your Mac</p>
 <button id="btn-retry" onclick="retryConnect()">Refresh</button>
 </div>
-<div id="terminal" style="display:none"></div>
+<div id="terminal" role="log" aria-live="polite" style="display:none"></div>
 </div>
 <div id="prompt-banner">
 <div id="prompt-text"></div>
@@ -175,7 +175,7 @@ const LAN_MODE = (qp.get('m') || P.m || fp.get('m')) === 'lan';
 const BASE = location.origin;
 
 let cryptoKey, activeSession = null, sessions = [];
-let polling = false, pollErrors = 0, maxPollErrors = 5, activeProject = null;
+let polling = false, pollErrors = 0, maxPollErrors = 5, activeProject = null, _retryCount = 0;
 let drawerOpen = false;
 
 // -- Drawer --
@@ -260,6 +260,7 @@ async function connect() {
     const res = await fetch(BASE + '/pair?t=' + TOKEN);
     const data = await res.json();
     if (data.status === 'paired') {
+      _retryCount = 0;
       setStatus('connected', 'Connected');
       $('#pairing').style.display = 'none';
       $('#terminal').style.display = '';
@@ -271,8 +272,11 @@ async function connect() {
     }
   } catch(e) {
     showRetry('Connection Failed', e.message + '. Tap to retry.');
-    // Also auto-retry after 3 seconds
-    setTimeout(connect, 3000);
+    // Auto-retry with cap (max 5 attempts before manual-only)
+    _retryCount = (_retryCount || 0) + 1;
+    if (_retryCount < 5) {
+      setTimeout(connect, 3000);
+    }
   }
 }
 

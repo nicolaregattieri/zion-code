@@ -12,7 +12,7 @@ struct RepositoryStatsCard: View {
             } else {
                 HStack {
                     Text(L10n("Carregue as estatisticas para visualizar."))
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(DesignSystem.Typography.label).foregroundStyle(.secondary)
                     Spacer()
                     Button {
                         model.loadRepositoryStats()
@@ -40,9 +40,9 @@ struct RepositoryStatsCard: View {
                 let formatter = DateFormatter()
                 let _ = { formatter.dateStyle = .medium }()
                 HStack(spacing: DesignSystem.Spacing.iconTextGap) {
-                    Image(systemName: "calendar").foregroundStyle(.secondary).font(.system(size: 10))
+                    Image(systemName: "calendar").foregroundStyle(.secondary).font(DesignSystem.Typography.label)
                     Text("\(formatter.string(from: first)) — \(formatter.string(from: last))")
-                        .font(.system(size: 11))
+                        .font(DesignSystem.Typography.bodySmall)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -58,20 +58,20 @@ struct RepositoryStatsCard: View {
                     ForEach(topContributors) { contributor in
                         HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                             Text(contributor.name)
-                                .font(.system(size: 11))
+                                .font(DesignSystem.Typography.bodySmall)
                                 .frame(width: 120, alignment: .trailing)
                                 .lineLimit(1)
 
                             GeometryReader { geo in
                                 let width = geo.size.width * CGFloat(contributor.commitCount) / CGFloat(max(1, maxCount))
-                                RoundedRectangle(cornerRadius: 3)
+                                RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius)
                                     .fill(Color.accentColor.opacity(0.6))
                                     .frame(width: max(4, width), height: 14)
                             }
                             .frame(height: 14)
 
                             Text("\(contributor.commitCount)")
-                                .font(.system(size: 10, design: .monospaced))
+                                .font(DesignSystem.Typography.monoLabel)
                                 .foregroundStyle(.secondary)
                                 .frame(width: 40, alignment: .trailing)
                         }
@@ -90,7 +90,7 @@ struct RepositoryStatsCard: View {
                         HStack(spacing: 1) {
                             ForEach(Array(stats.languageBreakdown.enumerated()), id: \.element.id) { index, lang in
                                 let width = geo.size.width * lang.percentage / 100
-                                RoundedRectangle(cornerRadius: 2)
+                                RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius)
                                     .fill(colors[index % colors.count])
                                     .frame(width: max(2, width))
                                     .help("\(lang.language): \(lang.fileCount) files")
@@ -107,7 +107,7 @@ struct RepositoryStatsCard: View {
                             HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                                 Circle().fill(colors[index % colors.count]).frame(width: 6, height: 6)
                                 Text("\(lang.language) \(String(format: "%.0f", lang.percentage))%")
-                                    .font(.system(size: 9))
+                                    .font(DesignSystem.Typography.meta)
                                     .foregroundStyle(.secondary)
                             }
                         }
@@ -131,12 +131,12 @@ struct RepositoryStatsCard: View {
     private func statBadge(value: String, label: String, icon: String, color: Color) -> some View {
         VStack(spacing: 4) {
             Image(systemName: icon)
-                .font(.system(size: 14))
+                .font(DesignSystem.Typography.bodyLarge)
                 .foregroundStyle(color)
             Text(value)
                 .font(.system(size: 16, weight: .bold, design: .monospaced))
             Text(label)
-                .font(.system(size: 9))
+                .font(DesignSystem.Typography.meta)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)

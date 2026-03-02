@@ -348,7 +348,7 @@ struct ContentView: View {
                 }
             }
         }
-        .animation(.easeInOut(duration: 0.15), value: model.isRepositorySwitching)
+        .animation(DesignSystem.Motion.detail, value: model.isRepositorySwitching)
     }
 
     @ViewBuilder
@@ -523,8 +523,8 @@ struct ContentView: View {
         HStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle.fill").font(.title3).foregroundStyle(DesignSystem.Colors.warning)
             VStack(alignment: .leading, spacing: 2) {
-                Text(L10n("Conflitos")).font(.headline)
-                Text(L10n("Resolva os conflitos na sua IDE favorita.")).font(.caption).foregroundStyle(.secondary)
+                Text(L10n("Conflitos")).font(DesignSystem.Typography.sheetTitle)
+                Text(L10n("Resolva os conflitos na sua IDE favorita.")).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
             }
             Spacer()
             HStack(spacing: DesignSystem.Spacing.iconTextGap) {

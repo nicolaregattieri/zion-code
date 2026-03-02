@@ -62,7 +62,7 @@ struct NotificationSettingsTab: View {
                     }
                     if !topicInput.isEmpty && !isTopicInputValid {
                         Text("Topico invalido. Use apenas letras, numeros, '.', '_' ou '-' (1-64).")
-                            .font(.caption2)
+                            .font(DesignSystem.Typography.meta)
                             .foregroundStyle(DesignSystem.Colors.error)
                     }
                 }
@@ -70,22 +70,22 @@ struct NotificationSettingsTab: View {
                 if !isConfigured {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(L10n("ntfy.onboarding.hint"))
-                            .font(.caption)
+                            .font(DesignSystem.Typography.label)
                             .foregroundStyle(.secondary)
 
                         DisclosureGroup(L10n("ntfy.whatIs.title")) {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(L10n("ntfy.whatIs.description"))
-                                    .font(.caption)
+                                    .font(DesignSystem.Typography.label)
                                     .foregroundStyle(.secondary)
 
                                 Text(L10n("ntfy.whatIs.steps"))
-                                    .font(.caption)
+                                    .font(DesignSystem.Typography.label)
                                     .foregroundStyle(.secondary)
 
                                 Link(destination: URL(string: "https://ntfy.sh")!) {
                                     Label(L10n("ntfy.whatIs.learnMore"), systemImage: "arrow.up.right.square")
-                                        .font(.caption)
+                                        .font(DesignSystem.Typography.label)
                                 }
                             }
                             .padding(.top, 4)
@@ -96,7 +96,7 @@ struct NotificationSettingsTab: View {
                 }
 
                 Text(L10n("ntfy.topic.privacy"))
-                    .font(.caption2)
+                    .font(DesignSystem.Typography.meta)
                     .foregroundStyle(.tertiary)
             }
 
@@ -114,7 +114,7 @@ struct NotificationSettingsTab: View {
                     }
                     if !isServerURLValid {
                         Text("Servidor invalido. Use URL HTTPS valida (ex: https://ntfy.sh).")
-                            .font(.caption2)
+                            .font(DesignSystem.Typography.meta)
                             .foregroundStyle(DesignSystem.Colors.error)
                     }
                 }
@@ -146,7 +146,7 @@ struct NotificationSettingsTab: View {
                     .disabled(isTestingNtfy || !isCurrentConfigValid)
                     if !isCurrentConfigValid {
                         Text("Corrija topico e servidor para testar notificacoes.")
-                            .font(.caption2)
+                            .font(DesignSystem.Typography.meta)
                             .foregroundStyle(DesignSystem.Colors.error)
                     }
                 }

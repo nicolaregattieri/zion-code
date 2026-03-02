@@ -13,10 +13,10 @@ struct PRReviewSubmitSheet: View {
             // Header
             HStack {
                 Image(systemName: "checkmark.message")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(DesignSystem.Typography.sheetTitle)
                     .foregroundStyle(DesignSystem.Colors.codeReview)
                 Text(L10n("pr.review.submit"))
-                    .font(.headline)
+                    .font(DesignSystem.Typography.sheetTitle)
                 Spacer()
             }
             .padding(16)
@@ -36,7 +36,7 @@ struct PRReviewSubmitSheet: View {
 
                 // Review body
                 TextEditor(text: $reviewBody)
-                    .font(.system(size: 12, design: .monospaced))
+                    .font(DesignSystem.Typography.monoBody)
                     .frame(minHeight: 120)
                     .overlay(
                         RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius)
@@ -49,7 +49,7 @@ struct PRReviewSubmitSheet: View {
                         Image(systemName: "text.bubble")
                             .foregroundStyle(DesignSystem.Colors.info)
                         Text(L10n("pr.review.comments.count", model.pendingReviewComments.count))
-                            .font(.system(size: 11))
+                            .font(DesignSystem.Typography.bodySmall)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -60,7 +60,7 @@ struct PRReviewSubmitSheet: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundStyle(DesignSystem.Colors.warning)
                         Text(error)
-                            .font(.caption)
+                            .font(DesignSystem.Typography.label)
                             .foregroundStyle(.secondary)
                     }
                     .padding(10)

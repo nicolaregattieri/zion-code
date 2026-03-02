@@ -214,11 +214,15 @@ struct SourceCodeEditor: NSViewRepresentable {
             coord.lastHighlightedExtension = fileExtension
         }
 
-        // Apply line spacing and letter spacing
-        let range = NSRange(location: 0, length: textView.string.utf16.count)
-        if range.length > 0 {
-            textView.textStorage?.addAttribute(.paragraphStyle, value: paragraphStyle, range: range)
-            textView.textStorage?.addAttribute(.kern, value: CGFloat(letterSpacing), range: range)
+        // Apply line spacing and letter spacing (only when changed)
+        if lineSpacing != coord.lastLineSpacing || letterSpacing != coord.lastLetterSpacing {
+            coord.lastLineSpacing = lineSpacing
+            coord.lastLetterSpacing = letterSpacing
+            let range = NSRange(location: 0, length: textView.string.utf16.count)
+            if range.length > 0 {
+                textView.textStorage?.addAttribute(.paragraphStyle, value: paragraphStyle, range: range)
+                textView.textStorage?.addAttribute(.kern, value: CGFloat(letterSpacing), range: range)
+            }
         }
 
         // Search highlighting
@@ -274,6 +278,8 @@ struct SourceCodeEditor: NSViewRepresentable {
         var lastWrappedWidth: CGFloat?
         var lastGoToLine: Int = 0
         var lastGoToLineRequestID: Int = 0
+        var lastLineSpacing: Double?
+        var lastLetterSpacing: Double?
         private var highlightDebounceTask: DispatchWorkItem?
         init(_ parent: SourceCodeEditor) {
             self.parent = parent

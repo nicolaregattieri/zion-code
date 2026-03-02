@@ -20,17 +20,17 @@ struct CodeReviewDiffPane: View {
                         if !file.inlineComments.isEmpty {
                             HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                                 Image(systemName: "text.bubble")
-                                    .font(.system(size: 10))
+                                    .font(DesignSystem.Typography.label)
                                 Text("\(file.inlineComments.count)")
-                                    .font(.system(size: 10, weight: .bold))
+                                    .font(DesignSystem.Typography.labelBold)
                             }
                             .foregroundStyle(DesignSystem.Colors.info)
                         }
                         Text("+\(file.additions)")
-                            .font(.system(size: 11, design: .monospaced))
+                            .font(DesignSystem.Typography.monoSmall)
                             .foregroundStyle(DesignSystem.Colors.diffAddition)
                         Text("-\(file.deletions)")
-                            .font(.system(size: 11, design: .monospaced))
+                            .font(DesignSystem.Typography.monoSmall)
                             .foregroundStyle(DesignSystem.Colors.diffDeletion)
                     }
                     .padding(12)
@@ -62,7 +62,7 @@ struct CodeReviewDiffPane: View {
                             ForEach(file.hunks) { hunk in
                                 VStack(alignment: .leading, spacing: 0) {
                                     Text(hunk.header)
-                                        .font(.system(size: 10, design: .monospaced))
+                                        .font(DesignSystem.Typography.monoLabel)
                                         .foregroundStyle(DesignSystem.Colors.diffHunkHeader)
                                         .padding(.horizontal, 8)
                                         .padding(.vertical, 4)
@@ -81,7 +81,7 @@ struct CodeReviewDiffPane: View {
                     } else if !file.diff.isEmpty {
                         // Raw diff fallback
                         Text(file.diff)
-                            .font(.system(size: 11, design: .monospaced))
+                            .font(DesignSystem.Typography.monoSmall)
                             .textSelection(.enabled)
                             .padding(12)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -135,12 +135,12 @@ struct CodeReviewDiffPane: View {
                     Text(line.newLineNumber.map { String($0) } ?? "")
                         .frame(width: 36, alignment: .trailing)
                 }
-                .font(.system(size: 9, design: .monospaced))
+                .font(DesignSystem.Typography.monoMeta)
                 .foregroundStyle(.tertiary)
                 .padding(.trailing, 8)
 
                 Text(line.content)
-                    .font(.system(size: 11, design: .monospaced))
+                    .font(DesignSystem.Typography.monoSmall)
                     .foregroundStyle(fg)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -196,7 +196,7 @@ struct CodeReviewDiffPane: View {
                 activeCommentLine = lineNumber
             } label: {
                 Image(systemName: "plus")
-                    .font(.system(size: 8, weight: .bold))
+                    .font(DesignSystem.Typography.micro)
                     .foregroundStyle(DesignSystem.Colors.info)
                     .frame(width: 16, height: 16)
                     .contentShape(Rectangle())

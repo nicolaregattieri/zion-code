@@ -82,7 +82,7 @@ struct ClimbingZionView: View {
 
             VStack(spacing: 8) {
                 Text(L10n("onboarding.title"))
-                    .font(.system(size: 28, weight: .bold))
+                    .font(DesignSystem.Typography.screenTitle)
 
                 Text(L10n("onboarding.subtitle"))
                     .font(.system(size: 14, weight: .medium))
@@ -107,7 +107,7 @@ struct ClimbingZionView: View {
                 skipOnboarding()
             }
             .buttonStyle(.plain)
-            .font(.system(size: 12))
+            .font(DesignSystem.Typography.body)
             .foregroundStyle(.tertiary)
 
             Spacer()
@@ -186,7 +186,7 @@ struct ClimbingZionView: View {
             }
 
             Text(L10n("onboarding.ai.features"))
-                .font(.system(size: 12))
+                .font(DesignSystem.Typography.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
@@ -236,7 +236,7 @@ struct ClimbingZionView: View {
             .controlSize(.regular)
 
             Text(L10n("onboarding.ai.laterHint"))
-                .font(.system(size: 11))
+                .font(DesignSystem.Typography.bodySmall)
                 .foregroundStyle(.tertiary)
         }
     }
@@ -423,7 +423,7 @@ struct ClimbingZionView: View {
                 .lineLimit(1)
 
             Text(model)
-                .font(.system(size: 10))
+                .font(DesignSystem.Typography.label)
                 .foregroundStyle(.tertiary)
 
             Button {
@@ -432,14 +432,14 @@ struct ClimbingZionView: View {
                 }
             } label: {
                 Text(L10n("onboarding.ai.getKey"))
-                    .font(.system(size: 10, weight: .medium))
+                    .font(DesignSystem.Typography.labelMedium)
             }
             .buttonStyle(.bordered)
             .controlSize(.mini)
 
             if isSelected && keySaved {
                 Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 14))
+                    .font(DesignSystem.Typography.bodyLarge)
                     .foregroundStyle(DesignSystem.Colors.success)
             }
         }
@@ -463,7 +463,7 @@ struct ClimbingZionView: View {
     private func recapRow(_ icon: String, _ title: String, enabled: Bool) -> some View {
         HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
             Image(systemName: icon)
-                .font(.system(size: 12))
+                .font(DesignSystem.Typography.body)
                 .foregroundStyle(.secondary)
                 .frame(width: 20)
             Text(title)
@@ -471,11 +471,11 @@ struct ClimbingZionView: View {
             Spacer()
             if enabled {
                 Label(L10n("onboarding.ready.enabled"), systemImage: "checkmark.circle.fill")
-                    .font(.system(size: 11))
+                    .font(DesignSystem.Typography.bodySmall)
                     .foregroundStyle(DesignSystem.Colors.success)
             } else {
                 Text(L10n("onboarding.ready.skipped"))
-                    .font(.system(size: 11))
+                    .font(DesignSystem.Typography.bodySmall)
                     .foregroundStyle(.tertiary)
             }
         }
@@ -510,7 +510,7 @@ struct ClimbingZionView: View {
             codeLineView("    return", " Result", ".", "success", "(diff)", colors: (.pink, .cyan, .gray, .green, .gray))
             codeLineView("}", "", "", "", "", colors: (.gray, .clear, .clear, .clear, .clear))
         }
-        .font(.system(size: 11, design: .monospaced))
+        .font(DesignSystem.Typography.monoSmall)
         .padding(12)
         .background(Color(red: 0.12, green: 0.12, blue: 0.18))
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous))

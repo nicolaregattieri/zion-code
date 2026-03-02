@@ -15,7 +15,7 @@ struct FileHistorySheet: View {
                 VStack(spacing: 12) {
                     ProgressView()
                     Text(L10n("filehistory.loading"))
-                        .font(.caption)
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -25,7 +25,7 @@ struct FileHistorySheet: View {
                         .font(.system(size: 28))
                         .foregroundStyle(.secondary)
                     Text(L10n("filehistory.empty"))
-                        .font(.caption)
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -50,9 +50,9 @@ struct FileHistorySheet: View {
                 .foregroundStyle(DesignSystem.Colors.info)
             VStack(alignment: .leading, spacing: 2) {
                 Text(L10n("filehistory.title"))
-                    .font(.headline)
+                    .font(DesignSystem.Typography.sheetTitle)
                 Text(fileName)
-                    .font(.system(size: 11, design: .monospaced))
+                    .font(DesignSystem.Typography.monoSmall)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
@@ -81,14 +81,14 @@ struct FileHistorySheet: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.message)
-                    .font(.system(size: 11, weight: .medium))
+                    .font(DesignSystem.Typography.bodyMedium)
                     .lineLimit(2)
                 HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                     Text(entry.author)
-                        .font(.system(size: 10))
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
                     Text(entry.date)
-                        .font(.system(size: 10))
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(.tertiary)
                 }
             }
@@ -101,7 +101,7 @@ struct FileHistorySheet: View {
                     NSPasteboard.general.setString(entry.hash, forType: .string)
                 } label: {
                     Image(systemName: "doc.on.doc")
-                        .font(.system(size: 10))
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
@@ -113,7 +113,7 @@ struct FileHistorySheet: View {
                     dismiss()
                 } label: {
                     Image(systemName: "arrow.right.circle")
-                        .font(.system(size: 10))
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(DesignSystem.Colors.info)
                 }
                 .buttonStyle(.plain)

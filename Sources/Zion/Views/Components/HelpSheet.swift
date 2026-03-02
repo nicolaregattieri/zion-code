@@ -193,7 +193,7 @@ struct HelpSheet: View {
                     .background(section.color.opacity(0.12))
                     .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
                 Text(L10n(section.titleKey))
-                    .font(.system(size: 13, weight: .bold))
+                    .font(DesignSystem.Typography.sectionTitle)
                 Spacer()
                 Image(systemName: "chevron.right")
                     .font(.system(size: 10, weight: .semibold))
@@ -209,7 +209,7 @@ struct HelpSheet: View {
                             .frame(width: 4, height: 4)
                             .padding(.top, 5)
                         Text(text)
-                            .font(.system(size: 11))
+                            .font(DesignSystem.Typography.bodySmall)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -261,7 +261,7 @@ struct HelpSheet: View {
                 Text(L10n("help.shortcuts.title"))
                     .font(.system(size: 12, weight: .bold))
                 Text(L10n("help.shortcuts.subtitle"))
-                    .font(.system(size: 11))
+                    .font(DesignSystem.Typography.bodySmall)
                     .foregroundStyle(.secondary)
             }
             Spacer()

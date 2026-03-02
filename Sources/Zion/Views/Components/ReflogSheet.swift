@@ -13,9 +13,9 @@ struct ReflogSheet: View {
                     .font(DesignSystem.IconSize.sectionHeader)
                     .foregroundStyle(.secondary)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(L10n("Reflog")).font(.headline)
+                    Text(L10n("Reflog")).font(DesignSystem.Typography.sheetTitle)
                     Text(L10n("Historico de acoes do repositorio"))
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(DesignSystem.Typography.label).foregroundStyle(.secondary)
                 }
                 Spacer()
 
@@ -44,7 +44,7 @@ struct ReflogSheet: View {
                 VStack(spacing: DesignSystem.Spacing.cardPadding) {
                     ProgressView()
                     Text(L10n("Carregando reflog..."))
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(DesignSystem.Typography.label).foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {

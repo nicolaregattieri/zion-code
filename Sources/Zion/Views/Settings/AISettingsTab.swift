@@ -77,14 +77,14 @@ struct AISettingsTab: View {
                     Text(commitStyleRaw == CommitMessageStyle.compact.rawValue
                         ? L10n("commit.style.compact.hint")
                         : L10n("commit.style.detailed.hint"))
-                        .font(.caption)
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
                 }
 
                 Section(L10n("settings.ai.preCommitReview")) {
                     Toggle(L10n("settings.ai.preCommitReview.toggle"), isOn: $preCommitReviewEnabled)
                     Text(L10n("settings.ai.preCommitReview.hint"))
-                        .font(.caption)
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
                 }
 
@@ -102,7 +102,7 @@ struct AISettingsTab: View {
             Section(L10n("settings.ai.transferSupport")) {
                 Toggle(L10n("settings.ai.transferSupport.toggle"), isOn: $aiTransferSupportHints)
                 Text(L10n("settings.ai.transferSupport.hint"))
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
             }
         }

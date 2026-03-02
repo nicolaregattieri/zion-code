@@ -45,9 +45,9 @@ struct CodeReviewSheet: View {
                 if !model.prComments.isEmpty {
                     HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                         Image(systemName: "text.bubble.fill")
-                            .font(.system(size: 10))
+                            .font(DesignSystem.Typography.label)
                         Text("\(model.prComments.count)")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(DesignSystem.Typography.labelBold)
                     }
                     .foregroundStyle(DesignSystem.Colors.info)
                     .padding(.horizontal, 8)
@@ -68,7 +68,7 @@ struct CodeReviewSheet: View {
                             Text(L10n("pr.review.submit"))
                             if !model.pendingReviewComments.isEmpty {
                                 Text("(\(model.pendingReviewComments.count))")
-                                    .font(.system(size: 9, weight: .bold))
+                                    .font(DesignSystem.Typography.metaBold)
                             }
                         }
                     }

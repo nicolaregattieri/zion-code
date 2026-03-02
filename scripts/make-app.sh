@@ -113,7 +113,12 @@ chmod +x "$APP_DIR/Contents/MacOS/Zion"
 xattr -cr "$APP_DIR"
 
 # Re-sign app bundle (install_name_tool invalidates the ad-hoc signature from swift build)
-codesign --force --deep --sign - "$APP_DIR"
+ENTITLEMENTS="$ROOT_DIR/Zion.entitlements"
+if [ -f "$ENTITLEMENTS" ]; then
+  codesign --force --deep --sign - --entitlements "$ENTITLEMENTS" "$APP_DIR"
+else
+  codesign --force --deep --sign - "$APP_DIR"
+fi
 
 # Nudge Finder/LaunchServices caches by bumping bundle mtimes after final signing
 touch "$APP_DIR/Contents/Info.plist" "$APP_DIR"

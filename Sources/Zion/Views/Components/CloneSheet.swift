@@ -47,9 +47,9 @@ struct CloneSheet: View {
                 .foregroundStyle(DesignSystem.Colors.brandPrimary)
             VStack(alignment: .leading, spacing: 2) {
                 Text(L10n("Clonar Repositorio"))
-                    .font(.headline)
+                    .font(DesignSystem.Typography.sheetTitle)
                 Text(L10n("Baixe um repositorio remoto para o disco local."))
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
             }
             Spacer()
@@ -109,7 +109,7 @@ struct CloneSheet: View {
             if !destinationPath.isEmpty {
                 HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                     Image(systemName: "folder.fill")
-                        .font(.caption)
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
                     Text(destinationURL.path)
                         .font(.caption.monospaced())
@@ -142,7 +142,7 @@ struct CloneSheet: View {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(DesignSystem.Colors.error)
                     Text(error)
-                        .font(.caption)
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(DesignSystem.Colors.error)
                         .lineLimit(3)
                 }

@@ -87,7 +87,8 @@ final class RepositoryViewModel {
     }
 
     // Clipboard
-    let clipboardMonitor = ClipboardMonitor()
+    @ObservationIgnored let clipboardMonitor = ClipboardMonitor()
+    @ObservationIgnored var _isReloadingExpandedDirs = false
     @ObservationIgnored var terminalSendCallbacks: [UUID: (Data) -> Void] = [:]
     @ObservationIgnored var terminalScreenReaders: [UUID: () -> [String]] = [:]
 
@@ -807,10 +808,13 @@ final class RepositoryViewModel {
     }
 
     func handleError(_ error: Error, source: String = #function) {
-        let message = friendlyErrorMessage(for: error) ?? error.localizedDescription
+        let rawMessage = error.localizedDescription
+        let message = friendlyErrorMessage(for: error)
+            ?? ErrorClassifier.classify(rawMessage)
+            ?? rawMessage
         lastError = message
         statusMessage = message
-        logger.log(.error, message, source: source)
+        logger.log(.error, rawMessage, source: source)
     }
 
     private func startFileWatcher(for url: URL) {

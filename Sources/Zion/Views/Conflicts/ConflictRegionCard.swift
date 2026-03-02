@@ -39,7 +39,7 @@ struct ConflictRegionCard: View {
     private var header: some View {
         HStack(spacing: DesignSystem.Spacing.iconTextGap) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 11))
+                .font(DesignSystem.Typography.bodySmall)
                 .foregroundStyle(DesignSystem.Colors.warning)
             Text(L10n("Conflito") + " #\(index + 1)")
                 .font(.system(size: 12, weight: .bold))
@@ -48,14 +48,14 @@ struct ConflictRegionCard: View {
                 .font(.system(size: 10, weight: .medium, design: .monospaced))
                 .foregroundStyle(DesignSystem.Colors.success)
             Text("vs")
-                .font(.system(size: 10))
+                .font(DesignSystem.Typography.label)
                 .foregroundStyle(.secondary)
             Text(region.theirsLabel)
                 .font(.system(size: 10, weight: .medium, design: .monospaced))
                 .foregroundStyle(DesignSystem.Colors.conflictTheirs)
             if region.choice != .undecided {
                 Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 12))
+                    .font(DesignSystem.Typography.body)
                     .foregroundStyle(DesignSystem.Colors.success)
             }
         }
@@ -72,7 +72,7 @@ struct ConflictRegionCard: View {
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(Array(region.oursLines.enumerated()), id: \.offset) { _, line in
                     Text(line.isEmpty ? " " : line)
-                        .font(.system(size: 11, design: .monospaced))
+                        .font(DesignSystem.Typography.monoSmall)
                         .lineLimit(1)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 8)
@@ -89,7 +89,7 @@ struct ConflictRegionCard: View {
         HStack {
             Spacer()
             Text("=======")
-                .font(.system(size: 9, design: .monospaced))
+                .font(DesignSystem.Typography.monoMeta)
                 .foregroundStyle(.secondary.opacity(0.5))
             Spacer()
         }
@@ -105,7 +105,7 @@ struct ConflictRegionCard: View {
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(Array(region.theirsLines.enumerated()), id: \.offset) { _, line in
                     Text(line.isEmpty ? " " : line)
-                        .font(.system(size: 11, design: .monospaced))
+                        .font(DesignSystem.Typography.monoSmall)
                         .lineLimit(1)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 8)
@@ -131,7 +131,7 @@ struct ConflictRegionCard: View {
                     }
                 } label: {
                     Label(L10n("Editar Manualmente"), systemImage: "pencil")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(DesignSystem.Typography.bodyMedium)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
@@ -147,7 +147,7 @@ struct ConflictRegionCard: View {
                                 .frame(width: 12, height: 12)
                         } else {
                             Label(L10n("Resolver com IA"), systemImage: "sparkles")
-                                .font(.system(size: 11, weight: .medium))
+                                .font(DesignSystem.Typography.bodyMedium)
                         }
                     }
                     .buttonStyle(.bordered)
@@ -168,7 +168,7 @@ struct ConflictRegionCard: View {
             if isEditingCustom {
                 VStack(alignment: .leading, spacing: 4) {
                     TextEditor(text: $customText)
-                        .font(.system(size: 11, design: .monospaced))
+                        .font(DesignSystem.Typography.monoSmall)
                         .frame(height: 100)
                         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
                         .overlay(
@@ -196,7 +196,7 @@ struct ConflictRegionCard: View {
             onChoose(choice)
         } label: {
             Label(label, systemImage: region.choice == choice ? "checkmark.circle.fill" : icon)
-                .font(.system(size: 11, weight: .medium))
+                .font(DesignSystem.Typography.bodyMedium)
         }
         .buttonStyle(.bordered)
         .controlSize(.small)

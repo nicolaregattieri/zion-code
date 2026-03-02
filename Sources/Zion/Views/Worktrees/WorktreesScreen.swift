@@ -26,9 +26,9 @@ struct WorktreesScreen: View {
                             .foregroundStyle(.secondary)
                         VStack(alignment: .leading, spacing: 1) {
                             Text(L10n("worktree.smart.new"))
-                                .font(.headline)
+                                .font(DesignSystem.Typography.sheetTitle)
                             Text(L10n("worktree.smart.subtitle"))
-                                .font(.caption)
+                                .font(DesignSystem.Typography.label)
                                 .foregroundStyle(.secondary)
                         }
                         Spacer()
@@ -67,13 +67,13 @@ struct WorktreesScreen: View {
                         HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                             if !model.derivedWorktreeBranch.isEmpty {
                                 Text("branch: \(model.derivedWorktreeBranch)")
-                                    .font(.system(size: 10, design: .monospaced))
+                                    .font(DesignSystem.Typography.monoLabel)
                                     .foregroundStyle(.secondary)
                                     .lineLimit(1)
                             }
                             if !model.derivedWorktreePath.isEmpty {
                                 Text(model.derivedWorktreePath)
-                                    .font(.system(size: 10, design: .monospaced))
+                                    .font(DesignSystem.Typography.monoLabel)
                                     .foregroundStyle(.secondary)
                                     .lineLimit(1)
                                     .truncationMode(.middle)
@@ -108,10 +108,10 @@ struct WorktreesScreen: View {
                 GlassCard(spacing: 10) {
                     HStack {
                         Text(L10n("Worktrees disponiveis"))
-                            .font(.headline)
+                            .font(DesignSystem.Typography.sheetTitle)
                         Spacer()
                         Text("\(model.worktrees.count)")
-                            .font(.caption)
+                            .font(DesignSystem.Typography.label)
                             .foregroundStyle(.secondary)
                     }
 
@@ -123,7 +123,11 @@ struct WorktreesScreen: View {
                                         .font(.largeTitle)
                                         .foregroundStyle(.secondary)
                                     Text(L10n("Nenhum worktree encontrado"))
-                                        .font(.headline)
+                                        .font(DesignSystem.Typography.sheetTitle)
+                                    Text(L10n("worktrees.emptyHint"))
+                                        .font(DesignSystem.Typography.label)
+                                        .foregroundStyle(.secondary)
+                                        .multilineTextAlignment(.center)
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 26)

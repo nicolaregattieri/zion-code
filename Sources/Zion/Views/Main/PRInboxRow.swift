@@ -14,16 +14,16 @@ struct PRInboxRow: View {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                         Text("#\(item.pr.number)")
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .font(DesignSystem.Typography.monoLabelBold)
                             .foregroundStyle(.secondary)
                         Text(item.pr.title)
-                            .font(.system(size: 11, weight: .medium))
+                            .font(DesignSystem.Typography.bodyMedium)
                             .lineLimit(1)
                     }
 
                     HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                         Text("@\(item.pr.author)")
-                            .font(.system(size: 9, design: .monospaced))
+                            .font(DesignSystem.Typography.monoMeta)
                             .foregroundStyle(.tertiary)
 
                         if !item.severitySummary.isEmpty {
@@ -34,7 +34,7 @@ struct PRInboxRow: View {
 
                         if let reviewedAt = item.reviewedAt {
                             Text(reviewedAt, style: .relative)
-                                .font(.system(size: 9))
+                                .font(DesignSystem.Typography.meta)
                                 .foregroundStyle(.tertiary)
                         }
                     }
@@ -46,7 +46,7 @@ struct PRInboxRow: View {
                 statusBadge
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 8, weight: .bold))
+                    .font(DesignSystem.Typography.micro)
                     .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 10)
@@ -79,7 +79,7 @@ struct PRInboxRow: View {
         let hue = Double(abs(item.pr.author.hashValue) % 360) / 360.0
 
         return Text(initial)
-            .font(.system(size: 10, weight: .bold))
+            .font(DesignSystem.Typography.labelBold)
             .foregroundStyle(.white)
             .frame(width: 22, height: 22)
             .background(Circle().fill(Color(hue: hue, saturation: 0.6, brightness: 0.8)))
@@ -94,15 +94,15 @@ struct PRInboxRow: View {
                 .scaleEffect(0.7)
         case .reviewed:
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 12))
+                .font(DesignSystem.Typography.body)
                 .foregroundStyle(DesignSystem.Colors.warning)
         case .clean:
             Image(systemName: "checkmark.seal.fill")
-                .font(.system(size: 12))
+                .font(DesignSystem.Typography.body)
                 .foregroundStyle(DesignSystem.Colors.success)
         case .pending:
             Image(systemName: "clock")
-                .font(.system(size: 11))
+                .font(DesignSystem.Typography.bodySmall)
                 .foregroundStyle(.secondary)
         }
     }

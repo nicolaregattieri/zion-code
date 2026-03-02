@@ -47,7 +47,7 @@ struct EditorSettingsTab: View {
                     Spacer()
                     Stepper(value: $fontSize, in: 8...32, step: 1) {
                         Text("\(Int(fontSize))pt")
-                            .font(.system(size: 11, design: .monospaced))
+                            .font(DesignSystem.Typography.monoSmall)
                             .frame(width: 36, alignment: .trailing)
                     }
                 }
@@ -58,7 +58,7 @@ struct EditorSettingsTab: View {
                     Slider(value: $lineSpacing, in: 0.0...20.0, step: 0.5)
                         .frame(width: 120)
                     Text(String(format: "%.1fpt", lineSpacing))
-                        .font(.system(size: 11, design: .monospaced))
+                        .font(DesignSystem.Typography.monoSmall)
                         .frame(width: 46, alignment: .trailing)
                 }
 
@@ -68,7 +68,7 @@ struct EditorSettingsTab: View {
                     Slider(value: $letterSpacing, in: -1.0...5.0, step: 0.1)
                         .frame(width: 120)
                     Text(String(format: "%.1f", letterSpacing))
-                        .font(.system(size: 11, design: .monospaced))
+                        .font(DesignSystem.Typography.monoSmall)
                         .frame(width: 36, alignment: .trailing)
                 }
             }

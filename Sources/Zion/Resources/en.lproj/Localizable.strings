@@ -1678,3 +1678,34 @@
 "mobile.status.waitingForPairing" = "Mobile Access: Waiting for pairing";
 "mobile.status.connected" = "Mobile Access: %lld device(s) connected";
 "mobile.status.error" = "Mobile Access: Error";
+
+// Accessibility Labels — icon-only buttons
+"accessibility.dismiss" = "Dismiss";
+"accessibility.expand" = "Expand";
+"accessibility.collapse" = "Collapse";
+"accessibility.commit.suggestMessage" = "Suggest commit message with AI";
+"accessibility.stash.suggestMessage" = "Suggest stash message with AI";
+"accessibility.recovery.refresh" = "Refresh recovery snapshots";
+"accessibility.remote.add" = "Add remote";
+"accessibility.remote.testConnection" = "Test connection";
+"accessibility.remote.delete" = "Delete remote";
+
+// Empty state hints
+"worktrees.emptyHint" = "Use the form above to create your first worktree.";
+"branches.emptyHint" = "Branches appear after the first commit.";
+
+// Sidebar tooltip
+"sidebar.locked.hint" = "Open a repository to unlock this section.";
+
+// Git error messages (ErrorClassifier)
+"error.git.authFailed" = "Authentication failed. Check your credentials or SSH key.";
+"error.git.sshDenied" = "SSH access denied. Make sure your SSH key is added and has access.";
+"error.git.noHost" = "Could not reach the remote server. Check your internet connection.";
+"error.git.networkError" = "Network error. Check your connection and try again.";
+"error.git.mergeConflict" = "There are merge conflicts. Resolve them before continuing.";
+"error.git.uncommittedChanges" = "You have uncommitted changes. Commit or stash them first.";
+"error.git.alreadyExists" = "A branch or tag with that name already exists.";
+"error.git.invalidBranchName" = "That's not a valid branch name.";
+"error.git.worktreeInUse" = "That branch is already used by a worktree at %@.";
+"error.git.lockFile" = "Another Git process is running. Wait for it to finish or remove the lock file.";
+"error.git.pushRejected" = "Push was rejected. Pull the latest changes first, then try again.";

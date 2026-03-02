@@ -69,7 +69,7 @@ struct MarkdownPreviewView: View {
         case .code(let code):
             ScrollView(.horizontal) {
                 Text(code)
-                    .font(.system(size: 12, design: .monospaced))
+                    .font(DesignSystem.Typography.monoBody)
                     .foregroundStyle(theme.colors.text)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -382,7 +382,7 @@ private struct MarkdownImageView: View {
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(theme.colors.comment)
             Text(source)
-                .font(.system(size: 11, design: .monospaced))
+                .font(DesignSystem.Typography.monoSmall)
                 .foregroundStyle(theme.colors.comment.opacity(0.9))
             if !altText.isEmpty {
                 Text(altText)

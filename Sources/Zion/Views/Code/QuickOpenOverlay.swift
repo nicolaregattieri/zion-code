@@ -47,7 +47,7 @@ struct QuickOpenOverlay: View {
                     Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
                     TextField(L10n("Buscar arquivo..."), text: $query)
                         .textFieldStyle(.plain)
-                        .font(.system(size: 14))
+                        .font(DesignSystem.Typography.bodyLarge)
                         .focused($isSearchFocused)
                         .onSubmit { selectCurrentFile() }
                 }

@@ -11,10 +11,10 @@ struct TagDetailSheet: View {
             // Header
             HStack {
                 Image(systemName: "tag")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(DesignSystem.Typography.sheetTitle)
                     .foregroundStyle(DesignSystem.Colors.info)
                 Text(L10n("tag.detail.title"))
-                    .font(.headline)
+                    .font(DesignSystem.Typography.sheetTitle)
                 Spacer()
             }
             .padding(16)
@@ -52,7 +52,7 @@ struct TagDetailSheet: View {
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundStyle(.secondary)
                             TextEditor(text: $model.tagMessage)
-                                .font(.system(size: 12, design: .monospaced))
+                                .font(DesignSystem.Typography.monoBody)
                                 .frame(minHeight: 80)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius)
@@ -64,7 +64,7 @@ struct TagDetailSheet: View {
                     // Push toggle
                     Toggle(isOn: $model.tagPushAfterCreate) {
                         Text(L10n("tag.detail.pushAfterCreate"))
-                            .font(.system(size: 12))
+                            .font(DesignSystem.Typography.body)
                     }
                     .toggleStyle(SwitchToggleStyle(tint: DesignSystem.Colors.actionPrimary))
                     .tint(DesignSystem.Colors.actionPrimary)

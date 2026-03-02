@@ -10,7 +10,7 @@ struct SubmodulesCard: View {
             if model.submodules.isEmpty {
                 HStack {
                     Text(L10n("Nenhum submodulo encontrado."))
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(DesignSystem.Typography.label).foregroundStyle(.secondary)
                     Spacer()
                     Button {
                         model.loadSubmodules()
@@ -24,25 +24,25 @@ struct SubmodulesCard: View {
                     ForEach(model.submodules) { sub in
                         HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                             Image(systemName: sub.status.icon)
-                                .font(.system(size: 12))
+                                .font(DesignSystem.Typography.body)
                                 .foregroundStyle(sub.status.color)
 
                             VStack(alignment: .leading, spacing: 1) {
                                 Text(sub.name)
                                     .font(.system(size: 12, weight: .medium, design: .monospaced))
                                 Text(sub.path)
-                                    .font(.system(size: 10))
+                                    .font(DesignSystem.Typography.label)
                                     .foregroundStyle(.secondary)
                             }
 
                             Spacer()
 
                             Text(String(sub.hash.prefix(8)))
-                                .font(.system(size: 10, design: .monospaced))
+                                .font(DesignSystem.Typography.monoLabel)
                                 .foregroundStyle(.secondary)
 
                             Text(sub.status.label)
-                                .font(.system(size: 9, weight: .bold))
+                                .font(DesignSystem.Typography.metaBold)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
                                 .background(sub.status.color.opacity(0.15))

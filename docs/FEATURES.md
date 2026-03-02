@@ -55,6 +55,8 @@
 | Keyboard Navigation | Arrow keys to navigate commits, Escape to deselect | `↑↓` / `Esc` |
 | Branch Focus | Double-click a branch to filter commits to that branch | — |
 | Load More | Paginated loading (300 per page, up to 5000) | — |
+| Path Breadcrumb | Breadcrumb navigation bar showing current file path with click-to-navigate | — |
+| Commit AI Review | AI-powered single-commit review from the graph context menu | — |
 
 ## Zion Code (Editor)
 
@@ -112,6 +114,10 @@
 | Background Badges | Orange badge on recent repos showing changed file count | — |
 | Paste from Clipboard | Click clipboard item to paste | — |
 | Drag to Terminal | Drag clipboard items into terminal | — |
+| Scrollback Buffer | Configurable scrollback buffer size (1K–50K lines) | Settings |
+| Bell Control | Enable/disable terminal bell sound | Settings |
+| Hyperlink Detection | Clickable URLs in terminal output | Settings |
+| Inline Images | Display images inline via `zion_display` (iTerm2 OSC 1337 protocol) | — |
 
 ## Smart Clipboard
 
@@ -200,6 +206,10 @@
 | Editor Tab | Theme, font family/size, spacing, tab/indent, ruler, wrap, guides, bracket highlight | — |
 | AI Tab | Provider, API key, Commit style, Diff explanation depth, Auto-explain | — |
 | Notifications Tab | ntfy topic, events, PR polling interval, Auto-review toggle | — |
+| Find in Files | Search across all repository files with grouped results and go-to-line | `⇧⌘F` |
+| Ntfy Push Notifications | Configurable ntfy server/topic for push notifications on Git events and AI completions | Settings |
+| AI Agent Rules | `zion_ai_setup` script installs AI instruction blocks (CLAUDE.md, AGENTS.md, .cursorrules, etc.) with terminal features | — |
+| Force Push Options | Force Push with Lease (safe) and Force Push (override) when push is rejected due to divergence | — |
 
 ## AI Diff Explanation
 
