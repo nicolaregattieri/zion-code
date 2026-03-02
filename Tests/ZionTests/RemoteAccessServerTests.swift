@@ -297,6 +297,55 @@ final class RemoteAccessModeSwitchTests: XCTestCase {
         }
     }
 
+    // MARK: - Screen Snapshot Tests
+
+    func testNotifyTerminalOutputMarksSessionDirty() async throws {
+        let sessionID = UUID()
+        let plainVM = RepositoryViewModel()
+        plainVM.isMobileAccessEnabled = true
+
+        XCTAssertNil(plainVM.terminalOutputBuffers[sessionID])
+
+        plainVM.notifyTerminalOutput(sessionID: sessionID, data: Data("hello".utf8))
+
+        XCTAssertNotNil(plainVM.terminalOutputBuffers[sessionID],
+                        "Session should be tracked after terminal output")
+    }
+
+    func testNotifyIgnoredWhenDisabled() async throws {
+        let sessionID = UUID()
+        let plainVM = RepositoryViewModel()
+        plainVM.isMobileAccessEnabled = false
+
+        plainVM.notifyTerminalOutput(sessionID: sessionID, data: Data("hello".utf8))
+
+        XCTAssertNil(plainVM.terminalOutputBuffers[sessionID],
+                     "Should not track sessions when mobile access is disabled")
+    }
+
+    func testNotifyIgnoresEmptyData() async throws {
+        let sessionID = UUID()
+        let plainVM = RepositoryViewModel()
+        plainVM.isMobileAccessEnabled = true
+
+        plainVM.notifyTerminalOutput(sessionID: sessionID, data: Data())
+
+        XCTAssertNil(plainVM.terminalOutputBuffers[sessionID],
+                     "Should not track sessions for empty data")
+    }
+
+    func testBuildScreenUpdateReturnsFullSync() async throws {
+        let sessionID = UUID()
+        let plainVM = RepositoryViewModel()
+        plainVM.isMobileAccessEnabled = true
+
+        // No terminal attached — should return empty fullSync payload
+        let payload = plainVM.buildScreenUpdate(for: sessionID)
+
+        XCTAssertTrue(payload.fullSync, "Screen snapshots should always be fullSync")
+        XCTAssertEqual(payload.sessionID, sessionID)
+    }
+
     func testSwitchModeClearsStaleQRImmediately() async throws {
         // Set stale values
         vm.mobileAccessQRImage = NSImage()

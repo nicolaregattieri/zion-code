@@ -113,12 +113,10 @@ chmod +x "$APP_DIR/Contents/MacOS/Zion"
 xattr -cr "$APP_DIR"
 
 # Re-sign app bundle (install_name_tool invalidates the ad-hoc signature from swift build)
-ENTITLEMENTS="$ROOT_DIR/Zion.entitlements"
-if [ -f "$ENTITLEMENTS" ]; then
-  codesign --force --deep --sign - --entitlements "$ENTITLEMENTS" "$APP_DIR"
-else
-  codesign --force --deep --sign - "$APP_DIR"
-fi
+# Note: Zion.entitlements exists for future Apple notarization but is NOT used with
+# ad-hoc signing (--sign -) as it causes Gatekeeper rejection. When notarization is
+# ready, switch to: codesign --sign "Developer ID" --entitlements Zion.entitlements
+codesign --force --deep --sign - "$APP_DIR"
 
 # Nudge Finder/LaunchServices caches by bumping bundle mtimes after final signing
 touch "$APP_DIR/Contents/Info.plist" "$APP_DIR"

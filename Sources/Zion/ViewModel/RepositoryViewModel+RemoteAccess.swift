@@ -2,6 +2,7 @@ import AppKit
 import Foundation
 import CryptoKit
 import IOKit.pwr_mgt
+@preconcurrency import SwiftTerm
 
 extension RepositoryViewModel {
 
@@ -253,28 +254,145 @@ extension RepositoryViewModel {
     // MARK: - Terminal Output Bridge
 
     func notifyTerminalOutput(sessionID: UUID, data: Data) {
-        guard isMobileAccessEnabled else { return }
+        guard isMobileAccessEnabled, !data.isEmpty else { return }
 
-        // Convert to string, strip ANSI codes, append to ring buffer
-        guard let text = String(data: data, encoding: .utf8) else { return }
-        let stripped = stripANSI(text)
-        guard !stripped.isEmpty else { return }
+        // Mark this session as dirty (has new output since last send)
+        terminalOutputBuffers[sessionID] = Data([1])
 
-        let lines = stripped.components(separatedBy: .newlines).filter { !$0.isEmpty }
-        var buffer = terminalOutputBuffers[sessionID] ?? []
-        buffer.append(contentsOf: lines)
-        if buffer.count > Constants.RemoteAccess.maxScreenUpdateLines {
-            buffer = Array(buffer.suffix(Constants.RemoteAccess.maxScreenUpdateLines))
-        }
-        terminalOutputBuffers[sessionID] = buffer
-
-        // Detect prompts
-        if let detection = PromptDetector.detect(in: stripped) {
-            sendPromptDetected(sessionID: sessionID, detection: detection)
+        // Prompt detection uses stripped text
+        if let text = String(data: data, encoding: .utf8) {
+            let stripped = stripANSI(text)
+            if !stripped.isEmpty, let detection = PromptDetector.detect(in: stripped) {
+                sendPromptDetected(sessionID: sessionID, detection: detection)
+            }
         }
 
         // Throttle screen updates (fires immediately, then coalesces)
         throttleScreenUpdate(for: sessionID)
+    }
+
+    /// Find the SwiftTerm Terminal instance for a given session ID.
+    private func terminalForSession(_ sessionID: UUID) -> SwiftTerm.Terminal? {
+        // Check active repo sessions
+        for tab in terminalTabs {
+            for session in tab.allSessions() where session.id == sessionID {
+                return (session._cachedView as? SwiftTerm.TerminalView)?.getTerminal()
+            }
+        }
+        // Check background repo sessions
+        for (_, state) in backgroundRepoStates {
+            for tab in state.terminalTabs {
+                for session in tab.allSessions() where session.id == sessionID {
+                    return (session._cachedView as? SwiftTerm.TerminalView)?.getTerminal()
+                }
+            }
+        }
+        return nil
+    }
+
+    /// Read the visible terminal screen and serialize as ANSI-formatted text.
+    /// Each row includes SGR color/style codes, written as plain lines with \r\n.
+    /// The client uses scrollTo(0) + eraseDisplay before writing, so old snapshots
+    /// scroll naturally into xterm.js's scrollback buffer (user can scroll up).
+    private func serializeTerminalScreen(terminal: SwiftTerm.Terminal) -> Data {
+        var output = ""
+        let rows = terminal.rows
+        let cols = terminal.cols
+
+        for row in 0..<rows {
+            guard let line = terminal.getLine(row: row) else {
+                output += "\r\n"
+                continue
+            }
+            output += serializeBufferLine(line, cols: cols, terminal: terminal)
+            if row < rows - 1 {
+                output += "\r\n"
+            }
+        }
+
+        return Data(output.utf8)
+    }
+
+    /// Serialize a single BufferLine as ANSI-formatted text with SGR color codes.
+    private func serializeBufferLine(
+        _ line: BufferLine,
+        cols: Int,
+        terminal: SwiftTerm.Terminal
+    ) -> String {
+        var result = ""
+        let trimLen = line.getTrimmedLength()
+        var prevAttr = Attribute.empty
+        var col = 0
+        while col < min(trimLen, cols) {
+            let cd = line[col]
+            let attr = cd.attribute
+
+            if attr != prevAttr {
+                result += sgrSequence(for: attr)
+                prevAttr = attr
+            }
+
+            let ch = terminal.getCharacter(for: cd)
+            if ch == "\0" || ch == "\u{FFFD}" {
+                result += " "
+            } else {
+                result.append(ch)
+            }
+
+            let w = max(1, Int(cd.width))
+            col += w
+        }
+        result += "\u{1B}[0m"
+        return result
+    }
+
+    /// Generate an SGR (Select Graphic Rendition) escape sequence for the given attribute.
+    private func sgrSequence(for attr: Attribute) -> String {
+        var params: [String] = ["0"] // Reset first
+
+        // Style flags
+        if attr.style.contains(.bold) { params.append("1") }
+        if attr.style.contains(.dim) { params.append("2") }
+        if attr.style.contains(.italic) { params.append("3") }
+        if attr.style.contains(.underline) { params.append("4") }
+        if attr.style.contains(.blink) { params.append("5") }
+        if attr.style.contains(.inverse) { params.append("7") }
+        if attr.style.contains(.invisible) { params.append("8") }
+        if attr.style.contains(.crossedOut) { params.append("9") }
+
+        // Foreground color
+        switch attr.fg {
+        case .ansi256(let code):
+            if code < 8 {
+                params.append("\(30 + Int(code))")
+            } else if code < 16 {
+                params.append("\(90 + Int(code) - 8)")
+            } else {
+                params.append("38;5;\(code)")
+            }
+        case .trueColor(let r, let g, let b):
+            params.append("38;2;\(r);\(g);\(b)")
+        case .defaultColor, .defaultInvertedColor:
+            break // Use default
+        }
+
+        // Background color
+        switch attr.bg {
+        case .ansi256(let code):
+            if code < 8 {
+                params.append("\(40 + Int(code))")
+            } else if code < 16 {
+                params.append("\(100 + Int(code) - 8)")
+            } else {
+                params.append("48;5;\(code)")
+            }
+        case .trueColor(let r, let g, let b):
+            params.append("48;2;\(r);\(g);\(b)")
+        case .defaultColor, .defaultInvertedColor:
+            break // Use default
+        }
+
+        return "\u{1B}[\(params.joined(separator: ";"))m"
     }
 
     // MARK: - Remote Message Handling
@@ -369,7 +487,9 @@ extension RepositoryViewModel {
     // MARK: - Sending Messages
 
     private func sendAllScreenUpdates() {
-        for sessionID in terminalOutputBuffers.keys {
+        // Send a fresh screen snapshot for every active session
+        let sessionIDs = Array(terminalOutputBuffers.keys)
+        for sessionID in sessionIDs {
             Task { await sendScreenUpdate(for: sessionID) }
         }
     }
@@ -452,9 +572,8 @@ extension RepositoryViewModel {
         // Also send via WebSocket
         let promptPayload = ScreenUpdatePayload(
             sessionID: sessionID,
-            lines: terminalOutputBuffers[sessionID] ?? [],
-            totalRows: 0,
-            totalCols: 0,
+            data: "",
+            fullSync: false,
             hasPrompt: true,
             promptText: detection.promptText
         )
@@ -514,18 +633,18 @@ extension RepositoryViewModel {
     }
 
     func buildScreenUpdate(for sessionID: UUID) -> ScreenUpdatePayload {
-        // Read directly from the terminal's rendered buffer (properly decoded, no ANSI codes)
-        let lines: [String]
-        if let reader = terminalScreenReaders[sessionID] {
-            lines = reader()
+        // Read the terminal's current visible screen with full ANSI formatting
+        let screenData: Data
+        if let terminal = terminalForSession(sessionID) {
+            screenData = serializeTerminalScreen(terminal: terminal)
         } else {
-            lines = terminalOutputBuffers[sessionID] ?? []
+            screenData = Data()
         }
+
         return ScreenUpdatePayload(
             sessionID: sessionID,
-            lines: Array(lines.suffix(Constants.RemoteAccess.maxScreenUpdateLines)),
-            totalRows: 0,
-            totalCols: 0,
+            data: screenData.base64EncodedString(),
+            fullSync: true, // Always full screen snapshot
             hasPrompt: false,
             promptText: nil
         )
@@ -697,3 +816,4 @@ extension RemoteAccessServer {
         self.onConnectionCountChanged = onConnectionCount
     }
 }
+
