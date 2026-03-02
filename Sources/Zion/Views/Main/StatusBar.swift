@@ -87,6 +87,10 @@ extension ContentView {
                             if case .connected(let count) = model.mobileAccessConnectionState {
                                 Text("\(count)")
                             }
+                            if let expiresAt = model.keepAwakeExpiresAt, expiresAt > .now {
+                                Text(expiresAt, style: .timer)
+                                    .monospacedDigit()
+                            }
                         }
                         .font(DesignSystem.Typography.label)
                         .padding(.horizontal, 6)

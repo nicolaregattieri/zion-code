@@ -335,6 +335,7 @@ final class RepositoryViewModel {
     @ObservationIgnored var hasEnsuredRemoteTerminals = false
     @ObservationIgnored var sleepAssertionID: IOPMAssertionID = 0
     @ObservationIgnored var sleepTimerTask: Task<Void, Never>?
+    var keepAwakeExpiresAt: Date?
     @ObservationIgnored var wakeObserver: NSObjectProtocol?
 
     // Background repo persistence (terminal sessions + change badges)

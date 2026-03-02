@@ -816,17 +816,22 @@ extension RepositoryViewModel {
         // Auto-release after duration (cancel any previous timer first)
         sleepTimerTask?.cancel()
         if let seconds = duration.seconds, seconds > 0 {
+            keepAwakeExpiresAt = Date.now.addingTimeInterval(seconds)
             sleepTimerTask = Task {
                 try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
                 guard !Task.isCancelled else { return }
                 releaseSleepAssertion()
+                UserDefaults.standard.set(KeepAwakeDuration.off.rawValue, forKey: "zion.mobileAccess.keepAwakeDuration")
             }
+        } else {
+            keepAwakeExpiresAt = nil
         }
     }
 
     func releaseSleepAssertion() {
         sleepTimerTask?.cancel()
         sleepTimerTask = nil
+        keepAwakeExpiresAt = nil
         guard sleepAssertionID != 0 else { return }
         IOPMAssertionRelease(sleepAssertionID)
         sleepAssertionID = 0
