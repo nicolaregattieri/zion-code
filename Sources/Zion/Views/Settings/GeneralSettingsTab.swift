@@ -17,7 +17,7 @@ struct GeneralSettingsTab: View {
             Section {
                 HStack(spacing: 12) {
                     Image(systemName: "bolt.fill")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(DesignSystem.Typography.sheetTitle)
                         .foregroundStyle(
                             zionModeEnabled
                                 ? AnyShapeStyle(.linearGradient(
@@ -53,9 +53,9 @@ struct GeneralSettingsTab: View {
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Zion Mode")
-                            .font(.system(size: 13, weight: .bold))
+                            .font(DesignSystem.Typography.sectionTitle)
                         Text(L10n("settings.zionMode.subtitle"))
-                            .font(.system(size: 11))
+                            .font(DesignSystem.Typography.bodySmall)
                             .foregroundStyle(.secondary)
                     }
 

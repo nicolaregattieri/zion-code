@@ -85,7 +85,7 @@ struct BlameView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                                 Image(systemName: "sparkles").font(DesignSystem.Typography.label).foregroundStyle(DesignSystem.Colors.semanticSearch)
-                                Text(entry.shortHash).font(.system(size: 10, weight: .bold, design: .monospaced))
+                                Text(entry.shortHash).font(DesignSystem.Typography.monoLabelBold)
                             }
                             Text(model.aiBlameExplanation)
                                 .font(DesignSystem.Typography.bodySmall)
@@ -112,14 +112,14 @@ struct BlameView: View {
 
             // Line number
             Text("\(entry.lineNumber)")
-                .font(.system(size: 10, design: .monospaced))
+                .font(DesignSystem.Typography.monoLabel)
                 .foregroundStyle(.secondary.opacity(0.4))
                 .frame(width: 40, alignment: .trailing)
                 .padding(.trailing, 6)
 
             // Code content
             Text(entry.content)
-                .font(.system(size: 12, design: .monospaced))
+                .font(DesignSystem.Typography.monoBody)
                 .lineLimit(1)
                 .foregroundStyle(.primary.opacity(0.85))
 

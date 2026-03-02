@@ -79,7 +79,7 @@ struct BranchReviewSheet: View {
                 Text(L10n("branch.review.title"))
                     .font(.title3.bold())
                 Text(L10n("branch.review.subtitle"))
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
             }
             Spacer()
@@ -90,7 +90,7 @@ struct BranchReviewSheet: View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(L10n("branch.review.target"))
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(DesignSystem.Typography.label).foregroundStyle(.secondary)
                 Picker("", selection: $model.branchReviewTarget) {
                     Text(L10n("Selecionar...")).tag("")
                     if !model.localBranchOptions.isEmpty {
@@ -118,13 +118,13 @@ struct BranchReviewSheet: View {
             }
 
             Image(systemName: "arrow.left")
-                .font(.caption)
+                .font(DesignSystem.Typography.label)
                 .foregroundStyle(.secondary)
                 .padding(.top, 16)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(L10n("branch.review.source"))
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(DesignSystem.Typography.label).foregroundStyle(.secondary)
                 Picker("", selection: $model.branchReviewSource) {
                     Text(L10n("Selecionar...")).tag("")
                     if !model.localBranchOptions.isEmpty {
@@ -158,7 +158,7 @@ struct BranchReviewSheet: View {
             ProgressView()
                 .controlSize(.large)
             Text(L10n("branch.review.loading"))
-                .font(.caption)
+                .font(DesignSystem.Typography.label)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, minHeight: 120)
@@ -170,7 +170,7 @@ struct BranchReviewSheet: View {
                 .font(.title2)
                 .foregroundStyle(.secondary)
             Text(L10n("branch.review.empty"))
-                .font(.caption)
+                .font(DesignSystem.Typography.label)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, minHeight: 120)

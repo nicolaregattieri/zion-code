@@ -79,7 +79,7 @@ struct KeyboardShortcutsSheet: View {
             Divider()
 
             Text(L10n("Pressione") + " ⌘? " + L10n("para ver todos os atalhos"))
-                .font(.caption)
+                .font(DesignSystem.Typography.label)
                 .foregroundStyle(.tertiary)
                 .padding(12)
         }
@@ -93,7 +93,7 @@ struct KeyboardShortcutsSheet: View {
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.secondary)
                 Text(title)
-                    .font(.system(size: 13, weight: .bold))
+                    .font(DesignSystem.Typography.sectionTitle)
             }
 
             VStack(spacing: 4) {
@@ -110,7 +110,7 @@ struct KeyboardShortcutsSheet: View {
     private func shortcutRow(description: String, keys: String) -> some View {
         HStack {
             Text(description)
-                .font(.system(size: 12))
+                .font(DesignSystem.Typography.body)
                 .foregroundStyle(.secondary)
             Spacer()
             Text(keys)

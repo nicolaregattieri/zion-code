@@ -146,7 +146,7 @@ struct FindInFilesView: View {
         ScrollView {
             if results.isEmpty && !query.isEmpty && !isSearching {
                 Text(L10n("Nenhum resultado"))
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
                     .padding(DesignSystem.Spacing.sectionGap)
                     .frame(maxWidth: .infinity)
@@ -175,7 +175,7 @@ struct FindInFilesView: View {
             } label: {
                 HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 8, weight: .bold))
+                        .font(DesignSystem.Typography.micro)
                         .foregroundStyle(.secondary)
                         .frame(width: 12)
 

@@ -70,7 +70,7 @@ struct CommitRowView: View {
 
             // Lane color left stripe
             HStack(spacing: 0) {
-                RoundedRectangle(cornerRadius: 3)
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius)
                     .fill(laneColor)
                     .frame(width: 3, height: cardHeight - 16)
                     .padding(.leading, 4)
@@ -155,7 +155,7 @@ struct CommitRowView: View {
     private var metadataRow: some View {
         HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
             Text(commit.shortHash)
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                .font(DesignSystem.Typography.monoLabelBold)
                 .padding(.horizontal, 6).padding(.vertical, 2)
                 .background(DesignSystem.Colors.selectionBackground)
                 .clipShape(Capsule())
@@ -179,7 +179,7 @@ struct CommitRowView: View {
                 Image(systemName: "calendar").font(DesignSystem.Typography.meta)
                 Text(Self.dateFormatter.string(from: commit.date))
             }
-            .font(.system(size: 10, design: .monospaced))
+            .font(DesignSystem.Typography.monoLabel)
             .foregroundStyle(DesignSystem.Colors.textTertiary)
 
             if let ins = commit.insertions, let del = commit.deletions, (ins > 0 || del > 0) {
@@ -249,9 +249,9 @@ struct CommitRowView: View {
         } label: {
             HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 Image(systemName: "ellipsis")
-                    .font(.system(size: 8, weight: .bold))
+                    .font(DesignSystem.Typography.micro)
                 Text("+\(decorationOverflow)")
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .font(DesignSystem.Typography.monoLabelBold)
                     .lineLimit(1)
             }
             .padding(.horizontal, 10)

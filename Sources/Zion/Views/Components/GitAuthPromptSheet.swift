@@ -27,9 +27,9 @@ struct GitAuthPromptSheet: View {
                     .foregroundStyle(DesignSystem.Colors.warning)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(L10n("git.auth.title"))
-                        .font(.headline)
+                        .font(DesignSystem.Typography.sheetTitle)
                     Text(context.host)
-                        .font(.caption)
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
@@ -37,7 +37,7 @@ struct GitAuthPromptSheet: View {
 
             if context.isAzureDevOps {
                 Text(L10n("git.auth.azure.hint"))
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
             }
 
@@ -58,7 +58,7 @@ struct GitAuthPromptSheet: View {
             }
 
             Text(context.commandSummary)
-                .font(.system(size: 11, design: .monospaced))
+                .font(DesignSystem.Typography.monoSmall)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
 

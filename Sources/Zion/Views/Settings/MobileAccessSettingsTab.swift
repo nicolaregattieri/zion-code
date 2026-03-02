@@ -29,9 +29,9 @@ struct MobileAccessSettingsTab: View {
                 Toggle(isOn: $isEnabled) {
                     VStack(alignment: .leading, spacing: 2) {
                         Label(L10n("mobile.access.title"), systemImage: "iphone.and.arrow.forward")
-                            .font(.headline)
+                            .font(DesignSystem.Typography.sheetTitle)
                         Text(L10n("mobile.access.description"))
-                            .font(.caption)
+                            .font(DesignSystem.Typography.label)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -44,7 +44,7 @@ struct MobileAccessSettingsTab: View {
                             Label(L10n("mobile.access.lanMode"), systemImage: "wifi")
                                 .font(.subheadline)
                             Text(L10n("mobile.access.lanMode.hint"))
-                                .font(.caption)
+                                .font(DesignSystem.Typography.label)
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -58,7 +58,7 @@ struct MobileAccessSettingsTab: View {
                             Label(L10n("mobile.access.keepAwake"), systemImage: "moon.zzz")
                                 .font(.subheadline)
                             Text(L10n("mobile.access.keepAwake.hint"))
-                                .font(.caption)
+                                .font(DesignSystem.Typography.label)
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -82,7 +82,7 @@ struct MobileAccessSettingsTab: View {
             case .installCloudflared:
                 Section(L10n("mobile.access.step.install.title")) {
                     Text(L10n("mobile.access.step.install.description"))
-                        .font(.caption)
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
 
                     HStack {
@@ -106,7 +106,7 @@ struct MobileAccessSettingsTab: View {
                     Button(L10n("mobile.access.step.install.recheck")) {
                         Task { await state.checkCloudflared() }
                     }
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
                 }
 
             case .starting:
@@ -134,7 +134,7 @@ struct MobileAccessSettingsTab: View {
                     }
 
                     Text(L10n("mobile.access.step.scan.description"))
-                        .font(.caption)
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
 
                     if !state.tunnelURL.isEmpty {
@@ -171,7 +171,7 @@ struct MobileAccessSettingsTab: View {
                     }
 
                     Text(L10n("mobile.access.step.connected.description"))
-                        .font(.caption)
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
                 }
 
@@ -181,7 +181,7 @@ struct MobileAccessSettingsTab: View {
                 Section(L10n("mobile.access.step.error.title")) {
                     if case .error(let message) = state.connectionState {
                         Text(message)
-                            .font(.caption)
+                            .font(DesignSystem.Typography.label)
                             .foregroundStyle(DesignSystem.Colors.error)
                     }
 
@@ -192,7 +192,7 @@ struct MobileAccessSettingsTab: View {
                             isEnabled = true
                         }
                     }
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
                 }
             }
         }
@@ -221,7 +221,7 @@ struct MobileAccessSettingsTab: View {
             Button(L10n("mobile.access.regenerateKey")) {
                 RemoteAccessState.shared.shouldRegenerateKey = true
             }
-            .font(.caption)
+            .font(DesignSystem.Typography.label)
             .foregroundStyle(DesignSystem.Colors.destructive)
         }
     }
@@ -233,13 +233,13 @@ struct MobileAccessSettingsTab: View {
             if isDone {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(DesignSystem.Colors.success)
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
             } else {
                 ProgressView()
                     .controlSize(.mini)
             }
             Text(label)
-                .font(.caption)
+                .font(DesignSystem.Typography.label)
                 .foregroundStyle(isDone ? .primary : .secondary)
         }
     }

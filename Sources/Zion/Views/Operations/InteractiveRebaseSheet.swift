@@ -19,16 +19,16 @@ struct InteractiveRebaseSheet: View {
     private var header: some View {
         HStack {
             Image(systemName: "arrow.triangle.branch")
-                .font(.system(size: 16, weight: .semibold))
+                .font(DesignSystem.Typography.sheetTitle)
                 .foregroundStyle(DesignSystem.Colors.ai)
             VStack(alignment: .leading, spacing: 2) {
-                Text(L10n("Rebase Interativo")).font(.headline)
+                Text(L10n("Rebase Interativo")).font(DesignSystem.Typography.sheetTitle)
                 Text(L10n("Base: %@", model.rebaseBaseRef))
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(DesignSystem.Typography.label).foregroundStyle(.secondary)
             }
             Spacer()
             Text(L10n("%d commits", model.rebaseItems.count))
-                .font(.system(size: 11, design: .monospaced))
+                .font(DesignSystem.Typography.monoSmall)
                 .foregroundStyle(.secondary)
         }
         .padding(16)
@@ -49,7 +49,7 @@ struct InteractiveRebaseSheet: View {
         HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
             // Drag handle
             Image(systemName: "line.3.horizontal")
-                .font(.system(size: 10))
+                .font(DesignSystem.Typography.label)
                 .foregroundStyle(.tertiary)
                 .frame(width: 16)
 
@@ -65,9 +65,9 @@ struct InteractiveRebaseSheet: View {
             } label: {
                 HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                     Image(systemName: item.action.icon)
-                        .font(.system(size: 10, weight: .bold))
+                        .font(DesignSystem.Typography.labelBold)
                     Text(item.action.label)
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .font(DesignSystem.Typography.monoLabelBold)
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
@@ -80,13 +80,13 @@ struct InteractiveRebaseSheet: View {
 
             // Hash
             Text(item.shortHash)
-                .font(.system(size: 11, design: .monospaced))
+                .font(DesignSystem.Typography.monoSmall)
                 .foregroundStyle(.secondary)
                 .frame(width: 70, alignment: .leading)
 
             // Subject
             Text(item.subject)
-                .font(.system(size: 12))
+                .font(DesignSystem.Typography.body)
                 .lineLimit(1)
                 .foregroundStyle(item.action == .drop ? .secondary : .primary)
                 .strikethrough(item.action == .drop)
@@ -101,7 +101,7 @@ struct InteractiveRebaseSheet: View {
                     }
                 } label: {
                     Image(systemName: "chevron.up")
-                        .font(.system(size: 9, weight: .bold))
+                        .font(DesignSystem.Typography.metaBold)
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
@@ -113,7 +113,7 @@ struct InteractiveRebaseSheet: View {
                     }
                 } label: {
                     Image(systemName: "chevron.down")
-                        .font(.system(size: 9, weight: .bold))
+                        .font(DesignSystem.Typography.metaBold)
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
@@ -136,7 +136,7 @@ struct InteractiveRebaseSheet: View {
                     HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                         Circle().fill(action.color).frame(width: 6, height: 6)
                         Text(action.label)
-                            .font(.system(size: 9, design: .monospaced))
+                            .font(DesignSystem.Typography.monoMeta)
                             .foregroundStyle(.secondary)
                     }
                 }

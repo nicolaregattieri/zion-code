@@ -4,7 +4,7 @@ extension ContentView {
 
     var statusBar: some View {
         HStack(spacing: 12) {
-            Text(model.statusMessage).lineLimit(1).font(.caption).foregroundStyle(.secondary)
+            Text(model.statusMessage).lineLimit(1).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
 
             statusBarQuickNavigation
 
@@ -14,7 +14,7 @@ extension ContentView {
                 // Branch pill
                 HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                     Image(systemName: "arrow.triangle.branch")
-                        .font(.system(size: 9))
+                        .font(DesignSystem.Typography.meta)
                     Text(model.currentBranch)
                         .lineLimit(1)
                 }
@@ -29,10 +29,10 @@ extension ContentView {
                 if model.aheadRemoteCount > 0 {
                     HStack(spacing: 3) {
                         Image(systemName: "arrow.up.circle.fill")
-                            .font(.system(size: 9))
+                            .font(DesignSystem.Typography.meta)
                         Text("\(model.aheadRemoteCount)")
                     }
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
                     .background(
@@ -52,10 +52,10 @@ extension ContentView {
                 if model.behindRemoteCount > 0 {
                     HStack(spacing: 3) {
                         Image(systemName: "arrow.down.circle.fill")
-                            .font(.system(size: 9))
+                            .font(DesignSystem.Typography.meta)
                         Text("\(model.behindRemoteCount)")
                     }
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
                     .background(zionModeEnabled ? DesignSystem.ZionMode.neonOrange.opacity(0.12) : DesignSystem.Colors.statusOrangeBg)
@@ -67,10 +67,10 @@ extension ContentView {
                 if model.uncommittedCount > 0 {
                     HStack(spacing: 3) {
                         Image(systemName: "pencil.circle.fill")
-                            .font(.system(size: 9))
+                            .font(DesignSystem.Typography.meta)
                         Text("\(model.uncommittedCount)")
                     }
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
                     .background(DesignSystem.Colors.statusBlueBg)
@@ -83,12 +83,12 @@ extension ContentView {
                     SettingsLink {
                         HStack(spacing: 3) {
                             Image(systemName: mobileAccessIcon)
-                                .font(.system(size: 9))
+                                .font(DesignSystem.Typography.meta)
                             if case .connected(let count) = model.mobileAccessConnectionState {
                                 Text("\(count)")
                             }
                         }
-                        .font(.caption)
+                        .font(DesignSystem.Typography.label)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 3)
                         .background(mobileAccessBadgeBg)

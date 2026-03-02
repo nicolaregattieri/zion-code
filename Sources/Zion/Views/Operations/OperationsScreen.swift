@@ -112,7 +112,7 @@ struct OperationsScreen: View {
                 if !model.uncommittedChanges.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
-                            Text(L10n("Arquivos alterados")).font(.caption).foregroundStyle(.secondary)
+                            Text(L10n("Arquivos alterados")).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
                             Spacer()
                             HStack(spacing: 12) {
                                 Button(L10n("Selecionar Tudo")) { model.stageAllFiles() }
@@ -175,13 +175,14 @@ struct OperationsScreen: View {
                                 .frame(width: 12, height: 12)
                         } else {
                             Image(systemName: "sparkles")
-                                .font(.system(size: 12))
+                                .font(DesignSystem.Typography.body)
                         }
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
                     .tint(DesignSystem.Colors.ai)
                     .disabled(model.isGeneratingAIMessage)
+                    .accessibilityLabel(L10n("accessibility.commit.suggestMessage"))
                     .help(model.isAIConfigured ? L10n("Gerar mensagem com IA") : L10n("Sugerir mensagem de commit"))
                     .onChange(of: model.suggestedCommitMessage) { _, newValue in
                         if !newValue.isEmpty {
@@ -193,7 +194,7 @@ struct OperationsScreen: View {
                 HStack {
                     Toggle(L10n("Corrigir ultimo commit (Amend)"), isOn: $model.amendLastCommit)
                         .toggleStyle(.checkbox)
-                        .font(.caption)
+                        .font(DesignSystem.Typography.label)
                     Spacer()
 
                     if model.isAIConfigured {
@@ -263,7 +264,9 @@ struct OperationsScreen: View {
                             Spacer()
                             Button { model.isSplitVisible = false } label: {
                                 Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
-                            }.buttonStyle(.plain)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(L10n("accessibility.dismiss"))
                         }
                         ForEach(model.aiCommitSplitSuggestions) { suggestion in
                             VStack(alignment: .leading, spacing: 4) {
@@ -373,11 +376,12 @@ struct OperationsScreen: View {
 
     private var branchListView: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(L10n("Branches locais/remotas")).font(.caption).foregroundStyle(.secondary)
+            Text(L10n("Branches locais/remotas")).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
             if model.branchInfos.isEmpty {
                 VStack(spacing: 6) {
                     Image(systemName: "arrow.triangle.branch").font(.title3).foregroundStyle(.secondary)
-                    Text(L10n("Nenhuma branch encontrada")).font(.caption).foregroundStyle(.secondary)
+                    Text(L10n("Nenhuma branch encontrada")).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
+                    Text(L10n("branches.emptyHint")).font(DesignSystem.Typography.meta).foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, minHeight: 80)
                 .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius).stroke(DesignSystem.Colors.glassStroke, lineWidth: 1))
@@ -391,14 +395,14 @@ struct OperationsScreen: View {
                                 VStack(alignment: .leading, spacing: 2) {
                                     HStack {
                                         if branch.name == model.currentBranch {
-                                            Image(systemName: "checkmark.circle.fill").font(.caption2).foregroundStyle(DesignSystem.Colors.success)
+                                            Image(systemName: "checkmark.circle.fill").font(DesignSystem.Typography.meta).foregroundStyle(DesignSystem.Colors.success)
                                         }
                                         Text(branch.name).font(.system(.caption, design: .monospaced))
                                             .fontWeight(branch.name == model.currentBranch ? .bold : .regular)
                                             .lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
-                                        if branch.isRemote { Image(systemName: "icloud").font(.caption2).foregroundStyle(.secondary) }
+                                        if branch.isRemote { Image(systemName: "icloud").font(DesignSystem.Typography.meta).foregroundStyle(.secondary) }
                                     }
-                                    Text("HEAD \(branch.shortHead)").font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                                    Text("HEAD \(branch.shortHead)").font(DesignSystem.Typography.meta).foregroundStyle(.secondary).lineLimit(1)
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, 8).padding(.vertical, 5).contentShape(Rectangle())
@@ -431,13 +435,14 @@ struct OperationsScreen: View {
                         if model.isGeneratingAIMessage {
                             ProgressView().controlSize(.small).frame(width: 12, height: 12)
                         } else {
-                            Image(systemName: "sparkles").font(.system(size: 12))
+                            Image(systemName: "sparkles").font(DesignSystem.Typography.body)
                         }
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
                     .tint(DesignSystem.Colors.ai)
                     .disabled(model.isGeneratingAIMessage)
+                    .accessibilityLabel(L10n("accessibility.stash.suggestMessage"))
                     .help(L10n("Gerar mensagem com IA"))
                 }
                 Button(L10n("Criar stash")) {
@@ -489,18 +494,19 @@ struct OperationsScreen: View {
                     }
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(L10n("accessibility.recovery.refresh"))
                 .help(L10n("recovery.refresh"))
             }
 
             if !model.recoverySnapshotsStatus.clean.isEmpty {
                 Text(model.recoverySnapshotsStatus)
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
             }
 
             if model.recoverySnapshots.isEmpty && !model.isRecoverySnapshotsLoading {
                 Text(L10n("recovery.empty"))
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
@@ -521,10 +527,10 @@ struct OperationsScreen: View {
                                             .clipShape(Capsule())
                                     }
                                     Text(snapshot.subject)
-                                        .font(.system(size: 10))
+                                        .font(DesignSystem.Typography.label)
                                         .lineLimit(1)
                                     Text(snapshot.date.formatted(date: .abbreviated, time: .shortened))
-                                        .font(.system(size: 9))
+                                        .font(DesignSystem.Typography.meta)
                                         .foregroundStyle(.secondary)
                                 }
                                 Spacer()
@@ -602,12 +608,13 @@ struct OperationsScreen: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(DesignSystem.Colors.actionPrimary)
+                    .accessibilityLabel(L10n("accessibility.remote.add"))
                 }
 
                 Divider().opacity(0.1)
                 
                 if model.remotes.isEmpty {
-                    Text(L10n("Nenhum remote configurado")).font(.caption).foregroundStyle(.secondary)
+                    Text(L10n("Nenhum remote configurado")).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
                 } else {
                     ForEach(model.remotes) { remote in
                         HStack {
@@ -620,8 +627,11 @@ struct OperationsScreen: View {
                                 Button {
                                     model.testRemote(named: remote.name)
                                 } label: {
-                                    Image(systemName: "antenna.radiowaves.left.and.right").font(.caption2)
-                                }.buttonStyle(.plain).foregroundStyle(DesignSystem.Colors.info.opacity(0.7))
+                                    Image(systemName: "antenna.radiowaves.left.and.right").font(DesignSystem.Typography.meta)
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundStyle(DesignSystem.Colors.info.opacity(0.7))
+                                .accessibilityLabel(L10n("accessibility.remote.testConnection"))
                                 .help(L10n("Testar conexao"))
 
                                 Button(role: .destructive) {
@@ -629,8 +639,11 @@ struct OperationsScreen: View {
                                         model.removeRemote(named: remote.name)
                                     }
                                 } label: {
-                                    Image(systemName: "trash").font(.caption2)
-                                }.buttonStyle(.plain).foregroundStyle(DesignSystem.Colors.destructiveMuted)
+                                    Image(systemName: "trash").font(DesignSystem.Typography.meta)
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundStyle(DesignSystem.Colors.destructiveMuted)
+                                .accessibilityLabel(L10n("accessibility.remote.delete"))
                             }
                         }
                         .padding(6)
@@ -787,7 +800,7 @@ struct OperationsScreen: View {
                 }
                 ScrollView {
                     Text(model.aiChangelog)
-                        .font(.system(size: 12, design: .monospaced))
+                        .font(DesignSystem.Typography.monoBody)
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -804,7 +817,7 @@ struct OperationsScreen: View {
             HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(L10n("branch.review.target"))
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(DesignSystem.Typography.label).foregroundStyle(.secondary)
                     Picker("", selection: $model.branchReviewTarget) {
                         Text(L10n("Selecionar...")).tag("")
                         if !model.localBranchOptions.isEmpty {
@@ -832,13 +845,13 @@ struct OperationsScreen: View {
                 }
 
                 Image(systemName: "arrow.left")
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
                     .padding(.top, 16)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(L10n("branch.review.source"))
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(DesignSystem.Typography.label).foregroundStyle(.secondary)
                     Picker("", selection: $model.branchReviewSource) {
                         Text(L10n("Selecionar...")).tag("")
                         if !model.localBranchOptions.isEmpty {
@@ -870,7 +883,7 @@ struct OperationsScreen: View {
                 && !model.branchReviewTarget.isEmpty
                 && model.branchReviewSource == model.branchReviewTarget {
                 Text(L10n("codereview.sameBranch.inline"))
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
                     .foregroundStyle(DesignSystem.Colors.warning)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -911,7 +924,7 @@ struct OperationsScreen: View {
                 .foregroundStyle(DesignSystem.Colors.destructive)
 
             Text(L10n("CUIDADO: Operacoes de reset descartam alteracoes."))
-                .font(.caption)
+                .font(DesignSystem.Typography.label)
                 .foregroundStyle(DesignSystem.Colors.destructiveMuted)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 6)
@@ -981,7 +994,7 @@ struct FileStatusRow: View {
                 }
             } label: {
                 statusIcon(index: indexStatus, worktree: workTreeStatus)
-                    .font(.system(size: 14))
+                    .font(DesignSystem.Typography.bodyLarge)
             }
             .buttonStyle(.plain)
 
@@ -1085,13 +1098,15 @@ struct PreCommitCheckCard: View {
                 Spacer()
                 Button { onFixIssues() } label: {
                     Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
-                }.buttonStyle(.plain)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(L10n("accessibility.dismiss"))
             }
 
             HStack(spacing: 12) {
                 if criticalCount > 0 {
                     HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
-                        Image(systemName: "xmark.octagon.fill").font(.system(size: 10))
+                        Image(systemName: "xmark.octagon.fill").font(DesignSystem.Typography.label)
                             .foregroundStyle(DesignSystem.Colors.destructive)
                         Text("\(criticalCount) \(L10n("Critico"))")
                             .font(DesignSystem.Typography.labelBold)
@@ -1100,7 +1115,7 @@ struct PreCommitCheckCard: View {
                 }
                 if warningCount > 0 {
                     HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
-                        Image(systemName: "exclamationmark.triangle.fill").font(.system(size: 10))
+                        Image(systemName: "exclamationmark.triangle.fill").font(DesignSystem.Typography.label)
                             .foregroundStyle(DesignSystem.Colors.warning)
                         Text("\(warningCount) \(L10n("Aviso"))")
                             .font(DesignSystem.Typography.labelBold)
@@ -1109,7 +1124,7 @@ struct PreCommitCheckCard: View {
                 }
                 if safeCount > 0 {
                     HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
-                        Image(systemName: "checkmark.circle.fill").font(.system(size: 10))
+                        Image(systemName: "checkmark.circle.fill").font(DesignSystem.Typography.label)
                             .foregroundStyle(DesignSystem.Colors.info)
                         Text("\(safeCount) \(L10n("Sugestao"))")
                             .font(DesignSystem.Typography.labelBold)
@@ -1121,7 +1136,7 @@ struct PreCommitCheckCard: View {
             ForEach(model.aiReviewFindings.prefix(5)) { finding in
                 HStack(alignment: .top, spacing: DesignSystem.Spacing.iconTextGap) {
                     Image(systemName: finding.severity.icon)
-                        .font(.system(size: 10))
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(finding.severity.color)
                         .frame(width: 14)
                     VStack(alignment: .leading, spacing: 2) {
@@ -1131,7 +1146,7 @@ struct PreCommitCheckCard: View {
                                 .foregroundStyle(.secondary)
                         }
                         Text(finding.message)
-                            .font(.system(size: 10))
+                            .font(DesignSystem.Typography.label)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -1143,7 +1158,7 @@ struct PreCommitCheckCard: View {
 
             if model.aiReviewFindings.count > 5 {
                 Text(L10n("precommit.moreFindings") + " \(model.aiReviewFindings.count - 5)")
-                    .font(.system(size: 10))
+                    .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
             }
 

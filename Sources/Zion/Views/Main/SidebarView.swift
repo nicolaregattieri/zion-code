@@ -182,7 +182,7 @@ struct SidebarView: View {
 
             if nonCurrentWorktrees.isEmpty {
                 Text(L10n("worktree.smart.empty"))
-                    .font(.system(size: 11))
+                    .font(DesignSystem.Typography.bodySmall)
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(nonCurrentWorktrees) { wt in
@@ -328,7 +328,7 @@ struct SidebarView: View {
                 model.openWorktreeTerminal(wt)
             } label: {
                 Image(systemName: "terminal.fill")
-                    .font(.system(size: 11))
+                    .font(DesignSystem.Typography.bodySmall)
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
@@ -339,7 +339,7 @@ struct SidebarView: View {
                     model.requestWorktreeRemoval(wt)
                 } label: {
                     Image(systemName: "trash")
-                        .font(.system(size: 11))
+                        .font(DesignSystem.Typography.bodySmall)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
@@ -395,7 +395,7 @@ struct SidebarView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(L10n(section.title)).font(DesignSystem.Typography.sectionTitle).lineLimit(1)
                         .foregroundStyle(isSelected ? .primary : .secondary)
-                    Text(L10n(section.subtitle)).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(2)
+                    Text(L10n(section.subtitle)).font(DesignSystem.Typography.bodySmall).foregroundStyle(.secondary).lineLimit(2)
                         .opacity(isSelected ? 1.0 : (isDisabled ? 0.3 : 0.7))
                 }
                 .opacity(isDisabled ? 0.3 : 1.0)
@@ -404,10 +404,11 @@ struct SidebarView: View {
                 
                 if isDisabled {
                     Image(systemName: "lock.fill")
-                        .font(.system(size: 10))
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
                         .opacity(0.5)
                         .padding(.top, 4)
+                        .help(L10n("sidebar.locked.hint"))
                 } else if section == .graph && model.behindRemoteCount > 0 {
                     Text("\(model.behindRemoteCount)")
                         .font(DesignSystem.Typography.monoMeta)
@@ -472,21 +473,21 @@ struct SidebarView: View {
     private var sidebarBranchExplorer: some View {
         GlassCard(spacing: 0) {
             CardHeader(L10n("Branches"), icon: "arrow.triangle.branch") {
-                Text("\(model.branchInfos.count) \(L10n("refs"))").font(.caption).foregroundStyle(.secondary)
+                Text("\(model.branchInfos.count) \(L10n("refs"))").font(DesignSystem.Typography.label).foregroundStyle(.secondary)
             }
             .padding(.horizontal, 12).padding(.top, 12).padding(.bottom, 8)
 
             HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 9))
+                    .font(DesignSystem.Typography.meta)
                     .foregroundStyle(.secondary)
                 TextField(L10n("Filtrar branches..."), text: $branchSearchQuery)
                     .textFieldStyle(.plain)
-                    .font(.system(size: 11))
+                    .font(DesignSystem.Typography.bodySmall)
                 if !branchSearchQuery.isEmpty {
                     Button { branchSearchQuery = "" } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 10))
+                            .font(DesignSystem.Typography.label)
                             .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
@@ -505,7 +506,7 @@ struct SidebarView: View {
                     Image(systemName: branchSearchQuery.isEmpty ? "arrow.triangle.branch" : "magnifyingglass")
                         .font(.title2).foregroundStyle(.secondary)
                     Text(branchSearchQuery.isEmpty ? L10n("Sem branches detectadas") : L10n("Nenhuma branch encontrada"))
-                        .font(.headline)
+                        .font(DesignSystem.Typography.sheetTitle)
                 }
                 .frame(maxWidth: .infinity, minHeight: 120)
             } else {
@@ -528,14 +529,14 @@ struct SidebarView: View {
         let isCurrent = node.branchName == model.currentBranch
         return HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
             VStack(alignment: .leading, spacing: 2) {
-                if node.isGroup { Text(node.title).font(.headline) } else {
+                if node.isGroup { Text(node.title).font(DesignSystem.Typography.sheetTitle) } else {
                     HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-                        Image(systemName: isMain ? "shield.fill" : "arrow.triangle.branch").font(.caption).foregroundStyle(isMain ? DesignSystem.Colors.warning : (isCurrent ? Color.accentColor : Color.secondary))
+                        Image(systemName: isMain ? "shield.fill" : "arrow.triangle.branch").font(DesignSystem.Typography.label).foregroundStyle(isMain ? DesignSystem.Colors.warning : (isCurrent ? Color.accentColor : Color.secondary))
                         Text(node.title).font(.system(.caption, design: .monospaced)).fontWeight(isCurrent || isMain ? .bold : .regular).lineLimit(1)
                         if isCurrent { Text(L10n("current")).font(DesignSystem.Typography.micro).padding(.horizontal, 4).padding(.vertical, 1).background(DesignSystem.Colors.selectionBackground).foregroundStyle(Color.accentColor).clipShape(Capsule()) }
                     }
                 }
-                if !node.subtitle.isEmpty { Text(node.subtitle).font(.caption2).foregroundStyle(.secondary).lineLimit(1) }
+                if !node.subtitle.isEmpty { Text(node.subtitle).font(DesignSystem.Typography.meta).foregroundStyle(.secondary).lineLimit(1) }
             }
             Spacer()
             if let branch = node.branchName, !isMain, !isCurrent {
@@ -549,7 +550,7 @@ struct SidebarView: View {
                         model.deleteLocalBranch(branch, force: false)
                     }
                 } label: {
-                    Image(systemName: "trash").font(.caption2).foregroundStyle(DesignSystem.Colors.destructiveMuted)
+                    Image(systemName: "trash").font(DesignSystem.Typography.meta).foregroundStyle(DesignSystem.Colors.destructiveMuted)
                 }
                 .buttonStyle(.plain)
                 .padding(4)
@@ -594,14 +595,14 @@ struct SidebarView: View {
                 // AI status
                 if model.aiProvider != .none {
                     Image(systemName: "sparkles")
-                        .font(.system(size: 11))
+                        .font(DesignSystem.Typography.bodySmall)
                         .foregroundStyle(model.isAIConfigured ? DesignSystem.Colors.ai : .secondary)
                 }
 
                 // ntfy status
                 if model.isNtfyConfigured {
                     Image(systemName: "bell.fill")
-                        .font(.system(size: 9))
+                        .font(DesignSystem.Typography.meta)
                         .foregroundStyle(DesignSystem.Colors.warning)
                         .help(L10n("Notificações ativas"))
                 }
@@ -610,7 +611,7 @@ struct SidebarView: View {
 
                 SettingsLink {
                     Image(systemName: "gearshape")
-                        .font(.system(size: 12))
+                        .font(DesignSystem.Typography.body)
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
@@ -641,14 +642,14 @@ private struct RecentProjectRow: View {
         Button(action: onTap) {
             HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                 Image(systemName: "folder.fill")
-                    .font(.system(size: 12))
+                    .font(DesignSystem.Typography.body)
                     .foregroundStyle(isCurrent ? DesignSystem.Colors.success : Color.accentColor.opacity(0.8))
                 VStack(alignment: .leading, spacing: 1) {
                     Text(url.lastPathComponent)
                         .font(DesignSystem.Typography.sectionTitle)
                         .lineLimit(1)
                     Text(url.path)
-                        .font(.system(size: 9))
+                        .font(DesignSystem.Typography.meta)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.middle)
@@ -676,7 +677,7 @@ private struct RecentProjectRow: View {
 
                 if isCurrent {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 10))
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(DesignSystem.Colors.success)
                 } else {
                     Image(systemName: "chevron.right")

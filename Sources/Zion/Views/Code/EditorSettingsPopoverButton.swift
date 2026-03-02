@@ -10,7 +10,7 @@ struct EditorSettingsPopoverButton: View {
             isPresented.toggle()
         } label: {
             Image(systemName: "slider.horizontal.3")
-                .font(.caption)
+                .font(DesignSystem.Typography.label)
         }
         .buttonStyle(.bordered)
         .tint(isPresented ? Color.accentColor : .secondary)

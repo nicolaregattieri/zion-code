@@ -337,7 +337,7 @@ struct CodeScreen: View {
             Button {
                 withAnimation(DesignSystem.Motion.panel) { isFileBrowserVisible.toggle() }
             } label: {
-                Image(systemName: "sidebar.left").font(.caption)
+                Image(systemName: "sidebar.left").font(DesignSystem.Typography.label)
             }
             .buttonStyle(.bordered)
             .tint(isFileBrowserVisible ? Color.accentColor : .secondary)
@@ -395,7 +395,7 @@ struct CodeScreen: View {
                 model.isLineWrappingEnabled.toggle()
             } label: {
                 Image(systemName: model.isLineWrappingEnabled ? "arrow.turn.down.left" : "arrow.right.to.line")
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
             }
             .buttonStyle(.bordered)
             .tint(model.isLineWrappingEnabled ? Color.accentColor : .secondary)
@@ -409,7 +409,7 @@ struct CodeScreen: View {
                     }
                 } label: {
                     Image(systemName: isMarkdownPreviewVisible ? "doc.richtext.fill" : "doc.richtext")
-                        .font(.caption)
+                        .font(DesignSystem.Typography.label)
                 }
                 .buttonStyle(.bordered)
                 .tint(isMarkdownPreviewVisible ? Color.accentColor : .secondary)
@@ -423,7 +423,7 @@ struct CodeScreen: View {
                 model.toggleBlame()
             } label: {
                 Image(systemName: "person.text.rectangle")
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
             }
             .buttonStyle(.bordered)
             .tint(model.isBlameVisible ? Color.accentColor : .secondary)
@@ -438,7 +438,7 @@ struct CodeScreen: View {
                 }
             } label: {
                 Image(systemName: "clock.arrow.circlepath")
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
             }
             .buttonStyle(.bordered)
             .help(L10n("filehistory.title"))
@@ -449,7 +449,7 @@ struct CodeScreen: View {
                 model.formatCurrentFile()
             } label: {
                 Image(systemName: "text.alignleft")
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
             }
             .buttonStyle(.bordered)
             .help(L10n("format.document") + " (⇧⌥F)")
@@ -533,7 +533,7 @@ struct CodeScreen: View {
                 model.createNewFile()
             } label: {
                 Image(systemName: "doc.badge.plus")
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
             }
             .buttonStyle(.bordered)
             .help(L10n("Novo Arquivo") + " (⌘N)")
@@ -544,7 +544,7 @@ struct CodeScreen: View {
                     model.saveCurrentFileAs()
                 } label: {
                     Image(systemName: "arrow.down.doc")
-                        .font(.caption)
+                        .font(DesignSystem.Typography.label)
                 }
                 .buttonStyle(.bordered)
                 .help(L10n("Salvar Como...") + " (⇧⌘S)")
@@ -768,7 +768,7 @@ struct CodeScreen: View {
                     VStack(alignment: .leading, spacing: 0) {
                         if model.repositoryFiles.isEmpty {
                             VStack(spacing: 16) {
-                                Text(L10n("Nenhum arquivo encontrado")).font(.caption).foregroundStyle(.secondary)
+                                Text(L10n("Nenhum arquivo encontrado")).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
                                 Button {
                                     onOpenFolder?()
                                 } label: {
@@ -1166,7 +1166,7 @@ struct CodeScreen: View {
     private var goToLineSheet: some View {
         VStack(spacing: 12) {
             Text(L10n("Ir para Linha"))
-                .font(.headline)
+                .font(DesignSystem.Typography.sheetTitle)
             HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 TextField(L10n("Numero da linha..."), text: $goToLineNumber)
                     .textFieldStyle(.roundedBorder)
@@ -1492,7 +1492,7 @@ struct CodeScreen: View {
                 if model.terminalTabs.isEmpty {
                     VStack(spacing: 8) {
                         Image(systemName: "terminal").font(.title).foregroundStyle(.secondary)
-                        Text(L10n("Nenhum terminal aberto")).font(.caption).foregroundStyle(.secondary)
+                        Text(L10n("Nenhum terminal aberto")).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {

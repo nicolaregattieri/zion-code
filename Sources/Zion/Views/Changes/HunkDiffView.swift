@@ -35,14 +35,14 @@ struct HunkDiffView: View {
                     }
                 } label: {
                     Image(systemName: isCollapsed ? "chevron.right" : "chevron.down")
-                        .font(.system(size: 8, weight: .bold))
+                        .font(DesignSystem.Typography.micro)
                         .foregroundStyle(.secondary)
                         .frame(width: 12)
                 }
                 .buttonStyle(.plain)
 
                 Text(hunk.header)
-                    .font(.system(size: 11, design: .monospaced))
+                    .font(DesignSystem.Typography.monoSmall)
                     .foregroundStyle(DesignSystem.Colors.diffHunkHeader)
                     .lineLimit(1)
 
@@ -53,7 +53,7 @@ struct HunkDiffView: View {
                     model.stageHunk(hunk, file: file)
                 } label: {
                     Label(L10n("Stage Hunk"), systemImage: "plus.circle")
-                        .font(.system(size: 10))
+                        .font(DesignSystem.Typography.label)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.mini)
@@ -66,7 +66,7 @@ struct HunkDiffView: View {
                         selectedLines.subtract(sel)
                     } label: {
                         Label(L10n("Stage Linhas"), systemImage: "text.badge.plus")
-                            .font(.system(size: 10))
+                            .font(DesignSystem.Typography.label)
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.mini)
@@ -122,7 +122,7 @@ struct HunkDiffView: View {
                     }
                 } label: {
                     Image(systemName: isSelected ? "checkmark.square.fill" : "square")
-                        .font(.system(size: 10))
+                        .font(DesignSystem.Typography.label)
                         .foregroundStyle(isSelected ? Color.accentColor : .secondary)
                 }
                 .buttonStyle(.plain)
@@ -133,14 +133,14 @@ struct HunkDiffView: View {
 
             // Old line number
             Text(line.oldLineNumber.map { "\($0)" } ?? "")
-                .font(.system(size: 10, design: .monospaced))
+                .font(DesignSystem.Typography.monoLabel)
                 .foregroundStyle(.secondary)
                 .frame(width: 40, alignment: .trailing)
                 .padding(.trailing, 4)
 
             // New line number
             Text(line.newLineNumber.map { "\($0)" } ?? "")
-                .font(.system(size: 10, design: .monospaced))
+                .font(DesignSystem.Typography.monoLabel)
                 .foregroundStyle(.secondary)
                 .frame(width: 40, alignment: .trailing)
                 .padding(.trailing, 4)
@@ -153,7 +153,7 @@ struct HunkDiffView: View {
 
             // Content
             Text(line.content)
-                .font(.system(size: 12, design: .monospaced))
+                .font(DesignSystem.Typography.monoBody)
                 .foregroundStyle(textColor)
                 .lineLimit(1)
 

@@ -79,7 +79,7 @@ struct CommitDetailContent: View {
                                 .foregroundStyle(.secondary)
                             Spacer()
                             Text("\(detail.changedFiles.count)")
-                                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                .font(DesignSystem.Typography.monoLabelBold)
                                 .foregroundStyle(.secondary)
                         }
 
@@ -99,7 +99,7 @@ struct CommitDetailContent: View {
                                         HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                                             fileStatusBadge(file.status)
                                             Text(file.path)
-                                                .font(.system(size: 11, design: .monospaced))
+                                                .font(DesignSystem.Typography.monoSmall)
                                                 .lineLimit(1)
                                                 .truncationMode(.middle)
                                             Spacer()
@@ -117,7 +117,7 @@ struct CommitDetailContent: View {
                                             }
                                             if model != nil && commitID != nil {
                                                 Image(systemName: expandedFile == file.path ? "chevron.down" : "chevron.right")
-                                                    .font(.system(size: 8, weight: .bold))
+                                                    .font(DesignSystem.Typography.micro)
                                                     .foregroundStyle(.secondary)
                                             }
                                         }

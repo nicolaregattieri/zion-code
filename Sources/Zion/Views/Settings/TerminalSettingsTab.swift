@@ -21,7 +21,7 @@ struct TerminalSettingsTab: View {
                 }
 
                 Text(L10n("settings.terminal.scrollback.hint"))
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
             } header: {
                 Text(L10n("settings.terminal.buffer"))
@@ -41,25 +41,25 @@ struct TerminalSettingsTab: View {
                 Toggle(L10n("settings.terminal.openHyperlinks"), isOn: $openHyperlinks)
 
                 Text(L10n("settings.terminal.openHyperlinks.hint"))
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
 
                 Toggle(L10n("settings.terminal.imageRendering"), isOn: $imageRendering)
 
                 Text(L10n("settings.terminal.imageRendering.hint"))
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
 
                 Toggle(L10n("settings.terminal.aiImageDisplay"), isOn: $aiImageDisplay)
 
                 Text(L10n("settings.terminal.aiImageDisplay.hint"))
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
 
                 Toggle(L10n("settings.terminal.autoAppendAIConfig"), isOn: $autoAppendAIConfig)
 
                 Text(L10n("settings.terminal.autoAppendAIConfig.hint"))
-                    .font(.caption)
+                    .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
             } header: {
                 Text(L10n("settings.terminal.advanced"))

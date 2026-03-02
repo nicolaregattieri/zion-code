@@ -166,6 +166,7 @@ struct DesignSystem {
         static let elementCornerRadius: CGFloat = 8     // Buttons, search bars, inline items
         static let smallCornerRadius: CGFloat = 6       // Tags, tiny pills, code blocks
         static let microCornerRadius: CGFloat = 4       // Badges, progress bars, icon frames
+        static let largeCornerRadius: CGFloat = 28      // Branding elements, hero cards
     }
 
     // MARK: - Typography Tokens
@@ -174,9 +175,11 @@ struct DesignSystem {
         // Headings
         static let screenTitle = Font.system(size: 28, weight: .bold)
         static let sheetTitle = Font.system(size: 16, weight: .semibold)
+        static let subtitle = Font.system(size: 14, weight: .medium)
         static let sectionTitle = Font.system(size: 13, weight: .bold)
 
         // Body
+        static let bodyLarge = Font.system(size: 14)
         static let body = Font.system(size: 12)
         static let bodySmall = Font.system(size: 11)
         static let bodyMedium = Font.system(size: 11, weight: .medium)
@@ -188,6 +191,9 @@ struct DesignSystem {
         static let meta = Font.system(size: 9)
         static let metaBold = Font.system(size: 9, weight: .bold)
         static let micro = Font.system(size: 8, weight: .bold)
+
+        // Icon-sized
+        static let iconLarge = Font.system(size: 20, weight: .medium)
 
         // Monospaced
         static let monoBody = Font.system(size: 12, design: .monospaced)

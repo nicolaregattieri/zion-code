@@ -11,17 +11,17 @@ struct PRInlineCommentInput: View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
             HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 Image(systemName: "plus.bubble")
-                    .font(.system(size: 10))
+                    .font(DesignSystem.Typography.label)
                     .foregroundStyle(DesignSystem.Colors.info)
                 Text("\(path):\(line)")
-                    .font(.system(size: 9, design: .monospaced))
+                    .font(DesignSystem.Typography.monoMeta)
                     .foregroundStyle(.tertiary)
             }
 
             TextField(L10n("pr.comment.placeholder"), text: $commentBody, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
                 .lineLimit(2...6)
-                .font(.system(size: 11))
+                .font(DesignSystem.Typography.bodySmall)
 
             HStack {
                 Spacer()

@@ -65,9 +65,9 @@ struct CardHeader: View {
                 .font(DesignSystem.IconSize.sectionHeader)
                 .foregroundStyle(.secondary)
             VStack(alignment: .leading, spacing: 1) {
-                Text(title).font(.headline)
+                Text(title).font(DesignSystem.Typography.sheetTitle)
                 if let subtitle {
-                    Text(subtitle).font(.caption).foregroundStyle(.secondary)
+                    Text(subtitle).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
                 }
             }
             Spacer()

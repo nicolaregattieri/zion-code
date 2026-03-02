@@ -14,7 +14,7 @@ struct CodeReviewStatsBar: View {
                     .foregroundStyle(DesignSystem.Colors.success)
                     .lineLimit(1)
                 Image(systemName: "arrow.right")
-                    .font(.system(size: 10))
+                    .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
                 Text(target.isEmpty ? "?" : target)
                     .font(.system(size: 12, weight: .bold, design: .monospaced))
@@ -40,9 +40,9 @@ struct CodeReviewStatsBar: View {
                 Image(systemName: stats.overallRisk == .risky ? "exclamationmark.octagon.fill" :
                                   stats.overallRisk == .moderate ? "exclamationmark.triangle.fill" :
                                   "checkmark.shield.fill")
-                    .font(.system(size: 10))
+                    .font(DesignSystem.Typography.label)
                 Text(stats.overallRisk.label)
-                    .font(.system(size: 10, weight: .bold))
+                    .font(DesignSystem.Typography.labelBold)
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
@@ -58,12 +58,12 @@ struct CodeReviewStatsBar: View {
     private func statChip(icon: String, value: String, label: String?, color: Color) -> some View {
         HStack(spacing: 3) {
             Image(systemName: icon)
-                .font(.system(size: 9))
+                .font(DesignSystem.Typography.meta)
             Text(value)
                 .font(.system(size: 11, weight: .semibold, design: .monospaced))
             if let label {
                 Text(label)
-                    .font(.system(size: 9))
+                    .font(DesignSystem.Typography.meta)
                     .foregroundStyle(.secondary)
             }
         }
