@@ -508,6 +508,10 @@ extension RepositoryViewModel {
             inputData = Data([0x1B, 0x5B, 0x41]) // ESC[A
         case .arrowDown:
             inputData = Data([0x1B, 0x5B, 0x42]) // ESC[B
+        case .refreshScreen:
+            terminalLastSentRows[sessionID] = nil
+            Task { await sendScreenUpdate(for: sessionID) }
+            return
         }
 
         if let data = inputData {

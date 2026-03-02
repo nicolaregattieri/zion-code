@@ -507,6 +507,8 @@ function selectSession(id) {
     const chunks = sessionBuffers[id] || [];
     for (const chunk of chunks) term.write(chunk);
   }
+  sendAction('refreshScreen');
+  scheduleEagerPoll();
   hidePrompt();
 }
 
