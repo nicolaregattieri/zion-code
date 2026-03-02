@@ -75,6 +75,10 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;ba
 #terminal-wrap{flex:1;overflow:hidden;position:relative}
 #xterm-container{height:100%;width:100%}
 .xterm{height:100%!important}
+#loading-overlay{display:none;position:absolute;inset:0;z-index:5;background:var(--bg);align-items:center;justify-content:center;flex-direction:column;gap:12px}
+#loading-overlay.visible{display:flex}
+#loading-overlay .spinner{width:24px;height:24px;border-width:2px}
+#loading-label{font-size:12px;color:var(--text3);letter-spacing:0.3px}
 
 /* -- Quick actions -- */
 #quick-actions{display:none;padding:8px 16px;background:var(--surface);border-top:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap}
@@ -130,8 +134,10 @@ const TOKEN = qp.get('t') || P.t || fp.get('t');
 const LAN_MODE = (qp.get('m') || P.m || fp.get('m')) === 'lan';
 const BASE = location.origin;
 
-let cryptoKey, activeSession = null, sessions = [];
-let polling = false, pollErrors = 0, maxPollErrors = 15, activeProject = null, _retryCount = 0;
+let cryptoKey, sessions = [];
+let activeSession = null, activeProject = null;
+try { activeSession = sessionStorage.getItem('zion_activeSession'); activeProject = sessionStorage.getItem('zion_activeProject'); } catch(e) {}
+let polling = false, pollErrors = 0, maxPollErrors = 15, _retryCount = 0;
 let drawerOpen = false, wasDisconnected = false;
 
 // -- xterm.js --
@@ -441,6 +447,8 @@ function handleMessage(msg) {
       if (!activeSession || !sessions.some(s => s.id === activeSession)) {
         const projSessions = sessions.filter(s => (s.repoName || 'Unknown') === activeProject);
         if (projSessions.length > 0) selectSession(projSessions[0].id);
+      } else {
+        selectSession(activeSession);
       }
       updateHeaderContext();
       break;
@@ -452,6 +460,7 @@ function handleMessage(msg) {
       if (raw.length > 0) {
         // Store latest snapshot for session switching
         sessionBuffers[sid] = [raw];
+        if (sid === activeSession) $('#loading-overlay').classList.remove('visible');
 
         if (sid === activeSession && term) {
           const buf = term.buffer.active;
@@ -558,6 +567,7 @@ function selectSession(id) {
   activeSession = id;
   const s = sessions.find(s => s.id === id);
   if (s) activeProject = s.repoName || 'Unknown';
+  try { sessionStorage.setItem('zion_activeSession', id); sessionStorage.setItem('zion_activeProject', activeProject); } catch(e) {}
   renderDrawerList();
   updateHeaderContext();
   if (term) {
@@ -565,8 +575,8 @@ function selectSession(id) {
     const chunks = sessionBuffers[id] || [];
     for (const chunk of chunks) term.write(chunk);
     if (chunks.length === 0) {
+      $('#loading-overlay').classList.add('visible');
       sendAction('refreshScreen');
-      scheduleEagerPoll();
     }
   }
   hidePrompt();
@@ -680,6 +690,7 @@ connect();
 <p id="pair-desc">Establishing secure connection to your Mac</p>
 <button id="btn-retry" onclick="retryConnect()">Refresh</button>
 </div>
+<div id="loading-overlay"><div class="spinner"></div><span id="loading-label">Loading terminal…</span></div>
 <div id="xterm-container" style="display:none"></div>
 </div>
 <div id="prompt-banner">
@@ -691,12 +702,12 @@ connect();
 </div>
 </div>
 <div id="quick-actions">
-<button class="qa-btn" onclick="sendAction('ctrlc')">&#x2303;C</button>
-<button class="qa-btn" onclick="sendAction('ctrld')">&#x2303;D</button>
-<button class="qa-btn" onclick="sendAction('escape')">Esc</button>
-<button class="qa-btn" onclick="sendAction('tab')">Tab</button>
-<button class="qa-btn" onclick="sendAction('arrowUp')">&#x2191;</button>
-<button class="qa-btn" onclick="sendAction('arrowDown')">&#x2193;</button>
+<button class="qa-btn" onclick="sendAction('ctrlc')" aria-label="Control C">&#x2303;C</button>
+<button class="qa-btn" onclick="sendAction('ctrld')" aria-label="Control D">&#x2303;D</button>
+<button class="qa-btn" onclick="sendAction('escape')" aria-label="Escape">Esc</button>
+<button class="qa-btn" onclick="sendAction('tab')" aria-label="Tab">Tab</button>
+<button class="qa-btn" onclick="sendAction('arrowUp')" aria-label="Arrow Up">&#x2191;</button>
+<button class="qa-btn" onclick="sendAction('arrowDown')" aria-label="Arrow Down">&#x2193;</button>
 </div>
 <div id="input-bar" style="display:none">
 <input id="cmd-input" type="text" placeholder="Type command..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">

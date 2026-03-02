@@ -13,6 +13,7 @@ final class TerminalSession: Identifiable {
     // Cache for preserving terminal across SwiftUI view tree changes
     // (split/unsplit restructures the view hierarchy without user intent to close)
     @ObservationIgnored var _cachedView: AnyObject?       // SwiftTerm.TerminalView
+    @ObservationIgnored var _cachedTerminal: AnyObject?   // SwiftTerm.Terminal (direct ref for remote access)
     @ObservationIgnored var _processBridge: AnyObject?    // Coordinator (keeps it alive)
     @ObservationIgnored var _shellPid: Int32 = 0
     @ObservationIgnored var _shouldPreserve = true        // false after explicit kill
