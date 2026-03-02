@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import CryptoKit
 import IOKit.pwr_mgt
@@ -480,9 +481,8 @@ extension RepositoryViewModel {
         }
 
         // Active repo sessions
-        var allSessions: [SessionInfo] = terminalSessions.compactMap { session in
-            guard terminalSendCallbacks[session.id] != nil else { return nil }
-            return SessionInfo(
+        var allSessions: [SessionInfo] = terminalSessions.map { session in
+            SessionInfo(
                 id: session.id,
                 label: session.label,
                 title: session.title,
@@ -495,9 +495,8 @@ extension RepositoryViewModel {
         // Background repo sessions
         for (url, state) in backgroundRepoStates {
             let repoName = url.lastPathComponent
-            let bgSessions: [SessionInfo] = state.terminalTabs.flatMap { $0.allSessions() }.compactMap { session in
-                guard terminalSendCallbacks[session.id] != nil else { return nil }
-                return SessionInfo(
+            let bgSessions: [SessionInfo] = state.terminalTabs.flatMap { $0.allSessions() }.map { session in
+                SessionInfo(
                     id: session.id,
                     label: session.label,
                     title: session.title,

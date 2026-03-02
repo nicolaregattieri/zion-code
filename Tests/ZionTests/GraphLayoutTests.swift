@@ -252,6 +252,64 @@ final class GraphLayoutTests: XCTestCase {
         }
     }
 
+    // MARK: - Merge Edge Eviction Regression
+
+    func testMergeEdgesPointToDistinctLanesAfterEviction() {
+        // Reproduces the bug: merge commit with two mainChain parents.
+        // Parent 7831c34 is reserved at lane 0, then 7f16d84 evicts it to lane 1.
+        // Before the fix, the edge for 7831c34 still pointed to lane 0 (stale).
+        let commits = [
+            makeCommit(hash: "2e0f174", parents: ["7831c34", "7f16d84"], decorations: ["HEAD -> main"]),
+            makeCommit(hash: "7831c34", parents: ["base"]),
+            makeCommit(hash: "7f16d84", parents: ["base"]),
+            makeCommit(hash: "base", parents: []),
+        ]
+        let mainChain: Set<String> = ["2e0f174", "7831c34", "7f16d84", "base"]
+        let layout = calculator.layout(for: commits, mainChain: mainChain)
+        let layoutByID = Dictionary(uniqueKeysWithValues: layout.map { ($0.id, $0) })
+
+        let mergeEdges = layoutByID["2e0f174"]?.outgoingEdges ?? []
+        XCTAssertEqual(mergeEdges.count, 2, "Merge should have 2 outgoing edges")
+
+        let targetLanes = Set(mergeEdges.map(\.to))
+        XCTAssertEqual(targetLanes.count, 2, "Edges must point to 2 distinct lanes (was broken by stale eviction)")
+
+        // Each edge target must match the actual lane of its parent
+        let p1Lane = layoutByID["7831c34"]?.lane
+        let p2Lane = layoutByID["7f16d84"]?.lane
+        XCTAssertTrue(targetLanes.contains(p1Lane!), "Edge must reach 7831c34 at lane \(p1Lane!)")
+        XCTAssertTrue(targetLanes.contains(p2Lane!), "Edge must reach 7f16d84 at lane \(p2Lane!)")
+    }
+
+    func testOctopusMergeEdgesAllDistinct() {
+        // 3-parent merge where all parents are mainChain — verifies the fix generalizes.
+        let commits = [
+            makeCommit(hash: "octopus", parents: ["p1", "p2", "p3"], decorations: ["HEAD -> main"]),
+            makeCommit(hash: "p1", parents: ["root"]),
+            makeCommit(hash: "p2", parents: ["root"]),
+            makeCommit(hash: "p3", parents: ["root"]),
+            makeCommit(hash: "root", parents: []),
+        ]
+        let mainChain: Set<String> = ["octopus", "p1", "p2", "p3", "root"]
+        let layout = calculator.layout(for: commits, mainChain: mainChain)
+        let layoutByID = Dictionary(uniqueKeysWithValues: layout.map { ($0.id, $0) })
+
+        let edges = layoutByID["octopus"]?.outgoingEdges ?? []
+        XCTAssertEqual(edges.count, 3, "Octopus merge should have 3 outgoing edges")
+
+        let targetLanes = Set(edges.map(\.to))
+        XCTAssertEqual(targetLanes.count, 3, "All 3 edges must point to distinct lanes")
+
+        // Each edge must reach the actual lane of its parent
+        for parentHash in ["p1", "p2", "p3"] {
+            guard let parentLane = layoutByID[parentHash]?.lane else {
+                XCTFail("\(parentHash) missing from layout")
+                continue
+            }
+            XCTAssertTrue(targetLanes.contains(parentLane), "Edge must reach \(parentHash) at lane \(parentLane)")
+        }
+    }
+
     // MARK: - Lane Colors
 
     func testLayoutProducesLaneColors() {
