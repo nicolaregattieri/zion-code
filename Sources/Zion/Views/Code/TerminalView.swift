@@ -517,39 +517,62 @@ struct TerminalTabView: NSViewRepresentable {
                 try? script.write(toFile: path, atomically: true, encoding: .utf8)
                 try? fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: path)
 
+                // Shared prompt content for all AI CLI tools
+                let zionImgPrompt = """
+                Display an image or draw an SVG and show it inline.
+
+                **If input is a PATH** (contains `/` or ends in .png/.jpg/.jpeg/.gif/.svg):
+                1. One-line description of the image.
+                2. Run: `~/.zion/bin/zion_display <path>`
+
+                **If input is a DESCRIPTION:**
+                1. Generate a 600x400 SVG (horizontal). Rules:
+                   - `xmlns="http://www.w3.org/2000/svg"`, `viewBox="0 0 600 400"`
+                   - Allowed: `<rect>`, `<circle>`, `<ellipse>`, `<line>`, `<polyline>`, `<polygon>`, `<path>`, `<text>`, `<g>`, `<defs>`, `<linearGradient>`, `<radialGradient>`, `<clipPath>`
+                   - Forbidden: `<foreignObject>`, `<filter>`, `<feGaussianBlur>`, `<mask>`, CSS `@import`, external refs
+                   - Keep under 50KB
+                2. Save to `~/Library/Caches/Zion/images/<name>.svg`
+                3. One-line description of what you drew.
+                4. Run: `~/.zion/bin/zion_display ~/Library/Caches/Zion/images/<name>.svg`
+                5. On failure, simplify SVG (remove gradients/text/complex paths) and retry once.
+
+                With `--save`: use `~/.zion/bin/zion_display --save <file>` instead.
+
+                **Rules:**
+                - Describe BEFORE displaying (text after the image overlaps it).
+                - Keep descriptions to 1-2 lines max. Execute immediately.
+                """
+
                 // Install Claude Code slash command: /zion-img
                 let home = FileManager.default.homeDirectoryForCurrentUser.path
                 let commandsDir = "\(home)/.claude/commands"
                 try? fm.createDirectory(atPath: commandsDir, withIntermediateDirectories: true)
-                let commandContent = """
-                Display an image inline in this terminal.
-
-                IMPORTANT: Always describe the image BEFORE running `zion_display`. The image renders directly on the terminal and any text printed after it will overlap. Write your description first, then display.
-
-                First, determine if the request is a **file path** or a **description**:
-
-                **If the input is a file path** (contains `/` or `.png`, `.jpg`, `.jpeg`, `.gif`, `.svg`):
-                1. Briefly describe what the image shows.
-                2. Run: `zion_display <filepath>`
-
-                **If the input is a description**:
-                1. Create an SVG that macOS can render. Follow these rules strictly:
-                   - Use `xmlns="http://www.w3.org/2000/svg"` on the root `<svg>` element
-                   - Use only basic SVG elements: `<rect>`, `<circle>`, `<ellipse>`, `<line>`, `<polyline>`, `<polygon>`, `<path>`, `<text>`, `<g>`, `<defs>`, `<linearGradient>`, `<radialGradient>`, `<clipPath>`
-                   - Do NOT use `<foreignObject>`, `<filter>`, `<feGaussianBlur>`, `<mask>`, CSS `@import`, or external references
-                   - Set a proper `viewBox` (e.g. `viewBox="0 0 600 400"`)
-                   - Keep it under 50KB — prefer clean shapes over excessive detail
-                2. Save using Bash `mkdir -p ~/Library/Caches/Zion/images && cat > ~/Library/Caches/Zion/images/<name>.svg << 'SVGEOF'` (NOT the Write tool). Always use `~/Library/Caches/Zion/images/`.
-                3. Briefly describe what you drew.
-                4. Run: `zion_display ~/Library/Caches/Zion/images/<name>.svg`
-                5. If `zion_display` fails with "SVG conversion failed", simplify the SVG (remove gradients, complex paths, or text) and retry.
-
-                If the request mentions "--save", use `zion_display --save <file>` instead.
-
-                Request: $ARGUMENTS
-                """
+                let claudeCommand = zionImgPrompt + "\n\nRequest: $ARGUMENTS"
                 let commandPath = "\(commandsDir)/zion-img.md"
-                try? commandContent.write(toFile: commandPath, atomically: true, encoding: .utf8)
+                try? claudeCommand.write(toFile: commandPath, atomically: true, encoding: .utf8)
+
+                // Install Gemini CLI slash command: /zion-img
+                let geminiCommandsDir = "\(home)/.gemini/commands"
+                try? fm.createDirectory(atPath: geminiCommandsDir, withIntermediateDirectories: true)
+                let tq = "\"\"\""  // TOML triple-quote delimiter
+                let geminiPrompt = zionImgPrompt.replacingOccurrences(of: "`", with: "")
+                let geminiCommand = "description = \"Display an image inline in this terminal\"\n\nprompt = \(tq)\n\(geminiPrompt)\n\nRequest: {{args}}\n\(tq)"
+                let geminiCommandPath = "\(geminiCommandsDir)/zion-img.toml"
+                try? geminiCommand.write(toFile: geminiCommandPath, atomically: true, encoding: .utf8)
+
+                // Install Codex CLI skill: $zion-img
+                let codexSkillDir = "\(home)/.agents/skills/zion-img"
+                try? fm.createDirectory(atPath: codexSkillDir, withIntermediateDirectories: true)
+                let codexSkill = """
+                ---
+                name: zion-img
+                description: Use when the user asks to display, draw, render, or show an image inline in the terminal. Also use when the user references zion_display or zion-img.
+                ---
+
+                \(zionImgPrompt)
+                """
+                let codexSkillPath = "\(codexSkillDir)/SKILL.md"
+                try? codexSkill.write(toFile: codexSkillPath, atomically: true, encoding: .utf8)
             }
 
             // zion_ai_setup — manual fallback for creating new AI config files
@@ -569,7 +592,7 @@ struct TerminalTabView: NSViewRepresentable {
 
                 ## Inline Image Display
                 Use `/zion-img <description>` to generate and display images inline.
-                Or run directly: `zion_display <file>` (supports PNG, JPEG, GIF, SVG).
+                Or run directly: `~/.zion/bin/zion_display <file>` (supports PNG, JPEG, GIF, SVG).
 
                 """
             }
@@ -727,7 +750,7 @@ struct TerminalTabView: NSViewRepresentable {
                 sections.append("""
                 ## Inline Image Display
                 Use `/zion-img <description>` to generate and display images inline.
-                Or run directly: `zion_display <file>` (supports PNG, JPEG, GIF, SVG).
+                Or run directly: `~/.zion/bin/zion_display <file>` (supports PNG, JPEG, GIF, SVG).
                 """)
             }
 

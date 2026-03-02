@@ -376,9 +376,11 @@ function handleMessage(msg) {
       // Each update is a complete screen snapshot — store latest per session
       sessionBuffers[sid] = [raw];
 
-      // Render active session: reset and write full snapshot
+      // Write snapshot: scroll to bottom, clear viewport, write fresh content.
+      // Old content naturally scrolls into xterm.js scrollback (user can scroll up).
       if (sid === activeSession && term && raw.length > 0) {
-        term.reset();
+        term.scrollToBottom();
+        term.write('\x1b[2J\x1b[H');  // Erase display + cursor home
         term.write(raw);
       }
       if (p.hasPrompt && p.promptText) showPrompt(p.promptText);

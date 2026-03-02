@@ -291,53 +291,59 @@ extension RepositoryViewModel {
     }
 
     /// Read the visible terminal screen and serialize as ANSI-formatted text.
-    /// Each row is positioned with ESC[row;1H and includes SGR color/style codes.
-    /// This produces a complete screen snapshot that renders correctly at any
-    /// terminal width — no dependency on the native terminal's dimensions.
+    /// Each row includes SGR color/style codes, written as plain lines with \r\n.
+    /// The client uses scrollTo(0) + eraseDisplay before writing, so old snapshots
+    /// scroll naturally into xterm.js's scrollback buffer (user can scroll up).
     private func serializeTerminalScreen(terminal: SwiftTerm.Terminal) -> Data {
         var output = ""
         let rows = terminal.rows
         let cols = terminal.cols
-        // Enter alternate screen + clear, so xterm.js starts clean
-        output += "\u{1B}[?1049h\u{1B}[2J"
 
         for row in 0..<rows {
-            // Position cursor at this row
-            output += "\u{1B}[\(row + 1);1H"
-            guard let line = terminal.getLine(row: row) else { continue }
-
-            let trimLen = line.getTrimmedLength()
-            var prevAttr = Attribute.empty
-            var col = 0
-            while col < min(trimLen, cols) {
-                let cd = line[col]
-                let attr = cd.attribute
-
-                // Emit SGR if attribute changed
-                if attr != prevAttr {
-                    output += sgrSequence(for: attr)
-                    prevAttr = attr
-                }
-
-                let ch = terminal.getCharacter(for: cd)
-                if ch == "\0" || ch == "\u{FFFD}" {
-                    output += " "
-                } else {
-                    output.append(ch)
-                }
-
-                // Skip trailing cell of wide characters
-                let w = max(1, Int(cd.width))
-                col += w
+            guard let line = terminal.getLine(row: row) else {
+                output += "\r\n"
+                continue
             }
-            // Reset attributes at end of line
-            output += "\u{1B}[0m"
+            output += serializeBufferLine(line, cols: cols, terminal: terminal)
+            if row < rows - 1 {
+                output += "\r\n"
+            }
         }
 
-        // Move cursor to a sensible position (bottom)
-        output += "\u{1B}[\(rows);1H"
-
         return Data(output.utf8)
+    }
+
+    /// Serialize a single BufferLine as ANSI-formatted text with SGR color codes.
+    private func serializeBufferLine(
+        _ line: BufferLine,
+        cols: Int,
+        terminal: SwiftTerm.Terminal
+    ) -> String {
+        var result = ""
+        let trimLen = line.getTrimmedLength()
+        var prevAttr = Attribute.empty
+        var col = 0
+        while col < min(trimLen, cols) {
+            let cd = line[col]
+            let attr = cd.attribute
+
+            if attr != prevAttr {
+                result += sgrSequence(for: attr)
+                prevAttr = attr
+            }
+
+            let ch = terminal.getCharacter(for: cd)
+            if ch == "\0" || ch == "\u{FFFD}" {
+                result += " "
+            } else {
+                result.append(ch)
+            }
+
+            let w = max(1, Int(cd.width))
+            col += w
+        }
+        result += "\u{1B}[0m"
+        return result
     }
 
     /// Generate an SGR (Select Graphic Rendition) escape sequence for the given attribute.
