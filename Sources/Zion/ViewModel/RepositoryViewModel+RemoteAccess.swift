@@ -62,8 +62,9 @@ extension RepositoryViewModel {
                 let tunnelURL = try await resolveTunnelURL()
                 mobileAccessTunnelURL = tunnelURL
 
-                // 4. Generate pairing token and QR code
-                let pairingToken = UUID().uuidString
+                // 4. Load or create persisted pairing token and QR code
+                let pairingToken = await loadOrCreatePairingToken()
+                await remoteAccessServer?.setPersistedToken(pairingToken)
                 await remoteAccessServer?.addPairingToken(pairingToken)
 
                 let keyBase64 = RemoteAccessEncryption.exportKey(key)
@@ -179,7 +180,8 @@ extension RepositoryViewModel {
                     syncRemoteAccessState()
                     return
                 }
-                let pairingToken = UUID().uuidString
+                let pairingToken = await loadOrCreatePairingToken()
+                await remoteAccessServer?.setPersistedToken(pairingToken)
                 await remoteAccessServer?.addPairingToken(pairingToken)
 
                 let keyBase64 = RemoteAccessEncryption.exportKey(key)
@@ -206,11 +208,25 @@ extension RepositoryViewModel {
 
     func regeneratePairingKey() {
         RemoteAccessEncryption.deletePairingKey()
+        RemoteAccessEncryption.deletePairingToken()
         pairedDevices.removeAll()
         if isMobileAccessEnabled {
             disableRemoteAccess()
             enableRemoteAccess()
         }
+    }
+
+    // MARK: - Pairing Token Persistence
+
+    private func loadOrCreatePairingToken() async -> String {
+        await Task.detached {
+            if let existing = RemoteAccessEncryption.loadPairingToken() {
+                return existing
+            }
+            let newToken = UUID().uuidString
+            RemoteAccessEncryption.savePairingToken(newToken)
+            return newToken
+        }.value
     }
 
     // MARK: - Auto-Open Terminals for Recent Projects

@@ -5,6 +5,7 @@ import Security
 enum RemoteAccessEncryption {
     private static let keychainService = "com.zion.remote-access"
     private static let pairingKeyAccount = "pairing-key"
+    private static let pairingTokenAccount = "pairing-token"
 
     // MARK: - Key Generation
 
@@ -79,6 +80,50 @@ enum RemoteAccessEncryption {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
             kSecAttrAccount as String: pairingKeyAccount,
+        ]
+        SecItemDelete(query as CFDictionary)
+    }
+
+    // MARK: - Pairing Token Storage
+
+    static func savePairingToken(_ token: String) {
+        let data = Data(token.utf8)
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: pairingTokenAccount,
+        ]
+
+        SecItemDelete(query as CFDictionary)
+
+        var add = query
+        add[kSecValueData as String] = data
+        add[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+        _ = SecItemAdd(add as CFDictionary, nil)
+    }
+
+    static func loadPairingToken() -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: pairingTokenAccount,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+        ]
+
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        guard status == errSecSuccess, let data = result as? Data else {
+            return nil
+        }
+        return String(data: data, encoding: .utf8)
+    }
+
+    static func deletePairingToken() {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: pairingTokenAccount,
         ]
         SecItemDelete(query as CFDictionary)
     }
