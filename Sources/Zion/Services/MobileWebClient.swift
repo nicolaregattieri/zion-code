@@ -373,12 +373,20 @@ function handleMessage(msg) {
       const raw = p.data ? Uint8Array.from(atob(p.data), c => c.charCodeAt(0))
                          : new Uint8Array(0);
 
-      // Buffer per session (for session switching replay)
+      // Buffer per session (for session switching replay).
+      // On fullSync, discard all prior chunks — they contain pre-reset
+      // data that would cause TUI duplication if replayed.
       if (p.fullSync) {
         sessionBuffers[sid] = [raw];
       } else {
         if (!sessionBuffers[sid]) sessionBuffers[sid] = [];
         sessionBuffers[sid].push(raw);
+        // Cap accumulated buffer size (256KB) to prevent memory bloat
+        let total = 0;
+        for (const c of sessionBuffers[sid]) total += c.length;
+        while (total > 262144 && sessionBuffers[sid].length > 1) {
+          total -= sessionBuffers[sid].shift().length;
+        }
       }
 
       // Render active session

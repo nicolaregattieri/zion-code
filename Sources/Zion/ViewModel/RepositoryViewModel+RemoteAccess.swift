@@ -253,11 +253,36 @@ extension RepositoryViewModel {
 
     // MARK: - Terminal Output Bridge
 
+    /// Detects ANSI sequences that reset the terminal screen.
+    /// TUI apps (Claude Code, Gemini, vim, etc.) use these when entering
+    /// alternate screen mode or clearing the display. Replaying pre-reset
+    /// data in xterm.js causes visual duplication, so we flush the buffer.
+    private func dataContainsScreenReset(_ data: Data) -> Bool {
+        // ESC[?1049h  – enter alternate screen (most common)
+        // ESC[?47h    – enter alternate screen (legacy)
+        // ESC[2J      – erase entire display
+        let altScreen1: [UInt8] = [0x1B, 0x5B, 0x3F, 0x31, 0x30, 0x34, 0x39, 0x68]
+        let altScreen2: [UInt8] = [0x1B, 0x5B, 0x3F, 0x34, 0x37, 0x68]
+        let eraseDisplay: [UInt8] = [0x1B, 0x5B, 0x32, 0x4A]
+
+        return data.containsSequence(altScreen1)
+            || data.containsSequence(altScreen2)
+            || data.containsSequence(eraseDisplay)
+    }
+
     func notifyTerminalOutput(sessionID: UUID, data: Data) {
         guard isMobileAccessEnabled, !data.isEmpty else { return }
 
-        // Append raw bytes (ANSI codes preserved)
         var buffer = terminalOutputBuffers[sessionID] ?? Data()
+
+        // Detect full screen resets — TUI apps trigger these, and replaying
+        // pre-reset data causes visual duplication in xterm.js
+        if dataContainsScreenReset(data) {
+            buffer = Data()
+            terminalOutputSentCursors[sessionID] = 0
+        }
+
+        // Append raw bytes (ANSI codes preserved)
         buffer.append(data)
 
         // Evict oldest if over cap
@@ -706,5 +731,27 @@ extension RemoteAccessServer {
     ) {
         self.onMessageReceived = onMessage
         self.onConnectionCountChanged = onConnectionCount
+    }
+}
+
+// MARK: - Data byte sequence search
+
+private extension Data {
+    /// Returns true if the receiver contains the given byte sequence.
+    func containsSequence(_ needle: [UInt8]) -> Bool {
+        guard needle.count <= count else { return false }
+        let end = count - needle.count
+        return withUnsafeBytes { buffer -> Bool in
+            guard let base = buffer.baseAddress?.assumingMemoryBound(to: UInt8.self) else { return false }
+            for i in 0...end {
+                var match = true
+                for j in 0..<needle.count where base[i + j] != needle[j] {
+                    match = false
+                    break
+                }
+                if match { return true }
+            }
+            return false
+        }
     }
 }
