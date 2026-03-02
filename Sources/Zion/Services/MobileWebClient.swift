@@ -137,6 +137,7 @@ let drawerOpen = false;
 // -- xterm.js --
 let term = null, fitAddon = null;
 const sessionBuffers = {};
+let pendingScreenUpdate = null;
 
 function initTerminal() {
     if (typeof Terminal === 'undefined') return;
@@ -165,6 +166,23 @@ function initTerminal() {
     fitAddon.fit();
     new ResizeObserver(() => fitAddon && fitAddon.fit())
         .observe($('#xterm-container'));
+
+    // Flush deferred screen update when user scrolls back to bottom (DOM event = touch/swipe)
+    const viewport = term.element.querySelector('.xterm-viewport');
+    if (viewport) {
+        viewport.addEventListener('scroll', () => {
+            const buf = term.buffer.active;
+            const atBottom = (buf.baseY === 0) || (buf.viewportY >= buf.baseY);
+            if (atBottom && pendingScreenUpdate) {
+                const raw = pendingScreenUpdate;
+                pendingScreenUpdate = null;
+                term.scrollToBottom();
+                term.write('\n'.repeat(term.rows));
+                term.write('\x1b[H\x1b[2J');
+                term.write(raw);
+            }
+        });
+    }
 }
 
 // -- Drawer --
@@ -378,12 +396,21 @@ function handleMessage(msg) {
         sessionBuffers[sid] = [raw];
 
         if (sid === activeSession && term) {
-          // Push current visible content into scrollback
-          term.scrollToBottom();
-          term.write('\n'.repeat(term.rows));
-          // Clear visible area, cursor home, write new snapshot
-          term.write('\x1b[H\x1b[2J');
-          term.write(raw);
+          const buf = term.buffer.active;
+          const atBottom = (buf.baseY === 0) || (buf.viewportY >= buf.baseY);
+
+          if (!atBottom) {
+            // User is reading scrollback — defer the update
+            pendingScreenUpdate = raw;
+          } else {
+            pendingScreenUpdate = null;
+            // Push current visible content into scrollback
+            term.scrollToBottom();
+            term.write('\n'.repeat(term.rows));
+            // Clear visible area, cursor home, write new snapshot
+            term.write('\x1b[H\x1b[2J');
+            term.write(raw);
+          }
         }
       }
       if (p.hasPrompt && p.promptText) showPrompt(p.promptText);
