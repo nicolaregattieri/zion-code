@@ -137,6 +137,8 @@ let drawerOpen = false;
 // -- xterm.js --
 let term = null, fitAddon = null;
 const sessionBuffers = {};
+let userScrolledUp = false;
+let pendingScreenUpdate = null;
 
 function initTerminal() {
     if (typeof Terminal === 'undefined') return;
@@ -165,6 +167,22 @@ function initTerminal() {
     fitAddon.fit();
     new ResizeObserver(() => fitAddon && fitAddon.fit())
         .observe($('#xterm-container'));
+
+    // Track user scroll position — pause screen updates while scrolled up
+    term.onScroll(() => {
+        const buf = term.buffer.active;
+        const atBottom = (buf.baseY === 0) || (buf.viewportY >= buf.baseY);
+        userScrolledUp = !atBottom;
+        // When user scrolls back to bottom, flush the latest pending update
+        if (atBottom && pendingScreenUpdate) {
+            const raw = pendingScreenUpdate;
+            pendingScreenUpdate = null;
+            term.scrollToBottom();
+            term.write('\n'.repeat(term.rows));
+            term.write('\x1b[H\x1b[2J');
+            term.write(raw);
+        }
+    });
 }
 
 // -- Drawer --
@@ -378,12 +396,18 @@ function handleMessage(msg) {
         sessionBuffers[sid] = [raw];
 
         if (sid === activeSession && term) {
-          // Push current visible content into scrollback
-          term.scrollToBottom();
-          term.write('\n'.repeat(term.rows));
-          // Clear visible area, cursor home, write new snapshot
-          term.write('\x1b[H\x1b[2J');
-          term.write(raw);
+          if (userScrolledUp) {
+            // User is reading scrollback — defer the update
+            pendingScreenUpdate = raw;
+          } else {
+            pendingScreenUpdate = null;
+            // Push current visible content into scrollback
+            term.scrollToBottom();
+            term.write('\n'.repeat(term.rows));
+            // Clear visible area, cursor home, write new snapshot
+            term.write('\x1b[H\x1b[2J');
+            term.write(raw);
+          }
         }
       }
       if (p.hasPrompt && p.promptText) showPrompt(p.promptText);
