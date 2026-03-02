@@ -137,7 +137,6 @@ let drawerOpen = false;
 // -- xterm.js --
 let term = null, fitAddon = null;
 const sessionBuffers = {};
-let userScrolledUp = false;
 let pendingScreenUpdate = null;
 
 function initTerminal() {
@@ -168,21 +167,22 @@ function initTerminal() {
     new ResizeObserver(() => fitAddon && fitAddon.fit())
         .observe($('#xterm-container'));
 
-    // Track user scroll position — pause screen updates while scrolled up
-    term.onScroll(() => {
-        const buf = term.buffer.active;
-        const atBottom = (buf.baseY === 0) || (buf.viewportY >= buf.baseY);
-        userScrolledUp = !atBottom;
-        // When user scrolls back to bottom, flush the latest pending update
-        if (atBottom && pendingScreenUpdate) {
-            const raw = pendingScreenUpdate;
-            pendingScreenUpdate = null;
-            term.scrollToBottom();
-            term.write('\n'.repeat(term.rows));
-            term.write('\x1b[H\x1b[2J');
-            term.write(raw);
-        }
-    });
+    // Flush deferred screen update when user scrolls back to bottom (DOM event = touch/swipe)
+    const viewport = term.element.querySelector('.xterm-viewport');
+    if (viewport) {
+        viewport.addEventListener('scroll', () => {
+            const buf = term.buffer.active;
+            const atBottom = (buf.baseY === 0) || (buf.viewportY >= buf.baseY);
+            if (atBottom && pendingScreenUpdate) {
+                const raw = pendingScreenUpdate;
+                pendingScreenUpdate = null;
+                term.scrollToBottom();
+                term.write('\n'.repeat(term.rows));
+                term.write('\x1b[H\x1b[2J');
+                term.write(raw);
+            }
+        });
+    }
 }
 
 // -- Drawer --
@@ -396,7 +396,10 @@ function handleMessage(msg) {
         sessionBuffers[sid] = [raw];
 
         if (sid === activeSession && term) {
-          if (userScrolledUp) {
+          const buf = term.buffer.active;
+          const atBottom = (buf.baseY === 0) || (buf.viewportY >= buf.baseY);
+
+          if (!atBottom) {
             // User is reading scrollback — defer the update
             pendingScreenUpdate = raw;
           } else {
