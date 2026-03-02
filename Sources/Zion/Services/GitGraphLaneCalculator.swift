@@ -79,10 +79,13 @@ struct GitGraphLaneCalculator {
                 hashes: &activeLaneHashes,
                 colorKeys: &activeLaneColorKeys
             )
-            var edges: [LaneEdge] = []
+            // Phase 1: Reserve lanes for all parents, collecting color keys.
+            // Edges are NOT built yet — later reservations may evict earlier ones
+            // (e.g., two mainChain parents both need lane 0).
+            var parentColorKeys: [(hash: String, colorKey: Int)] = []
 
             if let firstParent = commit.parents.first {
-                let firstParentReservation = reserveLane(
+                let firstRes = reserveLane(
                     for: firstParent,
                     preferred: lane,
                     preferredColorKey: nodeColorKey,
@@ -92,16 +95,10 @@ struct GitGraphLaneCalculator {
                     colorKeyByHash: &colorKeyByHash,
                     nextColorKey: &nextColorKey
                 )
-                edges.append(
-                    LaneEdge(
-                        from: lane,
-                        to: firstParentReservation.lane,
-                        colorKey: firstParentReservation.colorKey
-                    )
-                )
+                parentColorKeys.append((firstParent, firstRes.colorKey))
 
                 for parent in commit.parents.dropFirst() {
-                    let mergeReservation = reserveLane(
+                    let mergeRes = reserveLane(
                         for: parent,
                         preferred: lane + 1,
                         preferredColorKey: nil,
@@ -111,14 +108,17 @@ struct GitGraphLaneCalculator {
                         colorKeyByHash: &colorKeyByHash,
                         nextColorKey: &nextColorKey
                     )
-                    edges.append(
-                        LaneEdge(
-                            from: lane,
-                            to: mergeReservation.lane,
-                            colorKey: mergeReservation.colorKey
-                        )
-                    )
+                    parentColorKeys.append((parent, mergeRes.colorKey))
                 }
+            }
+
+            // Phase 2: Build edges using each parent's *final* lane position,
+            // which accounts for any evictions that happened during Phase 1.
+            let edges: [LaneEdge] = parentColorKeys.compactMap { entry in
+                guard let finalLane = activeLaneHashes.firstIndex(where: { $0 == entry.hash }) else {
+                    return nil
+                }
+                return LaneEdge(from: lane, to: finalLane, colorKey: entry.colorKey)
             }
 
             trimTrailingEmptyLanes(hashes: &activeLaneHashes, colorKeys: &activeLaneColorKeys)

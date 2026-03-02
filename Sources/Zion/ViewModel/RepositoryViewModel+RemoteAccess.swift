@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import CryptoKit
 import IOKit.pwr_mgt
