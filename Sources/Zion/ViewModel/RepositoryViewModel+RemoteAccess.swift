@@ -10,6 +10,7 @@ extension RepositoryViewModel {
     func enableRemoteAccess() {
         acquireSleepAssertionIfNeeded()
         isMobileAccessEnabled = true
+        observeSystemWake()
         mobileAccessConnectionState = .starting
         syncRemoteAccessState()
 
@@ -110,6 +111,7 @@ extension RepositoryViewModel {
 
     func disableRemoteAccess() {
         isMobileAccessEnabled = false
+        removeSystemWakeObserver()
         releaseSleepAssertion()
         heartbeatTask?.cancel()
         heartbeatTask = nil
@@ -584,6 +586,42 @@ extension RepositoryViewModel {
             }
         }
         return address
+    }
+
+    // MARK: - System Wake Recovery
+
+    private func observeSystemWake() {
+        guard wakeObserver == nil else { return }
+        wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, self.isMobileAccessEnabled else { return }
+                self.restartRemoteAccessAfterWake()
+            }
+        }
+    }
+
+    private func removeSystemWakeObserver() {
+        if let observer = wakeObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
+            wakeObserver = nil
+        }
+    }
+
+    private func restartRemoteAccessAfterWake() {
+        Task {
+            await remoteAccessServer?.stop()
+            remoteAccessServer = nil
+            await tunnelManager?.stop()
+            tunnelManager = nil
+            heartbeatTask?.cancel()
+            heartbeatTask = nil
+
+            enableRemoteAccess()
+        }
     }
 
     // MARK: - Sleep Assertion
