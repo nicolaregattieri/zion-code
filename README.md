@@ -38,29 +38,31 @@ Zion doesn't make you choose.
 | | Other Git GUIs | Zion |
 |---|---|---|
 | **Terminal** | External app / fake shell | Real PTY with splits, tabs, zoom |
-| **Editor** | None / basic viewer | Syntax highlighting, blame, Quick Open |
+| **Editor** | None / basic viewer | Syntax highlighting, blame, Quick Open, code formatter |
 | **Conflicts** | External merge tool | Built-in resolver (ours/theirs/both/edit) |
-| **AI** | None or paid addon | Built-in (Claude / GPT), free to configure |
+| **AI** | None or paid addon | 12 AI features (Claude / GPT / Gemini), free to configure |
 | **Clipboard** | Copy-paste manually | Smart clipboard that auto-captures and pastes into terminal |
+| **Mobile** | Nothing | Monitor terminals from your phone, approve AI prompts remotely |
+| **Safety** | Hope for the best | Recovery Vault auto-snapshots before every destructive operation |
+| **Hosting** | GitHub only | GitHub + GitLab + Bitbucket with auto-detection |
 | **Performance** | Electron / web view | Native SwiftUI, zero web tech |
 | **Price** | $50-100/year | Free and open source |
 
 ---
 
-## What's New in 1.2.6
+## What's New in 1.4.0
 
-- Code Review panel polish: improved spacing, typography, icon sizing, and snippet chip rhythm for clearer scanability.
-- Public release package bumped to `1.2.6` (build `11`) for Sparkle distribution.
+> Your Git workspace, everywhere.
 
-### Launch Week Validation (Advanced Flows)
-
-Zion is ready for daily use. During launch week, we are asking users to help validate advanced Git workflows:
-
-1. Worktree create/switch/remove (including pending-change worktrees)
-2. Pending Changes actions (`Commit`, `Create Branch Here`, `Copy Changes`, `Stash`)
-3. Stash apply/pop/drop and Recovery Vault restore path
-4. Graph pills + details/changes panel refresh when switching worktrees
-5. Operations conflict flow (manual + AI-assisted where available)
+- **Mobile Remote Access** — Monitor and control your Mac terminals from your phone. QR pairing, AES-256-GCM encryption, rich xterm.js terminal with full ANSI colors. Approve AI prompts from anywhere.
+- **Recovery Vault** — Auto-snapshots before every destructive operation (reset --hard, rebase, discard). Never lose work again.
+- **Git Hosting Providers** — GitHub, GitLab, and Bitbucket support with automatic remote URL detection. Inline PR comments and review submission.
+- **Rich Mobile Terminal** — Replaced plain-text streaming with xterm.js for full ANSI color, bold/italic, cursor positioning, and TUI app support (Claude Code, Gemini, etc.)
+- **AI Agent Integration** — Slash commands for Claude Code (`/zion-img`), Gemini CLI (`/zion-img`), and Codex CLI (`$zion-img`) — auto-installed when AI Inline Images is enabled.
+- **Annotated & Signed Tags** — Create annotated and GPG-signed tags with message editor, push to remote, delete remote tags.
+- **Force Push Options** — Force Push with Lease (safe) and Force Push (override) from branch context menu.
+- **Code Formatter** — Built-in formatting for 16+ languages with format-on-save.
+- **Security & Performance Audit** — Shell injection patches, connection limits, search debounce, batch mutations, design token adoption, accessibility labels.
 
 ---
 
@@ -69,16 +71,16 @@ Zion is ready for daily use. During launch week, we are asking users to help val
 Zion is the only Git workspace that brings the modern macOS **Glassmorphism** (UltraThinMaterial) aesthetic to your developer workflow. Whether you prefer deep indigo, classic dark, or a clean light theme, Zion looks stunning on every Mac.
 
 <p align="center">
-  <img src="docs/screenshots/hero-code.png" width="100%" alt="Zion Tree Graph - Tokyo Night Theme" />
+  <img src="docs/screenshots/hero-code.png" width="100%" alt="Zion Code — Editor + Terminal" />
 </p>
 <p align="center">
   <img src="docs/screenshots/gallery-4.png" width="100%" alt="Operations Dashboard" />
 </p>
 <p align="center">
-  <img src="docs/screenshots/quick-open.png" width="100%" alt="Zion Code Editor - Light Mode" />
+  <img src="docs/screenshots/quick-open.png" width="100%" alt="Quick Open fuzzy search" />
 </p>
 <p align="center">
-  <img src="docs/screenshots/conflict-resolver.png" width="100%" alt="Operations Dashboard" />
+  <img src="docs/screenshots/conflict-resolver.png" width="100%" alt="Built-in conflict resolver" />
 </p>
 
 
@@ -90,7 +92,7 @@ Zion is the only Git workspace that brings the modern macOS **Glassmorphism** (U
 ### Zion Code — Editor + Terminal
 > `Cmd+1`
 
-A real code editor with syntax highlighting, Git Blame, Quick Open (`Cmd+P`), file watcher, 6 themes (Dracula, Tokyo Night, Catppuccin Mocha, One Dark Pro, City Lights, GitHub Light), and configurable fonts. Side-by-side with a real PTY terminal that supports split panes, multiple tabs, and independent zoom.
+A real code editor with syntax highlighting, Git Blame, Quick Open (`Cmd+P`), code formatter (16+ languages), file watcher, 7 themes (Dracula, Tokyo Night, Catppuccin Mocha, One Dark Pro, City Lights, GitHub Light, SynthWave '84), and configurable fonts. Side-by-side with a real PTY terminal that supports split panes, multiple tabs, independent zoom, Finder drag-and-drop, and inline image display.
 
 <p>
   <img src="https://github.com/user-attachments/assets/da4dea75-7126-4f17-8b03-fc86da6b95cc" width="100%" alt="Dracula" />
@@ -105,7 +107,6 @@ Lane-colored commit cards with colored left stripes matching branch lanes, merge
   <img src="docs/screenshots/hero-graph.png" width="100%" alt="Graph" />
 </p>
 
-
 ### Smart Clipboard
 > The feature no other Git GUI has.
 
@@ -118,38 +119,43 @@ Zion watches your clipboard and auto-categorizes everything: commands, file path
 ### Operations Center
 > `Cmd+3`
 
-A dashboard for everything Git. Commit with hunk and line-level staging, interactive rebase (pick/squash/fixup/drop/reorder with drag), branch management (create/merge/rebase/rename/delete), stash management, cherry-pick, revert, reset, tag management, worktrees, submodules, remotes, reflog, and repo stats — all in one place.
+A dashboard for everything Git. Commit with hunk and line-level staging, interactive rebase (pick/squash/fixup/drop/reorder with drag), branch management (create/merge/rebase/rename/delete), stash management, cherry-pick, revert, reset, annotated/signed tag management, worktrees, submodules, remotes, reflog, and repo stats — all in one place.
 
 <p align="center">
   <img src="docs/screenshots/gallery-4.png" width="100%" alt="Operations Dashboard" />
 </p>
+
+### Mobile Remote Access
+> Monitor your Mac from anywhere.
+
+Scan a QR code to pair your phone with Zion. See live terminal output with full ANSI colors powered by xterm.js. Approve, deny, or abort AI prompts. Switch between terminal sessions across all open projects. Works over Cloudflare Tunnel (remote) or LAN (local Wi-Fi). All communication encrypted with AES-256-GCM.
+
+### Recovery Vault
+> Never lose work again.
+
+Zion auto-snapshots your working tree before every destructive operation — reset --hard, interactive rebase, discard all changes. If something goes wrong, restore from the Recovery Vault in Operations Center. Snapshots are named `zion-pre-{operation}` and visible in the stash list.
 
 ### Conflict Resolution
 > Built-in. No external merge tools needed.
 
 When a merge, rebase, or cherry-pick hits conflicts, Zion opens a dedicated resolver. A file list on the left shows conflict status with red/green icons. The inline editor on the right highlights conflict regions — **ours** (green) vs **theirs** (blue) — with one-click actions: accept ours, accept theirs, accept both, or edit manually. Once resolved, Zion auto-continues the operation.
 
-<p align="center">
-  <img src="docs/screenshots/blame-view.png" width="100%" alt="Built-in conflict resolver with ours vs theirs" />
-</p>
-
 ### AI Assistant
-> Works with Anthropic Claude, OpenAI GPT, or Google Gemini.
+> 12 features. 3 providers. Free to configure.
 
-Generate commit messages from your staged diff. Get plain-language explanations of file changes. Auto-draft PR titles and descriptions. Suggest descriptive stash messages. API key stored securely in macOS Keychain. Falls back to smart heuristics when AI is not configured.
+Works with Anthropic Claude, OpenAI GPT, or Google Gemini. Generate commit messages, explain diffs, draft PR descriptions, review code before committing, resolve conflicts with AI, search git history in natural language, summarize branches, explain blame entries, and suggest how to split large commits. API keys stored securely in macOS Keychain. Falls back to smart heuristics when AI is not configured.
 
-### GitHub Integration
+### Git Hosting Integration
+> GitHub + GitLab + Bitbucket
 
-List open pull requests, create new PRs from your current branch, and let AI generate the PR description from your commit log.
+Automatic provider detection from remote URLs. List open PRs, create PRs with AI-generated descriptions, post inline review comments, and submit reviews (approve/request changes). GitLab supports self-hosted instances. Bitbucket uses app passwords.
 
 ### Worktree-First Workflow
 
-Create worktrees with a smart prefix+name flow, open directly into Zion Code, and keep a dedicated terminal context per worktree. In Zion Tree, switch context through worktree pills, create branches directly from Pending Changes, and copy/move pending work safely across worktrees. Global Recents stays root-only while context switching happens in Worktrees.
-
-Current known edge case: if both worktrees change the same file/line, Git can block direct stash apply without generating a merge-conflict file list. In this scenario, use Operations + Recovery Vault refs to restore safely.
+Create worktrees with a smart prefix+name flow, open directly into Zion Code, and keep a dedicated terminal context per worktree. In Zion Tree, switch context through worktree pills, create branches directly from Pending Changes, and copy/move pending work safely across worktrees.
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/8e07e3bd-55ab-41ab-ac51-aecf82ede782" width="100%" alt="Quick Open fuzzy search overlay" />
+  <img src="https://github.com/user-attachments/assets/8e07e3bd-55ab-41ab-ac51-aecf82ede782" width="100%" alt="Worktree management" />
 </p>
 
 ---
@@ -160,25 +166,19 @@ Current known edge case: if both worktrees change the same file/line, Git can bl
 
 Grab the latest `.dmg` from [**Releases**](../../releases), open it, and drag **Zion.app** to Applications.
 
-### Security Note (Current Test Distribution)
+### Security Note (Current Distribution)
 
 Zion releases are open source and currently distributed without Apple Developer ID notarization.
 
 - Download only from the official [**Releases**](../../releases) page.
-- Verify checksum before opening:
-
-```bash
-shasum -a 256 dist/Zion.dmg
-```
-
 - On first launch, macOS Gatekeeper may block the app. Use **Right click > Open** for a per-app override.
 - For maximum trust, build from source locally.
 
 ### Build from Source
 
 ```bash
-git clone https://github.com/nicolaregattieri/Zion.git
-cd Zion
+git clone https://github.com/nicolaregattieri/zion-code.git
+cd zion-code
 swift build
 ./scripts/make-app.sh   # -> dist/Zion.app
 open dist/Zion.app
@@ -205,7 +205,7 @@ open dist/Zion.app
 
 ## Keyboard Shortcuts
 
-Zion is keyboard-first. Press `Cmd+?` to see all shortcuts inside the app.
+Zion is keyboard-first. Press `Cmd+/` to see all shortcuts inside the app.
 
 | Shortcut | Action |
 |----------|--------|
@@ -221,9 +221,12 @@ Zion is keyboard-first. Press `Cmd+?` to see all shortcuts inside the app.
 | `Cmd+S` | Save file |
 | `Cmd+R` | Refresh repository status |
 | `Cmd+F` | Context search (graph / editor / terminal) |
-| `Ctrl+F` | Find alias in editor |
-| `Cmd+G` | Go to line |
+| `Shift+Cmd+F` | Find in Files |
 | `Shift+Cmd+R` | Open Code Review |
+| `Shift+Alt+F` | Format Document |
+| `Cmd+G` | Go to line |
+| `Ctrl+Cmd+Z` | Toggle Zion Mode |
+| `Ctrl+Cmd+J` | Focus / Zen Mode |
 | `Ctrl+Plus` / `Ctrl+Minus` | Terminal zoom in / out |
 
 ---
@@ -235,21 +238,23 @@ Zion is keyboard-first. Press `Cmd+?` to see all shortcuts inside the app.
 
 | Area | Features |
 |------|----------|
-| **Graph** | Lane-colored commit cards, commit search, jump bar, branch focus, pending changes with quick actions (commit/stash/discard/create branch), worktree pills with dirty status, signature verification, keyboard navigation, paginated loading (up to 5000 commits) |
-| **Editor** | Syntax highlighting (regex-cached), Quick Open, Git Blame, 6 themes, 5+ font families, line spacing control, line wrapping, file watcher, multi-tab, unsaved indicator |
-| **Terminal** | Real PTY (`/bin/zsh -l`), split panes (H/V), multiple tabs, independent zoom, font config, clipboard paste/drag, process preservation across view changes |
-| **Clipboard** | Auto-capture (0.5s polling), smart categorization (command/path/hash/URL/image/text), click-to-paste, double-click-to-execute, drag-and-drop, image capture, auto-cleanup |
-| **Operations** | Hunk staging, line staging, interactive rebase (visual drag-reorder), cherry-pick, revert, reset (soft/hard), stash (create/apply/pop/drop), custom git commands, discard changes, add to .gitignore |
-| **Conflicts** | Built-in resolver, ours/theirs/both/custom edit, file list with status icons, auto-continue merge/rebase/cherry-pick |
-| **Branches** | Checkout, create, merge, rebase, push, pull, rename, delete, remote tracking |
-| **Tags** | Create and delete lightweight tags |
-| **AI** | Commit messages, diff explanations, PR descriptions, stash messages, provider config (Anthropic/OpenAI), Keychain API key storage, heuristic fallback, optional AI-ready hints for transfer support |
-| **GitHub** | PR list, create PR, AI-generated PR body |
-| **Worktrees** | Smart create (prefix+name), inline sidebar form, graph quick-switch pills with dirty status, single remove flow with pending-changes guidance, copy/move pending changes across worktrees, remove/prune, dedicated terminal |
-| **Remotes** | Fetch all, pull, push (normal/force-with-lease/force), add/remove, connection test |
+| **Graph** | Lane-colored commit cards, commit search, jump bar, branch focus, pending changes with quick actions, worktree pills with dirty status, signature verification, keyboard navigation, paginated loading (up to 5000 commits), main branch pinned to lane 0 |
+| **Editor** | Syntax highlighting, Quick Open, Git Blame, 7 themes, 5+ font families, code formatter (16+ languages), format on save, bracket pair highlight, indent guides, column ruler, find/replace, find in files, go to definition, find references, markdown preview, file history, multi-tab |
+| **Terminal** | Real PTY (`/bin/zsh -l`), split panes (H/V), multiple tabs, independent zoom, font config, clipboard paste/drag, Finder drag-and-drop, inline images, hyperlink detection, scrollback buffer config, process preservation |
+| **Clipboard** | Auto-capture, smart categorization (command/path/hash/URL/image/text), click-to-paste, double-click-to-execute, drag-and-drop, context-aware actions (hash → Show in Graph, branch → Checkout, path → Open) |
+| **Operations** | Hunk staging, line staging, interactive rebase (visual drag-reorder), cherry-pick, revert, reset (soft/hard), stash management, annotated/signed tags, custom git commands, discard changes, force push with lease |
+| **Conflicts** | Built-in resolver, ours/theirs/both/custom edit, AI-powered semantic resolution, auto-continue merge/rebase/cherry-pick |
+| **Branches** | Checkout, create, merge, rebase, push, pull, rename, delete, force push (with lease / override), remote tracking |
+| **Tags** | Create lightweight, annotated, and GPG-signed tags; push to remote; delete local and remote tags |
+| **AI** | Commit messages, diff explanations, PR descriptions, code review, conflict resolution, changelog generator, semantic search, branch summarizer, blame explainer, commit split advisor, stash messages, pre-commit review gate. Providers: Anthropic / OpenAI / Google |
+| **Git Hosting** | GitHub (via `gh` CLI), GitLab (PAT, self-hosted), Bitbucket (app passwords). Auto-detection from remote URLs. PR list, create, inline comments, review submission |
+| **Mobile** | QR pairing, AES-256-GCM encryption, xterm.js terminal with ANSI colors, prompt actions (approve/deny/abort), quick actions (Ctrl+C/D, Esc, Tab, arrows), multi-project sessions, Cloudflare tunnel or LAN mode, keep-awake |
+| **Recovery** | Auto-snapshot before destructive ops (reset, rebase, discard), named stash refs (`zion-pre-*`), restore from Operations Center |
+| **Worktrees** | Smart create (prefix+name), graph quick-switch pills, copy/move pending changes, dedicated terminal, remove/prune |
+| **Remotes** | Fetch all, pull, push (normal/force-with-lease/force), divergence warning, ahead/behind badges, add/remove, connection test |
 | **Submodules** | Status, init, update (recursive), sync |
 | **Reflog** | Visual viewer (last 50), undo last action (soft reset) |
-| **Settings** | Language (PT-BR/EN/ES/System), external editor (VS Code/Cursor/Xcode/IntelliJ/Sublime/custom), external terminal (Terminal.app/iTerm/Warp/custom), confirmation mode, background fetch (60s), root-only recents (10), AI transfer-support hint toggle |
+| **Settings** | 6 tabs (General, Editor, Terminal, AI, Notifications, Mobile), language (PT-BR/EN/ES), external editor/terminal, background fetch, ntfy push notifications |
 | **Diagnostics** | Ring-buffer logger, export/copy sanitized logs |
 
 </details>
@@ -260,7 +265,7 @@ Zion is keyboard-first. Press `Cmd+?` to see all shortcuts inside the app.
 
 ## Themes
 
-Zion ships with 6 curated editor + terminal palettes:
+Zion ships with 7 curated editor + terminal palettes:
 
 | Theme | Style |
 |-------|-------|
@@ -270,6 +275,7 @@ Zion ships with 6 curated editor + terminal palettes:
 | **One Dark Pro** | The most popular VS Code theme |
 | **City Lights** | Cool dark with muted tones |
 | **GitHub Light** | Clean light theme for daytime |
+| **SynthWave '84** | Neon cyberpunk (activated via Zion Mode) |
 
 ---
 
@@ -290,13 +296,16 @@ Switch anytime in Settings, or let Zion follow your system locale.
 Zion is a Swift Package (no `.xcodeproj`) built entirely with SwiftUI and Swift Concurrency.
 
 ```
-ZionApp / ContentView          App shell, navigation, toolbar
-  -> RepositoryViewModel       Central state (@Observable, @MainActor)
-    -> RepositoryWorker        Background Git operations (async/await)
-      -> GitClient             Git CLI process execution
-    -> GitGraphLaneCalculator  Lane & edge layout algorithm
-    -> TerminalSession         PTY management (SwiftTerm + LocalProcess)
-    -> AIClient                Anthropic / OpenAI API (actor-isolated)
+ZionApp / ContentView            App shell, navigation, toolbar
+  -> RepositoryViewModel         Central state (@Observable, @MainActor)
+    -> RepositoryWorker          Background Git operations (async/await)
+      -> GitClient               Git CLI process execution
+    -> GitGraphLaneCalculator    Lane & edge layout algorithm
+    -> TerminalSession           PTY management (SwiftTerm + LocalProcess)
+    -> AIClient                  Anthropic / OpenAI / Gemini (actor-isolated)
+    -> HostingProvider           GitHub / GitLab / Bitbucket abstraction
+    -> RemoteAccessServer        Mobile terminal streaming (HTTP polling)
+    -> CloudflareTunnelManager   Secure remote access tunneling
 ```
 
 Design pattern: **MVVM** with Swift Observation (`@Observable`).
@@ -322,6 +331,8 @@ Before submitting a PR:
 ## Acknowledgments
 
 - [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm) by Miguel de Icaza — Terminal emulator
+- [xterm.js](https://xtermjs.org/) — Mobile terminal rendering
+- [Sparkle](https://sparkle-project.org/) — Auto-update framework
 - [Git](https://git-scm.com/) — The engine under the hood
 
 ---
