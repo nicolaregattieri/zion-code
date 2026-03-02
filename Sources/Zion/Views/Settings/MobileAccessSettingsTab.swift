@@ -43,7 +43,7 @@ struct MobileAccessSettingsTab: View {
                     Toggle(isOn: $isLANMode) {
                         VStack(alignment: .leading, spacing: 2) {
                             Label(L10n("mobile.access.lanMode"), systemImage: "wifi")
-                                .font(.subheadline)
+                                .font(DesignSystem.Typography.subtitle)
                             Text(L10n("mobile.access.lanMode.hint"))
                                 .font(DesignSystem.Typography.label)
                                 .foregroundStyle(.secondary)
@@ -57,7 +57,7 @@ struct MobileAccessSettingsTab: View {
                     } label: {
                         VStack(alignment: .leading, spacing: 2) {
                             Label(L10n("mobile.access.keepAwake"), systemImage: "moon.zzz")
-                                .font(.subheadline)
+                                .font(DesignSystem.Typography.subtitle)
                             Text(L10n("mobile.access.keepAwake.hint"))
                                 .font(DesignSystem.Typography.label)
                                 .foregroundStyle(.secondary)
@@ -88,7 +88,7 @@ struct MobileAccessSettingsTab: View {
 
                     HStack {
                         Text("brew install cloudflared")
-                            .font(.system(.caption, design: .monospaced))
+                            .font(DesignSystem.Typography.monoLabel)
                             .padding(DesignSystem.Spacing.compact)
                             .background(.quaternary)
                             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius))
@@ -141,7 +141,7 @@ struct MobileAccessSettingsTab: View {
                     if !state.tunnelURL.isEmpty {
                         HStack {
                             Text(state.tunnelURL)
-                                .font(.system(.caption, design: .monospaced))
+                                .font(DesignSystem.Typography.monoLabel)
                                 .foregroundStyle(.tertiary)
                                 .lineLimit(1)
                                 .truncationMode(.middle)

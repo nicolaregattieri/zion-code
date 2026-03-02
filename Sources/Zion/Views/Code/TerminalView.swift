@@ -242,6 +242,7 @@ struct TerminalTabView: NSViewRepresentable {
                 // SwiftUI may create the new view BEFORE dismantling the old one (e.g. split),
                 // so the cache must be populated before dismantleNSView fires.
                 parent.session._cachedView = view
+                parent.session._cachedTerminal = view.getTerminal()
                 parent.session._processBridge = self
                 parent.session._shellPid = process.shellPid
 

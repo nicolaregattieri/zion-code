@@ -581,13 +581,13 @@ final class RepositoryViewModel {
         maxLaneCount = maxLane + 1
     }
 
-    func openRepository(_ url: URL) {
+    func openRepository(_ url: URL, silent: Bool = false) {
         let previousURL = repositoryURL
 
         // Same repo already open — just refresh metadata, don't touch terminals
         if previousURL == url {
             logger.log(.info, "openRepository SKIP (same repo)", context: "\(url.lastPathComponent) tabs=\(terminalTabs.count) sessions=\(terminalTabs.flatMap { $0.allSessions() }.count)", source: #function)
-            saveRecentRepository(url)
+            if !silent { saveRecentRepository(url) }
             refreshRepository()
             refreshFileTree()
             loadPullRequests()
@@ -605,7 +605,7 @@ final class RepositoryViewModel {
 
         repositoryURL = url
         repoEditorConfig = EditorConfig.load(from: url)
-        saveRecentRepository(url)
+        if !silent { saveRecentRepository(url) }
         commitLimit = defaultCommitLimit(for: nil)
         worktreeNameInput = ""
         worktreePathInput = ""

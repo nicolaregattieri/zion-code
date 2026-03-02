@@ -45,8 +45,6 @@ extension RepositoryViewModel {
                                 if count > 0 {
                                     self.mobileAccessConnectionState = .connected(deviceCount: count)
                                     self.ensureRecentProjectsHaveTerminals()
-                                    self.sendSessionList()
-                                    self.sendAllScreenUpdates()
                                 } else {
                                     self.mobileAccessConnectionState = .waitingForPairing
                                 }
@@ -233,6 +231,8 @@ extension RepositoryViewModel {
 
     /// Ensures each recent project has at least one terminal session so they all
     /// appear in the mobile project nav on first connect.
+    /// Opens missing repos silently, then boots headless terminals for any session
+    /// whose SwiftUI view hasn't rendered yet (so `terminalForSession` can find them).
     private func ensureRecentProjectsHaveTerminals() {
         guard !hasEnsuredRemoteTerminals else { return }
         hasEnsuredRemoteTerminals = true
@@ -247,24 +247,55 @@ extension RepositoryViewModel {
                 && FileManager.default.fileExists(atPath: url.path)
         }
 
-        guard !missing.isEmpty else { return }
-
-        // Snapshot recents order — openRepository moves repos to front
-        let savedOrder = recentRepositories
-
-        for url in missing {
-            openRepository(url)
+        if !missing.isEmpty {
+            for url in missing {
+                openRepository(url, silent: true)
+            }
+            // Switch back to the original repo immediately
+            if let originalURL {
+                openRepository(originalURL, silent: true)
+            }
         }
 
-        // Switch back to the original repo
-        if let originalURL {
-            openRepository(originalURL)
-        }
+        // Boot headless terminals for background sessions whose views haven't rendered
+        bootHeadlessTerminals()
 
-        // Restore original order
-        recentRepositories = savedOrder
-        if let encoded = try? JSONEncoder().encode(savedOrder) {
-            recentReposData = encoded
+        sendSessionList()
+        sendAllScreenUpdates()
+    }
+
+    /// Creates HeadlessTerminal instances for background repo sessions that don't
+    /// have a cached Terminal yet (because SwiftUI hasn't rendered their view).
+    private func bootHeadlessTerminals() {
+        for (url, state) in backgroundRepoStates {
+            for tab in state.terminalTabs {
+                for session in tab.allSessions() {
+                    // Skip if terminal is already available (view was rendered)
+                    if session._cachedView != nil || session._cachedTerminal != nil { continue }
+
+                    let headless = HeadlessTerminal { [weak session] _ in
+                        Task { @MainActor in
+                            session?.isAlive = false
+                        }
+                    }
+                    headless.process.startProcess(
+                        executable: "/bin/zsh",
+                        args: ["-c", "export ZION_TTY=$(tty); exec /bin/zsh -l"],
+                        environment: nil,
+                        currentDirectory: url.path
+                    )
+                    session._cachedTerminal = headless.terminal
+                    // Keep headless alive by storing on the session bridge
+                    session._processBridge = headless
+                    session._shellPid = headless.process.shellPid
+
+                    // Bridge output to mobile screen updates
+                    let sessionID = session.id
+                    registerTerminalSendCallback(sessionID: sessionID) { [weak headless] data in
+                        headless?.send(data: Array(data)[...])
+                    }
+                }
+            }
         }
     }
 
@@ -294,6 +325,7 @@ extension RepositoryViewModel {
         for tab in terminalTabs {
             for session in tab.allSessions() where session.id == sessionID {
                 return (session._cachedView as? SwiftTerm.TerminalView)?.getTerminal()
+                    ?? session._cachedTerminal as? SwiftTerm.Terminal
             }
         }
         // Check background repo sessions
@@ -301,6 +333,7 @@ extension RepositoryViewModel {
             for tab in state.terminalTabs {
                 for session in tab.allSessions() where session.id == sessionID {
                     return (session._cachedView as? SwiftTerm.TerminalView)?.getTerminal()
+                        ?? session._cachedTerminal as? SwiftTerm.Terminal
                 }
             }
         }
@@ -446,6 +479,10 @@ extension RepositoryViewModel {
     private func handleRemoteInput(sessionID: UUID, text: String) {
         guard let callback = terminalSendCallbacks[sessionID] else { return }
 
+        // Cap input length to prevent PTY buffer abuse (4 KB covers any reasonable command)
+        let maxInputLength = 4096
+        let safeText = text.count > maxInputLength ? String(text.prefix(maxInputLength)) : text
+
         // Reset throttle so the terminal echo fires immediately on the next output,
         // and clear last-sent rows so the diff can't be skipped as "unchanged"
         screenUpdateThrottleDeadlines[sessionID] = nil
@@ -456,10 +493,10 @@ extension RepositoryViewModel {
         // Split text from trailing CR/LF so TUI apps don't treat it as pasted text
         // Send the text content first, then the Enter keystroke after a short delay
         // so the TUI processes the text before receiving the submit key
-        let trimmed = text.replacingOccurrences(of: "\r", with: "")
-                         .replacingOccurrences(of: "\n", with: "")
+        let trimmed = safeText.replacingOccurrences(of: "\r", with: "")
+                              .replacingOccurrences(of: "\n", with: "")
 
-        let needsEnter = text.hasSuffix("\r") || text.hasSuffix("\n")
+        let needsEnter = safeText.hasSuffix("\r") || safeText.hasSuffix("\n")
 
         if !trimmed.isEmpty, let textData = trimmed.data(using: .utf8) {
             callback(textData)
@@ -479,6 +516,16 @@ extension RepositoryViewModel {
     }
 
     func handleRemoteAction(sessionID: UUID, action: RemoteAction) {
+        // refreshScreen doesn't need a send callback — handle it before the guard
+        if action == .refreshScreen {
+            screenUpdateThrottleDeadlines[sessionID] = nil
+            screenUpdateDebounceTasks[sessionID]?.cancel()
+            screenUpdateDebounceTasks[sessionID] = nil
+            terminalLastSentRows[sessionID] = nil
+            Task { await sendScreenUpdate(for: sessionID) }
+            return
+        }
+
         guard let callback = terminalSendCallbacks[sessionID] else { return }
 
         // Reset throttle so the terminal response fires immediately,
@@ -509,9 +556,7 @@ extension RepositoryViewModel {
         case .arrowDown:
             inputData = Data([0x1B, 0x5B, 0x42]) // ESC[B
         case .refreshScreen:
-            terminalLastSentRows[sessionID] = nil
-            Task { await sendScreenUpdate(for: sessionID) }
-            return
+            return // handled above
         }
 
         if let data = inputData {
@@ -855,16 +900,19 @@ extension RepositoryViewModel {
         sleepAssertionID = 0
     }
 
-    private func stripANSI(_ text: String) -> String {
+    // Cached ANSI regex — compiled once, reused on every terminal output
+    private static let ansiStripRegex: NSRegularExpression? = {
         // Comprehensive ANSI/VT escape stripping:
         // 1. CSI sequences: ESC [ (with optional ? / >) params letter  (colors, cursor, DEC modes)
         // 2. OSC sequences: ESC ] ... BEL or ESC ] ... ST            (window title, hyperlinks)
         // 3. Character set: ESC ( digit/letter                        (G0/G1 charset)
         // 4. Simple escapes: ESC followed by single char              (save/restore cursor, etc.)
         let pattern = #"\x1B(?:\[[0-9;?]*[ -/]*[A-Z@a-z]|\][^\x07\x1B]*(?:\x07|\x1B\\)?|\([0-9A-B]|[^\[\](])"#
-        guard let regex = try? NSRegularExpression(pattern: pattern) else {
-            return text
-        }
+        return try? NSRegularExpression(pattern: pattern)
+    }()
+
+    private func stripANSI(_ text: String) -> String {
+        guard let regex = Self.ansiStripRegex else { return text }
         return regex.stringByReplacingMatches(
             in: text,
             range: NSRange(text.startIndex..., in: text),
