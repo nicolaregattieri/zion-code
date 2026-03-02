@@ -300,11 +300,18 @@ function startPolling() {
   poll();
 }
 
+const TUNNEL_DEAD_CODES = new Set([502, 503, 530, 539]);
+
 async function poll() {
   if (!polling) return;
   try {
     const res = await fetch(BASE + '/poll?t=' + TOKEN);
     if (!res.ok) {
+      if (TUNNEL_DEAD_CODES.has(res.status)) {
+        polling = false;
+        showTunnelExpired();
+        return;
+      }
       pollErrors++;
       if (pollErrors >= maxPollErrors) {
         polling = false;
@@ -355,8 +362,12 @@ function silentReconnect() {
   pollErrors = 0;
   polling = false;
   fetch(BASE + '/pair?t=' + TOKEN)
-    .then(r => r.json())
+    .then(r => {
+      if (TUNNEL_DEAD_CODES.has(r.status)) { showTunnelExpired(); throw null; }
+      return r.json();
+    })
     .then(data => {
+      if (!data) return;
       if (data.status === 'paired') {
         wasDisconnected = false;
         setStatus('connected', 'Connected');
@@ -365,7 +376,7 @@ function silentReconnect() {
         showFullDisconnect();
       }
     })
-    .catch(() => showFullDisconnect());
+    .catch(e => { if (e !== null) showFullDisconnect(); });
 }
 
 function showFullDisconnect() {
@@ -378,6 +389,22 @@ function showFullDisconnect() {
   $('#pair-title').textContent = 'Connection Lost';
   $('#pair-desc').textContent = 'The connection to your Mac was lost. Tap Reconnect to try again.';
   $('#btn-retry').textContent = 'Reconnect';
+  $('#btn-retry').style.display = '';
+  updateHeaderContext();
+}
+
+function showTunnelExpired() {
+  wasDisconnected = false;
+  polling = false;
+  setStatus('error', 'Tunnel Expired');
+  $('#xterm-container').style.display = 'none';
+  $('#input-bar').style.display = 'none';
+  $('#quick-actions').classList.remove('visible');
+  $('#pairing').style.display = '';
+  $('#pair-spinner').classList.add('hidden');
+  $('#pair-title').textContent = 'Tunnel Expired';
+  $('#pair-desc').textContent = 'The Cloudflare tunnel is no longer active. Open Zion Settings on your Mac and re-scan the QR code to reconnect.';
+  $('#btn-retry').textContent = 'Retry';
   $('#btn-retry').style.display = '';
   updateHeaderContext();
 }
