@@ -71,16 +71,16 @@ Zion doesn't make you choose.
 Zion is the only Git workspace that brings the modern macOS **Glassmorphism** (UltraThinMaterial) aesthetic to your developer workflow. Whether you prefer deep indigo, classic dark, or a clean light theme, Zion looks stunning on every Mac.
 
 <p align="center">
-  <img src="docs/screenshots/hero-code.png" width="100%" alt="Zion Code — Editor + Terminal" />
+  <img src="docs/screenshots/hero-code.png" width="100%" alt="Zion Mode — Editor + Terminal in SynthWave '84" />
 </p>
 <p align="center">
-  <img src="docs/screenshots/gallery-4.png" width="100%" alt="Operations Dashboard" />
+  <img src="docs/screenshots/dual-terminal.png" width="100%" alt="Dual terminal split with code editor" />
 </p>
 <p align="center">
-  <img src="docs/screenshots/quick-open.png" width="100%" alt="Quick Open fuzzy search" />
+  <img src="docs/screenshots/settings.png" width="100%" alt="Zion Mode — Settings panel with glassmorphism" />
 </p>
 <p align="center">
-  <img src="docs/screenshots/conflict-resolver.png" width="100%" alt="Built-in conflict resolver" />
+  <img src="docs/screenshots/ai-terminal.png" width="100%" alt="Zen Mode — Claude Code + Gemini + Codex split terminals" />
 </p>
 
 
@@ -94,8 +94,8 @@ Zion is the only Git workspace that brings the modern macOS **Glassmorphism** (U
 
 A real code editor with syntax highlighting, Git Blame, Quick Open (`Cmd+P`), code formatter (16+ languages), file watcher, 7 themes (Dracula, Tokyo Night, Catppuccin Mocha, One Dark Pro, City Lights, GitHub Light, SynthWave '84), and configurable fonts. Side-by-side with a real PTY terminal that supports split panes, multiple tabs, independent zoom, Finder drag-and-drop, and inline image display.
 
-<p>
-  <img src="https://github.com/user-attachments/assets/da4dea75-7126-4f17-8b03-fc86da6b95cc" width="100%" alt="Dracula" />
+<p align="center">
+  <img src="docs/screenshots/hero-code.png" width="100%" alt="Zion Mode — Editor + Terminal" />
 </p>
 
 ### Zion Tree — Visual Commit Graph
@@ -113,7 +113,7 @@ Lane-colored commit cards with colored left stripes matching branch lanes, merge
 Zion watches your clipboard and auto-categorizes everything: commands, file paths, git hashes, URLs, even images. **Single-click** to paste into your active terminal. **Double-click** to paste and execute. **Drag** items directly into any terminal pane. It keeps your last 20 items and auto-cleans temp files.
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/0c9a254c-7347-459f-a92f-038ae4129145" width="100%" alt="Clipboard drawer with auto-categorized items" />
+  <img src="docs/screenshots/clipboard.png" width="100%" alt="Smart Clipboard with auto-categorized items" />
 </p>
 
 ### Operations Center
@@ -122,7 +122,7 @@ Zion watches your clipboard and auto-categorizes everything: commands, file path
 A dashboard for everything Git. Commit with hunk and line-level staging, interactive rebase (pick/squash/fixup/drop/reorder with drag), branch management (create/merge/rebase/rename/delete), stash management, cherry-pick, revert, reset, annotated/signed tag management, worktrees, submodules, remotes, reflog, and repo stats — all in one place.
 
 <p align="center">
-  <img src="docs/screenshots/gallery-4.png" width="100%" alt="Operations Dashboard" />
+  <img src="docs/screenshots/hero-operations.png" width="100%" alt="Operations Center — full Git dashboard" />
 </p>
 
 ### Mobile Remote Access
@@ -130,10 +130,24 @@ A dashboard for everything Git. Commit with hunk and line-level staging, interac
 
 Scan a QR code to pair your phone with Zion. See live terminal output with full ANSI colors powered by xterm.js. Approve, deny, or abort AI prompts. Switch between terminal sessions across all open projects. Works over Cloudflare Tunnel (remote) or LAN (local Wi-Fi). All communication encrypted with AES-256-GCM.
 
+<p align="center">
+  <img src="docs/screenshots/mobile-remote.png" width="32%" alt="Mobile Remote Access — QR pairing and session list" />
+  &nbsp;&nbsp;&nbsp;
+  <img src="docs/screenshots/mobile-terminal.png" width="32%" alt="Mobile Terminal — live xterm.js with ANSI colors" />
+</p>
+
 ### Recovery Vault
 > Never lose work again.
 
 Zion auto-snapshots your working tree before every destructive operation — reset --hard, interactive rebase, discard all changes. If something goes wrong, restore from the Recovery Vault in Operations Center. Snapshots are named `zion-pre-{operation}` and visible in the stash list.
+
+### Worktree-First Workflow
+
+Create worktrees with a smart prefix+name flow, open directly into Zion Code, and keep a dedicated terminal context per worktree. In Zion Tree, switch context through worktree pills, create branches directly from Pending Changes, and copy/move pending work safely across worktrees.
+
+<p align="center">
+  <img src="docs/screenshots/worktree-vault.png" width="100%" alt="Operations Center — Worktrees, Recovery Vault, Branches, and more" />
+</p>
 
 ### Conflict Resolution
 > Built-in. No external merge tools needed.
@@ -145,18 +159,15 @@ When a merge, rebase, or cherry-pick hits conflicts, Zion opens a dedicated reso
 
 Works with Anthropic Claude, OpenAI GPT, or Google Gemini. Generate commit messages, explain diffs, draft PR descriptions, review code before committing, resolve conflicts with AI, search git history in natural language, summarize branches, explain blame entries, and suggest how to split large commits. API keys stored securely in macOS Keychain. Falls back to smart heuristics when AI is not configured.
 
+<p align="center">
+  <img src="docs/screenshots/ai-commit.png" width="49%" alt="AI-generated commit message in Zion Tree" />
+  <img src="docs/screenshots/ai-review.png" width="49%" alt="AI Code Review side pane in Zion Tree" />
+</p>
+
 ### Git Hosting Integration
 > GitHub + GitLab + Bitbucket
 
 Automatic provider detection from remote URLs. List open PRs, create PRs with AI-generated descriptions, post inline review comments, and submit reviews (approve/request changes). GitLab supports self-hosted instances. Bitbucket uses app passwords.
-
-### Worktree-First Workflow
-
-Create worktrees with a smart prefix+name flow, open directly into Zion Code, and keep a dedicated terminal context per worktree. In Zion Tree, switch context through worktree pills, create branches directly from Pending Changes, and copy/move pending work safely across worktrees.
-
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/8e07e3bd-55ab-41ab-ac51-aecf82ede782" width="100%" alt="Worktree management" />
-</p>
 
 ---
 
@@ -264,6 +275,12 @@ Zion is keyboard-first. Press `Cmd+/` to see all shortcuts inside the app.
 ---
 
 ## Themes
+
+<p align="center">
+  <img src="docs/screenshots/one-dark-pro.png" width="32%" alt="One Dark Pro theme" />
+  <img src="docs/screenshots/hero-code.png" width="32%" alt="Zion Mode — SynthWave '84" />
+  <img src="docs/screenshots/light-theme.png" width="32%" alt="GitHub Light theme" />
+</p>
 
 Zion ships with 7 curated editor + terminal palettes:
 
