@@ -10,6 +10,7 @@ actor RemoteAccessServer {
     private static let tokenTTL = Duration.seconds(Constants.RemoteAccess.pairingTokenTTLSeconds)
     private var connectionCount: Int = 0
     private var isLANMode: Bool = false
+    private var persistedToken: String?
 
     // Pending events queue per token (consumed on poll)
     private var pendingEvents: [String: [RemoteMessage]] = [:]
@@ -81,6 +82,12 @@ actor RemoteAccessServer {
         Task { await onConnectionCountChanged?(count) }
     }
 
+    func setPersistedToken(_ token: String) {
+        persistedToken = token
+        authenticatedTokens.insert(token)
+        pendingEvents[token] = []
+    }
+
     private func isValidPairingToken(_ token: String) -> Bool {
         guard let created = validPairingTokens[token] else { return false }
         if ContinuousClock.now - created > Self.tokenTTL {
@@ -131,7 +138,10 @@ actor RemoteAccessServer {
 
         for token in disconnected {
             authenticatedTokens.remove(token)
-            pendingEvents.removeValue(forKey: token)
+            // Keep pendingEvents for persisted token so re-pair is seamless
+            if token != persistedToken {
+                pendingEvents.removeValue(forKey: token)
+            }
             lastPollTime.removeValue(forKey: token)
             requestTimestamps.removeValue(forKey: token)
         }
@@ -353,8 +363,8 @@ actor RemoteAccessServer {
             return
         }
 
-        // Already authenticated — allow re-pair (e.g., browser refresh)
-        guard authenticatedTokens.contains(token) || isValidPairingToken(token) else {
+        // Already authenticated, valid pairing token, or persisted token — allow re-pair
+        guard authenticatedTokens.contains(token) || isValidPairingToken(token) || token == persistedToken else {
             sendJSON(connection: connection, status: "403 Forbidden", json: #"{"error":"invalid_token"}"#)
             return
         }
