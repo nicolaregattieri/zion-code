@@ -194,7 +194,7 @@ struct ClipboardDrawer: View {
             if hasText {
                 let isFile = item.isImage || item.category == .path
                 if isFile {
-                    model.sendTextToActiveTerminal("open \(TerminalShellEscaping.quotePath(item.text))\n")
+                    NSWorkspace.shared.open(URL(fileURLWithPath: item.text))
                 } else {
                     model.sendTextToActiveTerminal(item.text + "\n")
                 }
