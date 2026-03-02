@@ -297,81 +297,53 @@ final class RemoteAccessModeSwitchTests: XCTestCase {
         }
     }
 
-    // MARK: - Screen Reset Buffer Flush Tests
+    // MARK: - Screen Snapshot Tests
 
-    func testBufferFlushesOnAlternateScreenEntry() async throws {
+    func testNotifyTerminalOutputMarksSessionDirty() async throws {
         let sessionID = UUID()
         let plainVM = RepositoryViewModel()
         plainVM.isMobileAccessEnabled = true
 
-        // Write some initial data
-        let initial = Data("hello world".utf8)
-        plainVM.notifyTerminalOutput(sessionID: sessionID, data: initial)
-        XCTAssertEqual(plainVM.terminalOutputBuffers[sessionID]?.count, initial.count)
+        XCTAssertNil(plainVM.terminalOutputBuffers[sessionID])
 
-        // Send alternate screen entry: ESC[?1049h
-        let altScreen = Data([0x1B, 0x5B, 0x3F, 0x31, 0x30, 0x34, 0x39, 0x68])
-        let tuiData = "TUI content".data(using: .utf8)!
-        var combined = altScreen
-        combined.append(tuiData)
-        plainVM.notifyTerminalOutput(sessionID: sessionID, data: combined)
+        plainVM.notifyTerminalOutput(sessionID: sessionID, data: Data("hello".utf8))
 
-        // Buffer should only contain the reset chunk, not the pre-reset data
-        let buffer = plainVM.terminalOutputBuffers[sessionID]!
-        XCTAssertEqual(buffer.count, combined.count,
-                       "Buffer should be flushed to only the reset chunk")
-        XCTAssertFalse(buffer.starts(with: initial),
-                       "Pre-reset data should be discarded")
+        XCTAssertNotNil(plainVM.terminalOutputBuffers[sessionID],
+                        "Session should be tracked after terminal output")
     }
 
-    func testBufferFlushesOnEraseDisplay() async throws {
+    func testNotifyIgnoredWhenDisabled() async throws {
         let sessionID = UUID()
         let plainVM = RepositoryViewModel()
-        plainVM.isMobileAccessEnabled = true
+        plainVM.isMobileAccessEnabled = false
 
-        // Write initial data
-        plainVM.notifyTerminalOutput(sessionID: sessionID, data: Data("old stuff".utf8))
+        plainVM.notifyTerminalOutput(sessionID: sessionID, data: Data("hello".utf8))
 
-        // Send ESC[2J (erase display)
-        let eraseDisplay = Data([0x1B, 0x5B, 0x32, 0x4A])
-        plainVM.notifyTerminalOutput(sessionID: sessionID, data: eraseDisplay)
-
-        let buffer = plainVM.terminalOutputBuffers[sessionID]!
-        XCTAssertEqual(buffer.count, eraseDisplay.count)
+        XCTAssertNil(plainVM.terminalOutputBuffers[sessionID],
+                     "Should not track sessions when mobile access is disabled")
     }
 
-    func testSentCursorResetsOnScreenReset() async throws {
+    func testNotifyIgnoresEmptyData() async throws {
         let sessionID = UUID()
         let plainVM = RepositoryViewModel()
         plainVM.isMobileAccessEnabled = true
 
-        // Write data and advance the sent cursor
-        plainVM.notifyTerminalOutput(sessionID: sessionID, data: Data("initial".utf8))
-        plainVM.terminalOutputSentCursors[sessionID] = 7
+        plainVM.notifyTerminalOutput(sessionID: sessionID, data: Data())
 
-        // Send alternate screen entry
-        let altScreen = Data([0x1B, 0x5B, 0x3F, 0x31, 0x30, 0x34, 0x39, 0x68])
-        plainVM.notifyTerminalOutput(sessionID: sessionID, data: altScreen)
-
-        // Sent cursor should be reset to 0 (triggers fullSync on next buildScreenUpdate)
-        // Then data is appended, so cursor stays at 0 while buffer has altScreen.count bytes
-        let cursor = plainVM.terminalOutputSentCursors[sessionID]!
-        XCTAssertEqual(cursor, 0, "Sent cursor should reset to 0 on screen reset")
+        XCTAssertNil(plainVM.terminalOutputBuffers[sessionID],
+                     "Should not track sessions for empty data")
     }
 
-    func testNormalDataDoesNotFlushBuffer() async throws {
+    func testBuildScreenUpdateReturnsFullSync() async throws {
         let sessionID = UUID()
         let plainVM = RepositoryViewModel()
         plainVM.isMobileAccessEnabled = true
 
-        let first = Data("hello".utf8)
-        let second = Data(" world".utf8)
-        plainVM.notifyTerminalOutput(sessionID: sessionID, data: first)
-        plainVM.notifyTerminalOutput(sessionID: sessionID, data: second)
+        // No terminal attached — should return empty fullSync payload
+        let payload = plainVM.buildScreenUpdate(for: sessionID)
 
-        let buffer = plainVM.terminalOutputBuffers[sessionID]!
-        XCTAssertEqual(buffer.count, first.count + second.count,
-                       "Normal data should accumulate without flushing")
+        XCTAssertTrue(payload.fullSync, "Screen snapshots should always be fullSync")
+        XCTAssertEqual(payload.sessionID, sessionID)
     }
 
     func testSwitchModeClearsStaleQRImmediately() async throws {

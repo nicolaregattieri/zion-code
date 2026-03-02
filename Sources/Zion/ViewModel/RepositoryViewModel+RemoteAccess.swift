@@ -2,6 +2,7 @@ import AppKit
 import Foundation
 import CryptoKit
 import IOKit.pwr_mgt
+@preconcurrency import SwiftTerm
 
 extension RepositoryViewModel {
 
@@ -130,7 +131,6 @@ extension RepositoryViewModel {
         mobileAccessTunnelURL = ""
         mobileAccessQRImage = nil
         terminalOutputBuffers.removeAll()
-        terminalOutputSentCursors.removeAll()
         hasEnsuredRemoteTerminals = false
         PromptDetector.resetDedup()
         syncRemoteAccessState()
@@ -253,51 +253,13 @@ extension RepositoryViewModel {
 
     // MARK: - Terminal Output Bridge
 
-    /// Detects ANSI sequences that reset the terminal screen.
-    /// TUI apps (Claude Code, Gemini, vim, etc.) use these when entering
-    /// alternate screen mode or clearing the display. Replaying pre-reset
-    /// data in xterm.js causes visual duplication, so we flush the buffer.
-    private func dataContainsScreenReset(_ data: Data) -> Bool {
-        // ESC[?1049h  – enter alternate screen (most common)
-        // ESC[?47h    – enter alternate screen (legacy)
-        // ESC[2J      – erase entire display
-        let altScreen1: [UInt8] = [0x1B, 0x5B, 0x3F, 0x31, 0x30, 0x34, 0x39, 0x68]
-        let altScreen2: [UInt8] = [0x1B, 0x5B, 0x3F, 0x34, 0x37, 0x68]
-        let eraseDisplay: [UInt8] = [0x1B, 0x5B, 0x32, 0x4A]
-
-        return data.containsSequence(altScreen1)
-            || data.containsSequence(altScreen2)
-            || data.containsSequence(eraseDisplay)
-    }
-
     func notifyTerminalOutput(sessionID: UUID, data: Data) {
         guard isMobileAccessEnabled, !data.isEmpty else { return }
 
-        var buffer = terminalOutputBuffers[sessionID] ?? Data()
+        // Mark this session as dirty (has new output since last send)
+        terminalOutputBuffers[sessionID] = Data([1])
 
-        // Detect full screen resets — TUI apps trigger these, and replaying
-        // pre-reset data causes visual duplication in xterm.js
-        if dataContainsScreenReset(data) {
-            buffer = Data()
-            terminalOutputSentCursors[sessionID] = 0
-        }
-
-        // Append raw bytes (ANSI codes preserved)
-        buffer.append(data)
-
-        // Evict oldest if over cap
-        let maxSize = Constants.RemoteAccess.maxRawOutputBufferSize
-        if buffer.count > maxSize {
-            let overflow = buffer.count - maxSize
-            buffer = Data(buffer.suffix(maxSize))
-            // Adjust cursor
-            if let cursor = terminalOutputSentCursors[sessionID] {
-                terminalOutputSentCursors[sessionID] = max(0, cursor - overflow)
-            }
-        }
-        terminalOutputBuffers[sessionID] = buffer
-
-        // Prompt detection still uses stripped text
+        // Prompt detection uses stripped text
         if let text = String(data: data, encoding: .utf8) {
             let stripped = stripANSI(text)
             if !stripped.isEmpty, let detection = PromptDetector.detect(in: stripped) {
@@ -307,6 +269,124 @@ extension RepositoryViewModel {
 
         // Throttle screen updates (fires immediately, then coalesces)
         throttleScreenUpdate(for: sessionID)
+    }
+
+    /// Find the SwiftTerm Terminal instance for a given session ID.
+    private func terminalForSession(_ sessionID: UUID) -> SwiftTerm.Terminal? {
+        // Check active repo sessions
+        for tab in terminalTabs {
+            for session in tab.allSessions() where session.id == sessionID {
+                return (session._cachedView as? SwiftTerm.TerminalView)?.getTerminal()
+            }
+        }
+        // Check background repo sessions
+        for (_, state) in backgroundRepoStates {
+            for tab in state.terminalTabs {
+                for session in tab.allSessions() where session.id == sessionID {
+                    return (session._cachedView as? SwiftTerm.TerminalView)?.getTerminal()
+                }
+            }
+        }
+        return nil
+    }
+
+    /// Read the visible terminal screen and serialize as ANSI-formatted text.
+    /// Each row is positioned with ESC[row;1H and includes SGR color/style codes.
+    /// This produces a complete screen snapshot that renders correctly at any
+    /// terminal width — no dependency on the native terminal's dimensions.
+    private func serializeTerminalScreen(terminal: SwiftTerm.Terminal) -> Data {
+        var output = ""
+        let rows = terminal.rows
+        let cols = terminal.cols
+        // Enter alternate screen + clear, so xterm.js starts clean
+        output += "\u{1B}[?1049h\u{1B}[2J"
+
+        for row in 0..<rows {
+            // Position cursor at this row
+            output += "\u{1B}[\(row + 1);1H"
+            guard let line = terminal.getLine(row: row) else { continue }
+
+            let trimLen = line.getTrimmedLength()
+            var prevAttr = Attribute.empty
+            var col = 0
+            while col < min(trimLen, cols) {
+                let cd = line[col]
+                let attr = cd.attribute
+
+                // Emit SGR if attribute changed
+                if attr != prevAttr {
+                    output += sgrSequence(for: attr)
+                    prevAttr = attr
+                }
+
+                let ch = terminal.getCharacter(for: cd)
+                if ch == "\0" || ch == "\u{FFFD}" {
+                    output += " "
+                } else {
+                    output.append(ch)
+                }
+
+                // Skip trailing cell of wide characters
+                let w = max(1, Int(cd.width))
+                col += w
+            }
+            // Reset attributes at end of line
+            output += "\u{1B}[0m"
+        }
+
+        // Move cursor to a sensible position (bottom)
+        output += "\u{1B}[\(rows);1H"
+
+        return Data(output.utf8)
+    }
+
+    /// Generate an SGR (Select Graphic Rendition) escape sequence for the given attribute.
+    private func sgrSequence(for attr: Attribute) -> String {
+        var params: [String] = ["0"] // Reset first
+
+        // Style flags
+        if attr.style.contains(.bold) { params.append("1") }
+        if attr.style.contains(.dim) { params.append("2") }
+        if attr.style.contains(.italic) { params.append("3") }
+        if attr.style.contains(.underline) { params.append("4") }
+        if attr.style.contains(.blink) { params.append("5") }
+        if attr.style.contains(.inverse) { params.append("7") }
+        if attr.style.contains(.invisible) { params.append("8") }
+        if attr.style.contains(.crossedOut) { params.append("9") }
+
+        // Foreground color
+        switch attr.fg {
+        case .ansi256(let code):
+            if code < 8 {
+                params.append("\(30 + Int(code))")
+            } else if code < 16 {
+                params.append("\(90 + Int(code) - 8)")
+            } else {
+                params.append("38;5;\(code)")
+            }
+        case .trueColor(let r, let g, let b):
+            params.append("38;2;\(r);\(g);\(b)")
+        case .defaultColor, .defaultInvertedColor:
+            break // Use default
+        }
+
+        // Background color
+        switch attr.bg {
+        case .ansi256(let code):
+            if code < 8 {
+                params.append("\(40 + Int(code))")
+            } else if code < 16 {
+                params.append("\(100 + Int(code) - 8)")
+            } else {
+                params.append("48;5;\(code)")
+            }
+        case .trueColor(let r, let g, let b):
+            params.append("48;2;\(r);\(g);\(b)")
+        case .defaultColor, .defaultInvertedColor:
+            break // Use default
+        }
+
+        return "\u{1B}[\(params.joined(separator: ";"))m"
     }
 
     // MARK: - Remote Message Handling
@@ -401,11 +481,9 @@ extension RepositoryViewModel {
     // MARK: - Sending Messages
 
     private func sendAllScreenUpdates() {
-        // Reset cursors so clients receive full buffer
-        for sessionID in terminalOutputBuffers.keys {
-            terminalOutputSentCursors[sessionID] = 0
-        }
-        for sessionID in terminalOutputBuffers.keys {
+        // Send a fresh screen snapshot for every active session
+        let sessionIDs = Array(terminalOutputBuffers.keys)
+        for sessionID in sessionIDs {
             Task { await sendScreenUpdate(for: sessionID) }
         }
     }
@@ -549,19 +627,18 @@ extension RepositoryViewModel {
     }
 
     func buildScreenUpdate(for sessionID: UUID) -> ScreenUpdatePayload {
-        let buffer = terminalOutputBuffers[sessionID] ?? Data()
-        let sentCursor = terminalOutputSentCursors[sessionID] ?? 0
-        let fullSync = (sentCursor == 0)
-
-        let startIndex = min(sentCursor, buffer.count)
-        let delta = buffer.subdata(in: startIndex..<buffer.count)
-
-        terminalOutputSentCursors[sessionID] = buffer.count
+        // Read the terminal's current visible screen with full ANSI formatting
+        let screenData: Data
+        if let terminal = terminalForSession(sessionID) {
+            screenData = serializeTerminalScreen(terminal: terminal)
+        } else {
+            screenData = Data()
+        }
 
         return ScreenUpdatePayload(
             sessionID: sessionID,
-            data: delta.base64EncodedString(),
-            fullSync: fullSync,
+            data: screenData.base64EncodedString(),
+            fullSync: true, // Always full screen snapshot
             hasPrompt: false,
             promptText: nil
         )
@@ -734,24 +811,3 @@ extension RemoteAccessServer {
     }
 }
 
-// MARK: - Data byte sequence search
-
-private extension Data {
-    /// Returns true if the receiver contains the given byte sequence.
-    func containsSequence(_ needle: [UInt8]) -> Bool {
-        guard needle.count <= count else { return false }
-        let end = count - needle.count
-        return withUnsafeBytes { buffer -> Bool in
-            guard let base = buffer.baseAddress?.assumingMemoryBound(to: UInt8.self) else { return false }
-            for i in 0...end {
-                var match = true
-                for j in 0..<needle.count where base[i + j] != needle[j] {
-                    match = false
-                    break
-                }
-                if match { return true }
-            }
-            return false
-        }
-    }
-}

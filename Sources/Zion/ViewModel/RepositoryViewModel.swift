@@ -327,7 +327,6 @@ final class RepositoryViewModel {
     @ObservationIgnored var remoteAccessServer: RemoteAccessServer?
     @ObservationIgnored var tunnelManager: CloudflareTunnelManager?
     @ObservationIgnored var terminalOutputBuffers: [UUID: Data] = [:]
-    @ObservationIgnored var terminalOutputSentCursors: [UUID: Int] = [:]
     @ObservationIgnored var screenUpdateDebounceTasks: [UUID: Task<Void, Never>] = [:]
     @ObservationIgnored var screenUpdateThrottleDeadlines: [UUID: ContinuousClock.Instant] = [:]
     @ObservationIgnored var heartbeatTask: Task<Void, Never>?
