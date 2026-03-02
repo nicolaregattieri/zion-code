@@ -131,8 +131,8 @@ const LAN_MODE = (qp.get('m') || P.m || fp.get('m')) === 'lan';
 const BASE = location.origin;
 
 let cryptoKey, activeSession = null, sessions = [];
-let polling = false, pollErrors = 0, maxPollErrors = 5, activeProject = null, _retryCount = 0;
-let drawerOpen = false;
+let polling = false, pollErrors = 0, maxPollErrors = 15, activeProject = null, _retryCount = 0;
+let drawerOpen = false, wasDisconnected = false;
 
 // -- xterm.js --
 let term = null, fitAddon = null;
@@ -240,6 +240,7 @@ function showRetry(title, desc) {
 function retryConnect() {
   pollErrors = 0;
   polling = false;
+  wasDisconnected = false;
   $('#pair-spinner').classList.remove('hidden');
   $('#btn-retry').style.display = 'none';
   $('#pair-title').textContent = 'Reconnecting...';
@@ -338,6 +339,36 @@ async function poll() {
 }
 
 function showDisconnected() {
+  wasDisconnected = true;
+  // If page is hidden (phone sleep / background tab), don't nuke the UI —
+  // visibilitychange will auto-reconnect when the user comes back.
+  if (document.hidden) {
+    setStatus('connecting', 'Reconnecting\u2026');
+    return;
+  }
+  // Page is visible and we still lost connection — try auto-reconnect once
+  setStatus('connecting', 'Reconnecting\u2026');
+  silentReconnect();
+}
+
+function silentReconnect() {
+  pollErrors = 0;
+  polling = false;
+  fetch(BASE + '/pair?t=' + TOKEN)
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'paired') {
+        wasDisconnected = false;
+        setStatus('connected', 'Connected');
+        startPolling();
+      } else {
+        showFullDisconnect();
+      }
+    })
+    .catch(() => showFullDisconnect());
+}
+
+function showFullDisconnect() {
   setStatus('error', 'Disconnected');
   $('#xterm-container').style.display = 'none';
   $('#input-bar').style.display = 'none';
@@ -506,6 +537,10 @@ function selectSession(id) {
     term.reset();
     const chunks = sessionBuffers[id] || [];
     for (const chunk of chunks) term.write(chunk);
+    if (chunks.length === 0) {
+      sendAction('refreshScreen');
+      scheduleEagerPoll();
+    }
   }
   hidePrompt();
 }
@@ -576,6 +611,12 @@ function scheduleEagerPoll() {
 
 $('#cmd-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') { e.preventDefault(); sendInput(); }
+});
+
+// Auto-reconnect when phone wakes up or tab becomes visible again
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden || !wasDisconnected) return;
+  silentReconnect();
 });
 
 connect();

@@ -53,6 +53,7 @@ enum RemoteAction: String, Codable, Sendable {
     case tab
     case arrowUp
     case arrowDown
+    case refreshScreen
 }
 
 struct SendActionPayload: Codable, Sendable {
