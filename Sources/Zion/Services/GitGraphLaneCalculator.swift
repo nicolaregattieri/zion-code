@@ -79,10 +79,9 @@ struct GitGraphLaneCalculator {
                 hashes: &activeLaneHashes,
                 colorKeys: &activeLaneColorKeys
             )
-            // Phase 1: Reserve lanes for all parents, collecting color keys.
-            // Edges are NOT built yet — later reservations may evict earlier ones
-            // (e.g., two mainChain parents both need lane 0).
-            var parentColorKeys: [(hash: String, colorKey: Int)] = []
+            // Phase 1: Reserve lanes for all parents, collecting intended lanes.
+            // Edges are NOT built yet — later reservations may evict earlier ones.
+            var parentInfo: [(hash: String, colorKey: Int, intendedLane: Int)] = []
 
             if let firstParent = commit.parents.first {
                 let firstRes = reserveLane(
@@ -95,7 +94,7 @@ struct GitGraphLaneCalculator {
                     colorKeyByHash: &colorKeyByHash,
                     nextColorKey: &nextColorKey
                 )
-                parentColorKeys.append((firstParent, firstRes.colorKey))
+                parentInfo.append((firstParent, firstRes.colorKey, firstRes.lane))
 
                 for parent in commit.parents.dropFirst() {
                     let mergeRes = reserveLane(
@@ -108,16 +107,16 @@ struct GitGraphLaneCalculator {
                         colorKeyByHash: &colorKeyByHash,
                         nextColorKey: &nextColorKey
                     )
-                    parentColorKeys.append((parent, mergeRes.colorKey))
+                    parentInfo.append((parent, mergeRes.colorKey, mergeRes.lane))
                 }
             }
 
-            // Phase 2: Build edges using each parent's *final* lane position,
-            // which accounts for any evictions that happened during Phase 1.
-            let edges: [LaneEdge] = parentColorKeys.compactMap { entry in
-                guard let finalLane = activeLaneHashes.firstIndex(where: { $0 == entry.hash }) else {
-                    return nil
-                }
+            // Phase 2: Build edges using each parent's *final* lane position.
+            // If a parent was virtually reserved (not physically placed), fall
+            // back to the intended lane from Phase 1.
+            let edges: [LaneEdge] = parentInfo.map { entry in
+                let finalLane = activeLaneHashes.firstIndex(where: { $0 == entry.hash })
+                    ?? entry.intendedLane
                 return LaneEdge(from: lane, to: finalLane, colorKey: entry.colorKey)
             }
 
@@ -176,9 +175,18 @@ struct GitGraphLaneCalculator {
 
         // Find the lane this hash currently occupies (if any) so we can relocate the occupant there
         let previousLane = hashes.firstIndex(where: { $0 == hash })
+        let occupant = hashes[0]
+        let occupantColorKey = colorKeys[0]
 
-        if let occupant = hashes[0] {
-            // Lane 0 is occupied by another hash — relocate it
+        // Clear the hash's previous position FIRST to avoid overwriting the occupant
+        // when targetLane == previousLane (swap case).
+        if let previousLane {
+            hashes[previousLane] = nil
+            colorKeys[previousLane] = nil
+        }
+
+        // Relocate the lane 0 occupant (if any) to make room
+        if let occupant {
             let targetLane: Int
             if let previousLane {
                 // Swap: put the occupant where the main-chain hash was
@@ -188,13 +196,7 @@ struct GitGraphLaneCalculator {
                 targetLane = firstAvailableLane(preferred: 1, hashes: &hashes, colorKeys: &colorKeys)
             }
             hashes[targetLane] = occupant
-            colorKeys[targetLane] = colorKeys[0]
-        }
-
-        // Clear the previous lane if the main-chain hash was already reserved elsewhere
-        if let previousLane {
-            hashes[previousLane] = nil
-            colorKeys[previousLane] = nil
+            colorKeys[targetLane] = occupantColorKey
         }
 
         // Place the main-chain hash at lane 0
@@ -272,6 +274,22 @@ struct GitGraphLaneCalculator {
 
         let lane: Int
         if isMain {
+            // Virtual reservation: if lane 0 already holds a different mainChain
+            // commit, don't evict it — that commit will be processed sooner and
+            // needs lane 0. Return lane 0 as the edge target without placing this
+            // hash, so no eviction or orphan lines are created.
+            if hashes.count > 0,
+               let lane0Hash = hashes[0],
+               lane0Hash != hash,
+               mainChain.contains(lane0Hash) {
+                let colorKey = assignedColorKey(
+                    for: hash,
+                    preferredColorKey: preferredColorKey,
+                    colorKeyByHash: &colorKeyByHash,
+                    nextColorKey: &nextColorKey
+                )
+                return (0, colorKey)
+            }
             lane = evictToLane0(hash, hashes: &hashes, colorKeys: &colorKeys)
         } else {
             lane = firstAvailableLane(preferred: preferred, hashes: &hashes, colorKeys: &colorKeys)
