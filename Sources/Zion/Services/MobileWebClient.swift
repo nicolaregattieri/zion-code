@@ -373,15 +373,18 @@ function handleMessage(msg) {
       const raw = p.data ? Uint8Array.from(atob(p.data), c => c.charCodeAt(0))
                          : new Uint8Array(0);
 
-      // Each update is a complete screen snapshot — store latest per session
-      sessionBuffers[sid] = [raw];
+      if (raw.length > 0) {
+        // Store latest snapshot for session switching
+        sessionBuffers[sid] = [raw];
 
-      // Write snapshot: scroll to bottom, clear viewport, write fresh content.
-      // Old content naturally scrolls into xterm.js scrollback (user can scroll up).
-      if (sid === activeSession && term && raw.length > 0) {
-        term.scrollToBottom();
-        term.write('\x1b[2J\x1b[H');  // Erase display + cursor home
-        term.write(raw);
+        if (sid === activeSession && term) {
+          // Push current visible content into scrollback
+          term.scrollToBottom();
+          term.write('\n'.repeat(term.rows));
+          // Clear visible area, cursor home, write new snapshot
+          term.write('\x1b[H\x1b[2J');
+          term.write(raw);
+        }
       }
       if (p.hasPrompt && p.promptText) showPrompt(p.promptText);
       break;
