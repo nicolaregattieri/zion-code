@@ -581,6 +581,8 @@ struct TerminalTabView: NSViewRepresentable {
             // zion_ai_setup — manual fallback for creating new AI config files
             let hasImage = aiImageDisplay
             let hasNtfy = !ntfyTopic.isEmpty
+                && NtfyClient.validateTopic(ntfyTopic)
+                && NtfyClient.validateServerURL(ntfyServer)
 
             var featuresList = ""
             if hasImage { featuresList += "\n  - Inline image display (zion_display)" }
@@ -615,7 +617,7 @@ struct TerminalTabView: NSViewRepresentable {
             # zion_ai_setup — configure AI tools to use Zion terminal features
             # Installed by Zion Git Client
 
-            _zas_block='\(blockLines)'
+            _zas_block='\(blockLines.replacingOccurrences(of: "'", with: "'\\''"))'
 
             case "$1" in
                 -h|--help|"")

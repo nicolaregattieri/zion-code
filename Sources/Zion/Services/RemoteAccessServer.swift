@@ -67,6 +67,7 @@ actor RemoteAccessServer {
     }
 
     func addPairingToken(_ token: String) {
+        validPairingTokens.removeAll()
         validPairingTokens[token] = ContinuousClock.now
     }
 
@@ -355,6 +356,13 @@ actor RemoteAccessServer {
         // Already authenticated — allow re-pair (e.g., browser refresh)
         guard authenticatedTokens.contains(token) || isValidPairingToken(token) else {
             sendJSON(connection: connection, status: "403 Forbidden", json: #"{"error":"invalid_token"}"#)
+            return
+        }
+
+        // Enforce connection limit (skip if already authenticated — re-pair)
+        if !authenticatedTokens.contains(token),
+           authenticatedTokens.count >= Constants.RemoteAccess.maxConcurrentConnections {
+            sendJSON(connection: connection, status: "429 Too Many Requests", json: #"{"error":"max_connections"}"#)
             return
         }
 
