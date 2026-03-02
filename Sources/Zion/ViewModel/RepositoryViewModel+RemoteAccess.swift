@@ -646,7 +646,7 @@ extension RepositoryViewModel {
             )
         }
 
-        // Serialize each row independently for diff comparison
+        // Serialize each row independently for change detection
         let rows = terminal.rows
         let cols = terminal.cols
         var currentRows: [String] = []
@@ -658,32 +658,22 @@ extension RepositoryViewModel {
             }
         }
 
-        let lastRows = terminalLastSentRows[sessionID]
-        let isFullSync = (lastRows == nil)
-
-        let screenData: Data
-        if isFullSync {
-            // First send: all rows as plain lines (client clears + writes)
-            let output = currentRows.joined(separator: "\r\n")
-            screenData = Data(output.utf8)
-        } else {
-            // Diff: only send rows that changed, with cursor positioning
-            var output = ""
-            for (i, row) in currentRows.enumerated() {
-                if i >= lastRows!.count || row != lastRows![i] {
-                    output += "\u{1B}[\(i + 1);1H\u{1B}[2K" // Position + erase line
-                    output += row
-                }
-            }
-            screenData = Data(output.utf8)
+        // Skip if nothing changed since last send
+        if let lastRows = terminalLastSentRows[sessionID], lastRows == currentRows {
+            return ScreenUpdatePayload(
+                sessionID: sessionID, data: "", fullSync: false,
+                hasPrompt: false, promptText: nil
+            )
         }
 
         terminalLastSentRows[sessionID] = currentRows
 
+        // Always send full snapshot — client pushes old content to scrollback
+        let output = currentRows.joined(separator: "\r\n")
         return ScreenUpdatePayload(
             sessionID: sessionID,
-            data: screenData.base64EncodedString(),
-            fullSync: isFullSync,
+            data: Data(output.utf8).base64EncodedString(),
+            fullSync: true,
             hasPrompt: false,
             promptText: nil
         )

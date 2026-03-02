@@ -373,21 +373,18 @@ function handleMessage(msg) {
       const raw = p.data ? Uint8Array.from(atob(p.data), c => c.charCodeAt(0))
                          : new Uint8Array(0);
 
-      if (p.fullSync) {
-        // Full screen snapshot — clear and write all rows
+      if (raw.length > 0) {
+        // Store latest snapshot for session switching
         sessionBuffers[sid] = [raw];
-        if (sid === activeSession && term && raw.length > 0) {
+
+        if (sid === activeSession && term) {
+          // Push current visible content into scrollback
           term.scrollToBottom();
-          term.write('\x1b[2J\x1b[H');
+          term.write('\n'.repeat(term.rows));
+          // Clear visible area, cursor home, write new snapshot
+          term.write('\x1b[H\x1b[2J');
           term.write(raw);
         }
-      } else {
-        // Row-level diff — only changed rows with cursor positioning
-        if (sid === activeSession && term && raw.length > 0) {
-          term.write(raw);
-        }
-        // Update stored snapshot for session switching
-        if (sessionBuffers[sid]) sessionBuffers[sid] = [raw];
       }
       if (p.hasPrompt && p.promptText) showPrompt(p.promptText);
       break;
