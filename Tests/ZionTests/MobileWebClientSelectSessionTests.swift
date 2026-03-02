@@ -44,34 +44,20 @@ final class MobileWebClientSelectSessionTests: XCTestCase {
         )
     }
 
-    // MARK: - refreshScreen on Empty Buffer (user-initiated only)
+    // MARK: - refreshScreen on Empty Buffer
 
-    func testRefreshScreenFiresOnEmptyBufferWhenUserInitiated() {
-        let jsSection = html.components(separatedBy: "function selectSession(id, userInitiated)")
+    func testRefreshScreenFiresOnEmptyBuffer() {
+        let jsSection = html.components(separatedBy: "function selectSession(id)")
             .last ?? ""
         let functionBody = String(jsSection.prefix(600))
 
         XCTAssertTrue(
-            functionBody.contains("chunks.length === 0 && userInitiated"),
-            "refreshScreen should only fire when buffer is empty AND user-initiated"
+            functionBody.contains("chunks.length === 0"),
+            "refreshScreen should fire when buffer is empty"
         )
         XCTAssertTrue(
             functionBody.contains("sendAction('refreshScreen')"),
             "refreshScreen action should be sent to the server"
-        )
-    }
-
-    func testDrawerPassesUserInitiatedFlag() {
-        XCTAssertTrue(
-            html.contains("selectSession(s.id, true)"),
-            "Drawer onclick should pass userInitiated=true"
-        )
-    }
-
-    func testAutoSelectionDoesNotPassUserInitiated() {
-        XCTAssertTrue(
-            html.contains("selectSession(projSessions[0].id)"),
-            "Auto-selection should NOT pass userInitiated (defaults to undefined/falsy)"
         )
     }
 }

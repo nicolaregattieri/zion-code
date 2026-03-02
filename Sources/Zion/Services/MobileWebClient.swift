@@ -555,7 +555,7 @@ function renderDrawerList() {
       label.className = 'drawer-session-label';
       label.textContent = s.label || s.title || 'Terminal';
       item.appendChild(label);
-      item.onclick = () => { selectSession(s.id, true); closeDrawer(); };
+      item.onclick = () => { selectSession(s.id); closeDrawer(); };
       group.appendChild(item);
     });
 
@@ -563,7 +563,7 @@ function renderDrawerList() {
   });
 }
 
-function selectSession(id, userInitiated) {
+function selectSession(id) {
   activeSession = id;
   const s = sessions.find(s => s.id === id);
   if (s) activeProject = s.repoName || 'Unknown';
@@ -574,7 +574,7 @@ function selectSession(id, userInitiated) {
     term.reset();
     const chunks = sessionBuffers[id] || [];
     for (const chunk of chunks) term.write(chunk);
-    if (chunks.length === 0 && userInitiated) {
+    if (chunks.length === 0) {
       $('#loading-overlay').classList.add('visible');
       sendAction('refreshScreen');
     }
