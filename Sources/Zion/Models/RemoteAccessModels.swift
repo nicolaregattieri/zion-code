@@ -33,9 +33,8 @@ struct SessionListPayload: Codable, Sendable {
 
 struct ScreenUpdatePayload: Codable, Sendable {
     let sessionID: UUID
-    let lines: [String]
-    let totalRows: Int
-    let totalCols: Int
+    let data: String           // base64-encoded raw terminal bytes
+    let fullSync: Bool         // true = client resets terminal before writing
     let hasPrompt: Bool
     let promptText: String?
 }

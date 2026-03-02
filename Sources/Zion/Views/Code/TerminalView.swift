@@ -185,19 +185,6 @@ struct TerminalTabView: NSViewRepresentable {
                     }
                 }
 
-                // Register screen reader for remote access (reads rendered terminal buffer)
-                parent.model?.registerTerminalScreenReader(sessionID: sessionID) { [weak self] in
-                    guard let terminalView = self?.terminalView else { return [] }
-                    let terminal = terminalView.getTerminal()
-                    var lines: [String] = []
-                    for row in 0..<terminal.rows {
-                        if let line = terminal.getLine(row: row) {
-                            lines.append(line.translateToString(trimRight: true))
-                        }
-                    }
-                    return lines
-                }
-
                 var env = ProcessInfo.processInfo.environment
                 env["TERM"] = "xterm-256color"
                 env["COLORTERM"] = "truecolor"
@@ -288,19 +275,6 @@ struct TerminalTabView: NSViewRepresentable {
                 Task { @MainActor in
                     self?.process?.send(data: ArraySlice(data))
                 }
-            }
-
-            // Re-register screen reader for remote access
-            parent.model?.registerTerminalScreenReader(sessionID: sessionID) { [weak self] in
-                guard let terminalView = self?.terminalView else { return [] }
-                let terminal = terminalView.getTerminal()
-                var lines: [String] = []
-                for row in 0..<terminal.rows {
-                    if let line = terminal.getLine(row: row) {
-                        lines.append(line.translateToString(trimRight: true))
-                    }
-                }
-                return lines
             }
 
             // Force theme re-application

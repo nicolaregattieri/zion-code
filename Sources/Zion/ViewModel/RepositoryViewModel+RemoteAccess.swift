@@ -130,6 +130,7 @@ extension RepositoryViewModel {
         mobileAccessTunnelURL = ""
         mobileAccessQRImage = nil
         terminalOutputBuffers.removeAll()
+        terminalOutputSentCursors.removeAll()
         hasEnsuredRemoteTerminals = false
         PromptDetector.resetDedup()
         syncRemoteAccessState()
@@ -253,24 +254,30 @@ extension RepositoryViewModel {
     // MARK: - Terminal Output Bridge
 
     func notifyTerminalOutput(sessionID: UUID, data: Data) {
-        guard isMobileAccessEnabled else { return }
+        guard isMobileAccessEnabled, !data.isEmpty else { return }
 
-        // Convert to string, strip ANSI codes, append to ring buffer
-        guard let text = String(data: data, encoding: .utf8) else { return }
-        let stripped = stripANSI(text)
-        guard !stripped.isEmpty else { return }
+        // Append raw bytes (ANSI codes preserved)
+        var buffer = terminalOutputBuffers[sessionID] ?? Data()
+        buffer.append(data)
 
-        let lines = stripped.components(separatedBy: .newlines).filter { !$0.isEmpty }
-        var buffer = terminalOutputBuffers[sessionID] ?? []
-        buffer.append(contentsOf: lines)
-        if buffer.count > Constants.RemoteAccess.maxScreenUpdateLines {
-            buffer = Array(buffer.suffix(Constants.RemoteAccess.maxScreenUpdateLines))
+        // Evict oldest if over cap
+        let maxSize = Constants.RemoteAccess.maxRawOutputBufferSize
+        if buffer.count > maxSize {
+            let overflow = buffer.count - maxSize
+            buffer = Data(buffer.suffix(maxSize))
+            // Adjust cursor
+            if let cursor = terminalOutputSentCursors[sessionID] {
+                terminalOutputSentCursors[sessionID] = max(0, cursor - overflow)
+            }
         }
         terminalOutputBuffers[sessionID] = buffer
 
-        // Detect prompts
-        if let detection = PromptDetector.detect(in: stripped) {
-            sendPromptDetected(sessionID: sessionID, detection: detection)
+        // Prompt detection still uses stripped text
+        if let text = String(data: data, encoding: .utf8) {
+            let stripped = stripANSI(text)
+            if !stripped.isEmpty, let detection = PromptDetector.detect(in: stripped) {
+                sendPromptDetected(sessionID: sessionID, detection: detection)
+            }
         }
 
         // Throttle screen updates (fires immediately, then coalesces)
@@ -369,6 +376,10 @@ extension RepositoryViewModel {
     // MARK: - Sending Messages
 
     private func sendAllScreenUpdates() {
+        // Reset cursors so clients receive full buffer
+        for sessionID in terminalOutputBuffers.keys {
+            terminalOutputSentCursors[sessionID] = 0
+        }
         for sessionID in terminalOutputBuffers.keys {
             Task { await sendScreenUpdate(for: sessionID) }
         }
@@ -452,9 +463,8 @@ extension RepositoryViewModel {
         // Also send via WebSocket
         let promptPayload = ScreenUpdatePayload(
             sessionID: sessionID,
-            lines: terminalOutputBuffers[sessionID] ?? [],
-            totalRows: 0,
-            totalCols: 0,
+            data: "",
+            fullSync: false,
             hasPrompt: true,
             promptText: detection.promptText
         )
@@ -514,18 +524,19 @@ extension RepositoryViewModel {
     }
 
     func buildScreenUpdate(for sessionID: UUID) -> ScreenUpdatePayload {
-        // Read directly from the terminal's rendered buffer (properly decoded, no ANSI codes)
-        let lines: [String]
-        if let reader = terminalScreenReaders[sessionID] {
-            lines = reader()
-        } else {
-            lines = terminalOutputBuffers[sessionID] ?? []
-        }
+        let buffer = terminalOutputBuffers[sessionID] ?? Data()
+        let sentCursor = terminalOutputSentCursors[sessionID] ?? 0
+        let fullSync = (sentCursor == 0)
+
+        let startIndex = min(sentCursor, buffer.count)
+        let delta = buffer.subdata(in: startIndex..<buffer.count)
+
+        terminalOutputSentCursors[sessionID] = buffer.count
+
         return ScreenUpdatePayload(
             sessionID: sessionID,
-            lines: Array(lines.suffix(Constants.RemoteAccess.maxScreenUpdateLines)),
-            totalRows: 0,
-            totalCols: 0,
+            data: delta.base64EncodedString(),
+            fullSync: fullSync,
             hasPrompt: false,
             promptText: nil
         )

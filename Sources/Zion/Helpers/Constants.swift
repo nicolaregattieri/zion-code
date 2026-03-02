@@ -56,6 +56,7 @@ enum Constants {
         static let aes256KeyByteLength = 32
         static let qrCodeSize: CGFloat = 200
         static let httpRequestBufferSize = 8192
+        static let maxRawOutputBufferSize = 262_144  // 256KB per session
     }
 
     enum UI {
