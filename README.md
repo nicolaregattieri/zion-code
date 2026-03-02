@@ -22,8 +22,8 @@ run commands — without switching apps.
 </div>
 
 <p align="center">
-  <img src="docs/screenshots/hero-graph.png" width="32%" alt="Zion Tree — visual commit graph with lane-colored cards" />
   <img src="docs/screenshots/hero-code.png" width="32%" alt="Zion Code — editor + terminal + clipboard" />
+  <img src="docs/screenshots/hero-graph.png" width="32%" alt="Zion Tree — visual commit graph with lane-colored cards" />
   <img src="docs/screenshots/hero-operations.png" width="32%" alt="Operations Center — full Git dashboard" />
 </p>
 
@@ -71,16 +71,10 @@ Zion doesn't make you choose.
 Zion is the only Git workspace that brings the modern macOS **Glassmorphism** (UltraThinMaterial) aesthetic to your developer workflow. Whether you prefer deep indigo, classic dark, or a clean light theme, Zion looks stunning on every Mac.
 
 <p align="center">
-  <img src="docs/screenshots/hero-code.png" width="100%" alt="Zion Mode — Editor + Terminal in SynthWave '84" />
+  <img src="docs/screenshots/dual-terminal.png" width="100%" alt="Zion Mode — Editor + dual terminal split" />
 </p>
 <p align="center">
-  <img src="docs/screenshots/dual-terminal.png" width="100%" alt="Dual terminal split with code editor" />
-</p>
-<p align="center">
-  <img src="docs/screenshots/settings.png" width="100%" alt="Zion Mode — Settings panel with glassmorphism" />
-</p>
-<p align="center">
-  <img src="docs/screenshots/ai-terminal.png" width="100%" alt="Zen Mode — Claude Code + Gemini + Codex split terminals" />
+  <img src="docs/screenshots/light-theme.png" width="100%" alt="GitHub Light — clean light theme for daytime" />
 </p>
 
 
@@ -168,6 +162,10 @@ Works with Anthropic Claude, OpenAI GPT, or Google Gemini. Generate commit messa
 > GitHub + GitLab + Bitbucket
 
 Automatic provider detection from remote URLs. List open PRs, create PRs with AI-generated descriptions, post inline review comments, and submit reviews (approve/request changes). GitLab supports self-hosted instances. Bitbucket uses app passwords.
+
+<p align="center">
+  <img src="docs/screenshots/settings.png" width="100%" alt="Settings — Git hosting provider configuration" />
+</p>
 
 ---
 
