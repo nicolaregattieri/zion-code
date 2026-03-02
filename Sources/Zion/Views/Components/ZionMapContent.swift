@@ -70,6 +70,12 @@ struct ZionMapContent {
                              tips: ["map.code.navigation.tip1"]),
                 ZionMapEntry("map.code.editorsettings.title", description: "map.code.editorsettings.description",
                              tips: ["map.code.editorsettings.tip1"]),
+                ZionMapEntry("map.code.findinfiles.title", description: "map.code.findinfiles.description",
+                             shortcut: "\u{21E7}\u{2318}F",
+                             tips: ["map.code.findinfiles.tip1"]),
+                ZionMapEntry("map.code.formatter.title", description: "map.code.formatter.description",
+                             shortcut: "\u{21E7}\u{2325}F",
+                             tips: ["map.code.formatter.tip1"]),
             ]
 
         case .terminal:
@@ -87,6 +93,8 @@ struct ZionMapContent {
                              tips: ["map.terminal.persistence.tip1"]),
                 ZionMapEntry("map.terminal.search.title", description: "map.terminal.search.description",
                              shortcut: "\u{2318}F"),
+                ZionMapEntry("map.terminal.finderdrag.title", description: "map.terminal.finderdrag.description",
+                             tips: ["map.terminal.finderdrag.tip1"]),
             ]
 
         case .clipboard:
@@ -118,6 +126,8 @@ struct ZionMapContent {
                              tips: ["map.ops.recovery.tip1"]),
                 ZionMapEntry("map.ops.tags.title", description: "map.ops.tags.description",
                              tips: ["map.ops.tags.tip1"]),
+                ZionMapEntry("map.ops.forcepush.title", description: "map.ops.forcepush.description",
+                             tips: ["map.ops.forcepush.tip1"]),
             ]
 
         case .worktrees:
@@ -149,6 +159,8 @@ struct ZionMapContent {
                 ZionMapEntry("map.ai.style.title", description: "map.ai.style.description"),
                 ZionMapEntry("map.ai.precommit.title", description: "map.ai.precommit.description",
                              tips: ["map.ai.precommit.tip1"]),
+                ZionMapEntry("map.ai.slashcommands.title", description: "map.ai.slashcommands.description",
+                             tips: ["map.ai.slashcommands.tip1"]),
             ]
 
         case .customization:

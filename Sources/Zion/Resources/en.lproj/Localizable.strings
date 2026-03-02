@@ -1710,3 +1710,26 @@
 "error.git.worktreeInUse" = "That branch is already used by a worktree at %@.";
 "error.git.lockFile" = "Another Git process is running. Wait for it to finish or remove the lock file.";
 "error.git.pushRejected" = "Push was rejected. Pull the latest changes first, then try again.";
+
+// Documentation sync — 1.4.0
+"help.code.findinfiles" = "Find in Files across the entire repository (⇧⌘F)";
+"help.terminal.finderdrag" = "Drag files from Finder directly into the terminal";
+"help.ops.forcepush" = "Force Push with Lease (safe) and Force Push (override) options";
+"help.ai.slashcommands" = "AI CLI slash commands: /zion-img for Claude, Gemini, and Codex";
+"shortcuts.findInFiles" = "Find in Files";
+
+"map.code.findinfiles.title" = "Find in Files";
+"map.code.findinfiles.description" = "Search across all repository files with highlighted results. Click a match to open the file at that line.";
+"map.code.findinfiles.tip1" = "Use ⇧⌘F from any screen to start a project-wide search.";
+"map.code.formatter.title" = "Code Formatter";
+"map.code.formatter.description" = "Format code with ⇧⌥F. Supports 16+ languages including JSON, XML, HTML, CSS, JavaScript, Python, Swift, Go, and more. Optional format-on-save.";
+"map.code.formatter.tip1" = "Enable format-on-save in Settings > Editor for automatic formatting.";
+"map.terminal.finderdrag.title" = "Finder Drag & Drop";
+"map.terminal.finderdrag.description" = "Drag files or folders from Finder directly into the terminal. The path is automatically pasted at the cursor.";
+"map.terminal.finderdrag.tip1" = "Works with any file type — great for quick cd or open commands.";
+"map.ops.forcepush.title" = "Force Push Options";
+"map.ops.forcepush.description" = "Force Push with Lease (safe, rejects if remote has new commits) and Force Push (override) available from the branch context menu.";
+"map.ops.forcepush.tip1" = "Always prefer Force with Lease — it prevents overwriting teammates' commits.";
+"map.ai.slashcommands.title" = "AI Agent Slash Commands";
+"map.ai.slashcommands.description" = "Auto-installed /zion-img command for Claude Code, Gemini CLI, and Codex CLI. Displays inline images and generates SVGs in the terminal.";
+"map.ai.slashcommands.tip1" = "Enable AI Inline Images in Settings to auto-install commands on terminal start.";
