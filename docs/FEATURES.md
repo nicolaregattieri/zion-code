@@ -51,6 +51,7 @@
 | Commit Search | Search by hash, author, or message with prev/next navigation | `⌘F` |
 | Jump Bar | Instant scroll to main, develop, or default branch | — |
 | Pending Changes | Uncommitted changes at the top with quick commit & stash | — |
+| First Parent | Shows the first parent commit in commit details for merge context | — |
 | Signature Verification | GPG/SSH commit signature status | — |
 | Keyboard Navigation | Arrow keys to navigate commits, Escape to deselect | `↑↓` / `Esc` |
 | Branch Focus | Double-click a branch to filter commits to that branch | — |
@@ -174,7 +175,7 @@
 |---------|-------------|
 | Commit Messages | Generate from staged diff (Anthropic/OpenAI/Gemini or heuristic fallback) |
 | Diff Explanation | Plain-language explanation of a file diff |
-| PR Description | Generate title and body from commit log |
+| PR Description | Generate title and body from commit log with dynamic base branch selection |
 | Stash Messages | Suggest descriptive stash messages |
 | Smart Conflict Resolution | AI reads both sides of a merge conflict and proposes a semantically correct resolution |
 | Code Review | Pre-commit code review that catches bugs, security issues, and style problems |
@@ -271,15 +272,16 @@
 
 | Feature | Description |
 |---------|-------------|
-| Provider Abstraction | Protocol-based provider system supporting GitHub, GitLab, and Bitbucket |
+| Provider Abstraction | Protocol-based provider system supporting GitHub, GitLab, Bitbucket, and Azure DevOps |
 | Auto-Detection | Automatically detects hosting provider from remote URLs (SSH and HTTPS) |
-| GitHub | Full support via `gh` CLI token — PRs, comments, reviews |
+| GitHub | OAuth Device Flow sign-in, Personal Access Token, or `gh` CLI token — PRs, comments, reviews |
 | GitLab | PAT authentication, self-hosted instance support, PR list and creation |
 | Bitbucket | App password authentication, PR list and creation |
+| Azure DevOps | PAT authentication with Code (Read & Write) scope, PR list and creation |
 | PR List | Fetch and display open PRs for current repo |
-| Create PR | Sheet to create PR from current branch |
-| AI PR Description | Auto-generate title and body |
-| Settings | Dedicated Git Hosting section in Settings for GitLab and Bitbucket credentials |
+| Create PR | Sheet to create PR from current branch with push validation |
+| AI PR Description | Auto-generate title and body with dynamic base branch selection |
+| Settings | Dedicated Git Hosting section in Settings for all provider credentials |
 
 ## Remote Management
 

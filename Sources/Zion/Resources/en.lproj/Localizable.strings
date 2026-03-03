@@ -883,7 +883,7 @@
 "help.codeReview.title" = "Code Review";
 "help.codeReview.features" = "Full-window file-by-file review|Per-file AI analysis|Inline PR comments with reply threads|Submit reviews (Approve/Request Changes/Comment)|Export as Markdown|Cmd+Shift+R shortcut";
 "help.prInbox.title" = "PR Inbox";
-"help.prInbox.features" = "GitHub, GitLab, and Bitbucket support|Assigned PR queue|Browse all open PRs|Auto-review with AI|Click to open in Code Review|macOS + ntfy notifications";
+"help.prInbox.features" = "GitHub, GitLab, Bitbucket, and Azure DevOps support|Assigned PR queue|Browse all open PRs|Auto-review with AI|Click to open in Code Review|macOS + ntfy notifications";
 
 
 // Zion Map — Settings
@@ -1611,8 +1611,8 @@
 "map.codereview.review.description" = "Submit formal reviews with Comment, Approve, or Request Changes. Draft comments are batched and submitted together.";
 
 "map.prinbox.hosting.title" = "Multi-Provider Support";
-"map.prinbox.hosting.description" = "Works with GitHub, GitLab, and Bitbucket. Provider is auto-detected from your remote URLs.";
-"map.prinbox.hosting.tip1" = "Configure GitLab PAT or Bitbucket credentials in Settings > Git Hosting.";
+"map.prinbox.hosting.description" = "Works with GitHub, GitLab, Bitbucket, and Azure DevOps. Provider is auto-detected from your remote URLs.";
+"map.prinbox.hosting.tip1" = "Configure GitLab, Bitbucket, or Azure DevOps credentials in Settings > Git Hosting.";
 
 // MARK: - Mobile Remote Access
 "settings.tab.mobileAccess" = "Mobile";

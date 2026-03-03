@@ -779,7 +779,7 @@
 "help.codeReview.title" = "Code Review";
 "help.codeReview.features" = "Revisão em tela cheia por arquivo|Análise IA por arquivo|Comentários inline em PRs com threads de resposta|Enviar reviews (Aprovar/Solicitar Alterações/Comentar)|Exportar como Markdown|Atalho Cmd+Shift+R";
 "help.prInbox.title" = "Caixa de PRs";
-"help.prInbox.features" = "Suporte a GitHub, GitLab e Bitbucket|Fila de PRs atribuídos|Navegar todos os PRs abertos|Revisão automática com IA|Clique para abrir no Code Review|Notificações macOS + ntfy";
+"help.prInbox.features" = "Suporte a GitHub, GitLab, Bitbucket e Azure DevOps|Fila de PRs atribuídos|Navegar todos os PRs abertos|Revisão automática com IA|Clique para abrir no Code Review|Notificações macOS + ntfy";
 
 
 // Zion Map — Settings
@@ -1564,8 +1564,8 @@
 "map.codereview.review.description" = "Envie reviews formais com Comentar, Aprovar ou Solicitar Alterações. Comentários rascunho são agrupados e enviados juntos.";
 
 "map.prinbox.hosting.title" = "Suporte Multi-Provedor";
-"map.prinbox.hosting.description" = "Funciona com GitHub, GitLab e Bitbucket. O provedor é detectado automaticamente pelas URLs dos seus remotos.";
-"map.prinbox.hosting.tip1" = "Configure o PAT do GitLab ou credenciais do Bitbucket em Configurações > Git Hosting.";
+"map.prinbox.hosting.description" = "Funciona com GitHub, GitLab, Bitbucket e Azure DevOps. O provedor é detectado automaticamente pelas URLs dos seus remotos.";
+"map.prinbox.hosting.tip1" = "Configure credenciais do GitLab, Bitbucket ou Azure DevOps em Configurações > Git Hosting.";
 
 // MARK: - Mobile Remote Access
 "settings.tab.mobileAccess" = "Mobile";
