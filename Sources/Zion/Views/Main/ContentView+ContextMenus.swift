@@ -79,6 +79,28 @@ extension ContentView {
             Button(L10n("Rebase Interativo a partir daqui...")) {
                 model.prepareInteractiveRebase(from: commit.id)
             }
+
+            // Git Bisect
+            Divider()
+            switch model.bisectPhase {
+            case .inactive:
+                Button(L10n("bisect.contextMenu.markBad")) {
+                    performGitAction(title: L10n("bisect.contextMenu.markBad"), message: L10n("bisect.confirm.start"), destructive: false) {
+                        model.startBisect(badCommitHash: commit.id)
+                    }
+                }
+            case .awaitingGoodCommit:
+                Button(L10n("bisect.contextMenu.markGood")) {
+                    model.markCommitGood(commit.id)
+                }
+                Button(L10n("bisect.abort"), role: .destructive) {
+                    model.bisectAbort()
+                }
+            case .active, .foundCulprit:
+                Button(L10n("bisect.abort"), role: .destructive) {
+                    model.bisectAbort()
+                }
+            }
         }
 
         Divider()

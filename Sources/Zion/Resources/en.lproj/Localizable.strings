@@ -1766,3 +1766,34 @@
 "speech.permission.denied" = "Microphone or speech recognition access denied. Enable in System Settings > Privacy & Security.";
 "speech.error.unavailable" = "Speech recognition is not available for the selected language.";
 "settings.speech.engine.hint" = "Apple Speech is free and real-time. Whisper requires an OpenAI API key (configured in AI settings).";
+
+// Git Bisect
+"bisect.contextMenu.markBad" = "Find Bug with Bisect";
+"bisect.contextMenu.markGood" = "This Commit Worked";
+"bisect.abort" = "Abort Bisect";
+"bisect.good" = "This Works";
+"bisect.bad" = "This is Broken";
+"bisect.skip" = "Skip";
+"bisect.done" = "Done";
+"bisect.viewCommit" = "View Commit";
+"bisect.banner.pickGood.title" = "Now pick a commit where things worked";
+"bisect.banner.pickGood.subtitle" = "Right-click any older commit and choose \"This Commit Worked\"";
+"bisect.banner.active.title" = "Testing commit %@";
+"bisect.banner.active.subtitle" = "~%@ steps to find the culprit";
+"bisect.banner.found.title" = "Found it — commit %@ introduced the bug";
+"bisect.ai.loading" = "AI is analyzing the culprit commit...";
+"bisect.ai.error" = "Could not generate AI explanation.";
+"bisect.badge.culprit" = "First Bad Commit";
+"bisect.status.pickGood" = "Bisect: pick a good commit";
+"bisect.status.testing" = "Bisect: testing %@";
+"bisect.status.found" = "Bisect: found culprit %@";
+"bisect.status.aborted" = "Bisect aborted.";
+"bisect.status.done" = "Bisect complete.";
+"bisect.pill.pickGood" = "Pick Good Commit";
+"bisect.pill.active" = "Bisecting ~%@ steps";
+"bisect.pill.found" = "Found: %@";
+"bisect.confirm.start" = "Mark this commit as broken and start bisecting?";
+"bisect.error.invalidHash" = "Invalid commit hash.";
+"bisect.good.hint" = "Mark as good (⇧⌘G)";
+"bisect.bad.hint" = "Mark as broken (⇧⌘B)";
+"bisect.skip.hint" = "Skip this commit (⇧⌘S)";

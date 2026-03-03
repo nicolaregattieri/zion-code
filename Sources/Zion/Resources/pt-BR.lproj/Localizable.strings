@@ -1766,3 +1766,34 @@
 "speech.permission.denied" = "Acesso ao microfone ou reconhecimento de fala negado. Ative em Ajustes do Sistema > Privacidade e Segurança.";
 "speech.error.unavailable" = "O reconhecimento de fala não está disponível para o idioma selecionado.";
 "settings.speech.engine.hint" = "Apple Speech é gratuito e em tempo real. Whisper requer uma chave de API OpenAI (configurada nas configurações de IA).";
+
+// Git Bisect
+"bisect.contextMenu.markBad" = "Encontrar Bug com Bisect";
+"bisect.contextMenu.markGood" = "Este Commit Funcionava";
+"bisect.abort" = "Abortar Bisect";
+"bisect.good" = "Isso Funciona";
+"bisect.bad" = "Isso Está Quebrado";
+"bisect.skip" = "Pular";
+"bisect.done" = "Concluído";
+"bisect.viewCommit" = "Ver Commit";
+"bisect.banner.pickGood.title" = "Agora escolha um commit onde tudo funcionava";
+"bisect.banner.pickGood.subtitle" = "Clique com botão direito em um commit mais antigo e escolha \"Este Commit Funcionava\"";
+"bisect.banner.active.title" = "Testando commit %@";
+"bisect.banner.active.subtitle" = "~%@ passos para encontrar o culpado";
+"bisect.banner.found.title" = "Encontrado — commit %@ introduziu o bug";
+"bisect.ai.loading" = "IA está analisando o commit culpado...";
+"bisect.ai.error" = "Não foi possível gerar explicação da IA.";
+"bisect.badge.culprit" = "Primeiro Commit Ruim";
+"bisect.status.pickGood" = "Bisect: escolha um commit bom";
+"bisect.status.testing" = "Bisect: testando %@";
+"bisect.status.found" = "Bisect: culpado encontrado %@";
+"bisect.status.aborted" = "Bisect abortado.";
+"bisect.status.done" = "Bisect concluído.";
+"bisect.pill.pickGood" = "Escolher Commit Bom";
+"bisect.pill.active" = "Bisect ~%@ passos";
+"bisect.pill.found" = "Encontrado: %@";
+"bisect.confirm.start" = "Marcar este commit como quebrado e iniciar bisect?";
+"bisect.error.invalidHash" = "Hash de commit inválido.";
+"bisect.good.hint" = "Marcar como bom (⇧⌘G)";
+"bisect.bad.hint" = "Marcar como quebrado (⇧⌘B)";
+"bisect.skip.hint" = "Pular este commit (⇧⌘S)";

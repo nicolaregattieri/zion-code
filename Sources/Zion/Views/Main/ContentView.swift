@@ -413,6 +413,12 @@ struct ContentView: View {
                             .zIndex(999)
                     }
 
+                    if model.bisectPhase != .inactive {
+                        BisectBanner(model: model)
+                            .zIndex(998)
+                            .transition(DesignSystem.Motion.slideFromTop)
+                    }
+
                     nonCodeMainContent
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }

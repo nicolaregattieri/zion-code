@@ -63,6 +63,21 @@ extension ContentView {
                     .clipShape(Capsule())
                 }
 
+                // Bisect pill
+                if model.isBisectActive {
+                    HStack(spacing: 3) {
+                        Image(systemName: "arrow.trianglehead.branch")
+                            .font(DesignSystem.Typography.meta)
+                        Text(bisectPillLabel)
+                    }
+                    .font(DesignSystem.Typography.label)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(bisectPillBg)
+                    .foregroundStyle(bisectPillFg)
+                    .clipShape(Capsule())
+                }
+
                 // Uncommitted changes count
                 if model.uncommittedCount > 0 {
                     HStack(spacing: 3) {
@@ -230,6 +245,35 @@ extension ContentView {
 
     func statusBarSectionLabel(_ section: AppSection) -> String {
         L10n(section.title)
+    }
+
+    // MARK: - Bisect Pill Helpers
+
+    private var bisectPillLabel: String {
+        switch model.bisectPhase {
+        case .awaitingGoodCommit:
+            return L10n("bisect.pill.pickGood")
+        case .active(_, let steps):
+            return L10n("bisect.pill.active", "\(steps)")
+        case .foundCulprit(let hash):
+            return L10n("bisect.pill.found", String(hash.prefix(8)))
+        case .inactive:
+            return ""
+        }
+    }
+
+    private var bisectPillBg: Color {
+        if case .foundCulprit = model.bisectPhase {
+            return zionModeEnabled ? DesignSystem.ZionMode.neonOrange.opacity(0.12) : DesignSystem.Colors.destructiveBg
+        }
+        return zionModeEnabled ? DesignSystem.ZionMode.neonCyan.opacity(0.12) : DesignSystem.Colors.statusBlueBg
+    }
+
+    private var bisectPillFg: Color {
+        if case .foundCulprit = model.bisectPhase {
+            return zionModeEnabled ? DesignSystem.ZionMode.neonOrange : DesignSystem.Colors.destructive
+        }
+        return zionModeEnabled ? DesignSystem.ZionMode.neonCyan : DesignSystem.Colors.info
     }
 
     // MARK: - Mobile Access Badge Helpers
