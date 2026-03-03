@@ -1754,3 +1754,28 @@
 "map.ai.slashcommands.title" = "AI Agent Slash Commands";
 "map.ai.slashcommands.description" = "Auto-installed /zion-img command for Claude Code, Gemini CLI, and Codex CLI. Displays inline images and generates SVGs in the terminal.";
 "map.ai.slashcommands.tip1" = "Enable AI Inline Images in Settings to auto-install commands on terminal start.";
+
+// Git Bisect
+"bisect.contextMenu.markBad" = "Find Bug with Bisect...";
+"bisect.contextMenu.markGood" = "This Commit Worked";
+"bisect.abort" = "Abort Bisect";
+"bisect.good" = "This Works";
+"bisect.bad" = "This is Broken";
+"bisect.skip" = "Skip";
+"bisect.done" = "Done";
+"bisect.viewCommit" = "View Commit";
+"bisect.banner.pickGood.title" = "Now pick a commit where things worked";
+"bisect.banner.pickGood.subtitle" = "Right-click any older commit and choose \"This Commit Worked\"";
+"bisect.banner.active.title" = "Testing commit %@";
+"bisect.banner.active.subtitle" = "~%@ steps to find the culprit";
+"bisect.banner.found.title" = "Found it — commit %@ introduced the bug";
+"bisect.ai.loading" = "AI is analyzing the culprit commit...";
+"bisect.ai.error" = "Could not generate AI explanation.";
+"bisect.badge.culprit" = "First Bad Commit";
+"bisect.status.pickGood" = "Bisect: pick a good commit";
+"bisect.status.testing" = "Bisect: testing %@";
+"bisect.status.found" = "Bisect: found culprit %@";
+"bisect.status.aborted" = "Bisect aborted.";
+"bisect.pill.pickGood" = "Pick Good Commit";
+"bisect.pill.active" = "Bisecting ~%@ steps";
+"bisect.pill.found" = "Found: %@";

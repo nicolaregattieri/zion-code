@@ -16,6 +16,7 @@ struct CommitRowView: View {
     let branchContextMenu: (String) -> AnyView
     let tagContextMenu: (String) -> AnyView
     let remotes: [String]
+    var bisectRole: BisectCommitRole = .none
     var avatarImage: NSImage? = nil
     
     @State private var isHovered = false
@@ -126,6 +127,22 @@ struct CommitRowView: View {
                 }
                 .frame(height: cardHeight, alignment: .topTrailing)
             }
+
+            if bisectRole == .culprit {
+                HStack {
+                    Spacer()
+                    Text(L10n("bisect.badge.culprit"))
+                        .font(DesignSystem.Typography.label)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(DesignSystem.Colors.destructive)
+                        .clipShape(Capsule())
+                        .padding(.bottom, 6)
+                        .padding(.trailing, 8)
+                }
+                .frame(height: cardHeight, alignment: .bottomTrailing)
+            }
         }
         .contentShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius))
         .scaleEffect(isHovered && !isSelected ? 1.015 : 1.0)
@@ -134,12 +151,19 @@ struct CommitRowView: View {
         .animation(DesignSystem.Motion.springInteractive, value: isSelected)
         .onHover { hovering in isHovered = hovering }
         .onTapGesture { onSelect() }
+        .opacity(bisectRole == .outsideRange ? DesignSystem.Opacity.dim : DesignSystem.Opacity.full)
         .contextMenu { contextMenu }
         .padding(.trailing, 16)
     }
 
     private var cardBackground: Color {
         if isSelected { return DesignSystem.Colors.selectionBackground }
+        switch bisectRole {
+        case .currentTest: return DesignSystem.Colors.statusBlueBg
+        case .markedGood: return DesignSystem.Colors.statusGreenBg
+        case .markedBad, .culprit: return DesignSystem.Colors.destructiveBg
+        case .none, .outsideRange: break
+        }
         if isSearchMatch { return DesignSystem.Colors.statusYellowBg }
         if isHovered { return DesignSystem.Colors.glassHover }
         return laneColor.opacity(0.06)
@@ -147,6 +171,12 @@ struct CommitRowView: View {
 
     private var cardStroke: Color {
         if isSelected { return DesignSystem.Colors.selectionBorder }
+        switch bisectRole {
+        case .currentTest: return DesignSystem.Colors.info.opacity(DesignSystem.Opacity.muted)
+        case .markedGood: return DesignSystem.Colors.success.opacity(DesignSystem.Opacity.muted)
+        case .markedBad, .culprit: return DesignSystem.Colors.destructive.opacity(DesignSystem.Opacity.muted)
+        case .none, .outsideRange: break
+        }
         if isSearchMatch { return DesignSystem.Colors.searchHighlight.opacity(0.5) }
         if isHovered { return DesignSystem.Colors.hoverAccent }
         return laneColor.opacity(0.15)

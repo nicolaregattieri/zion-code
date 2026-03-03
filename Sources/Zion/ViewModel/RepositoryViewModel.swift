@@ -114,6 +114,17 @@ final class RepositoryViewModel {
     var rebaseItems: [RebaseItem] = []
     var rebaseBaseRef: String = ""
 
+    // Git Bisect state
+    var bisectPhase: BisectPhase = .inactive
+    var bisectGoodCommits: Set<String> = []
+    var bisectBadCommits: Set<String> = []
+    var bisectCurrentHash: String = ""
+    var bisectAIExplanation: String = ""
+    var isBisectAILoading: Bool = false
+    @ObservationIgnored var bisectTask: Task<Void, Never>?
+
+    var isBisectActive: Bool { bisectPhase != .inactive }
+
     // Navigation signals (consumed by ContentView to switch tabs)
     var navigateToGraphRequested: Bool = false
     var navigateToCodeRequested: Bool = false

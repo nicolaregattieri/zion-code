@@ -1754,3 +1754,28 @@
 "map.ai.slashcommands.title" = "Comandos Slash para IA";
 "map.ai.slashcommands.description" = "Comando /zion-img instalado automaticamente para Claude Code, Gemini CLI e Codex CLI. Exibe imagens inline e gera SVGs no terminal.";
 "map.ai.slashcommands.tip1" = "Ative Imagens Inline de IA em Configurações para instalar comandos automaticamente ao iniciar o terminal.";
+
+// Git Bisect
+"bisect.contextMenu.markBad" = "Encontrar Bug com Bisect...";
+"bisect.contextMenu.markGood" = "Este Commit Funcionava";
+"bisect.abort" = "Abortar Bisect";
+"bisect.good" = "Isso Funciona";
+"bisect.bad" = "Isso Está Quebrado";
+"bisect.skip" = "Pular";
+"bisect.done" = "Concluído";
+"bisect.viewCommit" = "Ver Commit";
+"bisect.banner.pickGood.title" = "Agora escolha um commit onde tudo funcionava";
+"bisect.banner.pickGood.subtitle" = "Clique com botão direito em um commit mais antigo e escolha \"Este Commit Funcionava\"";
+"bisect.banner.active.title" = "Testando commit %@";
+"bisect.banner.active.subtitle" = "~%@ passos para encontrar o culpado";
+"bisect.banner.found.title" = "Encontrado — commit %@ introduziu o bug";
+"bisect.ai.loading" = "IA está analisando o commit culpado...";
+"bisect.ai.error" = "Não foi possível gerar explicação da IA.";
+"bisect.badge.culprit" = "Primeiro Commit Ruim";
+"bisect.status.pickGood" = "Bisect: escolha um commit bom";
+"bisect.status.testing" = "Bisect: testando %@";
+"bisect.status.found" = "Bisect: culpado encontrado %@";
+"bisect.status.aborted" = "Bisect abortado.";
+"bisect.pill.pickGood" = "Escolher Commit Bom";
+"bisect.pill.active" = "Bisect ~%@ passos";
+"bisect.pill.found" = "Encontrado: %@";

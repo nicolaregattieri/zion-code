@@ -331,6 +331,17 @@
 | Export Log | Save sanitized diagnostic log to file (Help menu) |
 | Copy Log | Copy sanitized log to clipboard for quick sharing |
 
+## Git Bisect (Bug Finder)
+
+| Feature | Description |
+|---------|-------------|
+| Start Bisect | Right-click any commit → "Find Bug with Bisect..." marks it as bad, prompts for good commit |
+| Active Bisect Banner | Top banner with "This Works" / "This is Broken" / "Skip" / "Abort" buttons during binary search |
+| Commit Visual States | Green (good), red (bad), blue (testing), culprit badge on the first bad commit |
+| AI Culprit Explanation | When culprit is found, AI automatically explains what changed and why it likely caused the regression |
+| Status Bar Pill | Capsule badge shows current bisect phase and step count |
+| Bisect Detection | Detects ongoing bisect sessions (e.g. started from terminal) and syncs UI state |
+
 ## Wave 2 — Differentiation & Polish
 
 | Feature | Description |
