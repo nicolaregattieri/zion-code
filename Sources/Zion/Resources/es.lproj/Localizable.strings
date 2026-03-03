@@ -1559,11 +1559,31 @@
 "hosting.gitlab.host" = "Host (predeterminado: gitlab.com)";
 "hosting.bitbucket.username" = "Nombre de usuario";
 "hosting.bitbucket.appPassword" = "Contraseña de App";
+"hosting.github.pat" = "Token de Acceso Personal";
+"hosting.github.hint" = "O usa `gh auth login` desde la terminal.";
 "hosting.notConnected" = "No se detectó ningún proveedor de hosting.";
+"hosting.noRemotes" = "No hay remotos git configurados.";
+"hosting.noProviderMatch" = "No se pudo detectar GitHub, GitLab, Bitbucket o Azure DevOps en tus remotos.";
+"hosting.noToken" = "No se encontró token de autenticación.";
+"hosting.tokenPlaceholder" = "Pega tu token aquí...";
+"hosting.saveAndCreate" = "Guardar y Crear PR";
 "hosting.notSupported" = "Esta acción no está soportada por el proveedor actual.";
 "settings.hosting.title" = "Hosting Git";
+"settings.hosting.github" = "GitHub";
 "settings.hosting.gitlab" = "GitLab";
 "settings.hosting.bitbucket" = "Bitbucket";
+"settings.hosting.azureDevOps" = "Azure DevOps";
+"hosting.provider.azureDevOps" = "Azure DevOps";
+"hosting.azure.pat" = "Token de Acceso Personal";
+"hosting.azure.hint" = "Crea un PAT con alcance Code (Lectura y Escritura).";
+"hosting.generateToken" = "Generar Token";
+"hosting.github.signIn" = "Iniciar sesion con GitHub";
+"hosting.github.enterCode" = "Ingresa este codigo en GitHub:";
+"hosting.github.openGitHub" = "Abrir GitHub";
+"hosting.github.waitingAuth" = "Esperando autorizacion...";
+"hosting.github.authSuccess" = "Autenticado como %@";
+"hosting.github.authExpired" = "Autorizacion expirada. Intenta de nuevo.";
+"hosting.github.authError" = "Error de autenticacion.";
 
 // MARK: - PR Comments & Reviews
 "pr.comment.reply" = "Responder";

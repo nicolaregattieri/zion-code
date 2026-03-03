@@ -9,12 +9,15 @@ struct HostedRemote: Sendable {
     let repo: String
     /// For self-hosted instances (GitLab CE/EE). Nil for cloud-hosted services.
     let host: String?
+    /// Azure DevOps project name (required for ADO, nil for others).
+    let project: String?
 
-    init(kind: GitHostingKind, owner: String, repo: String, host: String? = nil) {
+    init(kind: GitHostingKind, owner: String, repo: String, host: String? = nil, project: String? = nil) {
         self.kind = kind
         self.owner = owner
         self.repo = repo
         self.host = host
+        self.project = project
     }
 
     /// Base API URL for this remote.
@@ -27,6 +30,9 @@ struct HostedRemote: Sendable {
             return "https://\(h)/api/v4"
         case .bitbucket:
             return "https://api.bitbucket.org/2.0"
+        case .azureDevOps:
+            let h = host ?? "dev.azure.com"
+            return "https://\(h)/\(owner)"
         }
     }
 }

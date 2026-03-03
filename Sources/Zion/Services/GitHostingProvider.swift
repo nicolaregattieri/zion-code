@@ -5,6 +5,7 @@ enum GitHostingKind: String, Sendable, CaseIterable, Identifiable {
     case github
     case gitlab
     case bitbucket
+    case azureDevOps
 
     var id: String { rawValue }
 
@@ -13,6 +14,7 @@ enum GitHostingKind: String, Sendable, CaseIterable, Identifiable {
         case .github: return L10n("hosting.provider.github")
         case .gitlab: return L10n("hosting.provider.gitlab")
         case .bitbucket: return L10n("hosting.provider.bitbucket")
+        case .azureDevOps: return L10n("hosting.provider.azureDevOps")
         }
     }
 
@@ -21,6 +23,7 @@ enum GitHostingKind: String, Sendable, CaseIterable, Identifiable {
         case .github: return "arrow.triangle.branch"
         case .gitlab: return "arrow.triangle.branch"
         case .bitbucket: return "arrow.triangle.branch"
+        case .azureDevOps: return "arrow.triangle.branch"
         }
     }
 }
@@ -28,13 +31,16 @@ enum GitHostingKind: String, Sendable, CaseIterable, Identifiable {
 /// Protocol for git hosting provider integrations (GitHub, GitLab, Bitbucket).
 protocol GitHostingProvider: Actor {
     /// The kind of hosting provider this actor represents.
-    var kind: GitHostingKind { get }
+    nonisolated var kind: GitHostingKind { get }
 
     /// Attempt to parse a remote URL into a hosted remote. Returns nil if the URL doesn't match this provider.
     static func parseRemote(_ urlString: String) -> HostedRemote?
 
     /// Check if authentication is configured for this provider.
     func checkAuthStatus() -> (installed: Bool, authenticated: Bool)
+
+    /// Check whether any authentication token/credentials are available.
+    func hasToken() async -> Bool
 
     /// Fetch open pull/merge requests for a hosted remote.
     func fetchPullRequests(remote: HostedRemote) async -> [HostedPRInfo]

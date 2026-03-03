@@ -62,4 +62,8 @@ enum Constants {
         /// Standard frame for NSTextField inputs in alert dialogs
         static let alertInputFieldFrame = NSRect(x: 0, y: 0, width: 260, height: 24)
     }
+
+    /// GitHub OAuth App client ID for Device Flow authentication.
+    /// This is a public identifier (not a secret) — safe to embed in source.
+    static let gitHubOAuthClientID = "Ov23liMlw7pMjQqLHcD0"
 }

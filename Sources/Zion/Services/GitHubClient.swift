@@ -2,8 +2,18 @@ import Foundation
 
 actor GitHubClient: GitHostingProvider {
     let kind: GitHostingKind = .github
-    private var cachedToken: String?
+    private var injectedPAT: String?
+    private var cachedCLIToken: String?
     private var cachedUsername: String?
+
+    /// Inject a PAT for authentication. Called from settings when the user configures GitHub credentials.
+    func setToken(_ token: String?) {
+        let cleaned = token?.trimmingCharacters(in: .whitespacesAndNewlines)
+        injectedPAT = (cleaned?.isEmpty == true) ? nil : cleaned
+        // Clear cached CLI token so getToken() re-evaluates priority
+        cachedCLIToken = nil
+        cachedUsername = nil
+    }
 
     // MARK: - Auth
 
@@ -41,14 +51,14 @@ actor GitHubClient: GitHostingProvider {
 
     /// Parse GitHub owner/repo from a remote URL
     static func parseRemote(_ urlString: String) -> HostedRemote? {
-        // SSH: git@github.com:owner/repo.git
-        if let sshMatch = urlString.range(of: "github\\.com[:/]([^/]+)/([^/]+?)(\\.git)?$", options: .regularExpression) {
+        // SSH: git@github.com:owner/repo.git (also handles SSH aliases like github.com-personal)
+        if let sshMatch = urlString.range(of: "github\\.com[^:/]*[:/]([^/]+)/([^/]+?)(\\.git)?$", options: .regularExpression) {
             let segment = String(urlString[sshMatch])
-            let parts = segment
-                .replacingOccurrences(of: "github.com:", with: "")
-                .replacingOccurrences(of: "github.com/", with: "")
+            // Strip the host prefix (github.com or github.com-alias) and .git suffix
+            let cleaned = segment
                 .replacingOccurrences(of: ".git", with: "")
-                .split(separator: "/")
+                .replacingOccurrences(of: "github\\.com[^:/]*[:/]", with: "", options: .regularExpression)
+            let parts = cleaned.split(separator: "/")
             if parts.count >= 2 {
                 return HostedRemote(kind: .github, owner: String(parts[0]), repo: String(parts[1]))
             }
@@ -68,7 +78,11 @@ actor GitHubClient: GitHostingProvider {
     // MARK: - Token
 
     private func getToken() async -> String? {
-        if let cached = cachedToken { return cached }
+        // 1. Settings PAT takes priority
+        if let pat = injectedPAT { return pat }
+
+        // 2. Fall back to `gh auth token` CLI
+        if let cached = cachedCLIToken { return cached }
 
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
@@ -84,12 +98,19 @@ actor GitHubClient: GitHostingProvider {
                 let data = pipe.fileHandleForReading.readDataToEndOfFile()
                 let token = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
                 if let token, !token.isEmpty {
-                    cachedToken = token
+                    cachedCLIToken = token
                     return token
                 }
             }
         } catch {}
+
+        // 3. No token available
         return nil
+    }
+
+    /// Check whether any authentication is configured (PAT or `gh` CLI).
+    func hasToken() async -> Bool {
+        await getToken() != nil
     }
 
     /// Percent-encode a path segment for safe GitHub API URL interpolation.

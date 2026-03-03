@@ -37,6 +37,7 @@ extension RepositoryViewModel {
 
     // Restore persisted editor settings from UserDefaults
     func restoreEditorSettings() {
+        HostingCredentialStore.migrateFromUserDefaults()
         checkGitAvailability()
 
         let defaults = UserDefaults.standard
@@ -614,6 +615,9 @@ extension RepositoryViewModel {
             }
             if let hosted = BitbucketClient.parseRemote(remote.url) {
                 return (bitbucketClient, hosted)
+            }
+            if let hosted = AzureDevOpsClient.parseRemote(remote.url) {
+                return (azureDevOpsClient, hosted)
             }
         }
         return nil

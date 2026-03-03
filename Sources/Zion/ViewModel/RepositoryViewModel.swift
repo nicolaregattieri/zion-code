@@ -126,6 +126,7 @@ final class RepositoryViewModel {
     @ObservationIgnored let githubClient = GitHubClient()
     @ObservationIgnored let gitlabClient = GitLabClient()
     @ObservationIgnored let bitbucketClient = BitbucketClient()
+    @ObservationIgnored let azureDevOpsClient = AzureDevOpsClient()
     @ObservationIgnored var hostingProvider: (any GitHostingProvider)?
     @ObservationIgnored let ntfyClient = NtfyClient()
     @ObservationIgnored var prTask: Task<Void, Never>?

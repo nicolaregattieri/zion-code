@@ -16,6 +16,10 @@ actor GitLabClient: GitHostingProvider {
         (true, true)
     }
 
+    func hasToken() async -> Bool {
+        cachedToken != nil && !(cachedToken?.isEmpty ?? true)
+    }
+
     // MARK: - Remote Parsing
 
     static func parseRemote(_ urlString: String) -> HostedRemote? {
