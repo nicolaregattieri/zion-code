@@ -25,6 +25,7 @@ struct SessionInfo: Codable, Sendable {
     let isAlive: Bool
     let workingDirectory: String
     let repoName: String
+    let branchName: String
 }
 
 struct SessionListPayload: Codable, Sendable {

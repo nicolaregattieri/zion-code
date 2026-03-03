@@ -678,9 +678,24 @@ extension RepositoryViewModel {
 
     // MARK: - Payload Builders
 
+    /// Reads the current branch name from `.git/HEAD` without spawning a subprocess.
+    private func branchFromGitHead(at repoURL: URL) -> String {
+        let headURL = repoURL.appendingPathComponent(".git/HEAD")
+        guard let contents = try? String(contentsOf: headURL, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines) else {
+            return "-"
+        }
+        // "ref: refs/heads/branch-name" → "branch-name"
+        if contents.hasPrefix("ref: refs/heads/") {
+            return String(contents.dropFirst("ref: refs/heads/".count))
+        }
+        // Detached HEAD — return short hash
+        return String(contents.prefix(7))
+    }
+
     func buildSessionListPayload() -> SessionListPayload {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         let activeRepoName = repositoryURL?.lastPathComponent ?? ""
+        let activeBranch = currentBranch.isEmpty ? (repositoryURL.map { branchFromGitHead(at: $0) } ?? "-") : currentBranch
 
         func sanitizePath(_ path: String) -> String {
             path.hasPrefix(home) ? "~" + path.dropFirst(home.count) : path
@@ -694,13 +709,15 @@ extension RepositoryViewModel {
                 title: session.title,
                 isAlive: session.isAlive,
                 workingDirectory: sanitizePath(session.workingDirectory.path),
-                repoName: activeRepoName
+                repoName: activeRepoName,
+                branchName: activeBranch
             )
         }
 
         // Background repo sessions
         for (url, state) in backgroundRepoStates {
             let repoName = url.lastPathComponent
+            let branch = branchFromGitHead(at: url)
             let bgSessions: [SessionInfo] = state.terminalTabs.flatMap { $0.allSessions() }.map { session in
                 SessionInfo(
                     id: session.id,
@@ -708,7 +725,8 @@ extension RepositoryViewModel {
                     title: session.title,
                     isAlive: session.isAlive,
                     workingDirectory: sanitizePath(session.workingDirectory.path),
-                    repoName: repoName
+                    repoName: repoName,
+                    branchName: branch
                 )
             }
             allSessions.append(contentsOf: bgSessions)
