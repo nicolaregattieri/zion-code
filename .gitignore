@@ -40,6 +40,7 @@ DerivedData/
 *.xcworkspace/
 
 # Zion Specific
+scripts/
 dist/
 docs/RELEASE.md
 docs/NTFY-QA-CHECKLIST.md
