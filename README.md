@@ -23,7 +23,7 @@ run commands — without switching apps.
 
 <p align="center">
   <img src="docs/screenshots/hero-code.png" width="32%" alt="Zion Code — editor + terminal + clipboard" />
-  <img src="docs/screenshots/hero-graph.png" width="32%" alt="Zion Tree — visual commit graph with lane-colored cards" />
+  <img src="docs/screenshots/hero-graph.png" width="32%" alt="Zion Tree — visual commit graph with curved lane edges" />
   <img src="docs/screenshots/hero-operations.png" width="32%" alt="Operations Center — full Git dashboard" />
 </p>
 
@@ -98,7 +98,7 @@ A real code editor with syntax highlighting, Git Blame, Quick Open (`Cmd+P`), co
 Lane-colored commit cards with colored left stripes matching branch lanes, merge edges, branch decorations, commit search with `Cmd+F`, jump bar for quick branch navigation, pending changes row at the top, status bar pills showing current branch and change count, GPG/SSH signature verification, and keyboard navigation with arrow keys.
 
 <p>
-  <img src="docs/screenshots/hero-graph.png" width="100%" alt="Graph" />
+  <img src="docs/screenshots/hero-graph-isolated.png" width="100%" alt="Zion Tree — visual commit graph with curved lane edges" />
 </p>
 
 ### Smart Clipboard
@@ -154,8 +154,8 @@ When a merge, rebase, or cherry-pick hits conflicts, Zion opens a dedicated reso
 Works with Anthropic Claude, OpenAI GPT, or Google Gemini. Generate commit messages, explain diffs, draft PR descriptions, review code before committing, resolve conflicts with AI, search git history in natural language, summarize branches, explain blame entries, and suggest how to split large commits. API keys stored securely in macOS Keychain. Falls back to smart heuristics when AI is not configured.
 
 <p align="center">
-  <img src="docs/screenshots/ai-commit.png" width="49%" alt="AI-generated commit message in Zion Tree" />
-  <img src="docs/screenshots/ai-review.png" width="49%" alt="AI Code Review side pane in Zion Tree" />
+  <img src="docs/screenshots/ai-commit.png" width="49%" alt="Smart Commit — AI-generated commit message from diff" />
+  <img src="docs/screenshots/ai-review.png" width="49%" alt="Smart PR — AI-drafted pull request with code review" />
 </p>
 
 ### Git Hosting Integration
