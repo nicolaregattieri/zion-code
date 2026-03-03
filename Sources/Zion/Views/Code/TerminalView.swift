@@ -516,7 +516,7 @@ struct TerminalTabView: NSViewRepresentable {
                 """
                 let path = "\(zionBinDir)/zion_display"
                 try? script.write(toFile: path, atomically: true, encoding: .utf8)
-                try? fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: path)
+                try? fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: path)
 
                 // Shared prompt content for all AI CLI tools
                 let zionImgPrompt = """
@@ -692,7 +692,7 @@ struct TerminalTabView: NSViewRepresentable {
             """
             let setupPath = "\(zionBinDir)/zion_ai_setup"
             try? setupScript.write(toFile: setupPath, atomically: true, encoding: .utf8)
-            try? fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: setupPath)
+            try? fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: setupPath)
         }
 
         // MARK: - Auto-append Zion block to AI config files
