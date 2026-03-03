@@ -316,7 +316,7 @@ actor RepositoryWorker {
             throw GitClientError.commandFailed(command: "show", message: "Invalid commit ID: \(commitID)")
         }
         return try git.run(
-            args: ["show", "--no-color", "--name-status", "--pretty=fuller", commitID],
+            args: ["show", "--no-color", "--name-status", "--pretty=fuller", "--first-parent", commitID],
             in: repositoryURL
         ).stdout
     }
