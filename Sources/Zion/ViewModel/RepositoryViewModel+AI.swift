@@ -127,7 +127,7 @@ extension RepositoryViewModel {
         }
     }
 
-    func suggestPRDescription() async -> (title: String, body: String)? {
+    func suggestPRDescription(baseBranch: String) async -> (title: String, body: String)? {
         guard let url = repositoryURL, isAIConfigured else { return nil }
 
         isGeneratingAIMessage = true
@@ -136,18 +136,18 @@ extension RepositoryViewModel {
         do {
             logger.log(.ai, "Requesting PR description", context: aiProvider.rawValue)
             let commitLog = try await worker.runAction(
-                args: ["log", "--oneline", "main..HEAD"],
+                args: ["log", "--oneline", "\(baseBranch)..HEAD"],
                 in: url
             )
             let diffStat = try await worker.runAction(
-                args: ["diff", "--stat", "main..HEAD"],
+                args: ["diff", "--stat", "\(baseBranch)..HEAD"],
                 in: url
             )
             let result = try await aiClient.generatePRDescription(
                 commitLog: commitLog,
                 diffStat: diffStat,
                 branchName: currentBranch,
-                baseBranch: "main",
+                baseBranch: baseBranch,
                 provider: aiProvider,
                 apiKey: aiAPIKey
             )

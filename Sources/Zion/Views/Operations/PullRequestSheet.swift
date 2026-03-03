@@ -61,7 +61,7 @@ struct PullRequestSheet: View {
                                 Button {
                                     isGeneratingAI = true
                                     Task {
-                                        if let result = await model.suggestPRDescription() {
+                                        if let result = await model.suggestPRDescription(baseBranch: baseBranch) {
                                             title = result.title
                                             body_ = result.body
                                         }
