@@ -118,6 +118,18 @@ actor GitHubClient: GitHostingProvider {
         segment.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)
     }
 
+    /// Extract a human-readable error message from a GitHub API error response.
+    private static func extractAPIErrorMessage(from data: Data) -> String? {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        // Try nested errors first (e.g., "No commits between master and branch")
+        if let errors = json["errors"] as? [[String: Any]],
+           let first = errors.first,
+           let detail = first["message"] as? String {
+            return detail
+        }
+        return json["message"] as? String
+    }
+
     // MARK: - Authenticated Username
 
     private func fetchAuthenticatedUsername(token: String) async -> String? {
@@ -318,7 +330,8 @@ actor GitHubClient: GitHostingProvider {
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 201 else {
-            let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
+            let msg = Self.extractAPIErrorMessage(from: data)
+                ?? "HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0)"
             throw HostingError.apiError(msg)
         }
 
@@ -412,7 +425,8 @@ actor GitHubClient: GitHostingProvider {
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 201 else {
-            let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
+            let msg = Self.extractAPIErrorMessage(from: data)
+                ?? "HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0)"
             throw HostingError.apiError(msg)
         }
 
