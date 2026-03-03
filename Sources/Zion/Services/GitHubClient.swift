@@ -93,14 +93,25 @@ actor GitHubClient: GitHostingProvider {
 
         do {
             try process.run()
-            process.waitUntilExit()
-            if process.terminationStatus == 0 {
-                let data = pipe.fileHandleForReading.readDataToEndOfFile()
-                let token = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
-                if let token, !token.isEmpty {
-                    cachedCLIToken = token
-                    return token
+            // Run with 5s timeout to avoid hanging if gh stalls
+            let token: String? = await withCheckedContinuation { continuation in
+                DispatchQueue.global().async {
+                    let sem = DispatchSemaphore(value: 0)
+                    process.terminationHandler = { @Sendable _ in sem.signal() }
+                    let result = sem.wait(timeout: .now() + 5)
+                    if result == .success, process.terminationStatus == 0 {
+                        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                        let t = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+                        continuation.resume(returning: (t?.isEmpty == false) ? t : nil)
+                    } else {
+                        if result == .timedOut { process.terminate() }
+                        continuation.resume(returning: nil)
+                    }
                 }
+            }
+            if let token {
+                cachedCLIToken = token
+                return token
             }
         } catch {}
 
