@@ -3,11 +3,11 @@ import Speech
 
 struct VoiceInputButton: View {
     @Bindable var model: RepositoryViewModel
+    @Bindable var speechService: SpeechRecognitionService
     var accentColor: Color
     var isTerminalSearchVisible: Bool = false
     var voiceToggleRequestID: Int = 0
 
-    @State private var speechService = SpeechRecognitionService()
     @State private var isPopoverPresented = false
     @State private var permissionDenied = false
     @State private var isHovered = false

@@ -42,6 +42,7 @@ struct CodeScreen: View {
     @State private var isTerminalSearchVisible: Bool = false
     @State private var terminalSearchQuery: String = ""
     @State private var voiceToggleRequestID: Int = 0
+    @State private var speechService = SpeechRecognitionService()
     @State private var markdownPreviewRatio: CGFloat = 0.5
     @State private var isMarkdownPreviewVisible: Bool = false
     @FocusState private var isTerminalSearchFocused: Bool
@@ -1503,6 +1504,14 @@ struct CodeScreen: View {
                     .transition(DesignSystem.Motion.slideFromTop)
             }
 
+            if speechService.isActive {
+                VoiceActivePill(speechService: speechService) {
+                    voiceToggleRequestID += 1
+                }
+                .transition(DesignSystem.Motion.slideFromTop)
+                .padding(.vertical, DesignSystem.Spacing.compact)
+            }
+
             Divider()
 
             ZStack {
@@ -1703,6 +1712,7 @@ struct CodeScreen: View {
 
             VoiceInputButton(
                 model: model,
+                speechService: speechService,
                 accentColor: accentColor,
                 isTerminalSearchVisible: isTerminalSearchVisible,
                 voiceToggleRequestID: voiceToggleRequestID
