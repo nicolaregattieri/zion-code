@@ -36,6 +36,14 @@ final class GitHostingProviderTests: XCTestCase {
         XCTAssertEqual(remote?.repo, "Hello-World")
     }
 
+    func testGitHubParseSSHAlias() {
+        let remote = GitHubClient.parseRemote("git@github.com-personal:octocat/Hello-World.git")
+        XCTAssertNotNil(remote)
+        XCTAssertEqual(remote?.kind, .github)
+        XCTAssertEqual(remote?.owner, "octocat")
+        XCTAssertEqual(remote?.repo, "Hello-World")
+    }
+
     func testGitHubRejectsGitLab() {
         let remote = GitHubClient.parseRemote("https://gitlab.com/user/repo.git")
         XCTAssertNil(remote)

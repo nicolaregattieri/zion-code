@@ -36,27 +36,34 @@ final class HostingCredentialStoreTests: XCTestCase {
     }
 
     // MARK: - Keychain Save/Load/Delete Cycle
+    // These tests use .azureDevOpsPAT to avoid clobbering real credentials.
 
     func testSaveAndLoadSecret() {
-        let key = HostingCredentialStore.CredentialKey.githubPAT
-        let testSecret = "ghp_test_secret_\(UUID().uuidString)"
+        let key = HostingCredentialStore.CredentialKey.azureDevOpsPAT
+        let original = HostingCredentialStore.loadSecret(for: key)
+        defer {
+            if let original { HostingCredentialStore.saveSecret(original, for: key) }
+            else { HostingCredentialStore.deleteSecret(for: key) }
+        }
 
-        // Save
+        let testSecret = "test_secret_\(UUID().uuidString)"
         HostingCredentialStore.saveSecret(testSecret, for: key)
 
-        // Load
         let loaded = HostingCredentialStore.loadSecret(for: key)
         XCTAssertEqual(loaded, testSecret)
 
-        // Cleanup
         HostingCredentialStore.deleteSecret(for: key)
         XCTAssertNil(HostingCredentialStore.loadSecret(for: key))
     }
 
     func testSaveEmptyStringDeletesSecret() {
-        let key = HostingCredentialStore.CredentialKey.gitlabPAT
+        let key = HostingCredentialStore.CredentialKey.azureDevOpsPAT
+        let original = HostingCredentialStore.loadSecret(for: key)
+        defer {
+            if let original { HostingCredentialStore.saveSecret(original, for: key) }
+            else { HostingCredentialStore.deleteSecret(for: key) }
+        }
 
-        // First save something
         HostingCredentialStore.saveSecret("some-token", for: key)
         XCTAssertNotNil(HostingCredentialStore.loadSecret(for: key))
 
@@ -66,77 +73,103 @@ final class HostingCredentialStoreTests: XCTestCase {
     }
 
     func testDeleteNonexistentKeyDoesNotCrash() {
-        // Should be a no-op
-        HostingCredentialStore.deleteSecret(for: .azureDevOpsPAT)
-        XCTAssertNil(HostingCredentialStore.loadSecret(for: .azureDevOpsPAT))
+        let key = HostingCredentialStore.CredentialKey.azureDevOpsPAT
+        let original = HostingCredentialStore.loadSecret(for: key)
+        defer {
+            if let original { HostingCredentialStore.saveSecret(original, for: key) }
+        }
+
+        HostingCredentialStore.deleteSecret(for: key)
+        XCTAssertNil(HostingCredentialStore.loadSecret(for: key))
     }
 
     func testOverwriteExistingSecret() {
-        let key = HostingCredentialStore.CredentialKey.bitbucketAppPassword
+        let key = HostingCredentialStore.CredentialKey.azureDevOpsPAT
+        let original = HostingCredentialStore.loadSecret(for: key)
+        defer {
+            if let original { HostingCredentialStore.saveSecret(original, for: key) }
+            else { HostingCredentialStore.deleteSecret(for: key) }
+        }
 
         HostingCredentialStore.saveSecret("first-secret", for: key)
         XCTAssertEqual(HostingCredentialStore.loadSecret(for: key), "first-secret")
 
         HostingCredentialStore.saveSecret("second-secret", for: key)
         XCTAssertEqual(HostingCredentialStore.loadSecret(for: key), "second-secret")
-
-        // Cleanup
-        HostingCredentialStore.deleteSecret(for: key)
     }
 
     // MARK: - Migration
 
+    /// Save and restore real Keychain entries around migration tests so we don't destroy user credentials.
+    private func withSavedCredentials(keys: [HostingCredentialStore.CredentialKey], body: () -> Void) {
+        // Snapshot existing values
+        var saved: [HostingCredentialStore.CredentialKey: String] = [:]
+        for key in keys {
+            if let value = HostingCredentialStore.loadSecret(for: key) {
+                saved[key] = value
+            }
+        }
+
+        body()
+
+        // Restore original values
+        for key in keys {
+            if let original = saved[key] {
+                HostingCredentialStore.saveSecret(original, for: key)
+            } else {
+                HostingCredentialStore.deleteSecret(for: key)
+            }
+        }
+    }
+
     func testMigrateFromUserDefaults() {
         let defaults = UserDefaults.standard
+        let keys: [HostingCredentialStore.CredentialKey] = [.githubPAT, .gitlabPAT, .bitbucketAppPassword]
 
-        // Setup: write legacy keys
-        defaults.set("legacy-github-pat", forKey: "zion.github.pat")
-        defaults.set("legacy-gitlab-pat", forKey: "zion.gitlab.pat")
-        defaults.set("legacy-bb-pass", forKey: "zion.bitbucket.appPassword")
+        withSavedCredentials(keys: keys) {
+            // Setup: write legacy keys
+            defaults.set("legacy-github-pat", forKey: "zion.github.pat")
+            defaults.set("legacy-gitlab-pat", forKey: "zion.gitlab.pat")
+            defaults.set("legacy-bb-pass", forKey: "zion.bitbucket.appPassword")
 
-        // Clear Keychain to ensure migration
-        HostingCredentialStore.deleteSecret(for: .githubPAT)
-        HostingCredentialStore.deleteSecret(for: .gitlabPAT)
-        HostingCredentialStore.deleteSecret(for: .bitbucketAppPassword)
+            // Clear Keychain to ensure migration
+            HostingCredentialStore.deleteSecret(for: .githubPAT)
+            HostingCredentialStore.deleteSecret(for: .gitlabPAT)
+            HostingCredentialStore.deleteSecret(for: .bitbucketAppPassword)
 
-        // Migrate
-        HostingCredentialStore.migrateFromUserDefaults()
+            // Migrate
+            HostingCredentialStore.migrateFromUserDefaults()
 
-        // Verify Keychain has the values
-        XCTAssertEqual(HostingCredentialStore.loadSecret(for: .githubPAT), "legacy-github-pat")
-        XCTAssertEqual(HostingCredentialStore.loadSecret(for: .gitlabPAT), "legacy-gitlab-pat")
-        XCTAssertEqual(HostingCredentialStore.loadSecret(for: .bitbucketAppPassword), "legacy-bb-pass")
+            // Verify Keychain has the values
+            XCTAssertEqual(HostingCredentialStore.loadSecret(for: .githubPAT), "legacy-github-pat")
+            XCTAssertEqual(HostingCredentialStore.loadSecret(for: .gitlabPAT), "legacy-gitlab-pat")
+            XCTAssertEqual(HostingCredentialStore.loadSecret(for: .bitbucketAppPassword), "legacy-bb-pass")
 
-        // Verify UserDefaults are cleaned up
-        XCTAssertNil(defaults.string(forKey: "zion.github.pat"))
-        XCTAssertNil(defaults.string(forKey: "zion.gitlab.pat"))
-        XCTAssertNil(defaults.string(forKey: "zion.bitbucket.appPassword"))
-
-        // Cleanup Keychain
-        HostingCredentialStore.deleteSecret(for: .githubPAT)
-        HostingCredentialStore.deleteSecret(for: .gitlabPAT)
-        HostingCredentialStore.deleteSecret(for: .bitbucketAppPassword)
+            // Verify UserDefaults are cleaned up
+            XCTAssertNil(defaults.string(forKey: "zion.github.pat"))
+            XCTAssertNil(defaults.string(forKey: "zion.gitlab.pat"))
+            XCTAssertNil(defaults.string(forKey: "zion.bitbucket.appPassword"))
+        }
     }
 
     func testMigrateDoesNotOverwriteExistingKeychainEntry() {
         let defaults = UserDefaults.standard
 
-        // Pre-existing Keychain entry
-        HostingCredentialStore.saveSecret("keychain-value", for: .githubPAT)
+        withSavedCredentials(keys: [.githubPAT]) {
+            // Pre-existing Keychain entry
+            HostingCredentialStore.saveSecret("keychain-value", for: .githubPAT)
 
-        // Legacy UD entry
-        defaults.set("legacy-value", forKey: "zion.github.pat")
+            // Legacy UD entry
+            defaults.set("legacy-value", forKey: "zion.github.pat")
 
-        // Migrate
-        HostingCredentialStore.migrateFromUserDefaults()
+            // Migrate
+            HostingCredentialStore.migrateFromUserDefaults()
 
-        // Keychain should keep its value
-        XCTAssertEqual(HostingCredentialStore.loadSecret(for: .githubPAT), "keychain-value")
+            // Keychain should keep its value
+            XCTAssertEqual(HostingCredentialStore.loadSecret(for: .githubPAT), "keychain-value")
 
-        // But UD should still be cleaned up
-        XCTAssertNil(defaults.string(forKey: "zion.github.pat"))
-
-        // Cleanup
-        HostingCredentialStore.deleteSecret(for: .githubPAT)
+            // But UD should still be cleaned up
+            XCTAssertNil(defaults.string(forKey: "zion.github.pat"))
+        }
     }
 }
