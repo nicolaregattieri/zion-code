@@ -505,7 +505,7 @@ function updateHeaderContext() {
   if (!activeSession) { ctx.textContent = 'No session'; return; }
   const s = sessions.find(s => s.id === activeSession);
   if (s) {
-    const label = s.label || s.title || 'Terminal';
+    const label = s.branchName || s.label || s.title || 'Terminal';
     const repo = s.repoName || '';
     ctx.textContent = repo ? repo + ' \u2022 ' + label : label;
   }
@@ -553,7 +553,7 @@ function renderDrawerList() {
 
       const label = document.createElement('span');
       label.className = 'drawer-session-label';
-      label.textContent = s.label || s.title || 'Terminal';
+      label.textContent = s.branchName || s.label || s.title || 'Terminal';
       item.appendChild(label);
       item.onclick = () => { selectSession(s.id, true); closeDrawer(); };
       group.appendChild(item);
