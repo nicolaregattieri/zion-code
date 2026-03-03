@@ -1755,6 +1755,18 @@
 "map.ai.slashcommands.description" = "Auto-installed /zion-img command for Claude Code, Gemini CLI, and Codex CLI. Displays inline images and generates SVGs in the terminal.";
 "map.ai.slashcommands.tip1" = "Enable AI Inline Images in Settings to auto-install commands on terminal start.";
 
+// Voice-to-text — 1.6.0
+"speech.button.tooltip" = "Voice Input";
+"speech.listening" = "Listening...";
+"speech.language" = "Language";
+"speech.engine" = "Engine";
+"speech.engine.apple" = "Apple Speech (Free)";
+"speech.engine.whisper" = "OpenAI Whisper";
+"speech.send" = "Send to Terminal";
+"speech.permission.denied" = "Microphone or speech recognition access denied. Enable in System Settings > Privacy & Security.";
+"speech.error.unavailable" = "Speech recognition is not available for the selected language.";
+"settings.speech.engine.hint" = "Apple Speech is free and real-time. Whisper requires an OpenAI API key (configured in AI settings).";
+
 // Git Bisect
 "bisect.contextMenu.markBad" = "Find Bug with Bisect";
 "bisect.contextMenu.markGood" = "This Commit Worked";

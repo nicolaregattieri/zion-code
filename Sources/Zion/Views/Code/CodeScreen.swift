@@ -41,6 +41,8 @@ struct CodeScreen: View {
     @State private var goToLineRequestID: Int = 0
     @State private var isTerminalSearchVisible: Bool = false
     @State private var terminalSearchQuery: String = ""
+    @State private var voiceToggleRequestID: Int = 0
+    @State private var speechService = SpeechRecognitionService()
     @State private var markdownPreviewRatio: CGFloat = 0.5
     @State private var isMarkdownPreviewVisible: Bool = false
     @FocusState private var isTerminalSearchFocused: Bool
@@ -1502,6 +1504,14 @@ struct CodeScreen: View {
                     .transition(DesignSystem.Motion.slideFromTop)
             }
 
+            if speechService.isActive {
+                VoiceActivePill(speechService: speechService) {
+                    voiceToggleRequestID += 1
+                }
+                .transition(DesignSystem.Motion.slideFromTop)
+                .padding(.vertical, DesignSystem.Spacing.compact)
+            }
+
             Divider()
 
             ZStack {
@@ -1603,6 +1613,11 @@ struct CodeScreen: View {
             Button("") { closeTerminalSearch() }
                 .keyboardShortcut(.escape, modifiers: [])
                 .frame(width: 0, height: 0).opacity(0)
+
+            // Voice input toggle (⌘⌥X)
+            Button("") { voiceToggleRequestID += 1 }
+                .keyboardShortcut("x", modifiers: [.command, .option])
+                .frame(width: 0, height: 0).opacity(0)
         }
     }
 
@@ -1693,7 +1708,16 @@ struct CodeScreen: View {
                 let label = model.currentBranch.isEmpty ? "zsh" : model.currentBranch
                 model.createTerminalSession(workingDirectory: url, label: label)
             }
-            .padding(.trailing, 8)
+            .padding(.trailing, DesignSystem.Spacing.toolbarTrailing)
+
+            VoiceInputButton(
+                model: model,
+                speechService: speechService,
+                accentColor: accentColor,
+                isTerminalSearchVisible: isTerminalSearchVisible,
+                voiceToggleRequestID: voiceToggleRequestID
+            )
+            .padding(.trailing, DesignSystem.Spacing.toolbarTrailing)
 
             ClipboardPopoverButton(model: model, accentColor: accentColor)
                 .padding(.trailing, DesignSystem.Spacing.toolbarTrailing)

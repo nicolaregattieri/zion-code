@@ -56,6 +56,7 @@ struct KeyboardShortcutsSheet: View {
                         (L10n("Dividir horizontalmente"), "⇧⌘E"),
                         (L10n("Fechar painel dividido"), "⇧⌘W"),
                         (L10n("shortcuts.terminalSearch"), "⌘F"),
+                        (L10n("speech.button.tooltip"), "⌥⌘X"),
                         (L10n("Zoom in"), "⌃+"),
                         (L10n("Zoom out"), "⌃-"),
                     ])

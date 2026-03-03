@@ -1,3 +1,4 @@
+import Speech
 import SwiftUI
 
 struct TerminalSettingsTab: View {
@@ -8,6 +9,8 @@ struct TerminalSettingsTab: View {
     @AppStorage("terminal.copyOnSelect") private var copyOnSelect: Bool = false
     @AppStorage("terminal.aiImageDisplay") private var aiImageDisplay: Bool = false
     @AppStorage("terminal.autoAppendAIConfig") private var autoAppendAIConfig: Bool = false
+    @AppStorage("speech.engine") private var speechEngine: String = "apple"
+    @AppStorage("speech.locale") private var speechLocale: String = Locale.current.identifier
 
     var body: some View {
         Form {
@@ -63,6 +66,26 @@ struct TerminalSettingsTab: View {
                     .foregroundStyle(.secondary)
             } header: {
                 Text(L10n("settings.terminal.advanced"))
+            }
+
+            Section {
+                Picker(L10n("speech.engine"), selection: $speechEngine) {
+                    Text(L10n("speech.engine.apple")).tag("apple")
+                    Text(L10n("speech.engine.whisper")).tag("whisper")
+                }
+
+                Text(L10n("settings.speech.engine.hint"))
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(.secondary)
+
+                Picker(L10n("speech.language"), selection: $speechLocale) {
+                    ForEach(SFSpeechRecognizer.supportedLocales().sorted(by: { $0.identifier < $1.identifier }), id: \.identifier) { locale in
+                        Text(locale.localizedString(forIdentifier: locale.identifier) ?? locale.identifier)
+                            .tag(locale.identifier)
+                    }
+                }
+            } header: {
+                Text(L10n("speech.button.tooltip"))
             }
 
             Section {
