@@ -1754,3 +1754,14 @@
 "map.ai.slashcommands.title" = "Comandos Slash para IA";
 "map.ai.slashcommands.description" = "Comando /zion-img instalado automaticamente para Claude Code, Gemini CLI e Codex CLI. Exibe imagens inline e gera SVGs no terminal.";
 "map.ai.slashcommands.tip1" = "Ative Imagens Inline de IA em Configurações para instalar comandos automaticamente ao iniciar o terminal.";
+
+// Voice-to-text — 1.6.0
+"speech.button.tooltip" = "Entrada de Voz";
+"speech.listening" = "Ouvindo...";
+"speech.language" = "Idioma";
+"speech.engine" = "Motor";
+"speech.engine.apple" = "Apple Speech (Grátis)";
+"speech.engine.whisper" = "OpenAI Whisper";
+"speech.send" = "Enviar para o Terminal";
+"speech.permission.denied" = "Acesso ao microfone ou reconhecimento de fala negado. Ative em Ajustes do Sistema > Privacidade e Segurança.";
+"speech.error.unavailable" = "O reconhecimento de fala não está disponível para o idioma selecionado.";

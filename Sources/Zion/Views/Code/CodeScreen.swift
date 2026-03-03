@@ -1695,6 +1695,13 @@ struct CodeScreen: View {
             }
             .padding(.trailing, 8)
 
+            VoiceInputButton(
+                model: model,
+                accentColor: accentColor,
+                isTerminalSearchVisible: isTerminalSearchVisible
+            )
+            .padding(.trailing, 4)
+
             ClipboardPopoverButton(model: model, accentColor: accentColor)
                 .padding(.trailing, DesignSystem.Spacing.toolbarTrailing)
 
