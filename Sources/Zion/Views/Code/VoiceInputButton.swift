@@ -5,10 +5,12 @@ struct VoiceInputButton: View {
     @Bindable var model: RepositoryViewModel
     var accentColor: Color
     var isTerminalSearchVisible: Bool = false
+    var voiceToggleRequestID: Int = 0
 
     @State private var speechService = SpeechRecognitionService()
     @State private var isPopoverPresented = false
     @State private var permissionDenied = false
+    @State private var isHovered = false
 
     var body: some View {
         Button {
@@ -31,6 +33,9 @@ struct VoiceInputButton: View {
                 }
         }
         .buttonStyle(.plain)
+        .background(isHovered ? DesignSystem.Interactive.hoverBackground : Color.clear)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius))
+        .onHover { h in isHovered = h }
         .help(L10n("speech.button.tooltip"))
         .accessibilityLabel(L10n("speech.button.tooltip"))
         .popover(isPresented: $isPopoverPresented) {
@@ -39,6 +44,9 @@ struct VoiceInputButton: View {
         }
         .onLongPressGesture(minimumDuration: 0.5) {
             isPopoverPresented = true
+        }
+        .onChange(of: voiceToggleRequestID) {
+            handleTap()
         }
     }
 
@@ -113,16 +121,24 @@ struct VoiceInputButton: View {
     }
 
     private func startRecognition() {
+        let logger = DiagnosticLogger.shared
         Task {
+            logger.log(.info, "handleTap → startRecognition: requesting permission…", context: "Speech")
             let authorized = await speechService.requestPermission()
             guard authorized else {
+                logger.log(.warn, "Permission denied", context: "Speech")
                 permissionDenied = true
                 return
             }
             permissionDenied = false
 
+            // Give audio hardware time to initialize after first permission grant
+            logger.log(.info, "Permission granted, waiting 300ms for audio hardware…", context: "Speech")
+            try? await Task.sleep(for: .milliseconds(300))
+
             // Capture the current terminal session ID at START time
             let sessionID = model.activeTerminalID
+            logger.log(.info, "Starting engine=\(speechService.selectedEngine.rawValue)…", context: "Speech")
 
             switch speechService.selectedEngine {
             case .apple:
@@ -132,6 +148,21 @@ struct VoiceInputButton: View {
                 )
             case .whisper:
                 speechService.startRecording(targetSessionID: sessionID)
+            }
+
+            // If engine didn't start (format not ready), retry once
+            if !speechService.isActive {
+                logger.log(.warn, "Engine didn't start, retrying in 500ms…", context: "Speech")
+                try? await Task.sleep(for: .milliseconds(500))
+                switch speechService.selectedEngine {
+                case .apple:
+                    speechService.startListening(
+                        locale: speechService.selectedLocale,
+                        targetSessionID: sessionID
+                    )
+                case .whisper:
+                    speechService.startRecording(targetSessionID: sessionID)
+                }
             }
         }
     }

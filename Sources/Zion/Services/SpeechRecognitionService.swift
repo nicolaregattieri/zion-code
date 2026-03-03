@@ -36,8 +36,15 @@ final class SpeechRecognitionService {
     /// The terminal session ID captured at recording start (not at send time).
     private(set) var targetSessionID: UUID?
 
-    var selectedEngine: Engine = .apple
-    var selectedLocale: Locale = .current
+    var selectedEngine: Engine {
+        get { Engine(rawValue: UserDefaults.standard.string(forKey: "speech.engine") ?? Engine.apple.rawValue) ?? .apple }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: "speech.engine") }
+    }
+
+    var selectedLocale: Locale {
+        get { Locale(identifier: UserDefaults.standard.string(forKey: "speech.locale") ?? Locale.current.identifier) }
+        set { UserDefaults.standard.set(newValue.identifier, forKey: "speech.locale") }
+    }
 
     /// Whether an OpenAI key is configured (determines if Whisper option shows).
     var isWhisperAvailable: Bool {
@@ -50,6 +57,7 @@ final class SpeechRecognitionService {
 
     // MARK: - Private
 
+    @ObservationIgnored private let logger = DiagnosticLogger.shared
     @ObservationIgnored private var audioEngine: AVAudioEngine?
     @ObservationIgnored private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     @ObservationIgnored private var recognitionTask: SFSpeechRecognitionTask?
@@ -65,13 +73,9 @@ final class SpeechRecognitionService {
 
     func requestPermission() async -> Bool {
         state = .requesting
-        let speechAuthorized = await withCheckedContinuation { continuation in
-            SFSpeechRecognizer.requestAuthorization { status in
-                DispatchQueue.main.async {
-                    continuation.resume(returning: status == .authorized)
-                }
-            }
-        }
+        logger.log(.info, "Requesting speech authorization…", context: "Speech")
+        let speechAuthorized = await Self.requestSpeechAuthorization()
+        logger.log(.info, "Speech authorization: \(speechAuthorized)", context: "Speech")
 
         guard speechAuthorized else {
             state = .idle
@@ -80,26 +84,41 @@ final class SpeechRecognitionService {
 
         let micAuthorized: Bool
         if #available(macOS 14.0, *) {
+            logger.log(.info, "Requesting mic permission (macOS 14+)…", context: "Speech")
             micAuthorized = await AVAudioApplication.requestRecordPermission()
         } else {
             micAuthorized = true // Pre-14, mic permission prompt triggers on first use
         }
+        logger.log(.info, "Mic authorization: \(micAuthorized)", context: "Speech")
 
-        if !micAuthorized {
-            state = .idle
-        }
+        state = .idle
         return speechAuthorized && micAuthorized
     }
 
+    /// Isolated from @MainActor so the TCC callback doesn't inherit actor context.
+    private nonisolated static func requestSpeechAuthorization() async -> Bool {
+        await withCheckedContinuation { continuation in
+            SFSpeechRecognizer.requestAuthorization { status in
+                continuation.resume(returning: status == .authorized)
+            }
+        }
+    }
+
     func startListening(locale: Locale, targetSessionID: UUID?) {
-        guard state == .idle else { return }
+        guard state == .idle else {
+            logger.log(.warn, "startListening: state is \(state), expected .idle — skipping", context: "Speech")
+            return
+        }
         self.targetSessionID = targetSessionID
 
+        logger.log(.info, "Creating SFSpeechRecognizer for locale \(locale.identifier)…", context: "Speech")
         guard let recognizer = SFSpeechRecognizer(locale: locale), recognizer.isAvailable else {
+            logger.log(.error, "SFSpeechRecognizer unavailable for locale \(locale.identifier)", context: "Speech")
             state = .idle
             return
         }
 
+        logger.log(.info, "Creating AVAudioEngine…", context: "Speech")
         let engine = AVAudioEngine()
         let request = SFSpeechAudioBufferRecognitionRequest()
         request.shouldReportPartialResults = true
@@ -108,19 +127,30 @@ final class SpeechRecognitionService {
         self.recognitionRequest = request
         self.currentTranscript = ""
 
+        logger.log(.info, "Accessing inputNode…", context: "Speech")
         let inputNode = engine.inputNode
         let recordingFormat = inputNode.outputFormat(forBus: 0)
+        logger.log(.info, "Format: channels=\(recordingFormat.channelCount), sampleRate=\(recordingFormat.sampleRate)", context: "Speech")
 
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak request] buffer, _ in
-            request?.append(buffer)
+        // Audio hardware may not be ready right after first permission grant
+        guard recordingFormat.channelCount > 0, recordingFormat.sampleRate > 0 else {
+            logger.log(.error, "Invalid audio format — hardware not ready", context: "Speech")
+            cleanup()
+            return
         }
 
+        logger.log(.info, "Installing tap…", context: "Speech")
+        Self.installSpeechTap(on: inputNode, format: recordingFormat, request: request)
+
+        logger.log(.info, "Starting engine…", context: "Speech")
         engine.prepare()
 
         do {
             try engine.start()
             state = .listening
+            logger.log(.info, "Listening started", context: "Speech")
         } catch {
+            logger.log(.error, "Engine start failed: \(error.localizedDescription)", context: "Speech")
             cleanup()
             return
         }
@@ -134,6 +164,7 @@ final class SpeechRecognitionService {
                         self.cleanup()
                     }
                 } else if error != nil {
+                    self.logger.log(.error, "Recognition error: \(error!.localizedDescription)", context: "Speech")
                     self.cleanup()
                 }
             }
@@ -153,29 +184,48 @@ final class SpeechRecognitionService {
     // MARK: - Whisper
 
     func startRecording(targetSessionID: UUID?) {
-        guard state == .idle else { return }
+        guard state == .idle else {
+            logger.log(.warn, "startRecording: state is \(state), expected .idle — skipping", context: "Speech")
+            return
+        }
         self.targetSessionID = targetSessionID
 
+        logger.log(.info, "Creating AVAudioEngine for Whisper recording…", context: "Speech")
         let engine = AVAudioEngine()
         self.audioEngine = engine
         self.audioBufferFrames = []
         self.currentTranscript = ""
 
+        logger.log(.info, "Accessing inputNode (Whisper)…", context: "Speech")
         let inputNode = engine.inputNode
         let recordingFormat = inputNode.outputFormat(forBus: 0)
+        logger.log(.info, "Format: channels=\(recordingFormat.channelCount), sampleRate=\(recordingFormat.sampleRate)", context: "Speech")
 
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self] buffer, _ in
+        // Audio hardware may not be ready right after first permission grant
+        guard recordingFormat.channelCount > 0, recordingFormat.sampleRate > 0 else {
+            logger.log(.error, "Invalid audio format — hardware not ready (Whisper)", context: "Speech")
+            cleanup()
+            return
+        }
+
+        logger.log(.info, "Installing tap (Whisper)…", context: "Speech")
+        Self.installRecordingTap(on: inputNode, format: recordingFormat) { [weak self] buffer in
+            // Wrap buffer to cross isolation boundary — safe because we only read it on MainActor
+            let wrapped = UncheckedSendableBox(buffer)
             Task { @MainActor in
-                self?.audioBufferFrames.append(buffer)
+                self?.audioBufferFrames.append(wrapped.value)
             }
         }
 
+        logger.log(.info, "Starting engine (Whisper)…", context: "Speech")
         engine.prepare()
 
         do {
             try engine.start()
             state = .recording
+            logger.log(.info, "Recording started", context: "Speech")
         } catch {
+            logger.log(.error, "Engine start failed (Whisper): \(error.localizedDescription)", context: "Speech")
             cleanup()
         }
     }
@@ -216,6 +266,31 @@ final class SpeechRecognitionService {
             Task { _ = await stopAndTranscribe() }
         default:
             break
+        }
+    }
+
+    // MARK: - Audio Tap Helpers (nonisolated to avoid MainActor assertion on realtime thread)
+
+    /// Must be nonisolated so the tap closure doesn't inherit @MainActor isolation.
+    /// The audio engine calls this closure on its realtime thread — NOT the main thread.
+    private nonisolated static func installSpeechTap(
+        on node: AVAudioInputNode,
+        format: AVAudioFormat,
+        request: SFSpeechAudioBufferRecognitionRequest
+    ) {
+        node.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak request] buffer, _ in
+            request?.append(buffer)
+        }
+    }
+
+    /// Must be nonisolated so the tap closure doesn't inherit @MainActor isolation.
+    private nonisolated static func installRecordingTap(
+        on node: AVAudioInputNode,
+        format: AVAudioFormat,
+        handler: @Sendable @escaping (AVAudioPCMBuffer) -> Void
+    ) {
+        node.installTap(onBus: 0, bufferSize: 1024, format: format) { buffer, _ in
+            handler(buffer)
         }
     }
 
@@ -313,6 +388,15 @@ final class SpeechRecognitionService {
 
         return ""
     }
+}
+
+// MARK: - Sendable Wrapper
+
+/// Wraps a non-Sendable value for transfer across isolation boundaries.
+/// Caller must ensure the value is not accessed concurrently.
+private struct UncheckedSendableBox<T>: @unchecked Sendable {
+    let value: T
+    init(_ value: T) { self.value = value }
 }
 
 // MARK: - Helpers

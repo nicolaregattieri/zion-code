@@ -1765,3 +1765,4 @@
 "speech.send" = "Send to Terminal";
 "speech.permission.denied" = "Microphone or speech recognition access denied. Enable in System Settings > Privacy & Security.";
 "speech.error.unavailable" = "Speech recognition is not available for the selected language.";
+"settings.speech.engine.hint" = "Apple Speech is free and real-time. Whisper requires an OpenAI API key (configured in AI settings).";

@@ -1765,3 +1765,4 @@
 "speech.send" = "Enviar para o Terminal";
 "speech.permission.denied" = "Acesso ao microfone ou reconhecimento de fala negado. Ative em Ajustes do Sistema > Privacidade e Segurança.";
 "speech.error.unavailable" = "O reconhecimento de fala não está disponível para o idioma selecionado.";
+"settings.speech.engine.hint" = "Apple Speech é gratuito e em tempo real. Whisper requer uma chave de API OpenAI (configurada nas configurações de IA).";
