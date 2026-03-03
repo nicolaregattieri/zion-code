@@ -1551,6 +1551,7 @@
 "hosting.noToken" = "No authentication token found.";
 "hosting.tokenPlaceholder" = "Paste your token here...";
 "hosting.saveAndCreate" = "Save & Create PR";
+"hosting.branchNotPushed" = "Push \"%@\" to the remote before creating a pull request.";
 "hosting.notSupported" = "This action is not supported by the current provider.";
 "settings.hosting.title" = "Git Hosting";
 "settings.hosting.github" = "GitHub";
