@@ -67,7 +67,9 @@ final class SpeechRecognitionService {
         state = .requesting
         let speechAuthorized = await withCheckedContinuation { continuation in
             SFSpeechRecognizer.requestAuthorization { status in
-                continuation.resume(returning: status == .authorized)
+                DispatchQueue.main.async {
+                    continuation.resume(returning: status == .authorized)
+                }
             }
         }
 
