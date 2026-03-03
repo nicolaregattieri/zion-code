@@ -806,6 +806,12 @@ struct CodeScreen: View {
                 .onMoveCommand { direction in
                     let flatFiles = model.visibleFlatFiles()
                     guard !flatFiles.isEmpty else { return }
+                    // Sync index with the actual selection when out of sync
+                    if let clickedID = model.lastClickedFileID,
+                       (selectedBrowserIndex < 0 || selectedBrowserIndex >= flatFiles.count || flatFiles[selectedBrowserIndex].id != clickedID),
+                       let idx = flatFiles.firstIndex(where: { $0.id == clickedID }) {
+                        selectedBrowserIndex = idx
+                    }
                     let isShift = NSApp.currentEvent?.modifierFlags.contains(.shift) == true
                     switch direction {
                     case .up:
@@ -860,6 +866,16 @@ struct CodeScreen: View {
                 }
                 model.findInFilesScopeRequest = nil
             }
+        }
+        .onChange(of: model.repositoryURL) { _, _ in
+            sidebarMode = .fileTree
+            findInFilesQuery = ""
+            findInFilesInclude = ""
+            findInFilesExclude = ""
+            findInFilesResults = []
+            isFindInFilesSearching = false
+            findInFilesScopePath = nil
+            selectedBrowserIndex = -1
         }
         .background(DesignSystem.Colors.background.opacity(0.3))
         .contextMenu {
