@@ -308,13 +308,14 @@ extension RepositoryViewModel {
                 }
                 remotes = payload.remotes
 
-                // Wire hosting credentials from Settings → clients
-                await githubClient.setToken(UserDefaults.standard.string(forKey: "zion.github.pat"))
-                await gitlabClient.setToken(UserDefaults.standard.string(forKey: "zion.gitlab.pat"))
+                // Wire hosting credentials from Keychain → clients
+                await githubClient.setToken(HostingCredentialStore.loadSecret(for: .githubPAT))
+                await gitlabClient.setToken(HostingCredentialStore.loadSecret(for: .gitlabPAT))
                 await bitbucketClient.setCredentials(
                     username: UserDefaults.standard.string(forKey: "zion.bitbucket.username") ?? "",
-                    appPassword: UserDefaults.standard.string(forKey: "zion.bitbucket.appPassword") ?? ""
+                    appPassword: HostingCredentialStore.loadSecret(for: .bitbucketAppPassword) ?? ""
                 )
+                await azureDevOpsClient.setToken(HostingCredentialStore.loadSecret(for: .azureDevOpsPAT))
 
                 commits = payload.commits
                 hasMoreCommits = payload.hasMoreCommits

@@ -5,6 +5,7 @@ enum GitHostingKind: String, Sendable, CaseIterable, Identifiable {
     case github
     case gitlab
     case bitbucket
+    case azureDevOps
 
     var id: String { rawValue }
 
@@ -13,6 +14,7 @@ enum GitHostingKind: String, Sendable, CaseIterable, Identifiable {
         case .github: return L10n("hosting.provider.github")
         case .gitlab: return L10n("hosting.provider.gitlab")
         case .bitbucket: return L10n("hosting.provider.bitbucket")
+        case .azureDevOps: return L10n("hosting.provider.azureDevOps")
         }
     }
 
@@ -21,6 +23,7 @@ enum GitHostingKind: String, Sendable, CaseIterable, Identifiable {
         case .github: return "arrow.triangle.branch"
         case .gitlab: return "arrow.triangle.branch"
         case .bitbucket: return "arrow.triangle.branch"
+        case .azureDevOps: return "arrow.triangle.branch"
         }
     }
 }

@@ -1547,7 +1547,7 @@
 "hosting.github.hint" = "Or use `gh auth login` from the terminal.";
 "hosting.notConnected" = "No hosting provider detected.";
 "hosting.noRemotes" = "No git remotes configured.";
-"hosting.noProviderMatch" = "Could not detect GitHub, GitLab, or Bitbucket from your remotes.";
+"hosting.noProviderMatch" = "Could not detect GitHub, GitLab, Bitbucket, or Azure DevOps from your remotes.";
 "hosting.noToken" = "No authentication token found.";
 "hosting.tokenPlaceholder" = "Paste your token here...";
 "hosting.saveAndCreate" = "Save & Create PR";
@@ -1556,6 +1556,18 @@
 "settings.hosting.github" = "GitHub";
 "settings.hosting.gitlab" = "GitLab";
 "settings.hosting.bitbucket" = "Bitbucket";
+"settings.hosting.azureDevOps" = "Azure DevOps";
+"hosting.provider.azureDevOps" = "Azure DevOps";
+"hosting.azure.pat" = "Personal Access Token";
+"hosting.azure.hint" = "Create a PAT with Code (Read & Write) scope.";
+"hosting.generateToken" = "Generate Token";
+"hosting.github.signIn" = "Sign in with GitHub";
+"hosting.github.enterCode" = "Enter this code on GitHub:";
+"hosting.github.openGitHub" = "Open GitHub";
+"hosting.github.waitingAuth" = "Waiting for authorization...";
+"hosting.github.authSuccess" = "Authenticated as %@";
+"hosting.github.authExpired" = "Authorization expired. Try again.";
+"hosting.github.authError" = "Authentication failed.";
 
 // MARK: - PR Comments & Reviews
 "pr.comment.reply" = "Reply";

@@ -148,10 +148,82 @@ final class GitHostingProviderTests: XCTestCase {
         XCTAssertFalse(GitHostingKind.github.label.isEmpty)
         XCTAssertFalse(GitHostingKind.gitlab.label.isEmpty)
         XCTAssertFalse(GitHostingKind.bitbucket.label.isEmpty)
+        XCTAssertFalse(GitHostingKind.azureDevOps.label.isEmpty)
     }
 
     func testGitHostingKindCaseIterable() {
-        XCTAssertEqual(GitHostingKind.allCases.count, 3)
+        XCTAssertEqual(GitHostingKind.allCases.count, 4)
+    }
+
+    // MARK: - Azure DevOps Remote Parsing
+
+    func testADOParseHTTPSDevAzureCom() {
+        let remote = AzureDevOpsClient.parseRemote("https://dev.azure.com/myorg/myproject/_git/myrepo")
+        XCTAssertNotNil(remote)
+        XCTAssertEqual(remote?.kind, .azureDevOps)
+        XCTAssertEqual(remote?.owner, "myorg")
+        XCTAssertEqual(remote?.repo, "myrepo")
+        XCTAssertEqual(remote?.project, "myproject")
+        XCTAssertEqual(remote?.host, "dev.azure.com")
+    }
+
+    func testADOParseHTTPSVisualStudioCom() {
+        let remote = AzureDevOpsClient.parseRemote("https://myorg.visualstudio.com/myproject/_git/myrepo")
+        XCTAssertNotNil(remote)
+        XCTAssertEqual(remote?.kind, .azureDevOps)
+        XCTAssertEqual(remote?.owner, "myorg")
+        XCTAssertEqual(remote?.repo, "myrepo")
+        XCTAssertEqual(remote?.project, "myproject")
+    }
+
+    func testADOParseSSHDevAzureCom() {
+        let remote = AzureDevOpsClient.parseRemote("git@ssh.dev.azure.com:v3/myorg/myproject/myrepo")
+        XCTAssertNotNil(remote)
+        XCTAssertEqual(remote?.kind, .azureDevOps)
+        XCTAssertEqual(remote?.owner, "myorg")
+        XCTAssertEqual(remote?.repo, "myrepo")
+        XCTAssertEqual(remote?.project, "myproject")
+    }
+
+    func testADOParseSSHVisualStudioCom() {
+        let remote = AzureDevOpsClient.parseRemote("git@vs-ssh.visualstudio.com:v3/myorg/myproject/myrepo")
+        XCTAssertNotNil(remote)
+        XCTAssertEqual(remote?.kind, .azureDevOps)
+        XCTAssertEqual(remote?.owner, "myorg")
+        XCTAssertEqual(remote?.repo, "myrepo")
+        XCTAssertEqual(remote?.project, "myproject")
+    }
+
+    func testADORejectsGitHub() {
+        let remote = AzureDevOpsClient.parseRemote("https://github.com/user/repo.git")
+        XCTAssertNil(remote)
+    }
+
+    func testADORejectsGitLab() {
+        let remote = AzureDevOpsClient.parseRemote("https://gitlab.com/user/repo.git")
+        XCTAssertNil(remote)
+    }
+
+    func testADORejectsBitbucket() {
+        let remote = AzureDevOpsClient.parseRemote("https://bitbucket.org/user/repo.git")
+        XCTAssertNil(remote)
+    }
+
+    func testADOAPIBaseURL() {
+        let remote = HostedRemote(kind: .azureDevOps, owner: "myorg", repo: "myrepo", project: "myproject")
+        XCTAssertEqual(remote.apiBaseURL, "https://dev.azure.com/myorg")
+    }
+
+    func testADOAPIBaseURLWithCustomHost() {
+        let remote = HostedRemote(kind: .azureDevOps, owner: "myorg", repo: "myrepo", host: "ado.mycompany.com", project: "myproject")
+        XCTAssertEqual(remote.apiBaseURL, "https://ado.mycompany.com/myorg")
+    }
+
+    // MARK: - HostedRemote project field
+
+    func testHostedRemoteProjectDefaultsToNil() {
+        let remote = HostedRemote(kind: .github, owner: "user", repo: "repo")
+        XCTAssertNil(remote.project)
     }
 
     // MARK: - Typealias Backward Compatibility

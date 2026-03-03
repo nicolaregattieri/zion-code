@@ -272,19 +272,22 @@ struct PullRequestSheet: View {
         errorMessage = nil
 
         Task {
-            // Save to UserDefaults and inject into the client
+            // Save to Keychain and inject into the client
             switch kind {
             case .github:
-                UserDefaults.standard.set(token, forKey: "zion.github.pat")
+                HostingCredentialStore.saveSecret(token, for: .githubPAT)
                 await model.githubClient.setToken(token)
             case .gitlab:
-                UserDefaults.standard.set(token, forKey: "zion.gitlab.pat")
+                HostingCredentialStore.saveSecret(token, for: .gitlabPAT)
                 await model.gitlabClient.setToken(token)
             case .bitbucket:
                 // For Bitbucket, the inline field stores app password; username comes from settings
                 let username = UserDefaults.standard.string(forKey: "zion.bitbucket.username") ?? ""
-                UserDefaults.standard.set(token, forKey: "zion.bitbucket.appPassword")
+                HostingCredentialStore.saveSecret(token, for: .bitbucketAppPassword)
                 await model.bitbucketClient.setCredentials(username: username, appPassword: token)
+            case .azureDevOps:
+                HostingCredentialStore.saveSecret(token, for: .azureDevOpsPAT)
+                await model.azureDevOpsClient.setToken(token)
             }
 
             needsTokenForKind = nil
