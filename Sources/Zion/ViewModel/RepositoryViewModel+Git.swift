@@ -332,6 +332,16 @@ extension RepositoryViewModel {
                 isRebasing = payload.isRebasing
                 isCherryPicking = payload.isCherryPicking
                 isGitRepository = payload.isGitRepository
+                // Only update bisect from payload if we're not mid-flow
+                if bisectPhase == .inactive && payload.isBisecting {
+                    bisectPhase = .active(currentHash: payload.bisectCurrentHash, stepsRemaining: 0)
+                    bisectCurrentHash = payload.bisectCurrentHash
+                } else if !payload.isBisecting {
+                    // Bisect ended externally — clear unless user is still picking good commit
+                    if case .awaitingGoodCommit = bisectPhase {} else if bisectPhase != .inactive {
+                        clearBisectState()
+                    }
+                }
                 // Guard against transient empty results from `git status`
                 // (e.g. lock-file conflicts during concurrent git operations).
                 // Only accept an empty list from user-initiated or repo-switch refreshes.

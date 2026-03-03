@@ -28,6 +28,8 @@ struct RepositoryLoadPayload: Sendable {
     let isGitRepository: Bool
     let uncommittedChanges: [String]
     let uncommittedCount: Int
+    let isBisecting: Bool
+    let bisectCurrentHash: String
 }
 
 struct RepositoryLoadOptions: Sendable {
@@ -125,7 +127,9 @@ actor RepositoryWorker {
                 isCherryPicking: false,
                 isGitRepository: false,
                 uncommittedChanges: [],
-                uncommittedCount: 0
+                uncommittedCount: 0,
+                isBisecting: false,
+                bisectCurrentHash: ""
             )
         }
 
@@ -155,6 +159,14 @@ actor RepositoryWorker {
         let isRebasing = FileManager.default.fileExists(atPath: gitDir.appendingPathComponent("rebase-apply").path) ||
                          FileManager.default.fileExists(atPath: gitDir.appendingPathComponent("rebase-merge").path)
         let isCherryPicking = FileManager.default.fileExists(atPath: gitDir.appendingPathComponent("CHERRY_PICK_HEAD").path)
+        let isBisecting = FileManager.default.fileExists(atPath: gitDir.appendingPathComponent("BISECT_START").path)
+        let bisectCurrentHash: String
+        if isBisecting {
+            let headResult = try? git.runAllowingFailure(args: ["rev-parse", "HEAD"], in: repositoryURL)
+            bisectCurrentHash = headResult?.stdout.clean ?? ""
+        } else {
+            bisectCurrentHash = ""
+        }
 
         let statusResult = try? git.runAllowingFailure(args: ["status", "--porcelain"], in: repositoryURL)
         let uncommittedLines = statusResult?.stdout.split(separator: "\n").map { String($0) } ?? []
@@ -180,7 +192,9 @@ actor RepositoryWorker {
             isCherryPicking: isCherryPicking,
             isGitRepository: true,
             uncommittedChanges: uncommittedLines,
-            uncommittedCount: uncommittedLines.count
+            uncommittedCount: uncommittedLines.count,
+            isBisecting: isBisecting,
+            bisectCurrentHash: bisectCurrentHash
         )
     }
 
@@ -251,6 +265,7 @@ actor RepositoryWorker {
         if fm.fileExists(atPath: gitDir.appendingPathComponent("rebase-merge").path) ||
            fm.fileExists(atPath: gitDir.appendingPathComponent("rebase-apply").path) { return "rebase" }
         if fm.fileExists(atPath: gitDir.appendingPathComponent("CHERRY_PICK_HEAD").path) { return "cherry-pick" }
+        if fm.fileExists(atPath: gitDir.appendingPathComponent("BISECT_START").path) { return "bisect" }
         return nil
     }
 

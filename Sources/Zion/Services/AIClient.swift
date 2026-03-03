@@ -30,6 +30,7 @@ private enum AILimits {
     static let detailedDiffTokens = 400
     static let fileReviewTokens = 400
     static let pendingSummaryTokens = 150
+    static let bisectExplainTokens = 600
 }
 
 actor AIClient {
@@ -252,6 +253,38 @@ actor AIClient {
         - Output ONLY the explanation
         """
         return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.diffExplanationTokens)
+    }
+
+    // MARK: - Bisect Culprit Explanation
+
+    func explainBisectCulprit(
+        commitHash: String,
+        diff: String,
+        diffStat: String,
+        provider: AIProvider,
+        apiKey: String
+    ) async throws -> String {
+        let prompt = """
+        You are a debugging assistant. Git bisect found commit \(commitHash.prefix(12)) as the first bad commit that introduced a regression.
+
+        Files changed:
+        \(diffStat.prefix(AILimits.maxDiffStatLength))
+
+        Diff:
+        \(diff.prefix(AILimits.maxDiffContentLength))
+
+        Explain:
+        1. What this commit changed
+        2. Why it likely caused the regression
+        3. What to look for to fix it
+
+        Rules:
+        - Plain English, max 150 words
+        - No code blocks
+        - Be specific about which changes are suspicious
+        - Output ONLY the explanation
+        """
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.bisectExplainTokens)
     }
 
     // MARK: - Smart Conflict Resolution

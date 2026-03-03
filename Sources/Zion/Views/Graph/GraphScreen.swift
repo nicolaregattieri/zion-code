@@ -350,6 +350,7 @@ struct GraphScreen: View {
                                 branchContextMenu: branchContextMenu,
                                 tagContextMenu: tagContextMenu,
                                 remotes: remoteNames,
+                                bisectRole: model.bisectRole(for: commit.id),
                                 avatarImage: model.avatarImage(for: commit.email)
                             )
                             .frame(width: rowWidth, alignment: .leading)
