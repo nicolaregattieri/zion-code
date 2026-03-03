@@ -49,12 +49,6 @@ if ! swift test --quiet 2>&1; then
     esac
 fi
 
-echo ""
-echo "=== Pre-flight: Documentation reminder ==="
-echo "  Have you run /documenter to sync docs with recent changes?"
-echo "  Press Enter to continue or Ctrl+C to abort..."
-read -r
-
 # --- Step 1: Build app ---
 echo ""
 echo "=== Step 1/5: Building Zion.app ==="
@@ -125,6 +119,9 @@ echo "  Tag:       $TAG"
 echo "  DMG:       $DMG_PATH"
 echo "  Appcast:   $APPCAST_PATH"
 echo "  Signature: $ED_SIGNATURE"
+
+echo ""
+echo "  Reminder: run /documenter to sync docs with recent changes."
 
 # --- Step 5: Upload to GitHub Releases ---
 if [ "${1:-}" = "upload" ]; then
