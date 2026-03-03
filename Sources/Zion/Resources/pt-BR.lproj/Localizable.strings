@@ -1504,6 +1504,7 @@
 "hosting.noToken" = "Nenhum token de autenticação encontrado.";
 "hosting.tokenPlaceholder" = "Cole seu token aqui...";
 "hosting.saveAndCreate" = "Salvar & Criar PR";
+"hosting.branchNotPushed" = "Envie \"%@\" para o remote antes de criar um pull request.";
 "hosting.notSupported" = "Esta ação não é suportada pelo provedor atual.";
 "settings.hosting.title" = "Hospedagem Git";
 "settings.hosting.github" = "GitHub";

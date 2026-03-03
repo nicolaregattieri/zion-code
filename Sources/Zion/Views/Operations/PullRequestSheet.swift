@@ -225,7 +225,14 @@ struct PullRequestSheet: View {
             return
         }
 
-        // 2. Detect provider from remote URLs
+        // 2. Check if the current branch has been pushed to the remote
+        let currentBranchInfo = model.branchInfos.first { $0.name == model.currentBranch && !$0.isRemote }
+        if let info = currentBranchInfo, info.upstream.isEmpty {
+            errorMessage = L10n("hosting.branchNotPushed", model.currentBranch)
+            return
+        }
+
+        // 3. Detect provider from remote URLs
         guard let (provider, remote) = model.detectHostingProvider() else {
             errorMessage = L10n("hosting.noProviderMatch")
             return
