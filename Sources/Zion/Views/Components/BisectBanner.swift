@@ -4,16 +4,19 @@ struct BisectBanner: View {
     @Bindable var model: RepositoryViewModel
 
     var body: some View {
-        switch model.bisectPhase {
-        case .inactive:
-            EmptyView()
-        case .awaitingGoodCommit:
-            awaitingGoodBanner
-        case .active(let currentHash, let stepsRemaining):
-            activeBanner(currentHash: currentHash, stepsRemaining: stepsRemaining)
-        case .foundCulprit(let commitHash):
-            foundBanner(commitHash: commitHash)
+        Group {
+            switch model.bisectPhase {
+            case .inactive:
+                EmptyView()
+            case .awaitingGoodCommit:
+                awaitingGoodBanner
+            case .active(let currentHash, let stepsRemaining):
+                activeBanner(currentHash: currentHash, stepsRemaining: stepsRemaining)
+            case .foundCulprit(let commitHash):
+                foundBanner(commitHash: commitHash)
+            }
         }
+        .animation(DesignSystem.Motion.detail, value: model.bisectPhase)
     }
 
     // MARK: - Awaiting Good Commit
@@ -39,10 +42,13 @@ struct BisectBanner: View {
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
+            .help(L10n("bisect.abort"))
+            .accessibilityLabel(L10n("bisect.abort"))
         }
         .padding(16)
         .background(DesignSystem.Colors.statusBlueBg)
         .overlay(alignment: .bottom) { Divider() }
+        .transition(.opacity)
     }
 
     // MARK: - Active Bisect
@@ -74,6 +80,9 @@ struct BisectBanner: View {
                 .buttonStyle(.borderedProminent)
                 .tint(DesignSystem.Colors.success)
                 .controlSize(.small)
+                .keyboardShortcut("g", modifiers: [.command, .shift])
+                .help(L10n("bisect.good.hint"))
+                .accessibilityLabel(L10n("bisect.good"))
 
                 Button {
                     model.bisectMarkBad()
@@ -83,23 +92,32 @@ struct BisectBanner: View {
                 .buttonStyle(.borderedProminent)
                 .tint(DesignSystem.Colors.destructive)
                 .controlSize(.small)
+                .keyboardShortcut("b", modifiers: [.command, .shift])
+                .help(L10n("bisect.bad.hint"))
+                .accessibilityLabel(L10n("bisect.bad"))
 
                 Button(L10n("bisect.skip")) {
                     model.bisectSkip()
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
+                .keyboardShortcut("s", modifiers: [.command, .shift])
+                .help(L10n("bisect.skip.hint"))
+                .accessibilityLabel(L10n("bisect.skip"))
 
                 Button(L10n("bisect.abort")) {
                     model.bisectAbort()
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
+                .help(L10n("bisect.abort"))
+                .accessibilityLabel(L10n("bisect.abort"))
             }
         }
         .padding(16)
-        .background(Color(NSColor.windowBackgroundColor))
+        .background(DesignSystem.Colors.statusBlueBg)
         .overlay(alignment: .bottom) { Divider() }
+        .transition(.opacity)
     }
 
     // MARK: - Found Culprit
@@ -126,12 +144,16 @@ struct BisectBanner: View {
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
+                    .help(L10n("bisect.viewCommit"))
+                    .accessibilityLabel(L10n("bisect.viewCommit"))
 
                     Button(L10n("bisect.done")) {
-                        model.bisectAbort()
+                        model.bisectFinish()
                     }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.small)
+                    .help(L10n("bisect.done"))
+                    .accessibilityLabel(L10n("bisect.done"))
                 }
             }
 
@@ -160,5 +182,6 @@ struct BisectBanner: View {
         .padding(16)
         .background(DesignSystem.Colors.destructiveBg)
         .overlay(alignment: .bottom) { Divider() }
+        .transition(.opacity)
     }
 }

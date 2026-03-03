@@ -264,16 +264,16 @@ extension ContentView {
 
     private var bisectPillBg: Color {
         if case .foundCulprit = model.bisectPhase {
-            return DesignSystem.Colors.destructiveBg
+            return zionModeEnabled ? DesignSystem.ZionMode.neonOrange.opacity(0.12) : DesignSystem.Colors.destructiveBg
         }
-        return DesignSystem.Colors.statusBlueBg
+        return zionModeEnabled ? DesignSystem.ZionMode.neonCyan.opacity(0.12) : DesignSystem.Colors.statusBlueBg
     }
 
     private var bisectPillFg: Color {
         if case .foundCulprit = model.bisectPhase {
-            return DesignSystem.Colors.destructive
+            return zionModeEnabled ? DesignSystem.ZionMode.neonOrange : DesignSystem.Colors.destructive
         }
-        return DesignSystem.Colors.info
+        return zionModeEnabled ? DesignSystem.ZionMode.neonCyan : DesignSystem.Colors.info
     }
 
     // MARK: - Mobile Access Badge Helpers

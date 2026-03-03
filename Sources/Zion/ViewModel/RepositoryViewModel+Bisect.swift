@@ -27,18 +27,24 @@ enum BisectResult {
 
 extension RepositoryViewModel {
 
+    private static func isValidCommitHash(_ hash: String) -> Bool {
+        hash.count >= 7 && hash.count <= 40 && hash.allSatisfy { $0.isHexDigit }
+    }
+
     func startBisect(badCommitHash: String) {
+        guard Self.isValidCommitHash(badCommitHash) else {
+            lastError = L10n("bisect.error.invalidHash")
+            return
+        }
         guard let url = repositoryURL else { return }
 
         bisectTask?.cancel()
         bisectTask = Task {
             do {
-                // Start bisect session
                 let _ = try await worker.runActionAllowingFailure(
                     args: ["bisect", "start"],
                     in: url
                 )
-                // Mark the bad commit
                 let _ = try await worker.runActionAllowingFailure(
                     args: ["bisect", "bad", badCommitHash],
                     in: url
@@ -56,6 +62,10 @@ extension RepositoryViewModel {
     }
 
     func markCommitGood(_ commitHash: String) {
+        guard Self.isValidCommitHash(commitHash) else {
+            lastError = L10n("bisect.error.invalidHash")
+            return
+        }
         guard let url = repositoryURL else { return }
 
         bisectTask?.cancel()
@@ -67,20 +77,7 @@ extension RepositoryViewModel {
                 )
 
                 bisectGoodCommits.insert(commitHash)
-
-                switch parseBisectOutput(output) {
-                case .continuing(let nextHash, let steps):
-                    bisectPhase = .active(currentHash: nextHash, stepsRemaining: steps)
-                    bisectCurrentHash = nextHash
-                    statusMessage = L10n("bisect.status.testing", String(nextHash.prefix(8)))
-                case .foundCulprit(let culpritHash):
-                    bisectPhase = .foundCulprit(commitHash: culpritHash)
-                    bisectBadCommits.insert(culpritHash)
-                    bisectCurrentHash = culpritHash
-                    statusMessage = L10n("bisect.status.found", String(culpritHash.prefix(8)))
-                    bisectExplainCulprit(commitHash: culpritHash)
-                }
-
+                handleBisectResult(parseBisectOutput(output))
                 refreshRepository(setBusy: false)
                 logger.log(.git, "Bisect good", context: "hash=\(commitHash.prefix(8)), output=\(output.prefix(120))")
             } catch {
@@ -101,20 +98,7 @@ extension RepositoryViewModel {
                 )
 
                 bisectGoodCommits.insert(bisectCurrentHash)
-
-                switch parseBisectOutput(output) {
-                case .continuing(let nextHash, let steps):
-                    bisectPhase = .active(currentHash: nextHash, stepsRemaining: steps)
-                    bisectCurrentHash = nextHash
-                    statusMessage = L10n("bisect.status.testing", String(nextHash.prefix(8)))
-                case .foundCulprit(let culpritHash):
-                    bisectPhase = .foundCulprit(commitHash: culpritHash)
-                    bisectBadCommits.insert(culpritHash)
-                    bisectCurrentHash = culpritHash
-                    statusMessage = L10n("bisect.status.found", String(culpritHash.prefix(8)))
-                    bisectExplainCulprit(commitHash: culpritHash)
-                }
-
+                handleBisectResult(parseBisectOutput(output))
                 refreshRepository(setBusy: false)
                 logger.log(.git, "Bisect mark good", context: output.prefix(120).description)
             } catch {
@@ -135,20 +119,7 @@ extension RepositoryViewModel {
                 )
 
                 bisectBadCommits.insert(bisectCurrentHash)
-
-                switch parseBisectOutput(output) {
-                case .continuing(let nextHash, let steps):
-                    bisectPhase = .active(currentHash: nextHash, stepsRemaining: steps)
-                    bisectCurrentHash = nextHash
-                    statusMessage = L10n("bisect.status.testing", String(nextHash.prefix(8)))
-                case .foundCulprit(let culpritHash):
-                    bisectPhase = .foundCulprit(commitHash: culpritHash)
-                    bisectBadCommits.insert(culpritHash)
-                    bisectCurrentHash = culpritHash
-                    statusMessage = L10n("bisect.status.found", String(culpritHash.prefix(8)))
-                    bisectExplainCulprit(commitHash: culpritHash)
-                }
-
+                handleBisectResult(parseBisectOutput(output))
                 refreshRepository(setBusy: false)
                 logger.log(.git, "Bisect mark bad", context: output.prefix(120).description)
             } catch {
@@ -168,19 +139,7 @@ extension RepositoryViewModel {
                     in: url
                 )
 
-                switch parseBisectOutput(output) {
-                case .continuing(let nextHash, let steps):
-                    bisectPhase = .active(currentHash: nextHash, stepsRemaining: steps)
-                    bisectCurrentHash = nextHash
-                    statusMessage = L10n("bisect.status.testing", String(nextHash.prefix(8)))
-                case .foundCulprit(let culpritHash):
-                    bisectPhase = .foundCulprit(commitHash: culpritHash)
-                    bisectBadCommits.insert(culpritHash)
-                    bisectCurrentHash = culpritHash
-                    statusMessage = L10n("bisect.status.found", String(culpritHash.prefix(8)))
-                    bisectExplainCulprit(commitHash: culpritHash)
-                }
-
+                handleBisectResult(parseBisectOutput(output))
                 refreshRepository(setBusy: false)
                 logger.log(.git, "Bisect skip", context: output.prefix(120).description)
             } catch {
@@ -205,10 +164,44 @@ extension RepositoryViewModel {
         }
     }
 
+    func bisectFinish() {
+        guard let url = repositoryURL else { return }
+
+        bisectTask?.cancel()
+        bisectTask = Task {
+            let _ = try? await worker.runActionAllowingFailure(
+                args: ["bisect", "reset"],
+                in: url
+            )
+            clearBisectState()
+            statusMessage = L10n("bisect.status.done")
+            refreshRepository(setBusy: true)
+            logger.log(.git, "Bisect finished")
+        }
+    }
+
+    // MARK: - Result Handling
+
+    private func handleBisectResult(_ result: BisectResult) {
+        switch result {
+        case .continuing(let nextHash, let steps):
+            bisectPhase = .active(currentHash: nextHash, stepsRemaining: steps)
+            bisectCurrentHash = nextHash
+            statusMessage = L10n("bisect.status.testing", String(nextHash.prefix(8)))
+        case .foundCulprit(let culpritHash):
+            bisectPhase = .foundCulprit(commitHash: culpritHash)
+            bisectBadCommits.insert(culpritHash)
+            bisectCurrentHash = culpritHash
+            statusMessage = L10n("bisect.status.found", String(culpritHash.prefix(8)))
+            bisectExplainCulprit(commitHash: culpritHash)
+        }
+    }
+
     // MARK: - AI Explanation
 
     func bisectExplainCulprit(commitHash: String) {
         guard let url = repositoryURL, isAIConfigured else { return }
+        guard Self.isValidCommitHash(commitHash) else { return }
 
         isBisectAILoading = true
         bisectAIExplanation = ""
@@ -232,10 +225,13 @@ extension RepositoryViewModel {
                     apiKey: aiAPIKey
                 )
 
+                // Guard against stale result if bisect was aborted during AI call
+                guard !Task.isCancelled, bisectPhase != .inactive else { return }
                 bisectAIExplanation = explanation
                 isBisectAILoading = false
                 logger.log(.ai, "Bisect AI explanation generated", context: "hash=\(commitHash.prefix(8))")
             } catch {
+                guard !Task.isCancelled, bisectPhase != .inactive else { return }
                 isBisectAILoading = false
                 bisectAIExplanation = L10n("bisect.ai.error")
                 logger.log(.ai, "Bisect AI explanation failed: \(error.localizedDescription)")
@@ -246,13 +242,15 @@ extension RepositoryViewModel {
     // MARK: - Output Parsing
 
     func parseBisectOutput(_ output: String) -> BisectResult {
+        let safeOutput = String(output.prefix(10_000))
+
         // Pattern: "<hash> is the first bad commit"
-        if output.contains("is the first bad commit") {
-            let lines = output.components(separatedBy: "\n")
+        if safeOutput.contains("is the first bad commit") {
+            let lines = safeOutput.components(separatedBy: "\n")
             for line in lines {
                 if line.contains("is the first bad commit") {
                     let hash = String(line.split(separator: " ").first ?? "")
-                    if !hash.isEmpty {
+                    if Self.isValidCommitHash(hash) {
                         return .foundCulprit(commitHash: hash)
                     }
                 }
@@ -264,10 +262,9 @@ extension RepositoryViewModel {
         var stepsRemaining = 0
         var nextHash = ""
 
-        let lines = output.components(separatedBy: "\n")
+        let lines = safeOutput.components(separatedBy: "\n")
         for line in lines {
             if line.contains("roughly") && line.contains("step") {
-                // Extract step count: "roughly N steps"
                 let parts = line.components(separatedBy: "roughly ")
                 if parts.count > 1 {
                     let afterRoughly = parts[1]
@@ -279,7 +276,10 @@ extension RepositoryViewModel {
             if line.hasPrefix("[") {
                 let trimmed = line.dropFirst()
                 if let closeBracket = trimmed.firstIndex(of: "]") {
-                    nextHash = String(trimmed[trimmed.startIndex..<closeBracket])
+                    let candidate = String(trimmed[trimmed.startIndex..<closeBracket])
+                    if Self.isValidCommitHash(candidate) {
+                        nextHash = candidate
+                    }
                 }
             }
         }

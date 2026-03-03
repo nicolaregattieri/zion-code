@@ -85,7 +85,9 @@ extension ContentView {
             switch model.bisectPhase {
             case .inactive:
                 Button(L10n("bisect.contextMenu.markBad")) {
-                    model.startBisect(badCommitHash: commit.id)
+                    performGitAction(title: L10n("bisect.contextMenu.markBad"), message: L10n("bisect.confirm.start"), destructive: false) {
+                        model.startBisect(badCommitHash: commit.id)
+                    }
                 }
             case .awaitingGoodCommit:
                 Button(L10n("bisect.contextMenu.markGood")) {

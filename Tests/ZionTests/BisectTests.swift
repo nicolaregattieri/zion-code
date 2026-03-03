@@ -110,13 +110,13 @@ final class BisectTests: XCTestCase {
         let model = RepositoryViewModel()
         let output = """
         Bisecting: 1 revision left to test after this (roughly 1 step)
-        [def456] Fix typo
+        [def4567] Fix typo
         """
 
         let result = model.parseBisectOutput(output)
 
         if case .continuing(let nextHash, let steps) = result {
-            XCTAssertEqual(nextHash, "def456")
+            XCTAssertEqual(nextHash, "def4567")
             XCTAssertEqual(steps, 1)
         } else {
             XCTFail("Expected .continuing, got \(result)")
@@ -126,12 +126,12 @@ final class BisectTests: XCTestCase {
     @MainActor
     func testParseBisectOutputContinuingNoStepLine() {
         let model = RepositoryViewModel()
-        let output = "[abc123] Some commit message\n"
+        let output = "[abc1234] Some commit message\n"
 
         let result = model.parseBisectOutput(output)
 
         if case .continuing(let nextHash, let steps) = result {
-            XCTAssertEqual(nextHash, "abc123")
+            XCTAssertEqual(nextHash, "abc1234")
             XCTAssertEqual(steps, 0)
         } else {
             XCTFail("Expected .continuing, got \(result)")
@@ -281,6 +281,60 @@ final class BisectTests: XCTestCase {
         let model = RepositoryViewModel()
         model.bisectPhase = .awaitingGoodCommit(badCommitHash: "abc")
         XCTAssertTrue(model.isBisectActive)
+    }
+
+    // MARK: - Hash Validation (SEC-1,2)
+
+    @MainActor
+    func testParseBisectOutputRejectsInvalidHash() {
+        let model = RepositoryViewModel()
+        // A non-hex "hash" should not be returned as a culprit
+        let output = "--exec=malicious is the first bad commit\n"
+        let result = model.parseBisectOutput(output)
+        if case .foundCulprit = result {
+            XCTFail("Should not return .foundCulprit for non-hex hash")
+        }
+    }
+
+    @MainActor
+    func testParseBisectOutputRejectsInvalidBracketHash() {
+        let model = RepositoryViewModel()
+        let output = "[--output=/etc/passwd] Some subject\n"
+        let result = model.parseBisectOutput(output)
+        if case .continuing(let hash, _) = result {
+            XCTAssertNotEqual(hash, "--output=/etc/passwd", "Should not extract non-hex hash from brackets")
+        }
+    }
+
+    @MainActor
+    func testParseBisectOutputTruncatesLargeInput() {
+        let model = RepositoryViewModel()
+        // Create a very large output — parsing should not crash
+        let largeOutput = String(repeating: "x", count: 50_000)
+        let result = model.parseBisectOutput(largeOutput)
+        // Should fall through to the fallback
+        if case .continuing = result {
+            // Good — did not crash
+        } else {
+            XCTFail("Expected .continuing for garbage output")
+        }
+    }
+
+    @MainActor
+    func testStartBisectRejectsInvalidHash() {
+        let model = RepositoryViewModel()
+        model.startBisect(badCommitHash: "--exec=bad")
+        // Should set lastError and NOT start bisect
+        XCTAssertNotNil(model.lastError)
+        XCTAssertEqual(model.bisectPhase, .inactive)
+    }
+
+    @MainActor
+    func testMarkCommitGoodRejectsInvalidHash() {
+        let model = RepositoryViewModel()
+        model.bisectPhase = .awaitingGoodCommit(badCommitHash: "abc1234")
+        model.markCommitGood("not-a-hash!")
+        XCTAssertNotNil(model.lastError)
     }
 }
 

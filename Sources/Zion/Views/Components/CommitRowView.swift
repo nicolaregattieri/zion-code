@@ -157,7 +157,15 @@ struct CommitRowView: View {
     }
 
     private var cardBackground: Color {
-        if isSelected { return DesignSystem.Colors.selectionBackground }
+        // Bisect roles blend with selection instead of being overridden
+        if isSelected {
+            switch bisectRole {
+            case .currentTest: return DesignSystem.Colors.info.opacity(0.2)
+            case .markedGood: return DesignSystem.Colors.success.opacity(0.2)
+            case .markedBad, .culprit: return DesignSystem.Colors.destructive.opacity(0.2)
+            case .none, .outsideRange: return DesignSystem.Colors.selectionBackground
+            }
+        }
         switch bisectRole {
         case .currentTest: return DesignSystem.Colors.statusBlueBg
         case .markedGood: return DesignSystem.Colors.statusGreenBg

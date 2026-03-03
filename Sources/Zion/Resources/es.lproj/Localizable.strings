@@ -1772,7 +1772,7 @@
 "map.ai.slashcommands.tip1" = "Activa Imágenes Inline de IA en Configuración para instalar comandos automáticamente al iniciar el terminal.";
 
 // Git Bisect
-"bisect.contextMenu.markBad" = "Encontrar Bug con Bisect...";
+"bisect.contextMenu.markBad" = "Encontrar Bug con Bisect";
 "bisect.contextMenu.markGood" = "Este Commit Funcionaba";
 "bisect.abort" = "Abortar Bisect";
 "bisect.good" = "Esto Funciona";
@@ -1792,6 +1792,12 @@
 "bisect.status.testing" = "Bisect: probando %@";
 "bisect.status.found" = "Bisect: culpable encontrado %@";
 "bisect.status.aborted" = "Bisect abortado.";
+"bisect.status.done" = "Bisect completado.";
 "bisect.pill.pickGood" = "Elegir Commit Bueno";
 "bisect.pill.active" = "Bisect ~%@ pasos";
 "bisect.pill.found" = "Encontrado: %@";
+"bisect.confirm.start" = "¿Marcar este commit como roto e iniciar bisect?";
+"bisect.error.invalidHash" = "Hash de commit inválido.";
+"bisect.good.hint" = "Marcar como bueno (⇧⌘G)";
+"bisect.bad.hint" = "Marcar como roto (⇧⌘B)";
+"bisect.skip.hint" = "Saltar este commit (⇧⌘S)";

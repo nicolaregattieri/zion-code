@@ -48,6 +48,12 @@ final class LocalizationTests: XCTestCase {
             "bisect.pill.pickGood",
             "bisect.pill.active",
             "bisect.pill.found",
+            "bisect.status.done",
+            "bisect.confirm.start",
+            "bisect.error.invalidHash",
+            "bisect.good.hint",
+            "bisect.bad.hint",
+            "bisect.skip.hint",
         ]
 
         for key in bisectKeys {
