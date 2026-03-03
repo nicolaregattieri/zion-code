@@ -1543,9 +1543,17 @@
 "hosting.gitlab.host" = "Host (default: gitlab.com)";
 "hosting.bitbucket.username" = "Username";
 "hosting.bitbucket.appPassword" = "App Password";
+"hosting.github.pat" = "Personal Access Token";
+"hosting.github.hint" = "Or use `gh auth login` from the terminal.";
 "hosting.notConnected" = "No hosting provider detected.";
+"hosting.noRemotes" = "No git remotes configured.";
+"hosting.noProviderMatch" = "Could not detect GitHub, GitLab, or Bitbucket from your remotes.";
+"hosting.noToken" = "No authentication token found.";
+"hosting.tokenPlaceholder" = "Paste your token here...";
+"hosting.saveAndCreate" = "Save & Create PR";
 "hosting.notSupported" = "This action is not supported by the current provider.";
 "settings.hosting.title" = "Git Hosting";
+"settings.hosting.github" = "GitHub";
 "settings.hosting.gitlab" = "GitLab";
 "settings.hosting.bitbucket" = "Bitbucket";
 

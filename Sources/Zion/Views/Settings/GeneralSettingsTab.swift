@@ -5,6 +5,7 @@ struct GeneralSettingsTab: View {
     @AppStorage("zion.appearance") private var appearanceRaw: String = AppAppearance.system.rawValue
     @AppStorage("zion.confirmationMode") private var confirmationModeRaw: String = ConfirmationMode.destructiveOnly.rawValue
     @AppStorage("zion.zionModeEnabled") private var zionModeEnabled: Bool = false
+    @AppStorage("zion.github.pat") private var githubPAT: String = ""
     @AppStorage("zion.gitlab.pat") private var gitlabPAT: String = ""
     @AppStorage("zion.gitlab.host") private var gitlabHost: String = ""
     @AppStorage("zion.bitbucket.username") private var bitbucketUsername: String = ""
@@ -84,6 +85,13 @@ struct GeneralSettingsTab: View {
 
             // Git Hosting
             Section(L10n("settings.hosting.title")) {
+                DisclosureGroup(L10n("settings.hosting.github")) {
+                    SecureField(L10n("hosting.github.pat"), text: $githubPAT)
+                        .textFieldStyle(.roundedBorder)
+                    Text(L10n("hosting.github.hint"))
+                        .font(DesignSystem.Typography.bodySmall)
+                        .foregroundStyle(.secondary)
+                }
                 DisclosureGroup(L10n("settings.hosting.gitlab")) {
                     SecureField(L10n("hosting.gitlab.pat"), text: $gitlabPAT)
                         .textFieldStyle(.roundedBorder)

@@ -11,6 +11,8 @@ struct PullRequestSheet: View {
     @State private var errorMessage: String?
     @State private var createdPRURL: String?
     @State private var isGeneratingAI: Bool = false
+    @State private var needsTokenForKind: GitHostingKind?
+    @State private var inlineToken: String = ""
 
     var body: some View {
         VStack(spacing: 0) {
@@ -96,6 +98,49 @@ struct PullRequestSheet: View {
                     .toggleStyle(SwitchToggleStyle(tint: DesignSystem.Colors.actionPrimary))
                     .tint(DesignSystem.Colors.actionPrimary)
 
+                    // Inline token prompt
+                    if let tokenKind = needsTokenForKind {
+                        VStack(alignment: .leading, spacing: 8) {
+                            // Provider name in header for clarity
+                            Text(tokenKind.label)
+                                .font(DesignSystem.Typography.labelBold)
+                                .foregroundStyle(DesignSystem.Colors.warning)
+                            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
+                                Image(systemName: "key.fill").foregroundStyle(DesignSystem.Colors.warning)
+                                Text(L10n("hosting.noToken"))
+                                    .font(DesignSystem.Typography.label)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            SecureField(L10n("hosting.tokenPlaceholder"), text: $inlineToken)
+                                .textFieldStyle(.roundedBorder)
+
+                            if tokenKind == .github {
+                                Text(L10n("hosting.github.hint"))
+                                    .font(DesignSystem.Typography.bodySmall)
+                                    .foregroundStyle(.tertiary)
+                            }
+
+                            Button {
+                                saveInlineTokenAndRetry(kind: tokenKind)
+                            } label: {
+                                if isCreating {
+                                    ProgressView().controlSize(.small)
+                                } else {
+                                    Label(L10n("hosting.saveAndCreate"), systemImage: "arrow.triangle.pull")
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.small)
+                            .tint(DesignSystem.Colors.success)
+                            .disabled(inlineToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isCreating)
+                        }
+                        .padding(10)
+                        .background(DesignSystem.Colors.warning.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
+
                     // Error
                     if let error = errorMessage {
                         HStack(spacing: DesignSystem.Spacing.iconTextGap) {
@@ -153,7 +198,7 @@ struct PullRequestSheet: View {
                 .buttonStyle(.borderedProminent)
                 .controlSize(.small)
                 .tint(DesignSystem.Colors.success)
-                .disabled(title.isEmpty || isCreating || createdPRURL != nil)
+                .disabled(title.isEmpty || isCreating || createdPRURL != nil || needsTokenForKind != nil)
             }
             .padding(16)
         }
@@ -174,15 +219,83 @@ struct PullRequestSheet: View {
     }
 
     private func createPR() {
-        guard let (provider, remote) = model.detectHostingProvider() else {
-            errorMessage = L10n("hosting.notConnected")
+        // 1. No remotes at all
+        guard !model.remotes.isEmpty else {
+            errorMessage = L10n("hosting.noRemotes")
             return
         }
+
+        // 2. Detect provider from remote URLs
+        guard let (provider, remote) = model.detectHostingProvider() else {
+            errorMessage = L10n("hosting.noProviderMatch")
+            return
+        }
+
+        // 3. Check if token is available — if not, show inline prompt
+        isCreating = true
+        errorMessage = nil
+        needsTokenForKind = nil
+
+        Task {
+            let tokenAvailable = await provider.hasToken()
+            if !tokenAvailable {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    needsTokenForKind = provider.kind
+                }
+                isCreating = false
+                return
+            }
+
+            do {
+                let pr = try await provider.createPullRequest(
+                    remote: remote,
+                    title: title,
+                    body: body_,
+                    head: model.currentBranch,
+                    base: baseBranch,
+                    draft: isDraft
+                )
+                createdPRURL = pr.url
+                isCreating = false
+            } catch {
+                errorMessage = error.localizedDescription
+                isCreating = false
+            }
+        }
+    }
+
+    private func saveInlineTokenAndRetry(kind: GitHostingKind) {
+        let token = inlineToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !token.isEmpty else { return }
 
         isCreating = true
         errorMessage = nil
 
         Task {
+            // Save to UserDefaults and inject into the client
+            switch kind {
+            case .github:
+                UserDefaults.standard.set(token, forKey: "zion.github.pat")
+                await model.githubClient.setToken(token)
+            case .gitlab:
+                UserDefaults.standard.set(token, forKey: "zion.gitlab.pat")
+                await model.gitlabClient.setToken(token)
+            case .bitbucket:
+                // For Bitbucket, the inline field stores app password; username comes from settings
+                let username = UserDefaults.standard.string(forKey: "zion.bitbucket.username") ?? ""
+                UserDefaults.standard.set(token, forKey: "zion.bitbucket.appPassword")
+                await model.bitbucketClient.setCredentials(username: username, appPassword: token)
+            }
+
+            needsTokenForKind = nil
+
+            // Retry PR creation
+            guard let (provider, remote) = model.detectHostingProvider() else {
+                errorMessage = L10n("hosting.noProviderMatch")
+                isCreating = false
+                return
+            }
+
             do {
                 let pr = try await provider.createPullRequest(
                     remote: remote,

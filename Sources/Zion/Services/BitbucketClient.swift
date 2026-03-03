@@ -19,6 +19,10 @@ actor BitbucketClient: GitHostingProvider {
         (true, true)
     }
 
+    func hasToken() async -> Bool {
+        cachedCredentials != nil
+    }
+
     // MARK: - Remote Parsing
 
     static func parseRemote(_ urlString: String) -> HostedRemote? {

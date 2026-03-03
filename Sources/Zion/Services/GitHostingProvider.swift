@@ -28,13 +28,16 @@ enum GitHostingKind: String, Sendable, CaseIterable, Identifiable {
 /// Protocol for git hosting provider integrations (GitHub, GitLab, Bitbucket).
 protocol GitHostingProvider: Actor {
     /// The kind of hosting provider this actor represents.
-    var kind: GitHostingKind { get }
+    nonisolated var kind: GitHostingKind { get }
 
     /// Attempt to parse a remote URL into a hosted remote. Returns nil if the URL doesn't match this provider.
     static func parseRemote(_ urlString: String) -> HostedRemote?
 
     /// Check if authentication is configured for this provider.
     func checkAuthStatus() -> (installed: Bool, authenticated: Bool)
+
+    /// Check whether any authentication token/credentials are available.
+    func hasToken() async -> Bool
 
     /// Fetch open pull/merge requests for a hosted remote.
     func fetchPullRequests(remote: HostedRemote) async -> [HostedPRInfo]

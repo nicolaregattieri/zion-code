@@ -307,6 +307,15 @@ extension RepositoryViewModel {
                     recentWorktreeCounts[root] = max(resolvedWorktrees.count - 1, 0)
                 }
                 remotes = payload.remotes
+
+                // Wire hosting credentials from Settings → clients
+                await githubClient.setToken(UserDefaults.standard.string(forKey: "zion.github.pat"))
+                await gitlabClient.setToken(UserDefaults.standard.string(forKey: "zion.gitlab.pat"))
+                await bitbucketClient.setCredentials(
+                    username: UserDefaults.standard.string(forKey: "zion.bitbucket.username") ?? "",
+                    appPassword: UserDefaults.standard.string(forKey: "zion.bitbucket.appPassword") ?? ""
+                )
+
                 commits = payload.commits
                 hasMoreCommits = payload.hasMoreCommits
                 let didSelectedCommitChange = payload.selectedCommitID != selectedCommitSnapshot
