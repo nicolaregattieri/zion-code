@@ -203,7 +203,7 @@ struct ClipboardDrawer: View {
         .onTapGesture {
             if hasText {
                 let isFile = item.isImage || item.category == .path
-                model.sendTextToActiveTerminal(isFile ? "open \(TerminalShellEscaping.quotePath(item.text))" : item.text)
+                model.sendTextToActiveTerminal(isFile ? TerminalShellEscaping.quotePath(item.text) : item.text)
             }
         }
         .draggable(item.text)

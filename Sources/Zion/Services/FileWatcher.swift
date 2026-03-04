@@ -1,9 +1,9 @@
 import Foundation
+import CoreServices
 
 @MainActor
 final class FileWatcher {
-    private var source: DispatchSourceFileSystemObject?
-    private var fileDescriptor: Int32 = -1
+    private nonisolated(unsafe) var eventStream: FSEventStreamRef?
     private var debounceTask: Task<Void, Never>?
     private let debounceInterval: UInt64 = 1_500_000_000 // 1.5 seconds
 
@@ -13,35 +13,44 @@ final class FileWatcher {
     func watch(directory: URL) {
         stop()
 
-        let fd = open(directory.path, O_EVTONLY)
-        guard fd >= 0 else {
-            DiagnosticLogger.shared.log(.warn, "FileWatcher: failed to open directory", context: directory.path, source: #function)
+        let path = directory.path as CFString
+        let pathsToWatch = [path] as CFArray
+
+        var context = FSEventStreamContext()
+        context.info = Unmanaged.passUnretained(self).toOpaque()
+
+        guard let stream = FSEventStreamCreate(
+            nil,
+            { _, clientCallBackInfo, _, _, _, _ in
+                guard let info = clientCallBackInfo else { return }
+                let watcher = Unmanaged<FileWatcher>.fromOpaque(info).takeUnretainedValue()
+                Task { @MainActor in
+                    watcher.handleChange()
+                }
+            },
+            &context,
+            pathsToWatch,
+            FSEventStreamEventId(kFSEventStreamEventIdSinceNow),
+            1.5,
+            UInt32(kFSEventStreamCreateFlagFileEvents | kFSEventStreamCreateFlagUseCFTypes)
+        ) else {
+            DiagnosticLogger.shared.log(.warn, "FileWatcher: failed to create FSEventStream", context: directory.path, source: #function)
             return
         }
-        fileDescriptor = fd
 
-        let source = DispatchSource.makeFileSystemObjectSource(
-            fileDescriptor: fd,
-            eventMask: [.write, .rename, .delete, .extend],
-            queue: .main
-        )
-
-        source.setEventHandler { [weak self] in
-            self?.handleChange()
-        }
-
-        self.source = source
-        source.resume()
+        eventStream = stream
+        FSEventStreamSetDispatchQueue(stream, .main)
+        FSEventStreamStart(stream)
     }
 
     func stop() {
         debounceTask?.cancel()
         debounceTask = nil
-        source?.cancel()
-        source = nil
-        if fileDescriptor >= 0 {
-            close(fileDescriptor)
-            fileDescriptor = -1
+        if let stream = eventStream {
+            FSEventStreamStop(stream)
+            FSEventStreamInvalidate(stream)
+            FSEventStreamRelease(stream)
+            eventStream = nil
         }
     }
 
@@ -57,13 +66,10 @@ final class FileWatcher {
     }
 
     deinit {
-        let fd = fileDescriptor
-        let dispatchSource = source
-        Task { @MainActor in
-            dispatchSource?.cancel()
-            if fd >= 0 {
-                close(fd)
-            }
+        if let stream = eventStream {
+            FSEventStreamStop(stream)
+            FSEventStreamInvalidate(stream)
+            FSEventStreamRelease(stream)
         }
     }
 }

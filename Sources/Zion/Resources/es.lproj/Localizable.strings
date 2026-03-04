@@ -343,6 +343,8 @@
 "shortcuts.find" = "Buscar";
 "shortcuts.findReplace" = "Buscar y Reemplazar";
 "shortcuts.goToLine" = "Ir a línea";
+"shortcuts.findNext" = "Siguiente ocurrencia";
+"shortcuts.findPrevious" = "Ocurrencia anterior";
 "shortcuts.terminalSearch" = "Buscar en terminal";
 "shortcuts.navigateCommits" = "Navegar commits";
 "shortcuts.closeOrDeselect" = "Cerrar / deseleccionar";

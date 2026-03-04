@@ -397,6 +397,8 @@
 "shortcuts.find" = "Find";
 "shortcuts.findReplace" = "Find & Replace";
 "shortcuts.goToLine" = "Go to line";
+"shortcuts.findNext" = "Find Next";
+"shortcuts.findPrevious" = "Find Previous";
 "shortcuts.terminalSearch" = "Search terminal";
 "shortcuts.navigateCommits" = "Navigate commits";
 "shortcuts.closeOrDeselect" = "Close / deselect";

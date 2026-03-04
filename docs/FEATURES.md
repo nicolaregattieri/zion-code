@@ -387,7 +387,12 @@
 | `⌃-` | Terminal zoom out |
 | `⌘F` | Context search (graph, editor, terminal) |
 | `⌃F` | Find alias in editor |
-| `⌘G` | Go to Line |
+| `⌘G` | Go to Line / Find Next (when search open) |
+| `⇧⌘G` | Find Previous |
+| `⌘H` | Find & Replace |
+| `⌘D` | Select Next Occurrence |
+| `F12` | Go to Definition |
+| `⇧F12` | Find References |
 | `⇧⌘R` | Code Review |
 | `⇧⌘H` | Toggle dotfiles visibility |
 | `⇧⌘B` | Toggle Git Blame |
