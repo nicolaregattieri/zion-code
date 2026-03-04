@@ -212,6 +212,9 @@ struct MobileAccessSettingsTab: View {
         }
         .onChange(of: keepAwakeDuration) { _, _ in
             RemoteAccessState.shared.keepAwakeChanged = true
+            // Post again so syncSettingsFromDefaults picks up the flag
+            // (the first didChangeNotification fires before onChange sets the flag)
+            NotificationCenter.default.post(name: UserDefaults.didChangeNotification, object: nil)
         }
     }
 
