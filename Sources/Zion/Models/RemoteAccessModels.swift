@@ -54,6 +54,7 @@ enum RemoteAction: String, Codable, Sendable {
     case tab
     case arrowUp
     case arrowDown
+    case enter
     case refreshScreen
 }
 
