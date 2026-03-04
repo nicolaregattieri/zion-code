@@ -234,32 +234,35 @@ extension RepositoryViewModel {
     /// Opens missing repos silently, then boots headless terminals for any session
     /// whose SwiftUI view hasn't rendered yet (so `terminalForSession` can find them).
     private func ensureRecentProjectsHaveTerminals() {
-        guard !hasEnsuredRemoteTerminals else { return }
-        hasEnsuredRemoteTerminals = true
+        // First connect: open repos and boot headless terminals
+        if !hasEnsuredRemoteTerminals {
+            hasEnsuredRemoteTerminals = true
 
-        let originalURL = repositoryURL
-        let reposWithTerminals = Set(
-            [repositoryURL].compactMap { $0 } + Array(backgroundRepoStates.keys)
-        )
+            let originalURL = repositoryURL
+            let reposWithTerminals = Set(
+                [repositoryURL].compactMap { $0 } + Array(backgroundRepoStates.keys)
+            )
 
-        let missing = recentRepositories.filter { url in
-            !reposWithTerminals.contains(url)
-                && FileManager.default.fileExists(atPath: url.path)
+            let missing = recentRepositories.filter { url in
+                !reposWithTerminals.contains(url)
+                    && FileManager.default.fileExists(atPath: url.path)
+            }
+
+            if !missing.isEmpty {
+                for url in missing {
+                    openRepository(url, silent: true)
+                }
+                // Switch back to the original repo immediately
+                if let originalURL {
+                    openRepository(originalURL, silent: true)
+                }
+            }
+
+            // Boot headless terminals for background sessions whose views haven't rendered
+            bootHeadlessTerminals()
         }
 
-        if !missing.isEmpty {
-            for url in missing {
-                openRepository(url, silent: true)
-            }
-            // Switch back to the original repo immediately
-            if let originalURL {
-                openRepository(originalURL, silent: true)
-            }
-        }
-
-        // Boot headless terminals for background sessions whose views haven't rendered
-        bootHeadlessTerminals()
-
+        // Always re-send session list and screen snapshots (handles page refresh / re-pair)
         sendSessionList()
         sendAllScreenUpdates()
     }
@@ -273,11 +276,18 @@ extension RepositoryViewModel {
                     // Skip if terminal is already available (view was rendered)
                     if session._cachedView != nil || session._cachedTerminal != nil { continue }
 
-                    let headless = HeadlessTerminal { [weak session] _ in
-                        Task { @MainActor in
-                            session?.isAlive = false
+                    let sessionID = session.id
+                    let headless = RemoteHeadlessTerminal(
+                        sessionID: sessionID,
+                        onOutput: { [weak self] sid, data in
+                            self?.notifyTerminalOutput(sessionID: sid, data: data)
+                        },
+                        onEnd: { [weak session] _ in
+                            Task { @MainActor in
+                                session?.isAlive = false
+                            }
                         }
-                    }
+                    )
                     headless.process.startProcess(
                         executable: "/bin/zsh",
                         args: ["-c", "export ZION_TTY=$(tty); exec /bin/zsh -l"],
@@ -289,8 +299,7 @@ extension RepositoryViewModel {
                     session._processBridge = headless
                     session._shellPid = headless.process.shellPid
 
-                    // Bridge output to mobile screen updates
-                    let sessionID = session.id
+                    // Bridge input from mobile to headless terminal
                     registerTerminalSendCallback(sessionID: sessionID) { [weak headless] data in
                         headless?.send(data: Array(data)[...])
                     }
@@ -569,8 +578,22 @@ extension RepositoryViewModel {
     private func sendAllScreenUpdates() {
         // Clear last-sent rows so new client gets a full snapshot
         terminalLastSentRows.removeAll()
-        let sessionIDs = Array(terminalOutputBuffers.keys)
-        for sessionID in sessionIDs {
+
+        // Collect ALL session IDs — not just those with output buffers,
+        // since headless terminals may not have produced output yet
+        var allSessionIDs = Set(terminalOutputBuffers.keys)
+        for session in terminalSessions {
+            allSessionIDs.insert(session.id)
+        }
+        for (_, state) in backgroundRepoStates {
+            for tab in state.terminalTabs {
+                for session in tab.allSessions() {
+                    allSessionIDs.insert(session.id)
+                }
+            }
+        }
+
+        for sessionID in allSessionIDs {
             Task { await sendScreenUpdate(for: sessionID) }
         }
     }
