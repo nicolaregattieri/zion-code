@@ -891,6 +891,7 @@ extension RepositoryViewModel {
             )
             if result == kIOReturnSuccess {
                 sleepAssertionID = assertionID
+                isPreventingSleep = true
             }
         }
 
@@ -913,6 +914,7 @@ extension RepositoryViewModel {
         sleepTimerTask?.cancel()
         sleepTimerTask = nil
         keepAwakeExpiresAt = nil
+        isPreventingSleep = false
         guard sleepAssertionID != 0 else { return }
         IOPMAssertionRelease(sleepAssertionID)
         sleepAssertionID = 0
