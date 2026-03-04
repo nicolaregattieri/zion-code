@@ -42,7 +42,7 @@ struct SidebarView: View {
             }
             .padding(.top, 10).padding(.bottom, 20)
         }
-        .frame(minWidth: 260, idealWidth: 360, maxWidth: 420)
+        .frame(minWidth: DesignSystem.Layout.sidebarMinWidth, idealWidth: 360, maxWidth: 420)
         .onAppear {
             model.loadRecentRepositories()
         }

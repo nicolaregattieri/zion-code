@@ -83,8 +83,8 @@ struct CodeScreen: View {
                     DraggableSplitView(
                         axis: .horizontal,
                         ratio: $fileBrowserRatio,
-                        minLeading: 160,
-                        minTrailing: 300
+                        minLeading: DesignSystem.Layout.fileBrowserMinWidth,
+                        minTrailing: DesignSystem.Layout.editorMinWidth
                     ) {
                         fileBrowserPane
                     } trailing: {
@@ -306,8 +306,8 @@ struct CodeScreen: View {
             DraggableSplitView(
                 axis: .vertical,
                 ratio: $terminalRatio,
-                minLeading: 100,
-                minTrailing: 100
+                minLeading: DesignSystem.Layout.editorTerminalMinPane,
+                minTrailing: DesignSystem.Layout.editorTerminalMinPane
             ) {
                 editorPane
             } trailing: {
@@ -926,8 +926,8 @@ struct CodeScreen: View {
                         DraggableSplitView(
                             axis: .horizontal,
                             ratio: $markdownPreviewRatio,
-                            minLeading: 260,
-                            minTrailing: 240
+                            minLeading: DesignSystem.Layout.markdownPreviewMinLeading,
+                            minTrailing: DesignSystem.Layout.markdownPreviewMinTrailing
                         ) {
                             sourceEditorView
                         } trailing: {

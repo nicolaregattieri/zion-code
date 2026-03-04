@@ -11,15 +11,15 @@ struct ConflictResolutionScreen: View {
             DraggableSplitView(
                 axis: .horizontal,
                 ratio: $splitRatio,
-                minLeading: 200,
-                minTrailing: 420
+                minLeading: DesignSystem.Layout.conflictFileListMinWidth,
+                minTrailing: DesignSystem.Layout.conflictViewerMinWidth
             ) {
                 fileListPane
             } trailing: {
                 conflictViewerPane
             }
         }
-        .frame(minWidth: 860, minHeight: 560)
+        .frame(minWidth: DesignSystem.Layout.conflictMinWidth, minHeight: DesignSystem.Layout.conflictMinHeight)
         .background(.ultraThinMaterial)
     }
 
