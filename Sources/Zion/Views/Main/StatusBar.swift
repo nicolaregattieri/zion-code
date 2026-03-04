@@ -93,8 +93,8 @@ extension ContentView {
                     .clipShape(Capsule())
                 }
 
-                // Mobile Access indicator
-                if model.isMobileAccessEnabled {
+                // Mobile Access indicator (only when prevent-sleep is active)
+                if model.isMobileAccessEnabled && model.isPreventingSleep {
                     SettingsLink {
                         HStack(spacing: 3) {
                             Image(systemName: mobileAccessIcon)
