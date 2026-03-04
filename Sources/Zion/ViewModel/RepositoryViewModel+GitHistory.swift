@@ -180,6 +180,27 @@ extension RepositoryViewModel {
 
     // MARK: - Commit Stats
 
+    /// Carry over cached insertions/deletions from the existing commits array
+    /// so stats don't blink away between refresh and async stats reload.
+    func mergeExistingStats(into newCommits: [Commit]) -> [Commit] {
+        guard !commits.isEmpty else { return newCommits }
+        var cache: [String: (Int, Int)] = [:]
+        for c in commits {
+            if let ins = c.insertions, let del = c.deletions {
+                cache[c.id] = (ins, del)
+            }
+        }
+        guard !cache.isEmpty else { return newCommits }
+        var merged = newCommits
+        for i in merged.indices {
+            if let cached = cache[merged[i].id] {
+                merged[i].insertions = cached.0
+                merged[i].deletions = cached.1
+            }
+        }
+        return merged
+    }
+
     func loadCommitStats() {
         guard let url = repositoryURL, !commits.isEmpty else { return }
         commitStatsTask?.cancel()
