@@ -195,7 +195,7 @@ extension RepositoryViewModel {
                 guard refreshRequestID == requestID else { return }
 
                 clearError()
-                commits = payload.commits
+                commits = mergeExistingStats(into: payload.commits)
                 hasMoreCommits = payload.hasMore
                 let didSelectedCommitChange = payload.selectedCommitID != selectedCommitSnapshot
                 if didSelectedCommitChange {
@@ -317,7 +317,7 @@ extension RepositoryViewModel {
                 )
                 await azureDevOpsClient.setToken(HostingCredentialStore.loadSecret(for: .azureDevOpsPAT))
 
-                commits = payload.commits
+                commits = mergeExistingStats(into: payload.commits)
                 hasMoreCommits = payload.hasMoreCommits
                 let didSelectedCommitChange = payload.selectedCommitID != selectedCommitSnapshot
                 if didSelectedCommitChange {
