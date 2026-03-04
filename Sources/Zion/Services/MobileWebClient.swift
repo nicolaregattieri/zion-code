@@ -708,6 +708,7 @@ connect();
 <button class="qa-btn" onclick="sendAction('tab')" aria-label="Tab">Tab</button>
 <button class="qa-btn" onclick="sendAction('arrowUp')" aria-label="Arrow Up">&#x2191;</button>
 <button class="qa-btn" onclick="sendAction('arrowDown')" aria-label="Arrow Down">&#x2193;</button>
+<button class="qa-btn" onclick="sendAction('enter')" aria-label="Enter">&#x23CE;</button>
 </div>
 <div id="input-bar" style="display:none">
 <input id="cmd-input" type="text" placeholder="Type command..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
