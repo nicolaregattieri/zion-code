@@ -20,6 +20,8 @@ struct DesignSystem {
         static let centeredContentMaxWidth: CGFloat = 920
         static let operationsContentMaxWidth: CGFloat = 1280
         static let onboardingStepContentMaxWidth: CGFloat = 680
+        static let windowMinWidth: CGFloat = 900
+        static let windowMinHeight: CGFloat = 640
     }
 
     struct Colors {

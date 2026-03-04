@@ -18,8 +18,8 @@ struct CodeReviewSheet: View {
             DraggableSplitView(
                 axis: .horizontal,
                 ratio: $splitRatio,
-                minLeading: 220,
-                minTrailing: 600
+                minLeading: 180,
+                minTrailing: 480
             ) {
                 CodeReviewFileList(
                     files: model.codeReviewFiles,
@@ -93,7 +93,7 @@ struct CodeReviewSheet: View {
             }
             .padding(16)
         }
-        .frame(minWidth: 1000, idealWidth: 1200, minHeight: 700, idealHeight: 800)
+        .frame(minWidth: 860, idealWidth: 1200, minHeight: 600, idealHeight: 800)
         .sheet(isPresented: $model.isPRReviewSubmitSheetVisible) {
             PRReviewSubmitSheet(model: model)
         }
