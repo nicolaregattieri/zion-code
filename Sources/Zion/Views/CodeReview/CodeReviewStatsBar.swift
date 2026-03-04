@@ -10,14 +10,14 @@ struct CodeReviewStatsBar: View {
             // Branch flow
             HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 Text(source.isEmpty ? "?" : source)
-                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    .font(DesignSystem.Typography.monoBodyBold)
                     .foregroundStyle(DesignSystem.Colors.success)
                     .lineLimit(1)
                 Image(systemName: "arrow.right")
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
                 Text(target.isEmpty ? "?" : target)
-                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    .font(DesignSystem.Typography.monoBodyBold)
                     .foregroundStyle(DesignSystem.Colors.info)
                     .lineLimit(1)
             }

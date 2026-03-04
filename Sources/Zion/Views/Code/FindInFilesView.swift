@@ -184,7 +184,7 @@ struct FindInFilesView: View {
                         .foregroundStyle(.secondary)
 
                     Text(fileResult.file)
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                        .font(DesignSystem.Typography.monoSmallMedium)
                         .lineLimit(1)
                         .truncationMode(.middle)
 

@@ -16,7 +16,7 @@ struct CommitDetailContent: View {
         } else if detail.isPlaceholder {
             VStack(spacing: 16) {
                 Image(systemName: "arrow.left.circle")
-                    .font(.system(size: 36))
+                    .font(DesignSystem.Typography.heroIcon)
                     .foregroundStyle(.tertiary)
                 Text(rawDetails)
                     .foregroundStyle(.secondary)
@@ -29,7 +29,7 @@ struct CommitDetailContent: View {
                 // Commit message
                 if !detail.subject.isEmpty {
                     Text(detail.subject)
-                        .font(.system(size: 14, weight: .bold))
+                        .font(DesignSystem.Typography.bodyLargeBold)
                         .textSelection(.enabled)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -72,10 +72,10 @@ struct CommitDetailContent: View {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                             Image(systemName: "doc.on.doc")
-                                .font(.system(size: 10, weight: .semibold))
+                                .font(DesignSystem.Typography.labelSemibold)
                                 .foregroundStyle(.secondary)
                             Text(L10n("Arquivos alterados"))
-                                .font(.system(size: 11, weight: .bold))
+                                .font(DesignSystem.Typography.bodySmallBold)
                                 .foregroundStyle(.secondary)
                             Spacer()
                             Text("\(detail.changedFiles.count)")
@@ -195,10 +195,10 @@ struct CommitDetailContent: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 Image(systemName: "sparkles")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(DesignSystem.Typography.bodySmallSemibold)
                     .foregroundStyle(DesignSystem.Colors.ai)
                 Text(L10n("graph.commit.review.tab.ai"))
-                    .font(.system(size: 12, weight: .bold))
+                    .font(DesignSystem.Typography.bodyBold)
                 Spacer()
                 Button {
                     model.reviewCommitChanges(commitID: commitID)
@@ -239,7 +239,7 @@ struct CommitDetailContent: View {
             } else {
                 VStack(spacing: 10) {
                     Image(systemName: "sparkles")
-                        .font(.system(size: 28))
+                        .font(DesignSystem.Typography.decorativeIcon)
                         .foregroundStyle(.tertiary)
                     Text(L10n("graph.commit.review.empty"))
                         .font(DesignSystem.Typography.bodySmall)

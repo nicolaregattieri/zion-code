@@ -95,7 +95,7 @@ struct CodeReviewDiffPane: View {
         } else {
             VStack(spacing: 16) {
                 Image(systemName: "doc.text.magnifyingglass")
-                    .font(.system(size: 48))
+                    .font(DesignSystem.Typography.emptyStateIcon)
                     .foregroundStyle(.tertiary)
                 Text(L10n("codereview.selectFile"))
                     .foregroundStyle(.secondary)

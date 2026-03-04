@@ -73,7 +73,7 @@ struct BranchReviewSheet: View {
     private var header: some View {
         HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
             Image(systemName: "arrow.triangle.branch")
-                .font(.title3)
+                .font(DesignSystem.Typography.sheetTitle)
                 .foregroundStyle(DesignSystem.Colors.ai)
             VStack(alignment: .leading, spacing: 2) {
                 Text(L10n("branch.review.title"))
@@ -167,7 +167,7 @@ struct BranchReviewSheet: View {
     private var emptyState: some View {
         VStack(spacing: 8) {
             Image(systemName: "sparkles")
-                .font(.title2)
+                .font(DesignSystem.Typography.iconLarge)
                 .foregroundStyle(.secondary)
             Text(L10n("branch.review.empty"))
                 .font(DesignSystem.Typography.label)

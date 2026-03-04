@@ -224,12 +224,12 @@ struct CommitRowView: View {
                 HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                     if ins > 0 {
                         Text("+\(ins)")
-                            .font(.system(size: 9, weight: .bold, design: .monospaced))
+                            .font(DesignSystem.Typography.monoMetaBold)
                             .foregroundStyle(DesignSystem.Colors.diffAddition)
                     }
                     if del > 0 {
                         Text("-\(del)")
-                            .font(.system(size: 9, weight: .bold, design: .monospaced))
+                            .font(DesignSystem.Typography.monoMetaBold)
                             .foregroundStyle(DesignSystem.Colors.diffDeletion)
                     }
                 }

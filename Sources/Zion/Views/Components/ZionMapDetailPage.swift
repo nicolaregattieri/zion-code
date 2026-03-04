@@ -34,7 +34,7 @@ struct ZionMapDetailPage: View {
             } label: {
                 HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(DesignSystem.Typography.bodySemibold)
                     Text(L10n("Voltar"))
                         .font(.system(size: 13, weight: .medium))
                 }
@@ -49,7 +49,7 @@ struct ZionMapDetailPage: View {
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(section.color)
                 Text(L10n(section.titleKey))
-                    .font(.system(size: 14, weight: .bold))
+                    .font(DesignSystem.Typography.bodyLargeBold)
             }
 
             Spacer()
@@ -92,7 +92,7 @@ struct ZionMapDetailPage: View {
 
                 if let shortcut = entry.shortcut {
                     Text(shortcut)
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                        .font(DesignSystem.Typography.monoSmallMedium)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
                         .background(DesignSystem.Colors.glassSubtle)

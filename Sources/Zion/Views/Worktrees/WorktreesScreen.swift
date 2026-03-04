@@ -11,9 +11,9 @@ struct WorktreesScreen: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(L10n("Worktrees"))
-                            .font(.title2.weight(.semibold))
+                            .font(DesignSystem.Typography.screenTitle)
                         Text(L10n("Gerencie contextos paralelos sem trocar branch no diretorio principal."))
-                            .font(.subheadline)
+                            .font(DesignSystem.Typography.subtitle)
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
@@ -90,7 +90,7 @@ struct WorktreesScreen: View {
                             L10n("worktree.smart.advanced"),
                             systemImage: model.isWorktreeAdvancedExpanded ? "chevron.down" : "chevron.right"
                         )
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(DesignSystem.Typography.labelSemibold)
                         .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
@@ -120,7 +120,7 @@ struct WorktreesScreen: View {
                             if model.worktrees.isEmpty {
                                 VStack(spacing: 12) {
                                     Image(systemName: "square.split.2x2")
-                                        .font(.largeTitle)
+                                        .font(DesignSystem.Typography.emptyStateIcon)
                                         .foregroundStyle(.secondary)
                                     Text(L10n("Nenhum worktree encontrado"))
                                         .font(DesignSystem.Typography.sheetTitle)
@@ -172,7 +172,7 @@ struct WorktreeCardView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(worktree.path)
-                    .font(.system(.body, design: .monospaced))
+                    .font(DesignSystem.Typography.monoBody)
                     .lineLimit(1)
 
                 if worktree.isMainWorktree {
@@ -229,7 +229,7 @@ struct WorktreeCardView: View {
                 if worktree.isLocked { Text(L10n("locked")) }
                 if worktree.isPrunable { Text(L10n("prunable")) }
             }
-            .font(.system(.caption, design: .monospaced))
+            .font(DesignSystem.Typography.monoLabel)
             .foregroundStyle(.secondary)
         }
         .padding(12)

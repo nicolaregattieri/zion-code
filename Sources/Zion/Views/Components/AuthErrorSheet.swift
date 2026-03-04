@@ -14,7 +14,7 @@ struct AuthErrorSheet: View {
             // Header
             HStack(spacing: 12) {
                 Image(systemName: "lock.trianglebadge.exclamationmark")
-                    .font(.system(size: 28))
+                    .font(DesignSystem.Typography.decorativeIcon)
                     .foregroundStyle(DesignSystem.Colors.warning)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(L10n("Erro de Autenticacao")).font(DesignSystem.Typography.sheetTitle)
@@ -45,14 +45,14 @@ struct AuthErrorSheet: View {
                     // Remote info
                     if !remotes.isEmpty {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text(L10n("Remotes")).font(.system(size: 11, weight: .bold)).foregroundStyle(.secondary)
+                            Text(L10n("Remotes")).font(DesignSystem.Typography.bodySmallBold).foregroundStyle(.secondary)
                             ForEach(remotes) { remote in
                                 HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                                     Image(systemName: remote.url.contains("git@") ? "key.fill" : "globe")
                                         .font(DesignSystem.Typography.label)
                                         .foregroundStyle(.secondary)
                                     Text(remote.name)
-                                        .font(.system(size: 11, weight: .bold, design: .monospaced))
+                                        .font(DesignSystem.Typography.monoSmallBold)
                                     Text(remote.url)
                                         .font(DesignSystem.Typography.monoLabel)
                                         .foregroundStyle(.secondary)
@@ -74,7 +74,7 @@ struct AuthErrorSheet: View {
 
                     // Help suggestions
                     VStack(alignment: .leading, spacing: 12) {
-                        Text(L10n("Possiveis solucoes:")).font(.system(size: 12, weight: .bold))
+                        Text(L10n("Possiveis solucoes:")).font(DesignSystem.Typography.bodyBold)
 
                         if isSSH {
                             helpItem(icon: "key.fill", title: L10n("Chave SSH"),
@@ -118,7 +118,7 @@ struct AuthErrorSheet: View {
                 .frame(width: 18)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.system(size: 12, weight: .semibold))
+                Text(title).font(DesignSystem.Typography.bodySemibold)
                 Text(description).font(DesignSystem.Typography.bodySmall).foregroundStyle(.secondary)
                 if let command {
                     HStack(spacing: DesignSystem.Spacing.iconLabelGap) {

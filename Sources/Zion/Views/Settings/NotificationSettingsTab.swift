@@ -110,7 +110,7 @@ struct NotificationSettingsTab: View {
                         TextField("https://ntfy.sh", text: $ntfyServerURL)
                             .frame(width: 200)
                             .textFieldStyle(.roundedBorder)
-                            .font(.system(.body, design: .monospaced))
+                            .font(DesignSystem.Typography.monoBody)
                     }
                     if !isServerURLValid {
                         Text("Servidor invalido. Use URL HTTPS valida (ex: https://ntfy.sh).")

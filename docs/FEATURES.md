@@ -119,6 +119,9 @@
 | Bell Control | Enable/disable terminal bell sound | Settings |
 | Hyperlink Detection | Clickable URLs in terminal output | Settings |
 | Inline Images | Display images inline via `zion_display` (iTerm2 OSC 1337 protocol) | — |
+| Voice Input | Dictate text to terminal via Apple Speech (free, real-time) or OpenAI Whisper | `⌥⌘X` |
+| Voice Engines | Apple Speech for instant local recognition; Whisper for higher accuracy with API key | Settings |
+| Voice Pill | Floating voice-active pill with waveform animation while listening | — |
 
 ## Smart Clipboard
 
@@ -135,7 +138,7 @@
 | Search/Filter | Filter clipboard items by text content |
 | Zen Mode Popover | Clipboard accessible via toolbar popover in zen mode |
 
-## Operations Center
+## Zion Ops (Operations)
 
 | Feature | Description |
 |---------|-------------|
@@ -390,6 +393,7 @@
 | `⇧⌘B` | Toggle Git Blame |
 | `⇧⌥F` | Format Document |
 | `⌃⌘Z` | Toggle Zion Mode |
+| `⌥⌘X` | Voice Input |
 | `⌃⌘J` | Focus/Zen Mode |
 | `↑↓` | Navigate commits |
 | `Esc` | Deselect / close |

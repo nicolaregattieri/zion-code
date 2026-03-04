@@ -11,7 +11,7 @@ struct KeyboardShortcutsSheet: View {
                 Spacer()
                 Button { dismiss() } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.title3)
+                        .font(DesignSystem.Typography.sheetTitle)
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
@@ -26,7 +26,7 @@ struct KeyboardShortcutsSheet: View {
                     shortcutSection(L10n("Navegacao"), icon: "sidebar.left", shortcuts: [
                         (L10n("Codigo"), "⌘1"),
                         (L10n("Grafo"), "⌘2"),
-                        (L10n("Operacoes"), "⌘3"),
+                        ("Zion Ops", "⌘3"),
                     ])
 
                     shortcutSection(L10n("Editor"), icon: "doc.text", shortcuts: [
@@ -46,6 +46,7 @@ struct KeyboardShortcutsSheet: View {
                         (L10n("shortcuts.cmdClickDefinition"), "⌘Click"),
                         (L10n("Git Blame"), "⇧⌘B"),
                         (L10n("shortcuts.formatDocument"), "⇧⌥F"),
+                        (L10n("shortcuts.toggleDotfiles"), "⇧⌘H"),
                     ])
 
                     shortcutSection(L10n("Terminal"), icon: "terminal", shortcuts: [
@@ -92,7 +93,7 @@ struct KeyboardShortcutsSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 Image(systemName: icon)
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(DesignSystem.Typography.bodySmallSemibold)
                     .foregroundStyle(.secondary)
                 Text(title)
                     .font(DesignSystem.Typography.sectionTitle)

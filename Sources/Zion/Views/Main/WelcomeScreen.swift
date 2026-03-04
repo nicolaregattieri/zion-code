@@ -20,7 +20,7 @@ struct WelcomeScreen: View {
                         }
                     }
                     .frame(width: 128, height: 128)
-                    .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.largeCornerRadius, style: .continuous))
                     .shadow(color: DesignSystem.Colors.brandPrimary.opacity(0.5), radius: 12, x: 0, y: 4)
 
                     Text("Zion")
@@ -81,7 +81,7 @@ struct WelcomeScreen: View {
                 if !model.recentRepositories.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(L10n("Recentes"))
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(DesignSystem.Typography.bodySemibold)
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
 

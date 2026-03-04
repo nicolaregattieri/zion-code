@@ -50,7 +50,7 @@ struct RepositoryStatsCard: View {
             // Top contributors
             if !stats.contributors.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(L10n("Top Contribuidores")).font(.system(size: 11, weight: .bold)).foregroundStyle(.secondary)
+                    Text(L10n("Top Contribuidores")).font(DesignSystem.Typography.bodySmallBold).foregroundStyle(.secondary)
 
                     let topContributors = Array(stats.contributors.prefix(8))
                     let maxCount = topContributors.first?.commitCount ?? 1
@@ -82,7 +82,7 @@ struct RepositoryStatsCard: View {
             // Language breakdown
             if !stats.languageBreakdown.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(L10n("Linguagens")).font(.system(size: 11, weight: .bold)).foregroundStyle(.secondary)
+                    Text(L10n("Linguagens")).font(DesignSystem.Typography.bodySmallBold).foregroundStyle(.secondary)
 
                     // Stacked bar
                     let colors: [Color] = DesignSystem.Colors.lanePalette

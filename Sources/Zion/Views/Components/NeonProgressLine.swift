@@ -60,7 +60,7 @@ struct NeonProgressLine: View {
 
         case .static:
             activeGradient
-                .opacity(0.7)
+                .opacity(DesignSystem.Opacity.visible)
         }
     }
 

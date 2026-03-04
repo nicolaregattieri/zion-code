@@ -18,7 +18,7 @@ extension ContentView {
                     Text(model.currentBranch)
                         .lineLimit(1)
                 }
-                .font(.system(.caption, design: .monospaced))
+                .font(DesignSystem.Typography.monoLabel)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
                 .background(zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(0.12) : DesignSystem.Colors.statusGreenBg)
@@ -126,7 +126,7 @@ extension ContentView {
             }
 
             if let repositoryURL = model.repositoryURL {
-                Text(repositoryURL.path).lineLimit(1).font(.system(.caption, design: .monospaced)).foregroundStyle(.tertiary)
+                Text(repositoryURL.path).lineLimit(1).font(DesignSystem.Typography.monoLabel).foregroundStyle(.tertiary)
             }
         }
         .padding(.horizontal, 16)
@@ -151,11 +151,11 @@ extension ContentView {
                         .frame(height: 1)
                         .transition(.opacity.animation(.easeIn(duration: 0.5)))
                 } else {
-                    Divider().opacity(0.45)
+                    Divider().opacity(DesignSystem.Opacity.subtle)
                 }
             }
         }
-        .animation(.easeInOut(duration: 0.3), value: model.isBusy)
+        .animation(DesignSystem.Motion.panel, value: model.isBusy)
     }
 
     var statusBarQuickNavigation: some View {
@@ -189,9 +189,9 @@ extension ContentView {
         } label: {
             HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 Image(systemName: section.icon)
-                    .font(.system(size: 9, weight: .semibold))
+                    .font(DesignSystem.Typography.metaSemibold)
                 Text(statusBarSectionLabel(section))
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(DesignSystem.Typography.labelSemibold)
                     .lineLimit(1)
             }
             .padding(.horizontal, 6)
@@ -210,7 +210,7 @@ extension ContentView {
                         .frame(height: DesignSystem.ZionMode.neonLineHeight)
                         .padding(.horizontal, 4)
                         .clipShape(Capsule())
-                        .opacity(0.7)
+                        .opacity(DesignSystem.Opacity.visible)
                         .shadow(color: DesignSystem.ZionMode.neonMagenta.opacity(0.2),
                                 radius: 1, y: 1)
                         .transition(.opacity)
@@ -229,9 +229,9 @@ extension ContentView {
         SettingsLink {
             HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 Image(systemName: "gearshape")
-                    .font(.system(size: 9, weight: .semibold))
+                    .font(DesignSystem.Typography.metaSemibold)
                 Text(L10n("status.nav.settings"))
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(DesignSystem.Typography.labelSemibold)
                     .lineLimit(1)
             }
             .padding(.horizontal, 6)

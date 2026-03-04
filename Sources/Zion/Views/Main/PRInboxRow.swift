@@ -28,7 +28,7 @@ struct PRInboxRow: View {
 
                         if !item.severitySummary.isEmpty {
                             Text(item.severitySummary)
-                                .font(.system(size: 9, weight: .semibold))
+                                .font(DesignSystem.Typography.metaSemibold)
                                 .foregroundStyle(item.status == .reviewed ? DesignSystem.Colors.warning : DesignSystem.Colors.success)
                         }
 

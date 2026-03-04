@@ -195,12 +195,36 @@ struct DesignSystem {
         // Icon-sized
         static let iconLarge = Font.system(size: 20, weight: .medium)
 
+        // Bold variants
+        static let bodySmallBold = Font.system(size: 11, weight: .bold)
+        static let bodyBold = Font.system(size: 12, weight: .bold)
+        static let bodyLargeBold = Font.system(size: 14, weight: .bold)
+
+        // Semibold variants
+        static let labelSemibold = Font.system(size: 10, weight: .semibold)
+        static let bodySemibold = Font.system(size: 12, weight: .semibold)
+        static let bodySmallSemibold = Font.system(size: 11, weight: .semibold)
+        static let metaSemibold = Font.system(size: 9, weight: .semibold)
+
         // Monospaced
         static let monoBody = Font.system(size: 12, design: .monospaced)
         static let monoSmall = Font.system(size: 11, design: .monospaced)
         static let monoLabel = Font.system(size: 10, design: .monospaced)
         static let monoLabelBold = Font.system(size: 10, weight: .bold, design: .monospaced)
         static let monoMeta = Font.system(size: 9, design: .monospaced)
+
+        // Monospaced bold/medium
+        static let monoMetaBold = Font.system(size: 9, weight: .bold, design: .monospaced)
+        static let monoSmallBold = Font.system(size: 11, weight: .bold, design: .monospaced)
+        static let monoBodyBold = Font.system(size: 12, weight: .bold, design: .monospaced)
+        static let monoLabelMedium = Font.system(size: 10, weight: .medium, design: .monospaced)
+        static let monoSmallMedium = Font.system(size: 11, weight: .medium, design: .monospaced)
+
+        // Large decorative/icon sizes
+        static let emptyStateIcon = Font.system(size: 48)
+        static let decorativeIcon = Font.system(size: 28)
+        static let largeIcon = Font.system(size: 32)
+        static let heroIcon = Font.system(size: 36)
     }
 
     // MARK: - Opacity Tokens

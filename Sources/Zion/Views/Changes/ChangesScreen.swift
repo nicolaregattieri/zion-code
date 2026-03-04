@@ -70,7 +70,7 @@ struct ChangesScreen: View {
             if model.uncommittedChanges.isEmpty {
                 VStack(spacing: 12) {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 32))
+                        .font(DesignSystem.Typography.largeIcon)
                         .foregroundStyle(DesignSystem.Colors.success.opacity(0.6))
                     Text(L10n("Tudo limpo!"))
                         .font(DesignSystem.Typography.sheetTitle)
@@ -143,7 +143,7 @@ struct ChangesScreen: View {
 
                 if isStaged {
                     Text(L10n("Staged"))
-                        .font(.system(size: 9, weight: .semibold))
+                        .font(DesignSystem.Typography.metaSemibold)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 1)
                         .background(DesignSystem.Colors.fileStaged.opacity(0.15))
@@ -210,7 +210,7 @@ struct ChangesScreen: View {
             } else {
                 VStack(spacing: 16) {
                     Image(systemName: "doc.text.magnifyingglass")
-                        .font(.system(size: 48))
+                        .font(DesignSystem.Typography.emptyStateIcon)
                         .foregroundStyle(.tertiary)
                     Text(L10n("Selecione um arquivo para ver as mudanças."))
                         .foregroundStyle(.secondary)
@@ -261,7 +261,7 @@ struct ChangesScreen: View {
                 )
                 .padding(.horizontal, 12)
                 .padding(.top, 4)
-                .transition(.opacity.animation(.easeOut(duration: 0.3)))
+                .transition(.opacity.animation(DesignSystem.Motion.panel))
             }
 
             // Detailed diff explanation card (Phase 2)

@@ -26,7 +26,7 @@ struct TagDetailSheet: View {
                     // Tag name
                     VStack(alignment: .leading, spacing: 4) {
                         Text(L10n("Tags"))
-                            .font(.system(size: 11, weight: .bold))
+                            .font(DesignSystem.Typography.bodySmallBold)
                             .foregroundStyle(.secondary)
                         TextField("v1.0.0", text: $model.tagInput)
                             .textFieldStyle(.roundedBorder)
@@ -35,7 +35,7 @@ struct TagDetailSheet: View {
                     // Tag type
                     VStack(alignment: .leading, spacing: 4) {
                         Text(L10n("tag.detail.type"))
-                            .font(.system(size: 11, weight: .bold))
+                            .font(DesignSystem.Typography.bodySmallBold)
                             .foregroundStyle(.secondary)
                         Picker("", selection: $model.tagType) {
                             ForEach(TagType.allCases) { type in
@@ -49,7 +49,7 @@ struct TagDetailSheet: View {
                     if model.tagType != .lightweight {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(L10n("tag.detail.message"))
-                                .font(.system(size: 11, weight: .bold))
+                                .font(DesignSystem.Typography.bodySmallBold)
                                 .foregroundStyle(.secondary)
                             TextEditor(text: $model.tagMessage)
                                 .font(DesignSystem.Typography.monoBody)
@@ -73,7 +73,7 @@ struct TagDetailSheet: View {
                     if model.tagPushAfterCreate {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(L10n("tag.detail.targetRemote"))
-                                .font(.system(size: 11, weight: .bold))
+                                .font(DesignSystem.Typography.bodySmallBold)
                                 .foregroundStyle(.secondary)
                             Picker("", selection: $selectedRemote) {
                                 ForEach(model.remotes) { remote in

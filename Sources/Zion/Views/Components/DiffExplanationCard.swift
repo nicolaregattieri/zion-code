@@ -9,10 +9,10 @@ struct DiffExplanationCard: View {
             // Header with severity badge
             HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 Image(systemName: "sparkles")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(DesignSystem.Typography.bodySemibold)
                     .foregroundStyle(DesignSystem.Colors.ai)
                 Text(L10n("diff.explanation.title"))
-                    .font(.system(size: 12, weight: .bold))
+                    .font(DesignSystem.Typography.bodyBold)
                 Spacer()
 
                 // Severity badge
@@ -37,7 +37,7 @@ struct DiffExplanationCard: View {
             // Intent section
             VStack(alignment: .leading, spacing: 4) {
                 Label(L10n("diff.explanation.intent"), systemImage: "target")
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(DesignSystem.Typography.labelSemibold)
                     .foregroundStyle(.secondary)
                 Text(explanation.intent)
                     .font(DesignSystem.Typography.bodySmall)
@@ -47,7 +47,7 @@ struct DiffExplanationCard: View {
             // Risks section
             VStack(alignment: .leading, spacing: 4) {
                 Label(L10n("diff.explanation.risks"), systemImage: "exclamationmark.shield")
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(DesignSystem.Typography.labelSemibold)
                     .foregroundStyle(explanation.severity.color)
                 Text(explanation.risks)
                     .font(DesignSystem.Typography.bodySmall)
@@ -57,7 +57,7 @@ struct DiffExplanationCard: View {
             // Narrative section
             VStack(alignment: .leading, spacing: 4) {
                 Label(L10n("diff.explanation.narrative"), systemImage: "text.book.closed")
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(DesignSystem.Typography.labelSemibold)
                     .foregroundStyle(.secondary)
                 Text(explanation.narrative)
                     .font(DesignSystem.Typography.bodySmall)
@@ -103,10 +103,10 @@ struct DiffExplanationShimmer: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 Image(systemName: "sparkles")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(DesignSystem.Typography.bodySemibold)
                     .foregroundStyle(DesignSystem.Colors.ai)
                 Text(L10n("diff.explanation.loading"))
-                    .font(.system(size: 12, weight: .bold))
+                    .font(DesignSystem.Typography.bodyBold)
                 Spacer()
                 ProgressView()
                     .controlSize(.small)

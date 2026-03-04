@@ -202,7 +202,7 @@ struct GeneralSettingsTab: View {
                     glowPulse = true
                 }
             } else {
-                withAnimation(.easeInOut(duration: 0.3)) {
+                withAnimation(DesignSystem.Motion.panel) {
                     glowPulse = false
                 }
             }
@@ -252,7 +252,7 @@ struct GeneralSettingsTab: View {
         case .success(let username):
             HStack {
                 Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
+                    .foregroundStyle(DesignSystem.Colors.success)
                 Text(L10n("hosting.github.authSuccess", username))
                     .font(DesignSystem.Typography.bodySmall)
             }
@@ -260,7 +260,7 @@ struct GeneralSettingsTab: View {
         case .error(let message):
             HStack {
                 Image(systemName: "xmark.circle.fill")
-                    .foregroundStyle(.red)
+                    .foregroundStyle(DesignSystem.Colors.destructive)
                 Text(message)
                     .font(DesignSystem.Typography.bodySmall)
                     .foregroundStyle(.secondary)
