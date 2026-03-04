@@ -12,8 +12,8 @@ struct ChangesScreen: View {
         DraggableSplitView(
             axis: .horizontal,
             ratio: $splitRatio,
-            minLeading: 200,
-            minTrailing: 300
+            minLeading: DesignSystem.Layout.changesFileListMinWidth,
+            minTrailing: DesignSystem.Layout.changesDiffMinWidth
         ) {
             fileListPane
         } trailing: {

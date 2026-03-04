@@ -20,8 +20,44 @@ struct DesignSystem {
         static let centeredContentMaxWidth: CGFloat = 920
         static let operationsContentMaxWidth: CGFloat = 1280
         static let onboardingStepContentMaxWidth: CGFloat = 680
+
+        // Window
         static let windowMinWidth: CGFloat = 900
         static let windowMinHeight: CGFloat = 640
+
+        // Sidebar
+        static let sidebarMinWidth: CGFloat = 260
+
+        // CodeScreen splits
+        static let fileBrowserMinWidth: CGFloat = 160
+        static let editorMinWidth: CGFloat = 300
+        static let editorTerminalMinPane: CGFloat = 100
+        static let markdownPreviewMinLeading: CGFloat = 260
+        static let markdownPreviewMinTrailing: CGFloat = 240
+
+        // GraphScreen splits
+        static let commitListMinWidth: CGFloat = 300
+        static let commitDetailMinWidth: CGFloat = 250
+        static let commitRowFloor: CGFloat = 380
+        static let commitRowLaneOffset: CGFloat = 200
+        static let graphInlineSplitMinLeading: CGFloat = 150
+        static let graphInlineSplitMinTrailing: CGFloat = 200
+
+        // ChangesScreen splits
+        static let changesFileListMinWidth: CGFloat = 200
+        static let changesDiffMinWidth: CGFloat = 300
+
+        // CodeReviewSheet
+        static let codeReviewMinWidth: CGFloat = 860
+        static let codeReviewMinHeight: CGFloat = 600
+        static let codeReviewFileListMinWidth: CGFloat = 180
+        static let codeReviewDiffMinWidth: CGFloat = 480
+
+        // ConflictResolutionScreen
+        static let conflictMinWidth: CGFloat = 860
+        static let conflictMinHeight: CGFloat = 560
+        static let conflictFileListMinWidth: CGFloat = 200
+        static let conflictViewerMinWidth: CGFloat = 420
     }
 
     struct Colors {
