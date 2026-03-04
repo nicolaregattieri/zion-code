@@ -28,7 +28,7 @@ struct GraphScreen: View {
 
     private var commitRowMinWidth: CGFloat {
         let laneWidth = CGFloat(max(model.maxLaneCount, 1)) * 20
-        return max(520, laneWidth + 300)
+        return max(380, laneWidth + 200)
     }
 
     private var commitRowMaxWidth: CGFloat {
@@ -51,8 +51,8 @@ struct GraphScreen: View {
                 DraggableSplitView(
                     axis: .horizontal,
                     ratio: $splitRatio,
-                    minLeading: 400,
-                    minTrailing: 300
+                    minLeading: 300,
+                    minTrailing: 250
                 ) {
                     commitListPane(proxy: proxy)
                         .focusable()

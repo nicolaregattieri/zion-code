@@ -120,7 +120,7 @@ struct ContentView: View {
                     }
             }
             .navigationSplitViewStyle(.balanced)
-            .frame(minWidth: 1360, minHeight: 840)
+            .frame(minWidth: DesignSystem.Layout.windowMinWidth, minHeight: DesignSystem.Layout.windowMinHeight)
             .alert(L10n("Git não encontrado"), isPresented: $model.showGitNotFoundAlert) {
                 Button(L10n("git.installCLT")) {
                     model.installCommandLineTools()
