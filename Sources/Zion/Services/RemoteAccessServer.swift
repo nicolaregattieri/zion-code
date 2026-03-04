@@ -475,9 +475,11 @@ actor RemoteAccessServer {
 
     // MARK: - HTTP Helpers
 
+    private static let corsHeaders = "Access-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type\r\n"
+
     private func sendHTTP(connection: NWConnection, status: String, body: String) {
         let bodyData = Data(body.utf8)
-        let headers = "HTTP/1.1 \(status)\r\nContent-Type: text/plain\r\nContent-Length: \(bodyData.count)\r\nConnection: close\r\n\r\n"
+        let headers = "HTTP/1.1 \(status)\r\n\(Self.corsHeaders)Content-Type: text/plain\r\nContent-Length: \(bodyData.count)\r\nConnection: close\r\n\r\n"
         var response = Data(headers.utf8)
         response.append(bodyData)
         connection.send(content: response, completion: .contentProcessed { _ in
@@ -487,7 +489,7 @@ actor RemoteAccessServer {
 
     private func sendJSON(connection: NWConnection, status: String, json: String) {
         let bodyData = Data(json.utf8)
-        let headers = "HTTP/1.1 \(status)\r\nContent-Type: application/json\r\nContent-Length: \(bodyData.count)\r\nConnection: close\r\n\r\n"
+        let headers = "HTTP/1.1 \(status)\r\n\(Self.corsHeaders)Content-Type: application/json\r\nContent-Length: \(bodyData.count)\r\nConnection: close\r\n\r\n"
         var response = Data(headers.utf8)
         response.append(bodyData)
         connection.send(content: response, completion: .contentProcessed { _ in
