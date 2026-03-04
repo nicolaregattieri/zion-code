@@ -93,8 +93,8 @@ extension ContentView {
                     .clipShape(Capsule())
                 }
 
-                // Mobile Access indicator (only when prevent-sleep is active)
-                if model.isMobileAccessEnabled && model.isPreventingSleep {
+                // Mobile Access indicator
+                if model.isMobileAccessEnabled {
                     SettingsLink {
                         HStack(spacing: 3) {
                             Image(systemName: mobileAccessIcon)
@@ -102,7 +102,7 @@ extension ContentView {
                             if case .connected(let count) = model.mobileAccessConnectionState {
                                 Text("\(count)")
                             }
-                            if let expiresAt = model.keepAwakeExpiresAt, expiresAt > .now {
+                            if model.isPreventingSleep, let expiresAt = model.keepAwakeExpiresAt, expiresAt > .now {
                                 Text(expiresAt, style: .timer)
                                     .monospacedDigit()
                             }
