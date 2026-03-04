@@ -390,15 +390,15 @@ struct SidebarView: View {
                     .frame(width: 18)
                     .padding(.top, 2)
                     .foregroundStyle(isSelected ? .primary : .secondary)
-                    .opacity(isDisabled ? 0.3 : 1.0)
+                    .opacity(isDisabled ? DesignSystem.Opacity.dim : DesignSystem.Opacity.full)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(L10n(section.title)).font(DesignSystem.Typography.sectionTitle).lineLimit(1)
                         .foregroundStyle(isSelected ? .primary : .secondary)
                     Text(L10n(section.subtitle)).font(DesignSystem.Typography.bodySmall).foregroundStyle(.secondary).lineLimit(2)
-                        .opacity(isSelected ? 1.0 : (isDisabled ? 0.3 : 0.7))
+                        .opacity(isSelected ? DesignSystem.Opacity.full : (isDisabled ? DesignSystem.Opacity.dim : DesignSystem.Opacity.visible))
                 }
-                .opacity(isDisabled ? 0.3 : 1.0)
+                .opacity(isDisabled ? DesignSystem.Opacity.dim : DesignSystem.Opacity.full)
 
                 Spacer(minLength: 0)
                 
@@ -406,7 +406,7 @@ struct SidebarView: View {
                     Image(systemName: "lock.fill")
                         .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
-                        .opacity(0.5)
+                        .opacity(DesignSystem.Opacity.muted)
                         .padding(.top, 4)
                         .help(L10n("sidebar.locked.hint"))
                 } else if section == .graph && model.behindRemoteCount > 0 {
@@ -504,7 +504,7 @@ struct SidebarView: View {
             if filteredBranchTree.isEmpty {
                 VStack(spacing: 8) {
                     Image(systemName: branchSearchQuery.isEmpty ? "arrow.triangle.branch" : "magnifyingglass")
-                        .font(.title2).foregroundStyle(.secondary)
+                        .font(DesignSystem.Typography.iconLarge).foregroundStyle(.secondary)
                     Text(branchSearchQuery.isEmpty ? L10n("Sem branches detectadas") : L10n("Nenhuma branch encontrada"))
                         .font(DesignSystem.Typography.sheetTitle)
                 }
@@ -532,7 +532,7 @@ struct SidebarView: View {
                 if node.isGroup { Text(node.title).font(DesignSystem.Typography.sheetTitle) } else {
                     HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                         Image(systemName: isMain ? "shield.fill" : "arrow.triangle.branch").font(DesignSystem.Typography.label).foregroundStyle(isMain ? DesignSystem.Colors.warning : (isCurrent ? Color.accentColor : Color.secondary))
-                        Text(node.title).font(.system(.caption, design: .monospaced)).fontWeight(isCurrent || isMain ? .bold : .regular).lineLimit(1)
+                        Text(node.title).font(DesignSystem.Typography.monoLabel).fontWeight(isCurrent || isMain ? .bold : .regular).lineLimit(1)
                         if isCurrent { Text(L10n("current")).font(DesignSystem.Typography.micro).padding(.horizontal, 4).padding(.vertical, 1).background(DesignSystem.Colors.selectionBackground).foregroundStyle(Color.accentColor).clipShape(Capsule()) }
                     }
                 }

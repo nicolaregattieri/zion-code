@@ -77,7 +77,7 @@ struct ClimbingZionView: View {
                 }
             }
             .frame(width: 128, height: 128)
-            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.largeCornerRadius, style: .continuous))
             .shadow(color: DesignSystem.Colors.brandPrimary.opacity(0.5), radius: 16, x: 0, y: 6)
 
             VStack(spacing: 8) {
@@ -419,7 +419,7 @@ struct ClimbingZionView: View {
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous))
 
             Text(provider.label)
-                .font(.system(size: 11, weight: .semibold))
+                .font(DesignSystem.Typography.bodySmallSemibold)
                 .lineLimit(1)
 
             Text(model)
@@ -499,7 +499,7 @@ struct ClimbingZionView: View {
                 }
             }
         }
-        .opacity(0.7)
+        .opacity(DesignSystem.Opacity.visible)
     }
 
     private var codeMockup: some View {

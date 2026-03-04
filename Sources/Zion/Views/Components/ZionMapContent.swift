@@ -95,6 +95,9 @@ struct ZionMapContent {
                              shortcut: "\u{2318}F"),
                 ZionMapEntry("map.terminal.finderdrag.title", description: "map.terminal.finderdrag.description",
                              tips: ["map.terminal.finderdrag.tip1"]),
+                ZionMapEntry("map.terminal.voiceInput.title", description: "map.terminal.voiceInput.description",
+                             shortcut: "\u{2325}\u{2318}X",
+                             tips: ["map.terminal.voiceInput.tip1"]),
             ]
 
         case .clipboard:
@@ -241,6 +244,58 @@ struct ZionMapContent {
                 ZionMapEntry("map.mobile.multiProject.title", description: "map.mobile.multiProject.description"),
                 ZionMapEntry("map.mobile.lanMode.title", description: "map.mobile.lanMode.description"),
                 ZionMapEntry("map.mobile.preventSleep.title", description: "map.mobile.preventSleep.description"),
+            ]
+
+        case .clone:
+            return [
+                ZionMapEntry("map.clone.sheet.title", description: "map.clone.sheet.description"),
+                ZionMapEntry("map.clone.welcome.title", description: "map.clone.welcome.description"),
+                ZionMapEntry("map.clone.protocol.title", description: "map.clone.protocol.description",
+                             tips: ["map.clone.protocol.tip1"]),
+            ]
+
+        case .repoStats:
+            return [
+                ZionMapEntry("map.repoStats.card.title", description: "map.repoStats.card.description"),
+                ZionMapEntry("map.repoStats.languages.title", description: "map.repoStats.languages.description"),
+            ]
+
+        case .remotes:
+            return [
+                ZionMapEntry("map.remotes.fetchPullPush.title", description: "map.remotes.fetchPullPush.description",
+                             tips: ["map.remotes.fetchPullPush.tip1"]),
+                ZionMapEntry("map.remotes.divergence.title", description: "map.remotes.divergence.description"),
+                ZionMapEntry("map.remotes.manage.title", description: "map.remotes.manage.description"),
+                ZionMapEntry("map.remotes.testConnection.title", description: "map.remotes.testConnection.description"),
+            ]
+
+        case .submodules:
+            return [
+                ZionMapEntry("map.submodules.status.title", description: "map.submodules.status.description"),
+                ZionMapEntry("map.submodules.init.title", description: "map.submodules.init.description"),
+                ZionMapEntry("map.submodules.update.title", description: "map.submodules.update.description",
+                             tips: ["map.submodules.update.tip1"]),
+                ZionMapEntry("map.submodules.sync.title", description: "map.submodules.sync.description"),
+            ]
+
+        case .hosting:
+            return [
+                ZionMapEntry("map.hosting.autoDetect.title", description: "map.hosting.autoDetect.description",
+                             tips: ["map.hosting.autoDetect.tip1"]),
+                ZionMapEntry("map.hosting.providers.title", description: "map.hosting.providers.description"),
+                ZionMapEntry("map.hosting.createPR.title", description: "map.hosting.createPR.description"),
+                ZionMapEntry("map.hosting.aiDescription.title", description: "map.hosting.aiDescription.description"),
+            ]
+
+        case .bisect:
+            return [
+                ZionMapEntry("map.bisect.start.title", description: "map.bisect.start.description",
+                             tips: ["map.bisect.start.tip1"]),
+                ZionMapEntry("map.bisect.banner.title", description: "map.bisect.banner.description",
+                             shortcut: "\u{21E7}\u{2318}G / \u{21E7}\u{2318}B / \u{21E7}\u{2318}S"),
+                ZionMapEntry("map.bisect.visual.title", description: "map.bisect.visual.description"),
+                ZionMapEntry("map.bisect.ai.title", description: "map.bisect.ai.description"),
+                ZionMapEntry("map.bisect.statusPill.title", description: "map.bisect.statusPill.description"),
             ]
 
         case .zionMode:

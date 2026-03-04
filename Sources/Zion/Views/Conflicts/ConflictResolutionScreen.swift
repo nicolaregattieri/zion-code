@@ -28,7 +28,7 @@ struct ConflictResolutionScreen: View {
     private var header: some View {
         HStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.title2)
+                .font(DesignSystem.Typography.iconLarge)
                 .foregroundStyle(DesignSystem.Colors.warning)
             VStack(alignment: .leading, spacing: 2) {
                 Text(L10n("Resolver Conflitos"))
@@ -55,7 +55,7 @@ struct ConflictResolutionScreen: View {
                 dismiss()
             } label: {
                 Image(systemName: "xmark.circle.fill")
-                    .font(.title3)
+                    .font(DesignSystem.Typography.sheetTitle)
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
@@ -153,7 +153,7 @@ struct ConflictResolutionScreen: View {
                                 model.saveAndMarkResolved(selectedPath)
                             } label: {
                                 Label(L10n("Marcar como Resolvido"), systemImage: "checkmark.seal.fill")
-                                    .font(.system(size: 11, weight: .semibold))
+                                    .font(DesignSystem.Typography.bodySmallSemibold)
                             }
                             .buttonStyle(.borderedProminent)
                             .controlSize(.small)
@@ -177,7 +177,7 @@ struct ConflictResolutionScreen: View {
                         .font(.system(size: 40))
                         .foregroundStyle(.secondary)
                     Text(L10n("Selecione um arquivo com conflito"))
-                        .font(.subheadline)
+                        .font(DesignSystem.Typography.subtitle)
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)

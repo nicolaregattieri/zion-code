@@ -44,15 +44,15 @@ struct ClipboardDrawer: View {
                         .frame(width: 12)
 
                     Image(systemName: "clipboard")
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(DesignSystem.Typography.bodySmallSemibold)
                         .foregroundStyle(.secondary)
 
                     Text(L10n("Clipboard"))
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(DesignSystem.Typography.bodySemibold)
 
                     if !model.clipboardMonitor.items.isEmpty {
                         Text("\(model.clipboardMonitor.items.count)")
-                            .font(.system(size: 9, weight: .bold, design: .monospaced))
+                            .font(DesignSystem.Typography.monoMetaBold)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 1)
                             .background(DesignSystem.Colors.selectionBackground)
@@ -85,7 +85,7 @@ struct ClipboardDrawer: View {
             if model.clipboardMonitor.items.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(L10n("Clipboard Inteligente"))
-                        .font(.system(size: 11, weight: .bold))
+                        .font(DesignSystem.Typography.bodySmallBold)
                     featureRow("clipboard", DesignSystem.Colors.info, L10n("Captura automaticamente o que voce copiar"))
                     featureRow("cursorarrow.click", DesignSystem.Colors.success, L10n("Clique para colar no terminal"))
                     featureRow("cursorarrow.click.2", DesignSystem.Colors.warning, L10n("Duplo clique para executar"))
@@ -147,7 +147,7 @@ struct ClipboardDrawer: View {
                     ClipboardImageThumb(path: path)
                 }
                 Text(item.preview)
-                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .font(DesignSystem.Typography.monoLabelMedium)
                     .lineLimit(1)
                     .foregroundStyle(.secondary)
             } else {

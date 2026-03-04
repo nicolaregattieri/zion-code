@@ -17,7 +17,7 @@ struct SymbolResultsSheet: View {
                     dismiss()
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.title3)
+                        .font(DesignSystem.Typography.sheetTitle)
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)

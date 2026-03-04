@@ -22,7 +22,7 @@ struct FileHistorySheet: View {
             } else if model.fileHistoryEntries.isEmpty {
                 VStack(spacing: 12) {
                     Image(systemName: "clock.arrow.circlepath")
-                        .font(.system(size: 28))
+                        .font(DesignSystem.Typography.decorativeIcon)
                         .foregroundStyle(.secondary)
                     Text(L10n("filehistory.empty"))
                         .font(DesignSystem.Typography.label)
@@ -46,7 +46,7 @@ struct FileHistorySheet: View {
     private var header: some View {
         HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
             Image(systemName: "clock.arrow.circlepath")
-                .font(.title3)
+                .font(DesignSystem.Typography.sheetTitle)
                 .foregroundStyle(DesignSystem.Colors.info)
             VStack(alignment: .leading, spacing: 2) {
                 Text(L10n("filehistory.title"))
@@ -58,11 +58,11 @@ struct FileHistorySheet: View {
             }
             Spacer()
             Text("\(model.fileHistoryEntries.count) commits")
-                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .font(DesignSystem.Typography.monoLabelMedium)
                 .foregroundStyle(.secondary)
             Button { dismiss() } label: {
                 Image(systemName: "xmark.circle.fill")
-                    .font(.title3)
+                    .font(DesignSystem.Typography.sheetTitle)
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
@@ -75,7 +75,7 @@ struct FileHistorySheet: View {
         let isHovered = hoveredID == entry.id
         return HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
             Text(entry.shortHash)
-                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .font(DesignSystem.Typography.monoSmallBold)
                 .foregroundStyle(DesignSystem.Colors.info)
                 .frame(width: 60, alignment: .leading)
 

@@ -153,8 +153,8 @@ struct GraphScreen: View {
     private func header(proxy: ScrollViewProxy) -> some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(L10n("Zion Tree")).font(.title2.weight(.semibold))
-                Text(L10n("Navegue e salte entre as pontas das branches.")).foregroundStyle(.secondary).font(.subheadline)
+                Text(L10n("Zion Tree")).font(DesignSystem.Typography.screenTitle)
+                Text(L10n("Navegue e salte entre as pontas das branches.")).foregroundStyle(.secondary).font(DesignSystem.Typography.subtitle)
             }
             Spacer()
             
@@ -198,7 +198,7 @@ struct GraphScreen: View {
         Button(action: action) {
             HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 Image(systemName: icon).font(DesignSystem.Typography.labelBold)
-                Text(L10n(title)).font(.system(size: 10, weight: .semibold))
+                Text(L10n(title)).font(DesignSystem.Typography.labelSemibold)
             }
             .foregroundStyle(color)
         }
@@ -208,7 +208,7 @@ struct GraphScreen: View {
 
     private func jumpButton(icon: String, color: Color, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: icon).font(.system(size: 14, weight: .bold)).foregroundStyle(.white).frame(width: 32, height: 32).background(color.gradient).clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous))
+            Image(systemName: icon).font(DesignSystem.Typography.bodyLargeBold).foregroundStyle(.white).frame(width: 32, height: 32).background(color.gradient).clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous))
         }.buttonStyle(.plain).cursorArrow().help(L10n("Saltar para") + " \(label)")
         .accessibilityLabel(L10n("Saltar para") + " \(label)")
     }
@@ -266,7 +266,7 @@ struct GraphScreen: View {
                         }
                     } label: {
                         Image(systemName: "sparkles")
-                            .font(.system(size: 11, weight: .bold))
+                            .font(DesignSystem.Typography.bodySmallBold)
                             .foregroundStyle(model.isSemanticSearchActive ? DesignSystem.Colors.semanticSearch : .secondary)
                     }
                     .buttonStyle(.bordered)
@@ -437,7 +437,7 @@ struct GraphScreen: View {
                     )
 
                 HStack(spacing: 12) {
-                    Image(systemName: "pencil.circle.fill").font(.title2).foregroundStyle(DesignSystem.Colors.warning.opacity(0.8))
+                    Image(systemName: "pencil.circle.fill").font(DesignSystem.Typography.iconLarge).foregroundStyle(DesignSystem.Colors.warning.opacity(0.8))
 
                     VStack(alignment: .leading, spacing: 0) {
                         Text(L10n("Alteracoes Pendentes")).font(DesignSystem.Typography.sectionTitle).foregroundStyle(.primary.opacity(0.9))
@@ -886,7 +886,7 @@ struct GraphScreen: View {
     }
     
     private func scrollToMatch(id: String, proxy: ScrollViewProxy) {
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+        withAnimation(DesignSystem.Motion.springInteractive) {
             proxy.scrollTo(id, anchor: .center)
             model.selectCommit(id)
         }
@@ -946,7 +946,7 @@ struct GraphScreen: View {
                         }
 
                         Text(String(selectedCommitID.prefix(8)))
-                            .font(.system(.caption, design: .monospaced))
+                            .font(DesignSystem.Typography.monoLabel)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -983,7 +983,7 @@ struct GraphScreen: View {
             GlassCard(spacing: 0) {
                 VStack(spacing: 16) {
                     Image(systemName: "arrow.left.circle")
-                        .font(.system(size: 36))
+                        .font(DesignSystem.Typography.heroIcon)
                         .foregroundStyle(.tertiary)
                     Text(L10n("Selecione um commit para ver detalhes"))
                         .foregroundStyle(.secondary)
@@ -998,7 +998,7 @@ struct GraphScreen: View {
     private func detailTabButton(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 10, weight: .semibold))
+                .font(DesignSystem.Typography.labelSemibold)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
                 .background(
@@ -1089,7 +1089,7 @@ struct GraphScreen: View {
             Divider()
             if model.uncommittedChanges.isEmpty {
                 VStack(spacing: 12) {
-                    Image(systemName: "checkmark.circle.fill").font(.system(size: 32)).foregroundStyle(DesignSystem.Colors.success.opacity(0.6))
+                    Image(systemName: "checkmark.circle.fill").font(DesignSystem.Typography.largeIcon).foregroundStyle(DesignSystem.Colors.success.opacity(0.6))
                     Text(L10n("Tudo limpo!")).font(DesignSystem.Typography.sheetTitle)
                     Text(L10n("Nenhuma alteração pendente no momento.")).font(DesignSystem.Typography.label).foregroundStyle(.secondary).multilineTextAlignment(.center)
                 }
@@ -1175,7 +1175,7 @@ struct GraphScreen: View {
                 }.background(DesignSystem.Colors.glassInset)
             } else {
                 VStack(spacing: 16) {
-                    Image(systemName: "doc.text.magnifyingglass").font(.system(size: 48)).foregroundStyle(.tertiary)
+                    Image(systemName: "doc.text.magnifyingglass").font(DesignSystem.Typography.emptyStateIcon).foregroundStyle(.tertiary)
                     Text(L10n("Selecione um arquivo para ver as mudanças.")).foregroundStyle(.secondary)
                 }.frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -1268,7 +1268,7 @@ private struct WorktreePill: View {
                     .lineLimit(1)
                 if isMainWorktree {
                     Text(L10n("worktree.main.badge"))
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .font(DesignSystem.Typography.monoMetaBold)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 2)
                         .background(DesignSystem.Colors.success.opacity(0.18))

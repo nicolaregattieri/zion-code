@@ -51,7 +51,7 @@ struct HelpSheet: View {
             return ["help.terminal.pty", "help.terminal.splits", "help.terminal.tabs",
                     "help.terminal.zoom", "help.terminal.persistence",
                     "help.terminal.transparency", "help.terminal.finderdrag",
-                    "help.terminalSearch"]
+                    "help.terminalSearch", "help.terminal.voiceInput"]
         case .clipboard:
             return ["help.clipboard.capture", "help.clipboard.paste",
                     "help.clipboard.drag", "help.clipboard.images",
@@ -94,6 +94,22 @@ struct HelpSheet: View {
         case .mobileAccess:
             return ["help.mobile.pairing", "help.mobile.terminal", "help.mobile.quickActions",
                     "help.mobile.multiProject", "help.mobile.preventSleep"]
+        case .bisect:
+            return ["help.bisect.start", "help.bisect.banner", "help.bisect.visual",
+                    "help.bisect.ai", "help.bisect.statusPill"]
+        case .clone:
+            return ["help.clone.sheet", "help.clone.welcome", "help.clone.protocol"]
+        case .repoStats:
+            return ["help.repoStats.card", "help.repoStats.languages"]
+        case .remotes:
+            return ["help.remotes.fetchPullPush", "help.remotes.divergence",
+                    "help.remotes.manage", "help.remotes.testConnection"]
+        case .submodules:
+            return ["help.submodules.status", "help.submodules.init",
+                    "help.submodules.update", "help.submodules.sync"]
+        case .hosting:
+            return ["help.hosting.autoDetect", "help.hosting.providers",
+                    "help.hosting.createPR", "help.hosting.aiDescription"]
         }
     }
 
@@ -136,14 +152,14 @@ struct HelpSheet: View {
     private var header: some View {
         HStack {
             Image(systemName: "questionmark.circle.fill")
-                .font(.title3)
+                .font(DesignSystem.Typography.sheetTitle)
                 .foregroundStyle(.secondary)
             Text(L10n("Conheca o Zion"))
                 .font(.title2.bold())
             Spacer()
             Button { dismiss() } label: {
                 Image(systemName: "xmark.circle.fill")
-                    .font(.title3)
+                    .font(DesignSystem.Typography.sheetTitle)
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
@@ -200,7 +216,7 @@ struct HelpSheet: View {
                     .font(DesignSystem.Typography.sectionTitle)
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(DesignSystem.Typography.labelSemibold)
                     .foregroundStyle(.tertiary)
                     .opacity(isHovered ? 1 : 0.5)
             }
@@ -263,7 +279,7 @@ struct HelpSheet: View {
                 .foregroundStyle(.secondary)
             VStack(alignment: .leading, spacing: 2) {
                 Text(L10n("help.shortcuts.title"))
-                    .font(.system(size: 12, weight: .bold))
+                    .font(DesignSystem.Typography.bodyBold)
                 Text(L10n("help.shortcuts.subtitle"))
                     .font(DesignSystem.Typography.bodySmall)
                     .foregroundStyle(.secondary)

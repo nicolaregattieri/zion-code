@@ -180,7 +180,8 @@ enum CommitMessageStyle: String, CaseIterable, Identifiable {
 enum FeatureSection: String, CaseIterable, Identifiable {
     case tree, code, terminal, clipboard, operations, worktrees, ai,
          customization, diagnostics, conflicts, settings, diffExplanation,
-         codeReview, prInbox, autoUpdates, zionMode, mobileAccess
+         codeReview, prInbox, autoUpdates, zionMode, mobileAccess, bisect,
+         clone, repoStats, remotes, submodules, hosting
     var id: String { rawValue }
 
     var icon: String {
@@ -202,6 +203,12 @@ enum FeatureSection: String, CaseIterable, Identifiable {
         case .autoUpdates: return "arrow.triangle.2.circlepath"
         case .zionMode: return "bolt.fill"
         case .mobileAccess: return "iphone.and.arrow.forward"
+        case .bisect: return "arrow.triangle.swap"
+        case .clone: return "square.and.arrow.down"
+        case .repoStats: return "chart.bar.fill"
+        case .remotes: return "network"
+        case .submodules: return "shippingbox.fill"
+        case .hosting: return "server.rack"
         }
     }
 
@@ -224,6 +231,12 @@ enum FeatureSection: String, CaseIterable, Identifiable {
         case .autoUpdates: return DesignSystem.Colors.success
         case .zionMode: return .purple
         case .mobileAccess: return DesignSystem.Colors.info
+        case .bisect: return DesignSystem.Colors.destructive
+        case .clone: return DesignSystem.Colors.success
+        case .repoStats: return DesignSystem.Colors.info
+        case .remotes: return DesignSystem.Colors.commitSplit
+        case .submodules: return DesignSystem.Colors.warning
+        case .hosting: return DesignSystem.Colors.brandPrimary
         }
     }
 
@@ -233,7 +246,7 @@ enum FeatureSection: String, CaseIterable, Identifiable {
         case .code: return "Zion Code"
         case .terminal: return "Terminal"
         case .clipboard: return "Clipboard Inteligente"
-        case .operations: return "Centro de Operacoes"
+        case .operations: return "Zion Ops"
         case .worktrees: return "Worktrees"
         case .ai: return "Assistente IA"
         case .customization: return "help.customization.title"
@@ -246,6 +259,12 @@ enum FeatureSection: String, CaseIterable, Identifiable {
         case .autoUpdates: return "help.updates.title"
         case .zionMode: return "help.zionMode.title"
         case .mobileAccess: return "help.mobileAccess.title"
+        case .bisect: return "help.bisect.title"
+        case .clone: return "help.clone.title"
+        case .repoStats: return "help.repoStats.title"
+        case .remotes: return "help.remotes.title"
+        case .submodules: return "help.submodules.title"
+        case .hosting: return "help.hosting.title"
         }
     }
 
@@ -261,7 +280,7 @@ enum AppSection: String, CaseIterable, Identifiable {
         switch self {
         case .code: return "Zion Code"
         case .graph: return "Zion Tree"
-        case .operations: return "Operacoes"
+        case .operations: return "Zion Ops"
         }
     }
     var icon: String {
@@ -273,9 +292,9 @@ enum AppSection: String, CaseIterable, Identifiable {
     }
     var subtitle: String {
         switch self {
-        case .graph: return "Historico visual"
-        case .code: return "Editor e Terminal"
-        case .operations: return "Acoes e Comandos"
+        case .graph: return L10n("sidebar.graph.subtitle")
+        case .code: return L10n("sidebar.code.subtitle")
+        case .operations: return L10n("sidebar.operations.subtitle")
         }
     }
 }

@@ -37,14 +37,14 @@ struct PullRequestSheet: View {
                 VStack(alignment: .leading, spacing: 16) {
                     // Title
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(L10n("Titulo")).font(.system(size: 11, weight: .bold)).foregroundStyle(.secondary)
+                        Text(L10n("Titulo")).font(DesignSystem.Typography.bodySmallBold).foregroundStyle(.secondary)
                         TextField(L10n("Titulo do PR..."), text: $title)
                             .textFieldStyle(.roundedBorder)
                     }
 
                     // Base branch
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(L10n("Branch base")).font(.system(size: 11, weight: .bold)).foregroundStyle(.secondary)
+                        Text(L10n("Branch base")).font(DesignSystem.Typography.bodySmallBold).foregroundStyle(.secondary)
                         Picker("", selection: $baseBranch) {
                             ForEach(model.branches.filter { !$0.contains("/") }, id: \.self) { branch in
                                 Text(branch).tag(branch)
@@ -57,7 +57,7 @@ struct PullRequestSheet: View {
                     // Body
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
-                            Text(L10n("Descricao")).font(.system(size: 11, weight: .bold)).foregroundStyle(.secondary)
+                            Text(L10n("Descricao")).font(DesignSystem.Typography.bodySmallBold).foregroundStyle(.secondary)
                             Spacer()
                             if model.isAIConfigured {
                                 Button {
@@ -159,7 +159,7 @@ struct PullRequestSheet: View {
                         HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                             Image(systemName: "checkmark.circle.fill").foregroundStyle(DesignSystem.Colors.success)
                             Text(L10n("PR criado com sucesso!"))
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(DesignSystem.Typography.bodySemibold)
                             Spacer()
                             Button(L10n("Abrir no Navegador")) {
                                 if let nsURL = URL(string: url) {
@@ -246,7 +246,7 @@ struct PullRequestSheet: View {
         Task {
             let tokenAvailable = await provider.hasToken()
             if !tokenAvailable {
-                withAnimation(.easeInOut(duration: 0.25)) {
+                withAnimation(DesignSystem.Motion.snappy) {
                     needsTokenForKind = provider.kind
                 }
                 isCreating = false

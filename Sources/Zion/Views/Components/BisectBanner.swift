@@ -24,7 +24,7 @@ struct BisectBanner: View {
     private var awaitingGoodBanner: some View {
         HStack(spacing: 16) {
             Image(systemName: "arrow.trianglehead.branch")
-                .font(.title3)
+                .font(DesignSystem.Typography.sheetTitle)
                 .foregroundStyle(DesignSystem.Colors.info)
 
             VStack(alignment: .leading, spacing: 2) {
@@ -56,7 +56,7 @@ struct BisectBanner: View {
     private func activeBanner(currentHash: String, stepsRemaining: Int) -> some View {
         HStack(spacing: 16) {
             Image(systemName: "arrow.trianglehead.branch")
-                .font(.title3)
+                .font(DesignSystem.Typography.sheetTitle)
                 .foregroundStyle(DesignSystem.Colors.info)
 
             VStack(alignment: .leading, spacing: 2) {
@@ -126,7 +126,7 @@ struct BisectBanner: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 16) {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.title3)
+                    .font(DesignSystem.Typography.sheetTitle)
                     .foregroundStyle(DesignSystem.Colors.destructive)
 
                 VStack(alignment: .leading, spacing: 2) {

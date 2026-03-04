@@ -379,7 +379,7 @@ private struct MarkdownImageView: View {
     private var fallbackView: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(L10n("editor.markdown.imageUnavailable"))
-                .font(.system(size: 12, weight: .semibold))
+                .font(DesignSystem.Typography.bodySemibold)
                 .foregroundStyle(theme.colors.comment)
             Text(source)
                 .font(DesignSystem.Typography.monoSmall)

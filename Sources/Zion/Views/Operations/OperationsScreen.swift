@@ -12,10 +12,10 @@ struct OperationsScreen: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .bottom) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(L10n("Centro de Operacoes"))
+                        Text("Zion Ops")
                             .font(DesignSystem.Typography.screenTitle)
                         Text(L10n("Gerencie branches, tags, stashes e alteracoes de historico."))
-                            .font(.subheadline)
+                            .font(DesignSystem.Typography.subtitle)
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
@@ -238,7 +238,7 @@ struct OperationsScreen: View {
                         mode: .pulse
                     )
                     .padding(.top, 4)
-                    .transition(.opacity.animation(.easeOut(duration: 0.3)))
+                    .transition(.opacity.animation(DesignSystem.Motion.panel))
                 }
 
                 // AI Code Review Results
@@ -347,7 +347,7 @@ struct OperationsScreen: View {
                     Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
                     TextField(L10n("Selecionar branch ou hash..."), text: $model.branchInput)
                         .textFieldStyle(.plain)
-                        .font(.system(.body, design: .monospaced))
+                        .font(DesignSystem.Typography.monoBody)
                 }
                 .padding(8).background(DesignSystem.Colors.glassInset).clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
 
@@ -379,7 +379,7 @@ struct OperationsScreen: View {
             Text(L10n("Branches locais/remotas")).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
             if model.branchInfos.isEmpty {
                 VStack(spacing: 6) {
-                    Image(systemName: "arrow.triangle.branch").font(.title3).foregroundStyle(.secondary)
+                    Image(systemName: "arrow.triangle.branch").font(DesignSystem.Typography.sheetTitle).foregroundStyle(.secondary)
                     Text(L10n("Nenhuma branch encontrada")).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
                     Text(L10n("branches.emptyHint")).font(DesignSystem.Typography.meta).foregroundStyle(.secondary)
                 }
@@ -397,7 +397,7 @@ struct OperationsScreen: View {
                                         if branch.name == model.currentBranch {
                                             Image(systemName: "checkmark.circle.fill").font(DesignSystem.Typography.meta).foregroundStyle(DesignSystem.Colors.success)
                                         }
-                                        Text(branch.name).font(.system(.caption, design: .monospaced))
+                                        Text(branch.name).font(DesignSystem.Typography.monoLabel)
                                             .fontWeight(branch.name == model.currentBranch ? .bold : .regular)
                                             .lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
                                         if branch.isRemote { Image(systemName: "icloud").font(DesignSystem.Typography.meta).foregroundStyle(.secondary) }
@@ -619,7 +619,7 @@ struct OperationsScreen: View {
                     ForEach(model.remotes) { remote in
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(remote.name).font(.system(.caption, design: .monospaced)).fontWeight(.bold)
+                                Text(remote.name).font(DesignSystem.Typography.monoLabel).fontWeight(.bold)
                                 Text(remote.url).font(DesignSystem.Typography.monoMeta).foregroundStyle(.secondary).lineLimit(1)
                             }
                             Spacer()
@@ -1094,7 +1094,7 @@ struct PreCommitCheckCard: View {
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(criticalCount > 0 ? DesignSystem.Colors.destructive : DesignSystem.Colors.ai)
                 Text(L10n("precommit.gate.title"))
-                    .font(.system(size: 12, weight: .bold))
+                    .font(DesignSystem.Typography.bodyBold)
                 Spacer()
                 Button { onFixIssues() } label: {
                     Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)

@@ -111,7 +111,7 @@ struct ContentView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .allowsHitTesting(!model.isRepositorySwitching)
                     .padding(.bottom, statusBarClearance)
-                    .background(Color(NSColor.windowBackgroundColor))
+                    .background(DesignSystem.Colors.background)
                     .overlay {
                         if model.isRepositorySwitching {
                             ZionLoadingOverlay()
@@ -527,7 +527,7 @@ struct ContentView: View {
 
     private var conflictWarningBar: some View {
         HStack(spacing: 16) {
-            Image(systemName: "exclamationmark.triangle.fill").font(.title3).foregroundStyle(DesignSystem.Colors.warning)
+            Image(systemName: "exclamationmark.triangle.fill").font(DesignSystem.Typography.sheetTitle).foregroundStyle(DesignSystem.Colors.warning)
             VStack(alignment: .leading, spacing: 2) {
                 Text(L10n("Conflitos")).font(DesignSystem.Typography.sheetTitle)
                 Text(L10n("Resolva os conflitos na sua IDE favorita.")).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
@@ -549,7 +549,7 @@ struct ContentView: View {
             }
         }
         .padding(16)
-        .background(Color(NSColor.windowBackgroundColor))
+        .background(DesignSystem.Colors.background)
         .overlay(alignment: .bottom) { Divider() }
     }
 

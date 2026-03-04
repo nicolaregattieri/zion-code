@@ -10,7 +10,7 @@ struct CodeReviewFileList: View {
             // Header
             HStack {
                 Text(L10n("codereview.files"))
-                    .font(.system(size: 12, weight: .bold))
+                    .font(DesignSystem.Typography.bodyBold)
                 Spacer()
                 Button {
                     onReviewAll()

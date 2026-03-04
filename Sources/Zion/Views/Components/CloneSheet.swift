@@ -43,7 +43,7 @@ struct CloneSheet: View {
     private var header: some View {
         HStack(spacing: 12) {
             Image(systemName: "square.and.arrow.down.on.square")
-                .font(.title2)
+                .font(DesignSystem.Typography.iconLarge)
                 .foregroundStyle(DesignSystem.Colors.brandPrimary)
             VStack(alignment: .leading, spacing: 2) {
                 Text(L10n("Clonar Repositorio"))

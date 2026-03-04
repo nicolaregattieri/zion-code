@@ -8,7 +8,7 @@ struct StatPill: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .font(.title3)
+                .font(DesignSystem.Typography.sheetTitle)
                 .foregroundStyle(Color.accentColor)
                 .frame(width: 32, height: 32)
                 .background(DesignSystem.Colors.selectionBackground)
@@ -19,7 +19,7 @@ struct StatPill: View {
                     .font(.system(.headline, design: .rounded))
                     .fontWeight(.bold)
                 Text(title)
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(DesignSystem.Typography.labelSemibold)
                     .foregroundStyle(.secondary)
                     .textCase(.uppercase)
             }
@@ -55,7 +55,7 @@ struct StatusChip: View {
                     .foregroundStyle(.secondary)
                     .textCase(.uppercase)
                 Text(value)
-                    .font(.system(.caption, design: .monospaced))
+                    .font(DesignSystem.Typography.monoLabel)
                     .lineLimit(1)
             }
         }

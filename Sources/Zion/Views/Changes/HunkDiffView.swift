@@ -147,7 +147,7 @@ struct HunkDiffView: View {
 
             // Prefix (+/-/space)
             Text(prefix)
-                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                .font(DesignSystem.Typography.monoBodyBold)
                 .foregroundStyle(textColor)
                 .frame(width: 14)
 

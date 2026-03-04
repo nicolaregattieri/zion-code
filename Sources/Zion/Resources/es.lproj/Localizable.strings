@@ -51,7 +51,6 @@
 "Sem branches detectadas" = "No se detectaron branches";
 "Abra um repositorio com refs para visualizar a arvore." = "Abre un repositorio con refs para ver el arbol.";
 "Operacoes Git" = "Operaciones Git";
-"Fluxos organizados por contexto para reduzir erros operacionais." = "Flujos organizados por contexto para reducir errores operativos.";
 "Checkout, criacao e merge" = "Checkout, creacion y merge";
 "Digite uma branch/ref manualmente ou clique em uma da lista para preencher o campo." = "Escribe una branch/ref manualmente o haz clic en una de la lista para completar el campo.";
 "branch/ref" = "branch/ref";
@@ -1313,8 +1312,6 @@
 
 // Wave 2: Terminal Search
 "Buscar no terminal..." = "Buscar en terminal...";
-"Resultado anterior" = "Resultado anterior";
-"Proximo resultado" = "Siguiente resultado";
 "Fechar busca" = "Cerrar búsqueda";
 
 // Wave 2: Stash Badge
@@ -1336,7 +1333,6 @@
 "checkout.worktree.inUse.message" = "La rama '%@' ya está checkout en este worktree:\n%@";
 "checkout.worktree.inUse.open" = "Abrir Worktree";
 "checkout.worktree.redirected" = "Abriendo worktree para la rama '%@'.";
-"Abrir no Editor" = "Abrir en Editor";
 
 // Wave 2: Help entries
 "help.terminalSearch" = "Buscar texto en terminal con Cmd+F";
@@ -1732,8 +1728,11 @@
 "worktrees.emptyHint" = "Usa el formulario de arriba para crear tu primer worktree.";
 "branches.emptyHint" = "Las ramas aparecen después del primer commit.";
 
-// Sidebar tooltip
+// Sidebar
 "sidebar.locked.hint" = "Abre un repositorio para desbloquear esta sección.";
+"sidebar.graph.subtitle" = "Historial visual";
+"sidebar.code.subtitle" = "Editor y Terminal";
+"sidebar.operations.subtitle" = "Acciones y Comandos";
 
 // Git error messages (ErrorClassifier)
 "error.git.authFailed" = "Error de autenticación. Verifica tus credenciales o clave SSH.";
@@ -1813,3 +1812,117 @@
 "bisect.good.hint" = "Marcar como bueno (⇧⌘G)";
 "bisect.bad.hint" = "Marcar como roto (⇧⌘B)";
 "bisect.skip.hint" = "Saltar este commit (⇧⌘S)";
+
+// Bisect (Bug Finder) — HelpSheet + ZionMap
+"help.bisect.title" = "Git Bisect (Buscador de Bugs)";
+"help.bisect.start" = "Clic derecho en cualquier commit para iniciar búsqueda binaria de bug";
+"help.bisect.banner" = "Banner interactivo con controles Bueno / Malo / Saltar / Abortar";
+"help.bisect.visual" = "Estados visuales de commits: verde (bueno), rojo (malo), azul (probando)";
+"help.bisect.ai" = "La IA explica automáticamente el commit culpable al encontrarlo";
+"help.bisect.statusPill" = "Píldora en la barra de estado muestra fase del bisect y pasos restantes";
+"map.bisect.subtitle" = "Encuentra el commit que introdujo un bug con búsqueda binaria";
+"map.bisect.start.title" = "Iniciar Bisect";
+"map.bisect.start.description" = "Clic derecho en cualquier commit del grafo y elige 'Encontrar Bug con Bisect' para marcarlo como malo. Luego elige un commit bueno más antiguo para iniciar la búsqueda binaria.";
+"map.bisect.start.tip1" = "También puedes iniciar bisect desde la terminal — Zion detecta sesiones en curso y sincroniza la UI.";
+"map.bisect.banner.title" = "Banner Interactivo";
+"map.bisect.banner.description" = "Un banner superior con botones 'Funciona', 'Está Roto', 'Saltar' y 'Abortar' te guía en cada paso de la búsqueda binaria.";
+"map.bisect.visual.title" = "Estados Visuales de Commits";
+"map.bisect.visual.description" = "Commits buenos en verde, malos en rojo, el commit en prueba en azul, y el culpable recibe un badge especial.";
+"map.bisect.ai.title" = "Explicación IA del Culpable";
+"map.bisect.ai.description" = "Cuando se encuentra el commit culpable, la IA analiza el diff y explica qué cambió y por qué probablemente causó la regresión.";
+"map.bisect.statusPill.title" = "Píldora en la Barra de Estado";
+"map.bisect.statusPill.description" = "Un badge cápsula en la barra de estado muestra la fase actual del bisect y los pasos estimados restantes.";
+
+// Voice Input — HelpSheet + ZionMap
+"help.terminal.voiceInput" = "Entrada de voz con Apple Speech o OpenAI Whisper (⌥⌘X)";
+"map.terminal.voiceInput.title" = "Entrada de Voz";
+"map.terminal.voiceInput.description" = "Dicta texto al terminal usando Apple Speech (gratis, tiempo real) o OpenAI Whisper. Una píldora flotante con animación de onda muestra cuando está escuchando.";
+"map.terminal.voiceInput.tip1" = "Configura el motor de voz en Configuración > IA. Apple Speech funciona offline; Whisper necesita clave de API de OpenAI.";
+
+// Clone Repository
+"help.clone.title" = "Clonar Repositorio";
+"help.clone.sheet" = "Clonar desde URL con detección de protocolo SSH/HTTPS";
+"help.clone.welcome" = "Clon rápido desde la Pantalla de Bienvenida";
+"help.clone.protocol" = "Detección automática de protocolo y selector de destino";
+"map.clone.subtitle" = "Clona repositorios desde URLs remotas";
+"map.clone.sheet.title" = "Pantalla de Clon";
+"map.clone.sheet.description" = "Clona un repositorio desde cualquier URL. Zion detecta automáticamente SSH vs HTTPS y te permite elegir la carpeta de destino.";
+"map.clone.welcome.title" = "Integración con Pantalla de Bienvenida";
+"map.clone.welcome.description" = "El clon está disponible directamente desde la Pantalla de Bienvenida para configuración rápida sin navegar por menús.";
+"map.clone.protocol.title" = "Detección de Protocolo";
+"map.clone.protocol.description" = "Detecta automáticamente si la URL usa SSH o HTTPS y configura el clon de acuerdo.";
+"map.clone.protocol.tip1" = "Pega cualquier URL de GitHub, GitLab o Bitbucket — Zion se encarga del resto.";
+
+// Repository Statistics
+"help.repoStats.title" = "Estadísticas del Repositorio";
+"help.repoStats.card" = "Commits, ramas, tags y contribuidores de un vistazo";
+"help.repoStats.languages" = "Desglose visual de lenguajes del repositorio";
+"map.repoStats.subtitle" = "Vista rápida de métricas del repositorio";
+"map.repoStats.card.title" = "Tarjeta de Estadísticas";
+"map.repoStats.card.description" = "Ve conteo de commits, ramas, tags y contribuidores en una sola tarjeta. Se actualiza automáticamente al recargar el repositorio.";
+"map.repoStats.languages.title" = "Desglose de Lenguajes";
+"map.repoStats.languages.description" = "Visualización de la composición de lenguajes del repositorio con barras de colores mostrando la proporción de cada lenguaje.";
+
+// Remote Management
+"help.remotes.title" = "Gestión de Remotos";
+"help.remotes.fetchPullPush" = "Fetch, Pull (fast-forward) y Push con botones en la barra";
+"help.remotes.divergence" = "Aviso de divergencia en push con badge ahead/behind";
+"help.remotes.manage" = "Agregar, eliminar y renombrar remotos";
+"help.remotes.testConnection" = "Probar conexión con remoto antes de hacer push";
+"map.remotes.subtitle" = "Gestiona repositorios remotos y operaciones de sincronización";
+"map.remotes.fetchPullPush.title" = "Fetch / Pull / Push";
+"map.remotes.fetchPullPush.description" = "Botones en la barra para Fetch (descargar actualizaciones), Pull (merge fast-forward) y Push (enviar commits). Cada operación muestra progreso en la barra de estado.";
+"map.remotes.fetchPullPush.tip1" = "Usa Fetch regularmente para mantenerte actualizado sin modificar tu rama local.";
+"map.remotes.divergence.title" = "Aviso de Divergencia en Push";
+"map.remotes.divergence.description" = "Cuando tu rama diverge del remoto, Zion muestra un badge ahead/behind y avisa antes de hacer push para evitar force-pushes accidentales.";
+"map.remotes.manage.title" = "Gestionar Remotos";
+"map.remotes.manage.description" = "Agrega nuevos remotos, elimina antiguos o renómbralos. Accesible desde la pantalla de Operaciones.";
+"map.remotes.testConnection.title" = "Probar Conexión";
+"map.remotes.testConnection.description" = "Verifica que tus credenciales y claves SSH funcionen antes de hacer push. Muestra indicador de éxito o fallo.";
+
+// Submodule Management
+"help.submodules.title" = "Gestión de Submódulos";
+"help.submodules.status" = "Ver estado y commit actual de los submódulos";
+"help.submodules.init" = "Inicializar submódulos con un clic";
+"help.submodules.update" = "Actualizar submódulos recursivamente";
+"help.submodules.sync" = "Sincronizar URLs de submódulos desde .gitmodules";
+"map.submodules.subtitle" = "Gestiona submódulos git en tu repositorio";
+"map.submodules.status.title" = "Estado de Submódulos";
+"map.submodules.status.description" = "Ve el estado actual de cada submódulo: inicializado, actualizado o necesitando update. Muestra el hash del commit actual.";
+"map.submodules.init.title" = "Inicializar";
+"map.submodules.init.description" = "Inicializa submódulos no inicializados con un solo clic. Ejecuta git submodule init por ti.";
+"map.submodules.update.title" = "Actualización Recursiva";
+"map.submodules.update.description" = "Actualiza todos los submódulos recursivamente para coincidir con los commits referenciados por el repositorio padre.";
+"map.submodules.update.tip1" = "Usa actualización recursiva después de pull para mantener submódulos sincronizados.";
+"map.submodules.sync.title" = "Sincronizar URLs";
+"map.submodules.sync.description" = "Sincroniza URLs remotas de submódulos desde .gitmodules. Útil cuando las URLs upstream cambian.";
+
+// Git Hosting Integration
+"help.hosting.title" = "Hospedaje Git";
+"help.hosting.autoDetect" = "Detecta automáticamente GitHub, GitLab, Bitbucket o Azure DevOps en los remotos";
+"help.hosting.providers" = "Soporte multi-proveedor con autenticación OAuth y PAT";
+"help.hosting.createPR" = "Crea pull requests directamente desde Zion";
+"help.hosting.aiDescription" = "Descripciones de PR generadas por IA desde el diff de la rama";
+"map.hosting.subtitle" = "Conéctate a GitHub, GitLab, Bitbucket y Azure DevOps";
+"map.hosting.autoDetect.title" = "Detección Automática";
+"map.hosting.autoDetect.description" = "Zion detecta automáticamente tu proveedor de hospedaje git desde las URLs de los remotos. Sin configuración manual en la mayoría de repositorios.";
+"map.hosting.autoDetect.tip1" = "Configura credenciales en Configuración > Hospedaje Git para repositorios privados.";
+"map.hosting.providers.title" = "Soporte Multi-Proveedor";
+"map.hosting.providers.description" = "Funciona con GitHub (OAuth + PAT), GitLab (PAT), Bitbucket (App Password) y Azure DevOps (PAT). Cambia entre proveedores fácilmente.";
+"map.hosting.createPR.title" = "Crear Pull Requests";
+"map.hosting.createPR.description" = "Crea pull requests directo desde Zion con título, descripción, rama base y selección de revisores.";
+"map.hosting.aiDescription.title" = "Descripción de PR con IA";
+"map.hosting.aiDescription.description" = "La IA analiza el diff de la rama y genera una descripción estructurada del pull request con resumen y cambios principales.";
+
+// Shortcuts
+"shortcuts.toggleDotfiles" = "Alternar Dotfiles";
+
+// Missing keys (sync with en)
+"Busca" = "Buscar";
+"Checkout & Open in Editor" = "Checkout y Abrir en Editor";
+"Comando personalizado" = "Comando personalizado";
+"Executar" = "Ejecutar";
+"Fazer checkout da nova branch" = "Hacer checkout de la nueva rama";
+"Fluxos organizados por context para reduzir erros operacionais." = "Flujos organizados por contexto para reducir errores operativos.";
+"Resolver na IDE" = "Resolver en IDE";
+"Seu Git Graph nativo para macOS." = "Tu Git Graph nativo para macOS.";
