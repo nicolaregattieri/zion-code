@@ -141,7 +141,7 @@ struct ConflictRegionCard: View {
                     Button {
                         model.resolveConflictWithAI(region: region, fileName: fileName)
                     } label: {
-                        if model.isGeneratingAIMessage {
+                        if model.aiConflictResolvingRegionID == region.id {
                             ProgressView()
                                 .controlSize(.small)
                                 .frame(width: 12, height: 12)
@@ -153,13 +153,17 @@ struct ConflictRegionCard: View {
                     .buttonStyle(.bordered)
                     .controlSize(.small)
                     .tint(DesignSystem.Colors.ai)
-                    .disabled(model.isGeneratingAIMessage)
+                    .disabled(model.aiConflictResolvingRegionID != nil)
                     .help(L10n("Resolver conflito com IA"))
-                    .onChange(of: model.aiConflictResolution) { _, newValue in
-                        if !newValue.isEmpty {
-                            customText = newValue
+                    .onChange(of: model.aiConflictResolutionRegionID) { _, newRegionID in
+                        guard newRegionID == region.id,
+                              let resolved = model.consumeAIConflictResolution(for: region.id)
+                        else {
+                            return
+                        }
+                        customText = resolved
+                        if !resolved.isEmpty {
                             isEditingCustom = true
-                            model.aiConflictResolution = ""
                         }
                     }
                 }

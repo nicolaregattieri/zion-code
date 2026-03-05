@@ -4,6 +4,8 @@ struct ConflictResolutionScreen: View {
     @Bindable var model: RepositoryViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var splitRatio: CGFloat = 0.25
+    @State private var unresolvedJumpRequestID: Int = 0
+    @State private var pendingScrollToUnresolvedRegion: Bool = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -46,9 +48,19 @@ struct ConflictResolutionScreen: View {
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(DesignSystem.Colors.success)
             } else {
-                Text("\(model.unresolvedConflictCount) \(L10n("conflitos restantes"))")
+                Button {
+                    jumpToNextUnresolvedConflict()
+                } label: {
+                    HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
+                        Text("\(model.unresolvedConflictCount) \(L10n("conflitos restantes"))")
+                        Image(systemName: "arrow.down.forward")
+                            .font(DesignSystem.Typography.metaBold)
+                    }
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(DesignSystem.Colors.warning)
+                }
+                .buttonStyle(.plain)
+                .help(L10n("conflicts.jump.unresolved"))
             }
 
             Button {
@@ -161,13 +173,21 @@ struct ConflictResolutionScreen: View {
                         }
                     }
 
-                    ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 8) {
-                            ForEach(Array(model.conflictBlocks.enumerated()), id: \.element.id) { _, block in
-                                conflictBlockView(block)
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            LazyVStack(alignment: .leading, spacing: 8) {
+                                ForEach(Array(model.conflictBlocks.enumerated()), id: \.element.id) { _, block in
+                                    conflictBlockView(block)
+                                }
                             }
+                            .padding(.vertical, 4)
                         }
-                        .padding(.vertical, 4)
+                        .onChange(of: unresolvedJumpRequestID) { _, _ in
+                            scrollToFirstUnresolvedRegionIfNeeded(using: proxy)
+                        }
+                        .onChange(of: model.conflictBlocks.map(\.id)) { _, _ in
+                            scrollToFirstUnresolvedRegionIfNeeded(using: proxy)
+                        }
                     }
                 }
                 .padding(8)
@@ -209,7 +229,7 @@ struct ConflictResolutionScreen: View {
                 index: idx,
                 fileName: model.selectedConflictFile ?? "",
                 onChoose: { choice in
-                    model.resolveRegion(region.id, choice: choice)
+                    applyConflictChoice(choice, for: region.id)
                 },
                 model: model
             )
@@ -225,5 +245,33 @@ struct ConflictResolutionScreen: View {
             }
         }
         return 0
+    }
+
+    private func applyConflictChoice(_ choice: ConflictChoice, for regionID: UUID) {
+        model.resolveRegion(regionID, choice: choice)
+        guard model.currentFileAllRegionsChosen, let selectedPath = model.selectedConflictFile else {
+            return
+        }
+        pendingScrollToUnresolvedRegion = true
+        unresolvedJumpRequestID += 1
+        model.saveAndMarkResolved(selectedPath)
+    }
+
+    private func jumpToNextUnresolvedConflict() {
+        guard model.selectUnresolvedConflictFile(preferCurrentSelection: true) else {
+            return
+        }
+        pendingScrollToUnresolvedRegion = true
+        unresolvedJumpRequestID += 1
+    }
+
+    private func scrollToFirstUnresolvedRegionIfNeeded(using proxy: ScrollViewProxy) {
+        guard pendingScrollToUnresolvedRegion, let regionID = model.firstUndecidedRegionIDInSelectedConflictFile else {
+            return
+        }
+        pendingScrollToUnresolvedRegion = false
+        withAnimation(DesignSystem.Motion.detail) {
+            proxy.scrollTo(regionID.uuidString, anchor: .center)
+        }
     }
 }

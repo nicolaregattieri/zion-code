@@ -523,6 +523,7 @@
 "Continuar Rebase" = "Continue Rebase";
 "Todos os conflitos resolvidos!" = "All conflicts resolved!";
 "conflitos restantes" = "conflicts remaining";
+"conflicts.jump.unresolved" = "Jump to unresolved conflicts";
 "Conflito" = "Conflict";
 "arquivos" = "files";
 "Selecione um arquivo com conflito" = "Select a conflicted file";
