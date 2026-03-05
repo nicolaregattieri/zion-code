@@ -5,7 +5,7 @@ struct ConflictResolutionScreen: View {
     @Environment(\.dismiss) private var dismiss
     @State private var splitRatio: CGFloat = 0.25
     @State private var unresolvedJumpRequestID: Int = 0
-    @State private var pendingScrollToUnresolvedRegion: Bool = false
+    @State private var handledUnresolvedJumpRequestID: Int = 0
 
     var body: some View {
         VStack(spacing: 0) {
@@ -252,8 +252,6 @@ struct ConflictResolutionScreen: View {
         guard model.currentFileAllRegionsChosen, let selectedPath = model.selectedConflictFile else {
             return
         }
-        pendingScrollToUnresolvedRegion = true
-        unresolvedJumpRequestID += 1
         model.saveAndMarkResolved(selectedPath)
     }
 
@@ -261,16 +259,25 @@ struct ConflictResolutionScreen: View {
         guard model.selectUnresolvedConflictFile(preferCurrentSelection: true) else {
             return
         }
-        pendingScrollToUnresolvedRegion = true
         unresolvedJumpRequestID += 1
     }
 
     private func scrollToFirstUnresolvedRegionIfNeeded(using proxy: ScrollViewProxy) {
-        guard pendingScrollToUnresolvedRegion, let regionID = model.firstUndecidedRegionIDInSelectedConflictFile else {
+        guard unresolvedJumpRequestID > handledUnresolvedJumpRequestID else {
             return
         }
-        pendingScrollToUnresolvedRegion = false
-        withAnimation(DesignSystem.Motion.detail) {
+
+        guard let regionID = model.firstUndecidedRegionIDInSelectedConflictFile else {
+            if !model.conflictBlocks.isEmpty {
+                handledUnresolvedJumpRequestID = unresolvedJumpRequestID
+            }
+            return
+        }
+
+        handledUnresolvedJumpRequestID = unresolvedJumpRequestID
+        var transaction = Transaction()
+        transaction.animation = nil
+        withTransaction(transaction) {
             proxy.scrollTo(regionID.uuidString, anchor: .center)
         }
     }
