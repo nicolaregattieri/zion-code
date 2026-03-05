@@ -387,6 +387,39 @@ extension RepositoryViewModel {
         }
     }
 
+    func closeOtherFiles(keepingID id: String) {
+        guard openedFiles.contains(where: { $0.id == id }) else { return }
+        openedFiles.removeAll { $0.id != id }
+        if activeFileID != id, let kept = openedFiles.first {
+            selectCodeFile(kept)
+        }
+    }
+
+    func closeFilesToTheLeft(ofID id: String) {
+        guard let index = openedFiles.firstIndex(where: { $0.id == id }), index > 0 else { return }
+        let removedIDs = Set(openedFiles[..<index].map(\.id))
+        openedFiles.removeFirst(index)
+        if let activeID = activeFileID, removedIDs.contains(activeID) {
+            selectCodeFile(openedFiles[0])
+        }
+    }
+
+    func closeFilesToTheRight(ofID id: String) {
+        guard let index = openedFiles.firstIndex(where: { $0.id == id }), index < openedFiles.count - 1 else { return }
+        let removedIDs = Set(openedFiles[(index + 1)...].map(\.id))
+        openedFiles.removeSubrange((index + 1)...)
+        if let activeID = activeFileID, removedIDs.contains(activeID) {
+            selectCodeFile(openedFiles[index])
+        }
+    }
+
+    func closeAllFiles() {
+        openedFiles.removeAll()
+        activeFileID = nil
+        selectedCodeFile = nil
+        codeFileContent = ""
+    }
+
     func saveCurrentCodeFile() {
         guard let file = selectedCodeFile else { return }
         // Untitled files redirect to Save As
