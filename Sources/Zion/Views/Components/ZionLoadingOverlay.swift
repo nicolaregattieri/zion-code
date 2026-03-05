@@ -51,8 +51,8 @@ struct ZionLoadingOverlay: View {
                 .accessibilityHidden(true)
 
             ZionMountainFaceted()
-                .frame(width: 58, height: 45)
-                .offset(y: 8.5)
+                .frame(width: 56, height: 44)
+                .offset(y: 9)
                 .accessibilityHidden(true)
         }
         .frame(width: 72, height: 72)
@@ -133,54 +133,13 @@ private struct ZionTriangle: Shape {
 }
 
 private struct ZionMountainFaceted: View {
-    private static let logoImage: NSImage? = {
-        guard let url = Bundle.module.url(forResource: "zion-logo", withExtension: "png") else { return nil }
-        return NSImage(contentsOf: url)
-    }()
-
-    var body: some View {
-        GeometryReader { geo in
-            if let logo = Self.logoImage {
-                // Reuse the canonical logo texture and crop to the mountain silhouette for exact fidelity.
-                Image(nsImage: logo)
-                    .resizable()
-                    .interpolation(.high)
-                    .antialiased(true)
-                    .scaledToFit()
-                    .frame(width: geo.size.width * 1.44, height: geo.size.width * 1.44)
-                    .offset(y: geo.size.height * 0.22)
-                    .mask(ZionMountainMask())
-            } else {
-                ZionMountainFallback()
-            }
-        }
-    }
-}
-
-private struct ZionMountainMask: Shape {
-    func path(in rect: CGRect) -> Path {
-        let w = rect.width
-        let h = rect.height
-        var p = Path()
-        p.move(to: CGPoint(x: 0.0 * w, y: 1.0 * h))
-        p.addLine(to: CGPoint(x: 0.14 * w, y: 0.73 * h))
-        p.addLine(to: CGPoint(x: 0.28 * w, y: 0.54 * h))
-        p.addLine(to: CGPoint(x: 0.50 * w, y: 0.02 * h))
-        p.addLine(to: CGPoint(x: 0.72 * w, y: 0.54 * h))
-        p.addLine(to: CGPoint(x: 0.86 * w, y: 0.73 * h))
-        p.addLine(to: CGPoint(x: 1.00 * w, y: 1.0 * h))
-        p.closeSubpath()
-        return p
-    }
-}
-
-private struct ZionMountainFallback: View {
     var body: some View {
         GeometryReader { geo in
             let w = geo.size.width
             let h = geo.size.height
 
             ZStack {
+                // Base silhouette
                 Path { p in
                     p.move(to: CGPoint(x: 0.0 * w, y: 1.0 * h))
                     p.addLine(to: CGPoint(x: 0.14 * w, y: 0.73 * h))
@@ -201,6 +160,75 @@ private struct ZionMountainFallback: View {
                         endPoint: .bottom
                     )
                 )
+
+                // Lower base plate
+                Path { p in
+                    p.move(to: CGPoint(x: 0.04 * w, y: 0.94 * h))
+                    p.addLine(to: CGPoint(x: 0.96 * w, y: 0.94 * h))
+                    p.addLine(to: CGPoint(x: 0.90 * w, y: 1.00 * h))
+                    p.addLine(to: CGPoint(x: 0.10 * w, y: 1.00 * h))
+                    p.closeSubpath()
+                }
+                .fill(DesignSystem.Colors.brandWhite.opacity(0.30))
+
+                // Top facets
+                Path { p in
+                    p.move(to: CGPoint(x: 0.50 * w, y: 0.02 * h))
+                    p.addLine(to: CGPoint(x: 0.56 * w, y: 0.48 * h))
+                    p.addLine(to: CGPoint(x: 0.72 * w, y: 0.54 * h))
+                    p.closeSubpath()
+                }
+                .fill(DesignSystem.Colors.brandWhite.opacity(0.58))
+
+                Path { p in
+                    p.move(to: CGPoint(x: 0.50 * w, y: 0.02 * h))
+                    p.addLine(to: CGPoint(x: 0.44 * w, y: 0.48 * h))
+                    p.addLine(to: CGPoint(x: 0.28 * w, y: 0.54 * h))
+                    p.closeSubpath()
+                }
+                .fill(DesignSystem.Colors.brandWhite.opacity(0.64))
+
+                Path { p in
+                    p.move(to: CGPoint(x: 0.44 * w, y: 0.48 * h))
+                    p.addLine(to: CGPoint(x: 0.56 * w, y: 0.48 * h))
+                    p.addLine(to: CGPoint(x: 0.50 * w, y: 0.70 * h))
+                    p.closeSubpath()
+                }
+                .fill(DesignSystem.Colors.brandWhite.opacity(0.46))
+
+                // Side facets
+                Path { p in
+                    p.move(to: CGPoint(x: 0.72 * w, y: 0.54 * h))
+                    p.addLine(to: CGPoint(x: 0.84 * w, y: 0.78 * h))
+                    p.addLine(to: CGPoint(x: 1.00 * w, y: 1.00 * h))
+                    p.closeSubpath()
+                }
+                .fill(DesignSystem.Colors.brandWhite.opacity(0.70))
+
+                Path { p in
+                    p.move(to: CGPoint(x: 0.28 * w, y: 0.54 * h))
+                    p.addLine(to: CGPoint(x: 0.16 * w, y: 0.78 * h))
+                    p.addLine(to: CGPoint(x: 0.00 * w, y: 1.00 * h))
+                    p.closeSubpath()
+                }
+                .fill(DesignSystem.Colors.brandWhite.opacity(0.74))
+
+                // Facet lines to approximate logo geometry
+                Path { p in
+                    p.move(to: CGPoint(x: 0.50 * w, y: 0.02 * h))
+                    p.addLine(to: CGPoint(x: 0.50 * w, y: 0.70 * h))
+                    p.move(to: CGPoint(x: 0.28 * w, y: 0.54 * h))
+                    p.addLine(to: CGPoint(x: 0.72 * w, y: 0.54 * h))
+                    p.move(to: CGPoint(x: 0.44 * w, y: 0.48 * h))
+                    p.addLine(to: CGPoint(x: 0.28 * w, y: 0.54 * h))
+                    p.move(to: CGPoint(x: 0.56 * w, y: 0.48 * h))
+                    p.addLine(to: CGPoint(x: 0.72 * w, y: 0.54 * h))
+                    p.move(to: CGPoint(x: 0.72 * w, y: 0.54 * h))
+                    p.addLine(to: CGPoint(x: 0.84 * w, y: 0.78 * h))
+                    p.move(to: CGPoint(x: 0.28 * w, y: 0.54 * h))
+                    p.addLine(to: CGPoint(x: 0.16 * w, y: 0.78 * h))
+                }
+                .stroke(DesignSystem.Colors.brandWhite.opacity(0.30), lineWidth: 1)
             }
         }
     }
