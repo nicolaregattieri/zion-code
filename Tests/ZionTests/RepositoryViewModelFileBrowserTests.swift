@@ -285,6 +285,39 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
         XCTAssertEqual(merged[0].children?.count, 1)
     }
 
+    // MARK: - mergeDirectoryChildren
+
+    func testMergeDirectoryChildrenPreservesLoadedDescendants() {
+        let vm = RepositoryViewModel()
+
+        let nested = FileItem(url: URL(fileURLWithPath: "/tmp/src/core/main.swift"), isDirectory: false, children: nil)
+        let oldCore = FileItem(url: URL(fileURLWithPath: "/tmp/src/core"), isDirectory: true, children: [nested])
+        let oldReadme = FileItem(url: URL(fileURLWithPath: "/tmp/src/README.md"), isDirectory: false, children: nil)
+
+        let newCore = FileItem(url: URL(fileURLWithPath: "/tmp/src/core"), isDirectory: true, children: nil)
+        let newReadme = FileItem(url: URL(fileURLWithPath: "/tmp/src/README.md"), isDirectory: false, children: nil)
+
+        let merged = vm.mergeDirectoryChildren(old: [oldCore, oldReadme], new: [newCore, newReadme])
+
+        XCTAssertEqual(merged.count, 2)
+        XCTAssertEqual(merged[0].children?.count, 1)
+        XCTAssertEqual(merged[0].children?.first?.name, "main.swift")
+    }
+
+    func testMergeDirectoryChildrenAddsNewChildrenAndRemovesDeletedOnes() {
+        let vm = RepositoryViewModel()
+
+        let oldKeep = FileItem(url: URL(fileURLWithPath: "/tmp/src/keep.swift"), isDirectory: false, children: nil)
+        let oldGone = FileItem(url: URL(fileURLWithPath: "/tmp/src/gone.swift"), isDirectory: false, children: nil)
+        let newKeep = FileItem(url: URL(fileURLWithPath: "/tmp/src/keep.swift"), isDirectory: false, children: nil)
+        let newAdd = FileItem(url: URL(fileURLWithPath: "/tmp/src/new.swift"), isDirectory: false, children: nil)
+
+        let merged = vm.mergeDirectoryChildren(old: [oldKeep, oldGone], new: [newKeep, newAdd])
+
+        XCTAssertEqual(merged.count, 2)
+        XCTAssertEqual(merged.map(\.name), ["keep.swift", "new.swift"])
+    }
+
     // MARK: - closeOtherFiles
 
     func testCloseOtherFilesKeepsOnlyTarget() {

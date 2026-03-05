@@ -22,18 +22,18 @@ extension RepositoryViewModel {
                 files = initial
             }
             repositoryFiles = mergeTopLevel(old: repositoryFiles, new: files)
-            reloadExpandedDirectories()
+            reloadExpandedDirectories(forceReload: true)
             pruneStaleSelections()
             scheduleEditorSymbolIndexRebuild(repositoryURL: url)
         }
     }
 
-    func reloadExpandedDirectories() {
+    func reloadExpandedDirectories(forceReload: Bool = false) {
         guard !_isReloadingExpandedDirs else { return }
         _isReloadingExpandedDirs = true
         defer { _isReloadingExpandedDirs = false }
         for path in expandedPaths {
-            loadChildrenIfNeeded(for: path)
+            loadChildrenIfNeeded(for: path, forceReload: forceReload)
         }
     }
 
@@ -41,6 +41,12 @@ extension RepositoryViewModel {
     /// on directories that still exist. This avoids the collapse-then-expand flicker
     /// caused by replacing the entire array.
     func mergeTopLevel(old: [FileItem], new: [FileItem]) -> [FileItem] {
+        mergeDirectoryChildren(old: old, new: new)
+    }
+
+    /// Merge directory children while preserving already loaded descendants to avoid
+    /// expansion flicker during external file updates.
+    func mergeDirectoryChildren(old: [FileItem], new: [FileItem]) -> [FileItem] {
         let oldByID = Dictionary(old.map { ($0.id, $0) }, uniquingKeysWith: { _, last in last })
         return new.map { newItem in
             if let existing = oldByID[newItem.id],
@@ -59,14 +65,17 @@ extension RepositoryViewModel {
         }
     }
 
-    func loadChildrenIfNeeded(for path: String) {
+    func loadChildrenIfNeeded(for path: String, forceReload: Bool = false) {
         guard let item = findItem(path: path, in: repositoryFiles),
-              item.isDirectory, item.children == nil else { return }
+              item.isDirectory,
+              item.children == nil || forceReload else { return }
         let itemURL = item.url
+        let existingChildren = item.children ?? []
         let ignoredPaths = cachedIgnoredPaths
         Task {
             let children = await loadFiles(at: itemURL, ignoredPaths: ignoredPaths, maxDepth: 0)
-            repositoryFiles = updateTree(repositoryFiles, path: path, newChildren: children)
+            let mergedChildren = mergeDirectoryChildren(old: existingChildren, new: children)
+            repositoryFiles = updateTree(repositoryFiles, path: path, newChildren: mergedChildren)
             // Breadcrumb/path navigation can request deep expansions before parent nodes
             // finish loading. Re-run pending expanded paths so deeper levels load as soon
             // as they become discoverable in the tree.
