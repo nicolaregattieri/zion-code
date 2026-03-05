@@ -75,7 +75,7 @@
 "Filtro de branch ativo: %@ · %@ commits" = "Filtro de branch ativo: %@ · %@ commits";
 "Visualizando todas as branches · %@ commits" = "Visualizando todas as branches · %@ commits";
 "Repositorio carregado: %@ · %@ commits" = "Repositório carregado: %@ · %@ commits";
-"Resolva os conflitos na sua IDE favorita." = "Resolva os conflitos na sua IDE favorita.";
+"Resolva os conflitos na sua IDE favorita." = "Conflitos detectados. Abra o resolvedor do Zion para continuar.";
 "Limpeza" = "Limpeza";
 "Remover branches locais que ja foram mescladas na main." = "Remover branches locais que já foram mescladas na main.";
 "Deseja remover todas as branches locais ja mescladas?" = "Deseja remover todas as branches locais já mescladas?";
@@ -408,6 +408,10 @@
 
 // Conflict Resolution
 "Resolver no Zion" = "Resolver no Zion";
+"conflicts.banner.subtitle" = "Conflitos detectados. Abra o resolvedor do Zion para continuar.";
+"conflicts.open.prompt.title" = "Conflitos detectados";
+"conflicts.open.prompt.message" = "Deseja abrir o resolvedor de conflitos do Zion agora?";
+"conflicts.open.prompt.open" = "Abrir resolvedor";
 "Resolver Conflitos" = "Resolver Conflitos";
 "Aceitar Nosso" = "Aceitar Nosso";
 "Aceitar Deles" = "Aceitar Deles";
@@ -419,6 +423,7 @@
 "Continuar Rebase" = "Continuar Rebase";
 "Todos os conflitos resolvidos!" = "Todos os conflitos resolvidos!";
 "conflitos restantes" = "conflitos restantes";
+"conflicts.jump.unresolved" = "Ir para conflitos não resolvidos";
 "Conflito" = "Conflito";
 "arquivos" = "arquivos";
 "Selecione um arquivo com conflito" = "Selecione um arquivo com conflito";
@@ -1013,7 +1018,7 @@
 "pending.transfer.support.openTarget" = "Abrir Worktree de Destino";
 "pending.transfer.support.openTargetAI" = "Abrir Destino + Resolver com IA";
 "pending.transfer.support.ai.opened" = "Resolvedor de conflitos aberto. Use Resolver com IA nas regiões de conflito.";
-"pending.transfer.support.ai.noConflictFiles" = "Nenhum arquivo com conflito de merge foi detectado. Revise as mudanças pendentes em Operations antes de aplicar o stash novamente.";
+"pending.transfer.support.ai.noConflictFiles" = "Nenhum arquivo com conflito de merge foi detectado. Revise as mudanças pendentes antes de aplicar o stash novamente.";
 "pending.transfer.support.ai.confirm.title" = "Aplicar stash no destino com suporte de IA";
 "pending.transfer.support.ai.confirm.message" = "O Zion vai tentar aplicar o stash %@ no worktree '%@'.\n\nSe houver conflitos reais, o resolvedor será aberto automaticamente.";
 "pending.transfer.support.ai.confirm.apply" = "Aplicar no Destino";
@@ -1327,8 +1332,8 @@
 "Rebase Current onto This" = "Rebase da Atual nesta";
 "stash.restore.error.noEntries" = "Nenhum stash disponível para aplicar.";
 "stash.restore.error.invalidReference" = "A referência de stash '%@' não é válida.";
-"stash.restore.error.applyConflict" = "Não foi possível aplicar o stash automaticamente por conflito. Resolva em Operations.";
-"stash.restore.error.popConflict" = "Não foi possível aplicar/remover o stash automaticamente por conflito. Resolva em Operations.";
+"stash.restore.error.applyConflict" = "Não foi possível aplicar o stash automaticamente por conflito. Abra o resolvedor de conflitos para continuar.";
+"stash.restore.error.popConflict" = "Não foi possível aplicar/remover o stash automaticamente por conflito. Abra o resolvedor de conflitos para continuar.";
 "stash.restore.error.applyGeneric" = "Falha ao aplicar o stash. Revise o estado do repositório e tente novamente.";
 "stash.restore.error.popGeneric" = "Falha ao executar pop do stash. Revise o estado do repositório e tente novamente.";
 "reset.hard.confirm.withCount" = "Reset --hard para '%@'. Mudanças pendentes afetadas: %@ arquivo(s). Deseja continuar?";

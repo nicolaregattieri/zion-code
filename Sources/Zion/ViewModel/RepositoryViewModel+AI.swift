@@ -505,7 +505,11 @@ extension RepositoryViewModel {
         aiTask?.cancel()
         aiTask = Task {
             isGeneratingAIMessage = true
-            defer { isGeneratingAIMessage = false }
+            aiConflictResolvingRegionID = region.id
+            defer {
+                isGeneratingAIMessage = false
+                aiConflictResolvingRegionID = nil
+            }
 
             do {
                 logger.log(.ai, "Requesting conflict resolution", context: "\(aiProvider.rawValue): \(fileName)")
@@ -526,13 +530,23 @@ extension RepositoryViewModel {
                     apiKey: aiAPIKey
                 )
                 logger.log(.ai, "Conflict resolution generated OK")
+                aiConflictResolutionRegionID = region.id
                 aiConflictResolution = resolved
             } catch {
                 logger.log(.error, "AI conflict resolution failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
+                aiConflictResolutionRegionID = nil
                 aiConflictResolution = ""
                 lastError = error.localizedDescription
             }
         }
+    }
+
+    func consumeAIConflictResolution(for regionID: UUID) -> String? {
+        guard aiConflictResolutionRegionID == regionID, !aiConflictResolution.isEmpty else { return nil }
+        let resolved = aiConflictResolution
+        aiConflictResolution = ""
+        aiConflictResolutionRegionID = nil
+        return resolved
     }
 
     // MARK: - AI Code Review

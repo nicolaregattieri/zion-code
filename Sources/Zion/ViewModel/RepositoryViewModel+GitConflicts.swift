@@ -106,6 +106,41 @@ extension RepositoryViewModel {
         conflictedFiles.filter { !$0.isResolved }.count
     }
 
+    var firstUnresolvedConflictFilePath: String? {
+        conflictedFiles.first(where: { !$0.isResolved })?.path
+    }
+
+    func unresolvedConflictSelectionCandidate(preferCurrentSelection: Bool = true) -> String? {
+        if preferCurrentSelection,
+           let selectedConflictFile,
+           conflictedFiles.contains(where: { $0.path == selectedConflictFile && !$0.isResolved }) {
+            return selectedConflictFile
+        }
+        return firstUnresolvedConflictFilePath
+    }
+
+    var firstUndecidedRegionIDInSelectedConflictFile: UUID? {
+        for block in conflictBlocks {
+            if case .conflict(let region) = block, region.choice == .undecided {
+                return region.id
+            }
+        }
+        return nil
+    }
+
+    @discardableResult
+    func selectUnresolvedConflictFile(preferCurrentSelection: Bool = true) -> Bool {
+        guard let nextPath = unresolvedConflictSelectionCandidate(preferCurrentSelection: preferCurrentSelection) else {
+            return false
+        }
+
+        if nextPath != selectedConflictFile {
+            selectConflictFile(nextPath)
+        }
+
+        return true
+    }
+
     var currentFileAllRegionsChosen: Bool {
         conflictBlocks.allSatisfy { block in
             if case .conflict(let region) = block { return region.choice != .undecided }

@@ -206,6 +206,8 @@ final class RepositoryViewModel {
 
     // AI Smart Services
     var aiConflictResolution: String = ""
+    var aiConflictResolutionRegionID: UUID?
+    var aiConflictResolvingRegionID: UUID?
     var aiReviewFindings: [ReviewFinding] = []
     var isReviewVisible: Bool = false
     var commitReviewCache: [String: [ReviewFinding]] = [:]
@@ -876,4 +878,3 @@ final class RepositoryViewModel {
         }
     }
 }
-

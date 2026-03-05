@@ -525,6 +525,88 @@ final class RepositoryViewModelGitTests: XCTestCase {
         XCTAssertFalse(vm.currentFileAllRegionsChosen)
     }
 
+    func testUnresolvedConflictSelectionCandidatePrefersCurrentUnresolvedSelection() {
+        let vm = RepositoryViewModel()
+        vm.conflictedFiles = [
+            ConflictFile(path: "a.swift", isResolved: true),
+            ConflictFile(path: "b.swift", isResolved: false),
+            ConflictFile(path: "c.swift", isResolved: false),
+        ]
+        vm.selectedConflictFile = "c.swift"
+
+        XCTAssertEqual(vm.unresolvedConflictSelectionCandidate(), "c.swift")
+    }
+
+    func testUnresolvedConflictSelectionCandidateFallsBackToFirstUnresolved() {
+        let vm = RepositoryViewModel()
+        vm.conflictedFiles = [
+            ConflictFile(path: "a.swift", isResolved: true),
+            ConflictFile(path: "b.swift", isResolved: false),
+            ConflictFile(path: "c.swift", isResolved: false),
+        ]
+        vm.selectedConflictFile = "a.swift"
+
+        XCTAssertEqual(vm.unresolvedConflictSelectionCandidate(), "b.swift")
+    }
+
+    func testUnresolvedConflictSelectionCandidateReturnsNilWhenFullyResolved() {
+        let vm = RepositoryViewModel()
+        vm.conflictedFiles = [
+            ConflictFile(path: "a.swift", isResolved: true),
+            ConflictFile(path: "b.swift", isResolved: true),
+        ]
+        vm.selectedConflictFile = "a.swift"
+
+        XCTAssertNil(vm.unresolvedConflictSelectionCandidate())
+    }
+
+    func testFirstUndecidedRegionIDInSelectedConflictFileReturnsFirstUndecided() {
+        let vm = RepositoryViewModel()
+        let decided = ConflictRegion(
+            oursLines: ["a"], theirsLines: ["b"],
+            oursLabel: "HEAD", theirsLabel: "feat",
+            choice: .ours
+        )
+        let undecided = ConflictRegion(
+            oursLines: ["c"], theirsLines: ["d"],
+            oursLabel: "HEAD", theirsLabel: "feat",
+            choice: .undecided
+        )
+        vm.conflictBlocks = [
+            .conflict(decided),
+            .context(["line"]),
+            .conflict(undecided),
+        ]
+
+        XCTAssertEqual(vm.firstUndecidedRegionIDInSelectedConflictFile, undecided.id)
+    }
+
+    func testConsumeAIConflictResolutionReturnsAndClearsForMatchingRegion() {
+        let vm = RepositoryViewModel()
+        let targetRegionID = UUID()
+        vm.aiConflictResolutionRegionID = targetRegionID
+        vm.aiConflictResolution = "resolved line"
+
+        let consumed = vm.consumeAIConflictResolution(for: targetRegionID)
+
+        XCTAssertEqual(consumed, "resolved line")
+        XCTAssertEqual(vm.aiConflictResolution, "")
+        XCTAssertNil(vm.aiConflictResolutionRegionID)
+    }
+
+    func testConsumeAIConflictResolutionDoesNotConsumeMismatchedRegion() {
+        let vm = RepositoryViewModel()
+        let targetRegionID = UUID()
+        vm.aiConflictResolutionRegionID = targetRegionID
+        vm.aiConflictResolution = "resolved line"
+
+        let consumed = vm.consumeAIConflictResolution(for: UUID())
+
+        XCTAssertNil(consumed)
+        XCTAssertEqual(vm.aiConflictResolution, "resolved line")
+        XCTAssertEqual(vm.aiConflictResolutionRegionID, targetRegionID)
+    }
+
     // MARK: - isStashApplyBlockedByLocalChanges
 
     func testIsStashApplyBlockedByOverwrittenByMerge() {
