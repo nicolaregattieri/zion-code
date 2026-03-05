@@ -219,4 +219,69 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
 
         XCTAssertEqual(vm.openedFiles.count, 1)
     }
+
+    // MARK: - mergeTopLevel
+
+    func testMergeTopLevelPreservesExistingChildren() {
+        let vm = RepositoryViewModel()
+        let childA = FileItem(url: URL(fileURLWithPath: "/tmp/src/a.swift"), isDirectory: false, children: nil)
+        let childB = FileItem(url: URL(fileURLWithPath: "/tmp/src/b.swift"), isDirectory: false, children: nil)
+        let oldSrc = FileItem(url: URL(fileURLWithPath: "/tmp/src"), isDirectory: true, children: [childA, childB])
+        let oldFile = FileItem(url: URL(fileURLWithPath: "/tmp/README.md"), isDirectory: false, children: nil)
+
+        // New scan returns same dirs but without children (flat top-level)
+        let newSrc = FileItem(url: URL(fileURLWithPath: "/tmp/src"), isDirectory: true, children: nil)
+        let newFile = FileItem(url: URL(fileURLWithPath: "/tmp/README.md"), isDirectory: false, children: nil)
+
+        let merged = vm.mergeTopLevel(old: [oldSrc, oldFile], new: [newSrc, newFile])
+
+        XCTAssertEqual(merged.count, 2)
+        // Directory should keep its loaded children
+        XCTAssertEqual(merged[0].children?.count, 2)
+        XCTAssertEqual(merged[0].children?[0].name, "a.swift")
+        // File stays unchanged
+        XCTAssertNil(merged[1].children)
+    }
+
+    func testMergeTopLevelAddsNewItems() {
+        let vm = RepositoryViewModel()
+        let oldFile = FileItem(url: URL(fileURLWithPath: "/tmp/old.swift"), isDirectory: false, children: nil)
+
+        let newFile = FileItem(url: URL(fileURLWithPath: "/tmp/old.swift"), isDirectory: false, children: nil)
+        let addedFile = FileItem(url: URL(fileURLWithPath: "/tmp/new.swift"), isDirectory: false, children: nil)
+
+        let merged = vm.mergeTopLevel(old: [oldFile], new: [newFile, addedFile])
+
+        XCTAssertEqual(merged.count, 2)
+        XCTAssertEqual(merged[1].name, "new.swift")
+    }
+
+    func testMergeTopLevelRemovesDeletedItems() {
+        let vm = RepositoryViewModel()
+        let file1 = FileItem(url: URL(fileURLWithPath: "/tmp/keep.swift"), isDirectory: false, children: nil)
+        let file2 = FileItem(url: URL(fileURLWithPath: "/tmp/gone.swift"), isDirectory: false, children: nil)
+
+        let newFile = FileItem(url: URL(fileURLWithPath: "/tmp/keep.swift"), isDirectory: false, children: nil)
+
+        let merged = vm.mergeTopLevel(old: [file1, file2], new: [newFile])
+
+        XCTAssertEqual(merged.count, 1)
+        XCTAssertEqual(merged[0].name, "keep.swift")
+    }
+
+    func testMergeTopLevelUpdatesGitIgnoredFlag() {
+        let vm = RepositoryViewModel()
+        let oldDir = FileItem(url: URL(fileURLWithPath: "/tmp/vendor"), isDirectory: true,
+                              children: [FileItem(url: URL(fileURLWithPath: "/tmp/vendor/lib.js"), isDirectory: false, children: nil)],
+                              isGitIgnored: false)
+
+        let newDir = FileItem(url: URL(fileURLWithPath: "/tmp/vendor"), isDirectory: true, children: nil, isGitIgnored: true)
+
+        let merged = vm.mergeTopLevel(old: [oldDir], new: [newDir])
+
+        XCTAssertEqual(merged.count, 1)
+        XCTAssertTrue(merged[0].isGitIgnored)
+        // Children still preserved
+        XCTAssertEqual(merged[0].children?.count, 1)
+    }
 }
