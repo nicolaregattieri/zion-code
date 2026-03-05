@@ -59,9 +59,12 @@ ZION-HEALTH.md
 *~
 
 # AI assistant context
+AGENTS.md
 CODEX.md
 CLAUDE.md
 GEMINI.md
+.codex/
+codex/
 .geminiignore
 .agents/
 .claude
