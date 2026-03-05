@@ -31,6 +31,8 @@ struct ContentView: View {
     @State private var isHelpVisible: Bool = false
     @State private var shouldPresentOnboardingFromHelp: Bool = false
     @State private var splitViewVisibility: NavigationSplitViewVisibility = .all
+    @State private var isConflictResolverPromptVisible: Bool = false
+    @State private var hasShownConflictResolverPromptForCurrentConflictState: Bool = false
 
     @AppStorage("zion.confirmationMode") var confirmationModeRaw: String = ConfirmationMode.destructiveOnly.rawValue
     @AppStorage("zion.uiLanguage") private var uiLanguageRaw: String = AppLanguage.system.rawValue
@@ -152,6 +154,15 @@ struct ContentView: View {
                     Text("")
                 }
             }
+            .alert(L10n("conflicts.open.prompt.title"), isPresented: $isConflictResolverPromptVisible) {
+                Button(L10n("conflicts.open.prompt.open")) {
+                    model.loadConflictedFiles()
+                    model.isConflictViewVisible = true
+                }
+                Button(L10n("Cancelar"), role: .cancel) {}
+            } message: {
+                Text(L10n("conflicts.open.prompt.message"))
+            }
             .toolbar {
                 if !zenModeEnabled {
                     mainToolbar
@@ -245,6 +256,26 @@ struct ContentView: View {
         .onChange(of: model.repositoryURL) { _, url in
             if url != nil {
                 route(.repositoryOpened)
+            }
+        }
+        .onChange(of: model.hasConflicts) { _, hasConflicts in
+            guard hasConflicts else {
+                hasShownConflictResolverPromptForCurrentConflictState = false
+                isConflictResolverPromptVisible = false
+                return
+            }
+
+            guard !hasShownConflictResolverPromptForCurrentConflictState, !model.isConflictViewVisible else {
+                return
+            }
+
+            hasShownConflictResolverPromptForCurrentConflictState = true
+            isConflictResolverPromptVisible = true
+        }
+        .onChange(of: model.isConflictViewVisible) { _, isVisible in
+            if isVisible {
+                hasShownConflictResolverPromptForCurrentConflictState = true
+                isConflictResolverPromptVisible = false
             }
         }
         .onChange(of: selectedSection) { _, _ in
@@ -530,7 +561,7 @@ struct ContentView: View {
             Image(systemName: "exclamationmark.triangle.fill").font(DesignSystem.Typography.sheetTitle).foregroundStyle(DesignSystem.Colors.warning)
             VStack(alignment: .leading, spacing: 2) {
                 Text(L10n("Conflitos")).font(DesignSystem.Typography.sheetTitle)
-                Text(L10n("Resolva os conflitos na sua IDE favorita.")).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
+                Text(L10n("conflicts.banner.subtitle")).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
             }
             Spacer()
             HStack(spacing: DesignSystem.Spacing.iconTextGap) {

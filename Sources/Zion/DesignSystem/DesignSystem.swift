@@ -55,7 +55,7 @@ struct DesignSystem {
 
         // ConflictResolutionScreen
         static let conflictMinWidth: CGFloat = 860
-        static let conflictMinHeight: CGFloat = 560
+        static let conflictMinHeight: CGFloat = 680
         static let conflictFileListMinWidth: CGFloat = 200
         static let conflictViewerMinWidth: CGFloat = 420
     }

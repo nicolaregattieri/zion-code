@@ -127,4 +127,19 @@ final class LocalizationTests: XCTestCase {
             }
         }
     }
+
+    func testConflictPromptLocalizationKeysExist() {
+        let keys = [
+            "conflicts.banner.subtitle",
+            "conflicts.open.prompt.title",
+            "conflicts.open.prompt.message",
+            "conflicts.open.prompt.open",
+        ]
+
+        for key in keys {
+            let value = L10n(key)
+            XCTAssertNotEqual(value, key, "Missing L10n key: \(key)")
+            XCTAssertFalse(value.isEmpty, "Empty L10n value for key: \(key)")
+        }
+    }
 }
