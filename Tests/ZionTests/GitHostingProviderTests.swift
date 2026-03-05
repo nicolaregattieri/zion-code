@@ -253,4 +253,59 @@ final class GitHostingProviderTests: XCTestCase {
         let remote: GitHubRemote = HostedRemote(kind: .github, owner: "user", repo: "repo")
         XCTAssertEqual(remote.owner, "user")
     }
+
+    // MARK: - Lazy Keychain Token Loading
+
+    func testGitLabHasTokenLoadsFromKeychainOnDemand() async {
+        let key = HostingCredentialStore.CredentialKey.gitlabPAT
+        let original = HostingCredentialStore.loadSecret(for: key)
+        defer {
+            if let original { HostingCredentialStore.saveSecret(original, for: key) }
+            else { HostingCredentialStore.deleteSecret(for: key) }
+        }
+
+        HostingCredentialStore.saveSecret("gitlab-on-demand-token", for: key)
+        let client = GitLabClient()
+
+        let hasToken = await client.hasToken()
+        XCTAssertTrue(hasToken)
+    }
+
+    func testAzureHasTokenLoadsFromKeychainOnDemand() async {
+        let key = HostingCredentialStore.CredentialKey.azureDevOpsPAT
+        let original = HostingCredentialStore.loadSecret(for: key)
+        defer {
+            if let original { HostingCredentialStore.saveSecret(original, for: key) }
+            else { HostingCredentialStore.deleteSecret(for: key) }
+        }
+
+        HostingCredentialStore.saveSecret("azure-on-demand-token", for: key)
+        let client = AzureDevOpsClient()
+
+        let hasToken = await client.hasToken()
+        XCTAssertTrue(hasToken)
+    }
+
+    func testBitbucketHasTokenLoadsFromKeychainOnDemand() async {
+        let key = HostingCredentialStore.CredentialKey.bitbucketAppPassword
+        let defaults = UserDefaults.standard
+        let originalSecret = HostingCredentialStore.loadSecret(for: key)
+        let originalUsername = defaults.string(forKey: "zion.bitbucket.username")
+        defer {
+            if let originalSecret { HostingCredentialStore.saveSecret(originalSecret, for: key) }
+            else { HostingCredentialStore.deleteSecret(for: key) }
+            if let originalUsername {
+                defaults.set(originalUsername, forKey: "zion.bitbucket.username")
+            } else {
+                defaults.removeObject(forKey: "zion.bitbucket.username")
+            }
+        }
+
+        defaults.set("bitbucket-user", forKey: "zion.bitbucket.username")
+        HostingCredentialStore.saveSecret("bitbucket-on-demand-pass", for: key)
+        let client = BitbucketClient()
+
+        let hasToken = await client.hasToken()
+        XCTAssertTrue(hasToken)
+    }
 }

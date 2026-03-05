@@ -3,6 +3,7 @@ import Foundation
 actor AzureDevOpsClient: GitHostingProvider {
     let kind: GitHostingKind = .azureDevOps
     private var cachedToken: String?
+    private var didAttemptKeychainLookup = false
 
     private static let apiVersion = "7.1"
 
@@ -13,6 +14,7 @@ actor AzureDevOpsClient: GitHostingProvider {
         } else {
             cachedToken = nil
         }
+        didAttemptKeychainLookup = false
     }
 
     // MARK: - Auth
@@ -22,7 +24,7 @@ actor AzureDevOpsClient: GitHostingProvider {
     }
 
     func hasToken() async -> Bool {
-        cachedToken != nil
+        resolvedToken() != nil
     }
 
     // MARK: - Remote Parsing
@@ -81,10 +83,26 @@ actor AzureDevOpsClient: GitHostingProvider {
 
     /// ADO uses Basic auth with empty username and PAT as password.
     private func authHeader() -> String? {
-        guard let token = cachedToken else { return nil }
+        guard let token = resolvedToken() else { return nil }
         let credString = ":\(token)"
         guard let data = credString.data(using: .utf8) else { return nil }
         return "Basic \(data.base64EncodedString())"
+    }
+
+    private func resolvedToken() -> String? {
+        if let token = cachedToken, !token.isEmpty {
+            return token
+        }
+        if !didAttemptKeychainLookup {
+            didAttemptKeychainLookup = true
+            if let keychainToken = HostingCredentialStore.loadSecret(for: .azureDevOpsPAT)?
+                .trimmingCharacters(in: .whitespacesAndNewlines),
+               !keychainToken.isEmpty {
+                cachedToken = keychainToken
+                return keychainToken
+            }
+        }
+        return nil
     }
 
     /// Build an ADO REST API URL for a repository endpoint.

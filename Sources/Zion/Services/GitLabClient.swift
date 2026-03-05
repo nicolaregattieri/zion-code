@@ -3,10 +3,12 @@ import Foundation
 actor GitLabClient: GitHostingProvider {
     let kind: GitHostingKind = .gitlab
     private var cachedToken: String?
+    private var didAttemptKeychainLookup = false
 
     /// Inject a PAT for authentication. Called from settings when the user configures GitLab credentials.
     func setToken(_ token: String?) {
         cachedToken = token
+        didAttemptKeychainLookup = false
     }
 
     // MARK: - Auth
@@ -17,7 +19,7 @@ actor GitLabClient: GitHostingProvider {
     }
 
     func hasToken() async -> Bool {
-        cachedToken != nil && !(cachedToken?.isEmpty ?? true)
+        getToken() != nil
     }
 
     // MARK: - Remote Parsing
@@ -64,7 +66,19 @@ actor GitLabClient: GitHostingProvider {
     // MARK: - Token
 
     private func getToken() -> String? {
-        cachedToken
+        if let token = cachedToken, !token.isEmpty {
+            return token
+        }
+        if !didAttemptKeychainLookup {
+            didAttemptKeychainLookup = true
+            if let keychainToken = HostingCredentialStore.loadSecret(for: .gitlabPAT)?
+                .trimmingCharacters(in: .whitespacesAndNewlines),
+               !keychainToken.isEmpty {
+                cachedToken = keychainToken
+                return keychainToken
+            }
+        }
+        return nil
     }
 
     /// URL-encode a project path for GitLab API (owner/repo → owner%2Frepo).

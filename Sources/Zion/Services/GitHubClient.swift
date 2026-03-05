@@ -3,6 +3,7 @@ import Foundation
 actor GitHubClient: GitHostingProvider {
     let kind: GitHostingKind = .github
     private var injectedPAT: String?
+    private var didAttemptKeychainPATLookup = false
     private var cachedCLIToken: String?
     private var cachedUsername: String?
 
@@ -10,6 +11,7 @@ actor GitHubClient: GitHostingProvider {
     func setToken(_ token: String?) {
         let cleaned = token?.trimmingCharacters(in: .whitespacesAndNewlines)
         injectedPAT = (cleaned?.isEmpty == true) ? nil : cleaned
+        didAttemptKeychainPATLookup = false
         // Clear cached CLI token so getToken() re-evaluates priority
         cachedCLIToken = nil
         cachedUsername = nil
@@ -81,7 +83,18 @@ actor GitHubClient: GitHostingProvider {
         // 1. Settings PAT takes priority
         if let pat = injectedPAT { return pat }
 
-        // 2. Fall back to `gh auth token` CLI
+        // 2. Fall back to Keychain PAT (loaded lazily on demand)
+        if !didAttemptKeychainPATLookup {
+            didAttemptKeychainPATLookup = true
+            if let keychainPAT = HostingCredentialStore.loadSecret(for: .githubPAT)?
+                .trimmingCharacters(in: .whitespacesAndNewlines),
+               !keychainPAT.isEmpty {
+                injectedPAT = keychainPAT
+                return keychainPAT
+            }
+        }
+
+        // 3. Fall back to `gh auth token` CLI
         if let cached = cachedCLIToken { return cached }
 
         let process = Process()
@@ -115,7 +128,7 @@ actor GitHubClient: GitHostingProvider {
             }
         } catch {}
 
-        // 3. No token available
+        // 4. No token available
         return nil
     }
 
