@@ -21,8 +21,17 @@ final class FileWatcher {
 
         guard let stream = FSEventStreamCreate(
             nil,
-            { _, clientCallBackInfo, _, _, _, _ in
+            { _, clientCallBackInfo, numEvents, eventPaths, _, _ in
                 guard let info = clientCallBackInfo else { return }
+
+                // Filter out events that only touch .git/ internals
+                if numEvents > 0, let cfArray = unsafeBitCast(eventPaths, to: NSArray.self) as? [String] {
+                    let hasNonGitPath = cfArray.contains { path in
+                        !path.contains("/.git/") && !path.hasSuffix("/.git")
+                    }
+                    guard hasNonGitPath else { return }
+                }
+
                 let watcher = Unmanaged<FileWatcher>.fromOpaque(info).takeUnretainedValue()
                 Task { @MainActor in
                     watcher.handleChange()

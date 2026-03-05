@@ -21,7 +21,7 @@ extension RepositoryViewModel {
             } else {
                 files = initial
             }
-            repositoryFiles = files  // single assignment, single cache rebuild
+            repositoryFiles = mergeTopLevel(old: repositoryFiles, new: files)
             reloadExpandedDirectories()
             pruneStaleSelections()
             scheduleEditorSymbolIndexRebuild(repositoryURL: url)
@@ -34,6 +34,28 @@ extension RepositoryViewModel {
         defer { _isReloadingExpandedDirs = false }
         for path in expandedPaths {
             loadChildrenIfNeeded(for: path)
+        }
+    }
+
+    /// Merges new top-level items into the existing tree, preserving loaded children
+    /// on directories that still exist. This avoids the collapse-then-expand flicker
+    /// caused by replacing the entire array.
+    func mergeTopLevel(old: [FileItem], new: [FileItem]) -> [FileItem] {
+        let oldByID = Dictionary(old.map { ($0.id, $0) }, uniquingKeysWith: { _, last in last })
+        return new.map { newItem in
+            if let existing = oldByID[newItem.id],
+               newItem.isDirectory,
+               existing.isDirectory,
+               existing.children != nil {
+                // Preserve loaded children from the existing item
+                return FileItem(
+                    url: newItem.url,
+                    isDirectory: true,
+                    children: existing.children,
+                    isGitIgnored: newItem.isGitIgnored
+                )
+            }
+            return newItem
         }
     }
 
