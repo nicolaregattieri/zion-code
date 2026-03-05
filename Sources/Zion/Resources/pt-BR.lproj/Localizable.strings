@@ -1904,5 +1904,12 @@
 "map.hosting.aiDescription.title" = "Descrição de PR com IA";
 "map.hosting.aiDescription.description" = "A IA analisa o diff da branch e gera uma descrição estruturada do pull request com resumo e mudanças principais.";
 
+// Editor Tab Context Menu
+"editor.tab.close" = "Fechar";
+"editor.tab.closeOthers" = "Fechar Outros";
+"editor.tab.closeLeft" = "Fechar à Esquerda";
+"editor.tab.closeRight" = "Fechar à Direita";
+"editor.tab.closeAll" = "Fechar Todos";
+
 // Shortcuts
 "shortcuts.toggleDotfiles" = "Alternar Dotfiles";

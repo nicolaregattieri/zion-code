@@ -284,4 +284,134 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
         // Children still preserved
         XCTAssertEqual(merged[0].children?.count, 1)
     }
+
+    // MARK: - closeOtherFiles
+
+    func testCloseOtherFilesKeepsOnlyTarget() {
+        let vm = RepositoryViewModel()
+        let a = FileItem(url: URL(fileURLWithPath: "/tmp/a.swift"), isDirectory: false, children: nil)
+        let b = FileItem(url: URL(fileURLWithPath: "/tmp/b.swift"), isDirectory: false, children: nil)
+        let c = FileItem(url: URL(fileURLWithPath: "/tmp/c.swift"), isDirectory: false, children: nil)
+        vm.openedFiles = [a, b, c]
+        vm.activeFileID = b.id
+
+        vm.closeOtherFiles(keepingID: b.id)
+
+        XCTAssertEqual(vm.openedFiles.count, 1)
+        XCTAssertEqual(vm.openedFiles[0].id, b.id)
+        XCTAssertEqual(vm.activeFileID, b.id)
+    }
+
+    func testCloseOtherFilesSwitchesActiveWhenActiveRemoved() {
+        let vm = RepositoryViewModel()
+        let a = FileItem(url: URL(fileURLWithPath: "/tmp/a.swift"), isDirectory: false, children: nil)
+        let b = FileItem(url: URL(fileURLWithPath: "/tmp/b.swift"), isDirectory: false, children: nil)
+        let c = FileItem(url: URL(fileURLWithPath: "/tmp/c.swift"), isDirectory: false, children: nil)
+        vm.openedFiles = [a, b, c]
+        vm.activeFileID = a.id
+
+        vm.closeOtherFiles(keepingID: b.id)
+
+        XCTAssertEqual(vm.openedFiles.count, 1)
+        XCTAssertEqual(vm.activeFileID, b.id)
+    }
+
+    // MARK: - closeFilesToTheLeft
+
+    func testCloseFilesToTheLeftRemovesTabsBefore() {
+        let vm = RepositoryViewModel()
+        let a = FileItem(url: URL(fileURLWithPath: "/tmp/a.swift"), isDirectory: false, children: nil)
+        let b = FileItem(url: URL(fileURLWithPath: "/tmp/b.swift"), isDirectory: false, children: nil)
+        let c = FileItem(url: URL(fileURLWithPath: "/tmp/c.swift"), isDirectory: false, children: nil)
+        vm.openedFiles = [a, b, c]
+        vm.activeFileID = c.id
+
+        vm.closeFilesToTheLeft(ofID: c.id)
+
+        XCTAssertEqual(vm.openedFiles.count, 1)
+        XCTAssertEqual(vm.openedFiles[0].id, c.id)
+        XCTAssertEqual(vm.activeFileID, c.id)
+    }
+
+    func testCloseFilesToTheLeftSwitchesActiveWhenActiveRemoved() {
+        let vm = RepositoryViewModel()
+        let a = FileItem(url: URL(fileURLWithPath: "/tmp/a.swift"), isDirectory: false, children: nil)
+        let b = FileItem(url: URL(fileURLWithPath: "/tmp/b.swift"), isDirectory: false, children: nil)
+        let c = FileItem(url: URL(fileURLWithPath: "/tmp/c.swift"), isDirectory: false, children: nil)
+        vm.openedFiles = [a, b, c]
+        vm.activeFileID = a.id
+
+        vm.closeFilesToTheLeft(ofID: c.id)
+
+        XCTAssertEqual(vm.activeFileID, c.id)
+    }
+
+    func testCloseFilesToTheLeftNoopWhenFirst() {
+        let vm = RepositoryViewModel()
+        let a = FileItem(url: URL(fileURLWithPath: "/tmp/a.swift"), isDirectory: false, children: nil)
+        let b = FileItem(url: URL(fileURLWithPath: "/tmp/b.swift"), isDirectory: false, children: nil)
+        vm.openedFiles = [a, b]
+
+        vm.closeFilesToTheLeft(ofID: a.id)
+
+        XCTAssertEqual(vm.openedFiles.count, 2)
+    }
+
+    // MARK: - closeFilesToTheRight
+
+    func testCloseFilesToTheRightRemovesTabsAfter() {
+        let vm = RepositoryViewModel()
+        let a = FileItem(url: URL(fileURLWithPath: "/tmp/a.swift"), isDirectory: false, children: nil)
+        let b = FileItem(url: URL(fileURLWithPath: "/tmp/b.swift"), isDirectory: false, children: nil)
+        let c = FileItem(url: URL(fileURLWithPath: "/tmp/c.swift"), isDirectory: false, children: nil)
+        vm.openedFiles = [a, b, c]
+        vm.activeFileID = a.id
+
+        vm.closeFilesToTheRight(ofID: a.id)
+
+        XCTAssertEqual(vm.openedFiles.count, 1)
+        XCTAssertEqual(vm.openedFiles[0].id, a.id)
+        XCTAssertEqual(vm.activeFileID, a.id)
+    }
+
+    func testCloseFilesToTheRightSwitchesActiveWhenActiveRemoved() {
+        let vm = RepositoryViewModel()
+        let a = FileItem(url: URL(fileURLWithPath: "/tmp/a.swift"), isDirectory: false, children: nil)
+        let b = FileItem(url: URL(fileURLWithPath: "/tmp/b.swift"), isDirectory: false, children: nil)
+        let c = FileItem(url: URL(fileURLWithPath: "/tmp/c.swift"), isDirectory: false, children: nil)
+        vm.openedFiles = [a, b, c]
+        vm.activeFileID = c.id
+
+        vm.closeFilesToTheRight(ofID: a.id)
+
+        XCTAssertEqual(vm.activeFileID, a.id)
+    }
+
+    func testCloseFilesToTheRightNoopWhenLast() {
+        let vm = RepositoryViewModel()
+        let a = FileItem(url: URL(fileURLWithPath: "/tmp/a.swift"), isDirectory: false, children: nil)
+        let b = FileItem(url: URL(fileURLWithPath: "/tmp/b.swift"), isDirectory: false, children: nil)
+        vm.openedFiles = [a, b]
+
+        vm.closeFilesToTheRight(ofID: b.id)
+
+        XCTAssertEqual(vm.openedFiles.count, 2)
+    }
+
+    // MARK: - closeAllFiles
+
+    func testCloseAllFilesClearsEverything() {
+        let vm = RepositoryViewModel()
+        let a = FileItem(url: URL(fileURLWithPath: "/tmp/a.swift"), isDirectory: false, children: nil)
+        let b = FileItem(url: URL(fileURLWithPath: "/tmp/b.swift"), isDirectory: false, children: nil)
+        vm.openedFiles = [a, b]
+        vm.activeFileID = a.id
+
+        vm.closeAllFiles()
+
+        XCTAssertTrue(vm.openedFiles.isEmpty)
+        XCTAssertNil(vm.activeFileID)
+        XCTAssertNil(vm.selectedCodeFile)
+        XCTAssertEqual(vm.codeFileContent, "")
+    }
 }

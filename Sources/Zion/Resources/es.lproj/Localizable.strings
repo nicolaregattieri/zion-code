@@ -1928,3 +1928,10 @@
 "Fluxos organizados por context para reduzir erros operacionais." = "Flujos organizados por contexto para reducir errores operativos.";
 "Resolver na IDE" = "Resolver en IDE";
 "Seu Git Graph nativo para macOS." = "Tu Git Graph nativo para macOS.";
+
+// Editor Tab Context Menu
+"editor.tab.close" = "Cerrar";
+"editor.tab.closeOthers" = "Cerrar Otros";
+"editor.tab.closeLeft" = "Cerrar a la Izquierda";
+"editor.tab.closeRight" = "Cerrar a la Derecha";
+"editor.tab.closeAll" = "Cerrar Todos";

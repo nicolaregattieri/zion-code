@@ -52,5 +52,30 @@ struct CodeTab: View {
         .contentShape(Rectangle())
         .onTapGesture { onActivate() }
         .onHover { h in isHovered = h }
+        .contextMenu {
+            Button { onClose() } label: {
+                Label(L10n("editor.tab.close"), systemImage: "xmark")
+            }
+            Button { model.closeOtherFiles(keepingID: file.id) } label: {
+                Label(L10n("editor.tab.closeOthers"), systemImage: "square.on.square")
+            }
+            .disabled(model.openedFiles.count <= 1)
+
+            Button { model.closeFilesToTheLeft(ofID: file.id) } label: {
+                Label(L10n("editor.tab.closeLeft"), systemImage: "arrow.left.to.line")
+            }
+            .disabled(model.openedFiles.first?.id == file.id)
+
+            Button { model.closeFilesToTheRight(ofID: file.id) } label: {
+                Label(L10n("editor.tab.closeRight"), systemImage: "arrow.right.to.line")
+            }
+            .disabled(model.openedFiles.last?.id == file.id)
+
+            Divider()
+
+            Button { model.closeAllFiles() } label: {
+                Label(L10n("editor.tab.closeAll"), systemImage: "xmark.square")
+            }
+        }
     }
 }
