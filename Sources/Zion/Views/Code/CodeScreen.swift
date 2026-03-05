@@ -147,14 +147,14 @@ struct CodeScreen: View {
             .keyboardShortcut("j", modifiers: .command)
             .frame(width: 0, height: 0).opacity(0)
 
-            // Maximize terminal (Cmd+Shift+J)
+            // Maximize terminal (Ctrl+Cmd+J)
             Button("") {
                 guard !isZenMode else { return }
                 withAnimation(DesignSystem.Motion.detail) {
                     layout = layout == .terminalOnly ? .split : .terminalOnly
                 }
             }
-            .keyboardShortcut("j", modifiers: [.command, .shift])
+            .keyboardShortcut("j", modifiers: [.command, .control])
             .frame(width: 0, height: 0).opacity(0)
 
             // New File (Cmd+N)
@@ -274,7 +274,7 @@ struct CodeScreen: View {
                 Text(L10n("zen.exit"))
                     .font(DesignSystem.Typography.bodyMedium)
                 if showsShortcutHint {
-                    Text("⌃⌘J")
+                    Text("⇧⌘J")
                         .font(DesignSystem.Typography.monoLabel)
                         .foregroundStyle(.secondary)
                 }
@@ -296,7 +296,7 @@ struct CodeScreen: View {
             )
         }
         .buttonStyle(.plain)
-        .help(L10n("zen.exit") + " (⌃⌘J)")
+        .help(L10n("zen.exit") + " (⇧⌘J)")
         .accessibilityLabel(L10n("zen.exit"))
     }
     
@@ -501,7 +501,7 @@ struct CodeScreen: View {
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(layout == .terminalOnly ? Color.accentColor : .secondary)
-                .help(L10n("Somente terminal") + " (⇧⌘J)")
+                .help(L10n("Somente terminal") + " (⌃⌘J)")
                 .accessibilityLabel(L10n("Somente terminal"))
             }
             .padding(.horizontal, 4)
@@ -1733,4 +1733,3 @@ struct CodeScreen: View {
         .padding(.vertical, 4)
     }
 }
-

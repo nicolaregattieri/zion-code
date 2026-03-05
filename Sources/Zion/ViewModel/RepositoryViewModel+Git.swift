@@ -34,8 +34,18 @@ extension RepositoryViewModel {
 
     func setBranchFocus(_ branch: String?) {
         let normalized = branch?.clean
-        focusedBranch = normalized?.isEmpty == true ? nil : normalized
-        commitLimit = defaultCommitLimit(for: focusedBranch)
+        let nextFocusedBranch = normalized?.isEmpty == true ? nil : normalized
+        let nextCommitLimit = defaultCommitLimit(for: nextFocusedBranch)
+        guard focusedBranch != nextFocusedBranch || commitLimit != nextCommitLimit else { return }
+        focusedBranch = nextFocusedBranch
+        commitLimit = nextCommitLimit
+        guard repositoryURL != nil else {
+            isBranchFocusLoading = false
+            branchFocusLoadingBranch = nil
+            return
+        }
+        branchFocusLoadingBranch = nextFocusedBranch
+        isBranchFocusLoading = true
         refreshCommitsOnly()
     }
 
@@ -201,6 +211,8 @@ extension RepositoryViewModel {
         guard let repositoryURL else {
             lastError = GitClientError.repositoryNotSelected.localizedDescription
             hasMoreCommits = false
+            isBranchFocusLoading = false
+            branchFocusLoadingBranch = nil
             return
         }
 
@@ -244,6 +256,10 @@ extension RepositoryViewModel {
                 if statusMessage != refreshedStatusMessage {
                     statusMessage = refreshedStatusMessage
                 }
+                if isBranchFocusLoading, branchFocusLoadingBranch == focusedBranchSnapshot {
+                    isBranchFocusLoading = false
+                    branchFocusLoadingBranch = nil
+                }
                 isBusy = false
                 if didSelectedCommitChange {
                     let commitToken = payload.selectedCommitID.map { String($0.prefix(8)) } ?? "nil"
@@ -255,11 +271,19 @@ extension RepositoryViewModel {
                 loadCommitStats()
             } catch is CancellationError {
                 guard refreshRequestID == requestID else { return }
+                if isBranchFocusLoading, branchFocusLoadingBranch == focusedBranchSnapshot {
+                    isBranchFocusLoading = false
+                    branchFocusLoadingBranch = nil
+                }
                 isBusy = false
                 logger.log(.info, "refreshCommitsOnly cancelled", context: "request=\(requestID.uuidString.prefix(8))", source: #function)
                 return
             } catch {
                 guard refreshRequestID == requestID else { return }
+                if isBranchFocusLoading, branchFocusLoadingBranch == focusedBranchSnapshot {
+                    isBranchFocusLoading = false
+                    branchFocusLoadingBranch = nil
+                }
                 isBusy = false
                 handleError(error)
             }
@@ -454,6 +478,8 @@ extension RepositoryViewModel {
         }
 
         actionTask?.cancel()
+        let actionToken = UUID()
+        activeGitActionToken = actionToken
         isBusy = true
 
         let commandSummary = redactedGitCommandSummary(args: args)
@@ -476,10 +502,18 @@ extension RepositoryViewModel {
                     statusMessage = "\(label): \(output.prefix(240))"
                 }
                 logger.log(.git, "\(label) OK", context: commandSummary)
+                guard activeGitActionToken == actionToken else { return }
+                activeGitActionToken = nil
                 refreshRepository(setBusy: true, origin: .gitAction)
             } catch is CancellationError {
+                guard activeGitActionToken == actionToken else { return }
+                activeGitActionToken = nil
+                isBusy = false
+                logger.log(.info, "\(label) cancelled", context: commandSummary, source: #function)
                 return
             } catch {
+                guard activeGitActionToken == actionToken else { return }
+                activeGitActionToken = nil
                 isBusy = false
                 logger.log(.error, error.localizedDescription, context: commandSummary)
                 handleError(error)
@@ -501,6 +535,8 @@ extension RepositoryViewModel {
         }
 
         actionTask?.cancel()
+        let actionToken = UUID()
+        activeGitActionToken = actionToken
         isBusy = true
 
         let commandSummary = redactedGitCommandSummary(args: args)
@@ -539,10 +575,18 @@ extension RepositoryViewModel {
                     statusMessage = "\(label): \(output.prefix(240))"
                 }
                 logger.log(.git, "\(label) OK", context: commandSummary)
+                guard activeGitActionToken == actionToken else { return }
+                activeGitActionToken = nil
                 refreshRepository(setBusy: true, origin: .gitAction)
             } catch is CancellationError {
+                guard activeGitActionToken == actionToken else { return }
+                activeGitActionToken = nil
+                isBusy = false
+                logger.log(.info, "\(label) cancelled", context: commandSummary, source: #function)
                 return
             } catch {
+                guard activeGitActionToken == actionToken else { return }
+                activeGitActionToken = nil
                 isBusy = false
                 logger.log(.error, error.localizedDescription, context: commandSummary)
                 handleError(error)

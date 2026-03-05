@@ -527,11 +527,20 @@ struct SidebarView: View {
     private func branchTreeNodeRow(_ node: BranchTreeNode) -> some View {
         let isMain = ["main", "master", "develop", "dev"].contains(node.title.lowercased())
         let isCurrent = node.branchName == model.currentBranch
+        let isFocusLoading = node.branchName == model.branchFocusLoadingBranch && model.isBranchFocusLoading
         return HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
             VStack(alignment: .leading, spacing: 2) {
                 if node.isGroup { Text(node.title).font(DesignSystem.Typography.sheetTitle) } else {
                     HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-                        Image(systemName: isMain ? "shield.fill" : "arrow.triangle.branch").font(DesignSystem.Typography.label).foregroundStyle(isMain ? DesignSystem.Colors.warning : (isCurrent ? Color.accentColor : Color.secondary))
+                        if isFocusLoading {
+                            ProgressView()
+                                .controlSize(.mini)
+                                .frame(width: 12, height: 12)
+                        } else {
+                            Image(systemName: isMain ? "shield.fill" : "arrow.triangle.branch")
+                                .font(DesignSystem.Typography.label)
+                                .foregroundStyle(isMain ? DesignSystem.Colors.warning : (isCurrent ? Color.accentColor : Color.secondary))
+                        }
                         Text(node.title).font(DesignSystem.Typography.monoLabel).fontWeight(isCurrent || isMain ? .bold : .regular).lineLimit(1)
                         if isCurrent { Text(L10n("current")).font(DesignSystem.Typography.micro).padding(.horizontal, 4).padding(.vertical, 1).background(DesignSystem.Colors.selectionBackground).foregroundStyle(Color.accentColor).clipShape(Capsule()) }
                     }
@@ -569,7 +578,13 @@ struct SidebarView: View {
         )
         .contentShape(Rectangle())
         .onTapGesture { if let branch = node.branchName { selectedBranchTreeNodeID = node.id; model.branchInput = branch } }
-        .onTapGesture(count: 2) { if let branch = node.branchName { selectedBranchTreeNodeID = node.id; model.branchInput = branch; model.setBranchFocus(branch) } }
+        .onTapGesture(count: 2) {
+            if let branch = node.branchName, !isFocusLoading {
+                selectedBranchTreeNodeID = node.id
+                model.branchInput = branch
+                model.setBranchFocus(branch)
+            }
+        }
         .contextMenu {
             if let branch = node.branchName {
                 branchContextMenu(branch)

@@ -80,6 +80,8 @@ extension RepositoryViewModel {
 
     func continueAfterResolution() {
         guard let repositoryURL else { return }
+        let actionToken = UUID()
+        activeGitActionToken = actionToken
         isBusy = true
         conflictTask?.cancel()
         conflictTask = Task {
@@ -88,10 +90,17 @@ extension RepositoryViewModel {
                 try Task.checkCancellation()
                 isConflictViewVisible = false
                 statusMessage = output.isEmpty ? L10n("Todos os conflitos resolvidos!") : String(output.prefix(240))
+                guard activeGitActionToken == actionToken else { return }
+                activeGitActionToken = nil
                 refreshRepository(setBusy: true)
             } catch is CancellationError {
+                guard activeGitActionToken == actionToken else { return }
+                activeGitActionToken = nil
+                isBusy = false
                 return
             } catch {
+                guard activeGitActionToken == actionToken else { return }
+                activeGitActionToken = nil
                 isBusy = false
                 handleError(error)
             }
