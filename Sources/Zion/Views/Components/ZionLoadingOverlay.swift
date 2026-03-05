@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ZionLoadingOverlay: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var laserRotation: Double = 0
 
     var body: some View {
         ZStack {
@@ -22,13 +21,6 @@ struct ZionLoadingOverlay: View {
             .shadow(color: DesignSystem.Colors.shadowDark, radius: 8, y: 2)
         }
         .transition(DesignSystem.Motion.fade)
-        .onAppear {
-            guard !reduceMotion else { return }
-            laserRotation = 0
-            withAnimation(.linear(duration: 1.05).repeatForever(autoreverses: false)) {
-                laserRotation = 360
-            }
-        }
     }
 
     private var zionLoader: some View {
@@ -72,15 +64,43 @@ struct ZionLoadingOverlay: View {
     @ViewBuilder
     private var triangleLaserOrbit: some View {
         if reduceMotion {
-            EmptyView()
-        } else {
             ZionTriangle()
                 .trim(from: 0.02, to: 0.17)
                 .stroke(
+                    DesignSystem.Colors.brandWhite.opacity(0.55),
+                    style: StrokeStyle(lineWidth: 2.45, lineCap: .round, lineJoin: .round)
+                )
+                .shadow(color: DesignSystem.Colors.brandWhite.opacity(0.25), radius: 2, y: 0)
+        } else {
+            TimelineView(.animation(minimumInterval: 1.0 / 60.0, paused: false)) { context in
+                let phase = orbitPhase(for: context.date)
+                ZStack {
+                    triangleLaserSegment(start: phase, length: 0.16)
+                    triangleLaserSegment(start: phase - 1, length: 0.16)
+                }
+            }
+        }
+    }
+
+    private func orbitPhase(for date: Date) -> CGFloat {
+        let cycle: TimeInterval = 1.1
+        let t = date.timeIntervalSinceReferenceDate
+        let normalized = (t.remainder(dividingBy: cycle) + cycle).remainder(dividingBy: cycle) / cycle
+        return CGFloat(normalized)
+    }
+
+    @ViewBuilder
+    private func triangleLaserSegment(start: CGFloat, length: CGFloat) -> some View {
+        let from = max(0, start)
+        let to = min(1, start + length)
+        if to > from {
+            ZionTriangle()
+                .trim(from: from, to: to)
+                .stroke(
                     LinearGradient(
                         colors: [
-                            DesignSystem.Colors.brandWhite.opacity(0.06),
-                            DesignSystem.Colors.brandWhite.opacity(0.52),
+                            DesignSystem.Colors.brandWhite.opacity(0.02),
+                            DesignSystem.Colors.brandWhite.opacity(0.45),
                             DesignSystem.Colors.brandWhite.opacity(1.0),
                         ],
                         startPoint: .leading,
@@ -88,8 +108,7 @@ struct ZionLoadingOverlay: View {
                     ),
                     style: StrokeStyle(lineWidth: 2.55, lineCap: .round, lineJoin: .round)
                 )
-                .shadow(color: DesignSystem.Colors.brandWhite.opacity(0.58), radius: 3, y: 0)
-                .rotationEffect(.degrees(laserRotation))
+                .shadow(color: DesignSystem.Colors.brandWhite.opacity(0.6), radius: 3, y: 0)
         }
     }
 }
@@ -120,96 +139,85 @@ private struct ZionMountainFaceted: View {
             let h = geo.size.height
 
             ZStack {
-                // Base silhouette
+                // Main mountain silhouette
                 Path { p in
-                    p.move(to: CGPoint(x: 0.0 * w, y: 1.0 * h))
-                    p.addLine(to: CGPoint(x: 0.14 * w, y: 0.73 * h))
-                    p.addLine(to: CGPoint(x: 0.28 * w, y: 0.54 * h))
-                    p.addLine(to: CGPoint(x: 0.50 * w, y: 0.02 * h))
-                    p.addLine(to: CGPoint(x: 0.72 * w, y: 0.54 * h))
-                    p.addLine(to: CGPoint(x: 0.86 * w, y: 0.73 * h))
-                    p.addLine(to: CGPoint(x: 1.00 * w, y: 1.0 * h))
+                    p.move(to: CGPoint(x: 0.08 * w, y: 0.94 * h))
+                    p.addLine(to: CGPoint(x: 0.50 * w, y: 0.06 * h))
+                    p.addLine(to: CGPoint(x: 0.92 * w, y: 0.94 * h))
                     p.closeSubpath()
                 }
                 .fill(
                     LinearGradient(
                         colors: [
-                            DesignSystem.Colors.brandWhite.opacity(0.88),
-                            DesignSystem.Colors.brandLight.opacity(0.70)
+                            DesignSystem.Colors.brandWhite.opacity(0.94),
+                            DesignSystem.Colors.brandWhite.opacity(0.72)
                         ],
                         startPoint: .top,
                         endPoint: .bottom
                     )
                 )
 
-                // Lower base plate
+                // Left facet shadow
                 Path { p in
-                    p.move(to: CGPoint(x: 0.04 * w, y: 0.94 * h))
-                    p.addLine(to: CGPoint(x: 0.96 * w, y: 0.94 * h))
-                    p.addLine(to: CGPoint(x: 0.90 * w, y: 1.00 * h))
-                    p.addLine(to: CGPoint(x: 0.10 * w, y: 1.00 * h))
+                    p.move(to: CGPoint(x: 0.50 * w, y: 0.06 * h))
+                    p.addLine(to: CGPoint(x: 0.27 * w, y: 0.64 * h))
+                    p.addLine(to: CGPoint(x: 0.16 * w, y: 0.94 * h))
+                    p.addLine(to: CGPoint(x: 0.50 * w, y: 0.94 * h))
                     p.closeSubpath()
                 }
-                .fill(DesignSystem.Colors.brandWhite.opacity(0.30))
+                .fill(DesignSystem.Colors.brandWhite.opacity(0.76))
 
-                // Top facets
+                // Right facet glow
                 Path { p in
                     p.move(to: CGPoint(x: 0.50 * w, y: 0.02 * h))
-                    p.addLine(to: CGPoint(x: 0.56 * w, y: 0.48 * h))
-                    p.addLine(to: CGPoint(x: 0.72 * w, y: 0.54 * h))
+                    p.addLine(to: CGPoint(x: 0.74 * w, y: 0.63 * h))
+                    p.addLine(to: CGPoint(x: 0.84 * w, y: 0.94 * h))
+                    p.addLine(to: CGPoint(x: 0.50 * w, y: 0.94 * h))
                     p.closeSubpath()
                 }
                 .fill(DesignSystem.Colors.brandWhite.opacity(0.58))
 
+                // Central shard
                 Path { p in
-                    p.move(to: CGPoint(x: 0.50 * w, y: 0.02 * h))
-                    p.addLine(to: CGPoint(x: 0.44 * w, y: 0.48 * h))
-                    p.addLine(to: CGPoint(x: 0.28 * w, y: 0.54 * h))
+                    p.move(to: CGPoint(x: 0.50 * w, y: 0.17 * h))
+                    p.addLine(to: CGPoint(x: 0.58 * w, y: 0.67 * h))
+                    p.addLine(to: CGPoint(x: 0.50 * w, y: 0.92 * h))
+                    p.addLine(to: CGPoint(x: 0.42 * w, y: 0.67 * h))
                     p.closeSubpath()
                 }
-                .fill(DesignSystem.Colors.brandWhite.opacity(0.64))
+                .fill(DesignSystem.Colors.brandWhite.opacity(0.82))
 
+                // Top cap
                 Path { p in
-                    p.move(to: CGPoint(x: 0.44 * w, y: 0.48 * h))
-                    p.addLine(to: CGPoint(x: 0.56 * w, y: 0.48 * h))
-                    p.addLine(to: CGPoint(x: 0.50 * w, y: 0.70 * h))
+                    p.move(to: CGPoint(x: 0.50 * w, y: 0.10 * h))
+                    p.addLine(to: CGPoint(x: 0.56 * w, y: 0.30 * h))
+                    p.addLine(to: CGPoint(x: 0.44 * w, y: 0.30 * h))
                     p.closeSubpath()
                 }
-                .fill(DesignSystem.Colors.brandWhite.opacity(0.46))
+                .fill(DesignSystem.Colors.brandWhite.opacity(0.96))
 
-                // Side facets
+                // Base plate
                 Path { p in
-                    p.move(to: CGPoint(x: 0.72 * w, y: 0.54 * h))
-                    p.addLine(to: CGPoint(x: 0.84 * w, y: 0.78 * h))
-                    p.addLine(to: CGPoint(x: 1.00 * w, y: 1.00 * h))
+                    p.move(to: CGPoint(x: 0.12 * w, y: 0.90 * h))
+                    p.addLine(to: CGPoint(x: 0.88 * w, y: 0.90 * h))
+                    p.addLine(to: CGPoint(x: 0.84 * w, y: 0.98 * h))
+                    p.addLine(to: CGPoint(x: 0.16 * w, y: 0.98 * h))
                     p.closeSubpath()
                 }
-                .fill(DesignSystem.Colors.brandWhite.opacity(0.70))
+                .fill(DesignSystem.Colors.brandWhite.opacity(0.34))
 
+                // Logo facet lines
                 Path { p in
-                    p.move(to: CGPoint(x: 0.28 * w, y: 0.54 * h))
-                    p.addLine(to: CGPoint(x: 0.16 * w, y: 0.78 * h))
-                    p.addLine(to: CGPoint(x: 0.00 * w, y: 1.00 * h))
-                    p.closeSubpath()
+                    p.move(to: CGPoint(x: 0.50 * w, y: 0.10 * h))
+                    p.addLine(to: CGPoint(x: 0.50 * w, y: 0.94 * h))
+                    p.move(to: CGPoint(x: 0.44 * w, y: 0.30 * h))
+                    p.addLine(to: CGPoint(x: 0.27 * w, y: 0.64 * h))
+                    p.move(to: CGPoint(x: 0.56 * w, y: 0.30 * h))
+                    p.addLine(to: CGPoint(x: 0.74 * w, y: 0.63 * h))
+                    p.move(to: CGPoint(x: 0.27 * w, y: 0.64 * h))
+                    p.addLine(to: CGPoint(x: 0.74 * w, y: 0.63 * h))
                 }
-                .fill(DesignSystem.Colors.brandWhite.opacity(0.74))
-
-                // Facet lines to approximate logo geometry
-                Path { p in
-                    p.move(to: CGPoint(x: 0.50 * w, y: 0.02 * h))
-                    p.addLine(to: CGPoint(x: 0.50 * w, y: 0.70 * h))
-                    p.move(to: CGPoint(x: 0.28 * w, y: 0.54 * h))
-                    p.addLine(to: CGPoint(x: 0.72 * w, y: 0.54 * h))
-                    p.move(to: CGPoint(x: 0.44 * w, y: 0.48 * h))
-                    p.addLine(to: CGPoint(x: 0.28 * w, y: 0.54 * h))
-                    p.move(to: CGPoint(x: 0.56 * w, y: 0.48 * h))
-                    p.addLine(to: CGPoint(x: 0.72 * w, y: 0.54 * h))
-                    p.move(to: CGPoint(x: 0.72 * w, y: 0.54 * h))
-                    p.addLine(to: CGPoint(x: 0.84 * w, y: 0.78 * h))
-                    p.move(to: CGPoint(x: 0.28 * w, y: 0.54 * h))
-                    p.addLine(to: CGPoint(x: 0.16 * w, y: 0.78 * h))
-                }
-                .stroke(DesignSystem.Colors.brandWhite.opacity(0.30), lineWidth: 1)
+                .stroke(DesignSystem.Colors.brandWhite.opacity(0.32), lineWidth: 0.9)
             }
         }
     }
