@@ -298,6 +298,17 @@ final class RepositoryViewModelGitTests: XCTestCase {
         XCTAssertNil(result)
     }
 
+    // MARK: - refreshRepository busy skip guard
+
+    func testShouldSkipRefreshWhileBusyForSilentRefresh() {
+        XCTAssertTrue(RepositoryViewModel.shouldSkipRefreshWhileBusy(setBusy: false, isBusy: true))
+    }
+
+    func testShouldSkipRefreshWhileBusyForInteractiveRefresh() {
+        XCTAssertFalse(RepositoryViewModel.shouldSkipRefreshWhileBusy(setBusy: true, isBusy: true))
+        XCTAssertFalse(RepositoryViewModel.shouldSkipRefreshWhileBusy(setBusy: false, isBusy: false))
+    }
+
     // MARK: - filePathFromStatusLine
 
     func testFilePathFromStatusLineModifiedFile() {
