@@ -55,6 +55,9 @@ enum HostingCredentialStore {
         ]
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
+        if status == errSecItemNotFound {
+            return migrateLegacyValueIfPresent(for: key)
+        }
         guard status == errSecSuccess, let data = result as? Data else { return nil }
         return String(data: data, encoding: .utf8)
     }
@@ -78,11 +81,30 @@ enum HostingCredentialStore {
         for key in CredentialKey.allCases {
             guard let legacyKey = key.legacyDefaultsKey else { continue }
             guard let value = defaults.string(forKey: legacyKey), !value.isEmpty else { continue }
-            // Only migrate if Keychain doesn't already have a value
-            if loadSecret(for: key) == nil {
-                saveSecret(value, for: key)
-            }
+            saveSecretIfMissing(value, for: key)
             defaults.removeObject(forKey: legacyKey)
         }
+    }
+
+    private static func saveSecretIfMissing(_ secret: String, for key: CredentialKey) {
+        guard !secret.isEmpty else { return }
+        let data = Data(secret.utf8)
+        let add: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: key.rawValue,
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
+        ]
+        _ = SecItemAdd(add as CFDictionary, nil)
+    }
+
+    private static func migrateLegacyValueIfPresent(for key: CredentialKey) -> String? {
+        guard let legacyKey = key.legacyDefaultsKey else { return nil }
+        let defaults = UserDefaults.standard
+        guard let value = defaults.string(forKey: legacyKey), !value.isEmpty else { return nil }
+        saveSecretIfMissing(value, for: key)
+        defaults.removeObject(forKey: legacyKey)
+        return value
     }
 }

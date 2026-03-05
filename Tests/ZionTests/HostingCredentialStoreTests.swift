@@ -172,4 +172,19 @@ final class HostingCredentialStoreTests: XCTestCase {
             XCTAssertNil(defaults.string(forKey: "zion.github.pat"))
         }
     }
+
+    func testLoadSecretMigratesLegacyDefaultsOnDemand() {
+        let defaults = UserDefaults.standard
+
+        withSavedCredentials(keys: [.gitlabPAT]) {
+            HostingCredentialStore.deleteSecret(for: .gitlabPAT)
+            defaults.set("legacy-on-demand-gitlab", forKey: "zion.gitlab.pat")
+
+            let loaded = HostingCredentialStore.loadSecret(for: .gitlabPAT)
+
+            XCTAssertEqual(loaded, "legacy-on-demand-gitlab")
+            XCTAssertEqual(HostingCredentialStore.loadSecret(for: .gitlabPAT), "legacy-on-demand-gitlab")
+            XCTAssertNil(defaults.string(forKey: "zion.gitlab.pat"))
+        }
+    }
 }

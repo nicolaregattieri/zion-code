@@ -3,6 +3,7 @@ import Foundation
 actor BitbucketClient: GitHostingProvider {
     let kind: GitHostingKind = .bitbucket
     private var cachedCredentials: (username: String, appPassword: String)?
+    private var didAttemptKeychainLookup = false
 
     /// Inject credentials for authentication. Called from settings.
     func setCredentials(username: String, appPassword: String) {
@@ -11,6 +12,7 @@ actor BitbucketClient: GitHostingProvider {
         } else {
             cachedCredentials = (username, appPassword)
         }
+        didAttemptKeychainLookup = false
     }
 
     // MARK: - Auth
@@ -20,7 +22,7 @@ actor BitbucketClient: GitHostingProvider {
     }
 
     func hasToken() async -> Bool {
-        cachedCredentials != nil
+        resolveCredentials() != nil
     }
 
     // MARK: - Remote Parsing
@@ -53,10 +55,32 @@ actor BitbucketClient: GitHostingProvider {
     // MARK: - Auth Header
 
     private func authHeader() -> String? {
-        guard let creds = cachedCredentials else { return nil }
+        guard let creds = resolveCredentials() else { return nil }
         let credString = "\(creds.username):\(creds.appPassword)"
         guard let data = credString.data(using: .utf8) else { return nil }
         return "Basic \(data.base64EncodedString())"
+    }
+
+    private func resolveCredentials() -> (username: String, appPassword: String)? {
+        if let creds = cachedCredentials,
+           !creds.username.isEmpty,
+           !creds.appPassword.isEmpty {
+            return creds
+        }
+        if didAttemptKeychainLookup {
+            return nil
+        }
+        didAttemptKeychainLookup = true
+
+        let username = UserDefaults.standard.string(forKey: "zion.bitbucket.username")?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let appPassword = HostingCredentialStore.loadSecret(for: .bitbucketAppPassword)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !username.isEmpty, !appPassword.isEmpty else { return nil }
+
+        let resolved = (username: username, appPassword: appPassword)
+        cachedCredentials = resolved
+        return resolved
     }
 
     /// Percent-encode a path segment.
