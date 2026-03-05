@@ -431,6 +431,14 @@ final class RemoteAccessModeSwitchTests: XCTestCase {
 // MARK: - Pairing Token Keychain Tests
 
 final class PairingTokenKeychainTests: XCTestCase {
+    private static let runKeychainTestsEnv = "ZION_RUN_KEYCHAIN_TESTS"
+
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        guard ProcessInfo.processInfo.environment[Self.runKeychainTestsEnv] == "1" else {
+            throw XCTSkip("Skipping Keychain integration tests by default. Set \(Self.runKeychainTestsEnv)=1 to run.")
+        }
+    }
 
     override func tearDown() {
         RemoteAccessEncryption.deletePairingToken()
