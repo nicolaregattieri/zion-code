@@ -142,11 +142,11 @@ private struct ZionMountainFaceted: View {
                 // Base silhouette
                 Path { p in
                     p.move(to: CGPoint(x: 0.0 * w, y: 1.0 * h))
-                    p.addLine(to: CGPoint(x: 0.14 * w, y: 0.73 * h))
-                    p.addLine(to: CGPoint(x: 0.28 * w, y: 0.54 * h))
+                    p.addLine(to: CGPoint(x: 0.13 * w, y: 0.74 * h))
+                    p.addLine(to: CGPoint(x: 0.27 * w, y: 0.54 * h))
                     p.addLine(to: CGPoint(x: 0.50 * w, y: 0.02 * h))
-                    p.addLine(to: CGPoint(x: 0.72 * w, y: 0.54 * h))
-                    p.addLine(to: CGPoint(x: 0.86 * w, y: 0.73 * h))
+                    p.addLine(to: CGPoint(x: 0.73 * w, y: 0.54 * h))
+                    p.addLine(to: CGPoint(x: 0.87 * w, y: 0.74 * h))
                     p.addLine(to: CGPoint(x: 1.00 * w, y: 1.0 * h))
                     p.closeSubpath()
                 }
@@ -161,6 +161,62 @@ private struct ZionMountainFaceted: View {
                     )
                 )
 
+                // Top strong triangle
+                Path { p in
+                    p.move(to: CGPoint(x: 0.50 * w, y: 0.02 * h))
+                    p.addLine(to: CGPoint(x: 0.63 * w, y: 0.49 * h))
+                    p.addLine(to: CGPoint(x: 0.37 * w, y: 0.49 * h))
+                    p.closeSubpath()
+                }
+                .fill(DesignSystem.Colors.brandWhite.opacity(0.93))
+
+                // Center lozenge facet
+                Path { p in
+                    p.move(to: CGPoint(x: 0.37 * w, y: 0.49 * h))
+                    p.addLine(to: CGPoint(x: 0.50 * w, y: 0.69 * h))
+                    p.addLine(to: CGPoint(x: 0.63 * w, y: 0.49 * h))
+                    p.addLine(to: CGPoint(x: 0.50 * w, y: 0.42 * h))
+                    p.closeSubpath()
+                }
+                .fill(DesignSystem.Colors.brandWhite.opacity(0.55))
+
+                // Left shoulder triangle
+                Path { p in
+                    p.move(to: CGPoint(x: 0.27 * w, y: 0.54 * h))
+                    p.addLine(to: CGPoint(x: 0.37 * w, y: 0.49 * h))
+                    p.addLine(to: CGPoint(x: 0.50 * w, y: 0.69 * h))
+                    p.closeSubpath()
+                }
+                .fill(DesignSystem.Colors.brandWhite.opacity(0.66))
+
+                // Right shoulder triangle
+                Path { p in
+                    p.move(to: CGPoint(x: 0.73 * w, y: 0.54 * h))
+                    p.addLine(to: CGPoint(x: 0.63 * w, y: 0.49 * h))
+                    p.addLine(to: CGPoint(x: 0.50 * w, y: 0.69 * h))
+                    p.closeSubpath()
+                }
+                .fill(DesignSystem.Colors.brandWhite.opacity(0.60))
+
+                // Side lozenges
+                Path { p in
+                    p.move(to: CGPoint(x: 0.13 * w, y: 0.74 * h))
+                    p.addLine(to: CGPoint(x: 0.27 * w, y: 0.54 * h))
+                    p.addLine(to: CGPoint(x: 0.23 * w, y: 0.76 * h))
+                    p.addLine(to: CGPoint(x: 0.09 * w, y: 0.90 * h))
+                    p.closeSubpath()
+                }
+                .fill(DesignSystem.Colors.brandWhite.opacity(0.78))
+
+                Path { p in
+                    p.move(to: CGPoint(x: 0.87 * w, y: 0.74 * h))
+                    p.addLine(to: CGPoint(x: 0.73 * w, y: 0.54 * h))
+                    p.addLine(to: CGPoint(x: 0.77 * w, y: 0.76 * h))
+                    p.addLine(to: CGPoint(x: 0.91 * w, y: 0.90 * h))
+                    p.closeSubpath()
+                }
+                .fill(DesignSystem.Colors.brandWhite.opacity(0.74))
+
                 // Lower base plate
                 Path { p in
                     p.move(to: CGPoint(x: 0.04 * w, y: 0.94 * h))
@@ -171,62 +227,22 @@ private struct ZionMountainFaceted: View {
                 }
                 .fill(DesignSystem.Colors.brandWhite.opacity(0.30))
 
-                // Top facets
-                Path { p in
-                    p.move(to: CGPoint(x: 0.50 * w, y: 0.02 * h))
-                    p.addLine(to: CGPoint(x: 0.56 * w, y: 0.48 * h))
-                    p.addLine(to: CGPoint(x: 0.72 * w, y: 0.54 * h))
-                    p.closeSubpath()
-                }
-                .fill(DesignSystem.Colors.brandWhite.opacity(0.58))
-
-                Path { p in
-                    p.move(to: CGPoint(x: 0.50 * w, y: 0.02 * h))
-                    p.addLine(to: CGPoint(x: 0.44 * w, y: 0.48 * h))
-                    p.addLine(to: CGPoint(x: 0.28 * w, y: 0.54 * h))
-                    p.closeSubpath()
-                }
-                .fill(DesignSystem.Colors.brandWhite.opacity(0.64))
-
-                Path { p in
-                    p.move(to: CGPoint(x: 0.44 * w, y: 0.48 * h))
-                    p.addLine(to: CGPoint(x: 0.56 * w, y: 0.48 * h))
-                    p.addLine(to: CGPoint(x: 0.50 * w, y: 0.70 * h))
-                    p.closeSubpath()
-                }
-                .fill(DesignSystem.Colors.brandWhite.opacity(0.46))
-
-                // Side facets
-                Path { p in
-                    p.move(to: CGPoint(x: 0.72 * w, y: 0.54 * h))
-                    p.addLine(to: CGPoint(x: 0.84 * w, y: 0.78 * h))
-                    p.addLine(to: CGPoint(x: 1.00 * w, y: 1.00 * h))
-                    p.closeSubpath()
-                }
-                .fill(DesignSystem.Colors.brandWhite.opacity(0.70))
-
-                Path { p in
-                    p.move(to: CGPoint(x: 0.28 * w, y: 0.54 * h))
-                    p.addLine(to: CGPoint(x: 0.16 * w, y: 0.78 * h))
-                    p.addLine(to: CGPoint(x: 0.00 * w, y: 1.00 * h))
-                    p.closeSubpath()
-                }
-                .fill(DesignSystem.Colors.brandWhite.opacity(0.74))
-
                 // Facet lines to approximate logo geometry
                 Path { p in
                     p.move(to: CGPoint(x: 0.50 * w, y: 0.02 * h))
-                    p.addLine(to: CGPoint(x: 0.50 * w, y: 0.70 * h))
-                    p.move(to: CGPoint(x: 0.28 * w, y: 0.54 * h))
-                    p.addLine(to: CGPoint(x: 0.72 * w, y: 0.54 * h))
-                    p.move(to: CGPoint(x: 0.44 * w, y: 0.48 * h))
-                    p.addLine(to: CGPoint(x: 0.28 * w, y: 0.54 * h))
-                    p.move(to: CGPoint(x: 0.56 * w, y: 0.48 * h))
-                    p.addLine(to: CGPoint(x: 0.72 * w, y: 0.54 * h))
-                    p.move(to: CGPoint(x: 0.72 * w, y: 0.54 * h))
-                    p.addLine(to: CGPoint(x: 0.84 * w, y: 0.78 * h))
-                    p.move(to: CGPoint(x: 0.28 * w, y: 0.54 * h))
-                    p.addLine(to: CGPoint(x: 0.16 * w, y: 0.78 * h))
+                    p.addLine(to: CGPoint(x: 0.50 * w, y: 0.69 * h))
+                    p.move(to: CGPoint(x: 0.27 * w, y: 0.54 * h))
+                    p.addLine(to: CGPoint(x: 0.73 * w, y: 0.54 * h))
+                    p.move(to: CGPoint(x: 0.37 * w, y: 0.49 * h))
+                    p.addLine(to: CGPoint(x: 0.27 * w, y: 0.54 * h))
+                    p.move(to: CGPoint(x: 0.63 * w, y: 0.49 * h))
+                    p.addLine(to: CGPoint(x: 0.73 * w, y: 0.54 * h))
+                    p.move(to: CGPoint(x: 0.13 * w, y: 0.74 * h))
+                    p.addLine(to: CGPoint(x: 0.23 * w, y: 0.76 * h))
+                    p.addLine(to: CGPoint(x: 0.27 * w, y: 0.54 * h))
+                    p.move(to: CGPoint(x: 0.87 * w, y: 0.74 * h))
+                    p.addLine(to: CGPoint(x: 0.77 * w, y: 0.76 * h))
+                    p.addLine(to: CGPoint(x: 0.73 * w, y: 0.54 * h))
                 }
                 .stroke(DesignSystem.Colors.brandWhite.opacity(0.30), lineWidth: 1)
             }
