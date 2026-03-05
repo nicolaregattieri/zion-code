@@ -6,6 +6,8 @@ struct ConflictResolutionScreen: View {
     @State private var splitRatio: CGFloat = 0.25
     @State private var unresolvedJumpRequestID: Int = 0
     @State private var handledUnresolvedJumpRequestID: Int = 0
+    @State private var unresolvedJumpTargetFile: String?
+    @State private var unresolvedJumpTargetRegionID: UUID?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -176,7 +178,7 @@ struct ConflictResolutionScreen: View {
                     ScrollViewReader { proxy in
                         ScrollView {
                             LazyVStack(alignment: .leading, spacing: 8) {
-                                ForEach(Array(model.conflictBlocks.enumerated()), id: \.element.id) { _, block in
+                                ForEach(Array(model.conflictBlocks.enumerated()), id: \.offset) { _, block in
                                     conflictBlockView(block)
                                 }
                             }
@@ -186,6 +188,9 @@ struct ConflictResolutionScreen: View {
                             scrollToFirstUnresolvedRegionIfNeeded(using: proxy)
                         }
                         .onChange(of: model.conflictBlocks.map(\.id)) { _, _ in
+                            scrollToFirstUnresolvedRegionIfNeeded(using: proxy)
+                        }
+                        .onChange(of: model.selectedConflictFile) { _, _ in
                             scrollToFirstUnresolvedRegionIfNeeded(using: proxy)
                         }
                     }
@@ -233,6 +238,7 @@ struct ConflictResolutionScreen: View {
                 },
                 model: model
             )
+            .id(region.id)
         }
     }
 
@@ -256,9 +262,17 @@ struct ConflictResolutionScreen: View {
     }
 
     private func jumpToNextUnresolvedConflict() {
-        guard model.selectUnresolvedConflictFile(preferCurrentSelection: true) else {
+        guard let targetFile = model.unresolvedConflictSelectionCandidate(preferCurrentSelection: true) else {
             return
         }
+
+        unresolvedJumpTargetFile = targetFile
+        unresolvedJumpTargetRegionID = nil
+
+        if targetFile != model.selectedConflictFile {
+            model.selectConflictFile(targetFile)
+        }
+
         unresolvedJumpRequestID += 1
     }
 
@@ -267,10 +281,17 @@ struct ConflictResolutionScreen: View {
             return
         }
 
-        guard let regionID = model.firstUndecidedRegionIDInSelectedConflictFile else {
-            if !model.conflictBlocks.isEmpty {
-                handledUnresolvedJumpRequestID = unresolvedJumpRequestID
-            }
+        guard model.selectedConflictFile == unresolvedJumpTargetFile else {
+            return
+        }
+
+        if unresolvedJumpTargetRegionID == nil {
+            unresolvedJumpTargetRegionID = model.firstUndecidedRegionIDInSelectedConflictFile
+        }
+
+        guard let regionID = unresolvedJumpTargetRegionID else {
+            handledUnresolvedJumpRequestID = unresolvedJumpRequestID
+            unresolvedJumpTargetFile = nil
             return
         }
 
@@ -278,7 +299,9 @@ struct ConflictResolutionScreen: View {
         var transaction = Transaction()
         transaction.animation = nil
         withTransaction(transaction) {
-            proxy.scrollTo(regionID.uuidString, anchor: .center)
+            proxy.scrollTo(regionID, anchor: .top)
         }
+        unresolvedJumpTargetFile = nil
+        unresolvedJumpTargetRegionID = nil
     }
 }
