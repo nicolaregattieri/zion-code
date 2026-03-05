@@ -111,7 +111,7 @@ struct ChangesScreen: View {
                         }
                         if selectedFileIndex >= 0 && selectedFileIndex < changes.count {
                             let line = changes[selectedFileIndex]
-                            let file = String(line.dropFirst(3)).trimmingCharacters(in: .whitespaces)
+                            let file = RepositoryViewModel.filePathFromStatusLine(line) ?? line.trimmingCharacters(in: .whitespaces)
                             model.selectChangeFile(file)
                             withAnimation { scrollProxy.scrollTo(selectedFileIndex, anchor: .center) }
                         }
@@ -172,11 +172,13 @@ struct ChangesScreen: View {
             } label: {
                 Label(L10n("Stage"), systemImage: "plus.circle")
             }
+            .disabled(isStaged)
             Button {
                 model.unstageFile(file)
             } label: {
                 Label(L10n("Unstage"), systemImage: "minus.circle")
             }
+            .disabled(!isStaged)
             Divider()
             Button {
                 model.openFileInEditor(relativePath: file)
@@ -344,11 +346,10 @@ struct ChangesScreen: View {
     // MARK: - Helpers
 
     private func parseGitStatus(_ line: String) -> (String, String, String) {
-        if line.count < 3 { return (" ", " ", line) }
-        let index = String(line.prefix(1))
-        let worktree = String(line.prefix(2).suffix(1))
-        let file = String(line.dropFirst(3)).trimmingCharacters(in: .whitespaces)
-        return (index, worktree, file)
+        guard let entry = RepositoryViewModel.parsePorcelainStatusLine(line) else {
+            return (" ", " ", line.trimmingCharacters(in: .whitespaces))
+        }
+        return (entry.indexStatus, entry.worktreeStatus, entry.path)
     }
 
     @ViewBuilder

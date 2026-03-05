@@ -14,6 +14,7 @@ struct GraphScreen: View {
     @State private var aiMatchIDSet: Set<String> = []
     @State private var searchDebounceTask: Task<Void, Never>?
     @State private var isShowingQuickCommit: Bool = false
+    @State private var quickCommitIncludesAllChanges: Bool = false
     @State private var isShowingCreateBranchFromPending: Bool = false
     @State private var pendingBranchNameInput: String = ""
     @State private var isShowingQuickStash: Bool = false
@@ -24,6 +25,7 @@ struct GraphScreen: View {
     @State private var showingPendingChanges: Bool = false
     @State private var splitRatio: CGFloat = 0.7
     @State private var inlineSplitRatio: CGFloat = 0.35
+    @State private var hoveredInlineFilePath: String?
     @FocusState private var isGraphFocused: Bool
 
     private var commitRowMinWidth: CGFloat {
@@ -448,6 +450,7 @@ struct GraphScreen: View {
 
                     HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                         Button {
+                            quickCommitIncludesAllChanges = false
                             isShowingQuickCommit = true
                         } label: {
                             Label(L10n("Commit"), systemImage: "checkmark.circle.fill")
@@ -458,7 +461,31 @@ struct GraphScreen: View {
                         .sheet(isPresented: $isShowingQuickCommit) {
                             VStack(alignment: .leading, spacing: 16) {
                                 Text(L10n("Criar Commit Rapido")).font(.title3.bold())
-                                Text(L10n("Suas alteracoes serao rastreadas automaticamente (git add -A).")).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
+
+                                HStack(spacing: 8) {
+                                    quickCommitScopeChip(
+                                        title: L10n("Staged"),
+                                        icon: "checkmark.circle.fill",
+                                        isSelected: !quickCommitIncludesAllChanges
+                                    ) {
+                                        quickCommitIncludesAllChanges = false
+                                    }
+                                    quickCommitScopeChip(
+                                        title: L10n("Stage All"),
+                                        icon: "plus.circle.fill",
+                                        isSelected: quickCommitIncludesAllChanges
+                                    ) {
+                                        quickCommitIncludesAllChanges = true
+                                    }
+                                    Spacer()
+                                }
+                                Text(
+                                    quickCommitIncludesAllChanges
+                                        ? L10n("commit.mode.allChanges.hint")
+                                        : L10n("commit.mode.stagedOnly.hint")
+                                )
+                                .font(DesignSystem.Typography.label)
+                                .foregroundStyle(.secondary)
 
                                 HStack(alignment: .bottom, spacing: 8) {
                                     ZStack(alignment: .topLeading) {
@@ -519,19 +546,29 @@ struct GraphScreen: View {
                                 }
 
                                 HStack {
-                                    Button(L10n("Cancelar")) { isShowingQuickCommit = false }
+                                    Button(L10n("Cancelar")) {
+                                        quickCommitIncludesAllChanges = false
+                                        isShowingQuickCommit = false
+                                    }
                                         .buttonStyle(.bordered)
                                         .keyboardShortcut(.escape, modifiers: [])
 
                                     Spacer()
 
                                     Button(L10n("Commit")) {
-                                        model.commit(message: model.commitMessageInput)
+                                        model.commit(
+                                            message: model.commitMessageInput,
+                                            scope: quickCommitIncludesAllChanges ? .allChanges : .stagedOnly
+                                        )
+                                        quickCommitIncludesAllChanges = false
                                         isShowingQuickCommit = false
                                     }
                                     .buttonStyle(.borderedProminent)
                                     .tint(DesignSystem.Colors.actionPrimary)
-                                    .disabled(model.commitMessageInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                                    .disabled(
+                                        model.commitMessageInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                                        (!quickCommitIncludesAllChanges && !model.hasStagedChanges)
+                                    )
                                     .keyboardShortcut(.return, modifiers: [.command])
                                 }
                             }
@@ -1035,6 +1072,26 @@ struct GraphScreen: View {
         GlassCard(spacing: 0) {
             CardHeader(L10n("Changes"), icon: "pencil.circle", subtitle: "\(model.uncommittedCount) \(L10n("arquivos modificados"))") {
                 HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+                    Button {
+                        model.stageAllFiles()
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                    }
+                    .buttonStyle(.plain)
+                    .help(L10n("Stage All"))
+                    .accessibilityLabel(L10n("Stage All"))
+                    .disabled(model.uncommittedChanges.isEmpty)
+
+                    Button {
+                        model.unstageAllFiles()
+                    } label: {
+                        Image(systemName: "minus.circle.fill")
+                    }
+                    .buttonStyle(.plain)
+                    .help(L10n("Unstage All"))
+                    .accessibilityLabel(L10n("Unstage All"))
+                    .disabled(!model.hasStagedChanges)
+
                     if model.isAIConfigured && !model.uncommittedChanges.isEmpty {
                         Button { model.summarizePendingChanges() } label: {
                             Image(systemName: "sparkles")
@@ -1051,6 +1108,10 @@ struct GraphScreen: View {
                 }
             }
             .padding(12)
+
+            if !model.uncommittedChanges.isEmpty {
+                inlineChangesSummaryBar
+            }
 
             if model.isLoadingPendingChangesSummary {
                 HStack(spacing: DesignSystem.Spacing.iconTextGap) {
@@ -1109,6 +1170,7 @@ struct GraphScreen: View {
     private func inlineFileRow(line: String) -> some View {
         let (indexStatus, workTreeStatus, file) = parseInlineGitStatus(line)
         let isSelected = model.selectedChangeFile == file
+        let isHovered = hoveredInlineFilePath == file
         return Button {
             model.selectChangeFile(file)
         } label: {
@@ -1121,9 +1183,19 @@ struct GraphScreen: View {
                 }
             }
             .padding(.horizontal, 10).padding(.vertical, 8)
-            .background(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius).fill(isSelected ? DesignSystem.Colors.selectionBackground : Color.clear))
+            .background(
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius)
+                    .fill(isSelected ? DesignSystem.Colors.selectionBackground : (isHovered ? DesignSystem.Colors.glassHover : Color.clear))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius)
+                    .stroke(isSelected ? DesignSystem.Colors.selectionBorder : (isHovered ? DesignSystem.Colors.glassBorderDark : Color.clear), lineWidth: 1)
+            )
             .contentShape(Rectangle())
         }.buttonStyle(.plain)
+        .onHover { hovering in
+            hoveredInlineFilePath = hovering ? file : nil
+        }
         .onTapGesture(count: 2) {
             model.openFileInEditor(relativePath: file)
         }
@@ -1133,11 +1205,13 @@ struct GraphScreen: View {
             } label: {
                 Label(L10n("Stage"), systemImage: "plus.circle")
             }
+            .disabled(indexStatus != " " && indexStatus != "?")
             Button {
                 model.unstageFile(file)
             } label: {
                 Label(L10n("Unstage"), systemImage: "minus.circle")
             }
+            .disabled(indexStatus == " " || indexStatus == "?")
             Divider()
             Button {
                 model.openFileInEditor(relativePath: file)
@@ -1156,13 +1230,23 @@ struct GraphScreen: View {
     private var inlineDiffViewer: some View {
         GlassCard(spacing: 0) {
             if let file = model.selectedChangeFile {
+                let isStaged = model.statusEntry(for: file)?.isStaged ?? false
                 HStack {
                     Image(systemName: "doc.text").foregroundStyle(.secondary)
                     Text(file).font(.system(.subheadline, design: .monospaced)).fontWeight(.bold)
                     Spacer()
+                    Button { model.unstageFile(file) } label: {
+                        Label(L10n("Unstage"), systemImage: "minus")
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .disabled(!isStaged)
                     Button { model.stageFile(file) } label: {
                         Label(L10n("Stage"), systemImage: "plus")
-                    }.buttonStyle(.bordered).controlSize(.small)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .disabled(isStaged)
                 }.padding(12)
                 Divider()
                 ScrollView {
@@ -1199,11 +1283,83 @@ struct GraphScreen: View {
     }
 
     private func parseInlineGitStatus(_ line: String) -> (String, String, String) {
-        if line.count < 3 { return (" ", " ", line) }
-        let index = String(line.prefix(1))
-        let worktree = String(line.prefix(2).suffix(1))
-        let file = String(line.dropFirst(3)).trimmingCharacters(in: .whitespaces)
-        return (index, worktree, file)
+        guard let entry = RepositoryViewModel.parsePorcelainStatusLine(line) else {
+            return (" ", " ", line.trimmingCharacters(in: .whitespaces))
+        }
+        return (entry.indexStatus, entry.worktreeStatus, entry.path)
+    }
+
+    private var inlineChangesSummaryBar: some View {
+        HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
+            summaryChip(
+                title: L10n("changes.summary.staged"),
+                count: model.stagedChangesCount,
+                color: DesignSystem.Colors.fileStaged,
+                icon: "checkmark.circle.fill"
+            )
+            summaryChip(
+                title: L10n("changes.summary.pending"),
+                count: model.unstagedChangesCount,
+                color: DesignSystem.Colors.warning,
+                icon: "pencil.circle.fill"
+            )
+            if model.untrackedChangesCount > 0 {
+                summaryChip(
+                    title: L10n("changes.summary.untracked"),
+                    count: model.untrackedChangesCount,
+                    color: .secondary,
+                    icon: "plus.circle"
+                )
+            }
+            Spacer()
+            if model.stagedChangesCount == 0 {
+                Label(L10n("changes.summary.stageHint"), systemImage: "info.circle")
+                    .font(DesignSystem.Typography.metaSemibold)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.bottom, 8)
+    }
+
+    private func summaryChip(title: String, count: Int, color: Color, icon: String) -> some View {
+        HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
+            Image(systemName: icon)
+            Text("\(title) \(count)")
+        }
+        .font(DesignSystem.Typography.metaSemibold)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .background(color.opacity(0.15))
+        .foregroundStyle(color)
+        .clipShape(Capsule())
+    }
+
+    private func quickCommitScopeChip(
+        title: String,
+        icon: String,
+        isSelected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
+                Image(systemName: icon)
+                Text(title)
+            }
+            .font(DesignSystem.Typography.labelSemibold)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous)
+                    .fill(isSelected ? DesignSystem.Colors.selectionBackground : DesignSystem.Colors.glassSubtle)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous)
+                    .stroke(isSelected ? DesignSystem.Colors.selectionBorder : DesignSystem.Colors.glassBorderDark, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .cursorArrow()
     }
 
     @ViewBuilder

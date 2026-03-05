@@ -301,9 +301,7 @@ final class RepositoryViewModelGitTests: XCTestCase {
     // MARK: - filePathFromStatusLine
 
     func testFilePathFromStatusLineModifiedFile() {
-        // git status --porcelain: "XY path" — after trimming, " M" becomes "M "
-        // so we use a status where the first char is not a space
-        let path = RepositoryViewModel.filePathFromStatusLine("MM file.swift")
+        let path = RepositoryViewModel.filePathFromStatusLine(" M file.swift")
         XCTAssertEqual(path, "file.swift")
     }
 
@@ -315,6 +313,70 @@ final class RepositoryViewModelGitTests: XCTestCase {
     func testFilePathFromStatusLineEmptyString() {
         let path = RepositoryViewModel.filePathFromStatusLine("")
         XCTAssertNil(path)
+    }
+
+    func testParsePorcelainStatusLineUntrackedFile() {
+        let entry = RepositoryViewModel.parsePorcelainStatusLine("?? example.liquid")
+
+        XCTAssertEqual(entry?.indexStatus, "?")
+        XCTAssertEqual(entry?.worktreeStatus, "?")
+        XCTAssertEqual(entry?.path, "example.liquid")
+        XCTAssertNil(entry?.originalPath)
+        XCTAssertEqual(entry?.isUntracked, true)
+        XCTAssertEqual(entry?.isStaged, false)
+    }
+
+    func testParsePorcelainStatusLineRenamedFileHasOriginalAndNewPath() {
+        let entry = RepositoryViewModel.parsePorcelainStatusLine("R  old/path.swift -> new/path.swift")
+
+        XCTAssertEqual(entry?.indexStatus, "R")
+        XCTAssertEqual(entry?.worktreeStatus, " ")
+        XCTAssertEqual(entry?.originalPath, "old/path.swift")
+        XCTAssertEqual(entry?.path, "new/path.swift")
+        XCTAssertEqual(entry?.isStaged, true)
+    }
+
+    func testParsePorcelainStatusLineUnstagedModifiedKeepsLeadingWhitespaceStatus() {
+        let entry = RepositoryViewModel.parsePorcelainStatusLine(" M edited.swift")
+
+        XCTAssertEqual(entry?.indexStatus, " ")
+        XCTAssertEqual(entry?.worktreeStatus, "M")
+        XCTAssertEqual(entry?.path, "edited.swift")
+        XCTAssertEqual(entry?.isStaged, false)
+    }
+
+    func testHasStagedChangesTrueWhenStatusContainsIndexEntry() {
+        let vm = RepositoryViewModel()
+        vm.uncommittedChanges = [
+            " M unstaged.swift",
+            "A  staged-new.swift",
+        ]
+
+        XCTAssertTrue(vm.hasStagedChanges)
+    }
+
+    func testHasStagedChangesFalseWhenOnlyUntrackedAndUnstaged() {
+        let vm = RepositoryViewModel()
+        vm.uncommittedChanges = [
+            "?? new-file.swift",
+            " M edited.swift",
+        ]
+
+        XCTAssertFalse(vm.hasStagedChanges)
+    }
+
+    func testStagedAndUnstagedCountersReflectMixedStatuses() {
+        let vm = RepositoryViewModel()
+        vm.uncommittedChanges = [
+            "A  added.swift",
+            "MM modified.swift",
+            " M unstaged.swift",
+            "?? new-file.swift",
+        ]
+
+        XCTAssertEqual(vm.stagedChangesCount, 2)
+        XCTAssertEqual(vm.unstagedChangesCount, 3)
+        XCTAssertEqual(vm.untrackedChangesCount, 1)
     }
 
     // MARK: - buildMergedContent

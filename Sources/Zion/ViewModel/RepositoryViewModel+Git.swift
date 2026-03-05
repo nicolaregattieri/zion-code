@@ -100,8 +100,38 @@ extension RepositoryViewModel {
     }
 
     func discardChanges(in path: String) {
-        let file = path.trimmingCharacters(in: .whitespaces)
-        runDestructiveGitAction(label: "Discard", args: ["checkout", "--", file], operationTag: "discard")
+        let file = path.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !file.isEmpty else { return }
+
+        if let entry = statusEntry(for: file), entry.isUntracked {
+            runDestructiveGitAction(label: "Discard", args: ["clean", "-fd", "--", entry.path], operationTag: "discard")
+            return
+        }
+
+        if let entry = statusEntry(for: file), let originalPath = entry.originalPath {
+            var restorePaths: [String] = []
+            if !originalPath.isEmpty {
+                restorePaths.append(originalPath)
+            }
+            if !entry.path.isEmpty, entry.path != originalPath {
+                restorePaths.append(entry.path)
+            }
+            if restorePaths.isEmpty {
+                restorePaths = [file]
+            }
+            runDestructiveGitAction(
+                label: "Discard",
+                args: ["restore", "--staged", "--worktree", "--"] + restorePaths,
+                operationTag: "discard"
+            )
+            return
+        }
+
+        runDestructiveGitAction(
+            label: "Discard",
+            args: ["restore", "--staged", "--worktree", "--", file],
+            operationTag: "discard"
+        )
     }
 
     // MARK: - Stash
@@ -812,16 +842,87 @@ extension RepositoryViewModel {
     }
 
     static func filePathFromStatusLine(_ line: String) -> String? {
-        let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return nil }
-        guard trimmed.count >= 4 else { return trimmed }
-
-        let start = trimmed.index(trimmed.startIndex, offsetBy: 3)
-        var path = String(trimmed[start...]).trimmingCharacters(in: .whitespaces)
-        if let arrowRange = path.range(of: " -> ") {
-            path = String(path[arrowRange.upperBound...]).trimmingCharacters(in: .whitespaces)
-        }
-        return path.isEmpty ? nil : path
+        parsePorcelainStatusLine(line)?.path
     }
 
+    static func parsePorcelainStatusLine(_ line: String) -> PorcelainStatusEntry? {
+        let raw = line.trimmingCharacters(in: .newlines)
+        guard !raw.isEmpty else { return nil }
+
+        guard raw.count >= 3 else {
+            return PorcelainStatusEntry(
+                indexStatus: " ",
+                worktreeStatus: " ",
+                path: raw,
+                originalPath: nil
+            )
+        }
+
+        let indexStatus = String(raw.prefix(1))
+        let worktreeStatus = String(raw.dropFirst(1).prefix(1))
+        let payload = String(raw.dropFirst(3)).trimmingCharacters(in: .whitespaces)
+        guard !payload.isEmpty else { return nil }
+
+        if let renameRange = payload.range(of: " -> ") {
+            let originalPath = String(payload[..<renameRange.lowerBound]).trimmingCharacters(in: .whitespaces)
+            let renamedPath = String(payload[renameRange.upperBound...]).trimmingCharacters(in: .whitespaces)
+            guard !renamedPath.isEmpty else { return nil }
+            return PorcelainStatusEntry(
+                indexStatus: indexStatus,
+                worktreeStatus: worktreeStatus,
+                path: renamedPath,
+                originalPath: originalPath.isEmpty ? nil : originalPath
+            )
+        }
+
+        return PorcelainStatusEntry(
+            indexStatus: indexStatus,
+            worktreeStatus: worktreeStatus,
+            path: payload,
+            originalPath: nil
+        )
+    }
+
+    var hasStagedChanges: Bool {
+        porcelainStatusEntries.contains(where: { $0.isStaged })
+    }
+
+    var stagedChangesCount: Int {
+        porcelainStatusEntries.filter(\.isStaged).count
+    }
+
+    var unstagedChangesCount: Int {
+        porcelainStatusEntries.filter { $0.worktreeStatus != " " }.count
+    }
+
+    var untrackedChangesCount: Int {
+        porcelainStatusEntries.filter(\.isUntracked).count
+    }
+
+    func statusEntry(for file: String) -> PorcelainStatusEntry? {
+        let normalized = file.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalized.isEmpty else { return nil }
+        return porcelainStatusEntries
+            .first(where: { $0.path == normalized })
+    }
+
+    private var porcelainStatusEntries: [PorcelainStatusEntry] {
+        uncommittedChanges.compactMap(Self.parsePorcelainStatusLine)
+    }
+
+}
+
+struct PorcelainStatusEntry: Equatable {
+    let indexStatus: String
+    let worktreeStatus: String
+    let path: String
+    let originalPath: String?
+
+    var isStaged: Bool {
+        indexStatus != " " && indexStatus != "?"
+    }
+
+    var isUntracked: Bool {
+        indexStatus == "?" && worktreeStatus == "?"
+    }
 }

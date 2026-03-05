@@ -298,7 +298,7 @@ struct OperationsScreen: View {
                 if model.preCommitReviewPending && model.isReviewVisible && !model.aiReviewFindings.isEmpty {
                     PreCommitCheckCard(model: model) {
                         model.dismissPreCommitReview()
-                        performGitAction(L10n("Commit"), L10n("Deseja realizar o commit de todas as alterações?"), false) {
+                        performGitAction(L10n("Commit"), L10n("commit.confirm.staged"), false) {
                             model.commit(message: model.commitMessageInput)
                         }
                     } onFixIssues: {
@@ -323,7 +323,7 @@ struct OperationsScreen: View {
                     if model.preCommitReviewEnabled && model.isAIConfigured && !model.preCommitReviewPending {
                         model.runPreCommitReview()
                     } else if !model.preCommitReviewPending {
-                        performGitAction(L10n("Commit"), L10n("Deseja realizar o commit de todas as alterações?"), false) {
+                        performGitAction(L10n("Commit"), L10n("commit.confirm.staged"), false) {
                             model.commit(message: model.commitMessageInput)
                         }
                     }
@@ -333,7 +333,7 @@ struct OperationsScreen: View {
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
                 .tint(DesignSystem.Colors.actionPrimary)
-                .disabled(model.commitMessageInput.clean.isEmpty || model.preCommitReviewPending)
+                .disabled(model.commitMessageInput.clean.isEmpty || model.preCommitReviewPending || !model.hasStagedChanges)
             }
         }
     }
@@ -1039,11 +1039,10 @@ struct FileStatusRow: View {
     }
     
     private func parseGitStatus(_ line: String) -> (String, String, String) {
-        if line.count < 3 { return (" ", " ", line) }
-        let index = String(line.prefix(1))
-        let worktree = String(line.prefix(2).suffix(1))
-        let file = String(line.dropFirst(3)).trimmingCharacters(in: .whitespaces)
-        return (index, worktree, file)
+        guard let entry = RepositoryViewModel.parsePorcelainStatusLine(line) else {
+            return (" ", " ", line.trimmingCharacters(in: .whitespaces))
+        }
+        return (entry.indexStatus, entry.worktreeStatus, entry.path)
     }
     
     @ViewBuilder
