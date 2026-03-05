@@ -648,10 +648,16 @@ extension RepositoryViewModel {
         if let suspendedUntil = autoFetchSuspendedUntil, suspendedUntil > Date() {
             return
         }
+        if isBusy {
+            return
+        }
+
+        let previousBehind = behindRemoteCount
+        let previousAhead = aheadRemoteCount
 
         do {
-            // Dry-run fetch to check for updates
-            let _ = try await worker.runAction(args: ["fetch", "--dry-run"], in: url)
+            // Keep remote refs current so graph/status can reflect hosted merges without manual refresh.
+            let _ = try await worker.runAction(args: ["fetch", "--all", "--prune"], in: url)
             // Check how many commits behind
             let behindOutput = try await worker.runAction(
                 args: ["rev-list", "--count", "HEAD..@{upstream}"],
@@ -664,7 +670,16 @@ extension RepositoryViewModel {
                 args: ["rev-list", "--count", "@{upstream}..HEAD"],
                 in: url
             )
-            aheadRemoteCount = Int(aheadOutput.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
+            let newAheadCount = Int(aheadOutput.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
+            aheadRemoteCount = newAheadCount
+            if Self.shouldRefreshAfterRemoteDivergenceUpdate(
+                previousBehind: previousBehind,
+                previousAhead: previousAhead,
+                newBehind: newCount,
+                newAhead: newAheadCount
+            ) {
+                refreshRepository(setBusy: false, origin: .autoTimer)
+            }
             if newCount > 0 && lastNotifiedBehindCount == 0 {
                 await ntfyClient.sendIfEnabled(
                     event: .newRemoteCommits,
@@ -701,6 +716,15 @@ extension RepositoryViewModel {
             behindRemoteCount = 0
             aheadRemoteCount = 0
         }
+    }
+
+    static func shouldRefreshAfterRemoteDivergenceUpdate(
+        previousBehind: Int,
+        previousAhead: Int,
+        newBehind: Int,
+        newAhead: Int
+    ) -> Bool {
+        previousBehind != newBehind || previousAhead != newAhead
     }
 
     func refreshPushDivergence(in repositoryURL: URL) async throws {
