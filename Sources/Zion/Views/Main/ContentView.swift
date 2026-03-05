@@ -196,7 +196,7 @@ struct ContentView: View {
                             zenModeEnabled.toggle()
                         }
                     }
-                    .keyboardShortcut("j", modifiers: [.command, .control])
+                    .keyboardShortcut("j", modifiers: [.command, .shift])
                     Button("") {
                         zionModeEnabled.toggle()
                     }
@@ -522,7 +522,7 @@ struct ContentView: View {
                             zenModeEnabled = true
                         }
                     } label: { Image(systemName: "arrow.up.left.and.arrow.down.right") }
-                        .help(L10n("zen.enter") + " (⌃⌘J)")
+                        .help(L10n("zen.enter") + " (⇧⌘J)")
                         .accessibilityLabel(L10n("zen.enter"))
                     Button {
                         model.loadReflog()

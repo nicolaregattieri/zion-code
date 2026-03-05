@@ -53,7 +53,7 @@ struct KeyboardShortcutsSheet: View {
 
                     shortcutSection(L10n("Terminal"), icon: "terminal", shortcuts: [
                         (L10n("Terminal"), "⌘J"),
-                        (L10n("Maximizar terminal"), "⇧⌘J"),
+                        (L10n("Maximizar terminal"), "⌃⌘J"),
                         (L10n("Nova aba"), "⌘T"),
                         (L10n("Dividir verticalmente"), "⇧⌘D"),
                         (L10n("Dividir horizontalmente"), "⇧⌘E"),
@@ -73,7 +73,7 @@ struct KeyboardShortcutsSheet: View {
                     shortcutSection(L10n("shortcuts.general"), icon: "gearshape", shortcuts: [
                         (L10n("shortcuts.refreshRepository"), "⌘R"),
                         (L10n("shortcuts.codeReview"), "⇧⌘R"),
-                        (L10n("zen.mode"), "⌃⌘J"),
+                        (L10n("zen.mode"), "⇧⌘J"),
                         (L10n("shortcuts.zionMode"), "⌃⌘Z"),
                         (L10n("Atalhos de Teclado"), "⌘/"),
                     ])

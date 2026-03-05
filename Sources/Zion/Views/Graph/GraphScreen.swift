@@ -315,28 +315,21 @@ struct GraphScreen: View {
                                 isReviewingThisCommit: model.reviewingCommitID == commit.id,
                                 onCheckout: { branch in
                                     let isRemote = model.isRemoteRefName(branch)
-                                    let title = isRemote ? L10n("Checkout & Pull") : L10n("Checkout")
-                                    
-                                    var localName = branch
                                     if isRemote {
+                                        let title = L10n("Checkout & Pull")
+                                        var localName = branch
                                         for remote in model.remotes {
                                             if branch.hasPrefix("\(remote.name)/") {
                                                 localName = String(branch.dropFirst(remote.name.count + 1))
                                                 break
                                             }
                                         }
-                                    }
-
-                                    let message = isRemote
-                                        ? L10n("Deseja fazer checkout de %@ e puxar as alterações?", localName)
-                                        : L10n("Deseja fazer checkout para %@?", branch)
-                                    
-                                    performGitAction(title, message, false) {
-                                        if isRemote {
+                                        let message = L10n("Deseja fazer checkout de %@ e puxar as alterações?", localName)
+                                        performGitAction(title, message, false) {
                                             model.checkoutAndPull(reference: branch)
-                                        } else {
-                                            model.checkout(reference: branch)
                                         }
+                                    } else {
+                                        model.checkout(reference: branch)
                                     }
                                 },
                                 onReviewCommit: { commitID in

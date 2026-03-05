@@ -47,6 +47,8 @@ final class RepositoryViewModel {
     var mergedBranchesPreview: [String] = []
     var branchTree: [BranchTreeNode] = []
     var focusedBranch: String?
+    var isBranchFocusLoading: Bool = false
+    var branchFocusLoadingBranch: String?
     var inferBranchOrigins: Bool = true
     var hasMoreCommits: Bool = false
     var tags: [String] = []
@@ -353,6 +355,7 @@ final class RepositoryViewModel {
     var keepAwakeExpiresAt: Date?
     var isPreventingSleep = false
     @ObservationIgnored var wakeObserver: NSObjectProtocol?
+    @ObservationIgnored var activeGitActionToken: UUID?
 
     // Background repo persistence (terminal sessions + change badges)
     @ObservationIgnored var backgroundRepoStates: [URL: BackgroundRepoState] = [:]

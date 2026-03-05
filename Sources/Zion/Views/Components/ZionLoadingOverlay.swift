@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ZionLoadingOverlay: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var dashPhase: CGFloat = 0
+    @State private var laserPhase: CGFloat = 0
 
     var body: some View {
         ZStack {
@@ -24,7 +24,10 @@ struct ZionLoadingOverlay: View {
         .transition(DesignSystem.Motion.fade)
         .onAppear {
             guard !reduceMotion else { return }
-            dashPhase = -200
+            laserPhase = 0
+            withAnimation(.linear(duration: 1.1).repeatForever(autoreverses: false)) {
+                laserPhase = 1
+            }
         }
     }
 
@@ -44,18 +47,15 @@ struct ZionLoadingOverlay: View {
                     style: StrokeStyle(
                         lineWidth: 2.25,
                         lineCap: .round,
-                        lineJoin: .round,
-                        dash: [14, 34],
-                        dashPhase: dashPhase
+                        lineJoin: .round
                     )
                 )
+                .opacity(0.24)
                 .frame(width: 72, height: 72)
-                .animation(
-                    reduceMotion
-                        ? nil
-                        : .linear(duration: 1.1).repeatForever(autoreverses: false),
-                    value: dashPhase
-                )
+                .accessibilityHidden(true)
+
+            triangleLaserSweep
+                .frame(width: 72, height: 72)
                 .accessibilityHidden(true)
 
             ZionMountainFaceted()
@@ -68,14 +68,57 @@ struct ZionLoadingOverlay: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(L10n("switch.overlay.loading"))
     }
+
+    @ViewBuilder
+    private var triangleLaserSweep: some View {
+        if reduceMotion {
+            EmptyView()
+        } else {
+            ZStack {
+                triangleLaserSegment(from: laserPhase - 0.18, to: laserPhase)
+                triangleLaserSegment(from: laserPhase + 1 - 0.18, to: laserPhase + 1)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func triangleLaserSegment(from rawFrom: CGFloat, to rawTo: CGFloat) -> some View {
+        let from = min(max(rawFrom, 0), 1)
+        let to = min(max(rawTo, 0), 1)
+        if to > from {
+            ZionTriangle()
+                .trim(from: from, to: to)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            DesignSystem.Colors.brandWhite.opacity(0.0),
+                            DesignSystem.Colors.brandWhite.opacity(0.45),
+                            DesignSystem.Colors.brandWhite.opacity(1.0),
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ),
+                    style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round)
+                )
+                .shadow(color: DesignSystem.Colors.brandWhite.opacity(0.45), radius: 3, y: 0)
+        }
+    }
 }
 
 private struct ZionTriangle: Shape {
     func path(in rect: CGRect) -> Path {
+        let sqrt3 = CGFloat(3.0.squareRoot())
+        let side = min(rect.width, rect.height * 2 / sqrt3)
+        let triangleHeight = side * sqrt3 / 2
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let top = CGPoint(x: center.x, y: center.y - triangleHeight / 2)
+        let left = CGPoint(x: center.x - side / 2, y: center.y + triangleHeight / 2)
+        let right = CGPoint(x: center.x + side / 2, y: center.y + triangleHeight / 2)
+
         var p = Path()
-        p.move(to: CGPoint(x: rect.midX, y: rect.minY))
-        p.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-        p.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        p.move(to: top)
+        p.addLine(to: right)
+        p.addLine(to: left)
         p.closeSubpath()
         return p
     }

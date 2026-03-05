@@ -45,6 +45,8 @@ extension RepositoryViewModel {
         guard !target.isEmpty else { return }
 
         actionTask?.cancel()
+        let actionToken = UUID()
+        activeGitActionToken = actionToken
         isBusy = true
 
         let url = repositoryURL
@@ -87,8 +89,16 @@ extension RepositoryViewModel {
 
                 clearError()
                 statusMessage = L10n("Checkout e Pull concluídos para %@", localName)
+                guard activeGitActionToken == actionToken else { return }
+                activeGitActionToken = nil
                 refreshRepository(setBusy: true)
+            } catch is CancellationError {
+                guard activeGitActionToken == actionToken else { return }
+                activeGitActionToken = nil
+                isBusy = false
             } catch {
+                guard activeGitActionToken == actionToken else { return }
+                activeGitActionToken = nil
                 isBusy = false
                 handleError(error)
             }
@@ -329,6 +339,7 @@ extension RepositoryViewModel {
                 )
                 openWorktreeInZion(created)
             } catch is CancellationError {
+                isBusy = false
                 return
             } catch {
                 isBusy = false
@@ -444,6 +455,7 @@ extension RepositoryViewModel {
                     : L10n("pending.transfer.move.success", worktreeName)
                 refreshRepository(setBusy: true)
             } catch is CancellationError {
+                isBusy = false
                 return
             } catch {
                 if sourceWasStashed, let stashRef {
@@ -485,6 +497,7 @@ extension RepositoryViewModel {
                 statusMessage = successMessage
                 refreshRepository(setBusy: true)
             } catch is CancellationError {
+                isBusy = false
                 return
             } catch {
                 isBusy = false
@@ -551,6 +564,7 @@ extension RepositoryViewModel {
                     : L10n("worktree.remove.success", worktreeDisplayName(worktree))
                 refreshRepository(setBusy: true)
             } catch is CancellationError {
+                isBusy = false
                 return
             } catch {
                 isBusy = false
@@ -582,6 +596,7 @@ extension RepositoryViewModel {
                 statusMessage = L10n("worktree.remove.discarded.success", worktreeDisplayName(worktree))
                 refreshRepository(setBusy: true)
             } catch is CancellationError {
+                isBusy = false
                 return
             } catch {
                 isBusy = false
@@ -903,7 +918,10 @@ extension RepositoryViewModel {
                 splitFocusedWithSession(wtSession, direction: .vertical)
                 statusMessage = "Worktree criado: \(repoName)-wt-\(worktreeCounter)"
                 refreshRepository(setBusy: true)
-            } catch is CancellationError { return }
+            } catch is CancellationError {
+                isBusy = false
+                return
+            }
             catch { isBusy = false; handleError(error) }
         }
     }

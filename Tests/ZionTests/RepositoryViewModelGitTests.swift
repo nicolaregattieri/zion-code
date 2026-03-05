@@ -260,6 +260,40 @@ final class RepositoryViewModelGitTests: XCTestCase {
         XCTAssertEqual(modules[0].path, "libs/core")
     }
 
+    // MARK: - Branch focus loading state
+
+    func testSetBranchFocusWithoutRepositoryDoesNotLeaveLoadingState() {
+        let vm = RepositoryViewModel()
+
+        vm.setBranchFocus("feature/login")
+
+        XCTAssertEqual(vm.focusedBranch, "feature/login")
+        XCTAssertFalse(vm.isBranchFocusLoading)
+        XCTAssertNil(vm.branchFocusLoadingBranch)
+    }
+
+    func testSetBranchFocusNoopDoesNotStartLoading() {
+        let vm = RepositoryViewModel()
+        vm.focusedBranch = "main"
+        vm.commitLimit = vm.defaultCommitLimit(for: "main")
+
+        vm.setBranchFocus("main")
+
+        XCTAssertFalse(vm.isBranchFocusLoading)
+        XCTAssertNil(vm.branchFocusLoadingBranch)
+    }
+
+    func testRefreshCommitsOnlyClearsStaleBranchFocusLoadingWithoutRepository() {
+        let vm = RepositoryViewModel()
+        vm.isBranchFocusLoading = true
+        vm.branchFocusLoadingBranch = "main"
+
+        vm.refreshCommitsOnly()
+
+        XCTAssertFalse(vm.isBranchFocusLoading)
+        XCTAssertNil(vm.branchFocusLoadingBranch)
+    }
+
     func testParseSubmoduleStatusUninitialized() {
         let raw = "-abc1234def5678901234567890abcdef12345678 vendor/lib"
         let repoURL = URL(fileURLWithPath: "/tmp/repo")

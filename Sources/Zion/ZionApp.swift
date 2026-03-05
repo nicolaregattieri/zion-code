@@ -44,7 +44,7 @@ struct ZionApp: App {
                 Button(L10n("zen.mode")) {
                     NotificationCenter.default.post(name: .toggleZenMode, object: nil)
                 }
-                .keyboardShortcut("j", modifiers: [.command, .control])
+                .keyboardShortcut("j", modifiers: [.command, .shift])
 
                 Button("Zion Mode") {
                     NotificationCenter.default.post(name: .toggleZionMode, object: nil)

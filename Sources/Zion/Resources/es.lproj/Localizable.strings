@@ -221,9 +221,9 @@
 
 // Toolbar
 "Abrir repositório" = "Abrir repositorio";
-"Atualizar status do repositório" = "Actualizar estado del repositorio";
-"Fetch: Busca atualizações remotas" = "Fetch: Descarga actualizaciones remotas";
-"Pull: Puxa alterações da branch atual" = "Pull: Trae cambios de la branch actual";
+"Atualizar status do repositório" = "Actualizar: fetch + recargar estado local del repositorio";
+"Fetch: Busca atualizações remotas" = "Fetch: actualizar referencias remotas (sin cambiar la rama local)";
+"Pull: Puxa alterações da branch atual" = "Pull: aplicar commits remotos en la rama actual";
 "Push: Envia alterações locais" = "Push: Envía cambios locales";
 "Abrir no Editor de Código" = "Abrir en Editor de Código";
 

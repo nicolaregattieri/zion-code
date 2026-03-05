@@ -139,6 +139,7 @@ extension RepositoryViewModel {
                 statusMessage = shouldPop ? L10n("stash.pop.success") : L10n("stash.apply.success")
                 refreshRepository(setBusy: true)
             } catch is CancellationError {
+                isBusy = false
                 return
             } catch {
                 isBusy = false
@@ -226,6 +227,7 @@ extension RepositoryViewModel {
                 clearError()
                 refreshRepository(setBusy: true)
             } catch is CancellationError {
+                isBusy = false
                 return
             } catch {
                 isBusy = false
