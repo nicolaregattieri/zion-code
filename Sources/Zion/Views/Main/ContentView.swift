@@ -196,7 +196,7 @@ struct ContentView: View {
                             zenModeEnabled.toggle()
                         }
                     }
-                    .keyboardShortcut("j", modifiers: [.command, .shift])
+                    .keyboardShortcut("J", modifiers: .command)
                     Button("") {
                         zionModeEnabled.toggle()
                     }
