@@ -150,4 +150,43 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
         let error = NSError(domain: "test", code: 1, userInfo: [NSLocalizedDescriptionKey: "no upstream configured"])
         XCTAssertFalse(vm.isNoUpstreamConfigured(error))
     }
+
+    // MARK: - Auto refresh divergence helper
+
+    func testShouldRefreshAfterRemoteDivergenceUpdateWhenBehindChanges() {
+        XCTAssertTrue(
+            RepositoryViewModel.shouldRefreshAfterRemoteDivergenceUpdate(
+                previousBehind: 0,
+                previousAhead: 0,
+                newBehind: 2,
+                newAhead: 0
+            )
+        )
+    }
+
+    func testShouldRefreshAfterRemoteDivergenceUpdateWhenAheadChanges() {
+        XCTAssertTrue(
+            RepositoryViewModel.shouldRefreshAfterRemoteDivergenceUpdate(
+                previousBehind: 1,
+                previousAhead: 0,
+                newBehind: 1,
+                newAhead: 3
+            )
+        )
+    }
+
+    func testShouldRefreshAfterRemoteDivergenceUpdateWhenCountsUnchanged() {
+        XCTAssertFalse(
+            RepositoryViewModel.shouldRefreshAfterRemoteDivergenceUpdate(
+                previousBehind: 2,
+                previousAhead: 5,
+                newBehind: 2,
+                newAhead: 5
+            )
+        )
+    }
+
+    func testRefreshOriginGitActionUsesInteractiveDetails() {
+        XCTAssertFalse(RepositoryViewModel.RefreshOrigin.gitAction.usesSilentCommitDetails)
+    }
 }

@@ -418,7 +418,7 @@ extension RepositoryViewModel {
                     switch origin {
                     case .autoTimer, .fileWatcher:
                         break
-                    case .userInitiated, .repositorySwitch:
+                    case .userInitiated, .gitAction, .repositorySwitch:
                         logger.log(.info, "details.reload skipped (same commit)", context: "origin=\(origin.rawValue)", source: #function)
                     }
                 }
@@ -480,7 +480,7 @@ extension RepositoryViewModel {
                     statusMessage = "\(label): \(output.prefix(240))"
                 }
                 logger.log(.git, "\(label) OK", context: commandSummary)
-                refreshRepository(setBusy: true)
+                refreshRepository(setBusy: true, origin: .gitAction)
             } catch is CancellationError {
                 return
             } catch {
@@ -543,7 +543,7 @@ extension RepositoryViewModel {
                     statusMessage = "\(label): \(output.prefix(240))"
                 }
                 logger.log(.git, "\(label) OK", context: commandSummary)
-                refreshRepository(setBusy: true)
+                refreshRepository(setBusy: true, origin: .gitAction)
             } catch is CancellationError {
                 return
             } catch {
