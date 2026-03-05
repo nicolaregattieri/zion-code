@@ -14,6 +14,7 @@ final class RepositoryViewModel {
 
     enum RefreshOrigin: String {
         case userInitiated
+        case gitAction
         case autoTimer
         case fileWatcher
         case repositorySwitch
@@ -22,7 +23,7 @@ final class RepositoryViewModel {
             switch self {
             case .autoTimer, .fileWatcher, .repositorySwitch:
                 return true
-            case .userInitiated:
+            case .userInitiated, .gitAction:
                 return false
             }
         }
