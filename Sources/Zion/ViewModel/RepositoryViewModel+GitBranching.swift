@@ -473,17 +473,8 @@ extension RepositoryViewModel {
         isBusy = true
         actionTask = Task {
             do {
-                // Snapshot with --include-untracked since clean -fd deletes untracked files.
-                // stash push captures both tracked and untracked changes into one entry,
-                // then reset + clean ensure the tree is fully clean.
-                let status = try await worker.runAction(args: ["status", "--porcelain"], in: targetURL)
-                if !status.clean.isEmpty {
-                    let _ = try await worker.runAction(
-                        args: ["stash", "push", "--include-untracked", "-m", "zion-pre-discard-all"],
-                        in: targetURL
-                    )
-                    logger.log(.info, "Pre-snapshot created: zion-pre-discard-all", source: #function)
-                }
+                await abortInProgressIntegrationIfAny(in: targetURL)
+                try await createDiscardSnapshotIfPossible(in: targetURL, tag: "zion-pre-discard-all")
 
                 // Ensure tree is fully clean (stash push already cleans, but reset + clean
                 // handle edge cases like staged-only changes or ignored-but-tracked files)
@@ -579,15 +570,8 @@ extension RepositoryViewModel {
         isBusy = true
         actionTask = Task {
             do {
-                // Snapshot with --include-untracked before discarding worktree changes
-                let status = try await worker.runAction(args: ["status", "--porcelain"], in: targetURL)
-                if !status.clean.isEmpty {
-                    let _ = try await worker.runAction(
-                        args: ["stash", "push", "--include-untracked", "-m", "zion-pre-discard-worktree"],
-                        in: targetURL
-                    )
-                    logger.log(.info, "Pre-snapshot created: zion-pre-discard-worktree", source: #function)
-                }
+                await abortInProgressIntegrationIfAny(in: targetURL)
+                try await createDiscardSnapshotIfPossible(in: targetURL, tag: "zion-pre-discard-worktree")
 
                 let _ = try await worker.runAction(args: ["reset", "--hard", "HEAD"], in: targetURL)
                 let _ = try await worker.runAction(args: ["clean", "-fd"], in: targetURL)
@@ -835,6 +819,58 @@ extension RepositoryViewModel {
         return normalized.contains("would be overwritten by merge")
             || normalized.contains("please commit your changes or stash them before you merge")
             || normalized.contains("local changes")
+    }
+
+    static func isDiscardSnapshotRecoverableFailure(_ description: String?) -> Bool {
+        guard let description, !description.clean.isEmpty else { return false }
+        let normalized = description.lowercased()
+        return normalized.contains("needs merge")
+            || normalized.contains("cannot save the current index state")
+            || normalized.contains("could not write index")
+            || normalized.contains("unable to write index")
+    }
+
+    func abortInProgressIntegrationIfAny(in targetURL: URL) async {
+        let abortCommands = [
+            ["merge", "--abort"],
+            ["rebase", "--abort"],
+            ["cherry-pick", "--abort"],
+        ]
+
+        for args in abortCommands {
+            if let result = try? await worker.runActionAllowingFailure(args: args, in: targetURL),
+               result.status == 0 {
+                logger.log(.info, "Aborted in-progress operation: \(args.joined(separator: " "))", source: #function)
+            }
+        }
+    }
+
+    func createDiscardSnapshotIfPossible(in targetURL: URL, tag: String) async throws {
+        // Snapshot with --include-untracked since clean -fd deletes untracked files.
+        // If snapshot fails due unmerged index (common after stash pop conflicts),
+        // continue with explicit discard because the user requested destructive cleanup.
+        let status = try await worker.runAction(args: ["status", "--porcelain"], in: targetURL)
+        guard !status.clean.isEmpty else { return }
+
+        do {
+            let _ = try await worker.runAction(
+                args: ["stash", "push", "--include-untracked", "-m", tag],
+                in: targetURL
+            )
+            logger.log(.info, "Pre-snapshot created: \(tag)", source: #function)
+        } catch {
+            let message = error.localizedDescription
+            if Self.isDiscardSnapshotRecoverableFailure(message) {
+                logger.log(
+                    .warn,
+                    "Pre-snapshot skipped due recoverable index state: \(message)",
+                    context: tag,
+                    source: #function
+                )
+                return
+            }
+            throw error
+        }
     }
 
     func latestStashReference(in repositoryURL: URL) async throws -> String? {

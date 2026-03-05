@@ -66,10 +66,11 @@ extension RepositoryViewModel {
                         if diff.isEmpty {
                             logger.log(.ai, "Unstaged diff also empty, reading untracked files content")
                             var untrackedContext = "New files (untracked):\n\(status)\n\nFile contents summary:\n"
-                            let untrackedFiles = status.split(separator: "\n").compactMap { line -> String? in
-                                guard line.count >= 4 else { return nil }
-                                return String(line.dropFirst(3)).trimmingCharacters(in: .whitespaces)
-                            }
+                            let untrackedFiles = status
+                                .split(separator: "\n")
+                                .compactMap { RepositoryViewModel.parsePorcelainStatusLine(String($0)) }
+                                .filter(\.isUntracked)
+                                .map(\.path)
 
                             for file in untrackedFiles.prefix(Constants.Limits.maxUntrackedFilesForContext) {
                                 if let content = try? await worker.runAction(args: ["show", ":\(file)"], in: url) {
@@ -936,12 +937,10 @@ extension RepositoryViewModel {
         var added = 0, modified = 0, deleted = 0
         var paths: [String] = []
         for line in lines {
-            // git status --porcelain is exactly "XY path"
-            // X (index 0), Y (index 1), space (index 2), path (index 3...)
-            guard line.count >= 4 else { continue }
-            let indexStatus = String(line.prefix(1))
-            let workTreeStatus = String(line.dropFirst(1).prefix(1))
-            let file = String(line.dropFirst(3)).trimmingCharacters(in: .whitespaces)
+            guard let entry = RepositoryViewModel.parsePorcelainStatusLine(line) else { continue }
+            let indexStatus = entry.indexStatus
+            let workTreeStatus = entry.worktreeStatus
+            let file = entry.path
 
             paths.append(file)
 

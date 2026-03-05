@@ -970,6 +970,15 @@
 "stash.restore.blocked.transferRestored" = "Transferência aplicada e mudanças locais restauradas (stash de segurança: %@).";
 "stash.restore.blocked.transferConflicts" = "Conflitos detectados ao restaurar mudanças locais. Resolvedor de conflitos aberto.";
 "stash.restore.blocked.transferPartial" = "Transferência aplicada, mas não foi possível restaurar totalmente as mudanças locais (stash de segurança: %@).";
+"commit.mode.allChanges" = "Incluir todos os arquivos pendentes (git add -A)";
+"commit.mode.allChanges.hint" = "Ao ativar, o Zion vai rastrear automaticamente tudo antes do commit.";
+"commit.mode.stagedOnly.hint" = "Somente os arquivos em stage serão commitados.";
+"commit.error.noStagedChanges" = "Nenhum arquivo em stage. Faça stage dos arquivos ou ative a opção para incluir todos.";
+"commit.confirm.staged" = "Deseja realizar o commit das alterações em stage?";
+"changes.summary.staged" = "Stage";
+"changes.summary.pending" = "Pendentes";
+"changes.summary.untracked" = "Novos";
+"changes.summary.stageHint" = "Faça stage para commitar apenas os selecionados.";
 "Carregar mais" = "Carregar mais";
 "Sugerir mensagem de commit" = "Sugerir mensagem de commit";
 "Descartar Mudanças" = "Descartar Mudanças";

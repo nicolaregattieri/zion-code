@@ -1,10 +1,14 @@
 import Foundation
 
 extension RepositoryViewModel {
+    enum CommitScope {
+        case stagedOnly
+        case allChanges
+    }
 
     // MARK: - Commit & Stage
 
-    func commit(message: String) {
+    func commit(message: String, scope: CommitScope = .stagedOnly) {
         let msg = message.clean
         guard !msg.isEmpty else { return }
 
@@ -18,17 +22,19 @@ extension RepositoryViewModel {
             do {
                 guard let url else { return }
 
-                // 1. Always stage everything first for a guaranteed "Quick Commit"
-                // This handles both modified and untracked files.
-                let _ = try await worker.runAction(args: ["add", "-A"], in: url)
+                if scope == .allChanges {
+                    let _ = try await worker.runAction(args: ["add", "-A"], in: url)
+                } else if !hasStagedChanges {
+                    isBusy = false
+                    statusMessage = L10n("commit.error.noStagedChanges")
+                    return
+                }
 
-                // 2. Prepare commit arguments
                 var commitArgs = ["commit", "-m", msg]
                 if shouldAmend {
                     commitArgs.append("--amend")
                 }
 
-                // 3. Execute commit
                 let _ = try await worker.runAction(args: commitArgs, in: url)
 
                 if let newHeadCommitID = try? await worker.runAction(args: ["rev-parse", "HEAD"], in: url).clean,

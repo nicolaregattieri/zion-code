@@ -50,17 +50,10 @@ extension RepositoryViewModel {
 
     func statusForFile(_ file: String) -> String? {
         uncommittedChanges.first { line in
-            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard trimmed.count >= 4 else { return false }
-            let start = trimmed.index(trimmed.startIndex, offsetBy: 3)
-            var path = String(trimmed[start...]).trimmingCharacters(in: .whitespaces)
-            if let arrowRange = path.range(of: " -> ") {
-                path = String(path[arrowRange.upperBound...]).trimmingCharacters(in: .whitespaces)
-            }
-            return path == file
+            RepositoryViewModel.parsePorcelainStatusLine(line)?.path == file
         }.map { line in
-            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
-            return String(trimmed.prefix(2))
+            guard let entry = RepositoryViewModel.parsePorcelainStatusLine(line) else { return "  " }
+            return entry.indexStatus + entry.worktreeStatus
         }
     }
 
