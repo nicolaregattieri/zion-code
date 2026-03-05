@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ZionLoadingOverlay: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var laserPhase: CGFloat = 0
+    @State private var laserRotation: Double = 0
 
     var body: some View {
         ZStack {
@@ -24,9 +24,9 @@ struct ZionLoadingOverlay: View {
         .transition(DesignSystem.Motion.fade)
         .onAppear {
             guard !reduceMotion else { return }
-            laserPhase = 0
-            withAnimation(.linear(duration: 1.1).repeatForever(autoreverses: false)) {
-                laserPhase = 1
+            laserRotation = 0
+            withAnimation(.linear(duration: 1.05).repeatForever(autoreverses: false)) {
+                laserRotation = 360
             }
         }
     }
@@ -54,7 +54,7 @@ struct ZionLoadingOverlay: View {
                 .frame(width: 72, height: 72)
                 .accessibilityHidden(true)
 
-            triangleLaserSweep
+            triangleLaserOrbit
                 .frame(width: 72, height: 72)
                 .accessibilityHidden(true)
 
@@ -70,37 +70,26 @@ struct ZionLoadingOverlay: View {
     }
 
     @ViewBuilder
-    private var triangleLaserSweep: some View {
+    private var triangleLaserOrbit: some View {
         if reduceMotion {
             EmptyView()
         } else {
-            ZStack {
-                triangleLaserSegment(from: laserPhase - 0.18, to: laserPhase)
-                triangleLaserSegment(from: laserPhase + 1 - 0.18, to: laserPhase + 1)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func triangleLaserSegment(from rawFrom: CGFloat, to rawTo: CGFloat) -> some View {
-        let from = min(max(rawFrom, 0), 1)
-        let to = min(max(rawTo, 0), 1)
-        if to > from {
             ZionTriangle()
-                .trim(from: from, to: to)
+                .trim(from: 0.02, to: 0.17)
                 .stroke(
                     LinearGradient(
                         colors: [
-                            DesignSystem.Colors.brandWhite.opacity(0.0),
-                            DesignSystem.Colors.brandWhite.opacity(0.45),
+                            DesignSystem.Colors.brandWhite.opacity(0.06),
+                            DesignSystem.Colors.brandWhite.opacity(0.52),
                             DesignSystem.Colors.brandWhite.opacity(1.0),
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
                     ),
-                    style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round)
+                    style: StrokeStyle(lineWidth: 2.55, lineCap: .round, lineJoin: .round)
                 )
-                .shadow(color: DesignSystem.Colors.brandWhite.opacity(0.45), radius: 3, y: 0)
+                .shadow(color: DesignSystem.Colors.brandWhite.opacity(0.58), radius: 3, y: 0)
+                .rotationEffect(.degrees(laserRotation))
         }
     }
 }
