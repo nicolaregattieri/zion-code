@@ -279,6 +279,11 @@ extension RepositoryViewModel {
             return
         }
 
+        if Self.shouldSkipRefreshWhileBusy(setBusy: setBusy, isBusy: isBusy) {
+            logger.log(.info, "refreshRepository skipped while busy", context: "origin=\(origin.rawValue)", source: #function)
+            return
+        }
+
         refreshTask?.cancel()
         let requestID = UUID()
         refreshRequestID = requestID
@@ -612,6 +617,10 @@ extension RepositoryViewModel {
             || subcommand == "pull"
             || subcommand == "push"
             || subcommand == "ls-remote"
+    }
+
+    static func shouldSkipRefreshWhileBusy(setBusy: Bool, isBusy: Bool) -> Bool {
+        !setBusy && isBusy
     }
 
     func buildGitAuthContext(
