@@ -555,6 +555,27 @@ final class RepositoryViewModelGitTests: XCTestCase {
         ))
     }
 
+    // MARK: - isDiscardSnapshotRecoverableFailure
+
+    func testDiscardSnapshotRecoverableNeedsMerge() {
+        XCTAssertTrue(RepositoryViewModel.isDiscardSnapshotRecoverableFailure(
+            "Sources/Zion/Views/Graph/GraphScreen.swift: needs merge"
+        ))
+    }
+
+    func testDiscardSnapshotRecoverableCannotSaveIndex() {
+        XCTAssertTrue(RepositoryViewModel.isDiscardSnapshotRecoverableFailure(
+            "Cannot save the current index state"
+        ))
+    }
+
+    func testDiscardSnapshotRecoverableNilOrUnrelated() {
+        XCTAssertFalse(RepositoryViewModel.isDiscardSnapshotRecoverableFailure(nil))
+        XCTAssertFalse(RepositoryViewModel.isDiscardSnapshotRecoverableFailure(
+            "fatal: not a git repository"
+        ))
+    }
+
     // MARK: - friendlyStashRestoreErrorMessage
 
     func testFriendlyStashErrorNoEntries() {
