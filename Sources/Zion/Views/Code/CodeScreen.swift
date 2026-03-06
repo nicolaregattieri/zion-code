@@ -196,7 +196,7 @@ struct CodeScreen: View {
             Button("") {
                 guard !isZenMode else { return }
                 if sidebarMode == .findInFiles && isFileBrowserVisible {
-                    sidebarMode = .fileTree
+                    closeFindInFilesPanel()
                 } else {
                     sidebarMode = .findInFiles
                     if !isFileBrowserVisible {
@@ -215,6 +215,11 @@ struct CodeScreen: View {
             // Focus-aware Ctrl+F alias
             Button("") { routeFindShortcut() }
                 .keyboardShortcut("f", modifiers: .control)
+                .frame(width: 0, height: 0).opacity(0)
+
+            // Priority Escape routing for code screen overlays/panels
+            Button("") { handleEscapeShortcut() }
+                .keyboardShortcut(.escape, modifiers: [])
                 .frame(width: 0, height: 0).opacity(0)
         }
         .onChange(of: model.activeFileID) { _, _ in
@@ -769,7 +774,8 @@ struct CodeScreen: View {
                     excludePattern: $findInFilesExclude,
                     results: $findInFilesResults,
                     isSearching: $isFindInFilesSearching,
-                    scopePath: $findInFilesScopePath
+                    scopePath: $findInFilesScopePath,
+                    onClose: { closeFindInFilesPanel() }
                 )
             } else {
 
@@ -1349,6 +1355,27 @@ struct CodeScreen: View {
         }
     }
 
+    private func closeFindInFilesPanel() {
+        guard sidebarMode == .findInFiles else { return }
+        withAnimation(DesignSystem.Motion.detail) {
+            sidebarMode = .fileTree
+        }
+    }
+
+    private func handleEscapeShortcut() {
+        if sidebarMode == .findInFiles && isFileBrowserVisible {
+            closeFindInFilesPanel()
+            return
+        }
+        if isTerminalSearchVisible {
+            closeTerminalSearch()
+            return
+        }
+        if isSearchVisible {
+            closeSearch()
+        }
+    }
+
     private func closeSearch() {
         isSearchVisible = false
         isReplaceVisible = false
@@ -1645,11 +1672,6 @@ struct CodeScreen: View {
             // Git Blame (Cmd+Shift+B)
             Button("") { model.toggleBlame() }
                 .keyboardShortcut("b", modifiers: [.command, .shift])
-                .frame(width: 0, height: 0).opacity(0)
-
-            // Close terminal search (Escape)
-            Button("") { closeTerminalSearch() }
-                .keyboardShortcut(.escape, modifiers: [])
                 .frame(width: 0, height: 0).opacity(0)
 
             // Voice input toggle (⌘⌥X)

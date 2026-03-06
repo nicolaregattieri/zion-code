@@ -1537,6 +1537,7 @@
 "findInFiles.summary" = "%@ results in %@ files";
 "Nenhum resultado" = "No results";
 "Filtros" = "Filters";
+"findInFiles.close" = "Close Find in Files";
 
 // MARK: - Terminal Settings
 "settings.tab.terminal" = "Terminal";
@@ -1768,6 +1769,9 @@
 "help.ops.forcepush" = "Force Push with Lease (safe) and Force Push (override) options";
 "help.ai.slashcommands" = "AI CLI slash commands: /zion-img for Claude, Gemini, and Codex";
 "shortcuts.findInFiles" = "Find in Files";
+"shortcuts.findInFilesClose" = "Close Find in Files";
+"shortcuts.findInFilesNext" = "Next Find in Files Result";
+"shortcuts.findInFilesPrevious" = "Previous Find in Files Result";
 
 "map.code.findinfiles.title" = "Find in Files";
 "map.code.findinfiles.description" = "Search across all repository files with highlighted results. Click a match to open the file at that line.";
