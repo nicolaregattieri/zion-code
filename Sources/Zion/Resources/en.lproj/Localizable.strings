@@ -1152,6 +1152,7 @@
 "worktree.remove.success" = "Worktree '%@' removed successfully.";
 "worktree.remove.forced.success" = "Worktree '%@' removed with force.";
 "worktree.remove.discarded.success" = "Changes discarded and worktree '%@' removed.";
+"worktree.remove.branchRemains" = "Branch '%@' will remain available and can be deleted separately.";
 "Selecionar..." = "Select...";
 "Clipboard" = "Clipboard";
 "Imagem" = "Image";

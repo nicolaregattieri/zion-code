@@ -534,12 +534,13 @@ extension RepositoryViewModel {
     func requestWorktreeRemoval(_ worktree: WorktreeItem) {
         guard !worktree.isMainWorktree else { return }
         let displayName = worktreeDisplayName(worktree)
+        let branchRetentionHint = L10n("worktree.remove.branchRemains", displayName)
 
         if worktree.uncommittedCount > 0 || worktree.hasConflicts {
             let alert = NSAlert()
             alert.alertStyle = .warning
             alert.messageText = L10n("worktree.remove.pending.title")
-            alert.informativeText = L10n("worktree.remove.pending.message", displayName)
+            alert.informativeText = L10n("worktree.remove.pending.message", displayName) + "\n\n" + branchRetentionHint
             alert.addButton(withTitle: L10n("worktree.remove.discardAndRemove"))
             alert.addButton(withTitle: L10n("worktree.remove.withoutDiscard"))
             alert.addButton(withTitle: L10n("Cancelar"))
@@ -558,7 +559,7 @@ extension RepositoryViewModel {
         let alert = NSAlert()
         alert.alertStyle = .warning
         alert.messageText = L10n("Remover worktree")
-        alert.informativeText = L10n("Deseja remover o worktree %@?", worktree.path)
+        alert.informativeText = L10n("Deseja remover o worktree %@?", worktree.path) + "\n\n" + branchRetentionHint
         alert.addButton(withTitle: L10n("Remover"))
         alert.addButton(withTitle: L10n("Cancelar"))
         if alert.runModal() == .alertFirstButtonReturn {
@@ -1056,10 +1057,53 @@ extension RepositoryViewModel {
     func deleteLocalBranch(_ branch: String, force: Bool) {
         let name = branch.clean
         guard !name.isEmpty else { return }
-        runGitAction(
-            label: "Delete local branch",
-            args: ["branch", force ? "-D" : "-d", name]
-        )
+        guard let repositoryURL else {
+            lastError = GitClientError.repositoryNotSelected.localizedDescription
+            return
+        }
+
+        actionTask?.cancel()
+        let actionToken = UUID()
+        activeGitActionToken = actionToken
+        isBusy = true
+
+        let label = "Delete local branch"
+        let deleteArgs = ["branch", force ? "-D" : "-d", name]
+        let commandSummary = redactedGitCommandSummary(args: deleteArgs)
+        logger.log(.git, commandSummary, context: label)
+
+        actionTask = Task {
+            do {
+                // Always prune first so stale worktree metadata doesn't block deletion
+                // after a worktree folder was removed.
+                _ = try? await worker.runAction(args: ["worktree", "prune"], in: repositoryURL)
+                let output = try await worker.runAction(args: deleteArgs, in: repositoryURL)
+                try Task.checkCancellation()
+
+                clearError()
+                if output.isEmpty {
+                    statusMessage = "\(label) executado com sucesso."
+                } else {
+                    statusMessage = "\(label): \(output.prefix(240))"
+                }
+                logger.log(.git, "\(label) OK", context: commandSummary)
+                guard activeGitActionToken == actionToken else { return }
+                activeGitActionToken = nil
+                refreshRepository(setBusy: true, origin: .gitAction)
+            } catch is CancellationError {
+                guard activeGitActionToken == actionToken else { return }
+                activeGitActionToken = nil
+                isBusy = false
+                logger.log(.info, "\(label) cancelled", context: commandSummary, source: #function)
+                return
+            } catch {
+                guard activeGitActionToken == actionToken else { return }
+                activeGitActionToken = nil
+                isBusy = false
+                logger.log(.error, error.localizedDescription, context: commandSummary)
+                handleError(error)
+            }
+        }
     }
 
     func branchInfo(named name: String) -> BranchInfo? {
