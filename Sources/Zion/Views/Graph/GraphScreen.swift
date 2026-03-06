@@ -115,7 +115,8 @@ struct GraphScreen: View {
     }
 
     private var worktreeQuickSwitchBar: some View {
-        GlassCard(spacing: 8) {
+        let hasAdditionalWorktrees = model.worktrees.contains { !$0.isMainWorktree }
+        return GlassCard(spacing: 8) {
             CardHeader(L10n("Worktrees"), icon: "square.split.2x2") {
                 Text("\(model.worktrees.count)")
                     .font(DesignSystem.Typography.monoLabelBold)
@@ -131,6 +132,7 @@ struct GraphScreen: View {
                         WorktreePill(
                             branch: worktree.branch,
                             isMainWorktree: worktree.isMainWorktree,
+                            showRootBadge: hasAdditionalWorktrees,
                             dirtyCount: worktree.uncommittedCount,
                             hasConflicts: worktree.hasConflicts,
                             isCurrent: worktree.isCurrent
@@ -295,8 +297,12 @@ struct GraphScreen: View {
 
                 ScrollView([.horizontal, .vertical], showsIndicators: true) {
                     let remoteNames = model.remotes.map(\.name)
-                    let worktreeBranchNames = Set(model.worktrees.map(\.branch).filter { !$0.isEmpty })
                     let hasAdditionalWorktrees = model.worktrees.contains { !$0.isMainWorktree }
+                    let worktreeBranchNames = Set(
+                        model.worktrees
+                            .filter { !$0.isMainWorktree && !$0.isCurrent && !$0.branch.isEmpty }
+                            .map(\.branch)
+                    )
                     let rootWorktreeBranchNames: Set<String> = hasAdditionalWorktrees
                         ? Set(
                             model.worktrees
@@ -1384,6 +1390,7 @@ struct GraphScreen: View {
 private struct WorktreePill: View {
     let branch: String
     let isMainWorktree: Bool
+    let showRootBadge: Bool
     let dirtyCount: Int
     let hasConflicts: Bool
     let isCurrent: Bool
@@ -1426,7 +1433,7 @@ private struct WorktreePill: View {
                 Text(branch)
                     .font(.system(size: 11, weight: isCurrent ? .bold : .semibold, design: .monospaced))
                     .lineLimit(1)
-                if isMainWorktree {
+                if isMainWorktree && showRootBadge {
                     Text(L10n("worktree.main.badge"))
                         .font(DesignSystem.Typography.monoMetaBold)
                         .padding(.horizontal, 5)
@@ -1462,6 +1469,6 @@ private struct WorktreePill: View {
         }
         .buttonStyle(.plain)
         .shadow(color: isCurrent ? currentAccent.opacity(0.24) : .clear, radius: 8, y: 2)
-        .help(isMainWorktree ? L10n("worktree.main.hint") : "")
+        .help(isMainWorktree && showRootBadge ? L10n("worktree.main.hint") : "")
     }
 }
