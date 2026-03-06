@@ -9,12 +9,15 @@ struct DecorationPill: View {
     let tagContextMenu: (String) -> AnyView
     let remotes: [String]
     let worktreeBranches: Set<String>
+    let rootWorktreeBranches: Set<String>
 
     var body: some View {
         let (name, type) = parseDecoration(decoration, remotes: remotes)
         let isCurrent = checkIsCurrent(name: name, type: type, current: currentBranch)
         let isMain = ["main", "master", "develop", "dev"].contains(name.lowercased())
-        let isWorktreeBranch = (type == .localBranch || type == .head) && worktreeBranches.contains(name)
+        let isBranchDecoration = type == .localBranch || type == .head
+        let isRootWorktreeBranch = isBranchDecoration && rootWorktreeBranches.contains(name)
+        let isWorktreeBranch = isBranchDecoration && worktreeBranches.contains(name)
         let isSearchMatch = !highlightSearchQuery.isEmpty && name.lowercased().contains(highlightSearchQuery.lowercased())
         let pillColor = color(for: type)
         let isHighlighted = isCurrent || isSearchMatch
@@ -36,8 +39,8 @@ struct DecorationPill: View {
                 .lineLimit(1)
                 .frame(maxWidth: 200)
 
-            if isWorktreeBranch {
-                Text(L10n("worktree.badge.short"))
+            if isRootWorktreeBranch || isWorktreeBranch {
+                Text(isRootWorktreeBranch ? L10n("worktree.main.badge") : L10n("worktree.badge.short"))
                     .font(DesignSystem.Typography.monoMetaBold)
                     .padding(.horizontal, 4)
                     .padding(.vertical, 1)
@@ -75,16 +78,41 @@ struct DecorationPill: View {
                 branchContextMenu(name)
             }
         }
-        .help(pillHelp(name: name, type: type, isCurrent: isCurrent, isWorktreeBranch: isWorktreeBranch))
-        .accessibilityLabel(pillHelp(name: name, type: type, isCurrent: isCurrent, isWorktreeBranch: isWorktreeBranch))
+        .help(pillHelp(
+            name: name,
+            type: type,
+            isCurrent: isCurrent,
+            isWorktreeBranch: isWorktreeBranch,
+            isRootWorktreeBranch: isRootWorktreeBranch
+        ))
+        .accessibilityLabel(pillHelp(
+            name: name,
+            type: type,
+            isCurrent: isCurrent,
+            isWorktreeBranch: isWorktreeBranch,
+            isRootWorktreeBranch: isRootWorktreeBranch
+        ))
     }
 
     enum DecorationType {
         case head, localBranch, remoteBranch, tag, other
     }
 
-    private func pillHelp(name: String, type: DecorationType, isCurrent: Bool, isWorktreeBranch: Bool) -> String {
-        let worktreeSuffix = isWorktreeBranch ? " " + L10n("worktree.badge.hint") : ""
+    private func pillHelp(
+        name: String,
+        type: DecorationType,
+        isCurrent: Bool,
+        isWorktreeBranch: Bool,
+        isRootWorktreeBranch: Bool
+    ) -> String {
+        let worktreeSuffix: String
+        if isRootWorktreeBranch {
+            worktreeSuffix = " (" + L10n("worktree.main.hint") + ")"
+        } else if isWorktreeBranch {
+            worktreeSuffix = " " + L10n("worktree.badge.hint")
+        } else {
+            worktreeSuffix = ""
+        }
         if type == .tag {
             return L10n("Tag: %@", name) + worktreeSuffix
         }
