@@ -27,6 +27,13 @@ struct FileHistoryEntry: Identifiable {
     let message: String
 }
 
+enum EditorContentKind: Equatable {
+    case text
+    case markdown
+    case image
+    case unsupported
+}
+
 // MARK: - Per-Repo Editor Config (.zion/editor.json)
 
 struct EditorConfig: Codable {

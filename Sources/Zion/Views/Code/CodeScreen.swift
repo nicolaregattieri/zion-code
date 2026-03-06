@@ -219,6 +219,9 @@ struct CodeScreen: View {
         }
         .onChange(of: model.activeFileID) { _, _ in
             isMarkdownPreviewVisible = false
+            if !isTextEditorActive {
+                closeSearch()
+            }
         }
         .onChange(of: model.editorJumpToken) { _, _ in
             goToLineTarget = model.editorJumpLineTarget
@@ -371,6 +374,7 @@ struct CodeScreen: View {
             .padding(.vertical, 4)
             .background(DesignSystem.Colors.glassSubtle)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
+            .disabled(!isTextEditorActive)
 
             // Size & Spacing group
             HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
@@ -392,6 +396,7 @@ struct CodeScreen: View {
             .padding(.vertical, 4)
             .background(DesignSystem.Colors.glassSubtle)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
+            .disabled(!isTextEditorActive)
 
             Button {
                 model.isLineWrappingEnabled.toggle()
@@ -403,6 +408,7 @@ struct CodeScreen: View {
             .tint(model.isLineWrappingEnabled ? Color.accentColor : .secondary)
             .help(L10n("Quebra de Linha Automática"))
             .accessibilityLabel(L10n("Quebra de Linha Automática"))
+            .disabled(!isTextEditorActive)
 
             if isMarkdownFile {
                 Button {
@@ -420,6 +426,7 @@ struct CodeScreen: View {
             }
 
             EditorSettingsPopoverButton(model: model, showBreadcrumbPath: $showBreadcrumbPath)
+                .disabled(!isTextEditorActive)
 
             Button {
                 model.toggleBlame()
@@ -431,7 +438,7 @@ struct CodeScreen: View {
             .tint(model.isBlameVisible ? Color.accentColor : .secondary)
             .help(L10n("Git Blame"))
             .accessibilityLabel(L10n("Git Blame"))
-            .disabled(model.activeFileID == nil)
+            .disabled(model.activeFileID == nil || !isTextEditorActive)
 
             Button {
                 if let file = model.selectedCodeFile, let repoURL = model.repositoryURL {
@@ -456,7 +463,7 @@ struct CodeScreen: View {
             .buttonStyle(.bordered)
             .help(L10n("format.document") + " (⇧⌥F)")
             .accessibilityLabel(L10n("format.document"))
-            .disabled(model.activeFileID == nil || !CodeFormatter.canFormat(fileExtension: model.selectedCodeFile?.url.pathExtension ?? ""))
+            .disabled(model.activeFileID == nil || !isTextEditorActive || !CodeFormatter.canFormat(fileExtension: model.selectedCodeFile?.url.pathExtension ?? ""))
 
             Divider().frame(height: 14).padding(.horizontal, 4)
 
@@ -551,6 +558,7 @@ struct CodeScreen: View {
                 .buttonStyle(.bordered)
                 .help(L10n("Salvar Como...") + " (⇧⌘S)")
                 .accessibilityLabel(L10n("Salvar Como..."))
+                .disabled(!isTextEditorActive)
 
                 Button {
                     model.saveCurrentCodeFile()
@@ -561,6 +569,7 @@ struct CodeScreen: View {
                 .controlSize(.small)
                 .tint(model.selectedTheme.isLightAppearance ? DesignSystem.Colors.info : Color.accentColor)
                 .help(L10n("Salvar") + " (⌘S)")
+                .disabled(!isTextEditorActive)
             }
         }
         .controlSize(.small)
@@ -907,7 +916,7 @@ struct CodeScreen: View {
                 Divider()
                     .zIndex(2)
 
-                if isSearchVisible {
+                if isSearchVisible && isTextEditorActive {
                     findReplaceBar
                         .transition(DesignSystem.Motion.slideFromTop)
                         .background(model.selectedTheme.colors.background)
@@ -922,6 +931,11 @@ struct CodeScreen: View {
                             model.navigateToGraphRequested = true
                         }
                         .background(model.selectedTheme.colors.background)
+                    } else if isImagePreviewActive {
+                        ImagePreviewView(
+                            fileURL: model.selectedCodeFile?.url,
+                            theme: model.effectiveTheme
+                        )
                     } else if isMarkdownPreviewActive {
                         DraggableSplitView(
                             axis: .horizontal,
@@ -933,8 +947,10 @@ struct CodeScreen: View {
                         } trailing: {
                             markdownPreviewPane
                         }
-                    } else {
+                    } else if isTextEditorActive {
                         sourceEditorView
+                    } else {
+                        unsupportedFileView
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -970,8 +986,15 @@ struct CodeScreen: View {
     }
 
     private var isMarkdownFile: Bool {
-        let ext = model.selectedCodeFile?.url.pathExtension.lowercased() ?? ""
-        return ext == "md" || ext == "markdown"
+        model.selectedEditorContentKind == .markdown
+    }
+
+    private var isTextEditorActive: Bool {
+        model.selectedEditorContentKind == .text || model.selectedEditorContentKind == .markdown
+    }
+
+    private var isImagePreviewActive: Bool {
+        model.selectedEditorContentKind == .image
     }
 
     private var isMarkdownPreviewActive: Bool {
@@ -1265,6 +1288,9 @@ struct CodeScreen: View {
 
     /// Routes Cmd+F / Ctrl+F to the correct pane based on current focus.
     private func routeFindShortcut() {
+        if isImagePreviewActive {
+            return
+        }
         if layout == .terminalOnly {
             toggleTerminalSearch()
         } else if layout == .editorOnly {
@@ -1491,6 +1517,18 @@ struct CodeScreen: View {
         VStack(spacing: 16) {
             Image(systemName: "pencil.and.outline").font(.system(size: 40)).foregroundStyle(.secondary)
             Text(L10n("Selecione um arquivo")).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var unsupportedFileView: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "doc.badge.questionmark")
+                .font(.system(size: 24))
+                .foregroundStyle(.secondary)
+            Text(L10n("editor.file.unsupported"))
+                .font(DesignSystem.Typography.body)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

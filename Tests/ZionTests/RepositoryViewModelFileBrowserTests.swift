@@ -447,4 +447,106 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
         XCTAssertNil(vm.selectedCodeFile)
         XCTAssertEqual(vm.codeFileContent, "")
     }
+
+    // MARK: - editor content kind
+
+    func testEditorContentKindDetectsMarkdownByExtension() {
+        let vm = RepositoryViewModel()
+        let url = URL(fileURLWithPath: "/tmp/README.md")
+
+        XCTAssertEqual(vm.editorContentKind(for: url), .markdown)
+    }
+
+    func testEditorContentKindDetectsImageByExtension() {
+        let vm = RepositoryViewModel()
+        let url = URL(fileURLWithPath: "/tmp/screenshot.png")
+
+        XCTAssertEqual(vm.editorContentKind(for: url), .image)
+    }
+
+    func testEditorContentKindTreatsUntitledTempFilesAsText() {
+        let vm = RepositoryViewModel()
+        let tempURL = ZionTemp.directory.appendingPathComponent("Untitled")
+
+        XCTAssertEqual(vm.editorContentKind(for: tempURL), .text)
+    }
+
+    func testEditorContentKindDetectsUnsupportedBinary() throws {
+        let vm = RepositoryViewModel()
+        let binaryURL = try makeTempFile(ext: "bin", data: Data([0x00, 0xff, 0x00, 0xff]))
+
+        XCTAssertEqual(vm.editorContentKind(for: binaryURL), .unsupported)
+    }
+
+    func testSelectCodeFileImageDoesNotReadAsText() throws {
+        let vm = RepositoryViewModel()
+        let imageURL = try makeTempFile(ext: "png", data: Data([0x89, 0x50, 0x4e, 0x47]))
+        let item = FileItem(url: imageURL, isDirectory: false, children: nil)
+
+        vm.codeFileContent = "previous text"
+        vm.selectCodeFile(item)
+
+        XCTAssertEqual(vm.selectedEditorContentKind, .image)
+        XCTAssertEqual(vm.codeFileContent, "")
+        XCTAssertEqual(vm.activeFileID, item.id)
+    }
+
+    func testSaveCurrentCodeFileDoesNotOverwriteImageData() throws {
+        let vm = RepositoryViewModel()
+        let original = Data([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a])
+        let imageURL = try makeTempFile(ext: "png", data: original)
+        let item = FileItem(url: imageURL, isDirectory: false, children: nil)
+
+        vm.selectCodeFile(item)
+        vm.codeFileContent = "this should never be written"
+        vm.saveCurrentCodeFile()
+
+        let resulting = try Data(contentsOf: imageURL)
+        XCTAssertEqual(resulting, original)
+        XCTAssertEqual(vm.statusMessage, L10n("editor.file.readOnlyBinary"))
+    }
+
+    func testSaveCurrentFileAsDoesNotAllowBinaryEditorPath() throws {
+        let vm = RepositoryViewModel()
+        let imageURL = try makeTempFile(ext: "png", data: Data([0x89, 0x50, 0x4e, 0x47]))
+        let item = FileItem(url: imageURL, isDirectory: false, children: nil)
+        vm.selectCodeFile(item)
+
+        vm.saveCurrentFileAs()
+
+        XCTAssertEqual(vm.statusMessage, L10n("editor.file.readOnlyBinary"))
+    }
+
+    func testOpenExternalFilesAcceptsImageFiles() throws {
+        let vm = RepositoryViewModel()
+        let imageURL = try makeTempFile(ext: "png", data: Data([0x89, 0x50, 0x4e, 0x47]))
+
+        vm.openExternalFiles([imageURL])
+
+        XCTAssertEqual(vm.selectedCodeFile?.id, imageURL.path)
+        XCTAssertEqual(vm.selectedEditorContentKind, .image)
+        XCTAssertTrue(vm.openedFiles.contains(where: { $0.id == imageURL.path }))
+    }
+
+    func testOpenExternalFilesSkipsUnsupportedBinaryFiles() throws {
+        let vm = RepositoryViewModel()
+        let binaryURL = try makeTempFile(ext: "bin", data: Data([0x00, 0xff, 0x00, 0xff]))
+
+        vm.openExternalFiles([binaryURL])
+
+        XCTAssertTrue(vm.openedFiles.isEmpty)
+        XCTAssertNil(vm.selectedCodeFile)
+    }
+
+    private func makeTempFile(ext: String, data: Data) throws -> URL {
+        let tempRoot = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+        let directory = tempRoot.appendingPathComponent("zion-filebrowser-tests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        addTeardownBlock {
+            try? FileManager.default.removeItem(at: directory)
+        }
+        let fileURL = directory.appendingPathComponent("fixture.\(ext)")
+        try data.write(to: fileURL, options: .atomic)
+        return fileURL
+    }
 }

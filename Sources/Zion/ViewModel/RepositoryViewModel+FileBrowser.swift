@@ -188,6 +188,12 @@ extension RepositoryViewModel {
 
         let itemURL = item.url
         let itemID = item.id
+        let kind = editorContentKind(for: itemURL)
+        guard kind == .text || kind == .markdown else {
+            codeFileContent = ""
+            unsavedFiles.remove(itemID)
+            return
+        }
         Task {
             do {
                 let content = try String(contentsOf: itemURL, encoding: .utf8)
@@ -431,6 +437,11 @@ extension RepositoryViewModel {
 
     func saveCurrentCodeFile() {
         guard let file = selectedCodeFile else { return }
+        let kind = editorContentKind(for: file.url)
+        guard kind == .text || kind == .markdown else {
+            statusMessage = L10n("editor.file.readOnlyBinary")
+            return
+        }
         // Untitled files redirect to Save As
         if file.url.path.hasPrefix(ZionTemp.directory.path) {
             saveCurrentFileAs()
@@ -513,9 +524,37 @@ extension RepositoryViewModel {
         navigateToCodeRequested = true
     }
 
+    var selectedEditorContentKind: EditorContentKind {
+        guard let selectedCodeFile else { return .text }
+        return editorContentKind(for: selectedCodeFile.url)
+    }
+
+    func editorContentKind(for url: URL) -> EditorContentKind {
+        let ext = url.pathExtension.lowercased()
+        if ext == "md" || ext == "markdown" {
+            return .markdown
+        }
+        if ext == "svg" || Self.acceptedImageExtensions.contains(ext) {
+            return .image
+        }
+        if url.path.hasPrefix(ZionTemp.directory.path) {
+            return .text
+        }
+        if isImageFile(url) {
+            return .image
+        }
+        if !FileManager.default.fileExists(atPath: url.path) {
+            return .text
+        }
+        return isTextFile(url) ? .text : .unsupported
+    }
+
     static let acceptedTextTypes: [UTType] = [
         .text, .plainText, .sourceCode, .shellScript, .script,
         .json, .xml, .yaml, .html,
+    ]
+    static let acceptedImageExtensions: Set<String> = [
+        "png", "jpg", "jpeg", "gif", "webp", "bmp", "tiff", "tif", "svg",
     ]
 
     func isTextFile(_ url: URL) -> Bool {
@@ -526,8 +565,21 @@ extension RepositoryViewModel {
         return Self.acceptedTextTypes.contains { contentType.conforms(to: $0) }
     }
 
+    func isImageFile(_ url: URL) -> Bool {
+        if let resourceValues = try? url.resourceValues(forKeys: [.contentTypeKey]),
+           let contentType = resourceValues.contentType,
+           contentType.conforms(to: .image) {
+            return true
+        }
+        let ext = url.pathExtension.lowercased()
+        if ext == "svg" {
+            return true
+        }
+        return Self.acceptedImageExtensions.contains(ext)
+    }
+
     func openExternalFiles(_ urls: [URL]) {
-        let fileURLs = urls.filter { !$0.hasDirectoryPath && isTextFile($0) }
+        let fileURLs = urls.filter { !$0.hasDirectoryPath && (isTextFile($0) || isImageFile($0)) }
         guard !fileURLs.isEmpty else { return }
 
         let repoRoot = findGitRepository(containing: fileURLs[0])
@@ -580,6 +632,11 @@ extension RepositoryViewModel {
 
     func saveCurrentFileAs() {
         guard let file = selectedCodeFile else { return }
+        let kind = editorContentKind(for: file.url)
+        guard kind == .text || kind == .markdown else {
+            statusMessage = L10n("editor.file.readOnlyBinary")
+            return
+        }
         let content = codeFileContent
         let panel = NSSavePanel()
         panel.nameFieldStringValue = file.name
