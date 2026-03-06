@@ -1378,6 +1378,8 @@
 "worktree.smart.branchExists.cancelled" = "Creacion de worktree cancelada.";
 "worktree.main.badge" = "ROOT";
 "worktree.main.hint" = "Worktree principal (raíz del repositorio)";
+"worktree.badge.short" = "WT";
+"worktree.badge.hint" = "(Checkout activo en otro worktree)";
 "worktree.prefix.feat" = "feat";
 "worktree.prefix.fix" = "fix";
 "worktree.prefix.chore" = "chore";

@@ -16,6 +16,7 @@ struct CommitRowView: View {
     let branchContextMenu: (String) -> AnyView
     let tagContextMenu: (String) -> AnyView
     let remotes: [String]
+    let worktreeBranches: Set<String>
     var bisectRole: BisectCommitRole = .none
     var avatarImage: NSImage? = nil
     
@@ -272,7 +273,8 @@ struct CommitRowView: View {
                             },
                             branchContextMenu: branchContextMenu,
                             tagContextMenu: tagContextMenu,
-                            remotes: remotes
+                            remotes: remotes,
+                            worktreeBranches: worktreeBranches
                         )
                     }
                     overflowPill
@@ -318,7 +320,8 @@ struct CommitRowView: View {
                     },
                     branchContextMenu: branchContextMenu,
                     tagContextMenu: tagContextMenu,
-                    remotes: remotes
+                    remotes: remotes,
+                    worktreeBranches: worktreeBranches
                 )
             }
         }
