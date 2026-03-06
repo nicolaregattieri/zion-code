@@ -30,4 +30,31 @@ final class ZionTerminalViewTests: XCTestCase {
         view.onFileDrop?(escaped)
         XCTAssertEqual(received, "'/tmp/my file.txt'")
     }
+
+    func testLinefeedPreservesSelectionDuringRegularCliOutput() {
+        let view = ZionTerminalView(frame: .zero)
+        view.feed(text: "hello world")
+        view.selectAll(nil)
+
+        XCTAssertGreaterThan(view.selectedRange().length, 0)
+        XCTAssertEqual(view.getTerminal().mouseMode, .off)
+
+        view.linefeed(source: view.getTerminal())
+
+        XCTAssertGreaterThan(view.selectedRange().length, 0)
+    }
+
+    func testLinefeedClearsSelectionForMouseReportingApps() {
+        let view = ZionTerminalView(frame: .zero)
+        view.feed(text: "\u{1B}[?1000h") // Enable mouse reporting mode.
+        view.feed(text: "hello world")
+        view.selectAll(nil)
+
+        XCTAssertGreaterThan(view.selectedRange().length, 0)
+        XCTAssertNotEqual(view.getTerminal().mouseMode, .off)
+
+        view.linefeed(source: view.getTerminal())
+
+        XCTAssertEqual(view.selectedRange().length, 0)
+    }
 }
