@@ -1027,6 +1027,14 @@
 "editor.markdown.hidePreview" = "Ocultar vista previa de Markdown";
 "editor.markdown.imageUnavailable" = "No se pudo cargar la imagen";
 "editor.markdown.empty" = "Nada para previsualizar todavía";
+"editor.image.title" = "Vista previa de imagen";
+"editor.image.fit" = "Ajustar";
+"editor.image.actual" = "Tamaño real";
+"editor.image.revealFinder" = "Revelar en Finder";
+"editor.image.openExternal" = "Abrir externamente";
+"editor.image.loadFailed" = "No se pudo cargar esta imagen";
+"editor.file.unsupported" = "Este tipo de archivo no se puede previsualizar en el editor";
+"editor.file.readOnlyBinary" = "Este archivo binario no se puede guardar desde el editor de texto";
 
 // Per-Repo Config
 "editor.repoConfig.active" = "Ajustes del editor definidos por .zion/editor.json";

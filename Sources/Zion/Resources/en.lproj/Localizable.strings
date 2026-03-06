@@ -1030,6 +1030,14 @@
 "editor.markdown.hidePreview" = "Hide Markdown preview";
 "editor.markdown.imageUnavailable" = "Couldn't load image";
 "editor.markdown.empty" = "Nothing to preview yet";
+"editor.image.title" = "Image Preview";
+"editor.image.fit" = "Fit";
+"editor.image.actual" = "Actual Size";
+"editor.image.revealFinder" = "Reveal in Finder";
+"editor.image.openExternal" = "Open Externally";
+"editor.image.loadFailed" = "Could not load this image";
+"editor.file.unsupported" = "This file type cannot be previewed in the editor";
+"editor.file.readOnlyBinary" = "This binary file cannot be saved through the text editor";
 
 // Per-Repo Config
 "editor.repoConfig.active" = "Editor settings defined by .zion/editor.json";
