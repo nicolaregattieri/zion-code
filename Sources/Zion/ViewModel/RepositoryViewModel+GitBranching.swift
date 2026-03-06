@@ -44,6 +44,31 @@ extension RepositoryViewModel {
         let target = reference.clean
         guard !target.isEmpty else { return }
 
+        // Match checkout() behavior: if this local branch belongs to another
+        // worktree, offer to jump there instead of surfacing a checkout error.
+        var localName = target
+        for remote in remotes {
+            if target.hasPrefix("\(remote.name)/") {
+                localName = String(target.dropFirst(remote.name.count + 1))
+                break
+            }
+        }
+        if localBranchExists(named: localName) {
+            if let occupied = worktrees.first(where: { !$0.isCurrent && $0.branch.clean == localName }) {
+                let alert = NSAlert()
+                alert.alertStyle = .informational
+                alert.messageText = L10n("checkout.worktree.inUse.title")
+                alert.informativeText = L10n("checkout.worktree.inUse.message", localName, occupied.path)
+                alert.addButton(withTitle: L10n("checkout.worktree.inUse.open"))
+                alert.addButton(withTitle: L10n("Cancelar"))
+                if alert.runModal() == .alertFirstButtonReturn {
+                    openWorktreeInZion(occupied, navigateToCode: false, sectionAfterOpen: .graph)
+                    statusMessage = L10n("checkout.worktree.redirected", localName)
+                }
+                return
+            }
+        }
+
         actionTask?.cancel()
         let actionToken = UUID()
         activeGitActionToken = actionToken
