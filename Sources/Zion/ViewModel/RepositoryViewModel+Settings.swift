@@ -776,7 +776,8 @@ extension RepositoryViewModel {
     func startBackgroundMonitor(for url: URL) {
         guard var state = backgroundRepoStates[url] else { return }
 
-        state.fileWatcher.onRepositoryChanged = { [weak self] in
+        state.fileWatcher.onChange = { [weak self] event in
+            guard event.hasTreeImpact || event.hasGitMetadataImpact || event.requiresRescan else { return }
             Task { [weak self] in
                 await self?.updateChangedFileCount(for: url)
             }
