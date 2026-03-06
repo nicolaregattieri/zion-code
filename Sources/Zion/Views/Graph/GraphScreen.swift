@@ -295,6 +295,7 @@ struct GraphScreen: View {
 
                 ScrollView([.horizontal, .vertical], showsIndicators: true) {
                     let remoteNames = model.remotes.map(\.name)
+                    let worktreeBranchNames = Set(model.worktrees.map(\.branch).filter { !$0.isEmpty })
                     LazyVStack(spacing: 0) {
                         // PENDING CHANGES - TOP OF THE LIST
                         if !model.uncommittedChanges.isEmpty {
@@ -345,6 +346,7 @@ struct GraphScreen: View {
                                 branchContextMenu: branchContextMenu,
                                 tagContextMenu: tagContextMenu,
                                 remotes: remoteNames,
+                                worktreeBranches: worktreeBranchNames,
                                 bisectRole: model.bisectRole(for: commit.id),
                                 avatarImage: model.avatarImage(for: commit.email)
                             )
