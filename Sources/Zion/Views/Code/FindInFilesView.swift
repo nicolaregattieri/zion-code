@@ -1,5 +1,44 @@
 import SwiftUI
 
+enum FindInFilesViewLogic {
+    static func shouldApplySearchResults(
+        requestID: Int,
+        latestRequestID: Int,
+        isCancelled: Bool
+    ) -> Bool {
+        !isCancelled && requestID == latestRequestID
+    }
+
+    static func preferredSelectedMatchID(
+        currentSelectedID: String?,
+        matches: [FindInFilesMatch]
+    ) -> String? {
+        guard !matches.isEmpty else { return nil }
+        if let currentSelectedID,
+           matches.contains(where: { $0.id == currentSelectedID }) {
+            return currentSelectedID
+        }
+        return matches.first?.id
+    }
+
+    static func nextMatch(
+        matches: [FindInFilesMatch],
+        currentSelectedID: String?,
+        direction: Int
+    ) -> FindInFilesMatch? {
+        guard !matches.isEmpty else { return nil }
+
+        let nextIndex: Int
+        if let currentSelectedID,
+           let index = matches.firstIndex(where: { $0.id == currentSelectedID }) {
+            nextIndex = (index + direction + matches.count) % matches.count
+        } else {
+            nextIndex = direction < 0 ? max(matches.count - 1, 0) : 0
+        }
+        return matches[nextIndex]
+    }
+}
+
 struct FindInFilesView: View {
     @Bindable var model: RepositoryViewModel
     @Binding var query: String
@@ -8,11 +47,34 @@ struct FindInFilesView: View {
     @Binding var results: [FindInFilesFileResult]
     @Binding var isSearching: Bool
     @Binding var scopePath: String?
+    let onClose: () -> Void
 
     @State private var showFilters: Bool = false
     @State private var expandedFiles: Set<String> = []
     @State private var searchTask: Task<Void, Never>?
-    @FocusState private var isQueryFocused: Bool
+    @State private var selectedMatchID: String?
+    @State private var searchRequestID: Int = 0
+    @State private var keyMonitor: Any?
+    @FocusState private var focusedField: FocusField?
+
+    private enum FocusField: Hashable {
+        case query
+        case include
+        case exclude
+    }
+
+    private var flattenedMatches: [FindInFilesMatch] {
+        results.flatMap(\.matches)
+    }
+
+    private var selectedMatchPositionText: String? {
+        guard !flattenedMatches.isEmpty,
+              let selectedMatchID,
+              let index = flattenedMatches.firstIndex(where: { $0.id == selectedMatchID }) else {
+            return nil
+        }
+        return "\(index + 1)/\(flattenedMatches.count)"
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -20,14 +82,20 @@ struct FindInFilesView: View {
             Divider()
             resultsList
         }
-        .onAppear { isQueryFocused = true }
+        .onAppear {
+            focusedField = .query
+            installKeyMonitor()
+        }
+        .onDisappear {
+            removeKeyMonitor()
+            searchTask?.cancel()
+        }
     }
 
     // MARK: - Search Fields
 
     private var searchFields: some View {
         VStack(spacing: 6) {
-            // Query field
             HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 Image(systemName: "magnifyingglass")
                     .font(DesignSystem.Typography.label)
@@ -36,8 +104,8 @@ struct FindInFilesView: View {
                 TextField(L10n("Buscar nos Arquivos"), text: $query)
                     .textFieldStyle(.plain)
                     .font(DesignSystem.Typography.monoBody)
-                    .focused($isQueryFocused)
-                    .onSubmit { triggerSearch() }
+                    .focused($focusedField, equals: .query)
+                    .onSubmit { triggerSearch(openDirectionAfterSearch: 1) }
 
                 if isSearching {
                     ProgressView()
@@ -45,17 +113,48 @@ struct FindInFilesView: View {
                         .scaleEffect(0.7)
                 }
 
-                Button {
-                    showFilters.toggle()
-                } label: {
-                    Image(systemName: "line.3.horizontal.decrease.circle\(showFilters ? ".fill" : "")")
-                        .font(DesignSystem.Typography.body)
-                        .foregroundStyle(showFilters ? .primary : .secondary)
-                        .frame(width: 18, height: 18)
-                        .contentShape(Rectangle())
+                if let selectedMatchPositionText {
+                    Text(selectedMatchPositionText)
+                        .font(DesignSystem.Typography.monoLabel)
+                        .foregroundStyle(.secondary)
+                        .frame(minWidth: 42)
                 }
-                .buttonStyle(.plain)
-                .help(L10n("Filtros"))
+
+                if !flattenedMatches.isEmpty {
+                    SearchNavButton(
+                        icon: "chevron.up",
+                        tooltip: L10n("editor.search.previous") + " (⇧Enter)"
+                    ) {
+                        openRelativeMatch(direction: -1)
+                    }
+
+                    SearchNavButton(
+                        icon: "chevron.down",
+                        tooltip: L10n("editor.search.next") + " (Enter)"
+                    ) {
+                        openRelativeMatch(direction: 1)
+                    }
+                }
+
+                if !query.isEmpty {
+                    SearchNavButton(icon: "xmark.circle.fill", tooltip: L10n("Limpar busca"), isSecondary: true) {
+                        query = ""
+                        selectedMatchID = nil
+                        triggerSearch()
+                    }
+                }
+
+                SearchNavButton(
+                    icon: "line.3.horizontal.decrease.circle\(showFilters ? ".fill" : "")",
+                    tooltip: L10n("Filtros"),
+                    isSecondary: !showFilters
+                ) {
+                    showFilters.toggle()
+                }
+
+                SearchNavButton(icon: "xmark.circle.fill", tooltip: L10n("findInFiles.close"), isSecondary: true) {
+                    onClose()
+                }
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
@@ -105,6 +204,12 @@ struct FindInFilesView: View {
         .onChange(of: query) { _, _ in
             debounceSearch()
         }
+        .onChange(of: includePattern) { _, _ in
+            debounceSearch()
+        }
+        .onChange(of: excludePattern) { _, _ in
+            debounceSearch()
+        }
     }
 
     private var filterFields: some View {
@@ -117,7 +222,8 @@ struct FindInFilesView: View {
                 TextField("*.swift, *.ts", text: $includePattern)
                     .textFieldStyle(.plain)
                     .font(DesignSystem.Typography.monoMeta)
-                    .onSubmit { triggerSearch() }
+                    .focused($focusedField, equals: .include)
+                    .onSubmit { triggerSearch(openDirectionAfterSearch: 1) }
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
                     .background(DesignSystem.Colors.glassBackground)
@@ -131,7 +237,8 @@ struct FindInFilesView: View {
                 TextField("*.lock, dist/*", text: $excludePattern)
                     .textFieldStyle(.plain)
                     .font(DesignSystem.Typography.monoMeta)
-                    .onSubmit { triggerSearch() }
+                    .focused($focusedField, equals: .exclude)
+                    .onSubmit { triggerSearch(openDirectionAfterSearch: 1) }
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
                     .background(DesignSystem.Colors.glassBackground)
@@ -212,7 +319,8 @@ struct FindInFilesView: View {
     }
 
     private func matchRow(_ match: FindInFilesMatch) -> some View {
-        Button {
+        let isSelected = selectedMatchID == match.id
+        return Button {
             openMatch(match)
         } label: {
             HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
@@ -230,6 +338,7 @@ struct FindInFilesView: View {
             .padding(.horizontal, 10)
             .padding(.leading, 22)
             .padding(.vertical, 3)
+            .background(isSelected ? DesignSystem.Colors.selectionBackground : Color.clear)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -266,24 +375,37 @@ struct FindInFilesView: View {
     // MARK: - Actions
 
     private func debounceSearch() {
+        scheduleSearch(debounced: true, openDirectionAfterSearch: nil)
+    }
+
+    private func triggerSearch(openDirectionAfterSearch: Int? = nil) {
+        scheduleSearch(debounced: false, openDirectionAfterSearch: openDirectionAfterSearch)
+    }
+
+    private func scheduleSearch(debounced: Bool, openDirectionAfterSearch: Int?) {
         searchTask?.cancel()
+        searchRequestID += 1
+        let requestID = searchRequestID
+
         searchTask = Task {
-            try? await Task.sleep(for: .milliseconds(300))
-            guard !Task.isCancelled else { return }
-            await performSearch()
+            if debounced {
+                try? await Task.sleep(for: .milliseconds(300))
+                guard !Task.isCancelled else { return }
+            }
+            await performSearch(requestID: requestID, openDirectionAfterSearch: openDirectionAfterSearch)
         }
     }
 
-    private func triggerSearch() {
-        searchTask?.cancel()
-        searchTask = Task { await performSearch() }
-    }
+    private func performSearch(requestID: Int, openDirectionAfterSearch: Int?) async {
+        guard requestID == searchRequestID else { return }
 
-    private func performSearch() async {
         guard !query.isEmpty else {
+            isSearching = false
             results = []
+            selectedMatchID = nil
             return
         }
+
         isSearching = true
         let searchResults = await model.findInFiles(
             query: query,
@@ -291,16 +413,48 @@ struct FindInFilesView: View {
             excludePattern: excludePattern,
             scopePath: scopePath
         )
+
+        guard FindInFilesViewLogic.shouldApplySearchResults(
+            requestID: requestID,
+            latestRequestID: searchRequestID,
+            isCancelled: Task.isCancelled
+        ) else { return }
+
         isSearching = false
         results = searchResults
+
         // Auto-expand all files when few results
         if searchResults.count <= 10 {
             expandedFiles = Set(searchResults.map(\.file))
         }
+
+        // Keep selection stable when possible.
+        let resultMatches = searchResults.flatMap(\.matches)
+        self.selectedMatchID = FindInFilesViewLogic.preferredSelectedMatchID(
+            currentSelectedID: selectedMatchID,
+            matches: resultMatches
+        )
+
+        if let direction = openDirectionAfterSearch {
+            openRelativeMatch(direction: direction, in: searchResults)
+        }
+    }
+
+    private func openRelativeMatch(direction: Int, in searchResults: [FindInFilesFileResult]? = nil) {
+        let matches = (searchResults ?? results).flatMap(\.matches)
+        guard let nextMatch = FindInFilesViewLogic.nextMatch(
+            matches: matches,
+            currentSelectedID: selectedMatchID,
+            direction: direction
+        ) else { return }
+        openMatch(nextMatch)
     }
 
     private func openMatch(_ match: FindInFilesMatch) {
         guard model.repositoryURL != nil else { return }
+        selectedMatchID = match.id
+        expandedFiles.insert(match.file)
+
         let location = EditorSymbolLocation(
             relativePath: match.file,
             line: match.line,
@@ -308,5 +462,34 @@ struct FindInFilesView: View {
             preview: match.preview
         )
         model.openEditorLocation(location)
+    }
+
+    private func installKeyMonitor() {
+        removeKeyMonitor()
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            if event.keyCode == 53 { // Escape
+                onClose()
+                return nil
+            }
+
+            if event.keyCode == 51, focusedField == .query, query.isEmpty { // Delete
+                onClose()
+                return nil
+            }
+
+            if event.keyCode == 36, event.modifierFlags.intersection([.shift]).contains(.shift) { // Shift+Enter
+                triggerSearch(openDirectionAfterSearch: -1)
+                return nil
+            }
+
+            return event
+        }
+    }
+
+    private func removeKeyMonitor() {
+        if let keyMonitor {
+            NSEvent.removeMonitor(keyMonitor)
+            self.keyMonitor = nil
+        }
     }
 }
