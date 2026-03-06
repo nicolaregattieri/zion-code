@@ -588,6 +588,9 @@ final class RepositoryViewModel {
     @ObservationIgnored var autoRefreshTask: Task<Void, Never>?
     @ObservationIgnored private var deferredRepositoryLoadTask: Task<Void, Never>?
     @ObservationIgnored private var repositorySwitchToken = UUID()
+    @ObservationIgnored private var pendingFileWatcherEvent: FileWatcher.ChangeEvent?
+    @ObservationIgnored private var isApplyingFileWatcherRefresh = false
+    @ObservationIgnored private var fileWatcherGateTask: Task<Void, Never>?
     var isSwitchingRepository = false
     @ObservationIgnored private var cachedWorktreeStatusByPath: [String: (uncommittedCount: Int, hasConflicts: Bool)] = [:]
     @ObservationIgnored var cachedIgnoredPaths: Set<String>?
@@ -838,26 +841,69 @@ final class RepositoryViewModel {
     }
 
     private func startFileWatcher(for url: URL) {
-        fileWatcher.onFileChanged = { [weak self] in
+        fileWatcher.onChange = { [weak self] event in
             guard let self else { return }
-            // Reload the currently open file if it changed on disk
-            if let file = self.selectedCodeFile {
-                if let content = try? String(contentsOf: file.url, encoding: .utf8) {
-                    if content != self.codeFileContent {
-                        self.codeFileContent = content
-                        self.originalFileContents[file.id] = content
-                        self.unsavedFiles.remove(file.id)
-                    }
-                }
+            self.enqueueFileWatcherEvent(event)
+        }
+        pendingFileWatcherEvent = nil
+        isApplyingFileWatcherRefresh = false
+        fileWatcherGateTask?.cancel()
+        fileWatcherGateTask = nil
+        fileWatcher.watch(directory: url)
+    }
+
+    private func enqueueFileWatcherEvent(_ event: FileWatcher.ChangeEvent) {
+        guard !isSwitchingRepository else { return }
+        pendingFileWatcherEvent = pendingFileWatcherEvent?.merged(with: event) ?? event
+        processPendingFileWatcherEventIfNeeded()
+    }
+
+    private func processPendingFileWatcherEventIfNeeded() {
+        guard !isApplyingFileWatcherRefresh else { return }
+        guard let event = pendingFileWatcherEvent else { return }
+        pendingFileWatcherEvent = nil
+        isApplyingFileWatcherRefresh = true
+
+        if event.hasTreeImpact || event.requiresRescan {
+            refreshFileTree()
+            reloadSelectedCodeFileFromDiskIfNeeded(event: event)
+        }
+
+        if event.hasGitMetadataImpact || event.requiresRescan {
+            if isBusy {
+                pendingFileWatcherEvent = FileWatcher.ChangeEvent(
+                    changedPaths: event.changedPaths,
+                    hasTreeImpact: false,
+                    hasGitMetadataImpact: true,
+                    requiresRescan: event.requiresRescan
+                )
+            } else {
+                refreshRepository(setBusy: false, origin: .fileWatcher)
             }
         }
-        fileWatcher.onRepositoryChanged = { [weak self] in
+
+        fileWatcherGateTask?.cancel()
+        fileWatcherGateTask = Task { [weak self] in
             guard let self else { return }
-            guard !self.isSwitchingRepository else { return }
-            self.refreshRepository(setBusy: false, origin: .fileWatcher)
-            self.refreshFileTree()
+            try? await Task.sleep(for: .milliseconds(250))
+            guard !Task.isCancelled else { return }
+            self.isApplyingFileWatcherRefresh = false
+            self.processPendingFileWatcherEventIfNeeded()
         }
-        fileWatcher.watch(directory: url)
+    }
+
+    private func reloadSelectedCodeFileFromDiskIfNeeded(event: FileWatcher.ChangeEvent) {
+        guard let file = selectedCodeFile else { return }
+        let selectedPath = FileWatcher.normalizePath(file.url.standardizedFileURL.path)
+        let shouldReload = event.requiresRescan || event.changedPaths.contains(selectedPath)
+        guard shouldReload else { return }
+
+        if let content = try? String(contentsOf: file.url, encoding: .utf8),
+           content != codeFileContent {
+            codeFileContent = content
+            originalFileContents[file.id] = content
+            unsavedFiles.remove(file.id)
+        }
     }
 
     @ObservationIgnored var prPollingTimer: Task<Void, Never>?
@@ -866,6 +912,7 @@ final class RepositoryViewModel {
         deferredRepositoryLoadTask?.cancel()
         autoRefreshTask?.cancel()
         prPollingTimer?.cancel()
+        fileWatcherGateTask?.cancel()
         let states = backgroundRepoStates
         for (_, state) in states {
             state.monitorTask?.cancel()
