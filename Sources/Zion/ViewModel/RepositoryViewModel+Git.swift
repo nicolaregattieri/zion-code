@@ -443,6 +443,7 @@ extension RepositoryViewModel {
                     }
                 }
                 loadCommitStats()
+                ensureTerminalBridgeHealth(context: "refreshRepository.success.\(origin.rawValue)")
                 onFinish?()
             } catch is CancellationError {
                 guard refreshRequestID == requestID else { return }
@@ -453,6 +454,7 @@ extension RepositoryViewModel {
                     }
                 }
                 logger.log(.info, "refreshRepository cancelled", context: "request=\(requestID.uuidString.prefix(8)) busy=\(setBusy)", source: #function)
+                ensureTerminalBridgeHealth(context: "refreshRepository.cancelled")
                 onFinish?()
                 return
             } catch {
@@ -464,6 +466,7 @@ extension RepositoryViewModel {
                     }
                 }
                 handleError(error)
+                ensureTerminalBridgeHealth(context: "refreshRepository.error")
                 onFinish?()
             }
         }

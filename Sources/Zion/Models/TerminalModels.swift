@@ -15,6 +15,7 @@ final class TerminalSession: Identifiable {
     @ObservationIgnored var _cachedView: AnyObject?       // SwiftTerm.TerminalView
     @ObservationIgnored var _cachedTerminal: AnyObject?   // SwiftTerm.Terminal (direct ref for remote access)
     @ObservationIgnored var _processBridge: AnyObject?    // Coordinator (keeps it alive)
+    @ObservationIgnored var _activeCoordinatorGeneration: UUID?
     @ObservationIgnored var _shellPid: Int32 = 0
     @ObservationIgnored var _shouldPreserve = true        // false after explicit kill
 
@@ -35,7 +36,9 @@ final class TerminalSession: Identifiable {
         }
         _shellPid = 0
         _cachedView = nil
+        _cachedTerminal = nil
         _processBridge = nil
+        _activeCoordinatorGeneration = nil
     }
 }
 
