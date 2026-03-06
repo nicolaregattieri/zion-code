@@ -57,6 +57,14 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
         return true
     }
 
+    override func linefeed(source: Terminal) {
+        // Keep manual text selection stable while normal CLI output streams.
+        // Mouse-aware apps (mouseMode != .off) should keep SwiftTerm default behavior.
+        if allowMouseReporting && getTerminal().mouseMode != .off {
+            super.linefeed(source: source)
+        }
+    }
+
     // MARK: - Helpers
 
     private func hasFileURLs(_ info: NSDraggingInfo) -> Bool {
