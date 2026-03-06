@@ -867,13 +867,51 @@ struct TerminalTabView: NSViewRepresentable {
 
         nonisolated func requestOpenLink(source: SwiftTerm.TerminalView, link: String, params: [String: String]) {
             guard UserDefaults.standard.bool(forKey: "terminal.openHyperlinks") else { return }
-            if let fixedup = link.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
+
+            let trimmedLink = link
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .trimmingCharacters(in: CharacterSet(charactersIn: "\"'<>[](){}"))
+
+            if let localPath = localPathIfExists(from: trimmedLink) {
+                NSWorkspace.shared.open(URL(fileURLWithPath: localPath))
+                return
+            }
+
+            if let fixedup = trimmedLink.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
                 if let url = NSURLComponents(string: fixedup) {
                     if let actualUrl = url.url {
                         NSWorkspace.shared.open(actualUrl)
                     }
                 }
             }
+        }
+
+        private nonisolated func localPathIfExists(from link: String) -> String? {
+            guard !link.isEmpty else { return nil }
+            let lowercased = link.lowercased()
+
+            var path: String
+            if lowercased.hasPrefix("file://"), let fileURL = URL(string: link), fileURL.isFileURL {
+                path = fileURL.path
+            } else if link.hasPrefix("/") || link.hasPrefix("~/") {
+                path = (link as NSString).expandingTildeInPath
+            } else {
+                return nil
+            }
+
+            let fileManager = FileManager.default
+            if fileManager.fileExists(atPath: path) {
+                return path
+            }
+
+            if let suffixRange = path.range(of: #":\d+(?::\d+)?$"#, options: .regularExpression) {
+                let withoutLineColumn = String(path[..<suffixRange.lowerBound])
+                if fileManager.fileExists(atPath: withoutLineColumn) {
+                    return withoutLineColumn
+                }
+            }
+
+            return nil
         }
 
         // MARK: - LocalProcessDelegate
