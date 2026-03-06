@@ -296,11 +296,14 @@ struct GraphScreen: View {
                 ScrollView([.horizontal, .vertical], showsIndicators: true) {
                     let remoteNames = model.remotes.map(\.name)
                     let worktreeBranchNames = Set(model.worktrees.map(\.branch).filter { !$0.isEmpty })
-                    let rootWorktreeBranchNames = Set(
-                        model.worktrees
-                            .filter { $0.isMainWorktree && !$0.branch.isEmpty }
-                            .map(\.branch)
-                    )
+                    let hasAdditionalWorktrees = model.worktrees.contains { !$0.isMainWorktree }
+                    let rootWorktreeBranchNames: Set<String> = hasAdditionalWorktrees
+                        ? Set(
+                            model.worktrees
+                                .filter { $0.isMainWorktree && !$0.branch.isEmpty }
+                                .map(\.branch)
+                        )
+                        : []
                     LazyVStack(spacing: 0) {
                         // PENDING CHANGES - TOP OF THE LIST
                         if !model.uncommittedChanges.isEmpty {
