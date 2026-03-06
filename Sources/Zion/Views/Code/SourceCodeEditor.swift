@@ -25,6 +25,7 @@ struct SourceCodeEditor: NSViewRepresentable {
     var onMatchCountChanged: ((Int) -> Void)?
     var goToLine: Int = 0
     var goToLineRequestID: Int = 0
+    var focusRequestID: Int = 0
     var currentFilePath: String? = nil
     var onRequestDefinition: ((EditorSymbolQuery) -> Void)?
     var onRequestReferences: ((EditorSymbolQuery) -> Void)?
@@ -243,6 +244,14 @@ struct SourceCodeEditor: NSViewRepresentable {
             context.coordinator.scrollToLine(goToLine, in: textView)
         }
 
+        if focusRequestID != context.coordinator.lastFocusRequestID {
+            context.coordinator.lastFocusRequestID = focusRequestID
+            DispatchQueue.main.async {
+                guard let window = textView.window, window.firstResponder !== textView else { return }
+                window.makeFirstResponder(textView)
+            }
+        }
+
         // Scroll to top-left only when the active file changes
         if activeFileID != context.coordinator.lastActiveFileID {
             context.coordinator.lastActiveFileID = activeFileID
@@ -278,6 +287,7 @@ struct SourceCodeEditor: NSViewRepresentable {
         var lastWrappedWidth: CGFloat?
         var lastGoToLine: Int = 0
         var lastGoToLineRequestID: Int = 0
+        var lastFocusRequestID: Int = -1
         var lastLineSpacing: Double?
         var lastLetterSpacing: Double?
         private var highlightDebounceTask: DispatchWorkItem?
