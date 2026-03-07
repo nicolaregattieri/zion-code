@@ -392,7 +392,7 @@ struct ClimbingZionView: View {
             .foregroundStyle(color)
             .frame(width: 72, height: 72)
             .background(color.opacity(0.12))
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous))
     }
 
     private func featureBullet(_ text: String, color: Color) -> some View {

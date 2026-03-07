@@ -45,6 +45,7 @@ struct KeyboardShortcutsSheet: View {
                         (L10n("shortcuts.goToLine"), "⌘G"),
                         (L10n("shortcuts.findNext"), "⌘G"),
                         (L10n("shortcuts.findPrevious"), "⇧⌘G"),
+                        (L10n("Excluir"), "⌘Delete"),
                         (L10n("shortcuts.selectNextOccurrence"), "⌘D"),
                         (L10n("shortcuts.goToDefinition"), "F12"),
                         (L10n("shortcuts.findReferences"), "⇧F12"),
@@ -71,6 +72,9 @@ struct KeyboardShortcutsSheet: View {
                         (L10n("Buscar no grafo"), "⌘F"),
                         (L10n("shortcuts.navigateCommits"), "↑↓"),
                         (L10n("shortcuts.closeOrDeselect"), "Esc"),
+                        (L10n("bisect.good"), "⇧⌘G"),
+                        (L10n("bisect.bad"), "⇧⌘B"),
+                        (L10n("bisect.skip"), "⇧⌘S"),
                     ])
 
                     shortcutSection(L10n("shortcuts.general"), icon: "gearshape", shortcuts: [
