@@ -11,6 +11,7 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
     /// Called when the user drops one or more file URLs onto the terminal.
     /// The string is already shell-escaped and ready to paste.
     var onFileDrop: ((String) -> Void)?
+    var onDropActivated: (() -> Void)?
 
     private var dragHighlightLayer: CALayer?
 
@@ -53,16 +54,16 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
         guard !urls.isEmpty else { return false }
         let escaped = TerminalShellEscaping.joinQuotedFileURLs(urls)
         guard !escaped.isEmpty else { return false }
-        onFileDrop?(escaped)
+
+        let target = resolvedDropTarget(using: sender)
+        target.onDropActivated?()
+        target.onFileDrop?(escaped)
         return true
     }
 
     override func linefeed(source: Terminal) {
-        // Keep manual text selection stable while normal CLI output streams.
-        // Mouse-aware apps (mouseMode != .off) should keep SwiftTerm default behavior.
-        if allowMouseReporting && getTerminal().mouseMode != .off {
-            super.linefeed(source: source)
-        }
+        // Keep drag selection stable even while long-running CLIs stream output.
+        // SwiftTerm's default linefeed clears selection in mouse-reporting mode.
     }
 
     // MARK: - Helpers
@@ -79,6 +80,24 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
             forClasses: [NSURL.self],
             options: [.urlReadingFileURLsOnly: true]
         ) as? [URL]) ?? []
+    }
+
+    private func resolvedDropTarget(using info: NSDraggingInfo) -> ZionTerminalView {
+        guard let contentView = window?.contentView else { return self }
+        let locationInContent = contentView.convert(info.draggingLocation, from: nil)
+        let hitView = contentView.hitTest(locationInContent)
+        return Self.closestTerminalView(from: hitView) ?? self
+    }
+
+    static func closestTerminalView(from view: NSView?) -> ZionTerminalView? {
+        var current = view
+        while let node = current {
+            if let terminal = node as? ZionTerminalView {
+                return terminal
+            }
+            current = node.superview
+        }
+        return nil
     }
 
     // MARK: - Visual feedback

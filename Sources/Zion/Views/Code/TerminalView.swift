@@ -20,9 +20,13 @@ struct TerminalTabView: NSViewRepresentable {
             Self.log.log(.info, "makeNSView CACHED", context: "\(session.label)(\(session.id.uuidString.prefix(4))) alive=\(session.isAlive) preserve=\(session._shouldPreserve) pid=\(session._shellPid)", source: "TerminalTabView")
             cachedView.removeFromSuperview()
             cachedView.terminalDelegate = context.coordinator
+            applyInteractionPolicy(to: cachedView)
             if let zionView = cachedView as? ZionTerminalView {
+                zionView.onDropActivated = { [coordinator = context.coordinator] in
+                    coordinator.prepareForFileDrop()
+                }
                 zionView.onFileDrop = { [coordinator = context.coordinator] text in
-                    coordinator.sendText(text)
+                    coordinator.handleFileDrop(text)
                 }
             }
             context.coordinator.reattach(view: cachedView)
@@ -38,10 +42,13 @@ struct TerminalTabView: NSViewRepresentable {
         Self.log.log(.info, "makeNSView FRESH", context: "\(session.label)(\(session.id.uuidString.prefix(4)))", source: "TerminalTabView")
         // Fresh terminal (ZionTerminalView adds Finder drag-and-drop support)
         let terminalView = ZionTerminalView(frame: .zero)
-        terminalView.onFileDrop = { [coordinator = context.coordinator] text in
-            coordinator.sendText(text)
+        terminalView.onDropActivated = { [coordinator = context.coordinator] in
+            coordinator.prepareForFileDrop()
         }
-        terminalView.allowMouseReporting = true
+        terminalView.onFileDrop = { [coordinator = context.coordinator] text in
+            coordinator.handleFileDrop(text)
+        }
+        applyInteractionPolicy(to: terminalView)
         terminalView.terminalDelegate = context.coordinator
 
         // Apply custom terminal options BEFORE theme — applyCustomOptions replaces the
@@ -69,6 +76,7 @@ struct TerminalTabView: NSViewRepresentable {
 
     func updateNSView(_ nsView: SwiftTerm.TerminalView, context: Context) {
         applyTheme(to: nsView, context: context)
+        applyInteractionPolicy(to: nsView)
 
         // Read isAlive for @Observable tracking (processTerminated changes it,
         // which triggers this updateNSView call)
@@ -134,6 +142,13 @@ struct TerminalTabView: NSViewRepresentable {
 
         // Force redraw — setters above don't trigger needsDisplay
         view.needsDisplay = true
+    }
+
+    private func applyInteractionPolicy(to view: SwiftTerm.TerminalView) {
+        // Prioritize manual selection while output streams when copy-on-select is enabled.
+        // Users who disable copy-on-select keep mouse-reporting for TUI apps.
+        let copyOnSelectEnabled = UserDefaults.standard.bool(forKey: "terminal.copyOnSelect")
+        view.allowMouseReporting = !copyOnSelectEnabled
     }
 
     func makeCoordinator() -> Coordinator {
@@ -302,8 +317,11 @@ struct TerminalTabView: NSViewRepresentable {
 
             // Re-wire file drop handler for Finder drag-and-drop
             if let zionView = view as? ZionTerminalView {
+                zionView.onDropActivated = { [weak self] in
+                    self?.prepareForFileDrop()
+                }
                 zionView.onFileDrop = { [weak self] text in
-                    self?.sendText(text)
+                    self?.handleFileDrop(text)
                 }
             }
 
@@ -354,6 +372,19 @@ struct TerminalTabView: NSViewRepresentable {
         func sendText(_ text: String) {
             guard let data = text.data(using: .utf8) else { return }
             process?.send(data: ArraySlice(data))
+        }
+
+        func prepareForFileDrop() {
+            ensureOwnerBinding(reason: "fileDrop")
+            parent.model?.activateTerminalSession(parent.session)
+            if let view = terminalView {
+                view.window?.makeFirstResponder(view)
+            }
+        }
+
+        func handleFileDrop(_ text: String) {
+            prepareForFileDrop()
+            sendText(text)
         }
 
         private func installShiftEnterMonitor() {
