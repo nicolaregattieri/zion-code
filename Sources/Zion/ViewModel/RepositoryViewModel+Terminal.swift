@@ -152,8 +152,20 @@ extension RepositoryViewModel {
 
     func sendTextToActiveTerminal(_ text: String) {
         guard let activeID = activeTerminalID,
-              let callback = terminalSendCallbacks[activeID],
+              !text.isEmpty else { return }
+        sendTextToTerminal(text, sessionID: activeID)
+    }
+
+    func sendTextToTerminal(_ text: String, sessionID: UUID, activate: Bool = true) {
+        guard !text.isEmpty,
+              let callback = terminalSendCallbacks[sessionID],
               let data = text.data(using: .utf8) else { return }
+
+        if activate,
+           let session = terminalTabs.flatMap({ $0.allSessions() }).first(where: { $0.id == sessionID }) {
+            activateTerminalSession(session)
+        }
+
         callback(data)
     }
 

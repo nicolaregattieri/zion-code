@@ -162,4 +162,43 @@ final class RepositoryViewModelTerminalTests: XCTestCase {
         let session = vm.terminalSessions.first
         XCTAssertEqual(session?.workingDirectory.path, homePath)
     }
+
+    // MARK: - targeted terminal send routing
+
+    func testSendTextToTerminalRoutesToProvidedSession() {
+        let vm = RepositoryViewModel()
+        let dir = URL(fileURLWithPath: "/tmp/repo")
+
+        vm.createTerminalSession(workingDirectory: dir, label: "first")
+        vm.createTerminalSession(workingDirectory: dir, label: "second")
+
+        let first = vm.terminalTabs[0].allSessions().first!
+        let second = vm.terminalTabs[1].allSessions().first!
+        var firstReceived: String?
+        var secondReceived: String?
+
+        vm.registerTerminalSendCallback(sessionID: first.id) { data in
+            firstReceived = String(data: data, encoding: .utf8)
+        }
+        vm.registerTerminalSendCallback(sessionID: second.id) { data in
+            secondReceived = String(data: data, encoding: .utf8)
+        }
+
+        vm.sendTextToTerminal("echo pane-1", sessionID: first.id)
+
+        XCTAssertEqual(firstReceived, "echo pane-1")
+        XCTAssertNil(secondReceived)
+        XCTAssertEqual(vm.focusedSessionID, first.id)
+    }
+
+    func testSendTextToTerminalWithoutCallbackDoesNothing() {
+        let vm = RepositoryViewModel()
+        let dir = URL(fileURLWithPath: "/tmp/repo")
+        vm.createTerminalSession(workingDirectory: dir, label: "first")
+        let first = vm.terminalTabs[0].allSessions().first!
+
+        vm.sendTextToTerminal("echo ignored", sessionID: first.id)
+
+        XCTAssertEqual(vm.focusedSessionID, first.id)
+    }
 }

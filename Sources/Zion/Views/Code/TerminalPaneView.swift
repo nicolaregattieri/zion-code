@@ -41,6 +41,21 @@ struct TerminalPaneView: View {
             .padding(.horizontal, DesignSystem.Spacing.micro)
             .contentShape(Rectangle())
             .onTapGesture { model.focusedSessionID = session.id }
+            .dropDestination(for: String.self) { items, _ in
+                guard let text = items.first, !text.isEmpty else { return false }
+                model.sendTextToTerminal(text, sessionID: session.id)
+                model.focusActiveTerminal()
+                return true
+            }
+            .dropDestination(for: URL.self) { urls, _ in
+                let paths = urls
+                    .filter { $0.isFileURL }
+                    .map { TerminalShellEscaping.quotePath($0.path) }
+                guard !paths.isEmpty else { return false }
+                model.sendTextToTerminal(paths.joined(separator: " "), sessionID: session.id)
+                model.focusActiveTerminal()
+                return true
+            }
 
         case .split(let direction, _, _):
             let children = node.flattenedChildren(forDirection: direction)
