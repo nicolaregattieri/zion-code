@@ -63,7 +63,7 @@ struct SidebarView: View {
                                     RecentProjectRow(
                                         url: url,
                                         isCurrent: model.recentRepositoryRoot(for: model.repositoryURL) == url,
-                                        changedCount: model.backgroundRepoChangedFiles[url],
+                                        changedCount: model.recentChangedCount(for: url),
                                         worktreeCount: model.recentWorktreeCounts[url] ?? 0
                                     ) {
                                         withAnimation {
@@ -384,11 +384,10 @@ struct SidebarView: View {
         let isHovered = hoveredSection == section
         
         return Button { selectedSection = section } label: {
-            HStack(alignment: .top, spacing: DesignSystem.Spacing.toolbarItemGap) {
+            HStack(alignment: .center, spacing: DesignSystem.Spacing.toolbarItemGap) {
                 Image(systemName: section.icon)
                     .font(DesignSystem.Typography.sectionTitle)
                     .frame(width: 18)
-                    .padding(.top, 2)
                     .foregroundStyle(isSelected ? .primary : .secondary)
                     .opacity(isDisabled ? DesignSystem.Opacity.dim : DesignSystem.Opacity.full)
 
@@ -407,7 +406,6 @@ struct SidebarView: View {
                         .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
                         .opacity(DesignSystem.Opacity.muted)
-                        .padding(.top, 4)
                         .help(L10n("sidebar.locked.hint"))
                 } else if section == .graph && model.behindRemoteCount > 0 {
                     Text("\(model.behindRemoteCount)")
@@ -417,7 +415,6 @@ struct SidebarView: View {
                         .background(DesignSystem.Colors.warning.opacity(0.2))
                         .foregroundStyle(DesignSystem.Colors.warning)
                         .clipShape(Capsule())
-                        .padding(.top, 4)
                 } else if section == .operations && model.stashes.count > 0 {
                     Text("\(model.stashes.count)")
                         .font(DesignSystem.Typography.monoMeta)
@@ -426,7 +423,6 @@ struct SidebarView: View {
                         .background(DesignSystem.Colors.info.opacity(0.2))
                         .foregroundStyle(DesignSystem.Colors.info)
                         .clipShape(Capsule())
-                        .padding(.top, 4)
                 }
             }
             .contentShape(Rectangle())
@@ -649,8 +645,14 @@ private struct RecentProjectRow: View {
 
     private var rowBackground: Color {
         if isCurrent { return DesignSystem.Colors.glassHover }
-        if isHovered { return DesignSystem.Colors.glassHover }
-        return DesignSystem.Colors.glassMinimal
+        if isHovered { return DesignSystem.Colors.glassMinimal }
+        return Color.clear
+    }
+
+    private var rowStroke: Color {
+        if isCurrent { return DesignSystem.Colors.selectionBackground }
+        if isHovered { return DesignSystem.Colors.glassStroke }
+        return Color.clear
     }
 
     var body: some View {
@@ -658,7 +660,7 @@ private struct RecentProjectRow: View {
             HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                 Image(systemName: "folder.fill")
                     .font(DesignSystem.Typography.body)
-                    .foregroundStyle(isCurrent ? DesignSystem.Colors.success : Color.accentColor.opacity(0.8))
+                    .foregroundStyle(isCurrent ? .primary : Color.accentColor.opacity(0.8))
                 VStack(alignment: .leading, spacing: 1) {
                     Text(url.lastPathComponent)
                         .font(DesignSystem.Typography.sectionTitle)
@@ -690,25 +692,18 @@ private struct RecentProjectRow: View {
                         .clipShape(Capsule())
                 }
 
-                if isCurrent {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(DesignSystem.Typography.label)
-                        .foregroundStyle(DesignSystem.Colors.success)
-                } else {
-                    Image(systemName: "chevron.right")
-                        .font(DesignSystem.Typography.micro)
-                        .foregroundStyle(.secondary)
-                }
+                Image(systemName: "chevron.right")
+                    .font(DesignSystem.Typography.micro)
+                    .foregroundStyle(.secondary)
+                    .opacity(isCurrent ? 0 : 1)
+                    .accessibilityHidden(isCurrent)
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
-            .background(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius).fill(rowBackground))
+            .background(RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius).fill(rowBackground))
             .overlay(
-                RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius)
-                    .strokeBorder(
-                        isCurrent ? DesignSystem.Colors.glassBorderDark : Color.clear,
-                        lineWidth: 1
-                    )
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius)
+                    .strokeBorder(rowStroke, lineWidth: 1)
             )
             .contentShape(Rectangle())
         }

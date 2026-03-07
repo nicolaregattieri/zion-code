@@ -119,6 +119,42 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
         XCTAssertTrue(result.isEmpty)
     }
 
+    // MARK: - recentChangedCount(for:)
+
+    func testRecentChangedCountUsesLiveCountForCurrentRepository() {
+        let vm = RepositoryViewModel()
+        let current = URL(fileURLWithPath: "/tmp/repo-current")
+        vm.repositoryURL = current
+        vm.uncommittedCount = 7
+        vm.backgroundRepoChangedFiles[current] = 2
+
+        let count = vm.recentChangedCount(for: current)
+
+        XCTAssertEqual(count, 7)
+    }
+
+    func testRecentChangedCountUsesBackgroundCountForInactiveRepository() {
+        let vm = RepositoryViewModel()
+        let current = URL(fileURLWithPath: "/tmp/repo-current")
+        let inactive = URL(fileURLWithPath: "/tmp/repo-inactive")
+        vm.repositoryURL = current
+        vm.uncommittedCount = 4
+        vm.backgroundRepoChangedFiles[inactive] = 3
+
+        let count = vm.recentChangedCount(for: inactive)
+
+        XCTAssertEqual(count, 3)
+    }
+
+    func testRecentChangedCountReturnsNilWhenInactiveRepositoryIsUnknown() {
+        let vm = RepositoryViewModel()
+        vm.repositoryURL = URL(fileURLWithPath: "/tmp/repo-current")
+
+        let count = vm.recentChangedCount(for: URL(fileURLWithPath: "/tmp/repo-unknown"))
+
+        XCTAssertNil(count)
+    }
+
     // MARK: - isCredentialFailure (Settings extension)
 
     func testIsCredentialFailureDetectsKeychain() {
