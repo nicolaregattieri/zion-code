@@ -303,7 +303,7 @@ extension RepositoryViewModel {
             return
         }
 
-        if Self.shouldSkipRefreshWhileBusy(setBusy: setBusy, isBusy: isBusy) {
+        if Self.shouldSkipRefreshWhileBusy(setBusy: setBusy, isBusy: isBusy, origin: origin) {
             logger.log(.info, "refreshRepository skipped while busy", context: "origin=\(origin.rawValue)", source: #function)
             return
         }
@@ -666,8 +666,11 @@ extension RepositoryViewModel {
             || subcommand == "ls-remote"
     }
 
-    static func shouldSkipRefreshWhileBusy(setBusy: Bool, isBusy: Bool) -> Bool {
-        !setBusy && isBusy
+    static func shouldSkipRefreshWhileBusy(setBusy: Bool, isBusy: Bool, origin: RefreshOrigin) -> Bool {
+        guard !setBusy && isBusy else { return false }
+        // Deferred repository-switch refresh is responsible for finalizing switch state.
+        // If we skip it while busy, `isSwitchingRepository` can remain true.
+        return origin != .repositorySwitch
     }
 
     func buildGitAuthContext(
