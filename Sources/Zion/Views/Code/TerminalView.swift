@@ -172,7 +172,16 @@ struct TerminalTabView: NSViewRepresentable {
         var lastAppliedTransparent: Bool = false
         private var pendingResizeTask: Task<Void, Never>?
         private var shiftEnterMonitor: Any?
+        private var mouseDownMonitor: Any?
+        private var mouseDragMonitor: Any?
         private var mouseUpMonitor: Any?
+        private var pendingTerminalOutput = Data()
+        private var pendingOutputFlushTask: Task<Void, Never>?
+        private var pointerDownInTerminal = false
+        private var dragSelectionFreezeActive = false
+        private static let outputFlushIntervalNanos: UInt64 = 8_000_000
+        private static let maxBufferedOutputDuringDragSelection = 1_048_576
+        private static let forcedFlushChunkBytes = 65_536
 
         init(_ parent: TerminalTabView) {
             self.parent = parent
@@ -207,6 +216,22 @@ struct TerminalTabView: NSViewRepresentable {
             !isCurrentOwner && bridgeMatchesCoordinator
         }
 
+        static func shouldStartDragFreeze(
+            isPointerDownInTerminal: Bool,
+            isTerminalFocused: Bool,
+            allowMouseReporting: Bool,
+            prioritizeSelectionInteraction: Bool
+        ) -> Bool {
+            isPointerDownInTerminal && isTerminalFocused && allowMouseReporting && prioritizeSelectionInteraction
+        }
+
+        static func shouldForceFlushWhileDragFrozen(
+            bufferedByteCount: Int,
+            maxBufferedBytes: Int
+        ) -> Bool {
+            bufferedByteCount >= maxBufferedBytes
+        }
+
         func ensureOwnerBinding(reason: String) {
             guard parent.session._shouldPreserve else { return }
             guard let liveView = terminalView ?? (parent.session._cachedView as? SwiftTerm.TerminalView) else { return }
@@ -226,7 +251,7 @@ struct TerminalTabView: NSViewRepresentable {
         func startProcess(view: SwiftTerm.TerminalView) {
             self.terminalView = view
             installShiftEnterMonitor()
-            installMouseUpMonitor()
+            installMouseInteractionMonitors()
             let url = parent.session.workingDirectory
             let sessionID = parent.session.id
 
@@ -309,7 +334,7 @@ struct TerminalTabView: NSViewRepresentable {
         func reattach(view: SwiftTerm.TerminalView) {
             self.terminalView = view
             installShiftEnterMonitor()
-            installMouseUpMonitor()
+            installMouseInteractionMonitors()
             if process != nil {
                 processIsDead = false
                 parent.session.isAlive = true
@@ -355,7 +380,12 @@ struct TerminalTabView: NSViewRepresentable {
             }
             process = nil
             removeShiftEnterMonitor()
-            removeMouseUpMonitor()
+            removeMouseInteractionMonitors()
+            pendingOutputFlushTask?.cancel()
+            pendingOutputFlushTask = nil
+            pendingTerminalOutput.removeAll(keepingCapacity: false)
+            pointerDownInTerminal = false
+            dragSelectionFreezeActive = false
             parent.session._shellPid = 0
             if isCurrentOwner() {
                 parent.session._processBridge = nil
@@ -404,10 +434,33 @@ struct TerminalTabView: NSViewRepresentable {
             }
         }
 
-        private func installMouseUpMonitor() {
+        private func installMouseInteractionMonitors() {
+            if mouseDownMonitor == nil {
+                mouseDownMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
+                    guard let self else { return event }
+                    guard self.isTerminalFocused else { return event }
+                    self.pointerDownInTerminal = true
+                    return event
+                }
+            }
+
+            if mouseDragMonitor == nil {
+                mouseDragMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDragged) { [weak self] event in
+                    guard let self else { return event }
+                    self.beginDragSelectionFreezeIfNeeded()
+                    return event
+                }
+            }
+
             guard mouseUpMonitor == nil else { return }
             mouseUpMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseUp) { [weak self] event in
-                guard let self, self.isTerminalFocused else { return event }
+                guard let self else { return event }
+                defer {
+                    self.pointerDownInTerminal = false
+                    self.endDragSelectionFreezeIfNeeded()
+                }
+
+                guard self.isTerminalFocused else { return event }
                 guard UserDefaults.standard.bool(forKey: "terminal.copyOnSelect") else { return event }
                 guard let view = self.terminalView, view.selectedRange().length > 0 else { return event }
                 view.copy(self)
@@ -415,10 +468,88 @@ struct TerminalTabView: NSViewRepresentable {
             }
         }
 
-        private func removeMouseUpMonitor() {
+        private func removeMouseInteractionMonitors() {
+            if let monitor = mouseDownMonitor {
+                NSEvent.removeMonitor(monitor)
+                mouseDownMonitor = nil
+            }
+            if let monitor = mouseDragMonitor {
+                NSEvent.removeMonitor(monitor)
+                mouseDragMonitor = nil
+            }
             if let monitor = mouseUpMonitor {
                 NSEvent.removeMonitor(monitor)
                 mouseUpMonitor = nil
+            }
+        }
+
+        private func beginDragSelectionFreezeIfNeeded() {
+            guard let view = terminalView else { return }
+            guard Self.shouldStartDragFreeze(
+                isPointerDownInTerminal: pointerDownInTerminal,
+                isTerminalFocused: isTerminalFocused,
+                allowMouseReporting: view.allowMouseReporting,
+                prioritizeSelectionInteraction: view.prioritizeSelectionInteraction
+            ) else { return }
+            dragSelectionFreezeActive = true
+        }
+
+        private func endDragSelectionFreezeIfNeeded() {
+            guard dragSelectionFreezeActive else { return }
+            dragSelectionFreezeActive = false
+            flushPendingTerminalOutput(force: true)
+        }
+
+        private func queueTerminalOutput(_ slice: ArraySlice<UInt8>) {
+            guard !slice.isEmpty else { return }
+            pendingTerminalOutput.append(contentsOf: slice)
+
+            if dragSelectionFreezeActive {
+                if Self.shouldForceFlushWhileDragFrozen(
+                    bufferedByteCount: pendingTerminalOutput.count,
+                    maxBufferedBytes: Self.maxBufferedOutputDuringDragSelection
+                ) {
+                    flushPendingTerminalOutput(force: true)
+                }
+                return
+            }
+
+            schedulePendingOutputFlushIfNeeded()
+        }
+
+        private func schedulePendingOutputFlushIfNeeded() {
+            guard pendingOutputFlushTask == nil else { return }
+            pendingOutputFlushTask = Task { @MainActor [weak self] in
+                try? await Task.sleep(nanoseconds: Self.outputFlushIntervalNanos)
+                guard let self else { return }
+                self.pendingOutputFlushTask = nil
+                self.flushPendingTerminalOutput()
+            }
+        }
+
+        private func flushPendingTerminalOutput(force: Bool = false) {
+            guard !pendingTerminalOutput.isEmpty else { return }
+            guard force || !dragSelectionFreezeActive else { return }
+
+            if terminalView == nil, let rebound = parent.session._cachedView as? SwiftTerm.TerminalView {
+                terminalView = rebound
+            }
+            guard let view = terminalView else { return }
+
+            let payload: Data
+            if force && pendingTerminalOutput.count > Self.forcedFlushChunkBytes {
+                payload = pendingTerminalOutput.prefix(Self.forcedFlushChunkBytes)
+                pendingTerminalOutput.removeFirst(Self.forcedFlushChunkBytes)
+            } else {
+                payload = pendingTerminalOutput
+                pendingTerminalOutput.removeAll(keepingCapacity: true)
+            }
+            let bytes = Array(payload)
+            view.feed(byteArray: bytes[...])
+            parent.model?.notifyTerminalOutput(sessionID: parent.session.id, data: payload)
+
+            if !pendingTerminalOutput.isEmpty, !dragSelectionFreezeActive {
+                schedulePendingOutputFlushIfNeeded()
             }
         }
 
@@ -1031,6 +1162,7 @@ struct TerminalTabView: NSViewRepresentable {
                     return
                 }
                 DiagnosticLogger.shared.log(.info, "processTerminated", context: "\(parent.session.label)(\(parent.session.id.uuidString.prefix(4))) exitCode=\(exitCode ?? -1)", source: "TerminalTabView")
+                flushPendingTerminalOutput(force: true)
                 processIsDead = true
                 parent.session.isAlive = false
             }
@@ -1065,9 +1197,7 @@ struct TerminalTabView: NSViewRepresentable {
                         source: "TerminalTabView"
                     )
                 }
-
-                terminalView?.feed(byteArray: slice)
-                parent.model?.notifyTerminalOutput(sessionID: parent.session.id, data: Data(slice))
+                queueTerminalOutput(slice)
             }
         }
 
