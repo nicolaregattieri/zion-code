@@ -643,18 +643,6 @@ private struct RecentProjectRow: View {
     let onTap: () -> Void
     @State private var isHovered = false
 
-    private var rowBackground: Color {
-        if isCurrent { return DesignSystem.Colors.glassHover }
-        if isHovered { return DesignSystem.Colors.glassMinimal }
-        return Color.clear
-    }
-
-    private var rowStroke: Color {
-        if isCurrent { return DesignSystem.Colors.selectionBackground }
-        if isHovered { return DesignSystem.Colors.glassStroke }
-        return Color.clear
-    }
-
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
@@ -700,11 +688,15 @@ private struct RecentProjectRow: View {
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
-            .background(RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius).fill(rowBackground))
+            .background(
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius)
+                    .fill(isCurrent ? DesignSystem.Colors.glassHover : DesignSystem.Colors.glassMinimal)
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius)
-                    .strokeBorder(rowStroke, lineWidth: 1)
+                    .stroke(isCurrent ? DesignSystem.Colors.selectionBackground : (isHovered ? DesignSystem.Colors.glassStroke : Color.clear), lineWidth: 1)
             )
+            .animation(DesignSystem.Motion.detail, value: isCurrent)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
