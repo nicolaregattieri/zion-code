@@ -422,6 +422,7 @@ extension RepositoryViewModel {
                 if statusMessage != refreshedStatusMessage {
                     statusMessage = refreshedStatusMessage
                 }
+                captureRepositorySnapshot(for: repositoryURL)
                 if setBusy {
                     isBusy = false
                     if clearRepositorySwitchStateOnBusyCompletion, isSwitchingRepository {
@@ -773,13 +774,21 @@ extension RepositoryViewModel {
     func loadSubmodules() {
         guard let url = repositoryURL else { return }
 
-        Task {
+        submoduleTask?.cancel()
+        let requestToken = UUID()
+        submoduleLoadToken = requestToken
+        submoduleTask = Task { [weak self] in
+            guard let self else { return }
             do {
-                let output = try await worker.runAction(args: ["submodule", "status"], in: url)
-                submodules = Self.parseSubmoduleStatus(output, repoURL: url)
+                let output = try await self.worker.runAction(args: ["submodule", "status"], in: url)
+                guard !Task.isCancelled else { return }
+                guard self.submoduleLoadToken == requestToken, self.repositoryURL == url else { return }
+                self.submodules = Self.parseSubmoduleStatus(output, repoURL: url)
             } catch {
-                logger.log(.warn, "Failed to load submodules: \(error.localizedDescription)", source: #function)
-                submodules = []
+                guard !Task.isCancelled else { return }
+                guard self.submoduleLoadToken == requestToken, self.repositoryURL == url else { return }
+                self.logger.log(.warn, "Failed to load submodules: \(error.localizedDescription)", source: #function)
+                self.submodules = []
             }
         }
     }

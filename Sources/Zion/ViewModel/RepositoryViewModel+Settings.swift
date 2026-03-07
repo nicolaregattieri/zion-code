@@ -554,13 +554,19 @@ extension RepositoryViewModel {
     // MARK: - Git Hosting Provider Integration
 
     func loadPullRequests() {
-        guard let (provider, remote) = detectHostingProvider() else { return }
+        guard let repositoryURL,
+              let (provider, remote) = detectHostingProvider() else { return }
         hostingProvider = provider
 
         prTask?.cancel()
-        prTask = Task {
+        let requestToken = UUID()
+        pullRequestLoadToken = requestToken
+        prTask = Task { [weak self] in
+            guard let self else { return }
             let prs = await provider.fetchPullRequests(remote: remote)
-            pullRequests = prs
+            guard !Task.isCancelled else { return }
+            guard self.pullRequestLoadToken == requestToken, self.repositoryURL == repositoryURL else { return }
+            self.pullRequests = prs
         }
     }
 

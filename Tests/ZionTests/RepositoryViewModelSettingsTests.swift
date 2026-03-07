@@ -234,4 +234,73 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
         let expected = TimeInterval(Constants.Timing.inactiveBackgroundMonitorBurstWindow) / 1_000_000_000
         XCTAssertEqual(burstUntil.timeIntervalSince(now), expected, accuracy: 0.1)
     }
+
+    // MARK: - Repository switch snapshots
+
+    func testApplyRepositorySnapshotIfFreshRestoresCoreState() {
+        let vm = RepositoryViewModel()
+        let repoURL = URL(fileURLWithPath: "/tmp/repo-snapshot-a")
+        let baselineCommit = makeCommit(id: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+        let fileURL = repoURL.appendingPathComponent("README.md")
+
+        vm.repositoryURL = repoURL
+        vm.commitLimit = 700
+        vm.focusedBranch = "main"
+        vm.currentBranch = "main"
+        vm.headShortHash = "aaaaaaaa"
+        vm.commits = [baselineCommit]
+        vm.selectedCommitID = baselineCommit.id
+        vm.hasMoreCommits = true
+        vm.uncommittedChanges = [" M README.md"]
+        vm.uncommittedCount = 1
+        vm.repositoryFiles = [FileItem(url: fileURL, isDirectory: false, children: nil)]
+        vm.captureRepositorySnapshot(for: repoURL)
+
+        vm.currentBranch = "other"
+        vm.headShortHash = "-"
+        vm.commits = []
+        vm.selectedCommitID = nil
+        vm.hasMoreCommits = false
+        vm.uncommittedChanges = []
+        vm.uncommittedCount = 0
+        vm.repositoryFiles = []
+
+        XCTAssertTrue(vm.applyRepositorySnapshotIfFresh(for: repoURL))
+        XCTAssertEqual(vm.currentBranch, "main")
+        XCTAssertEqual(vm.headShortHash, "aaaaaaaa")
+        XCTAssertEqual(vm.commits.map(\.id), [baselineCommit.id])
+        XCTAssertEqual(vm.selectedCommitID, baselineCommit.id)
+        XCTAssertTrue(vm.hasMoreCommits)
+        XCTAssertEqual(vm.uncommittedChanges, [" M README.md"])
+        XCTAssertEqual(vm.uncommittedCount, 1)
+        XCTAssertEqual(vm.repositoryFiles.map(\.id), [fileURL.path])
+    }
+
+    func testApplyRepositorySnapshotIfFreshReturnsFalseWhenMissing() {
+        let vm = RepositoryViewModel()
+        let repoURL = URL(fileURLWithPath: "/tmp/repo-snapshot-missing")
+        XCTAssertFalse(vm.applyRepositorySnapshotIfFresh(for: repoURL))
+        XCTAssertFalse(vm.hasFreshRepositorySnapshot(for: repoURL))
+    }
+
+    private func makeCommit(id: String) -> Commit {
+        Commit(
+            id: id,
+            shortHash: String(id.prefix(8)),
+            parents: [],
+            author: "Tester",
+            email: "test@example.com",
+            date: Date(),
+            subject: "snapshot baseline",
+            decorations: [],
+            lane: 0,
+            nodeColorKey: 0,
+            incomingLanes: [0],
+            outgoingLanes: [0],
+            laneColors: [LaneColor(lane: 0, colorKey: 0)],
+            outgoingEdges: [LaneEdge(from: 0, to: 0, colorKey: 0)],
+            insertions: nil,
+            deletions: nil
+        )
+    }
 }
