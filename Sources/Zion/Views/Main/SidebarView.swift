@@ -644,11 +644,13 @@ private struct RecentProjectRow: View {
     @State private var isHovered = false
 
     var body: some View {
-        Button(action: onTap) {
+        Button(action: {
+            if !isCurrent { onTap() }
+        }) {
             HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                 Image(systemName: "folder.fill")
                     .font(DesignSystem.Typography.body)
-                    .foregroundStyle(isCurrent ? .primary : Color.accentColor.opacity(0.8))
+                    .foregroundStyle(isCurrent ? DesignSystem.Colors.success : Color.accentColor.opacity(0.8))
                 VStack(alignment: .leading, spacing: 1) {
                     Text(url.lastPathComponent)
                         .font(DesignSystem.Typography.sectionTitle)
@@ -700,7 +702,6 @@ private struct RecentProjectRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .disabled(isCurrent)
         .onHover { h in isHovered = h }
     }
 }
