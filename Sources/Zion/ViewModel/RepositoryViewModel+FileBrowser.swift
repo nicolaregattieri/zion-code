@@ -8,32 +8,43 @@ extension RepositoryViewModel {
 
     func refreshFileTree() {
         guard let url = repositoryURL else { return }
-        Task {
+        let requestID = UUID()
+        fileTreeRefreshRequestID = requestID
+        fileTreeRefreshTask?.cancel()
+        fileTreeRefreshTask = Task { [weak self] in
+            guard let self else { return }
             // Phase 1: load top-level only (instant)
-            let initial = await loadFiles(at: url, ignoredPaths: nil, maxDepth: 0)
+            let initial = await self.loadFiles(at: url, ignoredPaths: nil, maxDepth: 0)
+            guard !Task.isCancelled else { return }
 
             // Phase 2: refine with gitignore — build final value before assigning
-            let ignoredPaths = await loadGitIgnoredPaths()
+            let ignoredPaths = await self.loadGitIgnoredPaths(for: url)
             let files: [FileItem]
             if !ignoredPaths.isEmpty {
-                cachedIgnoredPaths = ignoredPaths
-                files = await loadFiles(at: url, ignoredPaths: ignoredPaths, maxDepth: 0)
+                files = await self.loadFiles(at: url, ignoredPaths: ignoredPaths, maxDepth: 0)
             } else {
                 files = initial
             }
-            repositoryFiles = mergeTopLevel(old: repositoryFiles, new: files)
-            reloadExpandedDirectories(forceReload: true)
-            pruneStaleSelections()
-            scheduleEditorSymbolIndexRebuild(repositoryURL: url)
+
+            guard !Task.isCancelled else { return }
+            guard self.fileTreeRefreshRequestID == requestID, self.repositoryURL == url else { return }
+
+            self.repositoryFiles = self.mergeTopLevel(old: self.repositoryFiles, new: files)
+            self.reloadExpandedDirectories(forceReload: false)
+            self.pruneStaleSelections()
+            self.expandedPathsByRepository[url] = self.expandedPaths
+            self.captureRepositorySnapshot(for: url)
+            self.scheduleEditorSymbolIndexRebuild(repositoryURL: url)
         }
     }
 
     func reloadExpandedDirectories(forceReload: Bool = false) {
+        guard let repositoryURL else { return }
         guard !_isReloadingExpandedDirs else { return }
         _isReloadingExpandedDirs = true
         defer { _isReloadingExpandedDirs = false }
         for path in expandedPaths {
-            loadChildrenIfNeeded(for: path, forceReload: forceReload)
+            loadChildrenIfNeeded(for: path, forceReload: forceReload, expectedRepositoryURL: repositoryURL)
         }
     }
 
@@ -65,21 +76,32 @@ extension RepositoryViewModel {
         }
     }
 
-    func loadChildrenIfNeeded(for path: String, forceReload: Bool = false) {
+    func loadChildrenIfNeeded(
+        for path: String,
+        forceReload: Bool = false,
+        expectedRepositoryURL: URL? = nil
+    ) {
+        guard let repositoryURL else { return }
+        let targetRepositoryURL = expectedRepositoryURL ?? repositoryURL
+        guard repositoryURL == targetRepositoryURL else { return }
         guard let item = findItem(path: path, in: repositoryFiles),
               item.isDirectory,
               item.children == nil || forceReload else { return }
         let itemURL = item.url
         let existingChildren = item.children ?? []
         let ignoredPaths = cachedIgnoredPaths
-        Task {
-            let children = await loadFiles(at: itemURL, ignoredPaths: ignoredPaths, maxDepth: 0)
-            let mergedChildren = mergeDirectoryChildren(old: existingChildren, new: children)
-            repositoryFiles = updateTree(repositoryFiles, path: path, newChildren: mergedChildren)
+        Task { [weak self] in
+            guard let self else { return }
+            let children = await self.loadFiles(at: itemURL, ignoredPaths: ignoredPaths, maxDepth: 0)
+            guard !Task.isCancelled else { return }
+            guard self.repositoryURL == targetRepositoryURL else { return }
+            let mergedChildren = self.mergeDirectoryChildren(old: existingChildren, new: children)
+            self.repositoryFiles = self.updateTree(self.repositoryFiles, path: path, newChildren: mergedChildren)
+            self.captureRepositorySnapshot(for: targetRepositoryURL)
             // Breadcrumb/path navigation can request deep expansions before parent nodes
             // finish loading. Re-run pending expanded paths so deeper levels load as soon
             // as they become discoverable in the tree.
-            reloadExpandedDirectories()
+            self.reloadExpandedDirectories()
         }
     }
 
@@ -120,18 +142,31 @@ extension RepositoryViewModel {
         ".nuxt", ".output", "coverage", ".cache", "vendor", ".idea", ".vscode"
     ]
 
-    func loadGitIgnoredPaths() async -> Set<String> {
-        guard let url = repositoryURL else { return [] }
+    func loadGitIgnoredPaths(for repositoryURL: URL, forceRefresh: Bool = false) async -> Set<String> {
+        if !forceRefresh,
+           let cached = ignoredPathsCacheByRepository[repositoryURL],
+           Date().timeIntervalSince(cached.capturedAt) <= ignoredPathsCacheTTL {
+            cachedIgnoredPaths = cached.paths
+            return cached.paths
+        }
         do {
             let output = try await worker.runAction(
                 args: ["ls-files", "--others", "--ignored", "--exclude-standard", "--directory"],
-                in: url
+                in: repositoryURL
             )
             let paths = output.split(separator: "\n").map {
                 // git outputs paths relative to repo root, trailing / for dirs
-                url.appendingPathComponent(String($0).trimmingCharacters(in: CharacterSet(charactersIn: "/"))).path
+                repositoryURL.appendingPathComponent(String($0).trimmingCharacters(in: CharacterSet(charactersIn: "/"))).path
             }
-            return Set(paths)
+            let resolved = Set(paths)
+            ignoredPathsCacheByRepository[repositoryURL] = IgnoredPathsCacheEntry(
+                paths: resolved,
+                capturedAt: Date()
+            )
+            if self.repositoryURL == repositoryURL {
+                cachedIgnoredPaths = resolved
+            }
+            return resolved
         } catch {
             logger.log(.warn, "Failed to load gitignored paths: \(error.localizedDescription)", source: #function)
             return []
@@ -994,9 +1029,20 @@ extension RepositoryViewModel {
     }
 
     func scheduleEditorSymbolIndexRebuild(repositoryURL: URL) {
+        if symbolIndexRebuildRepositoryURL == repositoryURL,
+           let lastSymbolIndexRebuildAt,
+           Date().timeIntervalSince(lastSymbolIndexRebuildAt) < ignoredPathsCacheTTL {
+            return
+        }
         editorSymbolIndexTask?.cancel()
-        editorSymbolIndexTask = Task(priority: .utility) { [editorSymbolIndex] in
+        editorSymbolIndexTask = Task(priority: .utility) { [weak self, editorSymbolIndex] in
+            try? await Task.sleep(for: .seconds(1.2))
+            guard let self else { return }
+            guard self.repositoryURL == repositoryURL else { return }
             await editorSymbolIndex.rebuild(repositoryURL: repositoryURL)
+            guard self.repositoryURL == repositoryURL else { return }
+            self.symbolIndexRebuildRepositoryURL = repositoryURL
+            self.lastSymbolIndexRebuildAt = Date()
         }
     }
 
@@ -1006,6 +1052,10 @@ extension RepositoryViewModel {
         } else {
             expandedPaths.insert(path)
             loadChildrenIfNeeded(for: path)
+        }
+        if let repositoryURL {
+            expandedPathsByRepository[repositoryURL] = expandedPaths
+            captureRepositorySnapshot(for: repositoryURL)
         }
     }
 }

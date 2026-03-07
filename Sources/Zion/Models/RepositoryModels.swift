@@ -104,3 +104,38 @@ struct BackgroundRepoState {
     var monitorTask: Task<Void, Never>?
     var burstUntil: Date?
 }
+
+// MARK: - Switch Snapshots
+
+struct RepositorySwitchSnapshot {
+    let capturedAt: Date
+    let commitLimit: Int
+    let focusedBranch: String?
+    let currentBranch: String
+    let headShortHash: String
+    let branchInfos: [BranchInfo]
+    let branches: [String]
+    let branchTree: [BranchTreeNode]
+    let tags: [String]
+    let stashes: [String]
+    let selectedStash: String
+    let worktrees: [WorktreeItem]
+    let remotes: [RemoteInfo]
+    let commits: [Commit]
+    let hasMoreCommits: Bool
+    let selectedCommitID: String?
+    let hasConflicts: Bool
+    let isMerging: Bool
+    let isRebasing: Bool
+    let isCherryPicking: Bool
+    let isGitRepository: Bool
+    let uncommittedChanges: [String]
+    let uncommittedCount: Int
+    let repositoryFiles: [FileItem]
+    let expandedPaths: Set<String>
+}
+
+struct IgnoredPathsCacheEntry {
+    let paths: Set<String>
+    let capturedAt: Date
+}

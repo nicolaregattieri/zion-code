@@ -618,12 +618,18 @@ extension RepositoryViewModel {
     func loadSignatureStatuses() {
         guard let url = repositoryURL else { return }
 
-        Task {
+        signatureStatusTask?.cancel()
+        let requestToken = UUID()
+        signatureStatusLoadToken = requestToken
+        signatureStatusTask = Task { [weak self] in
+            guard let self else { return }
             do {
-                let output = try await worker.runAction(
+                let output = try await self.worker.runAction(
                     args: ["log", "--format=%H %G?", "-n", "100"],
                     in: url
                 )
+                guard !Task.isCancelled else { return }
+                guard self.signatureStatusLoadToken == requestToken, self.repositoryURL == url else { return }
                 var statuses: [String: String] = [:]
                 for line in output.split(separator: "\n") {
                     let parts = line.split(separator: " ", maxSplits: 1)
@@ -631,10 +637,12 @@ extension RepositoryViewModel {
                         statuses[String(parts[0])] = String(parts[1])
                     }
                 }
-                commitSignatureStatus = statuses
+                self.commitSignatureStatus = statuses
             } catch {
-                logger.log(.warn, "Failed to load signature statuses: \(error.localizedDescription)", source: #function)
-                commitSignatureStatus = [:]
+                guard !Task.isCancelled else { return }
+                guard self.signatureStatusLoadToken == requestToken, self.repositoryURL == url else { return }
+                self.logger.log(.warn, "Failed to load signature statuses: \(error.localizedDescription)", source: #function)
+                self.commitSignatureStatus = [:]
             }
         }
     }

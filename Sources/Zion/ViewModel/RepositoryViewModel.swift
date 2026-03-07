@@ -151,6 +151,7 @@ final class RepositoryViewModel {
     @ObservationIgnored var hostingProvider: (any GitHostingProvider)?
     @ObservationIgnored let ntfyClient = NtfyClient()
     @ObservationIgnored var prTask: Task<Void, Never>?
+    @ObservationIgnored var pullRequestLoadToken = UUID()
 
     // Branch review
     var isBranchReviewSheetVisible: Bool = false
@@ -207,6 +208,8 @@ final class RepositoryViewModel {
 
     // Submodule state
     var submodules: [SubmoduleInfo] = []
+    @ObservationIgnored var submoduleTask: Task<Void, Never>?
+    @ObservationIgnored var submoduleLoadToken = UUID()
 
     // AI commit message
     var suggestedCommitMessage: String = ""
@@ -298,6 +301,8 @@ final class RepositoryViewModel {
 
     // Commit signing
     var commitSignatureStatus: [String: String] = [:] // hash -> "G"/"N"/"B"/etc
+    @ObservationIgnored var signatureStatusTask: Task<Void, Never>?
+    @ObservationIgnored var signatureStatusLoadToken = UUID()
 
     // Background fetch
     var behindRemoteCount: Int = 0
@@ -532,9 +537,18 @@ final class RepositoryViewModel {
     var flatFileCache: [FileItem] = []
     var editorJumpLineTarget: Int = 0
     var editorJumpToken: Int = 0
+    @ObservationIgnored var repositorySwitchSnapshots: [URL: RepositorySwitchSnapshot] = [:]
+    @ObservationIgnored var expandedPathsByRepository: [URL: Set<String>] = [:]
+    @ObservationIgnored var ignoredPathsCacheByRepository: [URL: IgnoredPathsCacheEntry] = [:]
+    @ObservationIgnored let repositorySwitchSnapshotTTL: TimeInterval = 5
+    @ObservationIgnored let ignoredPathsCacheTTL: TimeInterval = 10
 
     @ObservationIgnored let editorSymbolIndex = EditorSymbolIndex()
     @ObservationIgnored var editorSymbolIndexTask: Task<Void, Never>?
+    @ObservationIgnored var lastSymbolIndexRebuildAt: Date?
+    @ObservationIgnored var symbolIndexRebuildRepositoryURL: URL?
+    @ObservationIgnored var fileTreeRefreshTask: Task<Void, Never>?
+    @ObservationIgnored var fileTreeRefreshRequestID = UUID()
 
     var worktreeNameSlug: String {
         slugifiedWorktreeName(from: worktreeNameInput)
@@ -612,6 +626,74 @@ final class RepositoryViewModel {
         maxLaneCount = maxLane + 1
     }
 
+    func hasFreshRepositorySnapshot(for url: URL) -> Bool {
+        guard let snapshot = repositorySwitchSnapshots[url] else { return false }
+        return Date().timeIntervalSince(snapshot.capturedAt) <= repositorySwitchSnapshotTTL
+    }
+
+    func applyRepositorySnapshotIfFresh(for url: URL) -> Bool {
+        guard let snapshot = repositorySwitchSnapshots[url],
+              Date().timeIntervalSince(snapshot.capturedAt) <= repositorySwitchSnapshotTTL else {
+            return false
+        }
+
+        commitLimit = snapshot.commitLimit
+        focusedBranch = snapshot.focusedBranch
+        currentBranch = snapshot.currentBranch
+        headShortHash = snapshot.headShortHash
+        branchInfos = snapshot.branchInfos
+        branches = snapshot.branches
+        branchTree = snapshot.branchTree
+        tags = snapshot.tags
+        stashes = snapshot.stashes
+        selectedStash = snapshot.selectedStash
+        worktrees = snapshot.worktrees
+        remotes = snapshot.remotes
+        commits = snapshot.commits
+        hasMoreCommits = snapshot.hasMoreCommits
+        selectedCommitID = snapshot.selectedCommitID
+        hasConflicts = snapshot.hasConflicts
+        isMerging = snapshot.isMerging
+        isRebasing = snapshot.isRebasing
+        isCherryPicking = snapshot.isCherryPicking
+        isGitRepository = snapshot.isGitRepository
+        uncommittedChanges = snapshot.uncommittedChanges
+        uncommittedCount = snapshot.uncommittedCount
+        repositoryFiles = snapshot.repositoryFiles
+        expandedPaths = snapshot.expandedPaths
+        return true
+    }
+
+    func captureRepositorySnapshot(for url: URL) {
+        repositorySwitchSnapshots[url] = RepositorySwitchSnapshot(
+            capturedAt: Date(),
+            commitLimit: commitLimit,
+            focusedBranch: focusedBranch,
+            currentBranch: currentBranch,
+            headShortHash: headShortHash,
+            branchInfos: branchInfos,
+            branches: branches,
+            branchTree: branchTree,
+            tags: tags,
+            stashes: stashes,
+            selectedStash: selectedStash,
+            worktrees: worktrees,
+            remotes: remotes,
+            commits: commits,
+            hasMoreCommits: hasMoreCommits,
+            selectedCommitID: selectedCommitID,
+            hasConflicts: hasConflicts,
+            isMerging: isMerging,
+            isRebasing: isRebasing,
+            isCherryPicking: isCherryPicking,
+            isGitRepository: isGitRepository,
+            uncommittedChanges: uncommittedChanges,
+            uncommittedCount: uncommittedCount,
+            repositoryFiles: repositoryFiles,
+            expandedPaths: expandedPaths
+        )
+    }
+
     func openRepository(_ url: URL, silent: Bool = false) {
         let previousURL = repositoryURL
 
@@ -633,11 +715,18 @@ final class RepositoryViewModel {
         logger.log(.info, "switch.start", context: "target=\(url.lastPathComponent) token=\(switchToken.uuidString.prefix(8))", source: #function)
         cancelRepositoryBackgroundActivityForSwitch()
         lastNotifiedBehindCount = 0
+        if let previousURL {
+            expandedPathsByRepository[previousURL] = expandedPaths
+            captureRepositorySnapshot(for: previousURL)
+        }
 
         repositoryURL = url
         repoEditorConfig = EditorConfig.load(from: url)
         if !silent { saveRecentRepository(url) }
         commitLimit = defaultCommitLimit(for: nil)
+        focusedBranch = nil
+        expandedPaths = expandedPathsByRepository[url] ?? []
+        cachedIgnoredPaths = ignoredPathsCacheByRepository[url]?.paths
         worktreeNameInput = ""
         worktreePathInput = ""
         worktreeBranchInput = ""
@@ -711,16 +800,30 @@ final class RepositoryViewModel {
         currentCommitFileDiff = ""
         currentCommitFileDiffHunks = []
         selectedHunkLines = []
-
-        refreshRepository(
-            setBusy: true,
-            options: .critical,
-            origin: .repositorySwitch,
-            clearRepositorySwitchStateOnBusyCompletion: false
-        )
-        refreshFileTree()
         startFileWatcher(for: url)
-        scheduleDeferredRepositoryLoads(for: url, switchToken: switchToken)
+
+        if applyRepositorySnapshotIfFresh(for: url) {
+            logger.log(.info, "switch.snapshot.restore", context: "repo=\(url.lastPathComponent) token=\(switchToken.uuidString.prefix(8))", source: #function)
+            loadCommitDetails(for: selectedCommitID, policy: .silent)
+            isSwitchingRepository = false
+            refreshFileTree()
+            scheduleDeferredRepositoryLoads(
+                for: url,
+                switchToken: switchToken,
+                refreshRepositoryFirst: true
+            )
+        } else {
+            refreshRepository(
+                setBusy: true,
+                options: .full,
+                origin: .repositorySwitch,
+                clearRepositorySwitchStateOnBusyCompletion: false,
+                onFinish: { [weak self] in
+                    self?.finalizeRepositorySwitch(for: url, switchToken: switchToken)
+                }
+            )
+            refreshFileTree()
+        }
 
         if !pendingExternalFiles.isEmpty {
             let pending = pendingExternalFiles
@@ -735,14 +838,21 @@ final class RepositoryViewModel {
     private func cancelRepositoryBackgroundActivityForSwitch() {
         deferredRepositoryLoadTask?.cancel()
         refreshTask?.cancel()
+        fileTreeRefreshTask?.cancel()
         prTask?.cancel()
+        submoduleTask?.cancel()
+        signatureStatusTask?.cancel()
         prPollingTask?.cancel()
         prPollingTimer?.cancel()
         backgroundFetchTask?.cancel()
         autoRefreshTask?.cancel()
     }
 
-    private func scheduleDeferredRepositoryLoads(for url: URL, switchToken: UUID) {
+    private func scheduleDeferredRepositoryLoads(
+        for url: URL,
+        switchToken: UUID,
+        refreshRepositoryFirst: Bool
+    ) {
         deferredRepositoryLoadTask?.cancel()
         deferredRepositoryLoadTask = Task { [weak self] in
             guard let self else { return }
@@ -761,25 +871,33 @@ final class RepositoryViewModel {
             guard !Task.isCancelled else { return }
             guard self.repositorySwitchToken == switchToken, self.repositoryURL == url else { return }
 
-            self.logger.log(.info, "switch.deferred.begin", context: "repo=\(url.lastPathComponent) token=\(switchToken.uuidString.prefix(8))", source: #function)
-            self.refreshRepository(
-                setBusy: false,
-                options: .full,
-                origin: .repositorySwitch,
-                onFinish: { [weak self] in
-                    guard let self else { return }
-                    guard self.repositorySwitchToken == switchToken, self.repositoryURL == url else { return }
-                    self.loadPullRequests()
-                    self.refreshPRReviewQueue()
-                    self.startPRPollingTimer()
-                    self.loadSubmodules()
-                    self.loadSignatureStatuses()
-                    self.startBackgroundFetch()
-                    self.startAutoRefreshTimer()
-                    self.isSwitchingRepository = false
-                }
-            )
+            if refreshRepositoryFirst {
+                self.logger.log(.info, "switch.deferred.begin", context: "repo=\(url.lastPathComponent) token=\(switchToken.uuidString.prefix(8))", source: #function)
+                self.refreshRepository(
+                    setBusy: false,
+                    options: .full,
+                    origin: .repositorySwitch,
+                    onFinish: { [weak self] in
+                        self?.finalizeRepositorySwitch(for: url, switchToken: switchToken)
+                    }
+                )
+            } else {
+                self.finalizeRepositorySwitch(for: url, switchToken: switchToken)
+            }
         }
+    }
+
+    private func finalizeRepositorySwitch(for url: URL, switchToken: UUID) {
+        guard repositorySwitchToken == switchToken, repositoryURL == url else { return }
+        loadPullRequests()
+        refreshPRReviewQueue()
+        startPRPollingTimer()
+        loadSubmodules()
+        loadSignatureStatuses()
+        startBackgroundFetch()
+        startAutoRefreshTimer()
+        captureRepositorySnapshot(for: url)
+        isSwitchingRepository = false
     }
 
     func mergeWorktreeStatusIfNeeded(_ incoming: [WorktreeItem], includeWorktreeStatus: Bool) -> [WorktreeItem] {
