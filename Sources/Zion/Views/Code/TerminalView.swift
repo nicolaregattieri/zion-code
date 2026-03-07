@@ -145,10 +145,11 @@ struct TerminalTabView: NSViewRepresentable {
     }
 
     private func applyInteractionPolicy(to view: SwiftTerm.TerminalView) {
-        // Prioritize manual selection while output streams when copy-on-select is enabled.
-        // Users who disable copy-on-select keep mouse-reporting for TUI apps.
+        // Keep mouse reporting available for TUIs, but allow copy-on-select users
+        // to prioritize drag-selection when apps enable mouse tracking.
         let copyOnSelectEnabled = UserDefaults.standard.bool(forKey: "terminal.copyOnSelect")
-        view.allowMouseReporting = !copyOnSelectEnabled
+        view.allowMouseReporting = true
+        view.prioritizeSelectionInteraction = copyOnSelectEnabled
     }
 
     func makeCoordinator() -> Coordinator {

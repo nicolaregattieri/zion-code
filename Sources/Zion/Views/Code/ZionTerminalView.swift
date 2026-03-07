@@ -61,11 +61,6 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
         return true
     }
 
-    override func linefeed(source: Terminal) {
-        // Keep drag selection stable even while long-running CLIs stream output.
-        // SwiftTerm's default linefeed clears selection in mouse-reporting mode.
-    }
-
     // MARK: - Helpers
 
     private func hasFileURLs(_ info: NSDraggingInfo) -> Bool {
