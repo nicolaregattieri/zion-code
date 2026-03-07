@@ -52,6 +52,7 @@ struct CodeTab: View {
         .contentShape(Rectangle())
         .onTapGesture { onActivate() }
         .onHover { h in isHovered = h }
+        .animation(DesignSystem.Motion.snappy, value: isActive)
         .contextMenu {
             Button { onClose() } label: {
                 Label(L10n("editor.tab.close"), systemImage: "xmark")

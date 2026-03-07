@@ -478,6 +478,34 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
         XCTAssertEqual(vm.editorContentKind(for: binaryURL), .unsupported)
     }
 
+    func testSelectCodeFileReusesExistingTabForSameFile() throws {
+        let vm = RepositoryViewModel()
+        let imageURL = try makeTempFile(ext: "png", data: Data([0x89, 0x50, 0x4e, 0x47]))
+        let item = FileItem(url: imageURL, isDirectory: false, children: nil)
+
+        vm.selectCodeFile(item)
+        vm.selectCodeFile(item)
+
+        XCTAssertEqual(vm.openedFiles.count, 1)
+        XCTAssertEqual(vm.activeFileID, imageURL.standardizedFileURL.path)
+        XCTAssertEqual(vm.editorFocusRequestID, 2)
+    }
+
+    func testSelectCodeFileNormalizesPathToAvoidDuplicateTabs() throws {
+        let vm = RepositoryViewModel()
+        let imageURL = try makeTempFile(ext: "png", data: Data([0x89, 0x50, 0x4e, 0x47]))
+        let alternateURL = imageURL
+            .deletingLastPathComponent()
+            .appendingPathComponent("sub/../\(imageURL.lastPathComponent)")
+
+        vm.selectCodeFile(FileItem(url: imageURL, isDirectory: false, children: nil))
+        vm.selectCodeFile(FileItem(url: alternateURL, isDirectory: false, children: nil))
+
+        XCTAssertEqual(vm.openedFiles.count, 1)
+        XCTAssertEqual(vm.openedFiles[0].id, imageURL.standardizedFileURL.path)
+        XCTAssertEqual(vm.activeFileID, imageURL.standardizedFileURL.path)
+    }
+
     func testSelectCodeFileImageDoesNotReadAsText() throws {
         let vm = RepositoryViewModel()
         let imageURL = try makeTempFile(ext: "png", data: Data([0x89, 0x50, 0x4e, 0x47]))

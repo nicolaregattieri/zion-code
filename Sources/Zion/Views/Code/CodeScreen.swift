@@ -217,6 +217,11 @@ struct CodeScreen: View {
                 .keyboardShortcut("f", modifiers: .control)
                 .frame(width: 0, height: 0).opacity(0)
 
+            // File browser delete selection (Cmd+Delete)
+            Button("") { handleFileBrowserDeleteShortcut() }
+                .keyboardShortcut(.delete, modifiers: .command)
+                .frame(width: 0, height: 0).opacity(0)
+
             // Priority Escape routing for code screen overlays/panels
             Button("") { handleEscapeShortcut() }
                 .keyboardShortcut(.escape, modifiers: [])
@@ -808,12 +813,20 @@ struct CodeScreen: View {
                     .background {
                         Color.clear
                             .contentShape(Rectangle())
-                            .onTapGesture { model.clearFileSelection() }
+                            .onTapGesture {
+                                isFileBrowserFocused = true
+                                model.clearFileSelection()
+                            }
                     }
                 }
                 .focusable()
                 .focused($isFileBrowserFocused)
                 .focusEffectDisabled()
+                .simultaneousGesture(
+                    TapGesture().onEnded {
+                        isFileBrowserFocused = true
+                    }
+                )
                 .onChange(of: fileBrowserScrollRequestID) { _, _ in
                     guard let target = fileBrowserScrollTargetID else { return }
                     withAnimation(DesignSystem.Motion.snappy) {
@@ -850,8 +863,12 @@ struct CodeScreen: View {
                     case .right:
                         if selectedBrowserIndex >= 0 && selectedBrowserIndex < flatFiles.count {
                             let item = flatFiles[selectedBrowserIndex]
-                            if item.isDirectory && !model.expandedPaths.contains(item.id) {
-                                withAnimation(DesignSystem.Motion.snappy) { model.toggleExpansion(for: item.id) }
+                            if item.isDirectory {
+                                if !model.expandedPaths.contains(item.id) {
+                                    withAnimation(DesignSystem.Motion.snappy) { model.toggleExpansion(for: item.id) }
+                                }
+                            } else {
+                                model.selectCodeFile(item)
                             }
                         }
                         return
@@ -1038,6 +1055,7 @@ struct CodeScreen: View {
             },
             goToLine: goToLineTarget,
             goToLineRequestID: goToLineRequestID,
+            focusRequestID: model.editorFocusRequestID,
             currentFilePath: model.selectedCodeFile?.url.path,
             onRequestDefinition: { query in handleDefinitionRequest(query) },
             onRequestReferences: { query in handleReferencesRequest(query) },
@@ -1520,17 +1538,32 @@ struct CodeScreen: View {
 
     private var codeTabBar: some View {
         let accentColor = model.selectedTheme.isLightAppearance ? DesignSystem.Colors.info : Color.accentColor
-        return ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 0) {
-                ForEach(model.openedFiles) { file in
-                    CodeTab(
-                        model: model,
-                        file: file,
-                        isActive: file.id == model.activeFileID,
-                        accentColor: accentColor,
-                        onActivate: { model.selectCodeFile(file) },
-                        onClose: { model.closeFile(id: file.id) }
-                    )
+        return ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 0) {
+                    ForEach(model.openedFiles) { file in
+                        CodeTab(
+                            model: model,
+                            file: file,
+                            isActive: file.id == model.activeFileID,
+                            accentColor: accentColor,
+                            onActivate: { model.selectCodeFile(file) },
+                            onClose: { model.closeFile(id: file.id) }
+                        )
+                        .id(file.id)
+                    }
+                }
+            }
+            .onAppear {
+                guard let activeID = model.activeFileID else { return }
+                DispatchQueue.main.async {
+                    proxy.scrollTo(activeID, anchor: .center)
+                }
+            }
+            .onChange(of: model.activeFileID) { _, activeID in
+                guard let activeID else { return }
+                withAnimation(DesignSystem.Motion.snappy) {
+                    proxy.scrollTo(activeID, anchor: .center)
                 }
             }
         }
@@ -1538,6 +1571,25 @@ struct CodeScreen: View {
         .frame(height: 38)
         .background(model.selectedTheme.colors.background)
         .environment(\.colorScheme, model.selectedTheme.isLightAppearance ? .light : .dark)
+    }
+
+    private func selectedFileBrowserItems() -> [FileItem] {
+        let flat = model.visibleFlatFiles()
+        if !model.selectedFileIDs.isEmpty {
+            return flat.filter { model.selectedFileIDs.contains($0.id) }
+        }
+        if let lastClicked = model.lastClickedFileID,
+           let item = flat.first(where: { $0.id == lastClicked }) {
+            return [item]
+        }
+        return []
+    }
+
+    private func handleFileBrowserDeleteShortcut() {
+        guard isFileBrowserVisible, sidebarMode == .fileTree, isFileBrowserFocused else { return }
+        let items = selectedFileBrowserItems()
+        guard !items.isEmpty else { return }
+        model.deleteFileItems(items)
     }
     
     private var emptyEditorView: some View {

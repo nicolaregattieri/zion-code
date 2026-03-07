@@ -400,6 +400,7 @@ final class RepositoryViewModel {
     }
     var editorFindSeedQuery: String = ""
     var editorFindSeedRequestID: Int = 0
+    var editorFocusRequestID: Int = 0
     var expandedPaths: Set<String> = []
     var findInFilesScopeRequest: String? = nil
 

@@ -337,7 +337,3 @@ final class BisectTests: XCTestCase {
         XCTAssertNotNil(model.lastError)
     }
 }
-
-// MARK: - BisectCommitRole Equatable conformance for tests
-
-extension BisectCommitRole: Equatable {}

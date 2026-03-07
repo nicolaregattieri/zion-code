@@ -175,34 +175,74 @@ extension RepositoryViewModel {
         }
     }
 
-    func selectCodeFile(_ item: FileItem) {
+    func normalizedEditorURL(_ url: URL) -> URL {
+        url.standardizedFileURL
+    }
+
+    func normalizedEditorItem(_ item: FileItem) -> FileItem {
+        FileItem(
+            url: normalizedEditorURL(item.url),
+            isDirectory: item.isDirectory,
+            children: item.children,
+            isGitIgnored: item.isGitIgnored
+        )
+    }
+
+    func activateFileInEditor(_ item: FileItem, highlightQuery: String? = nil, navigateToCode: Bool = false) {
         guard !item.isDirectory else { return }
 
-        // Add to opened files if not already there
-        if !openedFiles.contains(where: { $0.id == item.id }) {
-            openedFiles.append(item)
+        let normalizedItem = normalizedEditorItem(item)
+        let activeItem: FileItem
+        if let existing = openedFiles.first(where: { $0.id == normalizedItem.id }) {
+            activeItem = existing
+        } else {
+            openedFiles.append(normalizedItem)
+            activeItem = normalizedItem
         }
 
-        activeFileID = item.id
-        selectedCodeFile = item
+        activeFileID = activeItem.id
+        selectedCodeFile = activeItem
+        editorFocusRequestID += 1
 
-        let itemURL = item.url
-        let itemID = item.id
-        let kind = editorContentKind(for: itemURL)
+        let kind = editorContentKind(for: activeItem.url)
         guard kind == .text || kind == .markdown else {
             codeFileContent = ""
-            unsavedFiles.remove(itemID)
+            unsavedFiles.remove(activeItem.id)
+            if navigateToCode {
+                navigateToCodeRequested = true
+            }
             return
         }
+
+        let itemURL = activeItem.url
+        let itemID = activeItem.id
         Task {
             do {
                 let content = try String(contentsOf: itemURL, encoding: .utf8)
+                guard activeFileID == itemID else { return }
                 codeFileContent = content
                 originalFileContents[itemID] = content
             } catch {
+                guard activeFileID == itemID else { return }
                 codeFileContent = L10n("error.readFile", error.localizedDescription)
             }
         }
+
+        if let highlightQuery {
+            let query = highlightQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !query.isEmpty {
+                editorFindSeedQuery = query
+                editorFindSeedRequestID += 1
+            }
+        }
+
+        if navigateToCode {
+            navigateToCodeRequested = true
+        }
+    }
+
+    func selectCodeFile(_ item: FileItem) {
+        activateFileInEditor(item)
     }
 
     // MARK: - Multi-Selection
@@ -511,17 +551,9 @@ extension RepositoryViewModel {
 
     func openFileInEditor(relativePath: String, highlightQuery: String? = nil) {
         guard let repoURL = repositoryURL else { return }
-        let fileURL = repoURL.appendingPathComponent(relativePath)
+        let fileURL = normalizedEditorURL(repoURL.appendingPathComponent(relativePath))
         let item = FileItem(url: fileURL, isDirectory: false, children: nil)
-        selectCodeFile(item)
-        if let highlightQuery {
-            let query = highlightQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !query.isEmpty {
-                editorFindSeedQuery = query
-                editorFindSeedRequestID += 1
-            }
-        }
-        navigateToCodeRequested = true
+        activateFileInEditor(item, highlightQuery: highlightQuery, navigateToCode: true)
     }
 
     var selectedEditorContentKind: EditorContentKind {
@@ -611,7 +643,7 @@ extension RepositoryViewModel {
 
     func openFilesAsTabs(_ urls: [URL]) {
         for url in urls {
-            let item = FileItem(url: url, isDirectory: false, children: nil)
+            let item = FileItem(url: normalizedEditorURL(url), isDirectory: false, children: nil)
             selectCodeFile(item)
         }
     }
