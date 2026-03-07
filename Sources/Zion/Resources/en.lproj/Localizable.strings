@@ -175,6 +175,9 @@
 "Deseja remover a branch local %@?" = "Do you want to delete the local branch %@?";
 "Remover branch local (Force)" = "Delete local branch (Force)";
 "Deseja remover FORCADO a branch local %@?" = "Do you want to FORCE delete the local branch %@?";
+"Renomear branch..." = "Rename branch...";
+"Renomear branch" = "Rename branch";
+"Novo nome para %@:" = "New name for %@:";
 "Filtro de branch ativo: %@ · %@ commits" = "Branch filter active: %@ · %@ commits";
 "Visualizando todas as branches · %@ commits" = "Viewing all branches · %@ commits";
 "Repositorio carregado: %@ · %@ commits" = "Repository loaded: %@ · %@ commits";

@@ -582,11 +582,11 @@ final class RepositoryViewModel {
     @ObservationIgnored let worker = RepositoryWorker()
     @ObservationIgnored let fileWatcher = FileWatcher()
 
-    @ObservationIgnored let defaultCommitLimitAll = 700
-    @ObservationIgnored let defaultCommitLimitFocused = 450
+    @ObservationIgnored let defaultCommitLimitAll = 300
+    @ObservationIgnored let defaultCommitLimitFocused = 200
     @ObservationIgnored let commitPageSize = 300
     @ObservationIgnored let maxCommitLimit = 5000
-    @ObservationIgnored var commitLimit = 700
+    @ObservationIgnored var commitLimit = 300
     @ObservationIgnored var refreshRequestID = UUID()
     @ObservationIgnored var detailsRequestID = UUID()
     @ObservationIgnored var refreshTask: Task<Void, Never>?
@@ -599,6 +599,7 @@ final class RepositoryViewModel {
     @ObservationIgnored private var pendingFileWatcherEvent: FileWatcher.ChangeEvent?
     @ObservationIgnored private var isApplyingFileWatcherRefresh = false
     @ObservationIgnored private var fileWatcherGateTask: Task<Void, Never>?
+    @ObservationIgnored var suppressFileWatcherGitMetadataUntil: Date = .distantPast
     var isSwitchingRepository = false
     @ObservationIgnored private var cachedWorktreeStatusByPath: [String: (uncommittedCount: Int, hasConflicts: Bool)] = [:]
     @ObservationIgnored var cachedIgnoredPaths: Set<String>?
@@ -874,18 +875,42 @@ final class RepositoryViewModel {
         isApplyingFileWatcherRefresh = true
 
         if event.hasTreeImpact || event.requiresRescan {
-            refreshFileTree()
-            reloadSelectedCodeFileFromDiskIfNeeded(event: event)
+            if isBusy {
+                pendingFileWatcherEvent = (pendingFileWatcherEvent?.merged(
+                    with: FileWatcher.ChangeEvent(
+                        changedPaths: event.changedPaths,
+                        hasTreeImpact: true,
+                        hasGitMetadataImpact: event.hasGitMetadataImpact,
+                        requiresRescan: event.requiresRescan
+                    )
+                )) ?? FileWatcher.ChangeEvent(
+                    changedPaths: event.changedPaths,
+                    hasTreeImpact: true,
+                    hasGitMetadataImpact: event.hasGitMetadataImpact,
+                    requiresRescan: event.requiresRescan
+                )
+            } else {
+                refreshFileTree()
+                reloadSelectedCodeFileFromDiskIfNeeded(event: event)
+            }
         }
 
         if event.hasGitMetadataImpact || event.requiresRescan {
             if isBusy {
-                pendingFileWatcherEvent = FileWatcher.ChangeEvent(
+                pendingFileWatcherEvent = (pendingFileWatcherEvent?.merged(
+                    with: FileWatcher.ChangeEvent(
+                        changedPaths: event.changedPaths,
+                        hasTreeImpact: event.hasTreeImpact,
+                        hasGitMetadataImpact: true,
+                        requiresRescan: event.requiresRescan
+                    )
+                )) ?? FileWatcher.ChangeEvent(
                     changedPaths: event.changedPaths,
-                    hasTreeImpact: false,
+                    hasTreeImpact: event.hasTreeImpact,
                     hasGitMetadataImpact: true,
                     requiresRescan: event.requiresRescan
                 )
+            } else if Date() < suppressFileWatcherGitMetadataUntil {
             } else {
                 refreshRepository(setBusy: false, origin: .fileWatcher)
             }
@@ -912,6 +937,13 @@ final class RepositoryViewModel {
             codeFileContent = content
             originalFileContents[file.id] = content
             unsavedFiles.remove(file.id)
+        }
+    }
+
+    func extendFileWatcherGitMetadataSuppression(by seconds: TimeInterval) {
+        let candidate = Date().addingTimeInterval(seconds)
+        if candidate > suppressFileWatcherGitMetadataUntil {
+            suppressFileWatcherGitMetadataUntil = candidate
         }
     }
 

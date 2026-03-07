@@ -190,6 +190,16 @@ extension ContentView {
                 }
             }
             Divider()
+            Button(L10n("Renomear branch...")) {
+                let promptTitle = L10n("Renomear branch")
+                let promptMessage = L10n("Novo nome para %@:", branch)
+                if let newName = promptForText(title: promptTitle, message: promptMessage, defaultValue: branch) {
+                    let cleaned = newName.clean
+                    guard !cleaned.isEmpty, cleaned != branch else { return }
+                    model.renameBranch(oldName: branch, newName: cleaned)
+                }
+            }
+            Divider()
             Button(L10n("Remover branch local"), role: .destructive) {
                 performGitAction(title: L10n("Remover branch local"), message: String(format: L10n("Deseja remover a branch local %@?"), branch), destructive: true) {
                     model.deleteLocalBranch(branch, force: false)
