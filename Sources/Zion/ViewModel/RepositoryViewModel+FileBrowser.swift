@@ -6,7 +6,7 @@ extension RepositoryViewModel {
 
     // MARK: - Zion Code Methods
 
-    func refreshFileTree() {
+    func refreshFileTree(forceReloadExpandedDirectories: Bool = true) {
         guard let url = repositoryURL else { return }
         let requestID = UUID()
         fileTreeRefreshRequestID = requestID
@@ -30,8 +30,9 @@ extension RepositoryViewModel {
             guard self.fileTreeRefreshRequestID == requestID, self.repositoryURL == url else { return }
 
             self.repositoryFiles = self.mergeTopLevel(old: self.repositoryFiles, new: files)
-            self.reloadExpandedDirectories(forceReload: false)
+            self.reloadExpandedDirectories(forceReload: forceReloadExpandedDirectories)
             self.pruneStaleSelections()
+            self.recalculateMissingOpenFileState(updateEditorForActiveFile: true)
             self.expandedPathsByRepository[url] = self.expandedPaths
             self.captureRepositorySnapshot(for: url)
             self.scheduleEditorSymbolIndexRebuild(repositoryURL: url)
@@ -210,6 +211,24 @@ extension RepositoryViewModel {
         }
     }
 
+    func isOpenFileMissingOnDisk(_ file: FileItem) -> Bool {
+        !FileManager.default.fileExists(atPath: file.url.path)
+    }
+
+    func recalculateMissingOpenFileState(updateEditorForActiveFile: Bool) {
+        let missing = Set(openedFiles.compactMap { file in
+            isOpenFileMissingOnDisk(file) ? file.id : nil
+        })
+        missingOpenFileIDs = missing
+
+        guard updateEditorForActiveFile,
+              let activeFileID,
+              missing.contains(activeFileID),
+              selectedCodeFile?.id == activeFileID else { return }
+        codeFileContent = L10n("editor.file.missingContent")
+        unsavedFiles.remove(activeFileID)
+    }
+
     func normalizedEditorURL(_ url: URL) -> URL {
         url.standardizedFileURL
     }
@@ -239,6 +258,18 @@ extension RepositoryViewModel {
         selectedCodeFile = activeItem
         editorFocusRequestID += 1
 
+        if isOpenFileMissingOnDisk(activeItem) {
+            missingOpenFileIDs.insert(activeItem.id)
+            codeFileContent = L10n("editor.file.missingContent")
+            statusMessage = L10n("editor.file.missingStatus", activeItem.name)
+            unsavedFiles.remove(activeItem.id)
+            if navigateToCode {
+                navigateToCodeRequested = true
+            }
+            return
+        }
+        missingOpenFileIDs.remove(activeItem.id)
+
         let kind = editorContentKind(for: activeItem.url)
         guard kind == .text || kind == .markdown else {
             codeFileContent = ""
@@ -257,9 +288,16 @@ extension RepositoryViewModel {
                 guard activeFileID == itemID else { return }
                 codeFileContent = content
                 originalFileContents[itemID] = content
+                missingOpenFileIDs.remove(itemID)
             } catch {
                 guard activeFileID == itemID else { return }
-                codeFileContent = L10n("error.readFile", error.localizedDescription)
+                if !FileManager.default.fileExists(atPath: itemURL.path) {
+                    missingOpenFileIDs.insert(itemID)
+                    codeFileContent = L10n("editor.file.missingContent")
+                    statusMessage = L10n("editor.file.missingStatus", activeItem.name)
+                } else {
+                    codeFileContent = L10n("error.readFile", error.localizedDescription)
+                }
             }
         }
 
@@ -465,6 +503,7 @@ extension RepositoryViewModel {
         guard let index = openedFiles.firstIndex(where: { $0.id == id }) else { return }
 
         openedFiles.remove(at: index)
+        missingOpenFileIDs.remove(id)
 
         if activeFileID == id {
             if let last = openedFiles.last {
@@ -475,6 +514,7 @@ extension RepositoryViewModel {
                 codeFileContent = ""
             }
         }
+        recalculateMissingOpenFileState(updateEditorForActiveFile: false)
     }
 
     func closeOtherFiles(keepingID id: String) {
@@ -483,6 +523,7 @@ extension RepositoryViewModel {
         if activeFileID != id, let kept = openedFiles.first {
             selectCodeFile(kept)
         }
+        recalculateMissingOpenFileState(updateEditorForActiveFile: false)
     }
 
     func closeFilesToTheLeft(ofID id: String) {
@@ -492,6 +533,7 @@ extension RepositoryViewModel {
         if let activeID = activeFileID, removedIDs.contains(activeID) {
             selectCodeFile(openedFiles[0])
         }
+        recalculateMissingOpenFileState(updateEditorForActiveFile: false)
     }
 
     func closeFilesToTheRight(ofID id: String) {
@@ -501,10 +543,12 @@ extension RepositoryViewModel {
         if let activeID = activeFileID, removedIDs.contains(activeID) {
             selectCodeFile(openedFiles[index])
         }
+        recalculateMissingOpenFileState(updateEditorForActiveFile: false)
     }
 
     func closeAllFiles() {
         openedFiles.removeAll()
+        missingOpenFileIDs.removeAll()
         activeFileID = nil
         selectedCodeFile = nil
         codeFileContent = ""
@@ -512,6 +556,10 @@ extension RepositoryViewModel {
 
     func saveCurrentCodeFile() {
         guard let file = selectedCodeFile else { return }
+        if missingOpenFileIDs.contains(file.id) {
+            statusMessage = L10n("editor.file.missingSaveBlocked")
+            return
+        }
         let kind = editorContentKind(for: file.url)
         guard kind == .text || kind == .markdown else {
             statusMessage = L10n("editor.file.readOnlyBinary")

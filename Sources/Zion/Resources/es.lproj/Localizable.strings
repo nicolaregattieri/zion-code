@@ -1038,6 +1038,9 @@
 "editor.image.loadFailed" = "No se pudo cargar esta imagen";
 "editor.file.unsupported" = "Este tipo de archivo no se puede previsualizar en el editor";
 "editor.file.readOnlyBinary" = "Este archivo binario no se puede guardar desde el editor de texto";
+"editor.file.missingContent" = "Este archivo fue eliminado del disco. Mantén esta pestaña para contexto o ciérrala.";
+"editor.file.missingStatus" = "El archivo \"%@\" fue eliminado del disco.";
+"editor.file.missingSaveBlocked" = "No se puede guardar porque este archivo ya no existe en disco.";
 
 // Per-Repo Config
 "editor.repoConfig.active" = "Ajustes del editor definidos por .zion/editor.json";
@@ -1967,3 +1970,4 @@
 "editor.tab.closeLeft" = "Cerrar a la Izquierda";
 "editor.tab.closeRight" = "Cerrar a la Derecha";
 "editor.tab.closeAll" = "Cerrar Todos";
+"editor.tab.missingTooltip" = "Archivo eliminado en disco";

@@ -346,6 +346,49 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
         XCTAssertEqual(merged.map(\.name), ["keep.swift", "new.swift"])
     }
 
+    // MARK: - Missing Open Files
+
+    func testRecalculateMissingOpenFileStateMarksMissingActiveFile() throws {
+        let vm = RepositoryViewModel()
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let existingURL = tempDir.appendingPathComponent("exists.swift")
+        let missingURL = tempDir.appendingPathComponent("missing.swift")
+        try "print(\"ok\")\n".write(to: existingURL, atomically: true, encoding: .utf8)
+
+        let existing = FileItem(url: existingURL, isDirectory: false, children: nil)
+        let missing = FileItem(url: missingURL, isDirectory: false, children: nil)
+        vm.openedFiles = [existing, missing]
+        vm.activeFileID = missing.id
+        vm.selectedCodeFile = missing
+        vm.codeFileContent = "old"
+
+        vm.recalculateMissingOpenFileState(updateEditorForActiveFile: true)
+
+        XCTAssertTrue(vm.missingOpenFileIDs.contains(missing.id))
+        XCTAssertFalse(vm.missingOpenFileIDs.contains(existing.id))
+        XCTAssertEqual(vm.codeFileContent, L10n("editor.file.missingContent"))
+    }
+
+    func testRecalculateMissingOpenFileStateClearsMarkerWhenFileReturns() throws {
+        let vm = RepositoryViewModel()
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let fileURL = tempDir.appendingPathComponent("transient.swift")
+        let transient = FileItem(url: fileURL, isDirectory: false, children: nil)
+        vm.openedFiles = [transient]
+        vm.missingOpenFileIDs = [transient.id]
+
+        try "print(\"back\")\n".write(to: fileURL, atomically: true, encoding: .utf8)
+        vm.recalculateMissingOpenFileState(updateEditorForActiveFile: false)
+
+        XCTAssertFalse(vm.missingOpenFileIDs.contains(transient.id))
+    }
+
     // MARK: - closeOtherFiles
 
     func testCloseOtherFilesKeepsOnlyTarget() {
