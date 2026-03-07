@@ -592,9 +592,23 @@ extension RepositoryViewModel {
     func isTextFile(_ url: URL) -> Bool {
         guard let resourceValues = try? url.resourceValues(forKeys: [.contentTypeKey]),
               let contentType = resourceValues.contentType else {
-            return false
+            return isLikelyTextFileByContent(url)
         }
-        return Self.acceptedTextTypes.contains { contentType.conforms(to: $0) }
+        if Self.acceptedTextTypes.contains(where: { contentType.conforms(to: $0) }) {
+            return true
+        }
+        return isLikelyTextFileByContent(url)
+    }
+
+    private func isLikelyTextFileByContent(_ url: URL, maxBytes: Int = 8_192) -> Bool {
+        guard let handle = try? FileHandle(forReadingFrom: url) else { return false }
+        defer { try? handle.close() }
+        guard let data = try? handle.read(upToCount: maxBytes) else { return false }
+        if data.isEmpty { return true }
+        if data.contains(0) { return false }
+        if String(data: data, encoding: .utf8) != nil { return true }
+        if String(data: data, encoding: .ascii) != nil { return true }
+        return false
     }
 
     func isImageFile(_ url: URL) -> Bool {

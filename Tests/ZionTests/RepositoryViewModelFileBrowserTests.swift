@@ -65,6 +65,34 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
         XCTAssertEqual(results[0].matches[0].preview, "# Project Title")
     }
 
+    // MARK: - isTextFile
+
+    func testIsTextFileAcceptsDotEnv() throws {
+        let vm = RepositoryViewModel()
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let envFile = tempDir.appendingPathComponent(".env")
+        try "API_KEY=test-value\nFEATURE_FLAG=true\n".write(to: envFile, atomically: true, encoding: .utf8)
+
+        XCTAssertTrue(vm.isTextFile(envFile))
+        XCTAssertEqual(vm.editorContentKind(for: envFile), .text)
+    }
+
+    func testIsTextFileRejectsBinaryWithoutExtension() throws {
+        let vm = RepositoryViewModel()
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let binaryFile = tempDir.appendingPathComponent("payload")
+        try Data([0x00, 0x01, 0x02, 0x03]).write(to: binaryFile)
+
+        XCTAssertFalse(vm.isTextFile(binaryFile))
+        XCTAssertEqual(vm.editorContentKind(for: binaryFile), .unsupported)
+    }
+
     // MARK: - isSafeFileOrFolderName
 
     func testIsSafeNameValidName() {
