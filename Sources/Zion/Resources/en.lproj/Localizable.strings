@@ -1041,6 +1041,9 @@
 "editor.image.loadFailed" = "Could not load this image";
 "editor.file.unsupported" = "This file type cannot be previewed in the editor";
 "editor.file.readOnlyBinary" = "This binary file cannot be saved through the text editor";
+"editor.file.missingContent" = "This file was deleted from disk. Keep this tab open for context or close it.";
+"editor.file.missingStatus" = "File \"%@\" was deleted from disk.";
+"editor.file.missingSaveBlocked" = "Cannot save because this file no longer exists on disk.";
 
 // Per-Repo Config
 "editor.repoConfig.active" = "Editor settings defined by .zion/editor.json";
@@ -1942,6 +1945,7 @@
 "editor.tab.closeLeft" = "Close to the Left";
 "editor.tab.closeRight" = "Close to the Right";
 "editor.tab.closeAll" = "Close All";
+"editor.tab.missingTooltip" = "File deleted on disk";
 
 // Shortcuts
 "shortcuts.toggleDotfiles" = "Toggle Dotfiles";

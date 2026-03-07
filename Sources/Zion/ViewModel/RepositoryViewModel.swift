@@ -403,6 +403,7 @@ final class RepositoryViewModel {
         didSet { rebuildFlatFileCache() }
     }
     var openedFiles: [FileItem] = []
+    var missingOpenFileIDs: Set<String> = []
     var activeFileID: String?
     var selectedFileIDs: Set<String> = []
     @ObservationIgnored var lastClickedFileID: String?
@@ -791,6 +792,7 @@ final class RepositoryViewModel {
         logger.log(.info, "openRepository EXIT", context: "tabs=\(terminalTabs.count) sessions=\(terminalTabs.flatMap { $0.allSessions() }.count) stashed=\(finalStashedKeys)", source: #function)
 
         openedFiles.removeAll()
+        missingOpenFileIDs.removeAll()
         activeFileID = nil
         selectedCodeFile = nil
         selectedChangeFile = nil
@@ -1050,6 +1052,15 @@ final class RepositoryViewModel {
         let shouldReload = event.requiresRescan || event.changedPaths.contains(selectedPath)
         guard shouldReload else { return }
 
+        if !FileManager.default.fileExists(atPath: file.url.path) {
+            missingOpenFileIDs.insert(file.id)
+            codeFileContent = L10n("editor.file.missingContent")
+            statusMessage = L10n("editor.file.missingStatus", file.name)
+            unsavedFiles.remove(file.id)
+            return
+        }
+
+        missingOpenFileIDs.remove(file.id)
         if let content = try? String(contentsOf: file.url, encoding: .utf8),
            content != codeFileContent {
             codeFileContent = content

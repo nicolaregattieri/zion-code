@@ -10,10 +10,16 @@ struct CodeTab: View {
     @State private var isHovered = false
 
     private var isUnsaved: Bool { model.unsavedFiles.contains(file.id) }
+    private var isMissing: Bool { model.missingOpenFileIDs.contains(file.id) }
 
     var body: some View {
         HStack(spacing: DesignSystem.Spacing.iconTextGap) {
-            if isUnsaved {
+            if isMissing {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundStyle(DesignSystem.Colors.destructive)
+                    .help(L10n("editor.tab.missingTooltip"))
+            } else if isUnsaved {
                 Circle().fill(DesignSystem.Colors.warning).frame(width: 6, height: 6)
             }
 
