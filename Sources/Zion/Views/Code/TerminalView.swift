@@ -188,6 +188,10 @@ struct TerminalTabView: NSViewRepresentable {
             parent.session._activeCoordinatorGeneration == generationID
         }
 
+        static func shouldRecoverOwnerBinding(isCurrentOwner: Bool, bridgeMatchesCoordinator: Bool) -> Bool {
+            !isCurrentOwner && bridgeMatchesCoordinator
+        }
+
         func ensureOwnerBinding(reason: String) {
             guard parent.session._shouldPreserve else { return }
             guard let liveView = terminalView ?? (parent.session._cachedView as? SwiftTerm.TerminalView) else { return }
@@ -958,7 +962,35 @@ struct TerminalTabView: NSViewRepresentable {
 
         nonisolated func processTerminated(_ source: SwiftTerm.LocalProcess, exitCode: Int32?) {
             Task { @MainActor in
-                guard source === process, isCurrentOwner() else {
+                guard source === process else {
+                    DiagnosticLogger.shared.log(
+                        .info,
+                        "processTerminated ignored (foreign source)",
+                        context: "\(parent.session.label)(\(parent.session.id.uuidString.prefix(4))) gen=\(shortGeneration)",
+                        source: "TerminalTabView"
+                    )
+                    return
+                }
+
+                let currentOwner = isCurrentOwner()
+                if !currentOwner {
+                    if Self.shouldRecoverOwnerBinding(
+                        isCurrentOwner: currentOwner,
+                        bridgeMatchesCoordinator: parent.session._processBridge === self
+                    ) {
+                        ensureOwnerBinding(reason: "processTerminated.recover")
+                    } else {
+                        DiagnosticLogger.shared.log(
+                            .info,
+                            "processTerminated ignored (stale)",
+                            context: "\(parent.session.label)(\(parent.session.id.uuidString.prefix(4))) gen=\(shortGeneration)",
+                            source: "TerminalTabView"
+                        )
+                        return
+                    }
+                }
+
+                guard isCurrentOwner() else {
                     DiagnosticLogger.shared.log(
                         .info,
                         "processTerminated ignored (stale)",
@@ -975,14 +1007,22 @@ struct TerminalTabView: NSViewRepresentable {
 
         nonisolated func dataReceived(slice: ArraySlice<UInt8>) {
             Task { @MainActor in
-                guard isCurrentOwner() else {
-                    DiagnosticLogger.shared.log(
-                        .info,
-                        "dataReceived ignored (stale)",
-                        context: "\(parent.session.label)(\(parent.session.id.uuidString.prefix(4))) gen=\(shortGeneration)",
-                        source: "TerminalTabView"
-                    )
-                    return
+                let currentOwner = isCurrentOwner()
+                if !currentOwner {
+                    if Self.shouldRecoverOwnerBinding(
+                        isCurrentOwner: currentOwner,
+                        bridgeMatchesCoordinator: parent.session._processBridge === self
+                    ) {
+                        ensureOwnerBinding(reason: "dataReceived.recover")
+                    } else {
+                        DiagnosticLogger.shared.log(
+                            .info,
+                            "dataReceived ignored (stale)",
+                            context: "\(parent.session.label)(\(parent.session.id.uuidString.prefix(4))) gen=\(shortGeneration)",
+                            source: "TerminalTabView"
+                        )
+                        return
+                    }
                 }
 
                 if terminalView == nil, let rebound = parent.session._cachedView as? SwiftTerm.TerminalView {

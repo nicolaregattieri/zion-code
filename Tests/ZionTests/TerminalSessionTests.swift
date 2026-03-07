@@ -40,4 +40,25 @@ final class TerminalSessionTests: XCTestCase {
         XCTAssertNil(session._activeCoordinatorGeneration)
         XCTAssertEqual(session._shellPid, 0)
     }
+
+    func testShouldRecoverOwnerBindingOnlyWhenBridgeMatchesAndNotCurrentOwner() {
+        XCTAssertTrue(
+            TerminalTabView.Coordinator.shouldRecoverOwnerBinding(
+                isCurrentOwner: false,
+                bridgeMatchesCoordinator: true
+            )
+        )
+        XCTAssertFalse(
+            TerminalTabView.Coordinator.shouldRecoverOwnerBinding(
+                isCurrentOwner: true,
+                bridgeMatchesCoordinator: true
+            )
+        )
+        XCTAssertFalse(
+            TerminalTabView.Coordinator.shouldRecoverOwnerBinding(
+                isCurrentOwner: false,
+                bridgeMatchesCoordinator: false
+            )
+        )
+    }
 }
