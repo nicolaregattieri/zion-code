@@ -8,6 +8,8 @@ extension RepositoryViewModel {
     func checkout(reference: String) {
         let target = reference.clean
         guard !target.isEmpty else { return }
+        guard !isBusy else { return }
+        guard activeGitActionToken == nil else { return }
 
         // Determine local branch name if it's a remote ref
         var localName = target
@@ -16,6 +18,10 @@ extension RepositoryViewModel {
                 localName = String(target.dropFirst(remote.name.count + 1))
                 break
             }
+        }
+
+        if localName == currentBranch {
+            return
         }
 
         if localBranchExists(named: localName) {
@@ -32,17 +38,45 @@ extension RepositoryViewModel {
                 }
                 return
             }
-            runGitAction(label: "Checkout", args: ["checkout", localName])
+            runGitAction(
+                label: "Checkout",
+                args: ["checkout", "--quiet", localName],
+                refreshOptions: .critical,
+                scheduleFullRefreshAfterCompletion: true,
+                refreshSetBusy: false,
+                onCommandSuccess: { [weak self] in
+                    self?.currentBranch = localName
+                }
+            )
         } else if isRemoteRefName(target) {
-            runGitAction(label: "Checkout", args: ["checkout", "-t", target])
+            runGitAction(
+                label: "Checkout",
+                args: ["checkout", "--quiet", "-t", target],
+                refreshOptions: .critical,
+                scheduleFullRefreshAfterCompletion: true,
+                refreshSetBusy: false,
+                onCommandSuccess: { [weak self] in
+                    self?.currentBranch = localName
+                }
+            )
         } else {
-            runGitAction(label: "Checkout", args: ["checkout", target])
+            runGitAction(
+                label: "Checkout",
+                args: ["checkout", "--quiet", target],
+                refreshOptions: .critical,
+                scheduleFullRefreshAfterCompletion: true,
+                refreshSetBusy: false,
+                onCommandSuccess: { [weak self] in
+                    self?.currentBranch = localName
+                }
+            )
         }
     }
 
     func checkoutAndPull(reference: String) {
         let target = reference.clean
         guard !target.isEmpty else { return }
+        guard !isBusy else { return }
 
         // Match checkout() behavior: if this local branch belongs to another
         // worktree, offer to jump there instead of surfacing a checkout error.
@@ -69,7 +103,7 @@ extension RepositoryViewModel {
             }
         }
 
-        actionTask?.cancel()
+        guard activeGitActionToken == nil else { return }
         let actionToken = UUID()
         activeGitActionToken = actionToken
         isBusy = true
@@ -116,7 +150,14 @@ extension RepositoryViewModel {
                 statusMessage = L10n("Checkout e Pull concluídos para %@", localName)
                 guard activeGitActionToken == actionToken else { return }
                 activeGitActionToken = nil
-                refreshRepository(setBusy: true)
+                refreshRepository(
+                    setBusy: true,
+                    options: .critical,
+                    origin: .gitAction,
+                    onFinish: { [weak self] in
+                        self?.refreshRepository(setBusy: false, options: .full, origin: .gitAction)
+                    }
+                )
             } catch is CancellationError {
                 guard activeGitActionToken == actionToken else { return }
                 activeGitActionToken = nil

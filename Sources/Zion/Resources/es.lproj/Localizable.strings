@@ -105,6 +105,9 @@
 "Deseja remover a branch local %@?" = "¿Desea eliminar la rama local %@?";
 "Remover branch local (Force)" = "Eliminar rama local (Forzar)";
 "Deseja remover FORCADO a branch local %@?" = "¿Desea eliminar FORZADO la rama local %@?";
+"Renomear branch..." = "Renombrar rama...";
+"Renomear branch" = "Renombrar rama";
+"Novo nome para %@:" = "Nuevo nombre para %@:";
 "Fazer merge da branch informada na atual?" = "¿Hacer merge de la rama informada en la actual?";
 "Rebasear a branch atual no target informado?" = "¿Rebasear la rama actual en el objetivo informado?";
 "Nova branch" = "Nueva rama";

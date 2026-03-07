@@ -96,7 +96,7 @@ struct DecorationPill: View {
     }
 
     private func checkIsCurrent(name: String, type: DecorationType, current: String) -> Bool {
-        if type == .head { return true }
+        if type == .head { return name == current }
         if name == current { return true }
         if current.hasPrefix("detached (tag: ") && type == .tag && current.contains(name) { return true }
         if current.hasPrefix("detached (") && current.contains(name) { return true } // matches hash

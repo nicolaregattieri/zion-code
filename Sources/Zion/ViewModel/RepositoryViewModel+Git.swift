@@ -325,6 +325,7 @@ extension RepositoryViewModel {
             inferOrigins: options.inferOrigins && inferBranchOrigins
         )
         let commitLimitSnapshot = commitLimit
+        extendFileWatcherGitMetadataSuppression(by: 1.2)
 
         refreshTask = Task {
             do {
@@ -474,16 +475,27 @@ extension RepositoryViewModel {
 
     // MARK: - Git Action Runner
 
-    func runGitAction(label: String, args: [String]) {
+    func runGitAction(
+        label: String,
+        args: [String],
+        refreshOptions: RepositoryLoadOptions = .full,
+        scheduleFullRefreshAfterCompletion: Bool = false,
+        refreshSetBusy: Bool = true,
+        onCommandSuccess: (() -> Void)? = nil
+    ) {
         guard let repositoryURL else {
             lastError = GitClientError.repositoryNotSelected.localizedDescription
             return
         }
+        guard activeGitActionToken == nil else {
+            logger.log(.info, "Git action skipped (another action in progress)", context: label, source: #function)
+            return
+        }
 
-        actionTask?.cancel()
         let actionToken = UUID()
         activeGitActionToken = actionToken
         isBusy = true
+        extendFileWatcherGitMetadataSuppression(by: 2.0)
 
         let commandSummary = redactedGitCommandSummary(args: args)
         logger.log(.git, commandSummary, context: label)
@@ -506,8 +518,21 @@ extension RepositoryViewModel {
                 }
                 logger.log(.git, "\(label) OK", context: commandSummary)
                 guard activeGitActionToken == actionToken else { return }
+                onCommandSuccess?()
                 activeGitActionToken = nil
-                refreshRepository(setBusy: true, origin: .gitAction)
+                if !refreshSetBusy {
+                    isBusy = false
+                }
+                refreshRepository(
+                    setBusy: refreshSetBusy,
+                    options: refreshOptions,
+                    origin: .gitAction,
+                    onFinish: { [weak self] in
+                        guard let self else { return }
+                        guard scheduleFullRefreshAfterCompletion else { return }
+                        self.refreshRepository(setBusy: false, options: .full, origin: .gitAction)
+                    }
+                )
             } catch is CancellationError {
                 guard activeGitActionToken == actionToken else { return }
                 activeGitActionToken = nil
@@ -531,13 +556,16 @@ extension RepositoryViewModel {
             lastError = GitClientError.repositoryNotSelected.localizedDescription
             return
         }
+        guard activeGitActionToken == nil else {
+            logger.log(.info, "Destructive git action skipped (another action in progress)", context: label, source: #function)
+            return
+        }
 
         guard uncommittedCount > 0 else {
             runGitAction(label: label, args: args)
             return
         }
 
-        actionTask?.cancel()
         let actionToken = UUID()
         activeGitActionToken = actionToken
         isBusy = true
