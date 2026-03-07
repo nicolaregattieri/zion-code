@@ -448,6 +448,13 @@ extension RepositoryViewModel {
         return canonicalRecentRepositoryURL(for: url)
     }
 
+    func recentChangedCount(for recentRoot: URL) -> Int? {
+        if recentRepositoryRoot(for: repositoryURL) == recentRoot {
+            return uncommittedCount
+        }
+        return backgroundRepoChangedFiles[recentRoot]
+    }
+
     func normalizeRecentRepositories(_ urls: [URL]) -> [URL] {
         var seen: Set<String> = []
         var ordered: [URL] = []
