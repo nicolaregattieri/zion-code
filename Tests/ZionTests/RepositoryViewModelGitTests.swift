@@ -885,18 +885,18 @@ final class RepositoryViewModelGitTests: XCTestCase {
     func testDefaultCommitLimitWithReference() {
         let vm = RepositoryViewModel()
         let result = vm.defaultCommitLimit(for: "main")
-        XCTAssertEqual(result, 450) // defaultCommitLimitFocused
+        XCTAssertEqual(result, vm.defaultCommitLimitFocused)
     }
 
     func testDefaultCommitLimitWithNil() {
         let vm = RepositoryViewModel()
         let result = vm.defaultCommitLimit(for: nil)
-        XCTAssertEqual(result, 700) // defaultCommitLimitAll
+        XCTAssertEqual(result, vm.defaultCommitLimitAll)
     }
 
     func testDefaultCommitLimitWithEmptyString() {
         let vm = RepositoryViewModel()
         let result = vm.defaultCommitLimit(for: "")
-        XCTAssertEqual(result, 700) // empty cleans to empty, so treated as nil
+        XCTAssertEqual(result, vm.defaultCommitLimitAll) // empty cleans to empty, so treated as nil
     }
 }
