@@ -46,6 +46,7 @@ final class ZionTerminalViewTests: XCTestCase {
 
     func testLinefeedPreservesSelectionForMouseReportingApps() {
         let view = ZionTerminalView(frame: .zero)
+        view.prioritizeSelectionInteraction = true
         view.feed(text: "\u{1B}[?1000h") // Enable mouse reporting mode.
         view.feed(text: "hello world")
         view.selectAll(nil)
@@ -56,6 +57,20 @@ final class ZionTerminalViewTests: XCTestCase {
         view.linefeed(source: view.getTerminal())
 
         XCTAssertGreaterThan(view.selectedRange().length, 0)
+    }
+
+    func testLinefeedClearsSelectionForMouseReportingWithoutSelectionPriority() {
+        let view = ZionTerminalView(frame: .zero)
+        view.feed(text: "\u{1B}[?1000h") // Enable mouse reporting mode.
+        view.feed(text: "hello world")
+        view.selectAll(nil)
+
+        XCTAssertGreaterThan(view.selectedRange().length, 0)
+        XCTAssertNotEqual(view.getTerminal().mouseMode, .off)
+
+        view.linefeed(source: view.getTerminal())
+
+        XCTAssertEqual(view.selectedRange().length, 0)
     }
 
     func testClosestTerminalViewFindsAncestorTerminal() {
