@@ -4,8 +4,8 @@ import AppKit
 /// Subclass of SwiftTerm.TerminalView that adds NSDraggingDestination support
 /// for file URLs dragged from Finder. SwiftTerm has no drag-and-drop implementation,
 /// so its NSView consumes all drag events before SwiftUI can handle them.
-/// This subclass registers for `.fileURL` drags only — `.string` drags are left
-/// to SwiftUI's `.dropDestination(for: String.self)` handler.
+/// This subclass handles file URL and string drags at the pane level so split
+/// layouts can route drops to the exact terminal under the cursor.
 final class ZionTerminalView: SwiftTerm.TerminalView {
 
     /// Called when the user drops one or more file URLs onto the terminal.
@@ -19,7 +19,7 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        registerForDraggedTypes([.fileURL])
+        registerForDraggedTypes([.fileURL, .string])
     }
 
     @available(*, unavailable)
@@ -30,13 +30,13 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
     // MARK: - NSDraggingDestination
 
     override func draggingEntered(_ sender: any NSDraggingInfo) -> NSDragOperation {
-        guard hasFileURLs(sender) else { return [] }
+        guard hasSupportedPayload(sender) else { return [] }
         showDragHighlight()
         return .copy
     }
 
     override func draggingUpdated(_ sender: any NSDraggingInfo) -> NSDragOperation {
-        guard hasFileURLs(sender) else { return [] }
+        guard hasSupportedPayload(sender) else { return [] }
         return .copy
     }
 
@@ -50,19 +50,20 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
 
     override func performDragOperation(_ sender: any NSDraggingInfo) -> Bool {
         removeDragHighlight()
-        let urls = fileURLs(from: sender)
-        guard !urls.isEmpty else { return false }
-        let escaped = TerminalShellEscaping.joinQuotedFileURLs(urls)
-        guard !escaped.isEmpty else { return false }
+        guard let droppedText = droppedText(from: sender), !droppedText.isEmpty else { return false }
 
         let target = resolvedDropTarget(using: sender)
         target.window?.makeFirstResponder(target)
         target.onDropActivated?()
-        target.onFileDrop?(escaped)
+        target.onFileDrop?(droppedText)
         return true
     }
 
     // MARK: - Helpers
+
+    private func hasSupportedPayload(_ info: NSDraggingInfo) -> Bool {
+        hasFileURLs(info) || hasStringPayload(info)
+    }
 
     private func hasFileURLs(_ info: NSDraggingInfo) -> Bool {
         info.draggingPasteboard.canReadObject(
@@ -71,11 +72,45 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
         )
     }
 
+    private func hasStringPayload(_ info: NSDraggingInfo) -> Bool {
+        info.draggingPasteboard.canReadObject(
+            forClasses: [NSString.self],
+            options: nil
+        )
+    }
+
     private func fileURLs(from info: NSDraggingInfo) -> [URL] {
-        (info.draggingPasteboard.readObjects(
+        let raw = (info.draggingPasteboard.readObjects(
             forClasses: [NSURL.self],
             options: [.urlReadingFileURLsOnly: true]
         ) as? [URL]) ?? []
+
+        var seen = Set<String>()
+        var unique: [URL] = []
+        for url in raw {
+            let key = url.standardizedFileURL.path
+            if seen.insert(key).inserted {
+                unique.append(url)
+            }
+        }
+        return unique
+    }
+
+    private func droppedText(from info: NSDraggingInfo) -> String? {
+        let urls = fileURLs(from: info)
+        if !urls.isEmpty {
+            let escaped = TerminalShellEscaping.joinQuotedFileURLs(urls)
+            return escaped.isEmpty ? nil : escaped
+        }
+
+        let strings = (info.draggingPasteboard.readObjects(
+            forClasses: [NSString.self],
+            options: nil
+        ) as? [NSString]) ?? []
+        guard let first = strings.first?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+              !first.isEmpty else { return nil }
+        return String(first)
     }
 
     private func resolvedDropTarget(using info: NSDraggingInfo) -> ZionTerminalView {

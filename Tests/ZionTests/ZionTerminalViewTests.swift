@@ -14,9 +14,9 @@ final class ZionTerminalViewTests: XCTestCase {
         XCTAssertTrue(view.registeredDraggedTypes.contains(.fileURL))
     }
 
-    func testRegisteredDraggedTypesDoesNotContainString() {
+    func testRegisteredDraggedTypesContainsString() {
         let view = ZionTerminalView(frame: .zero)
-        XCTAssertFalse(view.registeredDraggedTypes.contains(.string))
+        XCTAssertTrue(view.registeredDraggedTypes.contains(.string))
     }
 
     func testOnFileDropClosureReceivesShellEscapedPaths() {
