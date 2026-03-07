@@ -44,7 +44,7 @@ final class ZionTerminalViewTests: XCTestCase {
         XCTAssertGreaterThan(view.selectedRange().length, 0)
     }
 
-    func testLinefeedClearsSelectionForMouseReportingApps() {
+    func testLinefeedPreservesSelectionForMouseReportingApps() {
         let view = ZionTerminalView(frame: .zero)
         view.feed(text: "\u{1B}[?1000h") // Enable mouse reporting mode.
         view.feed(text: "hello world")
@@ -55,6 +55,26 @@ final class ZionTerminalViewTests: XCTestCase {
 
         view.linefeed(source: view.getTerminal())
 
-        XCTAssertEqual(view.selectedRange().length, 0)
+        XCTAssertGreaterThan(view.selectedRange().length, 0)
     }
+
+    func testClosestTerminalViewFindsAncestorTerminal() {
+        let terminal = ZionTerminalView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
+        let wrapper = NSView(frame: terminal.bounds)
+        let nested = NSView(frame: .zero)
+        terminal.addSubview(wrapper)
+        wrapper.addSubview(nested)
+
+        let resolved = ZionTerminalView.closestTerminalView(from: nested)
+        XCTAssertTrue(resolved === terminal)
+    }
+
+    func testClosestTerminalViewReturnsNilWhenNoAncestorMatches() {
+        let root = NSView(frame: .zero)
+        let child = NSView(frame: .zero)
+        root.addSubview(child)
+
+        XCTAssertNil(ZionTerminalView.closestTerminalView(from: child))
+    }
+
 }
