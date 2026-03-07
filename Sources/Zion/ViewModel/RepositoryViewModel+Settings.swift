@@ -778,22 +778,56 @@ extension RepositoryViewModel {
 
         state.fileWatcher.onChange = { [weak self] event in
             guard event.hasTreeImpact || event.hasGitMetadataImpact || event.requiresRescan else { return }
-            Task { [weak self] in
-                await self?.updateChangedFileCount(for: url)
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.markBackgroundRepoSignal(for: url)
+                await self.updateChangedFileCount(for: url)
             }
         }
         state.fileWatcher.watch(directory: url)
+        state.monitorTask?.cancel()
 
-        // Periodic check every 30s (catches changes FileWatcher might miss)
+        // Inactive repositories run in adaptive mode:
+        // idle polling is slow, but watcher signals temporarily switch to a fast burst cadence.
         state.monitorTask = Task { [weak self] in
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: Constants.Timing.backgroundMonitorInterval)
+                guard let self else { break }
+                let interval = self.nextBackgroundMonitorSleepInterval(for: url)
+                try? await Task.sleep(nanoseconds: interval)
                 if Task.isCancelled { break }
-                await self?.updateChangedFileCount(for: url)
+                await self.updateChangedFileCount(for: url)
+                self.clearBackgroundBurstIfNeeded(for: url)
             }
         }
 
         backgroundRepoStates[url] = state
+    }
+
+    static func nextInactiveMonitorInterval(now: Date, burstUntil: Date?) -> UInt64 {
+        if let burstUntil, now < burstUntil {
+            return Constants.Timing.inactiveBackgroundMonitorBurstInterval
+        }
+        return Constants.Timing.inactiveBackgroundMonitorIdleInterval
+    }
+
+    func nextBackgroundMonitorSleepInterval(for url: URL, now: Date = Date()) -> UInt64 {
+        let burstUntil = backgroundRepoStates[url]?.burstUntil
+        return Self.nextInactiveMonitorInterval(now: now, burstUntil: burstUntil)
+    }
+
+    func markBackgroundRepoSignal(for url: URL, now: Date = Date()) {
+        guard var state = backgroundRepoStates[url] else { return }
+        let burstWindowSeconds = TimeInterval(Constants.Timing.inactiveBackgroundMonitorBurstWindow) / 1_000_000_000
+        state.burstUntil = now.addingTimeInterval(burstWindowSeconds)
+        backgroundRepoStates[url] = state
+    }
+
+    func clearBackgroundBurstIfNeeded(for url: URL, now: Date = Date()) {
+        guard var state = backgroundRepoStates[url], let burstUntil = state.burstUntil else { return }
+        if now >= burstUntil {
+            state.burstUntil = nil
+            backgroundRepoStates[url] = state
+        }
     }
 
     func updateChangedFileCount(for url: URL) async {

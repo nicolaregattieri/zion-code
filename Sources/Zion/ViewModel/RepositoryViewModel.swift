@@ -649,7 +649,8 @@ final class RepositoryViewModel {
                 activeTabID: activeTabID,
                 focusedSessionID: focusedSessionID,
                 fileWatcher: watcher,
-                monitorTask: nil
+                monitorTask: nil,
+                burstUntil: nil
             )
             backgroundRepoChangedFiles[previousURL] = uncommittedCount
             startBackgroundMonitor(for: previousURL)

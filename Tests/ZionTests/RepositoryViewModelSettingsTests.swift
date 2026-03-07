@@ -189,4 +189,49 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
     func testRefreshOriginGitActionUsesInteractiveDetails() {
         XCTAssertFalse(RepositoryViewModel.RefreshOrigin.gitAction.usesSilentCommitDetails)
     }
+
+    // MARK: - Inactive background monitor policy
+
+    func testNextInactiveMonitorIntervalUsesIdleWhenNoBurst() {
+        let now = Date()
+        let interval = RepositoryViewModel.nextInactiveMonitorInterval(now: now, burstUntil: nil)
+        XCTAssertEqual(interval, Constants.Timing.inactiveBackgroundMonitorIdleInterval)
+    }
+
+    func testNextInactiveMonitorIntervalUsesBurstWhenBurstWindowActive() {
+        let now = Date()
+        let burstUntil = now.addingTimeInterval(30)
+        let interval = RepositoryViewModel.nextInactiveMonitorInterval(now: now, burstUntil: burstUntil)
+        XCTAssertEqual(interval, Constants.Timing.inactiveBackgroundMonitorBurstInterval)
+    }
+
+    func testNextInactiveMonitorIntervalUsesIdleWhenBurstExpired() {
+        let now = Date()
+        let burstUntil = now.addingTimeInterval(-1)
+        let interval = RepositoryViewModel.nextInactiveMonitorInterval(now: now, burstUntil: burstUntil)
+        XCTAssertEqual(interval, Constants.Timing.inactiveBackgroundMonitorIdleInterval)
+    }
+
+    func testMarkBackgroundRepoSignalSetsBurstDeadline() {
+        let vm = RepositoryViewModel()
+        let url = URL(fileURLWithPath: "/tmp/repo-bg-monitor")
+        vm.backgroundRepoStates[url] = BackgroundRepoState(
+            terminalTabs: [],
+            activeTabID: nil,
+            focusedSessionID: nil,
+            fileWatcher: FileWatcher(),
+            monitorTask: nil,
+            burstUntil: nil
+        )
+
+        let now = Date()
+        vm.markBackgroundRepoSignal(for: url, now: now)
+
+        let burstUntil = vm.backgroundRepoStates[url]?.burstUntil
+        XCTAssertNotNil(burstUntil)
+        guard let burstUntil else { return }
+
+        let expected = TimeInterval(Constants.Timing.inactiveBackgroundMonitorBurstWindow) / 1_000_000_000
+        XCTAssertEqual(burstUntil.timeIntervalSince(now), expected, accuracy: 0.1)
+    }
 }
