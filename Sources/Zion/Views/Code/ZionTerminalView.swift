@@ -56,6 +56,7 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
         guard !escaped.isEmpty else { return false }
 
         let target = resolvedDropTarget(using: sender)
+        target.window?.makeFirstResponder(target)
         target.onDropActivated?()
         target.onFileDrop?(escaped)
         return true
@@ -78,10 +79,28 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
     }
 
     private func resolvedDropTarget(using info: NSDraggingInfo) -> ZionTerminalView {
-        guard let contentView = window?.contentView else { return self }
-        let locationInContent = contentView.convert(info.draggingLocation, from: nil)
-        let hitView = contentView.hitTest(locationInContent)
-        return Self.closestTerminalView(from: hitView) ?? self
+        guard let window, let contentView = window.contentView else { return self }
+        let locationInWindow = info.draggingLocation
+        let locationInContent = contentView.convert(locationInWindow, from: nil)
+
+        if let hitView = contentView.hitTest(locationInContent),
+           let terminal = Self.closestTerminalView(from: hitView),
+           terminal.acceptsDrop(atWindowPoint: locationInWindow) {
+            return terminal
+        }
+
+        if let terminal = Self.allTerminalViews(in: contentView)
+            .reversed()
+            .first(where: { $0.acceptsDrop(atWindowPoint: locationInWindow) }) {
+            return terminal
+        }
+
+        if let responder = window.firstResponder as? NSView,
+           let terminal = Self.closestTerminalView(from: responder) {
+            return terminal
+        }
+
+        return self
     }
 
     static func closestTerminalView(from view: NSView?) -> ZionTerminalView? {
@@ -93,6 +112,26 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
             current = node.superview
         }
         return nil
+    }
+
+    private static func allTerminalViews(in root: NSView) -> [ZionTerminalView] {
+        var terminals: [ZionTerminalView] = []
+
+        func walk(_ node: NSView) {
+            if let terminal = node as? ZionTerminalView {
+                terminals.append(terminal)
+            }
+            node.subviews.forEach(walk)
+        }
+
+        walk(root)
+        return terminals
+    }
+
+    private func acceptsDrop(atWindowPoint point: NSPoint) -> Bool {
+        guard window != nil, !isHidden, alphaValue > 0.01 else { return false }
+        let pointInView = convert(point, from: nil)
+        return bounds.contains(pointInView)
     }
 
     // MARK: - Visual feedback
