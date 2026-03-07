@@ -69,7 +69,14 @@ final class RepositoryViewModel {
     var uncommittedChanges: [String] = []
     var uncommittedCount: Int = 0
     var selectedChangeFile: String?
-    var currentFileDiff: String = ""
+    var currentFileDiff: String = "" {
+        didSet {
+            currentFileDiffLines = currentFileDiff
+                .split(separator: "\n", omittingEmptySubsequences: false)
+                .map(String.init)
+        }
+    }
+    var currentFileDiffLines: [String] = []
     var selectedCommitFile: String?
     var currentCommitFileDiff: String = ""
     var currentCommitFileDiffHunks: [DiffHunk] = []

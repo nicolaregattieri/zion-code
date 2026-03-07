@@ -884,41 +884,73 @@ struct GraphScreen: View {
 
     private func updateSearchMatches() {
         let query = commitSearchQuery.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        if query.isEmpty { searchMatchIDs = []; searchMatchIDSet = []; currentMatchIndex = 0; return }
+        if query.isEmpty {
+            searchMatchIDs = []
+            searchMatchIDSet = []
+            currentMatchIndex = 0
+            aiMatchIDSet = []
+            return
+        }
 
-        let priority1 = model.commits.filter { commit in
-            commit.decorations.contains { d in
-                let cleaned = d.lowercased().replacingOccurrences(of: "head -> ", with: "").replacingOccurrences(of: "tag: ", with: "")
-                return cleaned == query || cleaned.hasSuffix("/" + query)
+        var priority1: [String] = []
+        var priority2: [String] = []
+        var priority3: [String] = []
+        priority1.reserveCapacity(model.commits.count)
+        priority2.reserveCapacity(model.commits.count)
+        priority3.reserveCapacity(model.commits.count)
+
+        for commit in model.commits {
+            var hasDecorationExact = false
+            var hasDecorationContains = false
+
+            for decoration in commit.decorations {
+                let lowercasedDecoration = decoration.lowercased()
+                let normalizedDecoration = lowercasedDecoration
+                    .replacingOccurrences(of: "head -> ", with: "")
+                    .replacingOccurrences(of: "tag: ", with: "")
+
+                if normalizedDecoration == query || normalizedDecoration.hasSuffix("/" + query) {
+                    hasDecorationExact = true
+                    break
+                }
+
+                if !hasDecorationContains && lowercasedDecoration.contains(query) {
+                    hasDecorationContains = true
+                }
             }
-        }.map(\.id)
 
-        let p1Set = Set(priority1)
-        let priority2 = model.commits.filter { commit in
-            !p1Set.contains(commit.id) && commit.decorations.contains { $0.lowercased().contains(query) }
-        }.map(\.id)
+            if hasDecorationExact {
+                priority1.append(commit.id)
+                continue
+            }
 
-        let p2Set = Set(priority2)
-        let priority3 = model.commits.filter { commit in
-            !p1Set.contains(commit.id) && !p2Set.contains(commit.id) && (
-                commit.shortHash.lowercased().contains(query) ||
-                commit.author.lowercased().contains(query) ||
-                commit.subject.lowercased().contains(query)
-            )
-        }.map(\.id)
+            if hasDecorationContains {
+                priority2.append(commit.id)
+                continue
+            }
+
+            let hash = commit.shortHash.lowercased()
+            let author = commit.author.lowercased()
+            let subject = commit.subject.lowercased()
+            if hash.contains(query) || author.contains(query) || subject.contains(query) {
+                priority3.append(commit.id)
+            }
+        }
 
         searchMatchIDs = priority1 + priority2 + priority3
         searchMatchIDSet = Set(searchMatchIDs)
         if currentMatchIndex >= searchMatchIDs.count { currentMatchIndex = 0 }
 
-        // Pre-compute AI semantic search matches as a Set for O(1) lookup
-        let aiResults = model.aiSemanticSearchResults
+        // Pre-compute AI semantic search matches as a Set for O(1) row lookups.
+        let aiResults = model.aiSemanticSearchResults.map { $0.lowercased() }
         if aiResults.isEmpty {
             aiMatchIDSet = []
         } else {
             var idSet = Set<String>()
             for commit in model.commits {
-                if aiResults.contains(where: { commit.shortHash.hasPrefix($0) || commit.id.hasPrefix($0) }) {
+                let shortHash = commit.shortHash.lowercased()
+                let fullHash = commit.id.lowercased()
+                if aiResults.contains(where: { shortHash.hasPrefix($0) || fullHash.hasPrefix($0) }) {
                     idSet.insert(commit.id)
                 }
             }
@@ -1261,9 +1293,8 @@ struct GraphScreen: View {
                 Divider()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-                        let lines = model.currentFileDiff.split(separator: "\n", omittingEmptySubsequences: false)
-                        ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
-                            inlineDiffLine(String(line))
+                        ForEach(Array(model.currentFileDiffLines.enumerated()), id: \.offset) { _, line in
+                            inlineDiffLine(line)
                         }
                     }.frame(maxWidth: .infinity, alignment: .leading)
                 }.background(DesignSystem.Colors.glassInset)

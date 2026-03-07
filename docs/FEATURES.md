@@ -103,7 +103,7 @@
 |---------|-------------|----------|
 | Real PTY | Native PTY with login shell and xterm-256color | — |
 | Toggle Terminal | Show/hide terminal pane | `⌘J` |
-| Maximize Terminal | Terminal-only layout | `⇧⌘J` |
+| Maximize Terminal | Terminal-only layout | `⌃⌘J` |
 | New Tab | Create new terminal tab | `⌘T` |
 | Split Vertical | Split focused pane vertically | `⇧⌘D` |
 | Split Horizontal | Split focused pane horizontally | `⇧⌘E` |
@@ -378,7 +378,7 @@
 | `⇧⌘S` | Save As |
 | `⌘R` | Refresh repository status |
 | `⌘J` | Toggle terminal |
-| `⇧⌘J` | Maximize terminal |
+| `⌃⌘J` | Maximize terminal |
 | `⌘T` | New terminal tab |
 | `⇧⌘D` | Split vertical |
 | `⇧⌘E` | Split horizontal |
@@ -390,12 +390,16 @@
 | `⌘G` | Go to Line / Find Next (when search open) |
 | `⇧⌘G` | Find Previous |
 | `⌘H` | Find & Replace |
+| `⌘Delete` | Delete selected file/folder in file browser |
 | `⌘D` | Select Next Occurrence |
 | `F12` | Go to Definition |
 | `⇧F12` | Find References |
 | `⇧⌘R` | Code Review |
 | `⇧⌘H` | Toggle dotfiles visibility |
 | `⇧⌘B` | Toggle Git Blame |
+| `⇧⌘G` | Bisect: mark commit as good |
+| `⇧⌘B` | Bisect: mark commit as bad |
+| `⇧⌘S` | Bisect: skip commit |
 | `⇧⌥F` | Format Document |
 | `⌃⌘Z` | Toggle Zion Mode |
 | `⌥⌘X` | Voice Input |
