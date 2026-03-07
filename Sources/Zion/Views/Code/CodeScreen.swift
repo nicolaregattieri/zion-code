@@ -1655,19 +1655,6 @@ struct CodeScreen: View {
                 }
             }
             .padding(.bottom, DesignSystem.Spacing.compact)
-            .dropDestination(for: String.self) { items, _ in
-                guard let text = items.first, !text.isEmpty else { return false }
-                model.sendTextToActiveTerminal(text)
-                model.focusActiveTerminal()
-                return true
-            }
-            .dropDestination(for: URL.self) { urls, _ in
-                let paths = urls.filter { $0.isFileURL }.map { TerminalShellEscaping.quotePath($0.path) }
-                guard !paths.isEmpty else { return false }
-                model.sendTextToActiveTerminal(paths.joined(separator: " "))
-                model.focusActiveTerminal()
-                return true
-            }
         }
         .padding(.top, DesignSystem.Spacing.cardPadding)
         .background {
