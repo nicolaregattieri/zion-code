@@ -85,15 +85,13 @@ struct TerminalTabView: NSViewRepresentable {
 
     static func dismantleNSView(_ nsView: SwiftTerm.TerminalView, coordinator: Coordinator) {
         let s = coordinator.parent.session
-        log.log(.info, "dismantleNSView", context: "\(s.label)(\(s.id.uuidString.prefix(4))) preserve=\(s._shouldPreserve) alive=\(s.isAlive) pid=\(s._shellPid)", source: "TerminalTabView")
+        let isCurrentOwner = s._activeCoordinatorGeneration == coordinator.generationID
+        log.log(.info, "dismantleNSView", context: "\(s.label)(\(s.id.uuidString.prefix(4))) gen=\(coordinator.shortGeneration) current=\(isCurrentOwner) preserve=\(s._shouldPreserve) alive=\(s.isAlive) pid=\(s._shellPid)", source: "TerminalTabView")
         // If session was explicitly killed, let everything deallocate naturally.
         guard s._shouldPreserve else { return }
-        // Cache coordinator + NSView on session so they survive view tree restructuring.
-        // Explicit kills happen via session.killCachedProcess() in the ViewModel.
-        // Note: don't unregister send callback here — reattach() re-registers it,
-        // and SwiftUI may create the new view BEFORE calling dismantle on the old one.
-        s._cachedView = nsView
-        s._processBridge = coordinator
+        // The active owner is bound during startProcess/reattach. We intentionally
+        // avoid writing cache ownership here to prevent stale dismantle calls
+        // from clobbering a newer live coordinator/view pair.
     }
 
     private func applyTheme(to view: SwiftTerm.TerminalView, context: Context) {
@@ -149,6 +147,7 @@ struct TerminalTabView: NSViewRepresentable {
     @MainActor
     class Coordinator: NSObject, SwiftTerm.TerminalViewDelegate, SwiftTerm.LocalProcessDelegate {
         var parent: TerminalTabView
+        let generationID = UUID()
         private var process: LocalProcess?
         private weak var terminalView: SwiftTerm.TerminalView?
         private(set) var processIsDead = false
@@ -162,6 +161,49 @@ struct TerminalTabView: NSViewRepresentable {
 
         init(_ parent: TerminalTabView) {
             self.parent = parent
+        }
+
+        var shortGeneration: String {
+            String(generationID.uuidString.prefix(4))
+        }
+
+        private func bindAsCurrentOwner(view: SwiftTerm.TerminalView, shellPid: Int32? = nil) {
+            let session = parent.session
+            session._cachedView = view
+            session._cachedTerminal = view.getTerminal()
+            session._processBridge = self
+            session._activeCoordinatorGeneration = generationID
+            if let shellPid {
+                session._shellPid = shellPid
+            }
+            DiagnosticLogger.shared.log(
+                .info,
+                "terminal.bindOwner",
+                context: "\(session.label)(\(session.id.uuidString.prefix(4))) gen=\(shortGeneration) pid=\(session._shellPid)",
+                source: "TerminalTabView"
+            )
+        }
+
+        private func isCurrentOwner() -> Bool {
+            parent.session._activeCoordinatorGeneration == generationID
+        }
+
+        static func shouldRecoverOwnerBinding(isCurrentOwner: Bool, bridgeMatchesCoordinator: Bool) -> Bool {
+            !isCurrentOwner && bridgeMatchesCoordinator
+        }
+
+        func ensureOwnerBinding(reason: String) {
+            guard parent.session._shouldPreserve else { return }
+            guard let liveView = terminalView ?? (parent.session._cachedView as? SwiftTerm.TerminalView) else { return }
+            if !isCurrentOwner() {
+                DiagnosticLogger.shared.log(
+                    .info,
+                    "terminal.rebindOwner",
+                    context: "\(parent.session.label)(\(parent.session.id.uuidString.prefix(4))) reason=\(reason) gen=\(shortGeneration)",
+                    source: "TerminalTabView"
+                )
+                bindAsCurrentOwner(view: liveView)
+            }
         }
 
         // MARK: - Process lifecycle
@@ -238,13 +280,8 @@ struct TerminalTabView: NSViewRepresentable {
                     currentDirectory: url.path
                 )
 
-                // Eagerly cache coordinator + view for reuse across view tree changes.
-                // SwiftUI may create the new view BEFORE dismantling the old one (e.g. split),
-                // so the cache must be populated before dismantleNSView fires.
-                parent.session._cachedView = view
-                parent.session._cachedTerminal = view.getTerminal()
-                parent.session._processBridge = self
-                parent.session._shellPid = process.shellPid
+                // Eagerly bind live ownership before any possible stale dismantle callback.
+                bindAsCurrentOwner(view: view, shellPid: process.shellPid)
 
                 // Force theme re-application on next updateNSView cycle
                 self.lastAppliedTheme = nil
@@ -258,6 +295,10 @@ struct TerminalTabView: NSViewRepresentable {
             self.terminalView = view
             installShiftEnterMonitor()
             installMouseUpMonitor()
+            if process != nil {
+                processIsDead = false
+                parent.session.isAlive = true
+            }
 
             // Re-wire file drop handler for Finder drag-and-drop
             if let zionView = view as? ZionTerminalView {
@@ -267,8 +308,7 @@ struct TerminalTabView: NSViewRepresentable {
             }
 
             // Re-cache for future restructures (split → unsplit → split again)
-            parent.session._cachedView = view
-            parent.session._processBridge = self
+            bindAsCurrentOwner(view: view)
 
             // Re-register send callback for clipboard
             let sessionID = parent.session.id
@@ -299,6 +339,10 @@ struct TerminalTabView: NSViewRepresentable {
             removeShiftEnterMonitor()
             removeMouseUpMonitor()
             parent.session._shellPid = 0
+            if isCurrentOwner() {
+                parent.session._processBridge = nil
+                parent.session._activeCoordinatorGeneration = nil
+            }
             parent.model?.unregisterTerminalSendCallback(sessionID: parent.session.id)
         }
 
@@ -918,6 +962,43 @@ struct TerminalTabView: NSViewRepresentable {
 
         nonisolated func processTerminated(_ source: SwiftTerm.LocalProcess, exitCode: Int32?) {
             Task { @MainActor in
+                guard source === process else {
+                    DiagnosticLogger.shared.log(
+                        .info,
+                        "processTerminated ignored (foreign source)",
+                        context: "\(parent.session.label)(\(parent.session.id.uuidString.prefix(4))) gen=\(shortGeneration)",
+                        source: "TerminalTabView"
+                    )
+                    return
+                }
+
+                let currentOwner = isCurrentOwner()
+                if !currentOwner {
+                    if Self.shouldRecoverOwnerBinding(
+                        isCurrentOwner: currentOwner,
+                        bridgeMatchesCoordinator: parent.session._processBridge === self
+                    ) {
+                        ensureOwnerBinding(reason: "processTerminated.recover")
+                    } else {
+                        DiagnosticLogger.shared.log(
+                            .info,
+                            "processTerminated ignored (stale)",
+                            context: "\(parent.session.label)(\(parent.session.id.uuidString.prefix(4))) gen=\(shortGeneration)",
+                            source: "TerminalTabView"
+                        )
+                        return
+                    }
+                }
+
+                guard isCurrentOwner() else {
+                    DiagnosticLogger.shared.log(
+                        .info,
+                        "processTerminated ignored (stale)",
+                        context: "\(parent.session.label)(\(parent.session.id.uuidString.prefix(4))) gen=\(shortGeneration)",
+                        source: "TerminalTabView"
+                    )
+                    return
+                }
                 DiagnosticLogger.shared.log(.info, "processTerminated", context: "\(parent.session.label)(\(parent.session.id.uuidString.prefix(4))) exitCode=\(exitCode ?? -1)", source: "TerminalTabView")
                 processIsDead = true
                 parent.session.isAlive = false
@@ -926,6 +1007,34 @@ struct TerminalTabView: NSViewRepresentable {
 
         nonisolated func dataReceived(slice: ArraySlice<UInt8>) {
             Task { @MainActor in
+                let currentOwner = isCurrentOwner()
+                if !currentOwner {
+                    if Self.shouldRecoverOwnerBinding(
+                        isCurrentOwner: currentOwner,
+                        bridgeMatchesCoordinator: parent.session._processBridge === self
+                    ) {
+                        ensureOwnerBinding(reason: "dataReceived.recover")
+                    } else {
+                        DiagnosticLogger.shared.log(
+                            .info,
+                            "dataReceived ignored (stale)",
+                            context: "\(parent.session.label)(\(parent.session.id.uuidString.prefix(4))) gen=\(shortGeneration)",
+                            source: "TerminalTabView"
+                        )
+                        return
+                    }
+                }
+
+                if terminalView == nil, let rebound = parent.session._cachedView as? SwiftTerm.TerminalView {
+                    terminalView = rebound
+                    DiagnosticLogger.shared.log(
+                        .info,
+                        "dataReceived rebound terminalView",
+                        context: "\(parent.session.label)(\(parent.session.id.uuidString.prefix(4))) gen=\(shortGeneration)",
+                        source: "TerminalTabView"
+                    )
+                }
+
                 terminalView?.feed(byteArray: slice)
                 parent.model?.notifyTerminalOutput(sessionID: parent.session.id, data: Data(slice))
             }

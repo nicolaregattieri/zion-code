@@ -165,6 +165,13 @@ extension RepositoryViewModel {
         terminalSendCallbacks.removeValue(forKey: sessionID)
     }
 
+    func ensureTerminalBridgeHealth(context: String) {
+        for session in terminalSessions {
+            guard let coordinator = session._processBridge as? TerminalTabView.Coordinator else { continue }
+            coordinator.ensureOwnerBinding(reason: context)
+        }
+    }
+
     // MARK: - Terminal Search
 
     var focusedTerminalView: SwiftTerm.TerminalView? {
