@@ -26,8 +26,6 @@ struct ClipboardDrawer: View {
         .overlay(alignment: .top) {
             Rectangle().fill(DesignSystem.Colors.glassBorderDark).frame(height: 1)
         }
-        .onAppear { model.clipboardMonitor.start() }
-        .onDisappear { model.clipboardMonitor.stop() }
     }
 
     private var header: some View {

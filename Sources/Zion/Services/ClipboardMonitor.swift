@@ -1,6 +1,7 @@
 import Foundation
 import AppKit
 import SwiftUI
+import CryptoKit
 
 struct ClipboardItem: Identifiable, Sendable {
     let id: UUID
@@ -10,6 +11,7 @@ struct ClipboardItem: Identifiable, Sendable {
     let category: Category
     let isImage: Bool
     let imageSize: CGSize?
+    let imageFingerprint: String?
     var imagePath: String? { isImage && !text.isEmpty ? text : nil }
 
     enum Category: Sendable {
@@ -35,9 +37,10 @@ struct ClipboardItem: Identifiable, Sendable {
         self.category = Self.detectCategory(text)
         self.isImage = false
         self.imageSize = nil
+        self.imageFingerprint = nil
     }
 
-    init(imageWidth: Int, imageHeight: Int, filePath: String? = nil) {
+    init(imageWidth: Int, imageHeight: Int, filePath: String? = nil, fingerprint: String? = nil) {
         self.id = UUID()
         self.text = filePath ?? ""
         self.timestamp = Date()
@@ -50,6 +53,7 @@ struct ClipboardItem: Identifiable, Sendable {
         self.category = .image
         self.isImage = true
         self.imageSize = CGSize(width: imageWidth, height: imageHeight)
+        self.imageFingerprint = fingerprint
     }
 
     private static func makePreview(_ text: String) -> String {
@@ -198,13 +202,19 @@ final class ClipboardMonitor {
            let image = NSImage(data: imageData) {
             let imageWidth = Int(image.size.width)
             let imageHeight = Int(image.size.height)
-            if let first = items.first, first.isImage, first.imageSize == CGSize(width: imageWidth, height: imageHeight) {
+            let fingerprint = Self.makeImageFingerprint(imageData)
+            if Self.shouldSkipIncomingImage(previousTopItem: items.first, incomingFingerprint: fingerprint) {
                 return
             }
             _ = imageType
             // Save image data to temp file so we have a draggable file path
             let savedPath = saveImageToTemp(imageData, width: imageWidth, height: imageHeight)
-            let item = ClipboardItem(imageWidth: imageWidth, imageHeight: imageHeight, filePath: savedPath)
+            let item = ClipboardItem(
+                imageWidth: imageWidth,
+                imageHeight: imageHeight,
+                filePath: savedPath,
+                fingerprint: fingerprint
+            )
             addItem(item)
             return
         }
@@ -234,6 +244,21 @@ final class ClipboardMonitor {
             try? data.write(to: fileURL)
         }
         return fileURL.path
+    }
+
+    static func shouldSkipIncomingImage(previousTopItem: ClipboardItem?, incomingFingerprint: String?) -> Bool {
+        guard let topItem = previousTopItem,
+              topItem.isImage,
+              let topFingerprint = topItem.imageFingerprint,
+              let incomingFingerprint else {
+            return false
+        }
+        return topFingerprint == incomingFingerprint
+    }
+
+    static func makeImageFingerprint(_ data: Data) -> String {
+        let digest = SHA256.hash(data: data)
+        return digest.map { String(format: "%02x", $0) }.joined()
     }
 
     private func friendlyImageFileName(width: Int, height: Int, now: Date = Date()) -> String {
