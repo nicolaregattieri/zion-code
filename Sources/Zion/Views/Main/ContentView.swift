@@ -212,6 +212,7 @@ struct ContentView: View {
         .environment(\.zionModeEnabled, zionModeEnabled)
         .onAppear {
             logger.log(.info, "Boot: starting", source: "ContentView")
+            model.clipboardMonitor.start()
             model.restoreEditorSettings()
             let result = model.restoreLastRepository()
             switch result {
@@ -241,6 +242,9 @@ struct ContentView: View {
             if zenModeEnabled {
                 selectedSection = .code
             }
+        }
+        .onDisappear {
+            model.clipboardMonitor.stop()
         }
         .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
             model.syncSettingsFromDefaults()
