@@ -376,15 +376,15 @@ struct GraphScreen: View {
                         )
                         : []
                     LazyVStack(spacing: 0) {
-                        // PENDING CHANGES - TOP OF THE LIST
-                        if !model.uncommittedChanges.isEmpty {
-                            pendingChangesRow
+                        if model.isSemanticSearchActive, (model.isGeneratingAIMessage || model.aiHistorySearchResult != nil) {
+                            aiHistoryResultsPanel(proxy: proxy)
                                 .padding(.top, 8)
                                 .frame(width: rowWidth, alignment: .leading)
                         }
 
-                        if model.isSemanticSearchActive, (model.isGeneratingAIMessage || model.aiHistorySearchResult != nil) {
-                            aiHistoryResultsPanel(proxy: proxy)
+                        // PENDING CHANGES - TOP OF THE LIST
+                        if !model.uncommittedChanges.isEmpty {
+                            pendingChangesRow
                                 .padding(.top, 8)
                                 .frame(width: rowWidth, alignment: .leading)
                         }
