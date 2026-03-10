@@ -33,6 +33,11 @@ struct GraphScreen: View {
         return max(DesignSystem.Layout.commitRowFloor, laneWidth + DesignSystem.Layout.commitRowLaneOffset)
     }
 
+    private var commitGraphColumnWidth: CGFloat {
+        let span = CGFloat(max(model.maxLaneCount - 1, 0)) * 20
+        return max(10 + 12 + span, 56)
+    }
+
     private var commitRowMaxWidth: CGFloat {
         DesignSystem.Layout.centeredContentMaxWidth
     }
@@ -450,7 +455,7 @@ struct GraphScreen: View {
     
     private var pendingChangesRow: some View {
         HStack(spacing: 0) {
-            PendingChangesLaneView(height: 102)
+            PendingChangesLaneView(height: 102, width: commitGraphColumnWidth)
 
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous)
@@ -995,95 +1000,102 @@ struct GraphScreen: View {
     }
 
     private func aiHistoryResultsPanel(proxy: ScrollViewProxy) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-                Image(systemName: "sparkles")
-                    .font(DesignSystem.Typography.labelBold)
-                    .foregroundStyle(DesignSystem.Colors.semanticSearch)
-                Text(L10n("graph.ai.answerTitle"))
-                    .font(DesignSystem.Typography.sectionTitle)
-                if let count = model.aiHistorySearchResult?.matches.count, count > 0 {
-                    Text("\(count) \(L10n("resultados"))")
-                        .font(DesignSystem.Typography.monoLabelBold)
+        HStack(spacing: 0) {
+            Color.clear
+                .frame(width: commitGraphColumnWidth)
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+                    Image(systemName: "sparkles")
+                        .font(DesignSystem.Typography.labelBold)
                         .foregroundStyle(DesignSystem.Colors.semanticSearch)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(DesignSystem.Colors.glassElevated)
-                        .clipShape(Capsule())
+                    Text(L10n("graph.ai.answerTitle"))
+                        .font(DesignSystem.Typography.sectionTitle)
+                    if let count = model.aiHistorySearchResult?.matches.count, count > 0 {
+                        Text("\(count) \(L10n("resultados"))")
+                            .font(DesignSystem.Typography.monoLabelBold)
+                            .foregroundStyle(DesignSystem.Colors.semanticSearch)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(DesignSystem.Colors.glassElevated)
+                            .clipShape(Capsule())
+                    }
                 }
-            }
 
-            if model.isGeneratingAIMessage && model.aiHistorySearchResult == nil {
-                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
-                    ProgressView()
-                        .controlSize(.small)
-                    Text(L10n("graph.ai.loading"))
-                        .font(DesignSystem.Typography.bodySmall)
-                        .foregroundStyle(.secondary)
-                }
-            } else if let result = model.aiHistorySearchResult {
-                Text(result.answer)
-                    .font(DesignSystem.Typography.bodySemibold)
-                    .foregroundStyle(.primary)
-                    .fixedSize(horizontal: false, vertical: true)
+                if model.isGeneratingAIMessage && model.aiHistorySearchResult == nil {
+                    HStack(spacing: DesignSystem.Spacing.iconTextGap) {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text(L10n("graph.ai.loading"))
+                            .font(DesignSystem.Typography.bodySmall)
+                            .foregroundStyle(.secondary)
+                    }
+                } else if let result = model.aiHistorySearchResult {
+                    Text(result.answer)
+                        .font(DesignSystem.Typography.bodySemibold)
+                        .foregroundStyle(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
 
-                if result.matches.isEmpty {
-                    Text(L10n("graph.ai.noMatches"))
-                        .font(DesignSystem.Typography.bodySmall)
-                        .foregroundStyle(.secondary)
-                } else {
-                    VStack(alignment: .leading, spacing: 8) {
-                        ForEach(result.matches) { match in
-                            if let commit = matchingCommit(for: match.hash) {
-                                Button {
-                                    scrollToMatch(id: commit.id, proxy: proxy)
-                                } label: {
-                                    VStack(alignment: .leading, spacing: 6) {
-                                        HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-                                            Text(commit.shortHash)
-                                                .font(DesignSystem.Typography.monoLabelBold)
-                                                .foregroundStyle(DesignSystem.Colors.semanticSearch)
-                                            Text(commit.subject)
-                                                .font(DesignSystem.Typography.bodySmallSemibold)
-                                                .foregroundStyle(.primary)
-                                                .lineLimit(1)
-                                            Spacer()
-                                            Image(systemName: "arrow.up.forward.square")
+                    if result.matches.isEmpty {
+                        Text(L10n("graph.ai.noMatches"))
+                            .font(DesignSystem.Typography.bodySmall)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        VStack(alignment: .leading, spacing: 8) {
+                            ForEach(result.matches) { match in
+                                if let commit = matchingCommit(for: match.hash) {
+                                    Button {
+                                        scrollToMatch(id: commit.id, proxy: proxy)
+                                    } label: {
+                                        VStack(alignment: .leading, spacing: 6) {
+                                            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+                                                Text(commit.shortHash)
+                                                    .font(DesignSystem.Typography.monoLabelBold)
+                                                    .foregroundStyle(DesignSystem.Colors.semanticSearch)
+                                                Text(commit.subject)
+                                                    .font(DesignSystem.Typography.bodySmallSemibold)
+                                                    .foregroundStyle(.primary)
+                                                    .lineLimit(1)
+                                                Spacer()
+                                                Image(systemName: "arrow.up.forward.square")
+                                                    .font(DesignSystem.Typography.label)
+                                                    .foregroundStyle(.secondary)
+                                            }
+                                            Text(match.reason)
                                                 .font(DesignSystem.Typography.label)
                                                 .foregroundStyle(.secondary)
+                                                .multilineTextAlignment(.leading)
                                         }
-                                        Text(match.reason)
-                                            .font(DesignSystem.Typography.label)
-                                            .foregroundStyle(.secondary)
-                                            .multilineTextAlignment(.leading)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .padding(10)
+                                        .background(DesignSystem.Colors.glassMinimal)
+                                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous)
+                                                .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
+                                        )
+                                        .contentShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous))
                                     }
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(10)
-                                    .background(DesignSystem.Colors.glassMinimal)
-                                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous)
-                                            .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
-                                    )
-                                    .contentShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous))
+                                    .buttonStyle(.plain)
+                                    .cursorArrow()
+                                    .help(L10n("graph.ai.openCommit", commit.shortHash))
+                                    .accessibilityLabel(L10n("graph.ai.openCommit", commit.shortHash))
                                 }
-                                .buttonStyle(.plain)
-                                .cursorArrow()
-                                .help(L10n("graph.ai.openCommit", commit.shortHash))
-                                .accessibilityLabel(L10n("graph.ai.openCommit", commit.shortHash))
                             }
                         }
                     }
                 }
             }
+            .padding(12)
+            .background(DesignSystem.Colors.glassSubtle)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous)
+                    .stroke(DesignSystem.Colors.semanticSearch, lineWidth: 1)
+            )
+            .padding(.trailing, 16)
         }
-        .padding(12)
-        .background(DesignSystem.Colors.glassSubtle)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous)
-                .stroke(DesignSystem.Colors.semanticSearch, lineWidth: 1)
-        )
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
     
     private var loadMoreButton: some View {
@@ -1535,15 +1547,15 @@ struct GraphScreen: View {
 
 private struct PendingChangesLaneView: View {
     let height: CGFloat
+    let width: CGFloat
 
-    private let markerPadding: CGFloat = 18
+    private let trailingPadding: CGFloat = 12
     private let markerDiameter: CGFloat = 12
-    private let width: CGFloat = 56
 
     var body: some View {
         Canvas { context, size in
             let rect = CGRect(
-                x: markerPadding,
+                x: max(size.width - trailingPadding - markerDiameter, 0),
                 y: (size.height - markerDiameter) / 2,
                 width: markerDiameter,
                 height: markerDiameter
