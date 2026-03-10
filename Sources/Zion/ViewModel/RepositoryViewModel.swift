@@ -721,6 +721,7 @@ final class RepositoryViewModel {
         isSwitchingRepository = true
         logger.log(.info, "switch.start", context: "target=\(url.lastPathComponent) token=\(switchToken.uuidString.prefix(8))", source: #function)
         cancelRepositoryBackgroundActivityForSwitch()
+        dismissPendingChangesSummary()
         lastNotifiedBehindCount = 0
         if let previousURL {
             expandedPathsByRepository[previousURL] = expandedPaths
@@ -941,6 +942,37 @@ final class RepositoryViewModel {
     var aiPendingChangesSummary: String = ""
     var isLoadingPendingChangesSummary: Bool = false
     @ObservationIgnored var pendingSummaryTask: Task<Void, Never>?
+
+    var hasVisiblePendingChangesSummary: Bool {
+        !aiPendingChangesSummary.clean.isEmpty
+    }
+
+    func beginPendingChangesSummaryRequest() {
+        pendingSummaryTask?.cancel()
+        isLoadingPendingChangesSummary = true
+    }
+
+    func applyPendingChangesSummary(_ summary: String) {
+        aiPendingChangesSummary = summary.clean
+        isLoadingPendingChangesSummary = false
+    }
+
+    func handlePendingChangesSummaryFailure(_ error: Error) {
+        isLoadingPendingChangesSummary = false
+        lastError = error.localizedDescription
+    }
+
+    func dismissPendingChangesSummary() {
+        pendingSummaryTask?.cancel()
+        pendingSummaryTask = nil
+        isLoadingPendingChangesSummary = false
+        aiPendingChangesSummary = ""
+    }
+
+    func syncPendingChangesSummaryAfterRefresh(hasPendingChanges: Bool) {
+        guard !hasPendingChanges else { return }
+        dismissPendingChangesSummary()
+    }
 
     func clearError() {
         lastError = nil

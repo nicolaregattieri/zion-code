@@ -1263,12 +1263,23 @@ struct GraphScreen: View {
 
                     if model.isAIConfigured && !model.uncommittedChanges.isEmpty {
                         Button { model.summarizePendingChanges() } label: {
-                            Image(systemName: "sparkles")
-                                .font(DesignSystem.Typography.bodySmall)
-                                .foregroundStyle(DesignSystem.Colors.ai)
+                            if model.isLoadingPendingChangesSummary && !model.hasVisiblePendingChangesSummary {
+                                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                    Text(L10n("Resumo IA das mudancas"))
+                                }
+                                .font(DesignSystem.Typography.bodySmallSemibold)
+                            } else {
+                                Label(L10n("Resumo IA das mudancas"), systemImage: "sparkles")
+                                    .font(DesignSystem.Typography.bodySmallSemibold)
+                            }
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .tint(DesignSystem.Colors.ai)
                         .help(L10n("Resumo IA das mudancas"))
+                        .accessibilityLabel(L10n("Resumo IA das mudancas"))
                         .disabled(model.isLoadingPendingChangesSummary)
                     }
                     Button { model.refreshRepository() } label: {
@@ -1282,38 +1293,8 @@ struct GraphScreen: View {
                 inlineChangesSummaryBar
             }
 
-            if model.isLoadingPendingChangesSummary {
-                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
-                    ProgressView().controlSize(.small)
-                    Text(L10n("Analisando mudancas..."))
-                        .font(DesignSystem.Typography.bodySmall)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.horizontal, 12)
-                .padding(.bottom, 8)
-            } else if !model.aiPendingChangesSummary.isEmpty {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-                        Image(systemName: "sparkles")
-                            .font(DesignSystem.Typography.label)
-                            .foregroundStyle(DesignSystem.Colors.ai)
-                        Text(model.aiPendingChangesSummary)
-                            .font(DesignSystem.Typography.bodySmall)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(3)
-                        Spacer()
-                    }
-                    Button {
-                        model.commitMessageInput = model.aiPendingChangesSummary
-                    } label: {
-                        Label(L10n("Usar como mensagem de commit"), systemImage: "text.insert")
-                            .font(DesignSystem.Typography.label)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                }
-                .padding(.horizontal, 12)
-                .padding(.bottom, 8)
+            if showPendingChangesSummaryCard {
+                pendingChangesSummaryCard
             }
 
             Divider()
@@ -1455,6 +1436,88 @@ struct GraphScreen: View {
             return (" ", " ", line.trimmingCharacters(in: .whitespaces))
         }
         return (entry.indexStatus, entry.worktreeStatus, entry.path)
+    }
+
+    private var showPendingChangesSummaryCard: Bool {
+        model.isAIConfigured
+            && !model.uncommittedChanges.isEmpty
+            && (model.isLoadingPendingChangesSummary || model.hasVisiblePendingChangesSummary)
+    }
+
+    private var pendingChangesSummaryCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top, spacing: DesignSystem.Spacing.iconTextGap) {
+                HStack(alignment: .top, spacing: DesignSystem.Spacing.iconLabelGap) {
+                    Image(systemName: "sparkles")
+                        .font(DesignSystem.Typography.bodySemibold)
+                        .foregroundStyle(DesignSystem.Colors.ai)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(L10n("map.ai.summary.title"))
+                            .font(DesignSystem.Typography.bodySemibold)
+                            .foregroundStyle(.primary)
+                        if model.isLoadingPendingChangesSummary {
+                            Text(L10n("Analisando mudancas..."))
+                                .font(DesignSystem.Typography.bodySmall)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
+                Spacer()
+
+                if model.isLoadingPendingChangesSummary {
+                    ProgressView()
+                        .controlSize(.small)
+                }
+
+                Button {
+                    model.dismissPendingChangesSummary()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(DesignSystem.Typography.body)
+                        .foregroundStyle(.tertiary)
+                }
+                .buttonStyle(.plain)
+                .cursorArrow()
+                .help(L10n("Fechar"))
+                .accessibilityLabel(L10n("accessibility.dismiss"))
+            }
+
+            if model.hasVisiblePendingChangesSummary {
+                Text(model.aiPendingChangesSummary)
+                    .font(DesignSystem.Typography.body)
+                    .foregroundStyle(.primary.opacity(0.92))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .textSelection(.enabled)
+            }
+
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
+                Button {
+                    model.commitMessageInput = model.aiPendingChangesSummary
+                } label: {
+                    Label(L10n("Usar como mensagem de commit"), systemImage: "text.insert")
+                        .font(DesignSystem.Typography.bodySmallSemibold)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .disabled(!model.hasVisiblePendingChangesSummary)
+
+                Spacer()
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous)
+                .fill(DesignSystem.Colors.glassSubtle)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous)
+                .stroke(DesignSystem.Colors.glassStroke, lineWidth: 1)
+        )
+        .padding(.horizontal, 12)
+        .padding(.bottom, 8)
     }
 
     private var inlineChangesSummaryBar: some View {

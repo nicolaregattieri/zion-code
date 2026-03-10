@@ -7,9 +7,7 @@ extension RepositoryViewModel {
 
     func summarizePendingChanges() {
         guard let url = repositoryURL, isAIConfigured, !uncommittedChanges.isEmpty else { return }
-        pendingSummaryTask?.cancel()
-        isLoadingPendingChangesSummary = true
-        aiPendingChangesSummary = ""
+        beginPendingChangesSummaryRequest()
 
         let fileList = uncommittedChanges.joined(separator: "\n")
         pendingSummaryTask = Task { [weak self] in
@@ -24,10 +22,11 @@ extension RepositoryViewModel {
                     apiKey: aiAPIKey
                 )
                 try Task.checkCancellation()
-                aiPendingChangesSummary = summary
-                isLoadingPendingChangesSummary = false
+                applyPendingChangesSummary(summary)
+            } catch is CancellationError {
+                return
             } catch {
-                isLoadingPendingChangesSummary = false
+                handlePendingChangesSummaryFailure(error)
                 logger.log(.error, "AI pending changes summary failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
             }
         }
