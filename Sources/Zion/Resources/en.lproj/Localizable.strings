@@ -1036,6 +1036,9 @@
 "editor.image.title" = "Image Preview";
 "editor.image.fit" = "Fit";
 "editor.image.actual" = "Actual Size";
+"editor.image.zoom" = "Zoom";
+"editor.image.zoomOut" = "Zoom Out";
+"editor.image.zoomIn" = "Zoom In";
 "editor.image.revealFinder" = "Reveal in Finder";
 "editor.image.openExternal" = "Open Externally";
 "editor.image.loadFailed" = "Could not load this image";
