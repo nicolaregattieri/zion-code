@@ -6,7 +6,7 @@ private enum AILimits {
     static let maxDiffContentLength = 10_000
     static let maxCommitLogLength = 3000
     static let maxChangelogLogLength = 5000
-    static let maxSemanticSearchLogLength = 8000
+    static let maxSemanticSearchLogLength = 6000
     static let maxBlameRegionLength = 1000
     static let maxBlameDiffLength = 5000
     static let maxPendingChangesFileListLength = 3000
@@ -23,7 +23,7 @@ private enum AILimits {
     static let codeReviewTokens = 800
     static let branchReviewTokens = 1000
     static let changelogTokens = 1000
-    static let semanticSearchTokens = 200
+    static let semanticSearchTokens = 260
     static let branchSummaryTokens = 60
     static let blameExplanationTokens = 200
     static let commitSplitTokens = 600
@@ -444,31 +444,46 @@ actor AIClient {
 
     // MARK: - Semantic Search
 
-    func semanticSearch(
+    func searchCommitHistory(
         query: String,
-        commitLog: String,
+        candidates: [AIHistorySearchCandidate],
         provider: AIProvider,
         apiKey: String
-    ) async throws -> [String] {
+    ) async throws -> AIHistorySearchResult {
+        guard !candidates.isEmpty else {
+            return AIHistorySearchResult(answer: "", matches: [])
+        }
+        let commitLog = Self.makeHistorySearchContext(from: candidates)
         let prompt = """
-        You are a git history search engine. The user is searching their commit history with a natural language query.
+        You are a git history assistant. The user is asking a question about recent commit history.
 
         Query: "\(query)"
 
-        Commit log (hash subject):
+        Candidate commits:
         \(commitLog.prefix(AILimits.maxSemanticSearchLogLength))
 
-        Output the SHORT HASHES (first column) of commits that match the query, one per line.
+        Output format (exactly):
+        ANSWER: <one short sentence answering the query>
+        MATCH: <short hash> | <brief reason>
 
         Rules:
-        - Output ONLY the short hashes, one per line, nothing else
-        - Return at most 20 matching commits
-        - Match semantically — "auth flow changes" should match commits about login, authentication, OAuth, etc.
-        - If no commits match, output: NONE
+        - Use ONLY hashes from the candidate list
+        - Return 0 to 5 MATCH lines
+        - Keep the answer under 140 characters
+        - Each reason should mention the strongest evidence, such as files, subject, or author
+        - If nothing looks relevant, still provide an ANSWER and then output: MATCH: NONE
+        - Output ONLY the ANSWER and MATCH lines, nothing else
         """
         let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.semanticSearchTokens)
-        if raw.trimmingCharacters(in: .whitespacesAndNewlines) == "NONE" { return [] }
-        return raw.split(separator: "\n").map { String($0).trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        let parsed = Self.parseHistorySearchResponse(raw)
+        let allowedHashes = Set(candidates.map { $0.shortHash.lowercased() })
+        var seen = Set<String>()
+        let filteredMatches = parsed.matches.filter { match in
+            let normalizedHash = match.hash.lowercased()
+            guard allowedHashes.contains(normalizedHash) else { return false }
+            return seen.insert(normalizedHash).inserted
+        }
+        return AIHistorySearchResult(answer: parsed.answer, matches: filteredMatches)
     }
 
     // MARK: - Branch Summarizer
@@ -782,6 +797,62 @@ actor AIClient {
             throw AIError.invalidResponse
         }
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    static func makeHistorySearchContext(from candidates: [AIHistorySearchCandidate]) -> String {
+        candidates.map { candidate in
+            let renderedFiles: String
+            if candidate.files.isEmpty {
+                renderedFiles = "-"
+            } else if candidate.files.count <= 5 {
+                renderedFiles = candidate.files.joined(separator: ", ")
+            } else {
+                let visible = candidate.files.prefix(5).joined(separator: ", ")
+                renderedFiles = "\(visible), +\(candidate.files.count - 5) more"
+            }
+
+            return """
+            COMMIT: \(candidate.shortHash)
+            SUBJECT: \(candidate.subject)
+            AUTHOR: \(candidate.author)
+            DATE: \(candidate.dateText)
+            FILES: \(renderedFiles)
+            """
+        }
+        .joined(separator: "\n\n")
+    }
+
+    static func parseHistorySearchResponse(_ raw: String) -> AIHistorySearchResult {
+        let lines = raw.components(separatedBy: .newlines)
+        var answer = ""
+        var matches: [AIHistorySearchMatch] = []
+
+        for line in lines {
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.hasPrefix("ANSWER:") {
+                answer = trimmed
+                    .replacingOccurrences(of: "ANSWER:", with: "")
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                continue
+            }
+
+            guard trimmed.hasPrefix("MATCH:") else { continue }
+            let value = trimmed
+                .replacingOccurrences(of: "MATCH:", with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+
+            if value.caseInsensitiveCompare("NONE") == .orderedSame {
+                continue
+            }
+
+            let parts = value.split(separator: "|", maxSplits: 1).map {
+                String($0).trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            guard parts.count == 2, !parts[0].isEmpty, !parts[1].isEmpty else { continue }
+            matches.append(AIHistorySearchMatch(hash: parts[0], reason: parts[1]))
+        }
+
+        return AIHistorySearchResult(answer: answer, matches: Array(matches.prefix(5)))
     }
 
     private func parseReviewFindings(_ raw: String) -> [ReviewFinding] {

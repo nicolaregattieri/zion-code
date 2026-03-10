@@ -102,13 +102,68 @@ final class RepositoryViewModelAITests: XCTestCase {
 
     func testClearSemanticSearchResetsState() {
         let vm = RepositoryViewModel()
-        vm.aiSemanticSearchResults = ["abc123", "def456"]
+        vm.aiHistorySearchResult = AIHistorySearchResult(
+            answer: "Found related commits.",
+            matches: [AIHistorySearchMatch(hash: "abc123", reason: "Touched README.md")]
+        )
         vm.isSemanticSearchActive = true
 
         vm.clearSemanticSearch()
 
-        XCTAssertTrue(vm.aiSemanticSearchResults.isEmpty, "aiSemanticSearchResults should be empty after clear")
+        XCTAssertNil(vm.aiHistorySearchResult, "aiHistorySearchResult should be nil after clear")
         XCTAssertFalse(vm.isSemanticSearchActive, "isSemanticSearchActive should be false after clear")
+    }
+
+    func testParseHistorySearchResponseExtractsAnswerAndMatches() {
+        let raw = """
+        ANSWER: README changes happened in the docs refresh commit.
+        MATCH: a1b2c3d | Updates README.md and docs navigation
+        MATCH: d4e5f6a | Touches docs/README.md during onboarding cleanup
+        """
+
+        let result = AIClient.parseHistorySearchResponse(raw)
+
+        XCTAssertEqual(result.answer, "README changes happened in the docs refresh commit.")
+        XCTAssertEqual(result.matches.count, 2)
+        XCTAssertEqual(result.matches.first?.hash, "a1b2c3d")
+        XCTAssertEqual(result.matches.first?.reason, "Updates README.md and docs navigation")
+    }
+
+    func testParseHistorySearchResponseHandlesNone() {
+        let raw = """
+        ANSWER: I could not find a strong match.
+        MATCH: NONE
+        """
+
+        let result = AIClient.parseHistorySearchResponse(raw)
+
+        XCTAssertEqual(result.answer, "I could not find a strong match.")
+        XCTAssertTrue(result.matches.isEmpty)
+    }
+
+    func testRankHistorySearchCandidatesPrioritizesTouchedFiles() {
+        let candidates = [
+            AIHistorySearchCandidate(
+                fullHash: "1111111111111111111111111111111111111111",
+                shortHash: "1111111",
+                subject: "Tidy onboarding copy",
+                author: "Nico",
+                dateText: "2026-03-10",
+                files: ["Sources/Zion/Views/Onboarding/WelcomeView.swift"]
+            ),
+            AIHistorySearchCandidate(
+                fullHash: "2222222222222222222222222222222222222222",
+                shortHash: "2222222",
+                subject: "Refresh docs landing page",
+                author: "Nico",
+                dateText: "2026-03-09",
+                files: ["README.md", "docs/getting-started.md"]
+            ),
+        ]
+
+        let ranked = RepositoryViewModel.rankHistorySearchCandidates(candidates, query: "when was the readme updated", limit: 2)
+
+        XCTAssertEqual(ranked.first?.shortHash, "2222222")
     }
 
     // MARK: - recalculateCodeReviewStats

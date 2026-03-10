@@ -772,6 +772,11 @@ extension RepositoryViewModel {
 
     func semanticSearchCommits(query: String) {
         guard let url = repositoryURL, isAIConfigured else { return }
+        let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedQuery.isEmpty else {
+            resetSemanticSearchResults()
+            return
+        }
 
         aiTask?.cancel()
         aiTask = Task {
@@ -779,30 +784,142 @@ extension RepositoryViewModel {
             defer { isGeneratingAIMessage = false }
 
             do {
-                logger.log(.ai, "Requesting semantic search", context: "\(aiProvider.rawValue): \(query)")
-                let commitLog = try await worker.runAction(args: ["log", "--oneline", "-200"], in: url)
-                let hashes = try await aiClient.semanticSearch(
-                    query: query,
-                    commitLog: commitLog,
+                logger.log(.ai, "Requesting semantic search", context: "\(aiProvider.rawValue): \(trimmedQuery)")
+                let historyOutput = try await worker.runAction(
+                    args: [
+                        "log",
+                        "-n", "80",
+                        "--date=short",
+                        "--format=%H%x1f%h%x1f%an%x1f%ad%x1f%s%x1e",
+                        "--name-only",
+                    ],
+                    in: url
+                )
+                try Task.checkCancellation()
+                let candidates = Self.parseHistorySearchCandidates(from: historyOutput)
+                let rankedCandidates = Self.rankHistorySearchCandidates(candidates, query: trimmedQuery, limit: 18)
+                let result = try await aiClient.searchCommitHistory(
+                    query: trimmedQuery,
+                    candidates: rankedCandidates,
                     provider: aiProvider,
                     apiKey: aiAPIKey
                 )
-                logger.log(.ai, "Semantic search OK: \(hashes.count) results")
-                aiSemanticSearchResults = hashes
+                try Task.checkCancellation()
+                let answer = result.answer.isEmpty
+                    ? (result.matches.isEmpty ? L10n("graph.ai.noMatches") : L10n("graph.ai.answerFallback"))
+                    : result.answer
+                logger.log(.ai, "Semantic search OK: \(result.matches.count) results")
+                aiHistorySearchResult = AIHistorySearchResult(answer: answer, matches: result.matches)
             } catch {
+                if error is CancellationError {
+                    return
+                }
                 if let aiErr = error as? AIError, case .quotaExceeded = aiErr {
                     aiQuotaExceeded = true
                 }
                 logger.log(.error, "AI semantic search failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
-                aiSemanticSearchResults = []
+                aiHistorySearchResult = nil
                 lastError = error.localizedDescription
             }
         }
     }
 
+    func resetSemanticSearchResults() {
+        aiTask?.cancel()
+        aiHistorySearchResult = nil
+    }
+
     func clearSemanticSearch() {
-        aiSemanticSearchResults = []
+        resetSemanticSearchResults()
         isSemanticSearchActive = false
+    }
+
+    static func parseHistorySearchCandidates(from raw: String) -> [AIHistorySearchCandidate] {
+        raw.components(separatedBy: "\u{1e}").compactMap { chunk in
+            let trimmedChunk = chunk.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmedChunk.isEmpty else { return nil }
+
+            let lines = trimmedChunk
+                .components(separatedBy: .newlines)
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+
+            guard let metadataLine = lines.first else { return nil }
+            let metadata = metadataLine.split(separator: "\u{1f}", maxSplits: 4).map(String.init)
+            guard metadata.count == 5 else { return nil }
+
+            return AIHistorySearchCandidate(
+                fullHash: metadata[0],
+                shortHash: metadata[1],
+                subject: metadata[4],
+                author: metadata[2],
+                dateText: metadata[3],
+                files: Array(lines.dropFirst())
+            )
+        }
+    }
+
+    static func rankHistorySearchCandidates(
+        _ candidates: [AIHistorySearchCandidate],
+        query: String,
+        limit: Int = 18
+    ) -> [AIHistorySearchCandidate] {
+        let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedQuery.isEmpty else { return Array(candidates.prefix(limit)) }
+
+        let queryTerms = historySearchTerms(from: trimmedQuery)
+        let loweredQuery = trimmedQuery.lowercased()
+        let ranked = candidates.enumerated().map { index, candidate in
+            let subject = candidate.subject.lowercased()
+            let author = candidate.author.lowercased()
+            let hash = candidate.shortHash.lowercased()
+            let fullHash = candidate.fullHash.lowercased()
+            let files = candidate.files.map { $0.lowercased() }
+
+            var score = 0
+            if subject.contains(loweredQuery) { score += 8 }
+            if author.contains(loweredQuery) { score += 4 }
+            if files.contains(where: { $0.contains(loweredQuery) }) { score += 10 }
+            if hash.hasPrefix(loweredQuery) || fullHash.hasPrefix(loweredQuery) { score += 12 }
+
+            for term in queryTerms {
+                if subject.contains(term) { score += 3 }
+                if author.contains(term) { score += 2 }
+                if files.contains(where: { $0.contains(term) }) { score += 4 }
+                if hash.hasPrefix(term) || fullHash.hasPrefix(term) { score += 6 }
+            }
+
+            return (candidate: candidate, score: score, index: index)
+        }
+
+        let sorted = ranked.sorted { lhs, rhs in
+            if lhs.score == rhs.score {
+                return lhs.index < rhs.index
+            }
+            return lhs.score > rhs.score
+        }
+
+        let positiveMatches = sorted.filter { $0.score > 0 }
+        if positiveMatches.count >= min(limit, 5) {
+            return Array(positiveMatches.prefix(limit).map(\.candidate))
+        }
+
+        let prefix = Array(positiveMatches.prefix(limit).map(\.candidate))
+        let prefixHashes = Set(prefix.map(\.fullHash))
+        let remainder = candidates.filter { candidate in
+            !prefixHashes.contains(candidate.fullHash)
+        }
+
+        return Array((prefix + remainder).prefix(limit))
+    }
+
+    static func historySearchTerms(from query: String) -> [String] {
+        let normalized = query
+            .lowercased()
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { $0.count >= 2 }
+        var seen = Set<String>()
+        return normalized.filter { seen.insert($0).inserted }
     }
 
     // MARK: - AI Branch Summarizer
