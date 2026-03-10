@@ -207,8 +207,10 @@ extension RepositoryViewModel {
             if ls != editorLineSpacing { editorLineSpacing = ls }
         }
 
-        let lw = defaults.bool(forKey: "editor.lineWrap")
-        if lw != isLineWrappingEnabled { isLineWrappingEnabled = lw }
+        if defaults.object(forKey: "editor.lineWrap") != nil {
+            let lw = defaults.bool(forKey: "editor.lineWrap")
+            if lw != isLineWrappingEnabled { isLineWrappingEnabled = lw }
+        }
 
         let ts = defaults.integer(forKey: "editor.tabSize")
         if ts > 0 && ts != editorTabSize { editorTabSize = ts }

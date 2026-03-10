@@ -22,6 +22,7 @@ struct SourceCodeEditor: NSViewRepresentable {
     var showIndentGuides: Bool = false
     var searchQuery: String = ""
     var currentMatchIndex: Int = 0
+    var searchScrollRequestID: Int = 0
     var onMatchCountChanged: ((Int) -> Void)?
     var goToLine: Int = 0
     var goToLineRequestID: Int = 0
@@ -115,30 +116,18 @@ struct SourceCodeEditor: NSViewRepresentable {
             textView.font = font
         }
 
-        // Handle Line Wrapping
-        if isLineWrappingEnabled {
-            let width = nsView.contentSize.width
-            let widthChanged = abs((coordinator.lastWrappedWidth ?? -1) - width) > 0.5
-            if coordinator.lastLineWrappingEnabled != true || widthChanged {
-                nsView.hasHorizontalScroller = false
-                textView.isHorizontallyResizable = false
-                textView.textContainer?.widthTracksTextView = true
-                textView.maxSize = NSSize(width: width, height: CGFloat.greatestFiniteMagnitude)
-                textView.setFrameSize(NSSize(width: width, height: textView.frame.height))
-            }
-            coordinator.lastLineWrappingEnabled = true
-            coordinator.lastWrappedWidth = width
-        } else {
-            if coordinator.lastLineWrappingEnabled != false {
-                nsView.hasHorizontalScroller = true
-                textView.isHorizontallyResizable = true
-                textView.textContainer?.widthTracksTextView = false
-                textView.textContainer?.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
-                textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
-            }
-            coordinator.lastLineWrappingEnabled = false
-            coordinator.lastWrappedWidth = nil
+        let width = max(nsView.contentSize.width, 1)
+        let widthChanged = abs((coordinator.lastWrappedWidth ?? -1) - width) > 0.5
+        if coordinator.lastLineWrappingEnabled != isLineWrappingEnabled || (isLineWrappingEnabled && widthChanged) {
+            coordinator.applyLineWrapping(
+                enabled: isLineWrappingEnabled,
+                width: width,
+                in: nsView,
+                textView: textView
+            )
         }
+        coordinator.lastLineWrappingEnabled = isLineWrappingEnabled
+        coordinator.lastWrappedWidth = isLineWrappingEnabled ? width : nil
 
         // Colors (cached)
         let colors: EditorColors
@@ -228,13 +217,27 @@ struct SourceCodeEditor: NSViewRepresentable {
 
         // Search highlighting
         let coord2 = context.coordinator
-        if searchQuery != coord2.lastSearchQuery || (!searchQuery.isEmpty && currentText != coord2.lastSearchText) {
+        let searchQueryChanged = searchQuery != coord2.lastSearchQuery
+        let searchTextChanged = !searchQuery.isEmpty && currentText != coord2.lastSearchText
+        let searchScrollRequestChanged = searchScrollRequestID != coord2.lastSearchScrollRequestID
+        if searchQueryChanged || searchTextChanged {
             coord2.lastSearchQuery = searchQuery
             coord2.lastSearchText = currentText
-            coord2.updateSearchHighlights(in: textView, query: searchQuery, currentIndex: currentMatchIndex)
+            coord2.updateSearchHighlights(
+                in: textView,
+                query: searchQuery,
+                currentIndex: currentMatchIndex,
+                scrollToCurrentMatch: searchQueryChanged || searchScrollRequestChanged
+            )
+            coord2.lastSearchScrollRequestID = searchScrollRequestID
             onMatchCountChanged?(coord2.searchMatchRanges.count)
-        } else if currentMatchIndex != coord2.lastCurrentMatchIndex {
-            coord2.updateCurrentMatchHighlight(in: textView, currentIndex: currentMatchIndex)
+        } else if currentMatchIndex != coord2.lastCurrentMatchIndex || searchScrollRequestChanged {
+            coord2.updateCurrentMatchHighlight(
+                in: textView,
+                currentIndex: currentMatchIndex,
+                scrollToCurrentMatch: searchScrollRequestChanged
+            )
+            coord2.lastSearchScrollRequestID = searchScrollRequestID
         }
 
         // Go to line
@@ -282,6 +285,7 @@ struct SourceCodeEditor: NSViewRepresentable {
         var lastSearchQuery: String = ""
         var lastSearchText: String = ""
         var lastCurrentMatchIndex: Int = 0
+        var lastSearchScrollRequestID: Int = 0
         var searchMatchRanges: [NSRange] = []
         var lastLineWrappingEnabled: Bool?
         var lastWrappedWidth: CGFloat?
@@ -366,6 +370,33 @@ struct SourceCodeEditor: NSViewRepresentable {
         func textViewDidChangeSelection(_ notification: Notification) {
             guard let textView = notification.object as? ZionTextView else { return }
             textView.updateBracketMatch()
+            textView.needsDisplay = true
+        }
+
+        @MainActor
+        func applyLineWrapping(enabled: Bool, width: CGFloat, in scrollView: NSScrollView, textView: NSTextView) {
+            guard let textContainer = textView.textContainer else { return }
+
+            if enabled {
+                let targetWidth = max(width, 1)
+                scrollView.hasHorizontalScroller = false
+                textView.isHorizontallyResizable = false
+                textContainer.widthTracksTextView = true
+                textContainer.containerSize = NSSize(width: targetWidth, height: CGFloat.greatestFiniteMagnitude)
+                textView.minSize = NSSize(width: 0, height: 0)
+                textView.maxSize = NSSize(width: targetWidth, height: CGFloat.greatestFiniteMagnitude)
+                if abs(textView.frame.width - targetWidth) > 0.5 {
+                    textView.setFrameSize(NSSize(width: targetWidth, height: textView.frame.height))
+                }
+            } else {
+                scrollView.hasHorizontalScroller = true
+                textView.isHorizontallyResizable = true
+                textContainer.widthTracksTextView = false
+                textContainer.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+                textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+            }
+
+            textView.layoutManager?.ensureLayout(for: textContainer)
             textView.needsDisplay = true
         }
 
@@ -587,7 +618,7 @@ struct SourceCodeEditor: NSViewRepresentable {
         private static let searchCurrentMatchColor = NSColor.systemOrange.withAlphaComponent(0.55)
 
         @MainActor
-        func updateSearchHighlights(in textView: NSTextView, query: String, currentIndex: Int) {
+        func updateSearchHighlights(in textView: NSTextView, query: String, currentIndex: Int, scrollToCurrentMatch: Bool = true) {
             guard let textStorage = textView.textStorage else { return }
             let fullRange = NSRange(location: 0, length: textStorage.length)
 
@@ -613,13 +644,13 @@ struct SourceCodeEditor: NSViewRepresentable {
             lastCurrentMatchIndex = currentIndex
 
             // Scroll to current match
-            if currentIndex < searchMatchRanges.count {
+            if scrollToCurrentMatch, currentIndex < searchMatchRanges.count {
                 textView.scrollRangeToVisible(searchMatchRanges[currentIndex])
             }
         }
 
         @MainActor
-        func updateCurrentMatchHighlight(in textView: NSTextView, currentIndex: Int) {
+        func updateCurrentMatchHighlight(in textView: NSTextView, currentIndex: Int, scrollToCurrentMatch: Bool = true) {
             guard let textStorage = textView.textStorage, !searchMatchRanges.isEmpty else { return }
             let previousIndex = lastCurrentMatchIndex
 
@@ -634,7 +665,7 @@ struct SourceCodeEditor: NSViewRepresentable {
             }
             textStorage.endEditing()
 
-            if currentIndex < searchMatchRanges.count {
+            if scrollToCurrentMatch, currentIndex < searchMatchRanges.count {
                 textView.scrollRangeToVisible(searchMatchRanges[currentIndex])
             }
 
