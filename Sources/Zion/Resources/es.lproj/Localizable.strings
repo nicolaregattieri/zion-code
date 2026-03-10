@@ -1974,3 +1974,5 @@
 "editor.tab.closeRight" = "Cerrar a la Derecha";
 "editor.tab.closeAll" = "Cerrar Todos";
 "editor.tab.missingTooltip" = "Archivo eliminado en disco";
+"editor.tab.unsavedClose.title" = "Cambios Sin Guardar";
+"editor.tab.unsavedClose.message" = "¿Quieres guardar los cambios de \"%@\" antes de cerrar?";

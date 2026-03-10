@@ -1949,6 +1949,8 @@
 "editor.tab.closeRight" = "Close to the Right";
 "editor.tab.closeAll" = "Close All";
 "editor.tab.missingTooltip" = "File deleted on disk";
+"editor.tab.unsavedClose.title" = "Unsaved Changes";
+"editor.tab.unsavedClose.message" = "Do you want to save the changes to \"%@\" before closing?";
 
 // Shortcuts
 "shortcuts.toggleDotfiles" = "Toggle Dotfiles";

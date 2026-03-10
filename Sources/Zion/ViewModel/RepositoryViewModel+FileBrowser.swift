@@ -8,6 +8,17 @@ private enum EditorFilePreparationResult: Sendable {
     case readFailure(String)
 }
 
+private enum EditorFileSaveResult {
+    case saved(fileID: String)
+    case cancelled
+    case failed
+}
+
+private enum EditorFileClosePreparation {
+    case ready(fileID: String)
+    case cancelled
+}
+
 private enum EditorFileInspector {
     static let acceptedTextTypes: [UTType] = [
         .text, .plainText, .sourceCode, .shellScript, .script,
@@ -317,9 +328,9 @@ extension RepositoryViewModel {
         guard updateEditorForActiveFile,
               let activeFileID,
               missing.contains(activeFileID),
-              selectedCodeFile?.id == activeFileID else { return }
-        codeFileContent = L10n("editor.file.missingContent")
-        unsavedFiles.remove(activeFileID)
+              let selectedCodeFile,
+              selectedCodeFile.id == activeFileID else { return }
+        displayMissingEditorState(for: selectedCodeFile)
     }
 
     func normalizedEditorURL(_ url: URL) -> URL {
@@ -333,6 +344,264 @@ extension RepositoryViewModel {
             children: item.children,
             isGitIgnored: item.isGitIgnored
         )
+    }
+
+    func applyEditorContent(_ content: String, syncDraftFor fileID: String? = nil) {
+        isApplyingEditorContent = true
+        codeFileContent = content
+        isApplyingEditorContent = false
+
+        guard let fileID else { return }
+        draftFileContents[fileID] = content
+        markFileUnsavedState(fileID: fileID)
+    }
+
+    func syncActiveDraftFromEditorContent() {
+        guard let file = selectedCodeFile else { return }
+        let kind = editorContentKind(for: file.url)
+        guard kind == .text || kind == .markdown else { return }
+        draftFileContents[file.id] = codeFileContent
+        markFileUnsavedState(fileID: file.id)
+    }
+
+    func markFileUnsavedState(fileID: String) {
+        guard let original = originalFileContents[fileID],
+              let draft = draftFileContents[fileID] else {
+            unsavedFiles.remove(fileID)
+            return
+        }
+        if original != draft {
+            unsavedFiles.insert(fileID)
+        } else {
+            unsavedFiles.remove(fileID)
+        }
+    }
+
+    func isDraftBuffered(for fileID: String) -> Bool {
+        draftFileContents[fileID] != nil
+    }
+
+    func restoreDraftIfAvailable(for item: FileItem) -> Bool {
+        guard let draft = draftFileContents[item.id] else { return false }
+        applyEditorContent(draft)
+        markFileUnsavedState(fileID: item.id)
+        return true
+    }
+
+    func displayMissingEditorState(for item: FileItem) {
+        missingOpenFileIDs.insert(item.id)
+        statusMessage = L10n("editor.file.missingStatus", item.name)
+
+        if restoreDraftIfAvailable(for: item) {
+            return
+        }
+
+        isApplyingEditorContent = true
+        codeFileContent = L10n("editor.file.missingContent")
+        isApplyingEditorContent = false
+        unsavedFiles.remove(item.id)
+    }
+
+    @discardableResult
+    func promptToCloseDirtyFile(_ item: FileItem) -> EditorDirtyCloseDecision {
+        if let handler = dirtyFileCloseDecisionHandler {
+            return handler(item)
+        }
+
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = L10n("editor.tab.unsavedClose.title")
+        alert.informativeText = L10n("editor.tab.unsavedClose.message", item.name)
+        alert.addButton(withTitle: L10n("Salvar"))
+        alert.addButton(withTitle: L10n("Descartar"))
+        alert.addButton(withTitle: L10n("Cancelar"))
+
+        switch alert.runModal() {
+        case .alertFirstButtonReturn:
+            return .save
+        case .alertSecondButtonReturn:
+            return .discard
+        default:
+            return .cancel
+        }
+    }
+
+    fileprivate func prepareFileForClosing(_ item: FileItem) -> EditorFileClosePreparation {
+        guard unsavedFiles.contains(item.id) else {
+            return .ready(fileID: item.id)
+        }
+
+        switch promptToCloseDirtyFile(item) {
+        case .save:
+            switch saveEditorFile(item) {
+            case let .saved(fileID):
+                return .ready(fileID: fileID)
+            case .cancelled, .failed:
+                return .cancelled
+            }
+        case .discard:
+            return .ready(fileID: item.id)
+        case .cancel:
+            return .cancelled
+        }
+    }
+
+    func performCloseFile(id: String, discardDraft: Bool) {
+        guard let index = openedFiles.firstIndex(where: { $0.id == id }) else { return }
+
+        openedFiles.remove(at: index)
+        missingOpenFileIDs.remove(id)
+        if discardDraft {
+            draftFileContents.removeValue(forKey: id)
+        }
+        originalFileContents.removeValue(forKey: id)
+        unsavedFiles.remove(id)
+
+        if activeFileID == id {
+            if let last = openedFiles.last {
+                selectCodeFile(last)
+            } else {
+                activeFileID = nil
+                selectedCodeFile = nil
+                applyEditorContent("", syncDraftFor: nil)
+            }
+        }
+        recalculateMissingOpenFileState(updateEditorForActiveFile: false)
+    }
+
+    func saveDraftContent(for fileID: String) -> String? {
+        if let draft = draftFileContents[fileID] {
+            return draft
+        }
+        if activeFileID == fileID {
+            return codeFileContent
+        }
+        return nil
+    }
+
+    func formatEditorContentForSave(_ content: String, file: FileItem) -> String {
+        guard editorFormatOnSave else { return content }
+        let ext = file.url.pathExtension
+        guard CodeFormatter.canFormat(fileExtension: ext) else { return content }
+
+        let opts = FormatOptions(
+            tabSize: effectiveTabSize,
+            useTabs: editorUseTabs,
+            jsonSortKeys: editorJsonSortKeys
+        )
+
+        if case let .success(formatted) = CodeFormatter.format(content, fileExtension: ext, options: opts) {
+            return formatted
+        }
+        return content
+    }
+
+    func applySavedContent(_ content: String, to file: FileItem) {
+        draftFileContents[file.id] = content
+        originalFileContents[file.id] = content
+        unsavedFiles.remove(file.id)
+
+        if activeFileID == file.id {
+            applyEditorContent(content, syncDraftFor: file.id)
+        }
+    }
+
+    fileprivate func saveEditorFile(_ file: FileItem) -> EditorFileSaveResult {
+        if missingOpenFileIDs.contains(file.id) {
+            statusMessage = L10n("editor.file.missingSaveBlocked")
+            return .failed
+        }
+
+        let kind = editorContentKind(for: file.url)
+        guard kind == .text || kind == .markdown else {
+            statusMessage = L10n("editor.file.readOnlyBinary")
+            return .failed
+        }
+
+        guard let currentContent = saveDraftContent(for: file.id) else {
+            return .failed
+        }
+
+        let content = formatEditorContentForSave(currentContent, file: file)
+
+        if file.url.path.hasPrefix(ZionTemp.directory.path) {
+            return saveEditorFileAs(file, content: content)
+        }
+
+        do {
+            try content.write(to: file.url, atomically: true, encoding: .utf8)
+            statusMessage = String(format: L10n("Arquivo salvo: %@"), file.name)
+            applySavedContent(content, to: file)
+            refreshRepository()
+            return .saved(fileID: file.id)
+        } catch {
+            handleError(error)
+            return .failed
+        }
+    }
+
+    fileprivate func saveEditorFileAs(_ file: FileItem, content: String? = nil) -> EditorFileSaveResult {
+        let kind = editorContentKind(for: file.url)
+        guard kind == .text || kind == .markdown else {
+            statusMessage = L10n("editor.file.readOnlyBinary")
+            return .failed
+        }
+
+        let draftContent = content ?? saveDraftContent(for: file.id) ?? ""
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = file.name
+        panel.canCreateDirectories = true
+        if let repoURL = repositoryURL {
+            panel.directoryURL = repoURL
+        }
+        guard panel.runModal() == .OK, let url = panel.url else { return .cancelled }
+
+        do {
+            try draftContent.write(to: url, atomically: true, encoding: .utf8)
+            let newItem = FileItem(url: url, isDirectory: false, children: nil)
+            let oldID = file.id
+            if let idx = openedFiles.firstIndex(where: { $0.id == oldID }) {
+                openedFiles[idx] = newItem
+            } else {
+                openedFiles.append(newItem)
+            }
+            if activeFileID == oldID {
+                activeFileID = newItem.id
+                selectedCodeFile = newItem
+            }
+
+            originalFileContents.removeValue(forKey: oldID)
+            draftFileContents.removeValue(forKey: oldID)
+            unsavedFiles.remove(oldID)
+            missingOpenFileIDs.remove(oldID)
+
+            draftFileContents[newItem.id] = draftContent
+            originalFileContents[newItem.id] = draftContent
+            unsavedFiles.remove(newItem.id)
+
+            if activeFileID == newItem.id {
+                applyEditorContent(draftContent, syncDraftFor: newItem.id)
+            }
+
+            statusMessage = String(format: L10n("Arquivo salvo: %@"), newItem.name)
+            refreshRepository()
+            return .saved(fileID: newItem.id)
+        } catch {
+            handleError(error)
+            return .failed
+        }
+    }
+
+    func attemptCloseFiles(ids: [String], discardDraft: Bool = true) {
+        for id in ids {
+            guard let file = openedFiles.first(where: { $0.id == id }) else { continue }
+            switch prepareFileForClosing(file) {
+            case let .ready(fileID):
+                performCloseFile(id: fileID, discardDraft: discardDraft)
+            case .cancelled:
+                return
+            }
+        }
     }
 
     func activateFileInEditor(_ item: FileItem, highlightQuery: String? = nil, navigateToCode: Bool = false) {
@@ -350,11 +619,24 @@ extension RepositoryViewModel {
         activeFileID = activeItem.id
         selectedCodeFile = activeItem
         editorFocusRequestID += 1
-        codeFileContent = ""
+        if restoreDraftIfAvailable(for: activeItem) {
+            if navigateToCode {
+                navigateToCodeRequested = true
+            }
+            if let highlightQuery {
+                let query = highlightQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !query.isEmpty {
+                    editorFindSeedQuery = query
+                    editorFindSeedRequestID += 1
+                }
+            }
+            return
+        }
+
+        applyEditorContent("", syncDraftFor: nil)
         let itemURL = activeItem.url
         let itemID = activeItem.id
-        let itemName = activeItem.name
-        Task { [itemURL, itemID, itemName] in
+        Task { [itemURL, itemID] in
             let prepared = await Task.detached(priority: .userInitiated) {
                 EditorFileInspector.prepareForEditor(url: itemURL)
             }.value
@@ -363,26 +645,34 @@ extension RepositoryViewModel {
 
             switch prepared {
             case .missing:
-                missingOpenFileIDs.insert(itemID)
-                originalFileContents.removeValue(forKey: itemID)
-                codeFileContent = L10n("editor.file.missingContent")
-                statusMessage = L10n("editor.file.missingStatus", itemName)
-                unsavedFiles.remove(itemID)
+                displayMissingEditorState(for: activeItem)
             case let .ready(kind, content):
                 missingOpenFileIDs.remove(itemID)
                 if kind == .text || kind == .markdown {
                     let resolvedContent = content ?? ""
-                    codeFileContent = resolvedContent
                     originalFileContents[itemID] = resolvedContent
+                    if !isDraftBuffered(for: itemID) {
+                        draftFileContents[itemID] = resolvedContent
+                    }
+                    if activeFileID == itemID, draftFileContents[itemID] == resolvedContent {
+                        applyEditorContent(resolvedContent)
+                    }
+                    markFileUnsavedState(fileID: itemID)
                 } else {
+                    draftFileContents.removeValue(forKey: itemID)
                     originalFileContents.removeValue(forKey: itemID)
-                    codeFileContent = ""
+                    applyEditorContent("")
                     unsavedFiles.remove(itemID)
                 }
             case let .readFailure(message):
                 missingOpenFileIDs.remove(itemID)
-                originalFileContents.removeValue(forKey: itemID)
-                codeFileContent = L10n("error.readFile", message)
+                if restoreDraftIfAvailable(for: activeItem) {
+                    statusMessage = message
+                } else {
+                    originalFileContents.removeValue(forKey: itemID)
+                    draftFileContents.removeValue(forKey: itemID)
+                    applyEditorContent(L10n("error.readFile", message))
+                }
             }
         }
 
@@ -577,114 +867,38 @@ extension RepositoryViewModel {
 
     func markCurrentFileUnsavedIfChanged() {
         guard let fileID = activeFileID else { return }
-        if let original = originalFileContents[fileID], original != codeFileContent {
-            unsavedFiles.insert(fileID)
-        } else {
-            unsavedFiles.remove(fileID)
-        }
+        markFileUnsavedState(fileID: fileID)
     }
 
     func closeFile(id: String) {
-        guard let index = openedFiles.firstIndex(where: { $0.id == id }) else { return }
-
-        openedFiles.remove(at: index)
-        missingOpenFileIDs.remove(id)
-
-        if activeFileID == id {
-            if let last = openedFiles.last {
-                selectCodeFile(last)
-            } else {
-                activeFileID = nil
-                selectedCodeFile = nil
-                codeFileContent = ""
-            }
-        }
-        recalculateMissingOpenFileState(updateEditorForActiveFile: false)
+        attemptCloseFiles(ids: [id])
     }
 
     func closeOtherFiles(keepingID id: String) {
         guard openedFiles.contains(where: { $0.id == id }) else { return }
-        openedFiles.removeAll { $0.id != id }
-        if activeFileID != id, let kept = openedFiles.first {
-            selectCodeFile(kept)
-        }
-        recalculateMissingOpenFileState(updateEditorForActiveFile: false)
+        let idsToClose = openedFiles.map(\.id).filter { $0 != id }
+        attemptCloseFiles(ids: idsToClose)
     }
 
     func closeFilesToTheLeft(ofID id: String) {
         guard let index = openedFiles.firstIndex(where: { $0.id == id }), index > 0 else { return }
-        let removedIDs = Set(openedFiles[..<index].map(\.id))
-        openedFiles.removeFirst(index)
-        if let activeID = activeFileID, removedIDs.contains(activeID) {
-            selectCodeFile(openedFiles[0])
-        }
-        recalculateMissingOpenFileState(updateEditorForActiveFile: false)
+        let idsToClose = Array(openedFiles[..<index].map(\.id))
+        attemptCloseFiles(ids: idsToClose)
     }
 
     func closeFilesToTheRight(ofID id: String) {
         guard let index = openedFiles.firstIndex(where: { $0.id == id }), index < openedFiles.count - 1 else { return }
-        let removedIDs = Set(openedFiles[(index + 1)...].map(\.id))
-        openedFiles.removeSubrange((index + 1)...)
-        if let activeID = activeFileID, removedIDs.contains(activeID) {
-            selectCodeFile(openedFiles[index])
-        }
-        recalculateMissingOpenFileState(updateEditorForActiveFile: false)
+        let idsToClose = Array(openedFiles[(index + 1)...].map(\.id))
+        attemptCloseFiles(ids: idsToClose)
     }
 
     func closeAllFiles() {
-        openedFiles.removeAll()
-        missingOpenFileIDs.removeAll()
-        activeFileID = nil
-        selectedCodeFile = nil
-        codeFileContent = ""
+        attemptCloseFiles(ids: openedFiles.map(\.id))
     }
 
     func saveCurrentCodeFile() {
         guard let file = selectedCodeFile else { return }
-        if missingOpenFileIDs.contains(file.id) {
-            statusMessage = L10n("editor.file.missingSaveBlocked")
-            return
-        }
-        let kind = editorContentKind(for: file.url)
-        guard kind == .text || kind == .markdown else {
-            statusMessage = L10n("editor.file.readOnlyBinary")
-            return
-        }
-        // Untitled files redirect to Save As
-        if file.url.path.hasPrefix(ZionTemp.directory.path) {
-            saveCurrentFileAs()
-            return
-        }
-        var content = codeFileContent
-        // Format on save (direct assignment — no undo needed since we're saving)
-        if editorFormatOnSave {
-            let ext = file.url.pathExtension
-            if CodeFormatter.canFormat(fileExtension: ext) {
-                let opts = FormatOptions(
-                    tabSize: effectiveTabSize,
-                    useTabs: editorUseTabs,
-                    jsonSortKeys: editorJsonSortKeys
-                )
-                if case .success(let formatted) = CodeFormatter.format(content, fileExtension: ext, options: opts) {
-                    content = formatted
-                    codeFileContent = formatted
-                }
-            }
-        }
-        let fileURL = file.url
-        let fileID = file.id
-        let fileName = file.name
-        Task {
-            do {
-                try content.write(to: fileURL, atomically: true, encoding: .utf8)
-                statusMessage = String(format: L10n("Arquivo salvo: %@"), fileName)
-                originalFileContents[fileID] = content
-                unsavedFiles.remove(fileID)
-                refreshRepository()
-            } catch {
-                handleError(error)
-            }
-        }
+        _ = saveEditorFile(file)
     }
 
     func formatCurrentFile() {
@@ -792,45 +1006,14 @@ extension RepositoryViewModel {
         }
         activeFileID = item.id
         selectedCodeFile = item
-        codeFileContent = ""
+        applyEditorContent("", syncDraftFor: item.id)
         originalFileContents[item.id] = ""
+        draftFileContents[item.id] = ""
     }
 
     func saveCurrentFileAs() {
         guard let file = selectedCodeFile else { return }
-        let kind = editorContentKind(for: file.url)
-        guard kind == .text || kind == .markdown else {
-            statusMessage = L10n("editor.file.readOnlyBinary")
-            return
-        }
-        let content = codeFileContent
-        let panel = NSSavePanel()
-        panel.nameFieldStringValue = file.name
-        panel.canCreateDirectories = true
-        if let repoURL = repositoryURL {
-            panel.directoryURL = repoURL
-        }
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        let oldID = file.id
-        Task {
-            do {
-                try content.write(to: url, atomically: true, encoding: .utf8)
-                let newItem = FileItem(url: url, isDirectory: false, children: nil)
-                // Replace the tab
-                if let idx = openedFiles.firstIndex(where: { $0.id == oldID }) {
-                    openedFiles[idx] = newItem
-                }
-                activeFileID = newItem.id
-                selectedCodeFile = newItem
-                originalFileContents.removeValue(forKey: oldID)
-                originalFileContents[newItem.id] = content
-                unsavedFiles.remove(oldID)
-                statusMessage = String(format: L10n("Arquivo salvo: %@"), newItem.name)
-                refreshRepository()
-            } catch {
-                handleError(error)
-            }
-        }
+        _ = saveEditorFileAs(file)
     }
 
     // MARK: - File Browser Context Menu Operations
@@ -940,7 +1123,7 @@ extension RepositoryViewModel {
             do {
                 try FileManager.default.removeItem(at: item.url)
                 if let idx = openedFiles.firstIndex(where: { $0.id == item.id }) {
-                    closeFile(id: openedFiles[idx].id)
+                    performCloseFile(id: openedFiles[idx].id, discardDraft: true)
                 }
             } catch {
                 handleError(error)
@@ -981,11 +1164,17 @@ extension RepositoryViewModel {
                 if activeFileID == item.id {
                     activeFileID = newItem.id
                     selectedCodeFile = newItem
-                    if let content = originalFileContents.removeValue(forKey: item.id) {
-                        originalFileContents[newItem.id] = content
-                    }
-                    unsavedFiles.remove(item.id)
                 }
+                if let content = originalFileContents.removeValue(forKey: item.id) {
+                    originalFileContents[newItem.id] = content
+                }
+                if let draft = draftFileContents.removeValue(forKey: item.id) {
+                    draftFileContents[newItem.id] = draft
+                }
+                if unsavedFiles.remove(item.id) != nil {
+                    markFileUnsavedState(fileID: newItem.id)
+                }
+                missingOpenFileIDs.remove(item.id)
             }
             refreshFileTree()
         } catch {
@@ -1051,9 +1240,18 @@ extension RepositoryViewModel {
                         if activeFileID == oldPath {
                             activeFileID = newItem.id
                             selectedCodeFile = newItem
-                            if let content = originalFileContents.removeValue(forKey: oldPath) {
-                                originalFileContents[newItem.id] = content
-                            }
+                        }
+                        if let content = originalFileContents.removeValue(forKey: oldPath) {
+                            originalFileContents[newItem.id] = content
+                        }
+                        if let draft = draftFileContents.removeValue(forKey: oldPath) {
+                            draftFileContents[newItem.id] = draft
+                        }
+                        if unsavedFiles.remove(oldPath) != nil {
+                            markFileUnsavedState(fileID: newItem.id)
+                        }
+                        if missingOpenFileIDs.remove(oldPath) != nil {
+                            missingOpenFileIDs.insert(newItem.id)
                         }
                     }
                 } else {

@@ -34,6 +34,12 @@ enum EditorContentKind: Equatable, Sendable {
     case unsupported
 }
 
+enum EditorDirtyCloseDecision: Equatable, Sendable {
+    case save
+    case discard
+    case cancel
+}
+
 // MARK: - Per-Repo Editor Config (.zion/editor.json)
 
 struct EditorConfig: Codable {
