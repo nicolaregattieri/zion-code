@@ -175,10 +175,12 @@ struct TerminalTabView: NSViewRepresentable {
         private var mouseDownMonitor: Any?
         private var mouseDragMonitor: Any?
         private var mouseUpMonitor: Any?
+        private var scrollWheelMonitor: Any?
         private var pendingTerminalOutput = Data()
         private var pendingOutputFlushTask: Task<Void, Never>?
         private var pointerDownInTerminal = false
         private var dragSelectionFreezeActive = false
+        private var preciseScrollLineAccumulator: CGFloat = 0
         private static let outputFlushIntervalNanos: UInt64 = 8_000_000
         private static let maxBufferedOutputDuringDragSelection = 1_048_576
         private static let forcedFlushChunkBytes = 65_536
@@ -466,6 +468,36 @@ struct TerminalTabView: NSViewRepresentable {
                 view.copy(self)
                 return event
             }
+
+            guard scrollWheelMonitor == nil else { return }
+            scrollWheelMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [weak self] event in
+                guard let self else { return event }
+                defer { self.resetPreciseScrollAccumulatorIfNeeded(for: event) }
+
+                guard event.hasPreciseScrollingDeltas,
+                      self.isTerminalFocused,
+                      let view = self.terminalView as? ZionTerminalView,
+                      view.canScroll else {
+                    self.preciseScrollLineAccumulator = 0
+                    return event
+                }
+
+                let lineHeight = ZionTerminalView.preciseScrollLineHeight(
+                    viewHeight: view.bounds.height,
+                    terminalRows: view.getTerminal().rows
+                )
+                let step = ZionTerminalView.accumulatePreciseScrollStep(
+                    accumulator: self.preciseScrollLineAccumulator,
+                    deltaY: event.scrollingDeltaY,
+                    lineHeight: lineHeight
+                )
+                self.preciseScrollLineAccumulator = step.remainder
+
+                if step.lines != 0 {
+                    view.applyDiscreteScroll(lines: step.lines)
+                }
+                return nil
+            }
         }
 
         private func removeMouseInteractionMonitors() {
@@ -480,6 +512,18 @@ struct TerminalTabView: NSViewRepresentable {
             if let monitor = mouseUpMonitor {
                 NSEvent.removeMonitor(monitor)
                 mouseUpMonitor = nil
+            }
+            if let monitor = scrollWheelMonitor {
+                NSEvent.removeMonitor(monitor)
+                scrollWheelMonitor = nil
+            }
+            preciseScrollLineAccumulator = 0
+        }
+
+        private func resetPreciseScrollAccumulatorIfNeeded(for event: NSEvent) {
+            let endedPhases: NSEvent.Phase = [.ended, .cancelled]
+            if endedPhases.contains(event.phase) || endedPhases.contains(event.momentumPhase) {
+                preciseScrollLineAccumulator = 0
             }
         }
 
