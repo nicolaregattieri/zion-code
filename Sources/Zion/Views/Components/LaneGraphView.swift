@@ -7,8 +7,10 @@ struct LaneGraphView: View {
     let isHead: Bool
     let height: CGFloat
     
-    private let safePadding: CGFloat = 14
+    private let leadingPadding: CGFloat = 10
+    private let trailingPadding: CGFloat = 12
     private let laneSpacing: CGFloat = 20
+    private let minimumWidth: CGFloat = 56
 
     var body: some View {
         Canvas { context, size in
@@ -30,7 +32,7 @@ struct LaneGraphView: View {
             for lane in allActiveLanes {
                 let colorKey = laneColorByLane[lane] ?? lane
                 let laneColor = color(forKey: colorKey)
-                let x = laneX(lane) + safePadding
+                let x = laneX(lane)
 
                 let hasIncoming = incomingLanes.contains(lane)
                 let hasOutgoing = outgoingLanes.contains(lane)
@@ -52,8 +54,8 @@ struct LaneGraphView: View {
             }
 
             for edge in commit.outgoingEdges where edge.from != edge.to {
-                let startX = laneX(edge.from) + safePadding
-                let endX = laneX(edge.to) + safePadding
+                let startX = laneX(edge.from)
+                let endX = laneX(edge.to)
                 let laneDist = abs(endX - startX)
                 let arcHeight = min(laneDist * 1.2, (size.height - centerY) * 0.6)
                 let arcTop = centerY + 4
@@ -73,7 +75,7 @@ struct LaneGraphView: View {
                                style: StrokeStyle(lineWidth: 2.0, lineCap: .round, lineJoin: .round))
             }
 
-            let x = laneX(commit.lane) + safePadding
+            let x = laneX(commit.lane)
             let nodeColor = color(forKey: laneColorByLane[commit.lane] ?? commit.nodeColorKey)
             
             if isHead {
@@ -89,9 +91,19 @@ struct LaneGraphView: View {
                 context.stroke(Path(ellipseIn: nodeRect), with: .color(.white.opacity(0.8)), lineWidth: 1.8)
             }
         }
-        .frame(width: max(CGFloat(max(laneCount, 1)) * laneSpacing + (safePadding * 2), 84), height: height)
+        .frame(width: graphWidth, height: height)
     }
 
-    private func laneX(_ lane: Int) -> CGFloat { CGFloat(lane) * laneSpacing + 4 }
+    private var graphWidth: CGFloat {
+        let span = CGFloat(max(laneCount - 1, 0)) * laneSpacing
+        return max(leadingPadding + trailingPadding + span, minimumWidth)
+    }
+
+    private func laneX(_ lane: Int) -> CGFloat {
+        let maxLaneIndex = max(laneCount - 1, 0)
+        let rightAlignedOffset = CGFloat(maxLaneIndex - lane) * laneSpacing
+        return graphWidth - trailingPadding - rightAlignedOffset
+    }
+
     private func color(forKey key: Int) -> Color { DesignSystem.Colors.laneColor(forKey: key) }
 }

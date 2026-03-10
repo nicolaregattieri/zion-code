@@ -11,18 +11,15 @@ struct CommitGraphLayout {
 }
 
 struct GitGraphLaneCalculator {
-    /// Walk first-parent chain from HEAD to build the set of main-line commit hashes.
+    /// Walk first-parent chain from the repo's main line to build the set of lane-0 commit hashes.
     static func mainFirstParentChain(from commits: [ParsedCommit]) -> Set<String> {
-        // Find the HEAD commit (has "HEAD" in decorations)
-        guard let headCommit = commits.first(where: { commit in
-            commit.decorations.contains { $0.contains("HEAD") }
-        }) else {
+        guard let anchorCommit = preferredMainlineCommit(in: commits) else {
             return []
         }
 
         let parentIndex = Dictionary(uniqueKeysWithValues: commits.map { ($0.hash, $0.parents) })
         var chain = Set<String>()
-        var current = headCommit.hash
+        var current = anchorCommit.hash
 
         while true {
             chain.insert(current)
@@ -33,6 +30,32 @@ struct GitGraphLaneCalculator {
         }
 
         return chain
+    }
+
+    private static func preferredMainlineCommit(in commits: [ParsedCommit]) -> ParsedCommit? {
+        let preferredNames = ["main", "master", "trunk"]
+
+        for name in preferredNames {
+            if let commit = commits.first(where: { commit in
+                commit.decorations.contains { decorationMatchesMainline($0, preferredName: name) }
+            }) {
+                return commit
+            }
+        }
+
+        return commits.first(where: { commit in
+            commit.decorations.contains { $0.contains("HEAD") }
+        })
+    }
+
+    private static func decorationMatchesMainline(_ decoration: String, preferredName: String) -> Bool {
+        let trimmed = decoration.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed == preferredName { return true }
+        if trimmed.hasPrefix("HEAD -> ") {
+            let headTarget = String(trimmed.dropFirst("HEAD -> ".count))
+            return headTarget == preferredName
+        }
+        return trimmed.hasSuffix("/\(preferredName)")
     }
 
     func layout(for commits: [ParsedCommit], mainChain: Set<String> = []) -> [CommitGraphLayout] {

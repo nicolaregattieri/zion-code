@@ -382,62 +382,9 @@ struct GraphScreen: View {
         }
     }
     
-    /// Build a pending-changes commit that aligns with the first real commit's lane and pass-through lanes.
-    private var pendingChangesCommit: Commit {
-        if let first = model.commits.first {
-            // Inherit lane position and all active pass-through lanes from HEAD
-            let pendingColorKey = first.nodeColorKey
-            var laneColors = first.laneColors
-            // Ensure the pending node's own lane is in the color list
-            if !laneColors.contains(where: { $0.lane == first.lane }) {
-                laneColors.append(LaneColor(lane: first.lane, colorKey: pendingColorKey))
-            }
-            return Commit(
-                id: "pending",
-                shortHash: "",
-                parents: [],
-                author: "",
-                email: "",
-                date: Date(),
-                subject: "",
-                decorations: [],
-                lane: first.lane,
-                nodeColorKey: pendingColorKey,
-                incomingLanes: first.incomingLanes,
-                outgoingLanes: first.incomingLanes,
-                laneColors: laneColors,
-                outgoingEdges: []
-            )
-        }
-        // Fallback when no commits exist
-        return Commit(
-            id: "pending",
-            shortHash: "",
-            parents: [],
-            author: "",
-            email: "",
-            date: Date(),
-            subject: "",
-            decorations: [],
-            lane: 0,
-            nodeColorKey: 3,
-            incomingLanes: [0],
-            outgoingLanes: [0],
-            laneColors: [LaneColor(lane: 0, colorKey: 3)],
-            outgoingEdges: []
-        )
-    }
-
     private var pendingChangesRow: some View {
         HStack(spacing: 0) {
-            // PERFECT ALIGNMENT: Use the real LaneGraphView with a dummy commit
-            LaneGraphView(
-                commit: pendingChangesCommit,
-                laneCount: model.maxLaneCount,
-                isSelected: false,
-                isHead: false,
-                height: 102
-            )
+            PendingChangesLaneView(height: 102)
 
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous)
@@ -1415,6 +1362,32 @@ struct GraphScreen: View {
             default: Image(systemName: "questionmark.circle").foregroundStyle(.secondary)
             }
         }
+    }
+}
+
+private struct PendingChangesLaneView: View {
+    let height: CGFloat
+
+    private let markerPadding: CGFloat = 18
+    private let markerDiameter: CGFloat = 12
+    private let width: CGFloat = 56
+
+    var body: some View {
+        Canvas { context, size in
+            let rect = CGRect(
+                x: markerPadding,
+                y: (size.height - markerDiameter) / 2,
+                width: markerDiameter,
+                height: markerDiameter
+            )
+
+            context.stroke(
+                Path(ellipseIn: rect),
+                with: .color(.white.opacity(0.7)),
+                style: StrokeStyle(lineWidth: 2)
+            )
+        }
+        .frame(width: width, height: height)
     }
 }
 
