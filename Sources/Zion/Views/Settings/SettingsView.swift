@@ -28,6 +28,9 @@ private enum SettingsTab: String, CaseIterable {
 
 struct SettingsView: View {
     @State private var selectedTab: SettingsTab = .general
+    @AppStorage("zion.uiLanguage") private var uiLanguageRaw: String = AppLanguage.system.rawValue
+
+    private var uiLanguage: AppLanguage { AppLanguage(rawValue: uiLanguageRaw) ?? .system }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -76,6 +79,8 @@ struct SettingsView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(width: 480, height: 580)
+        .id(uiLanguageRaw)
+        .environment(\.locale, uiLanguage.locale)
         .tint(DesignSystem.Colors.actionPrimary)
         .onReceive(NotificationCenter.default.publisher(for: .openMobileAccessSettings)) { _ in
             selectedTab = .mobileAccess
