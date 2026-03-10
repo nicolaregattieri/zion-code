@@ -2,6 +2,99 @@ import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
 
+private enum EditorFilePreparationResult: Sendable {
+    case missing
+    case ready(kind: EditorContentKind, content: String?)
+    case readFailure(String)
+}
+
+private enum EditorFileInspector {
+    static let acceptedTextTypes: [UTType] = [
+        .text, .plainText, .sourceCode, .shellScript, .script,
+        .json, .xml, .yaml, .html,
+    ]
+
+    static let acceptedImageExtensions: Set<String> = [
+        "png", "jpg", "jpeg", "gif", "webp", "bmp", "tiff", "tif", "svg",
+    ]
+
+    static func contentKind(for url: URL) -> EditorContentKind {
+        let ext = url.pathExtension.lowercased()
+        if ext == "md" || ext == "markdown" {
+            return .markdown
+        }
+        if ext == "svg" || acceptedImageExtensions.contains(ext) {
+            return .image
+        }
+        if url.path.hasPrefix(ZionTemp.directory.path) {
+            return .text
+        }
+        if isImageFile(url) {
+            return .image
+        }
+        if !FileManager.default.fileExists(atPath: url.path) {
+            return .text
+        }
+        return isTextFile(url) ? .text : .unsupported
+    }
+
+    static func isTextFile(_ url: URL) -> Bool {
+        guard let resourceValues = try? url.resourceValues(forKeys: [.contentTypeKey]),
+              let contentType = resourceValues.contentType else {
+            return isLikelyTextFileByContent(url)
+        }
+        if acceptedTextTypes.contains(where: { contentType.conforms(to: $0) }) {
+            return true
+        }
+        return isLikelyTextFileByContent(url)
+    }
+
+    static func isImageFile(_ url: URL) -> Bool {
+        if let resourceValues = try? url.resourceValues(forKeys: [.contentTypeKey]),
+           let contentType = resourceValues.contentType,
+           contentType.conforms(to: .image) {
+            return true
+        }
+        let ext = url.pathExtension.lowercased()
+        if ext == "svg" {
+            return true
+        }
+        return acceptedImageExtensions.contains(ext)
+    }
+
+    static func prepareForEditor(url: URL) -> EditorFilePreparationResult {
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            return .missing
+        }
+
+        let kind = contentKind(for: url)
+        guard kind == .text || kind == .markdown else {
+            return .ready(kind: kind, content: nil)
+        }
+
+        do {
+            let content = try String(contentsOf: url, encoding: .utf8)
+            return .ready(kind: kind, content: content)
+        } catch {
+            if !FileManager.default.fileExists(atPath: url.path) {
+                return .missing
+            }
+            return .readFailure(error.localizedDescription)
+        }
+    }
+
+    private static func isLikelyTextFileByContent(_ url: URL, maxBytes: Int = 8_192) -> Bool {
+        guard let handle = try? FileHandle(forReadingFrom: url) else { return false }
+        defer { try? handle.close() }
+        guard let data = try? handle.read(upToCount: maxBytes) else { return false }
+        if data.isEmpty { return true }
+        if data.contains(0) { return false }
+        if String(data: data, encoding: .utf8) != nil { return true }
+        if String(data: data, encoding: .ascii) != nil { return true }
+        return false
+    }
+}
+
 extension RepositoryViewModel {
 
     // MARK: - Zion Code Methods
@@ -257,47 +350,39 @@ extension RepositoryViewModel {
         activeFileID = activeItem.id
         selectedCodeFile = activeItem
         editorFocusRequestID += 1
-
-        if isOpenFileMissingOnDisk(activeItem) {
-            missingOpenFileIDs.insert(activeItem.id)
-            codeFileContent = L10n("editor.file.missingContent")
-            statusMessage = L10n("editor.file.missingStatus", activeItem.name)
-            unsavedFiles.remove(activeItem.id)
-            if navigateToCode {
-                navigateToCodeRequested = true
-            }
-            return
-        }
-        missingOpenFileIDs.remove(activeItem.id)
-
-        let kind = editorContentKind(for: activeItem.url)
-        guard kind == .text || kind == .markdown else {
-            codeFileContent = ""
-            unsavedFiles.remove(activeItem.id)
-            if navigateToCode {
-                navigateToCodeRequested = true
-            }
-            return
-        }
-
+        codeFileContent = ""
         let itemURL = activeItem.url
         let itemID = activeItem.id
-        Task {
-            do {
-                let content = try String(contentsOf: itemURL, encoding: .utf8)
-                guard activeFileID == itemID else { return }
-                codeFileContent = content
-                originalFileContents[itemID] = content
+        let itemName = activeItem.name
+        Task { [itemURL, itemID, itemName] in
+            let prepared = await Task.detached(priority: .userInitiated) {
+                EditorFileInspector.prepareForEditor(url: itemURL)
+            }.value
+
+            guard activeFileID == itemID else { return }
+
+            switch prepared {
+            case .missing:
+                missingOpenFileIDs.insert(itemID)
+                originalFileContents.removeValue(forKey: itemID)
+                codeFileContent = L10n("editor.file.missingContent")
+                statusMessage = L10n("editor.file.missingStatus", itemName)
+                unsavedFiles.remove(itemID)
+            case let .ready(kind, content):
                 missingOpenFileIDs.remove(itemID)
-            } catch {
-                guard activeFileID == itemID else { return }
-                if !FileManager.default.fileExists(atPath: itemURL.path) {
-                    missingOpenFileIDs.insert(itemID)
-                    codeFileContent = L10n("editor.file.missingContent")
-                    statusMessage = L10n("editor.file.missingStatus", activeItem.name)
+                if kind == .text || kind == .markdown {
+                    let resolvedContent = content ?? ""
+                    codeFileContent = resolvedContent
+                    originalFileContents[itemID] = resolvedContent
                 } else {
-                    codeFileContent = L10n("error.readFile", error.localizedDescription)
+                    originalFileContents.removeValue(forKey: itemID)
+                    codeFileContent = ""
+                    unsavedFiles.remove(itemID)
                 }
+            case let .readFailure(message):
+                missingOpenFileIDs.remove(itemID)
+                originalFileContents.removeValue(forKey: itemID)
+                codeFileContent = L10n("error.readFile", message)
             }
         }
 
@@ -645,66 +730,18 @@ extension RepositoryViewModel {
     }
 
     func editorContentKind(for url: URL) -> EditorContentKind {
-        let ext = url.pathExtension.lowercased()
-        if ext == "md" || ext == "markdown" {
-            return .markdown
-        }
-        if ext == "svg" || Self.acceptedImageExtensions.contains(ext) {
-            return .image
-        }
-        if url.path.hasPrefix(ZionTemp.directory.path) {
-            return .text
-        }
-        if isImageFile(url) {
-            return .image
-        }
-        if !FileManager.default.fileExists(atPath: url.path) {
-            return .text
-        }
-        return isTextFile(url) ? .text : .unsupported
+        EditorFileInspector.contentKind(for: url)
     }
 
-    static let acceptedTextTypes: [UTType] = [
-        .text, .plainText, .sourceCode, .shellScript, .script,
-        .json, .xml, .yaml, .html,
-    ]
-    static let acceptedImageExtensions: Set<String> = [
-        "png", "jpg", "jpeg", "gif", "webp", "bmp", "tiff", "tif", "svg",
-    ]
+    static let acceptedTextTypes = EditorFileInspector.acceptedTextTypes
+    static let acceptedImageExtensions = EditorFileInspector.acceptedImageExtensions
 
     func isTextFile(_ url: URL) -> Bool {
-        guard let resourceValues = try? url.resourceValues(forKeys: [.contentTypeKey]),
-              let contentType = resourceValues.contentType else {
-            return isLikelyTextFileByContent(url)
-        }
-        if Self.acceptedTextTypes.contains(where: { contentType.conforms(to: $0) }) {
-            return true
-        }
-        return isLikelyTextFileByContent(url)
-    }
-
-    private func isLikelyTextFileByContent(_ url: URL, maxBytes: Int = 8_192) -> Bool {
-        guard let handle = try? FileHandle(forReadingFrom: url) else { return false }
-        defer { try? handle.close() }
-        guard let data = try? handle.read(upToCount: maxBytes) else { return false }
-        if data.isEmpty { return true }
-        if data.contains(0) { return false }
-        if String(data: data, encoding: .utf8) != nil { return true }
-        if String(data: data, encoding: .ascii) != nil { return true }
-        return false
+        EditorFileInspector.isTextFile(url)
     }
 
     func isImageFile(_ url: URL) -> Bool {
-        if let resourceValues = try? url.resourceValues(forKeys: [.contentTypeKey]),
-           let contentType = resourceValues.contentType,
-           contentType.conforms(to: .image) {
-            return true
-        }
-        let ext = url.pathExtension.lowercased()
-        if ext == "svg" {
-            return true
-        }
-        return Self.acceptedImageExtensions.contains(ext)
+        EditorFileInspector.isImageFile(url)
     }
 
     func openExternalFiles(_ urls: [URL]) {

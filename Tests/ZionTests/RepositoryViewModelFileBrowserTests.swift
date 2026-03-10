@@ -590,6 +590,25 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
         XCTAssertEqual(vm.activeFileID, item.id)
     }
 
+    func testSelectCodeFileTextLoadsContentAsynchronously() async throws {
+        let vm = RepositoryViewModel()
+        let expected = "struct Fixture {}\n"
+        let textURL = try makeTempFile(ext: "swift", data: Data(expected.utf8))
+        let item = FileItem(url: textURL, isDirectory: false, children: nil)
+
+        vm.selectCodeFile(item)
+
+        XCTAssertEqual(vm.selectedEditorContentKind, .text)
+        XCTAssertEqual(vm.activeFileID, item.id)
+
+        for _ in 0..<20 where vm.codeFileContent != expected {
+            try await Task.sleep(nanoseconds: 50_000_000)
+        }
+
+        XCTAssertEqual(vm.codeFileContent, expected)
+        XCTAssertEqual(vm.originalFileContents[item.id], expected)
+    }
+
     func testSaveCurrentCodeFileDoesNotOverwriteImageData() throws {
         let vm = RepositoryViewModel()
         let original = Data([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a])

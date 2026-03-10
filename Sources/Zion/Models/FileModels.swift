@@ -27,7 +27,7 @@ struct FileHistoryEntry: Identifiable {
     let message: String
 }
 
-enum EditorContentKind: Equatable {
+enum EditorContentKind: Equatable, Sendable {
     case text
     case markdown
     case image
