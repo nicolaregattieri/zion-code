@@ -1033,6 +1033,9 @@
 "editor.image.title" = "Vista previa de imagen";
 "editor.image.fit" = "Ajustar";
 "editor.image.actual" = "Tamaño real";
+"editor.image.zoom" = "Zoom";
+"editor.image.zoomOut" = "Alejar";
+"editor.image.zoomIn" = "Acercar";
 "editor.image.revealFinder" = "Revelar en Finder";
 "editor.image.openExternal" = "Abrir externamente";
 "editor.image.loadFailed" = "No se pudo cargar esta imagen";
