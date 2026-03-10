@@ -3,6 +3,7 @@ import XCTest
 
 @MainActor
 final class RepositoryViewModelAITests: XCTestCase {
+    private struct PendingSummaryError: Error {}
 
     // MARK: - generateCommitMessage (static heuristic)
 
@@ -255,5 +256,62 @@ final class RepositoryViewModelAITests: XCTestCase {
         XCTAssertNotNil(result)
         XCTAssertEqual(result?.count, 1)
         XCTAssertEqual(result?.first?.message, "Issue")
+    }
+
+    // MARK: - pending changes summary
+
+    func testBeginPendingChangesSummaryRequestKeepsExistingSummaryVisible() {
+        let vm = RepositoryViewModel()
+        vm.aiPendingChangesSummary = "Existing summary"
+
+        vm.beginPendingChangesSummaryRequest()
+
+        XCTAssertTrue(vm.isLoadingPendingChangesSummary)
+        XCTAssertEqual(vm.aiPendingChangesSummary, "Existing summary")
+    }
+
+    func testHandlePendingChangesSummaryFailureKeepsExistingSummary() {
+        let vm = RepositoryViewModel()
+        vm.aiPendingChangesSummary = "Existing summary"
+        vm.isLoadingPendingChangesSummary = true
+
+        vm.handlePendingChangesSummaryFailure(PendingSummaryError())
+
+        XCTAssertFalse(vm.isLoadingPendingChangesSummary)
+        XCTAssertEqual(vm.aiPendingChangesSummary, "Existing summary")
+        XCTAssertFalse((vm.lastError ?? "").isEmpty)
+    }
+
+    func testDismissPendingChangesSummaryClearsState() {
+        let vm = RepositoryViewModel()
+        vm.aiPendingChangesSummary = "Existing summary"
+        vm.isLoadingPendingChangesSummary = true
+
+        vm.dismissPendingChangesSummary()
+
+        XCTAssertFalse(vm.isLoadingPendingChangesSummary)
+        XCTAssertEqual(vm.aiPendingChangesSummary, "")
+    }
+
+    func testSyncPendingChangesSummaryAfterRefreshKeepsSummaryWhenChangesRemain() {
+        let vm = RepositoryViewModel()
+        vm.aiPendingChangesSummary = "Existing summary"
+        vm.isLoadingPendingChangesSummary = true
+
+        vm.syncPendingChangesSummaryAfterRefresh(hasPendingChanges: true)
+
+        XCTAssertTrue(vm.isLoadingPendingChangesSummary)
+        XCTAssertEqual(vm.aiPendingChangesSummary, "Existing summary")
+    }
+
+    func testSyncPendingChangesSummaryAfterRefreshClearsSummaryWhenNoChangesRemain() {
+        let vm = RepositoryViewModel()
+        vm.aiPendingChangesSummary = "Existing summary"
+        vm.isLoadingPendingChangesSummary = true
+
+        vm.syncPendingChangesSummaryAfterRefresh(hasPendingChanges: false)
+
+        XCTAssertFalse(vm.isLoadingPendingChangesSummary)
+        XCTAssertEqual(vm.aiPendingChangesSummary, "")
     }
 }

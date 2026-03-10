@@ -411,9 +411,7 @@ extension RepositoryViewModel {
                     origin: origin,
                     didUncommittedChangesChange: didUncommittedChangesChange
                 )
-                if !aiPendingChangesSummary.isEmpty {
-                    aiPendingChangesSummary = "" // Clear cached summary on refresh
-                }
+                syncPendingChangesSummaryAfterRefresh(hasPendingChanges: !payloadChanges.isEmpty)
                 ensureBranchReviewSelections()
                 refreshMergedBranchesPreview()
                 if recoverySnapshotsRepositoryPath == repositoryURL.path {
