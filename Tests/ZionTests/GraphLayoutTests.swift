@@ -51,6 +51,24 @@ final class GraphLayoutTests: XCTestCase {
         XCTAssertFalse(chain.contains("branch1"))
     }
 
+    func testMainFirstParentChainPrefersMainOverHeadFeatureBranch() {
+        let commits = [
+            makeCommit(hash: "feature-tip", parents: ["feature-base"], decorations: ["HEAD -> feature/test"]),
+            makeCommit(hash: "main-tip", parents: ["main-base"], decorations: ["main"]),
+            makeCommit(hash: "feature-base", parents: ["fork"]),
+            makeCommit(hash: "main-base", parents: ["fork"]),
+            makeCommit(hash: "fork", parents: []),
+        ]
+
+        let chain = GitGraphLaneCalculator.mainFirstParentChain(from: commits)
+
+        XCTAssertTrue(chain.contains("main-tip"))
+        XCTAssertTrue(chain.contains("main-base"))
+        XCTAssertTrue(chain.contains("fork"))
+        XCTAssertFalse(chain.contains("feature-tip"))
+        XCTAssertFalse(chain.contains("feature-base"))
+    }
+
     func testMainFirstParentChainNoHEAD() {
         let commits = [
             makeCommit(hash: "c2", parents: ["c1"]),
@@ -377,6 +395,106 @@ final class GraphLayoutTests: XCTestCase {
         for hash in ["merge35", "merge34", "merge33", "merge32", "base"] {
             XCTAssertEqual(layoutByID[hash]?.lane, 0, "\(hash) should be at lane 0")
         }
+    }
+
+    func testNestedSideBranchDoesNotLeaveDuplicateParallelLane() throws {
+        // Reference shape:
+        //   main-tip
+        //   fresh-store   (forks from first-run tip)
+        //   first-run-tip
+        //   first-run-2
+        //   first-run-1
+        //   main-3
+        //   main-2
+        //   main-1
+        //   fork
+        //
+        // Expected behavior:
+        // once the nested branch tip is consumed, the graph should keep only
+        // a single non-main side lane alive for the long-lived first-run branch.
+        let commits = [
+            makeCommit(hash: "main-tip", parents: ["main-3"], decorations: ["HEAD -> main"]),
+            makeCommit(hash: "fresh-store", parents: ["first-run-tip"], decorations: ["simulate/fresh-store"]),
+            makeCommit(hash: "first-run-tip", parents: ["first-run-2"], decorations: ["simulate/first-run"]),
+            makeCommit(hash: "first-run-2", parents: ["first-run-1"]),
+            makeCommit(hash: "first-run-1", parents: ["fork"]),
+            makeCommit(hash: "main-3", parents: ["main-2"]),
+            makeCommit(hash: "main-2", parents: ["main-1"]),
+            makeCommit(hash: "main-1", parents: ["fork"]),
+            makeCommit(hash: "fork", parents: []),
+        ]
+
+        let mainChain = GitGraphLaneCalculator.mainFirstParentChain(from: commits)
+        let layout = calculator.layout(for: commits, mainChain: mainChain)
+        let layoutByID = Dictionary(uniqueKeysWithValues: layout.map { ($0.id, $0) })
+
+        for hash in ["main-tip", "main-3", "main-2", "main-1", "fork"] {
+            XCTAssertEqual(layoutByID[hash]?.lane, 0, "\(hash) should stay on lane 0")
+        }
+
+        for hash in ["first-run-tip", "first-run-2", "first-run-1"] {
+            let row = try XCTUnwrap(layoutByID[hash], "\(hash) should exist in layout")
+            let activeSideLanes = Set(row.outgoingLanes.filter { $0 != 0 })
+            XCTAssertLessThanOrEqual(
+                activeSideLanes.count,
+                1,
+                "\(hash) should keep only one active non-main lane, got \(activeSideLanes)"
+            )
+        }
+    }
+
+    func testAiShopifyPlanTopologyCollapsesTipBranchesBackToSingleSideLane() throws {
+        let commits = [
+            makeCommit(hash: "ff800d6", parents: ["65d5aa7"], decorations: ["main"]),
+            makeCommit(hash: "65d5aa7", parents: ["23fb3d8"]),
+            makeCommit(hash: "23fb3d8", parents: ["cd23506"]),
+            makeCommit(hash: "cd23506", parents: ["c64b917"]),
+            makeCommit(hash: "c64b917", parents: ["1236fd8"]),
+            makeCommit(hash: "1236fd8", parents: ["353793a"], decorations: ["tag: boilerplate"]),
+            makeCommit(hash: "6146eef", parents: ["6d5ba48"], decorations: ["simulate/fresh-store"]),
+            makeCommit(hash: "0d04fb5", parents: ["6d5ba48"], decorations: ["HEAD -> simulate/first-run"]),
+            makeCommit(hash: "6d5ba48", parents: ["b0c0968"]),
+            makeCommit(hash: "b0c0968", parents: ["d211a9a"]),
+            makeCommit(hash: "d211a9a", parents: ["9f089f8"]),
+            makeCommit(hash: "e8084d1", parents: ["9f089f8", "c9ca8b7"], decorations: ["refs/stash"]),
+            makeCommit(hash: "c9ca8b7", parents: ["9f089f8"]),
+            makeCommit(hash: "9f089f8", parents: ["d729fb6"]),
+            makeCommit(hash: "d729fb6", parents: ["64e0c97"]),
+            makeCommit(hash: "64e0c97", parents: ["f01cc56"]),
+            makeCommit(hash: "f01cc56", parents: ["27faca3"]),
+            makeCommit(hash: "27faca3", parents: ["002ad89"]),
+            makeCommit(hash: "002ad89", parents: ["40b12c4"]),
+            makeCommit(hash: "40b12c4", parents: ["353793a"]),
+            makeCommit(hash: "353793a", parents: []),
+        ]
+
+        let mainChain = GitGraphLaneCalculator.mainFirstParentChain(from: commits)
+        let layout = calculator.layout(for: commits, mainChain: mainChain)
+        let layoutByID = Dictionary(uniqueKeysWithValues: layout.map { ($0.id, $0) })
+
+        for hash in ["ff800d6", "65d5aa7", "23fb3d8", "cd23506", "c64b917", "1236fd8", "353793a"] {
+            XCTAssertEqual(layoutByID[hash]?.lane, 0, "\(hash) should stay on lane 0 as the main branch")
+        }
+
+        let firstRunTip = try XCTUnwrap(layoutByID["0d04fb5"])
+        XCTAssertEqual(firstRunTip.lane, 2, "The current side-branch tip should occupy its own lane before collapsing")
+        XCTAssertEqual(firstRunTip.outgoingEdges.map(\.to), [1], "The current side-branch tip should collapse into the shared side lane")
+        XCTAssertEqual(Set(firstRunTip.outgoingLanes.filter { $0 != 0 }).count, 1)
+
+        let sharedSideRow = try XCTUnwrap(layoutByID["6d5ba48"])
+        XCTAssertEqual(Set(sharedSideRow.incomingLanes.filter { $0 != 0 }).count, 1, "The two tip refs should already have collapsed into the shared side lane by 6d5ba48")
+        XCTAssertEqual(Set(sharedSideRow.outgoingLanes.filter { $0 != 0 }).count, 1, "After 6d5ba48 the history should continue as a single shared side lane")
+
+        let stashWIP = try XCTUnwrap(layoutByID["e8084d1"])
+        XCTAssertEqual(Set(stashWIP.outgoingLanes.filter { $0 != 0 }).count, 2, "The stash WIP commit should branch to the shared side lane and the index lane")
+
+        let indexRow = try XCTUnwrap(layoutByID["c9ca8b7"])
+        XCTAssertEqual(Set(indexRow.incomingLanes.filter { $0 != 0 }).count, 2, "The index row should receive both stash-related side lanes")
+        XCTAssertEqual(Set(indexRow.outgoingLanes.filter { $0 != 0 }).count, 1, "After the index row the stash topology should collapse back to one side lane")
+
+        let stashBaseRow = try XCTUnwrap(layoutByID["9f089f8"])
+        XCTAssertEqual(Set(stashBaseRow.incomingLanes.filter { $0 != 0 }).count, 1)
+        XCTAssertEqual(Set(stashBaseRow.outgoingLanes.filter { $0 != 0 }).count, 1)
     }
 
     // MARK: - Lane Colors
