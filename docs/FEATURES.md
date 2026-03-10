@@ -321,7 +321,7 @@
 | Settings Window | Native macOS Settings window (`⌘,`) with General, Editor, Terminal, AI, Notifications, and Mobile tabs |
 | Language | Portuguese (BR), English, Spanish, System |
 | Appearance Mode | System, Light, Dark |
-| Focus Mode | Full-screen code/terminal focus layout with explicit in-screen exit affordance (`⌃⌘J`) |
+| Focus Mode | Full-screen code/terminal focus layout with explicit in-screen exit affordance (`⌘J`) |
 | Confirmation Mode | Never / Destructive Only / All |
 | Background Fetch | Auto-checks remote every 60s |
 | Recent Repositories | Root-only list (up to 10) with per-project `WT n` badge |
@@ -403,6 +403,6 @@
 | `⇧⌥F` | Format Document |
 | `⌃⌘Z` | Toggle Zion Mode |
 | `⌥⌘X` | Voice Input |
-| `⌃⌘J` | Focus/Zen Mode |
+| `⌘J` | Focus/Zen Mode |
 | `↑↓` | Navigate commits |
 | `Esc` | Deselect / close |
