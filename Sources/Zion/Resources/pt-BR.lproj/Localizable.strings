@@ -454,6 +454,14 @@
 "Busca semantica com IA..." = "Busca semântica com IA...";
 "Busca semantica com IA" = "Busca semântica com IA";
 "resultados" = "resultados";
+"graph.search.aiPlaceholder" = "Pergunte ao histórico...";
+"graph.search.aiMode" = "IA";
+"graph.search.aiMode.help" = "Perguntar ao histórico com IA";
+"graph.ai.answerTitle" = "Resposta da IA";
+"graph.ai.loading" = "Buscando commits relacionados no histórico recente...";
+"graph.ai.noMatches" = "Não encontrei commits relevantes nesta janela do histórico.";
+"graph.ai.answerFallback" = "Encontrei os commits mais prováveis no histórico recente.";
+"graph.ai.openCommit" = "Abrir commit %@";
 "Resumir com IA" = "Resumir com IA";
 "Resumindo..." = "Resumindo...";
 "Explicar com IA" = "Explicar com IA";

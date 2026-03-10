@@ -230,7 +230,7 @@ final class RepositoryViewModel {
     var isChangelogSheetVisible: Bool = false
     var changelogFromRef: String = ""
     var changelogToRef: String = "HEAD"
-    var aiSemanticSearchResults: [String] = []
+    var aiHistorySearchResult: AIHistorySearchResult?
     var isSemanticSearchActive: Bool = false
     var branchSummaries: [String: String] = [:]
     var aiBlameExplanation: String = ""

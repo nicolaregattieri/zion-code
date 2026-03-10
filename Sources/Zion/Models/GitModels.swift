@@ -45,6 +45,27 @@ struct Commit: Identifiable, Hashable, Sendable {
     var deletions: Int?
 }
 
+struct AIHistorySearchCandidate: Hashable, Sendable {
+    let fullHash: String
+    let shortHash: String
+    let subject: String
+    let author: String
+    let dateText: String
+    let files: [String]
+}
+
+struct AIHistorySearchMatch: Identifiable, Hashable, Sendable {
+    let hash: String
+    let reason: String
+
+    var id: String { hash.lowercased() }
+}
+
+struct AIHistorySearchResult: Hashable, Sendable {
+    let answer: String
+    let matches: [AIHistorySearchMatch]
+}
+
 // MARK: - Branch & Remote
 
 struct BranchInfo: Identifiable, Hashable, Sendable {
