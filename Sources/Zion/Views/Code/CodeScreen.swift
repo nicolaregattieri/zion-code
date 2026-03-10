@@ -30,6 +30,7 @@ struct CodeScreen: View {
     @State private var replaceQuery: String = ""
     @State private var matchCount: Int = 0
     @State private var currentMatchIndex: Int = 0
+    @State private var searchScrollRequestID: Int = 0
     @State private var findSearchFocusRequestID: Int = 0
     @FocusState private var isFileBrowserFocused: Bool
     @State private var selectedBrowserIndex: Int = -1
@@ -1046,6 +1047,7 @@ struct CodeScreen: View {
             showIndentGuides: model.effectiveShowIndentGuides,
             searchQuery: isSearchVisible ? searchQuery : "",
             currentMatchIndex: currentMatchIndex,
+            searchScrollRequestID: searchScrollRequestID,
             onMatchCountChanged: { count in
                 matchCount = count
                 if count == 0, isSearchVisible, !searchQuery.isEmpty {
@@ -1353,6 +1355,7 @@ struct CodeScreen: View {
         }
 
         recomputeFindMatches()
+        searchScrollRequestID += 1
         findSearchFocusRequestID += 1
     }
 
@@ -1412,6 +1415,7 @@ struct CodeScreen: View {
             currentMatchIndex = 0
         }
         currentMatchIndex = (currentMatchIndex + 1) % matchCount
+        searchScrollRequestID += 1
     }
 
     private func navigateToPreviousMatch() {
@@ -1423,6 +1427,7 @@ struct CodeScreen: View {
             currentMatchIndex = 0
         }
         currentMatchIndex = (currentMatchIndex - 1 + matchCount) % matchCount
+        searchScrollRequestID += 1
     }
 
     private func recomputeFindMatches() {

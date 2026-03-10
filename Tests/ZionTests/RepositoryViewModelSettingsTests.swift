@@ -1,82 +1,119 @@
 import XCTest
 @testable import Zion
 
-@MainActor
 final class RepositoryViewModelSettingsTests: XCTestCase {
+    private let lineWrapKey = "editor.lineWrap"
+    private var savedLineWrapValue: Any?
+
+    override func setUp() {
+        super.setUp()
+        let defaults = UserDefaults.standard
+        savedLineWrapValue = defaults.object(forKey: lineWrapKey)
+        defaults.removeObject(forKey: lineWrapKey)
+    }
+
+    override func tearDown() {
+        let defaults = UserDefaults.standard
+        if let savedLineWrapValue {
+            defaults.set(savedLineWrapValue, forKey: lineWrapKey)
+        } else {
+            defaults.removeObject(forKey: lineWrapKey)
+        }
+        savedLineWrapValue = nil
+        super.tearDown()
+    }
 
     // MARK: - languageName(for:)
 
+    @MainActor
     func testSwiftExtension() {
         XCTAssertEqual(RepositoryViewModel.languageName(for: "swift"), "Swift")
     }
 
+    @MainActor
     func testTypeScriptExtension() {
         XCTAssertEqual(RepositoryViewModel.languageName(for: "ts"), "TypeScript")
     }
 
+    @MainActor
     func testTSXExtension() {
         XCTAssertEqual(RepositoryViewModel.languageName(for: "tsx"), "TypeScript")
     }
 
+    @MainActor
     func testPythonExtension() {
         XCTAssertEqual(RepositoryViewModel.languageName(for: "py"), "Python")
     }
 
+    @MainActor
     func testGoExtension() {
         XCTAssertEqual(RepositoryViewModel.languageName(for: "go"), "Go")
     }
 
+    @MainActor
     func testRustExtension() {
         XCTAssertEqual(RepositoryViewModel.languageName(for: "rs"), "Rust")
     }
 
+    @MainActor
     func testMarkdownExtension() {
         XCTAssertEqual(RepositoryViewModel.languageName(for: "md"), "Markdown")
     }
 
+    @MainActor
     func testUnknownExtensionUppercased() {
         XCTAssertEqual(RepositoryViewModel.languageName(for: "xyz"), "XYZ")
     }
 
+    @MainActor
     func testEmptyExtensionReturnsEmpty() {
         XCTAssertEqual(RepositoryViewModel.languageName(for: ""), "")
     }
 
     // MARK: - Additional known extensions
 
+    @MainActor
     func testJavaScriptExtension() {
         XCTAssertEqual(RepositoryViewModel.languageName(for: "js"), "JavaScript")
     }
 
+    @MainActor
     func testJSXExtension() {
         XCTAssertEqual(RepositoryViewModel.languageName(for: "jsx"), "JavaScript")
     }
 
+    @MainActor
     func testRubyExtension() {
         XCTAssertEqual(RepositoryViewModel.languageName(for: "rb"), "Ruby")
     }
 
+    @MainActor
     func testJavaExtension() {
         XCTAssertEqual(RepositoryViewModel.languageName(for: "java"), "Java")
     }
 
+    @MainActor
     func testHTMLExtension() {
         XCTAssertEqual(RepositoryViewModel.languageName(for: "html"), "HTML")
     }
 
+    @MainActor
     func testCSSExtension() {
         XCTAssertEqual(RepositoryViewModel.languageName(for: "css"), "CSS")
     }
 
+    @MainActor
     func testJSONExtension() {
         XCTAssertEqual(RepositoryViewModel.languageName(for: "json"), "JSON")
     }
 
+    @MainActor
     func testYAMLExtensions() {
         XCTAssertEqual(RepositoryViewModel.languageName(for: "yaml"), "YAML")
         XCTAssertEqual(RepositoryViewModel.languageName(for: "yml"), "YAML")
     }
 
+    @MainActor
     func testShellExtensions() {
         XCTAssertEqual(RepositoryViewModel.languageName(for: "sh"), "Shell")
         XCTAssertEqual(RepositoryViewModel.languageName(for: "bash"), "Shell")
@@ -85,6 +122,7 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
 
     // MARK: - normalizeRecentRepositories
 
+    @MainActor
     func testNormalizeRecentRepositoriesDeduplicates() {
         let vm = RepositoryViewModel()
         let url1 = URL(fileURLWithPath: "/tmp/repo-a")
@@ -98,6 +136,7 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
         XCTAssertEqual(result[1].path, url2.path)
     }
 
+    @MainActor
     func testNormalizeRecentRepositoriesPreservesOrder() {
         let vm = RepositoryViewModel()
         let url1 = URL(fileURLWithPath: "/tmp/repo-a")
@@ -113,6 +152,7 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
         XCTAssertEqual(result[2].path, url2.path)
     }
 
+    @MainActor
     func testNormalizeRecentRepositoriesEmptyList() {
         let vm = RepositoryViewModel()
         let result = vm.normalizeRecentRepositories([])
@@ -121,6 +161,7 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
 
     // MARK: - recentChangedCount(for:)
 
+    @MainActor
     func testRecentChangedCountUsesLiveCountForCurrentRepository() {
         let vm = RepositoryViewModel()
         let current = URL(fileURLWithPath: "/tmp/repo-current")
@@ -133,6 +174,7 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
         XCTAssertEqual(count, 7)
     }
 
+    @MainActor
     func testRecentChangedCountUsesBackgroundCountForInactiveRepository() {
         let vm = RepositoryViewModel()
         let current = URL(fileURLWithPath: "/tmp/repo-current")
@@ -146,6 +188,7 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
         XCTAssertEqual(count, 3)
     }
 
+    @MainActor
     func testRecentChangedCountReturnsNilWhenInactiveRepositoryIsUnknown() {
         let vm = RepositoryViewModel()
         vm.repositoryURL = URL(fileURLWithPath: "/tmp/repo-current")
@@ -157,30 +200,35 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
 
     // MARK: - isCredentialFailure (Settings extension)
 
+    @MainActor
     func testIsCredentialFailureDetectsKeychain() {
         let vm = RepositoryViewModel()
         let error = GitClientError.commandFailed(command: "fetch", message: "git-credential-osxkeychain error")
         XCTAssertTrue(vm.isCredentialFailure(error))
     }
 
+    @MainActor
     func testIsCredentialFailureDetectsTerminalPromptsDisabled() {
         let vm = RepositoryViewModel()
         let error = GitClientError.commandFailed(command: "fetch", message: "fatal: terminal prompts disabled")
         XCTAssertTrue(vm.isCredentialFailure(error))
     }
 
+    @MainActor
     func testIsCredentialFailureDetectsDeviceNotConfigured() {
         let vm = RepositoryViewModel()
         let error = GitClientError.commandFailed(command: "fetch", message: "error: device not configured")
         XCTAssertTrue(vm.isCredentialFailure(error))
     }
 
+    @MainActor
     func testIsCredentialFailureDetectsAzureDevOps() {
         let vm = RepositoryViewModel()
         let error = GitClientError.commandFailed(command: "push", message: "fatal: unable to access 'https://dev.azure.com/org/project'")
         XCTAssertTrue(vm.isCredentialFailure(error))
     }
 
+    @MainActor
     func testIsNoUpstreamConfiguredNonGitErrorReturnsFalse() {
         let vm = RepositoryViewModel()
         let error = NSError(domain: "test", code: 1, userInfo: [NSLocalizedDescriptionKey: "no upstream configured"])
@@ -189,6 +237,7 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
 
     // MARK: - Auto refresh divergence helper
 
+    @MainActor
     func testShouldRefreshAfterRemoteDivergenceUpdateWhenBehindChanges() {
         XCTAssertTrue(
             RepositoryViewModel.shouldRefreshAfterRemoteDivergenceUpdate(
@@ -200,6 +249,7 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
         )
     }
 
+    @MainActor
     func testShouldRefreshAfterRemoteDivergenceUpdateWhenAheadChanges() {
         XCTAssertTrue(
             RepositoryViewModel.shouldRefreshAfterRemoteDivergenceUpdate(
@@ -211,6 +261,7 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
         )
     }
 
+    @MainActor
     func testShouldRefreshAfterRemoteDivergenceUpdateWhenCountsUnchanged() {
         XCTAssertFalse(
             RepositoryViewModel.shouldRefreshAfterRemoteDivergenceUpdate(
@@ -222,18 +273,21 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
         )
     }
 
+    @MainActor
     func testRefreshOriginGitActionUsesInteractiveDetails() {
         XCTAssertFalse(RepositoryViewModel.RefreshOrigin.gitAction.usesSilentCommitDetails)
     }
 
     // MARK: - Inactive background monitor policy
 
+    @MainActor
     func testNextInactiveMonitorIntervalUsesIdleWhenNoBurst() {
         let now = Date()
         let interval = RepositoryViewModel.nextInactiveMonitorInterval(now: now, burstUntil: nil)
         XCTAssertEqual(interval, Constants.Timing.inactiveBackgroundMonitorIdleInterval)
     }
 
+    @MainActor
     func testNextInactiveMonitorIntervalUsesBurstWhenBurstWindowActive() {
         let now = Date()
         let burstUntil = now.addingTimeInterval(30)
@@ -241,6 +295,7 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
         XCTAssertEqual(interval, Constants.Timing.inactiveBackgroundMonitorBurstInterval)
     }
 
+    @MainActor
     func testNextInactiveMonitorIntervalUsesIdleWhenBurstExpired() {
         let now = Date()
         let burstUntil = now.addingTimeInterval(-1)
@@ -248,6 +303,7 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
         XCTAssertEqual(interval, Constants.Timing.inactiveBackgroundMonitorIdleInterval)
     }
 
+    @MainActor
     func testMarkBackgroundRepoSignalSetsBurstDeadline() {
         let vm = RepositoryViewModel()
         let url = URL(fileURLWithPath: "/tmp/repo-bg-monitor")
@@ -273,6 +329,7 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
 
     // MARK: - Repository switch snapshots
 
+    @MainActor
     func testApplyRepositorySnapshotIfFreshRestoresCoreState() {
         let vm = RepositoryViewModel()
         let repoURL = URL(fileURLWithPath: "/tmp/repo-snapshot-a")
@@ -312,6 +369,7 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
         XCTAssertEqual(vm.repositoryFiles.map(\.id), [fileURL.path])
     }
 
+    @MainActor
     func testApplyRepositorySnapshotIfFreshReturnsFalseWhenMissing() {
         let vm = RepositoryViewModel()
         let repoURL = URL(fileURLWithPath: "/tmp/repo-snapshot-missing")
@@ -319,6 +377,42 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
         XCTAssertFalse(vm.hasFreshRepositorySnapshot(for: repoURL))
     }
 
+    // MARK: - lineWrap sync
+
+    @MainActor
+    func testSyncSettingsFromDefaultsDoesNotOverrideLineWrapWhenPreferenceIsUnset() {
+        let vm = RepositoryViewModel()
+        vm.isLineWrappingEnabled = true
+
+        UserDefaults.standard.removeObject(forKey: lineWrapKey)
+        vm.syncSettingsFromDefaults()
+
+        XCTAssertTrue(vm.isLineWrappingEnabled)
+    }
+
+    @MainActor
+    func testSyncSettingsFromDefaultsAppliesStoredLineWrapPreference() {
+        let vm = RepositoryViewModel()
+        vm.isLineWrappingEnabled = true
+
+        UserDefaults.standard.set(false, forKey: lineWrapKey)
+        vm.syncSettingsFromDefaults()
+
+        XCTAssertFalse(vm.isLineWrappingEnabled)
+    }
+
+    @MainActor
+    func testRestoreEditorSettingsAppliesStoredLineWrapPreference() {
+        let vm = RepositoryViewModel()
+        vm.isLineWrappingEnabled = true
+
+        UserDefaults.standard.set(false, forKey: lineWrapKey)
+        vm.restoreEditorSettings()
+
+        XCTAssertFalse(vm.isLineWrappingEnabled)
+    }
+
+    @MainActor
     private func makeCommit(id: String) -> Commit {
         Commit(
             id: id,

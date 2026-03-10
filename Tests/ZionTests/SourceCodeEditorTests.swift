@@ -49,7 +49,7 @@ final class SourceCodeEditorTests: XCTestCase {
         XCTAssertEqual(coordinator.searchMatchRanges.count, 3)
 
         textView.string += "foo three\n"
-        coordinator.updateSearchHighlights(in: textView, query: "foo", currentIndex: 2)
+        coordinator.updateSearchHighlights(in: textView, query: "foo", currentIndex: 2, scrollToCurrentMatch: false)
         XCTAssertEqual(coordinator.searchMatchRanges.count, 4)
 
         let currentRange = coordinator.searchMatchRanges[2]
@@ -88,6 +88,29 @@ final class SourceCodeEditorTests: XCTestCase {
     }
 
     @MainActor
+    func testSearchHighlightsDoNotScrollWhenTypingRefreshesMatches() {
+        let textView = TrackingTextView(text: "foo one\nfoo two\n")
+        let editor = SourceCodeEditor(text: .constant(textView.string), theme: .tokyoNight, fileExtension: "swift")
+        let coordinator = SourceCodeEditor.Coordinator(editor)
+
+        coordinator.updateSearchHighlights(in: textView, query: "foo", currentIndex: 0, scrollToCurrentMatch: false)
+
+        XCTAssertNil(textView.lastScrolledRange)
+        XCTAssertEqual(coordinator.searchMatchRanges.count, 2)
+    }
+
+    @MainActor
+    func testSearchHighlightsScrollWhenNavigationRequestsIt() {
+        let textView = TrackingTextView(text: "foo one\nfoo two\n")
+        let editor = SourceCodeEditor(text: .constant(textView.string), theme: .tokyoNight, fileExtension: "swift")
+        let coordinator = SourceCodeEditor.Coordinator(editor)
+
+        coordinator.updateSearchHighlights(in: textView, query: "foo", currentIndex: 1, scrollToCurrentMatch: true)
+
+        XCTAssertEqual(textView.lastScrolledRange, coordinator.searchMatchRanges[1])
+    }
+
+    @MainActor
     private func makeTextView(text: String) -> NSTextView {
         let textStorage = NSTextStorage(string: text)
         let layoutManager = NSLayoutManager()
@@ -100,5 +123,27 @@ final class SourceCodeEditorTests: XCTestCase {
         textView.font = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
         textView.isRichText = false
         return textView
+    }
+
+    @MainActor
+    private final class TrackingTextView: NSTextView {
+        var lastScrolledRange: NSRange?
+
+        convenience init(text: String) {
+            let textStorage = NSTextStorage(string: text)
+            let layoutManager = NSLayoutManager()
+            textStorage.addLayoutManager(layoutManager)
+
+            let textContainer = NSTextContainer(containerSize: NSSize(width: 800, height: CGFloat.greatestFiniteMagnitude))
+            layoutManager.addTextContainer(textContainer)
+
+            self.init(frame: .zero, textContainer: textContainer)
+            font = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
+            isRichText = false
+        }
+
+        override func scrollRangeToVisible(_ range: NSRange) {
+            lastScrolledRange = range
+        }
     }
 }
