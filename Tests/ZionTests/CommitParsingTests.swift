@@ -190,4 +190,73 @@ final class CommitParsingTests: XCTestCase {
         let commits = await worker.parseCommits(from: output)
         XCTAssertEqual(commits.count, 2)
     }
+
+    func testCollapseStashHelperCommitsHidesIndexCommitAndRewritesParent() async {
+        let baseHash = "base" + String(repeating: "0", count: 36)
+        let stashHash = "stash" + String(repeating: "1", count: 35)
+        let indexHash = "index" + String(repeating: "2", count: 35)
+
+        let commits = [
+            ParsedCommit(
+                hash: stashHash,
+                parents: [baseHash, indexHash],
+                author: "Test",
+                email: "test@example.com",
+                date: Date(),
+                subject: "WIP on feature: snapshot",
+                decorations: ["refs/stash"]
+            ),
+            ParsedCommit(
+                hash: indexHash,
+                parents: [baseHash],
+                author: "Test",
+                email: "test@example.com",
+                date: Date(),
+                subject: "index on feature: snapshot",
+                decorations: []
+            ),
+            ParsedCommit(
+                hash: baseHash,
+                parents: [],
+                author: "Test",
+                email: "test@example.com",
+                date: Date(),
+                subject: "Base commit",
+                decorations: []
+            ),
+        ]
+
+        let collapsed = await worker.collapseStashHelperCommits(in: commits)
+
+        XCTAssertEqual(collapsed.map(\.hash), [stashHash, baseHash])
+        XCTAssertEqual(collapsed.first?.parents, [baseHash])
+        XCTAssertEqual(collapsed.first?.decorations, ["refs/stash"])
+    }
+
+    func testCollapseStashHelperCommitsKeepsNormalCommitsUntouched() async {
+        let commits = [
+            ParsedCommit(
+                hash: "aaaa" + String(repeating: "0", count: 36),
+                parents: ["bbbb" + String(repeating: "1", count: 36)],
+                author: "Test",
+                email: "test@example.com",
+                date: Date(),
+                subject: "Normal commit",
+                decorations: ["HEAD -> main"]
+            ),
+            ParsedCommit(
+                hash: "bbbb" + String(repeating: "1", count: 36),
+                parents: [],
+                author: "Test",
+                email: "test@example.com",
+                date: Date(),
+                subject: "Base",
+                decorations: []
+            ),
+        ]
+
+        let collapsed = await worker.collapseStashHelperCommits(in: commits)
+
+        XCTAssertEqual(collapsed, commits)
+    }
 }

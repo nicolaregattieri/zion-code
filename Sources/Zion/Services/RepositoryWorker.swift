@@ -448,7 +448,7 @@ actor RepositoryWorker {
 
         let output = try git.run(args: args, in: repositoryURL).stdout
 
-        let parsed = parseCommits(from: output)
+        let parsed = collapseStashHelperCommits(in: parseCommits(from: output))
         let hasMore = parsed.count > effectiveLimit
         let visibleParsed = hasMore ? Array(parsed.prefix(effectiveLimit)) : parsed
 
@@ -784,6 +784,38 @@ actor RepositoryWorker {
                     decorations: decorations
                 )
             }
+    }
+
+    func collapseStashHelperCommits(in commits: [ParsedCommit]) -> [ParsedCommit] {
+        guard !commits.isEmpty else { return commits }
+
+        let hiddenHelperHashes = Set(
+            commits
+                .filter { commit in
+                    commit.decorations.contains { $0.contains("refs/stash") }
+                }
+                .flatMap { Array($0.parents.dropFirst()) }
+        )
+
+        guard !hiddenHelperHashes.isEmpty else { return commits }
+
+        return commits.compactMap { commit in
+            guard !hiddenHelperHashes.contains(commit.hash) else { return nil }
+
+            if commit.decorations.contains(where: { $0.contains("refs/stash") }) {
+                return ParsedCommit(
+                    hash: commit.hash,
+                    parents: commit.parents.first.map { [$0] } ?? [],
+                    author: commit.author,
+                    email: commit.email,
+                    date: commit.date,
+                    subject: commit.subject,
+                    decorations: commit.decorations
+                )
+            }
+
+            return commit
+        }
     }
 
     func parseWorktrees(from output: String, currentPath: String) -> [WorktreeItem] {
