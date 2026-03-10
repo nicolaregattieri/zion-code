@@ -134,6 +134,66 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
         return bounds.contains(pointInView)
     }
 
+    func applyDiscreteScroll(lines: Int) {
+        guard lines != 0 else { return }
+        let wheel1 = Int32(lines > 0 ? 1 : -1)
+
+        for _ in 0..<abs(lines) {
+            if let event = Self.makeDiscreteScrollEvent(wheel1: wheel1) {
+                super.scrollWheel(with: event)
+            } else if lines > 0 {
+                scrollUp(lines: 1)
+            } else {
+                scrollDown(lines: 1)
+            }
+        }
+    }
+
+    private static func makeDiscreteScrollEvent(wheel1: Int32) -> NSEvent? {
+        guard let cgEvent = CGEvent(
+            scrollWheelEvent2Source: nil,
+            units: .line,
+            wheelCount: 1,
+            wheel1: wheel1,
+            wheel2: 0,
+            wheel3: 0
+        ) else {
+            return nil
+        }
+        return NSEvent(cgEvent: cgEvent)
+    }
+
+    static func preciseScrollLineHeight(viewHeight: CGFloat, terminalRows: Int) -> CGFloat {
+        let rows = max(1, terminalRows)
+        return max(6, viewHeight / CGFloat(rows))
+    }
+
+    static func accumulatePreciseScrollStep(
+        accumulator: CGFloat,
+        deltaY: CGFloat,
+        lineHeight: CGFloat,
+        maxLinesPerEvent: Int = 6
+    ) -> (lines: Int, remainder: CGFloat) {
+        guard lineHeight > 0, deltaY != 0 else {
+            return (0, 0)
+        }
+
+        var nextAccumulator = accumulator
+        if nextAccumulator != 0, nextAccumulator.sign != deltaY.sign {
+            nextAccumulator = 0
+        }
+
+        nextAccumulator += deltaY / lineHeight
+        let unclampedLines = Int(nextAccumulator.rounded(.towardZero))
+        guard unclampedLines != 0 else {
+            return (0, nextAccumulator)
+        }
+
+        let lines = max(-maxLinesPerEvent, min(maxLinesPerEvent, unclampedLines))
+        nextAccumulator -= CGFloat(lines)
+        return (lines, nextAccumulator)
+    }
+
     // MARK: - Visual feedback
 
     private func showDragHighlight() {

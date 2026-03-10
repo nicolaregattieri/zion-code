@@ -4,6 +4,67 @@ import SwiftTerm
 
 @MainActor
 final class ZionTerminalViewTests: XCTestCase {
+    func testPreciseScrollUsesTerminalRowHeight() {
+        XCTAssertEqual(
+            ZionTerminalView.preciseScrollLineHeight(viewHeight: 180, terminalRows: 10),
+            18,
+            accuracy: 0.001
+        )
+    }
+
+    func testPreciseScrollLineHeightHasMinimumFloor() {
+        XCTAssertEqual(
+            ZionTerminalView.preciseScrollLineHeight(viewHeight: 12, terminalRows: 10),
+            6,
+            accuracy: 0.001
+        )
+    }
+
+    func testPreciseScrollAccumulatorWaitsForWholeLine() {
+        let result = ZionTerminalView.accumulatePreciseScrollStep(
+            accumulator: 0,
+            deltaY: 8,
+            lineHeight: 16
+        )
+
+        XCTAssertEqual(result.lines, 0)
+        XCTAssertEqual(result.remainder, 0.5, accuracy: 0.001)
+    }
+
+    func testPreciseScrollAccumulatorEmitsLinesWithoutJumpingToLargeStep() {
+        let result = ZionTerminalView.accumulatePreciseScrollStep(
+            accumulator: 0,
+            deltaY: 24,
+            lineHeight: 12
+        )
+
+        XCTAssertEqual(result.lines, 2)
+        XCTAssertEqual(result.remainder, 0, accuracy: 0.001)
+    }
+
+    func testPreciseScrollAccumulatorClearsOppositeDirectionRemainder() {
+        let result = ZionTerminalView.accumulatePreciseScrollStep(
+            accumulator: 0.75,
+            deltaY: -8,
+            lineHeight: 8
+        )
+
+        XCTAssertEqual(result.lines, -1)
+        XCTAssertEqual(result.remainder, 0, accuracy: 0.001)
+    }
+
+    func testPreciseScrollAccumulatorCapsLargeSingleEvent() {
+        let result = ZionTerminalView.accumulatePreciseScrollStep(
+            accumulator: 0,
+            deltaY: 240,
+            lineHeight: 10,
+            maxLinesPerEvent: 6
+        )
+
+        XCTAssertEqual(result.lines, 6)
+        XCTAssertEqual(result.remainder, 18, accuracy: 0.001)
+    }
+
     func testIsSubclassOfSwiftTermTerminalView() {
         let view: Any = ZionTerminalView(frame: .zero)
         XCTAssertTrue(view is SwiftTerm.TerminalView)
