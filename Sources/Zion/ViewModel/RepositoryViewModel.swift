@@ -409,7 +409,10 @@ final class RepositoryViewModel {
     @ObservationIgnored var lastClickedFileID: String?
     var selectedCodeFile: FileItem?
     var codeFileContent: String = "" {
-        didSet { markCurrentFileUnsavedIfChanged() }
+        didSet {
+            guard !isApplyingEditorContent else { return }
+            syncActiveDraftFromEditorContent()
+        }
     }
     var editorFindSeedQuery: String = ""
     var editorFindSeedRequestID: Int = 0
@@ -420,6 +423,9 @@ final class RepositoryViewModel {
     // Tracking unsaved changes per file
     var unsavedFiles: Set<String> = []
     @ObservationIgnored var originalFileContents: [String: String] = [:]
+    @ObservationIgnored var draftFileContents: [String: String] = [:]
+    @ObservationIgnored var isApplyingEditorContent: Bool = false
+    @ObservationIgnored var dirtyFileCloseDecisionHandler: ((FileItem) -> EditorDirtyCloseDecision)? = nil
     @ObservationIgnored var untitledCounter: Int = 0
 
     // File browser clipboard (cut/copy/paste)

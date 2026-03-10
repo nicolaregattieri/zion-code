@@ -1949,6 +1949,8 @@
 "editor.tab.closeRight" = "Fechar à Direita";
 "editor.tab.closeAll" = "Fechar Todos";
 "editor.tab.missingTooltip" = "Arquivo removido no disco";
+"editor.tab.unsavedClose.title" = "Alterações Não Salvas";
+"editor.tab.unsavedClose.message" = "Deseja salvar as alterações de \"%@\" antes de fechar?";
 
 // Shortcuts
 "shortcuts.toggleDotfiles" = "Alternar Dotfiles";

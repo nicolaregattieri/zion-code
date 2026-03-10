@@ -248,6 +248,61 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
         XCTAssertEqual(vm.openedFiles.count, 1)
     }
 
+    func testCloseDirtyFileCancelKeepsTabOpen() async throws {
+        let vm = RepositoryViewModel()
+        let fileURL = try makeTempFile(ext: "swift", data: Data("let value = 1\n".utf8))
+        let item = FileItem(url: fileURL, isDirectory: false, children: nil)
+
+        vm.selectCodeFile(item)
+        try await waitForEditorContent("let value = 1\n", in: vm)
+
+        vm.codeFileContent = "let value = 2\n"
+        vm.dirtyFileCloseDecisionHandler = { _ in .cancel }
+        vm.closeFile(id: item.id)
+
+        XCTAssertEqual(vm.openedFiles.map(\.id), [item.id])
+        XCTAssertEqual(vm.activeFileID, item.id)
+        XCTAssertEqual(vm.codeFileContent, "let value = 2\n")
+        XCTAssertTrue(vm.unsavedFiles.contains(item.id))
+    }
+
+    func testCloseDirtyFileDiscardClosesAndDropsDraft() async throws {
+        let vm = RepositoryViewModel()
+        let fileURL = try makeTempFile(ext: "swift", data: Data("let value = 1\n".utf8))
+        let item = FileItem(url: fileURL, isDirectory: false, children: nil)
+
+        vm.selectCodeFile(item)
+        try await waitForEditorContent("let value = 1\n", in: vm)
+
+        vm.codeFileContent = "let value = 2\n"
+        vm.dirtyFileCloseDecisionHandler = { _ in .discard }
+        vm.closeFile(id: item.id)
+
+        XCTAssertTrue(vm.openedFiles.isEmpty)
+        XCTAssertNil(vm.activeFileID)
+        XCTAssertNil(vm.selectedCodeFile)
+        XCTAssertFalse(vm.unsavedFiles.contains(item.id))
+        XCTAssertNil(vm.draftFileContents[item.id])
+        XCTAssertEqual(try String(contentsOf: fileURL, encoding: .utf8), "let value = 1\n")
+    }
+
+    func testCloseDirtyFileSaveWritesDraftBeforeClosing() async throws {
+        let vm = RepositoryViewModel()
+        let fileURL = try makeTempFile(ext: "swift", data: Data("let value = 1\n".utf8))
+        let item = FileItem(url: fileURL, isDirectory: false, children: nil)
+
+        vm.selectCodeFile(item)
+        try await waitForEditorContent("let value = 1\n", in: vm)
+
+        vm.codeFileContent = "let value = 2\n"
+        vm.dirtyFileCloseDecisionHandler = { _ in .save }
+        vm.closeFile(id: item.id)
+
+        XCTAssertTrue(vm.openedFiles.isEmpty)
+        XCTAssertEqual(try String(contentsOf: fileURL, encoding: .utf8), "let value = 2\n")
+        XCTAssertFalse(vm.unsavedFiles.contains(item.id))
+    }
+
     // MARK: - mergeTopLevel
 
     func testMergeTopLevelPreservesExistingChildren() {
@@ -369,7 +424,7 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
 
         XCTAssertTrue(vm.missingOpenFileIDs.contains(missing.id))
         XCTAssertFalse(vm.missingOpenFileIDs.contains(existing.id))
-        XCTAssertEqual(vm.codeFileContent, L10n("editor.file.missingContent"))
+        XCTAssertEqual(vm.codeFileContent, "old")
     }
 
     func testRecalculateMissingOpenFileStateClearsMarkerWhenFileReturns() throws {
@@ -609,6 +664,34 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
         XCTAssertEqual(vm.originalFileContents[item.id], expected)
     }
 
+    func testSwitchingFilesRestoresDraftForEachTab() async throws {
+        let vm = RepositoryViewModel()
+        let firstURL = try makeTempFile(ext: "swift", data: Data("let first = 1\n".utf8))
+        let secondURL = try makeTempFile(ext: "swift", data: Data("let second = 2\n".utf8))
+        let first = FileItem(url: firstURL, isDirectory: false, children: nil)
+        let second = FileItem(url: secondURL, isDirectory: false, children: nil)
+
+        vm.selectCodeFile(first)
+        try await waitForEditorContent("let first = 1\n", in: vm)
+        vm.codeFileContent = "let first = 10\n"
+
+        vm.selectCodeFile(second)
+        try await waitForEditorContent("let second = 2\n", in: vm)
+        vm.codeFileContent = "let second = 20\n"
+
+        vm.selectCodeFile(first)
+
+        XCTAssertEqual(vm.codeFileContent, "let first = 10\n")
+        XCTAssertTrue(vm.unsavedFiles.contains(first.id))
+        XCTAssertEqual(vm.draftFileContents[first.id], "let first = 10\n")
+
+        vm.selectCodeFile(second)
+
+        XCTAssertEqual(vm.codeFileContent, "let second = 20\n")
+        XCTAssertTrue(vm.unsavedFiles.contains(second.id))
+        XCTAssertEqual(vm.draftFileContents[second.id], "let second = 20\n")
+    }
+
     func testSaveCurrentCodeFileDoesNotOverwriteImageData() throws {
         let vm = RepositoryViewModel()
         let original = Data([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a])
@@ -666,5 +749,12 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
         let fileURL = directory.appendingPathComponent("fixture.\(ext)")
         try data.write(to: fileURL, options: .atomic)
         return fileURL
+    }
+
+    private func waitForEditorContent(_ expected: String, in vm: RepositoryViewModel) async throws {
+        for _ in 0..<20 where vm.codeFileContent != expected {
+            try await Task.sleep(nanoseconds: 50_000_000)
+        }
+        XCTAssertEqual(vm.codeFileContent, expected)
     }
 }
