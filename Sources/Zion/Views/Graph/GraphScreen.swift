@@ -455,7 +455,8 @@ struct GraphScreen: View {
     
     private var pendingChangesRow: some View {
         HStack(spacing: 0) {
-            PendingChangesLaneView(height: 102, width: commitGraphColumnWidth)
+            Color.clear
+                .frame(width: commitGraphColumnWidth, height: 102)
 
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous)
@@ -1605,32 +1606,6 @@ struct GraphScreen: View {
             default: Image(systemName: "questionmark.circle").foregroundStyle(.secondary)
             }
         }
-    }
-}
-
-private struct PendingChangesLaneView: View {
-    let height: CGFloat
-    let width: CGFloat
-
-    private let trailingPadding: CGFloat = 12
-    private let markerDiameter: CGFloat = 12
-
-    var body: some View {
-        Canvas { context, size in
-            let rect = CGRect(
-                x: max(size.width - trailingPadding - markerDiameter, 0),
-                y: (size.height - markerDiameter) / 2,
-                width: markerDiameter,
-                height: markerDiameter
-            )
-
-            context.stroke(
-                Path(ellipseIn: rect),
-                with: .color(.white.opacity(0.7)),
-                style: StrokeStyle(lineWidth: 2)
-            )
-        }
-        .frame(width: width, height: height)
     }
 }
 
