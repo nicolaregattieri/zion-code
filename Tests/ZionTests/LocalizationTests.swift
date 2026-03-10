@@ -2,6 +2,27 @@ import XCTest
 @testable import Zion
 
 final class LocalizationTests: XCTestCase {
+    private let uiLanguageKey = AppLanguage.storageKey
+    private var savedLanguageValue: Any?
+
+    override func setUp() {
+        super.setUp()
+        let defaults = UserDefaults.standard
+        savedLanguageValue = defaults.object(forKey: uiLanguageKey)
+        defaults.removeObject(forKey: uiLanguageKey)
+    }
+
+    override func tearDown() {
+        let defaults = UserDefaults.standard
+        if let savedLanguageValue {
+            defaults.set(savedLanguageValue, forKey: uiLanguageKey)
+        } else {
+            defaults.removeObject(forKey: uiLanguageKey)
+        }
+        savedLanguageValue = nil
+        super.tearDown()
+    }
+
     func testL10nReturnsCorrectKeys() {
         // Since we can't easily change the system locale in tests without side effects,
         // we test if the keys return something (meaning the lookup is happening).
@@ -19,6 +40,39 @@ final class LocalizationTests: XCTestCase {
         XCTAssertEqual(AppLanguage.en.rawValue, "en")
         XCTAssertEqual(AppLanguage.ptBR.rawValue, "pt-BR")
         XCTAssertEqual(AppLanguage.es.rawValue, "es")
+    }
+
+    func testStoredLanguageSelectionReadsDefaults() {
+        UserDefaults.standard.set(AppLanguage.es.rawValue, forKey: uiLanguageKey)
+
+        XCTAssertEqual(AppLanguage.storedSelection(), .es)
+    }
+
+    func testResolvedLanguageMapsSystemPreferredLanguages() {
+        XCTAssertEqual(AppLanguage.resolvedLanguage(for: .system, preferredLanguages: ["pt-BR"]), .ptBR)
+        XCTAssertEqual(AppLanguage.resolvedLanguage(for: .system, preferredLanguages: ["es-419"]), .es)
+        XCTAssertEqual(AppLanguage.resolvedLanguage(for: .system, preferredLanguages: ["fr-FR"]), .en)
+    }
+
+    func testLocalizationContextPreservesExplicitSelection() {
+        UserDefaults.standard.set(AppLanguage.ptBR.rawValue, forKey: uiLanguageKey)
+
+        let context = AppLanguage.localizationContext(preferredLanguages: ["en-US"])
+
+        XCTAssertEqual(context.selectedLanguage, .ptBR)
+        XCTAssertEqual(context.resolvedLanguage, .ptBR)
+        XCTAssertEqual(context.locale.identifier, "pt-BR")
+    }
+
+    func testL10nSwitchesLanguageWithoutToggleDance() {
+        UserDefaults.standard.set(AppLanguage.en.rawValue, forKey: uiLanguageKey)
+        XCTAssertEqual(L10n("Sobre o Zion"), "About Zion")
+
+        UserDefaults.standard.set(AppLanguage.es.rawValue, forKey: uiLanguageKey)
+        XCTAssertEqual(L10n("Sobre o Zion"), "Acerca de Zion")
+
+        UserDefaults.standard.set(AppLanguage.ptBR.rawValue, forKey: uiLanguageKey)
+        XCTAssertEqual(L10n("Sobre o Zion"), "Sobre o Zion")
     }
 
     // MARK: - Bisect L10n Keys

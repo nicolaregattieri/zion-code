@@ -6,6 +6,8 @@ import SwiftUI
 enum AppLanguage: String, CaseIterable, Identifiable {
     case system, ptBR = "pt-BR", en, es
     var id: String { rawValue }
+    static let storageKey = "zion.uiLanguage"
+
     var label: String {
         switch self {
         case .system: return L10n("Sistema")
@@ -27,43 +29,83 @@ enum AppLanguage: String, CaseIterable, Identifiable {
         if self == .system { return .module }
 
         let resName = self.rawValue
+        let normalizedName = AppLanguage.normalizedLocalizationIdentifier(resName)
+
+        // SwiftPM may lowercase localized resource directories (for example pt-BR -> pt-br).
+        let resolvedLocalization = Bundle.module.localizations.first {
+            AppLanguage.normalizedLocalizationIdentifier($0) == normalizedName
+        } ?? resName
+
         // Try to find the lproj bundle in the module's resource bundle
-        if let url = Bundle.module.url(forResource: resName, withExtension: "lproj"),
+        if let url = Bundle.module.url(forResource: resolvedLocalization, withExtension: "lproj"),
            let bundle = Bundle(url: url) {
             return bundle
         }
 
         // Fallback: try search in subdirectories if processing messed with structure
-        if let path = Bundle.module.path(forResource: resName, ofType: "lproj", inDirectory: nil) ??
-                      Bundle.module.path(forResource: resName, ofType: "lproj", inDirectory: "Resources"),
+        if let path = Bundle.module.path(forResource: resolvedLocalization, ofType: "lproj", inDirectory: nil) ??
+                      Bundle.module.path(forResource: resolvedLocalization, ofType: "lproj", inDirectory: "Resources"),
            let bundle = Bundle(path: path) {
             return bundle
         }
 
         return .module
     }
+
+    static func storedSelection(from defaults: UserDefaults = .standard) -> AppLanguage {
+        let rawValue = defaults.string(forKey: storageKey) ?? AppLanguage.system.rawValue
+        return AppLanguage(rawValue: rawValue) ?? .system
+    }
+
+    static func resolvedLanguage(
+        for selection: AppLanguage,
+        preferredLanguages: [String] = Locale.preferredLanguages
+    ) -> AppLanguage {
+        guard selection == .system else { return selection }
+
+        let preferred = preferredLanguages.first?.lowercased() ?? "en"
+        if preferred.hasPrefix("pt") { return .ptBR }
+        if preferred.hasPrefix("es") { return .es }
+        return .en
+    }
+
+    static func localizationContext(
+        defaults: UserDefaults = .standard,
+        preferredLanguages: [String] = Locale.preferredLanguages
+    ) -> AppLocalizationContext {
+        let selectedLanguage = storedSelection(from: defaults)
+        let resolvedLanguage = resolvedLanguage(for: selectedLanguage, preferredLanguages: preferredLanguages)
+        return AppLocalizationContext(selectedLanguage: selectedLanguage, resolvedLanguage: resolvedLanguage)
+    }
+
+    private static func normalizedLocalizationIdentifier(_ identifier: String) -> String {
+        identifier.replacingOccurrences(of: "_", with: "-").lowercased()
+    }
+}
+
+struct AppLocalizationContext {
+    let selectedLanguage: AppLanguage
+    let resolvedLanguage: AppLanguage
+
+    var locale: Locale {
+        if selectedLanguage == .system {
+            return .autoupdatingCurrent
+        }
+        return resolvedLanguage.locale
+    }
+
+    var formatLocale: Locale { resolvedLanguage.locale }
+    var bundle: Bundle { resolvedLanguage.bundle }
 }
 
 func L10n(_ key: String, _ args: CVarArg...) -> String {
-    let languageRaw = UserDefaults.standard.string(forKey: "zion.uiLanguage") ?? "system"
-    let language: AppLanguage
-
-    if languageRaw == "system" {
-        // Find best match for system language
-        let preferred = Locale.preferredLanguages.first?.lowercased() ?? "en"
-        if preferred.hasPrefix("pt") { language = .ptBR }
-        else if preferred.hasPrefix("es") { language = .es }
-        else { language = .en }
-    } else {
-        language = AppLanguage(rawValue: languageRaw) ?? .system
-    }
-
-    let format = language.bundle.localizedString(forKey: key, value: nil, table: nil)
+    let context = AppLanguage.localizationContext()
+    let format = context.bundle.localizedString(forKey: key, value: nil, table: nil)
 
     if args.isEmpty { return format }
 
     return withVaList(args) { vaList in
-        return NSString(format: format, locale: language.locale, arguments: vaList) as String
+        return NSString(format: format, locale: context.formatLocale, arguments: vaList) as String
     }
 }
 

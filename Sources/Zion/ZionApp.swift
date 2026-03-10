@@ -18,10 +18,15 @@ extension Notification.Name {
 struct ZionApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var updater = SparkleUpdater()
+    @AppStorage("zion.uiLanguage") private var uiLanguageRaw: String = AppLanguage.system.rawValue
+
+    private var uiLanguage: AppLanguage { AppLanguage(rawValue: uiLanguageRaw) ?? .system }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .id(uiLanguageRaw)
+                .environment(\.locale, uiLanguage.locale)
         }
         .windowResizability(.contentMinSize)
         .windowToolbarStyle(.unified)
@@ -85,6 +90,8 @@ struct ZionApp: App {
 
         Settings {
             SettingsView()
+                .id(uiLanguageRaw)
+                .environment(\.locale, uiLanguage.locale)
         }
     }
 
