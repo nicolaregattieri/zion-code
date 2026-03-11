@@ -95,6 +95,17 @@ final class TerminalInteractionPolicyTests: XCTestCase {
         )
     }
 
+    func testShouldConsumePreciseScrollForFocusedHoveredScrollableTerminal() {
+        XCTAssertTrue(
+            TerminalTabView.Coordinator.shouldConsumePreciseScroll(
+                hasPreciseScrollingDeltas: true,
+                isTerminalFocused: true,
+                hoveredTerminalMatches: true,
+                canTerminalScroll: true
+            )
+        )
+    }
+
     func testShouldReleasePersistentSelectionFreezeOnNonCommandKeyDownOnly() {
         XCTAssertTrue(
             TerminalTabView.Coordinator.shouldReleasePersistentSelectionFreezeOnKeyDown(
@@ -112,6 +123,28 @@ final class TerminalInteractionPolicyTests: XCTestCase {
             TerminalTabView.Coordinator.shouldReleasePersistentSelectionFreezeOnKeyDown(
                 hasPersistentSelectionFreeze: false,
                 hasCommandModifier: false
+            )
+        )
+    }
+
+    func testShouldNotConsumePreciseScrollWhenPointerIsOverAnotherPane() {
+        XCTAssertFalse(
+            TerminalTabView.Coordinator.shouldConsumePreciseScroll(
+                hasPreciseScrollingDeltas: true,
+                isTerminalFocused: true,
+                hoveredTerminalMatches: false,
+                canTerminalScroll: true
+            )
+        )
+    }
+
+    func testShouldNotConsumePreciseScrollWhenTerminalIsNotFocused() {
+        XCTAssertFalse(
+            TerminalTabView.Coordinator.shouldConsumePreciseScroll(
+                hasPreciseScrollingDeltas: true,
+                isTerminalFocused: false,
+                hoveredTerminalMatches: true,
+                canTerminalScroll: true
             )
         )
     }

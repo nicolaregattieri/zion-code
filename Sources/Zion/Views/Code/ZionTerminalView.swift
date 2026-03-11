@@ -79,19 +79,9 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
     }
 
     private func resolvedDropTarget(using info: NSDraggingInfo) -> ZionTerminalView {
-        guard let window, let contentView = window.contentView else { return self }
+        guard let window else { return self }
         let locationInWindow = info.draggingLocation
-        let locationInContent = contentView.convert(locationInWindow, from: nil)
-
-        if let hitView = contentView.hitTest(locationInContent),
-           let terminal = Self.closestTerminalView(from: hitView),
-           terminal.acceptsDrop(atWindowPoint: locationInWindow) {
-            return terminal
-        }
-
-        if let terminal = Self.allTerminalViews(in: contentView)
-            .reversed()
-            .first(where: { $0.acceptsDrop(atWindowPoint: locationInWindow) }) {
+        if let terminal = Self.terminal(atWindowPoint: locationInWindow, in: window) {
             return terminal
         }
 
@@ -128,7 +118,22 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
         return terminals
     }
 
-    private func acceptsDrop(atWindowPoint point: NSPoint) -> Bool {
+    static func terminal(atWindowPoint point: NSPoint, in window: NSWindow?) -> ZionTerminalView? {
+        guard let window, let contentView = window.contentView else { return nil }
+        let pointInContent = contentView.convert(point, from: nil)
+
+        if let hitView = contentView.hitTest(pointInContent),
+           let terminal = closestTerminalView(from: hitView),
+           terminal.acceptsInteraction(atWindowPoint: point) {
+            return terminal
+        }
+
+        return allTerminalViews(in: contentView)
+            .reversed()
+            .first(where: { $0.acceptsInteraction(atWindowPoint: point) })
+    }
+
+    private func acceptsInteraction(atWindowPoint point: NSPoint) -> Bool {
         guard window != nil, !isHidden, alphaValue > 0.01 else { return false }
         let pointInView = convert(point, from: nil)
         return bounds.contains(pointInView)
@@ -165,7 +170,8 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
 
     static func preciseScrollLineHeight(viewHeight: CGFloat, terminalRows: Int) -> CGFloat {
         let rows = max(1, terminalRows)
-        return max(6, viewHeight / CGFloat(rows))
+        let terminalRowHeight = viewHeight / CGFloat(rows)
+        return max(4, terminalRowHeight * 0.75)
     }
 
     static func accumulatePreciseScrollStep(

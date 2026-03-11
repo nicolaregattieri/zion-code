@@ -251,6 +251,15 @@ struct TerminalTabView: NSViewRepresentable {
             hasPersistentSelectionFreeze && !hasCommandModifier
         }
 
+        static func shouldConsumePreciseScroll(
+            hasPreciseScrollingDeltas: Bool,
+            isTerminalFocused: Bool,
+            hoveredTerminalMatches: Bool,
+            canTerminalScroll: Bool
+        ) -> Bool {
+            hasPreciseScrollingDeltas && isTerminalFocused && hoveredTerminalMatches && canTerminalScroll
+        }
+
         func ensureOwnerBinding(reason: String) {
             guard parent.session._shouldPreserve else { return }
             guard let liveView = terminalView ?? (parent.session._cachedView as? SwiftTerm.TerminalView) else { return }
@@ -510,10 +519,22 @@ struct TerminalTabView: NSViewRepresentable {
                 guard let self else { return event }
                 defer { self.resetPreciseScrollAccumulatorIfNeeded(for: event) }
 
-                guard event.hasPreciseScrollingDeltas,
-                      self.isTerminalFocused,
-                      let view = self.terminalView as? ZionTerminalView,
-                      view.canScroll else {
+                guard let view = self.terminalView as? ZionTerminalView else {
+                    self.preciseScrollLineAccumulator = 0
+                    return event
+                }
+
+                let hoveredTerminal = ZionTerminalView.terminal(
+                    atWindowPoint: event.locationInWindow,
+                    in: event.window ?? view.window
+                )
+                let shouldConsumeScroll = Self.shouldConsumePreciseScroll(
+                    hasPreciseScrollingDeltas: event.hasPreciseScrollingDeltas,
+                    isTerminalFocused: self.isTerminalFocused,
+                    hoveredTerminalMatches: hoveredTerminal === view,
+                    canTerminalScroll: view.canScroll
+                )
+                guard shouldConsumeScroll else {
                     self.preciseScrollLineAccumulator = 0
                     return event
                 }
