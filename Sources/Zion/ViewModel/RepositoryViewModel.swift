@@ -153,7 +153,10 @@ final class RepositoryViewModel {
 
     // Bridge
     var bridgeState: BridgeProjectState = .empty
-    var bridgePreview: BridgeSyncPreview?
+    var bridgeSourceTarget: BridgeTarget = .codex
+    var bridgeDestinationTarget: BridgeTarget = .claude
+    var bridgeAnalysis: BridgeMigrationAnalysis?
+    var selectedBridgeRowID: String?
     var isBridgeVisible: Bool = false
     var isBridgeLoading: Bool = false
     var isBridgeApplying: Bool = false

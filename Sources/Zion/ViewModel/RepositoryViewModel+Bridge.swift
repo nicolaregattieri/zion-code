@@ -4,75 +4,66 @@ extension RepositoryViewModel {
     func loadBridgeState() {
         guard let repositoryURL else {
             bridgeState = .empty
-            bridgePreview = nil
+            bridgeAnalysis = nil
             return
         }
 
         isBridgeLoading = true
         defer { isBridgeLoading = false }
+
         bridgeState = bridgeService.loadState(repositoryURL: repositoryURL)
+        if !(bridgeState.detection(for: bridgeSourceTarget)?.isDetected ?? false),
+           let detected = bridgeState.detections.first(where: \.isDetected)?.target {
+            bridgeSourceTarget = detected
+        }
+        if bridgeDestinationTarget == bridgeSourceTarget,
+           let detected = BridgeTarget.allCases.first(where: { $0 != bridgeSourceTarget }) {
+            bridgeDestinationTarget = detected
+        }
     }
 
-    func initializeBridgePackage() {
+    func analyzeBridgeMigration() {
         guard let repositoryURL else { return }
 
         isBridgeLoading = true
         defer { isBridgeLoading = false }
 
         do {
-            bridgeState = try bridgeService.initializePackage(repositoryURL: repositoryURL)
-            bridgePreview = nil
-            statusMessage = L10n("bridge.status.packageReady")
+            bridgeAnalysis = try bridgeService.analyze(
+                from: bridgeSourceTarget,
+                to: bridgeDestinationTarget,
+                repositoryURL: repositoryURL
+            )
+            selectedBridgeRowID = bridgeAnalysis?.rows.first?.id
+            statusMessage = L10n("bridge.status.analyzed", bridgeSourceTarget.label, bridgeDestinationTarget.label)
         } catch {
             lastError = error.localizedDescription
         }
     }
 
-    func importBridge(from target: BridgeTarget) {
-        guard let repositoryURL else { return }
-
-        isBridgeLoading = true
-        defer { isBridgeLoading = false }
-
-        do {
-            bridgeState = try bridgeService.importConfiguration(from: target, repositoryURL: repositoryURL)
-            bridgePreview = nil
-            statusMessage = L10n("bridge.status.imported", target.label)
-        } catch {
-            lastError = error.localizedDescription
-        }
-    }
-
-    func previewBridgeSync(to target: BridgeTarget) {
-        guard let repositoryURL else { return }
-
-        isBridgeLoading = true
-        defer { isBridgeLoading = false }
-
-        do {
-            bridgePreview = try bridgeService.previewSync(to: target, repositoryURL: repositoryURL)
-            statusMessage = L10n("bridge.status.previewed", target.label)
-        } catch {
-            lastError = error.localizedDescription
-        }
-    }
-
-    func applyBridgePreview() {
-        guard let repositoryURL, let bridgePreview else { return }
+    func applyBridgeMigration() {
+        guard let repositoryURL, let bridgeAnalysis else { return }
 
         isBridgeApplying = true
         defer { isBridgeApplying = false }
 
         do {
-            bridgeState = try bridgeService.applySync(bridgePreview, repositoryURL: repositoryURL)
-            self.bridgePreview = try bridgeService.previewSync(to: bridgePreview.target, repositoryURL: repositoryURL)
-            statusMessage = L10n("bridge.status.synced", bridgePreview.target.label)
+            self.bridgeAnalysis = try bridgeService.apply(bridgeAnalysis, repositoryURL: repositoryURL)
+            bridgeState = bridgeService.loadState(repositoryURL: repositoryURL)
+            selectedBridgeRowID = self.bridgeAnalysis?.rows.first?.id
+            statusMessage = L10n("bridge.status.synced", bridgeDestinationTarget.label)
         } catch {
             lastError = error.localizedDescription
         }
     }
 
-    func bridgeCompatibility(for item: BridgeItem, target: BridgeTarget) -> BridgeCompatibility {
-        bridgeService.compatibility(for: item, target: target)
+    func clearBridgeAnalysis() {
+        bridgeAnalysis = nil
+        selectedBridgeRowID = nil
+    }
+
+    var selectedBridgeRow: BridgeMappingRow? {
+        guard let selectedBridgeRowID else { return bridgeAnalysis?.rows.first }
+        return bridgeAnalysis?.rows.first(where: { $0.id == selectedBridgeRowID }) ?? bridgeAnalysis?.rows.first
     }
 }
