@@ -141,6 +141,14 @@ final class RepositoryViewModel {
     var nextSectionAfterRepositoryOpen: AppSection?
     var pendingExternalFiles: [URL] = []
 
+    // Bridge
+    var bridgeState: BridgeProjectState = .empty
+    var bridgePreview: BridgeSyncPreview?
+    var isBridgeVisible: Bool = false
+    var isBridgeLoading: Bool = false
+    var isBridgeApplying: Bool = false
+    @ObservationIgnored let bridgeService = BridgeService()
+
     // Git Hosting Provider integration
     var pullRequests: [HostedPRInfo] = []
     var isPRSheetVisible: Bool = false
@@ -716,6 +724,7 @@ final class RepositoryViewModel {
             loadPullRequests()
             refreshPRReviewQueue()
             loadSubmodules()
+            loadBridgeState()
             return
         }
 
@@ -908,6 +917,7 @@ final class RepositoryViewModel {
         loadSignatureStatuses()
         startBackgroundFetch()
         startAutoRefreshTimer()
+        loadBridgeState()
         captureRepositorySnapshot(for: url)
         isSwitchingRepository = false
     }

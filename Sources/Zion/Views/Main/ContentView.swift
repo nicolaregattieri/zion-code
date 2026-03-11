@@ -68,10 +68,12 @@ struct ContentView: View {
         case .repositoryOpened:
             hasCompletedOnboarding = true
             shouldPresentOnboardingFromHelp = false
+            model.isBridgeVisible = false
             selectedSection = model.nextSectionAfterRepositoryOpen ?? .code
             model.nextSectionAfterRepositoryOpen = nil
         case .requestSection(let section):
             if zenModeEnabled && section != .code {
+                model.isBridgeVisible = false
                 selectedSection = .code
                 return
             }
@@ -79,14 +81,18 @@ struct ContentView: View {
                 model.statusMessage = L10n("Abra um repositorio para acessar %@", L10n(section.title))
                 return
             }
+            model.isBridgeVisible = false
             selectedSection = section
         case .showOnboardingFromHelp:
             isHelpVisible = false
+            model.isBridgeVisible = false
             selectedSection = .code
             shouldPresentOnboardingFromHelp = true
         case .navigateToGraph:
+            model.isBridgeVisible = false
             selectedSection = zenModeEnabled ? .code : .graph
         case .navigateToCode:
+            model.isBridgeVisible = false
             selectedSection = .code
         }
     }
@@ -390,6 +396,9 @@ struct ContentView: View {
     private var detailViewHost: some View {
         if launchPhase == .bootstrapping {
             Color.clear // Liquid background shows through during bootstrap
+        } else if model.isBridgeVisible, model.repositoryURL != nil {
+            BridgeScreen(model: model)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             switch rootPresentation {
             case .onboarding:
@@ -537,6 +546,14 @@ struct ContentView: View {
                     .help(L10n("Reflog / Desfazer"))
                     .accessibilityLabel(L10n("Reflog / Desfazer"))
                 }
+
+                Button {
+                    model.isBridgeVisible = true
+                } label: {
+                    Image(systemName: "arrow.trianglehead.branch")
+                }
+                .help(L10n("bridge.open.hint"))
+                .accessibilityLabel(L10n("bridge.open.hint"))
             }
 
             Button { isHelpVisible = true } label: { Image(systemName: "questionmark.circle") }

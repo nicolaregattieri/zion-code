@@ -24,6 +24,10 @@ struct SidebarView: View {
 
                 workspaceCard
 
+                if model.repositoryURL != nil {
+                    bridgeAccessCard
+                }
+
                 recentProjectsCard
 
                 if model.repositoryURL != nil {
@@ -631,6 +635,37 @@ struct SidebarView: View {
         }
         .padding(.horizontal, 10)
         .padding(.bottom, 14)
+    }
+
+    private var bridgeAccessCard: some View {
+        GlassCard(spacing: 10) {
+            CardHeader(L10n("bridge.entry.title"), icon: "arrow.trianglehead.branch", subtitle: L10n("bridge.entry.subtitle"))
+
+            Button {
+                model.isBridgeVisible = true
+            } label: {
+                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(L10n("bridge.title"))
+                            .font(DesignSystem.Typography.sectionTitle)
+                        Text(L10n("bridge.subtitle"))
+                            .font(DesignSystem.Typography.bodySmall)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
+
+                    Spacer(minLength: 0)
+
+                    Image(systemName: "arrow.right")
+                        .font(DesignSystem.Typography.metaBold)
+                        .foregroundStyle(DesignSystem.Colors.ai)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help(L10n("bridge.open.hint"))
+        }
+        .padding(.horizontal, 10)
     }
 
 }
