@@ -401,6 +401,60 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
         XCTAssertEqual(merged.map(\.name), ["keep.swift", "new.swift"])
     }
 
+    // MARK: - loadFiles
+
+    func testLoadFilesDoesNotHardcodeHideBuildOrToolDirectories() async throws {
+        let vm = RepositoryViewModel()
+        vm.showDotfiles = true
+        let root = try makeTempDirectory()
+
+        let visibleNames = ["build", "dist", "node_modules", "coverage", "vendor"]
+        for name in visibleNames {
+            try FileManager.default.createDirectory(
+                at: root.appendingPathComponent(name, isDirectory: true),
+                withIntermediateDirectories: true
+            )
+        }
+
+        let items = await vm.loadFiles(at: root, maxDepth: 0)
+
+        XCTAssertEqual(Set(items.map(\.name)), Set(visibleNames))
+    }
+
+    func testLoadFilesShowsDotDirectoriesWhenHiddenFilesAreEnabled() async throws {
+        let vm = RepositoryViewModel()
+        vm.showDotfiles = true
+        let root = try makeTempDirectory()
+
+        let visibleNames = [".git", ".build", ".swiftpm", ".vscode", ".cache", ".DS_Store", "pkg.egg-info"]
+        for name in visibleNames {
+            let url = root.appendingPathComponent(name, isDirectory: true)
+            try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        }
+
+        let items = await vm.loadFiles(at: root, maxDepth: 0)
+
+        XCTAssertEqual(Set(items.map(\.name)), Set(visibleNames))
+    }
+
+    func testLoadFilesHidesOnlyFilesystemHiddenEntriesWhenHiddenFilesAreDisabled() async throws {
+        let vm = RepositoryViewModel()
+        vm.showDotfiles = false
+        let root = try makeTempDirectory()
+
+        let hiddenNames = [".git", ".build", ".swiftpm", ".vscode", ".DS_Store"]
+        let visibleNames = ["build", "dist", "node_modules", "coverage", "vendor", "pkg.egg-info"]
+
+        for name in hiddenNames + visibleNames {
+            let url = root.appendingPathComponent(name, isDirectory: true)
+            try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        }
+
+        let items = await vm.loadFiles(at: root, maxDepth: 0)
+
+        XCTAssertEqual(Set(items.map(\.name)), Set(visibleNames))
+    }
+
     // MARK: - Missing Open Files
 
     func testRecalculateMissingOpenFileStateMarksMissingActiveFile() throws {
@@ -740,15 +794,20 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
     }
 
     private func makeTempFile(ext: String, data: Data) throws -> URL {
+        let directory = try makeTempDirectory()
+        let fileURL = directory.appendingPathComponent("fixture.\(ext)")
+        try data.write(to: fileURL, options: .atomic)
+        return fileURL
+    }
+
+    private func makeTempDirectory() throws -> URL {
         let tempRoot = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
         let directory = tempRoot.appendingPathComponent("zion-filebrowser-tests-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         addTeardownBlock {
             try? FileManager.default.removeItem(at: directory)
         }
-        let fileURL = directory.appendingPathComponent("fixture.\(ext)")
-        try data.write(to: fileURL, options: .atomic)
-        return fileURL
+        return directory
     }
 
     private func waitForEditorContent(_ expected: String, in vm: RepositoryViewModel) async throws {

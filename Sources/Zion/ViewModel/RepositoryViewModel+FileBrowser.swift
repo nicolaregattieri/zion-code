@@ -234,19 +234,6 @@ extension RepositoryViewModel {
         }
     }
 
-    // Always hidden — performance/safety, never hand-edited
-    static let alwaysHiddenEntries: Set<String> = [
-        "node_modules", ".git", ".DS_Store", "__pycache__", "DerivedData",
-        ".build", ".swiftpm", "Pods", ".gradle", ".tox",
-        ".mypy_cache", ".pytest_cache"
-    ]
-
-    // Build/tool directories — hidden by default
-    static let toolDirectories: Set<String> = [
-        "dist", "build", ".next", ".turbo", ".vercel", ".expo",
-        ".nuxt", ".output", "coverage", ".cache", "vendor", ".idea", ".vscode"
-    ]
-
     func loadGitIgnoredPaths(for repositoryURL: URL, forceRefresh: Bool = false) async -> Set<String> {
         if !forceRefresh,
            let cached = ignoredPathsCacheByRepository[repositoryURL],
@@ -285,13 +272,6 @@ extension RepositoryViewModel {
             let contents = try fm.contentsOfDirectory(at: url, includingPropertiesForKeys: [.isDirectoryKey], options: options)
             var items: [FileItem] = []
             for item in contents {
-                let name = item.lastPathComponent
-
-                // Skip always-hidden entries (node_modules, .git, etc.)
-                if Self.alwaysHiddenEntries.contains(name) || name.hasSuffix(".egg-info") { continue }
-                // Skip build/tool directories
-                if Self.toolDirectories.contains(name) { continue }
-
                 let isIgnored = ignoredPaths?.contains(item.path) ?? false
 
                 let isDir = (try? item.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false

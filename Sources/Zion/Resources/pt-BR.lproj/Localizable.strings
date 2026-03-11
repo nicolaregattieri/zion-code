@@ -1269,7 +1269,7 @@
 "help.code.filehistory" = "Visualize o histórico de commits de qualquer arquivo com um clique";
 "help.code.openwith" = "Abrir arquivos pelo Finder (Abrir Com) ou arrastando para o editor";
 "help.code.format" = "Formatar código com ⇧⌥F — suporta JSON, XML, HTML, CSS, JavaScript, Python e mais";
-"help.code.dotfiles" = "Visibilidade inteligente: alterne dotfiles com o botão ou ⇧⌘H. node_modules e .git sempre ocultos por performance";
+"help.code.dotfiles" = "Alterne arquivos ocultos com o botão de olho ou ⇧⌘H.";
 
 // Zion Map — Pre-Commit Review
 "map.ai.precommit.title" = "Gate de Review Pré-Commit";
