@@ -4,10 +4,10 @@ import SwiftTerm
 
 @MainActor
 final class ZionTerminalViewTests: XCTestCase {
-    func testPreciseScrollUsesTerminalRowHeight() {
+    func testPreciseScrollUsesReducedRowHeightForSmootherTrackpadScroll() {
         XCTAssertEqual(
             ZionTerminalView.preciseScrollLineHeight(viewHeight: 180, terminalRows: 10),
-            18,
+            13.5,
             accuracy: 0.001
         )
     }
@@ -15,20 +15,20 @@ final class ZionTerminalViewTests: XCTestCase {
     func testPreciseScrollLineHeightHasMinimumFloor() {
         XCTAssertEqual(
             ZionTerminalView.preciseScrollLineHeight(viewHeight: 12, terminalRows: 10),
-            6,
+            4,
             accuracy: 0.001
         )
     }
 
-    func testPreciseScrollAccumulatorWaitsForWholeLine() {
+    func testPreciseScrollAccumulatorAdvancesSoonerWithSmootherLineHeight() {
         let result = ZionTerminalView.accumulatePreciseScrollStep(
             accumulator: 0,
             deltaY: 8,
-            lineHeight: 16
+            lineHeight: 6
         )
 
-        XCTAssertEqual(result.lines, 0)
-        XCTAssertEqual(result.remainder, 0.5, accuracy: 0.001)
+        XCTAssertEqual(result.lines, 1)
+        XCTAssertEqual(result.remainder, 0.3333333333, accuracy: 0.001)
     }
 
     func testPreciseScrollAccumulatorEmitsLinesWithoutJumpingToLargeStep() {
