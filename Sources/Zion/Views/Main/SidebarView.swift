@@ -24,10 +24,6 @@ struct SidebarView: View {
 
                 workspaceCard
 
-                if model.repositoryURL != nil {
-                    bridgeAccessCard
-                }
-
                 recentProjectsCard
 
                 if model.repositoryURL != nil {
@@ -36,6 +32,10 @@ struct SidebarView: View {
 
                 if model.repositoryURL != nil, model.hasHostingProvider {
                     PRInboxCard(model: model)
+                }
+
+                if model.repositoryURL != nil {
+                    bridgeAccessCard
                 }
 
                 if selectedSection == .graph, model.repositoryURL != nil {
