@@ -545,6 +545,7 @@ extension RepositoryViewModel {
 
     func avatarImage(for email: String) -> NSImage? {
         guard !email.isEmpty else { return nil }
+        guard UserDefaults.standard.bool(forKey: "zion.graphAuthorAvatarsEnabled") else { return nil }
         let key = email.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         if let cached = avatarCache[key] { return cached }
         // Start download if not already in-flight

@@ -348,6 +348,8 @@
 "help.tree.jumpbar" = "Jump Bar para saltar instantaneamente para main, develop ou branch padrão";
 "help.tree.pending" = "Alterações pendentes no topo do grafo com commit rápido e stash";
 "help.tree.signature" = "Verificação de assinatura GPG/SSH dos commits";
+"help.tree.navigation" = "Navegação por commits com setas e Escape para limpar a seleção";
+"help.tree.focus" = "Clique duplo em uma branch para focar o grafo naquele histórico";
 
 // Zion Code
 "help.code.editor" = "Editor com syntax highlighting, múltiplas abas e detecção de alterações externas";
@@ -709,6 +711,8 @@
 "settings.general.tools" = "Ferramentas";
 "settings.general.safety" = "Segurança";
 "settings.general.confirmation" = "Modo de Confirmação";
+"settings.general.graphAuthorAvatars" = "Ativar avatares de autores no graph";
+"settings.general.graphAuthorAvatarsHint" = "Baixa identicons do Gravatar para autores de commits. Fica desativado por padrão para evitar requisições externas em repositórios privados.";
 "settings.general.customPath" = "Caminho Personalizado";
 "settings.open" = "Abrir Configurações";
 "settings.open.hint" = "Abrir Configurações (⌘,)";
@@ -729,6 +733,9 @@
 "settings.notifications.prPolling.30min" = "A cada 30 minutos";
 "settings.notifications.autoReview" = "Revisar PRs atribuídos automaticamente";
 "settings.notifications.server" = "URL do Servidor";
+"settings.notifications.topicInvalid" = "Tópico inválido. Use apenas letras, números, '.', '_' ou '-' (1-64).";
+"settings.notifications.serverInvalid" = "Servidor inválido. Use uma URL HTTPS válida (por exemplo, https://ntfy.sh).";
+"settings.notifications.fixConfig" = "Corrija o tópico e o servidor antes de testar notificações.";
 "settings.diff.depth.quick" = "Rápido";
 "settings.diff.depth.detailed" = "Detalhado";
 
@@ -791,7 +798,7 @@
 
 // Phase 5: Help Sheet
 "help.settings.title" = "Janela de Configurações";
-"help.settings.features" = "Atalho Cmd+,|Abas: Geral, Editor, IA, Notificações|Idioma, aparência, terminal|Gerenciamento de chave API";
+"help.settings.features" = "Atalho Cmd+,|6 abas: Geral, Editor, Terminal, IA, Notificações e Mobile|Idioma, aparência, terminal e acesso remoto mobile|Gerenciamento de chave API e configurações do provedor";
 "help.diffExplanation.title" = "Explicação de Diff com IA";
 "help.diffExplanation.features" = "Intenção, Riscos, Narrativa|Badges de severidade|Explicar automaticamente ao selecionar|Copiar para área de transferência";
 "help.codeReview.title" = "Code Review";
@@ -801,11 +808,11 @@
 
 
 // Zion Map — Settings
-"map.settings.subtitle" = "Janela de configurações nativa do macOS com 4 abas organizadas.";
+"map.settings.subtitle" = "Janela de configurações nativa do macOS com 6 abas organizadas.";
 "map.settings.window.title" = "Janela de Configurações";
-"map.settings.window.description" = "Janela de Configurações completa do macOS acessível via Cmd+, com abas Geral, Editor, IA e Notificações.";
+"map.settings.window.description" = "Janela de Configurações completa do macOS acessível via Cmd+, com abas Geral, Editor, Terminal, IA, Notificações e Mobile.";
 "map.settings.tabs.title" = "Abas Organizadas";
-"map.settings.tabs.description" = "Configurações divididas em grupos lógicos: Interface e Ferramentas, Temas e preferências do editor, Provedor e estilo de IA, Notificações e polling de PRs.";
+"map.settings.tabs.description" = "Configurações divididas em grupos lógicos: interface geral, editor, terminal, provedores de IA, notificações e acesso remoto mobile.";
 "map.settings.api.title" = "Gerenciamento de Chave API";
 "map.settings.api.description" = "Gerencie chaves API de provedores de IA armazenadas no Keychain do macOS com segurança.";
 
@@ -1351,7 +1358,7 @@
 "help.commitStats" = "Linhas adicionadas/removidas por commit no graph";
 "help.aiSummary" = "Resumo IA das mudanças pendentes";
 "help.smartClipboard" = "Ações contextuais inteligentes no clipboard";
-"help.avatars" = "Avatares Gravatar dos autores no graph";
+"help.avatars" = "Avatares opcionais de Gravatar dos autores no graph";
 
 // Worktree Smart Create
 "Abrir no Zion Code" = "Abrir no Zion Code";
@@ -1441,7 +1448,7 @@
 "map.tree.commitstats.description" = "Veja linhas adicionadas (+) e removidas (-) em cada commit direto no grafo.";
 "map.tree.commitstats.tip1" = "Use para identificar rapidamente commits com maior impacto.";
 "map.tree.avatars.title" = "Avatares de Autor";
-"map.tree.avatars.description" = "Exibe identicons Gravatar ao lado dos autores para leitura visual mais rápida.";
+"map.tree.avatars.description" = "Exibe opcionalmente identicons Gravatar ao lado dos autores para leitura visual mais rápida.";
 "map.tree.branchsearch.title" = "Busca de Branches";
 "map.tree.branchsearch.description" = "Filtre branches pelo nome na sidebar para encontrar referências rapidamente.";
 "map.tree.branchsearch.tip1" = "Funciona com nomes parciais e remotos, como origin/feature.";
@@ -1702,6 +1709,8 @@
 "help.mobile.terminal" = "Saída do terminal transmitida em tempo real para o celular";
 "help.mobile.quickActions" = "Botões de ação rápida: Ctrl+C, Ctrl+D, Esc, Tab, setas";
 "help.mobile.multiProject" = "Sessões de múltiplos projetos agrupadas por repositório";
+"help.mobile.lanMode" = "Modo LAN para conectar na mesma rede sem túnel";
+"help.mobile.cloudflare" = "Túnel Cloudflare para acesso seguro fora da rede local";
 "help.mobile.preventSleep" = "Impedir suspensão do Mac enquanto o servidor estiver ativo";
 
 "map.mobileAccess.subtitle" = "Controle sessões de terminal pelo iPhone";
@@ -1717,6 +1726,9 @@
 "map.mobile.multiProject.description" = "Sessões de todos os repositórios abertos aparecem no celular, agrupadas por nome do repositório. Alterne entre projetos sem tocar no Mac.";
 "map.mobile.lanMode.title" = "Modo LAN";
 "map.mobile.lanMode.description" = "Conecte pela rede local sem túnel Cloudflare. Ideal para testes ou quando o celular está na mesma rede.";
+"map.mobile.cloudflare.title" = "Túnel Cloudflare";
+"map.mobile.cloudflare.description" = "Quando o modo LAN está desligado, o Zion publica um túnel Cloudflare seguro para conectar o iPhone sem abrir portas no roteador.";
+"map.mobile.cloudflare.tip1" = "Instale `cloudflared` para usar acesso remoto fora da sua rede local.";
 "map.mobile.preventSleep.title" = "Impedir Suspensão";
 "map.mobile.preventSleep.description" = "Configuração opcional para manter o Mac ativo enquanto o servidor remoto estiver ligado, evitando desconexão por suspensão.";
 

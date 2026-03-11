@@ -5,6 +5,7 @@ struct GeneralSettingsTab: View {
     @AppStorage("zion.appearance") private var appearanceRaw: String = AppAppearance.system.rawValue
     @AppStorage("zion.confirmationMode") private var confirmationModeRaw: String = ConfirmationMode.destructiveOnly.rawValue
     @AppStorage("zion.zionModeEnabled") private var zionModeEnabled: Bool = false
+    @AppStorage("zion.graphAuthorAvatarsEnabled") private var graphAuthorAvatarsEnabled: Bool = false
     @AppStorage("zion.gitlab.host") private var gitlabHost: String = ""
     @AppStorage("zion.bitbucket.username") private var bitbucketUsername: String = ""
 
@@ -180,6 +181,12 @@ struct GeneralSettingsTab: View {
                         Text(mode.label).tag(mode.rawValue)
                     }
                 }
+
+                Toggle(L10n("settings.general.graphAuthorAvatars"), isOn: $graphAuthorAvatarsEnabled)
+
+                Text(L10n("settings.general.graphAuthorAvatarsHint"))
+                    .font(DesignSystem.Typography.bodySmall)
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)

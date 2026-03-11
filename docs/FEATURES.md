@@ -321,7 +321,7 @@
 | Settings Window | Native macOS Settings window (`⌘,`) with General, Editor, Terminal, AI, Notifications, and Mobile tabs |
 | Language | Portuguese (BR), English, Spanish, System |
 | Appearance Mode | System, Light, Dark |
-| Focus Mode | Full-screen code/terminal focus layout with explicit in-screen exit affordance (`⌘J`) |
+| Focus Mode | Full-screen code/terminal focus layout with explicit in-screen exit affordance (`⇧⌘J`) |
 | Confirmation Mode | Never / Destructive Only / All |
 | Background Fetch | Auto-checks remote every 60s |
 | Recent Repositories | Root-only list (up to 10) with per-project `WT n` badge |
@@ -355,7 +355,7 @@
 | Commit Stats | Insertions (+N) and deletions (-M) shown per commit in the graph |
 | AI Pending Changes Summary | One-click AI summary of what you've been working on, with "Use as commit message" |
 | Smart Clipboard Actions | Context-aware actions: git hashes → Show in Graph, branch names → Checkout, file paths → Open in Editor |
-| Author Avatars | Gravatar identicons shown next to author names in the commit graph |
+| Author Avatars | Optional Gravatar identicons shown next to author names in the commit graph |
 
 ## Known Edge Case (Revisit)
 
@@ -377,6 +377,7 @@
 | `⌘S` | Save file |
 | `⇧⌘S` | Save As |
 | `⌘R` | Refresh repository status |
+| `⌘,` | Open settings window |
 | `⌘J` | Toggle terminal |
 | `⌃⌘J` | Maximize terminal |
 | `⌘T` | New terminal tab |
@@ -403,6 +404,6 @@
 | `⇧⌥F` | Format Document |
 | `⌃⌘Z` | Toggle Zion Mode |
 | `⌥⌘X` | Voice Input |
-| `⌘J` | Focus/Zen Mode |
+| `⇧⌘J` | Focus/Zen Mode |
 | `↑↓` | Navigate commits |
 | `Esc` | Deselect / close |

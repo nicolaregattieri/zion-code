@@ -184,6 +184,63 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
         XCTAssertEqual(vm.lastClickedFileID, item.id)
     }
 
+    func testAllFlatFilesRebuildsCacheLazily() {
+        let vm = RepositoryViewModel()
+        let nestedFile = FileItem(url: URL(fileURLWithPath: "/tmp/repo/Sources/App.swift"), isDirectory: false, children: nil)
+        let rootDirectory = FileItem(
+            url: URL(fileURLWithPath: "/tmp/repo/Sources"),
+            isDirectory: true,
+            children: [nestedFile]
+        )
+
+        vm.repositoryFiles = [rootDirectory]
+
+        XCTAssertTrue(vm.flatFileCache.isEmpty)
+        XCTAssertTrue(vm.isFlatFileCacheDirty)
+        XCTAssertEqual(vm.allFlatFiles().map(\.id), [nestedFile.id])
+        XCTAssertFalse(vm.isFlatFileCacheDirty)
+    }
+
+    func testPendingExpandedDescendantPathsOnlyReturnsNestedExpandedDirectoriesInOrder() {
+        let vm = RepositoryViewModel()
+        vm.expandedPaths = [
+            "/tmp/repo/Sources",
+            "/tmp/repo/Sources/App",
+            "/tmp/repo/Sources/App/Features",
+            "/tmp/repo/Docs",
+        ]
+
+        let descendants = vm.pendingExpandedDescendantPaths(beneath: "/tmp/repo/Sources")
+
+        XCTAssertEqual(
+            descendants,
+            [
+                "/tmp/repo/Sources/App",
+                "/tmp/repo/Sources/App/Features",
+            ]
+        )
+    }
+
+    func testAvatarImageDoesNotStartDownloadWithoutExplicitOptIn() {
+        let vm = RepositoryViewModel()
+        let defaults = UserDefaults.standard
+        let previousValue = defaults.object(forKey: "zion.graphAuthorAvatarsEnabled")
+        defaults.set(false, forKey: "zion.graphAuthorAvatarsEnabled")
+        defer {
+            if let previousValue {
+                defaults.set(previousValue, forKey: "zion.graphAuthorAvatarsEnabled")
+            } else {
+                defaults.removeObject(forKey: "zion.graphAuthorAvatarsEnabled")
+            }
+        }
+
+        let image = vm.avatarImage(for: "dev@example.com")
+
+        XCTAssertNil(image)
+        XCTAssertTrue(vm.avatarDownloadTasks.isEmpty)
+        XCTAssertTrue(vm.avatarCache.isEmpty)
+    }
+
     // MARK: - clearFileSelection
 
     func testClearFileSelectionResetsState() {
