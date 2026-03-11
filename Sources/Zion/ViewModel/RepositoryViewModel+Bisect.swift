@@ -222,7 +222,8 @@ extension RepositoryViewModel {
                     diff: diff,
                     diffStat: diffStat,
                     provider: aiProvider,
-                    apiKey: aiAPIKey
+                    apiKey: aiAPIKey,
+                    mode: aiMode
                 )
 
                 // Guard against stale result if bisect was aborted during AI call

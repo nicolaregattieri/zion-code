@@ -8,6 +8,22 @@ struct ReviewFinding: Identifiable {
     let severity: ReviewSeverity
     let file: String
     let message: String
+    let evidence: String?
+    let testImpact: String?
+
+    init(
+        severity: ReviewSeverity,
+        file: String,
+        message: String,
+        evidence: String? = nil,
+        testImpact: String? = nil
+    ) {
+        self.severity = severity
+        self.file = file
+        self.message = message
+        self.evidence = ReviewFinding.normalizedOptionalText(evidence)
+        self.testImpact = ReviewFinding.normalizedOptionalText(testImpact)
+    }
 
     enum ReviewSeverity: String {
         case critical, warning, suggestion
@@ -35,6 +51,16 @@ struct ReviewFinding: Identifiable {
             case .suggestion: return L10n("Sugestao")
             }
         }
+    }
+
+    var hasEvidence: Bool { evidence != nil }
+    var hasTestImpact: Bool { testImpact != nil }
+
+    private static func normalizedOptionalText(_ value: String?) -> String? {
+        guard let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !trimmed.isEmpty,
+              trimmed != "-" else { return nil }
+        return trimmed
     }
 }
 

@@ -59,6 +59,30 @@ struct ReviewFindingsView: View {
                             .lineSpacing(3)
                             .fixedSize(horizontal: false, vertical: true)
 
+                        if let evidence = finding.evidence {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(L10n("review.finding.evidence"))
+                                    .font(DesignSystem.Typography.metaBold)
+                                    .foregroundStyle(.secondary)
+                                Text(evidence)
+                                    .font(DesignSystem.Typography.monoLabel)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+
+                        if let testImpact = finding.testImpact {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(L10n("review.finding.testImpact"))
+                                    .font(DesignSystem.Typography.metaBold)
+                                    .foregroundStyle(.secondary)
+                                Text(testImpact)
+                                    .font(DesignSystem.Typography.label)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+
                         let snippets = codeSnippets(from: finding.message)
                         if !snippets.isEmpty {
                             ScrollView(.horizontal, showsIndicators: false) {

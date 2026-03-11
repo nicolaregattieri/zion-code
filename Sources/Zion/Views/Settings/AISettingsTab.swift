@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AISettingsTab: View {
     @AppStorage("zion.aiProvider") private var aiProviderRaw: String = AIProvider.none.rawValue
+    @AppStorage("zion.aiMode") private var aiModeRaw: String = AIMode.efficient.rawValue
     @AppStorage("zion.commitMessageStyle") private var commitStyleRaw: String = CommitMessageStyle.compact.rawValue
     @AppStorage("zion.autoExplainDiffs") private var autoExplainDiffs: Bool = false
     @AppStorage("zion.diffExplanationDepth") private var diffDepthRaw: String = DiffExplanationDepth.quick.rawValue
@@ -14,6 +15,10 @@ struct AISettingsTab: View {
 
     private var provider: AIProvider {
         AIProvider(rawValue: aiProviderRaw) ?? .none
+    }
+
+    private var mode: AIMode {
+        AIMode(rawValue: aiModeRaw) ?? .efficient
     }
 
     var body: some View {
@@ -66,6 +71,19 @@ struct AISettingsTab: View {
             }
 
             if provider != .none {
+                Section(L10n("settings.ai.mode")) {
+                    Picker(L10n("settings.ai.mode"), selection: $aiModeRaw) {
+                        ForEach(AIMode.allCases) { mode in
+                            Text(mode.label).tag(mode.rawValue)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+
+                    Text(mode.hint)
+                        .font(DesignSystem.Typography.label)
+                        .foregroundStyle(.secondary)
+                }
+
                 Section(L10n("settings.ai.commitStyle")) {
                     Picker(L10n("settings.ai.commitStyle"), selection: $commitStyleRaw) {
                         ForEach(CommitMessageStyle.allCases) { style in
@@ -96,6 +114,24 @@ struct AISettingsTab: View {
                             Text(depth.label).tag(depth.rawValue)
                         }
                     }
+                }
+
+                Section(L10n("settings.ai.mapping")) {
+                    ForEach(AIModelCatalogService.mappingRows(for: provider, mode: mode), id: \.lane) { row in
+                        HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.iconLabelGap) {
+                            Text(row.lane.label)
+                                .font(DesignSystem.Typography.labelBold)
+                            Spacer()
+                            Text(row.modelID)
+                                .font(DesignSystem.Typography.monoLabel)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.trailing)
+                        }
+                    }
+
+                    Text(L10n("settings.ai.mapping.hint"))
+                        .font(DesignSystem.Typography.label)
+                        .foregroundStyle(.secondary)
                 }
             }
 
