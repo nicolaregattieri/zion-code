@@ -72,4 +72,47 @@ final class TerminalInteractionPolicyTests: XCTestCase {
             )
         )
     }
+
+    func testShouldKeepSelectionFreezeAfterMouseUpWhenSelectionExists() {
+        XCTAssertTrue(
+            TerminalTabView.Coordinator.shouldKeepSelectionFreezeAfterMouseUp(hasSelection: true)
+        )
+        XCTAssertFalse(
+            TerminalTabView.Coordinator.shouldKeepSelectionFreezeAfterMouseUp(hasSelection: false)
+        )
+    }
+
+    func testShouldReleasePersistentSelectionFreezeOnMouseDownWhenActive() {
+        XCTAssertTrue(
+            TerminalTabView.Coordinator.shouldReleasePersistentSelectionFreezeOnMouseDown(
+                hasPersistentSelectionFreeze: true
+            )
+        )
+        XCTAssertFalse(
+            TerminalTabView.Coordinator.shouldReleasePersistentSelectionFreezeOnMouseDown(
+                hasPersistentSelectionFreeze: false
+            )
+        )
+    }
+
+    func testShouldReleasePersistentSelectionFreezeOnNonCommandKeyDownOnly() {
+        XCTAssertTrue(
+            TerminalTabView.Coordinator.shouldReleasePersistentSelectionFreezeOnKeyDown(
+                hasPersistentSelectionFreeze: true,
+                hasCommandModifier: false
+            )
+        )
+        XCTAssertFalse(
+            TerminalTabView.Coordinator.shouldReleasePersistentSelectionFreezeOnKeyDown(
+                hasPersistentSelectionFreeze: true,
+                hasCommandModifier: true
+            )
+        )
+        XCTAssertFalse(
+            TerminalTabView.Coordinator.shouldReleasePersistentSelectionFreezeOnKeyDown(
+                hasPersistentSelectionFreeze: false,
+                hasCommandModifier: false
+            )
+        )
+    }
 }
