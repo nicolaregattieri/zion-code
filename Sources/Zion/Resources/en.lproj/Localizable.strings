@@ -452,6 +452,8 @@
 "help.tree.jumpbar" = "Jump Bar to instantly scroll to main, develop, or default branch";
 "help.tree.pending" = "Pending changes at the top of the graph with quick commit and stash";
 "help.tree.signature" = "GPG/SSH commit signature verification";
+"help.tree.navigation" = "Arrow key navigation through commits with Escape to clear selection";
+"help.tree.focus" = "Double-click a branch to focus the graph on that history";
 
 // Zion Code
 "help.code.editor" = "Editor with syntax highlighting, multiple tabs, and external change detection";
@@ -813,6 +815,8 @@
 "settings.general.tools" = "Tools";
 "settings.general.safety" = "Safety";
 "settings.general.confirmation" = "Confirmation Mode";
+"settings.general.graphAuthorAvatars" = "Enable author avatars in graph";
+"settings.general.graphAuthorAvatarsHint" = "Downloads Gravatar identicons for commit authors. Disabled by default to avoid external requests for private repositories.";
 "settings.general.customPath" = "Custom Path";
 "settings.open" = "Open Settings";
 "settings.open.hint" = "Open Settings (⌘,)";
@@ -833,6 +837,9 @@
 "settings.notifications.prPolling.30min" = "Every 30 minutes";
 "settings.notifications.autoReview" = "Auto-review assigned PRs";
 "settings.notifications.server" = "Server URL";
+"settings.notifications.topicInvalid" = "Invalid topic. Use only letters, numbers, '.', '_' or '-' (1-64).";
+"settings.notifications.serverInvalid" = "Invalid server. Use a valid HTTPS URL (for example, https://ntfy.sh).";
+"settings.notifications.fixConfig" = "Fix the topic and server before testing notifications.";
 "settings.diff.depth.quick" = "Quick";
 "settings.diff.depth.detailed" = "Detailed";
 
@@ -895,7 +902,7 @@
 
 // Phase 5: Help Sheet
 "help.settings.title" = "Settings Window";
-"help.settings.features" = "Cmd+, shortcut|General, Editor, AI, Notifications tabs|Language, appearance, terminal|API key management";
+"help.settings.features" = "Cmd+, shortcut|6 tabs: General, Editor, Terminal, AI, Notifications, and Mobile|Language, appearance, terminal, and mobile remote access|API key management and provider configuration";
 "help.diffExplanation.title" = "AI Diff Explanation";
 "help.diffExplanation.features" = "Intent, Risks, Narrative|Risk severity badges|Auto-explain on selection|Copy to clipboard";
 "help.codeReview.title" = "Code Review";
@@ -905,11 +912,11 @@
 
 
 // Zion Map — Settings
-"map.settings.subtitle" = "Native macOS settings window with 4 organized tabs.";
+"map.settings.subtitle" = "Native macOS settings window with 6 organized tabs.";
 "map.settings.window.title" = "Settings Window";
-"map.settings.window.description" = "Full macOS Settings window accessible via Cmd+, with General, Editor, AI, and Notifications tabs.";
+"map.settings.window.description" = "Full macOS Settings window accessible via Cmd+, with General, Editor, Terminal, AI, Notifications, and Mobile tabs.";
 "map.settings.tabs.title" = "Organized Tabs";
-"map.settings.tabs.description" = "Settings split into logical groups: Interface & Tools, Theme & editor preferences, AI provider & style, Notifications & PR polling.";
+"map.settings.tabs.description" = "Settings are split into logical groups for general interface, editor, terminal, AI providers, notifications, and mobile remote access.";
 "map.settings.api.title" = "API Key Management";
 "map.settings.api.description" = "Securely manage AI provider API keys stored in macOS Keychain.";
 
@@ -1398,7 +1405,7 @@
 "help.commitStats" = "Lines added/removed per commit in graph";
 "help.aiSummary" = "AI summary of pending changes";
 "help.smartClipboard" = "Smart context-aware clipboard actions";
-"help.avatars" = "Gravatar author avatars in graph";
+"help.avatars" = "Optional Gravatar author avatars in graph";
 
 // Worktree Smart Create
 "Abrir no Zion Code" = "Open in Zion Code";
@@ -1488,7 +1495,7 @@
 "map.tree.commitstats.description" = "See added (+) and removed (-) lines for each commit directly in the graph.";
 "map.tree.commitstats.tip1" = "Use this to quickly identify high-impact commits.";
 "map.tree.avatars.title" = "Author Avatars";
-"map.tree.avatars.description" = "Shows Gravatar identicons next to authors for faster visual scanning.";
+"map.tree.avatars.description" = "Optionally shows Gravatar identicons next to authors for faster visual scanning.";
 "map.tree.branchsearch.title" = "Branch Search";
 "map.tree.branchsearch.description" = "Filter branches by name in the sidebar to find references quickly.";
 "map.tree.branchsearch.tip1" = "Works with partial names and remotes, like origin/feature.";
@@ -1749,6 +1756,8 @@
 "help.mobile.terminal" = "Live terminal output streaming to your phone";
 "help.mobile.quickActions" = "Quick action buttons: Ctrl+C, Ctrl+D, Esc, Tab, arrows";
 "help.mobile.multiProject" = "Multi-project sessions grouped by repo";
+"help.mobile.lanMode" = "LAN mode for same-network connections without a tunnel";
+"help.mobile.cloudflare" = "Cloudflare tunnel for secure access outside your local network";
 "help.mobile.preventSleep" = "Prevent Mac sleep while server is active";
 
 "map.mobileAccess.subtitle" = "Control terminal sessions from your iPhone";
@@ -1764,6 +1773,9 @@
 "map.mobile.multiProject.description" = "Sessions from all open repos appear on your phone, grouped by repository name. Switch between projects without touching your Mac.";
 "map.mobile.lanMode.title" = "LAN Mode";
 "map.mobile.lanMode.description" = "Connect over local Wi-Fi without a Cloudflare tunnel. Ideal for testing or when your phone is on the same network.";
+"map.mobile.cloudflare.title" = "Cloudflare Tunnel";
+"map.mobile.cloudflare.description" = "When LAN mode is off, Zion publishes a secure Cloudflare tunnel so your iPhone can connect without opening router ports.";
+"map.mobile.cloudflare.tip1" = "Install `cloudflared` to enable remote access outside your local network.";
 "map.mobile.preventSleep.title" = "Prevent Sleep";
 "map.mobile.preventSleep.description" = "Optional setting to keep your Mac awake while the remote server is active, preventing disconnection from idle sleep.";
 

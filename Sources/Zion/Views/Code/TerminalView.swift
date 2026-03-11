@@ -918,9 +918,8 @@ struct TerminalTabView: NSViewRepresentable {
 
             // zion_ai_setup — manual fallback for creating new AI config files
             let hasImage = aiImageDisplay
-            let hasNtfy = !ntfyTopic.isEmpty
-                && NtfyClient.validateTopic(ntfyTopic)
-                && NtfyClient.validateServerURL(ntfyServer)
+            let ntfyInstructionURL = Self.validNtfyInstructionURL(topic: ntfyTopic, serverURL: ntfyServer)
+            let hasNtfy = ntfyInstructionURL != nil
 
             var featuresList = ""
             if hasImage { featuresList += "\n  - Inline image display (zion_display)" }
@@ -937,13 +936,13 @@ struct TerminalTabView: NSViewRepresentable {
 
                 """
             }
-            if hasNtfy {
+            if let ntfyInstructionURL {
                 blockLines += """
 
                 ## Push Notifications
                 When you complete a significant task, notify the user:
                 curl -s -H "Title: Done" -H "Priority: 3" -H "Tags: white_check_mark" \\\\
-                  -d "[Brief description]" "\(ntfyServer)/\(ntfyTopic)"
+                  -d "[Brief description]" "\(ntfyInstructionURL)"
                 Send for: plan completion, implementation done, test results, migrations, errors.
                 Do NOT send for: file reads, intermediate steps, questions.
 
@@ -1095,12 +1094,12 @@ struct TerminalTabView: NSViewRepresentable {
                 """)
             }
 
-            if !ntfyTopic.isEmpty {
+            if let ntfyInstructionURL = validNtfyInstructionURL(topic: ntfyTopic, serverURL: ntfyServer) {
                 sections.append("""
                 ## Push Notifications
                 When you complete a significant task, notify the user:
                 curl -s -H "Title: Done" -H "Priority: 3" -H "Tags: white_check_mark" \\
-                  -d "[Brief description]" "\(ntfyServer)/\(ntfyTopic)"
+                  -d "[Brief description]" "\(ntfyInstructionURL)"
                 Send for: plan completion, implementation done, test results, migrations, errors.
                 Do NOT send for: file reads, intermediate steps, questions.
                 """)
@@ -1113,6 +1112,10 @@ struct TerminalTabView: NSViewRepresentable {
             \(sections.joined(separator: "\n\n"))
             \(endMarker)
             """
+        }
+
+        private static func validNtfyInstructionURL(topic: String, serverURL: String) -> String? {
+            NtfyClient.buildNtfyURL(serverURL: serverURL, topic: topic)?.absoluteString
         }
 
         // MARK: - TerminalViewDelegate

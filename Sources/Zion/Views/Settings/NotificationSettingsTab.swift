@@ -8,13 +8,19 @@ struct NotificationSettingsTab: View {
     @AppStorage("zion.autoReviewAssignedPRs") private var autoReviewPRs: Bool = false
 
     @State private var topicInput: String = ""
+    @State private var serverURLInput: String = ""
     @State private var isEditingTopic: Bool = false
     @State private var isTestingNtfy: Bool = false
 
     private var isConfigured: Bool { !ntfyTopic.isEmpty }
     private var isTopicInputValid: Bool { NtfyClient.validateTopic(topicInput) }
-    private var isServerURLValid: Bool { NtfyClient.validateServerURL(ntfyServerURL) }
-    private var isCurrentConfigValid: Bool { NtfyClient.validateTopic(ntfyTopic) && isServerURLValid }
+    private var normalizedServerURLInput: String {
+        let trimmed = serverURLInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "https://ntfy.sh" : trimmed
+    }
+    private var isServerURLInputValid: Bool { NtfyClient.validateServerURL(normalizedServerURLInput) }
+    private var isServerURLDirty: Bool { normalizedServerURLInput != ntfyServerURL }
+    private var isCurrentConfigValid: Bool { NtfyClient.validateTopic(ntfyTopic) && isServerURLInputValid }
 
     var body: some View {
         Form {
@@ -61,7 +67,7 @@ struct NotificationSettingsTab: View {
                             .disabled(!isTopicInputValid)
                     }
                     if !topicInput.isEmpty && !isTopicInputValid {
-                        Text("Topico invalido. Use apenas letras, numeros, '.', '_' ou '-' (1-64).")
+                        Text(L10n("settings.notifications.topicInvalid"))
                             .font(DesignSystem.Typography.meta)
                             .foregroundStyle(DesignSystem.Colors.error)
                     }
@@ -107,13 +113,29 @@ struct NotificationSettingsTab: View {
                     HStack {
                         Text(L10n("settings.notifications.server"))
                         Spacer()
-                        TextField("https://ntfy.sh", text: $ntfyServerURL)
+                        TextField("https://ntfy.sh", text: $serverURLInput)
                             .frame(width: 200)
                             .textFieldStyle(.roundedBorder)
                             .font(DesignSystem.Typography.monoBody)
+                            .onSubmit { saveServerURL() }
                     }
-                    if !isServerURLValid {
-                        Text("Servidor invalido. Use URL HTTPS valida (ex: https://ntfy.sh).")
+                    HStack {
+                        Text(L10n("ntfy.server.hint"))
+                            .font(DesignSystem.Typography.meta)
+                            .foregroundStyle(.tertiary)
+                        Spacer()
+                        if isServerURLDirty {
+                            Button(L10n("Cancelar")) {
+                                serverURLInput = ntfyServerURL
+                            }
+                            Button(L10n("Salvar")) { saveServerURL() }
+                                .buttonStyle(.borderedProminent)
+                                .tint(DesignSystem.Colors.actionPrimary)
+                                .disabled(!isServerURLInputValid)
+                        }
+                    }
+                    if !isServerURLInputValid {
+                        Text(L10n("settings.notifications.serverInvalid"))
                             .font(DesignSystem.Typography.meta)
                             .foregroundStyle(DesignSystem.Colors.error)
                     }
@@ -130,7 +152,7 @@ struct NotificationSettingsTab: View {
                         isTestingNtfy = true
                         Task {
                             let client = NtfyClient()
-                            _ = await client.sendTest(serverURL: ntfyServerURL, topic: ntfyTopic)
+                            _ = await client.sendTest(serverURL: normalizedServerURLInput, topic: ntfyTopic)
                             isTestingNtfy = false
                         }
                     } label: {
@@ -145,7 +167,7 @@ struct NotificationSettingsTab: View {
                     }
                     .disabled(isTestingNtfy || !isCurrentConfigValid)
                     if !isCurrentConfigValid {
-                        Text("Corrija topico e servidor para testar notificacoes.")
+                        Text(L10n("settings.notifications.fixConfig"))
                             .font(DesignSystem.Typography.meta)
                             .foregroundStyle(DesignSystem.Colors.error)
                     }
@@ -166,6 +188,13 @@ struct NotificationSettingsTab: View {
         .formStyle(.grouped)
         .toggleStyle(SwitchToggleStyle(tint: DesignSystem.Colors.actionPrimary))
         .tint(DesignSystem.Colors.actionPrimary)
+        .onAppear {
+            topicInput = ntfyTopic
+            serverURLInput = ntfyServerURL
+        }
+        .onChange(of: ntfyServerURL) { _, newValue in
+            serverURLInput = newValue
+        }
     }
 
     // MARK: - Topic
@@ -175,6 +204,14 @@ struct NotificationSettingsTab: View {
         ntfyTopic = topicInput
         isEditingTopic = false
         NtfyClient.writeGlobalConfig(topic: ntfyTopic, serverURL: ntfyServerURL)
+    }
+
+    private func saveServerURL() {
+        guard isServerURLInputValid else { return }
+        let normalized = normalizedServerURLInput
+        ntfyServerURL = normalized
+        serverURLInput = normalized
+        NtfyClient.writeGlobalConfig(topic: ntfyTopic, serverURL: normalized)
     }
 
     // MARK: - Event Bindings

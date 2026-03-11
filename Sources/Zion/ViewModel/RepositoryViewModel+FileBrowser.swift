@@ -148,7 +148,7 @@ extension RepositoryViewModel {
         guard !_isReloadingExpandedDirs else { return }
         _isReloadingExpandedDirs = true
         defer { _isReloadingExpandedDirs = false }
-        for path in expandedPaths {
+        for path in sortedExpandedDirectoryPaths(expandedPaths) {
             loadChildrenIfNeeded(for: path, forceReload: forceReload, expectedRepositoryURL: repositoryURL)
         }
     }
@@ -204,9 +204,29 @@ extension RepositoryViewModel {
             self.repositoryFiles = self.updateTree(self.repositoryFiles, path: path, newChildren: mergedChildren)
             self.captureRepositorySnapshot(for: targetRepositoryURL)
             // Breadcrumb/path navigation can request deep expansions before parent nodes
-            // finish loading. Re-run pending expanded paths so deeper levels load as soon
-            // as they become discoverable in the tree.
-            self.reloadExpandedDirectories()
+            // finish loading. Re-run only pending descendants so deeper levels load as soon
+            // as they become discoverable in the tree without rescanning every expanded dir.
+            self.loadExpandedDescendantsIfNeeded(beneath: path, expectedRepositoryURL: targetRepositoryURL)
+        }
+    }
+
+    func pendingExpandedDescendantPaths(beneath path: String) -> [String] {
+        let prefix = path.hasSuffix("/") ? path : path + "/"
+        return sortedExpandedDirectoryPaths(expandedPaths.filter { $0.hasPrefix(prefix) })
+    }
+
+    func loadExpandedDescendantsIfNeeded(beneath path: String, expectedRepositoryURL: URL) {
+        for descendantPath in pendingExpandedDescendantPaths(beneath: path) {
+            loadChildrenIfNeeded(for: descendantPath, expectedRepositoryURL: expectedRepositoryURL)
+        }
+    }
+
+    func sortedExpandedDirectoryPaths(_ paths: some Sequence<String>) -> [String] {
+        paths.sorted { lhs, rhs in
+            let lhsDepth = lhs.split(separator: "/").count
+            let rhsDepth = rhs.split(separator: "/").count
+            if lhsDepth != rhsDepth { return lhsDepth < rhsDepth }
+            return lhs.localizedStandardCompare(rhs) == .orderedAscending
         }
     }
 
@@ -266,32 +286,63 @@ extension RepositoryViewModel {
     }
 
     func loadFiles(at url: URL, ignoredPaths: Set<String>? = nil, maxDepth: Int = .max) async -> [FileItem] {
-        let fm = FileManager.default
+        let showDotfiles = self.showDotfiles
         do {
-            let options: FileManager.DirectoryEnumerationOptions = showDotfiles ? [] : [.skipsHiddenFiles]
-            let contents = try fm.contentsOfDirectory(at: url, includingPropertiesForKeys: [.isDirectoryKey], options: options)
-            var items: [FileItem] = []
-            for item in contents {
-                let isIgnored = ignoredPaths?.contains(item.path) ?? false
-
-                let isDir = (try? item.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
-                let children: [FileItem]?
-                if isDir && maxDepth > 0 {
-                    children = await loadFiles(at: item, ignoredPaths: ignoredPaths, maxDepth: maxDepth - 1)
-                } else if isDir {
-                    children = nil // Directory but children not loaded yet (lazy)
-                } else {
-                    children = nil
-                }
-                items.append(FileItem(url: item, isDirectory: isDir, children: children?.sorted(by: { $0.name.lowercased() < $1.name.lowercased() }), isGitIgnored: isIgnored))
-            }
-            return items.sorted { a, b in
-                if a.isDirectory != b.isDirectory { return a.isDirectory }
-                return a.name.lowercased() < b.name.lowercased()
-            }
+            return try await Task.detached(priority: .utility) {
+                try Self.enumerateFiles(
+                    at: url,
+                    ignoredPaths: ignoredPaths,
+                    maxDepth: maxDepth,
+                    showDotfiles: showDotfiles
+                )
+            }.value
         } catch {
             logger.log(.warn, "Failed to load files: \(error.localizedDescription)", context: url.path, source: #function)
             return []
+        }
+    }
+
+    nonisolated private static func enumerateFiles(
+        at url: URL,
+        ignoredPaths: Set<String>?,
+        maxDepth: Int,
+        showDotfiles: Bool
+    ) throws -> [FileItem] {
+        let fm = FileManager.default
+        let options: FileManager.DirectoryEnumerationOptions = showDotfiles ? [] : [.skipsHiddenFiles]
+        let contents = try fm.contentsOfDirectory(at: url, includingPropertiesForKeys: [.isDirectoryKey], options: options)
+        var items: [FileItem] = []
+        items.reserveCapacity(contents.count)
+
+        for item in contents {
+            let isIgnored = ignoredPaths?.contains(item.path) ?? false
+            let isDirectory = (try? item.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
+            let children: [FileItem]?
+
+            if isDirectory && maxDepth > 0 {
+                children = try enumerateFiles(
+                    at: item,
+                    ignoredPaths: ignoredPaths,
+                    maxDepth: maxDepth - 1,
+                    showDotfiles: showDotfiles
+                )
+            } else {
+                children = nil
+            }
+
+            items.append(
+                FileItem(
+                    url: item,
+                    isDirectory: isDirectory,
+                    children: children,
+                    isGitIgnored: isIgnored
+                )
+            )
+        }
+
+        return items.sorted { lhs, rhs in
+            if lhs.isDirectory != rhs.isDirectory { return lhs.isDirectory }
+            return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
         }
     }
 
@@ -1248,7 +1299,10 @@ extension RepositoryViewModel {
     // MARK: - Flat File Helpers
 
     func allFlatFiles() -> [FileItem] {
-        flatFileCache
+        if isFlatFileCacheDirty {
+            rebuildFlatFileCache()
+        }
+        return flatFileCache
     }
 
     /// Returns all visible items in the file browser tree (directories + files),
@@ -1289,6 +1343,7 @@ extension RepositoryViewModel {
             return result
         }
         flatFileCache = flatten(repositoryFiles)
+        isFlatFileCacheDirty = false
     }
 
     func scheduleEditorSymbolIndexRebuild(repositoryURL: URL) {

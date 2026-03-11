@@ -243,6 +243,8 @@ struct ZionMapContent {
                              tips: ["map.mobile.quickActions.tip1"]),
                 ZionMapEntry("map.mobile.multiProject.title", description: "map.mobile.multiProject.description"),
                 ZionMapEntry("map.mobile.lanMode.title", description: "map.mobile.lanMode.description"),
+                ZionMapEntry("map.mobile.cloudflare.title", description: "map.mobile.cloudflare.description",
+                             tips: ["map.mobile.cloudflare.tip1"]),
                 ZionMapEntry("map.mobile.preventSleep.title", description: "map.mobile.preventSleep.description"),
             ]
 

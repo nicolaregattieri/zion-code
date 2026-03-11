@@ -35,6 +35,7 @@ struct HelpSheet: View {
         case .tree:
             return ["help.tree.lanes", "help.tree.search", "help.tree.jumpbar",
                     "help.tree.pending", "help.tree.signature",
+                    "help.tree.navigation", "help.tree.focus",
                     "help.commitStats", "help.avatars", "help.branchSearch"]
         case .code:
             return ["help.code.editor", "help.code.quickopen", "help.code.blame",
@@ -93,7 +94,8 @@ struct HelpSheet: View {
             return ["help.zionMode.toggle", "help.zionMode.shortcut", "help.zionMode.restore", "help.zionMode.theme"]
         case .mobileAccess:
             return ["help.mobile.pairing", "help.mobile.terminal", "help.mobile.quickActions",
-                    "help.mobile.multiProject", "help.mobile.preventSleep"]
+                    "help.mobile.multiProject", "help.mobile.lanMode",
+                    "help.mobile.cloudflare", "help.mobile.preventSleep"]
         case .bisect:
             return ["help.bisect.start", "help.bisect.banner", "help.bisect.visual",
                     "help.bisect.ai", "help.bisect.statusPill"]
