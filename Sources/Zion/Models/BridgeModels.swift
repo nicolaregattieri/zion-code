@@ -52,6 +52,12 @@ enum BridgeCompatibility: String, Codable, Identifiable {
     }
 }
 
+enum BridgeItemStrategy: String, Codable, Equatable {
+    case portable
+    case claudeCommandMirror
+    case codexSkillMirror
+}
+
 struct BridgeItem: Codable, Equatable, Identifiable {
     let id: UUID
     var kind: BridgeItemKind
@@ -60,6 +66,8 @@ struct BridgeItem: Codable, Equatable, Identifiable {
     var summary: String
     var content: String
     var sourceHint: String?
+    var strategy: BridgeItemStrategy
+    var mirrorReferencePath: String?
 
     init(
         id: UUID = UUID(),
@@ -68,7 +76,9 @@ struct BridgeItem: Codable, Equatable, Identifiable {
         title: String,
         summary: String,
         content: String,
-        sourceHint: String? = nil
+        sourceHint: String? = nil,
+        strategy: BridgeItemStrategy = .portable,
+        mirrorReferencePath: String? = nil
     ) {
         self.id = id
         self.kind = kind
@@ -77,6 +87,8 @@ struct BridgeItem: Codable, Equatable, Identifiable {
         self.summary = summary
         self.content = content
         self.sourceHint = sourceHint
+        self.strategy = strategy
+        self.mirrorReferencePath = mirrorReferencePath
     }
 }
 
@@ -85,6 +97,13 @@ struct BridgeManifest: Codable, Equatable {
     var enabledTargets: [BridgeTarget] = BridgeTarget.allCases
     var lastImportedTarget: BridgeTarget?
     var updatedAt: Date = Date()
+    var itemMetadata: [String: BridgeItemMetadata] = [:]
+}
+
+struct BridgeItemMetadata: Codable, Equatable {
+    var strategy: BridgeItemStrategy = .portable
+    var mirrorReferencePath: String?
+    var sourceHint: String?
 }
 
 struct BridgeProjectState: Equatable {

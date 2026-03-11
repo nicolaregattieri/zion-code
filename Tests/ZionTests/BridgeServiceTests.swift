@@ -52,6 +52,44 @@ final class BridgeServiceTests: XCTestCase {
         XCTAssertTrue(state.items.contains { $0.kind == .skill })
     }
 
+    func testImportCodexMirroredSkillBecomesClaudeCommandMirror() throws {
+        try FileManager.default.createDirectory(at: tempDir.appendingPathComponent(".claude/commands"), withIntermediateDirectories: true)
+        try "Use the original Claude workflow.\n".write(
+            to: tempDir.appendingPathComponent(".claude/commands/oraculo.md"),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        try FileManager.default.createDirectory(at: tempDir.appendingPathComponent(".agents/skills/oraculo"), withIntermediateDirectories: true)
+        try """
+        ---
+        name: oraculo
+        description: Use when the user wants tool-level diagnosis, friction analysis, or governance changes rather than section work.
+        ---
+
+        Repo-local Codex skill generated from `.claude/commands/oraculo.md`.
+
+        Workflow:
+        1. Read `.claude/commands/oraculo.md` and follow it as the reference procedure.
+        2. Treat `.claude/*` as immutable governance input unless the user explicitly asks to edit it.
+        3. Prefer mirrored project rules in `.agents/rules/*.md` when the same rule exists there.
+        4. Create or edit project files outside `.claude/`.
+        """.write(
+            to: tempDir.appendingPathComponent(".agents/skills/oraculo/SKILL.md"),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        let state = try service.importConfiguration(from: .codex, repositoryURL: tempDir)
+        let item = try XCTUnwrap(state.items.first(where: { $0.slug == "oraculo" }))
+
+        XCTAssertEqual(item.kind, .command)
+        XCTAssertEqual(item.strategy, .claudeCommandMirror)
+        XCTAssertEqual(item.mirrorReferencePath, ".claude/commands/oraculo.md")
+        XCTAssertEqual(item.sourceHint, ".agents/skills/oraculo/SKILL.md")
+        XCTAssertEqual(item.content, "Use the original Claude workflow.\n")
+    }
+
     func testPreviewSyncCreatesUpdateAndRemoveOperations() throws {
         let initialState = BridgeProjectState(
             exists: true,
@@ -103,5 +141,110 @@ final class BridgeServiceTests: XCTestCase {
 
         XCTAssertTrue(FileManager.default.fileExists(atPath: tempDir.appendingPathComponent("CLAUDE.md").path))
         XCTAssertTrue(state.manifest.enabledTargets.contains(.claude))
+    }
+
+    func testPreviewSyncToCodexUsesMirroredWrapperForClaudeCommands() throws {
+        try FileManager.default.createDirectory(at: tempDir.appendingPathComponent(".claude/commands"), withIntermediateDirectories: true)
+        try "Use the original Claude workflow.\n".write(
+            to: tempDir.appendingPathComponent(".claude/commands/oraculo.md"),
+            atomically: true,
+            encoding: .utf8
+        )
+        _ = try service.importConfiguration(from: .claude, repositoryURL: tempDir)
+
+        let preview = try service.previewSync(to: .codex, repositoryURL: tempDir)
+        let operation = try XCTUnwrap(preview.operations.first { $0.relativePath == ".agents/skills/oraculo/SKILL.md" })
+
+        XCTAssertEqual(operation.compatibility, .native)
+        XCTAssertEqual(operation.kind, .create)
+        XCTAssertTrue(operation.renderedContent?.contains("Repo-local Codex skill generated from `.claude/commands/oraculo.md`.") == true)
+        XCTAssertTrue(operation.renderedContent?.contains("Read `.claude/commands/oraculo.md` and follow it as the reference procedure.") == true)
+    }
+
+    func testImportCodexSkillMatchingClaudeCommandBecomesNormalizedClaudeCommand() throws {
+        try FileManager.default.createDirectory(at: tempDir.appendingPathComponent(".claude/commands"), withIntermediateDirectories: true)
+        try "You are a senior UX/UI designer reviewing the Zion macOS Git client.\n".write(
+            to: tempDir.appendingPathComponent(".claude/commands/ux-review.md"),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        try FileManager.default.createDirectory(at: tempDir.appendingPathComponent(".agents/skills/ux-review"), withIntermediateDirectories: true)
+        try """
+        ---
+        name: ux-review
+        description: Review Zion UX/UI and propose concrete SwiftUI improvements with code-level guidance.
+        ---
+
+        # UX Review
+
+        Mirror and execute the workflow defined for Claude command parity using Codex skills.
+
+        ## Workflow
+        You are a senior UX/UI designer reviewing the Zion macOS Git client.
+
+        Read `.agents/skills/documenter/SKILL.md` when the review also affects docs.
+        """.write(
+            to: tempDir.appendingPathComponent(".agents/skills/ux-review/SKILL.md"),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        let state = try service.importConfiguration(from: .codex, repositoryURL: tempDir)
+        let item = try XCTUnwrap(state.items.first(where: { $0.slug == "ux-review" }))
+
+        XCTAssertEqual(item.kind, .command)
+        XCTAssertEqual(item.strategy, .codexSkillMirror)
+        XCTAssertEqual(item.mirrorReferencePath, ".claude/commands/ux-review.md")
+        XCTAssertEqual(item.sourceHint, ".agents/skills/ux-review/SKILL.md")
+        XCTAssertEqual(
+            item.content.trimmingCharacters(in: .whitespacesAndNewlines),
+            """
+            You are a senior UX/UI designer reviewing the Zion macOS Git client.
+
+            Read `.claude/commands/documenter.md` when the review also affects docs.
+            """
+        )
+    }
+
+    func testPreviewSyncToClaudeIgnoresCodexFormattingOnlyChanges() throws {
+        try FileManager.default.createDirectory(at: tempDir.appendingPathComponent(".claude/commands"), withIntermediateDirectories: true)
+        try """
+        You are a senior UX/UI designer reviewing the Zion macOS Git client.
+
+        Read `.claude/commands/documenter.md` when the review also affects docs.
+        """.write(
+            to: tempDir.appendingPathComponent(".claude/commands/ux-review.md"),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        try FileManager.default.createDirectory(at: tempDir.appendingPathComponent(".agents/skills/ux-review"), withIntermediateDirectories: true)
+        try """
+        ---
+        name: ux-review
+        description: Review Zion UX/UI and propose concrete SwiftUI improvements with code-level guidance.
+        ---
+
+        # UX Review
+
+        Mirror and execute the workflow defined for Claude command parity using Codex skills.
+
+        ## Workflow
+        You are a senior UX/UI designer reviewing the Zion macOS Git client.
+
+        Read `.agents/skills/documenter/SKILL.md` when the review also affects docs.
+        """.write(
+            to: tempDir.appendingPathComponent(".agents/skills/ux-review/SKILL.md"),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        _ = try service.importConfiguration(from: .codex, repositoryURL: tempDir)
+        let preview = try service.previewSync(to: .claude, repositoryURL: tempDir)
+        let operation = try XCTUnwrap(preview.operations.first { $0.relativePath == ".claude/commands/ux-review.md" })
+
+        XCTAssertEqual(operation.compatibility, .native)
+        XCTAssertEqual(operation.kind, .noop)
     }
 }
