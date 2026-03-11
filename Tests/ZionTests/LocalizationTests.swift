@@ -196,4 +196,26 @@ final class LocalizationTests: XCTestCase {
             XCTAssertFalse(value.isEmpty, "Empty L10n value for key: \(key)")
         }
     }
+
+    func testRepoMemoryLocalizationKeysExist() {
+        let keys = [
+            "settings.ai.repoMemory",
+            "settings.ai.repoMemory.refresh",
+            "settings.ai.repoMemory.clear",
+            "settings.ai.repoMemory.status.closed",
+            "settings.ai.repoMemory.status.notBuilt",
+            "settings.ai.repoMemory.status.ready",
+            "settings.ai.repoMemory.status.readyDetail",
+            "settings.ai.repoMemory.status.pendingDetail",
+            "settings.ai.repoMemory.status.loading",
+            "settings.ai.repoMemory.status.missing",
+            "settings.ai.repoMemory.status.error",
+        ]
+
+        for key in keys {
+            let value = L10n(key)
+            XCTAssertNotEqual(value, key, "Missing L10n key: \(key)")
+            XCTAssertFalse(value.isEmpty, "Empty L10n value for key: \(key)")
+        }
+    }
 }

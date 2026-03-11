@@ -1287,6 +1287,17 @@
 "settings.ai.mapping.review" = "Reviews";
 "settings.ai.mapping.reasoning" = "Reasoning";
 "settings.ai.mapping.transcription" = "Transcription";
+"settings.ai.repoMemory" = "Repo Memory";
+"settings.ai.repoMemory.refresh" = "Refresh";
+"settings.ai.repoMemory.clear" = "Clear";
+"settings.ai.repoMemory.status.closed" = "Open a repository to build repo memory.";
+"settings.ai.repoMemory.status.notBuilt" = "not built yet";
+"settings.ai.repoMemory.status.ready" = "Repo memory is ready for %@.";
+"settings.ai.repoMemory.status.readyDetail" = "Repo memory is ready for %@. Last refresh: %@.";
+"settings.ai.repoMemory.status.pendingDetail" = "Repo memory is not ready for %@ yet.";
+"settings.ai.repoMemory.status.loading" = "Preparing repo memory…";
+"settings.ai.repoMemory.status.missing" = "Repo memory has not been generated for this repository yet.";
+"settings.ai.repoMemory.status.error" = "Repo memory could not be refreshed.";
 "review.finding.evidence" = "Evidence";
 "review.finding.testImpact" = "Test Impact";
 "precommit.gate.title" = "Pre-Commit AI Review";
