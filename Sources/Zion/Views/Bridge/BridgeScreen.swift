@@ -7,12 +7,16 @@ struct BridgeScreen: View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(alignment: .leading, spacing: 16) {
                 headerCard
-                importCard
-                inventoryCard
-                targetsCard
+                sessionCard
+                detectionCard
 
-                if let preview = model.bridgePreview {
-                    previewCard(preview)
+                if let analysis = model.bridgeAnalysis {
+                    summaryCard(analysis)
+                    mappingsCard(analysis)
+
+                    if let row = model.selectedBridgeRow {
+                        detailCard(row)
+                    }
                 }
 
                 if !allWarnings.isEmpty {
@@ -30,7 +34,7 @@ struct BridgeScreen: View {
     private var headerCard: some View {
         GlassCard(spacing: 12) {
             HStack(alignment: .center, spacing: 14) {
-                Image(systemName: "arrow.trianglehead.branch")
+                Image(systemName: "arrow.left.arrow.right.circle")
                     .font(.system(size: 24, weight: .semibold))
                     .foregroundStyle(DesignSystem.Colors.ai)
                     .frame(width: 44, height: 44)
@@ -56,86 +60,82 @@ struct BridgeScreen: View {
 
                 Button(L10n("bridge.action.reload")) {
                     model.loadBridgeState()
+                    model.clearBridgeAnalysis()
                 }
                 .buttonStyle(.bordered)
+            }
+        }
+    }
 
-                Button(model.bridgeState.exists ? L10n("bridge.action.rebuild") : L10n("bridge.action.create")) {
-                    model.initializeBridgePackage()
+    private var sessionCard: some View {
+        GlassCard(spacing: 12) {
+            CardHeader(L10n("bridge.session.title"), icon: "slider.horizontal.3")
+
+            HStack(alignment: .bottom, spacing: 12) {
+                toolPicker(title: L10n("bridge.session.from"), selection: $model.bridgeSourceTarget)
+                toolPicker(title: L10n("bridge.session.to"), selection: $model.bridgeDestinationTarget)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(L10n("bridge.session.policy"))
+                        .font(DesignSystem.Typography.monoMeta)
+                        .foregroundStyle(.secondary)
+                    Text(L10n("bridge.session.policyValue", model.bridgeDestinationTarget.label))
+                        .font(DesignSystem.Typography.bodySmall)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: 0)
+
+                Button(L10n("bridge.action.analyze")) {
+                    model.analyzeBridgeMigration()
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(DesignSystem.Colors.actionPrimary)
+                .disabled(model.bridgeSourceTarget == model.bridgeDestinationTarget || model.isBridgeLoading)
             }
 
-            HStack(spacing: 8) {
-                summaryPill(title: L10n("bridge.summary.items"), value: "\(model.bridgeState.itemCount)", tint: DesignSystem.Colors.info)
-                summaryPill(title: L10n("bridge.summary.targets"), value: "\(model.bridgeState.manifest.enabledTargets.count)", tint: DesignSystem.Colors.success)
-                summaryPill(
-                    title: L10n("bridge.summary.source"),
-                    value: model.bridgeState.manifest.lastImportedTarget?.label ?? L10n("bridge.summary.empty"),
-                    tint: DesignSystem.Colors.ai
-                )
-            }
-        }
-    }
-
-    private var importCard: some View {
-        GlassCard(spacing: 10) {
-            CardHeader(L10n("bridge.import.title"), icon: "arrow.down.doc") {
-                Text(L10n("bridge.import.hint"))
-                    .font(DesignSystem.Typography.bodySmall)
-                    .foregroundStyle(.secondary)
-            }
-
-            HStack(spacing: 10) {
-                ForEach(BridgeTarget.allCases) { target in
-                    Button {
-                        model.importBridge(from: target)
-                    } label: {
-                        Text(target.label)
-                            .frame(maxWidth: .infinity)
+            if let analysis = model.bridgeAnalysis {
+                HStack(spacing: 8) {
+                    Text(L10n("bridge.session.route", analysis.sourceTarget.label, analysis.destinationTarget.label))
+                        .font(DesignSystem.Typography.bodySmallBold)
+                    Spacer(minLength: 0)
+                    Button(L10n("bridge.action.sync")) {
+                        model.applyBridgeMigration()
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.borderedProminent)
+                    .tint(DesignSystem.Colors.actionPrimary)
+                    .disabled(model.isBridgeApplying || analysis.rows.isEmpty)
                 }
             }
         }
     }
 
-    private var inventoryCard: some View {
+    private var detectionCard: some View {
         GlassCard(spacing: 10) {
-            CardHeader(L10n("bridge.inventory.title"), icon: "shippingbox.fill")
+            CardHeader(L10n("bridge.detect.title"), icon: "eye")
 
-            if model.bridgeState.items.isEmpty {
-                Text(L10n("bridge.inventory.empty"))
+            if model.bridgeState.detections.isEmpty {
+                Text(L10n("bridge.detect.empty"))
                     .font(DesignSystem.Typography.bodySmall)
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(model.bridgeState.items) { item in
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack(spacing: 8) {
-                            Text(item.title)
+                ForEach(model.bridgeState.detections) { detection in
+                    HStack(alignment: .center, spacing: 10) {
+                        statusDot(active: detection.isDetected)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(detection.target.label)
                                 .font(DesignSystem.Typography.sectionTitle)
-                            Text(item.kind.label)
-                                .font(DesignSystem.Typography.monoMeta)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(DesignSystem.Colors.glassHover)
-                                .clipShape(Capsule())
-                            Spacer(minLength: 0)
+                            Text(detection.detail)
+                                .font(DesignSystem.Typography.bodySmall)
+                                .foregroundStyle(.secondary)
                         }
-
-                        Text(item.summary)
-                            .font(DesignSystem.Typography.bodySmall)
-                            .foregroundStyle(.secondary)
-
-                        HStack(spacing: 8) {
-                            ForEach(BridgeTarget.allCases) { target in
-                                compatibilityPill(model.bridgeCompatibility(for: item, target: target), target: target)
-                            }
-                        }
+                        Spacer(minLength: 0)
+                        Text(detection.isDetected ? L10n("bridge.detect.detected") : L10n("bridge.detect.missing"))
+                            .font(DesignSystem.Typography.monoMeta)
+                            .foregroundStyle(detection.isDetected ? DesignSystem.Colors.success : DesignSystem.Colors.warning)
                     }
-                    .padding(.vertical, 6)
 
-                    if item.id != model.bridgeState.items.last?.id {
+                    if detection.id != model.bridgeState.detections.last?.id {
                         Divider()
                     }
                 }
@@ -143,82 +143,109 @@ struct BridgeScreen: View {
         }
     }
 
-    private var targetsCard: some View {
+    private func summaryCard(_ analysis: BridgeMigrationAnalysis) -> some View {
         GlassCard(spacing: 10) {
-            CardHeader(L10n("bridge.targets.title"), icon: "point.3.connected.trianglepath.dotted")
+            CardHeader(L10n("bridge.summary.title"), icon: "chart.bar.xaxis")
 
-            ForEach(BridgeTarget.allCases) { target in
-                HStack(alignment: .center, spacing: 12) {
+            HStack(spacing: 8) {
+                summaryPill(title: L10n("bridge.mapping.knownMirror"), value: "\(analysis.summary.knownMirrors)", tint: DesignSystem.Colors.info)
+                summaryPill(title: L10n("bridge.summary.updates"), value: "\(analysis.summary.updates)", tint: DesignSystem.Colors.warning)
+                summaryPill(title: L10n("bridge.mapping.newImport"), value: "\(analysis.summary.newImports)", tint: DesignSystem.Colors.success)
+                summaryPill(title: L10n("bridge.summary.review"), value: "\(analysis.summary.needsReview)", tint: DesignSystem.Colors.brandPrimary)
+                summaryPill(title: L10n("bridge.summary.unsupported"), value: "\(analysis.summary.unsupported)", tint: DesignSystem.Colors.error)
+            }
+        }
+    }
+
+    private func mappingsCard(_ analysis: BridgeMigrationAnalysis) -> some View {
+        GlassCard(spacing: 10) {
+            CardHeader(L10n("bridge.mapping.title"), icon: "point.3.connected.trianglepath.dotted")
+
+            if analysis.rows.isEmpty {
+                Text(L10n("bridge.mapping.empty"))
+                    .font(DesignSystem.Typography.bodySmall)
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(analysis.rows) { row in
+                    mappingRowButton(row)
+                }
+            }
+        }
+    }
+
+    private func mappingRowButton(_ row: BridgeMappingRow) -> some View {
+        let isSelected = model.selectedBridgeRowID == row.id
+
+        return Button {
+            model.selectedBridgeRowID = row.id
+        } label: {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .top, spacing: 10) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(target.label)
-                            .font(DesignSystem.Typography.sectionTitle)
-                        Text(L10n("bridge.targets.subtitle", target.label))
-                            .font(DesignSystem.Typography.bodySmall)
+                        Text(row.sourceArtifact.relativePath)
+                            .font(DesignSystem.Typography.bodySmallSemibold)
+                            .multilineTextAlignment(.leading)
+                        Text(row.destinationRelativePath ?? L10n("bridge.mapping.noDestination"))
+                            .font(DesignSystem.Typography.monoMeta)
                             .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.leading)
                     }
 
                     Spacer(minLength: 0)
 
-                    Button(L10n("bridge.action.preview")) {
-                        model.previewBridgeSync(to: target)
-                    }
-                    .buttonStyle(.bordered)
-
-                    if model.bridgePreview?.target == target {
-                        Button(L10n("bridge.action.sync")) {
-                            model.applyBridgePreview()
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(DesignSystem.Colors.actionPrimary)
-                        .disabled(model.isBridgeApplying)
+                    HStack(spacing: 6) {
+                        badge(row.mappingKind.label, tint: mappingTint(row.mappingKind))
+                        badge(row.action.label, tint: actionTint(row.action))
                     }
                 }
-                .padding(.vertical, 4)
 
-                if target != BridgeTarget.allCases.last {
-                    Divider()
+                HStack(alignment: .center, spacing: 8) {
+                    Text(row.reason)
+                        .font(DesignSystem.Typography.bodySmall)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.leading)
+                    Spacer(minLength: 0)
+                    Text(row.confidence.label)
+                        .font(DesignSystem.Typography.monoMeta)
+                        .foregroundStyle(confidenceTint(row.confidence))
                 }
             }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                    .fill(isSelected ? DesignSystem.Colors.glassHover : DesignSystem.Colors.glassSubtle)
+            )
         }
+        .buttonStyle(.plain)
     }
 
-    private func previewCard(_ preview: BridgeSyncPreview) -> some View {
+    private func detailCard(_ row: BridgeMappingRow) -> some View {
         GlassCard(spacing: 10) {
-            CardHeader(L10n("bridge.preview.title", preview.target.label), icon: "doc.text.magnifyingglass")
+            CardHeader(L10n("bridge.detail.title"), icon: "doc.text.magnifyingglass")
 
-            if preview.operations.isEmpty {
-                Text(L10n("bridge.preview.empty"))
+            HStack(spacing: 12) {
+                previewColumn(
+                    title: L10n("bridge.detail.source", row.sourceArtifact.sourceTarget.label),
+                    path: row.sourceArtifact.relativePath,
+                    body: row.sourcePreview
+                )
+                previewColumn(
+                    title: L10n("bridge.detail.destination", row.destinationTarget.label),
+                    path: row.destinationRelativePath ?? L10n("bridge.mapping.noDestination"),
+                    body: row.destinationPreview
+                )
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(L10n("bridge.detail.reason"))
+                    .font(DesignSystem.Typography.monoMeta)
+                    .foregroundStyle(.secondary)
+                Text(row.reason)
+                    .font(DesignSystem.Typography.bodySmall)
+                Text(L10n("bridge.detail.readOnly"))
                     .font(DesignSystem.Typography.bodySmall)
                     .foregroundStyle(.secondary)
-            } else {
-                ForEach(preview.operations) { operation in
-                    HStack(alignment: .top, spacing: 10) {
-                        Text(operation.kind.label)
-                            .font(DesignSystem.Typography.monoMeta)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(operationBackground(operation.kind))
-                            .clipShape(Capsule())
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(operation.relativePath)
-                                .font(DesignSystem.Typography.bodySmallSemibold)
-                            Text(operation.detail)
-                                .font(DesignSystem.Typography.bodySmall)
-                                .foregroundStyle(.secondary)
-                        }
-
-                        Spacer(minLength: 0)
-
-                        Text(operation.compatibility.label)
-                            .font(DesignSystem.Typography.monoMeta)
-                            .foregroundStyle(compatibilityColor(operation.compatibility))
-                    }
-
-                    if operation.id != preview.operations.last?.id {
-                        Divider()
-                    }
-                }
             }
         }
     }
@@ -237,8 +264,47 @@ struct BridgeScreen: View {
 
     private var allWarnings: [String] {
         var warnings = model.bridgeState.warnings
-        warnings.append(contentsOf: model.bridgePreview?.warnings ?? [])
+        warnings.append(contentsOf: model.bridgeAnalysis?.warnings ?? [])
         return Array(NSOrderedSet(array: warnings)) as? [String] ?? warnings
+    }
+
+    private func toolPicker(title: String, selection: Binding<BridgeTarget>) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(DesignSystem.Typography.monoMeta)
+                .foregroundStyle(.secondary)
+
+            Picker(title, selection: selection) {
+                ForEach(BridgeTarget.allCases) { target in
+                    Text(target.label).tag(target)
+                }
+            }
+            .pickerStyle(.menu)
+            .frame(width: 160)
+        }
+    }
+
+    private func previewColumn(title: String, path: String, body: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(DesignSystem.Typography.sectionTitle)
+            Text(path)
+                .font(DesignSystem.Typography.monoMeta)
+                .foregroundStyle(.secondary)
+            ScrollView {
+                Text(body.isEmpty ? L10n("bridge.detail.empty") : body)
+                    .font(DesignSystem.Typography.bodySmall)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .textSelection(.enabled)
+            }
+            .frame(minHeight: 160, maxHeight: 220)
+            .padding(10)
+            .background(
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                    .fill(DesignSystem.Colors.glassHover)
+            )
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func summaryPill(title: String, value: String, tint: Color) -> some View {
@@ -256,30 +322,47 @@ struct BridgeScreen: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous))
     }
 
-    private func compatibilityPill(_ compatibility: BridgeCompatibility, target: BridgeTarget) -> some View {
-        Text("\(target.label): \(compatibility.label)")
+    private func badge(_ text: String, tint: Color) -> some View {
+        Text(text)
             .font(DesignSystem.Typography.monoMeta)
-            .padding(.horizontal, 6)
+            .padding(.horizontal, 8)
             .padding(.vertical, 3)
-            .background(compatibilityColor(compatibility).opacity(0.12))
-            .foregroundStyle(compatibilityColor(compatibility))
+            .background(tint.opacity(0.12))
+            .foregroundStyle(tint)
             .clipShape(Capsule())
     }
 
-    private func compatibilityColor(_ compatibility: BridgeCompatibility) -> Color {
-        switch compatibility {
-        case .native: return DesignSystem.Colors.success
-        case .adapted: return DesignSystem.Colors.warning
-        case .unsupported: return DesignSystem.Colors.destructive
+    private func statusDot(active: Bool) -> some View {
+        Circle()
+            .fill(active ? DesignSystem.Colors.success : DesignSystem.Colors.warning)
+            .frame(width: 10, height: 10)
+    }
+
+    private func mappingTint(_ kind: BridgeMappingKind) -> Color {
+        switch kind {
+        case .knownMirror: return DesignSystem.Colors.info
+        case .inferredMirror: return DesignSystem.Colors.warning
+        case .newImport: return DesignSystem.Colors.success
+        case .manualReview: return DesignSystem.Colors.brandPrimary
+        case .unsupported: return DesignSystem.Colors.error
         }
     }
 
-    private func operationBackground(_ kind: BridgeSyncOperationKind) -> Color {
-        switch kind {
-        case .create: return DesignSystem.Colors.success.opacity(0.12)
-        case .update: return DesignSystem.Colors.warning.opacity(0.12)
-        case .remove: return DesignSystem.Colors.destructive.opacity(0.12)
-        case .noop: return DesignSystem.Colors.glassHover
+    private func actionTint(_ action: BridgeSyncActionKind) -> Color {
+        switch action {
+        case .create: return DesignSystem.Colors.success
+        case .update: return DesignSystem.Colors.warning
+        case .noop: return DesignSystem.Colors.info
+        case .manualReview: return DesignSystem.Colors.brandPrimary
+        case .unsupported: return DesignSystem.Colors.error
+        }
+    }
+
+    private func confidenceTint(_ confidence: BridgeConfidence) -> Color {
+        switch confidence {
+        case .high: return DesignSystem.Colors.success
+        case .medium: return DesignSystem.Colors.warning
+        case .low: return DesignSystem.Colors.error
         }
     }
 }
