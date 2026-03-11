@@ -8,6 +8,9 @@ struct AISettingsTab: View {
     @AppStorage("zion.diffExplanationDepth") private var diffDepthRaw: String = DiffExplanationDepth.quick.rawValue
     @AppStorage("zion.preCommitReview") private var preCommitReviewEnabled: Bool = false
     @AppStorage("zion.aiTransferSupportHints") private var aiTransferSupportHints: Bool = true
+    @AppStorage("zion.repoMemory.activeRepoName") private var repoMemoryRepoName: String = ""
+    @AppStorage("zion.repoMemory.lastRefresh") private var repoMemoryLastRefresh: Double = 0
+    @AppStorage("zion.repoMemory.ready") private var repoMemoryReady: Bool = false
 
     @State private var aiKeyInput: String = ""
     @State private var isEditingKey: Bool = false
@@ -19,6 +22,26 @@ struct AISettingsTab: View {
 
     private var mode: AIMode {
         AIMode(rawValue: aiModeRaw) ?? .efficient
+    }
+
+    private var repoMemoryStatusText: String {
+        guard !repoMemoryRepoName.isEmpty else {
+            return L10n("settings.ai.repoMemory.status.closed")
+        }
+
+        let refreshText: String
+        if repoMemoryLastRefresh > 0 {
+            let date = Date(timeIntervalSince1970: repoMemoryLastRefresh)
+            refreshText = DateFormatter.localizedString(from: date, dateStyle: .short, timeStyle: .short)
+        } else {
+            refreshText = L10n("settings.ai.repoMemory.status.notBuilt")
+        }
+
+        if repoMemoryReady {
+            return L10n("settings.ai.repoMemory.status.readyDetail", repoMemoryRepoName, refreshText)
+        }
+
+        return L10n("settings.ai.repoMemory.status.pendingDetail", repoMemoryRepoName)
     }
 
     var body: some View {
@@ -132,6 +155,26 @@ struct AISettingsTab: View {
                     Text(L10n("settings.ai.mapping.hint"))
                         .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
+                }
+
+                Section(L10n("settings.ai.repoMemory")) {
+                    Text(repoMemoryStatusText)
+                        .font(DesignSystem.Typography.label)
+                        .foregroundStyle(.secondary)
+
+                    HStack {
+                        Button(L10n("settings.ai.repoMemory.refresh")) {
+                            NotificationCenter.default.post(name: .refreshRepoMemory, object: nil)
+                        }
+                        .disabled(repoMemoryRepoName.isEmpty)
+
+                        Spacer()
+
+                        Button(L10n("settings.ai.repoMemory.clear")) {
+                            NotificationCenter.default.post(name: .clearRepoMemory, object: nil)
+                        }
+                        .disabled(repoMemoryRepoName.isEmpty)
+                    }
                 }
             }
 

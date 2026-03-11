@@ -1133,11 +1133,31 @@ extension RepositoryViewModel {
         recentMessages: [String] = [],
         extraNotes: [String] = []
     ) -> String {
-        let (messageBudget, fileBudget) = repoContextBudget
         let uniqueFiles = Array(NSOrderedSet(array: fileHints.filter { !$0.isEmpty }).array as? [String] ?? [])
+        if let snapshot = repoMemorySnapshot {
+            let snapshotContext = repoMemoryService.promptContext(for: snapshot, focusFiles: uniqueFiles, mode: aiMode)
+            if !snapshotContext.isEmpty {
+                let notes = extraNotes.isEmpty ? "" : "\nnotes: \(extraNotes.joined(separator: " | "))"
+                return snapshotContext + notes
+            }
+        }
+
+        return buildTransientRepoContext(
+            fileHints: uniqueFiles,
+            recentMessages: recentMessages,
+            extraNotes: extraNotes
+        )
+    }
+
+    private func buildTransientRepoContext(
+        fileHints: [String],
+        recentMessages: [String],
+        extraNotes: [String]
+    ) -> String {
+        let (messageBudget, fileBudget) = repoContextBudget
         let uniqueMessages = Array(NSOrderedSet(array: recentMessages.filter { !$0.isEmpty }).array as? [String] ?? [])
-        let modules = Self.deriveModules(from: uniqueFiles, limit: max(2, min(fileBudget, 6)))
-        let testHints = uniqueFiles.filter {
+        let modules = RepoMemoryService.deriveModules(from: fileHints, limit: max(2, min(fileBudget, 6)))
+        let testHints = fileHints.filter {
             $0.localizedCaseInsensitiveContains("test") || $0.contains("/Tests/")
         }
 
@@ -1151,8 +1171,8 @@ extension RepositoryViewModel {
         if !modules.isEmpty {
             sections.append("modules: \(modules.joined(separator: ", "))")
         }
-        if !uniqueFiles.isEmpty {
-            sections.append("focus files: \(uniqueFiles.prefix(fileBudget).joined(separator: ", "))")
+        if !fileHints.isEmpty {
+            sections.append("focus files: \(fileHints.prefix(fileBudget).joined(separator: ", "))")
         }
         if !testHints.isEmpty {
             sections.append("test surface: \(testHints.prefix(max(1, fileBudget / 2)).joined(separator: ", "))")
@@ -1167,12 +1187,112 @@ extension RepositoryViewModel {
         return sections.joined(separator: "\n")
     }
 
+    func loadRepoMemorySnapshotIfAvailable() {
+        guard let repositoryURL else { return }
+        repoMemoryTask?.cancel()
+        repoMemoryTask = Task {
+            let snapshot = await repoMemoryService.loadSnapshot(for: repositoryURL)
+            guard !Task.isCancelled else { return }
+            repoMemorySnapshot = snapshot
+            repoMemoryLastRefreshedAt = snapshot?.generatedAt
+            updateRepoMemoryStatus(repositoryURL: repositoryURL, snapshot: snapshot)
+            if hasRepoMemoryRefreshInputs,
+               shouldRefreshRepoMemory(snapshot: snapshot, force: snapshot == nil) {
+                await refreshRepoMemory(force: snapshot == nil)
+            }
+        }
+    }
+
+    func refreshRepoMemory(force: Bool = true) async {
+        guard let repositoryURL, !isRepoMemoryRefreshing else { return }
+        guard hasRepoMemoryRefreshInputs else { return }
+        let snapshot = repoMemorySnapshot
+        guard force || shouldRefreshRepoMemory(snapshot: snapshot, force: false) else { return }
+
+        isRepoMemoryRefreshing = true
+        defer { isRepoMemoryRefreshing = false }
+
+        do {
+            let refreshed = try await repoMemoryService.refreshSnapshot(
+                for: repositoryURL,
+                worker: worker,
+                activeBranch: currentBranch,
+                headShortHash: headShortHash
+            )
+            guard !Task.isCancelled else { return }
+            repoMemorySnapshot = refreshed
+            repoMemoryLastRefreshedAt = refreshed.generatedAt
+            updateRepoMemoryStatus(repositoryURL: repositoryURL, snapshot: refreshed)
+        } catch {
+            repoMemoryStatusMessage = L10n("settings.ai.repoMemory.status.error")
+            logger.log(.error, "Repo memory refresh failed: \(error.localizedDescription)", context: repositoryURL.lastPathComponent, source: #function)
+        }
+    }
+
+    func clearRepoMemory() async {
+        guard let repositoryURL else { return }
+        do {
+            try await repoMemoryService.clearSnapshot(for: repositoryURL)
+            repoMemorySnapshot = nil
+            repoMemoryLastRefreshedAt = nil
+            updateRepoMemoryStatus(repositoryURL: repositoryURL, snapshot: nil)
+        } catch {
+            repoMemoryStatusMessage = L10n("settings.ai.repoMemory.status.error")
+            logger.log(.error, "Repo memory clear failed: \(error.localizedDescription)", context: repositoryURL.lastPathComponent, source: #function)
+        }
+    }
+
+    func scheduleRepoMemoryRefreshIfNeeded() {
+        guard let repositoryURL, repositoryURL == self.repositoryURL else { return }
+        guard hasRepoMemoryRefreshInputs else { return }
+        let snapshot = repoMemorySnapshot
+        guard shouldRefreshRepoMemory(snapshot: snapshot, force: false) else { return }
+        repoMemoryTask?.cancel()
+        repoMemoryTask = Task { [weak self] in
+            await self?.refreshRepoMemory(force: true)
+        }
+    }
+
+    private func shouldRefreshRepoMemory(snapshot: RepoMemorySnapshot?, force: Bool) -> Bool {
+        if force || snapshot == nil {
+            return true
+        }
+        guard let snapshot else { return true }
+        if snapshot.activeBranch != currentBranch || snapshot.headShortHash != headShortHash {
+            return true
+        }
+        let generatedAt = repoMemoryLastRefreshedAt ?? snapshot.generatedAt
+        return Date().timeIntervalSince(generatedAt) > 3600
+    }
+
+    private func updateRepoMemoryStatus(repositoryURL: URL, snapshot: RepoMemorySnapshot?) {
+        if let snapshot {
+            repoMemoryStatusMessage = L10n("settings.ai.repoMemory.status.ready", repositoryURL.lastPathComponent)
+            UserDefaults.standard.set(repositoryURL.lastPathComponent, forKey: "zion.repoMemory.activeRepoName")
+            UserDefaults.standard.set(snapshot.generatedAt.timeIntervalSince1970, forKey: "zion.repoMemory.lastRefresh")
+            UserDefaults.standard.set(true, forKey: "zion.repoMemory.ready")
+        } else {
+            repoMemoryStatusMessage = L10n("settings.ai.repoMemory.status.missing")
+            UserDefaults.standard.set(repositoryURL.lastPathComponent, forKey: "zion.repoMemory.activeRepoName")
+            UserDefaults.standard.removeObject(forKey: "zion.repoMemory.lastRefresh")
+            UserDefaults.standard.set(false, forKey: "zion.repoMemory.ready")
+        }
+    }
+
     private var repoContextBudget: (messages: Int, files: Int) {
         switch aiMode {
         case .efficient: return (4, 4)
         case .smart: return (6, 6)
         case .bestQuality: return (8, 8)
         }
+    }
+
+    private var hasRepoMemoryRefreshInputs: Bool {
+        repositoryURL != nil &&
+        !currentBranch.isEmpty &&
+        currentBranch != "-" &&
+        !headShortHash.isEmpty &&
+        headShortHash != "-"
     }
 
     static func parseCommitSubjects(fromLog log: String) -> [String] {
@@ -1200,25 +1320,7 @@ extension RepositoryViewModel {
     }
 
     static func deriveModules(from fileHints: [String], limit: Int) -> [String] {
-        var modules: [String] = []
-        var seen = Set<String>()
-
-        for path in fileHints {
-            let parts = path.split(separator: "/").map(String.init)
-            guard parts.count >= 2 else { continue }
-            let candidates = [parts.dropFirst().first, parts.first]
-                .compactMap { $0 }
-                .map { String($0) }
-
-            for candidate in candidates where seen.insert(candidate).inserted {
-                modules.append(candidate)
-                if modules.count == limit {
-                    return modules
-                }
-            }
-        }
-
-        return modules
+        RepoMemoryService.deriveModules(from: fileHints, limit: limit)
     }
 
     // MARK: - Heuristic Commit Message

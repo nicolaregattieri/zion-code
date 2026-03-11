@@ -12,6 +12,8 @@ extension Notification.Name {
     static let formatDocument = Notification.Name("formatDocument")
     static let formatCodeFile = Notification.Name("formatCodeFile")
     static let openMobileAccessSettings = Notification.Name("openMobileAccessSettings")
+    static let refreshRepoMemory = Notification.Name("refreshRepoMemory")
+    static let clearRepoMemory = Notification.Name("clearRepoMemory")
 }
 
 @main

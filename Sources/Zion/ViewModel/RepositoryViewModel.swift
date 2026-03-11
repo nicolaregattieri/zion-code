@@ -35,8 +35,18 @@ final class RepositoryViewModel {
     }
 
     var repositoryURL: URL?
-    var currentBranch: String = "-"
-    var headShortHash: String = "-"
+    var currentBranch: String = "-" {
+        didSet {
+            guard currentBranch != oldValue else { return }
+            scheduleRepoMemoryRefreshIfNeeded()
+        }
+    }
+    var headShortHash: String = "-" {
+        didSet {
+            guard headShortHash != oldValue else { return }
+            scheduleRepoMemoryRefreshIfNeeded()
+        }
+    }
     var commits: [Commit] = [] {
         didSet { recalculateMaxLaneCount() }
     }
@@ -245,6 +255,10 @@ final class RepositoryViewModel {
     var aiBlameEntryID: UUID?
     var aiCommitSplitSuggestions: [CommitSuggestion] = []
     var isSplitVisible: Bool = false
+    var repoMemorySnapshot: RepoMemorySnapshot?
+    var isRepoMemoryRefreshing: Bool = false
+    var repoMemoryLastRefreshedAt: Date?
+    var repoMemoryStatusMessage: String = ""
 
     // Pre-Commit AI Review Gate
     var preCommitReviewEnabled: Bool = false {
@@ -278,7 +292,9 @@ final class RepositoryViewModel {
         didSet { UserDefaults.standard.set(commitMessageStyle.rawValue, forKey: "zion.commitMessageStyle") }
     }
     @ObservationIgnored let aiClient = AIClient()
+    @ObservationIgnored let repoMemoryService = RepoMemoryService()
     @ObservationIgnored var aiTask: Task<Void, Never>?
+    @ObservationIgnored var repoMemoryTask: Task<Void, Never>?
 
     @ObservationIgnored var _cachedAIKey: String?
     @ObservationIgnored var _cachedAIKeyProvider: AIProvider?
@@ -719,6 +735,7 @@ final class RepositoryViewModel {
         if previousURL == url {
             logger.log(.info, "openRepository SKIP (same repo)", context: "\(url.lastPathComponent) tabs=\(terminalTabs.count) sessions=\(terminalTabs.flatMap { $0.allSessions() }.count)", source: #function)
             if !silent { saveRecentRepository(url) }
+            loadRepoMemorySnapshotIfAvailable()
             refreshRepository()
             refreshFileTree()
             loadPullRequests()
@@ -741,7 +758,11 @@ final class RepositoryViewModel {
         }
 
         repositoryURL = url
+        repoMemorySnapshot = nil
+        repoMemoryLastRefreshedAt = nil
+        repoMemoryStatusMessage = L10n("settings.ai.repoMemory.status.loading")
         repoEditorConfig = EditorConfig.load(from: url)
+        loadRepoMemorySnapshotIfAvailable()
         if !silent { saveRecentRepository(url) }
         commitLimit = defaultCommitLimit(for: nil)
         focusedBranch = nil

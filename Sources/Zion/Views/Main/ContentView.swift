@@ -98,120 +98,19 @@ struct ContentView: View {
     }
 
     var body: some View {
-        ZStack {
-            LiquidBackgroundView().ignoresSafeArea()
+        configuredRootView
+    }
 
-            NavigationSplitView(columnVisibility: $splitViewVisibility) {
-                SidebarView(
-                    model: model,
-                    selectedSection: $selectedSection,
-                    selectedBranchTreeNodeID: $selectedBranchTreeNodeID,
-                    confirmationModeRaw: $confirmationModeRaw,
-                    uiLanguageRaw: $uiLanguageRaw,
-                    appearanceRaw: $appearanceRaw,
-                    onOpen: { openRepositoryPanel() },
-                    branchContextMenu: { branch in AnyView(branchContextMenu(for: branch)) }
-                )
-                .padding(.bottom, statusBarClearance)
-            } detail: {
-                // RIGID LAYOUT: Detail view is a solid container
-                detailViewHost
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .allowsHitTesting(!model.isRepositorySwitching)
-                    .padding(.bottom, statusBarClearance)
-                    .background(DesignSystem.Colors.background)
-                    .overlay {
-                        if model.isRepositorySwitching {
-                            ZionLoadingOverlay()
-                                .transition(.opacity)
-                        }
-                    }
-            }
-            .navigationSplitViewStyle(.balanced)
-            .frame(minWidth: DesignSystem.Layout.windowMinWidth, minHeight: DesignSystem.Layout.windowMinHeight)
-            .alert(L10n("Git não encontrado"), isPresented: $model.showGitNotFoundAlert) {
-                Button(L10n("git.installCLT")) {
-                    model.installCommandLineTools()
-                }
-                Button(L10n("git.checkAgain")) {
-                    model.checkGitAvailability()
-                }
-                Button(L10n("Baixar Git")) {
-                    if let url = URL(string: "https://git-scm.com/downloads") {
-                        NSWorkspace.shared.open(url)
-                    }
-                }
-                Button(L10n("OK"), role: .cancel) {}
-            } message: {
-                Text(L10n("git.notFound.message"))
-            }
-            .alert(L10n("Erro"), isPresented: Binding(get: { model.lastError != nil }, set: { show in if !show { model.lastError = nil } })) {
-                Button(L10n("OK"), role: .cancel) {}
-            } message: { Text(model.lastError ?? "") }
-            .alert(L10n("push.warning.title"), isPresented: $model.showPushDivergenceWarning) {
-                pushDivergenceAlertButtons
-            } message: {
-                switch model.pushDivergenceState {
-                case .behind(let count):
-                    Text(L10n("push.warning.behind", count))
-                case .diverged(let ahead, let behind):
-                    Text(L10n("push.warning.diverged", ahead, behind))
-                case .clear:
-                    Text("")
-                }
-            }
-            .alert(L10n("conflicts.open.prompt.title"), isPresented: $isConflictResolverPromptVisible) {
-                Button(L10n("conflicts.open.prompt.open")) {
-                    model.loadConflictedFiles()
-                    model.isConflictViewVisible = true
-                }
-                Button(L10n("Cancelar"), role: .cancel) {}
-            } message: {
-                Text(L10n("conflicts.open.prompt.message"))
-            }
-            .toolbar {
-                if !zenModeEnabled {
-                    mainToolbar
-                }
-            }
-            .safeAreaInset(edge: .bottom) {
-                if !zenModeEnabled {
-                    statusBar
-                }
-            }
-            .background {
-                // Cmd+1/2/3 tab switching (standard macOS convention)
-                Group {
-                    Button("") { route(.requestSection(.code)) }
-                        .keyboardShortcut("1", modifiers: .command)
-                    Button("") { route(.requestSection(.graph)) }
-                        .keyboardShortcut("2", modifiers: .command)
-                    Button("") { route(.requestSection(.operations)) }
-                        .keyboardShortcut("3", modifiers: .command)
-                    Button("") { isShortcutsVisible = true }
-                        .keyboardShortcut("/", modifiers: .command)
-                    Button("") {
-                        if model.repositoryURL != nil {
-                            model.isBranchReviewSheetVisible = false
-                            model.isCodeReviewVisible = true
-                        }
-                    }
-                    .keyboardShortcut("r", modifiers: [.command, .shift])
-                    Button("") {
-                        withAnimation(DesignSystem.Motion.panel) {
-                            zenModeEnabled.toggle()
-                        }
-                    }
-                    .keyboardShortcut("J", modifiers: .command)
-                    Button("") {
-                        zionModeEnabled.toggle()
-                    }
-                    .keyboardShortcut("z", modifiers: [.command, .control])
-                }
-                .frame(width: 0, height: 0)
-                .opacity(0)
-            }
-        }
+    private var configuredRootView: some View {
+        applyInteractionModifiers(
+            to: applyPresentationModifiers(
+                to: rootEnvironmentView
+            )
+        )
+    }
+
+    private var rootEnvironmentView: some View {
+        rootShell
         .id(uiLanguageRaw)
         .preferredColorScheme(zionModeEnabled ? .dark : appearance.colorScheme)
         .environment(\.locale, uiLanguage.locale)
@@ -309,6 +208,64 @@ struct ContentView: View {
                 model.navigateToCodeRequested = false
             }
         }
+    }
+
+    private func applyInteractionModifiers<Content: View>(to view: Content) -> some View {
+        view
+        .onReceive(NotificationCenter.default.publisher(for: .showKeyboardShortcuts)) { _ in
+            isShortcutsVisible = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .showHelp)) { _ in
+            isHelpVisible = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .showOnboarding)) { _ in
+            route(.showOnboardingFromHelp)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .toggleZenMode)) { _ in
+            withAnimation(DesignSystem.Motion.panel) {
+                zenModeEnabled.toggle()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .toggleZionMode)) { _ in
+            zionModeEnabled.toggle()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openFilesFromFinder)) { notification in
+            guard let urls = notification.userInfo?["urls"] as? [URL] else { return }
+            model.openExternalFiles(urls)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .refreshRepoMemory)) { _ in
+            Task { await model.refreshRepoMemory(force: true) }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .clearRepoMemory)) { _ in
+            Task { await model.clearRepoMemory() }
+        }
+        .onChange(of: zionModeEnabled) { oldValue, enabled in
+            if enabled {
+                preZionModeTheme = UserDefaults.standard.string(forKey: "editor.theme") ?? EditorTheme.dracula.rawValue
+                UserDefaults.standard.set(EditorTheme.synthwave.rawValue, forKey: "editor.theme")
+            } else if oldValue {
+                // Only restore if explicitly toggled off (not auto-disabled by theme change)
+                let currentTheme = UserDefaults.standard.string(forKey: "editor.theme") ?? ""
+                if currentTheme == EditorTheme.synthwave.rawValue {
+                    let restore = preZionModeTheme.isEmpty ? EditorTheme.dracula.rawValue : preZionModeTheme
+                    UserDefaults.standard.set(restore, forKey: "editor.theme")
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
+            // Auto-disable Zion Mode if user manually picks a different theme
+            if zionModeEnabled {
+                let currentTheme = UserDefaults.standard.string(forKey: "editor.theme") ?? ""
+                if currentTheme != EditorTheme.synthwave.rawValue {
+                    zionModeEnabled = false
+                }
+            }
+        }
+        .animation(DesignSystem.Motion.detail, value: model.isRepositorySwitching)
+    }
+
+    private func applyPresentationModifiers<Content: View>(to view: Content) -> some View {
+        view
         .sheet(isPresented: $model.isReflogVisible) {
             ReflogSheet(model: model)
         }
@@ -346,50 +303,132 @@ struct ContentView: View {
                 )
             }
         }
-        .onReceive(NotificationCenter.default.publisher(for: .showKeyboardShortcuts)) { _ in
-            isShortcutsVisible = true
+    }
+
+    private var rootShell: some View {
+        ZStack {
+            LiquidBackgroundView().ignoresSafeArea()
+            navigationShell
         }
-        .onReceive(NotificationCenter.default.publisher(for: .showHelp)) { _ in
-            isHelpVisible = true
+    }
+
+    private var navigationShell: some View {
+        NavigationSplitView(columnVisibility: $splitViewVisibility) {
+            SidebarView(
+                model: model,
+                selectedSection: $selectedSection,
+                selectedBranchTreeNodeID: $selectedBranchTreeNodeID,
+                confirmationModeRaw: $confirmationModeRaw,
+                uiLanguageRaw: $uiLanguageRaw,
+                appearanceRaw: $appearanceRaw,
+                onOpen: { openRepositoryPanel() },
+                branchContextMenu: { branch in AnyView(branchContextMenu(for: branch)) }
+            )
+            .padding(.bottom, statusBarClearance)
+        } detail: {
+            detailContainer
         }
-        .onReceive(NotificationCenter.default.publisher(for: .showOnboarding)) { _ in
-            route(.showOnboardingFromHelp)
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .toggleZenMode)) { _ in
-            withAnimation(DesignSystem.Motion.panel) {
-                zenModeEnabled.toggle()
+        .navigationSplitViewStyle(.balanced)
+        .frame(minWidth: DesignSystem.Layout.windowMinWidth, minHeight: DesignSystem.Layout.windowMinHeight)
+        .alert(L10n("Git não encontrado"), isPresented: $model.showGitNotFoundAlert) {
+            Button(L10n("git.installCLT")) {
+                model.installCommandLineTools()
             }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .toggleZionMode)) { _ in
-            zionModeEnabled.toggle()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .openFilesFromFinder)) { notification in
-            guard let urls = notification.userInfo?["urls"] as? [URL] else { return }
-            model.openExternalFiles(urls)
-        }
-        .onChange(of: zionModeEnabled) { oldValue, enabled in
-            if enabled {
-                preZionModeTheme = UserDefaults.standard.string(forKey: "editor.theme") ?? EditorTheme.dracula.rawValue
-                UserDefaults.standard.set(EditorTheme.synthwave.rawValue, forKey: "editor.theme")
-            } else if oldValue {
-                // Only restore if explicitly toggled off (not auto-disabled by theme change)
-                let currentTheme = UserDefaults.standard.string(forKey: "editor.theme") ?? ""
-                if currentTheme == EditorTheme.synthwave.rawValue {
-                    let restore = preZionModeTheme.isEmpty ? EditorTheme.dracula.rawValue : preZionModeTheme
-                    UserDefaults.standard.set(restore, forKey: "editor.theme")
+            Button(L10n("git.checkAgain")) {
+                model.checkGitAvailability()
+            }
+            Button(L10n("Baixar Git")) {
+                if let url = URL(string: "https://git-scm.com/downloads") {
+                    NSWorkspace.shared.open(url)
                 }
             }
+            Button(L10n("OK"), role: .cancel) {}
+        } message: {
+            Text(L10n("git.notFound.message"))
         }
-        .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
-            // Auto-disable Zion Mode if user manually picks a different theme
-            if zionModeEnabled {
-                let currentTheme = UserDefaults.standard.string(forKey: "editor.theme") ?? ""
-                if currentTheme != EditorTheme.synthwave.rawValue {
-                    zionModeEnabled = false
-                }
+        .alert(L10n("Erro"), isPresented: Binding(get: { model.lastError != nil }, set: { show in if !show { model.lastError = nil } })) {
+            Button(L10n("OK"), role: .cancel) {}
+        } message: { Text(model.lastError ?? "") }
+        .alert(L10n("push.warning.title"), isPresented: $model.showPushDivergenceWarning) {
+            pushDivergenceAlertButtons
+        } message: {
+            switch model.pushDivergenceState {
+            case .behind(let count):
+                Text(L10n("push.warning.behind", count))
+            case .diverged(let ahead, let behind):
+                Text(L10n("push.warning.diverged", ahead, behind))
+            case .clear:
+                Text("")
             }
         }
-        .animation(DesignSystem.Motion.detail, value: model.isRepositorySwitching)
+        .alert(L10n("conflicts.open.prompt.title"), isPresented: $isConflictResolverPromptVisible) {
+            Button(L10n("conflicts.open.prompt.open")) {
+                model.loadConflictedFiles()
+                model.isConflictViewVisible = true
+            }
+            Button(L10n("Cancelar"), role: .cancel) {}
+        } message: {
+            Text(L10n("conflicts.open.prompt.message"))
+        }
+        .toolbar {
+            if !zenModeEnabled {
+                mainToolbar
+            }
+        }
+        .safeAreaInset(edge: .bottom) {
+            if !zenModeEnabled {
+                statusBar
+            }
+        }
+        .background {
+            keyboardShortcutBridge
+        }
+    }
+
+    private var detailContainer: some View {
+        detailViewHost
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .allowsHitTesting(!model.isRepositorySwitching)
+            .padding(.bottom, statusBarClearance)
+            .background(DesignSystem.Colors.background)
+            .overlay {
+                if model.isRepositorySwitching {
+                    ZionLoadingOverlay()
+                        .transition(.opacity)
+                }
+            }
+    }
+
+    private var keyboardShortcutBridge: some View {
+        Group {
+            Button("") { route(.requestSection(.code)) }
+                .keyboardShortcut("1", modifiers: .command)
+            Button("") { route(.requestSection(.graph)) }
+                .keyboardShortcut("2", modifiers: .command)
+            Button("") { route(.requestSection(.operations)) }
+                .keyboardShortcut("3", modifiers: .command)
+            Button("") { isShortcutsVisible = true }
+                .keyboardShortcut("/", modifiers: .command)
+            Button("") {
+                if model.repositoryURL != nil {
+                    model.isBranchReviewSheetVisible = false
+                    model.isCodeReviewVisible = true
+                }
+            }
+            .keyboardShortcut("r", modifiers: [.command, .shift])
+            Button("") {
+                withAnimation(DesignSystem.Motion.panel) {
+                    zenModeEnabled.toggle()
+                }
+            }
+            .keyboardShortcut("J", modifiers: .command)
+            Button("") {
+                zionModeEnabled.toggle()
+            }
+            .keyboardShortcut("z", modifiers: [.command, .control])
+        }
+        .frame(width: 0, height: 0)
+        .opacity(0)
     }
 
     @ViewBuilder
