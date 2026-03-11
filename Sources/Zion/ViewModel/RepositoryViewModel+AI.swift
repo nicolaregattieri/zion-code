@@ -19,7 +19,8 @@ extension RepositoryViewModel {
                     diffStat: diffStat,
                     fileList: fileList,
                     provider: aiProvider,
-                    apiKey: aiAPIKey
+                    apiKey: aiAPIKey,
+                    mode: aiMode
                 )
                 try Task.checkCancellation()
                 applyPendingChangesSummary(summary)
@@ -101,7 +102,12 @@ extension RepositoryViewModel {
                         branchName: currentBranch,
                         provider: aiProvider,
                         apiKey: aiAPIKey,
-                        style: commitMessageStyle
+                        style: commitMessageStyle,
+                        mode: aiMode,
+                        repoContext: buildRepoContext(
+                            fileHints: uncommittedChanges,
+                            recentMessages: recentMessages
+                        )
                     )
                     logger.log(.ai, "Commit message generated OK")
                     suggestedCommitMessage = message
@@ -149,7 +155,16 @@ extension RepositoryViewModel {
                 branchName: currentBranch,
                 baseBranch: baseBranch,
                 provider: aiProvider,
-                apiKey: aiAPIKey
+                apiKey: aiAPIKey,
+                mode: aiMode,
+                repoContext: buildRepoContext(
+                    fileHints: Self.parseFileHints(fromDiffStat: diffStat),
+                    recentMessages: Self.parseCommitSubjects(fromLog: commitLog),
+                    extraNotes: [
+                        "source branch: \(currentBranch)",
+                        "base branch: \(baseBranch)"
+                    ]
+                )
             )
             logger.log(.ai, "PR description generated OK")
             return result
@@ -176,7 +191,8 @@ extension RepositoryViewModel {
                     diff: diff,
                     diffStat: diffStat,
                     provider: aiProvider,
-                    apiKey: aiAPIKey
+                    apiKey: aiAPIKey,
+                    mode: aiMode
                 )
                 logger.log(.ai, "Stash message generated OK")
                 stashMessageInput = message
@@ -201,7 +217,8 @@ extension RepositoryViewModel {
                     fileDiff: diff,
                     fileName: fileName,
                     provider: aiProvider,
-                    apiKey: aiAPIKey
+                    apiKey: aiAPIKey,
+                    mode: aiMode
                 )
                 logger.log(.ai, "Diff explanation generated OK")
                 aiDiffExplanation = explanation
@@ -228,7 +245,9 @@ extension RepositoryViewModel {
                     fileDiff: diff,
                     fileName: fileName,
                     provider: aiProvider,
-                    apiKey: aiAPIKey
+                    apiKey: aiAPIKey,
+                    mode: aiMode,
+                    repoContext: buildRepoContext(fileHints: [fileName])
                 )
                 currentDiffExplanation = explanation
             } catch {
@@ -288,7 +307,9 @@ extension RepositoryViewModel {
                         fileDiff: codeReviewFiles[i].diff,
                         fileName: codeReviewFiles[i].path,
                         provider: aiProvider,
-                        apiKey: aiAPIKey
+                        apiKey: aiAPIKey,
+                        mode: aiMode,
+                        repoContext: buildRepoContext(fileHints: [codeReviewFiles[i].path])
                     )
                     codeReviewFiles[i].findings = findings
                     codeReviewFiles[i].isReviewed = true
@@ -298,7 +319,9 @@ extension RepositoryViewModel {
                         fileDiff: codeReviewFiles[i].diff,
                         fileName: codeReviewFiles[i].path,
                         provider: aiProvider,
-                        apiKey: aiAPIKey
+                        apiKey: aiAPIKey,
+                        mode: aiMode,
+                        repoContext: buildRepoContext(fileHints: [codeReviewFiles[i].path])
                     )
                     codeReviewFiles[i].explanation = explanation
                 } catch {
@@ -321,6 +344,12 @@ extension RepositoryViewModel {
             summary += "## \(file.path)\n"
             for finding in file.findings {
                 summary += "- [\(finding.severity.rawValue)] \(finding.message)\n"
+                if let evidence = finding.evidence {
+                    summary += "  evidence: \(evidence)\n"
+                }
+                if let testImpact = finding.testImpact {
+                    summary += "  test impact: \(testImpact)\n"
+                }
             }
             summary += "\n"
         }
@@ -349,6 +378,12 @@ extension RepositoryViewModel {
                 for finding in file.findings {
                     let icon = finding.severity == .critical ? "🔴" : finding.severity == .warning ? "🟡" : "🔵"
                     md += "- \(icon) \(finding.message)\n"
+                    if let evidence = finding.evidence {
+                        md += "  - Evidence: \(evidence)\n"
+                    }
+                    if let testImpact = finding.testImpact {
+                        md += "  - Test Impact: \(testImpact)\n"
+                    }
                 }
                 md += "\n"
             }
@@ -446,7 +481,16 @@ extension RepositoryViewModel {
                         sourceBranch: item.pr.headBranch,
                         targetBranch: item.pr.baseBranch,
                         provider: aiProvider,
-                        apiKey: aiAPIKey
+                        apiKey: aiAPIKey,
+                        mode: aiMode,
+                        repoContext: buildRepoContext(
+                            fileHints: [],
+                            extraNotes: [
+                                "source branch: \(item.pr.headBranch)",
+                                "target branch: \(item.pr.baseBranch)",
+                                "pr title: \(item.pr.title)"
+                            ]
+                        )
                     )
 
                     prReviewQueue[idx].findings = findings
@@ -526,7 +570,9 @@ extension RepositoryViewModel {
                     surroundingContext: context,
                     fileName: fileName,
                     provider: aiProvider,
-                    apiKey: aiAPIKey
+                    apiKey: aiAPIKey,
+                    mode: aiMode,
+                    repoContext: buildRepoContext(fileHints: [fileName])
                 )
                 logger.log(.ai, "Conflict resolution generated OK")
                 aiConflictResolutionRegionID = region.id
@@ -572,7 +618,9 @@ extension RepositoryViewModel {
                     diffStat: diffStat,
                     branchName: currentBranch,
                     provider: aiProvider,
-                    apiKey: aiAPIKey
+                    apiKey: aiAPIKey,
+                    mode: aiMode,
+                    repoContext: buildRepoContext(fileHints: Self.parseFileHints(fromDiffStat: diffStat))
                 )
                 logger.log(.ai, "Code review generated OK: \(findings.count) findings")
                 aiReviewFindings = findings
@@ -645,7 +693,9 @@ extension RepositoryViewModel {
                     diffStat: diffStat,
                     branchName: currentBranch,
                     provider: aiProvider,
-                    apiKey: aiAPIKey
+                    apiKey: aiAPIKey,
+                    mode: aiMode,
+                    repoContext: buildRepoContext(fileHints: Self.parseFileHints(fromDiffStat: diffStat))
                 )
 
                 logger.log(.ai, "Commit review generated OK: \(findings.count) findings", context: commitID)
@@ -701,7 +751,9 @@ extension RepositoryViewModel {
                     diffStat: diffStat,
                     branchName: currentBranch,
                     provider: aiProvider,
-                    apiKey: aiAPIKey
+                    apiKey: aiAPIKey,
+                    mode: aiMode,
+                    repoContext: buildRepoContext(fileHints: Self.parseFileHints(fromDiffStat: diffStat))
                 )
                 logger.log(.ai, "Pre-commit review: \(findings.count) findings")
                 aiReviewFindings = findings
@@ -752,7 +804,8 @@ extension RepositoryViewModel {
                     fromRef: from,
                     toRef: to,
                     provider: aiProvider,
-                    apiKey: aiAPIKey
+                    apiKey: aiAPIKey,
+                    mode: aiMode
                 )
                 logger.log(.ai, "Changelog generated OK")
                 aiChangelog = changelog
@@ -801,7 +854,8 @@ extension RepositoryViewModel {
                     query: trimmedQuery,
                     candidates: rankedCandidates,
                     provider: aiProvider,
-                    apiKey: aiAPIKey
+                    apiKey: aiAPIKey,
+                    mode: aiMode
                 )
                 try Task.checkCancellation()
                 let answer = result.answer.isEmpty
@@ -940,7 +994,8 @@ extension RepositoryViewModel {
                     commitLog: commitLog.isEmpty ? branchName : commitLog,
                     diffStat: diffStat,
                     provider: aiProvider,
-                    apiKey: aiAPIKey
+                    apiKey: aiAPIKey,
+                    mode: aiMode
                 )
                 logger.log(.ai, "Branch summary generated OK")
                 branchSummaries[branchName] = summary
@@ -975,7 +1030,15 @@ extension RepositoryViewModel {
                     sourceBranch: source,
                     targetBranch: target,
                     provider: aiProvider,
-                    apiKey: aiAPIKey
+                    apiKey: aiAPIKey,
+                    mode: aiMode,
+                    repoContext: buildRepoContext(
+                        fileHints: Self.parseFileHints(fromDiffStat: diffStat),
+                        extraNotes: [
+                            "source branch: \(source)",
+                            "target branch: \(target)"
+                        ]
+                    )
                 )
                 logger.log(.ai, "Branch review OK: \(findings.count) findings")
                 branchReviewFindings = findings
@@ -1007,7 +1070,12 @@ extension RepositoryViewModel {
                     commitSubject: commitSubject,
                     regionContent: entry.content,
                     provider: aiProvider,
-                    apiKey: aiAPIKey
+                    apiKey: aiAPIKey,
+                    mode: aiMode,
+                    repoContext: buildRepoContext(
+                        fileHints: [fileName],
+                        extraNotes: ["commit subject: \(commitSubject)"]
+                    )
                 )
                 logger.log(.ai, "Blame explanation generated OK")
                 aiBlameExplanation = explanation
@@ -1043,7 +1111,9 @@ extension RepositoryViewModel {
                     diff: diff,
                     diffStat: diffStat,
                     provider: aiProvider,
-                    apiKey: aiAPIKey
+                    apiKey: aiAPIKey,
+                    mode: aiMode,
+                    repoContext: buildRepoContext(fileHints: Self.parseFileHints(fromDiffStat: diffStat))
                 )
                 logger.log(.ai, "Commit split suggestions OK: \(suggestions.count) commits")
                 aiCommitSplitSuggestions = suggestions
@@ -1056,6 +1126,99 @@ extension RepositoryViewModel {
                 lastError = error.localizedDescription
             }
         }
+    }
+
+    private func buildRepoContext(
+        fileHints: [String],
+        recentMessages: [String] = [],
+        extraNotes: [String] = []
+    ) -> String {
+        let (messageBudget, fileBudget) = repoContextBudget
+        let uniqueFiles = Array(NSOrderedSet(array: fileHints.filter { !$0.isEmpty }).array as? [String] ?? [])
+        let uniqueMessages = Array(NSOrderedSet(array: recentMessages.filter { !$0.isEmpty }).array as? [String] ?? [])
+        let modules = Self.deriveModules(from: uniqueFiles, limit: max(2, min(fileBudget, 6)))
+        let testHints = uniqueFiles.filter {
+            $0.localizedCaseInsensitiveContains("test") || $0.contains("/Tests/")
+        }
+
+        var sections: [String] = []
+        if let repoName = repositoryURL?.lastPathComponent, !repoName.isEmpty {
+            sections.append("repository: \(repoName)")
+        }
+        if !currentBranch.isEmpty {
+            sections.append("branch: \(currentBranch)")
+        }
+        if !modules.isEmpty {
+            sections.append("modules: \(modules.joined(separator: ", "))")
+        }
+        if !uniqueFiles.isEmpty {
+            sections.append("focus files: \(uniqueFiles.prefix(fileBudget).joined(separator: ", "))")
+        }
+        if !testHints.isEmpty {
+            sections.append("test surface: \(testHints.prefix(max(1, fileBudget / 2)).joined(separator: ", "))")
+        }
+        if !uniqueMessages.isEmpty {
+            sections.append("recent commit style: \(uniqueMessages.prefix(messageBudget).joined(separator: " | "))")
+        }
+        if !extraNotes.isEmpty {
+            sections.append("notes: \(extraNotes.joined(separator: " | "))")
+        }
+
+        return sections.joined(separator: "\n")
+    }
+
+    private var repoContextBudget: (messages: Int, files: Int) {
+        switch aiMode {
+        case .efficient: return (4, 4)
+        case .smart: return (6, 6)
+        case .bestQuality: return (8, 8)
+        }
+    }
+
+    static func parseCommitSubjects(fromLog log: String) -> [String] {
+        log.split(separator: "\n").compactMap { line in
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { return nil }
+            let parts = trimmed.split(separator: " ", maxSplits: 1)
+            guard parts.count == 2 else { return trimmed }
+            return String(parts[1])
+        }
+    }
+
+    static func parseFileHints(fromDiffStat diffStat: String) -> [String] {
+        diffStat.split(separator: "\n").compactMap { line in
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { return nil }
+            if let filePart = trimmed.components(separatedBy: "|").first?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !filePart.isEmpty {
+                return filePart
+            }
+            let tabParts = trimmed.split(separator: "\t")
+            guard let last = tabParts.last else { return nil }
+            return String(last).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+    }
+
+    static func deriveModules(from fileHints: [String], limit: Int) -> [String] {
+        var modules: [String] = []
+        var seen = Set<String>()
+
+        for path in fileHints {
+            let parts = path.split(separator: "/").map(String.init)
+            guard parts.count >= 2 else { continue }
+            let candidates = [parts.dropFirst().first, parts.first]
+                .compactMap { $0 }
+                .map { String($0) }
+
+            for candidate in candidates where seen.insert(candidate).inserted {
+                modules.append(candidate)
+                if modules.count == limit {
+                    return modules
+                }
+            }
+        }
+
+        return modules
     }
 
     // MARK: - Heuristic Commit Message

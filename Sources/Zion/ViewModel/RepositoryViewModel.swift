@@ -263,6 +263,9 @@ final class RepositoryViewModel {
             _aiKeyRevision += 1 // Ensure aiAPIKey getter is re-evaluated for the new provider
         }
     }
+    var aiMode: AIMode = .efficient {
+        didSet { UserDefaults.standard.set(aiMode.rawValue, forKey: "zion.aiMode") }
+    }
     var commitMessageStyle: CommitMessageStyle = .compact {
         didSet { UserDefaults.standard.set(commitMessageStyle.rawValue, forKey: "zion.commitMessageStyle") }
     }

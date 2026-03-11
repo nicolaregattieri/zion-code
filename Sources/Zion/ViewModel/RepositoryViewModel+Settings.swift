@@ -108,6 +108,10 @@ extension RepositoryViewModel {
            let provider = AIProvider(rawValue: aiRaw) {
             aiProvider = provider
         }
+        if let modeRaw = defaults.string(forKey: "zion.aiMode"),
+           let mode = AIMode(rawValue: modeRaw) {
+            aiMode = mode
+        }
         // Commit message style
         if let styleRaw = defaults.string(forKey: "zion.commitMessageStyle"),
            let style = CommitMessageStyle(rawValue: styleRaw) {
@@ -253,6 +257,10 @@ extension RepositoryViewModel {
         if let aiRaw = defaults.string(forKey: "zion.aiProvider"),
            let provider = AIProvider(rawValue: aiRaw), provider != aiProvider {
             aiProvider = provider
+        }
+        if let modeRaw = defaults.string(forKey: "zion.aiMode"),
+           let mode = AIMode(rawValue: modeRaw), mode != aiMode {
+            aiMode = mode
         }
         if let styleRaw = defaults.string(forKey: "zion.commitMessageStyle"),
            let style = CommitMessageStyle(rawValue: styleRaw), style != commitMessageStyle {

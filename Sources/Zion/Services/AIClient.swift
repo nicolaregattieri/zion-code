@@ -12,6 +12,7 @@ private enum AILimits {
     static let maxPendingChangesFileListLength = 3000
     static let maxPendingChangesDiffStatLength = 5000
     static let maxSurroundingContextLength = 3000
+    static let maxRepoContextLength = 1600
 
     // Token limits per operation
     static let compactMessageTokens = 100
@@ -108,7 +109,9 @@ actor AIClient {
         branchName: String,
         provider: AIProvider,
         apiKey: String,
-        style: CommitMessageStyle = .compact
+        style: CommitMessageStyle = .compact,
+        mode: AIMode,
+        repoContext: String = ""
     ) async throws -> String {
         let recentStyle = recentMessages.prefix(10).joined(separator: "\n")
         let prompt: String
@@ -121,6 +124,9 @@ actor AIClient {
 
             Match the style of these recent commits from the repository:
             \(recentStyle)
+
+            Repository conventions:
+            \(repoContextBlock(repoContext))
 
             Branch: \(branchName)
 
@@ -148,6 +154,9 @@ actor AIClient {
             Match the style of these recent commits from the repository:
             \(recentStyle)
 
+            Repository conventions:
+            \(repoContextBlock(repoContext))
+
             Branch: \(branchName)
 
             Diff stat:
@@ -169,7 +178,7 @@ actor AIClient {
             maxTokens = AILimits.detailedMessageTokens
         }
 
-        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: maxTokens)
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: maxTokens, lane: .general, mode: mode)
     }
 
     func generatePRDescription(
@@ -178,10 +187,15 @@ actor AIClient {
         branchName: String,
         baseBranch: String,
         provider: AIProvider,
-        apiKey: String
+        apiKey: String,
+        mode: AIMode,
+        repoContext: String = ""
     ) async throws -> (title: String, body: String) {
         let prompt = """
         You are a Pull Request description generator. Generate a PR title and body for merging \(branchName) into \(baseBranch).
+
+        Repository conventions:
+        \(repoContextBlock(repoContext))
 
         Commits:
         \(commitLog.prefix(AILimits.maxCommitLogLength))
@@ -206,7 +220,7 @@ actor AIClient {
         - Focus on the "why" and user impact
         - Keep it professional and clear
         """
-        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.prDescriptionTokens)
+        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.prDescriptionTokens, lane: .reasoning, mode: mode)
         return parsePRResponse(raw)
     }
 
@@ -214,7 +228,8 @@ actor AIClient {
         diff: String,
         diffStat: String,
         provider: AIProvider,
-        apiKey: String
+        apiKey: String,
+        mode: AIMode
     ) async throws -> String {
         let prompt = """
         You are a Git stash message generator. Write a short, descriptive stash name for the following work-in-progress changes.
@@ -231,14 +246,15 @@ actor AIClient {
         - Describe WHAT the changes are about
         - Example style: "WIP: refactor auth flow" or "Add user avatar upload"
         """
-        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.stashMessageTokens)
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.stashMessageTokens, lane: .cheapSummary, mode: mode)
     }
 
     func explainDiff(
         fileDiff: String,
         fileName: String,
         provider: AIProvider,
-        apiKey: String
+        apiKey: String,
+        mode: AIMode
     ) async throws -> String {
         let prompt = """
         You are a code reviewer. Explain the following diff for the file "\(fileName)" in 2-3 plain-English sentences. Focus on WHAT changed and WHY it matters.
@@ -252,7 +268,7 @@ actor AIClient {
         - Focus on the intent behind the changes
         - Output ONLY the explanation
         """
-        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.diffExplanationTokens)
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.diffExplanationTokens, lane: .general, mode: mode)
     }
 
     // MARK: - Bisect Culprit Explanation
@@ -262,7 +278,8 @@ actor AIClient {
         diff: String,
         diffStat: String,
         provider: AIProvider,
-        apiKey: String
+        apiKey: String,
+        mode: AIMode
     ) async throws -> String {
         let prompt = """
         You are a debugging assistant. Git bisect found commit \(commitHash.prefix(12)) as the first bad commit that introduced a regression.
@@ -284,7 +301,7 @@ actor AIClient {
         - Be specific about which changes are suspicious
         - Output ONLY the explanation
         """
-        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.bisectExplainTokens)
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.bisectExplainTokens, lane: .reasoning, mode: mode)
     }
 
     // MARK: - Smart Conflict Resolution
@@ -297,7 +314,9 @@ actor AIClient {
         surroundingContext: String,
         fileName: String,
         provider: AIProvider,
-        apiKey: String
+        apiKey: String,
+        mode: AIMode,
+        repoContext: String = ""
     ) async throws -> String {
         let ours = oursLines.joined(separator: "\n")
         let theirs = theirsLines.joined(separator: "\n")
@@ -315,6 +334,9 @@ actor AIClient {
         Surrounding context:
         \(surroundingContext.prefix(AILimits.maxSurroundingContextLength))
 
+        Repository conventions:
+        \(repoContextBlock(repoContext))
+
         Rules:
         - Output ONLY the resolved code, nothing else. No explanation, no markers.
         - Combine both changes when they don't conflict semantically.
@@ -322,7 +344,7 @@ actor AIClient {
         - Preserve indentation and coding style from the surrounding context.
         - Do NOT include conflict markers in the output.
         """
-        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.conflictResolutionTokens)
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.conflictResolutionTokens, lane: .reasoning, mode: mode)
     }
 
     // MARK: - Code Review
@@ -332,12 +354,17 @@ actor AIClient {
         diffStat: String,
         branchName: String,
         provider: AIProvider,
-        apiKey: String
+        apiKey: String,
+        mode: AIMode,
+        repoContext: String = ""
     ) async throws -> [ReviewFinding] {
         let prompt = """
         You are a senior code reviewer. Analyze the staged diff below and find bugs, security issues, and style problems.
 
         Branch: \(branchName)
+
+        Repository conventions:
+        \(repoContextBlock(repoContext))
 
         Diff stat:
         \(diffStat.prefix(AILimits.maxDiffStatLength))
@@ -346,21 +373,23 @@ actor AIClient {
         \(diff.prefix(AILimits.maxDiffContentLength))
 
         Output format — one finding per line, pipe-delimited:
-        SEVERITY|FILE|MESSAGE
+        SEVERITY|FILE|MESSAGE|EVIDENCE|TEST_IMPACT
 
         Where SEVERITY is one of: critical, warning, suggestion
         FILE is the affected filename (or "general" if not file-specific)
         MESSAGE is a concise description of the issue
+        EVIDENCE is a short quote or hunk summary grounding the finding, or "-"
+        TEST_IMPACT is a likely test area or missing coverage hint, or "-"
 
         Rules:
         - Output ONLY the pipe-delimited lines, nothing else
         - Focus on real issues: bugs, security vulnerabilities, race conditions, missing error handling
         - Include style suggestions only if they're significant
         - Maximum 10 findings
-        - If the code looks good, output a single line: suggestion|general|Code looks good — no issues found.
+        - If the code looks good, output a single line: suggestion|general|Code looks good — no issues found.|-|-
         """
-        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.codeReviewTokens)
-        return parseReviewFindings(raw)
+        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.codeReviewTokens, lane: .review, mode: mode)
+        return Self.parseReviewFindings(raw)
     }
 
     func reviewBranch(
@@ -369,13 +398,18 @@ actor AIClient {
         sourceBranch: String,
         targetBranch: String,
         provider: AIProvider,
-        apiKey: String
+        apiKey: String,
+        mode: AIMode,
+        repoContext: String = ""
     ) async throws -> [ReviewFinding] {
         let prompt = """
         You are a senior code reviewer. Analyze the diff between "\(sourceBranch)" and "\(targetBranch)" and find bugs, security issues, and architectural problems.
 
         Source: \(sourceBranch)
         Target: \(targetBranch)
+
+        Repository conventions:
+        \(repoContextBlock(repoContext))
 
         Diff stat:
         \(diffStat.prefix(AILimits.maxDiffStatLength))
@@ -384,20 +418,22 @@ actor AIClient {
         \(diff.prefix(AILimits.maxDiffContentLength))
 
         Output format — one finding per line, pipe-delimited:
-        SEVERITY|FILE|MESSAGE
+        SEVERITY|FILE|MESSAGE|EVIDENCE|TEST_IMPACT
 
         Where SEVERITY is one of: critical, warning, suggestion
         FILE is the affected filename (or "general" if not file-specific)
         MESSAGE is a concise description of the issue
+        EVIDENCE is a short quote or hunk summary grounding the finding, or "-"
+        TEST_IMPACT is a likely test area or missing coverage hint, or "-"
 
         Rules:
         - Output ONLY the pipe-delimited lines, nothing else
         - Focus on real issues: logic bugs, security vulnerabilities, breaking changes
         - Maximum 15 findings
-        - If the code looks good, output a single line: suggestion|general|No issues found between branches.
+        - If the code looks good, output a single line: suggestion|general|No issues found between branches.|-|-
         """
-        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.branchReviewTokens)
-        return parseReviewFindings(raw)
+        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.branchReviewTokens, lane: .review, mode: mode)
+        return Self.parseReviewFindings(raw)
     }
 
     // MARK: - Changelog Generator
@@ -407,7 +443,8 @@ actor AIClient {
         fromRef: String,
         toRef: String,
         provider: AIProvider,
-        apiKey: String
+        apiKey: String,
+        mode: AIMode
     ) async throws -> String {
         let prompt = """
         You are a release notes generator. Create a categorized changelog from the commit log below.
@@ -439,7 +476,7 @@ actor AIClient {
         - Be concise but informative
         - Output ONLY the markdown, nothing else
         """
-        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.changelogTokens)
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.changelogTokens, lane: .general, mode: mode)
     }
 
     // MARK: - Semantic Search
@@ -448,7 +485,8 @@ actor AIClient {
         query: String,
         candidates: [AIHistorySearchCandidate],
         provider: AIProvider,
-        apiKey: String
+        apiKey: String,
+        mode: AIMode
     ) async throws -> AIHistorySearchResult {
         guard !candidates.isEmpty else {
             return AIHistorySearchResult(answer: "", matches: [])
@@ -474,7 +512,7 @@ actor AIClient {
         - If nothing looks relevant, still provide an ANSWER and then output: MATCH: NONE
         - Output ONLY the ANSWER and MATCH lines, nothing else
         """
-        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.semanticSearchTokens)
+        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.semanticSearchTokens, lane: .general, mode: mode)
         let parsed = Self.parseHistorySearchResponse(raw)
         let allowedHashes = Set(candidates.map { $0.shortHash.lowercased() })
         var seen = Set<String>()
@@ -493,7 +531,8 @@ actor AIClient {
         commitLog: String,
         diffStat: String,
         provider: AIProvider,
-        apiKey: String
+        apiKey: String,
+        mode: AIMode
     ) async throws -> String {
         let prompt = """
         You are a branch summarizer. Write a single-sentence summary of what this branch does.
@@ -512,7 +551,7 @@ actor AIClient {
         - Be specific and informative
         - Output ONLY the sentence, nothing else
         """
-        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.branchSummaryTokens)
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.branchSummaryTokens, lane: .cheapSummary, mode: mode)
     }
 
     // MARK: - Blame Explainer
@@ -524,7 +563,9 @@ actor AIClient {
         commitSubject: String,
         regionContent: String,
         provider: AIProvider,
-        apiKey: String
+        apiKey: String,
+        mode: AIMode,
+        repoContext: String = ""
     ) async throws -> String {
         let prompt = """
         You are a code historian. Explain WHY this code change was made based on the commit context.
@@ -538,13 +579,16 @@ actor AIClient {
         Commit diff for this file:
         \(commitDiff.prefix(AILimits.maxBlameDiffLength))
 
+        Repository conventions:
+        \(repoContextBlock(repoContext))
+
         Rules:
         - 2-3 sentences explaining the intent behind the change
         - Focus on WHY, not WHAT (the user can see the code)
         - Plain English, no code blocks
         - Output ONLY the explanation
         """
-        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.blameExplanationTokens)
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.blameExplanationTokens, lane: .reasoning, mode: mode)
     }
 
     // MARK: - Commit Split Advisor
@@ -553,10 +597,15 @@ actor AIClient {
         diff: String,
         diffStat: String,
         provider: AIProvider,
-        apiKey: String
+        apiKey: String,
+        mode: AIMode,
+        repoContext: String = ""
     ) async throws -> [CommitSuggestion] {
         let prompt = """
         You are a Git best practices advisor. The user has staged a large change. Suggest how to split it into atomic commits.
+
+        Repository conventions:
+        \(repoContextBlock(repoContext))
 
         Diff stat:
         \(diffStat.prefix(AILimits.maxDiffStatLength))
@@ -575,7 +624,7 @@ actor AIClient {
         - List exact file paths from the diff stat
         - Output ONLY the formatted blocks, nothing else
         """
-        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.commitSplitTokens)
+        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.commitSplitTokens, lane: .reasoning, mode: mode)
         return parseCommitSuggestions(raw)
     }
 
@@ -585,10 +634,15 @@ actor AIClient {
         fileDiff: String,
         fileName: String,
         provider: AIProvider,
-        apiKey: String
+        apiKey: String,
+        mode: AIMode,
+        repoContext: String = ""
     ) async throws -> DiffExplanation {
         let prompt = """
         You are a senior code reviewer explaining a diff to a tech lead. Analyze the diff for "\(fileName)" and provide a structured explanation.
+
+        Repository conventions:
+        \(repoContextBlock(repoContext))
 
         Diff:
         \(fileDiff.prefix(AILimits.maxDiffContentLength))
@@ -607,7 +661,7 @@ actor AIClient {
         - "risky" = breaking changes, security implications, or complex logic
         - Be specific and technical, not generic
         """
-        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.detailedDiffTokens)
+        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.detailedDiffTokens, lane: .review, mode: mode)
         return parseDiffExplanation(raw)
     }
 
@@ -617,29 +671,36 @@ actor AIClient {
         fileDiff: String,
         fileName: String,
         provider: AIProvider,
-        apiKey: String
+        apiKey: String,
+        mode: AIMode,
+        repoContext: String = ""
     ) async throws -> [ReviewFinding] {
         let prompt = """
         You are a senior code reviewer. Analyze the diff for the file "\(fileName)" and find bugs, security issues, and problems.
+
+        Repository conventions:
+        \(repoContextBlock(repoContext))
 
         Diff:
         \(fileDiff.prefix(AILimits.maxDiffContentLength))
 
         Output format — one finding per line, pipe-delimited:
-        SEVERITY|FILE|MESSAGE
+        SEVERITY|FILE|MESSAGE|EVIDENCE|TEST_IMPACT
 
         Where SEVERITY is one of: critical, warning, suggestion
         FILE is "\(fileName)"
         MESSAGE is a concise description of the issue
+        EVIDENCE is a short quote or hunk summary grounding the finding, or "-"
+        TEST_IMPACT is a likely test area or missing coverage hint, or "-"
 
         Rules:
         - Output ONLY the pipe-delimited lines, nothing else
         - Focus on real issues in THIS specific file
         - Maximum 5 findings per file
-        - If the code looks good, output: suggestion|\(fileName)|No issues found.
+        - If the code looks good, output: suggestion|\(fileName)|No issues found.|-|-
         """
-        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.fileReviewTokens)
-        return parseReviewFindings(raw)
+        let raw = try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.fileReviewTokens, lane: .review, mode: mode)
+        return Self.parseReviewFindings(raw)
     }
 
     // MARK: - Pending Changes Summary
@@ -648,7 +709,8 @@ actor AIClient {
         diffStat: String,
         fileList: String,
         provider: AIProvider,
-        apiKey: String
+        apiKey: String,
+        mode: AIMode
     ) async throws -> String {
         let prompt = """
         You are a developer assistant. Summarize what the developer has been working on based on their pending (uncommitted) changes.
@@ -665,27 +727,54 @@ actor AIClient {
         - Example: "You've been refactoring the auth module and fixing sidebar CSS."
         - Output ONLY the summary, nothing else
         """
-        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.pendingSummaryTokens)
+        return try await call(prompt: prompt, provider: provider, apiKey: apiKey, maxTokens: AILimits.pendingSummaryTokens, lane: .cheapSummary, mode: mode)
     }
 
     // MARK: - Private
 
-    private func call(prompt: String, provider: AIProvider, apiKey: String, maxTokens: Int) async throws -> String {
-        switch provider {
-        case .anthropic:
-            return try await callAnthropic(prompt: prompt, apiKey: apiKey, maxTokens: maxTokens)
-        case .openai:
-            return try await callOpenAI(prompt: prompt, apiKey: apiKey, maxTokens: maxTokens)
-        case .gemini:
-            return try await callGemini(prompt: prompt, apiKey: apiKey, maxTokens: maxTokens)
-        case .none:
-            throw AIError.noProvider
+    private func call(
+        prompt: String,
+        provider: AIProvider,
+        apiKey: String,
+        maxTokens: Int,
+        lane: AITaskLane,
+        mode: AIMode
+    ) async throws -> String {
+        let selection = AIModelCatalogService.selection(for: provider, mode: mode, lane: lane)
+        let candidates = selection.allCandidateModelIDs.filter { !$0.isEmpty }
+        guard !candidates.isEmpty else { throw AIError.noProvider }
+
+        var lastError: Error?
+        for modelID in candidates {
+            do {
+                switch provider {
+                case .anthropic:
+                    return try await callAnthropic(prompt: prompt, apiKey: apiKey, maxTokens: maxTokens, modelID: modelID)
+                case .openai:
+                    return try await callOpenAI(prompt: prompt, apiKey: apiKey, maxTokens: maxTokens, modelID: modelID)
+                case .gemini:
+                    return try await callGemini(prompt: prompt, apiKey: apiKey, maxTokens: maxTokens, modelID: modelID)
+                case .none:
+                    throw AIError.noProvider
+                }
+            } catch let error as AIError {
+                switch error {
+                case .apiError, .invalidResponse:
+                    lastError = error
+                    continue
+                default:
+                    throw error
+                }
+            } catch {
+                lastError = error
+            }
         }
+
+        throw lastError ?? AIError.invalidResponse
     }
 
-    private func callGemini(prompt: String, apiKey: String, maxTokens: Int) async throws -> String {
-        // Using gemini-2.5-flash-lite: the fastest and most cost-effective model
-        let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent")!
+    private func callGemini(prompt: String, apiKey: String, maxTokens: Int, modelID: String) async throws -> String {
+        let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/\(modelID):generateContent")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -727,7 +816,7 @@ actor AIClient {
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private func callAnthropic(prompt: String, apiKey: String, maxTokens: Int) async throws -> String {
+    private func callAnthropic(prompt: String, apiKey: String, maxTokens: Int, modelID: String) async throws -> String {
         let url = URL(string: "https://api.anthropic.com/v1/messages")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -737,7 +826,7 @@ actor AIClient {
         request.timeoutInterval = 30
 
         let body: [String: Any] = [
-            "model": "claude-3-5-haiku-20241022",
+            "model": modelID,
             "max_tokens": maxTokens,
             "messages": [
                 ["role": "user", "content": prompt]
@@ -763,7 +852,7 @@ actor AIClient {
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private func callOpenAI(prompt: String, apiKey: String, maxTokens: Int) async throws -> String {
+    private func callOpenAI(prompt: String, apiKey: String, maxTokens: Int, modelID: String) async throws -> String {
         let url = URL(string: "https://api.openai.com/v1/chat/completions")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -772,7 +861,7 @@ actor AIClient {
         request.timeoutInterval = 30
 
         let body: [String: Any] = [
-            "model": "gpt-4o-mini",
+            "model": modelID,
             "messages": [
                 ["role": "user", "content": prompt]
             ],
@@ -855,17 +944,27 @@ actor AIClient {
         return AIHistorySearchResult(answer: answer, matches: Array(matches.prefix(5)))
     }
 
-    private func parseReviewFindings(_ raw: String) -> [ReviewFinding] {
+    static func parseReviewFindings(_ raw: String) -> [ReviewFinding] {
         raw.split(separator: "\n").compactMap { line in
-            let parts = line.split(separator: "|", maxSplits: 2).map { String($0).trimmingCharacters(in: .whitespaces) }
-            guard parts.count == 3 else { return nil }
+            let parts = line.split(separator: "|", omittingEmptySubsequences: false).map {
+                String($0).trimmingCharacters(in: .whitespaces)
+            }
+            guard parts.count == 3 || parts.count == 5 else { return nil }
             let severity: ReviewFinding.ReviewSeverity
             switch parts[0].lowercased() {
             case "critical": severity = .critical
             case "warning": severity = .warning
             default: severity = .suggestion
             }
-            return ReviewFinding(severity: severity, file: parts[1], message: parts[2])
+            let evidence = parts.count > 3 ? parts[3] : nil
+            let testImpact = parts.count > 4 ? parts[4] : nil
+            return ReviewFinding(
+                severity: severity,
+                file: parts[1],
+                message: parts[2],
+                evidence: evidence,
+                testImpact: testImpact
+            )
         }
     }
 
@@ -920,6 +1019,12 @@ actor AIClient {
             narrative: narrative.isEmpty ? "" : narrative,
             severity: severity
         )
+    }
+
+    private func repoContextBlock(_ repoContext: String) -> String {
+        let trimmed = repoContext.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "-" }
+        return String(trimmed.prefix(AILimits.maxRepoContextLength))
     }
 
     private func parsePRResponse(_ raw: String) -> (title: String, body: String) {

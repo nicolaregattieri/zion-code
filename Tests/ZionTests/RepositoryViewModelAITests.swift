@@ -167,6 +167,69 @@ final class RepositoryViewModelAITests: XCTestCase {
         XCTAssertEqual(ranked.first?.shortHash, "2222222")
     }
 
+    func testParseReviewFindingsSupportsEvidenceAndTestImpact() {
+        let raw = """
+        warning|Sources/Zion/AI.swift|Potential nil handling gap|guard path stays optional|Add a regression test for empty input
+        """
+
+        let findings = AIClient.parseReviewFindings(raw)
+
+        XCTAssertEqual(findings.count, 1)
+        XCTAssertEqual(findings.first?.file, "Sources/Zion/AI.swift")
+        XCTAssertEqual(findings.first?.evidence, "guard path stays optional")
+        XCTAssertEqual(findings.first?.testImpact, "Add a regression test for empty input")
+    }
+
+    func testParseReviewFindingsKeepsBackwardCompatibility() {
+        let raw = "suggestion|general|Code looks good — no issues found."
+
+        let findings = AIClient.parseReviewFindings(raw)
+
+        XCTAssertEqual(findings.count, 1)
+        XCTAssertNil(findings.first?.evidence)
+        XCTAssertNil(findings.first?.testImpact)
+    }
+
+    func testModelCatalogKeepsEfficientOpenAIOnAffordableDefault() {
+        let selection = AIModelCatalogService.selection(for: .openai, mode: .efficient, lane: .review)
+
+        XCTAssertEqual(selection.primaryModelID, "gpt-4o-mini")
+        XCTAssertTrue(selection.fallbackModelIDs.contains("gpt-5-mini"))
+    }
+
+    func testModelCatalogUpgradesReviewLaneForSmartAnthropic() {
+        let selection = AIModelCatalogService.selection(for: .anthropic, mode: .smart, lane: .review)
+
+        XCTAssertEqual(selection.primaryModelID, "claude-sonnet-4-0")
+        XCTAssertTrue(selection.fallbackModelIDs.contains("claude-3-5-haiku-20241022"))
+    }
+
+    func testParseFileHintsFromDiffStatExtractsPaths() {
+        let diffStat = """
+         Sources/Zion/ViewModel/RepositoryViewModel+AI.swift | 12 +++++++-----
+         Tests/ZionTests/RepositoryViewModelAITests.swift    | 10 ++++++++--
+        """
+
+        let files = RepositoryViewModel.parseFileHints(fromDiffStat: diffStat)
+
+        XCTAssertEqual(files, [
+            "Sources/Zion/ViewModel/RepositoryViewModel+AI.swift",
+            "Tests/ZionTests/RepositoryViewModelAITests.swift",
+        ])
+    }
+
+    func testDeriveModulesPrefersNestedFolders() {
+        let modules = RepositoryViewModel.deriveModules(
+            from: [
+                "Sources/Zion/ViewModel/RepositoryViewModel+AI.swift",
+                "Tests/ZionTests/RepositoryViewModelAITests.swift",
+            ],
+            limit: 4
+        )
+
+        XCTAssertEqual(modules, ["Zion", "Sources", "ZionTests", "Tests"])
+    }
+
     // MARK: - recalculateCodeReviewStats
 
     func testRecalculateCodeReviewStatsTotals() {
