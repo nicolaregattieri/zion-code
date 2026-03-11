@@ -172,6 +172,7 @@ struct TerminalTabView: NSViewRepresentable {
         var lastAppliedTransparent: Bool = false
         private var pendingResizeTask: Task<Void, Never>?
         private var shiftEnterMonitor: Any?
+        private var keyDownMonitor: Any?
         private var mouseDownMonitor: Any?
         private var mouseDragMonitor: Any?
         private var mouseUpMonitor: Any?
@@ -180,6 +181,7 @@ struct TerminalTabView: NSViewRepresentable {
         private var pendingOutputFlushTask: Task<Void, Never>?
         private var pointerDownInTerminal = false
         private var dragSelectionFreezeActive = false
+        private var persistentSelectionFreezeActive = false
         private var preciseScrollLineAccumulator: CGFloat = 0
         private static let outputFlushIntervalNanos: UInt64 = 8_000_000
         private static let maxBufferedOutputDuringDragSelection = 1_048_576
@@ -232,6 +234,21 @@ struct TerminalTabView: NSViewRepresentable {
             maxBufferedBytes: Int
         ) -> Bool {
             bufferedByteCount >= maxBufferedBytes
+        }
+
+        static func shouldKeepSelectionFreezeAfterMouseUp(hasSelection: Bool) -> Bool {
+            hasSelection
+        }
+
+        static func shouldReleasePersistentSelectionFreezeOnMouseDown(hasPersistentSelectionFreeze: Bool) -> Bool {
+            hasPersistentSelectionFreeze
+        }
+
+        static func shouldReleasePersistentSelectionFreezeOnKeyDown(
+            hasPersistentSelectionFreeze: Bool,
+            hasCommandModifier: Bool
+        ) -> Bool {
+            hasPersistentSelectionFreeze && !hasCommandModifier
         }
 
         func ensureOwnerBinding(reason: String) {
@@ -388,6 +405,7 @@ struct TerminalTabView: NSViewRepresentable {
             pendingTerminalOutput.removeAll(keepingCapacity: false)
             pointerDownInTerminal = false
             dragSelectionFreezeActive = false
+            persistentSelectionFreezeActive = false
             parent.session._shellPid = 0
             if isCurrentOwner() {
                 parent.session._processBridge = nil
@@ -437,9 +455,27 @@ struct TerminalTabView: NSViewRepresentable {
         }
 
         private func installMouseInteractionMonitors() {
+            if keyDownMonitor == nil {
+                keyDownMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+                    guard let self else { return event }
+                    if Self.shouldReleasePersistentSelectionFreezeOnKeyDown(
+                        hasPersistentSelectionFreeze: self.persistentSelectionFreezeActive,
+                        hasCommandModifier: event.modifierFlags.contains(.command)
+                    ) {
+                        self.releasePersistentSelectionFreezeIfNeeded(flushImmediately: true)
+                    }
+                    return event
+                }
+            }
+
             if mouseDownMonitor == nil {
                 mouseDownMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
                     guard let self else { return event }
+                    if Self.shouldReleasePersistentSelectionFreezeOnMouseDown(
+                        hasPersistentSelectionFreeze: self.persistentSelectionFreezeActive
+                    ) {
+                        self.releasePersistentSelectionFreezeIfNeeded(flushImmediately: true)
+                    }
                     guard self.isTerminalFocused else { return event }
                     self.pointerDownInTerminal = true
                     return event
@@ -459,7 +495,7 @@ struct TerminalTabView: NSViewRepresentable {
                 guard let self else { return event }
                 defer {
                     self.pointerDownInTerminal = false
-                    self.endDragSelectionFreezeIfNeeded()
+                    self.persistOrEndSelectionFreezeIfNeeded()
                 }
 
                 guard self.isTerminalFocused else { return event }
@@ -501,6 +537,10 @@ struct TerminalTabView: NSViewRepresentable {
         }
 
         private func removeMouseInteractionMonitors() {
+            if let monitor = keyDownMonitor {
+                NSEvent.removeMonitor(monitor)
+                keyDownMonitor = nil
+            }
             if let monitor = mouseDownMonitor {
                 NSEvent.removeMonitor(monitor)
                 mouseDownMonitor = nil
@@ -520,6 +560,10 @@ struct TerminalTabView: NSViewRepresentable {
             preciseScrollLineAccumulator = 0
         }
 
+        private var isTerminalOutputFrozen: Bool {
+            dragSelectionFreezeActive || persistentSelectionFreezeActive
+        }
+
         private func resetPreciseScrollAccumulatorIfNeeded(for event: NSEvent) {
             let endedPhases: NSEvent.Phase = [.ended, .cancelled]
             if endedPhases.contains(event.phase) || endedPhases.contains(event.momentumPhase) {
@@ -535,6 +579,7 @@ struct TerminalTabView: NSViewRepresentable {
                 allowMouseReporting: view.allowMouseReporting,
                 prioritizeSelectionInteraction: view.prioritizeSelectionInteraction
             ) else { return }
+            persistentSelectionFreezeActive = false
             dragSelectionFreezeActive = true
         }
 
@@ -544,15 +589,39 @@ struct TerminalTabView: NSViewRepresentable {
             flushPendingTerminalOutput(force: true)
         }
 
+        private func persistOrEndSelectionFreezeIfNeeded() {
+            guard dragSelectionFreezeActive || persistentSelectionFreezeActive else { return }
+            let hasSelection = terminalView?.selectionActive == true
+            if dragSelectionFreezeActive,
+               Self.shouldKeepSelectionFreezeAfterMouseUp(hasSelection: hasSelection) {
+                dragSelectionFreezeActive = false
+                persistentSelectionFreezeActive = true
+                return
+            }
+
+            releasePersistentSelectionFreezeIfNeeded(flushImmediately: false)
+            endDragSelectionFreezeIfNeeded()
+        }
+
+        private func releasePersistentSelectionFreezeIfNeeded(flushImmediately: Bool) {
+            guard persistentSelectionFreezeActive else { return }
+            persistentSelectionFreezeActive = false
+            if flushImmediately {
+                flushPendingTerminalOutput(force: true)
+            }
+        }
+
         private func queueTerminalOutput(_ slice: ArraySlice<UInt8>) {
             guard !slice.isEmpty else { return }
             pendingTerminalOutput.append(contentsOf: slice)
 
-            if dragSelectionFreezeActive {
+            if isTerminalOutputFrozen {
                 if Self.shouldForceFlushWhileDragFrozen(
                     bufferedByteCount: pendingTerminalOutput.count,
                     maxBufferedBytes: Self.maxBufferedOutputDuringDragSelection
                 ) {
+                    persistentSelectionFreezeActive = false
+                    dragSelectionFreezeActive = false
                     flushPendingTerminalOutput(force: true)
                 }
                 return
@@ -573,7 +642,7 @@ struct TerminalTabView: NSViewRepresentable {
 
         private func flushPendingTerminalOutput(force: Bool = false) {
             guard !pendingTerminalOutput.isEmpty else { return }
-            guard force || !dragSelectionFreezeActive else { return }
+            guard force || !isTerminalOutputFrozen else { return }
 
             if terminalView == nil, let rebound = parent.session._cachedView as? SwiftTerm.TerminalView {
                 terminalView = rebound
@@ -592,7 +661,7 @@ struct TerminalTabView: NSViewRepresentable {
             view.feed(byteArray: bytes[...])
             parent.model?.notifyTerminalOutput(sessionID: parent.session.id, data: payload)
 
-            if !pendingTerminalOutput.isEmpty, !dragSelectionFreezeActive {
+            if !pendingTerminalOutput.isEmpty, !isTerminalOutputFrozen {
                 schedulePendingOutputFlushIfNeeded()
             }
         }
