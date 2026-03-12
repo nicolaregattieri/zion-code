@@ -20,12 +20,24 @@ enum TerminalInlineImageSupport {
         _zd_maxpx="${ZION_IMAGE_MAX_WIDTH:-$_zd_default_maxpx}"
         _zd_maxhpx="${ZION_IMAGE_MAX_HEIGHT:-$_zd_default_maxhpx}"
         _zd_maxb64=2097152    # 2 MB base64 limit (prevents terminal flooding)
+        _zd_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+        _zd_image_dir="${ZION_IMAGE_DIR:-$_zd_root/zion-image}"
+        _zd_stage_dir="$_zd_image_dir/.staging"
 
         _zd_require_int() {
             case "$1" in
                 ''|*[!0-9]*) return 1 ;;
                 *) return 0 ;;
             esac
+        }
+
+        _zd_prepare_dirs() {
+            mkdir -p "$_zd_image_dir" "$_zd_stage_dir"
+        }
+
+        _zd_make_stage_png() {
+            _zd_prepare_dirs
+            mktemp "$_zd_stage_dir/render_XXXXXX.png"
         }
 
         while [ $# -gt 0 ]; do
@@ -37,7 +49,7 @@ enum TerminalInlineImageSupport {
         Usage: zion_display [--save] [--width pixels] <file>
 
         Options:
-          --save            Save a copy to .zion/previews/ in the current git repo
+          --save            Save a copy to zion-image/ in the current git repo
           --width pixels    Override the max render width in pixels
           --help            Show this help
 
@@ -50,6 +62,8 @@ enum TerminalInlineImageSupport {
           ZION_IMAGE_DISPLAY=1    Set when this feature is active
           ZION_TTY                Terminal device path (set by Zion)
           ZION_IMAGE_MAX_WIDTH    Default max render width override
+          ZION_IMAGE_MAX_HEIGHT   Default max render height override
+          ZION_IMAGE_DIR          Save and staging directory override
 
         Examples:
           zion_display screenshot.png
@@ -120,7 +134,7 @@ enum TerminalInlineImageSupport {
                 # Downscale large raster images to keep payload manageable.
                 _zd_w=$(sips -g pixelWidth "$f" 2>/dev/null | awk '/pixelWidth/{print $2}')
                 if [ -n "$_zd_w" ] && [ "$_zd_w" -gt "$_zd_maxpx" ] 2>/dev/null; then
-                    tmp=$(mktemp "${TMPDIR:-/tmp}/zion_img_XXXXXX.png")
+                    tmp=$(_zd_make_stage_png)
                     sips --resampleWidth "$_zd_maxpx" "$f" --out "$tmp" >/dev/null 2>&1
                     if [ -f "$tmp" ] && [ -s "$tmp" ]; then
                         f="$tmp"; _zd_cleanup=1
@@ -130,15 +144,16 @@ enum TerminalInlineImageSupport {
                 fi
                 ;;
             image/svg+xml)
-                tmp=$(mktemp "${TMPDIR:-/tmp}/zion_img_XXXXXX.png")
+                tmp=$(_zd_make_stage_png)
                 # Try zion_svg2png first (bundled, sandbox-safe, uses CoreSVG).
                 if command -v zion_svg2png >/dev/null 2>&1; then
                     zion_svg2png "$f" "$_zd_maxpx" --out "$tmp" 2>/dev/null
                 fi
                 # Fallback 1: qlmanage (best quality but needs WindowServer).
                 if [ ! -s "$tmp" ]; then
-                    qlmanage -t -s "$_zd_maxpx" -o "${TMPDIR:-/tmp}" "$f" >/dev/null 2>&1 \\
-                        && mv "${TMPDIR:-/tmp}/$(basename "$f").png" "$tmp" 2>/dev/null
+                    _zd_prepare_dirs
+                    qlmanage -t -s "$_zd_maxpx" -o "$_zd_stage_dir" "$f" >/dev/null 2>&1 \\
+                        && mv "$_zd_stage_dir/$(basename "$f").png" "$tmp" 2>/dev/null
                 fi
                 # Fallback 2: sips (uses ImageIO, handles simpler SVGs).
                 if [ ! -s "$tmp" ]; then
@@ -220,13 +235,11 @@ enum TerminalInlineImageSupport {
         _zd_send > "$_zd_out"
 
         if [ "$_zd_save" = 1 ]; then
-            root=$(git rev-parse --show-toplevel 2>/dev/null || echo ".")
-            dir="$root/.zion/previews"
-            mkdir -p "$dir"
+            _zd_prepare_dirs
             ts=$(date +%Y-%m-%d_%H%M%S)
             base=$(basename "$_zd_orig")
-            cp "$_zd_orig" "$dir/${ts}_${base}"
-            echo "Saved: $dir/${ts}_${base}"
+            cp "$_zd_orig" "$_zd_image_dir/${ts}_${base}"
+            echo "Saved: $_zd_image_dir/${ts}_${base}"
         fi
 
         [ "$_zd_cleanup" = 1 ] && rm -f "$f"
@@ -247,16 +260,16 @@ enum TerminalInlineImageSupport {
            - Allowed: `<rect>`, `<circle>`, `<ellipse>`, `<line>`, `<polyline>`, `<polygon>`, `<path>`, `<text>`, `<g>`, `<defs>`, `<linearGradient>`, `<radialGradient>`, `<clipPath>`
            - Forbidden: `<foreignObject>`, `<filter>`, `<feGaussianBlur>`, `<mask>`, CSS `@import`, external refs
            - Keep under 50KB
-        2. Save to `~/Library/Caches/Zion/images/<name>.svg`
+        2. Save to `zion-image/<name>.svg` in the project root
         3. One-line description of what you drew.
-        4. Run `~/.zion/bin/zion_display ~/Library/Caches/Zion/images/<name>.svg` as a standalone terminal command.
+        4. Run `~/.zion/bin/zion_display zion-image/<name>.svg` as a standalone terminal command.
         5. `zion_display` auto-fits the image to the active pane. If you need a smaller render, pass `--width <pixels>`.
         6. On failure, simplify SVG (remove gradients/text/complex paths) and retry once.
         7. On second failure, generate a PNG directly using Python if available:
            `python3 -c "from PIL import Image, ImageDraw; ..."`
            If no Python/PIL, report the error with the hint: `brew install librsvg`
 
-        With `--save`: use `~/.zion/bin/zion_display --save <file>` instead.
+        With `--save`: use `~/.zion/bin/zion_display --save <file>` to copy the source into `zion-image/`.
 
         **Rules:**
         - Describe BEFORE displaying.

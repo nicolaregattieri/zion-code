@@ -7,21 +7,27 @@ final class TerminalInlineImageSupportTests: XCTestCase {
         let script = TerminalInlineImageSupport.zionDisplayScript()
 
         XCTAssertTrue(script.contains("Usage: zion_display [--save] [--width pixels] <file>"))
+        XCTAssertTrue(script.contains("Save a copy to zion-image/ in the current git repo"))
+        XCTAssertTrue(script.contains("ZION_IMAGE_DIR"))
+        XCTAssertTrue(script.contains("_zd_image_dir=\"${ZION_IMAGE_DIR:-$_zd_root/zion-image}\""))
         XCTAssertTrue(script.contains("ZION_IMAGE_MAX_HEIGHT"))
         XCTAssertTrue(script.contains("height=%dpx"))
         XCTAssertTrue(script.contains("Resolve output target: ZION_TTY > /dev/tty > fail loudly."))
         XCTAssertTrue(script.contains("no terminal TTY available for inline rendering"))
         XCTAssertFalse(script.contains("> stdout"))
+        XCTAssertFalse(script.contains(".zion/previews"))
     }
 
     func testZionImgPromptRequiresStandaloneDisplayStep() {
         let prompt = TerminalInlineImageSupport.zionImgPrompt()
 
         XCTAssertTrue(prompt.contains("standalone terminal command"))
+        XCTAssertTrue(prompt.contains("zion-image/<name>.svg"))
         XCTAssertTrue(prompt.contains("Never combine create-and-display into one compound shell command."))
         XCTAssertTrue(prompt.contains("Do not pipe, chain, or background the `zion_display` step."))
         XCTAssertTrue(prompt.contains("auto-fits the image to the active pane"))
         XCTAssertTrue(prompt.contains("After displaying, do not add follow-up narration unless the user asked for it."))
+        XCTAssertFalse(prompt.contains("~/Library/Caches/Zion/images"))
     }
 
     func testZionDisplayDoesNotLeakPayloadToStdoutWithoutTTY() throws {
@@ -48,6 +54,7 @@ final class TerminalInlineImageSupportTests: XCTestCase {
         process.arguments = [scriptURL.path, imageURL.path]
         process.environment = [
             "PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
+            "ZION_IMAGE_DIR": tempDir.appendingPathComponent("zion-image", isDirectory: true).path,
         ]
 
         let stdout = Pipe()
