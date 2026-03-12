@@ -718,6 +718,18 @@ struct TerminalTabView: NSViewRepresentable {
             try? fm.createDirectory(atPath: zionBinDir, withIntermediateDirectories: true)
 
             if aiImageDisplay {
+                // Deploy bundled zion_svg2png binary (sandbox-safe SVG converter)
+                if let execURL = Bundle.main.executableURL {
+                    let svg2pngSource = execURL.deletingLastPathComponent()
+                        .appendingPathComponent("zion_svg2png")
+                    let svg2pngDest = "\(zionBinDir)/zion_svg2png"
+                    if fm.fileExists(atPath: svg2pngSource.path) {
+                        try? fm.removeItem(atPath: svg2pngDest)
+                        try? fm.copyItem(atPath: svg2pngSource.path, toPath: svg2pngDest)
+                        try? fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: svg2pngDest)
+                    }
+                }
+
                 let script = """
                 #!/bin/zsh
                 # zion_display — display images inline in Zion terminal (iTerm2 OSC 1337)
@@ -739,7 +751,7 @@ struct TerminalTabView: NSViewRepresentable {
                   --help    Show this help
 
                 Supported formats: PNG, JPEG, GIF, SVG
-                SVG files are converted to PNG via macOS qlmanage (no dependencies).
+                SVG files are converted to PNG via bundled zion_svg2png (sandbox-safe).
                 Large raster images are downscaled to 600px width automatically.
                 Uses iTerm2 inline image protocol (OSC 1337).
 
@@ -780,20 +792,27 @@ struct TerminalTabView: NSViewRepresentable {
                         ;;
                     image/svg+xml)
                         tmp=$(mktemp "${TMPDIR:-/tmp}/zion_img_XXXXXX.png")
-                        # Try qlmanage first (best quality for SVGs)
-                        qlmanage -t -s "$_zd_maxpx" -o "${TMPDIR:-/tmp}" "$f" >/dev/null 2>&1 \\
-                            && mv "${TMPDIR:-/tmp}/$(basename "$f").png" "$tmp" 2>/dev/null
-                        # Fallback 1: sips (uses ImageIO, handles simpler SVGs)
+                        # Try zion_svg2png first (bundled, sandbox-safe, uses CoreSVG)
+                        if command -v zion_svg2png >/dev/null 2>&1; then
+                            zion_svg2png "$f" "$_zd_maxpx" --out "$tmp" 2>/dev/null
+                        fi
+                        # Fallback 1: qlmanage (best quality but needs WindowServer)
+                        if [ ! -s "$tmp" ]; then
+                            qlmanage -t -s "$_zd_maxpx" -o "${TMPDIR:-/tmp}" "$f" >/dev/null 2>&1 \\
+                                && mv "${TMPDIR:-/tmp}/$(basename "$f").png" "$tmp" 2>/dev/null
+                        fi
+                        # Fallback 2: sips (uses ImageIO, handles simpler SVGs)
                         if [ ! -s "$tmp" ]; then
                             sips -s format png -Z "$_zd_maxpx" "$f" --out "$tmp" >/dev/null 2>&1
                         fi
-                        # Fallback 2: rsvg-convert (if installed via Homebrew)
+                        # Fallback 3: rsvg-convert (if installed via Homebrew)
                         if [ ! -s "$tmp" ] && command -v rsvg-convert >/dev/null 2>&1; then
                             rsvg-convert -w "$_zd_maxpx" -o "$tmp" "$f" 2>/dev/null
                         fi
                         if [ ! -s "$tmp" ]; then
                             rm -f "$tmp"
-                            echo "zion_display: SVG conversion failed (tried qlmanage, sips, rsvg-convert)" >&2
+                            echo "zion_display: SVG conversion failed. All converters failed." >&2
+                            echo "  Hint: brew install librsvg (adds rsvg-convert)" >&2
                             exit 1
                         fi
                         f="$tmp"; _zd_cleanup=1
@@ -876,6 +895,9 @@ struct TerminalTabView: NSViewRepresentable {
                 3. One-line description of what you drew.
                 4. Run: `~/.zion/bin/zion_display ~/Library/Caches/Zion/images/<name>.svg`
                 5. On failure, simplify SVG (remove gradients/text/complex paths) and retry once.
+                6. On second failure, generate a PNG directly using Python if available:
+                   `python3 -c "from PIL import Image, ImageDraw; ..."`
+                   If no Python/PIL, report the error with the hint: `brew install librsvg`
 
                 With `--save`: use `~/.zion/bin/zion_display --save <file>` instead.
 
