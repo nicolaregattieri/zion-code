@@ -425,7 +425,7 @@ extension RepositoryViewModel {
                 if setBusy {
                     isBusy = false
                     if clearRepositorySwitchStateOnBusyCompletion, isSwitchingRepository {
-                        isSwitchingRepository = false
+                        clearRepositorySwitchState()
                     }
                 }
                 if didSelectedCommitChange {
@@ -450,7 +450,7 @@ extension RepositoryViewModel {
                 if setBusy {
                     isBusy = false
                     if clearRepositorySwitchStateOnBusyCompletion, isSwitchingRepository {
-                        isSwitchingRepository = false
+                        clearRepositorySwitchState()
                     }
                 }
                 logger.log(.info, "refreshRepository cancelled", context: "request=\(requestID.uuidString.prefix(8)) busy=\(setBusy)", source: #function)
@@ -462,7 +462,7 @@ extension RepositoryViewModel {
                 if setBusy {
                     isBusy = false
                     if clearRepositorySwitchStateOnBusyCompletion, isSwitchingRepository {
-                        isSwitchingRepository = false
+                        clearRepositorySwitchState()
                     }
                 }
                 handleError(error)

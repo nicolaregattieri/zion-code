@@ -261,7 +261,7 @@ struct ContentView: View {
                 }
             }
         }
-        .animation(DesignSystem.Motion.detail, value: model.isRepositorySwitching)
+        .animation(DesignSystem.Motion.detail, value: model.isRepositorySwitchBlocking)
     }
 
     private func applyPresentationModifiers<Content: View>(to view: Content) -> some View {
@@ -388,11 +388,11 @@ struct ContentView: View {
     private var detailContainer: some View {
         detailViewHost
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .allowsHitTesting(!model.isRepositorySwitching)
+            .allowsHitTesting(!model.isRepositorySwitchBlocking)
             .padding(.bottom, statusBarClearance)
             .background(DesignSystem.Colors.background)
             .overlay {
-                if model.isRepositorySwitching {
+                if model.isRepositorySwitchBlocking {
                     ZionLoadingOverlay()
                         .transition(.opacity)
                 }

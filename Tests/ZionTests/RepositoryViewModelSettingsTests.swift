@@ -377,6 +377,87 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
         XCTAssertFalse(vm.hasFreshRepositorySnapshot(for: repoURL))
     }
 
+    @MainActor
+    func testApplyRepositorySnapshotIfAvailableRestoresExpiredSnapshot() {
+        let vm = RepositoryViewModel()
+        let repoURL = URL(fileURLWithPath: "/tmp/repo-snapshot-stale")
+        let baselineCommit = makeCommit(id: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
+        let fileURL = repoURL.appendingPathComponent("Package.swift")
+
+        vm.repositorySwitchSnapshots[repoURL] = RepositorySwitchSnapshot(
+            capturedAt: Date().addingTimeInterval(-(vm.repositorySwitchSnapshotTTL + 1)),
+            commitLimit: 500,
+            focusedBranch: "feature/stale",
+            currentBranch: "feature/stale",
+            headShortHash: "bbbbbbbb",
+            branchInfos: [],
+            branches: ["feature/stale"],
+            branchTree: [],
+            tags: [],
+            stashes: [],
+            selectedStash: "",
+            worktrees: [],
+            remotes: [],
+            commits: [baselineCommit],
+            hasMoreCommits: false,
+            selectedCommitID: baselineCommit.id,
+            hasConflicts: false,
+            isMerging: false,
+            isRebasing: false,
+            isCherryPicking: false,
+            isGitRepository: true,
+            uncommittedChanges: [" M Package.swift"],
+            uncommittedCount: 1,
+            repositoryFiles: [FileItem(url: fileURL, isDirectory: false, children: nil)],
+            expandedPaths: [fileURL.path]
+        )
+
+        vm.currentBranch = "main"
+        vm.headShortHash = "-"
+        vm.commits = []
+        vm.selectedCommitID = nil
+        vm.uncommittedChanges = []
+        vm.uncommittedCount = 0
+        vm.repositoryFiles = []
+        vm.expandedPaths = []
+
+        XCTAssertFalse(vm.hasFreshRepositorySnapshot(for: repoURL))
+        XCTAssertTrue(vm.hasRepositorySnapshot(for: repoURL))
+        XCTAssertTrue(vm.applyRepositorySnapshotIfAvailable(for: repoURL))
+        XCTAssertEqual(vm.currentBranch, "feature/stale")
+        XCTAssertEqual(vm.headShortHash, "bbbbbbbb")
+        XCTAssertEqual(vm.commits.map(\.id), [baselineCommit.id])
+        XCTAssertEqual(vm.selectedCommitID, baselineCommit.id)
+        XCTAssertEqual(vm.uncommittedChanges, [" M Package.swift"])
+        XCTAssertEqual(vm.uncommittedCount, 1)
+        XCTAssertEqual(vm.repositoryFiles.map(\.id), [fileURL.path])
+        XCTAssertEqual(vm.expandedPaths, [fileURL.path])
+    }
+
+    @MainActor
+    func testRepositorySwitchStateSeparatesBlockingAndBackgroundRefresh() {
+        let vm = RepositoryViewModel()
+
+        vm.isSwitchingRepository = true
+        vm.isBlockingRepositorySwitch = true
+
+        XCTAssertTrue(vm.isRepositorySwitching)
+        XCTAssertTrue(vm.isRepositorySwitchBlocking)
+        XCTAssertFalse(vm.isRepositorySwitchRefreshingInBackground)
+
+        vm.isBlockingRepositorySwitch = false
+
+        XCTAssertTrue(vm.isRepositorySwitching)
+        XCTAssertFalse(vm.isRepositorySwitchBlocking)
+        XCTAssertTrue(vm.isRepositorySwitchRefreshingInBackground)
+
+        vm.clearRepositorySwitchState()
+
+        XCTAssertFalse(vm.isRepositorySwitching)
+        XCTAssertFalse(vm.isRepositorySwitchBlocking)
+        XCTAssertFalse(vm.isRepositorySwitchRefreshingInBackground)
+    }
+
     // MARK: - lineWrap sync
 
     @MainActor
