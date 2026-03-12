@@ -4,7 +4,7 @@ extension RepositoryViewModel {
     func loadBridgeState() {
         guard let repositoryURL else {
             bridgeState = .empty
-            bridgeAnalysis = nil
+            clearBridgeAnalysis()
             return
         }
 
@@ -34,7 +34,7 @@ extension RepositoryViewModel {
                 to: bridgeDestinationTarget,
                 repositoryURL: repositoryURL
             )
-            selectedBridgeRowID = bridgeAnalysis?.rows.first?.id
+            applyBridgeSelectionDefaults()
             statusMessage = L10n("bridge.status.analyzed", bridgeSourceTarget.label, bridgeDestinationTarget.label)
         } catch {
             lastError = error.localizedDescription
@@ -43,14 +43,19 @@ extension RepositoryViewModel {
 
     func applyBridgeMigration() {
         guard let repositoryURL, let bridgeAnalysis else { return }
+        guard !selectedBridgeRowIDs.isEmpty else { return }
 
         isBridgeApplying = true
         defer { isBridgeApplying = false }
 
         do {
-            self.bridgeAnalysis = try bridgeService.apply(bridgeAnalysis, repositoryURL: repositoryURL)
+            self.bridgeAnalysis = try bridgeService.apply(
+                bridgeAnalysis,
+                repositoryURL: repositoryURL,
+                selectedRowIDs: selectedBridgeRowIDs
+            )
             bridgeState = bridgeService.loadState(repositoryURL: repositoryURL)
-            selectedBridgeRowID = self.bridgeAnalysis?.rows.first?.id
+            applyBridgeSelectionDefaults()
             statusMessage = L10n("bridge.status.synced", bridgeDestinationTarget.label)
         } catch {
             lastError = error.localizedDescription
@@ -60,10 +65,49 @@ extension RepositoryViewModel {
     func clearBridgeAnalysis() {
         bridgeAnalysis = nil
         selectedBridgeRowID = nil
+        selectedBridgeRowIDs = []
     }
 
     var selectedBridgeRow: BridgeMappingRow? {
         guard let selectedBridgeRowID else { return bridgeAnalysis?.rows.first }
         return bridgeAnalysis?.rows.first(where: { $0.id == selectedBridgeRowID }) ?? bridgeAnalysis?.rows.first
+    }
+
+    var bridgeSelectedSyncableCount: Int {
+        selectedBridgeRowIDs.count
+    }
+
+    var bridgeSyncableRowCount: Int {
+        bridgeAnalysis?.syncableRows.count ?? 0
+    }
+
+    var hasSelectedBridgeRows: Bool {
+        !selectedBridgeRowIDs.isEmpty
+    }
+
+    func toggleBridgeRowSelection(_ row: BridgeMappingRow) {
+        guard row.isSyncable else { return }
+        if selectedBridgeRowIDs.contains(row.id) {
+            selectedBridgeRowIDs.remove(row.id)
+        } else {
+            selectedBridgeRowIDs.insert(row.id)
+        }
+    }
+
+    func selectAllBridgeSyncableRows() {
+        selectedBridgeRowIDs = Set(bridgeAnalysis?.syncableRows.map(\.id) ?? [])
+    }
+
+    func clearBridgeRowSelection() {
+        selectedBridgeRowIDs.removeAll()
+    }
+
+    func isBridgeRowSelected(_ row: BridgeMappingRow) -> Bool {
+        selectedBridgeRowIDs.contains(row.id)
+    }
+
+    private func applyBridgeSelectionDefaults() {
+        selectedBridgeRowID = bridgeAnalysis?.rows.first?.id
+        selectAllBridgeSyncableRows()
     }
 }

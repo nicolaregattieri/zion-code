@@ -2024,6 +2024,8 @@
 "bridge.action.reload" = "Reload";
 "bridge.action.analyze" = "Analyze";
 "bridge.action.sync" = "Sync Now";
+"bridge.action.selectAllSyncable" = "Select Writable";
+"bridge.action.clearSyncSelection" = "Clear Selection";
 "bridge.session.title" = "Migration Session";
 "bridge.session.from" = "From";
 "bridge.session.to" = "To";
@@ -2047,6 +2049,10 @@
 "bridge.mapping.newImport" = "New import";
 "bridge.mapping.manualReview" = "Review";
 "bridge.mapping.unsupported" = "Unsupported";
+"bridge.selection.summary" = "%d of %d writable files selected.";
+"bridge.selection.empty" = "No writable files are available in this analysis.";
+"bridge.selection.add" = "Add this file to sync selection";
+"bridge.selection.remove" = "Remove this file from sync selection";
 "bridge.confidence.high" = "high confidence";
 "bridge.confidence.medium" = "medium confidence";
 "bridge.confidence.low" = "low confidence";
