@@ -95,11 +95,10 @@ final class TerminalInteractionPolicyTests: XCTestCase {
         )
     }
 
-    func testShouldConsumePreciseScrollForFocusedHoveredScrollableTerminal() {
+    func testShouldConsumePreciseScrollForHoveredScrollableTerminal() {
         XCTAssertTrue(
             TerminalTabView.Coordinator.shouldConsumePreciseScroll(
                 hasPreciseScrollingDeltas: true,
-                isTerminalFocused: true,
                 hoveredTerminalMatches: true,
                 canTerminalScroll: true
             )
@@ -131,18 +130,16 @@ final class TerminalInteractionPolicyTests: XCTestCase {
         XCTAssertFalse(
             TerminalTabView.Coordinator.shouldConsumePreciseScroll(
                 hasPreciseScrollingDeltas: true,
-                isTerminalFocused: true,
                 hoveredTerminalMatches: false,
                 canTerminalScroll: true
             )
         )
     }
 
-    func testShouldNotConsumePreciseScrollWhenTerminalIsNotFocused() {
-        XCTAssertFalse(
+    func testShouldConsumePreciseScrollEvenWhenKeyboardFocusWasElsewhere() {
+        XCTAssertTrue(
             TerminalTabView.Coordinator.shouldConsumePreciseScroll(
                 hasPreciseScrollingDeltas: true,
-                isTerminalFocused: false,
                 hoveredTerminalMatches: true,
                 canTerminalScroll: true
             )
