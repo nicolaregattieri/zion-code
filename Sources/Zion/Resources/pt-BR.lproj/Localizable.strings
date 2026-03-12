@@ -2024,6 +2024,8 @@
 "bridge.action.reload" = "Recarregar";
 "bridge.action.analyze" = "Analisar";
 "bridge.action.sync" = "Sincronizar";
+"bridge.action.selectAllSyncable" = "Selecionar Graváveis";
+"bridge.action.clearSyncSelection" = "Limpar Seleção";
 "bridge.session.title" = "Sessão de Migração";
 "bridge.session.from" = "De";
 "bridge.session.to" = "Para";
@@ -2047,6 +2049,10 @@
 "bridge.mapping.newImport" = "Nova importação";
 "bridge.mapping.manualReview" = "Revisar";
 "bridge.mapping.unsupported" = "Não suportado";
+"bridge.selection.summary" = "%d de %d arquivos graváveis selecionados.";
+"bridge.selection.empty" = "Nenhum arquivo gravável está disponível nesta análise.";
+"bridge.selection.add" = "Adicionar este arquivo à seleção de sincronização";
+"bridge.selection.remove" = "Remover este arquivo da seleção de sincronização";
 "bridge.confidence.high" = "alta confiança";
 "bridge.confidence.medium" = "confiança média";
 "bridge.confidence.low" = "baixa confiança";

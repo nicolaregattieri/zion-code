@@ -125,6 +125,69 @@ final class BridgeServiceTests: XCTestCase {
         XCTAssertEqual(second.rows.first?.destinationRelativePath, ".claude/commands/ux-review.md")
     }
 
+    func testApplyWritesOnlySelectedRows() throws {
+        try FileManager.default.createDirectory(
+            at: tempDir.appendingPathComponent(".agents/skills/first"),
+            withIntermediateDirectories: true
+        )
+        try FileManager.default.createDirectory(
+            at: tempDir.appendingPathComponent(".agents/skills/second"),
+            withIntermediateDirectories: true
+        )
+
+        try """
+        ---
+        name: first
+        description: "First bridge test."
+        ---
+
+        # first
+
+        ## Mirror Source
+        First content.
+        """.write(
+            to: tempDir.appendingPathComponent(".agents/skills/first/SKILL.md"),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        try """
+        ---
+        name: second
+        description: "Second bridge test."
+        ---
+
+        # second
+
+        ## Mirror Source
+        Second content.
+        """.write(
+            to: tempDir.appendingPathComponent(".agents/skills/second/SKILL.md"),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        let analysis = try service.analyze(from: .codex, to: .claude, repositoryURL: tempDir)
+        let firstRow = try XCTUnwrap(analysis.rows.first(where: { $0.sourceArtifact.slug == "first" }))
+
+        _ = try service.apply(
+            analysis,
+            repositoryURL: tempDir,
+            selectedRowIDs: [firstRow.id]
+        )
+
+        XCTAssertTrue(
+            FileManager.default.fileExists(
+                atPath: tempDir.appendingPathComponent(".claude/commands/first.md").path
+            )
+        )
+        XCTAssertFalse(
+            FileManager.default.fileExists(
+                atPath: tempDir.appendingPathComponent(".claude/commands/second.md").path
+            )
+        )
+    }
+
     func testClaudeToCursorRendersNativeMdcShape() throws {
         try FileManager.default.createDirectory(
             at: tempDir.appendingPathComponent(".claude/commands"),

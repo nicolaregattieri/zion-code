@@ -56,11 +56,20 @@ struct BridgeService {
         )
     }
 
-    func apply(_ analysis: BridgeMigrationAnalysis, repositoryURL: URL) throws -> BridgeMigrationAnalysis {
-        for row in analysis.rows {
+    func apply(
+        _ analysis: BridgeMigrationAnalysis,
+        repositoryURL: URL,
+        selectedRowIDs: Set<String>? = nil
+    ) throws -> BridgeMigrationAnalysis {
+        let rowsToApply = analysis.rows.filter { row in
+            guard row.isSyncable else { return false }
+            guard let selectedRowIDs else { return true }
+            return selectedRowIDs.contains(row.id)
+        }
+
+        for row in rowsToApply {
             guard let destinationRelativePath = row.destinationRelativePath else { continue }
             guard let renderedContent = row.renderedContent else { continue }
-            guard row.action == .create || row.action == .update else { continue }
 
             let destinationURL = repositoryURL.appendingPathComponent(destinationRelativePath)
             try ensureParentDirectory(for: destinationURL)
@@ -68,7 +77,7 @@ struct BridgeService {
         }
 
         var matrix = cacheStore.loadMatrix(for: repositoryURL)
-        let refreshedRecords = analysis.rows.compactMap { row -> BridgeMirrorRecord? in
+        let refreshedRecords = rowsToApply.compactMap { row -> BridgeMirrorRecord? in
             guard let destinationRelativePath = row.destinationRelativePath else { return nil }
             guard row.mappingKind != .manualReview, row.mappingKind != .unsupported else { return nil }
 

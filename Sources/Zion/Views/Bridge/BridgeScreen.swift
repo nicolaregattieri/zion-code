@@ -104,7 +104,7 @@ struct BridgeScreen: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(DesignSystem.Colors.actionPrimary)
-                    .disabled(model.isBridgeApplying || analysis.rows.isEmpty)
+                    .disabled(model.isBridgeApplying || !model.hasSelectedBridgeRows)
                 }
             }
         }
@@ -166,58 +166,114 @@ struct BridgeScreen: View {
                     .font(DesignSystem.Typography.bodySmall)
                     .foregroundStyle(.secondary)
             } else {
+                HStack(alignment: .center, spacing: 10) {
+                    Text(selectionSummary(for: analysis))
+                        .font(DesignSystem.Typography.bodySmall)
+                        .foregroundStyle(.secondary)
+
+                    Spacer(minLength: 0)
+
+                    if !analysis.syncableRows.isEmpty {
+                        Button(L10n("bridge.action.selectAllSyncable")) {
+                            model.selectAllBridgeSyncableRows()
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+
+                        Button(L10n("bridge.action.clearSyncSelection")) {
+                            model.clearBridgeRowSelection()
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                    }
+                }
+
                 ForEach(analysis.rows) { row in
-                    mappingRowButton(row)
+                    mappingRow(row)
                 }
             }
         }
     }
 
-    private func mappingRowButton(_ row: BridgeMappingRow) -> some View {
+    private func mappingRow(_ row: BridgeMappingRow) -> some View {
         let isSelected = model.selectedBridgeRowID == row.id
+        let isSyncSelected = model.isBridgeRowSelected(row)
 
-        return Button {
-            model.selectedBridgeRowID = row.id
-        } label: {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .top, spacing: 10) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(row.sourceArtifact.relativePath)
-                            .font(DesignSystem.Typography.bodySmallSemibold)
-                            .multilineTextAlignment(.leading)
-                        Text(row.destinationRelativePath ?? L10n("bridge.mapping.noDestination"))
-                            .font(DesignSystem.Typography.monoMeta)
+        return HStack(alignment: .top, spacing: 10) {
+            if row.isSyncable {
+                Button {
+                    model.toggleBridgeRowSelection(row)
+                } label: {
+                    Image(systemName: isSyncSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(isSyncSelected ? DesignSystem.Colors.actionPrimary : .secondary)
+                        .frame(width: 24, height: 24)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help(isSyncSelected ? L10n("bridge.selection.remove") : L10n("bridge.selection.add"))
+            } else {
+                Image(systemName: "minus.circle")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.secondary.opacity(0.5))
+                    .frame(width: 24, height: 24)
+            }
+
+            Button {
+                model.selectedBridgeRowID = row.id
+            } label: {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(alignment: .top, spacing: 10) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(row.sourceArtifact.relativePath)
+                                .font(DesignSystem.Typography.bodySmallSemibold)
+                                .multilineTextAlignment(.leading)
+                            Text(row.destinationRelativePath ?? L10n("bridge.mapping.noDestination"))
+                                .font(DesignSystem.Typography.monoMeta)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.leading)
+                        }
+
+                        Spacer(minLength: 0)
+
+                        HStack(spacing: 6) {
+                            badge(row.mappingKind.label, tint: mappingTint(row.mappingKind))
+                            badge(row.action.label, tint: actionTint(row.action))
+                        }
+                    }
+
+                    HStack(alignment: .center, spacing: 8) {
+                        Text(row.reason)
+                            .font(DesignSystem.Typography.bodySmall)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.leading)
-                    }
-
-                    Spacer(minLength: 0)
-
-                    HStack(spacing: 6) {
-                        badge(row.mappingKind.label, tint: mappingTint(row.mappingKind))
-                        badge(row.action.label, tint: actionTint(row.action))
+                        Spacer(minLength: 0)
+                        Text(row.confidence.label)
+                            .font(DesignSystem.Typography.monoMeta)
+                            .foregroundStyle(confidenceTint(row.confidence))
                     }
                 }
-
-                HStack(alignment: .center, spacing: 8) {
-                    Text(row.reason)
-                        .font(DesignSystem.Typography.bodySmall)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.leading)
-                    Spacer(minLength: 0)
-                    Text(row.confidence.label)
-                        .font(DesignSystem.Typography.monoMeta)
-                        .foregroundStyle(confidenceTint(row.confidence))
-                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                        .fill(isSelected ? DesignSystem.Colors.glassHover : DesignSystem.Colors.glassSubtle)
+                )
             }
-            .padding(12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
-                    .fill(isSelected ? DesignSystem.Colors.glassHover : DesignSystem.Colors.glassSubtle)
-            )
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
+    }
+
+    private func selectionSummary(for analysis: BridgeMigrationAnalysis) -> String {
+        if analysis.syncableRows.isEmpty {
+            return L10n("bridge.selection.empty")
+        }
+
+        return L10n(
+            "bridge.selection.summary",
+            model.bridgeSelectedSyncableCount,
+            analysis.syncableRows.count
+        )
     }
 
     private func detailCard(_ row: BridgeMappingRow) -> some View {

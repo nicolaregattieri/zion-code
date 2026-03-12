@@ -113,6 +113,10 @@ struct BridgeMappingRow: Identifiable, Codable, Hashable {
     var id: String {
         "\(sourceArtifact.id)->\(destinationTarget.rawValue):\(destinationRelativePath ?? "none")"
     }
+
+    var isSyncable: Bool {
+        action == .create || action == .update
+    }
 }
 
 struct BridgeMigrationSummary: Codable, Hashable {
@@ -131,6 +135,10 @@ struct BridgeMigrationAnalysis: Identifiable, Codable, Hashable {
     let generatedAt: Date
 
     var id: String { "\(sourceTarget.rawValue)->\(destinationTarget.rawValue)" }
+
+    var syncableRows: [BridgeMappingRow] {
+        rows.filter(\.isSyncable)
+    }
 
     var summary: BridgeMigrationSummary {
         BridgeMigrationSummary(

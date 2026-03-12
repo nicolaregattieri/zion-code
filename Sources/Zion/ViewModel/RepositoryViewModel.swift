@@ -157,6 +157,7 @@ final class RepositoryViewModel {
     var bridgeDestinationTarget: BridgeTarget = .claude
     var bridgeAnalysis: BridgeMigrationAnalysis?
     var selectedBridgeRowID: String?
+    var selectedBridgeRowIDs: Set<String> = []
     var isBridgeVisible: Bool = false
     var isBridgeLoading: Bool = false
     var isBridgeApplying: Bool = false
