@@ -253,11 +253,13 @@ struct TerminalTabView: NSViewRepresentable {
 
         static func shouldConsumePreciseScroll(
             hasPreciseScrollingDeltas: Bool,
-            isTerminalFocused: Bool,
             hoveredTerminalMatches: Bool,
             canTerminalScroll: Bool
         ) -> Bool {
-            hasPreciseScrollingDeltas && isTerminalFocused && hoveredTerminalMatches && canTerminalScroll
+            hoveredTerminalMatches && ZionTerminalView.shouldHandlePreciseScroll(
+                hasPreciseScrollingDeltas: hasPreciseScrollingDeltas,
+                canScroll: canTerminalScroll
+            )
         }
 
         func ensureOwnerBinding(reason: String) {
@@ -530,13 +532,16 @@ struct TerminalTabView: NSViewRepresentable {
                 )
                 let shouldConsumeScroll = Self.shouldConsumePreciseScroll(
                     hasPreciseScrollingDeltas: event.hasPreciseScrollingDeltas,
-                    isTerminalFocused: self.isTerminalFocused,
                     hoveredTerminalMatches: hoveredTerminal === view,
                     canTerminalScroll: view.canScroll
                 )
                 guard shouldConsumeScroll else {
                     self.preciseScrollLineAccumulator = 0
                     return event
+                }
+
+                if view.window?.firstResponder !== view {
+                    view.window?.makeFirstResponder(view)
                 }
 
                 let lineHeight = ZionTerminalView.preciseScrollLineHeight(
@@ -586,8 +591,10 @@ struct TerminalTabView: NSViewRepresentable {
         }
 
         private func resetPreciseScrollAccumulatorIfNeeded(for event: NSEvent) {
-            let endedPhases: NSEvent.Phase = [.ended, .cancelled]
-            if endedPhases.contains(event.phase) || endedPhases.contains(event.momentumPhase) {
+            if ZionTerminalView.shouldResetPreciseScrollAccumulator(
+                phase: event.phase,
+                momentumPhase: event.momentumPhase
+            ) {
                 preciseScrollLineAccumulator = 0
             }
         }

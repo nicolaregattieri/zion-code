@@ -200,6 +200,23 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
         return (lines, nextAccumulator)
     }
 
+    static func shouldHandlePreciseScroll(
+        hasPreciseScrollingDeltas: Bool,
+        canScroll: Bool
+    ) -> Bool {
+        hasPreciseScrollingDeltas && canScroll
+    }
+
+    static func shouldResetPreciseScrollAccumulator(
+        phase: NSEvent.Phase,
+        momentumPhase: NSEvent.Phase
+    ) -> Bool {
+        let endedPhases: NSEvent.Phase = [.ended, .cancelled]
+        let phaseEnded = !phase.isEmpty && endedPhases.contains(phase)
+        let momentumEnded = !momentumPhase.isEmpty && endedPhases.contains(momentumPhase)
+        return phaseEnded || momentumEnded
+    }
+
     // MARK: - Visual feedback
 
     private func showDragHighlight() {

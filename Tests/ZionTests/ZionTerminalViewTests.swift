@@ -65,6 +65,65 @@ final class ZionTerminalViewTests: XCTestCase {
         XCTAssertEqual(result.remainder, 18, accuracy: 0.001)
     }
 
+    func testPreciseScrollHandlingRequiresPreciseTrackpadDeltas() {
+        XCTAssertTrue(
+            ZionTerminalView.shouldHandlePreciseScroll(
+                hasPreciseScrollingDeltas: true,
+                canScroll: true
+            )
+        )
+        XCTAssertFalse(
+            ZionTerminalView.shouldHandlePreciseScroll(
+                hasPreciseScrollingDeltas: false,
+                canScroll: true
+            )
+        )
+        XCTAssertFalse(
+            ZionTerminalView.shouldHandlePreciseScroll(
+                hasPreciseScrollingDeltas: true,
+                canScroll: false
+            )
+        )
+    }
+
+    func testCoordinatorConsumesPreciseScrollWhenPointerIsOverScrollableTerminal() {
+        XCTAssertTrue(
+            TerminalTabView.Coordinator.shouldConsumePreciseScroll(
+                hasPreciseScrollingDeltas: true,
+                hoveredTerminalMatches: true,
+                canTerminalScroll: true
+            )
+        )
+        XCTAssertFalse(
+            TerminalTabView.Coordinator.shouldConsumePreciseScroll(
+                hasPreciseScrollingDeltas: true,
+                hoveredTerminalMatches: false,
+                canTerminalScroll: true
+            )
+        )
+    }
+
+    func testPreciseScrollAccumulatorResetTracksGestureEndAndMomentumEnd() {
+        XCTAssertTrue(
+            ZionTerminalView.shouldResetPreciseScrollAccumulator(
+                phase: .ended,
+                momentumPhase: []
+            )
+        )
+        XCTAssertTrue(
+            ZionTerminalView.shouldResetPreciseScrollAccumulator(
+                phase: [],
+                momentumPhase: .cancelled
+            )
+        )
+        XCTAssertFalse(
+            ZionTerminalView.shouldResetPreciseScrollAccumulator(
+                phase: .began,
+                momentumPhase: []
+            )
+        )
+    }
+
     func testIsSubclassOfSwiftTermTerminalView() {
         let view: Any = ZionTerminalView(frame: .zero)
         XCTAssertTrue(view is SwiftTerm.TerminalView)
