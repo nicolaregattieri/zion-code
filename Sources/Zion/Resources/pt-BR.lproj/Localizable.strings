@@ -298,6 +298,7 @@
 "shortcuts.goToLine" = "Ir para linha";
 "shortcuts.findNext" = "Próxima ocorrência";
 "shortcuts.findPrevious" = "Ocorrência anterior";
+"shortcuts.toggleComment" = "Alternar comentário";
 "shortcuts.terminalSearch" = "Buscar no terminal";
 "shortcuts.navigateCommits" = "Navegar commits";
 "shortcuts.closeOrDeselect" = "Fechar / desselecionar";

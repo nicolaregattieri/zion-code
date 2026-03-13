@@ -402,6 +402,7 @@
 "shortcuts.goToLine" = "Go to line";
 "shortcuts.findNext" = "Find Next";
 "shortcuts.findPrevious" = "Find Previous";
+"shortcuts.toggleComment" = "Toggle Comment";
 "shortcuts.terminalSearch" = "Search terminal";
 "shortcuts.navigateCommits" = "Navigate commits";
 "shortcuts.closeOrDeselect" = "Close / deselect";

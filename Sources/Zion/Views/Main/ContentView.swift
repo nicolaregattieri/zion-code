@@ -407,8 +407,6 @@ struct ContentView: View {
                 .keyboardShortcut("2", modifiers: .command)
             Button("") { route(.requestSection(.operations)) }
                 .keyboardShortcut("3", modifiers: .command)
-            Button("") { isShortcutsVisible = true }
-                .keyboardShortcut("/", modifiers: .command)
             Button("") {
                 if model.repositoryURL != nil {
                     model.isBranchReviewSheetVisible = false
