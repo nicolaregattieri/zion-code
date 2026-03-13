@@ -1619,7 +1619,9 @@
 "settings.terminal.imageRendering" = "Renderizado de Imágenes Inline";
 "settings.terminal.imageRendering.hint" = "Renderiza imágenes Sixel, iTerm2 y Kitty inline. Los cambios se aplican en nuevas sesiones.";
 "settings.terminal.aiImageDisplay" = "Imágenes IA Inline y Helpers";
-"settings.terminal.aiImageDisplay.hint" = "Permite que las herramientas de IA muestren imágenes en la terminal e instala helpers globales de zion-img para Claude, Gemini y Codex en tu carpeta home. También instala zion_display en ~/.zion/bin/. Los cambios se aplican en nuevas sesiones.";
+"settings.terminal.aiImageDisplay.hint" = "Instala zion_display y actualiza de inmediato los helpers globales de zion-img en tu carpeta home. Los cambios de terminal se aplican en nuevas sesiones.";
+"settings.terminal.aiImageSaveToProjectRoot" = "Guardar Imágenes Generadas en la Raíz del Proyecto";
+"settings.terminal.aiImageSaveToProjectRoot.hint" = "Cuando está activado, /zion-img guarda SVGs en zion-image/ dentro del proyecto actual. Cuando está desactivado, usa la caché de Zion.";
 "settings.terminal.autoAppendAIConfig" = "Configurar Instrucciones IA del Proyecto";
 "settings.terminal.autoAppendAIConfig.hint" = "Escribe instrucciones locales de Zion en los archivos de configuración de IA de la raíz del proyecto, como AGENTS.md, CLAUDE.md y GEMINI.md. Esto es lo que da a las herramientas de IA orientación específica del proyecto, como notificaciones de finalización por ntfy. Cuando está desactivado, usa zion_ai_setup manualmente.";
 "settings.terminal.aiConfigScope.hint" = "Alcance: el toggle superior instala helpers a nivel de usuario en tu carpeta home. Este toggle escribe instrucciones a nivel de repositorio para el proyecto actual.";

@@ -1607,7 +1607,9 @@
 "settings.terminal.imageRendering" = "Inline Image Rendering";
 "settings.terminal.imageRendering.hint" = "Render Sixel, iTerm2, and Kitty inline images. Changes apply to new sessions.";
 "settings.terminal.aiImageDisplay" = "AI Inline Images & Helpers";
-"settings.terminal.aiImageDisplay.hint" = "Lets AI tools render images in the terminal and installs global zion-img helpers for Claude, Gemini, and Codex in your home folder. Also installs zion_display to ~/.zion/bin/. Changes apply to new sessions.";
+"settings.terminal.aiImageDisplay.hint" = "Installs zion_display and refreshes global zion-img helpers in your home folder immediately. Terminal changes apply to new sessions.";
+"settings.terminal.aiImageSaveToProjectRoot" = "Save Generated Images in Project Root";
+"settings.terminal.aiImageSaveToProjectRoot.hint" = "When on, /zion-img saves SVGs to zion-image/ in the current project. When off, it uses Zion cache.";
 "settings.terminal.autoAppendAIConfig" = "Auto-configure Project AI Instructions";
 "settings.terminal.autoAppendAIConfig.hint" = "Writes repo-local Zion instructions to AI config files in your project root, such as AGENTS.md, CLAUDE.md, and GEMINI.md. This is what gives AI tools project-specific guidance like ntfy completion notifications. When off, use zion_ai_setup manually.";
 "settings.terminal.aiConfigScope.hint" = "Scope: the top toggle installs user-level helpers in your home folder. This toggle writes repo-level instructions for the current project.";
