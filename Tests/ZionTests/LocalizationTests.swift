@@ -218,4 +218,20 @@ final class LocalizationTests: XCTestCase {
             XCTAssertFalse(value.isEmpty, "Empty L10n value for key: \(key)")
         }
     }
+
+    func testTerminalAISettingsLocalizationKeysExist() {
+        let keys = [
+            "settings.terminal.aiImageDisplay",
+            "settings.terminal.aiImageDisplay.hint",
+            "settings.terminal.autoAppendAIConfig",
+            "settings.terminal.autoAppendAIConfig.hint",
+            "settings.terminal.aiConfigScope.hint",
+        ]
+
+        for key in keys {
+            let value = L10n(key)
+            XCTAssertNotEqual(value, key, "Missing L10n key: \(key)")
+            XCTAssertFalse(value.isEmpty, "Empty L10n value for key: \(key)")
+        }
+    }
 }
