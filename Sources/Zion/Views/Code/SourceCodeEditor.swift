@@ -563,7 +563,12 @@ struct SourceCodeEditor: NSViewRepresentable {
                 highlight(pattern: #"<!--[\s\S]*?-->"#, in: string, color: colors.comment, storage: textStorage)
                 highlight(pattern: #"\{%[\s\S]*?%\}"#, in: string, color: colors.type, storage: textStorage)
                 highlight(pattern: #"\{\{[\s\S]*?\}\}"#, in: string, color: colors.call, storage: textStorage)
-                highlight(pattern: #"\{%[\s\S]*?comment[\s\S]*?endcomment[\s\S]*?%\}"#, in: string, color: colors.comment, storage: textStorage)
+                highlight(
+                    pattern: #"\{%-?\s*comment\s*-?%\}[\s\S]*?\{%-?\s*endcomment\s*-?%\}"#,
+                    in: string,
+                    color: colors.comment,
+                    storage: textStorage
+                )
             default:
                 highlight(pattern: #""[^"\\\n]*(\\.[^"\\\n]*)*""#, in: string, color: colors.string, storage: textStorage)
                 if lang == .python || lang == .ruby || lang == .shell {
