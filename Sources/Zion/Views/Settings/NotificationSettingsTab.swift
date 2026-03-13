@@ -151,7 +151,16 @@ struct NotificationSettingsTab: View {
 
                 Section(L10n("settings.notifications.events")) {
                     ForEach(NtfyEvent.allCases.filter(\.isUserConfigurable)) { event in
-                        Toggle(event.label, isOn: ntfyEventBinding(for: event))
+                        VStack(alignment: .leading, spacing: 4) {
+                            Toggle(event.label, isOn: ntfyEventBinding(for: event))
+
+                            if let description = notificationDescription(for: event) {
+                                Text(description)
+                                    .font(DesignSystem.Typography.meta)
+                                    .foregroundStyle(.tertiary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
                     }
                 }
 
@@ -243,6 +252,15 @@ struct NotificationSettingsTab: View {
                 UserDefaults.standard.set(events, forKey: "zion.ntfy.enabledEvents")
             }
         )
+    }
+
+    private func notificationDescription(for event: NtfyEvent) -> String? {
+        switch event {
+        case .terminalPromptDetected:
+            return L10n("ntfy.event.terminalPromptDetected.hint")
+        default:
+            return nil
+        }
     }
 
 }

@@ -53,6 +53,11 @@ final class NtfyEventTests: XCTestCase {
         XCTAssertEqual(fromDefaultEnabled, fromProperty)
     }
 
+    func testTerminalPromptDetectedIsNotEnabledByDefault() {
+        XCTAssertFalse(NtfyEvent.terminalPromptDetected.enabledByDefault)
+        XCTAssertFalse(NtfyEvent.defaultEnabledEvents.contains(NtfyEvent.terminalPromptDetected.rawValue))
+    }
+
     func testGroupCaseCountGuard() {
         XCTAssertEqual(NtfyEventGroup.allCases.count, 3, "Event group count changed — update tests")
     }

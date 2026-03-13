@@ -101,9 +101,10 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
     var enabledByDefault: Bool {
         switch self {
         case .cloneComplete, .newRemoteCommits,
-             .prCreated, .prReviewRequested, .prAutoReviewComplete,
-             .terminalPromptDetected:
+             .prCreated, .prReviewRequested, .prAutoReviewComplete:
             return true
+        case .terminalPromptDetected:
+            return false
         }
     }
 

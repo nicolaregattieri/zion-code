@@ -1739,7 +1739,8 @@
 "keepAwake.duration.4h" = "4 Horas";
 "keepAwake.duration.8h" = "8 Horas";
 "keepAwake.duration.indefinite" = "Indefinido";
-"ntfy.event.terminalPromptDetected" = "Prompt detectado en la terminal";
+"ntfy.event.terminalPromptDetected" = "Terminal remota esperando entrada";
+"ntfy.event.terminalPromptDetected.hint" = "Solo para Acceso Remoto Móvil. Esto no responde el prompt por ntfy. Solo recuerda que una sesión remota está esperando entrada para que vuelvas a abrir la sesión móvil remota y respondas.";
 
 // Mobile Access — Onboarding Steps
 "mobile.access.step.header" = "Paso %lld — %@";

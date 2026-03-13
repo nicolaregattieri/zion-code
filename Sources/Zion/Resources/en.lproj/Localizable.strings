@@ -1727,7 +1727,8 @@
 "keepAwake.duration.4h" = "4 Hours";
 "keepAwake.duration.8h" = "8 Hours";
 "keepAwake.duration.indefinite" = "Indefinite";
-"ntfy.event.terminalPromptDetected" = "Terminal prompt detected";
+"ntfy.event.terminalPromptDetected" = "Remote terminal waiting for input";
+"ntfy.event.terminalPromptDetected.hint" = "Mobile Remote Access only. This does not answer the prompt through ntfy. It only reminds you that a remote terminal session is waiting for input so you can reopen the mobile remote session and respond.";
 
 // Mobile Access — Onboarding Steps
 "mobile.access.step.header" = "Step %lld — %@";
