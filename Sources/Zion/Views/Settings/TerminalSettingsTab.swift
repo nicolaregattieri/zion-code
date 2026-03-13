@@ -5,7 +5,6 @@ struct TerminalSettingsTab: View {
     @AppStorage("terminal.scrollbackSize") private var scrollbackSize: Int = 5000
     @AppStorage("terminal.bellMode") private var bellMode: String = "system"
     @AppStorage("terminal.openHyperlinks") private var openHyperlinks: Bool = true
-    @AppStorage("terminal.imageRendering") private var imageRendering: Bool = true
     @AppStorage("terminal.copyOnSelect") private var copyOnSelect: Bool = false
     @AppStorage("terminal.aiImageDisplay") private var aiImageDisplay: Bool = false
     @AppStorage("speech.engine") private var speechEngine: String = "apple"
@@ -43,12 +42,6 @@ struct TerminalSettingsTab: View {
                 Toggle(L10n("settings.terminal.openHyperlinks"), isOn: $openHyperlinks)
 
                 Text(L10n("settings.terminal.openHyperlinks.hint"))
-                    .font(DesignSystem.Typography.label)
-                    .foregroundStyle(.secondary)
-
-                Toggle(L10n("settings.terminal.imageRendering"), isOn: $imageRendering)
-
-                Text(L10n("settings.terminal.imageRendering.hint"))
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
 
