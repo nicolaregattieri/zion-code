@@ -138,8 +138,8 @@ final class TerminalInteractionPolicyTests: XCTestCase {
         )
     }
 
-    func testShouldConsumePreciseScrollEvenWhenKeyboardFocusWasElsewhere() {
-        XCTAssertTrue(
+    func testShouldNotConsumePreciseScrollWhenKeyboardFocusWasElsewhere() {
+        XCTAssertFalse(
             TerminalTabView.Coordinator.shouldConsumePreciseScroll(
                 hasPreciseScrollingDeltas: true,
                 isTerminalFocused: false,
