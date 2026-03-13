@@ -217,6 +217,28 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
         return phaseEnded || momentumEnded
     }
 
+    static func isAtLiveBottom(
+        scrollPosition: Double,
+        tolerance: Double = 0.000_1
+    ) -> Bool {
+        scrollPosition >= 1 - tolerance
+    }
+
+    static func shouldStartManualScrollFreezeIntent(
+        scrollingDeltaY: CGFloat,
+        scrollPosition: Double,
+        canScroll: Bool
+    ) -> Bool {
+        canScroll && scrollingDeltaY > 0 && isAtLiveBottom(scrollPosition: scrollPosition)
+    }
+
+    static func shouldKeepManualScrollFreeze(
+        scrollPosition: Double,
+        canScroll: Bool
+    ) -> Bool {
+        canScroll && !isAtLiveBottom(scrollPosition: scrollPosition)
+    }
+
     // MARK: - Visual feedback
 
     private func showDragHighlight() {

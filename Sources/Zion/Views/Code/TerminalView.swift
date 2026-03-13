@@ -188,6 +188,8 @@ struct TerminalTabView: NSViewRepresentable {
         private var pointerDownInTerminal = false
         private var dragSelectionFreezeActive = false
         private var persistentSelectionFreezeActive = false
+        private var manualScrollFreezeActive = false
+        private var manualScrollFreezeIntentActive = false
         private var preciseScrollLineAccumulator: CGFloat = 0
         private static let outputFlushIntervalNanos: UInt64 = 8_000_000
         private static let maxBufferedOutputDuringDragSelection = 1_048_576
@@ -400,6 +402,8 @@ struct TerminalTabView: NSViewRepresentable {
             pointerDownInTerminal = false
             dragSelectionFreezeActive = false
             persistentSelectionFreezeActive = false
+            manualScrollFreezeActive = false
+            manualScrollFreezeIntentActive = false
             parent.session._shellPid = 0
             if isCurrentOwner() {
                 parent.session._processBridge = nil
@@ -521,8 +525,11 @@ struct TerminalTabView: NSViewRepresentable {
                 )
                 guard shouldConsumeScroll else {
                     self.preciseScrollLineAccumulator = 0
+                    self.finishManualScrollFreezeGestureIfNeeded(for: view)
                     return event
                 }
+
+                self.beginManualScrollFreezeIntentIfNeeded(for: view, event: event)
 
                 let lineHeight = ZionTerminalView.preciseScrollLineHeight(
                     viewHeight: view.bounds.height,
@@ -537,6 +544,7 @@ struct TerminalTabView: NSViewRepresentable {
 
                 if step.lines != 0 {
                     view.applyDiscreteScroll(lines: step.lines)
+                    self.syncManualScrollFreezeState(for: view)
                 }
                 return nil
             }
@@ -566,14 +574,58 @@ struct TerminalTabView: NSViewRepresentable {
             preciseScrollLineAccumulator = 0
         }
 
-        private var isTerminalOutputFrozen: Bool {
+        private var isSelectionOutputFrozen: Bool {
             dragSelectionFreezeActive || persistentSelectionFreezeActive
         }
 
+        private var isTerminalOutputFrozen: Bool {
+            isSelectionOutputFrozen || manualScrollFreezeActive || manualScrollFreezeIntentActive
+        }
+
         private func resetPreciseScrollAccumulatorIfNeeded(for event: NSEvent) {
-            let endedPhases: NSEvent.Phase = [.ended, .cancelled]
-            if endedPhases.contains(event.phase) || endedPhases.contains(event.momentumPhase) {
+            if ZionTerminalView.shouldResetPreciseScrollAccumulator(
+                phase: event.phase,
+                momentumPhase: event.momentumPhase
+            ) {
                 preciseScrollLineAccumulator = 0
+                if let view = terminalView as? ZionTerminalView {
+                    finishManualScrollFreezeGestureIfNeeded(for: view)
+                }
+            }
+        }
+
+        private func beginManualScrollFreezeIntentIfNeeded(for view: ZionTerminalView, event: NSEvent) {
+            guard !manualScrollFreezeActive else { return }
+            guard ZionTerminalView.shouldStartManualScrollFreezeIntent(
+                scrollingDeltaY: event.scrollingDeltaY,
+                scrollPosition: view.scrollPosition,
+                canScroll: view.canScroll
+            ) else { return }
+            manualScrollFreezeIntentActive = true
+        }
+
+        private func syncManualScrollFreezeState(for view: SwiftTerm.TerminalView) {
+            let shouldFreeze = ZionTerminalView.shouldKeepManualScrollFreeze(
+                scrollPosition: view.scrollPosition,
+                canScroll: view.canScroll
+            )
+
+            manualScrollFreezeIntentActive = false
+            manualScrollFreezeActive = shouldFreeze
+
+            if !shouldFreeze {
+                flushPendingTerminalOutput(force: true)
+            }
+        }
+
+        private func finishManualScrollFreezeGestureIfNeeded(for view: ZionTerminalView) {
+            guard manualScrollFreezeIntentActive else { return }
+            manualScrollFreezeIntentActive = false
+            if !ZionTerminalView.shouldKeepManualScrollFreeze(
+                scrollPosition: view.scrollPosition,
+                canScroll: view.canScroll
+            ) {
+                flushPendingTerminalOutput(force: true)
             }
         }
 
@@ -622,7 +674,7 @@ struct TerminalTabView: NSViewRepresentable {
             pendingTerminalOutput.append(contentsOf: slice)
 
             if isTerminalOutputFrozen {
-                if Self.shouldForceFlushWhileDragFrozen(
+                if isSelectionOutputFrozen, Self.shouldForceFlushWhileDragFrozen(
                     bufferedByteCount: pendingTerminalOutput.count,
                     maxBufferedBytes: Self.maxBufferedOutputDuringDragSelection
                 ) {
@@ -917,7 +969,12 @@ struct TerminalTabView: NSViewRepresentable {
             }
         }
 
-        nonisolated func scrolled(source: SwiftTerm.TerminalView, position: Double) {}
+        nonisolated func scrolled(source: SwiftTerm.TerminalView, position: Double) {
+            Task { @MainActor in
+                guard source === self.terminalView else { return }
+                self.syncManualScrollFreezeState(for: source)
+            }
+        }
         nonisolated func setTerminalTitle(source: SwiftTerm.TerminalView, title: String) {
             Task { @MainActor in
                 parent.session.title = title.isEmpty ? parent.session.label : compactTitle(from: title)

@@ -126,6 +126,57 @@ final class ZionTerminalViewTests: XCTestCase {
         )
     }
 
+    func testManualScrollFreezeIntentStartsWhenScrollingUpFromLiveBottom() {
+        XCTAssertTrue(
+            ZionTerminalView.shouldStartManualScrollFreezeIntent(
+                scrollingDeltaY: 6,
+                scrollPosition: 1,
+                canScroll: true
+            )
+        )
+        XCTAssertFalse(
+            ZionTerminalView.shouldStartManualScrollFreezeIntent(
+                scrollingDeltaY: -6,
+                scrollPosition: 1,
+                canScroll: true
+            )
+        )
+        XCTAssertFalse(
+            ZionTerminalView.shouldStartManualScrollFreezeIntent(
+                scrollingDeltaY: 6,
+                scrollPosition: 0.5,
+                canScroll: true
+            )
+        )
+    }
+
+    func testManualScrollFreezeTracksViewportAwayFromBottom() {
+        XCTAssertTrue(
+            ZionTerminalView.shouldKeepManualScrollFreeze(
+                scrollPosition: 0.5,
+                canScroll: true
+            )
+        )
+        XCTAssertFalse(
+            ZionTerminalView.shouldKeepManualScrollFreeze(
+                scrollPosition: 1,
+                canScroll: true
+            )
+        )
+        XCTAssertFalse(
+            ZionTerminalView.shouldKeepManualScrollFreeze(
+                scrollPosition: 0.5,
+                canScroll: false
+            )
+        )
+    }
+
+    func testLiveBottomDetectionTreatsNearBottomAsLive() {
+        XCTAssertTrue(ZionTerminalView.isAtLiveBottom(scrollPosition: 1))
+        XCTAssertTrue(ZionTerminalView.isAtLiveBottom(scrollPosition: 0.99995))
+        XCTAssertFalse(ZionTerminalView.isAtLiveBottom(scrollPosition: 0.99))
+    }
+
     func testIsSubclassOfSwiftTermTerminalView() {
         let view: Any = ZionTerminalView(frame: .zero)
         XCTAssertTrue(view is SwiftTerm.TerminalView)
