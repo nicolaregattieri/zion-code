@@ -8,7 +8,6 @@ struct TerminalSettingsTab: View {
     @AppStorage("terminal.imageRendering") private var imageRendering: Bool = true
     @AppStorage("terminal.copyOnSelect") private var copyOnSelect: Bool = false
     @AppStorage("terminal.aiImageDisplay") private var aiImageDisplay: Bool = false
-    @AppStorage("terminal.aiImageSaveToProjectRoot") private var aiImageSaveToProjectRoot: Bool = false
     @AppStorage("terminal.autoAppendAIConfig") private var autoAppendAIConfig: Bool = false
     @AppStorage("speech.engine") private var speechEngine: String = "apple"
     @AppStorage("speech.locale") private var speechLocale: String = Locale.current.identifier
@@ -60,12 +59,6 @@ struct TerminalSettingsTab: View {
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
 
-                Toggle(L10n("settings.terminal.aiImageSaveToProjectRoot"), isOn: $aiImageSaveToProjectRoot)
-
-                Text(L10n("settings.terminal.aiImageSaveToProjectRoot.hint"))
-                    .font(DesignSystem.Typography.label)
-                    .foregroundStyle(.secondary)
-
                 Toggle(L10n("settings.terminal.autoAppendAIConfig"), isOn: $autoAppendAIConfig)
 
                 Text(L10n("settings.terminal.autoAppendAIConfig.hint"))
@@ -110,10 +103,6 @@ struct TerminalSettingsTab: View {
         .tint(DesignSystem.Colors.actionPrimary)
         .onChange(of: aiImageDisplay) { _, enabled in
             guard enabled else { return }
-            TerminalTabView.syncInstalledTerminalHelpersForCurrentSettings()
-        }
-        .onChange(of: aiImageSaveToProjectRoot) { _, _ in
-            guard aiImageDisplay else { return }
             TerminalTabView.syncInstalledTerminalHelpersForCurrentSettings()
         }
     }

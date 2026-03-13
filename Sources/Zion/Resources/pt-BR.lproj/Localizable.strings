@@ -1560,10 +1560,8 @@
 "settings.terminal.openHyperlinks.hint" = "Links OSC 8 abrem no navegador padrão ao clicar com Cmd.";
 "settings.terminal.imageRendering" = "Renderização de Imagens Inline";
 "settings.terminal.imageRendering.hint" = "Renderiza imagens Sixel, iTerm2 e Kitty inline. Alterações aplicam em novas sessões.";
-"settings.terminal.aiImageDisplay" = "Imagens IA Inline e Helpers";
-"settings.terminal.aiImageDisplay.hint" = "Instala o zion_display e atualiza imediatamente os helpers globais do zion-img na sua pasta home. Mudanças no terminal aplicam em novas sessões.";
-"settings.terminal.aiImageSaveToProjectRoot" = "Salvar Imagens Geradas no Root do Projeto";
-"settings.terminal.aiImageSaveToProjectRoot.hint" = "Quando ativado, /zion-img salva SVGs em zion-image/ no projeto atual. Quando desativado, usa o cache do Zion.";
+"settings.terminal.aiImageDisplay" = "Geracao de Imagens por IA e Helpers";
+"settings.terminal.aiImageDisplay.hint" = "Instala os helpers do zion-img e o zion_display na sua pasta home. Imagens geradas por IA sao salvas em zion-image/ no projeto atual para preview no Zion.";
 "settings.terminal.autoAppendAIConfig" = "Configurar Instruções IA do Projeto";
 "settings.terminal.autoAppendAIConfig.hint" = "Escreve instruções locais do Zion em arquivos de configuração de IA no root do projeto, como AGENTS.md, CLAUDE.md e GEMINI.md. É isso que dá aos agentes orientação específica do projeto, como notificações de conclusão via ntfy. Quando desativado, use zion_ai_setup manualmente.";
 "settings.terminal.aiConfigScope.hint" = "Escopo: o toggle acima instala helpers no nível do usuário, na sua pasta home. Este toggle escreve instruções no nível do repositório para o projeto atual.";
@@ -1827,7 +1825,7 @@
 "help.code.findinfiles" = "Buscar em Arquivos em todo o repositório (⇧⌘F)";
 "help.terminal.finderdrag" = "Arraste arquivos do Finder direto para o terminal";
 "help.ops.forcepush" = "Force Push com Lease (seguro) e Force Push (sobrescrever) disponíveis";
-"help.ai.slashcommands" = "Comandos slash para IA: /zion-img para Claude, Gemini e Codex";
+"help.ai.slashcommands" = "Comando de imagem para IA: /zion-img para Claude, Gemini e Codex";
 "shortcuts.findInFiles" = "Buscar em Arquivos";
 "shortcuts.findInFilesClose" = "Fechar busca em arquivos";
 "shortcuts.findInFilesNext" = "Próximo resultado em arquivos";
@@ -1846,8 +1844,8 @@
 "map.ops.forcepush.description" = "Force Push com Lease (seguro, rejeita se o remoto tem commits novos) e Force Push (sobrescrever) disponíveis no menu de contexto da branch.";
 "map.ops.forcepush.tip1" = "Sempre prefira Force com Lease — evita sobrescrever commits de colegas.";
 "map.ai.slashcommands.title" = "Comandos Slash para IA";
-"map.ai.slashcommands.description" = "Comando /zion-img instalado automaticamente para Claude Code, Gemini CLI e Codex CLI. Exibe imagens inline e gera SVGs no terminal.";
-"map.ai.slashcommands.tip1" = "Ative Imagens Inline de IA em Configurações para instalar comandos automaticamente ao iniciar o terminal.";
+"map.ai.slashcommands.description" = "Comando /zion-img instalado automaticamente para Claude Code, Gemini CLI e Codex CLI. Gera arquivos de imagem em zion-image/ para preview no Zion.";
+"map.ai.slashcommands.tip1" = "Ative Geracao de Imagens por IA nas Configuracoes para instalar os comandos automaticamente ao iniciar o terminal.";
 
 // Voice-to-text — 1.6.0
 "speech.button.tooltip" = "Entrada de Voz";

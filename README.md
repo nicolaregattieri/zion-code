@@ -58,7 +58,7 @@ Zion doesn't make you choose.
 - **Recovery Vault** — Auto-snapshots before every destructive operation (reset --hard, rebase, discard). Never lose work again.
 - **Git Hosting Providers** — GitHub, GitLab, and Bitbucket support with automatic remote URL detection. Inline PR comments and review submission.
 - **Rich Mobile Terminal** — Replaced plain-text streaming with xterm.js for full ANSI color, bold/italic, cursor positioning, and TUI app support (Claude Code, Gemini, etc.)
-- **AI Agent Integration** — Slash commands for Claude Code (`/zion-img`), Gemini CLI (`/zion-img`), and Codex CLI (`$zion-img`) — auto-installed when AI Inline Images is enabled.
+- **AI Agent Integration** — Slash commands for Claude Code (`/zion-img`), Gemini CLI (`/zion-img`), and Codex CLI (`$zion-img`) that generate project image files for preview in Zion — auto-installed when AI Image Generation is enabled.
 - **Annotated & Signed Tags** — Create annotated and GPG-signed tags with message editor, push to remote, delete remote tags.
 - **Force Push Options** — Force Push with Lease (safe) and Force Push (override) from branch context menu.
 - **Code Formatter** — Built-in formatting for 16+ languages with format-on-save.
