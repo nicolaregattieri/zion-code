@@ -654,9 +654,14 @@ final class RepositoryViewModel {
     @ObservationIgnored private var fileWatcherGateTask: Task<Void, Never>?
     @ObservationIgnored var suppressFileWatcherGitMetadataUntil: Date = .distantPast
     var isSwitchingRepository = false
+    var isBlockingRepositorySwitch = false
     @ObservationIgnored private var cachedWorktreeStatusByPath: [String: (uncommittedCount: Int, hasConflicts: Bool)] = [:]
     @ObservationIgnored var cachedIgnoredPaths: Set<String>?
     var isRepositorySwitching: Bool { isSwitchingRepository }
+    var isRepositorySwitchBlocking: Bool { isSwitchingRepository && isBlockingRepositorySwitch }
+    var isRepositorySwitchRefreshingInBackground: Bool {
+        isSwitchingRepository && !isBlockingRepositorySwitch
+    }
 
     private func recalculateMaxLaneCount() {
         let maxLane = commits
@@ -670,12 +675,30 @@ final class RepositoryViewModel {
         return Date().timeIntervalSince(snapshot.capturedAt) <= repositorySwitchSnapshotTTL
     }
 
+    func hasRepositorySnapshot(for url: URL) -> Bool {
+        repositorySwitchSnapshots[url] != nil
+    }
+
     func applyRepositorySnapshotIfFresh(for url: URL) -> Bool {
         guard let snapshot = repositorySwitchSnapshots[url],
               Date().timeIntervalSince(snapshot.capturedAt) <= repositorySwitchSnapshotTTL else {
             return false
         }
 
+        applyRepositorySnapshot(snapshot)
+        return true
+    }
+
+    func applyRepositorySnapshotIfAvailable(for url: URL) -> Bool {
+        guard let snapshot = repositorySwitchSnapshots[url] else {
+            return false
+        }
+
+        applyRepositorySnapshot(snapshot)
+        return true
+    }
+
+    private func applyRepositorySnapshot(_ snapshot: RepositorySwitchSnapshot) {
         commitLimit = snapshot.commitLimit
         focusedBranch = snapshot.focusedBranch
         currentBranch = snapshot.currentBranch
@@ -700,7 +723,11 @@ final class RepositoryViewModel {
         uncommittedCount = snapshot.uncommittedCount
         repositoryFiles = snapshot.repositoryFiles
         expandedPaths = snapshot.expandedPaths
-        return true
+    }
+
+    func clearRepositorySwitchState() {
+        isBlockingRepositorySwitch = false
+        isSwitchingRepository = false
     }
 
     func captureRepositorySnapshot(for url: URL) {
@@ -752,6 +779,7 @@ final class RepositoryViewModel {
 
         let switchToken = UUID()
         repositorySwitchToken = switchToken
+        isBlockingRepositorySwitch = !hasRepositorySnapshot(for: url)
         isSwitchingRepository = true
         logger.log(.info, "switch.start", context: "target=\(url.lastPathComponent) token=\(switchToken.uuidString.prefix(8))", source: #function)
         cancelRepositoryBackgroundActivityForSwitch()
@@ -849,10 +877,17 @@ final class RepositoryViewModel {
         selectedHunkLines = []
         startFileWatcher(for: url)
 
-        if applyRepositorySnapshotIfFresh(for: url) {
-            logger.log(.info, "switch.snapshot.restore", context: "repo=\(url.lastPathComponent) token=\(switchToken.uuidString.prefix(8))", source: #function)
+        if applyRepositorySnapshotIfAvailable(for: url) {
+            let snapshotAgeSeconds = repositorySwitchSnapshots[url].map {
+                Int(Date().timeIntervalSince($0.capturedAt))
+            } ?? 0
+            logger.log(
+                .info,
+                "switch.snapshot.restore",
+                context: "repo=\(url.lastPathComponent) token=\(switchToken.uuidString.prefix(8)) age=\(snapshotAgeSeconds)s blocking=\(isRepositorySwitchBlocking)",
+                source: #function
+            )
             loadCommitDetails(for: selectedCommitID, policy: .silent)
-            isSwitchingRepository = false
             refreshFileTree()
             scheduleDeferredRepositoryLoads(
                 for: url,
@@ -945,7 +980,7 @@ final class RepositoryViewModel {
         startAutoRefreshTimer()
         loadBridgeState()
         captureRepositorySnapshot(for: url)
-        isSwitchingRepository = false
+        clearRepositorySwitchState()
     }
 
     func mergeWorktreeStatusIfNeeded(_ incoming: [WorktreeItem], includeWorktreeStatus: Bool) -> [WorktreeItem] {

@@ -10,7 +10,7 @@ extension ContentView {
 
             Spacer()
 
-            if model.repositoryURL != nil && !model.isRepositorySwitching {
+            if model.repositoryURL != nil && !model.isRepositorySwitchBlocking {
                 // Branch pill
                 HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                     Image(systemName: "arrow.triangle.branch")
@@ -125,6 +125,21 @@ extension ContentView {
                 }
             }
 
+            if model.isRepositorySwitchRefreshingInBackground {
+                HStack(spacing: 6) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text(L10n("switch.overlay.loading"))
+                        .lineLimit(1)
+                }
+                .font(DesignSystem.Typography.label)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(DesignSystem.Colors.statusBlueBg)
+                .foregroundStyle(DesignSystem.Colors.info)
+                .clipShape(Capsule())
+            }
+
             if let repositoryURL = model.repositoryURL {
                 Text(repositoryURL.path).lineLimit(1).font(DesignSystem.Typography.monoLabel).foregroundStyle(.tertiary)
             }
@@ -142,7 +157,7 @@ extension ContentView {
             }
         }
         .overlay(alignment: .top) {
-            if model.isBusy {
+            if model.isBusy || model.isRepositorySwitchRefreshingInBackground {
                 NeonProgressLine(mode: .shimmer)
                     .transition(.opacity.animation(.easeOut(duration: 0.3)))
             } else {
@@ -155,7 +170,10 @@ extension ContentView {
                 }
             }
         }
-        .animation(DesignSystem.Motion.panel, value: model.isBusy)
+        .animation(
+            DesignSystem.Motion.panel,
+            value: model.isBusy || model.isRepositorySwitchRefreshingInBackground
+        )
     }
 
     var statusBarQuickNavigation: some View {
