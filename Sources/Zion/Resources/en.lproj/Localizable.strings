@@ -625,19 +625,9 @@
 "ntfy.group.ai" = "AI";
 "ntfy.group.github" = "GitHub";
 "ntfy.event.cloneComplete" = "Clone complete";
-"ntfy.event.pushComplete" = "Push complete";
-"ntfy.event.pullComplete" = "Pull complete";
 "ntfy.event.newRemoteCommits" = "New remote commits";
-"ntfy.event.codeReviewComplete" = "Code review complete";
-"ntfy.event.conflictResolutionReady" = "Conflict resolution ready";
-"ntfy.event.commitMessageReady" = "Commit message ready";
-"ntfy.event.changelogReady" = "Changelog ready";
-"ntfy.event.blameExplanationReady" = "Blame explanation ready";
-"ntfy.event.diffExplanationReady" = "Diff explanation ready";
-"ntfy.event.commitSplitReady" = "Split suggestion ready";
 "ntfy.event.prCreated" = "PR created";
 "ntfy.event.prReviewRequested" = "PR review requested";
-"ntfy.event.branchReviewComplete" = "Branch review complete";
 
 // Zion Map — Section Subtitles
 "map.tree.subtitle" = "Visualize Git history with color-coded lanes, search, and commit navigation.";
