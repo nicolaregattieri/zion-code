@@ -9,8 +9,7 @@ let package = Package(
         .macOS(.v14)
     ],
     products: [
-        .executable(name: "Zion", targets: ["Zion"]),
-        .executable(name: "zion_svg2png", targets: ["ZionSVG2PNG"])
+        .executable(name: "Zion", targets: ["Zion"])
     ],
     dependencies: [
         .package(url: "https://github.com/nicolaregattieri/SwiftTerm.git", revision: "758b62157f629c8de618a50e8dbd6ba3f2a5db3b"),
@@ -26,10 +25,6 @@ let package = Package(
             resources: [
                 .process("Resources")
             ]
-        ),
-        .executableTarget(
-            name: "ZionSVG2PNG",
-            dependencies: []
         ),
         .testTarget(
             name: "ZionTests",
