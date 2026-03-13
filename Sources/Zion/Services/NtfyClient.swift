@@ -28,22 +28,11 @@ enum NtfyEventGroup: String, CaseIterable, Identifiable, Sendable {
 enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
     // Git Ops
     case cloneComplete = "cloneComplete"
-    case pushComplete = "pushComplete"
-    case pullComplete = "pullComplete"
     case newRemoteCommits = "newRemoteCommits"
-    // AI
-    case codeReviewComplete = "codeReviewComplete"
-    case conflictResolutionReady = "conflictResolutionReady"
-    case commitMessageReady = "commitMessageReady"
-    case changelogReady = "changelogReady"
-    case blameExplanationReady = "blameExplanationReady"
-    case diffExplanationReady = "diffExplanationReady"
-    case commitSplitReady = "commitSplitReady"
     // GitHub
     case prCreated = "prCreated"
     case prReviewRequested = "prReviewRequested"
-    // AI — Branch Review
-    case branchReviewComplete = "branchReviewComplete"
+    // AI
     case prAutoReviewComplete = "prAutoReviewComplete"
     // Terminal
     case terminalPromptDetected = "terminalPromptDetected"
@@ -52,11 +41,9 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
 
     var group: NtfyEventGroup {
         switch self {
-        case .cloneComplete, .pushComplete, .pullComplete, .newRemoteCommits:
+        case .cloneComplete, .newRemoteCommits:
             return .gitOps
-        case .codeReviewComplete, .conflictResolutionReady, .commitMessageReady,
-             .changelogReady, .blameExplanationReady, .diffExplanationReady, .commitSplitReady,
-             .branchReviewComplete, .prAutoReviewComplete:
+        case .prAutoReviewComplete:
             return .ai
         case .prCreated, .prReviewRequested:
             return .github
@@ -68,19 +55,9 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
     var label: String {
         switch self {
         case .cloneComplete: return L10n("ntfy.event.cloneComplete")
-        case .pushComplete: return L10n("ntfy.event.pushComplete")
-        case .pullComplete: return L10n("ntfy.event.pullComplete")
         case .newRemoteCommits: return L10n("ntfy.event.newRemoteCommits")
-        case .codeReviewComplete: return L10n("ntfy.event.codeReviewComplete")
-        case .conflictResolutionReady: return L10n("ntfy.event.conflictResolutionReady")
-        case .commitMessageReady: return L10n("ntfy.event.commitMessageReady")
-        case .changelogReady: return L10n("ntfy.event.changelogReady")
-        case .blameExplanationReady: return L10n("ntfy.event.blameExplanationReady")
-        case .diffExplanationReady: return L10n("ntfy.event.diffExplanationReady")
-        case .commitSplitReady: return L10n("ntfy.event.commitSplitReady")
         case .prCreated: return L10n("ntfy.event.prCreated")
         case .prReviewRequested: return L10n("ntfy.event.prReviewRequested")
-        case .branchReviewComplete: return L10n("ntfy.event.branchReviewComplete")
         case .prAutoReviewComplete: return L10n("ntfy.event.prAutoReviewComplete")
         case .terminalPromptDetected: return L10n("ntfy.event.terminalPromptDetected")
         }
@@ -89,19 +66,9 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
     var priority: Int {
         switch self {
         case .cloneComplete: return 4
-        case .pushComplete: return 3
-        case .pullComplete: return 3
         case .newRemoteCommits: return 4
-        case .codeReviewComplete: return 4
-        case .conflictResolutionReady: return 4
-        case .commitMessageReady: return 3
-        case .changelogReady: return 3
-        case .blameExplanationReady: return 2
-        case .diffExplanationReady: return 2
-        case .commitSplitReady: return 2
         case .prCreated: return 3
         case .prReviewRequested: return 4
-        case .branchReviewComplete: return 4
         case .prAutoReviewComplete: return 4
         case .terminalPromptDetected: return 5
         }
@@ -110,19 +77,9 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
     var emojiTag: String {
         switch self {
         case .cloneComplete: return "package"
-        case .pushComplete: return "rocket"
-        case .pullComplete: return "arrow_down"
         case .newRemoteCommits: return "bell"
-        case .codeReviewComplete: return "mag"
-        case .conflictResolutionReady: return "handshake"
-        case .commitMessageReady: return "memo"
-        case .changelogReady: return "scroll"
-        case .blameExplanationReady: return "detective"
-        case .diffExplanationReady: return "books"
-        case .commitSplitReady: return "scissors"
         case .prCreated: return "tada"
         case .prReviewRequested: return "eyes"
-        case .branchReviewComplete: return "mag"
         case .prAutoReviewComplete: return "mag"
         case .terminalPromptDetected: return "bell"
         }
@@ -136,24 +93,17 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
              .prCreated, .prReviewRequested, .prAutoReviewComplete,
              .terminalPromptDetected:
             return true
-        case .cloneComplete, .pushComplete, .pullComplete,
-             .codeReviewComplete, .branchReviewComplete,
-             .commitMessageReady, .changelogReady, .blameExplanationReady,
-             .diffExplanationReady, .commitSplitReady, .conflictResolutionReady:
+        case .cloneComplete:
             return false // synchronous — result appears instantly in UI
         }
     }
 
     var enabledByDefault: Bool {
         switch self {
-        case .cloneComplete, .pushComplete, .pullComplete, .newRemoteCommits,
-             .codeReviewComplete, .conflictResolutionReady, .prCreated,
-             .prReviewRequested, .branchReviewComplete, .prAutoReviewComplete,
+        case .cloneComplete, .newRemoteCommits,
+             .prCreated, .prReviewRequested, .prAutoReviewComplete,
              .terminalPromptDetected:
             return true
-        case .commitMessageReady, .changelogReady, .blameExplanationReady,
-             .diffExplanationReady, .commitSplitReady:
-            return false
         }
     }
 
