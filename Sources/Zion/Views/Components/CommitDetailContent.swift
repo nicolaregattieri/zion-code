@@ -171,8 +171,12 @@ struct CommitDetailContent: View {
                                         }
 
                                         if !model.currentCommitFileDiffHunks.isEmpty {
-                                            HunkDiffView(model: model, file: file.path, hunks: model.currentCommitFileDiffHunks)
-                                                .frame(maxHeight: 300)
+                                            HunkDiffView(
+                                                model: model,
+                                                file: file.path,
+                                                hunks: model.currentCommitFileDiffHunks,
+                                                isScrollEnabled: false
+                                            )
                                         }
                                     }
                                 }

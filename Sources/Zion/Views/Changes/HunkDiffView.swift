@@ -4,19 +4,30 @@ struct HunkDiffView: View {
     var model: RepositoryViewModel
     let file: String
     let hunks: [DiffHunk]
+    var isScrollEnabled: Bool = true
     @State private var collapsedHunks: Set<UUID> = []
     @State private var selectedLines: Set<UUID> = []
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                ForEach(hunks) { hunk in
-                    hunkSection(hunk)
+        Group {
+            if isScrollEnabled {
+                ScrollView {
+                    content
                 }
+            } else {
+                content
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .background(DesignSystem.Colors.glassInset)
+    }
+
+    private var content: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(hunks) { hunk in
+                hunkSection(hunk)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func hunkSection(_ hunk: DiffHunk) -> some View {
