@@ -48,11 +48,11 @@ cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
 <plist version="1.0">
 <dict>
   <key>CFBundleName</key>
-  <string>Zion</string>
+  <string>Zion Code</string>
   <key>CFBundleDisplayName</key>
-  <string>Zion</string>
+  <string>Zion Code</string>
   <key>CFBundleIdentifier</key>
-  <string>com.nicolaregattieri.zion.app</string>
+  <string>com.nicolaregattieri.zioncode</string>
   <key>CFBundleVersion</key>
   <string>28</string>
   <key>CFBundleShortVersionString</key>
@@ -117,10 +117,22 @@ chmod +x "$APP_DIR/Contents/MacOS/Zion"
 xattr -cr "$APP_DIR"
 
 # Re-sign app bundle (install_name_tool invalidates the ad-hoc signature from swift build)
-# Note: Zion.entitlements exists for future Apple notarization but is NOT used with
-# ad-hoc signing (--sign -) as it causes Gatekeeper rejection. When notarization is
-# ready, switch to: codesign --sign "Developer ID" --entitlements Zion.entitlements
-codesign --force --deep --sign - "$APP_DIR"
+# Set CODESIGN_IDENTITY in your environment for notarization (e.g., "Developer ID Application: Your Name (TEAMID)")
+# When unset or "-", falls back to ad-hoc signing without entitlements.
+CODESIGN_IDENTITY="${CODESIGN_IDENTITY:--}"
+
+if [ "$CODESIGN_IDENTITY" != "-" ]; then
+  # Notarization-ready: sign with identity, hardened runtime, and entitlements
+  codesign --force --deep --sign "$CODESIGN_IDENTITY" \
+    --options runtime \
+    --entitlements "$ROOT_DIR/Zion.entitlements" \
+    "$APP_DIR"
+  echo "Signed with identity: $CODESIGN_IDENTITY (hardened runtime + entitlements)"
+else
+  # Ad-hoc signing for local development
+  codesign --force --deep --sign - "$APP_DIR"
+  echo "Signed ad-hoc (set CODESIGN_IDENTITY for notarization)"
+fi
 
 # Nudge Finder/LaunchServices caches by bumping bundle mtimes after final signing
 touch "$APP_DIR/Contents/Info.plist" "$APP_DIR"
