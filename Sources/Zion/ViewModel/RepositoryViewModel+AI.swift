@@ -444,10 +444,11 @@ extension RepositoryViewModel {
     // MARK: - PR Review Queue (Phase 4)
 
     func openPRInCodeReview(_ item: PRReviewItem) {
-        branchReviewSource = item.pr.headBranch
-        branchReviewTarget = item.pr.baseBranch
-        if !item.pr.headBranch.isEmpty && !item.pr.baseBranch.isEmpty {
-            startCodeReview(source: item.pr.headBranch, target: item.pr.baseBranch)
+        let resolvedPR = Self.enrichedReviewRequestPR(item.pr, catalog: pullRequests)
+        branchReviewSource = resolvedPR.headBranch
+        branchReviewTarget = resolvedPR.baseBranch
+        if !resolvedPR.headBranch.isEmpty && !resolvedPR.baseBranch.isEmpty {
+            startCodeReview(source: resolvedPR.headBranch, target: resolvedPR.baseBranch)
         }
     }
 
@@ -460,7 +461,9 @@ extension RepositoryViewModel {
     }
 
     func reviewAllPRs() {
-        guard isAIConfigured, let url = repositoryURL else { return }
+        guard isAIConfigured,
+              let url = repositoryURL,
+              let (provider, remote) = detectHostingProvider() else { return }
 
         for i in prReviewQueue.indices where prReviewQueue[i].status == .pending {
             prReviewQueue[i].status = .reviewing
@@ -469,28 +472,31 @@ extension RepositoryViewModel {
             let idx = i
             Task {
                 do {
-                    // Get the diff for this PR
-                    let remoteResult = try? git.run(args: ["remote", "get-url", "origin"], in: url)
-            let remote = (remoteResult?.stdout ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-                    guard let ghRemote = GitHubClient.parseRemote(remote) else { return }
-
-                    let diff = await githubClient.fetchPRDiff(remote: ghRemote, prNumber: item.pr.number) ?? ""
+                    let resolvedPR = Self.enrichedReviewRequestPR(item.pr, catalog: pullRequests)
+                    let diffPayload = await reviewDiffPayload(for: resolvedPR, provider: provider, remote: remote, repositoryURL: url)
+                    guard !diffPayload.diff.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                        prReviewQueue[idx].status = .pending
+                        return
+                    }
+                    let fileHints = diffPayload.diffStat.isEmpty ? [] : Self.parseFileHints(fromDiffStat: diffPayload.diffStat)
+                    let repoContext = buildRepoContext(
+                        fileHints: fileHints,
+                        extraNotes: [
+                            "source branch: \(resolvedPR.headBranch)",
+                            "target branch: \(resolvedPR.baseBranch)",
+                            "pr title: \(resolvedPR.title)",
+                            "author: \(resolvedPR.author)"
+                        ]
+                    )
                     let findings = try await aiClient.reviewBranch(
-                        diff: diff,
-                        diffStat: "",
-                        sourceBranch: item.pr.headBranch,
-                        targetBranch: item.pr.baseBranch,
+                        diff: diffPayload.diff,
+                        diffStat: diffPayload.diffStat,
+                        sourceBranch: resolvedPR.headBranch.isEmpty ? "PR #\(resolvedPR.number)" : resolvedPR.headBranch,
+                        targetBranch: resolvedPR.baseBranch.isEmpty ? "review target" : resolvedPR.baseBranch,
                         provider: aiProvider,
                         apiKey: aiAPIKey,
                         mode: aiMode,
-                        repoContext: buildRepoContext(
-                            fileHints: [],
-                            extraNotes: [
-                                "source branch: \(item.pr.headBranch)",
-                                "target branch: \(item.pr.baseBranch)",
-                                "pr title: \(item.pr.title)"
-                            ]
-                        )
+                        repoContext: repoContext
                     )
 
                     prReviewQueue[idx].findings = findings
@@ -501,8 +507,12 @@ extension RepositoryViewModel {
                     let repoName = url.lastPathComponent
                     await ntfyClient.sendIfEnabled(
                         event: .prAutoReviewComplete,
-                        title: "PR #\(item.pr.number) reviewed",
-                        body: buildReviewNotificationBody(prTitle: item.pr.title, findings: findings),
+                        title: "PR #\(resolvedPR.number) reviewed",
+                        body: Self.buildReviewNotificationBody(
+                            pr: resolvedPR,
+                            findings: findings,
+                            repoContext: repoContext
+                        ),
                         repoName: repoName
                     )
                 } catch {
@@ -513,24 +523,27 @@ extension RepositoryViewModel {
     }
 
     func refreshPRReviewQueue() {
-        guard let url = repositoryURL else { return }
+        guard repositoryURL != nil,
+              let (provider, remote) = detectHostingProvider() else { return }
 
         prPollingTask?.cancel()
         prPollingTask = Task {
-            let remoteResult = try? git.run(args: ["remote", "get-url", "origin"], in: url)
-            let remote = (remoteResult?.stdout ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            guard let ghRemote = GitHubClient.parseRemote(remote) else { return }
+            let openPRCatalog = await ensurePRCatalogLoaded(provider: provider, remote: remote)
+            let prs = await provider.fetchPRsRequestingMyReview(remote: remote)
+            let enrichedPRs = prs.map { Self.enrichedReviewRequestPR($0, catalog: openPRCatalog) }
+            let existingItems = Dictionary(uniqueKeysWithValues: prReviewQueue.map { ($0.pr.id, $0) })
 
-            let prs = await githubClient.fetchPRsRequestingMyReview(remote: ghRemote)
-            let existingIDs = Set(prReviewQueue.map(\.pr.id))
-
-            for pr in prs where !existingIDs.contains(pr.id) {
-                prReviewQueue.append(PRReviewItem(pr: pr))
+            prReviewQueue = enrichedPRs.map { pr in
+                if let existing = existingItems[pr.id] {
+                    return PRReviewItem(
+                        pr: pr,
+                        status: existing.status,
+                        findings: existing.findings,
+                        reviewedAt: existing.reviewedAt
+                    )
+                }
+                return PRReviewItem(pr: pr)
             }
-
-            // Remove PRs no longer requesting review
-            let currentIDs = Set(prs.map(\.id))
-            prReviewQueue.removeAll { !currentIDs.contains($0.pr.id) }
 
             // Auto-review if enabled
             let autoReview = UserDefaults.standard.bool(forKey: "zion.autoReviewAssignedPRs")
@@ -1128,7 +1141,7 @@ extension RepositoryViewModel {
         }
     }
 
-    private func buildRepoContext(
+    func buildRepoContext(
         fileHints: [String],
         recentMessages: [String] = [],
         extraNotes: [String] = []
@@ -1147,6 +1160,42 @@ extension RepositoryViewModel {
             recentMessages: recentMessages,
             extraNotes: extraNotes
         )
+    }
+
+    func ensurePRCatalogLoaded(
+        provider: any GitHostingProvider,
+        remote: HostedRemote
+    ) async -> [HostedPRInfo] {
+        if !pullRequests.isEmpty {
+            return pullRequests
+        }
+
+        let prs = await provider.fetchPullRequests(remote: remote)
+        if !prs.isEmpty {
+            pullRequests = prs
+        }
+        return prs
+    }
+
+    private func reviewDiffPayload(
+        for pr: HostedPRInfo,
+        provider: any GitHostingProvider,
+        remote: HostedRemote,
+        repositoryURL: URL
+    ) async -> (diff: String, diffStat: String) {
+        if let diff = await provider.fetchPRDiff(remote: remote, prNumber: pr.number),
+           !diff.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return (diff, "")
+        }
+
+        guard !pr.headBranch.isEmpty, !pr.baseBranch.isEmpty else {
+            return ("", "")
+        }
+
+        let range = "\(pr.baseBranch)...\(pr.headBranch)"
+        let diff = (try? await worker.runAction(args: ["diff", range], in: repositoryURL)) ?? ""
+        let diffStat = (try? await worker.runAction(args: ["diff", "--stat", range], in: repositoryURL)) ?? ""
+        return (diff, diffStat)
     }
 
     private func buildTransientRepoContext(
@@ -1385,19 +1434,111 @@ extension RepositoryViewModel {
 
     // MARK: - Notification Helpers
 
-    private func buildReviewNotificationBody(prTitle: String, findings: [ReviewFinding]) -> String {
-        if findings.isEmpty {
-            return "\(prTitle) — clean, no issues found"
+    static func enrichedReviewRequestPR(_ pr: HostedPRInfo, catalog: [HostedPRInfo]) -> HostedPRInfo {
+        guard let fullPR = catalog.first(where: { $0.id == pr.id || $0.number == pr.number }) else {
+            return pr
         }
-        var lines = ["\(prTitle) — \(findings.count) finding\(findings.count == 1 ? "" : "s")"]
-        for f in findings.prefix(3) {
-            let icon = f.severity == .critical ? "🔴" : f.severity == .warning ? "🟡" : "🔵"
-            let file = f.file.split(separator: "/").last.map(String.init) ?? f.file
-            lines.append("\(icon) \(file): \(f.message.prefix(60))")
+
+        return HostedPRInfo(
+            id: pr.id,
+            number: pr.number,
+            title: pr.title.isEmpty ? fullPR.title : pr.title,
+            state: fullPR.state,
+            headBranch: pr.headBranch.isEmpty ? fullPR.headBranch : pr.headBranch,
+            baseBranch: pr.baseBranch.isEmpty ? fullPR.baseBranch : pr.baseBranch,
+            url: pr.url.isEmpty ? fullPR.url : pr.url,
+            isDraft: fullPR.isDraft,
+            author: pr.author.isEmpty ? fullPR.author : pr.author,
+            headSHA: pr.headSHA.isEmpty ? fullPR.headSHA : pr.headSHA
+        )
+    }
+
+    static func buildReviewRequestNotificationBody(pr: HostedPRInfo, repoContext: String) -> String {
+        let highlights = notificationHighlights(from: repoContext)
+        var lines = [String(format: L10n("pr.notification.request.header"), pr.author, pr.title)]
+
+        if !pr.headBranch.isEmpty, !pr.baseBranch.isEmpty {
+            lines.append(String(format: L10n("pr.notification.request.flow"), pr.headBranch, pr.baseBranch))
         }
-        if findings.count > 3 {
-            lines.append("… and \(findings.count - 3) more")
+        if let strategy = highlights.strategy {
+            lines.append(String(format: L10n("pr.notification.request.strategy"), strategy))
         }
+        if let constraints = highlights.constraints {
+            lines.append(String(format: L10n("pr.notification.request.constraints"), constraints))
+        }
+
         return lines.joined(separator: "\n")
+    }
+
+    static func buildReviewNotificationBody(
+        pr: HostedPRInfo,
+        findings: [ReviewFinding],
+        repoContext: String
+    ) -> String {
+        let highlights = notificationHighlights(from: repoContext)
+        let passSignal = reviewPassSignal(findings: findings)
+        var lines = [String(format: L10n("pr.notification.review.header"), pr.title, "\(passSignal)")]
+
+        if let strategy = highlights.strategy {
+            lines.append(String(format: L10n("pr.notification.request.strategy"), strategy))
+        }
+        if let constraints = highlights.constraints {
+            lines.append(String(format: L10n("pr.notification.request.constraints"), constraints))
+        }
+
+        let fixes = findings
+            .filter { $0.severity == .critical || $0.severity == .warning }
+            .prefix(3)
+            .map { finding in
+                let file = finding.file.split(separator: "/").last.map(String.init) ?? finding.file
+                return "\(file): \(finding.message)"
+            }
+
+        if fixes.isEmpty {
+            lines.append(L10n("pr.notification.review.clean"))
+        } else {
+            lines.append(String(format: L10n("pr.notification.review.fixes"), fixes.joined(separator: " | ")))
+        }
+
+        return lines.joined(separator: "\n")
+    }
+
+    static func reviewPassSignal(findings: [ReviewFinding]) -> Int {
+        let critical = findings.filter { $0.severity == .critical }.count
+        let warning = findings.filter { $0.severity == .warning }.count
+        let suggestion = findings.filter { $0.severity == .suggestion }.count
+        let penalty = critical * 30 + warning * 15 + suggestion * 5
+        return max(5, 100 - penalty)
+    }
+
+    static func notificationHighlights(from repoContext: String) -> (strategy: String?, constraints: String?) {
+        let lines = repoContext
+            .split(separator: "\n")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+        let strategy = value(forPrefix: "modules:", in: lines)
+            ?? value(forPrefix: "focus files:", in: lines)
+            ?? value(forPrefix: "branch patterns:", in: lines)
+        let constraints = value(forPrefix: "conventions:", in: lines)
+            ?? value(forPrefix: "sensitive areas:", in: lines)
+
+        return (
+            strategy: strategy.map { trimmedNotificationValue($0) },
+            constraints: constraints.map { trimmedNotificationValue($0) }
+        )
+    }
+
+    private static func value(forPrefix prefix: String, in lines: [String]) -> String? {
+        lines.first(where: { $0.hasPrefix(prefix) }).map { line in
+            line.dropFirst(prefix.count).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+    }
+
+    private static func trimmedNotificationValue(_ value: String) -> String {
+        value
+            .split(separator: ",")
+            .prefix(3)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .joined(separator: ", ")
     }
 }

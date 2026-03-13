@@ -9,8 +9,10 @@ struct PRInboxCard: View {
     var model: RepositoryViewModel
     @State private var isExpanded: Bool = true
     @State private var selectedTab: PRTab = .forReview
-    @State private var ghInstalled: Bool = true
-    @State private var ghAuthenticated: Bool = true
+    @State private var isCheckingHostingAccess: Bool = true
+    @State private var hostingAccessIcon: String = "link.badge.questionmark"
+    @State private var hostingAccessMessage: String?
+    @State private var hostingAccessHint: String?
 
     private var totalCount: Int {
         switch selectedTab {
@@ -20,8 +22,14 @@ struct PRInboxCard: View {
     }
 
     private var allOpenPRs: [GitHubPRInfo] {
+        guard hostingAccessMessage == nil else { return [] }
         let reviewIDs = Set(model.prReviewQueue.map(\.pr.id))
         return model.pullRequests.filter { !reviewIDs.contains($0.id) }
+    }
+
+    private var hostingRefreshKey: String {
+        let remoteSignature = model.remotes.map(\.url).joined(separator: "|")
+        return "\(model.repositoryURL?.path ?? "no-repo")|\(remoteSignature)"
     }
 
     var body: some View {
@@ -74,27 +82,26 @@ struct PRInboxCard: View {
             }
         }
         .padding(.horizontal, 10)
-        .onAppear {
-            // checkGHStatus() is nonisolated static — safe to call synchronously
-            let status = GitHubClient.checkGHStatus()
-            ghInstalled = status.installed
-            ghAuthenticated = status.authenticated
+        .task(id: hostingRefreshKey) {
+            await refreshHostingAccessState()
         }
     }
 
     @ViewBuilder
     private var forReviewContent: some View {
-        if !ghInstalled {
+        if isCheckingHostingAccess {
+            HStack {
+                Spacer()
+                ProgressView()
+                    .controlSize(.small)
+                Spacer()
+            }
+            .padding(.vertical, 8)
+        } else if let hostingAccessMessage {
             tabEmptyState(
-                icon: "exclamationmark.triangle",
-                message: L10n("pr.gh.notInstalled"),
-                hint: L10n("pr.gh.notInstalled.hint")
-            )
-        } else if !ghAuthenticated {
-            tabEmptyState(
-                icon: "person.crop.circle.badge.questionmark",
-                message: L10n("pr.gh.notAuthenticated"),
-                hint: L10n("pr.gh.notAuthenticated.hint")
+                icon: hostingAccessIcon,
+                message: hostingAccessMessage,
+                hint: hostingAccessHint
             )
         } else if model.prReviewQueue.isEmpty {
             tabEmptyState(
@@ -128,7 +135,21 @@ struct PRInboxCard: View {
 
     @ViewBuilder
     private var allOpenContent: some View {
-        if allOpenPRs.isEmpty {
+        if isCheckingHostingAccess {
+            HStack {
+                Spacer()
+                ProgressView()
+                    .controlSize(.small)
+                Spacer()
+            }
+            .padding(.vertical, 8)
+        } else if let hostingAccessMessage {
+            tabEmptyState(
+                icon: hostingAccessIcon,
+                message: hostingAccessMessage,
+                hint: hostingAccessHint
+            )
+        } else if allOpenPRs.isEmpty {
             tabEmptyState(
                 icon: "checkmark.circle",
                 message: L10n("pr.allOpen.empty"),
@@ -163,6 +184,51 @@ struct PRInboxCard: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
+    }
+
+    private func refreshHostingAccessState() async {
+        isCheckingHostingAccess = true
+
+        guard let (provider, _) = model.detectHostingProvider() else {
+            hostingAccessIcon = "link.badge.questionmark"
+            hostingAccessMessage = L10n("hosting.notConnected")
+            hostingAccessHint = L10n("pr.inbox.providerHint")
+            isCheckingHostingAccess = false
+            return
+        }
+
+        let hasToken = await provider.hasToken()
+        guard !hasToken else {
+            hostingAccessIcon = "checkmark.circle"
+            hostingAccessMessage = nil
+            hostingAccessHint = nil
+            isCheckingHostingAccess = false
+            return
+        }
+
+        switch provider.kind {
+        case .github:
+            let status = GitHubClient.checkGHStatus()
+            if !status.installed {
+                hostingAccessIcon = "exclamationmark.triangle"
+                hostingAccessMessage = L10n("pr.gh.notInstalled")
+                hostingAccessHint = L10n("pr.gh.notInstalled.hint")
+            } else if !status.authenticated {
+                hostingAccessIcon = "person.crop.circle.badge.questionmark"
+                hostingAccessMessage = L10n("pr.gh.notAuthenticated")
+                hostingAccessHint = L10n("pr.gh.notAuthenticated.hint")
+            } else {
+                hostingAccessIcon = "person.crop.circle.badge.questionmark"
+                hostingAccessMessage = L10n("pr.inbox.authRequired", provider.kind.label)
+                hostingAccessHint = L10n("pr.inbox.authRequired.hint", provider.kind.label)
+            }
+        default:
+            hostingAccessIcon = "person.crop.circle.badge.questionmark"
+            hostingAccessMessage = L10n("pr.inbox.authRequired", provider.kind.label)
+            hostingAccessHint = L10n("pr.inbox.authRequired.hint", provider.kind.label)
+        }
+
+        isCheckingHostingAccess = false
     }
 }
 
@@ -238,7 +304,7 @@ private struct PROpenRow: View {
                     NSWorkspace.shared.open(url)
                 }
             } label: {
-                Label(L10n("pr.inbox.openGitHub"), systemImage: "link")
+                Label(L10n("pr.inbox.openProvider"), systemImage: "link")
             }
         }
     }

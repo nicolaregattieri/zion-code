@@ -69,7 +69,7 @@ struct PRInboxRow: View {
                     NSWorkspace.shared.open(url)
                 }
             } label: {
-                Label(L10n("pr.inbox.openGitHub"), systemImage: "link")
+                Label(L10n("pr.inbox.openProvider"), systemImage: "link")
             }
         }
     }

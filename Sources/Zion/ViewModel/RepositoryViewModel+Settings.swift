@@ -133,16 +133,12 @@ extension RepositoryViewModel {
         if defaults.object(forKey: "zion.ntfy.localNotifications") != nil {
             ntfyLocalNotificationsEnabled = defaults.bool(forKey: "zion.ntfy.localNotifications")
         }
+        if defaults.object(forKey: "zion.prPollingInterval") != nil {
+            prPollingIntervalMinutes = Self.sanitizedPRPollingIntervalMinutes(defaults.integer(forKey: "zion.prPollingInterval"))
+        }
         // AI review settings
         if defaults.object(forKey: "zion.preCommitReview") != nil {
             preCommitReviewEnabled = defaults.bool(forKey: "zion.preCommitReview")
-        }
-        if defaults.object(forKey: "zion.autoExplainDiffs") != nil {
-            autoExplainDiffs = defaults.bool(forKey: "zion.autoExplainDiffs")
-        }
-        if let depthRaw = defaults.string(forKey: "zion.diffExplanationDepth"),
-           let depth = DiffExplanationDepth(rawValue: depthRaw) {
-            diffExplanationDepth = depth
         }
         if defaults.object(forKey: "zion.aiTransferSupportHints") != nil {
             aiTransferSupportHintsEnabled = defaults.bool(forKey: "zion.aiTransferSupportHints")
@@ -268,12 +264,6 @@ extension RepositoryViewModel {
         }
         let pcr = defaults.bool(forKey: "zion.preCommitReview")
         if pcr != preCommitReviewEnabled { preCommitReviewEnabled = pcr }
-        let aed = defaults.bool(forKey: "zion.autoExplainDiffs")
-        if aed != autoExplainDiffs { autoExplainDiffs = aed }
-        if let depthRaw = defaults.string(forKey: "zion.diffExplanationDepth"),
-           let depth = DiffExplanationDepth(rawValue: depthRaw), depth != diffExplanationDepth {
-            diffExplanationDepth = depth
-        }
         if defaults.object(forKey: "zion.aiTransferSupportHints") != nil {
             let ath = defaults.bool(forKey: "zion.aiTransferSupportHints")
             if ath != aiTransferSupportHintsEnabled { aiTransferSupportHintsEnabled = ath }
@@ -296,6 +286,15 @@ extension RepositoryViewModel {
         if defaults.object(forKey: "zion.ntfy.localNotifications") != nil {
             let nln = defaults.bool(forKey: "zion.ntfy.localNotifications")
             if nln != ntfyLocalNotificationsEnabled { ntfyLocalNotificationsEnabled = nln }
+        }
+        if defaults.object(forKey: "zion.prPollingInterval") != nil {
+            let interval = Self.sanitizedPRPollingIntervalMinutes(defaults.integer(forKey: "zion.prPollingInterval"))
+            if interval != prPollingIntervalMinutes {
+                prPollingIntervalMinutes = interval
+                if repositoryURL != nil {
+                    startPRPollingTimer()
+                }
+            }
         }
 
         // MARK: File browser
@@ -785,14 +784,25 @@ extension RepositoryViewModel {
 
     func checkPRReviewRequests() async {
         guard let (provider, remote) = detectHostingProvider() else { return }
+        let catalog = await ensurePRCatalogLoaded(provider: provider, remote: remote)
         let prs = await provider.fetchPRsRequestingMyReview(remote: remote)
         for pr in prs {
-            if !notifiedReviewRequestPRIDs.contains(pr.id) {
-                notifiedReviewRequestPRIDs.insert(pr.id)
+            let enrichedPR = Self.enrichedReviewRequestPR(pr, catalog: catalog)
+            if !notifiedReviewRequestPRIDs.contains(enrichedPR.id) {
+                notifiedReviewRequestPRIDs.insert(enrichedPR.id)
+                let repoContext = buildRepoContext(
+                    fileHints: [],
+                    extraNotes: [
+                        "source branch: \(enrichedPR.headBranch)",
+                        "target branch: \(enrichedPR.baseBranch)",
+                        "pr title: \(enrichedPR.title)",
+                        "author: \(enrichedPR.author)"
+                    ]
+                )
                 await ntfyClient.sendIfEnabled(
                     event: .prReviewRequested,
                     title: L10n("ntfy.event.prReviewRequested"),
-                    body: "#\(pr.number) \(pr.title)",
+                    body: Self.buildReviewRequestNotificationBody(pr: enrichedPR, repoContext: repoContext),
                     repoName: repositoryURL?.lastPathComponent ?? ""
                 )
             }
@@ -989,11 +999,20 @@ extension RepositoryViewModel {
         prPollingTimer?.cancel()
         prPollingTimer = Task {
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: Constants.Timing.prPollingInterval)
+                try? await Task.sleep(nanoseconds: Self.prPollingIntervalNanoseconds(for: prPollingIntervalMinutes))
                 if Task.isCancelled { break }
                 if isSwitchingRepository { continue }
                 refreshPRReviewQueue()
             }
         }
+    }
+
+    static func sanitizedPRPollingIntervalMinutes(_ minutes: Int) -> Int {
+        let allowed = [2, 5, 10, 30]
+        return allowed.contains(minutes) ? minutes : 5
+    }
+
+    static func prPollingIntervalNanoseconds(for minutes: Int) -> UInt64 {
+        UInt64(sanitizedPRPollingIntervalMinutes(minutes)) * 60 * 1_000_000_000
     }
 }
