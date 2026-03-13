@@ -24,7 +24,7 @@ final class NtfyEventTests: XCTestCase {
 
     func testGitOpsGroupCount() {
         let gitOps = NtfyEvent.allCases.filter { $0.group == .gitOps }
-        XCTAssertEqual(gitOps.count, 3, "Expected 3 gitOps events")
+        XCTAssertEqual(gitOps.count, 2, "Expected 2 gitOps events")
     }
 
     func testAIGroupCount() {
@@ -35,6 +35,11 @@ final class NtfyEventTests: XCTestCase {
     func testGitHubGroupCount() {
         let github = NtfyEvent.allCases.filter { $0.group == .github }
         XCTAssertEqual(github.count, 2, "Expected 2 GitHub events")
+    }
+
+    func testMobileRemoteGroupCount() {
+        let mobileRemote = NtfyEvent.allCases.filter { $0.group == .mobileRemote }
+        XCTAssertEqual(mobileRemote.count, 1, "Expected 1 mobile remote event")
     }
 
     func testUniqueRawValues() {
@@ -59,6 +64,6 @@ final class NtfyEventTests: XCTestCase {
     }
 
     func testGroupCaseCountGuard() {
-        XCTAssertEqual(NtfyEventGroup.allCases.count, 3, "Event group count changed — update tests")
+        XCTAssertEqual(NtfyEventGroup.allCases.count, 4, "Event group count changed — update tests")
     }
 }

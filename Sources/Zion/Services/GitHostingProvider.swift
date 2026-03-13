@@ -26,6 +26,15 @@ enum GitHostingKind: String, Sendable, CaseIterable, Identifiable {
         case .azureDevOps: return "arrow.triangle.branch"
         }
     }
+
+    var supportsAnonymousOpenPullRequests: Bool {
+        switch self {
+        case .github:
+            return true
+        case .gitlab, .bitbucket, .azureDevOps:
+            return false
+        }
+    }
 }
 
 /// Protocol for git hosting provider integrations (GitHub, GitLab, Bitbucket).

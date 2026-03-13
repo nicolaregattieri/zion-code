@@ -1,5 +1,27 @@
 import SwiftUI
 
+struct NotificationSettingsLayoutState: Equatable {
+    let showTopicSection: Bool
+    let showPreferencesSection: Bool
+    let showEventsSection: Bool
+    let showTestSection: Bool
+    let showPRSection: Bool
+
+    static func resolve(
+        ntfyEnabled: Bool,
+        localNotificationsEnabled: Bool
+    ) -> NotificationSettingsLayoutState {
+        _ = localNotificationsEnabled
+        return NotificationSettingsLayoutState(
+            showTopicSection: ntfyEnabled,
+            showPreferencesSection: true,
+            showEventsSection: true,
+            showTestSection: ntfyEnabled,
+            showPRSection: true
+        )
+    }
+}
+
 struct NotificationSettingsTab: View {
     @AppStorage("zion.ntfy.enabled") private var ntfyEnabled: Bool = false
     @AppStorage("zion.ntfy.topic") private var ntfyTopic: String = ""
@@ -23,6 +45,17 @@ struct NotificationSettingsTab: View {
     private var isServerURLInputValid: Bool { NtfyClient.validateServerURL(normalizedServerURLInput) }
     private var isServerURLDirty: Bool { normalizedServerURLInput != ntfyServerURL }
     private var isCurrentConfigValid: Bool { NtfyClient.validateTopic(ntfyTopic) && isServerURLInputValid }
+    private var layoutState: NotificationSettingsLayoutState {
+        NotificationSettingsLayoutState.resolve(
+            ntfyEnabled: ntfyEnabled,
+            localNotificationsEnabled: localNotifications
+        )
+    }
+    private var userConfigurableGroups: [NtfyEventGroup] {
+        NtfyEventGroup.allCases.filter { group in
+            NtfyEvent.allCases.contains { $0.isUserConfigurable && $0.group == group }
+        }
+    }
 
     var body: some View {
         Form {
@@ -30,7 +63,7 @@ struct NotificationSettingsTab: View {
                 Toggle(L10n("settings.notifications.ntfyEnabled"), isOn: $ntfyEnabled)
             }
 
-            if ntfyEnabled {
+            if layoutState.showTopicSection {
             Section(L10n("settings.notifications.topic")) {
                 if isConfigured && !isEditingTopic {
                     HStack {
@@ -114,56 +147,70 @@ struct NotificationSettingsTab: View {
             }
             }
 
-            if isConfigured {
+            if layoutState.showPreferencesSection {
                 Section(L10n("settings.notifications.preferences")) {
                     Toggle(L10n("ntfy.local.toggle"), isOn: $localNotifications)
 
-                    HStack {
-                        Text(L10n("settings.notifications.server"))
-                        Spacer()
-                        TextField("https://ntfy.sh", text: $serverURLInput)
-                            .frame(width: 200)
-                            .textFieldStyle(.roundedBorder)
-                            .font(DesignSystem.Typography.monoBody)
-                            .onSubmit { saveServerURL() }
-                    }
-                    HStack {
-                        Text(L10n("ntfy.server.hint"))
-                            .font(DesignSystem.Typography.meta)
-                            .foregroundStyle(.tertiary)
-                        Spacer()
-                        if isServerURLDirty {
-                            Button(L10n("Cancelar")) {
-                                serverURLInput = ntfyServerURL
+                    if ntfyEnabled {
+                        HStack {
+                            Text(L10n("settings.notifications.server"))
+                            Spacer()
+                            TextField("https://ntfy.sh", text: $serverURLInput)
+                                .frame(width: 200)
+                                .textFieldStyle(.roundedBorder)
+                                .font(DesignSystem.Typography.monoBody)
+                                .onSubmit { saveServerURL() }
+                        }
+                        HStack {
+                            Text(L10n("ntfy.server.hint"))
+                                .font(DesignSystem.Typography.meta)
+                                .foregroundStyle(.tertiary)
+                            Spacer()
+                            if isServerURLDirty {
+                                Button(L10n("Cancelar")) {
+                                    serverURLInput = ntfyServerURL
+                                }
+                                Button(L10n("Salvar")) { saveServerURL() }
+                                    .buttonStyle(.borderedProminent)
+                                    .tint(DesignSystem.Colors.actionPrimary)
+                                    .disabled(!isServerURLInputValid)
                             }
-                            Button(L10n("Salvar")) { saveServerURL() }
-                                .buttonStyle(.borderedProminent)
-                                .tint(DesignSystem.Colors.actionPrimary)
-                                .disabled(!isServerURLInputValid)
+                        }
+                        if !isServerURLInputValid {
+                            Text(L10n("settings.notifications.serverInvalid"))
+                                .font(DesignSystem.Typography.meta)
+                                .foregroundStyle(DesignSystem.Colors.error)
                         }
                     }
-                    if !isServerURLInputValid {
-                        Text(L10n("settings.notifications.serverInvalid"))
-                            .font(DesignSystem.Typography.meta)
-                            .foregroundStyle(DesignSystem.Colors.error)
-                    }
                 }
+            }
 
+            if layoutState.showEventsSection {
                 Section(L10n("settings.notifications.events")) {
-                    ForEach(NtfyEvent.allCases.filter(\.isUserConfigurable)) { event in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Toggle(event.label, isOn: ntfyEventBinding(for: event))
+                    ForEach(userConfigurableGroups) { group in
+                        VStack(alignment: .leading, spacing: 8) {
+                            Label(group.label, systemImage: group.icon)
+                                .font(DesignSystem.Typography.labelBold)
+                                .foregroundStyle(.secondary)
 
-                            if let description = notificationDescription(for: event) {
-                                Text(description)
-                                    .font(DesignSystem.Typography.meta)
-                                    .foregroundStyle(.tertiary)
-                                    .fixedSize(horizontal: false, vertical: true)
+                            ForEach(events(for: group)) { event in
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Toggle(event.label, isOn: ntfyEventBinding(for: event))
+
+                                    if let description = notificationDescription(for: event) {
+                                        Text(description)
+                                            .font(DesignSystem.Typography.meta)
+                                            .foregroundStyle(.tertiary)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                    }
+                                }
                             }
                         }
                     }
                 }
+            }
 
+            if layoutState.showTestSection {
                 Section(L10n("settings.notifications.test")) {
                     Button {
                         isTestingNtfy = true
@@ -189,7 +236,9 @@ struct NotificationSettingsTab: View {
                             .foregroundStyle(DesignSystem.Colors.error)
                     }
                 }
+            }
 
+            if layoutState.showPRSection {
                 Section(L10n("settings.notifications.pr")) {
                     Picker(L10n("settings.notifications.prPolling"), selection: $prPollingInterval) {
                         Text(L10n("settings.notifications.prPolling.2min")).tag(2)
@@ -252,6 +301,10 @@ struct NotificationSettingsTab: View {
                 UserDefaults.standard.set(events, forKey: "zion.ntfy.enabledEvents")
             }
         )
+    }
+
+    private func events(for group: NtfyEventGroup) -> [NtfyEvent] {
+        NtfyEvent.allCases.filter { $0.isUserConfigurable && $0.group == group }
     }
 
     private func notificationDescription(for event: NtfyEvent) -> String? {

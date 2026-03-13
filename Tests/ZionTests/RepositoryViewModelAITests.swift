@@ -432,6 +432,7 @@ final class RepositoryViewModelAITests: XCTestCase {
             headSHA: "abc123"
         )
         let repoContext = """
+        changed files: RepositoryViewModel+AI.swift, NotificationSettingsTab.swift
         modules: AI, ViewModel, Settings
         conventions: preserve notifier payload shape, avoid duplicate review events
         """
@@ -442,8 +443,44 @@ final class RepositoryViewModelAITests: XCTestCase {
         XCTAssertTrue(body.contains("Refresh repo memory prompts"))
         XCTAssertTrue(body.contains("feature/repo-memory"))
         XCTAssertTrue(body.contains("main"))
+        XCTAssertTrue(body.contains("RepositoryViewModel+AI.swift"))
         XCTAssertTrue(body.contains("AI, ViewModel, Settings"))
         XCTAssertTrue(body.contains("preserve notifier payload shape"))
+    }
+
+    func testReviewRequestNotificationTransitionDropsInactiveIDs() {
+        let active = [
+            HostedPRInfo(
+                id: 9,
+                number: 9,
+                title: "Keep inbox state aligned",
+                state: .open,
+                headBranch: "feature/inbox",
+                baseBranch: "main",
+                url: "https://example.com/pr/9",
+                isDraft: false,
+                author: "nico",
+                headSHA: "abc123"
+            )
+        ]
+
+        let transition = RepositoryViewModel.reviewRequestNotificationTransition(
+            existingIDs: [7, 9],
+            activePRs: active
+        )
+
+        XCTAssertTrue(transition.newlyRequested.isEmpty)
+        XCTAssertEqual(transition.nextIDs, [9])
+    }
+
+    func testReviewRequestTouchedFilesSummaryUsesFileBasenames() {
+        let summary = RepositoryViewModel.reviewRequestTouchedFilesSummary(from: [
+            (filename: "Sources/Zion/Views/Main/PRInboxCard.swift", status: "modified", additions: 12, deletions: 2, patch: ""),
+            (filename: "Sources/Zion/Services/NtfyClient.swift", status: "modified", additions: 8, deletions: 1, patch: ""),
+            (filename: "Tests/ZionTests/NtfyEventTests.swift", status: "modified", additions: 6, deletions: 0, patch: ""),
+        ])
+
+        XCTAssertEqual(summary, "PRInboxCard.swift, NtfyClient.swift, NtfyEventTests.swift")
     }
 
     func testBuildReviewNotificationBodySummarizesFixesAndPassSignal() {

@@ -621,6 +621,7 @@
 "ntfy.group.gitOps" = "Operaciones Git";
 "ntfy.group.ai" = "IA";
 "ntfy.group.github" = "GitHub";
+"ntfy.group.mobileRemote" = "Remoto Móvil";
 "ntfy.event.cloneComplete" = "Clone completado";
 "ntfy.event.newRemoteCommits" = "Nuevos commits remotos";
 "ntfy.event.prCreated" = "PR creado";
@@ -895,6 +896,7 @@
 "ntfy.event.prAutoReviewComplete" = "Revisión automática de PR completada";
 "pr.notification.request.header" = "%@ está pidiendo tu revisión en: %@";
 "pr.notification.request.flow" = "Flujo: %@ -> %@";
+"pr.notification.request.touches" = "Toca: %@";
 "pr.notification.request.strategy" = "Estrategia: %@";
 "pr.notification.request.constraints" = "Restricciones: %@";
 "pr.notification.review.header" = "Revisión local completada para %@. Señal de aprobación: %@%%";

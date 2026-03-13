@@ -5,6 +5,7 @@ enum NtfyEventGroup: String, CaseIterable, Identifiable, Sendable {
     case gitOps = "gitOps"
     case ai = "ai"
     case github = "github"
+    case mobileRemote = "mobileRemote"
 
     var id: String { rawValue }
 
@@ -13,6 +14,7 @@ enum NtfyEventGroup: String, CaseIterable, Identifiable, Sendable {
         case .gitOps: return L10n("ntfy.group.gitOps")
         case .ai: return L10n("ntfy.group.ai")
         case .github: return L10n("ntfy.group.github")
+        case .mobileRemote: return L10n("ntfy.group.mobileRemote")
         }
     }
 
@@ -21,6 +23,7 @@ enum NtfyEventGroup: String, CaseIterable, Identifiable, Sendable {
         case .gitOps: return "arrow.triangle.branch"
         case .ai: return "sparkles"
         case .github: return "link"
+        case .mobileRemote: return "iphone.and.arrow.forward"
         }
     }
 }
@@ -48,7 +51,7 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
         case .prCreated, .prReviewRequested:
             return .github
         case .terminalPromptDetected:
-            return .gitOps
+            return .mobileRemote
         }
     }
 
@@ -114,34 +117,58 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
 }
 
 actor NtfyClient {
+    struct DeliveryPlan: Equatable {
+        let eventEnabled: Bool
+        let deliverLocal: Bool
+        let deliverRemote: Bool
+        let topic: String
+        let serverURL: String
+
+        var shouldSendAnything: Bool {
+            eventEnabled && (deliverLocal || deliverRemote)
+        }
+    }
+
+    static func deliveryPlan(
+        event: NtfyEvent,
+        defaults: UserDefaults = .standard
+    ) -> DeliveryPlan {
+        let enabledEvents = defaults.stringArray(forKey: "zion.ntfy.enabledEvents") ?? NtfyEvent.defaultEnabledEvents
+        let eventEnabled = enabledEvents.contains(event.rawValue)
+        let localEnabled = defaults.object(forKey: "zion.ntfy.localNotifications") as? Bool ?? false
+        let remoteEnabled = defaults.object(forKey: "zion.ntfy.enabled") as? Bool ?? false
+        let topic = defaults.string(forKey: "zion.ntfy.topic") ?? ""
+        let serverURL = defaults.string(forKey: "zion.ntfy.serverURL") ?? "https://ntfy.sh"
+
+        return DeliveryPlan(
+            eventEnabled: eventEnabled,
+            deliverLocal: localEnabled && eventEnabled,
+            deliverRemote: remoteEnabled && !topic.isEmpty && eventEnabled,
+            topic: topic,
+            serverURL: serverURL
+        )
+    }
+
     func sendIfEnabled(
         event: NtfyEvent,
         title: String,
         body: String,
         repoName: String
     ) async {
-        let defaults = UserDefaults.standard
-        let ntfyEnabled = defaults.object(forKey: "zion.ntfy.enabled") as? Bool ?? false
-        guard ntfyEnabled else { return }
-        let enabledEvents = defaults.stringArray(forKey: "zion.ntfy.enabledEvents") ?? NtfyEvent.defaultEnabledEvents
-        guard enabledEvents.contains(event.rawValue) else { return }
+        let plan = Self.deliveryPlan(event: event)
+        guard plan.shouldSendAnything else { return }
 
         let fullTitle = "Zion: \(title)"
         let fullBody = repoName.isEmpty ? body : "[\(repoName)] \(body)"
 
-        // Always send local macOS notification if enabled
-        let localEnabled = defaults.object(forKey: "zion.ntfy.localNotifications") as? Bool ?? false
-        if localEnabled {
+        if plan.deliverLocal {
             await sendLocalNotification(title: fullTitle, body: fullBody)
         }
 
-        // Also send ntfy push if topic is configured
-        let topic = defaults.string(forKey: "zion.ntfy.topic") ?? ""
-        if !topic.isEmpty {
-            let serverURL = defaults.string(forKey: "zion.ntfy.serverURL") ?? "https://ntfy.sh"
+        if plan.deliverRemote {
             await send(
-                serverURL: serverURL,
-                topic: topic,
+                serverURL: plan.serverURL,
+                topic: plan.topic,
                 title: fullTitle,
                 body: fullBody,
                 priority: event.priority,
