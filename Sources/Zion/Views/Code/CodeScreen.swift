@@ -799,6 +799,8 @@ struct CodeScreen: View {
                         reference: fileBrowserResponderReference,
                         canDeleteSelectedFiles: canDeleteFileBrowserSelection,
                         onDeleteSelectedFiles: handleFileBrowserDeleteShortcut,
+                        canRenameSelectedFile: canRenameFileBrowserSelection,
+                        onRenameSelectedFile: handleFileBrowserRenameShortcut,
                         onMoveSelection: moveFileBrowserSelection
                     )
                     .frame(width: 0, height: 0)
@@ -1565,6 +1567,17 @@ struct CodeScreen: View {
         return !selectedFileBrowserItems().isEmpty
     }
 
+    private func handleFileBrowserRenameShortcut() {
+        guard canRenameFileBrowserSelection() else { return }
+        guard let item = selectedFileBrowserItems().first else { return }
+        model.renameFileItem(item)
+    }
+
+    private func canRenameFileBrowserSelection() -> Bool {
+        guard isFileBrowserVisible, sidebarMode == .fileTree else { return false }
+        return selectedFileBrowserItems().count == 1
+    }
+
     private func focusFileBrowserResponder() {
         DispatchQueue.main.async {
             guard let responder = fileBrowserResponderReference.responder,
@@ -1892,6 +1905,8 @@ private struct FileBrowserShortcutResponderHost: NSViewRepresentable {
     let reference: FileBrowserResponderReference
     var canDeleteSelectedFiles: () -> Bool
     var onDeleteSelectedFiles: () -> Void
+    var canRenameSelectedFile: () -> Bool
+    var onRenameSelectedFile: () -> Void
     var onMoveSelection: (FileBrowserNavigationDirection, Bool) -> Void
 
     func makeNSView(context: Context) -> FileBrowserShortcutResponderView {
@@ -1899,6 +1914,8 @@ private struct FileBrowserShortcutResponderHost: NSViewRepresentable {
         view.reference = reference
         view.canDeleteSelectedFiles = canDeleteSelectedFiles
         view.onDeleteSelectedFiles = onDeleteSelectedFiles
+        view.canRenameSelectedFile = canRenameSelectedFile
+        view.onRenameSelectedFile = onRenameSelectedFile
         view.onMoveSelection = onMoveSelection
         reference.responder = view
         return view
@@ -1908,6 +1925,8 @@ private struct FileBrowserShortcutResponderHost: NSViewRepresentable {
         nsView.reference = reference
         nsView.canDeleteSelectedFiles = canDeleteSelectedFiles
         nsView.onDeleteSelectedFiles = onDeleteSelectedFiles
+        nsView.canRenameSelectedFile = canRenameSelectedFile
+        nsView.onRenameSelectedFile = onRenameSelectedFile
         nsView.onMoveSelection = onMoveSelection
         if reference.responder !== nsView {
             reference.responder = nsView
@@ -1920,6 +1939,8 @@ private final class FileBrowserShortcutResponderView: NSView {
     weak var reference: FileBrowserResponderReference?
     var canDeleteSelectedFiles: () -> Bool = { false }
     var onDeleteSelectedFiles: () -> Void = {}
+    var canRenameSelectedFile: () -> Bool = { false }
+    var onRenameSelectedFile: () -> Void = {}
     var onMoveSelection: (FileBrowserNavigationDirection, Bool) -> Void = { _, _ in }
 
     override var acceptsFirstResponder: Bool { true }
@@ -1933,6 +1954,14 @@ private final class FileBrowserShortcutResponderView: NSView {
     func zionDeleteSelectedFiles(_ sender: Any?) {
         guard canDeleteSelectedFiles() else { return }
         onDeleteSelectedFiles()
+    }
+
+    override func insertNewline(_ sender: Any?) {
+        guard canRenameSelectedFile() else {
+            super.insertNewline(sender)
+            return
+        }
+        onRenameSelectedFile()
     }
 
     override func keyDown(with event: NSEvent) {
