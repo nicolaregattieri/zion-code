@@ -24,10 +24,10 @@ struct WelcomeScreen: View {
                     .shadow(color: DesignSystem.Colors.brandPrimary.opacity(0.5), radius: 12, x: 0, y: 4)
 
                     Text("Zion")
-                        .font(.system(size: 44, weight: .black))
+                        .font(DesignSystem.Typography.heroTitle)
 
                     Text(L10n("The view from the top."))
-                        .font(.system(size: 13, weight: .medium, design: .default))
+                        .font(DesignSystem.Typography.cardBodyMedium)
                         .foregroundStyle(.secondary)
                         .tracking(0.5)
                 }
@@ -96,7 +96,7 @@ struct WelcomeScreen: View {
                                             .foregroundStyle(Color.accentColor.opacity(0.8))
                                         VStack(alignment: .leading, spacing: 1) {
                                             Text(url.lastPathComponent)
-                                                .font(.system(size: 13, weight: .semibold))
+                                                .font(DesignSystem.Typography.cardTitle)
                                                 .lineLimit(1)
                                             Text(url.path)
                                                 .font(DesignSystem.Typography.meta)

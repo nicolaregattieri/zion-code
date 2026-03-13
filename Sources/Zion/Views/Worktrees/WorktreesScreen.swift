@@ -22,7 +22,7 @@ struct WorktreesScreen: View {
                 GlassCard(spacing: 10) {
                     HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                         Image(systemName: "plus.square")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(DesignSystem.Typography.cardTitle)
                             .foregroundStyle(.secondary)
                         VStack(alignment: .leading, spacing: 1) {
                             Text(L10n("worktree.smart.new"))
@@ -188,7 +188,7 @@ struct WorktreeCardView: View {
 
                 if worktree.isCurrent {
                     Text(L10n("ATUAL"))
-                        .font(.caption2.weight(.semibold))
+                        .font(DesignSystem.Typography.metaSemibold)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
                         .background(DesignSystem.Colors.selectionBackground)

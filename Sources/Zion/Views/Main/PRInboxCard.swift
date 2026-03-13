@@ -183,7 +183,7 @@ struct PRInboxCard: View {
     private func tabEmptyState(icon: String, message: String, hint: String?) -> some View {
         VStack(spacing: 6) {
             Image(systemName: icon)
-                .font(.system(size: 18))
+                .font(DesignSystem.Typography.sheetIcon)
                 .foregroundStyle(.secondary)
             Text(message)
                 .font(DesignSystem.Typography.bodySmall)

@@ -157,7 +157,7 @@ struct HelpSheet: View {
                 .font(DesignSystem.Typography.sheetTitle)
                 .foregroundStyle(.secondary)
             Text(L10n("Conheca o Zion"))
-                .font(.title2.bold())
+                .font(DesignSystem.Typography.sheetSectionTitle)
             Spacer()
             Button { dismiss() } label: {
                 Image(systemName: "xmark.circle.fill")
@@ -175,10 +175,10 @@ struct HelpSheet: View {
     private var heroSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(L10n("help.hero.title"))
-                .font(.system(size: 18, weight: .bold))
+                .font(DesignSystem.Typography.sheetSectionTitle)
                 .frame(maxWidth: .infinity, alignment: .leading)
             Text(L10n("help.hero.subtitle"))
-                .font(.system(size: 13))
+                .font(DesignSystem.Typography.cardBody)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: DesignSystem.Spacing.iconTextGap) {
@@ -209,10 +209,10 @@ struct HelpSheet: View {
         return VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 Image(systemName: section.icon)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(DesignSystem.Typography.subtitle)
                     .foregroundStyle(section.color)
                     .frame(width: 28, height: 28)
-                    .background(section.color.opacity(0.12))
+                    .background(section.color.opacity(DesignSystem.Opacity.selectedSubtle))
                     .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
                 Text(L10n(section.titleKey))
                     .font(DesignSystem.Typography.sectionTitle)
@@ -277,7 +277,7 @@ struct HelpSheet: View {
     private var shortcutsHighlight: some View {
         HStack(spacing: 12) {
             Image(systemName: "keyboard")
-                .font(.system(size: 16))
+                .font(DesignSystem.Typography.sheetBody)
                 .foregroundStyle(.secondary)
             VStack(alignment: .leading, spacing: 2) {
                 Text(L10n("help.shortcuts.title"))
@@ -288,7 +288,7 @@ struct HelpSheet: View {
             }
             Spacer()
             Text("\u{2318}/")
-                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                .font(DesignSystem.Typography.monoCardBody)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
                 .background(DesignSystem.Colors.glassSubtle)

@@ -5,6 +5,7 @@ struct CommitDetailContent: View {
     var model: RepositoryViewModel?
     var commitID: String?
     @State private var expandedFile: String?
+    @State private var hoveredFile: String?
 
     private var parsed: ParsedDetail { ParsedDetail(rawDetails) }
 
@@ -126,7 +127,15 @@ struct CommitDetailContent: View {
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 5)
                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(
+                                        hoveredFile == file.path
+                                            ? DesignSystem.Colors.glassSubtle
+                                            : .clear
+                                    )
                                     .contentShape(Rectangle())
+                                    .onHover { isHovered in
+                                        hoveredFile = isHovered ? file.path : nil
+                                    }
                                     .contextMenu {
                                         if let model {
                                             Button {
@@ -271,7 +280,7 @@ struct CommitDetailContent: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 80, alignment: .trailing)
             Text(value)
-                .font(.system(size: 11, weight: .regular, design: mono ? .monospaced : .default))
+                .font(mono ? DesignSystem.Typography.monoSmall : DesignSystem.Typography.bodySmall)
                 .textSelection(.enabled)
                 .lineLimit(2)
         }
