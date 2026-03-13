@@ -1739,7 +1739,7 @@
 "keepAwake.duration.4h" = "4 Horas";
 "keepAwake.duration.8h" = "8 Horas";
 "keepAwake.duration.indefinite" = "Indefinido";
-"ntfy.event.terminalPromptDetected" = "Prompt detectado en la terminal";
+"ntfy.event.terminalPromptDetected" = "Prompt detectado en la terminal remota";
 
 // Mobile Access — Onboarding Steps
 "mobile.access.step.header" = "Paso %lld — %@";
