@@ -4,8 +4,6 @@ struct AISettingsTab: View {
     @AppStorage("zion.aiProvider") private var aiProviderRaw: String = AIProvider.none.rawValue
     @AppStorage("zion.aiMode") private var aiModeRaw: String = AIMode.efficient.rawValue
     @AppStorage("zion.commitMessageStyle") private var commitStyleRaw: String = CommitMessageStyle.compact.rawValue
-    @AppStorage("zion.autoExplainDiffs") private var autoExplainDiffs: Bool = false
-    @AppStorage("zion.diffExplanationDepth") private var diffDepthRaw: String = DiffExplanationDepth.quick.rawValue
     @AppStorage("zion.preCommitReview") private var preCommitReviewEnabled: Bool = false
     @AppStorage("zion.aiTransferSupportHints") private var aiTransferSupportHints: Bool = true
     @AppStorage("zion.repoMemory.activeRepoName") private var repoMemoryRepoName: String = ""
@@ -127,16 +125,6 @@ struct AISettingsTab: View {
                     Text(L10n("settings.ai.preCommitReview.hint"))
                         .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
-                }
-
-                Section(L10n("settings.ai.diffExplanation")) {
-                    Toggle(L10n("settings.ai.autoExplain"), isOn: $autoExplainDiffs)
-
-                    Picker(L10n("settings.ai.depth"), selection: $diffDepthRaw) {
-                        ForEach(DiffExplanationDepth.allCases) { depth in
-                            Text(depth.label).tag(depth.rawValue)
-                        }
-                    }
                 }
 
                 Section(L10n("settings.ai.mapping")) {

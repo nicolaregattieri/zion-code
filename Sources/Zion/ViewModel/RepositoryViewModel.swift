@@ -220,14 +220,6 @@ final class RepositoryViewModel {
     var isExplainingDiff: Bool = false
     @ObservationIgnored var explainDiffTask: Task<Void, Never>?
 
-    // Auto-explain setting
-    var autoExplainDiffs: Bool = false {
-        didSet { UserDefaults.standard.set(autoExplainDiffs, forKey: "zion.autoExplainDiffs") }
-    }
-    var diffExplanationDepth: DiffExplanationDepth = .quick {
-        didSet { UserDefaults.standard.set(diffExplanationDepth.rawValue, forKey: "zion.diffExplanationDepth") }
-    }
-
     // Submodule state
     var submodules: [SubmoduleInfo] = []
     @ObservationIgnored var submoduleTask: Task<Void, Never>?
@@ -367,6 +359,9 @@ final class RepositoryViewModel {
 
     var ntfyLocalNotificationsEnabled: Bool = false {
         didSet { UserDefaults.standard.set(ntfyLocalNotificationsEnabled, forKey: "zion.ntfy.localNotifications") }
+    }
+    var prPollingIntervalMinutes: Int = 5 {
+        didSet { UserDefaults.standard.set(prPollingIntervalMinutes, forKey: "zion.prPollingInterval") }
     }
 
     var isNtfyConfigured: Bool { ntfyEnabled && !ntfyTopic.isEmpty }

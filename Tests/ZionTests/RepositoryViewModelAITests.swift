@@ -377,4 +377,125 @@ final class RepositoryViewModelAITests: XCTestCase {
         XCTAssertFalse(vm.isLoadingPendingChangesSummary)
         XCTAssertEqual(vm.aiPendingChangesSummary, "")
     }
+
+    // MARK: - PR notification helpers
+
+    func testEnrichedReviewRequestPRPrefersCatalogMetadata() {
+        let queued = HostedPRInfo(
+            id: 42,
+            number: 17,
+            title: "Improve inbox",
+            state: .open,
+            headBranch: "",
+            baseBranch: "",
+            url: "",
+            isDraft: false,
+            author: "",
+            headSHA: ""
+        )
+        let catalog = [
+            HostedPRInfo(
+                id: 42,
+                number: 17,
+                title: "Improve inbox",
+                state: .open,
+                headBranch: "feature/inbox",
+                baseBranch: "main",
+                url: "https://example.com/pr/17",
+                isDraft: true,
+                author: "nico",
+                headSHA: "abc123"
+            )
+        ]
+
+        let enriched = RepositoryViewModel.enrichedReviewRequestPR(queued, catalog: catalog)
+
+        XCTAssertEqual(enriched.headBranch, "feature/inbox")
+        XCTAssertEqual(enriched.baseBranch, "main")
+        XCTAssertEqual(enriched.url, "https://example.com/pr/17")
+        XCTAssertEqual(enriched.author, "nico")
+        XCTAssertEqual(enriched.headSHA, "abc123")
+        XCTAssertTrue(enriched.isDraft)
+    }
+
+    func testBuildReviewRequestNotificationBodyIncludesRepoHighlights() {
+        let pr = HostedPRInfo(
+            id: 1,
+            number: 23,
+            title: "Refresh repo memory prompts",
+            state: .open,
+            headBranch: "feature/repo-memory",
+            baseBranch: "main",
+            url: "https://example.com/pr/23",
+            isDraft: false,
+            author: "fulano",
+            headSHA: "abc123"
+        )
+        let repoContext = """
+        modules: AI, ViewModel, Settings
+        conventions: preserve notifier payload shape, avoid duplicate review events
+        """
+
+        let body = RepositoryViewModel.buildReviewRequestNotificationBody(pr: pr, repoContext: repoContext)
+
+        XCTAssertTrue(body.contains("fulano"))
+        XCTAssertTrue(body.contains("Refresh repo memory prompts"))
+        XCTAssertTrue(body.contains("feature/repo-memory"))
+        XCTAssertTrue(body.contains("main"))
+        XCTAssertTrue(body.contains("AI, ViewModel, Settings"))
+        XCTAssertTrue(body.contains("preserve notifier payload shape"))
+    }
+
+    func testBuildReviewNotificationBodySummarizesFixesAndPassSignal() {
+        let pr = HostedPRInfo(
+            id: 2,
+            number: 31,
+            title: "Tighten PR review queue",
+            state: .open,
+            headBranch: "feature/pr-queue",
+            baseBranch: "main",
+            url: "https://example.com/pr/31",
+            isDraft: false,
+            author: "fulano",
+            headSHA: "def456"
+        )
+        let findings = [
+            ReviewFinding(severity: .warning, file: "Sources/Zion/ViewModel/RepositoryViewModel+AI.swift", message: "Queue item loses branch metadata"),
+            ReviewFinding(severity: .critical, file: "Sources/Zion/Views/Main/PRInboxCard.swift", message: "Auth state can mislead users"),
+        ]
+        let repoContext = """
+        modules: AI, Sidebar, Notifications
+        sensitive areas: notification spam, review queue state
+        """
+
+        let body = RepositoryViewModel.buildReviewNotificationBody(pr: pr, findings: findings, repoContext: repoContext)
+
+        XCTAssertTrue(body.contains("Tighten PR review queue"))
+        XCTAssertTrue(body.contains("55%"))
+        XCTAssertTrue(body.contains("AI, Sidebar, Notifications"))
+        XCTAssertTrue(body.contains("notification spam"))
+        XCTAssertTrue(body.contains("Queue item loses branch metadata"))
+        XCTAssertTrue(body.contains("Auth state can mislead users"))
+    }
+
+    func testBuildReviewNotificationBodyFallsBackToCleanSummary() {
+        let pr = HostedPRInfo(
+            id: 3,
+            number: 41,
+            title: "Refine notifier copy",
+            state: .open,
+            headBranch: "feature/notifier-copy",
+            baseBranch: "main",
+            url: "https://example.com/pr/41",
+            isDraft: false,
+            author: "fulano",
+            headSHA: "ghi789"
+        )
+
+        let body = RepositoryViewModel.buildReviewNotificationBody(pr: pr, findings: [], repoContext: "")
+
+        XCTAssertTrue(body.contains("Refine notifier copy"))
+        XCTAssertTrue(body.contains("100%"))
+        XCTAssertTrue(body.contains(L10n("pr.notification.review.clean")))
+    }
 }

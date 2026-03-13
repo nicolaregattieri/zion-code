@@ -872,8 +872,12 @@
 "pr.inbox.title" = "PR Reviews";
 "pr.inbox.reviewAll" = "Review All";
 "pr.inbox.openGitHub" = "Open on GitHub";
+"pr.inbox.openProvider" = "Open PR";
 "pr.inbox.empty" = "No PRs awaiting review";
 "pr.inbox.setup.hint" = "Requires gh CLI authenticated (gh auth login)";
+"pr.inbox.providerHint" = "Add a supported Git hosting remote to enable the review inbox.";
+"pr.inbox.authRequired" = "%@ credentials not configured";
+"pr.inbox.authRequired.hint" = "Configure %@ access in Settings > Git Hosting.";
 "pr.gh.notInstalled" = "GitHub CLI not found";
 "pr.gh.notInstalled.hint" = "Install with: brew install gh";
 "pr.gh.notAuthenticated" = "GitHub CLI not authenticated";
@@ -892,12 +896,19 @@
 "pr.draft" = "Draft";
 "pr.review" = "Review";
 "ntfy.event.prAutoReviewComplete" = "PR auto-review complete";
+"pr.notification.request.header" = "%@ is asking your review on: %@";
+"pr.notification.request.flow" = "Flow: %@ -> %@";
+"pr.notification.request.strategy" = "Strategy: %@";
+"pr.notification.request.constraints" = "Constraints: %@";
+"pr.notification.review.header" = "Local review complete for %@. Pass signal: %@%%";
+"pr.notification.review.clean" = "No blocking issues found.";
+"pr.notification.review.fixes" = "Needs fixes: %@";
 
 // Phase 5: Help Sheet
 "help.settings.title" = "Settings Window";
 "help.settings.features" = "Cmd+, shortcut|6 tabs: General, Editor, Terminal, AI, Notifications, and Mobile|Language, appearance, terminal, and mobile remote access|API key management and provider configuration";
 "help.diffExplanation.title" = "AI Diff Explanation";
-"help.diffExplanation.features" = "Intent, Risks, Narrative|Risk severity badges|Auto-explain on selection|Copy to clipboard";
+"help.diffExplanation.features" = "Intent, Risks, Narrative|Risk severity badges|Manual explain from Changes and Code Review|Copy to clipboard";
 "help.codeReview.title" = "Code Review";
 "help.codeReview.features" = "Full-window file-by-file review|Per-file AI analysis|Inline PR comments with reply threads|Submit reviews (Approve/Request Changes/Comment)|Export as Markdown|Cmd+Shift+R shortcut";
 "help.prInbox.title" = "PR Inbox";
@@ -919,9 +930,9 @@
 "map.diffexp.structured.description" = "Every diff gets Intent, Risks, and Narrative sections for comprehensive understanding.";
 "map.diffexp.severity.title" = "Risk Severity";
 "map.diffexp.severity.description" = "Color-coded severity badges (Safe/Moderate/Risky) help prioritize review attention.";
-"map.diffexp.auto.title" = "Auto-Explain";
-"map.diffexp.auto.description" = "Enable auto-explain to analyze diffs automatically when selecting files.";
-"map.diffexp.auto.tip1" = "Toggle in Settings > AI > Auto-explain diffs on selection.";
+"map.diffexp.auto.title" = "Diff Explain";
+"map.diffexp.auto.description" = "Use the explain action to analyze diffs on demand from Changes and Code Review.";
+"map.diffexp.auto.tip1" = "Open a diff and trigger Explain when you want AI context.";
 
 // Zion Map — Code Review
 "map.codeReview.subtitle" = "Full-window file-by-file code review powered by AI.";

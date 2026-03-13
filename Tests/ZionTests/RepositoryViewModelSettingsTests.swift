@@ -5,9 +5,11 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
     private let lineWrapKey = "editor.lineWrap"
     private let ntfyEnabledKey = "zion.ntfy.enabled"
     private let ntfyLocalNotificationsKey = "zion.ntfy.localNotifications"
+    private let prPollingIntervalKey = "zion.prPollingInterval"
     private var savedLineWrapValue: Any?
     private var savedNtfyEnabledValue: Any?
     private var savedNtfyLocalNotificationsValue: Any?
+    private var savedPRPollingIntervalValue: Any?
 
     override func setUp() {
         super.setUp()
@@ -15,9 +17,11 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
         savedLineWrapValue = defaults.object(forKey: lineWrapKey)
         savedNtfyEnabledValue = defaults.object(forKey: ntfyEnabledKey)
         savedNtfyLocalNotificationsValue = defaults.object(forKey: ntfyLocalNotificationsKey)
+        savedPRPollingIntervalValue = defaults.object(forKey: prPollingIntervalKey)
         defaults.removeObject(forKey: lineWrapKey)
         defaults.removeObject(forKey: ntfyEnabledKey)
         defaults.removeObject(forKey: ntfyLocalNotificationsKey)
+        defaults.removeObject(forKey: prPollingIntervalKey)
     }
 
     override func tearDown() {
@@ -37,9 +41,15 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
         } else {
             defaults.removeObject(forKey: ntfyLocalNotificationsKey)
         }
+        if let savedPRPollingIntervalValue {
+            defaults.set(savedPRPollingIntervalValue, forKey: prPollingIntervalKey)
+        } else {
+            defaults.removeObject(forKey: prPollingIntervalKey)
+        }
         savedLineWrapValue = nil
         savedNtfyEnabledValue = nil
         savedNtfyLocalNotificationsValue = nil
+        savedPRPollingIntervalValue = nil
         super.tearDown()
     }
 
@@ -253,6 +263,32 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
         let vm = RepositoryViewModel()
         let error = NSError(domain: "test", code: 1, userInfo: [NSLocalizedDescriptionKey: "no upstream configured"])
         XCTAssertFalse(vm.isNoUpstreamConfigured(error))
+    }
+
+    // MARK: - PR polling interval
+
+    @MainActor
+    func testRestoreEditorSettingsLoadsSanitizedPRPollingInterval() {
+        UserDefaults.standard.set(10, forKey: prPollingIntervalKey)
+        let vm = RepositoryViewModel()
+
+        vm.restoreEditorSettings()
+
+        XCTAssertEqual(vm.prPollingIntervalMinutes, 10)
+    }
+
+    @MainActor
+    func testSanitizedPRPollingIntervalMinutesFallsBackToDefault() {
+        XCTAssertEqual(RepositoryViewModel.sanitizedPRPollingIntervalMinutes(0), 5)
+        XCTAssertEqual(RepositoryViewModel.sanitizedPRPollingIntervalMinutes(99), 5)
+    }
+
+    @MainActor
+    func testPRPollingIntervalNanosecondsMatchesMinutes() {
+        XCTAssertEqual(
+            RepositoryViewModel.prPollingIntervalNanoseconds(for: 30),
+            UInt64(30 * 60) * 1_000_000_000
+        )
     }
 
     // MARK: - Auto refresh divergence helper

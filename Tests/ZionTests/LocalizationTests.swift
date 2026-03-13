@@ -233,4 +233,26 @@ final class LocalizationTests: XCTestCase {
             XCTAssertFalse(value.isEmpty, "Empty L10n value for key: \(key)")
         }
     }
+
+    func testPRReviewNotificationLocalizationKeysExist() {
+        let keys = [
+            "pr.inbox.openProvider",
+            "pr.inbox.providerHint",
+            "pr.inbox.authRequired",
+            "pr.inbox.authRequired.hint",
+            "pr.notification.request.header",
+            "pr.notification.request.flow",
+            "pr.notification.request.strategy",
+            "pr.notification.request.constraints",
+            "pr.notification.review.header",
+            "pr.notification.review.clean",
+            "pr.notification.review.fixes",
+        ]
+
+        for key in keys {
+            let value = L10n(key)
+            XCTAssertNotEqual(value, key, "Missing L10n key: \(key)")
+            XCTAssertFalse(value.isEmpty, "Empty L10n value for key: \(key)")
+        }
+    }
 }

@@ -768,8 +768,12 @@
 "pr.inbox.title" = "Revisões de PR";
 "pr.inbox.reviewAll" = "Revisar Todos";
 "pr.inbox.openGitHub" = "Abrir no GitHub";
+"pr.inbox.openProvider" = "Abrir PR";
 "pr.inbox.empty" = "Nenhum PR aguardando revisão";
 "pr.inbox.setup.hint" = "Requer gh CLI autenticado (gh auth login)";
+"pr.inbox.providerHint" = "Adicione um remote de hospedagem compatível para habilitar a caixa de revisão.";
+"pr.inbox.authRequired" = "Credenciais de %@ não configuradas";
+"pr.inbox.authRequired.hint" = "Configure o acesso de %@ em Ajustes > Git Hosting.";
 "pr.gh.notInstalled" = "GitHub CLI não encontrado";
 "pr.gh.notInstalled.hint" = "Instale com: brew install gh";
 "pr.gh.notAuthenticated" = "GitHub CLI não autenticado";
@@ -788,12 +792,19 @@
 "pr.draft" = "Rascunho";
 "pr.review" = "Revisar";
 "ntfy.event.prAutoReviewComplete" = "Revisão automática de PR concluída";
+"pr.notification.request.header" = "%@ está pedindo sua revisão em: %@";
+"pr.notification.request.flow" = "Fluxo: %@ -> %@";
+"pr.notification.request.strategy" = "Estratégia: %@";
+"pr.notification.request.constraints" = "Restrições: %@";
+"pr.notification.review.header" = "Revisão local concluída para %@. Sinal de aprovação: %@%%";
+"pr.notification.review.clean" = "Nenhum bloqueio encontrado.";
+"pr.notification.review.fixes" = "Precisa corrigir: %@";
 
 // Phase 5: Help Sheet
 "help.settings.title" = "Janela de Configurações";
 "help.settings.features" = "Atalho Cmd+,|6 abas: Geral, Editor, Terminal, IA, Notificações e Mobile|Idioma, aparência, terminal e acesso remoto mobile|Gerenciamento de chave API e configurações do provedor";
 "help.diffExplanation.title" = "Explicação de Diff com IA";
-"help.diffExplanation.features" = "Intenção, Riscos, Narrativa|Badges de severidade|Explicar automaticamente ao selecionar|Copiar para área de transferência";
+"help.diffExplanation.features" = "Intenção, Riscos, Narrativa|Badges de severidade|Explicação manual em Changes e Code Review|Copiar para área de transferência";
 "help.codeReview.title" = "Code Review";
 "help.codeReview.features" = "Revisão em tela cheia por arquivo|Análise IA por arquivo|Comentários inline em PRs com threads de resposta|Enviar reviews (Aprovar/Solicitar Alterações/Comentar)|Exportar como Markdown|Atalho Cmd+Shift+R";
 "help.prInbox.title" = "Caixa de PRs";
@@ -815,9 +826,9 @@
 "map.diffexp.structured.description" = "Cada diff recebe seções de Intenção, Riscos e Narrativa para compreensão completa.";
 "map.diffexp.severity.title" = "Severidade de Risco";
 "map.diffexp.severity.description" = "Badges de severidade com cores (Seguro/Moderado/Arriscado) ajudam a priorizar a atenção da revisão.";
-"map.diffexp.auto.title" = "Explicação Automática";
-"map.diffexp.auto.description" = "Ative a explicação automática para analisar diffs automaticamente ao selecionar arquivos.";
-"map.diffexp.auto.tip1" = "Ative em Configurações > IA > Explicar diffs automaticamente ao selecionar.";
+"map.diffexp.auto.title" = "Explicar Diff";
+"map.diffexp.auto.description" = "Use a ação de explicar para analisar diffs sob demanda em Changes e Code Review.";
+"map.diffexp.auto.tip1" = "Abra um diff e acione Explicar quando quiser contexto da IA.";
 
 // Zion Map — Code Review
 "map.codeReview.subtitle" = "Revisão de código em tela cheia arquivo por arquivo com IA.";
