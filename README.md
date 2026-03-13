@@ -40,29 +40,28 @@ Zion doesn't make you choose.
 | **Terminal** | External app / fake shell | Real PTY with splits, tabs, zoom |
 | **Editor** | None / basic viewer | Syntax highlighting, blame, Quick Open, code formatter |
 | **Conflicts** | External merge tool | Built-in resolver (ours/theirs/both/edit) |
-| **AI** | None or paid addon | 12 AI features (Claude / GPT / Gemini), free to configure |
+| **AI** | None or paid addon | 13 AI features (Claude / GPT / Gemini), free to configure |
 | **Clipboard** | Copy-paste manually | Smart clipboard that auto-captures and pastes into terminal |
 | **Mobile** | Nothing | Monitor terminals from your phone, approve AI prompts remotely |
 | **Safety** | Hope for the best | Recovery Vault auto-snapshots before every destructive operation |
-| **Hosting** | GitHub only | GitHub + GitLab + Bitbucket with auto-detection |
+| **Hosting** | GitHub only | GitHub + GitLab + Bitbucket + Azure DevOps with auto-detection |
 | **Performance** | Electron / web view | Native SwiftUI, zero web tech |
 | **Price** | $50-100/year | Free and open source |
 
 ---
 
-## What's New in 1.4.0
+## What's New in 1.6.7
 
-> Your Git workspace, everywhere.
+> See everything. Ship with confidence.
 
-- **Mobile Remote Access** — Monitor and control your Mac terminals from your phone. QR pairing, AES-256-GCM encryption, rich xterm.js terminal with full ANSI colors. Approve AI prompts from anywhere.
-- **Recovery Vault** — Auto-snapshots before every destructive operation (reset --hard, rebase, discard). Never lose work again.
-- **Git Hosting Providers** — GitHub, GitLab, and Bitbucket support with automatic remote URL detection. Inline PR comments and review submission.
-- **Rich Mobile Terminal** — Replaced plain-text streaming with xterm.js for full ANSI color, bold/italic, cursor positioning, and TUI app support (Claude Code, Gemini, etc.)
-- **AI Agent Integration** — Slash commands for Claude Code (`/zion-img`), Gemini CLI (`/zion-img`), and Codex CLI (`$zion-img`) that generate project image files for preview in Zion — auto-installed when AI Image Generation is enabled.
-- **Annotated & Signed Tags** — Create annotated and GPG-signed tags with message editor, push to remote, delete remote tags.
-- **Force Push Options** — Force Push with Lease (safe) and Force Push (override) from branch context menu.
-- **Code Formatter** — Built-in formatting for 16+ languages with format-on-save.
-- **Security & Performance Audit** — Shell injection patches, connection limits, search debounce, batch mutations, design token adoption, accessibility labels.
+- **Zion Bridge** — AI portability flow for migrating AI configurations between repositories with migration console.
+- **AI Modes** — Mode-aware routing (efficient/smart/bestQuality) with richer review context for different use cases.
+- **Repo Memory** — AI snapshot cache for repository context, giving AI assistants better project awareness.
+- **Azure DevOps** — Full hosting provider support alongside GitHub, GitLab, and Bitbucket.
+- **Image Preview** — VS Code-like image preview in the file browser with zoom controls.
+- **Graph Polish** — Stash helper commits collapsed, worktree ROOT/WT badges, improved lane rendering and pending changes.
+- **Terminal Stability** — Selection preserved during streaming, split-pane drag fixes, scroll hover routing, and owner binding recovery.
+- **Performance** — Adaptive throttling for background repo monitoring, scoped snapshots for faster repo switching, search debounce.
 
 ---
 
@@ -149,7 +148,7 @@ Create worktrees with a smart prefix+name flow, open directly into Zion Code, an
 When a merge, rebase, or cherry-pick hits conflicts, Zion opens a dedicated resolver. A file list on the left shows conflict status with red/green icons. The inline editor on the right highlights conflict regions — **ours** (green) vs **theirs** (blue) — with one-click actions: accept ours, accept theirs, accept both, or edit manually. Once resolved, Zion auto-continues the operation.
 
 ### AI Assistant
-> 12 features. 3 providers. Free to configure.
+> 13 features. 3 providers. Free to configure.
 
 Works with Anthropic Claude, OpenAI GPT, or Google Gemini. Generate commit messages, explain diffs, draft PR descriptions, review code before committing, resolve conflicts with AI, search git history in natural language, summarize branches, explain blame entries, and suggest how to split large commits. API keys stored securely in macOS Keychain. Falls back to smart heuristics when AI is not configured.
 

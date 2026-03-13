@@ -191,6 +191,23 @@
 | Pre-Commit Review Gate | Automatic AI review before committing — shows findings and lets you fix or commit anyway |
 | Provider Config | Anthropic (Claude), OpenAI (GPT), Google (Gemini), API keys in Keychain |
 
+## Zion Bridge
+
+| Feature | Description |
+|---------|-------------|
+| AI Portability | Migrate AI configurations (CLAUDE.md, .cursorrules, AGENTS.md) between repositories |
+| Migration Console | Visual console showing migration progress and status |
+| Reverse Sync | Sync changes back from target to source repository |
+
+## AI Modes
+
+| Feature | Description |
+|---------|-------------|
+| Efficient Mode | Fastest responses with lower token usage — good for simple tasks |
+| Smart Mode | Balanced quality and speed — default for most workflows |
+| Best Quality Mode | Maximum reasoning depth — best for complex code review and analysis |
+| Mode-Aware Routing | AI provider and model selection adapts to the chosen mode |
+
 ## Zion Mode
 
 | Feature | Description | Shortcut |
@@ -283,7 +300,7 @@
 | PR List | Fetch and display open PRs for current repo |
 | Create PR | Sheet to create PR from current branch with push validation |
 | AI PR Description | Auto-generate title and body with dynamic base branch selection |
-| Settings | Dedicated Git Hosting section in Settings for all provider credentials |
+| Settings | Git Hosting section in Settings > General tab for all provider credentials |
 
 ## Remote Management
 
@@ -396,10 +413,9 @@
 | `⇧F12` | Find References |
 | `⇧⌘R` | Code Review |
 | `⇧⌘H` | Toggle dotfiles visibility |
-| `⇧⌘B` | Toggle Git Blame |
-| `⇧⌘G` | Bisect: mark commit as good |
-| `⇧⌘B` | Bisect: mark commit as bad |
-| `⇧⌘S` | Bisect: skip commit |
+| `⇧⌘B` | Toggle Git Blame / Bisect: mark as bad (contextual — bisect shortcuts active only during an active bisect session) |
+| `⇧⌘G` | Find Previous / Bisect: mark as good (contextual) |
+| `⇧⌘S` | Save As / Bisect: skip commit (contextual) |
 | `⇧⌥F` | Format Document |
 | `⌃⌘Z` | Toggle Zion Mode |
 | `⌥⌘X` | Voice Input |
