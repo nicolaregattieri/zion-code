@@ -1607,8 +1607,6 @@
 "settings.terminal.advanced" = "Advanced";
 "settings.terminal.openHyperlinks" = "Open Hyperlinks on Cmd+Click";
 "settings.terminal.openHyperlinks.hint" = "OSC 8 links open in the default browser when Cmd+clicked.";
-"settings.terminal.imageRendering" = "Inline Image Rendering";
-"settings.terminal.imageRendering.hint" = "Render Sixel, iTerm2, and Kitty inline images. Changes apply to new sessions.";
 "settings.terminal.aiImageDisplay" = "AI Image Generation & Helpers";
 "settings.terminal.aiImageDisplay.hint" = "Installs zion-img helpers and zion_display in your home folder. Generated AI images are saved to zion-image/ in the current project for preview in Zion.";
 "settings.terminal.selection" = "Selection";

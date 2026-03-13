@@ -220,7 +220,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             "terminal.scrollbackSize": 5000,
             "terminal.bellMode": "system",
             "terminal.openHyperlinks": true,
-            "terminal.imageRendering": true,
             "terminal.copyOnSelect": false,
             "terminal.aiImageDisplay": false,
             "zion.ntfy.enabled": false,

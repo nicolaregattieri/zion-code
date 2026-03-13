@@ -1619,8 +1619,6 @@
 "settings.terminal.advanced" = "Avanzado";
 "settings.terminal.openHyperlinks" = "Abrir Hipervínculos con Cmd+Clic";
 "settings.terminal.openHyperlinks.hint" = "Los enlaces OSC 8 se abren en el navegador predeterminado al hacer Cmd+clic.";
-"settings.terminal.imageRendering" = "Renderizado de Imágenes Inline";
-"settings.terminal.imageRendering.hint" = "Renderiza imágenes Sixel, iTerm2 y Kitty inline. Los cambios se aplican en nuevas sesiones.";
 "settings.terminal.aiImageDisplay" = "Generación de Imágenes por IA y Helpers";
 "settings.terminal.aiImageDisplay.hint" = "Instala los helpers de zion-img y zion_display en tu carpeta home. Las imágenes generadas por IA se guardan en zion-image/ dentro del proyecto actual para previsualizarlas en Zion.";
 "settings.terminal.selection" = "Selección";

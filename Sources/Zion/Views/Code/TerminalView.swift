@@ -54,10 +54,9 @@ struct TerminalTabView: NSViewRepresentable {
         // Apply custom terminal options BEFORE theme — applyCustomOptions replaces the
         // Terminal instance with default colors, so theme must come after.
         let scrollback = UserDefaults.standard.integer(forKey: "terminal.scrollbackSize")
-        let imageRendering = UserDefaults.standard.bool(forKey: "terminal.imageRendering")
         var opts = SwiftTerm.TerminalOptions()
         opts.scrollback = scrollback == Int.max ? Int.max : max(100, scrollback)
-        opts.enableSixelReported = imageRendering
+        opts.enableSixelReported = true
         terminalView.applyCustomOptions(opts)
 
         applyTheme(to: terminalView, context: context)
