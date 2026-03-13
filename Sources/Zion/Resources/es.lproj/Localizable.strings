@@ -823,6 +823,8 @@
 "settings.ai.diffExplanation" = "Explicación de Diff";
 "settings.ai.autoExplain" = "Explicar diffs automáticamente al seleccionar";
 "settings.ai.depth" = "Profundidad de la Explicación";
+"settings.notifications.ntfy" = "ntfy";
+"settings.notifications.ntfyEnabled" = "Activar Notificaciones ntfy";
 "settings.notifications.topic" = "Tema ntfy";
 "settings.notifications.preferences" = "Preferencias";
 "settings.notifications.events" = "Eventos";
@@ -1621,9 +1623,6 @@
 "settings.terminal.imageRendering.hint" = "Renderiza imágenes Sixel, iTerm2 y Kitty inline. Los cambios se aplican en nuevas sesiones.";
 "settings.terminal.aiImageDisplay" = "Generación de Imágenes por IA y Helpers";
 "settings.terminal.aiImageDisplay.hint" = "Instala los helpers de zion-img y zion_display en tu carpeta home. Las imágenes generadas por IA se guardan en zion-image/ dentro del proyecto actual para previsualizarlas en Zion.";
-"settings.terminal.autoAppendAIConfig" = "Configurar Instrucciones IA del Proyecto";
-"settings.terminal.autoAppendAIConfig.hint" = "Escribe instrucciones locales de Zion en los archivos de configuración de IA de la raíz del proyecto, como AGENTS.md, CLAUDE.md y GEMINI.md. Esto es lo que da a las herramientas de IA orientación específica del proyecto, como notificaciones de finalización por ntfy. Cuando está desactivado, usa zion_ai_setup manualmente.";
-"settings.terminal.aiConfigScope.hint" = "Alcance: el toggle superior instala helpers a nivel de usuario en tu carpeta home. Este toggle escribe instrucciones a nivel de repositorio para el proyecto actual.";
 "settings.terminal.selection" = "Selección";
 "settings.terminal.copyOnSelect" = "Copiar al Seleccionar";
 "recent.active.hint" = "Sesión activa";

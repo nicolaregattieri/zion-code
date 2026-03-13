@@ -3,13 +3,21 @@ import XCTest
 
 final class RepositoryViewModelSettingsTests: XCTestCase {
     private let lineWrapKey = "editor.lineWrap"
+    private let ntfyEnabledKey = "zion.ntfy.enabled"
+    private let ntfyLocalNotificationsKey = "zion.ntfy.localNotifications"
     private var savedLineWrapValue: Any?
+    private var savedNtfyEnabledValue: Any?
+    private var savedNtfyLocalNotificationsValue: Any?
 
     override func setUp() {
         super.setUp()
         let defaults = UserDefaults.standard
         savedLineWrapValue = defaults.object(forKey: lineWrapKey)
+        savedNtfyEnabledValue = defaults.object(forKey: ntfyEnabledKey)
+        savedNtfyLocalNotificationsValue = defaults.object(forKey: ntfyLocalNotificationsKey)
         defaults.removeObject(forKey: lineWrapKey)
+        defaults.removeObject(forKey: ntfyEnabledKey)
+        defaults.removeObject(forKey: ntfyLocalNotificationsKey)
     }
 
     override func tearDown() {
@@ -19,7 +27,19 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
         } else {
             defaults.removeObject(forKey: lineWrapKey)
         }
+        if let savedNtfyEnabledValue {
+            defaults.set(savedNtfyEnabledValue, forKey: ntfyEnabledKey)
+        } else {
+            defaults.removeObject(forKey: ntfyEnabledKey)
+        }
+        if let savedNtfyLocalNotificationsValue {
+            defaults.set(savedNtfyLocalNotificationsValue, forKey: ntfyLocalNotificationsKey)
+        } else {
+            defaults.removeObject(forKey: ntfyLocalNotificationsKey)
+        }
         savedLineWrapValue = nil
+        savedNtfyEnabledValue = nil
+        savedNtfyLocalNotificationsValue = nil
         super.tearDown()
     }
 
@@ -491,6 +511,45 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
         vm.restoreEditorSettings()
 
         XCTAssertFalse(vm.isLineWrappingEnabled)
+    }
+
+    @MainActor
+    func testNtfyLocalNotificationsDefaultToOff() {
+        let vm = RepositoryViewModel()
+
+        XCTAssertFalse(vm.ntfyLocalNotificationsEnabled)
+    }
+
+    @MainActor
+    func testNtfyDefaultsToDisabled() {
+        let vm = RepositoryViewModel()
+
+        XCTAssertFalse(vm.ntfyEnabled)
+        XCTAssertFalse(vm.isNtfyConfigured)
+    }
+
+    @MainActor
+    func testRestoreEditorSettingsAppliesStoredNtfyEnabledPreference() {
+        let vm = RepositoryViewModel()
+        vm.ntfyEnabled = false
+
+        UserDefaults.standard.set(true, forKey: ntfyEnabledKey)
+        UserDefaults.standard.set("topic", forKey: "zion.ntfy.topic")
+        vm.restoreEditorSettings()
+
+        XCTAssertTrue(vm.ntfyEnabled)
+        XCTAssertTrue(vm.isNtfyConfigured)
+    }
+
+    @MainActor
+    func testRestoreEditorSettingsAppliesStoredNtfyLocalNotificationsPreference() {
+        let vm = RepositoryViewModel()
+        vm.ntfyLocalNotificationsEnabled = false
+
+        UserDefaults.standard.set(true, forKey: ntfyLocalNotificationsKey)
+        vm.restoreEditorSettings()
+
+        XCTAssertTrue(vm.ntfyLocalNotificationsEnabled)
     }
 
     @MainActor

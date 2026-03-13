@@ -120,15 +120,15 @@ extension RepositoryViewModel {
         // ntfy Push Notifications
         if let topic = defaults.string(forKey: "zion.ntfy.topic") {
             ntfyTopic = topic
-        } else if let global = NtfyClient.readGlobalConfig() {
-            ntfyTopic = global.topic
-            ntfyServerURL = global.serverURL
         }
         if let server = defaults.string(forKey: "zion.ntfy.serverURL"), !server.isEmpty {
             ntfyServerURL = server
         }
         if let events = defaults.stringArray(forKey: "zion.ntfy.enabledEvents") {
             ntfyEnabledEvents = events
+        }
+        if defaults.object(forKey: "zion.ntfy.enabled") != nil {
+            ntfyEnabled = defaults.bool(forKey: "zion.ntfy.enabled")
         }
         if defaults.object(forKey: "zion.ntfy.localNotifications") != nil {
             ntfyLocalNotificationsEnabled = defaults.bool(forKey: "zion.ntfy.localNotifications")
@@ -288,6 +288,10 @@ extension RepositoryViewModel {
         }
         if let events = defaults.stringArray(forKey: "zion.ntfy.enabledEvents"), events != ntfyEnabledEvents {
             ntfyEnabledEvents = events
+        }
+        if defaults.object(forKey: "zion.ntfy.enabled") != nil {
+            let enabled = defaults.bool(forKey: "zion.ntfy.enabled")
+            if enabled != ntfyEnabled { ntfyEnabled = enabled }
         }
         if defaults.object(forKey: "zion.ntfy.localNotifications") != nil {
             let nln = defaults.bool(forKey: "zion.ntfy.localNotifications")

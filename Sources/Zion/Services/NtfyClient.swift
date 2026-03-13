@@ -170,6 +170,8 @@ actor NtfyClient {
         repoName: String
     ) async {
         let defaults = UserDefaults.standard
+        let ntfyEnabled = defaults.object(forKey: "zion.ntfy.enabled") as? Bool ?? false
+        guard ntfyEnabled else { return }
         let enabledEvents = defaults.stringArray(forKey: "zion.ntfy.enabledEvents") ?? NtfyEvent.defaultEnabledEvents
         guard enabledEvents.contains(event.rawValue) else { return }
 
@@ -177,7 +179,7 @@ actor NtfyClient {
         let fullBody = repoName.isEmpty ? body : "[\(repoName)] \(body)"
 
         // Always send local macOS notification if enabled
-        let localEnabled = defaults.object(forKey: "zion.ntfy.localNotifications") as? Bool ?? true
+        let localEnabled = defaults.object(forKey: "zion.ntfy.localNotifications") as? Bool ?? false
         if localEnabled {
             await sendLocalNotification(title: fullTitle, body: fullBody)
         }
@@ -274,54 +276,6 @@ actor NtfyClient {
             }
             return false
         }
-    }
-
-    /// Write global ntfy config to ~/.config/ntfy/config.json for external tools
-    static func writeGlobalConfig(
-        topic: String,
-        serverURL: String,
-        baseDirectory: URL = FileManager.default.homeDirectoryForCurrentUser
-    ) {
-        let configDir = baseDirectory.appendingPathComponent(".config/ntfy")
-        let configFile = configDir.appendingPathComponent("config.json")
-
-        do {
-            // Refuse to write through symlinks
-            let fm = FileManager.default
-            if fm.fileExists(atPath: configFile.path) {
-                let attrs = try fm.attributesOfItem(atPath: configFile.path)
-                if attrs[.type] as? FileAttributeType == .typeSymbolicLink {
-                    return
-                }
-            }
-
-            try fm.createDirectory(
-                at: configDir,
-                withIntermediateDirectories: true,
-                attributes: [.posixPermissions: 0o700]
-            )
-            let config: [String: String] = ["topic": topic, "server": serverURL]
-            let data = try JSONSerialization.data(withJSONObject: config, options: [.prettyPrinted, .sortedKeys])
-            try data.write(to: configFile, options: .atomic)
-            try fm.setAttributes([.posixPermissions: 0o600], ofItemAtPath: configFile.path)
-        } catch {
-            Task { @MainActor in
-                DiagnosticLogger.shared.log(.warn, "Failed to write ntfy config", context: error.localizedDescription, source: "NtfyClient.writeGlobalConfig")
-            }
-        }
-    }
-
-    /// Read global ntfy config as fallback
-    static func readGlobalConfig(
-        baseDirectory: URL = FileManager.default.homeDirectoryForCurrentUser
-    ) -> (topic: String, serverURL: String)? {
-        let configFile = baseDirectory.appendingPathComponent(".config/ntfy/config.json")
-        guard let data = try? Data(contentsOf: configFile),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: String],
-              let topic = json["topic"], !topic.isEmpty else {
-            return nil
-        }
-        return (topic: topic, serverURL: json["server"] ?? "https://ntfy.sh")
     }
 
     /// Generate a secure random topic like `zion-code-3Y3k8If`

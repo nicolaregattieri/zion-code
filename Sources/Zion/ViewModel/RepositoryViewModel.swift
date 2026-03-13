@@ -350,28 +350,26 @@ final class RepositoryViewModel {
     var ntfyTopic: String = "" {
         didSet {
             UserDefaults.standard.set(ntfyTopic, forKey: "zion.ntfy.topic")
-            if !ntfyTopic.isEmpty {
-                NtfyClient.writeGlobalConfig(topic: ntfyTopic, serverURL: ntfyServerURL)
-            }
         }
     }
     var ntfyServerURL: String = "https://ntfy.sh" {
         didSet {
             UserDefaults.standard.set(ntfyServerURL, forKey: "zion.ntfy.serverURL")
-            if !ntfyTopic.isEmpty {
-                NtfyClient.writeGlobalConfig(topic: ntfyTopic, serverURL: ntfyServerURL)
-            }
         }
     }
     var ntfyEnabledEvents: [String] = NtfyEvent.defaultEnabledEvents {
         didSet { UserDefaults.standard.set(ntfyEnabledEvents, forKey: "zion.ntfy.enabledEvents") }
     }
 
-    var ntfyLocalNotificationsEnabled: Bool = true {
+    var ntfyEnabled: Bool = false {
+        didSet { UserDefaults.standard.set(ntfyEnabled, forKey: "zion.ntfy.enabled") }
+    }
+
+    var ntfyLocalNotificationsEnabled: Bool = false {
         didSet { UserDefaults.standard.set(ntfyLocalNotificationsEnabled, forKey: "zion.ntfy.localNotifications") }
     }
 
-    var isNtfyConfigured: Bool { !ntfyTopic.isEmpty }
+    var isNtfyConfigured: Bool { ntfyEnabled && !ntfyTopic.isEmpty }
 
     // Mobile Remote Access
     var isMobileAccessEnabled: Bool = false {

@@ -212,7 +212,6 @@
 | Notifications Tab | ntfy topic, events, PR polling interval, Auto-review toggle | — |
 | Find in Files | Search across all repository files with grouped results and go-to-line | `⇧⌘F` |
 | Ntfy Push Notifications | Configurable ntfy server/topic for push notifications on Git events and AI completions | Settings |
-| AI Agent Rules | `zion_ai_setup` script installs AI instruction blocks (CLAUDE.md, AGENTS.md, .cursorrules, etc.) with terminal features | — |
 | Force Push Options | Force Push with Lease (safe) and Force Push (override) when push is rejected due to divergence | — |
 
 ## AI Diff Explanation

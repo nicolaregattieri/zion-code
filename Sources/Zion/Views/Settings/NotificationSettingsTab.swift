@@ -1,9 +1,10 @@
 import SwiftUI
 
 struct NotificationSettingsTab: View {
+    @AppStorage("zion.ntfy.enabled") private var ntfyEnabled: Bool = false
     @AppStorage("zion.ntfy.topic") private var ntfyTopic: String = ""
     @AppStorage("zion.ntfy.serverURL") private var ntfyServerURL: String = "https://ntfy.sh"
-    @AppStorage("zion.ntfy.localNotifications") private var localNotifications: Bool = true
+    @AppStorage("zion.ntfy.localNotifications") private var localNotifications: Bool = false
     @AppStorage("zion.prPollingInterval") private var prPollingInterval: Int = 5
     @AppStorage("zion.autoReviewAssignedPRs") private var autoReviewPRs: Bool = false
 
@@ -12,7 +13,8 @@ struct NotificationSettingsTab: View {
     @State private var isEditingTopic: Bool = false
     @State private var isTestingNtfy: Bool = false
 
-    private var isConfigured: Bool { !ntfyTopic.isEmpty }
+    private var hasSavedTopic: Bool { !ntfyTopic.isEmpty }
+    private var isConfigured: Bool { ntfyEnabled && hasSavedTopic }
     private var isTopicInputValid: Bool { NtfyClient.validateTopic(topicInput) }
     private var normalizedServerURLInput: String {
         let trimmed = serverURLInput.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -24,6 +26,11 @@ struct NotificationSettingsTab: View {
 
     var body: some View {
         Form {
+            Section(L10n("settings.notifications.ntfy")) {
+                Toggle(L10n("settings.notifications.ntfyEnabled"), isOn: $ntfyEnabled)
+            }
+
+            if ntfyEnabled {
             Section(L10n("settings.notifications.topic")) {
                 if isConfigured && !isEditingTopic {
                     HStack {
@@ -104,6 +111,7 @@ struct NotificationSettingsTab: View {
                 Text(L10n("ntfy.topic.privacy"))
                     .font(DesignSystem.Typography.meta)
                     .foregroundStyle(.tertiary)
+            }
             }
 
             if isConfigured {
@@ -195,6 +203,11 @@ struct NotificationSettingsTab: View {
         .onChange(of: ntfyServerURL) { _, newValue in
             serverURLInput = newValue
         }
+        .onChange(of: ntfyEnabled) { _, enabled in
+            if !enabled {
+                isEditingTopic = false
+            }
+        }
     }
 
     // MARK: - Topic
@@ -203,7 +216,6 @@ struct NotificationSettingsTab: View {
         guard isTopicInputValid else { return }
         ntfyTopic = topicInput
         isEditingTopic = false
-        NtfyClient.writeGlobalConfig(topic: ntfyTopic, serverURL: ntfyServerURL)
     }
 
     private func saveServerURL() {
@@ -211,7 +223,6 @@ struct NotificationSettingsTab: View {
         let normalized = normalizedServerURLInput
         ntfyServerURL = normalized
         serverURLInput = normalized
-        NtfyClient.writeGlobalConfig(topic: ntfyTopic, serverURL: normalized)
     }
 
     // MARK: - Event Bindings

@@ -14,8 +14,6 @@ final class TerminalHelperInstallTests: XCTestCase {
 
         TerminalTabView.Coordinator.installScripts(
             aiImageDisplay: true,
-            ntfyTopic: "",
-            ntfyServer: "https://ntfy.sh",
             homeDirectoryPath: homePath,
             zionBinDirOverride: binPath
         )

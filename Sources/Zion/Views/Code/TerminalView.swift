@@ -162,9 +162,7 @@ struct TerminalTabView: NSViewRepresentable {
     static func syncInstalledTerminalHelpersForCurrentSettings() {
         let defaults = UserDefaults.standard
         Coordinator.installScripts(
-            aiImageDisplay: defaults.bool(forKey: "terminal.aiImageDisplay"),
-            ntfyTopic: defaults.string(forKey: "zion.ntfy.topic") ?? "",
-            ntfyServer: defaults.string(forKey: "zion.ntfy.serverURL") ?? "https://ntfy.sh"
+            aiImageDisplay: defaults.bool(forKey: "terminal.aiImageDisplay")
         )
     }
 
@@ -317,32 +315,11 @@ struct TerminalTabView: NSViewRepresentable {
                     env["ZION_IMAGE_DISPLAY"] = "1"
                 }
 
-                let ntfyTopic = UserDefaults.standard.string(forKey: "zion.ntfy.topic") ?? ""
-                let ntfyServer = UserDefaults.standard.string(forKey: "zion.ntfy.serverURL") ?? "https://ntfy.sh"
-                if !ntfyTopic.isEmpty {
-                    env["ZION_NTFY_TOPIC"] = ntfyTopic
-                    env["ZION_NTFY_SERVER"] = ntfyServer
-                }
-
                 // Install standalone scripts to ~/.zion/bin/
-                let hasFeatures = aiImageDisplay || !ntfyTopic.isEmpty
-                if hasFeatures {
+                if aiImageDisplay {
                     Self.installScripts(
-                        aiImageDisplay: aiImageDisplay,
-                        ntfyTopic: ntfyTopic,
-                        ntfyServer: ntfyServer
+                        aiImageDisplay: aiImageDisplay
                     )
-
-                    // Only auto-append AI config blocks to project files if user opted in
-                    let autoAppend = UserDefaults.standard.bool(forKey: "terminal.autoAppendAIConfig")
-                    if autoAppend {
-                        Self.appendZionBlock(
-                            projectRoot: url,
-                            aiImageDisplay: aiImageDisplay,
-                            ntfyTopic: ntfyTopic,
-                            ntfyServer: ntfyServer
-                        )
-                    }
                 }
 
                 let envArray = env.map { "\($0.key)=\($0.value)" }
@@ -720,8 +697,6 @@ struct TerminalTabView: NSViewRepresentable {
         /// with zero terminal injection. Scripts are overwritten each time to stay current.
         static func installScripts(
             aiImageDisplay: Bool,
-            ntfyTopic: String,
-            ntfyServer: String,
             homeDirectoryPath: String = FileManager.default.homeDirectoryForCurrentUser.path,
             zionBinDirOverride: String? = nil
         ) {
@@ -933,207 +908,6 @@ struct TerminalTabView: NSViewRepresentable {
                 let codexSkillPath = "\(codexSkillDir)/SKILL.md"
                 try? codexSkill.write(toFile: codexSkillPath, atomically: true, encoding: .utf8)
             }
-
-            // zion_ai_setup — manual fallback for creating new AI config files
-            let hasImage = aiImageDisplay
-            let ntfyInstructionURL = Self.validNtfyInstructionURL(topic: ntfyTopic, serverURL: ntfyServer)
-            let hasNtfy = ntfyInstructionURL != nil
-
-            var featuresList = ""
-            if hasImage { featuresList += "\n  - AI image generation for Zion preview (zion-img)" }
-            if hasNtfy { featuresList += "\n  - Push notifications (ntfy)" }
-
-            // Build the block lines that zion_ai_setup will embed
-            var blockLines = ""
-            if hasImage {
-                blockLines += """
-
-                ## AI Image Generation
-                Use `/zion-img <description>` to generate an image into `zion-image/` in the project root.
-                Preview the result in Zion's built-in image preview.
-
-                """
-            }
-            if let ntfyInstructionURL {
-                blockLines += """
-
-                ## Push Notifications
-                When you complete a significant task, notify the user:
-                curl -s -H "Title: Done" -H "Priority: 3" -H "Tags: white_check_mark" \\\\
-                  -d "[Brief description]" "\(ntfyInstructionURL)"
-                Send for: plan completion, implementation done, test results, migrations, errors.
-                Do NOT send for: file reads, intermediate steps, questions.
-
-                """
-            }
-
-            let setupScript = """
-            #!/bin/zsh
-            # zion_ai_setup — configure AI tools to use Zion terminal features
-            # Installed by Zion Git Client
-
-            _zas_block='\(blockLines.replacingOccurrences(of: "'", with: "'\\''"))'
-
-            case "$1" in
-                -h|--help|"")
-                    cat <<'HELP'
-            zion_ai_setup — configure AI tools to use Zion terminal features
-
-            Usage: zion_ai_setup <tool>
-
-            Supported tools:
-              claude      CLAUDE.md
-              codex       AGENTS.md
-              cursor      .cursorrules
-              copilot     .github/copilot-instructions.md
-              windsurf    .windsurfrules
-              cody        .cody/instructions.md
-              gemini      GEMINI.md
-
-            Features configured:\(featuresList)
-
-            Creates the file if needed and appends a Zion instruction block.
-            Use this when your project does not yet have the config file.
-            Existing files with a Zion block are updated automatically on terminal start.
-
-            Example: zion_ai_setup claude
-            HELP
-                    exit 0
-                    ;;
-                claude)   _zas_f="CLAUDE.md" ;;
-                codex)    _zas_f="AGENTS.md" ;;
-                cursor)   _zas_f=".cursorrules" ;;
-                copilot)  _zas_f=".github/copilot-instructions.md" ;;
-                windsurf) _zas_f=".windsurfrules" ;;
-                cody)     _zas_f=".cody/instructions.md" ;;
-                gemini)   _zas_f="GEMINI.md" ;;
-                *)
-                    echo "zion_ai_setup: unknown tool '$1'. Run zion_ai_setup --help" >&2
-                    exit 1
-                    ;;
-            esac
-
-            _zas_root=$(git rev-parse --show-toplevel 2>/dev/null) || {
-                echo "zion_ai_setup: not inside a git repository" >&2
-                exit 1
-            }
-
-            _zas_path="$_zas_root/$_zas_f"
-
-            if [ -f "$_zas_path" ] && grep -q 'Zion Terminal' "$_zas_path" 2>/dev/null; then
-                echo "Already configured: $_zas_path contains Zion Terminal block"
-                exit 0
-            fi
-
-            _zas_full="<!-- ZION:START (managed by Zion Git Client \\u2014 do not edit) -->
-            # Zion Terminal
-            $_zas_block
-            <!-- ZION:END -->"
-
-            echo ""
-            echo "Will \(hasImage || hasNtfy ? "append to" : "create"): $_zas_path"
-            echo "---"
-            echo "$_zas_full"
-            echo "---"
-            echo ""
-            printf "Proceed? [y/N] "
-            read -r _zas_ans
-            case "$_zas_ans" in
-                [Yy]*)
-                    mkdir -p "$(dirname "$_zas_path")" 2>/dev/null
-                    printf '\\n%s\\n' "$_zas_full" >> "$_zas_path"
-                    echo "Done: $_zas_path updated"
-                    ;;
-                *) echo "Cancelled" ;;
-            esac
-            """
-            let setupPath = "\(zionBinDir)/zion_ai_setup"
-            try? setupScript.write(toFile: setupPath, atomically: true, encoding: .utf8)
-            try? fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: setupPath)
-        }
-
-        // MARK: - Auto-append Zion block to AI config files
-
-        private static let startMarker = "<!-- ZION:START (managed by Zion Git Client \u{2014} do not edit) -->"
-        private static let endMarker = "<!-- ZION:END -->"
-
-        private static let knownConfigFiles = [
-            "CLAUDE.md",
-            ".cursorrules",
-            ".github/copilot-instructions.md",
-            ".windsurfrules",
-            ".cody/instructions.md",
-            "AGENTS.md",
-            "GEMINI.md",
-        ]
-
-        /// Scan project root for known AI config files and append/update the Zion instruction block.
-        static func appendZionBlock(projectRoot: URL, aiImageDisplay: Bool, ntfyTopic: String, ntfyServer: String) {
-            let fm = FileManager.default
-
-            for configFile in knownConfigFiles {
-                let fileURL = projectRoot.appendingPathComponent(configFile)
-                guard fm.fileExists(atPath: fileURL.path) else { continue }
-
-                // Don't write through symlinks
-                if let attrs = try? fm.attributesOfItem(atPath: fileURL.path),
-                   attrs[.type] as? FileAttributeType == .typeSymbolicLink {
-                    continue
-                }
-
-                guard var content = try? String(contentsOf: fileURL, encoding: .utf8) else { continue }
-
-                let block = buildMarkdownBlock(aiImageDisplay: aiImageDisplay, ntfyTopic: ntfyTopic, ntfyServer: ntfyServer)
-
-                // Check if block already exists
-                if let startRange = content.range(of: startMarker),
-                   let endRange = content.range(of: endMarker) {
-                    // Replace existing block
-                    content.replaceSubrange(startRange.lowerBound..<endRange.upperBound, with: block)
-                    try? content.write(to: fileURL, atomically: true, encoding: .utf8)
-                } else if !content.contains("Zion Terminal") {
-                    // Append new block
-                    if !content.hasSuffix("\n") { content += "\n" }
-                    content += "\n" + block + "\n"
-                    try? content.write(to: fileURL, atomically: true, encoding: .utf8)
-                }
-            }
-        }
-
-        /// Build the markdown instruction block with only enabled features.
-        private static func buildMarkdownBlock(aiImageDisplay: Bool, ntfyTopic: String, ntfyServer: String) -> String {
-            var sections: [String] = []
-
-            if aiImageDisplay {
-                sections.append("""
-                ## AI Image Generation
-                Use `/zion-img <description>` to generate an image into `zion-image/` in the project root.
-                Preview the result in Zion's built-in image preview.
-                """)
-            }
-
-            if let ntfyInstructionURL = validNtfyInstructionURL(topic: ntfyTopic, serverURL: ntfyServer) {
-                sections.append("""
-                ## Push Notifications
-                When you complete a significant task, notify the user:
-                curl -s -H "Title: Done" -H "Priority: 3" -H "Tags: white_check_mark" \\
-                  -d "[Brief description]" "\(ntfyInstructionURL)"
-                Send for: plan completion, implementation done, test results, migrations, errors.
-                Do NOT send for: file reads, intermediate steps, questions.
-                """)
-            }
-
-            return """
-            \(startMarker)
-            # Zion Terminal
-
-            \(sections.joined(separator: "\n\n"))
-            \(endMarker)
-            """
-        }
-
-        private static func validNtfyInstructionURL(topic: String, serverURL: String) -> String? {
-            NtfyClient.buildNtfyURL(serverURL: serverURL, topic: topic)?.absoluteString
         }
 
         // MARK: - TerminalViewDelegate

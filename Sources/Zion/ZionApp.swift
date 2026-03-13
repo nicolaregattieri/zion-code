@@ -223,6 +223,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             "terminal.imageRendering": true,
             "terminal.copyOnSelect": false,
             "terminal.aiImageDisplay": false,
+            "zion.ntfy.enabled": false,
+            "zion.ntfy.localNotifications": false,
         ])
 
         registerFonts()
