@@ -1618,10 +1618,11 @@
 "settings.terminal.openHyperlinks.hint" = "Los enlaces OSC 8 se abren en el navegador predeterminado al hacer Cmd+clic.";
 "settings.terminal.imageRendering" = "Renderizado de Imágenes Inline";
 "settings.terminal.imageRendering.hint" = "Renderiza imágenes Sixel, iTerm2 y Kitty inline. Los cambios se aplican en nuevas sesiones.";
-"settings.terminal.aiImageDisplay" = "Imágenes IA Inline";
-"settings.terminal.aiImageDisplay.hint" = "Permite que las herramientas de IA muestren imágenes directamente en la terminal. Instala zion_display en ~/.zion/bin/. Los cambios se aplican en nuevas sesiones.";
-"settings.terminal.autoAppendAIConfig" = "Configurar Archivos IA Automáticamente";
-"settings.terminal.autoAppendAIConfig.hint" = "Agrega automáticamente instrucciones de Zion a los archivos de configuración IA (CLAUDE.md, .cursorrules, etc.) en la raíz del proyecto. Cuando está desactivado, usa zion_ai_setup manualmente.";
+"settings.terminal.aiImageDisplay" = "Imágenes IA Inline y Helpers";
+"settings.terminal.aiImageDisplay.hint" = "Permite que las herramientas de IA muestren imágenes en la terminal e instala helpers globales de zion-img para Claude, Gemini y Codex en tu carpeta home. También instala zion_display en ~/.zion/bin/. Los cambios se aplican en nuevas sesiones.";
+"settings.terminal.autoAppendAIConfig" = "Configurar Instrucciones IA del Proyecto";
+"settings.terminal.autoAppendAIConfig.hint" = "Escribe instrucciones locales de Zion en los archivos de configuración de IA de la raíz del proyecto, como AGENTS.md, CLAUDE.md y GEMINI.md. Esto es lo que da a las herramientas de IA orientación específica del proyecto, como notificaciones de finalización por ntfy. Cuando está desactivado, usa zion_ai_setup manualmente.";
+"settings.terminal.aiConfigScope.hint" = "Alcance: el toggle superior instala helpers a nivel de usuario en tu carpeta home. Este toggle escribe instrucciones a nivel de repositorio para el proyecto actual.";
 "settings.terminal.selection" = "Selección";
 "settings.terminal.copyOnSelect" = "Copiar al Seleccionar";
 "recent.active.hint" = "Sesión activa";

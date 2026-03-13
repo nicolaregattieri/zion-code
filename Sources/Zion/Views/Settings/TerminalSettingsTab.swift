@@ -64,6 +64,10 @@ struct TerminalSettingsTab: View {
                 Text(L10n("settings.terminal.autoAppendAIConfig.hint"))
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
+
+                Text(L10n("settings.terminal.aiConfigScope.hint"))
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(.secondary)
             } header: {
                 Text(L10n("settings.terminal.advanced"))
             }
