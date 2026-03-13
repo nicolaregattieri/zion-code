@@ -722,6 +722,9 @@
 "settings.ai.diffExplanation" = "Explicação de Diff";
 "settings.ai.autoExplain" = "Explicar diffs automaticamente ao selecionar";
 "settings.ai.depth" = "Profundidade da Explicação";
+"settings.notifications.ntfy" = "ntfy";
+"settings.notifications.ntfyEnabled" = "Ativar Notificações ntfy";
+"settings.notifications.ntfyEnabled.hint" = "Mantém o envio ntfy e as instruções relacionadas para IA desligados até você ativar explicitamente.";
 "settings.notifications.topic" = "Tópico ntfy";
 "settings.notifications.preferences" = "Preferências";
 "settings.notifications.events" = "Eventos";

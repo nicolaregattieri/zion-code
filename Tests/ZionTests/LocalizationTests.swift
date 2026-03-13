@@ -226,6 +226,9 @@ final class LocalizationTests: XCTestCase {
             "settings.terminal.autoAppendAIConfig",
             "settings.terminal.autoAppendAIConfig.hint",
             "settings.terminal.aiConfigScope.hint",
+            "settings.notifications.ntfy",
+            "settings.notifications.ntfyEnabled",
+            "settings.notifications.ntfyEnabled.hint",
         ]
 
         for key in keys {

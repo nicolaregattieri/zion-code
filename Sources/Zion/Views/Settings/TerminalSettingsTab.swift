@@ -101,9 +101,18 @@ struct TerminalSettingsTab: View {
         .formStyle(.grouped)
         .toggleStyle(SwitchToggleStyle(tint: DesignSystem.Colors.actionPrimary))
         .tint(DesignSystem.Colors.actionPrimary)
-        .onChange(of: aiImageDisplay) { _, enabled in
-            guard enabled else { return }
+        .onChange(of: aiImageDisplay) { _, _ in
             TerminalTabView.syncInstalledTerminalHelpersForCurrentSettings()
+            if autoAppendAIConfig {
+                TerminalTabView.syncManagedAIConfigBlocksForCurrentSettings()
+            }
+        }
+        .onChange(of: autoAppendAIConfig) { _, enabled in
+            if enabled {
+                TerminalTabView.syncManagedAIConfigBlocksForCurrentSettings()
+            } else {
+                TerminalTabView.syncManagedAIConfigBlocksForRecentRepositories(forceRemove: true)
+            }
         }
     }
 }

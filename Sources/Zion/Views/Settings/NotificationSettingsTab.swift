@@ -1,18 +1,21 @@
 import SwiftUI
 
 struct NotificationSettingsTab: View {
+    @AppStorage("zion.ntfy.enabled") private var ntfyEnabled: Bool = false
     @AppStorage("zion.ntfy.topic") private var ntfyTopic: String = ""
     @AppStorage("zion.ntfy.serverURL") private var ntfyServerURL: String = "https://ntfy.sh"
-    @AppStorage("zion.ntfy.localNotifications") private var localNotifications: Bool = true
+    @AppStorage("zion.ntfy.localNotifications") private var localNotifications: Bool = false
     @AppStorage("zion.prPollingInterval") private var prPollingInterval: Int = 5
     @AppStorage("zion.autoReviewAssignedPRs") private var autoReviewPRs: Bool = false
+    @AppStorage("terminal.autoAppendAIConfig") private var autoAppendAIConfig: Bool = false
 
     @State private var topicInput: String = ""
     @State private var serverURLInput: String = ""
     @State private var isEditingTopic: Bool = false
     @State private var isTestingNtfy: Bool = false
 
-    private var isConfigured: Bool { !ntfyTopic.isEmpty }
+    private var hasSavedTopic: Bool { !ntfyTopic.isEmpty }
+    private var isConfigured: Bool { ntfyEnabled && hasSavedTopic }
     private var isTopicInputValid: Bool { NtfyClient.validateTopic(topicInput) }
     private var normalizedServerURLInput: String {
         let trimmed = serverURLInput.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -24,6 +27,15 @@ struct NotificationSettingsTab: View {
 
     var body: some View {
         Form {
+            Section(L10n("settings.notifications.ntfy")) {
+                Toggle(L10n("settings.notifications.ntfyEnabled"), isOn: $ntfyEnabled)
+
+                Text(L10n("settings.notifications.ntfyEnabled.hint"))
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(.secondary)
+            }
+
+            if ntfyEnabled {
             Section(L10n("settings.notifications.topic")) {
                 if isConfigured && !isEditingTopic {
                     HStack {
@@ -104,6 +116,7 @@ struct NotificationSettingsTab: View {
                 Text(L10n("ntfy.topic.privacy"))
                     .font(DesignSystem.Typography.meta)
                     .foregroundStyle(.tertiary)
+            }
             }
 
             if isConfigured {
@@ -195,6 +208,14 @@ struct NotificationSettingsTab: View {
         .onChange(of: ntfyServerURL) { _, newValue in
             serverURLInput = newValue
         }
+        .onChange(of: ntfyEnabled) { _, enabled in
+            if !enabled {
+                isEditingTopic = false
+            }
+            TerminalTabView.syncInstalledTerminalHelpersForCurrentSettings()
+            guard autoAppendAIConfig else { return }
+            TerminalTabView.syncManagedAIConfigBlocksForRecentRepositories()
+        }
     }
 
     // MARK: - Topic
@@ -204,6 +225,10 @@ struct NotificationSettingsTab: View {
         ntfyTopic = topicInput
         isEditingTopic = false
         NtfyClient.writeGlobalConfig(topic: ntfyTopic, serverURL: ntfyServerURL)
+        TerminalTabView.syncInstalledTerminalHelpersForCurrentSettings()
+        if autoAppendAIConfig {
+            TerminalTabView.syncManagedAIConfigBlocksForRecentRepositories()
+        }
     }
 
     private func saveServerURL() {
@@ -212,6 +237,10 @@ struct NotificationSettingsTab: View {
         ntfyServerURL = normalized
         serverURLInput = normalized
         NtfyClient.writeGlobalConfig(topic: ntfyTopic, serverURL: normalized)
+        TerminalTabView.syncInstalledTerminalHelpersForCurrentSettings()
+        if autoAppendAIConfig {
+            TerminalTabView.syncManagedAIConfigBlocksForRecentRepositories()
+        }
     }
 
     // MARK: - Event Bindings

@@ -161,11 +161,48 @@ struct TerminalTabView: NSViewRepresentable {
 
     static func syncInstalledTerminalHelpersForCurrentSettings() {
         let defaults = UserDefaults.standard
+        let ntfyEnabled = defaults.object(forKey: "zion.ntfy.enabled") as? Bool ?? false
         Coordinator.installScripts(
             aiImageDisplay: defaults.bool(forKey: "terminal.aiImageDisplay"),
-            ntfyTopic: defaults.string(forKey: "zion.ntfy.topic") ?? "",
+            ntfyTopic: ntfyEnabled ? (defaults.string(forKey: "zion.ntfy.topic") ?? "") : "",
             ntfyServer: defaults.string(forKey: "zion.ntfy.serverURL") ?? "https://ntfy.sh"
         )
+    }
+
+    static func syncManagedAIConfigBlocksForCurrentSettings() {
+        syncManagedAIConfigBlocksForRecentRepositories(forceRemove: false)
+    }
+
+    static func syncManagedAIConfigBlocksForRecentRepositories(forceRemove: Bool = false) {
+        for repoRoot in recentRepositoryRoots() {
+            if forceRemove {
+                Coordinator.removeZionBlock(projectRoot: repoRoot)
+            } else {
+                let defaults = UserDefaults.standard
+                let ntfyEnabled = defaults.object(forKey: "zion.ntfy.enabled") as? Bool ?? false
+                Coordinator.appendZionBlock(
+                    projectRoot: repoRoot,
+                    aiImageDisplay: defaults.bool(forKey: "terminal.aiImageDisplay"),
+                    ntfyTopic: ntfyEnabled ? (defaults.string(forKey: "zion.ntfy.topic") ?? "") : "",
+                    ntfyServer: defaults.string(forKey: "zion.ntfy.serverURL") ?? "https://ntfy.sh"
+                )
+            }
+        }
+    }
+
+    private static func recentRepositoryRoots() -> [URL] {
+        guard let data = UserDefaults.standard.data(forKey: "zion.recentRepositories"),
+              let urls = try? JSONDecoder().decode([URL].self, from: data) else {
+            return []
+        }
+
+        var seen: Set<String> = []
+        return urls.filter {
+            let path = $0.standardizedFileURL.path
+            guard !path.isEmpty, !seen.contains(path) else { return false }
+            seen.insert(path)
+            return true
+        }
     }
 
     @MainActor
@@ -317,7 +354,8 @@ struct TerminalTabView: NSViewRepresentable {
                     env["ZION_IMAGE_DISPLAY"] = "1"
                 }
 
-                let ntfyTopic = UserDefaults.standard.string(forKey: "zion.ntfy.topic") ?? ""
+                let ntfyEnabled = UserDefaults.standard.object(forKey: "zion.ntfy.enabled") as? Bool ?? false
+                let ntfyTopic = ntfyEnabled ? (UserDefaults.standard.string(forKey: "zion.ntfy.topic") ?? "") : ""
                 let ntfyServer = UserDefaults.standard.string(forKey: "zion.ntfy.serverURL") ?? "https://ntfy.sh"
                 if !ntfyTopic.isEmpty {
                     env["ZION_NTFY_TOPIC"] = ntfyTopic
@@ -1070,6 +1108,7 @@ struct TerminalTabView: NSViewRepresentable {
         /// Scan project root for known AI config files and append/update the Zion instruction block.
         static func appendZionBlock(projectRoot: URL, aiImageDisplay: Bool, ntfyTopic: String, ntfyServer: String) {
             let fm = FileManager.default
+            let block = buildMarkdownBlock(aiImageDisplay: aiImageDisplay, ntfyTopic: ntfyTopic, ntfyServer: ntfyServer)
 
             for configFile in knownConfigFiles {
                 let fileURL = projectRoot.appendingPathComponent(configFile)
@@ -1083,15 +1122,19 @@ struct TerminalTabView: NSViewRepresentable {
 
                 guard var content = try? String(contentsOf: fileURL, encoding: .utf8) else { continue }
 
-                let block = buildMarkdownBlock(aiImageDisplay: aiImageDisplay, ntfyTopic: ntfyTopic, ntfyServer: ntfyServer)
-
                 // Check if block already exists
                 if let startRange = content.range(of: startMarker),
                    let endRange = content.range(of: endMarker) {
-                    // Replace existing block
-                    content.replaceSubrange(startRange.lowerBound..<endRange.upperBound, with: block)
+                    if let block {
+                        content.replaceSubrange(startRange.lowerBound..<endRange.upperBound, with: block)
+                    } else {
+                        content.replaceSubrange(startRange.lowerBound..<endRange.upperBound, with: "")
+                        while content.contains("\n\n\n") {
+                            content = content.replacingOccurrences(of: "\n\n\n", with: "\n\n")
+                        }
+                    }
                     try? content.write(to: fileURL, atomically: true, encoding: .utf8)
-                } else if !content.contains("Zion Terminal") {
+                } else if let block, !content.contains("Zion Terminal") {
                     // Append new block
                     if !content.hasSuffix("\n") { content += "\n" }
                     content += "\n" + block + "\n"
@@ -1100,8 +1143,12 @@ struct TerminalTabView: NSViewRepresentable {
             }
         }
 
+        static func removeZionBlock(projectRoot: URL) {
+            appendZionBlock(projectRoot: projectRoot, aiImageDisplay: false, ntfyTopic: "", ntfyServer: "https://ntfy.sh")
+        }
+
         /// Build the markdown instruction block with only enabled features.
-        private static func buildMarkdownBlock(aiImageDisplay: Bool, ntfyTopic: String, ntfyServer: String) -> String {
+        private static func buildMarkdownBlock(aiImageDisplay: Bool, ntfyTopic: String, ntfyServer: String) -> String? {
             var sections: [String] = []
 
             if aiImageDisplay {
@@ -1122,6 +1169,8 @@ struct TerminalTabView: NSViewRepresentable {
                 Do NOT send for: file reads, intermediate steps, questions.
                 """)
             }
+
+            guard !sections.isEmpty else { return nil }
 
             return """
             \(startMarker)

@@ -367,11 +367,15 @@ final class RepositoryViewModel {
         didSet { UserDefaults.standard.set(ntfyEnabledEvents, forKey: "zion.ntfy.enabledEvents") }
     }
 
-    var ntfyLocalNotificationsEnabled: Bool = true {
+    var ntfyEnabled: Bool = false {
+        didSet { UserDefaults.standard.set(ntfyEnabled, forKey: "zion.ntfy.enabled") }
+    }
+
+    var ntfyLocalNotificationsEnabled: Bool = false {
         didSet { UserDefaults.standard.set(ntfyLocalNotificationsEnabled, forKey: "zion.ntfy.localNotifications") }
     }
 
-    var isNtfyConfigured: Bool { !ntfyTopic.isEmpty }
+    var isNtfyConfigured: Bool { ntfyEnabled && !ntfyTopic.isEmpty }
 
     // Mobile Remote Access
     var isMobileAccessEnabled: Bool = false {

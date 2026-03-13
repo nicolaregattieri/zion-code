@@ -170,6 +170,8 @@ actor NtfyClient {
         repoName: String
     ) async {
         let defaults = UserDefaults.standard
+        let ntfyEnabled = defaults.object(forKey: "zion.ntfy.enabled") as? Bool ?? false
+        guard ntfyEnabled else { return }
         let enabledEvents = defaults.stringArray(forKey: "zion.ntfy.enabledEvents") ?? NtfyEvent.defaultEnabledEvents
         guard enabledEvents.contains(event.rawValue) else { return }
 
@@ -177,7 +179,7 @@ actor NtfyClient {
         let fullBody = repoName.isEmpty ? body : "[\(repoName)] \(body)"
 
         // Always send local macOS notification if enabled
-        let localEnabled = defaults.object(forKey: "zion.ntfy.localNotifications") as? Bool ?? true
+        let localEnabled = defaults.object(forKey: "zion.ntfy.localNotifications") as? Bool ?? false
         if localEnabled {
             await sendLocalNotification(title: fullTitle, body: fullBody)
         }
