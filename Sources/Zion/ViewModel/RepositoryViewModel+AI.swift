@@ -1453,12 +1453,59 @@ extension RepositoryViewModel {
         )
     }
 
+    static func reviewRequestNotificationTransition(
+        existingIDs: Set<Int>,
+        activePRs: [HostedPRInfo]
+    ) -> (newlyRequested: [HostedPRInfo], nextIDs: Set<Int>) {
+        let activeIDs = Set(activePRs.map(\.id))
+        let newlyRequested = activePRs.filter { !existingIDs.contains($0.id) }
+        return (newlyRequested, activeIDs)
+    }
+
+    static func reviewRequestFileHints(
+        from files: [(filename: String, status: String, additions: Int, deletions: Int, patch: String)]
+    ) -> [String] {
+        let unique = NSOrderedSet(array: files.map(\.filename).filter { !$0.isEmpty })
+        return unique.array as? [String] ?? []
+    }
+
+    static func reviewRequestExtraNotes(
+        pr: HostedPRInfo,
+        files: [(filename: String, status: String, additions: Int, deletions: Int, patch: String)]
+    ) -> [String] {
+        var notes = [
+            "source branch: \(pr.headBranch)",
+            "target branch: \(pr.baseBranch)",
+            "pr title: \(pr.title)",
+            "author: \(pr.author)"
+        ]
+
+        if let summary = reviewRequestTouchedFilesSummary(from: files) {
+            notes.append("changed files: \(summary)")
+        }
+
+        return notes
+    }
+
+    static func reviewRequestTouchedFilesSummary(
+        from files: [(filename: String, status: String, additions: Int, deletions: Int, patch: String)]
+    ) -> String? {
+        let names = reviewRequestFileHints(from: files).map {
+            URL(fileURLWithPath: $0).lastPathComponent
+        }
+        guard !names.isEmpty else { return nil }
+        return names.prefix(3).joined(separator: ", ")
+    }
+
     static func buildReviewRequestNotificationBody(pr: HostedPRInfo, repoContext: String) -> String {
         let highlights = notificationHighlights(from: repoContext)
         var lines = [String(format: L10n("pr.notification.request.header"), pr.author, pr.title)]
 
         if !pr.headBranch.isEmpty, !pr.baseBranch.isEmpty {
             lines.append(String(format: L10n("pr.notification.request.flow"), pr.headBranch, pr.baseBranch))
+        }
+        if let touches = highlights.touches {
+            lines.append(String(format: L10n("pr.notification.request.touches"), touches))
         }
         if let strategy = highlights.strategy {
             lines.append(String(format: L10n("pr.notification.request.strategy"), strategy))
@@ -1511,18 +1558,20 @@ extension RepositoryViewModel {
         return max(5, 100 - penalty)
     }
 
-    static func notificationHighlights(from repoContext: String) -> (strategy: String?, constraints: String?) {
+    static func notificationHighlights(from repoContext: String) -> (touches: String?, strategy: String?, constraints: String?) {
         let lines = repoContext
             .split(separator: "\n")
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
 
-        let strategy = value(forPrefix: "modules:", in: lines)
+        let touches = value(forPrefix: "changed files:", in: lines)
             ?? value(forPrefix: "focus files:", in: lines)
+        let strategy = value(forPrefix: "modules:", in: lines)
             ?? value(forPrefix: "branch patterns:", in: lines)
         let constraints = value(forPrefix: "conventions:", in: lines)
             ?? value(forPrefix: "sensitive areas:", in: lines)
 
         return (
+            touches: touches.map { trimmedNotificationValue($0) },
             strategy: strategy.map { trimmedNotificationValue($0) },
             constraints: constraints.map { trimmedNotificationValue($0) }
         )

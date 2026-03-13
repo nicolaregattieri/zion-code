@@ -225,6 +225,7 @@ final class LocalizationTests: XCTestCase {
             "settings.terminal.aiImageDisplay.hint",
             "settings.notifications.ntfy",
             "settings.notifications.ntfyEnabled",
+            "ntfy.group.mobileRemote",
             "ntfy.event.terminalPromptDetected",
             "ntfy.event.terminalPromptDetected.hint",
         ]
@@ -244,6 +245,7 @@ final class LocalizationTests: XCTestCase {
             "pr.inbox.authRequired.hint",
             "pr.notification.request.header",
             "pr.notification.request.flow",
+            "pr.notification.request.touches",
             "pr.notification.request.strategy",
             "pr.notification.request.constraints",
             "pr.notification.review.header",

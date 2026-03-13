@@ -786,26 +786,25 @@ extension RepositoryViewModel {
         guard let (provider, remote) = detectHostingProvider() else { return }
         let catalog = await ensurePRCatalogLoaded(provider: provider, remote: remote)
         let prs = await provider.fetchPRsRequestingMyReview(remote: remote)
-        for pr in prs {
-            let enrichedPR = Self.enrichedReviewRequestPR(pr, catalog: catalog)
-            if !notifiedReviewRequestPRIDs.contains(enrichedPR.id) {
-                notifiedReviewRequestPRIDs.insert(enrichedPR.id)
-                let repoContext = buildRepoContext(
-                    fileHints: [],
-                    extraNotes: [
-                        "source branch: \(enrichedPR.headBranch)",
-                        "target branch: \(enrichedPR.baseBranch)",
-                        "pr title: \(enrichedPR.title)",
-                        "author: \(enrichedPR.author)"
-                    ]
-                )
-                await ntfyClient.sendIfEnabled(
-                    event: .prReviewRequested,
-                    title: L10n("ntfy.event.prReviewRequested"),
-                    body: Self.buildReviewRequestNotificationBody(pr: enrichedPR, repoContext: repoContext),
-                    repoName: repositoryURL?.lastPathComponent ?? ""
-                )
-            }
+        let enrichedPRs = prs.map { Self.enrichedReviewRequestPR($0, catalog: catalog) }
+        let transition = Self.reviewRequestNotificationTransition(
+            existingIDs: notifiedReviewRequestPRIDs,
+            activePRs: enrichedPRs
+        )
+        notifiedReviewRequestPRIDs = transition.nextIDs
+
+        for pr in transition.newlyRequested {
+            let files = await provider.fetchPRFiles(remote: remote, prNumber: pr.number)
+            let repoContext = buildRepoContext(
+                fileHints: Self.reviewRequestFileHints(from: files),
+                extraNotes: Self.reviewRequestExtraNotes(pr: pr, files: files)
+            )
+            await ntfyClient.sendIfEnabled(
+                event: .prReviewRequested,
+                title: L10n("ntfy.event.prReviewRequested"),
+                body: Self.buildReviewRequestNotificationBody(pr: pr, repoContext: repoContext),
+                repoName: repositoryURL?.lastPathComponent ?? ""
+            )
         }
     }
 

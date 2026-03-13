@@ -1,5 +1,20 @@
 import SwiftUI
 
+enum PRInboxSurface {
+    case forReview
+    case allOpen
+}
+
+struct PRInboxAccessState: Equatable {
+    let icon: String
+    let message: String?
+    let hint: String?
+
+    var isAvailable: Bool { message == nil }
+
+    static let available = PRInboxAccessState(icon: "checkmark.circle", message: nil, hint: nil)
+}
+
 private enum PRTab: String, CaseIterable {
     case forReview
     case allOpen
@@ -10,9 +25,8 @@ struct PRInboxCard: View {
     @State private var isExpanded: Bool = true
     @State private var selectedTab: PRTab = .forReview
     @State private var isCheckingHostingAccess: Bool = true
-    @State private var hostingAccessIcon: String = "link.badge.questionmark"
-    @State private var hostingAccessMessage: String?
-    @State private var hostingAccessHint: String?
+    @State private var forReviewAccessState = PRInboxAccessState.available
+    @State private var allOpenAccessState = PRInboxAccessState.available
 
     private var totalCount: Int {
         switch selectedTab {
@@ -22,7 +36,7 @@ struct PRInboxCard: View {
     }
 
     private var allOpenPRs: [GitHubPRInfo] {
-        guard hostingAccessMessage == nil else { return [] }
+        guard allOpenAccessState.isAvailable else { return [] }
         let reviewIDs = Set(model.prReviewQueue.map(\.pr.id))
         return model.pullRequests.filter { !reviewIDs.contains($0.id) }
     }
@@ -97,11 +111,11 @@ struct PRInboxCard: View {
                 Spacer()
             }
             .padding(.vertical, 8)
-        } else if let hostingAccessMessage {
+        } else if let message = forReviewAccessState.message {
             tabEmptyState(
-                icon: hostingAccessIcon,
-                message: hostingAccessMessage,
-                hint: hostingAccessHint
+                icon: forReviewAccessState.icon,
+                message: message,
+                hint: forReviewAccessState.hint
             )
         } else if model.prReviewQueue.isEmpty {
             tabEmptyState(
@@ -143,11 +157,11 @@ struct PRInboxCard: View {
                 Spacer()
             }
             .padding(.vertical, 8)
-        } else if let hostingAccessMessage {
+        } else if let message = allOpenAccessState.message {
             tabEmptyState(
-                icon: hostingAccessIcon,
-                message: hostingAccessMessage,
-                hint: hostingAccessHint
+                icon: allOpenAccessState.icon,
+                message: message,
+                hint: allOpenAccessState.hint
             )
         } else if allOpenPRs.isEmpty {
             tabEmptyState(
@@ -190,45 +204,86 @@ struct PRInboxCard: View {
         isCheckingHostingAccess = true
 
         guard let (provider, _) = model.detectHostingProvider() else {
-            hostingAccessIcon = "link.badge.questionmark"
-            hostingAccessMessage = L10n("hosting.notConnected")
-            hostingAccessHint = L10n("pr.inbox.providerHint")
+            let unavailable = PRInboxAccessState(
+                icon: "link.badge.questionmark",
+                message: L10n("hosting.notConnected"),
+                hint: L10n("pr.inbox.providerHint")
+            )
+            forReviewAccessState = unavailable
+            allOpenAccessState = unavailable
             isCheckingHostingAccess = false
             return
         }
 
         let hasToken = await provider.hasToken()
-        guard !hasToken else {
-            hostingAccessIcon = "checkmark.circle"
-            hostingAccessMessage = nil
-            hostingAccessHint = nil
-            isCheckingHostingAccess = false
-            return
-        }
-
-        switch provider.kind {
-        case .github:
-            let status = GitHubClient.checkGHStatus()
-            if !status.installed {
-                hostingAccessIcon = "exclamationmark.triangle"
-                hostingAccessMessage = L10n("pr.gh.notInstalled")
-                hostingAccessHint = L10n("pr.gh.notInstalled.hint")
-            } else if !status.authenticated {
-                hostingAccessIcon = "person.crop.circle.badge.questionmark"
-                hostingAccessMessage = L10n("pr.gh.notAuthenticated")
-                hostingAccessHint = L10n("pr.gh.notAuthenticated.hint")
-            } else {
-                hostingAccessIcon = "person.crop.circle.badge.questionmark"
-                hostingAccessMessage = L10n("pr.inbox.authRequired", provider.kind.label)
-                hostingAccessHint = L10n("pr.inbox.authRequired.hint", provider.kind.label)
-            }
-        default:
-            hostingAccessIcon = "person.crop.circle.badge.questionmark"
-            hostingAccessMessage = L10n("pr.inbox.authRequired", provider.kind.label)
-            hostingAccessHint = L10n("pr.inbox.authRequired.hint", provider.kind.label)
-        }
+        let githubStatus = provider.kind == .github ? GitHubClient.checkGHStatus() : nil
+        forReviewAccessState = Self.accessState(
+            for: .forReview,
+            providerKind: provider.kind,
+            hasToken: hasToken,
+            githubStatus: githubStatus
+        )
+        allOpenAccessState = Self.accessState(
+            for: .allOpen,
+            providerKind: provider.kind,
+            hasToken: hasToken,
+            githubStatus: githubStatus
+        )
 
         isCheckingHostingAccess = false
+    }
+
+    nonisolated static func accessState(
+        for surface: PRInboxSurface,
+        providerKind: GitHostingKind?,
+        hasToken: Bool,
+        githubStatus: (installed: Bool, authenticated: Bool)? = nil
+    ) -> PRInboxAccessState {
+        guard let providerKind else {
+            return PRInboxAccessState(
+                icon: "link.badge.questionmark",
+                message: L10n("hosting.notConnected"),
+                hint: L10n("pr.inbox.providerHint")
+            )
+        }
+
+        if hasToken {
+            return .available
+        }
+
+        if surface == .allOpen && providerKind.supportsAnonymousOpenPullRequests {
+            return .available
+        }
+
+        switch providerKind {
+        case .github:
+            let status = githubStatus ?? GitHubClient.checkGHStatus()
+            if !status.installed {
+                return PRInboxAccessState(
+                    icon: "exclamationmark.triangle",
+                    message: L10n("pr.gh.notInstalled"),
+                    hint: L10n("pr.gh.notInstalled.hint")
+                )
+            }
+            if !status.authenticated {
+                return PRInboxAccessState(
+                    icon: "person.crop.circle.badge.questionmark",
+                    message: L10n("pr.gh.notAuthenticated"),
+                    hint: L10n("pr.gh.notAuthenticated.hint")
+                )
+            }
+            return PRInboxAccessState(
+                icon: "person.crop.circle.badge.questionmark",
+                message: L10n("pr.inbox.authRequired", providerKind.label),
+                hint: L10n("pr.inbox.authRequired.hint", providerKind.label)
+            )
+        case .gitlab, .bitbucket, .azureDevOps:
+            return PRInboxAccessState(
+                icon: "person.crop.circle.badge.questionmark",
+                message: L10n("pr.inbox.authRequired", providerKind.label),
+                hint: L10n("pr.inbox.authRequired.hint", providerKind.label)
+            )
+        }
     }
 }
 

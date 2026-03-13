@@ -624,6 +624,7 @@
 "ntfy.group.gitOps" = "Git Operations";
 "ntfy.group.ai" = "AI";
 "ntfy.group.github" = "GitHub";
+"ntfy.group.mobileRemote" = "Mobile Remote";
 "ntfy.event.cloneComplete" = "Clone complete";
 "ntfy.event.newRemoteCommits" = "New remote commits";
 "ntfy.event.prCreated" = "PR created";
@@ -898,6 +899,7 @@
 "ntfy.event.prAutoReviewComplete" = "PR auto-review complete";
 "pr.notification.request.header" = "%@ is asking your review on: %@";
 "pr.notification.request.flow" = "Flow: %@ -> %@";
+"pr.notification.request.touches" = "Touches: %@";
 "pr.notification.request.strategy" = "Strategy: %@";
 "pr.notification.request.constraints" = "Constraints: %@";
 "pr.notification.review.header" = "Local review complete for %@. Pass signal: %@%%";
