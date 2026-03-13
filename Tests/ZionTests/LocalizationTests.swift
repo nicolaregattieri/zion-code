@@ -225,6 +225,8 @@ final class LocalizationTests: XCTestCase {
             "settings.terminal.aiImageDisplay.hint",
             "settings.notifications.ntfy",
             "settings.notifications.ntfyEnabled",
+            "ntfy.event.terminalPromptDetected",
+            "ntfy.event.terminalPromptDetected.hint",
         ]
 
         for key in keys {
