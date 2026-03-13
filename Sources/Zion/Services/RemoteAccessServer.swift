@@ -37,6 +37,15 @@ actor RemoteAccessServer {
         isLANMode = lanMode
 
         let parameters = NWParameters.tcp
+
+        // In tunnel mode, bind to localhost only — no LAN exposure
+        if !lanMode {
+            parameters.requiredLocalEndpoint = NWEndpoint.hostPort(
+                host: NWEndpoint.Host("127.0.0.1"),
+                port: NWEndpoint.Port(rawValue: port)!
+            )
+        }
+
         let nwPort = NWEndpoint.Port(rawValue: port)!
         let newListener = try NWListener(using: parameters, on: nwPort)
 
@@ -403,31 +412,19 @@ actor RemoteAccessServer {
         let events = pendingEvents[token] ?? []
         pendingEvents[token] = []
 
-        // Encode events (encrypted in tunnel mode, plaintext in LAN mode)
+        // Always encrypt events with AES-256-GCM (both tunnel and LAN modes)
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
 
-        if isLANMode {
-            // LAN mode: send events as plain JSON array (no encryption)
-            var jsonEvents: [String] = []
-            for event in events {
-                if let jsonData = try? encoder.encode(event) {
-                    jsonEvents.append(jsonData.base64EncodedString())
-                }
+        var encryptedEvents: [String] = []
+        for event in events {
+            if let jsonData = try? encoder.encode(event),
+               let encrypted = try? RemoteAccessEncryption.encrypt(jsonData, using: key) {
+                encryptedEvents.append(encrypted.base64EncodedString())
             }
-            let jsonArray = "[" + jsonEvents.map { #""\#($0)""# }.joined(separator: ",") + "]"
-            sendJSON(connection: connection, status: "200 OK", json: jsonArray)
-        } else {
-            var encryptedEvents: [String] = []
-            for event in events {
-                if let jsonData = try? encoder.encode(event),
-                   let encrypted = try? RemoteAccessEncryption.encrypt(jsonData, using: key) {
-                    encryptedEvents.append(encrypted.base64EncodedString())
-                }
-            }
-            let jsonArray = "[" + encryptedEvents.map { #""\#($0)""# }.joined(separator: ",") + "]"
-            sendJSON(connection: connection, status: "200 OK", json: jsonArray)
         }
+        let jsonArray = "[" + encryptedEvents.map { #""\#($0)""# }.joined(separator: ",") + "]"
+        sendJSON(connection: connection, status: "200 OK", json: jsonArray)
     }
 
     private func handleInput(params: [String: String], request: String, body: Data, connection: NWConnection) {
@@ -451,13 +448,8 @@ actor RemoteAccessServer {
         }
 
         do {
-            let messageData: Data
-            if isLANMode {
-                // LAN mode: body is plain JSON (base64-encoded by extractHTTPBody, or raw)
-                messageData = httpBody
-            } else {
-                messageData = try RemoteAccessEncryption.decrypt(httpBody, using: key)
-            }
+            // Always decrypt — both tunnel and LAN modes use AES-256-GCM
+            let messageData = try RemoteAccessEncryption.decrypt(httpBody, using: key)
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
             let message = try decoder.decode(RemoteMessage.self, from: messageData)
@@ -475,7 +467,7 @@ actor RemoteAccessServer {
 
     // MARK: - HTTP Helpers
 
-    private static let corsHeaders = "Access-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type\r\n"
+    private static let corsHeaders = "Access-Control-Allow-Origin: http://localhost\r\nAccess-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type\r\n"
 
     private func sendHTTP(connection: NWConnection, status: String, body: String) {
         let bodyData = Data(body.utf8)
