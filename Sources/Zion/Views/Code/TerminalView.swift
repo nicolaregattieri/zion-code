@@ -163,7 +163,6 @@ struct TerminalTabView: NSViewRepresentable {
         let defaults = UserDefaults.standard
         Coordinator.installScripts(
             aiImageDisplay: defaults.bool(forKey: "terminal.aiImageDisplay"),
-            saveGeneratedImagesToProjectRoot: defaults.bool(forKey: "terminal.aiImageSaveToProjectRoot"),
             ntfyTopic: defaults.string(forKey: "zion.ntfy.topic") ?? "",
             ntfyServer: defaults.string(forKey: "zion.ntfy.serverURL") ?? "https://ntfy.sh"
         )
@@ -314,7 +313,6 @@ struct TerminalTabView: NSViewRepresentable {
                 env["PATH"] = "\(Self.zionBinDir):/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:" + (env["PATH"] ?? "")
 
                 let aiImageDisplay = UserDefaults.standard.bool(forKey: "terminal.aiImageDisplay")
-                let saveGeneratedImagesToProjectRoot = UserDefaults.standard.bool(forKey: "terminal.aiImageSaveToProjectRoot")
                 if aiImageDisplay {
                     env["ZION_IMAGE_DISPLAY"] = "1"
                 }
@@ -331,7 +329,6 @@ struct TerminalTabView: NSViewRepresentable {
                 if hasFeatures {
                     Self.installScripts(
                         aiImageDisplay: aiImageDisplay,
-                        saveGeneratedImagesToProjectRoot: saveGeneratedImagesToProjectRoot,
                         ntfyTopic: ntfyTopic,
                         ntfyServer: ntfyServer
                     )
@@ -723,7 +720,6 @@ struct TerminalTabView: NSViewRepresentable {
         /// with zero terminal injection. Scripts are overwritten each time to stay current.
         static func installScripts(
             aiImageDisplay: Bool,
-            saveGeneratedImagesToProjectRoot: Bool,
             ntfyTopic: String,
             ntfyServer: String,
             homeDirectoryPath: String = FileManager.default.homeDirectoryForCurrentUser.path,
@@ -877,21 +873,12 @@ struct TerminalTabView: NSViewRepresentable {
                 try? fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: path)
 
                 // Shared prompt content for all AI CLI tools
-                let generatedImageSaveLine: String
-                let generatedImageDisplayLine: String
-                if saveGeneratedImagesToProjectRoot {
-                    generatedImageSaveLine = "2. Create `zion-image/` in the project root if needed, then save to `zion-image/<name>.svg`"
-                    generatedImageDisplayLine = "4. Run: `~/.zion/bin/zion_display zion-image/<name>.svg`"
-                } else {
-                    generatedImageSaveLine = "2. Save to `~/Library/Caches/Zion/images/<name>.svg`"
-                    generatedImageDisplayLine = "4. Run: `~/.zion/bin/zion_display ~/Library/Caches/Zion/images/<name>.svg`"
-                }
                 let zionImgPrompt = """
-                Display an image or draw an SVG and show it inline.
+                Generate an image file for preview in Zion.
 
                 **If input is a PATH** (contains `/` or ends in .png/.jpg/.jpeg/.gif/.svg):
                 1. One-line description of the image.
-                2. Run: `~/.zion/bin/zion_display <path>`
+                2. Tell the user to preview the file directly in Zion.
 
                 **If input is a DESCRIPTION:**
                 1. Generate a 600x400 SVG (horizontal). Rules:
@@ -899,19 +886,20 @@ struct TerminalTabView: NSViewRepresentable {
                    - Allowed: `<rect>`, `<circle>`, `<ellipse>`, `<line>`, `<polyline>`, `<polygon>`, `<path>`, `<text>`, `<g>`, `<defs>`, `<linearGradient>`, `<radialGradient>`, `<clipPath>`
                    - Forbidden: `<foreignObject>`, `<filter>`, `<feGaussianBlur>`, `<mask>`, CSS `@import`, external refs
                    - Keep under 50KB
-                \(generatedImageSaveLine)
+                2. Create `zion-image/` in the project root if needed, then save to `zion-image/<name>.svg`
                 3. One-line description of what you drew.
-                \(generatedImageDisplayLine)
+                4. Stop after saving the file and tell the user it is ready for preview in Zion.
                 5. On failure, simplify SVG (remove gradients/text/complex paths) and retry once.
 
                 With `--save`: use `~/.zion/bin/zion_display --save <file>` instead.
 
                 **Rules:**
-                - Describe BEFORE displaying (text after the image overlaps it).
+                - Describe BEFORE saving the file.
                 - Keep descriptions to 1-2 lines max. Execute immediately.
+                - Do not attempt inline terminal display from AI CLIs for this workflow.
                 - Never use Playwright, browser tools, screenshots, or external viewers for this workflow.
-                - Never open the generated SVG/PNG in a browser tab. Only use `~/.zion/bin/zion_display`.
-                - After running `zion_display`, stop. Do not do extra inspection unless the display command fails.
+                - Never open the generated SVG/PNG in a browser tab.
+                - After saving the file, stop. Do not do extra inspection unless generation fails.
                 """
 
                 // Install Claude Code slash command: /zion-img
@@ -927,7 +915,7 @@ struct TerminalTabView: NSViewRepresentable {
                 try? fm.createDirectory(atPath: geminiCommandsDir, withIntermediateDirectories: true)
                 let tq = "\"\"\""  // TOML triple-quote delimiter
                 let geminiPrompt = zionImgPrompt.replacingOccurrences(of: "`", with: "")
-                let geminiCommand = "description = \"Display an image inline in this terminal\"\n\nprompt = \(tq)\n\(geminiPrompt)\n\nRequest: {{args}}\n\(tq)"
+                let geminiCommand = "description = \"Generate an image file for preview in Zion\"\n\nprompt = \(tq)\n\(geminiPrompt)\n\nRequest: {{args}}\n\(tq)"
                 let geminiCommandPath = "\(geminiCommandsDir)/zion-img.toml"
                 try? geminiCommand.write(toFile: geminiCommandPath, atomically: true, encoding: .utf8)
 
@@ -937,7 +925,7 @@ struct TerminalTabView: NSViewRepresentable {
                 let codexSkill = """
                 ---
                 name: zion-img
-                description: Use when the user asks to display, draw, render, or show an image inline in the terminal. Also use when the user references zion_display or zion-img.
+                description: Use when the user asks to generate, draw, render, or prepare an image or SVG for preview in Zion. Also use when the user references zion-img or zion_display.
                 ---
 
                 \(zionImgPrompt)
@@ -952,7 +940,7 @@ struct TerminalTabView: NSViewRepresentable {
             let hasNtfy = ntfyInstructionURL != nil
 
             var featuresList = ""
-            if hasImage { featuresList += "\n  - Inline image display (zion_display)" }
+            if hasImage { featuresList += "\n  - AI image generation for Zion preview (zion-img)" }
             if hasNtfy { featuresList += "\n  - Push notifications (ntfy)" }
 
             // Build the block lines that zion_ai_setup will embed
@@ -960,9 +948,9 @@ struct TerminalTabView: NSViewRepresentable {
             if hasImage {
                 blockLines += """
 
-                ## Inline Image Display
-                Use `/zion-img <description>` to generate and display images inline.
-                Or run directly: `~/.zion/bin/zion_display <file>` (supports PNG, JPEG, GIF, SVG).
+                ## AI Image Generation
+                Use `/zion-img <description>` to generate an image into `zion-image/` in the project root.
+                Preview the result in Zion's built-in image preview.
 
                 """
             }
@@ -1118,9 +1106,9 @@ struct TerminalTabView: NSViewRepresentable {
 
             if aiImageDisplay {
                 sections.append("""
-                ## Inline Image Display
-                Use `/zion-img <description>` to generate and display images inline.
-                Or run directly: `~/.zion/bin/zion_display <file>` (supports PNG, JPEG, GIF, SVG).
+                ## AI Image Generation
+                Use `/zion-img <description>` to generate an image into `zion-image/` in the project root.
+                Preview the result in Zion's built-in image preview.
                 """)
             }
 

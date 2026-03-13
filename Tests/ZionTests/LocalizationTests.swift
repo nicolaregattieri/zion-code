@@ -223,8 +223,6 @@ final class LocalizationTests: XCTestCase {
         let keys = [
             "settings.terminal.aiImageDisplay",
             "settings.terminal.aiImageDisplay.hint",
-            "settings.terminal.aiImageSaveToProjectRoot",
-            "settings.terminal.aiImageSaveToProjectRoot.hint",
             "settings.terminal.autoAppendAIConfig",
             "settings.terminal.autoAppendAIConfig.hint",
             "settings.terminal.aiConfigScope.hint",
