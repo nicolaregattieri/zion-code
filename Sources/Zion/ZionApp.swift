@@ -20,6 +20,7 @@ extension Notification.Name {
 struct ZionApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var updater = SparkleUpdater()
+    @StateObject private var shortcutRegistry = ShortcutRegistry.shared
     @AppStorage("zion.uiLanguage") private var uiLanguageRaw: String = AppLanguage.system.rawValue
 
     private var uiLanguage: AppLanguage { AppLanguage(rawValue: uiLanguageRaw) ?? .system }
@@ -29,6 +30,7 @@ struct ZionApp: App {
             ContentView()
                 .id(uiLanguageRaw)
                 .environment(\.locale, uiLanguage.locale)
+                .environmentObject(shortcutRegistry)
         }
         .windowResizability(.contentMinSize)
         .windowToolbarStyle(.unified)
@@ -41,10 +43,13 @@ struct ZionApp: App {
             }
 
             CommandMenu(L10n("format.menu")) {
-                Button(L10n("format.document")) {
+                shortcutCommandButton(L10n("format.document"), action: .formatDocument) {
                     NotificationCenter.default.post(name: .formatDocument, object: nil)
                 }
-                .keyboardShortcut("f", modifiers: [.shift, .option])
+
+                shortcutCommandButton(L10n("shortcuts.toggleComment"), action: .toggleComment) {
+                    NSApp.sendAction(#selector(ZionShortcutActionTarget.zionToggleComment(_:)), to: nil, from: nil)
+                }
             }
 
             CommandMenu(L10n("focus.menu")) {
@@ -69,7 +74,7 @@ struct ZionApp: App {
                 Button(L10n("Atalhos de Teclado")) {
                     NotificationCenter.default.post(name: .showKeyboardShortcuts, object: nil)
                 }
-                .keyboardShortcut("/", modifiers: .command)
+                .applyShortcutBinding(shortcutRegistry.binding(for: .showKeyboardShortcuts))
 
                 Divider()
 
@@ -88,13 +93,26 @@ struct ZionApp: App {
                     copyDiagnosticLog()
                 }
             }
+
+            CommandGroup(after: .pasteboard) {
+                shortcutCommandButton(L10n("Excluir"), action: .deleteSelection) {
+                    NSApp.sendAction(#selector(ZionShortcutActionTarget.zionDeleteSelectedFiles(_:)), to: nil, from: nil)
+                }
+            }
         }
 
         Settings {
             SettingsView()
                 .id(uiLanguageRaw)
                 .environment(\.locale, uiLanguage.locale)
+                .environmentObject(shortcutRegistry)
         }
+    }
+
+    @ViewBuilder
+    private func shortcutCommandButton(_ title: String, action: ShortcutActionID, perform: @escaping () -> Void) -> some View {
+        Button(title, action: perform)
+            .applyShortcutBinding(shortcutRegistry.binding(for: action))
     }
 
     private func exportDiagnosticLog() {
@@ -168,6 +186,18 @@ struct ZionApp: App {
         options[.credits] = credits
 
         NSApp.orderFrontStandardAboutPanel(options: options)
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func applyShortcutBinding(_ binding: ShortcutBinding?) -> some View {
+        if let binding,
+           let keyEquivalent = binding.key.menuKeyEquivalent {
+            keyboardShortcut(keyEquivalent, modifiers: binding.modifiers.eventModifiers)
+        } else {
+            self
+        }
     }
 }
 

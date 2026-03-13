@@ -111,6 +111,32 @@ final class SourceCodeEditorTests: XCTestCase {
     }
 
     @MainActor
+    func testToggleCommentSelectorCommentsCurrentLine() {
+        let textView = makeZionTextView(text: "let value = 1\n")
+        let editor = SourceCodeEditor(text: .constant(textView.string), theme: .tokyoNight, fileExtension: "swift")
+        let coordinator = SourceCodeEditor.Coordinator(editor)
+        textView.coordinator = coordinator
+        textView.setSelectedRange(NSRange(location: 0, length: 0))
+
+        textView.zionToggleComment(nil)
+
+        XCTAssertEqual(textView.string, "// let value = 1\n")
+    }
+
+    @MainActor
+    func testToggleCommentSelectorUncommentsCurrentLine() {
+        let textView = makeZionTextView(text: "// let value = 1\n")
+        let editor = SourceCodeEditor(text: .constant(textView.string), theme: .tokyoNight, fileExtension: "swift")
+        let coordinator = SourceCodeEditor.Coordinator(editor)
+        textView.coordinator = coordinator
+        textView.setSelectedRange(NSRange(location: 0, length: 0))
+
+        textView.zionToggleComment(nil)
+
+        XCTAssertEqual(textView.string, "let value = 1\n")
+    }
+
+    @MainActor
     private func makeTextView(text: String) -> NSTextView {
         let textStorage = NSTextStorage(string: text)
         let layoutManager = NSLayoutManager()
@@ -122,6 +148,22 @@ final class SourceCodeEditorTests: XCTestCase {
         let textView = NSTextView(frame: .zero, textContainer: textContainer)
         textView.font = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
         textView.isRichText = false
+        return textView
+    }
+
+    @MainActor
+    private func makeZionTextView(text: String) -> ZionTextView {
+        let textStorage = NSTextStorage(string: text)
+        let layoutManager = NSLayoutManager()
+        textStorage.addLayoutManager(layoutManager)
+
+        let textContainer = NSTextContainer(containerSize: NSSize(width: 800, height: CGFloat.greatestFiniteMagnitude))
+        layoutManager.addTextContainer(textContainer)
+
+        let textView = ZionTextView(frame: .zero, textContainer: textContainer)
+        textView.font = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
+        textView.isRichText = false
+        textView.isEditable = true
         return textView
     }
 

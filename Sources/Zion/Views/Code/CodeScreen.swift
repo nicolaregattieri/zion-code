@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 enum EditorTerminalLayout: String, CaseIterable {
@@ -9,6 +10,13 @@ enum EditorTerminalLayout: String, CaseIterable {
 private enum EditorSymbolResultsMode {
     case definitions
     case references
+}
+
+private enum FileBrowserNavigationDirection {
+    case up
+    case down
+    case left
+    case right
 }
 
 struct CodeScreen: View {
@@ -32,7 +40,7 @@ struct CodeScreen: View {
     @State private var currentMatchIndex: Int = 0
     @State private var searchScrollRequestID: Int = 0
     @State private var findSearchFocusRequestID: Int = 0
-    @FocusState private var isFileBrowserFocused: Bool
+    @StateObject private var fileBrowserResponderReference = FileBrowserResponderReference()
     @State private var selectedBrowserIndex: Int = -1
     @State private var fileBrowserScrollTargetID: String?
     @State private var fileBrowserScrollRequestID: Int = 0
@@ -218,11 +226,6 @@ struct CodeScreen: View {
                 .keyboardShortcut("f", modifiers: .control)
                 .frame(width: 0, height: 0).opacity(0)
 
-            // File browser delete selection (Cmd+Delete)
-            Button("") { handleFileBrowserDeleteShortcut() }
-                .keyboardShortcut(.delete, modifiers: .command)
-                .frame(width: 0, height: 0).opacity(0)
-
             // Priority Escape routing for code screen overlays/panels
             Button("") { handleEscapeShortcut() }
                 .keyboardShortcut(.escape, modifiers: [])
@@ -254,6 +257,10 @@ struct CodeScreen: View {
             guard !query.isEmpty else { return }
             seededFindQuery = query
             openSearch(applySeedIfPresent: true)
+        }
+        .onChange(of: model.lastClickedFileID) { _, fileID in
+            guard fileID != nil, isFileBrowserVisible, sidebarMode == .fileTree else { return }
+            focusFileBrowserResponder()
         }
         .onAppear {
             applyZenModeState(isZenMode)
@@ -787,102 +794,58 @@ struct CodeScreen: View {
 
             // File tree scroll — fills available space
             ScrollViewReader { scrollProxy in
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 0) {
-                        if model.repositoryFiles.isEmpty {
-                            VStack(spacing: 16) {
-                                Text(L10n("Nenhum arquivo encontrado")).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
-                                Button {
-                                    onOpenFolder?()
-                                } label: {
-                                    Label(L10n("Selecionar Pasta"), systemImage: "folder.badge.plus")
-                                }
-                                .buttonStyle(.bordered)
-                                .controlSize(.small)
-                            }
-                            .padding(DesignSystem.Spacing.sectionGap)
-                            .frame(maxWidth: .infinity)
-                        } else {
-                            ForEach(model.repositoryFiles) { item in
-                                FileTreeNodeView(model: model, item: item, level: 0)
-                                    .id(item.id)
-                            }
-                        }
+                ZStack(alignment: .topLeading) {
+                    FileBrowserShortcutResponderHost(
+                        reference: fileBrowserResponderReference,
+                        canDeleteSelectedFiles: canDeleteFileBrowserSelection,
+                        onDeleteSelectedFiles: handleFileBrowserDeleteShortcut,
+                        onMoveSelection: moveFileBrowserSelection
+                    )
+                    .frame(width: 0, height: 0)
 
-                    }
-                    .padding(.top, DesignSystem.Spacing.standard)
-                    .background {
-                        Color.clear
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                isFileBrowserFocused = true
-                                model.clearFileSelection()
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 0) {
+                            if model.repositoryFiles.isEmpty {
+                                VStack(spacing: 16) {
+                                    Text(L10n("Nenhum arquivo encontrado")).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
+                                    Button {
+                                        onOpenFolder?()
+                                    } label: {
+                                        Label(L10n("Selecionar Pasta"), systemImage: "folder.badge.plus")
+                                    }
+                                    .buttonStyle(.bordered)
+                                    .controlSize(.small)
+                                }
+                                .padding(DesignSystem.Spacing.sectionGap)
+                                .frame(maxWidth: .infinity)
+                            } else {
+                                ForEach(model.repositoryFiles) { item in
+                                    FileTreeNodeView(
+                                        model: model,
+                                        item: item,
+                                        level: 0,
+                                        onActivate: focusFileBrowserResponder
+                                    )
+                                    .id(item.id)
+                                }
                             }
+
+                        }
+                        .padding(.top, DesignSystem.Spacing.standard)
+                        .background {
+                            Color.clear
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    focusFileBrowserResponder()
+                                    model.clearFileSelection()
+                                }
+                        }
                     }
                 }
-                .focusable()
-                .focused($isFileBrowserFocused)
-                .focusEffectDisabled()
-                .simultaneousGesture(
-                    TapGesture().onEnded {
-                        isFileBrowserFocused = true
-                    }
-                )
                 .onChange(of: fileBrowserScrollRequestID) { _, _ in
                     guard let target = fileBrowserScrollTargetID else { return }
                     withAnimation(DesignSystem.Motion.snappy) {
                         scrollProxy.scrollTo(target, anchor: .center)
-                    }
-                }
-                .onMoveCommand { direction in
-                    let flatFiles = model.visibleFlatFiles()
-                    guard !flatFiles.isEmpty else { return }
-                    // Sync index with the actual selection when out of sync
-                    if let clickedID = model.lastClickedFileID,
-                       (selectedBrowserIndex < 0 || selectedBrowserIndex >= flatFiles.count || flatFiles[selectedBrowserIndex].id != clickedID),
-                       let idx = flatFiles.firstIndex(where: { $0.id == clickedID }) {
-                        selectedBrowserIndex = idx
-                    }
-                    let isShift = NSApp.currentEvent?.modifierFlags.contains(.shift) == true
-                    switch direction {
-                    case .up:
-                        if selectedBrowserIndex > 0 {
-                            selectedBrowserIndex -= 1
-                        }
-                    case .down:
-                        if selectedBrowserIndex < flatFiles.count - 1 {
-                            selectedBrowserIndex += 1
-                        }
-                    case .left:
-                        if selectedBrowserIndex >= 0 && selectedBrowserIndex < flatFiles.count {
-                            let item = flatFiles[selectedBrowserIndex]
-                            if item.isDirectory && model.expandedPaths.contains(item.id) {
-                                withAnimation(DesignSystem.Motion.snappy) { model.toggleExpansion(for: item.id) }
-                            }
-                        }
-                        return
-                    case .right:
-                        if selectedBrowserIndex >= 0 && selectedBrowserIndex < flatFiles.count {
-                            let item = flatFiles[selectedBrowserIndex]
-                            if item.isDirectory {
-                                if !model.expandedPaths.contains(item.id) {
-                                    withAnimation(DesignSystem.Motion.snappy) { model.toggleExpansion(for: item.id) }
-                                }
-                            } else {
-                                model.selectCodeFile(item)
-                            }
-                        }
-                        return
-                    @unknown default: break
-                    }
-                    if selectedBrowserIndex >= 0 && selectedBrowserIndex < flatFiles.count {
-                        let item = flatFiles[selectedBrowserIndex]
-                        if isShift {
-                            model.extendSelection(to: item)
-                        } else {
-                            model.plainClickFile(item)
-                        }
-                        withAnimation { scrollProxy.scrollTo(item.id, anchor: .center) }
                     }
                 }
             }
@@ -1591,10 +1554,92 @@ struct CodeScreen: View {
     }
 
     private func handleFileBrowserDeleteShortcut() {
-        guard isFileBrowserVisible, sidebarMode == .fileTree, isFileBrowserFocused else { return }
+        guard isFileBrowserVisible, sidebarMode == .fileTree else { return }
         let items = selectedFileBrowserItems()
         guard !items.isEmpty else { return }
         model.deleteFileItems(items)
+    }
+
+    private func canDeleteFileBrowserSelection() -> Bool {
+        guard isFileBrowserVisible, sidebarMode == .fileTree else { return false }
+        return !selectedFileBrowserItems().isEmpty
+    }
+
+    private func focusFileBrowserResponder() {
+        DispatchQueue.main.async {
+            guard let responder = fileBrowserResponderReference.responder,
+                  let window = responder.window else { return }
+            window.makeFirstResponder(responder)
+        }
+    }
+
+    private func moveFileBrowserSelection(_ direction: FileBrowserNavigationDirection, isExtendingSelection: Bool) {
+        let flatFiles = model.visibleFlatFiles()
+        guard !flatFiles.isEmpty else { return }
+
+        syncSelectedBrowserIndex(with: flatFiles)
+
+        switch direction {
+        case .up:
+            if selectedBrowserIndex == -1 {
+                selectedBrowserIndex = flatFiles.count - 1
+            } else if selectedBrowserIndex > 0 {
+                selectedBrowserIndex -= 1
+            }
+        case .down:
+            if selectedBrowserIndex == -1 {
+                selectedBrowserIndex = 0
+            } else if selectedBrowserIndex < flatFiles.count - 1 {
+                selectedBrowserIndex += 1
+            }
+        case .left:
+            guard selectedBrowserIndex >= 0, selectedBrowserIndex < flatFiles.count else { return }
+            let item = flatFiles[selectedBrowserIndex]
+            guard item.isDirectory, model.expandedPaths.contains(item.id) else { return }
+            withAnimation(DesignSystem.Motion.snappy) {
+                model.toggleExpansion(for: item.id)
+            }
+            return
+        case .right:
+            guard selectedBrowserIndex >= 0, selectedBrowserIndex < flatFiles.count else { return }
+            let item = flatFiles[selectedBrowserIndex]
+            if item.isDirectory {
+                guard !model.expandedPaths.contains(item.id) else { return }
+                withAnimation(DesignSystem.Motion.snappy) {
+                    model.toggleExpansion(for: item.id)
+                }
+            } else {
+                model.selectCodeFile(item)
+            }
+            return
+        }
+
+        guard selectedBrowserIndex >= 0, selectedBrowserIndex < flatFiles.count else { return }
+        let item = flatFiles[selectedBrowserIndex]
+        if isExtendingSelection {
+            model.extendSelection(to: item)
+        } else {
+            model.selectedFileIDs = [item.id]
+            model.lastClickedFileID = item.id
+        }
+        fileBrowserScrollTargetID = item.id
+        fileBrowserScrollRequestID += 1
+    }
+
+    private func syncSelectedBrowserIndex(with flatFiles: [FileItem]) {
+        if let clickedID = model.lastClickedFileID,
+           let index = flatFiles.firstIndex(where: { $0.id == clickedID }) {
+            selectedBrowserIndex = index
+            return
+        }
+
+        if let selectedID = model.selectedFileIDs.first,
+           let index = flatFiles.firstIndex(where: { $0.id == selectedID }) {
+            selectedBrowserIndex = index
+            return
+        }
+
+        selectedBrowserIndex = -1
     }
     
     private var emptyEditorView: some View {
@@ -1835,5 +1880,94 @@ struct CodeScreen: View {
             }
         }
         .padding(.vertical, 4)
+    }
+}
+
+@MainActor
+private final class FileBrowserResponderReference: ObservableObject {
+    weak var responder: FileBrowserShortcutResponderView?
+}
+
+private struct FileBrowserShortcutResponderHost: NSViewRepresentable {
+    let reference: FileBrowserResponderReference
+    var canDeleteSelectedFiles: () -> Bool
+    var onDeleteSelectedFiles: () -> Void
+    var onMoveSelection: (FileBrowserNavigationDirection, Bool) -> Void
+
+    func makeNSView(context: Context) -> FileBrowserShortcutResponderView {
+        let view = FileBrowserShortcutResponderView()
+        view.reference = reference
+        view.canDeleteSelectedFiles = canDeleteSelectedFiles
+        view.onDeleteSelectedFiles = onDeleteSelectedFiles
+        view.onMoveSelection = onMoveSelection
+        reference.responder = view
+        return view
+    }
+
+    func updateNSView(_ nsView: FileBrowserShortcutResponderView, context: Context) {
+        nsView.reference = reference
+        nsView.canDeleteSelectedFiles = canDeleteSelectedFiles
+        nsView.onDeleteSelectedFiles = onDeleteSelectedFiles
+        nsView.onMoveSelection = onMoveSelection
+        if reference.responder !== nsView {
+            reference.responder = nsView
+        }
+    }
+
+}
+
+private final class FileBrowserShortcutResponderView: NSView {
+    weak var reference: FileBrowserResponderReference?
+    var canDeleteSelectedFiles: () -> Bool = { false }
+    var onDeleteSelectedFiles: () -> Void = {}
+    var onMoveSelection: (FileBrowserNavigationDirection, Bool) -> Void = { _, _ in }
+
+    override var acceptsFirstResponder: Bool { true }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        reference?.responder = self
+    }
+
+    @objc
+    func zionDeleteSelectedFiles(_ sender: Any?) {
+        guard canDeleteSelectedFiles() else { return }
+        onDeleteSelectedFiles()
+    }
+
+    override func keyDown(with event: NSEvent) {
+        interpretKeyEvents([event])
+    }
+
+    override func moveUp(_ sender: Any?) {
+        onMoveSelection(.up, false)
+    }
+
+    override func moveDown(_ sender: Any?) {
+        onMoveSelection(.down, false)
+    }
+
+    override func moveLeft(_ sender: Any?) {
+        onMoveSelection(.left, false)
+    }
+
+    override func moveRight(_ sender: Any?) {
+        onMoveSelection(.right, false)
+    }
+
+    override func moveUpAndModifySelection(_ sender: Any?) {
+        onMoveSelection(.up, true)
+    }
+
+    override func moveDownAndModifySelection(_ sender: Any?) {
+        onMoveSelection(.down, true)
+    }
+
+    override func moveLeftAndModifySelection(_ sender: Any?) {
+        onMoveSelection(.left, true)
+    }
+
+    override func moveRightAndModifySelection(_ sender: Any?) {
+        onMoveSelection(.right, true)
     }
 }

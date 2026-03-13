@@ -4,6 +4,7 @@ struct FileTreeNodeView: View {
     var model: RepositoryViewModel
     let item: FileItem
     let level: Int
+    var onActivate: (() -> Void)? = nil
     @State private var isHovered = false
 
     var body: some View {
@@ -16,6 +17,7 @@ struct FileTreeNodeView: View {
 
         VStack(alignment: .leading, spacing: 0) {
             Button {
+                onActivate?()
                 let flags = NSApp.currentEvent?.modifierFlags.intersection([.command, .shift]) ?? []
                 if flags.contains(.command) {
                     model.toggleFileSelection(item)
@@ -173,7 +175,12 @@ struct FileTreeNodeView: View {
 
             if item.isDirectory && isExpanded, let children = item.children {
                 ForEach(children) { child in
-                    FileTreeNodeView(model: model, item: child, level: level + 1)
+                    FileTreeNodeView(
+                        model: model,
+                        item: child,
+                        level: level + 1,
+                        onActivate: onActivate
+                    )
                 }
             }
         }

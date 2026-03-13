@@ -54,6 +54,7 @@ struct SourceCodeEditor: NSViewRepresentable {
         layoutManager.addTextContainer(textContainer)
 
         let textView = ZionTextView(frame: .zero, textContainer: textContainer)
+        ZionTextView.activeTextViewReference.value = textView
         textView.isVerticallyResizable = true
         textView.isHorizontallyResizable = false
         textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
@@ -93,6 +94,7 @@ struct SourceCodeEditor: NSViewRepresentable {
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         context.coordinator.parent = self
         guard let textView = nsView.documentView as? ZionTextView else { return }
+        ZionTextView.activeTextViewReference.value = textView
         let coordinator = context.coordinator
 
         // Sync text
@@ -771,6 +773,11 @@ struct SourceCodeEditor: NSViewRepresentable {
 // MARK: - ZionTextView — Custom NSTextView with editor features
 
 class ZionTextView: NSTextView {
+    final class WeakReference {
+        weak var value: ZionTextView?
+    }
+
+    static let activeTextViewReference = WeakReference()
     weak var coordinator: SourceCodeEditor.Coordinator?
     var currentLineHighlightColor: NSColor = NSColor.white.withAlphaComponent(0.04)
     var isLightTheme: Bool = false
@@ -1115,12 +1122,6 @@ class ZionTextView: NSTextView {
             break
         }
 
-        // Cmd+/: Toggle comment (use charactersIgnoringModifiers for keyboard layout independence)
-        if flags == .command, event.charactersIgnoringModifiers == "/" {
-            toggleComment()
-            return
-        }
-
         // Auto-closing brackets/quotes
         if let chars = event.characters, chars.count == 1, !flags.contains(.command), !flags.contains(.control) {
             let char = chars.first!
@@ -1308,7 +1309,34 @@ class ZionTextView: NSTextView {
         }
     }
 
-    // MARK: - Toggle Comment (Cmd+/)
+    // MARK: - Selector-backed Shortcut Actions
+
+    @objc
+    func zionToggleComment(_ sender: Any?) {
+        toggleComment()
+    }
+
+    @objc
+    func zionFindNext(_ sender: Any?) {
+        onFindNextShortcut?()
+    }
+
+    @objc
+    func zionFindPrevious(_ sender: Any?) {
+        onFindPreviousShortcut?()
+    }
+
+    @objc
+    func zionSelectNextOccurrence(_ sender: Any?) {
+        selectNextOccurrence()
+    }
+
+    @objc
+    func zionFormatDocument(_ sender: Any?) {
+        NotificationCenter.default.post(name: .formatDocument, object: nil)
+    }
+
+    // MARK: - Toggle Comment
 
     private func toggleComment() {
         guard let coordinator = coordinator else { return }
