@@ -7,7 +7,6 @@ struct NotificationSettingsTab: View {
     @AppStorage("zion.ntfy.localNotifications") private var localNotifications: Bool = false
     @AppStorage("zion.prPollingInterval") private var prPollingInterval: Int = 5
     @AppStorage("zion.autoReviewAssignedPRs") private var autoReviewPRs: Bool = false
-    @AppStorage("terminal.autoAppendAIConfig") private var autoAppendAIConfig: Bool = false
 
     @State private var topicInput: String = ""
     @State private var serverURLInput: String = ""
@@ -29,10 +28,6 @@ struct NotificationSettingsTab: View {
         Form {
             Section(L10n("settings.notifications.ntfy")) {
                 Toggle(L10n("settings.notifications.ntfyEnabled"), isOn: $ntfyEnabled)
-
-                Text(L10n("settings.notifications.ntfyEnabled.hint"))
-                    .font(DesignSystem.Typography.label)
-                    .foregroundStyle(.secondary)
             }
 
             if ntfyEnabled {
@@ -212,9 +207,6 @@ struct NotificationSettingsTab: View {
             if !enabled {
                 isEditingTopic = false
             }
-            TerminalTabView.syncInstalledTerminalHelpersForCurrentSettings()
-            guard autoAppendAIConfig else { return }
-            TerminalTabView.syncManagedAIConfigBlocksForRecentRepositories()
         }
     }
 
@@ -224,11 +216,6 @@ struct NotificationSettingsTab: View {
         guard isTopicInputValid else { return }
         ntfyTopic = topicInput
         isEditingTopic = false
-        NtfyClient.writeGlobalConfig(topic: ntfyTopic, serverURL: ntfyServerURL)
-        TerminalTabView.syncInstalledTerminalHelpersForCurrentSettings()
-        if autoAppendAIConfig {
-            TerminalTabView.syncManagedAIConfigBlocksForRecentRepositories()
-        }
     }
 
     private func saveServerURL() {
@@ -236,11 +223,6 @@ struct NotificationSettingsTab: View {
         let normalized = normalizedServerURLInput
         ntfyServerURL = normalized
         serverURLInput = normalized
-        NtfyClient.writeGlobalConfig(topic: ntfyTopic, serverURL: normalized)
-        TerminalTabView.syncInstalledTerminalHelpersForCurrentSettings()
-        if autoAppendAIConfig {
-            TerminalTabView.syncManagedAIConfigBlocksForRecentRepositories()
-        }
     }
 
     // MARK: - Event Bindings

@@ -223,12 +223,8 @@ final class LocalizationTests: XCTestCase {
         let keys = [
             "settings.terminal.aiImageDisplay",
             "settings.terminal.aiImageDisplay.hint",
-            "settings.terminal.autoAppendAIConfig",
-            "settings.terminal.autoAppendAIConfig.hint",
-            "settings.terminal.aiConfigScope.hint",
             "settings.notifications.ntfy",
             "settings.notifications.ntfyEnabled",
-            "settings.notifications.ntfyEnabled.hint",
         ]
 
         for key in keys {

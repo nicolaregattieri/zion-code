@@ -3,69 +3,6 @@ import XCTest
 
 final class TerminalHelperInstallTests: XCTestCase {
     @MainActor
-    func testAppendZionBlockRemovesManagedBlockWhenNoFeaturesRemain() throws {
-        let tempRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString, isDirectory: true)
-        try FileManager.default.createDirectory(at: tempRoot, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: tempRoot) }
-
-        let agentsPath = tempRoot.appendingPathComponent("AGENTS.md")
-        let managedBlock = """
-        <!-- ZION:START (managed by Zion Git Client — do not edit) -->
-        # Zion Terminal
-
-        ## Push Notifications
-        curl https://ntfy.sh/example
-        <!-- ZION:END -->
-        """
-        try """
-        Header
-
-        \(managedBlock)
-        """.write(to: agentsPath, atomically: true, encoding: .utf8)
-
-        TerminalTabView.Coordinator.appendZionBlock(
-            projectRoot: tempRoot,
-            aiImageDisplay: false,
-            ntfyTopic: "",
-            ntfyServer: "https://ntfy.sh"
-        )
-
-        let content = try String(contentsOf: agentsPath, encoding: .utf8)
-        XCTAssertFalse(content.contains("Zion Terminal"))
-        XCTAssertFalse(content.contains("Push Notifications"))
-        XCTAssertTrue(content.contains("Header"))
-    }
-
-    @MainActor
-    func testAppendZionBlockRemovesOnlyNtfySectionWhenImageFeatureStaysEnabled() throws {
-        let tempRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString, isDirectory: true)
-        try FileManager.default.createDirectory(at: tempRoot, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: tempRoot) }
-
-        let agentsPath = tempRoot.appendingPathComponent("AGENTS.md")
-        try "Header\n".write(to: agentsPath, atomically: true, encoding: .utf8)
-
-        TerminalTabView.Coordinator.appendZionBlock(
-            projectRoot: tempRoot,
-            aiImageDisplay: true,
-            ntfyTopic: "topic",
-            ntfyServer: "https://ntfy.sh"
-        )
-        TerminalTabView.Coordinator.appendZionBlock(
-            projectRoot: tempRoot,
-            aiImageDisplay: true,
-            ntfyTopic: "",
-            ntfyServer: "https://ntfy.sh"
-        )
-
-        let content = try String(contentsOf: agentsPath, encoding: .utf8)
-        XCTAssertTrue(content.contains("AI Image Generation"))
-        XCTAssertFalse(content.contains("Push Notifications"))
-    }
-
-    @MainActor
     func testInstallScriptsRefreshesGlobalZionImgHelpersWithPreviewFirstPrompt() throws {
         let tempRoot = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
@@ -77,8 +14,6 @@ final class TerminalHelperInstallTests: XCTestCase {
 
         TerminalTabView.Coordinator.installScripts(
             aiImageDisplay: true,
-            ntfyTopic: "",
-            ntfyServer: "https://ntfy.sh",
             homeDirectoryPath: homePath,
             zionBinDirOverride: binPath
         )

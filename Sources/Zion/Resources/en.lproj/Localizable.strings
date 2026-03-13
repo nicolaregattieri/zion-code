@@ -828,7 +828,6 @@
 "settings.ai.depth" = "Explanation Depth";
 "settings.notifications.ntfy" = "ntfy";
 "settings.notifications.ntfyEnabled" = "Enable ntfy Notifications";
-"settings.notifications.ntfyEnabled.hint" = "Keeps ntfy delivery and related AI-instruction wiring off until you explicitly enable it.";
 "settings.notifications.topic" = "ntfy Topic";
 "settings.notifications.preferences" = "Preferences";
 "settings.notifications.events" = "Events";
@@ -1612,9 +1611,6 @@
 "settings.terminal.imageRendering.hint" = "Render Sixel, iTerm2, and Kitty inline images. Changes apply to new sessions.";
 "settings.terminal.aiImageDisplay" = "AI Image Generation & Helpers";
 "settings.terminal.aiImageDisplay.hint" = "Installs zion-img helpers and zion_display in your home folder. Generated AI images are saved to zion-image/ in the current project for preview in Zion.";
-"settings.terminal.autoAppendAIConfig" = "Auto-configure Project AI Instructions";
-"settings.terminal.autoAppendAIConfig.hint" = "Writes repo-local Zion instructions to AI config files in your project root, such as AGENTS.md, CLAUDE.md, and GEMINI.md. This is what gives AI tools project-specific guidance like ntfy completion notifications. When off, use zion_ai_setup manually.";
-"settings.terminal.aiConfigScope.hint" = "Scope: the top toggle installs user-level helpers in your home folder. This toggle writes repo-level instructions for the current project.";
 "settings.terminal.selection" = "Selection";
 "settings.terminal.copyOnSelect" = "Copy on Select";
 "recent.active.hint" = "Active session";

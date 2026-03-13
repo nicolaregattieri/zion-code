@@ -350,17 +350,11 @@ final class RepositoryViewModel {
     var ntfyTopic: String = "" {
         didSet {
             UserDefaults.standard.set(ntfyTopic, forKey: "zion.ntfy.topic")
-            if !ntfyTopic.isEmpty {
-                NtfyClient.writeGlobalConfig(topic: ntfyTopic, serverURL: ntfyServerURL)
-            }
         }
     }
     var ntfyServerURL: String = "https://ntfy.sh" {
         didSet {
             UserDefaults.standard.set(ntfyServerURL, forKey: "zion.ntfy.serverURL")
-            if !ntfyTopic.isEmpty {
-                NtfyClient.writeGlobalConfig(topic: ntfyTopic, serverURL: ntfyServerURL)
-            }
         }
     }
     var ntfyEnabledEvents: [String] = NtfyEvent.defaultEnabledEvents {
