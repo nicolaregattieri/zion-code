@@ -90,6 +90,7 @@ final class ZionTerminalViewTests: XCTestCase {
         XCTAssertTrue(
             TerminalTabView.Coordinator.shouldConsumePreciseScroll(
                 hasPreciseScrollingDeltas: true,
+                isTerminalFocused: true,
                 hoveredTerminalMatches: true,
                 canTerminalScroll: true
             )
@@ -97,6 +98,7 @@ final class ZionTerminalViewTests: XCTestCase {
         XCTAssertFalse(
             TerminalTabView.Coordinator.shouldConsumePreciseScroll(
                 hasPreciseScrollingDeltas: true,
+                isTerminalFocused: true,
                 hoveredTerminalMatches: false,
                 canTerminalScroll: true
             )
