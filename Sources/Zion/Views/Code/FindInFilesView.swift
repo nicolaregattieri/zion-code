@@ -1,6 +1,43 @@
 import SwiftUI
 
 enum FindInFilesViewLogic {
+    static func totalMatchCount(in results: [FindInFilesFileResult]) -> Int {
+        results.reduce(0) { $0 + $1.matches.count }
+    }
+
+    static func defaultExpandedFiles(
+        results: [FindInFilesFileResult],
+        maxAutoExpandedFiles: Int,
+        maxAutoExpandedMatches: Int
+    ) -> Set<String> {
+        guard results.count <= maxAutoExpandedFiles,
+              totalMatchCount(in: results) <= maxAutoExpandedMatches else {
+            return []
+        }
+        return Set(results.map(\.file))
+    }
+
+    static func effectiveVisibleMatches(
+        matches: [FindInFilesMatch],
+        revealedCount: Int?,
+        selectedMatchID: String?,
+        defaultVisibleCount: Int
+    ) -> [FindInFilesMatch] {
+        guard !matches.isEmpty else { return [] }
+
+        var visibleCount = min(revealedCount ?? defaultVisibleCount, matches.count)
+        if let selectedMatchID,
+           let selectedIndex = matches.firstIndex(where: { $0.id == selectedMatchID }) {
+            visibleCount = max(visibleCount, selectedIndex + 1)
+        }
+
+        return Array(matches.prefix(visibleCount))
+    }
+
+    static func remainingMatchCount(totalMatches: Int, visibleMatches: Int) -> Int {
+        max(0, totalMatches - visibleMatches)
+    }
+
     static func shouldApplySearchResults(
         requestID: Int,
         latestRequestID: Int,
@@ -51,6 +88,7 @@ struct FindInFilesView: View {
 
     @State private var showFilters: Bool = false
     @State private var expandedFiles: Set<String> = []
+    @State private var revealedMatchCounts: [String: Int] = [:]
     @State private var searchTask: Task<Void, Never>?
     @State private var selectedMatchID: String?
     @State private var searchRequestID: Int = 0
@@ -65,6 +103,10 @@ struct FindInFilesView: View {
 
     private var flattenedMatches: [FindInFilesMatch] {
         results.flatMap(\.matches)
+    }
+
+    private var totalMatches: Int {
+        FindInFilesViewLogic.totalMatchCount(in: results)
     }
 
     private var selectedMatchPositionText: String? {
@@ -192,7 +234,6 @@ struct FindInFilesView: View {
 
             // Summary
             if !results.isEmpty {
-                let totalMatches = results.reduce(0) { $0 + $1.matches.count }
                 Text(L10n("findInFiles.summary", "\(totalMatches)", "\(results.count)"))
                     .font(DesignSystem.Typography.monoMeta)
                     .foregroundStyle(.secondary)
@@ -277,6 +318,12 @@ struct FindInFilesView: View {
                         expandedFiles.remove(fileResult.file)
                     } else {
                         expandedFiles.insert(fileResult.file)
+                        if revealedMatchCounts[fileResult.file] == nil {
+                            revealedMatchCounts[fileResult.file] = min(
+                                fileResult.matches.count,
+                                Constants.Limits.findInFilesInitialVisibleMatchesPerFile
+                            )
+                        }
                     }
                 }
             } label: {
@@ -311,8 +358,29 @@ struct FindInFilesView: View {
             .buttonStyle(.plain)
 
             if isExpanded {
-                ForEach(fileResult.matches) { match in
-                    matchRow(match)
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    ForEach(visibleMatches(for: fileResult)) { match in
+                        matchRow(match)
+                    }
+
+                    let remainingMatches = remainingMatchCount(for: fileResult)
+                    if remainingMatches > 0 {
+                        Button {
+                            revealMoreMatches(for: fileResult)
+                        } label: {
+                            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
+                                Image(systemName: "plus.circle")
+                                    .font(DesignSystem.Typography.label)
+                                Text("\(L10n("Carregar mais")) (\(remainingMatches))")
+                                    .font(DesignSystem.Typography.label)
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.leading, 22)
+                            .padding(.vertical, 6)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
             }
         }
@@ -342,9 +410,6 @@ struct FindInFilesView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .onHover { h in
-            if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
-        }
     }
 
     private func highlightedPreview(_ text: String, query: String) -> some View {
@@ -402,6 +467,8 @@ struct FindInFilesView: View {
         guard !query.isEmpty else {
             isSearching = false
             results = []
+            expandedFiles = []
+            revealedMatchCounts = [:]
             selectedMatchID = nil
             return
         }
@@ -425,8 +492,21 @@ struct FindInFilesView: View {
 
         // Auto-expand all files when few results
         if searchResults.count <= 10 {
-            expandedFiles = Set(searchResults.map(\.file))
+            expandedFiles = FindInFilesViewLogic.defaultExpandedFiles(
+                results: searchResults,
+                maxAutoExpandedFiles: Constants.Limits.maxFindInFilesAutoExpandedFiles,
+                maxAutoExpandedMatches: Constants.Limits.maxFindInFilesAutoExpandedMatches
+            )
+        } else {
+            expandedFiles = []
         }
+        revealedMatchCounts = Dictionary(uniqueKeysWithValues: expandedFiles.compactMap { file in
+            guard let fileResult = searchResults.first(where: { $0.file == file }) else { return nil }
+            return (
+                file,
+                min(fileResult.matches.count, Constants.Limits.findInFilesInitialVisibleMatchesPerFile)
+            )
+        })
 
         // Keep selection stable when possible.
         let resultMatches = searchResults.flatMap(\.matches)
@@ -454,6 +534,7 @@ struct FindInFilesView: View {
         guard model.repositoryURL != nil else { return }
         selectedMatchID = match.id
         expandedFiles.insert(match.file)
+        ensureMatchIsVisible(match)
 
         let location = EditorSymbolLocation(
             relativePath: match.file,
@@ -491,5 +572,46 @@ struct FindInFilesView: View {
             NSEvent.removeMonitor(keyMonitor)
             self.keyMonitor = nil
         }
+    }
+
+    private func visibleMatches(for fileResult: FindInFilesFileResult) -> [FindInFilesMatch] {
+        FindInFilesViewLogic.effectiveVisibleMatches(
+            matches: fileResult.matches,
+            revealedCount: revealedMatchCounts[fileResult.file],
+            selectedMatchID: selectedMatchID,
+            defaultVisibleCount: Constants.Limits.findInFilesInitialVisibleMatchesPerFile
+        )
+    }
+
+    private func remainingMatchCount(for fileResult: FindInFilesFileResult) -> Int {
+        FindInFilesViewLogic.remainingMatchCount(
+            totalMatches: fileResult.matches.count,
+            visibleMatches: visibleMatches(for: fileResult).count
+        )
+    }
+
+    private func revealMoreMatches(for fileResult: FindInFilesFileResult) {
+        let current = revealedMatchCounts[fileResult.file] ?? Constants.Limits.findInFilesInitialVisibleMatchesPerFile
+        revealedMatchCounts[fileResult.file] = min(
+            fileResult.matches.count,
+            current + Constants.Limits.findInFilesVisibleMatchesPageSize
+        )
+    }
+
+    private func ensureMatchIsVisible(_ match: FindInFilesMatch) {
+        guard let fileResult = results.first(where: { $0.file == match.file }),
+              let matchIndex = fileResult.matches.firstIndex(where: { $0.id == match.id }) else {
+            return
+        }
+
+        let currentVisible = revealedMatchCounts[match.file] ?? Constants.Limits.findInFilesInitialVisibleMatchesPerFile
+        guard matchIndex >= currentVisible else { return }
+
+        let pageSize = Constants.Limits.findInFilesVisibleMatchesPageSize
+        let requiredVisible = ((matchIndex / pageSize) + 1) * pageSize
+        revealedMatchCounts[match.file] = min(
+            fileResult.matches.count,
+            max(currentVisible, requiredVisible)
+        )
     }
 }

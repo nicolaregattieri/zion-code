@@ -37,6 +37,14 @@ enum Constants {
         static let maxDanglingSnapshots = 180
         /// Maximum matches returned by Find in Files
         static let maxFindInFilesMatches = 1000
+        /// Maximum total matches to auto-expand in Find in Files
+        static let maxFindInFilesAutoExpandedMatches = 60
+        /// Maximum file groups to auto-expand in Find in Files
+        static let maxFindInFilesAutoExpandedFiles = 10
+        /// Initial number of matches to render for an expanded file result
+        static let findInFilesInitialVisibleMatchesPerFile = 40
+        /// Additional matches to reveal per "load more" action in Find in Files
+        static let findInFilesVisibleMatchesPageSize = 80
         /// Maximum polling attempts when waiting for editor file to load
         static let maxEditorLocationWaitAttempts = 50
         /// Polling interval in milliseconds when waiting for editor file to load
