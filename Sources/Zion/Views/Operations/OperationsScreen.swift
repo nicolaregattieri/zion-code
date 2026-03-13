@@ -12,7 +12,7 @@ struct OperationsScreen: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .bottom) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Zion Ops")
+                        Text(L10n("ops.title"))
                             .font(DesignSystem.Typography.screenTitle)
                         Text(L10n("Gerencie branches, tags, stashes e alteracoes de historico."))
                             .font(DesignSystem.Typography.subtitle)
@@ -402,7 +402,7 @@ struct OperationsScreen: View {
                                             .lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
                                         if branch.isRemote { Image(systemName: "icloud").font(DesignSystem.Typography.meta).foregroundStyle(.secondary) }
                                     }
-                                    Text("HEAD \(branch.shortHead)").font(DesignSystem.Typography.meta).foregroundStyle(.secondary).lineLimit(1)
+                                    Text(L10n("ops.branch.head", branch.shortHead)).font(DesignSystem.Typography.meta).foregroundStyle(.secondary).lineLimit(1)
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, 8).padding(.vertical, 5).contentShape(Rectangle())
