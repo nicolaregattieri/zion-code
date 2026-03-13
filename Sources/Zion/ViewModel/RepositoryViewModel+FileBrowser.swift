@@ -1174,6 +1174,15 @@ extension RepositoryViewModel {
         input.stringValue = item.name
         alert.accessoryView = input
         alert.window.initialFirstResponder = input
+        let currentName = item.name as NSString
+        let selectionLength = item.isDirectory
+            ? currentName.length
+            : currentName.deletingPathExtension.count
+        DispatchQueue.main.async {
+            input.currentEditor()?.selectedRange = NSRange(location: 0, length: max(selectionLength, 0))
+            input.selectText(nil)
+            input.currentEditor()?.selectedRange = NSRange(location: 0, length: max(selectionLength, 0))
+        }
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         let newName = input.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard newName != item.name else { return }
