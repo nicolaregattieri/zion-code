@@ -67,6 +67,32 @@ final class SourceCodeEditorTests: XCTestCase {
     }
 
     @MainActor
+    func testLiquidCommentHighlightDoesNotBleedIntoPreviousTag() {
+        let text = """
+        {%- unless section.settings.show == false -%}
+        {%- comment -%} Hidden helper text {%- endcomment -%}
+        {{ 'bundle.css' | asset_url | stylesheet_tag }}
+        """
+        let textView = makeTextView(text: text)
+        let editor = SourceCodeEditor(text: .constant(text), theme: .tokyoNight, fileExtension: "liquid")
+        let coordinator = SourceCodeEditor.Coordinator(editor)
+        let colors = editor.getEditorColors(for: editor.theme)
+
+        coordinator.applyHighlighting(to: textView, colors: colors)
+
+        let unlessIndex = (text as NSString).range(of: "unless").location
+        let commentIndex = (text as NSString).range(of: "Hidden helper text").location
+        XCTAssertNotEqual(unlessIndex, NSNotFound)
+        XCTAssertNotEqual(commentIndex, NSNotFound)
+
+        let unlessColor = textView.textStorage?.attribute(.foregroundColor, at: unlessIndex, effectiveRange: nil) as? NSColor
+        let commentColor = textView.textStorage?.attribute(.foregroundColor, at: commentIndex, effectiveRange: nil) as? NSColor
+
+        XCTAssertEqual(unlessColor, colors.type)
+        XCTAssertEqual(commentColor, colors.comment)
+    }
+
+    @MainActor
     func testSearchHighlightsClearWhenQueryBecomesEmpty() {
         let textView = makeTextView(text: "foo\nbar\nfoo\n")
         let editor = SourceCodeEditor(text: .constant(textView.string), theme: .tokyoNight, fileExtension: "swift")
