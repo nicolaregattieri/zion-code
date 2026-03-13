@@ -19,12 +19,6 @@ mkdir -p "$APP_DIR/Contents/Frameworks"
 
 cp "$BIN_PATH" "$APP_DIR/Contents/MacOS/Zion"
 
-# Copy bundled SVG-to-PNG converter (sandbox-safe inline images for AI agents)
-SVG2PNG_PATH="$ROOT_DIR/.build/release/zion_svg2png"
-if [ -f "$SVG2PNG_PATH" ]; then
-    cp "$SVG2PNG_PATH" "$APP_DIR/Contents/MacOS/zion_svg2png"
-fi
-
 # Add rpath so @rpath/Sparkle.framework resolves to Contents/Frameworks/
 install_name_tool -add_rpath @executable_path/../Frameworks "$APP_DIR/Contents/MacOS/Zion"
 
