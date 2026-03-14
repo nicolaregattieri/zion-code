@@ -453,7 +453,7 @@
 
 // Shortcuts highlight
 "help.shortcuts.title" = "Más de 15 atajos de teclado";
-"help.shortcuts.subtitle" = "Presiona ⌘? para ver todos los atajos disponibles.";
+"help.shortcuts.subtitle" = "Presiona ⌥⌘K para ver todos los atajos disponibles.";
 
 // Diagnostics
 "Exportar Diagnostico..." = "Exportar Diagnóstico...";
@@ -913,7 +913,7 @@
 "help.codeReview.title" = "Code Review";
 "help.codeReview.features" = "Revisión a pantalla completa por archivo|Análisis IA por archivo|Comentarios inline en PRs con hilos de respuesta|Enviar reviews (Aprobar/Solicitar Cambios/Comentar)|Exportar como Markdown|Atajo Cmd+Shift+R";
 "help.prInbox.title" = "Bandeja de PRs";
-"help.prInbox.features" = "Soporte para GitHub, GitLab, Bitbucket y Azure DevOps|Cola de PRs asignados|Explorar todos los PRs abiertos|Revisión automática con IA|Clic para abrir en Code Review|Notificaciones macOS + ntfy";
+"help.prInbox.features" = "Soporte para GitHub, GitLab, Bitbucket y Azure DevOps|Cola de PRs asignados|Explorar todos los PRs abiertos con actualización por polling|Revisión automática con IA|Clic para abrir en Code Review|Alertas macOS + ntfy para PRs nuevos y revisiones";
 
 
 // Zion Map — Settings
@@ -950,8 +950,8 @@
 "map.prinbox.queue.description" = "Card en la sidebar mostrando todos los PRs asignados con insignias de estado y resúmenes de severidad.";
 "map.prinbox.autoreview.title" = "Revisión Automática";
 "map.prinbox.autoreview.description" = "Cuando está activado, la IA revisa automáticamente PRs asignados y le notifica con los hallazgos listos.";
-"map.prinbox.notifications.title" = "Notificaciones de Revisión";
-"map.prinbox.notifications.description" = "Reciba notificaciones de macOS y alertas push vía ntfy cuando la IA complete revisiones de PR.";
+"map.prinbox.notifications.title" = "Notificaciones de Pull Requests";
+"map.prinbox.notifications.description" = "Reciba notificaciones de macOS y alertas push vía ntfy para PRs recién abiertos, solicitudes de revisión y revisiones de IA completadas.";
 
 // Auto Updates (Sparkle)
 "Buscar Atualizacoes..." = "Buscar Actualizaciones\U2026";
