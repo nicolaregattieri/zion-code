@@ -815,6 +815,27 @@
 "settings.open" = "Open Settings";
 "settings.open.hint" = "Open Settings (⌘,)";
 "settings.ai.provider" = "AI Provider";
+"settings.ai.defaultProvider" = "Default AI Assistant";
+"settings.ai.defaultProvider.hint" = "Choose which connected provider Zion uses for commit messages, reviews, and other general AI tasks.";
+"settings.ai.defaultProvider.missingKey" = "The selected default provider does not have a connected API key yet.";
+"settings.ai.defaultProvider.recovery" = "Connect a key below or switch the default assistant to another connected provider.";
+"settings.ai.connectedProviders" = "Connected Providers";
+"settings.ai.connectedProviders.hint" = "You can connect multiple providers at the same time. OpenAI can stay connected just for Whisper while Gemini or Claude remains the default assistant.";
+"settings.ai.provider.defaultBadge" = "DEFAULT";
+"settings.ai.provider.status.connected" = "Connected";
+"settings.ai.provider.status.notConnected" = "Not connected";
+"settings.ai.provider.openDashboard" = "Open Dashboard";
+"settings.ai.provider.openaiWhisperHint" = "Also enables OpenAI Whisper transcription for voice input.";
+"settings.ai.provider.cancelEdit" = "Cancel";
+"settings.ai.provider.editKey" = "Edit Key";
+"settings.ai.provider.addKey" = "Add Key";
+"settings.ai.provider.removeKey" = "Remove Key";
+"settings.ai.provider.keyPlaceholder" = "API Key";
+"settings.ai.provider.saveKey" = "Save Key";
+"settings.ai.recovery.badge" = "AI quota";
+"settings.ai.recovery.alternativeProviders" = "AI quota reached. Open Settings to switch the default assistant. Connected alternatives: %@.";
+"settings.ai.recovery.openSettingsHint" = "AI quota reached. Open AI settings to review your connected providers or update keys.";
+"settings.ai.recovery.openSettings" = "Open AI Settings";
 "settings.ai.commitStyle" = "Commit Style";
 "settings.ai.diffExplanation" = "Diff Explanation";
 "settings.ai.autoExplain" = "Auto-explain diffs on selection";
@@ -1857,10 +1878,18 @@
 "speech.engine" = "Engine";
 "speech.engine.apple" = "Apple Speech (Free)";
 "speech.engine.whisper" = "OpenAI Whisper";
+"speech.recovery.whisperMissingKey" = "OpenAI Whisper needs a connected OpenAI API key.";
+"speech.recovery.whisperQuotaExceeded" = "OpenAI Whisper quota was exceeded or the balance is unavailable.";
+"speech.recovery.whisperTemporarilyUnavailable" = "OpenAI Whisper is temporarily unavailable. Try Apple Speech or retry in a moment.";
+"speech.recovery.whisperFailed" = "Whisper transcription failed. Try Apple Speech or review your OpenAI key.";
+"speech.recovery.useAppleSpeech" = "Use Apple Speech";
+"speech.recovery.manageOpenAI" = "Manage OpenAI";
 "speech.send" = "Send to Terminal";
 "speech.permission.denied" = "Microphone or speech recognition access denied. Enable in System Settings > Privacy & Security.";
 "speech.error.unavailable" = "Speech recognition is not available for the selected language.";
 "settings.speech.engine.hint" = "Apple Speech is free and real-time. Whisper requires an OpenAI API key (configured in AI settings).";
+"settings.speech.engine.whisperUnavailable" = "OpenAI Whisper is unavailable until an OpenAI API key is connected in AI settings.";
+"settings.speech.engine.configureOpenAI" = "Configure OpenAI Key";
 
 // Git Bisect
 "bisect.contextMenu.markBad" = "Find Bug with Bisect";

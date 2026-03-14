@@ -571,11 +571,24 @@ struct GraphScreen: View {
                                 }
 
                                 if model.aiQuotaExceeded {
-                                    HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
-                                        Image(systemName: "exclamationmark.triangle.fill")
-                                            .font(DesignSystem.Typography.label)
-                                        Text(L10n("Cota da API excedida. Usando sugestao local."))
-                                            .font(DesignSystem.Typography.labelMedium)
+                                    VStack(alignment: .leading, spacing: 6) {
+                                        HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
+                                            Image(systemName: "exclamationmark.triangle.fill")
+                                                .font(DesignSystem.Typography.label)
+                                            Text(L10n("Cota da API excedida. Usando sugestao local."))
+                                                .font(DesignSystem.Typography.labelMedium)
+                                        }
+
+                                        SettingsLink {
+                                            Label(L10n("settings.ai.recovery.openSettings"), systemImage: "gearshape")
+                                                .font(DesignSystem.Typography.label)
+                                        }
+                                        .buttonStyle(.bordered)
+                                        .simultaneousGesture(TapGesture().onEnded {
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                                NotificationCenter.default.post(name: .openAISettings, object: nil)
+                                            }
+                                        })
                                     }
                                     .foregroundStyle(DesignSystem.Colors.warning)
                                     .padding(.top, -8)

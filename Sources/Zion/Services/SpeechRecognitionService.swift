@@ -30,15 +30,43 @@ final class SpeechRecognitionService {
         }
     }
 
+    enum RecoveryIssue: Equatable {
+        case whisperMissingKey
+        case whisperQuotaExceeded
+        case whisperTemporarilyUnavailable
+        case whisperFailed
+
+        var message: String {
+            switch self {
+            case .whisperMissingKey:
+                return L10n("speech.recovery.whisperMissingKey")
+            case .whisperQuotaExceeded:
+                return L10n("speech.recovery.whisperQuotaExceeded")
+            case .whisperTemporarilyUnavailable:
+                return L10n("speech.recovery.whisperTemporarilyUnavailable")
+            case .whisperFailed:
+                return L10n("speech.recovery.whisperFailed")
+            }
+        }
+    }
+
     private(set) var state: State = .idle
     private(set) var currentTranscript: String = ""
+    private(set) var recoveryIssue: RecoveryIssue?
 
     /// The terminal session ID captured at recording start (not at send time).
     private(set) var targetSessionID: UUID?
 
     var selectedEngine: Engine {
-        get { Engine(rawValue: UserDefaults.standard.string(forKey: "speech.engine") ?? Engine.apple.rawValue) ?? .apple }
-        set { UserDefaults.standard.set(newValue.rawValue, forKey: "speech.engine") }
+        get {
+            SpeechEngineSupport.effectiveEngine(
+                storedValue: UserDefaults.standard.string(forKey: "speech.engine")
+            )
+        }
+        set {
+            let effective = SpeechEngineSupport.effectiveEngine(storedValue: newValue.rawValue)
+            UserDefaults.standard.set(effective.rawValue, forKey: "speech.engine")
+        }
     }
 
     var selectedLocale: Locale {
@@ -48,7 +76,7 @@ final class SpeechRecognitionService {
 
     /// Whether an OpenAI key is configured (determines if Whisper option shows).
     var isWhisperAvailable: Bool {
-        AIClient.loadAPIKey(for: .openai) != nil
+        SpeechEngineSupport.isWhisperAvailable()
     }
 
     var isActive: Bool {
@@ -109,6 +137,7 @@ final class SpeechRecognitionService {
             logger.log(.warn, "startListening: state is \(state), expected .idle — skipping", context: "Speech")
             return
         }
+        recoveryIssue = nil
         self.targetSessionID = targetSessionID
 
         logger.log(.info, "Creating SFSpeechRecognizer for locale \(locale.identifier)…", context: "Speech")
@@ -188,6 +217,7 @@ final class SpeechRecognitionService {
             logger.log(.warn, "startRecording: state is \(state), expected .idle — skipping", context: "Speech")
             return
         }
+        recoveryIssue = nil
         self.targetSessionID = targetSessionID
 
         logger.log(.info, "Creating AVAudioEngine for Whisper recording…", context: "Speech")
@@ -236,20 +266,44 @@ final class SpeechRecognitionService {
         audioEngine?.stop()
         audioEngine?.inputNode.removeTap(onBus: 0)
         state = .processing
+        recoveryIssue = nil
 
         guard let wavData = encodeWAV() else {
+            recoveryIssue = .whisperFailed
             cleanup()
             return ("", sessionID)
         }
 
         guard let apiKey = AIClient.loadAPIKey(for: .openai) else {
+            recoveryIssue = .whisperMissingKey
             cleanup()
             return ("", sessionID)
         }
 
-        let transcript = await transcribeWithWhisper(wavData: wavData, apiKey: apiKey)
-        cleanup()
-        return (transcript, sessionID)
+        do {
+            let transcript = try await transcribeWithWhisper(wavData: wavData, apiKey: apiKey)
+            cleanup()
+            return (transcript, sessionID)
+        } catch let error as AIError {
+            switch error {
+            case .quotaExceeded:
+                recoveryIssue = .whisperQuotaExceeded
+            case .temporarilyUnavailable:
+                recoveryIssue = .whisperTemporarilyUnavailable
+            default:
+                recoveryIssue = .whisperFailed
+            }
+            cleanup()
+            return ("", sessionID)
+        } catch {
+            recoveryIssue = .whisperFailed
+            cleanup()
+            return ("", sessionID)
+        }
+    }
+
+    func clearRecoveryIssue() {
+        recoveryIssue = nil
     }
 
     // MARK: - Toggle (convenience for UI)
@@ -354,12 +408,13 @@ final class SpeechRecognitionService {
         return data
     }
 
-    private func transcribeWithWhisper(wavData: Data, apiKey: String) async -> String {
+    private func transcribeWithWhisper(wavData: Data, apiKey: String) async throws -> String {
         let boundary = UUID().uuidString
         var request = URLRequest(url: URL(string: "https://api.openai.com/v1/audio/transcriptions")!)
         request.httpMethod = "POST"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 30
 
         var body = Data()
         // model field
@@ -376,17 +431,22 @@ final class SpeechRecognitionService {
 
         request.httpBody = body
 
-        do {
-            let (data, _) = try await URLSession.shared.data(for: request)
-            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let text = json["text"] as? String {
-                return text
-            }
-        } catch {
-            // Transcription failed silently
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw AIError.invalidResponse }
+
+        if http.statusCode == 401 { throw AIError.invalidKey }
+        if http.statusCode == 503 { throw AIError.temporarilyUnavailable }
+        if http.statusCode == 429 { throw AIError.quotaExceeded }
+        guard http.statusCode == 200 else {
+            throw AIError.apiError("OpenAI Whisper request failed (\(http.statusCode)).")
         }
 
-        return ""
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        guard let text = json?["text"] as? String else {
+            throw AIError.invalidResponse
+        }
+
+        return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 

@@ -10,6 +10,22 @@ struct TerminalSettingsTab: View {
     @AppStorage("speech.engine") private var speechEngine: String = "apple"
     @AppStorage("speech.locale") private var speechLocale: String = Locale.current.identifier
 
+    private var isWhisperAvailable: Bool {
+        SpeechEngineSupport.isWhisperAvailable()
+    }
+
+    private var speechEngineSelection: Binding<String> {
+        Binding(
+            get: {
+                SpeechEngineSupport.effectiveEngine(storedValue: speechEngine).rawValue
+            },
+            set: { newValue in
+                let nextValue = SpeechEngineSupport.effectiveEngine(storedValue: newValue).rawValue
+                speechEngine = nextValue
+            }
+        )
+    }
+
     var body: some View {
         Form {
             Section {
@@ -55,14 +71,32 @@ struct TerminalSettingsTab: View {
             }
 
             Section {
-                Picker(L10n("speech.engine"), selection: $speechEngine) {
+                Picker(L10n("speech.engine"), selection: speechEngineSelection) {
                     Text(L10n("speech.engine.apple")).tag("apple")
                     Text(L10n("speech.engine.whisper")).tag("whisper")
+                        .disabled(!isWhisperAvailable)
                 }
 
                 Text(L10n("settings.speech.engine.hint"))
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
+
+                if !isWhisperAvailable {
+                    Label(L10n("settings.speech.engine.whisperUnavailable"), systemImage: "exclamationmark.triangle.fill")
+                        .font(DesignSystem.Typography.labelMedium)
+                        .foregroundStyle(DesignSystem.Colors.warning)
+
+                    SettingsLink {
+                        Label(L10n("settings.speech.engine.configureOpenAI"), systemImage: "sparkles")
+                            .font(DesignSystem.Typography.label)
+                    }
+                    .buttonStyle(.bordered)
+                    .simultaneousGesture(TapGesture().onEnded {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            NotificationCenter.default.post(name: .openAISettings, object: nil)
+                        }
+                    })
+                }
 
                 Picker(L10n("speech.language"), selection: $speechLocale) {
                     ForEach(SFSpeechRecognizer.supportedLocales().sorted(by: { $0.identifier < $1.identifier }), id: \.identifier) { locale in
@@ -83,6 +117,12 @@ struct TerminalSettingsTab: View {
         .formStyle(.grouped)
         .toggleStyle(SwitchToggleStyle(tint: DesignSystem.Colors.actionPrimary))
         .tint(DesignSystem.Colors.actionPrimary)
+        .onAppear {
+            let effectiveEngine = SpeechEngineSupport.effectiveEngine(storedValue: speechEngine)
+            if speechEngine != effectiveEngine.rawValue {
+                speechEngine = effectiveEngine.rawValue
+            }
+        }
         .onChange(of: aiImageDisplay) { _, _ in
             TerminalTabView.syncInstalledTerminalHelpersForCurrentSettings()
         }

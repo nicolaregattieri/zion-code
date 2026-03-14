@@ -219,6 +219,95 @@ final class LocalizationTests: XCTestCase {
         }
     }
 
+    func testAIProviderSettingsLocalizationKeysExist() {
+        let keys = [
+            "settings.ai.defaultProvider",
+            "settings.ai.defaultProvider.hint",
+            "settings.ai.defaultProvider.missingKey",
+            "settings.ai.defaultProvider.recovery",
+            "settings.ai.connectedProviders",
+            "settings.ai.connectedProviders.hint",
+            "settings.ai.provider.defaultBadge",
+            "settings.ai.provider.status.connected",
+            "settings.ai.provider.status.notConnected",
+            "settings.ai.provider.openDashboard",
+            "settings.ai.provider.openaiWhisperHint",
+            "settings.ai.provider.cancelEdit",
+            "settings.ai.provider.editKey",
+            "settings.ai.provider.addKey",
+            "settings.ai.provider.removeKey",
+            "settings.ai.provider.keyPlaceholder",
+            "settings.ai.provider.saveKey",
+            "settings.ai.recovery.badge",
+            "settings.ai.recovery.alternativeProviders",
+            "settings.ai.recovery.openSettingsHint",
+            "settings.ai.recovery.openSettings",
+            "settings.speech.engine.whisperUnavailable",
+            "settings.speech.engine.configureOpenAI",
+            "speech.recovery.whisperMissingKey",
+            "speech.recovery.whisperQuotaExceeded",
+            "speech.recovery.whisperTemporarilyUnavailable",
+            "speech.recovery.whisperFailed",
+            "speech.recovery.useAppleSpeech",
+            "speech.recovery.manageOpenAI",
+        ]
+
+        for key in keys {
+            let value = L10n(key)
+            XCTAssertNotEqual(value, key, "Missing L10n key: \(key)")
+            XCTAssertFalse(value.isEmpty, "Empty L10n value for key: \(key)")
+        }
+    }
+
+    func testAIProviderSettingsKeysExistInAllLocales() {
+        let keys = [
+            "settings.ai.defaultProvider",
+            "settings.ai.defaultProvider.hint",
+            "settings.ai.defaultProvider.missingKey",
+            "settings.ai.defaultProvider.recovery",
+            "settings.ai.connectedProviders",
+            "settings.ai.connectedProviders.hint",
+            "settings.ai.provider.defaultBadge",
+            "settings.ai.provider.status.connected",
+            "settings.ai.provider.status.notConnected",
+            "settings.ai.provider.openDashboard",
+            "settings.ai.provider.openaiWhisperHint",
+            "settings.ai.provider.cancelEdit",
+            "settings.ai.provider.editKey",
+            "settings.ai.provider.addKey",
+            "settings.ai.provider.removeKey",
+            "settings.ai.provider.keyPlaceholder",
+            "settings.ai.provider.saveKey",
+            "settings.ai.recovery.badge",
+            "settings.ai.recovery.alternativeProviders",
+            "settings.ai.recovery.openSettingsHint",
+            "settings.ai.recovery.openSettings",
+            "settings.speech.engine.whisperUnavailable",
+            "settings.speech.engine.configureOpenAI",
+            "speech.recovery.whisperMissingKey",
+            "speech.recovery.whisperQuotaExceeded",
+            "speech.recovery.whisperTemporarilyUnavailable",
+            "speech.recovery.whisperFailed",
+            "speech.recovery.useAppleSpeech",
+            "speech.recovery.manageOpenAI",
+        ]
+
+        let locales = ["en", "pt-BR", "es"]
+
+        for locale in locales {
+            guard let path = Bundle.module.path(forResource: "Localizable", ofType: "strings", inDirectory: nil, forLocalization: locale),
+                  let content = try? String(contentsOfFile: path, encoding: .utf8) else {
+                continue
+            }
+            for key in keys {
+                XCTAssertTrue(
+                    content.contains("\"\(key)\""),
+                    "Missing key \"\(key)\" in \(locale) locale file"
+                )
+            }
+        }
+    }
+
     func testTerminalAISettingsLocalizationKeysExist() {
         let keys = [
             "settings.terminal.aiImageDisplay",
