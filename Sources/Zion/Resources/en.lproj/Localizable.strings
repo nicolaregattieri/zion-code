@@ -1889,6 +1889,10 @@
 "map.ai.slashcommands.title" = "AI Agent Slash Commands";
 "map.ai.slashcommands.description" = "Auto-installed /zion-img command for Claude Code, Gemini CLI, and Codex CLI. Generates image files in zion-image/ for preview in Zion.";
 "map.ai.slashcommands.tip1" = "Enable AI Image Generation in Settings to auto-install commands on terminal start.";
+"help.ai.connectedProviders" = "Connect multiple AI providers simultaneously (e.g., Whisper + Claude)";
+"map.ai.connectedProviders.title" = "Connected Providers";
+"map.ai.connectedProviders.description" = "Keep multiple AI providers connected at the same time. For example, use OpenAI just for Whisper while Claude or Gemini is the default assistant.";
+"map.ai.connectedProviders.tip1" = "Configure each provider in Settings > AI. Connected providers appear in the Connected Providers section.";
 
 // Voice-to-text — 1.6.0
 "speech.button.tooltip" = "Voice Input";
@@ -1966,6 +1970,10 @@
 "map.terminal.voiceInput.title" = "Voice Input";
 "map.terminal.voiceInput.description" = "Dictate text to the terminal using Apple Speech (free, real-time) or OpenAI Whisper. A floating pill with waveform animation shows when listening.";
 "map.terminal.voiceInput.tip1" = "Configure the speech engine in Settings > AI. Apple Speech works offline; Whisper needs an OpenAI API key.";
+"help.terminal.whisperRecovery" = "Automatic Whisper recovery with fallback to Apple Speech";
+"map.terminal.whisperRecovery.title" = "Whisper Recovery";
+"map.terminal.whisperRecovery.description" = "When OpenAI Whisper is unavailable (quota exceeded, missing key, service down), Zion automatically falls back to Apple Speech and shows recovery guidance.";
+"map.terminal.whisperRecovery.tip1" = "Long-press the voice button to switch engines or see recovery messages.";
 
 // Clone Repository
 "help.clone.title" = "Clone Repository";

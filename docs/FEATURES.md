@@ -43,6 +43,14 @@
 | Localized | Full L10n support in Portuguese (BR), English, and Spanish |
 | Navigation | Step dots, Back/Continue buttons, Enter/Escape keyboard shortcuts |
 
+## Contextual Feature Tour
+
+| Feature | Description |
+|---------|-------------|
+| Spotlight Tour | Replayable 5-step guided tour highlighting key areas: recent repos, workspace switcher, graph, zen mode, worktrees |
+| Replay Anytime | Launch from Help Sheet or "Replay feature tour" button — not limited to first launch |
+| Visual Spotlight | Overlay with glassomorphic card and spotlight cutout on the target area |
+
 ## Zion Tree (Graph Visualization)
 
 | Feature | Description | Shortcut |
@@ -121,7 +129,8 @@
 | Inline Images | Display images inline via `zion_display` (iTerm2 OSC 1337 protocol) | — |
 | Voice Input | Dictate text to terminal via Apple Speech (free, real-time) or OpenAI Whisper | `⌥⌘X` |
 | Voice Engines | Apple Speech for instant local recognition; Whisper for higher accuracy with API key | Settings |
-| Voice Pill | Floating voice-active pill with waveform animation while listening | — |
+| Voice Pill | Floating voice-active pill with waveform animation while listening |
+| Whisper Recovery | Graceful fallback to Apple Speech when Whisper is unavailable (quota, key missing, service down) with recovery guidance | — |
 
 ## Smart Clipboard
 
@@ -190,6 +199,7 @@
 | Commit Message Style | Toggle between compact (single-line) and detailed (header + bullet points) AI-generated messages |
 | Pre-Commit Review Gate | Automatic AI review before committing — shows findings and lets you fix or commit anyway |
 | Provider Config | Anthropic (Claude), OpenAI (GPT), Google (Gemini), API keys in Keychain |
+| Connected Providers | Multiple AI providers connected simultaneously — e.g., keep OpenAI for Whisper while using Claude as default |
 
 ## Zion Bridge
 

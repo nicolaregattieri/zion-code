@@ -98,6 +98,8 @@ struct ZionMapContent {
                 ZionMapEntry("map.terminal.voiceInput.title", description: "map.terminal.voiceInput.description",
                              shortcut: "\u{2325}\u{2318}X",
                              tips: ["map.terminal.voiceInput.tip1"]),
+                ZionMapEntry("map.terminal.whisperRecovery.title", description: "map.terminal.whisperRecovery.description",
+                             tips: ["map.terminal.whisperRecovery.tip1"]),
             ]
 
         case .clipboard:
@@ -164,6 +166,8 @@ struct ZionMapContent {
                              tips: ["map.ai.precommit.tip1"]),
                 ZionMapEntry("map.ai.slashcommands.title", description: "map.ai.slashcommands.description",
                              tips: ["map.ai.slashcommands.tip1"]),
+                ZionMapEntry("map.ai.connectedProviders.title", description: "map.ai.connectedProviders.description",
+                             tips: ["map.ai.connectedProviders.tip1"]),
             ]
 
         case .customization:
