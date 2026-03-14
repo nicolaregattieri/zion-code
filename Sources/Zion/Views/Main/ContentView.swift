@@ -41,6 +41,7 @@ struct ContentView: View {
     @AppStorage("zion.appearance") private var appearanceRaw: String = AppAppearance.system.rawValue
     @AppStorage("zion.hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
     @AppStorage("zion.hasCompletedFeatureTour") private var hasCompletedFeatureTour: Bool = false
+    @AppStorage("zion.hasOpenedRepositoryOnce") private var hasOpenedRepositoryOnce: Bool = false
     @AppStorage("zion.zenModeEnabled") private var zenModeEnabled: Bool = false
     @AppStorage("zion.zionModeEnabled") var zionModeEnabled: Bool = false
     @AppStorage("zion.preZionModeTheme") private var preZionModeTheme: String = ""
@@ -125,10 +126,17 @@ struct ContentView: View {
             logger.log(.info, "Boot: starting", source: "ContentView")
             model.clipboardMonitor.start()
             model.restoreEditorSettings()
+            if !hasOpenedRepositoryOnce,
+               FeatureTourLaunchPolicy.inferredExistingRepositoryHistory(
+                from: UserDefaults.standard.data(forKey: "zion.recentRepositories")
+               ) {
+                hasOpenedRepositoryOnce = true
+            }
             let result = model.restoreLastRepository()
             switch result {
             case .opened(let url):
                 hasCompletedOnboarding = true
+                hasOpenedRepositoryOnce = true
                 logger.log(.info, "Boot: restored \(url.lastPathComponent)", source: "ContentView")
             case .missing(let url):
                 logger.log(.info, "Boot: missing \(url.lastPathComponent)", source: "ContentView")
@@ -170,8 +178,12 @@ struct ContentView: View {
         }
         .onChange(of: model.repositoryURL) { _, url in
             if url != nil {
-                let shouldAutoStartFeatureTour = !hasCompletedOnboarding && !hasCompletedFeatureTour
+                let shouldAutoStartFeatureTour = FeatureTourLaunchPolicy.shouldAutoStartFirstRepositoryTour(
+                    hasOpenedRepositoryOnce: hasOpenedRepositoryOnce,
+                    hasCompletedFeatureTour: hasCompletedFeatureTour
+                )
                 route(.repositoryOpened)
+                hasOpenedRepositoryOnce = true
                 if shouldAutoStartFeatureTour {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                         startFeatureTour()
