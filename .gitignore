@@ -40,9 +40,11 @@ DerivedData/
 *.xcworkspace/
 
 # Zion Specific
-scripts/
+scripts/*
+!scripts/make-app.sh
+!scripts/make-dmg.sh
+!scripts/release.sh
 dist/
-docs/RELEASE.md
 docs/NTFY-QA-CHECKLIST.md
 docs/ZION-CENTRAL.md
 docs/STORY.md
@@ -57,6 +59,8 @@ ZION-HEALTH.md
 .cursor/
 *.swp
 *~
+.env.notarize
+.zion-release.local
 
 # AI assistant context
 AGENTS.md

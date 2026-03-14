@@ -5,15 +5,5 @@
     <!-- Required by SwiftTerm's terminal emulator for PTY/JIT memory operations -->
     <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
     <true/>
-    <key>com.apple.security.network.client</key>
-    <true/>
-    <key>com.apple.security.network.server</key>
-    <true/>
-    <key>com.apple.security.device.audio-input</key>
-    <true/>
-    <key>keychain-access-groups</key>
-    <array>
-        <string>$(AppIdentifierPrefix)com.nicolaregattieri.zioncode</string>
-    </array>
 </dict>
 </plist>
