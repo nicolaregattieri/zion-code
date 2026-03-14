@@ -138,7 +138,6 @@ if [ "$CODESIGN_IDENTITY" != "-" ]; then
     # Sign Sparkle inside-out to keep the updater helpers launchable.
     sign_with_identity \
       --options runtime \
-      --preserve-metadata=entitlements \
       "$SPARKLE_ROOT/XPCServices/Downloader.xpc"
 
     sign_with_identity \
