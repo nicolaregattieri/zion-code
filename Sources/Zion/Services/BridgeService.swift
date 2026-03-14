@@ -265,11 +265,23 @@ struct BridgeService {
 
     private func detection(for target: BridgeTarget, repositoryURL: URL) -> BridgeToolDetection {
         let paths = discoveryRoots(for: target)
-        let hitPaths = paths.filter { fileManager.fileExists(atPath: repositoryURL.appendingPathComponent($0).path) }
+        var hitDetails: [String] = []
+        for path in paths {
+            let url = repositoryURL.appendingPathComponent(path)
+            var isDirectory: ObjCBool = false
+            guard fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory) else { continue }
+            if isDirectory.boolValue {
+                let count = (try? fileManager.contentsOfDirectory(at: url, includingPropertiesForKeys: nil))?
+                    .filter { !$0.lastPathComponent.hasPrefix(".") }.count ?? 0
+                hitDetails.append(count > 0 ? path : "\(path) (\(L10n("bridge.detect.empty.folder")))")
+            } else {
+                hitDetails.append(path)
+            }
+        }
         return BridgeToolDetection(
             target: target,
-            isDetected: !hitPaths.isEmpty,
-            detail: hitPaths.isEmpty ? L10n("bridge.detect.none") : hitPaths.joined(separator: ", ")
+            isDetected: !hitDetails.isEmpty,
+            detail: hitDetails.isEmpty ? L10n("bridge.detect.none") : hitDetails.joined(separator: ", ")
         )
     }
 

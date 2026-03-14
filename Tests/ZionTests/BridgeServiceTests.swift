@@ -188,6 +188,46 @@ final class BridgeServiceTests: XCTestCase {
         )
     }
 
+    func testDetectionShowsEmptyHintWhenFolderExistsButHasNoFiles() throws {
+        try FileManager.default.createDirectory(
+            at: tempDir.appendingPathComponent(".claude/rules"),
+            withIntermediateDirectories: true
+        )
+
+        let state = service.loadState(repositoryURL: tempDir)
+        let claudeDetection = try XCTUnwrap(state.detections.first(where: { $0.target == .claude }))
+
+        XCTAssertTrue(claudeDetection.isDetected)
+        XCTAssertTrue(claudeDetection.detail.contains("("))
+    }
+
+    func testDetectionShowsNotDetectedWhenFolderIsMissing() throws {
+        let state = service.loadState(repositoryURL: tempDir)
+        let codexDetection = try XCTUnwrap(state.detections.first(where: { $0.target == .codex }))
+
+        XCTAssertFalse(codexDetection.isDetected)
+    }
+
+    func testAnalyzeClaudeToCodexWorksWhenDestinationMissing() throws {
+        try FileManager.default.createDirectory(
+            at: tempDir.appendingPathComponent(".claude/rules"),
+            withIntermediateDirectories: true
+        )
+        try "Always use snake_case for variable names.\n".write(
+            to: tempDir.appendingPathComponent(".claude/rules/naming.md"),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        let analysis = try service.analyze(from: .claude, to: .codex, repositoryURL: tempDir)
+
+        XCTAssertFalse(analysis.rows.isEmpty, "Should produce rows even when destination folder is missing")
+        let row = try XCTUnwrap(analysis.rows.first)
+        XCTAssertEqual(row.destinationRelativePath, ".agents/rules/naming.md")
+        XCTAssertEqual(row.mappingKind, .newImport)
+        XCTAssertEqual(row.action, .create)
+    }
+
     func testClaudeToCursorRendersNativeMdcShape() throws {
         try FileManager.default.createDirectory(
             at: tempDir.appendingPathComponent(".claude/commands"),

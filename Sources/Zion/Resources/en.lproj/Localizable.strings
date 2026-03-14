@@ -2098,6 +2098,8 @@
 "bridge.detect.detected" = "detected";
 "bridge.detect.missing" = "missing";
 "bridge.detect.none" = "No matching files found";
+"bridge.detect.empty.folder" = "empty";
+"bridge.detect.willCreate" = "will be created";
 "bridge.summary.title" = "Migration Summary";
 "bridge.summary.updates" = "Writes";
 "bridge.summary.review" = "Needs Review";

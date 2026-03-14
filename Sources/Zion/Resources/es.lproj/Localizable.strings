@@ -2120,6 +2120,8 @@
 "bridge.detect.detected" = "detectado";
 "bridge.detect.missing" = "ausente";
 "bridge.detect.none" = "No se encontraron archivos compatibles";
+"bridge.detect.empty.folder" = "vacío";
+"bridge.detect.willCreate" = "se creará";
 "bridge.summary.title" = "Resumen de Migración";
 "bridge.summary.updates" = "Escrituras";
 "bridge.summary.review" = "Revisión";
