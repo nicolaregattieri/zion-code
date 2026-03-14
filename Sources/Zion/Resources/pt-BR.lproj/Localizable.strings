@@ -2080,3 +2080,15 @@
 "bridge.reason.multipleCandidates" = "Mais de um arquivo resolve para este caminho de destino. Revise antes de sincronizar.";
 "bridge.reason.unsupported" = "O Bridge não conhece um formato nativo seguro de destino para este arquivo.";
 "bridge.open.hint" = "Abrir Zion Bridge";
+
+// Divergence Resolution
+"divergence.title" = "Branches Divergentes";
+"divergence.subtitle" = "As versões local e remota de '%@' divergiram.";
+"divergence.localAhead" = "%d local à frente";
+"divergence.remoteAhead" = "%d remoto à frente";
+"divergence.option.rebase" = "Pull com Rebase";
+"divergence.option.rebase.desc" = "Reaplica seus commits locais sobre o remoto — histórico linear mais limpo.";
+"divergence.option.merge" = "Pull com Merge";
+"divergence.option.merge.desc" = "Cria um commit de merge preservando ambos os históricos.";
+"divergence.option.forceAlign" = "Forçar Alinhamento com Remoto";
+"divergence.option.forceAlign.desc" = "Descarta commits locais e reseta para o remoto. Um snapshot de recuperação será criado antes.";

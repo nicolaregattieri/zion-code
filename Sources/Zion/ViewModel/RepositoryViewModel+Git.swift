@@ -313,6 +313,7 @@ extension RepositoryViewModel {
         refreshRequestID = requestID
         if setBusy {
             isBusy = true
+            armBusyWatchdog()
         }
 
         let focusedBranchSnapshot = focusedBranch
@@ -424,6 +425,7 @@ extension RepositoryViewModel {
                 captureRepositorySnapshot(for: repositoryURL)
                 if setBusy {
                     isBusy = false
+                    disarmBusyWatchdog()
                     if clearRepositorySwitchStateOnBusyCompletion, isSwitchingRepository {
                         clearRepositorySwitchState()
                     }
@@ -449,6 +451,7 @@ extension RepositoryViewModel {
                 guard refreshRequestID == requestID else { return }
                 if setBusy {
                     isBusy = false
+                    disarmBusyWatchdog()
                     if clearRepositorySwitchStateOnBusyCompletion, isSwitchingRepository {
                         clearRepositorySwitchState()
                     }
@@ -461,6 +464,7 @@ extension RepositoryViewModel {
                 guard refreshRequestID == requestID else { return }
                 if setBusy {
                     isBusy = false
+                    disarmBusyWatchdog()
                     if clearRepositorySwitchStateOnBusyCompletion, isSwitchingRepository {
                         clearRepositorySwitchState()
                     }
@@ -494,6 +498,7 @@ extension RepositoryViewModel {
         let actionToken = UUID()
         activeGitActionToken = actionToken
         isBusy = true
+        armBusyWatchdog()
         extendFileWatcherGitMetadataSuppression(by: 2.0)
 
         let commandSummary = redactedGitCommandSummary(args: args)
@@ -521,6 +526,7 @@ extension RepositoryViewModel {
                 activeGitActionToken = nil
                 if !refreshSetBusy {
                     isBusy = false
+                    disarmBusyWatchdog()
                 }
                 refreshRepository(
                     setBusy: refreshSetBusy,
@@ -536,12 +542,14 @@ extension RepositoryViewModel {
                 guard activeGitActionToken == actionToken else { return }
                 activeGitActionToken = nil
                 isBusy = false
+                disarmBusyWatchdog()
                 logger.log(.info, "\(label) cancelled", context: commandSummary, source: #function)
                 return
             } catch {
                 guard activeGitActionToken == actionToken else { return }
                 activeGitActionToken = nil
                 isBusy = false
+                disarmBusyWatchdog()
                 logger.log(.error, error.localizedDescription, context: commandSummary)
                 handleError(error)
             }
@@ -568,6 +576,7 @@ extension RepositoryViewModel {
         let actionToken = UUID()
         activeGitActionToken = actionToken
         isBusy = true
+        armBusyWatchdog()
 
         let commandSummary = redactedGitCommandSummary(args: args)
         logger.log(.git, commandSummary, context: label)
@@ -612,12 +621,14 @@ extension RepositoryViewModel {
                 guard activeGitActionToken == actionToken else { return }
                 activeGitActionToken = nil
                 isBusy = false
+                disarmBusyWatchdog()
                 logger.log(.info, "\(label) cancelled", context: commandSummary, source: #function)
                 return
             } catch {
                 guard activeGitActionToken == actionToken else { return }
                 activeGitActionToken = nil
                 isBusy = false
+                disarmBusyWatchdog()
                 logger.log(.error, error.localizedDescription, context: commandSummary)
                 handleError(error)
             }
@@ -691,6 +702,25 @@ extension RepositoryViewModel {
             || subcommand == "pull"
             || subcommand == "push"
             || subcommand == "ls-remote"
+    }
+
+    // MARK: - Busy Watchdog
+
+    func armBusyWatchdog() {
+        busyWatchdogTask?.cancel()
+        busyWatchdogTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: Constants.Timing.busyWatchdogTimeout)
+            guard let self, !Task.isCancelled else { return }
+            if self.isBusy {
+                self.logger.log(.warn, "Busy watchdog fired — force-clearing isBusy", source: #function)
+                self.isBusy = false
+            }
+        }
+    }
+
+    func disarmBusyWatchdog() {
+        busyWatchdogTask?.cancel()
+        busyWatchdogTask = nil
     }
 
     static func shouldSkipRefreshWhileBusy(setBusy: Bool, isBusy: Bool, origin: RefreshOrigin) -> Bool {

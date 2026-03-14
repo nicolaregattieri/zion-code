@@ -191,6 +191,21 @@ enum PushDivergenceState {
     case diverged(ahead: Int, behind: Int)
 }
 
+// MARK: - Branch Divergence Resolution
+
+struct DivergenceContext: Identifiable {
+    let id = UUID()
+    let branch: String
+    let localAhead: Int
+    let remoteAhead: Int
+}
+
+enum DivergenceResolution {
+    case rebase
+    case merge
+    case forceAlign
+}
+
 // MARK: - AI
 
 enum AIProvider: String, CaseIterable, Identifiable {

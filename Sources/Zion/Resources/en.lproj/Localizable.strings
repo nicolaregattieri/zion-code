@@ -2080,3 +2080,15 @@
 "bridge.reason.multipleCandidates" = "More than one file resolves to this destination path. Review before syncing.";
 "bridge.reason.unsupported" = "Bridge does not know a safe native destination shape for this file.";
 "bridge.open.hint" = "Open Zion Bridge";
+
+// Divergence Resolution
+"divergence.title" = "Divergent Branches";
+"divergence.subtitle" = "Local and remote versions of '%@' have diverged.";
+"divergence.localAhead" = "%d local ahead";
+"divergence.remoteAhead" = "%d remote ahead";
+"divergence.option.rebase" = "Pull with Rebase";
+"divergence.option.rebase.desc" = "Replay your local commits on top of remote — cleanest linear history.";
+"divergence.option.merge" = "Pull with Merge";
+"divergence.option.merge.desc" = "Create a merge commit preserving both histories.";
+"divergence.option.forceAlign" = "Force Align to Remote";
+"divergence.option.forceAlign.desc" = "Discard local commits and reset to remote. A recovery snapshot will be created first.";
