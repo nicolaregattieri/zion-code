@@ -403,7 +403,7 @@
 
 // Shortcuts highlight
 "help.shortcuts.title" = "Mais de 15 atalhos de teclado";
-"help.shortcuts.subtitle" = "Pressione ⌘? para ver todos os atalhos disponíveis.";
+"help.shortcuts.subtitle" = "Pressione ⌥⌘K para ver todos os atalhos disponíveis.";
 
 // Diagnostics
 "Exportar Diagnostico..." = "Exportar Diagnóstico...";
@@ -812,7 +812,7 @@
 "help.codeReview.title" = "Code Review";
 "help.codeReview.features" = "Revisão em tela cheia por arquivo|Análise IA por arquivo|Comentários inline em PRs com threads de resposta|Enviar reviews (Aprovar/Solicitar Alterações/Comentar)|Exportar como Markdown|Atalho Cmd+Shift+R";
 "help.prInbox.title" = "Caixa de PRs";
-"help.prInbox.features" = "Suporte a GitHub, GitLab, Bitbucket e Azure DevOps|Fila de PRs atribuídos|Navegar todos os PRs abertos|Revisão automática com IA|Clique para abrir no Code Review|Notificações macOS + ntfy";
+"help.prInbox.features" = "Suporte a GitHub, GitLab, Bitbucket e Azure DevOps|Fila de PRs atribuídos|Navegar todos os PRs abertos com atualização por polling|Revisão automática com IA|Clique para abrir no Code Review|Alertas macOS + ntfy para novos PRs e reviews";
 
 
 // Zion Map — Settings
@@ -849,8 +849,8 @@
 "map.prinbox.queue.description" = "Card na sidebar mostrando todos os PRs atribuídos com badges de status e resumos de severidade.";
 "map.prinbox.autoreview.title" = "Revisão Automática";
 "map.prinbox.autoreview.description" = "Quando ativado, a IA revisa automaticamente PRs atribuídos e notifica você com os achados prontos.";
-"map.prinbox.notifications.title" = "Notificações de Revisão";
-"map.prinbox.notifications.description" = "Receba notificações do macOS e alertas push via ntfy quando a IA completar revisões de PR.";
+"map.prinbox.notifications.title" = "Notificações de Pull Requests";
+"map.prinbox.notifications.description" = "Receba notificações do macOS e alertas push via ntfy para PRs recém-abertos, pedidos de review e revisões de IA concluídas.";
 
 // Auto Updates (Sparkle)
 "Buscar Atualizacoes..." = "Buscar Atualizações...";

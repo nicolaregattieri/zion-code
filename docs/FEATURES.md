@@ -226,7 +226,7 @@
 | General Tab | Language, Appearance, Confirmation Mode | — |
 | Editor Tab | Theme, font family/size, spacing, tab/indent, ruler, wrap, guides, bracket highlight | — |
 | AI Tab | Provider, API key, Commit style, Diff explanation depth, Auto-explain | — |
-| Notifications Tab | ntfy topic, events, PR polling interval, Auto-review toggle | — |
+| Notifications Tab | ntfy topic, pull request events, PR polling interval, Auto-review toggle | — |
 | Find in Files | Search across all repository files with grouped results and go-to-line | `⇧⌘F` |
 | Ntfy Push Notifications | Configurable ntfy server/topic for push notifications on Git events and AI completions | Settings |
 | Force Push Options | Force Push with Lease (safe) and Force Push (override) when push is rejected due to divergence | — |
@@ -257,10 +257,10 @@
 | Feature | Description |
 |---------|-------------|
 | PR Queue | Sidebar card showing assigned PRs with status badges |
-| All Open PRs | Browse all open PRs in the repo via segmented "All Open" tab |
+| All Open PRs | Browse all open PRs in the repo via segmented "All Open" tab, refreshed on the PR polling cadence |
 | Auto-Review | AI automatically reviews assigned PRs when they arrive |
 | Status Flow | Pending → Reviewing → Reviewed/Clean with severity badges |
-| Notifications | macOS + ntfy push alerts when AI review completes |
+| Notifications | macOS + ntfy push alerts for new PRs, review requests, and AI review completion |
 | Open in Code Review | Click any PR (assigned or open) to open it in the full Code Review screen |
 
 ## Auto Updates
@@ -386,7 +386,7 @@
 | `⌘1` | Code workspace |
 | `⌘2` | Graph workspace |
 | `⌘3` | Operations workspace |
-| `⌘/` | Keyboard shortcuts sheet |
+| `⌥⌘K` | Keyboard shortcuts sheet |
 | `⌘P` | Quick Open |
 | `⌘B` | Toggle file browser |
 | `⌘N` | New file |

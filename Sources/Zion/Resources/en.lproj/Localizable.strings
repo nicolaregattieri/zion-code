@@ -507,7 +507,7 @@
 
 // Shortcuts highlight
 "help.shortcuts.title" = "Over 15 keyboard shortcuts";
-"help.shortcuts.subtitle" = "Press ⌘? to see all available shortcuts.";
+"help.shortcuts.subtitle" = "Press ⌥⌘K to see all available shortcuts.";
 
 // Diagnostics
 "Exportar Diagnostico..." = "Export Diagnostics...";
@@ -916,7 +916,7 @@
 "help.codeReview.title" = "Code Review";
 "help.codeReview.features" = "Full-window file-by-file review|Per-file AI analysis|Inline PR comments with reply threads|Submit reviews (Approve/Request Changes/Comment)|Export as Markdown|Cmd+Shift+R shortcut";
 "help.prInbox.title" = "PR Inbox";
-"help.prInbox.features" = "GitHub, GitLab, Bitbucket, and Azure DevOps support|Assigned PR queue|Browse all open PRs|Auto-review with AI|Click to open in Code Review|macOS + ntfy notifications";
+"help.prInbox.features" = "GitHub, GitLab, Bitbucket, and Azure DevOps support|Assigned PR queue|Browse all open PRs with polling refresh|Auto-review with AI|Click to open in Code Review|macOS + ntfy alerts for new PRs and reviews";
 
 
 // Zion Map — Settings
@@ -953,8 +953,8 @@
 "map.prinbox.queue.description" = "Sidebar card showing all assigned PRs with status badges and severity summaries.";
 "map.prinbox.autoreview.title" = "Auto-Review";
 "map.prinbox.autoreview.description" = "When enabled, AI automatically reviews assigned PRs and notifies you with findings ready.";
-"map.prinbox.notifications.title" = "Review Notifications";
-"map.prinbox.notifications.description" = "Get macOS notifications and ntfy push alerts when AI completes PR reviews.";
+"map.prinbox.notifications.title" = "Pull Request Notifications";
+"map.prinbox.notifications.description" = "Get macOS notifications and ntfy push alerts for newly opened PRs, review requests, and completed AI reviews.";
 
 // Auto Updates (Sparkle)
 "Buscar Atualizacoes..." = "Check for Updates\U2026";
