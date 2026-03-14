@@ -204,9 +204,8 @@ function closeDrawer() {
   $('#drawer-overlay').classList.remove('open');
 }
 
-// -- Crypto (AES-256-GCM via Web Crypto API, skipped in LAN mode) --
+// -- Crypto (AES-256-GCM via Web Crypto API — always enabled) --
 async function importKey(b64url) {
-  if (LAN_MODE) return null;
   let b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
   while (b64.length % 4) b64 += '=';
   const raw = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
@@ -214,7 +213,6 @@ async function importKey(b64url) {
 }
 
 async function encrypt(data) {
-  if (LAN_MODE) return data;
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const ct = await crypto.subtle.encrypt({name:'AES-GCM',iv}, cryptoKey, data);
   const combined = new Uint8Array(12 + ct.byteLength);
@@ -224,7 +222,6 @@ async function encrypt(data) {
 }
 
 async function decrypt(combined) {
-  if (LAN_MODE) return combined;
   const iv = combined.slice(0, 12);
   const ct = combined.slice(12);
   return crypto.subtle.decrypt({name:'AES-GCM',iv}, cryptoKey, ct);

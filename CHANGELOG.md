@@ -2,6 +2,8 @@
 
 All notable changes to Zion are documented here.
 
+> **For releases after v1.2.6**, see the full release notes on [GitHub Releases](https://github.com/nicolaregattieri/zion-code/releases).
+
 ---
 
 ## 1.2.6 — 2026-02-24

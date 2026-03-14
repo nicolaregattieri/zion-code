@@ -4,6 +4,17 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
+DEFAULT_ENV_FILE="$ROOT_DIR/.zion-release.local"
+LEGACY_ENV_FILE="$ROOT_DIR/.env.notarize"
+ENV_FILE="${ZION_ENV_FILE:-$DEFAULT_ENV_FILE}"
+if [ ! -f "$ENV_FILE" ] && [ "$ENV_FILE" = "$DEFAULT_ENV_FILE" ] && [ -f "$LEGACY_ENV_FILE" ]; then
+  ENV_FILE="$LEGACY_ENV_FILE"
+fi
+if [ -f "$ENV_FILE" ]; then
+  # shellcheck disable=SC1090
+  source "$ENV_FILE"
+fi
+
 export SWIFTPM_MODULECACHE_OVERRIDE="$ROOT_DIR/.build/module-cache"
 export CLANG_MODULE_CACHE_PATH="$ROOT_DIR/.build/clang-module-cache"
 
@@ -117,10 +128,52 @@ chmod +x "$APP_DIR/Contents/MacOS/Zion"
 xattr -cr "$APP_DIR"
 
 # Re-sign app bundle (install_name_tool invalidates the ad-hoc signature from swift build)
-# Note: Zion.entitlements exists for future Apple notarization but is NOT used with
-# ad-hoc signing (--sign -) as it causes Gatekeeper rejection. When notarization is
-# ready, switch to: codesign --sign "Developer ID" --entitlements Zion.entitlements
-codesign --force --deep --sign - "$APP_DIR"
+# Set CODESIGN_IDENTITY in your environment for notarization (e.g., "Developer ID Application: Your Name (TEAMID)")
+# When unset or "-", falls back to ad-hoc signing without entitlements.
+CODESIGN_IDENTITY="${CODESIGN_IDENTITY:--}"
+
+if [ "$CODESIGN_IDENTITY" != "-" ]; then
+  sign_with_identity() {
+    local target="$1"
+    shift
+    codesign --force --sign "$CODESIGN_IDENTITY" --timestamp "$@" "$target"
+  }
+
+  # Sign nested Sparkle code explicitly before sealing the app bundle.
+  SPARKLE_ROOT="$APP_DIR/Contents/Frameworks/Sparkle.framework/Versions/B"
+  if [ -d "$SPARKLE_ROOT" ]; then
+    if [ -f "$SPARKLE_ROOT/Autoupdate" ]; then
+      sign_with_identity "$SPARKLE_ROOT/Autoupdate" --options runtime
+    fi
+
+    if [ -d "$SPARKLE_ROOT/XPCServices/Downloader.xpc" ]; then
+      sign_with_identity "$SPARKLE_ROOT/XPCServices/Downloader.xpc" --options runtime
+    fi
+
+    if [ -d "$SPARKLE_ROOT/XPCServices/Installer.xpc" ]; then
+      sign_with_identity "$SPARKLE_ROOT/XPCServices/Installer.xpc" --options runtime
+    fi
+
+    if [ -d "$SPARKLE_ROOT/Updater.app" ]; then
+      sign_with_identity "$SPARKLE_ROOT/Updater.app" --options runtime
+    fi
+
+    sign_with_identity "$APP_DIR/Contents/Frameworks/Sparkle.framework"
+  fi
+
+  sign_with_identity "$APP_DIR/Contents/MacOS/Zion" \
+    --options runtime \
+    --entitlements "$ROOT_DIR/Zion.entitlements"
+
+  sign_with_identity "$APP_DIR" \
+    --options runtime \
+    --entitlements "$ROOT_DIR/Zion.entitlements"
+  echo "Signed with identity: $CODESIGN_IDENTITY (hardened runtime + entitlements)"
+else
+  # Ad-hoc signing for local development
+  codesign --force --deep --sign - "$APP_DIR"
+  echo "Signed ad-hoc (set CODESIGN_IDENTITY for notarization)"
+fi
 
 # Nudge Finder/LaunchServices caches by bumping bundle mtimes after final signing
 touch "$APP_DIR/Contents/Info.plist" "$APP_DIR"

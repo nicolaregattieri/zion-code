@@ -85,7 +85,7 @@ struct ClimbingZionView: View {
                     .font(DesignSystem.Typography.screenTitle)
 
                 Text(L10n("onboarding.subtitle"))
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DesignSystem.Typography.subtitle)
                     .foregroundStyle(.secondary)
                     .tracking(0.5)
             }
@@ -123,9 +123,9 @@ struct ClimbingZionView: View {
 
             VStack(spacing: 6) {
                 Text(L10n("onboarding.tree.title"))
-                    .font(.system(size: 24, weight: .bold))
+                    .font(DesignSystem.Typography.onboardingTitle)
                 Text(L10n("onboarding.tree.subtitle"))
-                    .font(.system(size: 13))
+                    .font(DesignSystem.Typography.cardBody)
                     .foregroundStyle(.secondary)
             }
 
@@ -151,9 +151,9 @@ struct ClimbingZionView: View {
 
             VStack(spacing: 6) {
                 Text(L10n("onboarding.code.title"))
-                    .font(.system(size: 24, weight: .bold))
+                    .font(DesignSystem.Typography.onboardingTitle)
                 Text(L10n("onboarding.code.subtitle"))
-                    .font(.system(size: 13))
+                    .font(DesignSystem.Typography.cardBody)
                     .foregroundStyle(.secondary)
             }
 
@@ -179,9 +179,9 @@ struct ClimbingZionView: View {
 
             VStack(spacing: 6) {
                 Text(L10n("onboarding.ai.title"))
-                    .font(.system(size: 24, weight: .bold))
+                    .font(DesignSystem.Typography.onboardingTitle)
                 Text(L10n("onboarding.ai.subtitle"))
-                    .font(.system(size: 13))
+                    .font(DesignSystem.Typography.cardBody)
                     .foregroundStyle(.secondary)
             }
 
@@ -192,7 +192,7 @@ struct ClimbingZionView: View {
                 .padding(.horizontal, 40)
 
             Text(L10n("onboarding.ai.optional"))
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignSystem.Typography.bodySemibold)
                 .foregroundStyle(DesignSystem.Colors.ai)
 
             // Provider cards
@@ -213,7 +213,7 @@ struct ClimbingZionView: View {
 
                     if keySaved {
                         Label(L10n("onboarding.ai.keySaved"), systemImage: "checkmark.circle.fill")
-                            .font(.system(size: 12, weight: .medium))
+                            .font(DesignSystem.Typography.bodySemibold)
                             .foregroundStyle(DesignSystem.Colors.success)
                     } else {
                         Button(L10n("Salvar")) { saveAPIKey() }
@@ -248,15 +248,15 @@ struct ClimbingZionView: View {
             Spacer()
 
             Image(systemName: "mountain.2.fill")
-                .font(.system(size: 56))
+                .font(DesignSystem.Typography.onboardingIcon)
                 .foregroundStyle(DesignSystem.Colors.brandPrimary)
                 .shadow(color: DesignSystem.Colors.brandPrimary.opacity(0.4), radius: 8, y: 2)
 
             VStack(spacing: 6) {
                 Text(L10n("onboarding.ready.title"))
-                    .font(.system(size: 24, weight: .bold))
+                    .font(DesignSystem.Typography.onboardingTitle)
                 Text(L10n("onboarding.ready.subtitle"))
-                    .font(.system(size: 13))
+                    .font(DesignSystem.Typography.cardBody)
                     .foregroundStyle(.secondary)
             }
 
@@ -388,7 +388,7 @@ struct ClimbingZionView: View {
 
     private func featureIcon(_ systemName: String, color: Color) -> some View {
         Image(systemName: systemName)
-            .font(.system(size: 40))
+            .font(DesignSystem.Typography.onboardingFeatureIcon)
             .foregroundStyle(color)
             .frame(width: 72, height: 72)
             .background(color.opacity(0.12))
@@ -402,7 +402,7 @@ struct ClimbingZionView: View {
                 .frame(width: 6, height: 6)
                 .padding(.top, 6)
             Text(text)
-                .font(.system(size: 13))
+                .font(DesignSystem.Typography.cardBody)
                 .foregroundStyle(.primary.opacity(0.85))
         }
     }
@@ -412,7 +412,7 @@ struct ClimbingZionView: View {
 
         return VStack(spacing: 10) {
             Image(systemName: icon)
-                .font(.system(size: 20))
+                .font(DesignSystem.Typography.onboardingFeatureLabel)
                 .foregroundStyle(isSelected ? DesignSystem.Colors.ai : .secondary)
                 .frame(width: 40, height: 40)
                 .background(isSelected ? DesignSystem.Colors.ai.opacity(0.15) : DesignSystem.Colors.glassSubtle)
@@ -467,7 +467,7 @@ struct ClimbingZionView: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 20)
             Text(title)
-                .font(.system(size: 13, weight: .medium))
+                .font(DesignSystem.Typography.cardBodyMedium)
             Spacer()
             if enabled {
                 Label(L10n("onboarding.ready.enabled"), systemImage: "checkmark.circle.fill")

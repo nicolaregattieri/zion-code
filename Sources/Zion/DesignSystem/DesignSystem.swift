@@ -231,6 +231,7 @@ struct DesignSystem {
         static let micro = Font.system(size: 8, weight: .bold)
 
         // Icon-sized
+        static let settingsTabIcon = Font.system(size: 22)
         static let iconLarge = Font.system(size: 20, weight: .medium)
 
         // Bold variants
@@ -258,6 +259,24 @@ struct DesignSystem {
         static let monoLabelMedium = Font.system(size: 10, weight: .medium, design: .monospaced)
         static let monoSmallMedium = Font.system(size: 11, weight: .medium, design: .monospaced)
 
+        // Section/card header
+        static let cardTitle = Font.system(size: 13, weight: .semibold)
+        static let cardBody = Font.system(size: 13)
+        static let cardBodyMedium = Font.system(size: 13, weight: .medium)
+        static let monoCardBody = Font.system(size: 13, weight: .medium, design: .monospaced)
+
+        // Sheet / modal sizes
+        static let sheetSectionTitle = Font.system(size: 18, weight: .bold)
+        static let sheetBody = Font.system(size: 16)
+        static let sheetIcon = Font.system(size: 18)
+
+        // Onboarding
+        static let heroTitle = Font.system(size: 44, weight: .black)
+        static let onboardingTitle = Font.system(size: 24, weight: .bold)
+        static let onboardingIcon = Font.system(size: 56)
+        static let onboardingFeatureIcon = Font.system(size: 40)
+        static let onboardingFeatureLabel = Font.system(size: 20)
+
         // Large decorative/icon sizes
         static let emptyStateIcon = Font.system(size: 48)
         static let decorativeIcon = Font.system(size: 28)
@@ -274,6 +293,7 @@ struct DesignSystem {
         static let muted: Double = 0.5
         static let subtle: Double = 0.45
         static let dim: Double = 0.3
+        static let selectedSubtle: Double = 0.12
         static let faint: Double = 0.15
         static let ghost: Double = 0.08
     }

@@ -251,6 +251,8 @@
 "Abort" = "Abort";
 
 // OperationsScreen
+"ops.title" = "Zion Ops";
+"ops.branch.head" = "HEAD %@";
 "STAGED" = "STAGED";
 
 // Commit context menu

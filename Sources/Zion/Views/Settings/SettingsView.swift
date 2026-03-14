@@ -28,6 +28,7 @@ private enum SettingsTab: String, CaseIterable {
 
 struct SettingsView: View {
     @State private var selectedTab: SettingsTab = .general
+    @State private var hoveredTab: SettingsTab?
     @AppStorage("zion.uiLanguage") private var uiLanguageRaw: String = AppLanguage.system.rawValue
 
     private var uiLanguage: AppLanguage { AppLanguage(rawValue: uiLanguageRaw) ?? .system }
@@ -42,7 +43,7 @@ struct SettingsView: View {
                     } label: {
                         VStack(spacing: 2) {
                             Image(systemName: tab.icon)
-                                .font(.system(size: 22))
+                                .font(DesignSystem.Typography.settingsTabIcon)
                             Text(tab.label)
                                 .font(DesignSystem.Typography.label)
                         }
@@ -52,11 +53,18 @@ struct SettingsView: View {
                         .foregroundStyle(selectedTab == tab ? DesignSystem.Colors.actionPrimary : .secondary)
                         .background(
                             RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius)
-                                .fill(selectedTab == tab ? DesignSystem.Colors.actionPrimary.opacity(0.12) : .clear)
+                                .fill(selectedTab == tab
+                                    ? DesignSystem.Colors.actionPrimary.opacity(DesignSystem.Opacity.selectedSubtle)
+                                    : hoveredTab == tab
+                                        ? DesignSystem.Colors.glassSubtle
+                                        : .clear)
                                 .padding(.horizontal, 4)
                         )
                     }
                     .buttonStyle(.plain)
+                    .onHover { isHovered in
+                        hoveredTab = isHovered ? tab : nil
+                    }
                 }
             }
             .padding(.horizontal, 8)
