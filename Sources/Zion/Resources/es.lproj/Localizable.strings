@@ -1901,6 +1901,10 @@
 "map.ai.slashcommands.title" = "Comandos Slash para IA";
 "map.ai.slashcommands.description" = "Comando /zion-img instalado automáticamente para Claude Code, Gemini CLI y Codex CLI. Genera archivos de imagen en zion-image/ para previsualizarlos en Zion.";
 "map.ai.slashcommands.tip1" = "Activa Generación de Imágenes por IA en Configuración para instalar los comandos automáticamente al iniciar el terminal.";
+"help.ai.connectedProviders" = "Conecta múltiples proveedores de IA simultáneamente (ej: Whisper + Claude)";
+"map.ai.connectedProviders.title" = "Proveedores Conectados";
+"map.ai.connectedProviders.description" = "Mantén múltiples proveedores de IA conectados al mismo tiempo. Por ejemplo, usa OpenAI solo para Whisper mientras Claude o Gemini es el asistente principal.";
+"map.ai.connectedProviders.tip1" = "Configura cada proveedor en Configuración > IA. Los proveedores conectados aparecen en la sección Proveedores Conectados.";
 
 // Voice-to-text — 1.6.0
 "speech.button.tooltip" = "Entrada de Voz";
@@ -1978,6 +1982,10 @@
 "map.terminal.voiceInput.title" = "Entrada de Voz";
 "map.terminal.voiceInput.description" = "Dicta texto al terminal usando Apple Speech (gratis, tiempo real) o OpenAI Whisper. Una píldora flotante con animación de onda muestra cuando está escuchando.";
 "map.terminal.voiceInput.tip1" = "Configura el motor de voz en Configuración > IA. Apple Speech funciona offline; Whisper necesita clave de API de OpenAI.";
+"help.terminal.whisperRecovery" = "Recuperación automática del Whisper con respaldo a Apple Speech";
+"map.terminal.whisperRecovery.title" = "Recuperación del Whisper";
+"map.terminal.whisperRecovery.description" = "Cuando OpenAI Whisper no está disponible (cuota excedida, clave faltante, servicio caído), Zion automáticamente recurre a Apple Speech y muestra orientación de recuperación.";
+"map.terminal.whisperRecovery.tip1" = "Mantén presionado el botón de voz para cambiar de motor o ver mensajes de recuperación.";
 
 // Clone Repository
 "help.clone.title" = "Clonar Repositorio";

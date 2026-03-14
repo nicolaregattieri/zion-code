@@ -52,7 +52,8 @@ struct HelpSheet: View {
             return ["help.terminal.pty", "help.terminal.splits", "help.terminal.tabs",
                     "help.terminal.zoom", "help.terminal.persistence",
                     "help.terminal.transparency", "help.terminal.finderdrag",
-                    "help.terminalSearch", "help.terminal.voiceInput"]
+                    "help.terminalSearch", "help.terminal.voiceInput",
+                    "help.terminal.whisperRecovery"]
         case .clipboard:
             return ["help.clipboard.capture", "help.clipboard.paste",
                     "help.clipboard.drag", "help.clipboard.images",
@@ -71,6 +72,7 @@ struct HelpSheet: View {
                     "help.ai.search", "help.ai.branch", "help.ai.blame",
                     "help.ai.split", "help.ai.style", "help.ai.precommit",
                     "help.ai.slashcommands",
+                    "help.ai.connectedProviders",
                     "help.aiSummary"]
         case .customization:
             return ["help.customization.languages", "help.customization.appearance",
