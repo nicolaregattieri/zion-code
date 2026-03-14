@@ -227,7 +227,13 @@ struct VoiceInputButton: View {
                 result = await speechService.stopAndTranscribe()
             }
 
-            guard !result.transcript.isEmpty else { return }
+            guard !result.transcript.isEmpty else {
+                // Show popover so user sees recovery message (e.g. Whisper failure)
+                if speechService.recoveryIssue != nil {
+                    isPopoverPresented = true
+                }
+                return
+            }
 
             // Send to the CAPTURED target session (not the currently active one)
             if let sessionID = result.sessionID,
