@@ -58,6 +58,12 @@ if [ "$CODESIGN_IDENTITY" != "-" ] && [ -z "$NOTARY_KEYCHAIN_PROFILE" ]; then
     echo "         Apple notarization will be skipped."
 fi
 
+if [ "${1:-}" = "upload" ] && [ "$ENABLE_APPLE_NOTARIZATION" -ne 1 ]; then
+    echo "ERROR: Refusing to upload a release without Apple notarization enabled."
+    echo "       Set CODESIGN_IDENTITY and NOTARY_KEYCHAIN_PROFILE via .zion-release.local or ZION_ENV_FILE."
+    exit 1
+fi
+
 # --- Check Sparkle sign_update exists ---
 if [ ! -f "$SPARKLE_BIN/sign_update" ]; then
     echo "ERROR: Sparkle sign_update not found at $SPARKLE_BIN/sign_update"
@@ -188,12 +194,6 @@ if [ "${1:-}" = "upload" ]; then
         exit 1
     fi
 
-    # Delete existing release to avoid CDN caching stale assets
-    if gh release view "$TAG" --repo "$GITHUB_REPO" &>/dev/null; then
-        echo "Release $TAG already exists — deleting to avoid CDN cache..."
-        gh release delete "$TAG" --yes --cleanup-tag --repo "$GITHUB_REPO"
-    fi
-
     # Build "What's Changed" from commits since last tag.
     # Works for both PRs and direct commits to master — nothing gets lost.
     PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
@@ -209,7 +209,25 @@ $COMMIT_LOG
         fi
     fi
 
-    if [ -n "$NOTES_BODY" ]; then
+    if gh release view "$TAG" --repo "$GITHUB_REPO" &>/dev/null; then
+        echo "Release $TAG already exists — replacing assets in place..."
+        gh release upload "$TAG" \
+            "$DMG_PATH" \
+            "$APPCAST_PATH" \
+            --clobber \
+            --repo "$GITHUB_REPO"
+
+        if [ -n "$NOTES_BODY" ]; then
+            gh release edit "$TAG" \
+                --title "Zion $VERSION" \
+                --notes "$NOTES_BODY" \
+                --repo "$GITHUB_REPO"
+        else
+            gh release edit "$TAG" \
+                --title "Zion $VERSION" \
+                --repo "$GITHUB_REPO"
+        fi
+    elif [ -n "$NOTES_BODY" ]; then
         gh release create "$TAG" \
             --title "Zion $VERSION" \
             --notes "$NOTES_BODY" \
