@@ -243,6 +243,16 @@ struct AISettingsTab: View {
             if editingProvider == info.provider {
                 VStack(alignment: .leading, spacing: 8) {
                     SecureField(L10n("settings.ai.provider.keyPlaceholder"), text: $aiKeyInput)
+                        .textFieldStyle(.plain)
+                        .padding(8)
+                        .background(
+                            RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                                .fill(DesignSystem.Colors.glassHover)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                                .stroke(DesignSystem.Colors.glassStroke, lineWidth: 1)
+                        )
                         .onSubmit { saveKey(for: info.provider) }
 
                     HStack {
