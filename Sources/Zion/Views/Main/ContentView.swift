@@ -232,10 +232,8 @@ struct ContentView: View {
                 model.navigateToCodeRequested = false
             }
         }
-        .onChange(of: currentFeatureTourIndex) { _, _ in
-            guard isFeatureTourVisible else { return }
-            syncFeatureTourSection()
-        }
+
+
     }
 
     private func applyInteractionModifiers<Content: View>(to view: Content) -> some View {
@@ -726,7 +724,7 @@ struct ContentView: View {
     }
 
     private func startFeatureTour() {
-        guard model.repositoryURL != nil else { return }
+        guard model.repositoryURL != nil, model.isGitRepository else { return }
 
         if zenModeEnabled {
             zenModeEnabled = false
@@ -735,18 +733,6 @@ struct ContentView: View {
 
         currentFeatureTourIndex = 0
         isFeatureTourVisible = true
-        syncFeatureTourSection()
-    }
-
-    private func syncFeatureTourSection() {
-        guard isFeatureTourVisible, featureTourSteps.indices.contains(currentFeatureTourIndex) else { return }
-
-        if let requiredSection = featureTourSteps[currentFeatureTourIndex].requiredSection,
-           selectedSection != requiredSection {
-            withAnimation(DesignSystem.Motion.panel) {
-                selectedSection = requiredSection
-            }
-        }
     }
 
     private func moveFeatureTourBackward() {
