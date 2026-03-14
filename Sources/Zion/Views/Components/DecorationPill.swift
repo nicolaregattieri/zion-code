@@ -21,6 +21,9 @@ struct DecorationPill: View {
         let isSearchMatch = !highlightSearchQuery.isEmpty && name.lowercased().contains(highlightSearchQuery.lowercased())
         let pillColor = color(for: type)
         let isHighlighted = isCurrent || isSearchMatch
+        let backgroundColor = pillBackgroundColor(isCurrent: isCurrent, isSearchMatch: isSearchMatch, pillColor: pillColor)
+        let foregroundColor = pillForegroundColor(isCurrent: isCurrent, isSearchMatch: isSearchMatch, pillColor: pillColor)
+        let borderColor = pillBorderColor(isCurrent: isCurrent, isSearchMatch: isSearchMatch, pillColor: pillColor)
 
         HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
             if isMain {
@@ -51,19 +54,29 @@ struct DecorationPill: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 4)
-        .background(
+        .background {
             Capsule()
-                .fill(
-                    isSearchMatch
-                        ? DesignSystem.Colors.statusYellowBg
-                        : (isCurrent ? DesignSystem.Colors.selectionBackground : pillColor.opacity(0.12))
-                )
-        )
-        .foregroundStyle(isSearchMatch ? .primary : (isCurrent ? .primary : pillColor))
+                .fill(backgroundColor)
+        }
+        .overlay {
+            if isCurrent && !isSearchMatch {
+                Capsule()
+                    .inset(by: 2)
+                    .fill(currentTintColor(for: type))
+            }
+        }
+        .overlay {
+            if isCurrent && !isSearchMatch {
+                Capsule()
+                    .inset(by: 2)
+                    .strokeBorder(pillColor.opacity(DesignSystem.Opacity.muted), lineWidth: 1)
+            }
+        }
+        .foregroundStyle(foregroundColor)
         .overlay(
             Capsule()
                 .strokeBorder(
-                    isSearchMatch ? DesignSystem.Colors.searchHighlight : (isCurrent ? DesignSystem.Colors.selectionBorder : pillColor.opacity(0.2)),
+                    borderColor,
                     lineWidth: isHighlighted ? 1.5 : 1
                 )
         )
@@ -134,6 +147,38 @@ struct DecorationPill: View {
         case .remoteBranch: return DesignSystem.Colors.warning
         case .tag: return DesignSystem.Colors.searchHighlight
         case .other: return .gray
+        }
+    }
+
+    private func pillBackgroundColor(isCurrent: Bool, isSearchMatch: Bool, pillColor: Color) -> Color {
+        if isSearchMatch { return DesignSystem.Colors.statusYellowBg }
+        if isCurrent { return DesignSystem.Colors.glassElevated }
+        return pillColor.opacity(DesignSystem.Opacity.selectedSubtle)
+    }
+
+    private func pillForegroundColor(isCurrent: Bool, isSearchMatch: Bool, pillColor: Color) -> Color {
+        if isSearchMatch || isCurrent { return .primary }
+        return pillColor
+    }
+
+    private func pillBorderColor(isCurrent: Bool, isSearchMatch: Bool, pillColor: Color) -> Color {
+        if isSearchMatch { return DesignSystem.Colors.searchHighlight }
+        if isCurrent { return DesignSystem.Colors.selectionBorder }
+        return pillColor.opacity(0.2)
+    }
+
+    private func currentTintColor(for type: DecorationType) -> Color {
+        switch type {
+        case .head:
+            return DesignSystem.Colors.ai.opacity(DesignSystem.Opacity.faint)
+        case .localBranch:
+            return DesignSystem.Colors.statusGreenBg
+        case .remoteBranch:
+            return DesignSystem.Colors.statusOrangeBg
+        case .tag:
+            return DesignSystem.Colors.statusYellowBg
+        case .other:
+            return DesignSystem.Colors.glassSubtle
         }
     }
 }
