@@ -33,25 +33,16 @@ final class ContextualFeatureTourTests: XCTestCase {
         XCTAssertTrue(FeatureTourLaunchPolicy.inferredExistingRepositoryHistory(from: Data([0x01])))
     }
 
-    func testFeatureTourStepOrderMatchesCuratedWalkthrough() {
+    func testFeatureTourStepsOnlyCoversVisibleElements() {
         XCTAssertEqual(
             ContextualFeatureTourStep.allCases,
-            [.recentRepositories, .workspace, .worktrees, .zenToolbar, .treeHeader]
+            [.recentRepositories, .workspace, .worktrees, .zenToolbar]
         )
-    }
-
-    func testStepSectionRequirements() {
-        XCTAssertEqual(ContextualFeatureTourStep.recentRepositories.requiredSection, .code)
-        XCTAssertEqual(ContextualFeatureTourStep.workspace.requiredSection, .code)
-        XCTAssertEqual(ContextualFeatureTourStep.worktrees.requiredSection, .code)
-        XCTAssertEqual(ContextualFeatureTourStep.zenToolbar.requiredSection, .code)
-        XCTAssertEqual(ContextualFeatureTourStep.treeHeader.requiredSection, .graph)
     }
 
     func testOnlyWorktreesStepCarriesOptionalAIMessage() {
         XCTAssertNil(ContextualFeatureTourStep.recentRepositories.supplementaryKey)
         XCTAssertNil(ContextualFeatureTourStep.workspace.supplementaryKey)
-        XCTAssertNil(ContextualFeatureTourStep.treeHeader.supplementaryKey)
         XCTAssertNil(ContextualFeatureTourStep.zenToolbar.supplementaryKey)
         XCTAssertEqual(ContextualFeatureTourStep.worktrees.supplementaryKey, "featureTour.ai.optional")
     }

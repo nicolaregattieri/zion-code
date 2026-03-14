@@ -3,7 +3,6 @@ import SwiftUI
 enum FeatureTourAnchorID: Hashable {
     case recentRepositories
     case workspace
-    case treeHeader
     case zenToolbar
     case worktrees
 }
@@ -13,24 +12,13 @@ enum ContextualFeatureTourStep: Int, CaseIterable {
     case workspace
     case worktrees
     case zenToolbar
-    case treeHeader
 
     var anchorID: FeatureTourAnchorID {
         switch self {
         case .recentRepositories: return .recentRepositories
         case .workspace: return .workspace
-        case .treeHeader: return .treeHeader
         case .zenToolbar: return .zenToolbar
         case .worktrees: return .worktrees
-        }
-    }
-
-    var requiredSection: AppSection? {
-        switch self {
-        case .treeHeader:
-            return .graph
-        case .recentRepositories, .workspace, .zenToolbar, .worktrees:
-            return .code
         }
     }
 
@@ -40,8 +28,6 @@ enum ContextualFeatureTourStep: Int, CaseIterable {
             return "featureTour.recent.title"
         case .workspace:
             return "featureTour.workspace.title"
-        case .treeHeader:
-            return "featureTour.tree.title"
         case .zenToolbar:
             return "featureTour.zen.title"
         case .worktrees:
@@ -55,8 +41,6 @@ enum ContextualFeatureTourStep: Int, CaseIterable {
             return "featureTour.recent.body"
         case .workspace:
             return "featureTour.workspace.body"
-        case .treeHeader:
-            return "featureTour.tree.body"
         case .zenToolbar:
             return "featureTour.zen.body"
         case .worktrees:
@@ -68,7 +52,7 @@ enum ContextualFeatureTourStep: Int, CaseIterable {
         switch self {
         case .worktrees:
             return "featureTour.ai.optional"
-        case .recentRepositories, .workspace, .treeHeader, .zenToolbar:
+        case .recentRepositories, .workspace, .zenToolbar:
             return nil
         }
     }
