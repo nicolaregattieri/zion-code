@@ -350,16 +350,14 @@ extension RepositoryViewModel {
         }
     }
 
-    func notifyPRCreated(title: String, url: String) {
+    func notifyPRCreated(title: String, url: String) async {
         let repoName = repositoryURL?.lastPathComponent ?? ""
-        Task {
-            await ntfyClient.sendIfEnabled(
-                event: .prCreated,
-                title: L10n("ntfy.event.prCreated"),
-                body: "\(title)\n\(url)",
-                repoName: repoName
-            )
-        }
+        await ntfyClient.sendIfEnabled(
+            event: .prCreated,
+            title: L10n("ntfy.event.prCreated"),
+            body: "\(title)\n\(url)",
+            repoName: repoName
+        )
     }
 
     // MARK: - Clone
@@ -575,20 +573,37 @@ extension RepositoryViewModel {
     // MARK: - Git Hosting Provider Integration
 
     func loadPullRequests() {
-        guard let repositoryURL,
-              let (provider, remote) = detectHostingProvider() else { return }
-        hostingProvider = provider
-
         prTask?.cancel()
-        let requestToken = UUID()
-        pullRequestLoadToken = requestToken
         prTask = Task { [weak self] in
             guard let self else { return }
-            let prs = await provider.fetchPullRequests(remote: remote)
-            guard !Task.isCancelled else { return }
-            guard self.pullRequestLoadToken == requestToken, self.repositoryURL == repositoryURL else { return }
-            self.pullRequests = prs
+            _ = await self.refreshPullRequestsCatalog(notifyOnNewPRs: false)
         }
+    }
+
+    @discardableResult
+    func refreshPullRequestsCatalog(notifyOnNewPRs: Bool) async -> [HostedPRInfo] {
+        guard let repositoryURL,
+              let (provider, remote) = detectHostingProvider() else { return [] }
+        hostingProvider = provider
+
+        let requestToken = UUID()
+        pullRequestLoadToken = requestToken
+
+        let prs = await provider.fetchPullRequests(remote: remote)
+        guard !Task.isCancelled else { return [] }
+        guard pullRequestLoadToken == requestToken, self.repositoryURL == repositoryURL else { return [] }
+
+        let transition = Self.openPRNotificationTransition(existingIDs: observedOpenPRIDs, activePRs: prs)
+        observedOpenPRIDs = transition.nextIDs
+        pullRequests = prs
+
+        guard notifyOnNewPRs else { return prs }
+
+        for pr in transition.newlyCreated {
+            await notifyPRCreated(title: pr.title, url: pr.url)
+        }
+
+        return prs
     }
 
     func prForBranch(_ branch: String) -> HostedPRInfo? {
@@ -1001,6 +1016,7 @@ extension RepositoryViewModel {
                 try? await Task.sleep(nanoseconds: Self.prPollingIntervalNanoseconds(for: prPollingIntervalMinutes))
                 if Task.isCancelled { break }
                 if isSwitchingRepository { continue }
+                await refreshPullRequestsCatalog(notifyOnNewPRs: true)
                 refreshPRReviewQueue()
             }
         }

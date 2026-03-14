@@ -1462,6 +1462,19 @@ extension RepositoryViewModel {
         return (newlyRequested, activeIDs)
     }
 
+    static func openPRNotificationTransition(
+        existingIDs: Set<Int>?,
+        activePRs: [HostedPRInfo]
+    ) -> (newlyCreated: [HostedPRInfo], nextIDs: Set<Int>) {
+        let activeIDs = Set(activePRs.map(\.id))
+        guard let existingIDs else {
+            return ([], activeIDs)
+        }
+
+        let newlyCreated = activePRs.filter { !existingIDs.contains($0.id) }
+        return (newlyCreated, activeIDs)
+    }
+
     static func reviewRequestFileHints(
         from files: [(filename: String, status: String, additions: Int, deletions: Int, patch: String)]
     ) -> [String] {

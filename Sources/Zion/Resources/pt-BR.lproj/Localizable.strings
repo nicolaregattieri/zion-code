@@ -521,7 +521,7 @@
 "ntfy.test.failed" = "Falha ao enviar notificação de teste. Verifique o tópico e a conexão.";
 "ntfy.group.gitOps" = "Operações Git";
 "ntfy.group.ai" = "IA";
-"ntfy.group.github" = "GitHub";
+"ntfy.group.pullRequests" = "Pull Requests";
 "ntfy.group.mobileRemote" = "Mobile Remoto";
 "ntfy.event.cloneComplete" = "Clone concluído";
 "ntfy.event.newRemoteCommits" = "Novos commits remotos";

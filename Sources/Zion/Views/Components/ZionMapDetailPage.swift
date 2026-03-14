@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ZionMapDetailPage: View {
     let section: FeatureSection
-    @Environment(\.dismiss) private var dismiss
 
     private var entries: [ZionMapEntry] {
         ZionMapContent.entries(for: section)
@@ -29,18 +28,7 @@ struct ZionMapDetailPage: View {
 
     private var detailHeader: some View {
         HStack {
-            Button {
-                dismiss()
-            } label: {
-                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-                    Image(systemName: "chevron.left")
-                        .font(DesignSystem.Typography.bodySemibold)
-                    Text(L10n("Voltar"))
-                        .font(.system(size: 13, weight: .medium))
-                }
-                .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
+            Color.clear.frame(width: 60, height: 1)
 
             Spacer()
 
@@ -54,7 +42,7 @@ struct ZionMapDetailPage: View {
 
             Spacer()
 
-            // Balance the back button width
+            // Balance the leading placeholder width
             Color.clear.frame(width: 60, height: 1)
         }
         .padding(20)

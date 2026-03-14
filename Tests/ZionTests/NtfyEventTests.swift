@@ -32,9 +32,13 @@ final class NtfyEventTests: XCTestCase {
         XCTAssertEqual(ai.count, 1, "Expected 1 AI event")
     }
 
-    func testGitHubGroupCount() {
-        let github = NtfyEvent.allCases.filter { $0.group == .github }
-        XCTAssertEqual(github.count, 2, "Expected 2 GitHub events")
+    func testPullRequestsGroupCount() {
+        let pullRequests = NtfyEvent.allCases.filter { $0.group == .github }
+        XCTAssertEqual(pullRequests.count, 2, "Expected 2 pull request events")
+    }
+
+    func testPullRequestsGroupUsesNeutralLabel() {
+        XCTAssertEqual(NtfyEventGroup.github.label, "Pull Requests")
     }
 
     func testMobileRemoteGroupCount() {

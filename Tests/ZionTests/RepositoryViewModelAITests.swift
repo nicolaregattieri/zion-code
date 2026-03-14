@@ -473,6 +473,56 @@ final class RepositoryViewModelAITests: XCTestCase {
         XCTAssertEqual(transition.nextIDs, [9])
     }
 
+    func testOpenPRNotificationTransitionUsesInitialFetchAsBaseline() {
+        let active = [
+            HostedPRInfo(
+                id: 11,
+                number: 11,
+                title: "Keep all-open inbox fresh",
+                state: .open,
+                headBranch: "feature/pr-inbox-refresh",
+                baseBranch: "main",
+                url: "https://example.com/pr/11",
+                isDraft: false,
+                author: "nico",
+                headSHA: "abc123"
+            )
+        ]
+
+        let transition = RepositoryViewModel.openPRNotificationTransition(
+            existingIDs: nil,
+            activePRs: active
+        )
+
+        XCTAssertTrue(transition.newlyCreated.isEmpty)
+        XCTAssertEqual(transition.nextIDs, [11])
+    }
+
+    func testOpenPRNotificationTransitionDetectsNewlyAppearedPRsAfterBaseline() {
+        let active = [
+            HostedPRInfo(
+                id: 12,
+                number: 12,
+                title: "Refresh open PR cache on timer",
+                state: .open,
+                headBranch: "feature/open-pr-refresh",
+                baseBranch: "main",
+                url: "https://example.com/pr/12",
+                isDraft: false,
+                author: "nico",
+                headSHA: "def456"
+            )
+        ]
+
+        let transition = RepositoryViewModel.openPRNotificationTransition(
+            existingIDs: [],
+            activePRs: active
+        )
+
+        XCTAssertEqual(transition.newlyCreated.map(\.id), [12])
+        XCTAssertEqual(transition.nextIDs, [12])
+    }
+
     func testReviewRequestTouchedFilesSummaryUsesFileBasenames() {
         let summary = RepositoryViewModel.reviewRequestTouchedFilesSummary(from: [
             (filename: "Sources/Zion/Views/Main/PRInboxCard.swift", status: "modified", additions: 12, deletions: 2, patch: ""),

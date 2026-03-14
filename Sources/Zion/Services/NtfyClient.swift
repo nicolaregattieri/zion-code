@@ -13,7 +13,7 @@ enum NtfyEventGroup: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .gitOps: return L10n("ntfy.group.gitOps")
         case .ai: return L10n("ntfy.group.ai")
-        case .github: return L10n("ntfy.group.github")
+        case .github: return L10n("ntfy.group.pullRequests")
         case .mobileRemote: return L10n("ntfy.group.mobileRemote")
         }
     }
@@ -32,7 +32,7 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
     // Git Ops
     case cloneComplete = "cloneComplete"
     case newRemoteCommits = "newRemoteCommits"
-    // GitHub
+    // Pull Requests
     case prCreated = "prCreated"
     case prReviewRequested = "prReviewRequested"
     // AI
