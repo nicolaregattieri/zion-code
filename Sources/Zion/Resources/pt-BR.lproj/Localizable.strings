@@ -344,6 +344,7 @@
 "help.hero.title" = "Tudo que você precisa para trabalhar com Git, nativo no seu Mac.";
 "help.hero.subtitle" = "O Zion combina visualização de grafo, editor de código, terminal integrado e operações Git — tudo em uma única interface nativa macOS.";
 "help.openOnboarding" = "Ver onboarding novamente";
+"help.openFeatureTour" = "Rever tour guiado";
 
 // Zion Tree
 "help.tree.lanes" = "Grafo visual com lanes coloridas mostrando topologia de branches e merges";
@@ -1356,6 +1357,24 @@
 "onboarding.ready.initRepo" = "Inicializar Repositório";
 "onboarding.ready.enabled" = "Ativado";
 "onboarding.ready.skipped" = "Não configurado";
+
+// Tour guiado contextual
+"featureTour.stepLabel" = "Passo %d de %d";
+"featureTour.skip" = "Pular tour";
+"featureTour.back" = "Voltar";
+"featureTour.next" = "Próximo";
+"featureTour.done" = "Concluir";
+"featureTour.recent.title" = "Repositórios recentes";
+"featureTour.recent.body" = "Volte rápido para os repositórios em que você trabalhou recentemente sem precisar reabrir tudo pelo Finder.";
+"featureTour.workspace.title" = "Seletor de workspace";
+"featureTour.workspace.body" = "Alterne entre Zion Code, Zion Tree e Operations por aqui. Esse é o jeito mais rápido de entender o layout do Zion.";
+"featureTour.tree.title" = "Zion Tree";
+"featureTour.tree.body" = "Revise histórico, pesquise commits e inspecione mudanças pendentes no grafo antes de agir no repositório.";
+"featureTour.zen.title" = "Zen Mode";
+"featureTour.zen.body" = "Use este botão da toolbar quando quiser uma experiência focada em editor e terminal, com menos distrações ao redor.";
+"featureTour.worktrees.title" = "Worktrees";
+"featureTour.worktrees.body" = "Crie e troque worktrees paralelos aqui para revisar, corrigir ou prototipar em branches diferentes sem perder contexto.";
+"featureTour.ai.optional" = "Os recursos principais de Git, código, terminal e worktrees funcionam sem IA. Adicione um provedor depois em Configurações > IA para desbloquear ferramentas com IA.";
 
 // Wave 2: Terminal Search
 "Buscar no terminal..." = "Buscar no terminal...";

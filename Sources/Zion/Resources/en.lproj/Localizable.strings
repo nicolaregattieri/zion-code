@@ -448,6 +448,7 @@
 "help.hero.title" = "Everything you need to work with Git, native on your Mac.";
 "help.hero.subtitle" = "Zion combines graph visualization, code editor, integrated terminal, and Git operations — all in a single native macOS interface.";
 "help.openOnboarding" = "View onboarding again";
+"help.openFeatureTour" = "Replay feature tour";
 
 // Zion Tree
 "help.tree.lanes" = "Visual graph with color-coded lanes showing branch and merge topology";
@@ -1402,6 +1403,24 @@
 "onboarding.ready.initRepo" = "Initialize a Repository";
 "onboarding.ready.enabled" = "Enabled";
 "onboarding.ready.skipped" = "Not configured";
+
+// Contextual Feature Tour
+"featureTour.stepLabel" = "Step %d of %d";
+"featureTour.skip" = "Skip tour";
+"featureTour.back" = "Back";
+"featureTour.next" = "Next";
+"featureTour.done" = "Done";
+"featureTour.recent.title" = "Recent repositories";
+"featureTour.recent.body" = "Jump back into the repositories you worked on recently without reopening them from Finder.";
+"featureTour.workspace.title" = "Workspace switcher";
+"featureTour.workspace.body" = "Move between Zion Code, Zion Tree, and Operations here. This is the fastest way to understand Zion's layout.";
+"featureTour.tree.title" = "Zion Tree";
+"featureTour.tree.body" = "Review history, search commits, and inspect pending changes from the graph view before acting on your repo.";
+"featureTour.zen.title" = "Zen Mode";
+"featureTour.zen.body" = "Use this toolbar button when you want a focused editor and terminal experience with the surrounding chrome reduced.";
+"featureTour.worktrees.title" = "Worktrees";
+"featureTour.worktrees.body" = "Create and switch parallel worktrees here so you can review, fix, or prototype on different branches without losing context.";
+"featureTour.ai.optional" = "Core Git, code, terminal, and worktree features work without AI. Add a provider later in Settings > AI to unlock AI-powered tools.";
 
 // Wave 2: Terminal Search
 "Buscar no terminal..." = "Search terminal...";

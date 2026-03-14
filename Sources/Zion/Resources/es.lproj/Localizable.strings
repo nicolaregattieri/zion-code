@@ -394,6 +394,7 @@
 "help.hero.title" = "Todo lo que necesitas para trabajar con Git, nativo en tu Mac.";
 "help.hero.subtitle" = "Zion combina visualización de grafo, editor de código, terminal integrado y operaciones Git — todo en una interfaz nativa de macOS.";
 "help.openOnboarding" = "Ver onboarding nuevamente";
+"help.openFeatureTour" = "Repetir tour guiado";
 
 // Zion Tree
 "help.tree.lanes" = "Grafo visual con lanes coloreados mostrando topología de branches y merges";
@@ -1414,6 +1415,24 @@
 "onboarding.ready.initRepo" = "Inicializar Repositorio";
 "onboarding.ready.enabled" = "Activado";
 "onboarding.ready.skipped" = "No configurado";
+
+// Tour guiado contextual
+"featureTour.stepLabel" = "Paso %d de %d";
+"featureTour.skip" = "Saltar tour";
+"featureTour.back" = "Atrás";
+"featureTour.next" = "Siguiente";
+"featureTour.done" = "Listo";
+"featureTour.recent.title" = "Repositorios recientes";
+"featureTour.recent.body" = "Vuelve rápido a los repositorios en los que trabajaste hace poco sin tener que reabrirlos desde Finder.";
+"featureTour.workspace.title" = "Selector de workspace";
+"featureTour.workspace.body" = "Muévete entre Zion Code, Zion Tree y Operations desde aquí. Es la forma más rápida de entender la estructura de Zion.";
+"featureTour.tree.title" = "Zion Tree";
+"featureTour.tree.body" = "Revisa el historial, busca commits e inspecciona cambios pendientes desde el grafo antes de actuar sobre tu repositorio.";
+"featureTour.zen.title" = "Zen Mode";
+"featureTour.zen.body" = "Usa este botón de la toolbar cuando quieras una experiencia enfocada en editor y terminal, con menos distracciones alrededor.";
+"featureTour.worktrees.title" = "Worktrees";
+"featureTour.worktrees.body" = "Crea y cambia worktrees paralelos aquí para revisar, corregir o prototipar en ramas distintas sin perder contexto.";
+"featureTour.ai.optional" = "Las funciones principales de Git, código, terminal y worktrees funcionan sin IA. Agrega un proveedor más tarde en Configuración > IA para desbloquear herramientas con IA.";
 
 // Wave 2: Terminal Search
 "Buscar no terminal..." = "Buscar en terminal...";

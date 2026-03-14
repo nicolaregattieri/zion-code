@@ -191,6 +191,15 @@ struct HelpSheet: View {
                 .buttonStyle(.bordered)
                 .controlSize(.small)
 
+                Button {
+                    dismiss()
+                    NotificationCenter.default.post(name: .showFeatureTour, object: nil)
+                } label: {
+                    Label(L10n("help.openFeatureTour"), systemImage: "scope")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+
                 Link(destination: URL(string: "https://zioncode.dev")!) {
                     Label(L10n("help.visitWebsite"), systemImage: "globe")
                 }
