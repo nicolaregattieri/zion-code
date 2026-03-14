@@ -139,11 +139,11 @@ final class RemoteAccessServerTests: XCTestCase {
 
     // MARK: - CORS Tests
 
-    func testCORSWildcardPresent() async throws {
+    func testCORSAllowsLocalhostOrigin() async throws {
         let (_, response) = try await httpGET("/pair?t=test")
         let httpResponse = response as? HTTPURLResponse
         let corsHeader = httpResponse?.allHeaderFields["Access-Control-Allow-Origin"] as? String
-        XCTAssertEqual(corsHeader, "*", "CORS wildcard should be present for web clients")
+        XCTAssertEqual(corsHeader, "http://localhost", "CORS should be restricted to localhost for tunnel-backed web clients")
     }
 
     // MARK: - Disconnect Detection Tests
