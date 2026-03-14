@@ -414,6 +414,21 @@ extension RepositoryViewModel {
 
     func restoreDraftIfAvailable(for item: FileItem) -> Bool {
         guard let draft = draftFileContents[item.id] else { return false }
+
+        // If the file has no unsaved edits, check whether the disk version
+        // changed while this tab was in the background (e.g. stash pop,
+        // branch switch, external editor).  When it did, reload from disk
+        // so the editor never shows stale content.
+        if !unsavedFiles.contains(item.id),
+           let diskContent = try? String(contentsOf: item.url, encoding: .utf8),
+           diskContent != originalFileContents[item.id] {
+            originalFileContents[item.id] = diskContent
+            draftFileContents[item.id] = diskContent
+            applyEditorContent(diskContent)
+            unsavedFiles.remove(item.id)
+            return true
+        }
+
         applyEditorContent(draft)
         markFileUnsavedState(fileID: item.id)
         return true
