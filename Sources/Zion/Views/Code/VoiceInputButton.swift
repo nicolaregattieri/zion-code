@@ -68,6 +68,16 @@ struct VoiceInputButton: View {
                     .pickerStyle(.segmented)
                     .labelsHidden()
                 }
+            } else {
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.micro) {
+                    Text(L10n("speech.engine"))
+                        .font(DesignSystem.Typography.label)
+                        .foregroundStyle(.secondary)
+                    Text(L10n("settings.speech.engine.whisperUnavailable"))
+                        .font(DesignSystem.Typography.label)
+                        .foregroundStyle(.secondary)
+                    openAISettingsLink(label: L10n("settings.speech.engine.configureOpenAI"))
+                }
             }
 
             // Language picker
@@ -105,6 +115,24 @@ struct VoiceInputButton: View {
                 Text(L10n("speech.permission.denied"))
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(DesignSystem.Colors.error)
+            }
+
+            if let recoveryIssue = speechService.recoveryIssue {
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.micro) {
+                    Text(recoveryIssue.message)
+                        .font(DesignSystem.Typography.label)
+                        .foregroundStyle(DesignSystem.Colors.warning)
+
+                    HStack(spacing: DesignSystem.Spacing.iconTextGap) {
+                        Button(L10n("speech.recovery.useAppleSpeech")) {
+                            speechService.selectedEngine = .apple
+                            speechService.clearRecoveryIssue()
+                        }
+                        .buttonStyle(.bordered)
+
+                        openAISettingsLink(label: L10n("speech.recovery.manageOpenAI"))
+                    }
+                }
             }
         }
         .padding(DesignSystem.Spacing.standard)
@@ -201,5 +229,18 @@ struct VoiceInputButton: View {
             return DesignSystem.Colors.error
         }
         return isPopoverPresented ? Color.accentColor : accentColor
+    }
+
+    private func openAISettingsLink(label: String) -> some View {
+        SettingsLink {
+            Text(label)
+                .font(DesignSystem.Typography.label)
+        }
+        .buttonStyle(.bordered)
+        .simultaneousGesture(TapGesture().onEnded {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                NotificationCenter.default.post(name: .openAISettings, object: nil)
+            }
+        })
     }
 }

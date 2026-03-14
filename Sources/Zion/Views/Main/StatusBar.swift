@@ -123,6 +123,30 @@ extension ContentView {
                         }
                     })
                 }
+
+                if model.aiQuotaExceeded {
+                    SettingsLink {
+                        HStack(spacing: 3) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(DesignSystem.Typography.meta)
+                            Text(L10n("settings.ai.recovery.badge"))
+                        }
+                        .font(DesignSystem.Typography.label)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(DesignSystem.Colors.statusOrangeBg)
+                        .foregroundStyle(DesignSystem.Colors.warning)
+                        .clipShape(Capsule())
+                        .contentShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .help(aiQuotaRecoveryHelpText)
+                    .simultaneousGesture(TapGesture().onEnded {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            NotificationCenter.default.post(name: .openAISettings, object: nil)
+                        }
+                    })
+                }
             }
 
             if model.isRepositorySwitchRefreshingInBackground {
@@ -301,6 +325,17 @@ extension ContentView {
             return "iphone.slash"
         }
         return "iphone.radiowaves.left.and.right"
+    }
+
+    private var aiQuotaRecoveryHelpText: String {
+        let recovery = AIProviderSupport.quotaRecoveryInfo(defaultProvider: model.aiProvider)
+        if recovery.hasAlternativeProvider {
+            return L10n(
+                "settings.ai.recovery.alternativeProviders",
+                recovery.alternativeProviders.map(\.label).joined(separator: ", ")
+            )
+        }
+        return L10n("settings.ai.recovery.openSettingsHint")
     }
 
     private var mobileAccessBadgeBg: Color {

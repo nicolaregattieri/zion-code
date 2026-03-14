@@ -93,5 +93,8 @@ struct SettingsView: View {
         .onReceive(NotificationCenter.default.publisher(for: .openMobileAccessSettings)) { _ in
             selectedTab = .mobileAccess
         }
+        .onReceive(NotificationCenter.default.publisher(for: .openAISettings)) { _ in
+            selectedTab = .ai
+        }
     }
 }
