@@ -101,13 +101,19 @@ final class SpeechRecognitionService {
 
     func requestPermission() async -> Bool {
         state = .requesting
-        logger.log(.info, "Requesting speech authorization…", context: "Speech")
-        let speechAuthorized = await Self.requestSpeechAuthorization()
-        logger.log(.info, "Speech authorization: \(speechAuthorized)", context: "Speech")
 
-        guard speechAuthorized else {
-            state = .idle
-            return false
+        // Whisper only needs microphone, not Speech Recognition
+        if selectedEngine == .apple {
+            logger.log(.info, "Requesting speech authorization…", context: "Speech")
+            let speechAuthorized = await Self.requestSpeechAuthorization()
+            logger.log(.info, "Speech authorization: \(speechAuthorized)", context: "Speech")
+
+            guard speechAuthorized else {
+                state = .idle
+                return false
+            }
+        } else {
+            logger.log(.info, "Whisper engine — skipping speech authorization", context: "Speech")
         }
 
         let micAuthorized: Bool
@@ -120,7 +126,7 @@ final class SpeechRecognitionService {
         logger.log(.info, "Mic authorization: \(micAuthorized)", context: "Speech")
 
         state = .idle
-        return speechAuthorized && micAuthorized
+        return micAuthorized
     }
 
     /// Isolated from @MainActor so the TCC callback doesn't inherit actor context.

@@ -159,6 +159,7 @@ if [ "$CODESIGN_IDENTITY" != "-" ]; then
 
   sign_with_identity \
     --options runtime \
+    --entitlements "$ROOT_DIR/Zion.entitlements" \
     "$APP_DIR/Contents/MacOS/Zion"
 
   # Notarization-ready: sign the outer app with the app entitlements.
