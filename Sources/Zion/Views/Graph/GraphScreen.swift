@@ -194,6 +194,7 @@ struct GraphScreen: View {
             jumpBar
             searchBar(proxy: proxy).frame(minWidth: 250, idealWidth: 350, maxWidth: 400)
         }
+        .featureTourAnchor(.treeHeader)
     }
 
     @ViewBuilder

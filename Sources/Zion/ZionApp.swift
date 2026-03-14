@@ -6,6 +6,7 @@ extension Notification.Name {
     static let showKeyboardShortcuts = Notification.Name("showKeyboardShortcuts")
     static let showHelp = Notification.Name("showHelp")
     static let showOnboarding = Notification.Name("showOnboarding")
+    static let showFeatureTour = Notification.Name("showFeatureTour")
     static let toggleZenMode = Notification.Name("toggleZenMode")
     static let toggleZionMode = Notification.Name("toggleZionMode")
     static let openFilesFromFinder = Notification.Name("openFilesFromFinder")
@@ -68,6 +69,10 @@ struct ZionApp: App {
             CommandGroup(replacing: .help) {
                 Button(L10n("Conheca o Zion")) {
                     NotificationCenter.default.post(name: .showHelp, object: nil)
+                }
+
+                Button(L10n("help.openFeatureTour")) {
+                    NotificationCenter.default.post(name: .showFeatureTour, object: nil)
                 }
 
                 Divider()

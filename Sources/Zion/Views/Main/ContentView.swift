@@ -30,6 +30,8 @@ struct ContentView: View {
     @State private var isShortcutsVisible: Bool = false
     @State private var isHelpVisible: Bool = false
     @State private var shouldPresentOnboardingFromHelp: Bool = false
+    @State private var isFeatureTourVisible: Bool = false
+    @State private var currentFeatureTourIndex: Int = 0
     @State private var splitViewVisibility: NavigationSplitViewVisibility = .all
     @State private var isConflictResolverPromptVisible: Bool = false
     @State private var hasShownConflictResolverPromptForCurrentConflictState: Bool = false
@@ -38,12 +40,14 @@ struct ContentView: View {
     @AppStorage("zion.uiLanguage") private var uiLanguageRaw: String = AppLanguage.system.rawValue
     @AppStorage("zion.appearance") private var appearanceRaw: String = AppAppearance.system.rawValue
     @AppStorage("zion.hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
+    @AppStorage("zion.hasCompletedFeatureTour") private var hasCompletedFeatureTour: Bool = false
     @AppStorage("zion.zenModeEnabled") private var zenModeEnabled: Bool = false
     @AppStorage("zion.zionModeEnabled") var zionModeEnabled: Bool = false
     @AppStorage("zion.preZionModeTheme") private var preZionModeTheme: String = ""
 
     private var uiLanguage: AppLanguage { AppLanguage(rawValue: uiLanguageRaw) ?? .system }
     private var appearance: AppAppearance { AppAppearance(rawValue: appearanceRaw) ?? .system }
+    private let featureTourSteps = ContextualFeatureTourStep.allCases
     private var statusBarClearance: CGFloat { zenModeEnabled ? 0 : DesignSystem.Spacing.statusBarClearance }
     private var rootPresentation: RootPresentation {
         // Explicit replay from Help always wins.
@@ -102,9 +106,11 @@ struct ContentView: View {
     }
 
     private var configuredRootView: some View {
-        applyInteractionModifiers(
-            to: applyPresentationModifiers(
-                to: rootEnvironmentView
+        applyFeatureTourOverlay(
+            to: applyInteractionModifiers(
+                to: applyPresentationModifiers(
+                    to: rootEnvironmentView
+                )
             )
         )
     }
@@ -164,7 +170,13 @@ struct ContentView: View {
         }
         .onChange(of: model.repositoryURL) { _, url in
             if url != nil {
+                let shouldAutoStartFeatureTour = !hasCompletedOnboarding && !hasCompletedFeatureTour
                 route(.repositoryOpened)
+                if shouldAutoStartFeatureTour {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                        startFeatureTour()
+                    }
+                }
             }
         }
         .onChange(of: model.hasConflicts) { _, hasConflicts in
@@ -208,6 +220,10 @@ struct ContentView: View {
                 model.navigateToCodeRequested = false
             }
         }
+        .onChange(of: currentFeatureTourIndex) { _, _ in
+            guard isFeatureTourVisible else { return }
+            syncFeatureTourSection()
+        }
     }
 
     private func applyInteractionModifiers<Content: View>(to view: Content) -> some View {
@@ -220,6 +236,13 @@ struct ContentView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .showOnboarding)) { _ in
             route(.showOnboardingFromHelp)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .showFeatureTour)) { _ in
+            if model.repositoryURL != nil {
+                startFeatureTour()
+            } else {
+                route(.showOnboardingFromHelp)
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .toggleZenMode)) { _ in
             withAnimation(DesignSystem.Motion.panel) {
@@ -262,6 +285,32 @@ struct ContentView: View {
             }
         }
         .animation(DesignSystem.Motion.detail, value: model.isRepositorySwitchBlocking)
+    }
+
+    private func applyFeatureTourOverlay<Content: View>(to view: Content) -> some View {
+        view.overlayPreferenceValue(FeatureTourAnchorPreferenceKey.self) { anchors in
+            GeometryReader { proxy in
+                if isFeatureTourVisible {
+                    ContextualFeatureTourOverlay(
+                        steps: featureTourSteps,
+                        currentIndex: currentFeatureTourIndex,
+                        anchorFrames: resolvedFeatureTourFrames(from: anchors, using: proxy),
+                        onBack: moveFeatureTourBackward,
+                        onNext: advanceFeatureTour,
+                        onSkip: completeFeatureTour
+                    )
+                }
+            }
+        }
+    }
+
+    private func resolvedFeatureTourFrames(
+        from anchors: [FeatureTourAnchorID: Anchor<CGRect>],
+        using proxy: GeometryProxy
+    ) -> [FeatureTourAnchorID: CGRect] {
+        anchors.reduce(into: [:]) { result, item in
+            result[item.key] = proxy[item.value]
+        }
     }
 
     private func applyPresentationModifiers<Content: View>(to view: Content) -> some View {
@@ -579,6 +628,7 @@ struct ContentView: View {
                     } label: { Image(systemName: "arrow.up.left.and.arrow.down.right") }
                         .help(L10n("zen.enter") + " (⇧⌘J)")
                         .accessibilityLabel(L10n("zen.enter"))
+                        .featureTourAnchor(.zenToolbar)
                     Button {
                         model.loadReflog()
                         model.isReflogVisible = true
@@ -663,4 +713,53 @@ struct ContentView: View {
         }
     }
 
+    private func startFeatureTour() {
+        guard model.repositoryURL != nil else { return }
+
+        if zenModeEnabled {
+            zenModeEnabled = false
+            splitViewVisibility = .all
+        }
+
+        currentFeatureTourIndex = 0
+        isFeatureTourVisible = true
+        syncFeatureTourSection()
+    }
+
+    private func syncFeatureTourSection() {
+        guard isFeatureTourVisible, featureTourSteps.indices.contains(currentFeatureTourIndex) else { return }
+
+        if let requiredSection = featureTourSteps[currentFeatureTourIndex].requiredSection,
+           selectedSection != requiredSection {
+            withAnimation(DesignSystem.Motion.panel) {
+                selectedSection = requiredSection
+            }
+        }
+    }
+
+    private func moveFeatureTourBackward() {
+        guard currentFeatureTourIndex > 0 else { return }
+        withAnimation(DesignSystem.Motion.panel) {
+            currentFeatureTourIndex -= 1
+        }
+    }
+
+    private func advanceFeatureTour() {
+        let nextIndex = currentFeatureTourIndex + 1
+        guard nextIndex < featureTourSteps.count else {
+            completeFeatureTour()
+            return
+        }
+
+        withAnimation(DesignSystem.Motion.panel) {
+            currentFeatureTourIndex = nextIndex
+        }
+    }
+
+    private func completeFeatureTour() {
+        hasCompletedFeatureTour = true
+        withAnimation(DesignSystem.Motion.detail) {
+            isFeatureTourVisible = false
+        }
+    }
 }

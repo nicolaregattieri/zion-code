@@ -82,6 +82,7 @@ struct SidebarView: View {
                     }
                 }
                 .padding(.horizontal, 10)
+                .featureTourAnchor(.recentRepositories)
             }
         }
     }
@@ -133,7 +134,9 @@ struct SidebarView: View {
                     }
                 }
             }
-        }.padding(.horizontal, 10)
+        }
+        .padding(.horizontal, 10)
+        .featureTourAnchor(.workspace)
     }
 
     private func collapseToggle(isExpanded: Binding<Bool>) -> some View {
@@ -193,7 +196,9 @@ struct SidebarView: View {
                     worktreeRow(wt)
                 }
             }
-        }.padding(.horizontal, 10)
+        }
+        .padding(.horizontal, 10)
+        .featureTourAnchor(.worktrees)
     }
 
     private var smartWorktreeInlineForm: some View {
