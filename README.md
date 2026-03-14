@@ -6,11 +6,8 @@
 
 *The view from the top.*
 
-**Graph. Code. Terminal. AI. One window.**
-
-The native macOS workspace where you run AI agents, review changes, and ship —
-without switching apps. Split terminals, visual commit graph, code editor,
-smart clipboard, mobile remote access, and 15 AI features. All in one window.
+Native macOS workspace for AI-driven development.
+Graph, code, and terminal — in one window.
 
 **Free. Native Swift. No Electron. No subscriptions.**
 
@@ -38,7 +35,7 @@ Everything running, everything visible, everything under your control.
 | **Split Terminals** | Real PTY with tabs, horizontal/vertical splits, independent zoom — run Claude Code and Gemini side by side |
 | **Code Editor** | Syntax highlighting, Git Blame with AI explanation, Quick Open, code formatter (16+ languages), go-to-definition |
 | **Commit Graph** | Color-coded branch lanes with Bezier merge curves, search, jump bar, pending changes, up to 5,000 commits |
-| **13 AI Features** | Commit messages, pre-commit review, diff explanation, conflict resolution, semantic search, blame explainer, PR drafts — Claude / GPT / Gemini |
+| **15 AI Features** | Commit messages, pre-commit review, diff explanation, conflict resolution, semantic search, blame explainer, PR drafts, and more — Claude / GPT / Gemini |
 | **Smart Clipboard** | Copy a hash → "Show in Graph". Copy a branch → one-click checkout. Copy a command → double-click executes. Auto-categorized. |
 | **Mobile Access** | All terminal sessions across all projects, from your phone. Approve AI prompts remotely. AES-256-GCM encrypted. |
 | **Recovery Vault** | Auto-snapshots before every destructive operation. Be aggressive with git — Zion has your back. |
@@ -48,37 +45,7 @@ Everything running, everything visible, everything under your control.
 
 ---
 
-## What's New in 1.6.7
-
-> See everything. Ship with confidence.
-
-- **Zion Bridge** — AI portability flow for migrating AI configurations between repositories with migration console.
-- **AI Modes** — Mode-aware routing (efficient/smart/bestQuality) with richer review context for different use cases.
-- **Repo Memory** — AI snapshot cache for repository context, giving AI assistants better project awareness.
-- **Azure DevOps** — Full hosting provider support alongside GitHub, GitLab, and Bitbucket.
-- **Image Preview** — VS Code-like image preview in the file browser with zoom controls.
-- **Graph Polish** — Stash helper commits collapsed, worktree ROOT/WT badges, improved lane rendering and pending changes.
-- **Terminal Stability** — Selection preserved during streaming, split-pane drag fixes, scroll hover routing, and owner binding recovery.
-- **Performance** — Adaptive throttling for background repo monitoring, scoped snapshots for faster repo switching, search debounce.
-
----
-
-## Beautiful by Design
-
-Zion is the only Git workspace that brings the modern macOS **Glassmorphism** (UltraThinMaterial) aesthetic to your developer workflow. Whether you prefer deep indigo, classic dark, or a clean light theme, Zion looks stunning on every Mac.
-
-<p align="center">
-  <img src="docs/screenshots/dual-terminal.png" width="100%" alt="Zion Mode — Editor + dual terminal split" />
-</p>
-<p align="center">
-  <img src="docs/screenshots/light-theme.png" width="100%" alt="GitHub Light — clean light theme for daytime" />
-</p>
-
-
----
-
 ## Features at a Glance
-
 
 ### Zion Code — Editor + Terminal
 > `Cmd+1`
@@ -127,24 +94,6 @@ Scan a QR code to pair your phone with Zion. See live terminal output with full 
   <img src="docs/screenshots/mobile-terminal.png" width="32%" alt="Mobile Terminal — live xterm.js with ANSI colors" />
 </p>
 
-### Recovery Vault
-> Never lose work again.
-
-Zion auto-snapshots your working tree before every destructive operation — reset --hard, interactive rebase, discard all changes. If something goes wrong, restore from the Recovery Vault in Operations Center. Snapshots are named `zion-pre-{operation}` and visible in the stash list.
-
-### Worktree-First Workflow
-
-Create worktrees with a smart prefix+name flow, open directly into Zion Code, and keep a dedicated terminal context per worktree. In Zion Tree, switch context through worktree pills, create branches directly from Pending Changes, and copy/move pending work safely across worktrees.
-
-<p align="center">
-  <img src="docs/screenshots/worktree-vault.png" width="100%" alt="Operations Center — Worktrees, Recovery Vault, Branches, and more" />
-</p>
-
-### Conflict Resolution
-> Built-in. No external merge tools needed.
-
-When a merge, rebase, or cherry-pick hits conflicts, Zion opens a dedicated resolver. A file list on the left shows conflict status with red/green icons. The inline editor on the right highlights conflict regions — **ours** (green) vs **theirs** (blue) — with one-click actions: accept ours, accept theirs, accept both, or edit manually. Once resolved, Zion auto-continues the operation.
-
 ### AI Assistant
 > Wired into every Git action.
 
@@ -153,15 +102,6 @@ AI reads your diff and writes the commit message. AI reviews your code before yo
 <p align="center">
   <img src="docs/screenshots/ai-commit.png" width="49%" alt="Smart Commit — AI-generated commit message from diff" />
   <img src="docs/screenshots/ai-review.png" width="49%" alt="Smart PR — AI-drafted pull request with code review" />
-</p>
-
-### Git Hosting Integration
-> GitHub + GitLab + Bitbucket + Azure DevOps
-
-Automatic provider detection from remote URLs. List open PRs, create PRs with AI-generated descriptions, post inline review comments, and submit reviews (approve/request changes). GitLab supports self-hosted instances. Bitbucket uses app passwords. Azure DevOps uses PAT authentication.
-
-<p align="center">
-  <img src="docs/screenshots/settings.png" width="100%" alt="Settings — Git hosting provider configuration" />
 </p>
 
 ---
@@ -273,72 +213,31 @@ Zion is keyboard-first. Press `Cmd+/` to see all shortcuts inside the app.
 
 <p align="center">
   <img src="docs/screenshots/one-dark-pro.png" width="32%" alt="One Dark Pro theme" />
-  <img src="docs/screenshots/hero-code.png" width="32%" alt="Zion Mode — SynthWave '84" />
+  <img src="docs/screenshots/dual-terminal.png" width="32%" alt="Zion Mode — SynthWave '84" />
   <img src="docs/screenshots/light-theme.png" width="32%" alt="GitHub Light theme" />
 </p>
 
-Zion ships with 7 curated editor + terminal palettes:
+7 curated editor + terminal palettes: Dracula, Tokyo Night, Catppuccin Mocha, One Dark Pro, City Lights, GitHub Light, and SynthWave '84 (activated via Zion Mode).
 
-| Theme | Style |
-|-------|-------|
-| **Dracula** | Classic dark with vibrant accents |
-| **Tokyo Night** | Deep indigo with soft pastels |
-| **Catppuccin Mocha** | Warm dark with community-driven colors |
-| **One Dark Pro** | The most popular VS Code theme |
-| **City Lights** | Cool dark with muted tones |
-| **GitHub Light** | Clean light theme for daytime |
-| **SynthWave '84** | Neon cyberpunk (activated via Zion Mode) |
-
----
-
-## Languages
-
-Zion speaks three languages out of the box:
-
-- **Portugues (BR)** — default
-- **English**
-- **Espanol**
-
-Switch anytime in Settings, or let Zion follow your system locale.
-
----
-
-## Architecture
-
-Zion is a Swift Package (no `.xcodeproj`) built entirely with SwiftUI and Swift Concurrency.
-
-```
-ZionApp / ContentView            App shell, navigation, toolbar
-  -> RepositoryViewModel         Central state (@Observable, @MainActor)
-    -> RepositoryWorker          Background Git operations (async/await)
-      -> GitClient               Git CLI process execution
-    -> GitGraphLaneCalculator    Lane & edge layout algorithm
-    -> TerminalSession           PTY management (SwiftTerm + LocalProcess)
-    -> AIClient                  Anthropic / OpenAI / Gemini (actor-isolated)
-    -> HostingProvider           GitHub / GitLab / Bitbucket abstraction
-    -> RemoteAccessServer        Mobile terminal streaming (HTTP polling)
-    -> CloudflareTunnelManager   Secure remote access tunneling
-```
-
-Design pattern: **MVVM** with Swift Observation (`@Observable`).
+Localized in Portuguese (BR), English, and Spanish. Switch anytime in Settings or follow your system locale.
 
 ---
 
 ## Contributing
 
-Zion is open source and contributions are welcome. The `master` branch is protected — all changes must go through pull requests.
-
-Before submitting a PR:
-
-1. Make sure `swift build` passes
-2. Test your changes with `./scripts/make-app.sh && open dist/Zion.app`
-3. Add L10n keys for any user-facing strings in all 3 locales
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
 ## License
 
 [MIT](LICENSE) — Use it, fork it, ship it.
+
+## Project Identity
+
+Zion Code is an open source project created and maintained by Nicola Regattieri.
+
+Forks are welcome under the terms of the MIT license, but should not imply official affiliation with Zion Code unless explicitly authorized.
 
 ## Acknowledgments
 
