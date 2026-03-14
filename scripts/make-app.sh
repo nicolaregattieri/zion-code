@@ -5,11 +5,7 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
 DEFAULT_ENV_FILE="$ROOT_DIR/.zion-release.local"
-LEGACY_ENV_FILE="$ROOT_DIR/.env.notarize"
 ENV_FILE="${ZION_ENV_FILE:-$DEFAULT_ENV_FILE}"
-if [ ! -f "$ENV_FILE" ] && [ "$ENV_FILE" = "$DEFAULT_ENV_FILE" ] && [ -f "$LEGACY_ENV_FILE" ]; then
-  ENV_FILE="$LEGACY_ENV_FILE"
-fi
 if [ -f "$ENV_FILE" ]; then
   # shellcheck disable=SC1090
   source "$ENV_FILE"
@@ -133,41 +129,11 @@ xattr -cr "$APP_DIR"
 CODESIGN_IDENTITY="${CODESIGN_IDENTITY:--}"
 
 if [ "$CODESIGN_IDENTITY" != "-" ]; then
-  sign_with_identity() {
-    local target="$1"
-    shift
-    codesign --force --sign "$CODESIGN_IDENTITY" --timestamp "$@" "$target"
-  }
-
-  # Sign nested Sparkle code explicitly before sealing the app bundle.
-  SPARKLE_ROOT="$APP_DIR/Contents/Frameworks/Sparkle.framework/Versions/B"
-  if [ -d "$SPARKLE_ROOT" ]; then
-    if [ -f "$SPARKLE_ROOT/Autoupdate" ]; then
-      sign_with_identity "$SPARKLE_ROOT/Autoupdate" --options runtime
-    fi
-
-    if [ -d "$SPARKLE_ROOT/XPCServices/Downloader.xpc" ]; then
-      sign_with_identity "$SPARKLE_ROOT/XPCServices/Downloader.xpc" --options runtime
-    fi
-
-    if [ -d "$SPARKLE_ROOT/XPCServices/Installer.xpc" ]; then
-      sign_with_identity "$SPARKLE_ROOT/XPCServices/Installer.xpc" --options runtime
-    fi
-
-    if [ -d "$SPARKLE_ROOT/Updater.app" ]; then
-      sign_with_identity "$SPARKLE_ROOT/Updater.app" --options runtime
-    fi
-
-    sign_with_identity "$APP_DIR/Contents/Frameworks/Sparkle.framework"
-  fi
-
-  sign_with_identity "$APP_DIR/Contents/MacOS/Zion" \
+  # Notarization-ready: sign with identity, hardened runtime, and entitlements
+  codesign --force --deep --sign "$CODESIGN_IDENTITY" \
     --options runtime \
-    --entitlements "$ROOT_DIR/Zion.entitlements"
-
-  sign_with_identity "$APP_DIR" \
-    --options runtime \
-    --entitlements "$ROOT_DIR/Zion.entitlements"
+    --entitlements "$ROOT_DIR/Zion.entitlements" \
+    "$APP_DIR"
   echo "Signed with identity: $CODESIGN_IDENTITY (hardened runtime + entitlements)"
 else
   # Ad-hoc signing for local development

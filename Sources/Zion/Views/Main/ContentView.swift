@@ -303,6 +303,11 @@ struct ContentView: View {
                 )
             }
         }
+        .sheet(item: $model.divergenceResolution) { context in
+            DivergenceResolutionSheet(context: context) { resolution in
+                model.resolveDivergence(resolution, context: context)
+            }
+        }
     }
 
     private var rootShell: some View {

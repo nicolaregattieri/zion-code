@@ -332,6 +332,8 @@ final class RepositoryViewModel {
     var aheadRemoteCount: Int = 0
     var showPushDivergenceWarning: Bool = false
     var pushDivergenceState: PushDivergenceState = .clear
+    var divergenceResolution: DivergenceContext?
+    @ObservationIgnored var busyWatchdogTask: Task<Void, Never>?
     @ObservationIgnored var backgroundFetchTask: Task<Void, Never>?
     @ObservationIgnored var lastNotifiedBehindCount: Int = 0
     @ObservationIgnored var notifiedReviewRequestPRIDs: Set<Int> = []
@@ -945,6 +947,13 @@ final class RepositoryViewModel {
 
             guard !Task.isCancelled else { return }
             guard self.repositorySwitchToken == switchToken, self.repositoryURL == url else { return }
+
+            // Force-clear stale busy state after polling timeout
+            if self.isBusy {
+                self.logger.log(.warn, "switch.deferred: force-clearing stale isBusy after poll timeout", context: "repo=\(url.lastPathComponent)", source: #function)
+                self.isBusy = false
+                self.disarmBusyWatchdog()
+            }
 
             if refreshRepositoryFirst {
                 self.logger.log(.info, "switch.deferred.begin", context: "repo=\(url.lastPathComponent) token=\(switchToken.uuidString.prefix(8))", source: #function)

@@ -107,6 +107,7 @@ extension RepositoryViewModel {
         let actionToken = UUID()
         activeGitActionToken = actionToken
         isBusy = true
+        armBusyWatchdog()
 
         let url = repositoryURL
         actionTask = Task {
@@ -162,13 +163,62 @@ extension RepositoryViewModel {
                 guard activeGitActionToken == actionToken else { return }
                 activeGitActionToken = nil
                 isBusy = false
+                disarmBusyWatchdog()
             } catch {
                 guard activeGitActionToken == actionToken else { return }
                 activeGitActionToken = nil
                 isBusy = false
-                handleError(error)
+                disarmBusyWatchdog()
+
+                if isDivergentBranchError(error) {
+                    let context = buildDivergenceContext(branch: localName, url: url)
+                    divergenceResolution = context
+                } else {
+                    handleError(error)
+                }
             }
         }
+    }
+
+    // MARK: - Divergence Resolution
+
+    func resolveDivergence(_ resolution: DivergenceResolution, context: DivergenceContext) {
+        divergenceResolution = nil
+
+        switch resolution {
+        case .rebase:
+            runGitAction(label: "Pull --rebase", args: ["pull", "--rebase"])
+        case .merge:
+            runGitAction(label: "Pull --no-rebase", args: ["pull", "--no-rebase"])
+        case .forceAlign:
+            guard let url = repositoryURL else { return }
+            let remoteBranch = resolveUpstreamRef(for: context.branch) ?? "origin/\(context.branch)"
+            runDestructiveGitAction(
+                label: "Reset --hard",
+                args: ["reset", "--hard", remoteBranch],
+                operationTag: "reset-hard",
+                targetHint: remoteBranch
+            )
+            _ = url // suppress unused warning
+        }
+    }
+
+    func isDivergentBranchError(_ error: Error) -> Bool {
+        let message = error.localizedDescription.lowercased()
+        return message.contains("divergent branches")
+            || message.contains("need to specify how to reconcile")
+    }
+
+    private func buildDivergenceContext(branch: String, url: URL?) -> DivergenceContext {
+        DivergenceContext(
+            branch: branch,
+            localAhead: aheadRemoteCount,
+            remoteAhead: behindRemoteCount
+        )
+    }
+
+    private func resolveUpstreamRef(for branch: String) -> String? {
+        branchInfos.first(where: { $0.name == branch })?.upstream
     }
 
     func pushBranch(_ branch: String, to remote: String, setUpstream: Bool, mode: PushMode) {

@@ -28,6 +28,8 @@ enum Constants {
         static let prPollingInterval: UInt64 = 5 * 60 * 1_000_000_000
         /// Delay before opening conflict resolver after transfer support (600ms)
         static let transferSupportDelay: UInt64 = 600_000_000
+        /// Safety timeout to force-clear isBusy if a refresh never completes (60s)
+        static let busyWatchdogTimeout: UInt64 = 60_000_000_000
     }
 
     enum Limits {

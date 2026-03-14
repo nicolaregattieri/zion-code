@@ -24,11 +24,7 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
 DEFAULT_ENV_FILE="$ROOT_DIR/.zion-release.local"
-LEGACY_ENV_FILE="$ROOT_DIR/.env.notarize"
 ENV_FILE="${ZION_ENV_FILE:-$DEFAULT_ENV_FILE}"
-if [ ! -f "$ENV_FILE" ] && [ "$ENV_FILE" = "$DEFAULT_ENV_FILE" ] && [ -f "$LEGACY_ENV_FILE" ]; then
-    ENV_FILE="$LEGACY_ENV_FILE"
-fi
 if [ -f "$ENV_FILE" ]; then
     # shellcheck disable=SC1090
     source "$ENV_FILE"
