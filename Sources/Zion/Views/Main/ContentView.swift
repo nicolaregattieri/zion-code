@@ -298,28 +298,17 @@ struct ContentView: View {
     }
 
     private func applyFeatureTourOverlay<Content: View>(to view: Content) -> some View {
-        view.overlayPreferenceValue(FeatureTourAnchorPreferenceKey.self) { anchors in
-            GeometryReader { proxy in
-                if isFeatureTourVisible {
-                    ContextualFeatureTourOverlay(
-                        steps: featureTourSteps,
-                        currentIndex: currentFeatureTourIndex,
-                        anchorFrames: resolvedFeatureTourFrames(from: anchors, using: proxy),
-                        onBack: moveFeatureTourBackward,
-                        onNext: advanceFeatureTour,
-                        onSkip: completeFeatureTour
-                    )
-                }
+        view.overlayPreferenceValue(FeatureTourFramePreferenceKey.self) { frames in
+            if isFeatureTourVisible {
+                ContextualFeatureTourOverlay(
+                    steps: featureTourSteps,
+                    currentIndex: currentFeatureTourIndex,
+                    anchorFrames: frames,
+                    onBack: moveFeatureTourBackward,
+                    onNext: advanceFeatureTour,
+                    onSkip: completeFeatureTour
+                )
             }
-        }
-    }
-
-    private func resolvedFeatureTourFrames(
-        from anchors: [FeatureTourAnchorID: Anchor<CGRect>],
-        using proxy: GeometryProxy
-    ) -> [FeatureTourAnchorID: CGRect] {
-        anchors.reduce(into: [:]) { result, item in
-            result[item.key] = proxy[item.value]
         }
     }
 
@@ -374,6 +363,7 @@ struct ContentView: View {
             LiquidBackgroundView().ignoresSafeArea()
             navigationShell
         }
+        .coordinateSpace(name: "featureTour")
     }
 
     private var navigationShell: some View {
@@ -638,7 +628,6 @@ struct ContentView: View {
                     } label: { Image(systemName: "arrow.up.left.and.arrow.down.right") }
                         .help(L10n("zen.enter") + " (⇧⌘J)")
                         .accessibilityLabel(L10n("zen.enter"))
-                        .featureTourAnchor(.zenToolbar)
                     Button {
                         model.loadReflog()
                         model.isReflogVisible = true
