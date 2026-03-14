@@ -2,6 +2,13 @@ import XCTest
 @testable import Zion
 
 final class HostingCredentialStoreTests: XCTestCase {
+    private static let runKeychainTestsEnv = "ZION_RUN_KEYCHAIN_TESTS"
+
+    private func requireKeychainIntegration() throws {
+        guard ProcessInfo.processInfo.environment[Self.runKeychainTestsEnv] == "1" else {
+            throw XCTSkip("Skipping Keychain integration tests by default. Set \(Self.runKeychainTestsEnv)=1 to run.")
+        }
+    }
 
     // MARK: - CredentialKey Enumeration
 
@@ -38,7 +45,8 @@ final class HostingCredentialStoreTests: XCTestCase {
     // MARK: - Keychain Save/Load/Delete Cycle
     // These tests use .azureDevOpsPAT to avoid clobbering real credentials.
 
-    func testSaveAndLoadSecret() {
+    func testSaveAndLoadSecret() throws {
+        try requireKeychainIntegration()
         let key = HostingCredentialStore.CredentialKey.azureDevOpsPAT
         let original = HostingCredentialStore.loadSecret(for: key)
         defer {
@@ -56,7 +64,8 @@ final class HostingCredentialStoreTests: XCTestCase {
         XCTAssertNil(HostingCredentialStore.loadSecret(for: key))
     }
 
-    func testSaveEmptyStringDeletesSecret() {
+    func testSaveEmptyStringDeletesSecret() throws {
+        try requireKeychainIntegration()
         let key = HostingCredentialStore.CredentialKey.azureDevOpsPAT
         let original = HostingCredentialStore.loadSecret(for: key)
         defer {
@@ -72,7 +81,8 @@ final class HostingCredentialStoreTests: XCTestCase {
         XCTAssertNil(HostingCredentialStore.loadSecret(for: key))
     }
 
-    func testDeleteNonexistentKeyDoesNotCrash() {
+    func testDeleteNonexistentKeyDoesNotCrash() throws {
+        try requireKeychainIntegration()
         let key = HostingCredentialStore.CredentialKey.azureDevOpsPAT
         let original = HostingCredentialStore.loadSecret(for: key)
         defer {
@@ -83,7 +93,8 @@ final class HostingCredentialStoreTests: XCTestCase {
         XCTAssertNil(HostingCredentialStore.loadSecret(for: key))
     }
 
-    func testOverwriteExistingSecret() {
+    func testOverwriteExistingSecret() throws {
+        try requireKeychainIntegration()
         let key = HostingCredentialStore.CredentialKey.azureDevOpsPAT
         let original = HostingCredentialStore.loadSecret(for: key)
         defer {
@@ -122,7 +133,8 @@ final class HostingCredentialStoreTests: XCTestCase {
         }
     }
 
-    func testMigrateFromUserDefaults() {
+    func testMigrateFromUserDefaults() throws {
+        try requireKeychainIntegration()
         let defaults = UserDefaults.standard
         let keys: [HostingCredentialStore.CredentialKey] = [.githubPAT, .gitlabPAT, .bitbucketAppPassword]
 
@@ -152,7 +164,8 @@ final class HostingCredentialStoreTests: XCTestCase {
         }
     }
 
-    func testMigrateDoesNotOverwriteExistingKeychainEntry() {
+    func testMigrateDoesNotOverwriteExistingKeychainEntry() throws {
+        try requireKeychainIntegration()
         let defaults = UserDefaults.standard
 
         withSavedCredentials(keys: [.githubPAT]) {
@@ -173,7 +186,8 @@ final class HostingCredentialStoreTests: XCTestCase {
         }
     }
 
-    func testLoadSecretMigratesLegacyDefaultsOnDemand() {
+    func testLoadSecretMigratesLegacyDefaultsOnDemand() throws {
+        try requireKeychainIntegration()
         let defaults = UserDefaults.standard
 
         withSavedCredentials(keys: [.gitlabPAT]) {
