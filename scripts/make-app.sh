@@ -129,8 +129,41 @@ xattr -cr "$APP_DIR"
 CODESIGN_IDENTITY="${CODESIGN_IDENTITY:--}"
 
 if [ "$CODESIGN_IDENTITY" != "-" ]; then
-  # Notarization-ready: sign with identity, hardened runtime, and entitlements
-  codesign --force --deep --sign "$CODESIGN_IDENTITY" \
+  sign_with_identity() {
+    codesign --force --timestamp --sign "$CODESIGN_IDENTITY" "$@"
+  }
+
+  SPARKLE_ROOT="$APP_DIR/Contents/Frameworks/Sparkle.framework/Versions/B"
+  if [ -d "$SPARKLE_ROOT" ]; then
+    # Sign Sparkle inside-out to keep the updater helpers launchable.
+    sign_with_identity \
+      --options runtime \
+      --preserve-metadata=entitlements \
+      "$SPARKLE_ROOT/XPCServices/Downloader.xpc"
+
+    sign_with_identity \
+      --options runtime \
+      "$SPARKLE_ROOT/XPCServices/Installer.xpc"
+
+    sign_with_identity \
+      --options runtime \
+      "$SPARKLE_ROOT/Updater.app"
+
+    sign_with_identity \
+      --options runtime \
+      "$SPARKLE_ROOT/Autoupdate"
+
+    sign_with_identity \
+      --options runtime \
+      "$APP_DIR/Contents/Frameworks/Sparkle.framework"
+  fi
+
+  sign_with_identity \
+    --options runtime \
+    "$APP_DIR/Contents/MacOS/Zion"
+
+  # Notarization-ready: sign the outer app with the app entitlements.
+  sign_with_identity \
     --options runtime \
     --entitlements "$ROOT_DIR/Zion.entitlements" \
     "$APP_DIR"
@@ -140,8 +173,5 @@ else
   codesign --force --deep --sign - "$APP_DIR"
   echo "Signed ad-hoc (set CODESIGN_IDENTITY for notarization)"
 fi
-
-# Nudge Finder/LaunchServices caches by bumping bundle mtimes after final signing
-touch "$APP_DIR/Contents/Info.plist" "$APP_DIR"
 
 echo "App gerado em: $APP_DIR"
