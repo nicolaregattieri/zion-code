@@ -10,7 +10,7 @@
 
 The native macOS workspace where you run AI agents, review changes, and ship —
 without switching apps. Split terminals, visual commit graph, code editor,
-smart clipboard, mobile remote access, and 13 AI features. All in one window.
+smart clipboard, mobile remote access, and 15 AI features. All in one window.
 
 **Free. Native Swift. No Electron. No subscriptions.**
 
