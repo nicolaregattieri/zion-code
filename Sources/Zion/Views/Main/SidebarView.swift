@@ -136,7 +136,6 @@ struct SidebarView: View {
             }
         }
         .padding(.horizontal, 10)
-        .featureTourAnchor(.workspace)
     }
 
     private func collapseToggle(isExpanded: Binding<Bool>) -> some View {
@@ -385,6 +384,7 @@ struct SidebarView: View {
                 }
             }
         }.padding(.horizontal, 10)
+        .featureTourAnchor(.workspace)
     }
 
     private func workspaceButton(for section: AppSection) -> some View {
