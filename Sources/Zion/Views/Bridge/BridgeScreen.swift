@@ -130,9 +130,9 @@ struct BridgeScreen: View {
                                 .foregroundStyle(.secondary)
                         }
                         Spacer(minLength: 0)
-                        Text(detection.isDetected ? L10n("bridge.detect.detected") : L10n("bridge.detect.missing"))
+                        Text(detection.isDetected ? L10n("bridge.detect.detected") : L10n("bridge.detect.willCreate"))
                             .font(DesignSystem.Typography.monoMeta)
-                            .foregroundStyle(detection.isDetected ? DesignSystem.Colors.success : DesignSystem.Colors.warning)
+                            .foregroundStyle(detection.isDetected ? DesignSystem.Colors.success : DesignSystem.Colors.info)
                     }
 
                     if detection.id != model.bridgeState.detections.last?.id {
@@ -336,6 +336,7 @@ struct BridgeScreen: View {
                 }
             }
             .pickerStyle(.menu)
+            .labelsHidden()
             .frame(width: 160)
         }
     }
