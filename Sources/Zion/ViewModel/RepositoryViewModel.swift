@@ -174,6 +174,7 @@ final class RepositoryViewModel {
     @ObservationIgnored let ntfyClient = NtfyClient()
     @ObservationIgnored var prTask: Task<Void, Never>?
     @ObservationIgnored var pullRequestLoadToken = UUID()
+    @ObservationIgnored var observedOpenPRIDs: Set<Int>?
 
     // Branch review
     var isBranchReviewSheetVisible: Bool = false
@@ -780,6 +781,9 @@ final class RepositoryViewModel {
         cancelRepositoryBackgroundActivityForSwitch()
         dismissPendingChangesSummary()
         lastNotifiedBehindCount = 0
+        observedOpenPRIDs = nil
+        pullRequests = []
+        prReviewQueue = []
         if let previousURL {
             expandedPathsByRepository[previousURL] = expandedPaths
             captureRepositorySnapshot(for: previousURL)
