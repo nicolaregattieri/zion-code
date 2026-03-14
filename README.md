@@ -213,7 +213,7 @@ Zion is keyboard-first. Press `Cmd+/` to see all shortcuts inside the app.
 
 <p align="center">
   <img src="docs/screenshots/one-dark-pro.png" width="32%" alt="One Dark Pro theme" />
-  <img src="docs/screenshots/hero-code.png" width="32%" alt="Zion Mode — SynthWave '84" />
+  <img src="docs/screenshots/dual-terminal.png" width="32%" alt="Zion Mode — SynthWave '84" />
   <img src="docs/screenshots/light-theme.png" width="32%" alt="GitHub Light theme" />
 </p>
 
@@ -232,6 +232,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 ## License
 
 [MIT](LICENSE) — Use it, fork it, ship it.
+
+## Project Identity
+
+Zion Code is an open source project created and maintained by Nicola Regattieri.
+
+Forks are welcome under the terms of the MIT license, but should not imply official affiliation with Zion Code unless explicitly authorized.
 
 ## Acknowledgments
 
