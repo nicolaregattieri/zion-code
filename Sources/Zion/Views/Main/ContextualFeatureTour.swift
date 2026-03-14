@@ -11,9 +11,9 @@ enum FeatureTourAnchorID: Hashable {
 enum ContextualFeatureTourStep: Int, CaseIterable {
     case recentRepositories
     case workspace
-    case treeHeader
-    case zenToolbar
     case worktrees
+    case zenToolbar
+    case treeHeader
 
     var anchorID: FeatureTourAnchorID {
         switch self {
@@ -30,7 +30,7 @@ enum ContextualFeatureTourStep: Int, CaseIterable {
         case .treeHeader:
             return .graph
         case .recentRepositories, .workspace, .zenToolbar, .worktrees:
-            return nil
+            return .code
         }
     }
 

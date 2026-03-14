@@ -36,19 +36,19 @@ final class ContextualFeatureTourTests: XCTestCase {
     func testFeatureTourStepOrderMatchesCuratedWalkthrough() {
         XCTAssertEqual(
             ContextualFeatureTourStep.allCases,
-            [.recentRepositories, .workspace, .treeHeader, .zenToolbar, .worktrees]
+            [.recentRepositories, .workspace, .worktrees, .zenToolbar, .treeHeader]
         )
     }
 
-    func testOnlyTreeStepRequiresGraphSection() {
-        XCTAssertNil(ContextualFeatureTourStep.recentRepositories.requiredSection)
-        XCTAssertNil(ContextualFeatureTourStep.workspace.requiredSection)
+    func testStepSectionRequirements() {
+        XCTAssertEqual(ContextualFeatureTourStep.recentRepositories.requiredSection, .code)
+        XCTAssertEqual(ContextualFeatureTourStep.workspace.requiredSection, .code)
+        XCTAssertEqual(ContextualFeatureTourStep.worktrees.requiredSection, .code)
+        XCTAssertEqual(ContextualFeatureTourStep.zenToolbar.requiredSection, .code)
         XCTAssertEqual(ContextualFeatureTourStep.treeHeader.requiredSection, .graph)
-        XCTAssertNil(ContextualFeatureTourStep.zenToolbar.requiredSection)
-        XCTAssertNil(ContextualFeatureTourStep.worktrees.requiredSection)
     }
 
-    func testOnlyFinalStepCarriesOptionalAIMessage() {
+    func testOnlyWorktreesStepCarriesOptionalAIMessage() {
         XCTAssertNil(ContextualFeatureTourStep.recentRepositories.supplementaryKey)
         XCTAssertNil(ContextualFeatureTourStep.workspace.supplementaryKey)
         XCTAssertNil(ContextualFeatureTourStep.treeHeader.supplementaryKey)
