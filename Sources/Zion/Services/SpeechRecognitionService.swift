@@ -30,6 +30,21 @@ final class SpeechRecognitionService {
         }
     }
 
+    enum PermissionDenial: Equatable {
+        case speech
+        case microphone
+
+        /// The deep-link into System Settings for this permission.
+        var settingsURL: URL? {
+            switch self {
+            case .speech:
+                return URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_SpeechRecognition")
+            case .microphone:
+                return URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")
+            }
+        }
+    }
+
     enum RecoveryIssue: Equatable {
         case whisperMissingKey
         case whisperQuotaExceeded
@@ -99,7 +114,8 @@ final class SpeechRecognitionService {
             .sorted { $0.identifier < $1.identifier }
     }
 
-    func requestPermission() async -> Bool {
+    /// Returns `nil` when all permissions are granted, or the specific denial when blocked.
+    func requestPermission() async -> PermissionDenial? {
         state = .requesting
 
         // Whisper only needs microphone, not Speech Recognition
@@ -110,7 +126,7 @@ final class SpeechRecognitionService {
 
             guard speechAuthorized else {
                 state = .idle
-                return false
+                return .speech
             }
         } else {
             logger.log(.info, "Whisper engine — skipping speech authorization", context: "Speech")
@@ -126,7 +142,7 @@ final class SpeechRecognitionService {
         logger.log(.info, "Mic authorization: \(micAuthorized)", context: "Speech")
 
         state = .idle
-        return micAuthorized
+        return micAuthorized ? nil : .microphone
     }
 
     /// Isolated from @MainActor so the TCC callback doesn't inherit actor context.
