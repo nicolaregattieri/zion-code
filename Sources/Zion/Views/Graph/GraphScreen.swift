@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct GraphScreen: View {
+    private static let semanticResultsScrollTarget = "graph.semanticResults.scrollTarget"
+
     @Bindable var model: RepositoryViewModel
     @Binding var commitSearchQuery: String
     let performGitAction: (String, String, Bool, @escaping () -> Void) -> Void
@@ -110,10 +112,12 @@ struct GraphScreen: View {
             }
             .onChange(of: model.aiHistorySearchResult) { _, newValue in
                 updateSearchMatches()
-                guard model.isSemanticSearchActive,
-                      let firstHash = newValue?.matches.first?.hash,
-                      let commit = matchingCommit(for: firstHash) else { return }
-                scrollToMatch(id: commit.id, proxy: proxy)
+                guard model.isSemanticSearchActive, newValue != nil else { return }
+                if let firstHash = newValue?.matches.first?.hash,
+                   let commit = matchingCommit(for: firstHash) {
+                    model.selectCommit(commit.id)
+                }
+                scrollToSemanticResults(proxy: proxy)
             }
             .onChange(of: model.uncommittedChanges) { _, changes in
                 if changes.isEmpty, showingPendingChanges {
@@ -377,6 +381,9 @@ struct GraphScreen: View {
                         : []
                     LazyVStack(spacing: 0) {
                         if model.isSemanticSearchActive, (model.isGeneratingAIMessage || model.aiHistorySearchResult != nil) {
+                            Color.clear
+                                .frame(height: 12)
+                                .id(Self.semanticResultsScrollTarget)
                             aiHistoryResultsPanel(proxy: proxy)
                                 .padding(.top, 8)
                                 .frame(width: rowWidth, alignment: .leading)
@@ -986,6 +993,14 @@ struct GraphScreen: View {
         withAnimation(DesignSystem.Motion.springInteractive) {
             proxy.scrollTo(id, anchor: .center)
             model.selectCommit(id)
+        }
+    }
+
+    private func scrollToSemanticResults(proxy: ScrollViewProxy) {
+        DispatchQueue.main.async {
+            withAnimation(DesignSystem.Motion.springInteractive) {
+                proxy.scrollTo(Self.semanticResultsScrollTarget, anchor: .top)
+            }
         }
     }
 
