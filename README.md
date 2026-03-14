@@ -172,13 +172,13 @@ Automatic provider detection from remote URLs. List open PRs, create PRs with AI
 
 Grab the latest `.dmg` from [**Releases**](../../releases), open it, and drag **Zion.app** to Applications.
 
-### Security Note (Current Distribution)
+### Security Note
 
-Zion releases are open source and currently distributed without Apple Developer ID notarization.
+Zion release builds are signed with Apple Developer ID, notarized by Apple, and distributed from the official [**Releases**](../../releases) page.
 
 - Download only from the official [**Releases**](../../releases) page.
-- On first launch, macOS Gatekeeper may block the app. Use **Right click > Open** for a per-app override.
-- For maximum trust, build from source locally.
+- macOS may still show the standard internet-download confirmation prompt the first time you open the app.
+- If you prefer, you can still build from source locally.
 
 ### Build from Source
 
