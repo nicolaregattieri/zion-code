@@ -260,3 +260,17 @@ struct ContextualFeatureTourOverlay: View {
         return CGPoint(x: x, y: y)
     }
 }
+
+enum FeatureTourLaunchPolicy {
+    static func shouldAutoStartFirstRepositoryTour(
+        hasOpenedRepositoryOnce: Bool,
+        hasCompletedFeatureTour: Bool
+    ) -> Bool {
+        !hasOpenedRepositoryOnce && !hasCompletedFeatureTour
+    }
+
+    static func inferredExistingRepositoryHistory(from recentRepositoriesData: Data?) -> Bool {
+        guard let recentRepositoriesData else { return false }
+        return !recentRepositoriesData.isEmpty
+    }
+}
