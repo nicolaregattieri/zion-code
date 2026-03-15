@@ -90,7 +90,7 @@ struct VoiceInputButton: View {
     // MARK: - Settings Popover
 
     private var voiceSettingsPopover: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.standard) {
             Text(L10n("speech.button.tooltip"))
                 .font(DesignSystem.Typography.bodyMedium)
 
@@ -152,7 +152,7 @@ struct VoiceInputButton: View {
         }
         .controlSize(.small)
         .tint(DesignSystem.Colors.actionPrimary)
-        .padding(12)
+        .padding(DesignSystem.Spacing.standard)
         .frame(width: 280)
     }
 
