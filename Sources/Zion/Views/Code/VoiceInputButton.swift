@@ -9,7 +9,7 @@ struct VoiceInputButton: View {
     var voiceToggleRequestID: Int = 0
 
     @State private var isPopoverPresented = false
-    @State private var permissionDenied = false
+    @State private var permissionDenial: SpeechRecognitionService.PermissionDenial?
     @State private var isHovered = false
 
     var body: some View {
@@ -47,6 +47,27 @@ struct VoiceInputButton: View {
         }
         .onChange(of: voiceToggleRequestID) {
             handleTap()
+        }
+        .alert(
+            L10n("speech.permission.alert.title"),
+            isPresented: Binding(
+                get: { permissionDenial != nil },
+                set: { if !$0 { permissionDenial = nil } }
+            )
+        ) {
+            if let url = permissionDenial?.settingsURL {
+                Button(L10n("speech.permission.alert.openSettings")) {
+                    NSWorkspace.shared.open(url)
+                    permissionDenial = nil
+                }
+            }
+            Button(L10n("Cancelar"), role: .cancel) {
+                permissionDenial = nil
+            }
+        } message: {
+            Text(permissionDenial == .microphone
+                ? L10n("speech.permission.alert.micMessage")
+                : L10n("speech.permission.alert.speechMessage"))
         }
     }
 
@@ -111,7 +132,7 @@ struct VoiceInputButton: View {
             }
 
             // Permission denied message
-            if permissionDenied {
+            if permissionDenial != nil {
                 Text(L10n("speech.permission.denied"))
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(DesignSystem.Colors.error)
@@ -152,13 +173,13 @@ struct VoiceInputButton: View {
         let logger = DiagnosticLogger.shared
         Task {
             logger.log(.info, "handleTap → startRecognition: requesting permission…", context: "Speech")
-            let authorized = await speechService.requestPermission()
-            guard authorized else {
-                logger.log(.warn, "Permission denied", context: "Speech")
-                permissionDenied = true
+            let denial = await speechService.requestPermission()
+            guard denial == nil else {
+                logger.log(.warn, "Permission denied: \(denial!)", context: "Speech")
+                permissionDenial = denial
                 return
             }
-            permissionDenied = false
+            permissionDenial = nil
 
             // Give audio hardware time to initialize after first permission grant
             logger.log(.info, "Permission granted, waiting 300ms for audio hardware…", context: "Speech")

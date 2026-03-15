@@ -1909,6 +1909,10 @@
 "speech.recovery.manageOpenAI" = "Manage OpenAI";
 "speech.send" = "Send to Terminal";
 "speech.permission.denied" = "Microphone or speech recognition access denied. Enable in System Settings > Privacy & Security.";
+"speech.permission.alert.title" = "Permission Required";
+"speech.permission.alert.openSettings" = "Open System Settings";
+"speech.permission.alert.micMessage" = "Zion needs microphone access for voice input. Enable it in System Settings > Privacy & Security > Microphone.";
+"speech.permission.alert.speechMessage" = "Zion needs speech recognition access. Enable it in System Settings > Privacy & Security > Speech Recognition.";
 "speech.error.unavailable" = "Speech recognition is not available for the selected language.";
 "settings.speech.engine.hint" = "Apple Speech is free and real-time. Whisper requires an OpenAI API key (configured in AI settings).";
 "settings.speech.engine.whisperUnavailable" = "OpenAI Whisper is unavailable until an OpenAI API key is connected in AI settings.";
