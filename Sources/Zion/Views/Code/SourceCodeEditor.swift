@@ -1,5 +1,5 @@
-import SwiftUI
 import AppKit
+import SwiftUI
 
 struct SourceCodeEditor: NSViewRepresentable {
     @Binding var text: String
@@ -38,124 +38,88 @@ struct SourceCodeEditor: NSViewRepresentable {
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSScrollView()
         scrollView.hasVerticalScroller = true
-        scrollView.hasHorizontalScroller = true
-        scrollView.autohidesScrollers = true
+        scrollView.hasHorizontalScroller = !isLineWrappingEnabled
         scrollView.drawsBackground = true
-        // Keep ruler/gutter drawing strictly inside editor bounds.
-        scrollView.wantsLayer = true
-        scrollView.layer?.masksToBounds = true
 
-        let textStorage = NSTextStorage()
-        let layoutManager = NSLayoutManager()
-        textStorage.addLayoutManager(layoutManager)
-
-        let textContainer = NSTextContainer(containerSize: NSSize(width: 0, height: CGFloat.greatestFiniteMagnitude))
-        textContainer.widthTracksTextView = true
-        layoutManager.addTextContainer(textContainer)
-
-        let textView = ZionTextView(frame: .zero, textContainer: textContainer)
-        ZionTextView.activeTextViewReference.value = textView
-        textView.isVerticallyResizable = true
-        textView.isHorizontallyResizable = false
-        textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
-        textView.minSize = NSSize(width: 0, height: 0)
-        textView.autoresizingMask = [.width]
-
-        textView.coordinator = context.coordinator
-        textView.delegate = context.coordinator
+        let textView = ZionTextView()
         textView.isEditable = true
         textView.isSelectable = true
-        textView.isRichText = false
         textView.allowsUndo = true
-        // Keep code input deterministic regardless of macOS substitution settings.
-        textView.isAutomaticQuoteSubstitutionEnabled = false
-        textView.isAutomaticDashSubstitutionEnabled = false
-        textView.isAutomaticTextReplacementEnabled = false
-        textView.isAutomaticSpellingCorrectionEnabled = false
-        textView.isContinuousSpellCheckingEnabled = false
-        textView.isGrammarCheckingEnabled = false
-        textView.smartInsertDeleteEnabled = false
-        textView.font = MonospaceFontResolver.resolve(name: fontFamily, size: fontSize).font
+        textView.isRichText = false
+        textView.drawsBackground = true
         textView.usesAdaptiveColorMappingForDarkAppearance = false
-
-        scrollView.documentView = textView
+        textView.textContainerInset = NSSize(width: 6, height: 6)
+        textView.autoresizingMask = [.width]
+        textView.isVerticallyResizable = true
+        textView.delegate = context.coordinator
+        textView.string = text
+        ZionTextView.activeTextViewReference.value = textView
         context.coordinator.installedTextView = textView
 
-        // Setup Line Numbers
-        scrollView.hasVerticalRuler = true
-        scrollView.rulersVisible = true
+        textView.coordinator = context.coordinator
+        textView.currentFilePath = currentFilePath
+        textView.onRequestDefinition = onRequestDefinition
+        textView.onRequestReferences = onRequestReferences
+        textView.onFindSeedFromMultiSelect = onFindSeedFromMultiSelect
+        textView.onToggleFindUI = onToggleFindUI
+        textView.onFindNextShortcut = onFindNextShortcut
+        textView.onFindPreviousShortcut = onFindPreviousShortcut
+
+        scrollView.documentView = textView
+
         let ruler = LineNumberRulerView(textView: textView)
-        ruler.theme = theme
+        scrollView.hasVerticalRuler = true
         scrollView.verticalRulerView = ruler
+        scrollView.rulersVisible = true
+
+        let colors = getEditorColors(for: theme)
+        textView.backgroundColor = colors.background
+        scrollView.backgroundColor = colors.background
+        context.coordinator.applyHighlighting(to: textView, colors: colors)
+
+        context.coordinator.lastHighlightedText = text
+        context.coordinator.lastHighlightedTheme = theme
+        context.coordinator.lastHighlightedExtension = fileExtension
+        context.coordinator.lastActiveFileID = activeFileID
+
+        if let textContainer = textView.textContainer {
+            textContainer.widthTracksTextView = isLineWrappingEnabled
+            textContainer.containerSize = isLineWrappingEnabled
+                ? NSSize(width: 0, height: CGFloat.greatestFiniteMagnitude)
+                : NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        }
 
         return scrollView
     }
 
     func updateNSView(_ nsView: NSScrollView, context: Context) {
-        context.coordinator.parent = self
         guard let textView = nsView.documentView as? ZionTextView else { return }
-        ZionTextView.activeTextViewReference.value = textView
-        let coordinator = context.coordinator
 
-        // Sync text
-        var didSyncTextFromBinding = false
-        if textView.string != text {
-            textView.string = text
-            didSyncTextFromBinding = true
-        }
+        context.coordinator.parent = self
 
-        // Sync font (cached)
-        let font: NSFont
-        if let cached = coordinator.cachedFont, coordinator.cachedFontSize == fontSize, coordinator.cachedFontFamily == fontFamily {
-            font = cached
-        } else {
-            font = MonospaceFontResolver.resolve(name: fontFamily, size: fontSize).font
-            coordinator.cachedFont = font
-            coordinator.cachedFontSize = fontSize
-            coordinator.cachedFontFamily = fontFamily
-        }
-        if textView.font != font {
-            textView.font = font
-        }
-
-        let width = max(nsView.contentSize.width, 1)
-        let widthChanged = abs((coordinator.lastWrappedWidth ?? -1) - width) > 0.5
-        if coordinator.lastLineWrappingEnabled != isLineWrappingEnabled || (isLineWrappingEnabled && widthChanged) {
-            coordinator.applyLineWrapping(
-                enabled: isLineWrappingEnabled,
-                width: width,
-                in: nsView,
-                textView: textView
-            )
-        }
-        coordinator.lastLineWrappingEnabled = isLineWrappingEnabled
-        coordinator.lastWrappedWidth = isLineWrappingEnabled ? width : nil
-
-        // Colors (cached)
-        let colors: EditorColors
-        if let cached = coordinator.cachedColors, coordinator.cachedColorsTheme == theme {
-            colors = cached
-        } else {
-            colors = getEditorColors(for: theme)
-            coordinator.cachedColors = colors
-            coordinator.cachedColorsTheme = theme
-        }
-        textView.drawsBackground = true
+        let colors = getEditorColors(for: theme)
         textView.backgroundColor = colors.background
-        nsView.drawsBackground = true
         nsView.backgroundColor = colors.background
-        textView.insertionPointColor = colors.text
-        let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.lineSpacing = CGFloat(lineSpacing)
-        textView.defaultParagraphStyle = paragraphStyle
-        textView.typingAttributes = [
-            .font: font,
-            .foregroundColor: colors.text,
-            .paragraphStyle: paragraphStyle,
-            .kern: CGFloat(letterSpacing)
-        ]
+        textView.drawsBackground = true
+        let isLight = theme.isLightAppearance
+        textView.isLightTheme = isLight
+        textView.currentLineHighlightColor = isLight
+            ? NSColor.black.withAlphaComponent(0.04)
+            : NSColor.white.withAlphaComponent(0.04)
 
-        // Editor settings
+        if let ruler = nsView.verticalRulerView as? LineNumberRulerView {
+            ruler.theme = theme
+            ruler.needsDisplay = true
+        }
+
+        textView.currentFilePath = currentFilePath
+        textView.onRequestDefinition = onRequestDefinition
+        textView.onRequestReferences = onRequestReferences
+        textView.onFindSeedFromMultiSelect = onFindSeedFromMultiSelect
+        textView.onToggleFindUI = onToggleFindUI
+        textView.onFindNextShortcut = onFindNextShortcut
+        textView.onFindPreviousShortcut = onFindPreviousShortcut
+
         textView.editorTabSize = tabSize
         textView.editorUseTabs = useTabs
         textView.editorAutoCloseBrackets = autoCloseBrackets
@@ -165,111 +129,122 @@ struct SourceCodeEditor: NSViewRepresentable {
         textView.columnRulerPosition = rulerColumn
         textView.editorBracketPairHighlight = bracketPairHighlight
         textView.editorShowIndentGuides = showIndentGuides
-        textView.currentFilePath = currentFilePath
-        textView.onRequestDefinition = onRequestDefinition
-        textView.onRequestReferences = onRequestReferences
-        textView.onFindSeedFromMultiSelect = onFindSeedFromMultiSelect
-        textView.onToggleFindUI = onToggleFindUI
-        textView.onFindNextShortcut = onFindNextShortcut
-        textView.onFindPreviousShortcut = onFindPreviousShortcut
 
-        // Current line highlight color — theme-aware
-        textView.currentLineHighlightColor = theme.isLightAppearance
-            ? NSColor.black.withAlphaComponent(0.06)
-            : NSColor.white.withAlphaComponent(0.04)
-        textView.isLightTheme = theme.isLightAppearance
+        let coord = context.coordinator
+        let fileChanged = activeFileID != coord.lastActiveFileID
+        if fileChanged { coord.lastActiveFileID = activeFileID }
 
-        // Enforce code-editor semantics if app-level substitutions are toggled at runtime.
-        textView.isAutomaticQuoteSubstitutionEnabled = false
-        textView.isAutomaticDashSubstitutionEnabled = false
-        textView.isAutomaticTextReplacementEnabled = false
-        textView.isAutomaticSpellingCorrectionEnabled = false
-        textView.isContinuousSpellCheckingEnabled = false
-        textView.isGrammarCheckingEnabled = false
-        textView.smartInsertDeleteEnabled = false
-
-        if let ruler = nsView.verticalRulerView as? LineNumberRulerView {
-            ruler.theme = theme
-            ruler.needsDisplay = true
+        // Update font
+        let needsFontUpdate = coord.cachedFontSize != fontSize || coord.cachedFontFamily != fontFamily
+        if needsFontUpdate {
+            let font: NSFont
+            if let custom = NSFont(name: fontFamily, size: CGFloat(fontSize)) {
+                font = custom
+            } else {
+                font = NSFont.monospacedSystemFont(ofSize: CGFloat(fontSize), weight: .regular)
+            }
+            textView.font = font
+            coord.cachedFont = font
+            coord.cachedFontSize = fontSize
+            coord.cachedFontFamily = fontFamily
+            if let ruler = nsView.verticalRulerView as? LineNumberRulerView {
+                ruler.needsDisplay = true
+            }
         }
 
-        // Highlighting
-        let coord = context.coordinator
-        let currentText = textView.string
-        let needsImmediateHighlight = didSyncTextFromBinding
-            || theme != coord.lastHighlightedTheme
-            || fileExtension != coord.lastHighlightedExtension
-        if needsImmediateHighlight {
+        // Update text
+        if text != textView.string || fileChanged {
+            let sel = textView.selectedRange()
+            textView.string = text
+            let clampedLoc = min(sel.location, (text as NSString).length)
+            let clampedLen = min(sel.length, max(0, (text as NSString).length - clampedLoc))
+            textView.setSelectedRange(NSRange(location: clampedLoc, length: clampedLen))
+        }
+
+        // Re-highlight if needed
+        let needsHighlight = text != coord.lastHighlightedText ||
+            theme != coord.lastHighlightedTheme ||
+            fileExtension != coord.lastHighlightedExtension ||
+            fileChanged
+        if needsHighlight {
             coord.applyHighlighting(to: textView, colors: colors)
-            coord.lastHighlightedText = currentText
+            coord.lastHighlightedText = text
             coord.lastHighlightedTheme = theme
             coord.lastHighlightedExtension = fileExtension
         }
 
-        // Apply line spacing and letter spacing (only when changed)
-        if lineSpacing != coord.lastLineSpacing || letterSpacing != coord.lastLetterSpacing {
-            coord.lastLineSpacing = lineSpacing
-            coord.lastLetterSpacing = letterSpacing
-            let range = NSRange(location: 0, length: textView.string.utf16.count)
-            if range.length > 0 {
-                textView.textStorage?.addAttribute(.paragraphStyle, value: paragraphStyle, range: range)
-                textView.textStorage?.addAttribute(.kern, value: CGFloat(letterSpacing), range: range)
+        // Line spacing
+        if lineSpacing != coord.lastLineSpacing || fileChanged {
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.lineSpacing = CGFloat(lineSpacing)
+            let fullRange = NSRange(location: 0, length: (textView.string as NSString).length)
+            if fullRange.length > 0 {
+                textView.textStorage?.addAttribute(.paragraphStyle, value: paragraphStyle, range: fullRange)
             }
+            coord.lastLineSpacing = lineSpacing
         }
 
-        // Search highlighting
-        let coord2 = context.coordinator
-        let searchQueryChanged = searchQuery != coord2.lastSearchQuery
-        let searchTextChanged = !searchQuery.isEmpty && currentText != coord2.lastSearchText
-        let searchScrollRequestChanged = searchScrollRequestID != coord2.lastSearchScrollRequestID
-        if searchQueryChanged || searchTextChanged {
-            coord2.lastSearchQuery = searchQuery
-            coord2.lastSearchText = currentText
-            coord2.updateSearchHighlights(
-                in: textView,
-                query: searchQuery,
-                currentIndex: currentMatchIndex,
-                scrollToCurrentMatch: searchQueryChanged || searchScrollRequestChanged
-            )
-            coord2.lastSearchScrollRequestID = searchScrollRequestID
-            onMatchCountChanged?(coord2.searchMatchRanges.count)
-        } else if currentMatchIndex != coord2.lastCurrentMatchIndex || searchScrollRequestChanged {
-            coord2.updateCurrentMatchHighlight(
-                in: textView,
-                currentIndex: currentMatchIndex,
-                scrollToCurrentMatch: searchScrollRequestChanged
-            )
-            coord2.lastSearchScrollRequestID = searchScrollRequestID
+        // Letter spacing
+        if letterSpacing != coord.lastLetterSpacing || fileChanged {
+            let fullRange = NSRange(location: 0, length: (textView.string as NSString).length)
+            if fullRange.length > 0 {
+                textView.textStorage?.addAttribute(.kern, value: CGFloat(letterSpacing), range: fullRange)
+            }
+            coord.lastLetterSpacing = letterSpacing
         }
+
+        // Line wrapping
+        let contentWidth = nsView.contentSize.width
+        let wrappingChanged = isLineWrappingEnabled != coord.lastLineWrappingEnabled
+        let widthChanged = abs(contentWidth - (coord.lastWrappedWidth ?? 0)) > 1.0
+        if wrappingChanged || (isLineWrappingEnabled && widthChanged) {
+            coord.applyLineWrapping(enabled: isLineWrappingEnabled, width: contentWidth, in: nsView, textView: textView)
+            coord.lastLineWrappingEnabled = isLineWrappingEnabled
+            coord.lastWrappedWidth = contentWidth
+        }
+
+        // Search highlights
+        let searchChanged = searchQuery != coord.lastSearchQuery || text != coord.lastSearchText || fileChanged
+        if searchChanged {
+            coord.updateSearchHighlights(in: textView, query: searchQuery, currentIndex: currentMatchIndex)
+            coord.lastSearchQuery = searchQuery
+            coord.lastSearchText = text
+            coord.lastCurrentMatchIndex = currentMatchIndex
+            onMatchCountChanged?(coord.searchMatchRanges.count)
+        } else if currentMatchIndex != coord.lastCurrentMatchIndex || searchScrollRequestID != coord.lastSearchScrollRequestID {
+            coord.updateCurrentMatchHighlight(in: textView, currentIndex: currentMatchIndex)
+            coord.lastCurrentMatchIndex = currentMatchIndex
+        }
+
+        coord.lastSearchScrollRequestID = searchScrollRequestID
 
         // Go to line
-        if goToLine > 0 && (goToLine != context.coordinator.lastGoToLine || goToLineRequestID != context.coordinator.lastGoToLineRequestID) {
-            context.coordinator.lastGoToLine = goToLine
-            context.coordinator.lastGoToLineRequestID = goToLineRequestID
-            context.coordinator.scrollToLine(goToLine, in: textView)
+        if goToLine != coord.lastGoToLine || goToLineRequestID != coord.lastGoToLineRequestID {
+            if goToLine > 0 {
+                coord.scrollToLine(goToLine, in: textView)
+            }
+            coord.lastGoToLine = goToLine
+            coord.lastGoToLineRequestID = goToLineRequestID
         }
 
-        if focusRequestID != context.coordinator.lastFocusRequestID {
-            context.coordinator.lastFocusRequestID = focusRequestID
+        // Focus request
+        if focusRequestID != coord.lastFocusRequestID {
+            coord.lastFocusRequestID = focusRequestID
             DispatchQueue.main.async {
-                guard let window = textView.window, window.firstResponder !== textView else { return }
-                window.makeFirstResponder(textView)
+                if let window = textView.window {
+                    window.makeFirstResponder(textView)
+                }
             }
         }
 
-        // Scroll to top-left only when the active file changes
-        if activeFileID != context.coordinator.lastActiveFileID {
-            context.coordinator.lastActiveFileID = activeFileID
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                textView.setSelectedRange(NSRange(location: 0, length: 0))
-                textView.scrollRangeToVisible(NSRange(location: 0, length: 0))
-            }
-        }
+        textView.needsDisplay = true
     }
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
+
+    // MARK: - Coordinator
 
     class Coordinator: NSObject, NSTextViewDelegate {
         var parent: SourceCodeEditor
@@ -691,88 +666,6 @@ struct SourceCodeEditor: NSViewRepresentable {
         let number: NSColor
         let call: NSColor
     }
-
-    func getEditorColors(for theme: EditorTheme) -> EditorColors {
-        switch theme {
-        case .dracula:
-            return EditorColors(
-                background: NSColor(srgbRed: 0.157, green: 0.165, blue: 0.212, alpha: 1.0),
-                text: NSColor(srgbRed: 0.973, green: 0.973, blue: 0.949, alpha: 1.0),
-                keyword: NSColor(srgbRed: 1.0, green: 0.475, blue: 0.776, alpha: 1.0),
-                type: NSColor(srgbRed: 0.545, green: 0.914, blue: 0.992, alpha: 1.0),
-                string: NSColor(srgbRed: 0.945, green: 0.980, blue: 0.549, alpha: 1.0),
-                comment: NSColor(srgbRed: 0.384, green: 0.447, blue: 0.643, alpha: 1.0),
-                number: NSColor(srgbRed: 0.741, green: 0.576, blue: 0.976, alpha: 1.0),
-                call: NSColor(srgbRed: 0.314, green: 0.980, blue: 0.482, alpha: 1.0)
-            )
-        case .cityLights:
-            return EditorColors(
-                background: NSColor(srgbRed: 0.114, green: 0.145, blue: 0.173, alpha: 1.0),
-                text: NSColor(srgbRed: 0.443, green: 0.549, blue: 0.631, alpha: 1.0),
-                keyword: NSColor(srgbRed: 0.325, green: 0.604, blue: 0.988, alpha: 1.0),
-                type: NSColor(srgbRed: 0.0, green: 0.733, blue: 0.824, alpha: 1.0),
-                string: NSColor(srgbRed: 0.545, green: 0.831, blue: 0.612, alpha: 1.0),
-                comment: NSColor(srgbRed: 0.255, green: 0.314, blue: 0.369, alpha: 1.0),
-                number: NSColor(srgbRed: 0.886, green: 0.494, blue: 0.553, alpha: 1.0),
-                call: NSColor(srgbRed: 0.325, green: 0.604, blue: 0.988, alpha: 1.0)
-            )
-        case .githubLight:
-            return EditorColors(
-                background: NSColor(srgbRed: 1.0, green: 1.0, blue: 1.0, alpha: 1.0),
-                text: NSColor(srgbRed: 0.141, green: 0.161, blue: 0.180, alpha: 1.0),
-                keyword: NSColor(srgbRed: 0.843, green: 0.227, blue: 0.286, alpha: 1.0),
-                type: NSColor(srgbRed: 0.435, green: 0.259, blue: 0.757, alpha: 1.0),
-                string: NSColor(srgbRed: 0.012, green: 0.184, blue: 0.384, alpha: 1.0),
-                comment: NSColor(srgbRed: 0.416, green: 0.451, blue: 0.490, alpha: 1.0),
-                number: NSColor(srgbRed: 0.0, green: 0.361, blue: 0.773, alpha: 1.0),
-                call: NSColor(srgbRed: 0.435, green: 0.259, blue: 0.757, alpha: 1.0)
-            )
-        case .catppuccinMocha:
-            return EditorColors(
-                background: NSColor(srgbRed: 0.118, green: 0.118, blue: 0.180, alpha: 1.0),
-                text: NSColor(srgbRed: 0.804, green: 0.839, blue: 0.957, alpha: 1.0),
-                keyword: NSColor(srgbRed: 0.796, green: 0.651, blue: 0.969, alpha: 1.0),
-                type: NSColor(srgbRed: 0.537, green: 0.706, blue: 0.980, alpha: 1.0),
-                string: NSColor(srgbRed: 0.651, green: 0.890, blue: 0.631, alpha: 1.0),
-                comment: NSColor(srgbRed: 0.424, green: 0.439, blue: 0.525, alpha: 1.0),
-                number: NSColor(srgbRed: 0.980, green: 0.702, blue: 0.529, alpha: 1.0),
-                call: NSColor(srgbRed: 0.537, green: 0.706, blue: 0.980, alpha: 1.0)
-            )
-        case .oneDarkPro:
-            return EditorColors(
-                background: NSColor(srgbRed: 0.157, green: 0.173, blue: 0.204, alpha: 1.0),
-                text: NSColor(srgbRed: 0.671, green: 0.698, blue: 0.749, alpha: 1.0),
-                keyword: NSColor(srgbRed: 0.776, green: 0.471, blue: 0.867, alpha: 1.0),
-                type: NSColor(srgbRed: 0.898, green: 0.753, blue: 0.482, alpha: 1.0),
-                string: NSColor(srgbRed: 0.596, green: 0.765, blue: 0.475, alpha: 1.0),
-                comment: NSColor(srgbRed: 0.361, green: 0.388, blue: 0.439, alpha: 1.0),
-                number: NSColor(srgbRed: 0.820, green: 0.604, blue: 0.400, alpha: 1.0),
-                call: NSColor(srgbRed: 0.380, green: 0.686, blue: 0.937, alpha: 1.0)
-            )
-        case .tokyoNight:
-            return EditorColors(
-                background: NSColor(srgbRed: 0.102, green: 0.106, blue: 0.149, alpha: 1.0),
-                text: NSColor(srgbRed: 0.663, green: 0.694, blue: 0.839, alpha: 1.0),
-                keyword: NSColor(srgbRed: 0.733, green: 0.604, blue: 0.969, alpha: 1.0),
-                type: NSColor(srgbRed: 0.165, green: 0.765, blue: 0.871, alpha: 1.0),
-                string: NSColor(srgbRed: 0.620, green: 0.808, blue: 0.416, alpha: 1.0),
-                comment: NSColor(srgbRed: 0.337, green: 0.373, blue: 0.537, alpha: 1.0),
-                number: NSColor(srgbRed: 1.0, green: 0.620, blue: 0.392, alpha: 1.0),
-                call: NSColor(srgbRed: 0.478, green: 0.635, blue: 0.969, alpha: 1.0)
-            )
-        case .synthwave:
-            return EditorColors(
-                background: NSColor(srgbRed: 0.149, green: 0.137, blue: 0.208, alpha: 1.0),
-                text: NSColor(srgbRed: 1.0, green: 1.0, blue: 1.0, alpha: 1.0),
-                keyword: NSColor(srgbRed: 0.996, green: 0.871, blue: 0.365, alpha: 1.0),
-                type: NSColor(srgbRed: 0.212, green: 0.976, blue: 0.965, alpha: 1.0),
-                string: NSColor(srgbRed: 1.0, green: 0.545, blue: 0.224, alpha: 1.0),
-                comment: NSColor(srgbRed: 0.518, green: 0.545, blue: 0.741, alpha: 1.0),
-                number: NSColor(srgbRed: 0.976, green: 0.494, blue: 0.447, alpha: 1.0),
-                call: NSColor(srgbRed: 0.447, green: 0.945, blue: 0.722, alpha: 1.0)
-            )
-        }
-    }
 }
 
 // MARK: - ZionTextView — Custom NSTextView with editor features
@@ -805,24 +698,25 @@ class ZionTextView: NSTextView {
     var editorBracketPairHighlight: Bool = true
     var editorShowIndentGuides: Bool = false
     var matchingBracketRange: NSRange?
+    var secondBracketRange: NSRange?
 
     var indentString: String {
         editorUseTabs ? "\t" : String(repeating: " ", count: editorTabSize)
     }
 
-    private static let autoClosePairs: [Character: Character] = [
+    static let autoClosePairs: [Character: Character] = [
         "(": ")", "[": "]", "{": "}",
         "\"": "\"", "'": "'", "`": "`"
     ]
 
-    private static let bracketPairs: [Character: Character] = [
+    static let bracketPairs: [Character: Character] = [
         "(": ")", "[": "]", "{": "}"
     ]
-    private static let closingBrackets: [Character: Character] = [
+    static let closingBrackets: [Character: Character] = [
         ")": "(", "]": "[", "}": "{"
     ]
 
-    // MARK: - Background Drawing (current line, ruler, brackets, indent guides)
+    // MARK: - Background Drawing
 
     override func drawBackground(in rect: NSRect) {
         super.drawBackground(in: rect)
@@ -861,89 +755,6 @@ class ZionTextView: NSTextView {
         }
     }
 
-    private func drawColumnRuler(in rect: NSRect) {
-        guard let font = self.font else { return }
-        let charWidth = NSString("m").size(withAttributes: [.font: font]).width
-        let x = textContainerOrigin.x + charWidth * CGFloat(columnRulerPosition)
-        guard rect.minX <= x && x <= rect.maxX else { return }
-
-        let color = isLightTheme
-            ? NSColor.black.withAlphaComponent(0.15)
-            : NSColor.white.withAlphaComponent(0.15)
-        color.setStroke()
-
-        let path = NSBezierPath()
-        path.move(to: NSPoint(x: x, y: rect.minY))
-        path.line(to: NSPoint(x: x, y: rect.maxY))
-        path.lineWidth = 1.0
-        path.stroke()
-    }
-
-    private func drawBracketHighlight(range: NSRange, in rect: NSRect) {
-        guard let layoutManager = layoutManager, let textContainer = textContainer else { return }
-        let glyphRange = layoutManager.glyphRange(forCharacterRange: range, actualCharacterRange: nil)
-        var bracketRect = layoutManager.boundingRect(forGlyphRange: glyphRange, in: textContainer)
-        bracketRect.origin.y += textContainerOrigin.y
-        bracketRect.origin.x += textContainerOrigin.x
-
-        guard bracketRect.intersects(rect) else { return }
-
-        let color = NSColor.systemBlue.withAlphaComponent(0.2)
-        color.setFill()
-        let highlightRect = bracketRect.insetBy(dx: -1, dy: -1)
-        let path = NSBezierPath(roundedRect: highlightRect, xRadius: 2, yRadius: 2)
-        path.fill()
-    }
-
-    private func drawIndentGuides(in rect: NSRect) {
-        guard let layoutManager = layoutManager, let textContainer = textContainer, let font = self.font else { return }
-        guard !string.isEmpty else { return }
-
-        let charWidth = NSString(" ").size(withAttributes: [.font: font]).width
-        let guideSpacing = charWidth * CGFloat(editorTabSize)
-        guard guideSpacing > 0 else { return }
-
-        let color = isLightTheme
-            ? NSColor.black.withAlphaComponent(0.06)
-            : NSColor.white.withAlphaComponent(0.06)
-        color.setStroke()
-
-        let visibleGlyphRange = layoutManager.glyphRange(forBoundingRect: visibleRect, in: textContainer)
-        let visibleCharRange = layoutManager.characterRange(forGlyphRange: visibleGlyphRange, actualGlyphRange: nil)
-
-        let nsString = string as NSString
-        var index = visibleCharRange.location
-        while index < NSMaxRange(visibleCharRange) && index < nsString.length {
-            let lineRange = nsString.lineRange(for: NSRange(location: index, length: 0))
-            let lineText = nsString.substring(with: lineRange)
-
-            // Count leading whitespace columns
-            var columns = 0
-            for ch in lineText {
-                if ch == " " { columns += 1 }
-                else if ch == "\t" { columns += editorTabSize }
-                else { break }
-            }
-
-            let lineGlyphRange = layoutManager.glyphRange(forCharacterRange: lineRange, actualCharacterRange: nil)
-            let lineRect = layoutManager.boundingRect(forGlyphRange: lineGlyphRange, in: textContainer)
-
-            // Draw guide at each indent level
-            var level = 1
-            while CGFloat(level) * guideSpacing < charWidth * CGFloat(columns) {
-                let x = textContainerOrigin.x + CGFloat(level) * guideSpacing
-                let path = NSBezierPath()
-                path.move(to: NSPoint(x: x, y: lineRect.minY + textContainerOrigin.y))
-                path.line(to: NSPoint(x: x, y: lineRect.maxY + textContainerOrigin.y))
-                path.lineWidth = 0.5
-                path.stroke()
-                level += 1
-            }
-
-            index = NSMaxRange(lineRange)
-        }
-    }
-
     // MARK: - Bracket Matching
 
     func updateBracketMatch() {
@@ -963,14 +774,13 @@ class ZionTextView: NSTextView {
             let ch = Character(nsString.substring(with: NSRange(location: checkPos, length: 1)))
 
             if let closing = ZionTextView.bracketPairs[ch] {
-                // Opening bracket — scan forward
+                // Opening bracket -- scan forward
                 if let matchPos = findMatchingBracket(from: checkPos + 1, open: ch, close: closing, forward: true) {
-                    // Highlight both brackets
                     drawBothBrackets(checkPos, matchPos)
                     return
                 }
             } else if let opening = ZionTextView.closingBrackets[ch] {
-                // Closing bracket — scan backward
+                // Closing bracket -- scan backward
                 if let matchPos = findMatchingBracket(from: checkPos - 1, open: opening, close: ch, forward: false) {
                     drawBothBrackets(matchPos, checkPos)
                     return
@@ -981,24 +791,9 @@ class ZionTextView: NSTextView {
     }
 
     private func drawBothBrackets(_ pos1: Int, _ pos2: Int) {
-        // We draw both brackets — use two passes via drawBackground
-        // Store the second bracket for drawBackground; draw both in sequence
         matchingBracketRange = NSRange(location: pos1, length: 1)
-        // Store second bracket in a temporary — we need to draw both
         secondBracketRange = NSRange(location: pos2, length: 1)
         needsDisplay = true
-    }
-
-    var secondBracketRange: NSRange?
-
-    // Override drawBackground to also draw secondBracketRange
-    private func drawBracketHighlightPair(in rect: NSRect) {
-        if let range = matchingBracketRange {
-            drawBracketHighlight(range: range, in: rect)
-        }
-        if let range = secondBracketRange {
-            drawBracketHighlight(range: range, in: rect)
-        }
     }
 
     private func findMatchingBracket(from start: Int, open: Character, close: Character, forward: Bool) -> Int? {
@@ -1021,757 +816,5 @@ class ZionTextView: NSTextView {
             scanned += 1
         }
         return nil
-    }
-
-    private func currentFindSeedFromSelection() -> String? {
-        let range = selectedRange()
-        guard range.location != NSNotFound, range.length > 0 else { return nil }
-        let nsString = string as NSString
-        guard NSMaxRange(range) <= nsString.length else { return nil }
-        let selectedText = nsString.substring(with: range)
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !selectedText.isEmpty else { return nil }
-        guard !selectedText.contains("\n"), !selectedText.contains("\r") else { return nil }
-        return selectedText
-    }
-
-    private func emitFindSeedFromSelection() {
-        onFindSeedFromMultiSelect?(currentFindSeedFromSelection() ?? "")
-    }
-
-    // MARK: - Key Interception
-
-    override func performKeyEquivalent(with event: NSEvent) -> Bool {
-        let flags = event.modifierFlags.intersection([.command, .option, .shift, .control])
-        let key = event.charactersIgnoringModifiers?.lowercased()
-
-        if (flags == .command || flags == .control), key == "f" {
-            emitFindSeedFromSelection()
-            return false
-        }
-
-        if flags == .command, key == "g" {
-            onFindNextShortcut?()
-            return true
-        }
-
-        if flags == [.command, .shift], key == "g" {
-            onFindPreviousShortcut?()
-            return true
-        }
-
-        if flags == .command, key == "d" {
-            selectNextOccurrence()
-            return true
-        }
-
-        // Format Document (⇧⌥F)
-        if flags == [.shift, .option], key == "f" {
-            NotificationCenter.default.post(name: .formatDocument, object: nil)
-            return true
-        }
-
-        return super.performKeyEquivalent(with: event)
-    }
-
-    override func keyDown(with event: NSEvent) {
-        let flags = event.modifierFlags.intersection([.command, .option, .shift, .control])
-
-        if flags == .command, event.charactersIgnoringModifiers?.lowercased() == "g" {
-            onFindNextShortcut?()
-            return
-        }
-
-        if flags == [.command, .shift], event.charactersIgnoringModifiers?.lowercased() == "g" {
-            onFindPreviousShortcut?()
-            return
-        }
-
-        // VSCode-like command: add next occurrence selection.
-        if flags == .command, event.charactersIgnoringModifiers?.lowercased() == "d" {
-            selectNextOccurrence()
-            return
-        }
-
-        if isF12(event) {
-            if flags == .shift {
-                requestReferencesFromCaret()
-                return
-            }
-            if flags.isEmpty {
-                requestDefinitionFromCaret()
-                return
-            }
-        }
-
-        switch (event.keyCode, flags) {
-        case (126, .option):          // Option+Up: Move line up
-            moveLineUp()
-            return
-        case (125, .option):          // Option+Down: Move line down
-            moveLineDown()
-            return
-        case (125, [.shift, .option]): // Shift+Option+Down: Duplicate line
-            duplicateLineDown()
-            return
-        case (48, []) where !hasMarkedText(): // Tab: Indent
-            indentLines()
-            return
-        case (48, .shift):            // Shift+Tab: Outdent
-            outdentLines()
-            return
-        case (36, []), (76, []):      // Return/Enter: Auto-indent
-            autoIndentNewLine()
-            return
-        default:
-            break
-        }
-
-        // Auto-closing brackets/quotes
-        if let chars = event.characters, chars.count == 1, !flags.contains(.command), !flags.contains(.control) {
-            let char = chars.first!
-            if handleAutoClose(char) {
-                return
-            }
-        }
-
-        super.keyDown(with: event)
-    }
-
-    override func mouseDown(with event: NSEvent) {
-        if event.modifierFlags.contains(.command),
-           let query = navigationQuery(at: event.locationInWindow) {
-            onRequestDefinition?(query)
-            return
-        }
-        super.mouseDown(with: event)
-    }
-
-    // MARK: - Delete Backward (auto-close pair removal)
-
-    override func deleteBackward(_ sender: Any?) {
-        let sel = selectedRange()
-        if sel.length == 0 && sel.location > 0 && sel.location < (string as NSString).length {
-            let nsString = string as NSString
-            let prev = nsString.substring(with: NSRange(location: sel.location - 1, length: 1))
-            let next = nsString.substring(with: NSRange(location: sel.location, length: 1))
-            let pairs: [String: String] = ["(": ")", "[": "]", "{": "}", "\"": "\"", "'": "'", "`": "`"]
-            if let closing = pairs[prev], closing == next {
-                let deleteRange = NSRange(location: sel.location - 1, length: 2)
-                if shouldChangeText(in: deleteRange, replacementString: "") {
-                    textStorage?.replaceCharacters(in: deleteRange, with: "")
-                    didChangeText()
-                    setSelectedRange(NSRange(location: sel.location - 1, length: 0))
-                    return
-                }
-            }
-        }
-        super.deleteBackward(sender)
-    }
-
-    // MARK: - Move Line Up
-
-    private func moveLineUp() {
-        let nsString = string as NSString
-        let cursorPos = selectedRange().location
-        let currentLineRange = nsString.lineRange(for: NSRange(location: cursorPos, length: 0))
-        guard currentLineRange.location > 0 else { return }
-
-        let prevLineRange = nsString.lineRange(for: NSRange(location: currentLineRange.location - 1, length: 0))
-        var currentLine = nsString.substring(with: currentLineRange)
-        var prevLine = nsString.substring(with: prevLineRange)
-
-        // Handle last line (no trailing newline)
-        if !currentLine.hasSuffix("\n") {
-            currentLine += "\n"
-            prevLine = String(prevLine.dropLast())
-        }
-
-        let combinedRange = NSRange(location: prevLineRange.location, length: prevLineRange.length + currentLineRange.length)
-        let replacement = currentLine + prevLine
-        let offsetInLine = cursorPos - currentLineRange.location
-        let maxOffset = max(0, (currentLine as NSString).length - 1)
-        let newCursorPos = prevLineRange.location + min(offsetInLine, maxOffset)
-
-        if shouldChangeText(in: combinedRange, replacementString: replacement) {
-            textStorage?.replaceCharacters(in: combinedRange, with: replacement)
-            didChangeText()
-            setSelectedRange(NSRange(location: newCursorPos, length: 0))
-        }
-    }
-
-    // MARK: - Move Line Down
-
-    private func moveLineDown() {
-        let nsString = string as NSString
-        let cursorPos = selectedRange().location
-        let currentLineRange = nsString.lineRange(for: NSRange(location: cursorPos, length: 0))
-        let endOfCurrent = NSMaxRange(currentLineRange)
-        guard endOfCurrent < nsString.length else { return }
-
-        let nextLineRange = nsString.lineRange(for: NSRange(location: endOfCurrent, length: 0))
-        var currentLine = nsString.substring(with: currentLineRange)
-        var nextLine = nsString.substring(with: nextLineRange)
-
-        // Handle last line (no trailing newline on the next line)
-        if !nextLine.hasSuffix("\n") {
-            nextLine += "\n"
-            currentLine = String(currentLine.dropLast())
-        }
-
-        let combinedRange = NSRange(location: currentLineRange.location, length: currentLineRange.length + nextLineRange.length)
-        let replacement = nextLine + currentLine
-        let offsetInLine = cursorPos - currentLineRange.location
-        let newCursorPos = currentLineRange.location + (nextLine as NSString).length + min(offsetInLine, (currentLine as NSString).length)
-
-        if shouldChangeText(in: combinedRange, replacementString: replacement) {
-            textStorage?.replaceCharacters(in: combinedRange, with: replacement)
-            didChangeText()
-            setSelectedRange(NSRange(location: newCursorPos, length: 0))
-        }
-    }
-
-    // MARK: - Duplicate Line Down
-
-    private func duplicateLineDown() {
-        let nsString = string as NSString
-        let cursorPos = selectedRange().location
-        let currentLineRange = nsString.lineRange(for: NSRange(location: cursorPos, length: 0))
-        let currentLine = nsString.substring(with: currentLineRange)
-        let insertPos = NSMaxRange(currentLineRange)
-        let offsetInLine = cursorPos - currentLineRange.location
-
-        var insertion: String
-        var newCursorPos: Int
-        if currentLine.hasSuffix("\n") {
-            insertion = currentLine
-            newCursorPos = insertPos + offsetInLine
-        } else {
-            // Last line — prepend newline
-            insertion = "\n" + currentLine
-            newCursorPos = insertPos + 1 + offsetInLine
-        }
-
-        if shouldChangeText(in: NSRange(location: insertPos, length: 0), replacementString: insertion) {
-            textStorage?.replaceCharacters(in: NSRange(location: insertPos, length: 0), with: insertion)
-            didChangeText()
-            setSelectedRange(NSRange(location: newCursorPos, length: 0))
-        }
-    }
-
-    // MARK: - Indent / Outdent
-
-    private func indentLines() {
-        let nsString = string as NSString
-        let sel = selectedRange()
-        let indent = indentString
-
-        if sel.length == 0 {
-            insertText(indent, replacementRange: sel)
-            return
-        }
-
-        let lineRange = nsString.lineRange(for: sel)
-        let text = nsString.substring(with: lineRange)
-        let lines = text.components(separatedBy: "\n")
-        let indented = lines.enumerated().map { index, line in
-            if index == lines.count - 1 && line.isEmpty { return line }
-            return indent + line
-        }.joined(separator: "\n")
-
-        if shouldChangeText(in: lineRange, replacementString: indented) {
-            textStorage?.replaceCharacters(in: lineRange, with: indented)
-            didChangeText()
-            setSelectedRange(NSRange(location: lineRange.location, length: (indented as NSString).length))
-        }
-    }
-
-    private func outdentLines() {
-        let nsString = string as NSString
-        let sel = selectedRange()
-        let lineRange = nsString.lineRange(for: sel)
-        let text = nsString.substring(with: lineRange)
-        let lines = text.components(separatedBy: "\n")
-        let tabSize = editorTabSize
-        let outdented = lines.enumerated().map { index, line in
-            if index == lines.count - 1 && line.isEmpty { return line }
-            var removed = 0
-            var result = line
-            while removed < tabSize && result.hasPrefix(" ") {
-                result = String(result.dropFirst())
-                removed += 1
-            }
-            if removed == 0 && result.hasPrefix("\t") {
-                result = String(result.dropFirst())
-            }
-            return result
-        }.joined(separator: "\n")
-
-        if shouldChangeText(in: lineRange, replacementString: outdented) {
-            textStorage?.replaceCharacters(in: lineRange, with: outdented)
-            didChangeText()
-            setSelectedRange(NSRange(location: lineRange.location, length: (outdented as NSString).length))
-        }
-    }
-
-    // MARK: - Selector-backed Shortcut Actions
-
-    @objc
-    func zionToggleComment(_ sender: Any?) {
-        toggleComment()
-    }
-
-    @objc
-    func zionFindNext(_ sender: Any?) {
-        onFindNextShortcut?()
-    }
-
-    @objc
-    func zionFindPrevious(_ sender: Any?) {
-        onFindPreviousShortcut?()
-    }
-
-    @objc
-    func zionSelectNextOccurrence(_ sender: Any?) {
-        selectNextOccurrence()
-    }
-
-    @objc
-    func zionFormatDocument(_ sender: Any?) {
-        NotificationCenter.default.post(name: .formatDocument, object: nil)
-    }
-
-    // MARK: - Toggle Comment
-
-    private func toggleComment() {
-        guard let coordinator = coordinator else { return }
-        let style = coordinator.commentStyle()
-
-        let nsString = string as NSString
-        let sel = selectedRange()
-        let lineRange = nsString.lineRange(for: sel)
-        let text = nsString.substring(with: lineRange)
-        let lines = text.components(separatedBy: "\n")
-
-        let toggled: String
-        switch style {
-        case .none:
-            return
-
-        case .line(let prefix):
-            let nonEmptyLines = lines.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
-            let allCommented = !nonEmptyLines.isEmpty && nonEmptyLines.allSatisfy {
-                $0.trimmingCharacters(in: .whitespaces).hasPrefix(prefix)
-            }
-
-            toggled = lines.map { line -> String in
-                let trimmed = line.trimmingCharacters(in: .whitespaces)
-                if trimmed.isEmpty { return line }
-
-                if allCommented {
-                    let leading = line.prefix(while: { $0 == " " || $0 == "\t" })
-                    let rest = String(line.dropFirst(leading.count))
-                    if rest.hasPrefix(prefix + " ") {
-                        return String(leading) + String(rest.dropFirst(prefix.count + 1))
-                    } else if rest.hasPrefix(prefix) {
-                        return String(leading) + String(rest.dropFirst(prefix.count))
-                    }
-                    return line
-                } else {
-                    let leading = line.prefix(while: { $0 == " " || $0 == "\t" })
-                    let rest = String(line.dropFirst(leading.count))
-                    return String(leading) + prefix + " " + rest
-                }
-            }.joined(separator: "\n")
-
-        case .block(let open, let close):
-            let nonEmptyLines = lines.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
-            let allCommented = !nonEmptyLines.isEmpty && nonEmptyLines.allSatisfy {
-                let t = $0.trimmingCharacters(in: .whitespaces)
-                return t.hasPrefix(open) && t.hasSuffix(close)
-            }
-
-            toggled = lines.map { line -> String in
-                let trimmed = line.trimmingCharacters(in: .whitespaces)
-                if trimmed.isEmpty { return line }
-
-                if allCommented {
-                    let leading = line.prefix(while: { $0 == " " || $0 == "\t" })
-                    var rest = String(line.dropFirst(leading.count))
-                    if rest.hasPrefix(open) {
-                        rest = String(rest.dropFirst(open.count))
-                    }
-                    if rest.hasSuffix(close) {
-                        rest = String(rest.dropLast(close.count))
-                    }
-                    return String(leading) + rest
-                } else {
-                    let leading = line.prefix(while: { $0 == " " || $0 == "\t" })
-                    let rest = String(line.dropFirst(leading.count))
-                    return String(leading) + open + rest + close
-                }
-            }.joined(separator: "\n")
-        }
-
-        if shouldChangeText(in: lineRange, replacementString: toggled) {
-            textStorage?.replaceCharacters(in: lineRange, with: toggled)
-            didChangeText()
-            setSelectedRange(NSRange(location: lineRange.location, length: (toggled as NSString).length))
-        }
-    }
-
-    // MARK: - Auto-close Brackets/Quotes
-
-    private func handleAutoClose(_ char: Character) -> Bool {
-        let sel = selectedRange()
-        let pos = sel.location
-        let nsString = string as NSString
-        let closers: Set<Character> = [")", "]", "}"]
-        let brackets: Set<Character> = ["(", "[", "{"]
-        let quotes: Set<Character> = ["\"", "'", "`"]
-
-        // Check if this character type is enabled
-        let isBracketChar = brackets.contains(char) || closers.contains(char)
-        let isQuoteChar = quotes.contains(char)
-        if isBracketChar && !editorAutoCloseBrackets { return false }
-        if isQuoteChar && !editorAutoCloseQuotes { return false }
-
-        // Skip over closing bracket if next char matches
-        if closers.contains(char) && sel.length == 0 && pos < nsString.length {
-            let nextChar = nsString.substring(with: NSRange(location: pos, length: 1))
-            if nextChar == String(char) {
-                setSelectedRange(NSRange(location: pos + 1, length: 0))
-                return true
-            }
-        }
-
-        // Skip over closing quote if next char matches
-        if quotes.contains(char) && sel.length == 0 && pos < nsString.length {
-            let nextChar = nsString.substring(with: NSRange(location: pos, length: 1))
-            if nextChar == String(char) {
-                setSelectedRange(NSRange(location: pos + 1, length: 0))
-                return true
-            }
-        }
-
-        // Auto-insert closing pair
-        guard let closer = ZionTextView.autoClosePairs[char] else { return false }
-
-        // For quotes, only auto-close when next char is whitespace, EOL, or closing bracket
-        if quotes.contains(char) && pos < nsString.length {
-            let nextChar = Character(nsString.substring(with: NSRange(location: pos, length: 1)))
-            if !nextChar.isWhitespace && !closers.contains(nextChar) && nextChar != "\n" {
-                return false
-            }
-        }
-
-        if sel.length > 0 {
-            // Wrap selection with pair
-            let selectedText = nsString.substring(with: sel)
-            let wrapped = String(char) + selectedText + String(closer)
-            if shouldChangeText(in: sel, replacementString: wrapped) {
-                textStorage?.replaceCharacters(in: sel, with: wrapped)
-                didChangeText()
-                setSelectedRange(NSRange(location: sel.location + 1, length: sel.length))
-                return true
-            }
-        } else {
-            let pair = String(char) + String(closer)
-            if shouldChangeText(in: NSRange(location: pos, length: 0), replacementString: pair) {
-                textStorage?.replaceCharacters(in: NSRange(location: pos, length: 0), with: pair)
-                didChangeText()
-                setSelectedRange(NSRange(location: pos + 1, length: 0))
-                return true
-            }
-        }
-        return false
-    }
-
-    // MARK: - Auto-indent on Enter
-
-    private func autoIndentNewLine() {
-        let nsString = string as NSString
-        let sel = selectedRange()
-        let pos = sel.location
-        let currentLineRange = nsString.lineRange(for: NSRange(location: pos, length: 0))
-        let textBeforeCursor = nsString.substring(with: NSRange(location: currentLineRange.location, length: pos - currentLineRange.location))
-
-        let leadingWhitespace = String(textBeforeCursor.prefix(while: { $0 == " " || $0 == "\t" }))
-        let trimmedBefore = textBeforeCursor.trimmingCharacters(in: .whitespaces)
-        let extraIndent = (trimmedBefore.hasSuffix("{") || trimmedBefore.hasSuffix(":") || trimmedBefore.hasSuffix("(")) ? indentString : ""
-
-        let insertion = "\n" + leadingWhitespace + extraIndent
-        insertText(insertion, replacementRange: sel)
-    }
-
-    private func selectNextOccurrence() {
-        let nsString = string as NSString
-        guard nsString.length > 0 else { return }
-
-        let existing = selectedRanges.map(\.rangeValue)
-            .filter { $0.location != NSNotFound }
-        let meaningfulSelections = existing.filter { $0.length > 0 }
-
-        if meaningfulSelections.isEmpty {
-            if let seed = currentSymbolRange() {
-                setSelectedRange(seed)
-                scrollRangeToVisible(seed)
-                let value = nsString.substring(with: seed).trimmingCharacters(in: .whitespacesAndNewlines)
-                if !value.isEmpty {
-                    onFindSeedFromMultiSelect?(value)
-                }
-            } else {
-                NSSound.beep()
-            }
-            return
-        }
-
-        guard let seed = meaningfulSelections.last else {
-            NSSound.beep()
-            return
-        }
-
-        let selectedText = nsString.substring(with: seed)
-        guard !selectedText.isEmpty else {
-            NSSound.beep()
-            return
-        }
-        let normalizedSelection = selectedText.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !normalizedSelection.isEmpty {
-            onFindSeedFromMultiSelect?(normalizedSelection)
-        }
-
-        let enforceBoundary = selectedText.allSatisfy { $0.isLetter || $0.isNumber || $0 == "_" }
-        if let nextRange = findNextMatch(
-            for: selectedText,
-            from: NSMaxRange(seed),
-            wrapToStartAt: seed.location,
-            enforceBoundary: enforceBoundary,
-            excluding: meaningfulSelections
-        ) {
-            var merged = meaningfulSelections
-            merged.append(nextRange)
-            selectedRanges = merged.map(NSValue.init(range:))
-            scrollRangeToVisible(nextRange)
-            return
-        }
-
-        NSSound.beep()
-    }
-
-    private func findNextMatch(
-        for needle: String,
-        from startLocation: Int,
-        wrapToStartAt wrapLimit: Int,
-        enforceBoundary: Bool,
-        excluding ranges: [NSRange]
-    ) -> NSRange? {
-        let nsString = string as NSString
-        let length = nsString.length
-        guard length > 0 else { return nil }
-
-        func firstMatch(in range: NSRange) -> NSRange? {
-            guard range.length > 0 else { return nil }
-            var searchLocation = range.location
-            while searchLocation < NSMaxRange(range) {
-                let searchRange = NSRange(location: searchLocation, length: NSMaxRange(range) - searchLocation)
-                let found = nsString.range(of: needle, options: [], range: searchRange)
-                if found.location == NSNotFound {
-                    return nil
-                }
-                searchLocation = NSMaxRange(found)
-                if ranges.contains(where: { $0.location == found.location && $0.length == found.length }) {
-                    continue
-                }
-                if enforceBoundary && !isBoundaryMatch(found) {
-                    continue
-                }
-                return found
-            }
-            return nil
-        }
-
-        if let forward = firstMatch(in: NSRange(location: max(0, startLocation), length: max(0, length - startLocation))) {
-            return forward
-        }
-        if wrapLimit > 0 {
-            return firstMatch(in: NSRange(location: 0, length: min(wrapLimit, length)))
-        }
-        return nil
-    }
-
-    private func isBoundaryMatch(_ range: NSRange) -> Bool {
-        let nsString = string as NSString
-        let leftOK: Bool
-        if range.location == 0 {
-            leftOK = true
-        } else {
-            let prev = Character(nsString.substring(with: NSRange(location: range.location - 1, length: 1)))
-            leftOK = !(prev.isLetter || prev.isNumber || prev == "_")
-        }
-
-        let rightOK: Bool
-        let rightIndex = NSMaxRange(range)
-        if rightIndex >= nsString.length {
-            rightOK = true
-        } else {
-            let next = Character(nsString.substring(with: NSRange(location: rightIndex, length: 1)))
-            rightOK = !(next.isLetter || next.isNumber || next == "_")
-        }
-        return leftOK && rightOK
-    }
-
-    private func requestDefinitionFromCaret() {
-        guard let query = navigationQueryFromCaret() else {
-            NSSound.beep()
-            return
-        }
-        onRequestDefinition?(query)
-    }
-
-    private func requestReferencesFromCaret() {
-        guard let query = navigationQueryFromCaret() else {
-            NSSound.beep()
-            return
-        }
-        onRequestReferences?(query)
-    }
-
-    private func navigationQueryFromCaret() -> EditorSymbolQuery? {
-        guard let range = currentSymbolRange() else { return nil }
-        return navigationQuery(for: range)
-    }
-
-    private func navigationQuery(at windowPoint: NSPoint) -> EditorSymbolQuery? {
-        guard let index = characterIndex(at: convert(windowPoint, from: nil)),
-              let range = symbolRange(at: index) else {
-            return nil
-        }
-        setSelectedRange(range)
-        return navigationQuery(for: range)
-    }
-
-    private func navigationQuery(for symbolRange: NSRange) -> EditorSymbolQuery? {
-        guard symbolRange.length > 0 else { return nil }
-        let nsString = string as NSString
-        let symbol = nsString.substring(with: symbolRange)
-        guard !symbol.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
-
-        let lineRange = nsString.lineRange(for: symbolRange)
-        let lineText = nsString.substring(with: lineRange)
-        return EditorSymbolQuery(symbol: symbol, currentFilePath: currentFilePath, lineText: lineText)
-    }
-
-    private func currentSymbolRange() -> NSRange? {
-        let sel = selectedRange()
-        let nsString = string as NSString
-        guard nsString.length > 0 else { return nil }
-
-        if sel.length > 0 {
-            let selected = nsString.substring(with: sel).trimmingCharacters(in: .whitespacesAndNewlines)
-            return selected.isEmpty ? nil : sel
-        }
-
-        let caret = min(sel.location, max(0, nsString.length - 1))
-        if let direct = symbolRange(at: caret) {
-            return direct
-        }
-        if caret > 0 {
-            return symbolRange(at: caret - 1)
-        }
-        return nil
-    }
-
-    private func symbolRange(at index: Int) -> NSRange? {
-        let nsString = string as NSString
-        guard index >= 0, index < nsString.length else { return nil }
-        let charset = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "_$"))
-
-        func isSymbolChar(at idx: Int) -> Bool {
-            guard idx >= 0, idx < nsString.length else { return false }
-            let scalar = nsString.substring(with: NSRange(location: idx, length: 1)).unicodeScalars.first
-            return scalar.map { charset.contains($0) } ?? false
-        }
-
-        guard isSymbolChar(at: index) else { return nil }
-
-        var start = index
-        var end = index
-        while start > 0 && isSymbolChar(at: start - 1) { start -= 1 }
-        while end + 1 < nsString.length && isSymbolChar(at: end + 1) { end += 1 }
-        return NSRange(location: start, length: end - start + 1)
-    }
-
-    private func characterIndex(at localPoint: NSPoint) -> Int? {
-        guard let layoutManager = layoutManager, let container = textContainer else { return nil }
-        var point = localPoint
-        point.x -= textContainerOrigin.x
-        point.y -= textContainerOrigin.y
-        guard point.x >= 0, point.y >= 0 else { return nil }
-
-        let glyphIndex = layoutManager.glyphIndex(for: point, in: container)
-        return layoutManager.characterIndexForGlyph(at: glyphIndex)
-    }
-
-    private func isF12(_ event: NSEvent) -> Bool {
-        guard let scalar = event.charactersIgnoringModifiers?.unicodeScalars.first else { return false }
-        return Int(scalar.value) == NSF12FunctionKey
-    }
-}
-
-// MARK: - Line Number Ruler
-
-class LineNumberRulerView: NSRulerView {
-    var theme: EditorTheme = .dracula
-    init(textView: NSTextView) {
-        super.init(scrollView: textView.enclosingScrollView, orientation: .verticalRuler)
-        self.clientView = textView
-        self.ruleThickness = 35
-    }
-    required init(coder: NSCoder) { fatalError() }
-
-    override func drawHashMarksAndLabels(in rect: NSRect) {
-        guard let textView = clientView as? NSTextView, let layoutManager = textView.layoutManager, let textContainer = textView.textContainer else { return }
-
-        let isLight = !theme.isDark
-        let bg = isLight ? NSColor(srgbRed: 0.949, green: 0.949, blue: 0.949, alpha: 1.0) : NSColor.black.withAlphaComponent(0.15)
-        bg.set()
-        rect.fill()
-
-        let string = textView.string as NSString
-        let visibleRect = textView.visibleRect
-        let glyphRange = layoutManager.glyphRange(forBoundingRect: visibleRect, in: textContainer)
-        let charRange = layoutManager.characterRange(forGlyphRange: glyphRange, actualGlyphRange: nil)
-
-        var lineNumber = 1
-        var index = 0
-        while index < charRange.location {
-            index = string.lineRange(for: NSRange(location: index, length: 0)).upperBound
-            lineNumber += 1
-        }
-
-        index = charRange.location
-        while index < NSMaxRange(charRange) {
-            let lineRange = string.lineRange(for: NSRange(location: index, length: 0))
-            let lineGlyphRange = layoutManager.glyphRange(forCharacterRange: lineRange, actualCharacterRange: nil)
-            let lineRect = layoutManager.boundingRect(forGlyphRange: lineGlyphRange, in: textContainer)
-
-            let y = lineRect.origin.y + textView.textContainerInset.height - visibleRect.origin.y
-
-            let color = isLight ? NSColor(srgbRed: 0.416, green: 0.451, blue: 0.490, alpha: 0.7) : NSColor.secondaryLabelColor
-            let currentFontSize = textView.font?.pointSize ?? 13.0
-            let attrs: [NSAttributedString.Key: Any] = [
-                .font: NSFont.monospacedSystemFont(ofSize: currentFontSize * 0.7, weight: .regular),
-                .foregroundColor: color
-            ]
-            let str = "\(lineNumber)" as NSString
-            let size = str.size(withAttributes: attrs)
-
-            let x = ruleThickness - size.width - 10
-            str.draw(at: NSPoint(x: x, y: y + (lineRect.height - size.height)/2), withAttributes: attrs)
-
-            index = lineRange.upperBound
-            lineNumber += 1
-        }
     }
 }
