@@ -204,16 +204,31 @@ struct PullRequestSheet: View {
         }
         .frame(width: 600, height: 500)
         .onAppear {
-            // Default title from branch name
-            title = model.currentBranch
-                .replacingOccurrences(of: "-", with: " ")
-                .replacingOccurrences(of: "_", with: " ")
-                .replacingOccurrences(of: "/", with: ": ")
             // Default base
             if model.branches.contains("main") {
                 baseBranch = "main"
             } else if model.branches.contains("master") {
                 baseBranch = "master"
+            }
+
+            // Default title from branch name
+            if model.currentBranch.hasPrefix("release/") {
+                let version = String(model.currentBranch.dropFirst("release/".count))
+                title = "Release \(version)"
+            } else {
+                title = model.currentBranch
+                    .replacingOccurrences(of: "-", with: " ")
+                    .replacingOccurrences(of: "_", with: " ")
+                    .replacingOccurrences(of: "/", with: ": ")
+            }
+
+            // Auto-populate changelog for release branches
+            if model.currentBranch.hasPrefix("release/") {
+                Task {
+                    if let changelog = await model.generateReleaseChangelog() {
+                        body_ = changelog
+                    }
+                }
             }
         }
     }
