@@ -13,6 +13,7 @@ extension RepositoryViewModel {
         isMobileAccessEnabled = true
         observeSystemWake()
         mobileAccessConnectionState = .starting
+        RemoteAccessState.shared.isCloudflaredMissing = false
         syncRemoteAccessState()
 
         Task {
