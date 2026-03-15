@@ -553,6 +553,7 @@ final class PairingTokenKeychainTests: XCTestCase {
     }
 
     override func tearDown() {
+        guard ProcessInfo.processInfo.environment[Self.runKeychainTestsEnv] == "1" else { return }
         RemoteAccessEncryption.deletePairingToken()
     }
 
