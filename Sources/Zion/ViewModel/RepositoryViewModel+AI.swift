@@ -175,6 +175,42 @@ extension RepositoryViewModel {
         }
     }
 
+    // MARK: - Release Changelog
+
+    func generateReleaseChangelog() async -> String? {
+        guard let url = repositoryURL,
+              currentBranch.hasPrefix("release/") else { return nil }
+
+        let version = String(currentBranch.dropFirst("release/".count))
+        let prevTag = await worker.previousReleaseTag(in: url)
+
+        // Build git log args: scoped to prevTag..HEAD if a tag exists, otherwise full history
+        var logArgs = ["log", "--oneline", "--no-merges"]
+        if let prevTag {
+            logArgs.append("\(prevTag)..HEAD")
+        }
+
+        guard let commitLog = try? await worker.runAction(args: logArgs, in: url),
+              !commitLog.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return nil
+        }
+
+        let bullets = commitLog
+            .split(separator: "\n", omittingEmptySubsequences: true)
+            .map { line in
+                // Strip the short hash prefix (e.g. "abc1234 message" -> "message")
+                let message = line.drop(while: { !$0.isWhitespace }).dropFirst()
+                return "* \(message)"
+            }
+            .joined(separator: "\n")
+
+        var result = "## \(L10n("pr.release.whatsChanged"))\n\(bullets)"
+        if let prevTag {
+            result += "\n\n**\(L10n("pr.release.fullChangelog"))**: \(prevTag)...v\(version)"
+        }
+        return result
+    }
+
     func suggestStashMessage() {
         guard let url = repositoryURL, isAIConfigured else { return }
 

@@ -934,6 +934,21 @@ actor RepositoryWorker {
         return Date(timeIntervalSince1970: 0)
     }
 
+    func previousReleaseTag(in repositoryURL: URL) -> String? {
+        // Try git describe first (finds most recent tag reachable from HEAD~1)
+        if let result = try? runActionAllowingFailure(
+            args: ["describe", "--tags", "--abbrev=0", "HEAD~1"],
+            in: repositoryURL
+        ), result.status == 0, !result.output.isEmpty {
+            return result.output
+        }
+        // Fallback: use the first tag from sorted list (latest version)
+        if let tags = try? tagList(in: repositoryURL), let first = tags.first {
+            return first
+        }
+        return nil
+    }
+
     func sortTagsDescending(_ tags: [String]) -> [String] {
         tags.sorted { lhs, rhs in
             let lhsVersion = versionComponents(from: lhs)

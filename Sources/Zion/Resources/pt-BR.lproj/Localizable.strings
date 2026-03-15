@@ -1660,6 +1660,8 @@
 "pr.review.submitted" = "Review enviada";
 "pr.review.comments.count" = "%d comentários";
 "pr.review.addComment" = "Adicionar Comentário";
+"pr.release.whatsChanged" = "O que mudou";
+"pr.release.fullChangelog" = "Changelog completo";
 
 // MARK: - Tags
 "tag.detail.title" = "Criar Tag";

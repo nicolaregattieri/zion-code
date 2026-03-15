@@ -1707,6 +1707,8 @@
 "pr.review.submitted" = "Review submitted";
 "pr.review.comments.count" = "%d comments";
 "pr.review.addComment" = "Add Comment";
+"pr.release.whatsChanged" = "What's Changed";
+"pr.release.fullChangelog" = "Full Changelog";
 
 // MARK: - Tags
 "tag.detail.title" = "Create Tag";

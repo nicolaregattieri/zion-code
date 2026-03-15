@@ -1719,6 +1719,8 @@
 "pr.review.submitted" = "Review enviada";
 "pr.review.comments.count" = "%d comentarios";
 "pr.review.addComment" = "Agregar Comentario";
+"pr.release.whatsChanged" = "Qué cambió";
+"pr.release.fullChangelog" = "Changelog completo";
 
 // MARK: - Tags
 "tag.detail.title" = "Crear Tag";
