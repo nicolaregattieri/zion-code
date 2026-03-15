@@ -9,7 +9,7 @@ actor RemoteAccessServer {
     private var authenticatedTokens: Set<String> = []
     private static let tokenTTL = Duration.seconds(Constants.RemoteAccess.pairingTokenTTLSeconds)
     private var connectionCount: Int = 0
-    private var isLANMode: Bool = false
+    private var tokenModes: [String: Bool] = [:]  // token -> true if LAN
     private var persistedToken: String?
 
     // Pending events queue per token (consumed on poll)
@@ -30,22 +30,19 @@ actor RemoteAccessServer {
 
     var connectedDeviceCount: Int { authenticatedTokens.count }
 
+    var lanConnectedCount: Int {
+        authenticatedTokens.filter { tokenModes[$0] == true }.count
+    }
+    var tunnelConnectedCount: Int {
+        authenticatedTokens.filter { tokenModes[$0] != true }.count
+    }
+
     // MARK: - Lifecycle
 
-    func start(port: UInt16, key: SymmetricKey, lanMode: Bool = false) throws {
+    func start(port: UInt16, key: SymmetricKey) throws {
         pairingKey = key
-        isLANMode = lanMode
 
         let parameters = NWParameters.tcp
-
-        // In tunnel mode, bind to localhost only — no LAN exposure
-        if !lanMode {
-            parameters.requiredLocalEndpoint = NWEndpoint.hostPort(
-                host: NWEndpoint.Host("127.0.0.1"),
-                port: NWEndpoint.Port(rawValue: port)!
-            )
-        }
-
         let nwPort = NWEndpoint.Port(rawValue: port)!
         let newListener = try NWListener(using: parameters, on: nwPort)
 
@@ -74,6 +71,7 @@ actor RemoteAccessServer {
         pendingEvents.removeAll()
         requestTimestamps.removeAll()
         lastPollTime.removeAll()
+        tokenModes.removeAll()
     }
 
     func addPairingToken(_ token: String) {
@@ -81,12 +79,13 @@ actor RemoteAccessServer {
         validPairingTokens[token] = ContinuousClock.now
     }
 
-    /// Disconnect all authenticated clients (used when switching modes)
+    /// Disconnect all authenticated clients
     func disconnectAll() {
         authenticatedTokens.removeAll()
         pendingEvents.removeAll()
         lastPollTime.removeAll()
         requestTimestamps.removeAll()
+        tokenModes.removeAll()
         let count = 0
         Task { await onConnectionCountChanged?(count) }
     }
@@ -153,6 +152,7 @@ actor RemoteAccessServer {
             }
             lastPollTime.removeValue(forKey: token)
             requestTimestamps.removeValue(forKey: token)
+            tokenModes.removeValue(forKey: token)
         }
 
         if !disconnected.isEmpty {
@@ -347,17 +347,12 @@ actor RemoteAccessServer {
             html = html.replacingOccurrences(of: "<script>", with: injection + "<script>", options: [], range: html.range(of: "<script>"))
         }
         let body = Data(html.utf8)
-        let headers = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: \(body.count)\r\nConnection: close\r\nCache-Control: no-cache\r\n\r\n"
+        let headers = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: \(body.count)\r\nConnection: close\r\nCache-Control: no-store, no-cache, must-revalidate\r\nPragma: no-cache\r\n\r\n"
         var responseData = Data(headers.utf8)
         responseData.append(body)
         connection.send(content: responseData, completion: .contentProcessed { _ in
             connection.cancel()
         })
-    }
-
-    /// Update LAN mode without restarting the server
-    func setLANMode(_ enabled: Bool) {
-        isLANMode = enabled
     }
 
     private func handlePair(params: [String: String], connection: NWConnection) {
@@ -387,6 +382,7 @@ actor RemoteAccessServer {
 
         authenticatedTokens.insert(token)
         pendingEvents[token] = []
+        tokenModes[token] = (params["m"] == "lan")
         let count = authenticatedTokens.count
         Task { await onConnectionCountChanged?(count) }
 
@@ -400,11 +396,6 @@ actor RemoteAccessServer {
             return
         }
 
-        guard let key = pairingKey else {
-            sendJSON(connection: connection, status: "500 Internal Server Error", json: #"{"error":"no_key"}"#)
-            return
-        }
-
         // Track last poll time for disconnect detection
         lastPollTime[token] = ContinuousClock.now
 
@@ -412,19 +403,35 @@ actor RemoteAccessServer {
         let events = pendingEvents[token] ?? []
         pendingEvents[token] = []
 
-        // Always encrypt events with AES-256-GCM (both tunnel and LAN modes)
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
 
-        var encryptedEvents: [String] = []
-        for event in events {
-            if let jsonData = try? encoder.encode(event),
-               let encrypted = try? RemoteAccessEncryption.encrypt(jsonData, using: key) {
-                encryptedEvents.append(encrypted.base64EncodedString())
+        if tokenModes[token] == true {
+            // LAN mode: send events as plain JSON array (no encryption)
+            var jsonEvents: [String] = []
+            for event in events {
+                if let jsonData = try? encoder.encode(event) {
+                    jsonEvents.append(jsonData.base64EncodedString())
+                }
             }
+            let jsonArray = "[" + jsonEvents.map { #""\#($0)""# }.joined(separator: ",") + "]"
+            sendJSON(connection: connection, status: "200 OK", json: jsonArray)
+        } else {
+            // Tunnel mode: encrypt events with AES-256-GCM
+            guard let key = pairingKey else {
+                sendJSON(connection: connection, status: "500 Internal Server Error", json: #"{"error":"no_key"}"#)
+                return
+            }
+            var encryptedEvents: [String] = []
+            for event in events {
+                if let jsonData = try? encoder.encode(event),
+                   let encrypted = try? RemoteAccessEncryption.encrypt(jsonData, using: key) {
+                    encryptedEvents.append(encrypted.base64EncodedString())
+                }
+            }
+            let jsonArray = "[" + encryptedEvents.map { #""\#($0)""# }.joined(separator: ",") + "]"
+            sendJSON(connection: connection, status: "200 OK", json: jsonArray)
         }
-        let jsonArray = "[" + encryptedEvents.map { #""\#($0)""# }.joined(separator: ",") + "]"
-        sendJSON(connection: connection, status: "200 OK", json: jsonArray)
     }
 
     private func handleInput(params: [String: String], request: String, body: Data, connection: NWConnection) {
@@ -441,15 +448,24 @@ actor RemoteAccessServer {
             return
         }
 
-        guard let key = pairingKey,
-              let httpBody = extractHTTPBody(from: request, fullData: body) else {
+        guard let httpBody = extractHTTPBody(from: request, fullData: body) else {
             sendJSON(connection: connection, status: "400 Bad Request", json: #"{"error":"bad_request"}"#)
             return
         }
 
         do {
-            // Always decrypt — both tunnel and LAN modes use AES-256-GCM
-            let messageData = try RemoteAccessEncryption.decrypt(httpBody, using: key)
+            let messageData: Data
+            if tokenModes[token] == true {
+                // LAN mode: plaintext JSON (Web Crypto API unavailable over plain HTTP)
+                messageData = httpBody
+            } else {
+                // Tunnel mode: decrypt AES-256-GCM
+                guard let key = pairingKey else {
+                    sendJSON(connection: connection, status: "400 Bad Request", json: #"{"error":"bad_request"}"#)
+                    return
+                }
+                messageData = try RemoteAccessEncryption.decrypt(httpBody, using: key)
+            }
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
             let message = try decoder.decode(RemoteMessage.self, from: messageData)
@@ -467,7 +483,7 @@ actor RemoteAccessServer {
 
     // MARK: - HTTP Helpers
 
-    private static let corsHeaders = "Access-Control-Allow-Origin: http://localhost\r\nAccess-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type\r\n"
+    private static let corsHeaders = "Access-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type\r\n"
 
     private func sendHTTP(connection: NWConnection, status: String, body: String) {
         let bodyData = Data(body.utf8)

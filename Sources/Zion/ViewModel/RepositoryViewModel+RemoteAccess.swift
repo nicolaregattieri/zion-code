@@ -38,10 +38,14 @@ extension RepositoryViewModel {
                             await self?.handleRemoteMessage(message)
                         },
                         onConnectionCount: { [weak self] count in
+                            // Fetch per-mode counts from server
+                            let lanCount = await server.lanConnectedCount
+                            let tunnelCount = await server.tunnelConnectedCount
                             await MainActor.run { [weak self] in
                                 guard let self else { return }
-                                // Skip connection updates during active mode switch
-                                if self.isSwitchingMode { return }
+                                let shared = RemoteAccessState.shared
+                                shared.lanConnectedCount = lanCount
+                                shared.tunnelConnectedCount = tunnelCount
                                 if count > 0 {
                                     self.mobileAccessConnectionState = .connected(deviceCount: count)
                                     self.ensureRecentProjectsHaveTerminals()
@@ -53,24 +57,25 @@ extension RepositoryViewModel {
                         }
                     )
 
-                    try await server.start(port: Constants.RemoteAccess.defaultPort, key: key, lanMode: isMobileAccessLANMode)
+                    try await server.start(port: Constants.RemoteAccess.defaultPort, key: key)
                 }
 
-                // 3. Resolve tunnel URL
-                let tunnelURL = try await resolveTunnelURL()
-                mobileAccessTunnelURL = tunnelURL
-
-                // 4. Load or create persisted pairing token and QR code
+                // 3. Load or create persisted pairing token
                 let pairingToken = await loadOrCreatePairingToken()
                 await remoteAccessServer?.setPersistedToken(pairingToken)
                 await remoteAccessServer?.addPairingToken(pairingToken)
 
                 let keyBase64 = RemoteAccessEncryption.exportKey(key)
-                mobileAccessQRImage = QRCodeGenerator.generatePairingQR(
-                    tunnelURL: tunnelURL,
+
+                // 4. Generate LAN QR immediately (only needs local IP)
+                let localIP = Self.getLocalIPAddress() ?? "localhost"
+                let lanURL = "http://\(localIP):\(Constants.RemoteAccess.defaultPort)"
+                mobileAccessLanURL = lanURL
+                mobileAccessLanQRImage = QRCodeGenerator.generatePairingQR(
+                    tunnelURL: lanURL,
                     keyBase64: keyBase64,
                     pairingToken: pairingToken,
-                    lanMode: isMobileAccessLANMode,
+                    lanMode: true,
                     size: Constants.RemoteAccess.qrCodeSize
                 )
 
@@ -78,35 +83,56 @@ extension RepositoryViewModel {
                 syncRemoteAccessState()
                 startHeartbeat()
 
-            } catch let error as CloudflareTunnelManager.TunnelError where error == .cloudflaredNotFound {
-                mobileAccessConnectionState = .error(L10n("mobile.access.cloudflared.notFound"))
-                syncRemoteAccessState()
+                // 5. Start tunnel in background (non-blocking, LAN works independently)
+                Task { [weak self] in
+                    guard let self else { return }
+                    do {
+                        // Check cloudflared availability
+                        let isInstalled = await CloudflareTunnelManager.isCloudflaredInstalled()
+                        guard isInstalled else {
+                            await MainActor.run {
+                                let shared = RemoteAccessState.shared
+                                shared.isCloudflaredMissing = true
+                            }
+                            return
+                        }
+
+                        // Reuse tunnel if still alive
+                        let tunnelURL: String
+                        if let tunnel = await self.tunnelManager, await tunnel.isRunning, let url = await tunnel.currentURL {
+                            tunnelURL = url
+                        } else {
+                            await self.tunnelManager?.stop()
+                            let tunnel = CloudflareTunnelManager()
+                            await MainActor.run { self.tunnelManager = tunnel }
+                            tunnelURL = try await tunnel.start(localPort: Constants.RemoteAccess.defaultPort)
+                        }
+
+                        await MainActor.run {
+                            self.mobileAccessTunnelURL = tunnelURL
+                            self.mobileAccessTunnelQRImage = QRCodeGenerator.generatePairingQR(
+                                tunnelURL: tunnelURL,
+                                keyBase64: keyBase64,
+                                pairingToken: pairingToken,
+                                lanMode: false,
+                                size: Constants.RemoteAccess.qrCodeSize
+                            )
+                            self.isTunnelReady = true
+                            self.syncRemoteAccessState()
+                        }
+                    } catch {
+                        await MainActor.run {
+                            self.logger.log(.warn, "Tunnel failed, LAN still active", context: error.localizedDescription, source: #function)
+                        }
+                    }
+                }
+
             } catch {
                 mobileAccessConnectionState = .error(error.localizedDescription)
                 syncRemoteAccessState()
                 logger.log(.error, "Failed to start remote access", context: error.localizedDescription, source: #function)
             }
         }
-    }
-
-    /// Resolve tunnel URL: reuse existing Cloudflare tunnel if alive, or use LAN IP
-    private func resolveTunnelURL() async throws -> String {
-        if isMobileAccessLANMode {
-            // LAN mode: keep tunnel alive for quick switch-back, just use local IP
-            let localIP = Self.getLocalIPAddress() ?? "localhost"
-            return "http://\(localIP):\(Constants.RemoteAccess.defaultPort)"
-        }
-
-        // Cloudflare mode: reuse tunnel if still alive
-        if let tunnel = tunnelManager, await tunnel.isRunning, let url = await tunnel.currentURL {
-            return url
-        }
-
-        // Need a new tunnel
-        await tunnelManager?.stop()
-        let tunnel = CloudflareTunnelManager()
-        tunnelManager = tunnel
-        return try await tunnel.start(localPort: Constants.RemoteAccess.defaultPort)
     }
 
     func disableRemoteAccess() {
@@ -127,81 +153,16 @@ extension RepositoryViewModel {
         }
 
         mobileAccessConnectionState = .disabled
+        mobileAccessLanQRImage = nil
+        mobileAccessLanURL = ""
+        mobileAccessTunnelQRImage = nil
         mobileAccessTunnelURL = ""
-        mobileAccessQRImage = nil
+        isTunnelReady = false
         terminalOutputBuffers.removeAll()
         terminalLastSentRows.removeAll()
         hasEnsuredRemoteTerminals = false
         PromptDetector.resetDedup()
         syncRemoteAccessState()
-    }
-
-    /// Switch between LAN and Cloudflare mode without restarting the HTTP server
-    func switchRemoteAccessMode() {
-        guard isMobileAccessEnabled, remoteAccessServer != nil else { return }
-
-        // Clear stale QR/URL immediately so the UI doesn't flash old values
-        mobileAccessConnectionState = .starting
-        mobileAccessQRImage = nil
-        mobileAccessTunnelURL = ""
-        isSwitchingMode = true
-        syncRemoteAccessState()
-
-        Task {
-            defer { isSwitchingMode = false }
-
-            do {
-                // Disconnect all clients — they need to re-pair with the new URL
-                await remoteAccessServer?.disconnectAll()
-
-                // Update server's LAN mode flag (no restart needed)
-                await remoteAccessServer?.setLANMode(isMobileAccessLANMode)
-
-                // Resolve new tunnel URL with timeout so .starting doesn't persist forever
-                let tunnelURL = try await withThrowingTaskGroup(of: String.self) { group in
-                    group.addTask { try await self.resolveTunnelURL() }
-                    group.addTask {
-                        try await Task.sleep(nanoseconds: Constants.RemoteAccess.tunnelURLTimeoutNanoseconds)
-                        throw CancellationError()
-                    }
-                    guard let result = try await group.next() else {
-                        throw CancellationError()
-                    }
-                    group.cancelAll()
-                    return result
-                }
-                mobileAccessTunnelURL = tunnelURL
-
-                // Regenerate QR with new URL but reuse key
-                guard let key = RemoteAccessEncryption.loadPairingKey() else {
-                    mobileAccessConnectionState = .error(L10n("mobile.access.error.keyNotFound"))
-                    syncRemoteAccessState()
-                    return
-                }
-                let pairingToken = await loadOrCreatePairingToken()
-                await remoteAccessServer?.setPersistedToken(pairingToken)
-                await remoteAccessServer?.addPairingToken(pairingToken)
-
-                let keyBase64 = RemoteAccessEncryption.exportKey(key)
-                mobileAccessQRImage = QRCodeGenerator.generatePairingQR(
-                    tunnelURL: tunnelURL,
-                    keyBase64: keyBase64,
-                    pairingToken: pairingToken,
-                    lanMode: isMobileAccessLANMode,
-                    size: Constants.RemoteAccess.qrCodeSize
-                )
-
-                mobileAccessConnectionState = .waitingForPairing
-                syncRemoteAccessState()
-
-            } catch is CancellationError {
-                mobileAccessConnectionState = .error(L10n("mobile.access.error.timeout"))
-                syncRemoteAccessState()
-            } catch {
-                mobileAccessConnectionState = .error(error.localizedDescription)
-                syncRemoteAccessState()
-            }
-        }
     }
 
     func regeneratePairingKey() {
@@ -826,9 +787,11 @@ extension RepositoryViewModel {
     private func syncRemoteAccessState() {
         let shared = RemoteAccessState.shared
         shared.connectionState = mobileAccessConnectionState
+        shared.lanQRImage = mobileAccessLanQRImage
+        shared.lanURL = mobileAccessLanURL
+        shared.tunnelQRImage = mobileAccessTunnelQRImage
         shared.tunnelURL = mobileAccessTunnelURL
-        shared.qrImage = mobileAccessQRImage
-        shared.isLANMode = isMobileAccessLANMode
+        shared.isTunnelReady = isTunnelReady
     }
 
     // MARK: - Helpers

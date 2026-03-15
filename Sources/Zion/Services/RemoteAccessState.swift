@@ -9,13 +9,18 @@ final class RemoteAccessState {
     static let shared = RemoteAccessState()
 
     var connectionState: RemoteAccessConnectionState = .disabled
+    var lanQRImage: NSImage?
+    var lanURL: String = ""
+    var tunnelQRImage: NSImage?
     var tunnelURL: String = ""
-    var qrImage: NSImage?
+    var isTunnelReady: Bool = false
+    var isCloudflaredMissing: Bool = false
     var isCloudflaredInstalled: Bool = false
     var hasCheckedCloudflared: Bool = false
     var shouldRegenerateKey: Bool = false
     var keepAwakeChanged: Bool = false
-    var isLANMode: Bool = false
+    var lanConnectedCount: Int = 0
+    var tunnelConnectedCount: Int = 0
 
     private init() {}
 

@@ -373,12 +373,12 @@ final class RepositoryViewModel {
     var isMobileAccessEnabled: Bool = false {
         didSet { UserDefaults.standard.set(isMobileAccessEnabled, forKey: "zion.mobileAccess.enabled") }
     }
-    var isMobileAccessLANMode: Bool = false {
-        didSet { UserDefaults.standard.set(isMobileAccessLANMode, forKey: "zion.mobileAccess.lanMode") }
-    }
     var mobileAccessConnectionState: RemoteAccessConnectionState = .disabled
+    var mobileAccessLanQRImage: NSImage?
+    var mobileAccessLanURL: String = ""
+    var mobileAccessTunnelQRImage: NSImage?
     var mobileAccessTunnelURL: String = ""
-    var mobileAccessQRImage: NSImage?
+    var isTunnelReady: Bool = false
     var pairedDevices: [PairedDevice] = []
     @ObservationIgnored var remoteAccessServer: RemoteAccessServer?
     @ObservationIgnored var tunnelManager: CloudflareTunnelManager?
@@ -387,7 +387,6 @@ final class RepositoryViewModel {
     @ObservationIgnored var screenUpdateDebounceTasks: [UUID: Task<Void, Never>] = [:]
     @ObservationIgnored var screenUpdateThrottleDeadlines: [UUID: ContinuousClock.Instant] = [:]
     @ObservationIgnored var heartbeatTask: Task<Void, Never>?
-    @ObservationIgnored var isSwitchingMode = false
     @ObservationIgnored var hasEnsuredRemoteTerminals = false
     @ObservationIgnored var sleepAssertionID: IOPMAssertionID = 0
     @ObservationIgnored var sleepTimerTask: Task<Void, Never>?

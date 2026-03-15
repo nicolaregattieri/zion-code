@@ -9,7 +9,7 @@ final class RemoteAccessServerTests: XCTestCase {
     override func setUp() async throws {
         server = RemoteAccessServer()
         let key = RemoteAccessEncryption.generatePairingKey()
-        try await server.start(port: testPort, key: key, lanMode: true)
+        try await server.start(port: testPort, key: key)
         // Give NWListener time to bind
         try await Task.sleep(nanoseconds: 500_000_000)
     }
@@ -139,11 +139,11 @@ final class RemoteAccessServerTests: XCTestCase {
 
     // MARK: - CORS Tests
 
-    func testCORSAllowsLocalhostOrigin() async throws {
+    func testCORSAllowsAllOrigins() async throws {
         let (_, response) = try await httpGET("/pair?t=test")
         let httpResponse = response as? HTTPURLResponse
         let corsHeader = httpResponse?.allHeaderFields["Access-Control-Allow-Origin"] as? String
-        XCTAssertEqual(corsHeader, "http://localhost", "CORS should be restricted to localhost for tunnel-backed web clients")
+        XCTAssertEqual(corsHeader, "*", "CORS should allow all origins for LAN + tunnel dual mode")
     }
 
     // MARK: - Disconnect Detection Tests
@@ -298,6 +298,158 @@ final class RemoteAccessServerTests: XCTestCase {
         XCTAssertTrue(got429, "Should have received 429 after exceeding rate limit")
     }
 
+    // MARK: - Per-Token Mode Tests
+
+    func testPairWithLANModeRecordsMode() async throws {
+        let token = "LAN-\(UUID().uuidString)"
+        await server.addPairingToken(token)
+        let (data, response) = try await httpGET("/pair?t=\(token)&m=lan")
+        XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
+        XCTAssertTrue(String(data: data, encoding: .utf8)?.contains("paired") ?? false)
+    }
+
+    func testPairWithoutModeDefaultsToTunnel() async throws {
+        let token = "TUNNEL-\(UUID().uuidString)"
+        await server.addPairingToken(token)
+        let (data, response) = try await httpGET("/pair?t=\(token)")
+        XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
+        XCTAssertTrue(String(data: data, encoding: .utf8)?.contains("paired") ?? false)
+    }
+
+    func testLANPollReturnsPlaintextBase64() async throws {
+        let token = "LAN-POLL-\(UUID().uuidString)"
+        await server.addPairingToken(token)
+        _ = try await httpGET("/pair?t=\(token)&m=lan")
+
+        // Broadcast a test event
+        let testPayload = Data("{\"test\":true}".utf8)
+        let testMessage = RemoteMessage(type: .screenUpdate, sessionID: UUID(), payload: testPayload, timestamp: Date())
+        await server.broadcast(testMessage)
+
+        let (data, response) = try await httpGET("/poll?t=\(token)")
+        XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
+
+        // LAN poll returns base64-encoded JSON strings (not encrypted)
+        let jsonArray = try JSONDecoder().decode([String].self, from: data)
+        XCTAssertFalse(jsonArray.isEmpty)
+
+        // Each element should be valid base64 that decodes to valid JSON
+        for b64 in jsonArray {
+            let decoded = Data(base64Encoded: b64)
+            XCTAssertNotNil(decoded, "LAN poll items should be valid base64")
+            let json = try? JSONSerialization.jsonObject(with: decoded!)
+            XCTAssertNotNil(json, "Decoded base64 should be valid JSON")
+        }
+    }
+
+    func testTunnelPollReturnsEncryptedData() async throws {
+        let token = "TUNNEL-POLL-\(UUID().uuidString)"
+        await server.addPairingToken(token)
+        _ = try await httpGET("/pair?t=\(token)")  // no m=lan = tunnel mode
+
+        let testPayload = Data("{\"test\":true}".utf8)
+        await server.broadcast(RemoteMessage(type: .screenUpdate, sessionID: UUID(), payload: testPayload, timestamp: Date()))
+
+        let (data, response) = try await httpGET("/poll?t=\(token)")
+        XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
+
+        // Tunnel poll returns base64-encoded AES-256-GCM ciphertext
+        let jsonArray = try JSONDecoder().decode([String].self, from: data)
+        XCTAssertFalse(jsonArray.isEmpty)
+
+        // Each element should be base64 that does NOT decode to valid JSON directly
+        // (it's encrypted, so raw decode produces garbage)
+        for b64 in jsonArray {
+            let decoded = Data(base64Encoded: b64)
+            XCTAssertNotNil(decoded)
+            let json = try? JSONSerialization.jsonObject(with: decoded!)
+            XCTAssertNil(json, "Tunnel data should be encrypted, not raw JSON")
+        }
+    }
+
+    func testMixedModeClientsReceiveCorrectEncryption() async throws {
+        // Pair LAN client
+        let lanToken = "MIX-LAN-\(UUID().uuidString)"
+        await server.addPairingToken(lanToken)
+        _ = try await httpGET("/pair?t=\(lanToken)&m=lan")
+
+        // Pair tunnel client
+        let tunnelToken = "MIX-TUNNEL-\(UUID().uuidString)"
+        await server.addPairingToken(tunnelToken)
+        _ = try await httpGET("/pair?t=\(tunnelToken)")
+
+        // Broadcast event - should reach both
+        let testPayload = Data("{\"test\":true}".utf8)
+        await server.broadcast(RemoteMessage(type: .screenUpdate, sessionID: UUID(), payload: testPayload, timestamp: Date()))
+
+        // LAN client gets plaintext
+        let (lanData, _) = try await httpGET("/poll?t=\(lanToken)")
+        let lanEvents = try JSONDecoder().decode([String].self, from: lanData)
+        XCTAssertFalse(lanEvents.isEmpty, "LAN client should receive events")
+
+        // Tunnel client gets encrypted
+        let (tunnelData, _) = try await httpGET("/poll?t=\(tunnelToken)")
+        let tunnelEvents = try JSONDecoder().decode([String].self, from: tunnelData)
+        XCTAssertFalse(tunnelEvents.isEmpty, "Tunnel client should receive events")
+
+        // Verify they got different encodings of the same event
+        XCTAssertNotEqual(lanEvents.first, tunnelEvents.first,
+            "LAN (plaintext) and tunnel (encrypted) should produce different base64")
+    }
+
+    func testLANConnectedCount() async throws {
+        let token = "COUNT-LAN-\(UUID().uuidString)"
+        await server.addPairingToken(token)
+        _ = try await httpGET("/pair?t=\(token)&m=lan")
+
+        let lanCount = await server.lanConnectedCount
+        let tunnelCount = await server.tunnelConnectedCount
+        XCTAssertEqual(lanCount, 1)
+        XCTAssertEqual(tunnelCount, 0)
+    }
+
+    func testTunnelConnectedCount() async throws {
+        let token = "COUNT-TUNNEL-\(UUID().uuidString)"
+        await server.addPairingToken(token)
+        _ = try await httpGET("/pair?t=\(token)")
+
+        let lanCount = await server.lanConnectedCount
+        let tunnelCount = await server.tunnelConnectedCount
+        XCTAssertEqual(lanCount, 0)
+        XCTAssertEqual(tunnelCount, 1)
+    }
+
+    func testMixedConnectedCounts() async throws {
+        let lanToken = "MIXCOUNT-LAN-\(UUID().uuidString)"
+        await server.addPairingToken(lanToken)
+        _ = try await httpGET("/pair?t=\(lanToken)&m=lan")
+
+        let tunnelToken = "MIXCOUNT-TUNNEL-\(UUID().uuidString)"
+        await server.addPairingToken(tunnelToken)
+        _ = try await httpGET("/pair?t=\(tunnelToken)")
+
+        let lanCount = await server.lanConnectedCount
+        let tunnelCount = await server.tunnelConnectedCount
+        let totalCount = await server.connectedDeviceCount
+        XCTAssertEqual(lanCount, 1)
+        XCTAssertEqual(tunnelCount, 1)
+        XCTAssertEqual(totalCount, 2)
+    }
+
+    func testDisconnectClearsTokenModes() async throws {
+        let token = "DISC-MODE-\(UUID().uuidString)"
+        await server.addPairingToken(token)
+        _ = try await httpGET("/pair?t=\(token)&m=lan")
+        let lanBefore = await server.lanConnectedCount
+        XCTAssertEqual(lanBefore, 1)
+
+        await server.disconnectAll()
+        let lanAfter = await server.lanConnectedCount
+        let tunnelAfter = await server.tunnelConnectedCount
+        XCTAssertEqual(lanAfter, 0)
+        XCTAssertEqual(tunnelAfter, 0)
+    }
+
     // MARK: - Helpers
 
     private func httpGET(_ path: String) async throws -> (Data, URLResponse) {
@@ -314,51 +466,10 @@ final class RemoteAccessServerTests: XCTestCase {
     }
 }
 
-// MARK: - Mode Switch Flow Tests
+// MARK: - Dual Mode Integration Tests
 
 @MainActor
-final class RemoteAccessModeSwitchTests: XCTestCase {
-
-    private var vm: RepositoryViewModel!
-    private let testPort: UInt16 = 19_849
-
-    override func setUp() async throws {
-        vm = RepositoryViewModel()
-        vm.isMobileAccessEnabled = true
-
-        let server = RemoteAccessServer()
-        let key = RemoteAccessEncryption.generatePairingKey()
-        RemoteAccessEncryption.savePairingKey(key)
-        try await server.start(port: testPort, key: key, lanMode: true)
-        vm.remoteAccessServer = server
-        vm.isMobileAccessLANMode = true
-    }
-
-    override func tearDown() async throws {
-        await vm.remoteAccessServer?.stop()
-        vm.remoteAccessServer = nil
-        vm = nil
-        try await Task.sleep(nanoseconds: 300_000_000)
-    }
-
-    func testSwitchModeCompletesSuccessfullyWithKey() async throws {
-        // Key was saved in setUp, so the mode switch should complete successfully
-        vm.switchRemoteAccessMode()
-
-        // Wait for the async Task to complete (includes disconnectAll + URL resolution)
-        try await Task.sleep(nanoseconds: 5_000_000_000)
-
-        XCTAssertFalse(vm.isSwitchingMode, "isSwitchingMode should be false after successful switch")
-        if case .waitingForPairing = vm.mobileAccessConnectionState {
-            // Expected
-        } else if case .error = vm.mobileAccessConnectionState {
-            // Also acceptable — Keychain may not work in test sandbox
-        } else {
-            XCTFail("Expected .waitingForPairing or .error, got \(vm.mobileAccessConnectionState)")
-        }
-    }
-
-    // MARK: - Screen Snapshot Tests
+final class RemoteAccessDualModeTests: XCTestCase {
 
     func testNotifyTerminalOutputMarksSessionDirty() async throws {
         let sessionID = UUID()
@@ -407,24 +518,21 @@ final class RemoteAccessModeSwitchTests: XCTestCase {
         XCTAssertEqual(payload.sessionID, sessionID)
     }
 
-    func testSwitchModeClearsStaleQRImmediately() async throws {
-        // Set stale values
-        vm.mobileAccessQRImage = NSImage()
-        vm.mobileAccessTunnelURL = "https://stale-url.trycloudflare.com"
+    func testDisableClearsBothQRs() async throws {
+        let vm = RepositoryViewModel()
+        vm.mobileAccessLanQRImage = NSImage()
+        vm.mobileAccessTunnelQRImage = NSImage()
+        vm.mobileAccessLanURL = "http://192.168.1.1:19847"
+        vm.mobileAccessTunnelURL = "https://test.trycloudflare.com"
+        vm.isTunnelReady = true
 
-        vm.switchRemoteAccessMode()
+        vm.disableRemoteAccess()
 
-        // Check immediately (before async task completes)
-        XCTAssertNil(vm.mobileAccessQRImage, "QR should be cleared immediately on switch")
-        XCTAssertEqual(vm.mobileAccessTunnelURL, "", "Tunnel URL should be cleared immediately on switch")
-        if case .starting = vm.mobileAccessConnectionState {
-            // Expected
-        } else {
-            XCTFail("Expected .starting immediately after switch, got \(vm.mobileAccessConnectionState)")
-        }
-
-        // Wait for async task to complete before tearDown
-        try await Task.sleep(nanoseconds: 5_000_000_000)
+        XCTAssertNil(vm.mobileAccessLanQRImage)
+        XCTAssertNil(vm.mobileAccessTunnelQRImage)
+        XCTAssertEqual(vm.mobileAccessLanURL, "")
+        XCTAssertEqual(vm.mobileAccessTunnelURL, "")
+        XCTAssertFalse(vm.isTunnelReady)
     }
 }
 
@@ -470,7 +578,7 @@ final class PairingTokenKeychainTests: XCTestCase {
         let loaded = RemoteAccessEncryption.loadPairingToken()
         if loaded != nil {
             // Keychain prompt likely blocked the delete — not a code bug
-            print("⚠️ Keychain delete may have been blocked by macOS authorization prompt")
+            print("Warning: Keychain delete may have been blocked by macOS authorization prompt")
         } else {
             XCTAssertNil(loaded)
         }
