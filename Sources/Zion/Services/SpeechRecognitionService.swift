@@ -285,28 +285,35 @@ final class SpeechRecognitionService {
     func stopAndTranscribe() async -> (transcript: String, sessionID: UUID?) {
         let sessionID = targetSessionID
 
+        logger.log(.info, "stopAndTranscribe: stopping engine…", context: "Speech")
         audioEngine?.stop()
         audioEngine?.inputNode.removeTap(onBus: 0)
         state = .processing
         recoveryIssue = nil
 
         guard let wavData = encodeWAV() else {
+            logger.log(.error, "stopAndTranscribe: encodeWAV failed (no frames or empty)", context: "Speech")
             recoveryIssue = .whisperFailed
             cleanup()
             return ("", sessionID)
         }
+        logger.log(.info, "stopAndTranscribe: WAV encoded (\(wavData.count) bytes)", context: "Speech")
 
         guard let apiKey = AIClient.loadAPIKey(for: .openai) else {
+            logger.log(.error, "stopAndTranscribe: no OpenAI API key", context: "Speech")
             recoveryIssue = .whisperMissingKey
             cleanup()
             return ("", sessionID)
         }
 
         do {
+            logger.log(.info, "stopAndTranscribe: sending to Whisper API…", context: "Speech")
             let transcript = try await transcribeWithWhisper(wavData: wavData, apiKey: apiKey)
+            logger.log(.info, "stopAndTranscribe: transcript received (\(transcript.count) chars)", context: "Speech")
             cleanup()
             return (transcript, sessionID)
         } catch let error as AIError {
+            logger.log(.error, "stopAndTranscribe: AIError — \(error)", context: "Speech")
             switch error {
             case .quotaExceeded:
                 recoveryIssue = .whisperQuotaExceeded
@@ -318,6 +325,7 @@ final class SpeechRecognitionService {
             cleanup()
             return ("", sessionID)
         } catch {
+            logger.log(.error, "stopAndTranscribe: \(error.localizedDescription)", context: "Speech")
             recoveryIssue = .whisperFailed
             cleanup()
             return ("", sessionID)

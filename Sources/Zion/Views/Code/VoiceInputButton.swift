@@ -10,6 +10,7 @@ struct VoiceInputButton: View {
 
     @State private var isPopoverPresented = false
     @State private var permissionDenial: SpeechRecognitionService.PermissionDenial?
+    @State private var showRecoveryAlert = false
     @State private var isHovered = false
 
     var body: some View {
@@ -39,8 +40,7 @@ struct VoiceInputButton: View {
         .help(L10n("speech.button.tooltip"))
         .accessibilityLabel(L10n("speech.button.tooltip"))
         .popover(isPresented: $isPopoverPresented) {
-            voicePopover
-                .frame(width: 260)
+            voiceSettingsPopover
         }
         .onLongPressGesture(minimumDuration: 0.5) {
             isPopoverPresented = true
@@ -69,12 +69,31 @@ struct VoiceInputButton: View {
                 ? L10n("speech.permission.alert.micMessage")
                 : L10n("speech.permission.alert.speechMessage"))
         }
+        .alert(
+            L10n("speech.recovery.alert.title"),
+            isPresented: $showRecoveryAlert
+        ) {
+            Button(L10n("speech.recovery.useAppleSpeech")) {
+                speechService.selectedEngine = .apple
+                speechService.clearRecoveryIssue()
+            }
+            Button(L10n("Cancelar"), role: .cancel) {
+                speechService.clearRecoveryIssue()
+            }
+        } message: {
+            if let issue = speechService.recoveryIssue {
+                Text(issue.message)
+            }
+        }
     }
 
-    // MARK: - Popover
+    // MARK: - Settings Popover
 
-    private var voicePopover: some View {
+    private var voiceSettingsPopover: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.standard) {
+            Text(L10n("speech.button.tooltip"))
+                .font(DesignSystem.Typography.bodyMedium)
+
             // Engine picker
             if speechService.isWhisperAvailable {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.micro) {
@@ -130,33 +149,11 @@ struct VoiceInputButton: View {
                         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius))
                 }
             }
-
-            // Permission denied message
-            if permissionDenial != nil {
-                Text(L10n("speech.permission.denied"))
-                    .font(DesignSystem.Typography.label)
-                    .foregroundStyle(DesignSystem.Colors.error)
-            }
-
-            if let recoveryIssue = speechService.recoveryIssue {
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.micro) {
-                    Text(recoveryIssue.message)
-                        .font(DesignSystem.Typography.label)
-                        .foregroundStyle(DesignSystem.Colors.warning)
-
-                    HStack(spacing: DesignSystem.Spacing.iconTextGap) {
-                        Button(L10n("speech.recovery.useAppleSpeech")) {
-                            speechService.selectedEngine = .apple
-                            speechService.clearRecoveryIssue()
-                        }
-                        .buttonStyle(.bordered)
-
-                        openAISettingsLink(label: L10n("speech.recovery.manageOpenAI"))
-                    }
-                }
-            }
         }
+        .controlSize(.small)
+        .tint(DesignSystem.Colors.actionPrimary)
         .padding(DesignSystem.Spacing.standard)
+        .frame(width: 280)
     }
 
     // MARK: - Actions
@@ -227,7 +224,13 @@ struct VoiceInputButton: View {
                 result = await speechService.stopAndTranscribe()
             }
 
-            guard !result.transcript.isEmpty else { return }
+            guard !result.transcript.isEmpty else {
+                // Show recovery alert when Whisper fails
+                if speechService.recoveryIssue != nil {
+                    showRecoveryAlert = true
+                }
+                return
+            }
 
             // Send to the CAPTURED target session (not the currently active one)
             if let sessionID = result.sessionID,

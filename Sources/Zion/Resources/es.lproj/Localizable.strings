@@ -1925,6 +1925,7 @@
 "speech.permission.alert.openSettings" = "Abrir Configuración del Sistema";
 "speech.permission.alert.micMessage" = "Zion necesita acceso al micrófono para entrada de voz. Actívalo en Configuración del Sistema > Privacidad y Seguridad > Micrófono.";
 "speech.permission.alert.speechMessage" = "Zion necesita acceso al reconocimiento de voz. Actívalo en Configuración del Sistema > Privacidad y Seguridad > Reconocimiento de Voz.";
+"speech.recovery.alert.title" = "Error de Whisper";
 "speech.error.unavailable" = "El reconocimiento de voz no está disponible para el idioma seleccionado.";
 "settings.speech.engine.hint" = "Apple Speech es gratuito y en tiempo real. Whisper requiere una clave de API de OpenAI (configurada en los ajustes de IA).";
 "settings.speech.engine.whisperUnavailable" = "OpenAI Whisper no estará disponible hasta que se conecte una clave de API de OpenAI en los ajustes de IA.";
