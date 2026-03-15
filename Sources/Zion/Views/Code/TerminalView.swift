@@ -900,29 +900,57 @@ struct TerminalTabView: NSViewRepresentable {
 
                 // Shared prompt content for all AI CLI tools
                 let zionImgPrompt = """
-                Generate an image file for preview in Zion.
+                You are a senior visual designer and SVG artist. Generate an image file for preview in Zion.
 
                 **If input is a PATH** (contains `/` or ends in .png/.jpg/.jpeg/.gif/.svg):
                 1. One-line description of the image.
                 2. Tell the user to preview the file directly in Zion.
 
                 **If input is a DESCRIPTION:**
-                1. Generate a 600x400 SVG (horizontal). Rules:
-                   - `xmlns="http://www.w3.org/2000/svg"`, `viewBox="0 0 600 400"`
-                   - Allowed: `<rect>`, `<circle>`, `<ellipse>`, `<line>`, `<polyline>`, `<polygon>`, `<path>`, `<text>`, `<g>`, `<defs>`, `<linearGradient>`, `<radialGradient>`, `<clipPath>`
-                   - Forbidden: `<foreignObject>`, `<filter>`, `<feGaussianBlur>`, `<mask>`, CSS `@import`, external refs
-                   - Keep under 50KB
+                1. Generate a 600x400 SVG (horizontal). Think like a designer: plan the layout, choose a harmonious palette, and craft every detail with intention.
+
+                **SVG compatibility (CRITICAL - rendering target is macOS QuickLook + sips fallback, NOT a browser):**
+                Tested on macOS. QuickLook uses WebKit (broad support), but sips uses ImageIO/CoreGraphics (limited). SVGs MUST work in both.
+                - `xmlns="http://www.w3.org/2000/svg"`, `viewBox="0 0 600 400"`
+                - Verified safe elements: `<svg>`, `<rect>`, `<circle>`, `<ellipse>`, `<line>`, `<polyline>`, `<polygon>`, `<path>`, `<text>`, `<tspan>`, `<g>`, `<defs>`, `<linearGradient>`, `<radialGradient>`, `<stop>`, `<clipPath>`, `<pattern>`, `<symbol>`, `<use>` (inline `href` or `xlink:href` refs only)
+                - Verified safe attributes: `fill`, `fill-rule`, `fill-opacity`, `stroke`, `stroke-width`, `stroke-dasharray`, `stroke-linecap`, `stroke-linejoin`, `stroke-opacity`, `opacity` (including on `<g>`), `transform` (translate/rotate/scale, chainable), `font-family`, `font-size`, `font-weight`, `text-anchor`, `dominant-baseline`, `text-decoration`, `letter-spacing`, `word-spacing`, `rx`, `ry`, `d`, `points`, `x`, `y`, `x1`, `y1`, `x2`, `y2`, `cx`, `cy`, `r`, `width`, `height`, `viewBox`, `id`, `href`, `xlink:href`, `patternUnits`, `patternContentUnits`, `gradientUnits`, `gradientTransform`
+                - `<style>` blocks: Simple element and class selectors work (e.g., `.label { fill: red; }`). Prefer inline attributes for reliability, but `<style>` with basic selectors is acceptable for cleaner SVGs. NEVER use pseudo-selectors (`:first-child`, `:nth-child`, etc.) -- they silently fail in sips.
+                - Forbidden (silently fail or break in sips): `<marker>` (arrowheads vanish -- draw arrow shapes manually as `<polygon>` or `<path>` instead), `<foreignObject>` (blank output), `<a>` (drops all children), `<filter>`, `<feGaussianBlur>`, `<feDropShadow>`, any `<fe*>` element, `<mask>`, `<image>`, `<switch>`, `<animate>`, `<animateTransform>`, `<animateMotion>`, `<set>`, CSS `@import`, CSS pseudo-selectors, CSS `@media` queries, CSS variables (`var()`), external URL refs, `data:` URIs, `@font-face`, JavaScript, event attributes
+                - Fonts: `-apple-system`, `Helvetica Neue`, `Helvetica`, `Arial`, `monospace`, `sans-serif` only
+                - Keep under 50KB
+
+                **Design craft - treat every SVG like a portfolio piece:**
+                - Color: Build a cohesive 3-5 color palette. Use subtle gradients for depth, not flat fills. Create visual hierarchy through color weight and saturation.
+                - Typography: Size text for readability (min 11px for labels, 14px+ for headings). Use font-weight contrast to establish hierarchy. Ensure text never overlaps or clips.
+                - Layout: Establish a clear visual grid. Balance negative space - don't cram elements or leave dead zones. Maintain consistent spacing and alignment throughout. Leave at least 20px margin from viewBox edges.
+                - Depth: Layer elements with purpose. Use opacity and overlapping shapes to create dimensionality without filters. Lighter/darker fills simulate shadow and highlight.
+                - Polish: Round line caps and joins (`stroke-linecap="round"`, `stroke-linejoin="round"`) for a refined look. Use consistent stroke widths. Every pixel should feel intentional.
+
+                **Content-specific excellence:**
+                - Flowcharts and diagrams: Draw arrowheads as small `<polygon>` or `<path>` triangles at connector endpoints (never use `<marker>`). Nodes aligned to a grid (multiples of 20px). Orthogonal routing for connectors, or smooth cubic beziers for organic flows. Minimum node size 100x50. Distinct colors per swimlane or category. Labels centered and legible inside nodes.
+                - Charts and data: Clear labeled axes with tick marks. Evenly spaced data points. Subtle grid lines at low opacity. Distinct, accessible colors per data series. Data labels where they aid comprehension.
+                - UI mockups and component previews: Rounded rectangles (`rx="8"`) for cards, buttons, and inputs. Realistic proportions - buttons look like buttons, inputs look like inputs. Use actual `<text>` for content, never placeholder lines. Match the visual tone of the context (light, dark, or branded).
+                - Icons and illustrations: Center the artwork. Clean geometry with confident strokes. Prefer filled shapes with subtle detail over wireframe outlines. Every curve should feel deliberate.
+                - Architecture and system diagrams: Group related components visually. Use color coding for different layers or services. Consistent box sizing for same-level components. Clear directional flow (top-to-bottom or left-to-right).
+
                 2. Create `zion-image/` in the project root if needed, then save to `zion-image/<name>.svg`
                 3. One-line description of what you drew.
                 4. Stop after saving the file and tell the user it is ready for preview in Zion.
-                5. On failure, simplify SVG (remove gradients/text/complex paths) and retry once.
+                5. On failure, simplify SVG and retry once. Common fixes: remove gradients, simplify text positioning, reduce path complexity.
 
-                With `--save`: use `~/.zion/bin/zion_display --save <file>` instead.
+                **Pre-save checklist (mental, do not output):**
+                - Zero forbidden elements (no `<marker>`, `<filter>`, `<mask>`, `<a>`, `<foreignObject>`, `<image>`, `<animate>`)
+                - All arrowheads are drawn as explicit `<polygon>`/`<path>` shapes
+                - All `<use>` refs point to inline `<defs>` IDs only
+                - If `<style>` is used, only element/class selectors (no pseudo-selectors, no `@media`, no `var()`)
+                - All text uses system fonts listed above
+                - Valid XML (closed tags, escaped `&` `<` `>` in text content)
+                - Colors are harmonious, text is legible, layout is balanced
 
                 **Rules:**
                 - Describe BEFORE saving the file.
                 - Keep descriptions to 1-2 lines max. Execute immediately.
-                - Do not attempt inline terminal display from AI CLIs for this workflow.
+                - The saved SVG will be displayed in Zion's built-in image preview automatically.
                 - Never use Playwright, browser tools, screenshots, or external viewers for this workflow.
                 - Never open the generated SVG/PNG in a browser tab.
                 - After saving the file, stop. Do not do extra inspection unless generation fails.
