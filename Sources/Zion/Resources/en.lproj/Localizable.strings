@@ -1761,8 +1761,11 @@
 "mobile.access.error.timeout" = "Timed out waiting for Cloudflare tunnel";
 "mobile.access.error.rateLimited" = "Cloudflare rate limit reached. Wait a few minutes and try again.";
 "mobile.access.error.keyNotFound" = "Encryption key not found. Try regenerating the pairing key.";
-"mobile.access.lanMode" = "LAN Mode";
-"mobile.access.lanMode.hint" = "Connect over local network (same Wi-Fi) without Cloudflare tunnel. Use for testing or when your phone is on the same network.";
+"mobile.access.lan.title" = "Local Network";
+"mobile.access.lan.description" = "Scan to connect over Wi-Fi. Both devices must be on the same network.";
+"mobile.access.tunnel.title" = "Internet (Tunnel)";
+"mobile.access.tunnel.description" = "Scan to connect from anywhere. Encrypted through Cloudflare.";
+"mobile.access.tunnel.loading" = "Starting tunnel...";
 "mobile.access.keepAwake" = "Prevent Sleep";
 "mobile.access.keepAwake.hint" = "Keep your Mac awake while the remote server is active.";
 "keepAwake.duration.off" = "Off";

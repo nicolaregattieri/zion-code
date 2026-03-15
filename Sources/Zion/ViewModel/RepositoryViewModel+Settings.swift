@@ -148,9 +148,6 @@ extension RepositoryViewModel {
             showDotfiles = defaults.bool(forKey: "fileBrowser.showHiddenFiles")
         }
         // Mobile Remote Access
-        if defaults.object(forKey: "zion.mobileAccess.lanMode") != nil {
-            isMobileAccessLANMode = defaults.bool(forKey: "zion.mobileAccess.lanMode")
-        }
         if defaults.object(forKey: "zion.mobileAccess.enabled") != nil {
             isMobileAccessEnabled = defaults.bool(forKey: "zion.mobileAccess.enabled")
             if isMobileAccessEnabled {
@@ -304,16 +301,6 @@ extension RepositoryViewModel {
         }
 
         // MARK: Mobile Remote Access
-        if defaults.object(forKey: "zion.mobileAccess.lanMode") != nil {
-            let lm = defaults.bool(forKey: "zion.mobileAccess.lanMode")
-            if lm != isMobileAccessLANMode {
-                isMobileAccessLANMode = lm
-                // Switch mode without restarting the HTTP server
-                if isMobileAccessEnabled {
-                    switchRemoteAccessMode()
-                }
-            }
-        }
         if defaults.object(forKey: "zion.mobileAccess.enabled") != nil {
             let mae = defaults.bool(forKey: "zion.mobileAccess.enabled")
             if mae != isMobileAccessEnabled {

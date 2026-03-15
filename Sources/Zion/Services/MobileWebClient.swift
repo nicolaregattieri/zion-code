@@ -31,8 +31,8 @@ enum MobileWebClient {
   --mono:'SF Mono',SFMono-Regular,Menlo,monospace;
   --radius:12px;--radius-sm:8px
 }
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);overflow:hidden;-webkit-text-size-adjust:100%}
-#app{display:flex;flex-direction:column;height:100%;height:100dvh}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--font);-webkit-text-size-adjust:100%;overflow:hidden;width:100%;height:100%}
+#app{display:flex;flex-direction:column;width:100%;height:100%;overflow:hidden}
 
 /* -- Header -- */
 header{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--border);position:relative;z-index:10}
@@ -170,6 +170,9 @@ function initTerminal() {
     term.loadAddon(fitAddon);
     term.open($('#xterm-container'));
     fitAddon.fit();
+    // Re-fit after browser reflow to handle cases where container
+    // dimensions aren't available yet (e.g., LAN mode with lower latency)
+    requestAnimationFrame(() => { if (fitAddon) fitAddon.fit(); });
     new ResizeObserver(() => fitAddon && fitAddon.fit())
         .observe($('#xterm-container'));
 
@@ -204,8 +207,9 @@ function closeDrawer() {
   $('#drawer-overlay').classList.remove('open');
 }
 
-// -- Crypto (AES-256-GCM via Web Crypto API — always enabled) --
+// -- Crypto (AES-256-GCM via Web Crypto API, skipped in LAN mode) --
 async function importKey(b64url) {
+  if (LAN_MODE) return null;
   let b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
   while (b64.length % 4) b64 += '=';
   const raw = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
@@ -213,6 +217,7 @@ async function importKey(b64url) {
 }
 
 async function encrypt(data) {
+  if (LAN_MODE) return data;
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const ct = await crypto.subtle.encrypt({name:'AES-GCM',iv}, cryptoKey, data);
   const combined = new Uint8Array(12 + ct.byteLength);
@@ -222,6 +227,7 @@ async function encrypt(data) {
 }
 
 async function decrypt(combined) {
+  if (LAN_MODE) return combined;
   const iv = combined.slice(0, 12);
   const ct = combined.slice(12);
   return crypto.subtle.decrypt({name:'AES-GCM',iv}, cryptoKey, ct);
@@ -253,22 +259,29 @@ function retryConnect() {
 }
 
 async function connect() {
+  console.log('[Zion] connect() LAN_MODE=' + LAN_MODE + ' BASE=' + BASE + ' TOKEN=' + (TOKEN ? TOKEN.slice(0,8) + '...' : 'null') + ' KEY=' + (KEY_B64URL ? 'yes' : 'null'));
   if (!KEY_B64URL || !TOKEN) {
+    console.error('[Zion] Missing pairing data: KEY=' + !!KEY_B64URL + ' TOKEN=' + !!TOKEN);
     showRetry('Connection Error', 'Pairing data not found. Tap Refresh or re-scan the QR code from Zion Settings.');
     return;
   }
 
   try {
     cryptoKey = await importKey(KEY_B64URL);
+    console.log('[Zion] importKey result: ' + (cryptoKey ? 'CryptoKey' : 'null (LAN mode)'));
   } catch(e) {
+    console.error('[Zion] importKey FAILED:', e.message);
     showRetry('Crypto Error', 'Failed to initialize encryption. Tap to retry.');
     return;
   }
   setStatus('connecting', 'Pairing...');
 
   try {
-    const res = await fetch(BASE + '/pair?t=' + TOKEN);
+    console.log('[Zion] Fetching /pair...');
+    const res = await fetch(BASE + '/pair?t=' + TOKEN + (LAN_MODE ? '&m=lan' : ''));
+    console.log('[Zion] /pair status=' + res.status);
     const data = await res.json();
+    console.log('[Zion] /pair response:', JSON.stringify(data));
     if (data.status === 'paired') {
       _retryCount = 0;
       setStatus('connected', 'Connected');
@@ -282,6 +295,7 @@ async function connect() {
       showRetry('Pairing Failed', (data.error || 'Unknown error') + '. Tap to retry.');
     }
   } catch(e) {
+    console.error('[Zion] connect fetch FAILED:', e.message);
     showRetry('Connection Failed', e.message + '. Tap to retry.');
     _retryCount = (_retryCount || 0) + 1;
     if (_retryCount < 5) {
@@ -594,7 +608,13 @@ async function sendEncrypted(msg) {
   const encrypted = await encrypt(data);
   const b64 = btoa(String.fromCharCode(...encrypted));
   const endpoint = msg.type === 'sendAction' ? '/action' : '/input';
-  await fetch(BASE + endpoint + '?t=' + TOKEN, {method:'POST', body: b64});
+  console.log('[Zion] sendEncrypted ' + endpoint + ' type=' + msg.type + ' len=' + b64.length);
+  try {
+    const res = await fetch(BASE + endpoint + '?t=' + TOKEN, {method:'POST', body: b64});
+    console.log('[Zion] sendEncrypted status=' + res.status);
+  } catch(e) {
+    console.error('[Zion] sendEncrypted FAILED:', e.message);
+  }
 }
 
 async function sendInput() {

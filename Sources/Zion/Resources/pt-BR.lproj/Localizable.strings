@@ -1714,8 +1714,11 @@
 "mobile.access.error.timeout" = "Tempo esgotado aguardando túnel Cloudflare";
 "mobile.access.error.rateLimited" = "Limite de requisições Cloudflare atingido. Aguarde alguns minutos e tente novamente.";
 "mobile.access.error.keyNotFound" = "Chave de criptografia não encontrada. Tente regenerar a chave de pareamento.";
-"mobile.access.lanMode" = "Modo LAN";
-"mobile.access.lanMode.hint" = "Conectar pela rede local (mesmo Wi-Fi) sem túnel Cloudflare. Use para testes ou quando o celular está na mesma rede.";
+"mobile.access.lan.title" = "Rede Local";
+"mobile.access.lan.description" = "Escaneie para conectar via Wi-Fi. Os dispositivos devem estar na mesma rede.";
+"mobile.access.tunnel.title" = "Internet (Tunnel)";
+"mobile.access.tunnel.description" = "Escaneie para conectar de qualquer lugar. Criptografado via Cloudflare.";
+"mobile.access.tunnel.loading" = "Iniciando tunnel...";
 "mobile.access.keepAwake" = "Impedir Suspensão";
 "mobile.access.keepAwake.hint" = "Manter o Mac ativo enquanto o servidor remoto estiver ligado.";
 "keepAwake.duration.off" = "Desligado";
