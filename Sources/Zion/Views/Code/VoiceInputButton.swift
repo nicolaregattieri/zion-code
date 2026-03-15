@@ -150,6 +150,8 @@ struct VoiceInputButton: View {
                 }
             }
         }
+        .controlSize(.small)
+        .tint(DesignSystem.Colors.actionPrimary)
         .padding(12)
         .frame(width: 280)
     }
