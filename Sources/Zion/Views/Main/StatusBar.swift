@@ -96,15 +96,25 @@ extension ContentView {
                 // Mobile Access indicator
                 if model.isMobileAccessEnabled {
                     SettingsLink {
-                        HStack(spacing: 3) {
-                            Image(systemName: mobileAccessIcon)
-                                .font(DesignSystem.Typography.meta)
-                            if case .connected(let count) = model.mobileAccessConnectionState {
-                                Text("\(count)")
+                        HStack(spacing: 5) {
+                            HStack(spacing: 3) {
+                                Image(systemName: mobileAccessIcon)
+                                    .font(DesignSystem.Typography.meta)
+                                if case .connected(let count) = model.mobileAccessConnectionState {
+                                    Text("\(count)")
+                                }
                             }
                             if model.isPreventingSleep, let expiresAt = model.keepAwakeExpiresAt, expiresAt > .now {
-                                Text(expiresAt, style: .timer)
-                                    .monospacedDigit()
+                                TimelineView(.periodic(from: .now, by: 1)) { context in
+                                    let remaining = max(0, Int(ceil(expiresAt.timeIntervalSince(context.date))))
+                                    let h = remaining / 3600
+                                    let m = (remaining % 3600) / 60
+                                    let s = remaining % 60
+                                    Text(h > 0
+                                         ? String(format: "%d:%02d:%02d", h, m, s)
+                                         : String(format: "%d:%02d", m, s))
+                                        .monospacedDigit()
+                                }
                             }
                         }
                         .font(DesignSystem.Typography.label)

@@ -5,8 +5,12 @@ import XCTest
 final class RemoteAccessServerTests: XCTestCase {
     private var server: RemoteAccessServer!
     private let testPort: UInt16 = 19_848 // Avoid conflict with running app on 19847
+    private static let runNetworkTestsEnv = "ZION_RUN_NETWORK_TESTS"
 
     override func setUp() async throws {
+        guard ProcessInfo.processInfo.environment[Self.runNetworkTestsEnv] == "1" else {
+            throw XCTSkip("Skipping network tests by default (NWListener triggers firewall dialogs). Set \(Self.runNetworkTestsEnv)=1 to run.")
+        }
         server = RemoteAccessServer()
         let key = RemoteAccessEncryption.generatePairingKey()
         try await server.start(port: testPort, key: key)
@@ -15,7 +19,7 @@ final class RemoteAccessServerTests: XCTestCase {
     }
 
     override func tearDown() async throws {
-        await server.stop()
+        await server?.stop()
         server = nil
         // Give port time to release
         try await Task.sleep(nanoseconds: 300_000_000)
