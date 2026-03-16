@@ -263,10 +263,10 @@ final class RepositoryViewModel {
 
     // Pre-Commit AI Review Gate
     var preCommitReviewEnabled: Bool = false {
-        didSet { UserDefaults.standard.set(preCommitReviewEnabled, forKey: "zion.preCommitReview") }
+        didSet { UserDefaults.standard.set(preCommitReviewEnabled, forKey: UserDefaultsKeys.AI.preCommitReview) }
     }
     var aiTransferSupportHintsEnabled: Bool = true {
-        didSet { UserDefaults.standard.set(aiTransferSupportHintsEnabled, forKey: "zion.aiTransferSupportHints") }
+        didSet { UserDefaults.standard.set(aiTransferSupportHintsEnabled, forKey: UserDefaultsKeys.AI.transferSupportHints) }
     }
     var preCommitReviewPending: Bool = false
     @ObservationIgnored var preCommitDiffHash: String = ""
@@ -281,16 +281,16 @@ final class RepositoryViewModel {
 
     var aiProvider: AIProvider = .none {
         didSet { 
-            UserDefaults.standard.set(aiProvider.rawValue, forKey: "zion.aiProvider")
+            UserDefaults.standard.set(aiProvider.rawValue, forKey: UserDefaultsKeys.AI.provider)
             aiQuotaExceeded = false // Reset on provider change
             _aiKeyRevision += 1 // Ensure aiAPIKey getter is re-evaluated for the new provider
         }
     }
     var aiMode: AIMode = .efficient {
-        didSet { UserDefaults.standard.set(aiMode.rawValue, forKey: "zion.aiMode") }
+        didSet { UserDefaults.standard.set(aiMode.rawValue, forKey: UserDefaultsKeys.AI.mode) }
     }
     var commitMessageStyle: CommitMessageStyle = .compact {
-        didSet { UserDefaults.standard.set(commitMessageStyle.rawValue, forKey: "zion.commitMessageStyle") }
+        didSet { UserDefaults.standard.set(commitMessageStyle.rawValue, forKey: UserDefaultsKeys.AI.commitMessageStyle) }
     }
     @ObservationIgnored let aiClient = AIClient()
     @ObservationIgnored let repoMemoryService = RepoMemoryService()
@@ -348,34 +348,34 @@ final class RepositoryViewModel {
     // ntfy Push Notifications
     var ntfyTopic: String = "" {
         didSet {
-            UserDefaults.standard.set(ntfyTopic, forKey: "zion.ntfy.topic")
+            UserDefaults.standard.set(ntfyTopic, forKey: UserDefaultsKeys.Ntfy.topic)
         }
     }
     var ntfyServerURL: String = "https://ntfy.sh" {
         didSet {
-            UserDefaults.standard.set(ntfyServerURL, forKey: "zion.ntfy.serverURL")
+            UserDefaults.standard.set(ntfyServerURL, forKey: UserDefaultsKeys.Ntfy.serverURL)
         }
     }
     var ntfyEnabledEvents: [String] = NtfyEvent.defaultEnabledEvents {
-        didSet { UserDefaults.standard.set(ntfyEnabledEvents, forKey: "zion.ntfy.enabledEvents") }
+        didSet { UserDefaults.standard.set(ntfyEnabledEvents, forKey: UserDefaultsKeys.Ntfy.enabledEvents) }
     }
 
     var ntfyEnabled: Bool = false {
-        didSet { UserDefaults.standard.set(ntfyEnabled, forKey: "zion.ntfy.enabled") }
+        didSet { UserDefaults.standard.set(ntfyEnabled, forKey: UserDefaultsKeys.Ntfy.enabled) }
     }
 
     var ntfyLocalNotificationsEnabled: Bool = false {
-        didSet { UserDefaults.standard.set(ntfyLocalNotificationsEnabled, forKey: "zion.ntfy.localNotifications") }
+        didSet { UserDefaults.standard.set(ntfyLocalNotificationsEnabled, forKey: UserDefaultsKeys.Ntfy.localNotifications) }
     }
     var prPollingIntervalMinutes: Int = 5 {
-        didSet { UserDefaults.standard.set(prPollingIntervalMinutes, forKey: "zion.prPollingInterval") }
+        didSet { UserDefaults.standard.set(prPollingIntervalMinutes, forKey: UserDefaultsKeys.Notifications.prPollingInterval) }
     }
 
     var isNtfyConfigured: Bool { ntfyEnabled && !ntfyTopic.isEmpty }
 
     // Mobile Remote Access
     var isMobileAccessEnabled: Bool = false {
-        didSet { UserDefaults.standard.set(isMobileAccessEnabled, forKey: "zion.mobileAccess.enabled") }
+        didSet { UserDefaults.standard.set(isMobileAccessEnabled, forKey: UserDefaultsKeys.MobileAccess.enabled) }
     }
     var mobileAccessConnectionState: RemoteAccessConnectionState = .disabled
     var mobileAccessLanQRImage: NSImage?
@@ -463,77 +463,77 @@ final class RepositoryViewModel {
 
     // Editor Settings (persisted via UserDefaults)
     var selectedTheme: EditorTheme = .dracula {
-        didSet { UserDefaults.standard.set(selectedTheme.rawValue, forKey: "editor.theme") }
+        didSet { UserDefaults.standard.set(selectedTheme.rawValue, forKey: UserDefaultsKeys.Editor.theme) }
     }
     var editorFontSize: Double = 13.0 {
-        didSet { UserDefaults.standard.set(editorFontSize, forKey: "editor.fontSize") }
+        didSet { UserDefaults.standard.set(editorFontSize, forKey: UserDefaultsKeys.Editor.fontSize) }
     }
     var editorFontFamily: String = "SF Mono" {
-        didSet { UserDefaults.standard.set(editorFontFamily, forKey: "editor.fontFamily") }
+        didSet { UserDefaults.standard.set(editorFontFamily, forKey: UserDefaultsKeys.Editor.fontFamily) }
     }
     var editorLineSpacing: Double = 4.0 {
-        didSet { UserDefaults.standard.set(editorLineSpacing, forKey: "editor.lineSpacing") }
+        didSet { UserDefaults.standard.set(editorLineSpacing, forKey: UserDefaultsKeys.Editor.lineSpacing) }
     }
     var isLineWrappingEnabled: Bool = true {
-        didSet { UserDefaults.standard.set(isLineWrappingEnabled, forKey: "editor.lineWrap") }
+        didSet { UserDefaults.standard.set(isLineWrappingEnabled, forKey: UserDefaultsKeys.Editor.lineWrap) }
     }
     var editorTabSize: Int = 4 {
-        didSet { UserDefaults.standard.set(editorTabSize, forKey: "editor.tabSize") }
+        didSet { UserDefaults.standard.set(editorTabSize, forKey: UserDefaultsKeys.Editor.tabSize) }
     }
     var editorUseTabs: Bool = false {
-        didSet { UserDefaults.standard.set(editorUseTabs, forKey: "editor.useTabs") }
+        didSet { UserDefaults.standard.set(editorUseTabs, forKey: UserDefaultsKeys.Editor.useTabs) }
     }
     var editorShowRuler: Bool = false {
-        didSet { UserDefaults.standard.set(editorShowRuler, forKey: "editor.showRuler") }
+        didSet { UserDefaults.standard.set(editorShowRuler, forKey: UserDefaultsKeys.Editor.showRuler) }
     }
     var editorRulerColumn: Int = 80 {
-        didSet { UserDefaults.standard.set(editorRulerColumn, forKey: "editor.rulerColumn") }
+        didSet { UserDefaults.standard.set(editorRulerColumn, forKey: UserDefaultsKeys.Editor.rulerColumn) }
     }
     var editorAutoCloseBrackets: Bool = true {
-        didSet { UserDefaults.standard.set(editorAutoCloseBrackets, forKey: "editor.autoCloseBrackets") }
+        didSet { UserDefaults.standard.set(editorAutoCloseBrackets, forKey: UserDefaultsKeys.Editor.autoCloseBrackets) }
     }
     var editorAutoCloseQuotes: Bool = true {
-        didSet { UserDefaults.standard.set(editorAutoCloseQuotes, forKey: "editor.autoCloseQuotes") }
+        didSet { UserDefaults.standard.set(editorAutoCloseQuotes, forKey: UserDefaultsKeys.Editor.autoCloseQuotes) }
     }
     var editorLetterSpacing: Double = 0.0 {
-        didSet { UserDefaults.standard.set(editorLetterSpacing, forKey: "editor.letterSpacing") }
+        didSet { UserDefaults.standard.set(editorLetterSpacing, forKey: UserDefaultsKeys.Editor.letterSpacing) }
     }
     var editorHighlightCurrentLine: Bool = true {
-        didSet { UserDefaults.standard.set(editorHighlightCurrentLine, forKey: "editor.highlightCurrentLine") }
+        didSet { UserDefaults.standard.set(editorHighlightCurrentLine, forKey: UserDefaultsKeys.Editor.highlightCurrentLine) }
     }
     var editorBracketPairHighlight: Bool = true {
-        didSet { UserDefaults.standard.set(editorBracketPairHighlight, forKey: "editor.bracketPairHighlight") }
+        didSet { UserDefaults.standard.set(editorBracketPairHighlight, forKey: UserDefaultsKeys.Editor.bracketPairHighlight) }
     }
     var editorShowIndentGuides: Bool = false {
-        didSet { UserDefaults.standard.set(editorShowIndentGuides, forKey: "editor.showIndentGuides") }
+        didSet { UserDefaults.standard.set(editorShowIndentGuides, forKey: UserDefaultsKeys.Editor.showIndentGuides) }
     }
 
     // Formatting settings
     var editorFormatOnSave: Bool = false {
-        didSet { UserDefaults.standard.set(editorFormatOnSave, forKey: "editor.formatOnSave") }
+        didSet { UserDefaults.standard.set(editorFormatOnSave, forKey: UserDefaultsKeys.Editor.formatOnSave) }
     }
     var editorJsonSortKeys: Bool = false {
-        didSet { UserDefaults.standard.set(editorJsonSortKeys, forKey: "editor.jsonSortKeys") }
+        didSet { UserDefaults.standard.set(editorJsonSortKeys, forKey: UserDefaultsKeys.Editor.jsonSortKeys) }
     }
 
     // Terminal font settings
     var terminalFontSize: Double = 13.0 {
-        didSet { UserDefaults.standard.set(terminalFontSize, forKey: "terminal.fontSize") }
+        didSet { UserDefaults.standard.set(terminalFontSize, forKey: UserDefaultsKeys.Terminal.fontSize) }
     }
     var terminalFontFamily: String = "SF Mono" {
-        didSet { UserDefaults.standard.set(terminalFontFamily, forKey: "terminal.fontFamily") }
+        didSet { UserDefaults.standard.set(terminalFontFamily, forKey: UserDefaultsKeys.Terminal.fontFamily) }
     }
     var isTerminalFontAvailable: Bool {
         MonospaceFontResolver.isAvailable(name: terminalFontFamily)
     }
 
     var terminalOpacity: Double = 0.92 {
-        didSet { UserDefaults.standard.set(terminalOpacity, forKey: "terminal.opacity") }
+        didSet { UserDefaults.standard.set(terminalOpacity, forKey: UserDefaultsKeys.Terminal.opacity) }
     }
 
     var showDotfiles: Bool = true {
         didSet {
-            UserDefaults.standard.set(showDotfiles, forKey: "fileBrowser.showHiddenFiles")
+            UserDefaults.standard.set(showDotfiles, forKey: UserDefaultsKeys.FileBrowser.showHiddenFiles)
             refreshFileTree()
         }
     }
@@ -563,8 +563,8 @@ final class RepositoryViewModel {
     @ObservationIgnored let logger = DiagnosticLogger.shared
 
     var recentReposData: Data {
-        get { UserDefaults.standard.data(forKey: "zion.recentRepositories") ?? Data() }
-        set { UserDefaults.standard.set(newValue, forKey: "zion.recentRepositories") }
+        get { UserDefaults.standard.data(forKey: UserDefaultsKeys.General.recentRepositories) ?? Data() }
+        set { UserDefaults.standard.set(newValue, forKey: UserDefaultsKeys.General.recentRepositories) }
     }
     var recentRepositories: [URL] = []
     var recentWorktreeCounts: [URL: Int] = [:]

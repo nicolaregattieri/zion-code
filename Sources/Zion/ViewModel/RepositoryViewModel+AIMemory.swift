@@ -217,14 +217,14 @@ extension RepositoryViewModel {
     fileprivate func updateRepoMemoryStatus(repositoryURL: URL, snapshot: RepoMemorySnapshot?) {
         if let snapshot {
             repoMemoryStatusMessage = L10n("settings.ai.repoMemory.status.ready", repositoryURL.lastPathComponent)
-            UserDefaults.standard.set(repositoryURL.lastPathComponent, forKey: "zion.repoMemory.activeRepoName")
-            UserDefaults.standard.set(snapshot.generatedAt.timeIntervalSince1970, forKey: "zion.repoMemory.lastRefresh")
-            UserDefaults.standard.set(true, forKey: "zion.repoMemory.ready")
+            UserDefaults.standard.set(repositoryURL.lastPathComponent, forKey: UserDefaultsKeys.RepoMemory.activeRepoName)
+            UserDefaults.standard.set(snapshot.generatedAt.timeIntervalSince1970, forKey: UserDefaultsKeys.RepoMemory.lastRefresh)
+            UserDefaults.standard.set(true, forKey: UserDefaultsKeys.RepoMemory.ready)
         } else {
             repoMemoryStatusMessage = L10n("settings.ai.repoMemory.status.missing")
-            UserDefaults.standard.set(repositoryURL.lastPathComponent, forKey: "zion.repoMemory.activeRepoName")
-            UserDefaults.standard.removeObject(forKey: "zion.repoMemory.lastRefresh")
-            UserDefaults.standard.set(false, forKey: "zion.repoMemory.ready")
+            UserDefaults.standard.set(repositoryURL.lastPathComponent, forKey: UserDefaultsKeys.RepoMemory.activeRepoName)
+            UserDefaults.standard.removeObject(forKey: UserDefaultsKeys.RepoMemory.lastRefresh)
+            UserDefaults.standard.set(false, forKey: UserDefaultsKeys.RepoMemory.ready)
         }
     }
 

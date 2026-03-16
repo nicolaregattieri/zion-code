@@ -29,7 +29,7 @@ private enum SettingsTab: String, CaseIterable {
 struct SettingsView: View {
     @State private var selectedTab: SettingsTab = .general
     @State private var hoveredTab: SettingsTab?
-    @AppStorage("zion.uiLanguage") private var uiLanguageRaw: String = AppLanguage.system.rawValue
+    @AppStorage(UserDefaultsKeys.General.uiLanguage) private var uiLanguageRaw: String = AppLanguage.system.rawValue
 
     private var uiLanguage: AppLanguage { AppLanguage(rawValue: uiLanguageRaw) ?? .system }
 

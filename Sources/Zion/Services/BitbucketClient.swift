@@ -72,7 +72,7 @@ actor BitbucketClient: GitHostingProvider {
         }
         didAttemptKeychainLookup = true
 
-        let username = UserDefaults.standard.string(forKey: "zion.bitbucket.username")?
+        let username = UserDefaults.standard.string(forKey: UserDefaultsKeys.GitHosting.bitbucketUsername)?
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let appPassword = HostingCredentialStore.loadSecret(for: .bitbucketAppPassword)?
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""

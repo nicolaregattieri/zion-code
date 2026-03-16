@@ -23,7 +23,7 @@ struct ZionApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var updater = SparkleUpdater()
     @StateObject private var shortcutRegistry = ShortcutRegistry.shared
-    @AppStorage("zion.uiLanguage") private var uiLanguageRaw: String = AppLanguage.system.rawValue
+    @AppStorage(UserDefaultsKeys.General.uiLanguage) private var uiLanguageRaw: String = AppLanguage.system.rawValue
 
     private var uiLanguage: AppLanguage { AppLanguage(rawValue: uiLanguageRaw) ?? .system }
 
@@ -223,13 +223,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         UserDefaults.standard.register(defaults: [
-            "terminal.scrollbackSize": 5000,
-            "terminal.bellMode": "system",
-            "terminal.openHyperlinks": true,
-            "terminal.copyOnSelect": false,
-            "terminal.aiImageDisplay": false,
-            "zion.ntfy.enabled": false,
-            "zion.ntfy.localNotifications": false,
+            UserDefaultsKeys.Terminal.scrollbackSize: 5000,
+            UserDefaultsKeys.Terminal.bellMode: "system",
+            UserDefaultsKeys.Terminal.openHyperlinks: true,
+            UserDefaultsKeys.Terminal.copyOnSelect: false,
+            UserDefaultsKeys.Terminal.aiImageDisplay: false,
+            UserDefaultsKeys.Ntfy.enabled: false,
+            UserDefaultsKeys.Ntfy.localNotifications: false,
         ])
 
         registerFonts()

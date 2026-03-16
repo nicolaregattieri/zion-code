@@ -224,13 +224,13 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
     func testAvatarImageDoesNotStartDownloadWithoutExplicitOptIn() {
         let vm = RepositoryViewModel()
         let defaults = UserDefaults.standard
-        let previousValue = defaults.object(forKey: "zion.graphAuthorAvatarsEnabled")
-        defaults.set(false, forKey: "zion.graphAuthorAvatarsEnabled")
+        let previousValue = defaults.object(forKey: UserDefaultsKeys.General.graphAuthorAvatarsEnabled)
+        defaults.set(false, forKey: UserDefaultsKeys.General.graphAuthorAvatarsEnabled)
         defer {
             if let previousValue {
-                defaults.set(previousValue, forKey: "zion.graphAuthorAvatarsEnabled")
+                defaults.set(previousValue, forKey: UserDefaultsKeys.General.graphAuthorAvatarsEnabled)
             } else {
-                defaults.removeObject(forKey: "zion.graphAuthorAvatarsEnabled")
+                defaults.removeObject(forKey: UserDefaultsKeys.General.graphAuthorAvatarsEnabled)
             }
         }
 

@@ -6,7 +6,7 @@ struct ClimbingZionView: View {
     let onOpen: () -> Void
     let onInit: () -> Void
 
-    @AppStorage("zion.aiProvider") private var aiProviderRaw: String = AIProvider.none.rawValue
+    @AppStorage(UserDefaultsKeys.AI.provider) private var aiProviderRaw: String = AIProvider.none.rawValue
     @State private var currentStep: Int = 0
     @State private var selectedProvider: AIProvider = .none
     @State private var apiKeyInput: String = ""

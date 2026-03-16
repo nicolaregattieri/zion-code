@@ -133,12 +133,12 @@ actor NtfyClient {
         event: NtfyEvent,
         defaults: UserDefaults = .standard
     ) -> DeliveryPlan {
-        let enabledEvents = defaults.stringArray(forKey: "zion.ntfy.enabledEvents") ?? NtfyEvent.defaultEnabledEvents
+        let enabledEvents = defaults.stringArray(forKey: UserDefaultsKeys.Ntfy.enabledEvents) ?? NtfyEvent.defaultEnabledEvents
         let eventEnabled = enabledEvents.contains(event.rawValue)
-        let localEnabled = defaults.object(forKey: "zion.ntfy.localNotifications") as? Bool ?? false
-        let remoteEnabled = defaults.object(forKey: "zion.ntfy.enabled") as? Bool ?? false
-        let topic = defaults.string(forKey: "zion.ntfy.topic") ?? ""
-        let serverURL = defaults.string(forKey: "zion.ntfy.serverURL") ?? "https://ntfy.sh"
+        let localEnabled = defaults.object(forKey: UserDefaultsKeys.Ntfy.localNotifications) as? Bool ?? false
+        let remoteEnabled = defaults.object(forKey: UserDefaultsKeys.Ntfy.enabled) as? Bool ?? false
+        let topic = defaults.string(forKey: UserDefaultsKeys.Ntfy.topic) ?? ""
+        let serverURL = defaults.string(forKey: UserDefaultsKeys.Ntfy.serverURL) ?? "https://ntfy.sh"
 
         return DeliveryPlan(
             eventEnabled: eventEnabled,

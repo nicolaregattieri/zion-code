@@ -1,28 +1,28 @@
 import SwiftUI
 
 struct EditorSettingsTab: View {
-    @AppStorage("editor.theme") private var themeRaw: String = EditorTheme.dracula.rawValue
-    @AppStorage("editor.fontFamily") private var fontFamily: String = "SF Mono"
-    @AppStorage("editor.fontSize") private var fontSize: Double = 13.0
-    @AppStorage("editor.lineSpacing") private var lineSpacing: Double = 4.0
-    @AppStorage("editor.letterSpacing") private var letterSpacing: Double = 0.0
+    @AppStorage(UserDefaultsKeys.Editor.theme) private var themeRaw: String = EditorTheme.dracula.rawValue
+    @AppStorage(UserDefaultsKeys.Editor.fontFamily) private var fontFamily: String = "SF Mono"
+    @AppStorage(UserDefaultsKeys.Editor.fontSize) private var fontSize: Double = 13.0
+    @AppStorage(UserDefaultsKeys.Editor.lineSpacing) private var lineSpacing: Double = 4.0
+    @AppStorage(UserDefaultsKeys.Editor.letterSpacing) private var letterSpacing: Double = 0.0
 
-    @AppStorage("editor.tabSize") private var tabSize: Int = 4
-    @AppStorage("editor.useTabs") private var useTabs: Bool = false
-    @AppStorage("editor.autoCloseBrackets") private var autoCloseBrackets: Bool = true
-    @AppStorage("editor.autoCloseQuotes") private var autoCloseQuotes: Bool = true
-    @AppStorage("editor.bracketPairHighlight") private var bracketPairHighlight: Bool = true
+    @AppStorage(UserDefaultsKeys.Editor.tabSize) private var tabSize: Int = 4
+    @AppStorage(UserDefaultsKeys.Editor.useTabs) private var useTabs: Bool = false
+    @AppStorage(UserDefaultsKeys.Editor.autoCloseBrackets) private var autoCloseBrackets: Bool = true
+    @AppStorage(UserDefaultsKeys.Editor.autoCloseQuotes) private var autoCloseQuotes: Bool = true
+    @AppStorage(UserDefaultsKeys.Editor.bracketPairHighlight) private var bracketPairHighlight: Bool = true
 
-    @AppStorage("editor.lineWrap") private var lineWrap: Bool = true
-    @AppStorage("editor.showRuler") private var showRuler: Bool = false
-    @AppStorage("editor.rulerColumn") private var rulerColumn: Int = 80
-    @AppStorage("editor.highlightCurrentLine") private var highlightCurrentLine: Bool = true
-    @AppStorage("editor.showIndentGuides") private var showIndentGuides: Bool = false
+    @AppStorage(UserDefaultsKeys.Editor.lineWrap) private var lineWrap: Bool = true
+    @AppStorage(UserDefaultsKeys.Editor.showRuler) private var showRuler: Bool = false
+    @AppStorage(UserDefaultsKeys.Editor.rulerColumn) private var rulerColumn: Int = 80
+    @AppStorage(UserDefaultsKeys.Editor.highlightCurrentLine) private var highlightCurrentLine: Bool = true
+    @AppStorage(UserDefaultsKeys.Editor.showIndentGuides) private var showIndentGuides: Bool = false
 
-    @AppStorage("editor.formatOnSave") private var formatOnSave: Bool = false
-    @AppStorage("editor.jsonSortKeys") private var jsonSortKeys: Bool = false
+    @AppStorage(UserDefaultsKeys.Editor.formatOnSave) private var formatOnSave: Bool = false
+    @AppStorage(UserDefaultsKeys.Editor.jsonSortKeys) private var jsonSortKeys: Bool = false
 
-    @AppStorage("fileBrowser.showHiddenFiles") private var showDotfiles: Bool = true
+    @AppStorage(UserDefaultsKeys.FileBrowser.showHiddenFiles) private var showDotfiles: Bool = true
 
     var body: some View {
         Form {

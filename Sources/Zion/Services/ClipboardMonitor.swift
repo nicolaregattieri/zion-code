@@ -122,8 +122,8 @@ final class ClipboardMonitor {
         return cacheDir.appendingPathComponent("Zion/clipboard", isDirectory: true)
     }()
 
-    var isCollapsed: Bool = UserDefaults.standard.bool(forKey: "clipboard.collapsed") {
-        didSet { UserDefaults.standard.set(isCollapsed, forKey: "clipboard.collapsed") }
+    var isCollapsed: Bool = UserDefaults.standard.bool(forKey: UserDefaultsKeys.Clipboard.collapsed) {
+        didSet { UserDefaults.standard.set(isCollapsed, forKey: UserDefaultsKeys.Clipboard.collapsed) }
     }
 
     static func purgeStaleFilesOnLaunch() {

@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct MobileAccessSettingsTab: View {
-    @AppStorage("zion.mobileAccess.enabled") private var isEnabled: Bool = false
-    @AppStorage("zion.mobileAccess.keepAwakeDuration") private var keepAwakeDuration: String = "off"
+    @AppStorage(UserDefaultsKeys.MobileAccess.enabled) private var isEnabled: Bool = false
+    @AppStorage(UserDefaultsKeys.MobileAccess.keepAwakeDuration) private var keepAwakeDuration: String = "off"
     @State private var showRegenerateConfirm = false
 
     private var state: RemoteAccessState { RemoteAccessState.shared }

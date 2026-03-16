@@ -53,7 +53,7 @@ struct TerminalTabView: NSViewRepresentable {
 
         // Apply custom terminal options BEFORE theme — applyCustomOptions replaces the
         // Terminal instance with default colors, so theme must come after.
-        let scrollback = UserDefaults.standard.integer(forKey: "terminal.scrollbackSize")
+        let scrollback = UserDefaults.standard.integer(forKey: UserDefaultsKeys.Terminal.scrollbackSize)
         var opts = SwiftTerm.TerminalOptions()
         opts.scrollback = scrollback == Int.max ? Int.max : max(100, scrollback)
         opts.enableSixelReported = true
@@ -161,7 +161,7 @@ struct TerminalTabView: NSViewRepresentable {
     static func syncInstalledTerminalHelpersForCurrentSettings() {
         let defaults = UserDefaults.standard
         Coordinator.installScripts(
-            aiImageDisplay: defaults.bool(forKey: "terminal.aiImageDisplay")
+            aiImageDisplay: defaults.bool(forKey: UserDefaultsKeys.Terminal.aiImageDisplay)
         )
     }
 
@@ -311,7 +311,7 @@ struct TerminalTabView: NSViewRepresentable {
                 env["LANG"] = "en_US.UTF-8"
                 env["PATH"] = "\(Self.zionBinDir):/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:" + (env["PATH"] ?? "")
 
-                let aiImageDisplay = UserDefaults.standard.bool(forKey: "terminal.aiImageDisplay")
+                let aiImageDisplay = UserDefaults.standard.bool(forKey: UserDefaultsKeys.Terminal.aiImageDisplay)
                 if aiImageDisplay {
                     env["ZION_IMAGE_DISPLAY"] = "1"
                 }
@@ -497,7 +497,7 @@ struct TerminalTabView: NSViewRepresentable {
                 }
 
                 guard self.isTerminalFocused else { return event }
-                guard UserDefaults.standard.bool(forKey: "terminal.copyOnSelect") else { return event }
+                guard UserDefaults.standard.bool(forKey: UserDefaultsKeys.Terminal.copyOnSelect) else { return event }
                 guard let view = self.terminalView, view.selectedRange().length > 0 else { return event }
                 view.copy(self)
                 return event
@@ -1064,7 +1064,7 @@ struct TerminalTabView: NSViewRepresentable {
         nonisolated func hostCurrentDirectoryUpdate(source: SwiftTerm.TerminalView, directory: String?) {}
 
         nonisolated func bell(source: SwiftTerm.TerminalView) {
-            let mode = UserDefaults.standard.string(forKey: "terminal.bellMode") ?? "system"
+            let mode = UserDefaults.standard.string(forKey: UserDefaultsKeys.Terminal.bellMode) ?? "system"
             switch mode {
             case "off":
                 break
@@ -1085,7 +1085,7 @@ struct TerminalTabView: NSViewRepresentable {
         }
 
         nonisolated func requestOpenLink(source: SwiftTerm.TerminalView, link: String, params: [String: String]) {
-            guard UserDefaults.standard.bool(forKey: "terminal.openHyperlinks") else { return }
+            guard UserDefaults.standard.bool(forKey: UserDefaultsKeys.Terminal.openHyperlinks) else { return }
 
             let trimmedLink = link
                 .trimmingCharacters(in: .whitespacesAndNewlines)

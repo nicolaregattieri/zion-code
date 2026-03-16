@@ -40,116 +40,116 @@ extension RepositoryViewModel {
         checkGitAvailability()
 
         let defaults = UserDefaults.standard
-        if let themeRaw = defaults.string(forKey: "editor.theme"),
+        if let themeRaw = defaults.string(forKey: UserDefaultsKeys.Editor.theme),
            let theme = EditorTheme(rawValue: themeRaw) {
             selectedTheme = theme
         }
-        if defaults.object(forKey: "editor.fontSize") != nil {
-            editorFontSize = defaults.double(forKey: "editor.fontSize")
+        if defaults.object(forKey: UserDefaultsKeys.Editor.fontSize) != nil {
+            editorFontSize = defaults.double(forKey: UserDefaultsKeys.Editor.fontSize)
         }
-        if let family = defaults.string(forKey: "editor.fontFamily") {
+        if let family = defaults.string(forKey: UserDefaultsKeys.Editor.fontFamily) {
             editorFontFamily = family
         }
-        if defaults.object(forKey: "editor.lineSpacing") != nil {
-            editorLineSpacing = defaults.double(forKey: "editor.lineSpacing")
+        if defaults.object(forKey: UserDefaultsKeys.Editor.lineSpacing) != nil {
+            editorLineSpacing = defaults.double(forKey: UserDefaultsKeys.Editor.lineSpacing)
         }
-        if defaults.object(forKey: "editor.lineWrap") != nil {
-            isLineWrappingEnabled = defaults.bool(forKey: "editor.lineWrap")
+        if defaults.object(forKey: UserDefaultsKeys.Editor.lineWrap) != nil {
+            isLineWrappingEnabled = defaults.bool(forKey: UserDefaultsKeys.Editor.lineWrap)
         }
-        if defaults.object(forKey: "editor.tabSize") != nil {
-            editorTabSize = defaults.integer(forKey: "editor.tabSize")
+        if defaults.object(forKey: UserDefaultsKeys.Editor.tabSize) != nil {
+            editorTabSize = defaults.integer(forKey: UserDefaultsKeys.Editor.tabSize)
         }
-        if defaults.object(forKey: "editor.useTabs") != nil {
-            editorUseTabs = defaults.bool(forKey: "editor.useTabs")
+        if defaults.object(forKey: UserDefaultsKeys.Editor.useTabs) != nil {
+            editorUseTabs = defaults.bool(forKey: UserDefaultsKeys.Editor.useTabs)
         }
-        if defaults.object(forKey: "editor.showRuler") != nil {
-            editorShowRuler = defaults.bool(forKey: "editor.showRuler")
+        if defaults.object(forKey: UserDefaultsKeys.Editor.showRuler) != nil {
+            editorShowRuler = defaults.bool(forKey: UserDefaultsKeys.Editor.showRuler)
         }
-        if defaults.object(forKey: "editor.rulerColumn") != nil {
-            editorRulerColumn = defaults.integer(forKey: "editor.rulerColumn")
+        if defaults.object(forKey: UserDefaultsKeys.Editor.rulerColumn) != nil {
+            editorRulerColumn = defaults.integer(forKey: UserDefaultsKeys.Editor.rulerColumn)
         }
-        if defaults.object(forKey: "editor.autoCloseBrackets") != nil {
-            editorAutoCloseBrackets = defaults.bool(forKey: "editor.autoCloseBrackets")
+        if defaults.object(forKey: UserDefaultsKeys.Editor.autoCloseBrackets) != nil {
+            editorAutoCloseBrackets = defaults.bool(forKey: UserDefaultsKeys.Editor.autoCloseBrackets)
         }
-        if defaults.object(forKey: "editor.autoCloseQuotes") != nil {
-            editorAutoCloseQuotes = defaults.bool(forKey: "editor.autoCloseQuotes")
+        if defaults.object(forKey: UserDefaultsKeys.Editor.autoCloseQuotes) != nil {
+            editorAutoCloseQuotes = defaults.bool(forKey: UserDefaultsKeys.Editor.autoCloseQuotes)
         }
-        if defaults.object(forKey: "editor.letterSpacing") != nil {
-            editorLetterSpacing = defaults.double(forKey: "editor.letterSpacing")
+        if defaults.object(forKey: UserDefaultsKeys.Editor.letterSpacing) != nil {
+            editorLetterSpacing = defaults.double(forKey: UserDefaultsKeys.Editor.letterSpacing)
         }
-        if defaults.object(forKey: "editor.highlightCurrentLine") != nil {
-            editorHighlightCurrentLine = defaults.bool(forKey: "editor.highlightCurrentLine")
+        if defaults.object(forKey: UserDefaultsKeys.Editor.highlightCurrentLine) != nil {
+            editorHighlightCurrentLine = defaults.bool(forKey: UserDefaultsKeys.Editor.highlightCurrentLine)
         }
-        if defaults.object(forKey: "editor.bracketPairHighlight") != nil {
-            editorBracketPairHighlight = defaults.bool(forKey: "editor.bracketPairHighlight")
+        if defaults.object(forKey: UserDefaultsKeys.Editor.bracketPairHighlight) != nil {
+            editorBracketPairHighlight = defaults.bool(forKey: UserDefaultsKeys.Editor.bracketPairHighlight)
         }
-        if defaults.object(forKey: "editor.showIndentGuides") != nil {
-            editorShowIndentGuides = defaults.bool(forKey: "editor.showIndentGuides")
+        if defaults.object(forKey: UserDefaultsKeys.Editor.showIndentGuides) != nil {
+            editorShowIndentGuides = defaults.bool(forKey: UserDefaultsKeys.Editor.showIndentGuides)
         }
-        if defaults.object(forKey: "editor.formatOnSave") != nil {
-            editorFormatOnSave = defaults.bool(forKey: "editor.formatOnSave")
+        if defaults.object(forKey: UserDefaultsKeys.Editor.formatOnSave) != nil {
+            editorFormatOnSave = defaults.bool(forKey: UserDefaultsKeys.Editor.formatOnSave)
         }
-        if defaults.object(forKey: "editor.jsonSortKeys") != nil {
-            editorJsonSortKeys = defaults.bool(forKey: "editor.jsonSortKeys")
+        if defaults.object(forKey: UserDefaultsKeys.Editor.jsonSortKeys) != nil {
+            editorJsonSortKeys = defaults.bool(forKey: UserDefaultsKeys.Editor.jsonSortKeys)
         }
         // Terminal font settings
-        if defaults.object(forKey: "terminal.fontSize") != nil {
-            terminalFontSize = defaults.double(forKey: "terminal.fontSize")
+        if defaults.object(forKey: UserDefaultsKeys.Terminal.fontSize) != nil {
+            terminalFontSize = defaults.double(forKey: UserDefaultsKeys.Terminal.fontSize)
         }
-        if let family = defaults.string(forKey: "terminal.fontFamily") {
+        if let family = defaults.string(forKey: UserDefaultsKeys.Terminal.fontFamily) {
             terminalFontFamily = MonospaceFontResolver.migratedTerminalName(family)
         }
         // Terminal transparency settings
-        if defaults.object(forKey: "terminal.opacity") != nil {
-            terminalOpacity = defaults.double(forKey: "terminal.opacity")
+        if defaults.object(forKey: UserDefaultsKeys.Terminal.opacity) != nil {
+            terminalOpacity = defaults.double(forKey: UserDefaultsKeys.Terminal.opacity)
         }
         // AI provider
-        if let aiRaw = defaults.string(forKey: "zion.aiProvider"),
+        if let aiRaw = defaults.string(forKey: UserDefaultsKeys.AI.provider),
            let provider = AIProvider(rawValue: aiRaw) {
             aiProvider = provider
         }
-        if let modeRaw = defaults.string(forKey: "zion.aiMode"),
+        if let modeRaw = defaults.string(forKey: UserDefaultsKeys.AI.mode),
            let mode = AIMode(rawValue: modeRaw) {
             aiMode = mode
         }
         // Commit message style
-        if let styleRaw = defaults.string(forKey: "zion.commitMessageStyle"),
+        if let styleRaw = defaults.string(forKey: UserDefaultsKeys.AI.commitMessageStyle),
            let style = CommitMessageStyle(rawValue: styleRaw) {
             commitMessageStyle = style
         }
         // ntfy Push Notifications
-        if let topic = defaults.string(forKey: "zion.ntfy.topic") {
+        if let topic = defaults.string(forKey: UserDefaultsKeys.Ntfy.topic) {
             ntfyTopic = topic
         }
-        if let server = defaults.string(forKey: "zion.ntfy.serverURL"), !server.isEmpty {
+        if let server = defaults.string(forKey: UserDefaultsKeys.Ntfy.serverURL), !server.isEmpty {
             ntfyServerURL = server
         }
-        if let events = defaults.stringArray(forKey: "zion.ntfy.enabledEvents") {
+        if let events = defaults.stringArray(forKey: UserDefaultsKeys.Ntfy.enabledEvents) {
             ntfyEnabledEvents = events
         }
-        if defaults.object(forKey: "zion.ntfy.enabled") != nil {
-            ntfyEnabled = defaults.bool(forKey: "zion.ntfy.enabled")
+        if defaults.object(forKey: UserDefaultsKeys.Ntfy.enabled) != nil {
+            ntfyEnabled = defaults.bool(forKey: UserDefaultsKeys.Ntfy.enabled)
         }
-        if defaults.object(forKey: "zion.ntfy.localNotifications") != nil {
-            ntfyLocalNotificationsEnabled = defaults.bool(forKey: "zion.ntfy.localNotifications")
+        if defaults.object(forKey: UserDefaultsKeys.Ntfy.localNotifications) != nil {
+            ntfyLocalNotificationsEnabled = defaults.bool(forKey: UserDefaultsKeys.Ntfy.localNotifications)
         }
-        if defaults.object(forKey: "zion.prPollingInterval") != nil {
-            prPollingIntervalMinutes = Self.sanitizedPRPollingIntervalMinutes(defaults.integer(forKey: "zion.prPollingInterval"))
+        if defaults.object(forKey: UserDefaultsKeys.Notifications.prPollingInterval) != nil {
+            prPollingIntervalMinutes = Self.sanitizedPRPollingIntervalMinutes(defaults.integer(forKey: UserDefaultsKeys.Notifications.prPollingInterval))
         }
         // AI review settings
-        if defaults.object(forKey: "zion.preCommitReview") != nil {
-            preCommitReviewEnabled = defaults.bool(forKey: "zion.preCommitReview")
+        if defaults.object(forKey: UserDefaultsKeys.AI.preCommitReview) != nil {
+            preCommitReviewEnabled = defaults.bool(forKey: UserDefaultsKeys.AI.preCommitReview)
         }
-        if defaults.object(forKey: "zion.aiTransferSupportHints") != nil {
-            aiTransferSupportHintsEnabled = defaults.bool(forKey: "zion.aiTransferSupportHints")
+        if defaults.object(forKey: UserDefaultsKeys.AI.transferSupportHints) != nil {
+            aiTransferSupportHintsEnabled = defaults.bool(forKey: UserDefaultsKeys.AI.transferSupportHints)
         }
         // File browser
-        if defaults.object(forKey: "fileBrowser.showHiddenFiles") != nil {
-            showDotfiles = defaults.bool(forKey: "fileBrowser.showHiddenFiles")
+        if defaults.object(forKey: UserDefaultsKeys.FileBrowser.showHiddenFiles) != nil {
+            showDotfiles = defaults.bool(forKey: UserDefaultsKeys.FileBrowser.showHiddenFiles)
         }
         // Mobile Remote Access
-        if defaults.object(forKey: "zion.mobileAccess.enabled") != nil {
-            isMobileAccessEnabled = defaults.bool(forKey: "zion.mobileAccess.enabled")
+        if defaults.object(forKey: UserDefaultsKeys.MobileAccess.enabled) != nil {
+            isMobileAccessEnabled = defaults.bool(forKey: UserDefaultsKeys.MobileAccess.enabled)
             if isMobileAccessEnabled {
                 enableRemoteAccess()
             }
@@ -190,102 +190,102 @@ extension RepositoryViewModel {
         let defaults = UserDefaults.standard
 
         // MARK: Editor settings
-        if let themeRaw = defaults.string(forKey: "editor.theme"),
+        if let themeRaw = defaults.string(forKey: UserDefaultsKeys.Editor.theme),
            let theme = EditorTheme(rawValue: themeRaw), theme != selectedTheme {
             selectedTheme = theme
         }
-        let fs = defaults.double(forKey: "editor.fontSize")
+        let fs = defaults.double(forKey: UserDefaultsKeys.Editor.fontSize)
         if fs > 0 && fs != editorFontSize { editorFontSize = fs }
-        if let family = defaults.string(forKey: "editor.fontFamily"), family != editorFontFamily {
+        if let family = defaults.string(forKey: UserDefaultsKeys.Editor.fontFamily), family != editorFontFamily {
             editorFontFamily = family
         }
-        if defaults.object(forKey: "editor.lineSpacing") != nil {
-            let ls = defaults.double(forKey: "editor.lineSpacing")
+        if defaults.object(forKey: UserDefaultsKeys.Editor.lineSpacing) != nil {
+            let ls = defaults.double(forKey: UserDefaultsKeys.Editor.lineSpacing)
             if ls != editorLineSpacing { editorLineSpacing = ls }
         }
 
-        if defaults.object(forKey: "editor.lineWrap") != nil {
-            let lw = defaults.bool(forKey: "editor.lineWrap")
+        if defaults.object(forKey: UserDefaultsKeys.Editor.lineWrap) != nil {
+            let lw = defaults.bool(forKey: UserDefaultsKeys.Editor.lineWrap)
             if lw != isLineWrappingEnabled { isLineWrappingEnabled = lw }
         }
 
-        let ts = defaults.integer(forKey: "editor.tabSize")
+        let ts = defaults.integer(forKey: UserDefaultsKeys.Editor.tabSize)
         if ts > 0 && ts != editorTabSize { editorTabSize = ts }
-        let ut = defaults.bool(forKey: "editor.useTabs")
+        let ut = defaults.bool(forKey: UserDefaultsKeys.Editor.useTabs)
         if ut != editorUseTabs { editorUseTabs = ut }
-        let sr = defaults.bool(forKey: "editor.showRuler")
+        let sr = defaults.bool(forKey: UserDefaultsKeys.Editor.showRuler)
         if sr != editorShowRuler { editorShowRuler = sr }
-        let rc = defaults.integer(forKey: "editor.rulerColumn")
+        let rc = defaults.integer(forKey: UserDefaultsKeys.Editor.rulerColumn)
         if rc > 0 && rc != editorRulerColumn { editorRulerColumn = rc }
-        let acb = defaults.bool(forKey: "editor.autoCloseBrackets")
+        let acb = defaults.bool(forKey: UserDefaultsKeys.Editor.autoCloseBrackets)
         if acb != editorAutoCloseBrackets { editorAutoCloseBrackets = acb }
-        let acq = defaults.bool(forKey: "editor.autoCloseQuotes")
+        let acq = defaults.bool(forKey: UserDefaultsKeys.Editor.autoCloseQuotes)
         if acq != editorAutoCloseQuotes { editorAutoCloseQuotes = acq }
-        let els = defaults.double(forKey: "editor.letterSpacing")
+        let els = defaults.double(forKey: UserDefaultsKeys.Editor.letterSpacing)
         if els != editorLetterSpacing { editorLetterSpacing = els }
-        let hcl = defaults.bool(forKey: "editor.highlightCurrentLine")
+        let hcl = defaults.bool(forKey: UserDefaultsKeys.Editor.highlightCurrentLine)
         if hcl != editorHighlightCurrentLine { editorHighlightCurrentLine = hcl }
-        let bph = defaults.bool(forKey: "editor.bracketPairHighlight")
+        let bph = defaults.bool(forKey: UserDefaultsKeys.Editor.bracketPairHighlight)
         if bph != editorBracketPairHighlight { editorBracketPairHighlight = bph }
-        let sig = defaults.bool(forKey: "editor.showIndentGuides")
+        let sig = defaults.bool(forKey: UserDefaultsKeys.Editor.showIndentGuides)
         if sig != editorShowIndentGuides { editorShowIndentGuides = sig }
-        let fos = defaults.bool(forKey: "editor.formatOnSave")
+        let fos = defaults.bool(forKey: UserDefaultsKeys.Editor.formatOnSave)
         if fos != editorFormatOnSave { editorFormatOnSave = fos }
-        let jsk = defaults.bool(forKey: "editor.jsonSortKeys")
+        let jsk = defaults.bool(forKey: UserDefaultsKeys.Editor.jsonSortKeys)
         if jsk != editorJsonSortKeys { editorJsonSortKeys = jsk }
 
         // MARK: Terminal settings
-        let tfs = defaults.double(forKey: "terminal.fontSize")
+        let tfs = defaults.double(forKey: UserDefaultsKeys.Terminal.fontSize)
         if tfs > 0 && tfs != terminalFontSize { terminalFontSize = tfs }
-        if let tFamily = defaults.string(forKey: "terminal.fontFamily") {
+        if let tFamily = defaults.string(forKey: UserDefaultsKeys.Terminal.fontFamily) {
             let migrated = MonospaceFontResolver.migratedTerminalName(tFamily)
             if migrated != terminalFontFamily { terminalFontFamily = migrated }
         }
-        if defaults.object(forKey: "terminal.opacity") != nil {
-            let top = defaults.double(forKey: "terminal.opacity")
+        if defaults.object(forKey: UserDefaultsKeys.Terminal.opacity) != nil {
+            let top = defaults.double(forKey: UserDefaultsKeys.Terminal.opacity)
             if top != terminalOpacity { terminalOpacity = top }
         }
 
         // MARK: AI settings
-        if let aiRaw = defaults.string(forKey: "zion.aiProvider"),
+        if let aiRaw = defaults.string(forKey: UserDefaultsKeys.AI.provider),
            let provider = AIProvider(rawValue: aiRaw), provider != aiProvider {
             aiProvider = provider
         }
-        if let modeRaw = defaults.string(forKey: "zion.aiMode"),
+        if let modeRaw = defaults.string(forKey: UserDefaultsKeys.AI.mode),
            let mode = AIMode(rawValue: modeRaw), mode != aiMode {
             aiMode = mode
         }
-        if let styleRaw = defaults.string(forKey: "zion.commitMessageStyle"),
+        if let styleRaw = defaults.string(forKey: UserDefaultsKeys.AI.commitMessageStyle),
            let style = CommitMessageStyle(rawValue: styleRaw), style != commitMessageStyle {
             commitMessageStyle = style
         }
-        let pcr = defaults.bool(forKey: "zion.preCommitReview")
+        let pcr = defaults.bool(forKey: UserDefaultsKeys.AI.preCommitReview)
         if pcr != preCommitReviewEnabled { preCommitReviewEnabled = pcr }
-        if defaults.object(forKey: "zion.aiTransferSupportHints") != nil {
-            let ath = defaults.bool(forKey: "zion.aiTransferSupportHints")
+        if defaults.object(forKey: UserDefaultsKeys.AI.transferSupportHints) != nil {
+            let ath = defaults.bool(forKey: UserDefaultsKeys.AI.transferSupportHints)
             if ath != aiTransferSupportHintsEnabled { aiTransferSupportHintsEnabled = ath }
         }
 
         // MARK: ntfy settings
-        if let topic = defaults.string(forKey: "zion.ntfy.topic"), topic != ntfyTopic {
+        if let topic = defaults.string(forKey: UserDefaultsKeys.Ntfy.topic), topic != ntfyTopic {
             ntfyTopic = topic
         }
-        if let server = defaults.string(forKey: "zion.ntfy.serverURL"), !server.isEmpty, server != ntfyServerURL {
+        if let server = defaults.string(forKey: UserDefaultsKeys.Ntfy.serverURL), !server.isEmpty, server != ntfyServerURL {
             ntfyServerURL = server
         }
-        if let events = defaults.stringArray(forKey: "zion.ntfy.enabledEvents"), events != ntfyEnabledEvents {
+        if let events = defaults.stringArray(forKey: UserDefaultsKeys.Ntfy.enabledEvents), events != ntfyEnabledEvents {
             ntfyEnabledEvents = events
         }
-        if defaults.object(forKey: "zion.ntfy.enabled") != nil {
-            let enabled = defaults.bool(forKey: "zion.ntfy.enabled")
+        if defaults.object(forKey: UserDefaultsKeys.Ntfy.enabled) != nil {
+            let enabled = defaults.bool(forKey: UserDefaultsKeys.Ntfy.enabled)
             if enabled != ntfyEnabled { ntfyEnabled = enabled }
         }
-        if defaults.object(forKey: "zion.ntfy.localNotifications") != nil {
-            let nln = defaults.bool(forKey: "zion.ntfy.localNotifications")
+        if defaults.object(forKey: UserDefaultsKeys.Ntfy.localNotifications) != nil {
+            let nln = defaults.bool(forKey: UserDefaultsKeys.Ntfy.localNotifications)
             if nln != ntfyLocalNotificationsEnabled { ntfyLocalNotificationsEnabled = nln }
         }
-        if defaults.object(forKey: "zion.prPollingInterval") != nil {
-            let interval = Self.sanitizedPRPollingIntervalMinutes(defaults.integer(forKey: "zion.prPollingInterval"))
+        if defaults.object(forKey: UserDefaultsKeys.Notifications.prPollingInterval) != nil {
+            let interval = Self.sanitizedPRPollingIntervalMinutes(defaults.integer(forKey: UserDefaultsKeys.Notifications.prPollingInterval))
             if interval != prPollingIntervalMinutes {
                 prPollingIntervalMinutes = interval
                 if repositoryURL != nil {
@@ -295,14 +295,14 @@ extension RepositoryViewModel {
         }
 
         // MARK: File browser
-        if defaults.object(forKey: "fileBrowser.showHiddenFiles") != nil {
-            let sd = defaults.bool(forKey: "fileBrowser.showHiddenFiles")
+        if defaults.object(forKey: UserDefaultsKeys.FileBrowser.showHiddenFiles) != nil {
+            let sd = defaults.bool(forKey: UserDefaultsKeys.FileBrowser.showHiddenFiles)
             if sd != showDotfiles { showDotfiles = sd }
         }
 
         // MARK: Mobile Remote Access
-        if defaults.object(forKey: "zion.mobileAccess.enabled") != nil {
-            let mae = defaults.bool(forKey: "zion.mobileAccess.enabled")
+        if defaults.object(forKey: UserDefaultsKeys.MobileAccess.enabled) != nil {
+            let mae = defaults.bool(forKey: UserDefaultsKeys.MobileAccess.enabled)
             if mae != isMobileAccessEnabled {
                 isMobileAccessEnabled = mae
                 if mae {
@@ -533,7 +533,7 @@ extension RepositoryViewModel {
 
     func avatarImage(for email: String) -> NSImage? {
         guard !email.isEmpty else { return nil }
-        guard UserDefaults.standard.bool(forKey: "zion.graphAuthorAvatarsEnabled") else { return nil }
+        guard UserDefaults.standard.bool(forKey: UserDefaultsKeys.General.graphAuthorAvatarsEnabled) else { return nil }
         let key = email.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         if let cached = avatarCache[key] { return cached }
         // Start download if not already in-flight
