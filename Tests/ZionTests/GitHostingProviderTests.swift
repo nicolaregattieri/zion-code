@@ -290,18 +290,18 @@ final class GitHostingProviderTests: XCTestCase {
         let key = HostingCredentialStore.CredentialKey.bitbucketAppPassword
         let defaults = UserDefaults.standard
         let originalSecret = HostingCredentialStore.loadSecret(for: key)
-        let originalUsername = defaults.string(forKey: "zion.bitbucket.username")
+        let originalUsername = defaults.string(forKey: UserDefaultsKeys.GitHosting.bitbucketUsername)
         defer {
             if let originalSecret { HostingCredentialStore.saveSecret(originalSecret, for: key) }
             else { HostingCredentialStore.deleteSecret(for: key) }
             if let originalUsername {
-                defaults.set(originalUsername, forKey: "zion.bitbucket.username")
+                defaults.set(originalUsername, forKey: UserDefaultsKeys.GitHosting.bitbucketUsername)
             } else {
-                defaults.removeObject(forKey: "zion.bitbucket.username")
+                defaults.removeObject(forKey: UserDefaultsKeys.GitHosting.bitbucketUsername)
             }
         }
 
-        defaults.set("bitbucket-user", forKey: "zion.bitbucket.username")
+        defaults.set("bitbucket-user", forKey: UserDefaultsKeys.GitHosting.bitbucketUsername)
         HostingCredentialStore.saveSecret("bitbucket-on-demand-pass", for: key)
         let client = BitbucketClient()
 

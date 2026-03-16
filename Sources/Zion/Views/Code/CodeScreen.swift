@@ -24,7 +24,7 @@ struct CodeScreen: View {
     var onOpenFolder: (() -> Void)? = nil
     var isZenMode: Bool = false
     @Environment(\.zionModeEnabled) private var zionModeEnabled
-    @AppStorage("editor.showBreadcrumb") var showBreadcrumbPath: Bool = true
+    @AppStorage(UserDefaultsKeys.Editor.showBreadcrumb) var showBreadcrumbPath: Bool = true
     @State var isQuickOpenVisible: Bool = false
     @State var isFileBrowserVisible: Bool = true
     @State var fileBrowserRatio: CGFloat = 0.25
@@ -70,7 +70,7 @@ struct CodeScreen: View {
     @State var isFindInFilesSearching: Bool = false
     @State var findInFilesScopePath: String? = nil
 
-    @AppStorage("terminal.opacity") var terminalOpacity: Double = 0.92
+    @AppStorage(UserDefaultsKeys.Terminal.opacity) var terminalOpacity: Double = 0.92
 
     /// Ghostty-style terminal transparency: automatically enabled in Zen Mode
     var isTerminalTransparent: Bool {

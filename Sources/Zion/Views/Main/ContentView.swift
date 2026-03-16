@@ -36,15 +36,15 @@ struct ContentView: View {
     @State private var isConflictResolverPromptVisible: Bool = false
     @State private var hasShownConflictResolverPromptForCurrentConflictState: Bool = false
 
-    @AppStorage("zion.confirmationMode") var confirmationModeRaw: String = ConfirmationMode.destructiveOnly.rawValue
-    @AppStorage("zion.uiLanguage") private var uiLanguageRaw: String = AppLanguage.system.rawValue
-    @AppStorage("zion.appearance") private var appearanceRaw: String = AppAppearance.system.rawValue
-    @AppStorage("zion.hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
-    @AppStorage("zion.hasCompletedFeatureTour") private var hasCompletedFeatureTour: Bool = false
-    @AppStorage("zion.hasOpenedRepositoryOnce") private var hasOpenedRepositoryOnce: Bool = false
-    @AppStorage("zion.zenModeEnabled") private var zenModeEnabled: Bool = false
-    @AppStorage("zion.zionModeEnabled") var zionModeEnabled: Bool = false
-    @AppStorage("zion.preZionModeTheme") private var preZionModeTheme: String = ""
+    @AppStorage(UserDefaultsKeys.General.confirmationMode) var confirmationModeRaw: String = ConfirmationMode.destructiveOnly.rawValue
+    @AppStorage(UserDefaultsKeys.General.uiLanguage) private var uiLanguageRaw: String = AppLanguage.system.rawValue
+    @AppStorage(UserDefaultsKeys.General.appearance) private var appearanceRaw: String = AppAppearance.system.rawValue
+    @AppStorage(UserDefaultsKeys.General.hasCompletedOnboarding) private var hasCompletedOnboarding: Bool = false
+    @AppStorage(UserDefaultsKeys.General.hasCompletedFeatureTour) private var hasCompletedFeatureTour: Bool = false
+    @AppStorage(UserDefaultsKeys.General.hasOpenedRepositoryOnce) private var hasOpenedRepositoryOnce: Bool = false
+    @AppStorage(UserDefaultsKeys.General.zenModeEnabled) private var zenModeEnabled: Bool = false
+    @AppStorage(UserDefaultsKeys.General.zionModeEnabled) var zionModeEnabled: Bool = false
+    @AppStorage(UserDefaultsKeys.General.preZionModeTheme) private var preZionModeTheme: String = ""
 
     private var uiLanguage: AppLanguage { AppLanguage(rawValue: uiLanguageRaw) ?? .system }
     private var appearance: AppAppearance { AppAppearance(rawValue: appearanceRaw) ?? .system }
@@ -128,7 +128,7 @@ struct ContentView: View {
             model.restoreEditorSettings()
             if !hasOpenedRepositoryOnce,
                FeatureTourLaunchPolicy.inferredExistingRepositoryHistory(
-                from: UserDefaults.standard.data(forKey: "zion.recentRepositories")
+                from: UserDefaults.standard.data(forKey: UserDefaultsKeys.General.recentRepositories)
                ) {
                 hasOpenedRepositoryOnce = true
             }
@@ -274,21 +274,21 @@ struct ContentView: View {
         }
         .onChange(of: zionModeEnabled) { oldValue, enabled in
             if enabled {
-                preZionModeTheme = UserDefaults.standard.string(forKey: "editor.theme") ?? EditorTheme.dracula.rawValue
-                UserDefaults.standard.set(EditorTheme.synthwave.rawValue, forKey: "editor.theme")
+                preZionModeTheme = UserDefaults.standard.string(forKey: UserDefaultsKeys.Editor.theme) ?? EditorTheme.dracula.rawValue
+                UserDefaults.standard.set(EditorTheme.synthwave.rawValue, forKey: UserDefaultsKeys.Editor.theme)
             } else if oldValue {
                 // Only restore if explicitly toggled off (not auto-disabled by theme change)
-                let currentTheme = UserDefaults.standard.string(forKey: "editor.theme") ?? ""
+                let currentTheme = UserDefaults.standard.string(forKey: UserDefaultsKeys.Editor.theme) ?? ""
                 if currentTheme == EditorTheme.synthwave.rawValue {
                     let restore = preZionModeTheme.isEmpty ? EditorTheme.dracula.rawValue : preZionModeTheme
-                    UserDefaults.standard.set(restore, forKey: "editor.theme")
+                    UserDefaults.standard.set(restore, forKey: UserDefaultsKeys.Editor.theme)
                 }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
             // Auto-disable Zion Mode if user manually picks a different theme
             if zionModeEnabled {
-                let currentTheme = UserDefaults.standard.string(forKey: "editor.theme") ?? ""
+                let currentTheme = UserDefaults.standard.string(forKey: UserDefaultsKeys.Editor.theme) ?? ""
                 if currentTheme != EditorTheme.synthwave.rawValue {
                     zionModeEnabled = false
                 }

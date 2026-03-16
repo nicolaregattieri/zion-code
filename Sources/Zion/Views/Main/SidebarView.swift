@@ -8,7 +8,7 @@ struct SidebarView: View {
     @Binding var uiLanguageRaw: String
     @Binding var appearanceRaw: String
 
-    @AppStorage("zion.sidebar.recentsExpanded") private var isRecentsExpanded: Bool = true
+    @AppStorage(UserDefaultsKeys.Sidebar.recentsExpanded) private var isRecentsExpanded: Bool = true
     @State private var branchSearchQuery: String = ""
     @State private var isNewWorktreeExpanded: Bool = false
     @State private var hoveredSection: AppSection?

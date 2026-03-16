@@ -75,18 +75,18 @@ final class SpeechRecognitionService {
     var selectedEngine: Engine {
         get {
             SpeechEngineSupport.effectiveEngine(
-                storedValue: UserDefaults.standard.string(forKey: "speech.engine")
+                storedValue: UserDefaults.standard.string(forKey: UserDefaultsKeys.Speech.engine)
             )
         }
         set {
             let effective = SpeechEngineSupport.effectiveEngine(storedValue: newValue.rawValue)
-            UserDefaults.standard.set(effective.rawValue, forKey: "speech.engine")
+            UserDefaults.standard.set(effective.rawValue, forKey: UserDefaultsKeys.Speech.engine)
         }
     }
 
     var selectedLocale: Locale {
-        get { Locale(identifier: UserDefaults.standard.string(forKey: "speech.locale") ?? Locale.current.identifier) }
-        set { UserDefaults.standard.set(newValue.identifier, forKey: "speech.locale") }
+        get { Locale(identifier: UserDefaults.standard.string(forKey: UserDefaultsKeys.Speech.locale) ?? Locale.current.identifier) }
+        set { UserDefaults.standard.set(newValue.identifier, forKey: UserDefaultsKeys.Speech.locale) }
     }
 
     /// Whether an OpenAI key is configured (determines if Whisper option shows).

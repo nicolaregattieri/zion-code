@@ -23,12 +23,12 @@ struct NotificationSettingsLayoutState: Equatable {
 }
 
 struct NotificationSettingsTab: View {
-    @AppStorage("zion.ntfy.enabled") private var ntfyEnabled: Bool = false
-    @AppStorage("zion.ntfy.topic") private var ntfyTopic: String = ""
-    @AppStorage("zion.ntfy.serverURL") private var ntfyServerURL: String = "https://ntfy.sh"
-    @AppStorage("zion.ntfy.localNotifications") private var localNotifications: Bool = false
-    @AppStorage("zion.prPollingInterval") private var prPollingInterval: Int = 5
-    @AppStorage("zion.autoReviewAssignedPRs") private var autoReviewPRs: Bool = false
+    @AppStorage(UserDefaultsKeys.Ntfy.enabled) private var ntfyEnabled: Bool = false
+    @AppStorage(UserDefaultsKeys.Ntfy.topic) private var ntfyTopic: String = ""
+    @AppStorage(UserDefaultsKeys.Ntfy.serverURL) private var ntfyServerURL: String = "https://ntfy.sh"
+    @AppStorage(UserDefaultsKeys.Ntfy.localNotifications) private var localNotifications: Bool = false
+    @AppStorage(UserDefaultsKeys.Notifications.prPollingInterval) private var prPollingInterval: Int = 5
+    @AppStorage(UserDefaultsKeys.Notifications.autoReviewAssignedPRs) private var autoReviewPRs: Bool = false
 
     @State private var topicInput: String = ""
     @State private var serverURLInput: String = ""
@@ -288,17 +288,17 @@ struct NotificationSettingsTab: View {
     private func ntfyEventBinding(for event: NtfyEvent) -> Binding<Bool> {
         Binding<Bool>(
             get: {
-                let events = UserDefaults.standard.stringArray(forKey: "zion.ntfy.enabledEvents") ?? NtfyEvent.defaultEnabledEvents
+                let events = UserDefaults.standard.stringArray(forKey: UserDefaultsKeys.Ntfy.enabledEvents) ?? NtfyEvent.defaultEnabledEvents
                 return events.contains(event.rawValue)
             },
             set: { enabled in
-                var events = UserDefaults.standard.stringArray(forKey: "zion.ntfy.enabledEvents") ?? NtfyEvent.defaultEnabledEvents
+                var events = UserDefaults.standard.stringArray(forKey: UserDefaultsKeys.Ntfy.enabledEvents) ?? NtfyEvent.defaultEnabledEvents
                 if enabled {
                     if !events.contains(event.rawValue) { events.append(event.rawValue) }
                 } else {
                     events.removeAll { $0 == event.rawValue }
                 }
-                UserDefaults.standard.set(events, forKey: "zion.ntfy.enabledEvents")
+                UserDefaults.standard.set(events, forKey: UserDefaultsKeys.Ntfy.enabledEvents)
             }
         )
     }

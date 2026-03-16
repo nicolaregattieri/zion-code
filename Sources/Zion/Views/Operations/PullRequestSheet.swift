@@ -304,7 +304,7 @@ struct PullRequestSheet: View {
                 await model.gitlabClient.setToken(token)
             case .bitbucket:
                 // For Bitbucket, the inline field stores app password; username comes from settings
-                let username = UserDefaults.standard.string(forKey: "zion.bitbucket.username") ?? ""
+                let username = UserDefaults.standard.string(forKey: UserDefaultsKeys.GitHosting.bitbucketUsername) ?? ""
                 HostingCredentialStore.saveSecret(token, for: .bitbucketAppPassword)
                 await model.bitbucketClient.setCredentials(username: username, appPassword: token)
             case .azureDevOps:

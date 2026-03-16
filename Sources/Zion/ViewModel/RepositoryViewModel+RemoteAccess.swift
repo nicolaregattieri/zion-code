@@ -861,7 +861,7 @@ extension RepositoryViewModel {
     // MARK: - Sleep Assertion
 
     func acquireSleepAssertionIfNeeded() {
-        let raw = UserDefaults.standard.string(forKey: "zion.mobileAccess.keepAwakeDuration") ?? "off"
+        let raw = UserDefaults.standard.string(forKey: UserDefaultsKeys.MobileAccess.keepAwakeDuration) ?? "off"
         let duration = KeepAwakeDuration(rawValue: raw) ?? .off
 
         guard duration != .off else {
@@ -892,7 +892,7 @@ extension RepositoryViewModel {
                 try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
                 guard !Task.isCancelled else { return }
                 releaseSleepAssertion()
-                UserDefaults.standard.set(KeepAwakeDuration.off.rawValue, forKey: "zion.mobileAccess.keepAwakeDuration")
+                UserDefaults.standard.set(KeepAwakeDuration.off.rawValue, forKey: UserDefaultsKeys.MobileAccess.keepAwakeDuration)
             }
         } else {
             keepAwakeExpiresAt = nil

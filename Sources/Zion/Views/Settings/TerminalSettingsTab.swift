@@ -2,13 +2,13 @@ import Speech
 import SwiftUI
 
 struct TerminalSettingsTab: View {
-    @AppStorage("terminal.scrollbackSize") private var scrollbackSize: Int = 5000
-    @AppStorage("terminal.bellMode") private var bellMode: String = "system"
-    @AppStorage("terminal.openHyperlinks") private var openHyperlinks: Bool = true
-    @AppStorage("terminal.copyOnSelect") private var copyOnSelect: Bool = false
-    @AppStorage("terminal.aiImageDisplay") private var aiImageDisplay: Bool = false
-    @AppStorage("speech.engine") private var speechEngine: String = "apple"
-    @AppStorage("speech.locale") private var speechLocale: String = Locale.current.identifier
+    @AppStorage(UserDefaultsKeys.Terminal.scrollbackSize) private var scrollbackSize: Int = 5000
+    @AppStorage(UserDefaultsKeys.Terminal.bellMode) private var bellMode: String = "system"
+    @AppStorage(UserDefaultsKeys.Terminal.openHyperlinks) private var openHyperlinks: Bool = true
+    @AppStorage(UserDefaultsKeys.Terminal.copyOnSelect) private var copyOnSelect: Bool = false
+    @AppStorage(UserDefaultsKeys.Terminal.aiImageDisplay) private var aiImageDisplay: Bool = false
+    @AppStorage(UserDefaultsKeys.Speech.engine) private var speechEngine: String = "apple"
+    @AppStorage(UserDefaultsKeys.Speech.locale) private var speechLocale: String = Locale.current.identifier
 
     private var isWhisperAvailable: Bool {
         SpeechEngineSupport.isWhisperAvailable()

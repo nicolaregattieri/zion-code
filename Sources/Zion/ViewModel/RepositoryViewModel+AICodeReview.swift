@@ -292,7 +292,7 @@ extension RepositoryViewModel {
             }
 
             // Auto-review if enabled
-            let autoReview = UserDefaults.standard.bool(forKey: "zion.autoReviewAssignedPRs")
+            let autoReview = UserDefaults.standard.bool(forKey: UserDefaultsKeys.Notifications.autoReviewAssignedPRs)
             if autoReview && isAIConfigured {
                 reviewAllPRs()
             }

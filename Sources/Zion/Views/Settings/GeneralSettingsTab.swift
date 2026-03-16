@@ -1,13 +1,13 @@
 import SwiftUI
 
 struct GeneralSettingsTab: View {
-    @AppStorage("zion.uiLanguage") private var uiLanguageRaw: String = AppLanguage.system.rawValue
-    @AppStorage("zion.appearance") private var appearanceRaw: String = AppAppearance.system.rawValue
-    @AppStorage("zion.confirmationMode") private var confirmationModeRaw: String = ConfirmationMode.destructiveOnly.rawValue
-    @AppStorage("zion.zionModeEnabled") private var zionModeEnabled: Bool = false
-    @AppStorage("zion.graphAuthorAvatarsEnabled") private var graphAuthorAvatarsEnabled: Bool = false
-    @AppStorage("zion.gitlab.host") private var gitlabHost: String = ""
-    @AppStorage("zion.bitbucket.username") private var bitbucketUsername: String = ""
+    @AppStorage(UserDefaultsKeys.General.uiLanguage) private var uiLanguageRaw: String = AppLanguage.system.rawValue
+    @AppStorage(UserDefaultsKeys.General.appearance) private var appearanceRaw: String = AppAppearance.system.rawValue
+    @AppStorage(UserDefaultsKeys.General.confirmationMode) private var confirmationModeRaw: String = ConfirmationMode.destructiveOnly.rawValue
+    @AppStorage(UserDefaultsKeys.General.zionModeEnabled) private var zionModeEnabled: Bool = false
+    @AppStorage(UserDefaultsKeys.General.graphAuthorAvatarsEnabled) private var graphAuthorAvatarsEnabled: Bool = false
+    @AppStorage(UserDefaultsKeys.GitHosting.gitlabHost) private var gitlabHost: String = ""
+    @AppStorage(UserDefaultsKeys.GitHosting.bitbucketUsername) private var bitbucketUsername: String = ""
 
     // Secrets — backed by Keychain, NOT UserDefaults
     @State private var githubPAT: String = ""

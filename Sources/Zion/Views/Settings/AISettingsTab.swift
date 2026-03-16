@@ -1,14 +1,14 @@
 import SwiftUI
 
 struct AISettingsTab: View {
-    @AppStorage("zion.aiProvider") private var aiProviderRaw: String = AIProvider.none.rawValue
-    @AppStorage("zion.aiMode") private var aiModeRaw: String = AIMode.efficient.rawValue
-    @AppStorage("zion.commitMessageStyle") private var commitStyleRaw: String = CommitMessageStyle.compact.rawValue
-    @AppStorage("zion.preCommitReview") private var preCommitReviewEnabled: Bool = false
-    @AppStorage("zion.aiTransferSupportHints") private var aiTransferSupportHints: Bool = true
-    @AppStorage("zion.repoMemory.activeRepoName") private var repoMemoryRepoName: String = ""
-    @AppStorage("zion.repoMemory.lastRefresh") private var repoMemoryLastRefresh: Double = 0
-    @AppStorage("zion.repoMemory.ready") private var repoMemoryReady: Bool = false
+    @AppStorage(UserDefaultsKeys.AI.provider) private var aiProviderRaw: String = AIProvider.none.rawValue
+    @AppStorage(UserDefaultsKeys.AI.mode) private var aiModeRaw: String = AIMode.efficient.rawValue
+    @AppStorage(UserDefaultsKeys.AI.commitMessageStyle) private var commitStyleRaw: String = CommitMessageStyle.compact.rawValue
+    @AppStorage(UserDefaultsKeys.AI.preCommitReview) private var preCommitReviewEnabled: Bool = false
+    @AppStorage(UserDefaultsKeys.AI.transferSupportHints) private var aiTransferSupportHints: Bool = true
+    @AppStorage(UserDefaultsKeys.RepoMemory.activeRepoName) private var repoMemoryRepoName: String = ""
+    @AppStorage(UserDefaultsKeys.RepoMemory.lastRefresh) private var repoMemoryLastRefresh: Double = 0
+    @AppStorage(UserDefaultsKeys.RepoMemory.ready) private var repoMemoryReady: Bool = false
 
     @State private var aiKeyInput: String = ""
     @State private var editingProvider: AIProvider?
