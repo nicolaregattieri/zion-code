@@ -106,6 +106,11 @@ extension CodeScreen {
                                 }
                         }
                     }
+                    .dropDestination(for: URL.self) { urls, _ in
+                        guard let repoURL = model.repositoryURL else { return false }
+                        model.handleFileDrop(urls, into: repoURL)
+                        return true
+                    }
                 }
                 .onChange(of: fileBrowserScrollRequestID) { _, _ in
                     guard let target = fileBrowserScrollTargetID else { return }

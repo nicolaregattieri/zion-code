@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import UniformTypeIdentifiers
 
 struct ClipboardDrawer: View {
     var model: RepositoryViewModel
@@ -204,7 +205,21 @@ struct ClipboardDrawer: View {
                 model.sendTextToActiveTerminal(isFile ? TerminalShellEscaping.quotePath(item.text) : item.text)
             }
         }
-        .draggable(item.text)
+        .onDrag {
+            let provider = NSItemProvider(object: item.text as NSString)
+            let isFile = item.isImage || item.category == .path
+            if isFile {
+                let fileURL = URL(fileURLWithPath: item.text)
+                provider.registerFileRepresentation(
+                    forTypeIdentifier: UTType.fileURL.identifier,
+                    visibility: .all
+                ) { completion in
+                    completion(fileURL, false, nil)
+                    return nil
+                }
+            }
+            return provider
+        }
         .onHover { h in hoveredItemID = h ? item.id : nil }
         .contextMenu {
             if hasText {

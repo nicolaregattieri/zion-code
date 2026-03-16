@@ -1320,6 +1320,130 @@ extension RepositoryViewModel {
         refreshFileTree()
     }
 
+    // MARK: - Drag & Drop
+
+    /// Handle a file URL drop onto a folder. Moves internal files, copies external files.
+    func handleFileDrop(_ urls: [URL], into destinationFolder: URL) {
+        guard let repoURL = repositoryURL else { return }
+        let repoPath = repoURL.path
+
+        // Separate internal (within repo) from external URLs
+        var internalURLs: [URL] = []
+        var externalURLs: [URL] = []
+        for url in urls {
+            if url.path.hasPrefix(repoPath) {
+                internalURLs.append(url)
+            } else {
+                externalURLs.append(url)
+            }
+        }
+
+        // If a single internal URL is part of the current selection, move all selected items
+        if internalURLs.count == 1,
+           let singleURL = internalURLs.first,
+           selectedFileIDs.contains(singleURL.path),
+           selectedFileIDs.count > 1 {
+            internalURLs = selectedFileItems().map(\.url)
+        }
+
+        // Move internal files
+        for url in internalURLs {
+            moveFileItem(at: url, into: destinationFolder)
+        }
+
+        // Copy external files
+        for url in externalURLs {
+            copyExternalFile(at: url, into: destinationFolder)
+        }
+
+        if !internalURLs.isEmpty || !externalURLs.isEmpty {
+            refreshFileTree()
+        }
+    }
+
+    /// Move a single file/folder into a destination folder, with validation and editor state migration.
+    private func moveFileItem(at sourceURL: URL, into destinationFolder: URL) {
+        let destPath = destinationFolder.path
+        let sourcePath = sourceURL.path
+
+        // No-op if already in that folder
+        if sourceURL.deletingLastPathComponent().path == destPath { return }
+
+        // Cannot move a folder into itself or a descendant
+        if destPath.hasPrefix(sourcePath + "/") || destPath == sourcePath { return }
+
+        var targetURL = destinationFolder.appendingPathComponent(sourceURL.lastPathComponent)
+
+        // Handle name conflicts
+        if FileManager.default.fileExists(atPath: targetURL.path) {
+            targetURL = uniqueDestinationURL(for: targetURL)
+        }
+
+        do {
+            try FileManager.default.moveItem(at: sourceURL, to: targetURL)
+            migrateEditorState(from: sourceURL, to: targetURL)
+        } catch {
+            handleError(error)
+        }
+    }
+
+    /// Copy an external file into a destination folder.
+    private func copyExternalFile(at sourceURL: URL, into destinationFolder: URL) {
+        var targetURL = destinationFolder.appendingPathComponent(sourceURL.lastPathComponent)
+
+        if FileManager.default.fileExists(atPath: targetURL.path) {
+            targetURL = uniqueDestinationURL(for: targetURL)
+        }
+
+        do {
+            try FileManager.default.copyItem(at: sourceURL, to: targetURL)
+        } catch {
+            handleError(error)
+        }
+    }
+
+    /// Migrate editor state (opened files, drafts, unsaved state) after a file move.
+    private func migrateEditorState(from oldURL: URL, to newURL: URL) {
+        let oldPath = oldURL.path
+        if let idx = openedFiles.firstIndex(where: { $0.id == oldPath }) {
+            let newItem = FileItem(url: newURL, isDirectory: false, children: nil)
+            openedFiles[idx] = newItem
+            if activeFileID == oldPath {
+                activeFileID = newItem.id
+                selectedCodeFile = newItem
+            }
+            if let content = originalFileContents.removeValue(forKey: oldPath) {
+                originalFileContents[newItem.id] = content
+            }
+            if let draft = draftFileContents.removeValue(forKey: oldPath) {
+                draftFileContents[newItem.id] = draft
+            }
+            if unsavedFiles.remove(oldPath) != nil {
+                markFileUnsavedState(fileID: newItem.id)
+            }
+            if missingOpenFileIDs.remove(oldPath) != nil {
+                missingOpenFileIDs.insert(newItem.id)
+            }
+        }
+    }
+
+    /// Generate a unique destination URL by appending a number suffix, matching `duplicateFileItems` pattern.
+    private func uniqueDestinationURL(for url: URL) -> URL {
+        let parentURL = url.deletingLastPathComponent()
+        let ext = url.pathExtension
+        let baseName = ext.isEmpty ? url.lastPathComponent : String(url.lastPathComponent.dropLast(ext.count + 1))
+        var counter = 2
+        while true {
+            let candidate = ext.isEmpty
+                ? parentURL.appendingPathComponent("\(baseName) \(counter)")
+                : parentURL.appendingPathComponent("\(baseName) \(counter).\(ext)")
+            if !FileManager.default.fileExists(atPath: candidate.path) {
+                return candidate
+            }
+            counter += 1
+        }
+    }
+
     // MARK: - Flat File Helpers
 
     func allFlatFiles() -> [FileItem] {
