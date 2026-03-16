@@ -266,5 +266,5 @@ Forks are welcome under the terms of the MIT license, but should not imply offic
 ---
 
 <div align="center">
-<sub>Built with SwiftUI by <a href="https://github.com/nicolaregattieri">Nicola Regattieri</a></sub>
+<sub>Designed & built by <a href="https://github.com/nicolaregattieri">Nicola Regattieri</a></sub>
 </div>
