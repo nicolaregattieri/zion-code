@@ -65,6 +65,7 @@
 | Branch Focus | Double-click a branch to filter commits to that branch | — |
 | Load More | Paginated loading (300 per page, up to 5000) | — |
 | Path Breadcrumb | Breadcrumb navigation bar showing current file path with click-to-navigate | — |
+| Commit Detail Loading | Loading spinners for commit details and file diffs with instant re-access via smart caching | — |
 | Commit AI Review | AI-powered single-commit review from the graph context menu | — |
 
 ## Zion Code (Editor)
@@ -86,6 +87,7 @@
 | Save As | Save current file to a new location | `⇧⌘S` |
 | Open in Editor | Open changed files from commit details, staging, or operations | — |
 | File Browser Context Menu | Right-click: new file/folder, rename, duplicate, copy, cut, paste, delete, reveal in Finder | — |
+| File Browser Drag & Drop | Move files and folders within the repo by dragging; drop on empty space to move to root; import from Finder or Smart Clipboard | — |
 | File Watcher | Auto-reload on external changes | — |
 | Find/Replace | In-editor search with match highlighting and navigation | `⌘F` (alias `⌃F`) / `⌘H` / `⌘G` / `⇧⌘G` |
 | Select Next Occurrence | Multi-cursor selection for next matching occurrence | `⌘D` |
@@ -116,6 +118,7 @@
 | Split Vertical | Split focused pane vertically | `⇧⌘D` |
 | Split Horizontal | Split focused pane horizontally | `⇧⌘E` |
 | Close Split | Close focused split pane | `⇧⌘W` |
+| Resizable Splits | Drag dividers between split panes to resize; double-tap to reset 50/50 | — |
 | Zoom In/Out | Independent terminal font size | `⌃+` / `⌃-` |
 | Font Settings | Configurable family and size | — |
 | Session Persistence | Terminal sessions persist across repo switches with live processes | — |

@@ -365,6 +365,7 @@
 // Terminal
 "help.terminal.pty" = "Terminal real com PTY nativo, login shell e suporte a cores 256";
 "help.terminal.splits" = "Divide o terminal em painéis verticais (⇧⌘D) ou horizontais (⇧⌘E)";
+"help.terminal.resizeSplits" = "Arraste os divisores entre painéis para redimensionar; toque duplo para resetar 50/50";
 "help.terminal.tabs" = "Múltiplas abas de terminal com status de processo vivo";
 "help.terminal.zoom" = "Zoom independente com Ctrl+/- e fonte configurável";
 "help.terminal.persistence" = "Terminais persistem ao trocar de repositório, com badges de alterações";
@@ -572,6 +573,9 @@
 "map.code.quickopen.tip1" = "Digite apenas parte do nome — a busca fuzzy encontra correspondências parciais.";
 "map.code.filebrowser.title" = "Navegador de Arquivos";
 "map.code.filebrowser.description" = "Árvore de arquivos do repositório com respeito ao .gitignore. Alterne visibilidade com ⌘B.";
+"map.code.filebrowserdnd.title" = "Arrastar e Soltar no Navegador";
+"map.code.filebrowserdnd.description" = "Mova arquivos e pastas dentro do repositório arrastando-os para uma pasta destino. Solte em espaço vazio para mover para a raiz. Importe arquivos do Finder ou Smart Clipboard.";
+"map.code.filebrowserdnd.tip1" = "Selecione múltiplos arquivos primeiro, depois arraste um para mover toda a seleção de uma vez.";
 "map.code.blame.title" = "Git Blame Inline";
 "map.code.blame.description" = "Veja autor, hash e data de cada linha diretamente no editor. Clique para ver o commit completo.";
 "map.code.blame.tip1" = "Com IA configurada, clique no blame para entender POR QUE o código foi alterado.";
@@ -593,6 +597,9 @@
 "map.terminal.splits.title" = "Splits Vertical e Horizontal";
 "map.terminal.splits.description" = "Divida o terminal em painéis verticais ou horizontais para trabalhar com múltiplos comandos lado a lado.";
 "map.terminal.splits.tip1" = "Feche um painel split com ⇧⌘W sem afetar os outros.";
+"map.terminal.resizeSplits.title" = "Painéis Split Redimensionáveis";
+"map.terminal.resizeSplits.description" = "Arraste o divisor entre painéis split para redimensioná-los. Toque duplo no divisor para resetar para split igual 50/50.";
+"map.terminal.resizeSplits.tip1" = "Um tamanho mínimo é aplicado para que você nunca perca um painel por acidente.";
 "map.terminal.tabs.title" = "Abas de Terminal";
 "map.terminal.tabs.description" = "Crie múltiplas abas de terminal, cada uma com seu processo independente e indicador de status.";
 "map.terminal.zoom.title" = "Zoom Independente";
@@ -905,6 +912,7 @@
 "help.code.saveas" = "Salvar Como para escolher nome e local do arquivo (⇧⌘S)";
 "help.code.openineditor" = "Abrir arquivos alterados no editor a partir de qualquer tela";
 "help.code.contextmenu" = "Menu de contexto completo no navegador de arquivos (novo, renomear, copiar, colar, excluir)";
+"help.code.filebrowserdnd" = "Arraste e solte arquivos no navegador para mover ou importar do Finder";
 "help.code.findreplace" = "Buscar e Substituir no editor com destaque de resultados (⌘F / ⌘H)";
 "help.code.markdownpreview" = "Preview Markdown lado a lado para arquivos .md, com links clicáveis e imagens locais";
 "help.code.tabsize" = "Tamanho de tab e estilo de indentação configuráveis (2/4/8, espaços ou tabs)";
@@ -1404,6 +1412,7 @@
 "help.terminalSearch" = "Buscar texto no terminal com Cmd+F";
 "help.stashBadge" = "Badge de contagem de stashes na sidebar";
 "help.branchSearch" = "Filtrar branches por nome na sidebar";
+"help.tree.commitLoading" = "Spinners de carregamento para detalhes de commit com re-acesso instantâneo via cache";
 "help.commitStats" = "Linhas adicionadas/removidas por commit no graph";
 "help.aiSummary" = "Resumo IA das mudanças pendentes";
 "help.smartClipboard" = "Ações contextuais inteligentes no clipboard";
@@ -1501,6 +1510,8 @@
 "map.tree.branchsearch.title" = "Busca de Branches";
 "map.tree.branchsearch.description" = "Filtre branches pelo nome na sidebar para encontrar referências rapidamente.";
 "map.tree.branchsearch.tip1" = "Funciona com nomes parciais e remotos, como origin/feature.";
+"map.tree.commitLoading.title" = "Carregamento de Detalhes";
+"map.tree.commitLoading.description" = "Spinners de carregamento aparecem ao buscar detalhes de commits e diffs. Commits visualizados anteriormente carregam instantaneamente via cache inteligente.";
 
 "map.code.fileactions.title" = "Ações de Arquivo";
 "map.code.fileactions.description" = "Crie arquivos (⌘N), use Salvar Como (⇧⌘S), abra mudanças no editor e acesse menu de contexto completo no navegador.";

@@ -36,11 +36,13 @@ struct HelpSheet: View {
             return ["help.tree.lanes", "help.tree.search", "help.tree.jumpbar",
                     "help.tree.pending", "help.tree.signature",
                     "help.tree.navigation", "help.tree.focus",
-                    "help.commitStats", "help.avatars", "help.branchSearch"]
+                    "help.commitStats", "help.avatars", "help.branchSearch",
+                    "help.tree.commitLoading"]
         case .code:
             return ["help.code.editor", "help.code.quickopen", "help.code.blame",
                     "help.code.themes", "help.code.unsaved", "help.code.newfile",
                     "help.code.saveas", "help.code.openineditor", "help.code.contextmenu",
+                    "help.code.filebrowserdnd",
                     "help.code.findreplace", "help.code.findinfiles",
                     "help.code.markdownpreview",
                     "help.code.navigation",
@@ -49,7 +51,8 @@ struct HelpSheet: View {
                     "help.code.filehistory", "help.code.openwith",
                     "help.code.format", "help.code.dotfiles"]
         case .terminal:
-            return ["help.terminal.pty", "help.terminal.splits", "help.terminal.tabs",
+            return ["help.terminal.pty", "help.terminal.splits", "help.terminal.resizeSplits",
+                    "help.terminal.tabs",
                     "help.terminal.zoom", "help.terminal.persistence",
                     "help.terminal.transparency", "help.terminal.finderdrag",
                     "help.terminalSearch", "help.terminal.voiceInput",

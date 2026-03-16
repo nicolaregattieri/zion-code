@@ -39,6 +39,7 @@ struct ZionMapContent {
                 ZionMapEntry("map.tree.avatars.title", description: "map.tree.avatars.description"),
                 ZionMapEntry("map.tree.branchsearch.title", description: "map.tree.branchsearch.description",
                              tips: ["map.tree.branchsearch.tip1"]),
+                ZionMapEntry("map.tree.commitLoading.title", description: "map.tree.commitLoading.description"),
             ]
 
         case .code:
@@ -49,6 +50,8 @@ struct ZionMapContent {
                              shortcut: "\u{2318}P", tips: ["map.code.quickopen.tip1"]),
                 ZionMapEntry("map.code.filebrowser.title", description: "map.code.filebrowser.description",
                              shortcut: "\u{2318}B"),
+                ZionMapEntry("map.code.filebrowserdnd.title", description: "map.code.filebrowserdnd.description",
+                             tips: ["map.code.filebrowserdnd.tip1"]),
                 ZionMapEntry("map.code.blame.title", description: "map.code.blame.description",
                              tips: ["map.code.blame.tip1"]),
                 ZionMapEntry("map.code.tabs.title", description: "map.code.tabs.description",
@@ -85,6 +88,8 @@ struct ZionMapContent {
                 ZionMapEntry("map.terminal.splits.title", description: "map.terminal.splits.description",
                              shortcut: "\u{21E7}\u{2318}D / \u{21E7}\u{2318}E",
                              tips: ["map.terminal.splits.tip1"]),
+                ZionMapEntry("map.terminal.resizeSplits.title", description: "map.terminal.resizeSplits.description",
+                             tips: ["map.terminal.resizeSplits.tip1"]),
                 ZionMapEntry("map.terminal.tabs.title", description: "map.terminal.tabs.description",
                              shortcut: "\u{2318}T"),
                 ZionMapEntry("map.terminal.zoom.title", description: "map.terminal.zoom.description",
