@@ -16,6 +16,8 @@ Graph, code, and terminal — in one window.
 [![Swift 6](https://img.shields.io/badge/Swift-6-F05138?style=flat-square&logo=swift&logoColor=white)](https://swift.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 
+**793+ tests · 40+ releases · Apple notarized**
+
 </div>
 
 <p align="center">
@@ -32,13 +34,14 @@ Everything running, everything visible, everything under your control.
 
 | Capability | What you get |
 |---|---|
-| **Split Terminals** | Real PTY with tabs, horizontal/vertical splits, independent zoom — run Claude Code and Gemini side by side |
+| **Split Terminals** | Real PTY with tabs, horizontal/vertical splits, independent zoom — run multiple AI agents in parallel across worktrees, each visible at a glance |
 | **Code Editor** | Syntax highlighting, Git Blame with AI explanation, Quick Open, code formatter (16+ languages), go-to-definition |
 | **Commit Graph** | Color-coded branch lanes with Bezier merge curves, search, jump bar, pending changes, up to 5,000 commits |
 | **15 AI Features** | Commit messages, pre-commit review, diff explanation, conflict resolution, semantic search, blame explainer, PR drafts, and more — Claude / GPT / Gemini |
-| **Smart Clipboard** | Copy a hash → "Show in Graph". Copy a branch → one-click checkout. Copy a command → double-click executes. Auto-categorized. |
+| **Smart Clipboard** | Take screenshots (Cmd+Shift+4), come back to Zion — every capture is waiting. Drag into any terminal for visual AI feedback. Plus: hash → "Show in Graph", branch → checkout, command → execute. |
 | **Mobile Access** | All terminal sessions across all projects, from your phone. Approve AI prompts remotely. AES-256-GCM encrypted. |
 | **Recovery Vault** | Auto-snapshots before every destructive operation. Be aggressive with git — Zion has your back. |
+| **Zion Bridge** | Switch LLMs mid-project. Sync AI configs (CLAUDE.md, AGENTS.md, .cursorrules) between Claude, Codex, Gemini, and Cursor in one click. |
 | **Git Hosting** | GitHub + GitLab + Bitbucket + Azure DevOps with auto-detection from remote URLs |
 | **Native macOS** | Pure SwiftUI. No Electron, no web views. Glassmorphism design with 7 themes. |
 | **Free** | MIT licensed. No subscriptions. Your API keys, your machine. |
@@ -66,9 +69,9 @@ Lane-colored commit cards with colored left stripes matching branch lanes, merge
 </p>
 
 ### Smart Clipboard
-> It knows what you copied.
+> Stop switching apps. Start dragging.
 
-Copy a git hash — Zion offers "Show in Graph". Copy a branch name — one click checks it out. Copy a file path — opens in editor. Copy a command — double-click executes it. Everything auto-categorized with color codes. **Drag** items directly into any terminal pane. Keeps your last 20 items and auto-cleans temp files.
+You're building something and need to give the AI visual feedback. Take all the screenshots you need (Cmd+Shift+4), come back to Zion — every capture is waiting with thumbnails. Drag any of them into any split terminal. Errors, layouts, logs, UI bugs — the clipboard is always there, always ready. Plus: copy a git hash and Zion offers "Show in Graph". Copy a branch — one click checks it out. Copy a command — double-click executes it. Everything auto-categorized. Keeps your last 20 items.
 
 <p align="center">
   <img src="docs/screenshots/clipboard.png" width="100%" alt="Smart Clipboard with auto-categorized items" />
@@ -103,6 +106,11 @@ AI reads your diff and writes the commit message. AI reviews your code before yo
   <img src="docs/screenshots/ai-commit.png" width="49%" alt="Smart Commit — AI-generated commit message from diff" />
   <img src="docs/screenshots/ai-review.png" width="49%" alt="Smart PR — AI-drafted pull request with code review" />
 </p>
+
+### Zion Bridge
+> Switch LLMs mid-project.
+
+You know a certain LLM is better at specific tasks. Bridge transfers your AI config instantly so you can switch mid-project. Hit your limit on Claude? Switch to Gemini and keep going — Bridge gets you ready in one click. Visual migration console with confidence levels and selective sync. Supports Claude, Codex, Gemini, and Cursor configurations (CLAUDE.md, AGENTS.md, .cursorrules, and more).
 
 ---
 
