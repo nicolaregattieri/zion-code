@@ -57,38 +57,105 @@ struct TerminalPaneView: View {
                 return true
             }
 
-        case .split(let direction, _, _):
-            let children = node.flattenedChildren(forDirection: direction)
-            let dividerThickness: CGFloat = 1
-            GeometryReader { geometry in
-                if direction == .vertical {
-                    let totalDividers = dividerThickness * CGFloat(children.count - 1)
-                    let paneWidth = (geometry.size.width - totalDividers) / CGFloat(children.count)
-                    HStack(spacing: 0) {
-                        ForEach(Array(children.enumerated()), id: \.element.id) { index, child in
-                            if index > 0 {
-                                Divider().frame(width: dividerThickness)
-                            }
-                            TerminalPaneView(node: child, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model, transparentBackground: transparentBackground)
-                                .padding(.horizontal, DesignSystem.Spacing.micro)
-                                .frame(width: max(0, paneWidth))
-                        }
-                    }
-                } else {
-                    let totalDividers = dividerThickness * CGFloat(children.count - 1)
-                    let paneHeight = (geometry.size.height - totalDividers) / CGFloat(children.count)
-                    VStack(spacing: 0) {
-                        ForEach(Array(children.enumerated()), id: \.element.id) { index, child in
-                            if index > 0 {
-                                Divider().frame(height: dividerThickness)
-                            }
-                            TerminalPaneView(node: child, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model, transparentBackground: transparentBackground)
-                                .padding(.horizontal, DesignSystem.Spacing.micro)
-                                .frame(height: max(0, paneHeight))
-                        }
-                    }
+        case .split(let direction, let first, let second):
+            TerminalSplitView(
+                node: node,
+                direction: direction,
+                first: first,
+                second: second,
+                theme: theme,
+                fontSize: fontSize,
+                fontFamily: fontFamily,
+                focusedSessionID: focusedSessionID,
+                model: model,
+                transparentBackground: transparentBackground
+            )
+        }
+    }
+}
+
+// MARK: - Draggable Split
+
+private struct TerminalSplitView: View {
+    let node: TerminalPaneNode
+    let direction: SplitDirection
+    let first: TerminalPaneNode
+    let second: TerminalPaneNode
+    var theme: EditorTheme
+    var fontSize: Double
+    var fontFamily: String
+    var focusedSessionID: UUID?
+    var model: RepositoryViewModel
+    var transparentBackground: Bool
+
+    private let dividerHitSize: CGFloat = 8
+    private let minPaneSize: CGFloat = 80
+
+    @GestureState private var dragOffset: CGFloat = 0
+
+    var body: some View {
+        GeometryReader { geo in
+            let totalSize = direction == .vertical ? geo.size.width : geo.size.height
+            let available = totalSize - dividerHitSize
+            let baseLeading = available * node.ratio
+            let proposedLeading = baseLeading + dragOffset
+            let clampedLeading = max(minPaneSize, min(available - minPaneSize, proposedLeading))
+
+            if direction == .vertical {
+                HStack(spacing: 0) {
+                    TerminalPaneView(node: first, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model, transparentBackground: transparentBackground)
+                        .frame(width: clampedLeading)
+
+                    dividerView(available: available, baseLeading: baseLeading)
+
+                    TerminalPaneView(node: second, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model, transparentBackground: transparentBackground)
+                        .frame(maxWidth: .infinity)
                 }
+                .coordinateSpace(name: "terminalSplit-\(node.id)")
+            } else {
+                VStack(spacing: 0) {
+                    TerminalPaneView(node: first, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model, transparentBackground: transparentBackground)
+                        .frame(height: clampedLeading)
+
+                    dividerView(available: available, baseLeading: baseLeading)
+
+                    TerminalPaneView(node: second, theme: theme, fontSize: fontSize, fontFamily: fontFamily, focusedSessionID: focusedSessionID, model: model, transparentBackground: transparentBackground)
+                        .frame(maxHeight: .infinity)
+                }
+                .coordinateSpace(name: "terminalSplit-\(node.id)")
             }
         }
+    }
+
+    private func dividerView(available: CGFloat, baseLeading: CGFloat) -> some View {
+        let cursorStyle: NSCursor = direction == .vertical ? .resizeLeftRight : .resizeUpDown
+
+        return Rectangle()
+            .fill(Color.clear)
+            .frame(
+                width: direction == .vertical ? dividerHitSize : nil,
+                height: direction == .horizontal ? dividerHitSize : nil
+            )
+            .overlay { Divider() }
+            .contentShape(Rectangle())
+            .onHover { hovering in
+                if hovering { cursorStyle.push() } else { NSCursor.pop() }
+            }
+            .gesture(
+                DragGesture(coordinateSpace: .named("terminalSplit-\(node.id)"))
+                    .updating($dragOffset) { value, state, _ in
+                        state = direction == .vertical ? value.translation.width : value.translation.height
+                    }
+                    .onEnded { value in
+                        let delta = direction == .vertical ? value.translation.width : value.translation.height
+                        let newLeading = max(minPaneSize, min(available - minPaneSize, baseLeading + delta))
+                        node.ratio = newLeading / available
+                    }
+            )
+            .onTapGesture(count: 2) {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    node.ratio = 0.5
+                }
+            }
     }
 }
