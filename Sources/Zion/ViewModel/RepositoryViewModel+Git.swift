@@ -154,9 +154,9 @@ extension RepositoryViewModel {
     func createStash(message: String?) {
         let cleanedMessage = message?.clean ?? ""
         if cleanedMessage.isEmpty {
-            runGitAction(label: "Stash", args: ["stash", "push"])
+            runGitAction(label: "Stash", args: ["stash", "push"], refreshOptions: .stashRefresh)
         } else {
-            runGitAction(label: "Stash", args: ["stash", "push", "-m", cleanedMessage])
+            runGitAction(label: "Stash", args: ["stash", "push", "-m", cleanedMessage], refreshOptions: .stashRefresh)
         }
     }
 
@@ -269,6 +269,7 @@ extension RepositoryViewModel {
                     logger.log(.info, "details.reload skipped (same commit)", context: "origin=refreshCommitsOnly", source: #function)
                 }
                 loadCommitStats()
+                prefetchCommitDetails(for: Array(payload.commits.prefix(Constants.Limits.commitDetailsPrefetchCount).map(\.id)))
             } catch is CancellationError {
                 guard refreshRequestID == requestID else { return }
                 if isBranchFocusLoading, branchFocusLoadingBranch == focusedBranchSnapshot {
@@ -445,6 +446,7 @@ extension RepositoryViewModel {
                     }
                 }
                 loadCommitStats()
+                prefetchCommitDetails(for: Array(payload.commits.prefix(Constants.Limits.commitDetailsPrefetchCount).map(\.id)))
                 ensureTerminalBridgeHealth(context: "refreshRepository.success.\(origin.rawValue)")
                 onFinish?()
             } catch is CancellationError {

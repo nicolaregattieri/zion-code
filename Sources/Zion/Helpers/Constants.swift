@@ -57,6 +57,12 @@ enum Constants {
         static let maxFileContentPreviewLength = 500
         /// Maximum characters to show in clipboard preview text
         static let clipboardPreviewTruncationLength = 60
+        /// Maximum cached commit detail results (keyed by commit hash)
+        static let commitDetailsCacheSize = 20
+        /// Maximum cached commit file diff results (keyed by commitID:filePath)
+        static let commitFileDiffCacheSize = 40
+        /// Number of visible commits to prefetch details for in background
+        static let commitDetailsPrefetchCount = 15
     }
 
     enum RemoteAccess {

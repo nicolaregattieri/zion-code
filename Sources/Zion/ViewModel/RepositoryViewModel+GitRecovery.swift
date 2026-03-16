@@ -137,7 +137,7 @@ extension RepositoryViewModel {
                 try Task.checkCancellation()
                 clearError()
                 statusMessage = shouldPop ? L10n("stash.pop.success") : L10n("stash.apply.success")
-                refreshRepository(setBusy: true)
+                refreshRepository(setBusy: true, options: .stashRefresh)
             } catch is CancellationError {
                 isBusy = false
                 return

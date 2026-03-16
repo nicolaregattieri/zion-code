@@ -16,9 +16,14 @@ struct CommitDetailContent: View {
             aiReviewContent(model: model, commitID: commitID)
         } else if detail.isPlaceholder {
             VStack(spacing: 16) {
-                Image(systemName: "arrow.left.circle")
-                    .font(DesignSystem.Typography.heroIcon)
-                    .foregroundStyle(.tertiary)
+                if model?.isLoadingCommitDetails == true {
+                    ProgressView()
+                        .controlSize(.regular)
+                } else {
+                    Image(systemName: "arrow.left.circle")
+                        .font(DesignSystem.Typography.heroIcon)
+                        .foregroundStyle(.tertiary)
+                }
                 Text(rawDetails)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -179,7 +184,12 @@ struct CommitDetailContent: View {
                                                 .padding(.bottom, 4)
                                         }
 
-                                        if !model.currentCommitFileDiffHunks.isEmpty {
+                                        if model.isLoadingCommitFileDiff && model.selectedCommitFile == file.path {
+                                            ProgressView()
+                                                .controlSize(.small)
+                                                .frame(maxWidth: .infinity)
+                                                .padding(.vertical, 12)
+                                        } else if !model.currentCommitFileDiffHunks.isEmpty {
                                             HunkDiffView(
                                                 model: model,
                                                 file: file.path,
