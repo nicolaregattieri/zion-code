@@ -100,7 +100,7 @@ extension RepositoryViewModel {
 
                         // Reuse tunnel if still alive
                         let tunnelURL: String
-                        if let tunnel = await self.tunnelManager, await tunnel.isRunning, let url = await tunnel.currentURL {
+                        if let tunnel = self.tunnelManager, await tunnel.isRunning, let url = await tunnel.currentURL {
                             tunnelURL = url
                         } else {
                             await self.tunnelManager?.stop()
