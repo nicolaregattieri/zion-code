@@ -57,29 +57,37 @@ struct GraphScreen: View {
                     worktreeQuickSwitchBar
                 }
 
-                DraggableSplitView(
-                    axis: .horizontal,
-                    ratio: $splitRatio,
-                    minLeading: DesignSystem.Layout.commitListMinWidth,
-                    minTrailing: DesignSystem.Layout.commitDetailMinWidth
-                ) {
-                    commitListPane(proxy: proxy)
-                        .focusable()
-                        .focused($isGraphFocused)
-                        .focusEffectDisabled()
-                        .onMoveCommand { direction in
-                            switch direction {
-                            case .up: navigateSelection(direction: -1, proxy: proxy)
-                            case .down: navigateSelection(direction: 1, proxy: proxy)
-                            default: break
+                ZStack {
+                    DraggableSplitView(
+                        axis: .horizontal,
+                        ratio: $splitRatio,
+                        minLeading: DesignSystem.Layout.commitListMinWidth,
+                        minTrailing: DesignSystem.Layout.commitDetailMinWidth
+                    ) {
+                        commitListPane(proxy: proxy)
+                            .focusable()
+                            .focused($isGraphFocused)
+                            .focusEffectDisabled()
+                            .onMoveCommand { direction in
+                                switch direction {
+                                case .up: navigateSelection(direction: -1, proxy: proxy)
+                                case .down: navigateSelection(direction: 1, proxy: proxy)
+                                default: break
+                                }
                             }
-                        }
-                        .onExitCommand { model.selectCommit(nil); showingPendingChanges = false }
-                        .padding(.trailing, 6)
-                } trailing: {
-                    commitDetailsPane
-                        .animation(nil, value: showingPendingChanges)
-                        .padding(.leading, 6)
+                            .onExitCommand { model.selectCommit(nil); showingPendingChanges = false }
+                            .padding(.trailing, 6)
+                    } trailing: {
+                        commitDetailsPane
+                            .animation(nil, value: showingPendingChanges)
+                            .padding(.leading, 6)
+                    }
+
+                    if model.isRepositorySwitchRefreshingInBackground {
+                        ZionLoadingOverlay()
+                            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius))
+                            .allowsHitTesting(false)
+                    }
                 }
             }
             .padding(.horizontal, 18)
