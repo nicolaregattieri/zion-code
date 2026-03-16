@@ -5,10 +5,16 @@ import Foundation
 enum RemoteMessageType: String, Codable, Sendable {
     case sessionList
     case screenUpdate
+    case streamData
     case promptDetected
     case sendInput
     case sendAction
     case heartbeat
+}
+
+struct StreamDataPayload: Codable, Sendable {
+    let sessionID: UUID
+    let data: String   // base64-encoded raw PTY bytes
 }
 
 struct RemoteMessage: Codable, Sendable {

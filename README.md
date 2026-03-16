@@ -139,6 +139,15 @@ open dist/Zion.app
 
 </details>
 
+### Testing
+
+Zion ships with **793 tests** covering core functionality, Git operations, AI integrations, and UI behavior.
+```bash
+swift test
+```
+
+Tests run on every release. No mocks for Git -- tests use real repositories.
+
 ### Requirements
 
 | | Minimum |

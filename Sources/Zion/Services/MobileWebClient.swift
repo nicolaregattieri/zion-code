@@ -75,6 +75,8 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;ba
 #terminal-wrap{flex:1;overflow:hidden;position:relative}
 #xterm-container{height:100%;width:100%}
 .xterm{height:100%!important}
+.xterm-viewport{-webkit-overflow-scrolling:touch!important;touch-action:pan-y!important}
+.xterm-screen{touch-action:pan-y!important}
 #loading-overlay{display:none;position:absolute;inset:0;z-index:5;background:var(--bg);align-items:center;justify-content:center;flex-direction:column;gap:12px}
 #loading-overlay.visible{display:flex}
 #loading-overlay .spinner{width:24px;height:24px;border-width:2px}
@@ -143,7 +145,7 @@ let drawerOpen = false, wasDisconnected = false;
 // -- xterm.js --
 let term = null, fitAddon = null;
 const sessionBuffers = {};
-let pendingScreenUpdate = null;
+let lastSnapshotText = null;
 
 function initTerminal() {
     if (typeof Terminal === 'undefined') return;
@@ -151,7 +153,7 @@ function initTerminal() {
         cursorBlink: true,
         fontSize: 13,
         fontFamily: "'SF Mono', SFMono-Regular, Menlo, monospace",
-        scrollback: 1000,
+        scrollback: 5000,
         theme: {
             background: '#110b1f',
             foreground: '#e8e4f0',
@@ -176,22 +178,79 @@ function initTerminal() {
     new ResizeObserver(() => fitAddon && fitAddon.fit())
         .observe($('#xterm-container'));
 
-    // Flush deferred screen update when user scrolls back to bottom (DOM event = touch/swipe)
-    const viewport = term.element.querySelector('.xterm-viewport');
-    if (viewport) {
-        viewport.addEventListener('scroll', () => {
-            const buf = term.buffer.active;
-            const atBottom = (buf.baseY === 0) || (buf.viewportY >= buf.baseY);
-            if (atBottom && pendingScreenUpdate) {
-                const raw = pendingScreenUpdate;
-                pendingScreenUpdate = null;
-                term.scrollToBottom();
-                term.write('\n'.repeat(term.rows));
-                term.write('\x1b[H\x1b[2J');
-                term.write(raw);
-            }
-        });
-    }
+    // Momentum scrolling — iOS-style inertia with velocity smoothing and rubber-band stop.
+    // xterm.js handles direct 1:1 drag; we add coast-after-release physics.
+    (function() {
+      const el = term.element;
+      if (!el) return;
+      let lastY = 0, lastT = 0, vy = 0, raf = null;
+      let samples = []; // recent velocity samples for smoothing
+      const DECEL = 0.005;      // px/ms² deceleration
+      const MIN_V = 0.15;       // px/ms stop threshold
+      const BOOST = 1.2;        // slight initial multiplier
+      const MAX_SAMPLES = 5;    // velocity averaging window
+      let residual = 0;         // sub-line fractional accumulator
+
+      el.addEventListener('touchstart', e => {
+        if (raf) { cancelAnimationFrame(raf); raf = null; }
+        vy = 0; residual = 0;
+        samples = [];
+        lastY = e.touches[0].clientY;
+        lastT = performance.now();
+      }, { passive: true });
+
+      el.addEventListener('touchmove', e => {
+        const y = e.touches[0].clientY;
+        const t = performance.now();
+        const dt = t - lastT || 1;
+        const v = (y - lastY) / dt;
+        // Keep a sliding window of recent velocity samples
+        samples.push(v);
+        if (samples.length > MAX_SAMPLES) samples.shift();
+        lastY = y;
+        lastT = t;
+      }, { passive: true });
+
+      el.addEventListener('touchend', () => {
+        if (samples.length === 0) return;
+        // Weighted average — recent samples count more (iOS-style)
+        let wSum = 0, wDiv = 0;
+        for (let i = 0; i < samples.length; i++) {
+          const w = i + 1;
+          wSum += samples[i] * w;
+          wDiv += w;
+        }
+        vy = (wSum / wDiv) * BOOST;
+        if (Math.abs(vy) < MIN_V) return;
+        residual = 0;
+
+        const rowH = el.offsetHeight / term.rows || 16;
+        let lastFrame = performance.now();
+
+        const coast = () => {
+          const now = performance.now();
+          const dt = now - lastFrame;
+          lastFrame = now;
+
+          // Linear deceleration (iOS-like — not exponential)
+          const sign = vy > 0 ? 1 : -1;
+          vy -= sign * DECEL * dt;
+          // Stop when velocity crosses zero or falls below threshold
+          if (sign * vy <= MIN_V) { raf = null; return; }
+
+          // Accumulate fractional lines for smooth sub-line scrolling
+          residual += -(vy * dt) / rowH;
+          const lines = Math.trunc(residual);
+          if (lines !== 0) {
+            residual -= lines;
+            term.scrollLines(lines);
+          }
+          raf = requestAnimationFrame(coast);
+        };
+        raf = requestAnimationFrame(coast);
+      }, { passive: true });
+    })();
+
 }
 
 // -- Drawer --
@@ -359,7 +418,7 @@ async function poll() {
     setTimeout(poll, Math.min(1000 * pollErrors, 5000));
     return;
   }
-  setTimeout(poll, 500);
+  setTimeout(poll, 200);
 }
 
 function showDisconnected() {
@@ -474,21 +533,16 @@ function handleMessage(msg) {
         if (sid === activeSession) $('#loading-overlay').classList.remove('visible');
 
         if (sid === activeSession && term) {
-          const buf = term.buffer.active;
-          const atBottom = (buf.baseY === 0) || (buf.viewportY >= buf.baseY);
+          // Truncate to mobile viewport (keep bottom rows where cursor lives)
+          const text = new TextDecoder().decode(raw);
+          const lines = text.split('\r\n');
+          const visible = lines.length > term.rows
+            ? lines.slice(lines.length - term.rows)
+            : lines;
+          const fitted = new TextEncoder().encode(visible.join('\r\n'));
 
-          if (!atBottom) {
-            // User is reading scrollback — defer the update
-            pendingScreenUpdate = raw;
-          } else {
-            pendingScreenUpdate = null;
-            // Push current visible content into scrollback
-            term.scrollToBottom();
-            term.write('\n'.repeat(term.rows));
-            // Clear visible area, cursor home, write new snapshot
-            term.write('\x1b[H\x1b[2J');
-            term.write(raw);
-          }
+          term.write('\x1b[H\x1b[2J\x1b[3J');
+          term.write(fitted);
         }
       }
       if (p.hasPrompt && p.promptText) showPrompt(p.promptText);
@@ -581,6 +635,7 @@ function selectSession(id, userInitiated) {
   try { sessionStorage.setItem('zion_activeSession', id); sessionStorage.setItem('zion_activeProject', activeProject); } catch(e) {}
   renderDrawerList();
   updateHeaderContext();
+  lastSnapshotText = null;
   if (term) {
     term.reset();
     const chunks = sessionBuffers[id] || [];
@@ -652,7 +707,7 @@ async function sendAction(action) {
 let eagerPollTimer = null;
 function scheduleEagerPoll() {
   if (eagerPollTimer) return; // already in eager mode
-  let remaining = 3;
+  let remaining = 5;
   eagerPollTimer = setInterval(() => {
     if (--remaining <= 0 || !polling) {
       clearInterval(eagerPollTimer);
@@ -660,17 +715,25 @@ function scheduleEagerPoll() {
       return;
     }
     poll();
-  }, 150);
+  }, 100);
 }
 
 $('#cmd-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') { e.preventDefault(); sendInput(); }
 });
 
-// Auto-reconnect when phone wakes up or tab becomes visible again
+// Auto-reconnect when phone wakes up or tab becomes visible again.
+// Also resync terminal state: iOS suspends JS when backgrounded,
+// so stream events may pile up and get capped. A fresh snapshot
+// ensures you never come back to a stale terminal.
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden || !wasDisconnected) return;
-  silentReconnect();
+  if (document.hidden) return;
+  if (wasDisconnected) {
+    silentReconnect();
+  } else if (polling && activeSession) {
+    sendAction('refreshScreen');
+    if (!eagerPollTimer) scheduleEagerPoll();
+  }
 });
 
 connect();
