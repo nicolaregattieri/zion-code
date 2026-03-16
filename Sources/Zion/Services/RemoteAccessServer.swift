@@ -175,8 +175,8 @@ actor RemoteAccessServer {
             var queue = pendingEvents[token] ?? []
             queue.append(message)
             // Keep last N events to prevent memory growth
-            if queue.count > Constants.RemoteAccess.maxScreenUpdateLines {
-                queue = Array(queue.suffix(Constants.RemoteAccess.maxScreenUpdateLines))
+            if queue.count > Constants.RemoteAccess.maxPendingEventsPerToken {
+                queue = Array(queue.suffix(Constants.RemoteAccess.maxPendingEventsPerToken))
             }
             pendingEvents[token] = queue
         }
