@@ -850,6 +850,176 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
         XCTAssertNil(vm.selectedCodeFile)
     }
 
+    // MARK: - Drag & Drop (handleFileDrop)
+
+    func testHandleFileDropMovesInternalFileIntoFolder() throws {
+        let vm = RepositoryViewModel()
+        let root = try makeTempDirectory()
+        vm.repositoryURL = root
+
+        let sourceFile = root.appendingPathComponent("hello.swift")
+        try "content".write(to: sourceFile, atomically: true, encoding: .utf8)
+
+        let destFolder = root.appendingPathComponent("Sources", isDirectory: true)
+        try FileManager.default.createDirectory(at: destFolder, withIntermediateDirectories: true)
+
+        vm.handleFileDrop([sourceFile], into: destFolder)
+
+        let moved = destFolder.appendingPathComponent("hello.swift")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: moved.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: sourceFile.path))
+    }
+
+    func testHandleFileDropNoOpWhenDroppingIntoSameFolder() throws {
+        let vm = RepositoryViewModel()
+        let root = try makeTempDirectory()
+        vm.repositoryURL = root
+
+        let sourceFile = root.appendingPathComponent("hello.swift")
+        try "content".write(to: sourceFile, atomically: true, encoding: .utf8)
+
+        vm.handleFileDrop([sourceFile], into: root)
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: sourceFile.path))
+    }
+
+    func testHandleFileDropNoOpWhenDroppingFolderIntoItself() throws {
+        let vm = RepositoryViewModel()
+        let root = try makeTempDirectory()
+        vm.repositoryURL = root
+
+        let folder = root.appendingPathComponent("MyFolder", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let child = folder.appendingPathComponent("child.txt")
+        try "data".write(to: child, atomically: true, encoding: .utf8)
+
+        vm.handleFileDrop([folder], into: folder)
+
+        // Folder still exists at original location
+        XCTAssertTrue(FileManager.default.fileExists(atPath: folder.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: child.path))
+    }
+
+    func testHandleFileDropNoOpWhenDroppingFolderIntoDescendant() throws {
+        let vm = RepositoryViewModel()
+        let root = try makeTempDirectory()
+        vm.repositoryURL = root
+
+        let parent = root.appendingPathComponent("Parent", isDirectory: true)
+        let child = parent.appendingPathComponent("Child", isDirectory: true)
+        try FileManager.default.createDirectory(at: child, withIntermediateDirectories: true)
+
+        vm.handleFileDrop([parent], into: child)
+
+        // Parent still exists at original location
+        XCTAssertTrue(FileManager.default.fileExists(atPath: parent.path))
+    }
+
+    func testHandleFileDropCopiesExternalFile() throws {
+        let vm = RepositoryViewModel()
+        let root = try makeTempDirectory()
+        vm.repositoryURL = root
+
+        let externalDir = try makeTempDirectory()
+        let externalFile = externalDir.appendingPathComponent("external.txt")
+        try "external content".write(to: externalFile, atomically: true, encoding: .utf8)
+
+        vm.handleFileDrop([externalFile], into: root)
+
+        let copied = root.appendingPathComponent("external.txt")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: copied.path))
+        // Original still exists (copied, not moved)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: externalFile.path))
+    }
+
+    func testHandleFileDropHandlesNameConflict() throws {
+        let vm = RepositoryViewModel()
+        let root = try makeTempDirectory()
+        vm.repositoryURL = root
+
+        let destFolder = root.appendingPathComponent("dest", isDirectory: true)
+        try FileManager.default.createDirectory(at: destFolder, withIntermediateDirectories: true)
+
+        // Create file in source
+        let sourceFile = root.appendingPathComponent("name.swift")
+        try "source".write(to: sourceFile, atomically: true, encoding: .utf8)
+
+        // Create conflicting file in destination
+        let existing = destFolder.appendingPathComponent("name.swift")
+        try "existing".write(to: existing, atomically: true, encoding: .utf8)
+
+        vm.handleFileDrop([sourceFile], into: destFolder)
+
+        // Original conflict file untouched
+        XCTAssertEqual(try String(contentsOf: existing, encoding: .utf8), "existing")
+        // Moved file got a numbered suffix
+        let renamed = destFolder.appendingPathComponent("name 2.swift")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: renamed.path))
+        XCTAssertEqual(try String(contentsOf: renamed, encoding: .utf8), "source")
+    }
+
+    func testHandleFileDropMigratesEditorState() throws {
+        let vm = RepositoryViewModel()
+        let root = try makeTempDirectory()
+        vm.repositoryURL = root
+
+        let sourceFile = root.appendingPathComponent("open.swift")
+        try "code".write(to: sourceFile, atomically: true, encoding: .utf8)
+
+        let destFolder = root.appendingPathComponent("lib", isDirectory: true)
+        try FileManager.default.createDirectory(at: destFolder, withIntermediateDirectories: true)
+
+        // Simulate file being open in editor
+        let item = FileItem(url: sourceFile, isDirectory: false, children: nil)
+        vm.openedFiles = [item]
+        vm.activeFileID = item.id
+        vm.selectedCodeFile = item
+        vm.originalFileContents[item.id] = "code"
+        vm.draftFileContents[item.id] = "modified code"
+        vm.markFileUnsavedState(fileID: item.id)
+
+        vm.handleFileDrop([sourceFile], into: destFolder)
+
+        let newPath = destFolder.appendingPathComponent("open.swift").path
+        XCTAssertEqual(vm.openedFiles.count, 1)
+        XCTAssertEqual(vm.openedFiles[0].id, newPath)
+        XCTAssertEqual(vm.activeFileID, newPath)
+        XCTAssertEqual(vm.originalFileContents[newPath], "code")
+        XCTAssertEqual(vm.draftFileContents[newPath], "modified code")
+        XCTAssertTrue(vm.unsavedFiles.contains(newPath))
+        // Old path state cleaned up
+        XCTAssertNil(vm.originalFileContents[item.id])
+        XCTAssertNil(vm.draftFileContents[item.id])
+    }
+
+    func testHandleFileDropMovesAllSelectedWhenDraggingSelectedItem() throws {
+        let vm = RepositoryViewModel()
+        let root = try makeTempDirectory()
+        vm.repositoryURL = root
+
+        let file1 = root.appendingPathComponent("a.swift")
+        let file2 = root.appendingPathComponent("b.swift")
+        try "a".write(to: file1, atomically: true, encoding: .utf8)
+        try "b".write(to: file2, atomically: true, encoding: .utf8)
+
+        let destFolder = root.appendingPathComponent("dest", isDirectory: true)
+        try FileManager.default.createDirectory(at: destFolder, withIntermediateDirectories: true)
+
+        // Set up multi-selection including file1
+        let item1 = FileItem(url: file1, isDirectory: false, children: nil)
+        let item2 = FileItem(url: file2, isDirectory: false, children: nil)
+        vm.repositoryFiles = [item1, item2]
+        vm.selectedFileIDs = [file1.path, file2.path]
+
+        // Drop only file1 -- should move both since file1 is selected
+        vm.handleFileDrop([file1], into: destFolder)
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: destFolder.appendingPathComponent("a.swift").path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: destFolder.appendingPathComponent("b.swift").path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: file1.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: file2.path))
+    }
+
     private func makeTempFile(ext: String, data: Data) throws -> URL {
         let directory = try makeTempDirectory()
         let fileURL = directory.appendingPathComponent("fixture.\(ext)")

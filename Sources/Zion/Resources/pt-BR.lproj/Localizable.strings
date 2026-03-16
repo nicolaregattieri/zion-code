@@ -958,6 +958,7 @@
 "settings.editor.formatOnSave" = "Formatar ao Salvar";
 "settings.editor.jsonSortKeys" = "JSON: Ordenar chaves";
 "fileBrowser.toggleHidden" = "Alternar Arquivos Ocultos";
+"fileBrowser.dropMove" = "Falha ao mover arquivo";
 "settings.editor.fileBrowser" = "Explorador de Arquivos";
 "settings.editor.showDotfiles" = "Mostrar Arquivos Ocultos (.env, .gitignore, etc.)";
 

@@ -6,6 +6,7 @@ struct FileTreeNodeView: View {
     let level: Int
     var onActivate: (() -> Void)? = nil
     @State private var isHovered = false
+    @State private var isDropTarget = false
 
     var body: some View {
         let isExpanded = model.expandedPaths.contains(item.id)
@@ -57,7 +58,40 @@ struct FileTreeNodeView: View {
             }
             .buttonStyle(.plain)
             .onHover { h in isHovered = h }
-            .draggable(TerminalShellEscaping.quotePath(item.url.path))
+            .onDrag {
+                let urls: [URL]
+                if model.selectedFileIDs.contains(item.id), model.selectedFileIDs.count > 1 {
+                    urls = model.selectedFileItems().map(\.url)
+                } else {
+                    urls = [item.url]
+                }
+                let provider = NSItemProvider(object: item.url as NSURL)
+                if let data = try? JSONEncoder().encode(urls) {
+                    provider.registerDataRepresentation(
+                        forTypeIdentifier: "dev.zioncode.file-items",
+                        visibility: .ownProcess
+                    ) { completion in
+                        completion(data, nil)
+                        return nil
+                    }
+                }
+                return provider
+            }
+            .background(
+                Group {
+                    if item.isDirectory {
+                        RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius)
+                            .strokeBorder(Color.accentColor, lineWidth: 2)
+                            .opacity(isDropTarget ? 1 : 0)
+                    }
+                }
+            )
+            .modifier(FolderDropTarget(
+                isDirectory: item.isDirectory,
+                folderURL: item.url,
+                model: model,
+                isDropTarget: $isDropTarget
+            ))
             .contextMenu {
                 let effectiveSelection: [FileItem] = {
                     if model.selectedFileIDs.contains(item.id) && model.selectedFileIDs.count > 1 {
@@ -183,6 +217,29 @@ struct FileTreeNodeView: View {
                     )
                 }
             }
+        }
+    }
+}
+
+// MARK: - Folder Drop Target
+
+private struct FolderDropTarget: ViewModifier {
+    let isDirectory: Bool
+    let folderURL: URL
+    var model: RepositoryViewModel
+    @Binding var isDropTarget: Bool
+
+    func body(content: Content) -> some View {
+        if isDirectory {
+            content
+                .dropDestination(for: URL.self) { urls, _ in
+                    model.handleFileDrop(urls, into: folderURL)
+                    return true
+                } isTargeted: { targeted in
+                    isDropTarget = targeted
+                }
+        } else {
+            content
         }
     }
 }

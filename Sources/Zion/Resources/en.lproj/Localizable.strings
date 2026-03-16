@@ -1062,6 +1062,7 @@
 "settings.editor.formatOnSave" = "Format on Save";
 "settings.editor.jsonSortKeys" = "JSON: Sort keys";
 "fileBrowser.toggleHidden" = "Toggle Hidden Files";
+"fileBrowser.dropMove" = "Failed to move file";
 "settings.editor.fileBrowser" = "File Browser";
 "settings.editor.showDotfiles" = "Show Hidden Files (.env, .gitignore, etc.)";
 
