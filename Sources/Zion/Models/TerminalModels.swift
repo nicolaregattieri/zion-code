@@ -50,6 +50,8 @@ enum SplitDirection: String {
 final class TerminalPaneNode: Identifiable {
     let id = UUID()
     var content: PaneContent
+    /// Fraction of space allocated to the `first` child in a `.split` node (0...1)
+    var ratio: CGFloat = 0.5
 
     enum PaneContent {
         case terminal(TerminalSession)
@@ -113,5 +115,46 @@ final class TerminalPaneNode: Identifiable {
         if let found = first.findParent(of: sessionID) { return found }
         if let found = second.findParent(of: sessionID) { return found }
         return nil
+    }
+
+    /// Walk a same-direction split chain and set ratios so all leaves get equal space.
+    /// Pattern: for N leaves, ratios from root to deepest are 1/N, 1/(N-1), ..., 1/2.
+    func redistributeEqualRatios(forDirection target: SplitDirection) {
+        let leafCount = flattenedChildren(forDirection: target).count
+        guard leafCount > 1 else { return }
+        applyChainRatios(forDirection: target, remaining: leafCount)
+    }
+
+    private func applyChainRatios(forDirection target: SplitDirection, remaining: Int) {
+        guard case .split(let direction, let first, let second) = content,
+              direction == target, remaining > 1 else { return }
+        ratio = 1.0 / CGFloat(remaining)
+        second.applyChainRatios(forDirection: target, remaining: remaining - 1)
+        first.applyChainRatios(forDirection: target, remaining: 1) // first is always a leaf or cross-direction
+    }
+
+    /// Check if this subtree contains a node with the given node ID
+    func containsNode(id nodeID: UUID) -> Bool {
+        if self.id == nodeID { return true }
+        guard case .split(_, let first, let second) = content else { return false }
+        return first.containsNode(id: nodeID) || second.containsNode(id: nodeID)
+    }
+
+    /// Find the topmost ancestor in the same-direction chain that contains a given node ID.
+    /// Searches from `root` downward. Returns the highest split node whose direction matches
+    /// `target` and whose subtree contains `nodeID`.
+    static func findSameDirectionChainRoot(
+        in root: TerminalPaneNode,
+        containing nodeID: UUID,
+        direction target: SplitDirection
+    ) -> TerminalPaneNode? {
+        guard case .split(let dir, let first, let second) = root.content else { return nil }
+        guard root.containsNode(id: nodeID) else { return nil }
+        if dir == target {
+            return root
+        }
+        // Direction mismatch -- look deeper
+        return findSameDirectionChainRoot(in: first, containing: nodeID, direction: target)
+            ?? findSameDirectionChainRoot(in: second, containing: nodeID, direction: target)
     }
 }
