@@ -90,6 +90,8 @@ final class RepositoryViewModel {
     var selectedCommitFile: String?
     var currentCommitFileDiff: String = ""
     var currentCommitFileDiffHunks: [DiffHunk] = []
+    var isLoadingCommitDetails: Bool = false
+    var isLoadingCommitFileDiff: Bool = false
 
     // Terminal — pane tree architecture
     var terminalTabs: [TerminalPaneNode] = []
@@ -238,6 +240,8 @@ final class RepositoryViewModel {
     var aiConflictResolvingRegionID: UUID?
     var aiReviewFindings: [ReviewFinding] = []
     var isReviewVisible: Bool = false
+    @ObservationIgnored var commitDetailsCache = LRUCache<String, String>(capacity: Constants.Limits.commitDetailsCacheSize)
+    @ObservationIgnored var commitFileDiffCache = LRUCache<String, (raw: String, hunks: [DiffHunk])>(capacity: Constants.Limits.commitFileDiffCacheSize)
     var commitReviewCache: [String: [ReviewFinding]] = [:]
     var reviewingCommitID: String?
     var selectedCommitDetailTab: CommitDetailTab = .details
@@ -873,6 +877,8 @@ final class RepositoryViewModel {
         currentCommitFileDiff = ""
         currentCommitFileDiffHunks = []
         selectedHunkLines = []
+        commitDetailsCache.clear()
+        commitFileDiffCache.clear()
         startFileWatcher(for: url)
 
         if applyRepositorySnapshotIfAvailable(for: url) {

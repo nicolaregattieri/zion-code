@@ -51,6 +51,13 @@ struct RepositoryLoadOptions: Sendable {
         includeTagsAndStashes: true,
         inferOrigins: false
     )
+
+    static let stashRefresh = RepositoryLoadOptions(
+        includeWorktreeStatus: true,
+        includeBranchTree: false,
+        includeTagsAndStashes: true,
+        inferOrigins: false
+    )
 }
 
 actor RepositoryWorker {

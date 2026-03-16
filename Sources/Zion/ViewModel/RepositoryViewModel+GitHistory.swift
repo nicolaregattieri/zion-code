@@ -15,21 +15,38 @@ extension RepositoryViewModel {
             return
         }
 
+        // Cache hit: set details directly, no Task needed
+        if let cached = commitDetailsCache.get(commitID) {
+            detailsTask?.cancel()
+            isLoadingCommitDetails = false
+            if commitDetails != cached {
+                commitDetails = cached
+            }
+            return
+        }
+
         detailsTask?.cancel()
         let requestID = UUID()
         detailsRequestID = requestID
         switch policy {
         case .interactive:
+            isLoadingCommitDetails = true
             commitDetails = L10n("Carregando detalhes do commit...")
         case .silent:
             break
         }
 
         detailsTask = Task {
+            defer {
+                if detailsRequestID == requestID {
+                    isLoadingCommitDetails = false
+                }
+            }
             do {
                 let details = try await worker.loadCommitDetails(in: repositoryURL, commitID: commitID)
                 try Task.checkCancellation()
                 guard detailsRequestID == requestID else { return }
+                commitDetailsCache.set(commitID, value: details)
                 if commitDetails != details {
                     commitDetails = details
                 }
@@ -41,6 +58,26 @@ extension RepositoryViewModel {
                 let message = error.localizedDescription
                 if commitDetails != message {
                     commitDetails = message
+                }
+            }
+        }
+    }
+
+    // MARK: - Commit Details Prefetch
+
+    func prefetchCommitDetails(for commitIDs: [String]) {
+        guard let url = repositoryURL else { return }
+        let uncached = commitIDs.filter { commitDetailsCache.get($0) == nil }
+        guard !uncached.isEmpty else { return }
+
+        Task.detached(priority: .background) { [weak self] in
+            guard let self else { return }
+            for id in uncached.prefix(Constants.Limits.commitDetailsPrefetchCount) {
+                guard !Task.isCancelled else { break }
+                if let details = try? await self.worker.loadCommitDetails(in: url, commitID: id) {
+                    await MainActor.run {
+                        self.commitDetailsCache.set(id, value: details)
+                    }
                 }
             }
         }
@@ -298,14 +335,29 @@ extension RepositoryViewModel {
     func loadDiffForCommitFile(commitID: String, file: String) {
         guard let url = repositoryURL else { return }
         selectedCommitFile = file
+
+        // Cache hit: set diff directly, no Task needed
+        let cacheKey = "\(commitID):\(file)"
+        if let cached = commitFileDiffCache.get(cacheKey) {
+            isLoadingCommitFileDiff = false
+            currentCommitFileDiff = cached.raw
+            currentCommitFileDiffHunks = cached.hunks
+            return
+        }
+
+        isLoadingCommitFileDiff = true
         Task {
+            defer { isLoadingCommitFileDiff = false }
             do {
                 let diff = try await worker.runAction(
                     args: ["diff", "\(commitID)~1", commitID, "--", file],
                     in: url
                 )
-                currentCommitFileDiff = diff.isEmpty ? L10n("Nenhuma mudanca.") : diff
-                currentCommitFileDiffHunks = Self.parseDiffHunks(diff)
+                let raw = diff.isEmpty ? L10n("Nenhuma mudanca.") : diff
+                let hunks = Self.parseDiffHunks(diff)
+                commitFileDiffCache.set(cacheKey, value: (raw: raw, hunks: hunks))
+                currentCommitFileDiff = raw
+                currentCommitFileDiffHunks = hunks
             } catch {
                 logger.log(.warn, "Failed to load commit file diff: \(error.localizedDescription)", context: "\(commitID):\(file)", source: #function)
                 currentCommitFileDiff = L10n("error.generic", error.localizedDescription)
