@@ -346,7 +346,10 @@ extension RepositoryViewModel {
                     limit: commitLimitSnapshot
                 )
                 try Task.checkCancellation()
-                guard refreshRequestID == requestID else { return }
+                guard refreshRequestID == requestID else {
+                    onFinish?()
+                    return
+                }
 
                 clearError()
                 currentBranch = payload.currentBranch
@@ -450,7 +453,10 @@ extension RepositoryViewModel {
                 ensureTerminalBridgeHealth(context: "refreshRepository.success.\(origin.rawValue)")
                 onFinish?()
             } catch is CancellationError {
-                guard refreshRequestID == requestID else { return }
+                guard refreshRequestID == requestID else {
+                    onFinish?()
+                    return
+                }
                 if setBusy {
                     isBusy = false
                     disarmBusyWatchdog()
@@ -463,7 +469,10 @@ extension RepositoryViewModel {
                 onFinish?()
                 return
             } catch {
-                guard refreshRequestID == requestID else { return }
+                guard refreshRequestID == requestID else {
+                    onFinish?()
+                    return
+                }
                 if setBusy {
                     isBusy = false
                     disarmBusyWatchdog()

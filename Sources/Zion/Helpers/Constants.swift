@@ -30,6 +30,8 @@ enum Constants {
         static let transferSupportDelay: UInt64 = 600_000_000
         /// Safety timeout to force-clear isBusy if a refresh never completes (60s)
         static let busyWatchdogTimeout: UInt64 = 60_000_000_000
+        /// Safety timeout to force-clear isSwitchingRepository if finalization never fires (10s)
+        static let repositorySwitchWatchdogTimeout: UInt64 = 10_000_000_000
     }
 
     enum Limits {

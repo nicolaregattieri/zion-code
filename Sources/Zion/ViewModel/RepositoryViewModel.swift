@@ -729,6 +729,19 @@ final class RepositoryViewModel {
         isSwitchingRepository = false
     }
 
+    /// Safety net: force-clears isSwitchingRepository after a timeout if finalization never fires.
+    func armSwitchWatchdog(for url: URL, switchToken: UUID) {
+        Task { [weak self] in
+            try? await Task.sleep(nanoseconds: Constants.Timing.repositorySwitchWatchdogTimeout)
+            guard let self, self.repositorySwitchToken == switchToken else { return }
+            if self.isSwitchingRepository {
+                self.logger.log(.warn, "switch.watchdog: force-clearing stale isSwitchingRepository",
+                                context: "repo=\(url.lastPathComponent)", source: #function)
+                self.clearRepositorySwitchState()
+            }
+        }
+    }
+
     func captureRepositorySnapshot(for url: URL) {
         repositorySwitchSnapshots[url] = RepositorySwitchSnapshot(
             capturedAt: Date(),
@@ -909,6 +922,7 @@ final class RepositoryViewModel {
                 }
             )
             refreshFileTree()
+            armSwitchWatchdog(for: url, switchToken: switchToken)
         }
 
         if !pendingExternalFiles.isEmpty {
@@ -977,6 +991,8 @@ final class RepositoryViewModel {
             } else {
                 self.finalizeRepositorySwitch(for: url, switchToken: switchToken)
             }
+
+            self.armSwitchWatchdog(for: url, switchToken: switchToken)
         }
     }
 
