@@ -18,6 +18,7 @@ struct BreadcrumbFolderSegmentButton: View {
             Text(title)
                 .font(DesignSystem.Typography.monoLabel)
                 .lineLimit(1)
+                .help(title)
                 .foregroundStyle(isHovered ? Color.primary : DesignSystem.Colors.textSecondary)
                 .padding(.horizontal, 4)
                 .padding(.vertical, 2)

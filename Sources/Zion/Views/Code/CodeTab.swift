@@ -30,6 +30,7 @@ struct CodeTab: View {
             Text(file.name)
                 .font(.system(size: 11, weight: isActive ? .bold : .regular))
                 .lineLimit(1)
+                .help(file.name)
 
             Button {
                 onClose()

@@ -48,6 +48,7 @@ struct FileTreeNodeView: View {
                     Text(item.name)
                         .font(.system(size: 12, weight: isSelected ? .bold : .regular, design: .monospaced))
                         .lineLimit(1)
+                        .help(item.name)
                         .foregroundStyle(isSelected ? (isDark ? .white : DesignSystem.Colors.info) : (isModified ? DesignSystem.Colors.warning : .primary))
                 }
                 .opacity((isIgnored || model.isFileInCutClipboard(item.id)) && !isSelected ? 0.5 : 1.0)
