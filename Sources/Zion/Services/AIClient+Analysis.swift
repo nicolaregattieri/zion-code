@@ -364,4 +364,63 @@ extension AIClient {
         )
         return try await call(payload: payload, provider: provider, apiKey: apiKey, maxTokens: AILimits.pendingSummaryTokens, lane: .cheapSummary, mode: mode)
     }
+
+    // MARK: - Bridge Content Transformation
+
+    func transformBridgeContent(
+        sourceContent: String,
+        sourceToolName: String,
+        destinationToolName: String,
+        provider: AIProvider,
+        apiKey: String,
+        mode: AIMode
+    ) async throws -> (content: String, confidence: Int) {
+        let maxTokens = sourceContent.count > 2000 ? AILimits.detailedDiffTokens : AILimits.pendingSummaryTokens
+        let lane: AITaskLane = sourceContent.count > 2000 ? .general : .cheapSummary
+
+        let payload = Self.makePromptPayload(
+            task: "Transform AI tool configuration content",
+            taskInstructions: """
+            You are converting an AI tool configuration file from \(sourceToolName) format to \(destinationToolName) format.
+
+            Rules:
+            - Preserve ALL semantic meaning and instructions from the source
+            - Adapt syntax and structure conventions for the destination tool:
+              * Claude uses markdown files with optional XML directives
+              * Codex (OpenAI) uses AGENTS.md and skill wrappers with YAML frontmatter
+              * Cursor uses .mdc files with YAML frontmatter (description, globs, alwaysApply fields)
+              * Gemini uses markdown files similar to Claude
+            - Remove source-tool-specific directives that have no equivalent in the destination
+            - Keep the content actionable and clear for the destination tool
+            - Output ONLY the transformed content, no explanations or metadata
+            - After the content, on a new line, output: CONFIDENCE: <0-100>
+            """,
+            untrustedSections: [
+                AIUntrustedPromptSection(
+                    kind: "source_content",
+                    label: "Source content (\(sourceToolName))",
+                    content: sourceContent,
+                    maxLength: AILimits.maxDiffContentLength
+                ),
+            ]
+        )
+        let raw = try await call(payload: payload, provider: provider, apiKey: apiKey, maxTokens: maxTokens, lane: lane, mode: mode)
+
+        // Parse confidence score from response
+        let lines = raw.components(separatedBy: .newlines)
+        var confidence = 75
+        var contentLines: [String] = []
+
+        for line in lines {
+            if line.trimmingCharacters(in: .whitespaces).uppercased().hasPrefix("CONFIDENCE:") {
+                let scoreStr = line.components(separatedBy: ":").last?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                confidence = Int(scoreStr) ?? 75
+            } else {
+                contentLines.append(line)
+            }
+        }
+
+        let content = contentLines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+        return (content: content + "\n", confidence: min(100, max(0, confidence)))
+    }
 }

@@ -69,11 +69,11 @@ struct BridgeService {
 
         for row in rowsToApply {
             guard let destinationRelativePath = row.destinationRelativePath else { continue }
-            guard let renderedContent = row.renderedContent else { continue }
+            guard let content = row.effectiveContent else { continue }
 
             let destinationURL = repositoryURL.appendingPathComponent(destinationRelativePath)
             try ensureParentDirectory(for: destinationURL)
-            try renderedContent.write(to: destinationURL, atomically: true, encoding: .utf8)
+            try content.write(to: destinationURL, atomically: true, encoding: .utf8)
         }
 
         var matrix = cacheStore.loadMatrix(for: repositoryURL)
@@ -139,7 +139,10 @@ struct BridgeService {
                 reason: L10n("bridge.reason.multipleCandidates"),
                 sourcePreview: row.sourcePreview,
                 destinationPreview: row.destinationPreview,
-                renderedContent: nil
+                renderedContent: nil,
+                transformedContent: nil,
+                validationWarnings: [],
+                compatibilityScore: nil
             )
         }
 
@@ -173,7 +176,10 @@ struct BridgeService {
                 reason: resolved.reason,
                 sourcePreview: previewText(from: cleanedSourceBody(for: artifact, destination: destination)),
                 destinationPreview: "",
-                renderedContent: nil
+                renderedContent: nil,
+                transformedContent: nil,
+                validationWarnings: [],
+                compatibilityScore: nil
             )
         }
 
@@ -194,6 +200,13 @@ struct BridgeService {
             action = .update
         }
 
+        let warnings = validateRenderedContent(
+            renderedContent,
+            destination: destination,
+            artifact: artifact,
+            destinationRelativePath: destinationRelativePath
+        )
+
         return BridgeMappingRow(
             sourceArtifact: artifact,
             destinationTarget: destination,
@@ -204,7 +217,10 @@ struct BridgeService {
             reason: resolved.reason,
             sourcePreview: previewText(from: cleanedSourceBody(for: artifact, destination: destination)),
             destinationPreview: previewText(from: existingContent.isEmpty ? renderedContent : existingContent),
-            renderedContent: resolved.mappingKind == .manualReview ? nil : renderedContent
+            renderedContent: resolved.mappingKind == .manualReview ? nil : renderedContent,
+            transformedContent: nil,
+            validationWarnings: warnings,
+            compatibilityScore: nil
         )
     }
 
@@ -701,8 +717,14 @@ struct BridgeService {
     private func previewText(from body: String) -> String {
         let compact = body.trimmingCharacters(in: .whitespacesAndNewlines)
         guard compact.count > 220 else { return compact }
-        let index = compact.index(compact.startIndex, offsetBy: 220)
-        return String(compact[..<index]) + "..."
+
+        let searchEnd = compact.index(compact.startIndex, offsetBy: 220)
+        let searchRange = compact.startIndex..<searchEnd
+        if let lastNewline = compact.range(of: "\n", options: .backwards, range: searchRange)?.lowerBound {
+            return String(compact[..<lastNewline]) + "\n" + L10n("bridge.preview.truncated")
+        }
+
+        return String(compact[..<searchEnd]) + "\n" + L10n("bridge.preview.truncated")
     }
 
     private func normalizeComparison(_ body: String) -> String {
@@ -801,6 +823,81 @@ struct BridgeService {
         }
 
         return (name, description)
+    }
+
+    // MARK: - Content Validation (Phase 1B)
+
+    private func validateRenderedContent(
+        _ content: String,
+        destination: BridgeTarget,
+        artifact: BridgeArtifact,
+        destinationRelativePath: String
+    ) -> [String] {
+        var warnings: [String] = []
+
+        switch destination {
+        case .cursor:
+            // Check YAML frontmatter is valid
+            if !content.hasPrefix("---\n") {
+                warnings.append(L10n("bridge.validation.cursor.noFrontmatter"))
+            }
+            // Check .mdc extension
+            if !destinationRelativePath.hasSuffix(".mdc") {
+                warnings.append(L10n("bridge.validation.cursor.wrongExtension"))
+            }
+            // Check for unsupported directives (Claude XML tags)
+            if content.contains("<tool_use>") || content.contains("<result>") || content.contains("<anthr") {
+                warnings.append(L10n("bridge.validation.cursor.unsupportedDirectives"))
+            }
+
+        case .claude:
+            // Check markdown structure
+            if content.contains("---\n") && content.contains("alwaysApply:") {
+                warnings.append(L10n("bridge.validation.claude.cursorSyntax"))
+            }
+            // Check for Codex-specific syntax
+            if content.contains("## Workflow\n1. Use the mirror source") {
+                warnings.append(L10n("bridge.validation.claude.codexSyntax"))
+            }
+
+        case .codex:
+            // Check AGENTS.md structure for guidance files
+            if artifact.kind == .skill {
+                if !content.contains("---\nname:") {
+                    warnings.append(L10n("bridge.validation.codex.missingSkillFrontmatter"))
+                }
+            }
+
+        case .gemini:
+            // Check for Claude-specific XML directives
+            if content.contains("<tool_use>") || content.contains("</tool_use>") {
+                warnings.append(L10n("bridge.validation.gemini.claudeDirectives"))
+            }
+        }
+
+        // Universal checks
+        if content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            warnings.append(L10n("bridge.validation.emptyContent"))
+        }
+
+        return warnings
+    }
+
+    // MARK: - Round-Trip Safety (Phase 1D)
+
+    func computeDestinationDiff(
+        existingContent: String,
+        newContent: String
+    ) -> (linesAdded: Int, linesRemoved: Int, destinationOnlyLines: [String]) {
+        let existingLines = Set(existingContent.components(separatedBy: .newlines))
+        let newLines = Set(newContent.components(separatedBy: .newlines))
+
+        let removed = existingLines.subtracting(newLines)
+        let added = newLines.subtracting(existingLines)
+        let destinationOnly = Array(existingLines.subtracting(newLines))
+            .filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+
+        return (linesAdded: added.count, linesRemoved: removed.count, destinationOnlyLines: destinationOnly)
     }
 
     private func yamlEscaped(_ text: String) -> String {

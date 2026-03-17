@@ -86,12 +86,22 @@ struct BridgeScreen: View {
 
                 Spacer(minLength: 0)
 
-                Button(L10n("bridge.action.analyze")) {
-                    model.analyzeBridgeMigration()
+                if model.isBridgeLoading {
+                    ProgressView()
+                        .controlSize(.small)
+
+                    Button(L10n("bridge.action.cancel")) {
+                        model.cancelBridgeAnalysis()
+                    }
+                    .buttonStyle(.bordered)
+                } else {
+                    Button(L10n("bridge.action.analyze")) {
+                        model.analyzeBridgeMigration()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(DesignSystem.Colors.actionPrimary)
+                    .disabled(model.bridgeSourceTarget == model.bridgeDestinationTarget)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(DesignSystem.Colors.actionPrimary)
-                .disabled(model.bridgeSourceTarget == model.bridgeDestinationTarget || model.isBridgeLoading)
             }
 
             if let analysis = model.bridgeAnalysis {
@@ -99,12 +109,39 @@ struct BridgeScreen: View {
                     Text(L10n("bridge.session.route", analysis.sourceTarget.label, analysis.destinationTarget.label))
                         .font(DesignSystem.Typography.bodySmallBold)
                     Spacer(minLength: 0)
-                    Button(L10n("bridge.action.sync")) {
-                        model.applyBridgeMigration()
+
+                    if model.isAIConfigured {
+                        Button {
+                            model.transformBridgeContentWithAI()
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "sparkles")
+                                Text(L10n("bridge.action.aiSync"))
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .tint(DesignSystem.Colors.ai)
+                        .disabled(model.isBridgeLoading || model.isBridgeApplying)
+                        .help(L10n("bridge.action.aiSync.hint"))
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(DesignSystem.Colors.actionPrimary)
-                    .disabled(model.isBridgeApplying || !model.hasSelectedBridgeRows)
+
+                    if model.isBridgeApplying {
+                        ProgressView()
+                            .controlSize(.small)
+
+                        Button(L10n("bridge.action.cancel")) {
+                            model.cancelBridgeAnalysis()
+                        }
+                        .buttonStyle(.bordered)
+                    } else {
+                        Button(L10n("bridge.action.sync")) {
+                            model.applyBridgeMigration()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(DesignSystem.Colors.actionPrimary)
+                        .disabled(!model.hasSelectedBridgeRows)
+                    }
                 }
             }
         }
@@ -248,6 +285,17 @@ struct BridgeScreen: View {
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.leading)
                         Spacer(minLength: 0)
+                        if row.hasValidationIssues {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(DesignSystem.Typography.monoMeta)
+                                .foregroundStyle(DesignSystem.Colors.warning)
+                                .help(row.validationWarnings.joined(separator: "\n"))
+                        }
+                        if let score = row.compatibilityScore {
+                            Text("\(score)%")
+                                .font(DesignSystem.Typography.monoMeta)
+                                .foregroundStyle(score >= 80 ? DesignSystem.Colors.success : score >= 50 ? DesignSystem.Colors.warning : DesignSystem.Colors.error)
+                        }
                         Text(row.confidence.label)
                             .font(DesignSystem.Typography.monoMeta)
                             .foregroundStyle(confidenceTint(row.confidence))
@@ -302,6 +350,42 @@ struct BridgeScreen: View {
                 Text(L10n("bridge.detail.readOnly"))
                     .font(DesignSystem.Typography.bodySmall)
                     .foregroundStyle(.secondary)
+            }
+
+            if row.hasValidationIssues {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(L10n("bridge.validation.title"))
+                        .font(DesignSystem.Typography.monoMeta)
+                        .foregroundStyle(DesignSystem.Colors.warning)
+                    ForEach(row.validationWarnings, id: \.self) { warning in
+                        HStack(alignment: .top, spacing: 6) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(DesignSystem.Typography.meta)
+                                .foregroundStyle(DesignSystem.Colors.warning)
+                            Text(warning)
+                                .font(DesignSystem.Typography.bodySmall)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .padding(10)
+                .background(
+                    RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                        .fill(DesignSystem.Colors.warning.opacity(0.06))
+                )
+            }
+
+            if let score = row.compatibilityScore {
+                HStack(spacing: 8) {
+                    Text(L10n("bridge.detail.compatibility"))
+                        .font(DesignSystem.Typography.monoMeta)
+                        .foregroundStyle(.secondary)
+                    ProgressView(value: Double(score), total: 100)
+                        .tint(score >= 80 ? DesignSystem.Colors.success : score >= 50 ? DesignSystem.Colors.warning : DesignSystem.Colors.error)
+                    Text("\(score)%")
+                        .font(DesignSystem.Typography.monoMeta)
+                        .foregroundStyle(score >= 80 ? DesignSystem.Colors.success : score >= 50 ? DesignSystem.Colors.warning : DesignSystem.Colors.error)
+                }
             }
         }
     }

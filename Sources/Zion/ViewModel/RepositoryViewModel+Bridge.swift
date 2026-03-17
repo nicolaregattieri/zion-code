@@ -25,19 +25,27 @@ extension RepositoryViewModel {
     func analyzeBridgeMigration() {
         guard let repositoryURL else { return }
 
+        bridgeAnalysisTask?.cancel()
         isBridgeLoading = true
-        defer { isBridgeLoading = false }
 
-        do {
-            bridgeAnalysis = try bridgeService.analyze(
-                from: bridgeSourceTarget,
-                to: bridgeDestinationTarget,
-                repositoryURL: repositoryURL
-            )
-            applyBridgeSelectionDefaults()
-            statusMessage = L10n("bridge.status.analyzed", bridgeSourceTarget.label, bridgeDestinationTarget.label)
-        } catch {
-            lastError = error.localizedDescription
+        bridgeAnalysisTask = Task {
+            do {
+                let result = try bridgeService.analyze(
+                    from: bridgeSourceTarget,
+                    to: bridgeDestinationTarget,
+                    repositoryURL: repositoryURL
+                )
+
+                guard !Task.isCancelled else { return }
+                bridgeAnalysis = result
+                applyBridgeSelectionDefaults()
+                statusMessage = L10n("bridge.status.analyzed", bridgeSourceTarget.label, bridgeDestinationTarget.label)
+            } catch {
+                guard !Task.isCancelled else { return }
+                lastError = error.localizedDescription
+            }
+
+            isBridgeLoading = false
         }
     }
 
@@ -45,21 +53,40 @@ extension RepositoryViewModel {
         guard let repositoryURL, let bridgeAnalysis else { return }
         guard !selectedBridgeRowIDs.isEmpty else { return }
 
+        bridgeAnalysisTask?.cancel()
         isBridgeApplying = true
-        defer { isBridgeApplying = false }
 
-        do {
-            self.bridgeAnalysis = try bridgeService.apply(
-                bridgeAnalysis,
-                repositoryURL: repositoryURL,
-                selectedRowIDs: selectedBridgeRowIDs
-            )
-            bridgeState = bridgeService.loadState(repositoryURL: repositoryURL)
-            applyBridgeSelectionDefaults()
-            statusMessage = L10n("bridge.status.synced", bridgeDestinationTarget.label)
-        } catch {
-            lastError = error.localizedDescription
+        let analysis = bridgeAnalysis
+        let selectedIDs = selectedBridgeRowIDs
+
+        bridgeAnalysisTask = Task {
+            do {
+                let applied = try bridgeService.apply(
+                    analysis,
+                    repositoryURL: repositoryURL,
+                    selectedRowIDs: selectedIDs
+                )
+                let newState = bridgeService.loadState(repositoryURL: repositoryURL)
+
+                guard !Task.isCancelled else { return }
+                self.bridgeAnalysis = applied
+                bridgeState = newState
+                applyBridgeSelectionDefaults()
+                statusMessage = L10n("bridge.status.synced", bridgeDestinationTarget.label)
+            } catch {
+                guard !Task.isCancelled else { return }
+                lastError = error.localizedDescription
+            }
+
+            isBridgeApplying = false
         }
+    }
+
+    func cancelBridgeAnalysis() {
+        bridgeAnalysisTask?.cancel()
+        bridgeAnalysisTask = nil
+        isBridgeLoading = false
+        isBridgeApplying = false
     }
 
     func clearBridgeAnalysis() {
@@ -104,6 +131,50 @@ extension RepositoryViewModel {
 
     func isBridgeRowSelected(_ row: BridgeMappingRow) -> Bool {
         selectedBridgeRowIDs.contains(row.id)
+    }
+
+    // MARK: - AI Content Transformation (Phase 1A)
+
+    func transformBridgeContentWithAI() {
+        guard isAIConfigured, var analysis = bridgeAnalysis else { return }
+        let smartSyncEnabled = UserDefaults.standard.bool(forKey: UserDefaultsKeys.Bridge.smartSync)
+        guard smartSyncEnabled else { return }
+
+        bridgeAnalysisTask?.cancel()
+        isBridgeLoading = true
+
+        bridgeAnalysisTask = Task {
+            for i in analysis.rows.indices {
+                guard !Task.isCancelled else { break }
+                guard analysis.rows[i].isSyncable, analysis.rows[i].renderedContent != nil else { continue }
+                guard let sourceContent = analysis.rows[i].renderedContent else { continue }
+
+                do {
+                    let result = try await aiClient.transformBridgeContent(
+                        sourceContent: sourceContent,
+                        sourceToolName: analysis.sourceTarget.label,
+                        destinationToolName: analysis.destinationTarget.label,
+                        provider: aiProvider,
+                        apiKey: aiAPIKey,
+                        mode: aiMode
+                    )
+                    guard !Task.isCancelled else { break }
+                    analysis.rows[i].transformedContent = result.content
+                    analysis.rows[i].compatibilityScore = result.confidence
+                } catch {
+                    if let aiErr = error as? AIError, case .quotaExceeded = aiErr {
+                        aiQuotaExceeded = true
+                        break
+                    }
+                    logger.log(.warn, "Bridge AI transform failed for \(analysis.rows[i].sourceArtifact.relativePath): \(error.localizedDescription)", source: #function)
+                }
+            }
+
+            guard !Task.isCancelled else { return }
+            bridgeAnalysis = analysis
+            statusMessage = L10n("bridge.status.aiTransformed")
+            isBridgeLoading = false
+        }
     }
 
     private func applyBridgeSelectionDefaults() {
