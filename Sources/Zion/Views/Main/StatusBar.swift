@@ -103,10 +103,11 @@ extension ContentView {
                                 if case .connected(let count) = model.mobileAccessConnectionState {
                                     Text("\(count)")
                                 }
-                                if mobileAccessReady {
-                                    Text(model.isTunnelReady ? "WAN" : "LAN")
-                                        .font(DesignSystem.Typography.micro)
-                                }
+                            }
+                            if mobileAccessReady {
+                                Text(model.isTunnelReady ? "WAN" : "LAN")
+                                    .font(DesignSystem.Typography.meta)
+                                    .opacity(DesignSystem.Opacity.visible)
                             }
                             if model.isPreventingSleep, let expiresAt = model.keepAwakeExpiresAt, expiresAt > .now {
                                 TimelineView(.periodic(from: .now, by: 1)) { context in
