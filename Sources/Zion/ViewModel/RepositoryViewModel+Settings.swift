@@ -581,6 +581,30 @@ extension RepositoryViewModel {
         guard pullRequestLoadToken == requestToken, self.repositoryURL == repositoryURL else { return [] }
 
         let transition = Self.openPRNotificationTransition(existingIDs: observedOpenPRIDs, activePRs: prs)
+
+        // Phase 2B: Detect merged/closed PRs
+        if let previousIDs = observedOpenPRIDs, notifyOnNewPRs {
+            let currentIDs = transition.nextIDs
+            let disappearedIDs = previousIDs.subtracting(currentIDs)
+            if !disappearedIDs.isEmpty {
+                let repoName = repositoryURL.lastPathComponent
+                for disappearedID in disappearedIDs {
+                    let title = previousPRTitles[disappearedID] ?? "#\(disappearedID)"
+                    await ntfyClient.sendIfEnabled(
+                        event: .prMergedOrClosed,
+                        title: L10n("ntfy.prMergedClosed.title"),
+                        body: L10n("ntfy.prMergedClosed.body", title),
+                        repoName: repoName
+                    )
+                }
+            }
+        }
+
+        // Cache current PR titles for merge/close detection
+        for pr in prs {
+            previousPRTitles[pr.id] = pr.title
+        }
+
         observedOpenPRIDs = transition.nextIDs
         pullRequests = prs
 

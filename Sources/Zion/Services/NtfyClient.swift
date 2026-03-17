@@ -35,10 +35,13 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
     // Pull Requests
     case prCreated = "prCreated"
     case prReviewRequested = "prReviewRequested"
+    case prMergedOrClosed = "prMergedOrClosed"
     // AI
     case prAutoReviewComplete = "prAutoReviewComplete"
     // Terminal
     case terminalPromptDetected = "terminalPromptDetected"
+    // System
+    case operationComplete = "operationComplete"
 
     var id: String { rawValue }
 
@@ -48,10 +51,12 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
             return .gitOps
         case .prAutoReviewComplete:
             return .ai
-        case .prCreated, .prReviewRequested:
+        case .prCreated, .prReviewRequested, .prMergedOrClosed:
             return .github
         case .terminalPromptDetected:
             return .mobileRemote
+        case .operationComplete:
+            return .gitOps
         }
     }
 
@@ -61,8 +66,10 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
         case .newRemoteCommits: return L10n("ntfy.event.newRemoteCommits")
         case .prCreated: return L10n("ntfy.event.prCreated")
         case .prReviewRequested: return L10n("ntfy.event.prReviewRequested")
+        case .prMergedOrClosed: return L10n("ntfy.event.prMergedOrClosed")
         case .prAutoReviewComplete: return L10n("ntfy.event.prAutoReviewComplete")
         case .terminalPromptDetected: return L10n("ntfy.event.terminalPromptDetected")
+        case .operationComplete: return L10n("ntfy.event.operationComplete")
         }
     }
 
@@ -72,8 +79,10 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
         case .newRemoteCommits: return 4
         case .prCreated: return 3
         case .prReviewRequested: return 4
+        case .prMergedOrClosed: return 3
         case .prAutoReviewComplete: return 4
         case .terminalPromptDetected: return 5
+        case .operationComplete: return 3
         }
     }
 
@@ -83,31 +92,41 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
         case .newRemoteCommits: return "bell"
         case .prCreated: return "tada"
         case .prReviewRequested: return "eyes"
+        case .prMergedOrClosed: return "checkered_flag"
         case .prAutoReviewComplete: return "mag"
         case .terminalPromptDetected: return "bell"
+        case .operationComplete: return "white_check_mark"
         }
     }
 
     /// Whether this event should appear in the notification settings UI.
-    /// Synchronous events (instant inline results) are hidden — notifications add no value.
+    /// Synchronous events (instant inline results) are hidden -- notifications add no value.
     var isUserConfigurable: Bool {
         switch self {
         case .newRemoteCommits,
-             .prCreated, .prReviewRequested, .prAutoReviewComplete,
-             .terminalPromptDetected:
+             .prCreated, .prReviewRequested, .prMergedOrClosed, .prAutoReviewComplete,
+             .terminalPromptDetected, .operationComplete:
             return true
         case .cloneComplete:
-            return false // synchronous — result appears instantly in UI
+            return false // synchronous -- result appears instantly in UI
         }
     }
 
     var enabledByDefault: Bool {
         switch self {
         case .cloneComplete, .newRemoteCommits,
-             .prCreated, .prReviewRequested, .prAutoReviewComplete:
+             .prCreated, .prReviewRequested, .prMergedOrClosed, .prAutoReviewComplete:
             return true
-        case .terminalPromptDetected:
+        case .terminalPromptDetected, .operationComplete:
             return false
+        }
+    }
+
+    /// Whether this event should only be delivered as a local macOS notification (never remote).
+    var isLocalOnly: Bool {
+        switch self {
+        case .operationComplete: return true
+        default: return false
         }
     }
 
@@ -127,6 +146,37 @@ actor NtfyClient {
         var shouldSendAnything: Bool {
             eventEnabled && (deliverLocal || deliverRemote)
         }
+    }
+
+    // MARK: - Retry Queue (Phase 2C)
+
+    private struct RetryItem {
+        let event: NtfyEvent
+        let title: String
+        let body: String
+        let serverURL: String
+        let topic: String
+        let priority: Int
+        let tags: String
+        let timestamp: Date
+        var attemptCount: Int
+    }
+
+    private static let maxRetryQueueSize = 10
+    private static let maxRetryAttempts = 3
+    private static let retryItemMaxAge: TimeInterval = 3600 // 1 hour
+
+    private var retryQueue: [RetryItem] = []
+
+    // MARK: - Batch Buffer (Phase 2D)
+
+    private static let batchWindowSeconds: UInt64 = 30
+
+    private var batchBuffer: [RetryItem] = []
+    private var batchFlushTask: Task<Void, Never>?
+
+    private static var prEvents: Set<NtfyEvent> {
+        [.prCreated, .prReviewRequested]
     }
 
     static func deliveryPlan(
@@ -165,15 +215,45 @@ actor NtfyClient {
             await sendLocalNotification(title: fullTitle, body: fullBody)
         }
 
+        // Local-only events (e.g., operationComplete) skip remote delivery
+        guard !event.isLocalOnly else { return }
+
         if plan.deliverRemote {
-            await send(
-                serverURL: plan.serverURL,
-                topic: plan.topic,
-                title: fullTitle,
-                body: fullBody,
-                priority: event.priority,
-                tags: event.emojiTag
-            )
+            // PR events get batched (Phase 2D), everything else sends immediately
+            if Self.prEvents.contains(event) {
+                bufferPREvent(
+                    event: event,
+                    title: fullTitle,
+                    body: fullBody,
+                    serverURL: plan.serverURL,
+                    topic: plan.topic,
+                    priority: event.priority,
+                    tags: event.emojiTag
+                )
+            } else {
+                let success = await send(
+                    serverURL: plan.serverURL,
+                    topic: plan.topic,
+                    title: fullTitle,
+                    body: fullBody,
+                    priority: event.priority,
+                    tags: event.emojiTag
+                )
+
+                if success {
+                    await flushRetryQueue()
+                } else {
+                    enqueueForRetry(
+                        event: event,
+                        title: fullTitle,
+                        body: fullBody,
+                        serverURL: plan.serverURL,
+                        topic: plan.topic,
+                        priority: event.priority,
+                        tags: event.emojiTag
+                    )
+                }
+            }
         }
     }
 
@@ -189,6 +269,167 @@ actor NtfyClient {
         content.sound = .default
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
         try? await center.add(request)
+    }
+
+    // MARK: - Retry Logic (Phase 2C)
+
+    private func enqueueForRetry(
+        event: NtfyEvent,
+        title: String,
+        body: String,
+        serverURL: String,
+        topic: String,
+        priority: Int,
+        tags: String
+    ) {
+        guard retryQueue.count < Self.maxRetryQueueSize else { return }
+
+        let item = RetryItem(
+            event: event,
+            title: title,
+            body: body,
+            serverURL: serverURL,
+            topic: topic,
+            priority: priority,
+            tags: tags,
+            timestamp: Date(),
+            attemptCount: 1
+        )
+        retryQueue.append(item)
+    }
+
+    func retryPendingNotifications() async {
+        await flushRetryQueue()
+    }
+
+    private func flushRetryQueue() async {
+        let now = Date()
+
+        // Drop expired items (older than 1 hour)
+        retryQueue.removeAll { now.timeIntervalSince($0.timestamp) > Self.retryItemMaxAge }
+
+        guard !retryQueue.isEmpty else { return }
+
+        var remaining: [RetryItem] = []
+
+        for var item in retryQueue {
+            let success = await send(
+                serverURL: item.serverURL,
+                topic: item.topic,
+                title: item.title,
+                body: item.body,
+                priority: item.priority,
+                tags: item.tags
+            )
+
+            if !success {
+                item.attemptCount += 1
+                if item.attemptCount <= Self.maxRetryAttempts {
+                    remaining.append(item)
+                }
+            }
+        }
+
+        retryQueue = remaining
+    }
+
+    // MARK: - PR Event Batching (Phase 2D)
+
+    private func bufferPREvent(
+        event: NtfyEvent,
+        title: String,
+        body: String,
+        serverURL: String,
+        topic: String,
+        priority: Int,
+        tags: String
+    ) {
+        let item = RetryItem(
+            event: event,
+            title: title,
+            body: body,
+            serverURL: serverURL,
+            topic: topic,
+            priority: priority,
+            tags: tags,
+            timestamp: Date(),
+            attemptCount: 0
+        )
+        batchBuffer.append(item)
+
+        // Cancel existing flush timer and start a new one
+        batchFlushTask?.cancel()
+        batchFlushTask = Task {
+            try? await Task.sleep(nanoseconds: Self.batchWindowSeconds * 1_000_000_000)
+            guard !Task.isCancelled else { return }
+            await self.flushBatchBuffer()
+        }
+    }
+
+    private func flushBatchBuffer() async {
+        guard !batchBuffer.isEmpty else { return }
+
+        let items = batchBuffer
+        batchBuffer.removeAll()
+        batchFlushTask = nil
+
+        if items.count == 1 {
+            // Single item: send as-is
+            let item = items[0]
+            let success = await send(
+                serverURL: item.serverURL,
+                topic: item.topic,
+                title: item.title,
+                body: item.body,
+                priority: item.priority,
+                tags: item.tags
+            )
+
+            if !success {
+                enqueueForRetry(
+                    event: item.event,
+                    title: item.title,
+                    body: item.body,
+                    serverURL: item.serverURL,
+                    topic: item.topic,
+                    priority: item.priority,
+                    tags: item.tags
+                )
+            } else {
+                await flushRetryQueue()
+            }
+        } else {
+            // Multiple items: send as summary
+            let summaryTitle = "Zion: \(items.count) new PR events"
+            let summaryBody = items.map(\.body).joined(separator: ", ")
+            // Use the first item's connection details and highest priority
+            let firstItem = items[0]
+            let maxPriority = items.map(\.priority).max() ?? 3
+
+            let success = await send(
+                serverURL: firstItem.serverURL,
+                topic: firstItem.topic,
+                title: summaryTitle,
+                body: summaryBody,
+                priority: maxPriority,
+                tags: "tada"
+            )
+
+            if !success {
+                // Enqueue the summary as a single retry item
+                enqueueForRetry(
+                    event: .prCreated,
+                    title: summaryTitle,
+                    body: summaryBody,
+                    serverURL: firstItem.serverURL,
+                    topic: firstItem.topic,
+                    priority: maxPriority,
+                    tags: "tada"
+                )
+            } else {
+                await flushRetryQueue()
+            }
+        }
     }
 
     func sendTest(serverURL: String, topic: String) async -> Bool {

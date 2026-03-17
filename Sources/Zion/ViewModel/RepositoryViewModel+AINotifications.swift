@@ -80,13 +80,28 @@ extension RepositoryViewModel {
         return names.prefix(3).joined(separator: ", ")
     }
 
-    static func buildReviewRequestNotificationBody(pr: HostedPRInfo, repoContext: String) -> String {
+    static func buildReviewRequestNotificationBody(
+        pr: HostedPRInfo,
+        repoContext: String,
+        fileCount: Int = 0,
+        additions: Int = 0,
+        deletions: Int = 0,
+        autoReviewScore: Int? = nil,
+        topFinding: String? = nil
+    ) -> String {
         let highlights = notificationHighlights(from: repoContext)
         var lines = [String(format: L10n("pr.notification.request.header"), pr.author, pr.title)]
 
         if !pr.headBranch.isEmpty, !pr.baseBranch.isEmpty {
             lines.append(String(format: L10n("pr.notification.request.flow"), pr.headBranch, pr.baseBranch))
         }
+
+        // Lines changed and complexity estimate
+        if additions > 0 || deletions > 0 {
+            let complexity = reviewComplexityLabel(fileCount: fileCount, additions: additions, deletions: deletions)
+            lines.append("+\(additions)/-\(deletions) (\(fileCount) files) - \(complexity)")
+        }
+
         if let touches = highlights.touches {
             lines.append(String(format: L10n("pr.notification.request.touches"), touches))
         }
@@ -97,7 +112,26 @@ extension RepositoryViewModel {
             lines.append(String(format: L10n("pr.notification.request.constraints"), constraints))
         }
 
+        // Auto-review results if available
+        if let score = autoReviewScore {
+            lines.append(L10n("pr.notification.request.riskScore", score))
+        }
+        if let finding = topFinding {
+            lines.append(L10n("pr.notification.request.topFinding", finding))
+        }
+
         return lines.joined(separator: "\n")
+    }
+
+    static func reviewComplexityLabel(fileCount: Int, additions: Int, deletions: Int) -> String {
+        let totalChanges = additions + deletions
+        if fileCount <= 3 && totalChanges < 100 {
+            return L10n("pr.complexity.small")
+        } else if fileCount <= 10 && totalChanges < 500 {
+            return L10n("pr.complexity.medium")
+        } else {
+            return L10n("pr.complexity.large")
+        }
     }
 
     static func buildReviewNotificationBody(
