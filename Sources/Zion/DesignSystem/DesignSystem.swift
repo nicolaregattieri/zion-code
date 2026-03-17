@@ -296,6 +296,7 @@ struct DesignSystem {
         static let selectedSubtle: Double = 0.12
         static let faint: Double = 0.15
         static let ghost: Double = 0.08
+        static let whisper: Double = 0.04
     }
 
     // MARK: - Icon Size Tokens
