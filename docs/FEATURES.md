@@ -143,7 +143,7 @@
 | Smart Categories | Detects: command, path, git hash, URL, image, text |
 | Click to Paste | Single click sends text to active terminal |
 | Double-Click Execute | Double click sends text + newline (executes) |
-| Drag & Drop | Drag items directly into terminal pane |
+| Drag & Drop | Drag items directly into the terminal pane, or drop onto the file browser to import into the repository |
 | Image Capture | Saves copied images to temp dir as JPEG |
 | Auto-Cleanup | Temp images purged after 1h, full cleanup on quit |
 | Item Limit | Keeps up to 20 items, evicts oldest |

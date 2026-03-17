@@ -374,7 +374,7 @@
 // Clipboard
 "help.clipboard.capture" = "Captura automaticamente tudo que você copia na área de transferência";
 "help.clipboard.paste" = "Clique para colar no terminal, duplo clique para executar";
-"help.clipboard.drag" = "Arraste itens diretamente para o terminal";
+"help.clipboard.drag" = "Arraste itens para o terminal ou para o navegador de arquivos";
 "help.clipboard.images" = "Captura imagens copiadas com limpeza automática";
 
 // Operations
@@ -614,8 +614,8 @@
 "map.clipboard.capture.tip1" = "O clipboard mantém até 20 itens, removendo os mais antigos automaticamente.";
 "map.clipboard.paste.title" = "Colar e Executar";
 "map.clipboard.paste.description" = "Clique em um item para colar no terminal. Duplo clique para executar imediatamente (envia com Enter).";
-"map.clipboard.drag.title" = "Arrastar para o Terminal";
-"map.clipboard.drag.description" = "Arraste itens do clipboard diretamente para qualquer painel do terminal.";
+"map.clipboard.drag.title" = "Arrastar para o Terminal ou Navegador";
+"map.clipboard.drag.description" = "Arraste itens do clipboard diretamente para qualquer painel do terminal ou solte-os no navegador de arquivos para importá-los.";
 "map.clipboard.images.title" = "Captura de Imagens";
 "map.clipboard.images.description" = "Imagens copiadas são salvas como JPEG temporário. Limpeza automática após 1 hora e na saída do app.";
 "map.clipboard.images.tip1" = "Útil para capturar screenshots e colar em issues ou documentação.";
@@ -912,7 +912,7 @@
 "help.code.saveas" = "Salvar Como para escolher nome e local do arquivo (⇧⌘S)";
 "help.code.openineditor" = "Abrir arquivos alterados no editor a partir de qualquer tela";
 "help.code.contextmenu" = "Menu de contexto completo no navegador de arquivos (novo, renomear, copiar, colar, excluir)";
-"help.code.filebrowserdnd" = "Arraste e solte arquivos no navegador para mover ou importar do Finder";
+"help.code.filebrowserdnd" = "Arraste e solte arquivos no navegador para mover ou importar do Finder ou Smart Clipboard";
 "help.code.findreplace" = "Buscar e Substituir no editor com destaque de resultados (⌘F / ⌘H)";
 "help.code.markdownpreview" = "Preview Markdown lado a lado para arquivos .md, com links clicáveis e imagens locais";
 "help.code.tabsize" = "Tamanho de tab e estilo de indentação configuráveis (2/4/8, espaços ou tabs)";
