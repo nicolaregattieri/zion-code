@@ -416,14 +416,28 @@ extension RepositoryViewModel {
 
                 commits = mergeExistingStats(into: payload.commits)
                 hasMoreCommits = payload.hasMoreCommits
-                let didSelectedCommitChange = payload.selectedCommitID != selectedCommitSnapshot
+
+                // Preserve user's selection if they clicked a different commit while
+                // this refresh was in flight. The snapshot captured what was selected
+                // at refresh start — if selectedCommitID diverged, the user acted.
+                let userChangedSelectionDuringRefresh = selectedCommitID != selectedCommitSnapshot
+                let effectiveSelectedCommitID: String?
+                if userChangedSelectionDuringRefresh,
+                   let current = selectedCommitID,
+                   payload.commits.contains(where: { $0.id == current }) {
+                    effectiveSelectedCommitID = current
+                } else {
+                    effectiveSelectedCommitID = payload.selectedCommitID
+                }
+
+                let didSelectedCommitChange = effectiveSelectedCommitID != selectedCommitSnapshot
                 if didSelectedCommitChange {
                     selectedCommitFile = nil
                     currentCommitFileDiff = ""
                     currentCommitFileDiffHunks = []
                     clearCommitReviewSelectionStateOnCommitChange()
                 }
-                selectedCommitID = payload.selectedCommitID
+                selectedCommitID = effectiveSelectedCommitID
                 hasConflicts = payload.hasConflicts
                 isMerging = payload.isMerging
                 isRebasing = payload.isRebasing
@@ -475,12 +489,12 @@ extension RepositoryViewModel {
                         clearRepositorySwitchState()
                     }
                 }
-                if didSelectedCommitChange {
+                if didSelectedCommitChange && !userChangedSelectionDuringRefresh {
                     let detailsPolicy: CommitDetailsLoadPolicy = origin.usesSilentCommitDetails ? .silent : .interactive
                     let mode = origin.usesSilentCommitDetails ? "silent" : "interactive"
-                    let commitToken = payload.selectedCommitID.map { String($0.prefix(8)) } ?? "nil"
+                    let commitToken = effectiveSelectedCommitID.map { String($0.prefix(8)) } ?? "nil"
                     logger.log(.info, "details.reload \(mode)", context: "origin=\(origin.rawValue) commit=\(commitToken)", source: #function)
-                    loadCommitDetails(for: payload.selectedCommitID, policy: detailsPolicy)
+                    loadCommitDetails(for: effectiveSelectedCommitID, policy: detailsPolicy)
                 } else {
                     switch origin {
                     case .autoTimer, .fileWatcher:
