@@ -104,6 +104,11 @@ extension ContentView {
                                     Text("\(count)")
                                 }
                             }
+                            if mobileAccessReady {
+                                Text(model.isTunnelReady ? "WAN" : "LAN")
+                                    .font(DesignSystem.Typography.meta)
+                                    .opacity(DesignSystem.Opacity.visible)
+                            }
                             if model.isPreventingSleep, let expiresAt = model.keepAwakeExpiresAt, expiresAt > .now {
                                 TimelineView(.periodic(from: .now, by: 1)) { context in
                                     let remaining = max(0, Int(ceil(expiresAt.timeIntervalSince(context.date))))
@@ -379,17 +384,35 @@ extension ContentView {
     }
 
     private var mobileAccessTooltip: String {
+        let base: String
         switch model.mobileAccessConnectionState {
         case .disabled:
             return ""
         case .starting:
-            return L10n("mobile.status.starting")
+            base = L10n("mobile.status.starting")
         case .waitingForPairing:
-            return L10n("mobile.status.waitingForPairing")
+            base = L10n("mobile.status.waitingForPairing")
         case .connected(let count):
-            return L10n("mobile.status.connected", count)
+            base = L10n("mobile.status.connected", count)
         case .error:
-            return L10n("mobile.status.error")
+            base = L10n("mobile.status.error")
+        }
+
+        if mobileAccessReady {
+            let mode = model.isTunnelReady
+                ? L10n("mobile.status.mode.wan")
+                : L10n("mobile.status.mode.lanOnly")
+            return "\(base) - \(mode)"
+        }
+        return base
+    }
+
+    private var mobileAccessReady: Bool {
+        switch model.mobileAccessConnectionState {
+        case .waitingForPairing, .connected:
+            return true
+        default:
+            return false
         }
     }
 }

@@ -126,6 +126,12 @@ enum UserDefaultsKeys {
         static let recentsExpanded = "zion.sidebar.recentsExpanded"
     }
 
+    // MARK: - Bridge
+
+    enum Bridge {
+        static let smartSync = "zion.bridge.smartSync"
+    }
+
     // MARK: - Clipboard
 
     enum Clipboard {

@@ -42,10 +42,22 @@ extension RepositoryViewModel {
 
         codeReviewTask?.cancel()
         codeReviewTask = Task {
+            guard await !aiSemaphore.isFull else {
+                statusMessage = L10n("ai.busy")
+                return
+            }
+            await aiSemaphore.acquire()
+            defer { Task { await aiSemaphore.release() } }
+
             isCodeReviewLoading = true
+            codeReviewProgressTotal = codeReviewFiles.count
+            codeReviewProgressCurrent = 0
+            codeReviewProgressFileName = ""
 
             for i in codeReviewFiles.indices {
                 guard !Task.isCancelled else { break }
+                codeReviewProgressCurrent = i + 1
+                codeReviewProgressFileName = codeReviewFiles[i].path
                 guard codeReviewFiles[i].findings.isEmpty else { continue }
 
                 do {
@@ -77,6 +89,9 @@ extension RepositoryViewModel {
 
             recalculateCodeReviewStats(commitCount: codeReviewStats.commitCount)
             isCodeReviewLoading = false
+            codeReviewProgressCurrent = 0
+            codeReviewProgressTotal = 0
+            codeReviewProgressFileName = ""
         }
     }
 
@@ -306,6 +321,13 @@ extension RepositoryViewModel {
 
         aiTask?.cancel()
         aiTask = Task {
+            guard await !aiSemaphore.isFull else {
+                statusMessage = L10n("ai.busy")
+                return
+            }
+            await aiSemaphore.acquire()
+            defer { Task { await aiSemaphore.release() } }
+
             isGeneratingAIMessage = true
             defer { isGeneratingAIMessage = false }
 

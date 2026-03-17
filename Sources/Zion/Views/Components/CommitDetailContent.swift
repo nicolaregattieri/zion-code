@@ -184,18 +184,37 @@ struct CommitDetailContent: View {
                                                 .padding(.bottom, 4)
                                         }
 
-                                        if model.isLoadingCommitFileDiff && model.selectedCommitFile == file.path {
+                                        if model.selectedCommitFile == file.path {
+                                            if model.isLoadingCommitFileDiff {
+                                                ProgressView()
+                                                    .controlSize(.small)
+                                                    .frame(maxWidth: .infinity)
+                                                    .padding(.vertical, 12)
+                                            } else if !model.currentCommitFileDiffHunks.isEmpty {
+                                                HunkDiffView(
+                                                    model: model,
+                                                    file: file.path,
+                                                    hunks: model.currentCommitFileDiffHunks,
+                                                    isScrollEnabled: false
+                                                )
+                                            } else if !model.currentCommitFileDiff.isEmpty {
+                                                Text(model.currentCommitFileDiff)
+                                                    .font(DesignSystem.Typography.monoSmall)
+                                                    .foregroundStyle(.secondary)
+                                                    .textSelection(.enabled)
+                                                    .padding(8)
+                                            }
+                                        } else {
+                                            // File was expanded but diff hasn't loaded for it yet
                                             ProgressView()
                                                 .controlSize(.small)
                                                 .frame(maxWidth: .infinity)
                                                 .padding(.vertical, 12)
-                                        } else if !model.currentCommitFileDiffHunks.isEmpty {
-                                            HunkDiffView(
-                                                model: model,
-                                                file: file.path,
-                                                hunks: model.currentCommitFileDiffHunks,
-                                                isScrollEnabled: false
-                                            )
+                                                .onAppear {
+                                                    if let commitID {
+                                                        model.loadDiffForCommitFile(commitID: commitID, file: file.path)
+                                                    }
+                                                }
                                         }
                                     }
                                 }

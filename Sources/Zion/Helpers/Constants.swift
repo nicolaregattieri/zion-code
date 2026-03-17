@@ -60,11 +60,15 @@ enum Constants {
         /// Maximum characters to show in clipboard preview text
         static let clipboardPreviewTruncationLength = 60
         /// Maximum cached commit detail results (keyed by commit hash)
-        static let commitDetailsCacheSize = 20
+        static let commitDetailsCacheSize = 64
         /// Maximum cached commit file diff results (keyed by commitID:filePath)
-        static let commitFileDiffCacheSize = 40
+        static let commitFileDiffCacheSize = 96
         /// Number of visible commits to prefetch details for in background
-        static let commitDetailsPrefetchCount = 15
+        static let commitDetailsPrefetchCount = 25
+        /// Maximum age in days for dangling recovery snapshots before cleanup
+        static let danglingSnapshotMaxAgeDays = 30
+        /// Minimum dangling snapshot count to trigger automatic cleanup
+        static let danglingSnapshotCleanupThreshold = 100
     }
 
     enum RemoteAccess {

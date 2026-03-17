@@ -109,6 +109,9 @@ struct BridgeMappingRow: Identifiable, Codable, Hashable {
     let sourcePreview: String
     let destinationPreview: String
     let renderedContent: String?
+    var transformedContent: String?
+    var validationWarnings: [String] = []
+    var compatibilityScore: Int?
 
     var id: String {
         "\(sourceArtifact.id)->\(destinationTarget.rawValue):\(destinationRelativePath ?? "none")"
@@ -116,6 +119,62 @@ struct BridgeMappingRow: Identifiable, Codable, Hashable {
 
     var isSyncable: Bool {
         action == .create || action == .update
+    }
+
+    /// Content to write: AI-transformed content if available, otherwise rendered content
+    var effectiveContent: String? {
+        transformedContent ?? renderedContent
+    }
+
+    var hasValidationIssues: Bool {
+        !validationWarnings.isEmpty
+    }
+
+    init(
+        sourceArtifact: BridgeArtifact,
+        destinationTarget: BridgeTarget,
+        destinationRelativePath: String?,
+        mappingKind: BridgeMappingKind,
+        action: BridgeSyncActionKind,
+        confidence: BridgeConfidence,
+        reason: String,
+        sourcePreview: String,
+        destinationPreview: String,
+        renderedContent: String?,
+        transformedContent: String? = nil,
+        validationWarnings: [String] = [],
+        compatibilityScore: Int? = nil
+    ) {
+        self.sourceArtifact = sourceArtifact
+        self.destinationTarget = destinationTarget
+        self.destinationRelativePath = destinationRelativePath
+        self.mappingKind = mappingKind
+        self.action = action
+        self.confidence = confidence
+        self.reason = reason
+        self.sourcePreview = sourcePreview
+        self.destinationPreview = destinationPreview
+        self.renderedContent = renderedContent
+        self.transformedContent = transformedContent
+        self.validationWarnings = validationWarnings
+        self.compatibilityScore = compatibilityScore
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        sourceArtifact = try container.decode(BridgeArtifact.self, forKey: .sourceArtifact)
+        destinationTarget = try container.decode(BridgeTarget.self, forKey: .destinationTarget)
+        destinationRelativePath = try container.decodeIfPresent(String.self, forKey: .destinationRelativePath)
+        mappingKind = try container.decode(BridgeMappingKind.self, forKey: .mappingKind)
+        action = try container.decode(BridgeSyncActionKind.self, forKey: .action)
+        confidence = try container.decode(BridgeConfidence.self, forKey: .confidence)
+        reason = try container.decode(String.self, forKey: .reason)
+        sourcePreview = try container.decode(String.self, forKey: .sourcePreview)
+        destinationPreview = try container.decode(String.self, forKey: .destinationPreview)
+        renderedContent = try container.decodeIfPresent(String.self, forKey: .renderedContent)
+        transformedContent = try container.decodeIfPresent(String.self, forKey: .transformedContent)
+        validationWarnings = (try? container.decode([String].self, forKey: .validationWarnings)) ?? []
+        compatibilityScore = try container.decodeIfPresent(Int.self, forKey: .compatibilityScore)
     }
 }
 
@@ -130,7 +189,7 @@ struct BridgeMigrationSummary: Codable, Hashable {
 struct BridgeMigrationAnalysis: Identifiable, Codable, Hashable {
     let sourceTarget: BridgeTarget
     let destinationTarget: BridgeTarget
-    let rows: [BridgeMappingRow]
+    var rows: [BridgeMappingRow]
     let warnings: [String]
     let generatedAt: Date
 

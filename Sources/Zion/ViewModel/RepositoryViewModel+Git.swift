@@ -98,14 +98,55 @@ extension RepositoryViewModel {
     func hardReset(to target: String) {
         let cleanedTarget = target.clean
         guard !cleanedTarget.isEmpty else { return }
-        runDestructiveGitAction(label: "Reset --hard", args: ["reset", "--hard", cleanedTarget], operationTag: "reset-hard", targetHint: String(cleanedTarget.prefix(8)))
+        confirmHardReset(to: cleanedTarget)
     }
 
     func resetToCommit(_ commitID: String, shouldHardReset: Bool) {
         if shouldHardReset {
-            runDestructiveGitAction(label: "Reset --hard", args: ["reset", "--hard", commitID], operationTag: "reset-hard", targetHint: String(commitID.prefix(8)))
+            confirmHardReset(to: commitID)
         } else {
             runGitAction(label: "Reset --soft", args: ["reset", "--soft", commitID])
+        }
+    }
+
+    private func confirmHardReset(to target: String) {
+        guard let repositoryURL else { return }
+
+        Task {
+            let count = (try? await worker.runAction(
+                args: ["rev-list", "--count", "HEAD", "^\(target)"],
+                in: repositoryURL
+            ).clean) ?? "0"
+            let lostCommits = Int(count) ?? 0
+
+            await MainActor.run {
+                let alert = NSAlert()
+                alert.alertStyle = .critical
+                alert.messageText = L10n("reset.hard.confirm.title")
+
+                var details: [String] = []
+                if lostCommits > 0 {
+                    details.append(L10n("reset.hard.confirm.commits", lostCommits))
+                }
+                if uncommittedCount > 0 {
+                    details.append(L10n("reset.hard.confirm.uncommitted", uncommittedCount))
+                }
+                alert.informativeText = details.isEmpty
+                    ? L10n("reset.hard.confirm.message", target)
+                    : details.joined(separator: "\n") + "\n\n" + L10n("reset.hard.confirm.message", target)
+
+                alert.addButton(withTitle: L10n("reset.hard.confirm.proceed"))
+                alert.addButton(withTitle: L10n("Cancelar"))
+
+                guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+                runDestructiveGitAction(
+                    label: "Reset --hard",
+                    args: ["reset", "--hard", target],
+                    operationTag: "reset-hard",
+                    targetHint: String(target.prefix(12))
+                )
+            }
         }
     }
 
@@ -648,6 +689,25 @@ extension RepositoryViewModel {
 
     // MARK: - Credential Retry
 
+    private func isTransientNetworkError(_ error: Error) -> Bool {
+        let message = error.localizedDescription.lowercased()
+        return message.contains("could not resolve host")
+            || message.contains("connection refused")
+            || message.contains("connection reset")
+            || message.contains("network is unreachable")
+            || message.contains("timed out")
+            || message.contains("ssl")
+            || message.contains("temporary failure")
+    }
+
+    private func isNetworkCommand(_ args: [String]) -> Bool {
+        guard let subcommand = args.first?.lowercased() else { return false }
+        return subcommand == "push"
+            || subcommand == "pull"
+            || subcommand == "fetch"
+            || subcommand == "clone"
+    }
+
     func runActionWithCredentialRetry(
         label: String,
         args: [String],
@@ -657,6 +717,17 @@ extension RepositoryViewModel {
         do {
             return try await worker.runAction(args: args, in: repositoryURL)
         } catch {
+            // Retry once for transient network errors on network commands
+            if isNetworkCommand(args), isTransientNetworkError(error) {
+                logger.log(.warn, "Transient network error, retrying in 2s…", context: commandSummary)
+                try await Task.sleep(nanoseconds: 2_000_000_000)
+                do {
+                    return try await worker.runAction(args: args, in: repositoryURL)
+                } catch {
+                    // Fall through to credential retry logic below
+                }
+            }
+
             guard shouldHandleCredentialPrompt(for: args),
                   isCredentialFailure(error),
                   let context = buildGitAuthContext(

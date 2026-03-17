@@ -886,13 +886,62 @@ extension RepositoryViewModel {
 
         // Auto-release after duration (cancel any previous timer first)
         sleepTimerTask?.cancel()
+        keepAwakeWarning15Sent = false
+        keepAwakeWarning5Sent = false
         if let seconds = duration.seconds, seconds > 0 {
             keepAwakeExpiresAt = Date.now.addingTimeInterval(seconds)
-            sleepTimerTask = Task {
-                try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            let repoName = repositoryURL?.lastPathComponent ?? ""
+            sleepTimerTask = Task { [weak self] in
+                guard let self else { return }
+
+                // 15-minute warning
+                let warn15At = seconds - 900
+                if warn15At > 0 {
+                    try? await Task.sleep(nanoseconds: UInt64(warn15At * 1_000_000_000))
+                    guard !Task.isCancelled else { return }
+                    keepAwakeWarning15Sent = true
+                    await ntfyClient.sendIfEnabled(
+                        event: .operationComplete,
+                        title: L10n("keepAwake.warning.title"),
+                        body: L10n("keepAwake.warning.15min"),
+                        repoName: repoName
+                    )
+                }
+
+                // 5-minute warning
+                let warn5At = seconds - 300
+                let alreadySlept = max(warn15At, 0)
+                let sleepFor5 = warn5At - alreadySlept
+                if sleepFor5 > 0 {
+                    try? await Task.sleep(nanoseconds: UInt64(sleepFor5 * 1_000_000_000))
+                    guard !Task.isCancelled else { return }
+                    keepAwakeWarning5Sent = true
+                    await ntfyClient.sendIfEnabled(
+                        event: .operationComplete,
+                        title: L10n("keepAwake.warning.title"),
+                        body: L10n("keepAwake.warning.5min"),
+                        repoName: repoName
+                    )
+                }
+
+                // Wait for remaining time until expiry
+                let totalSlept = max(warn5At, max(warn15At, 0))
+                let remaining = seconds - totalSlept
+                if remaining > 0 {
+                    try? await Task.sleep(nanoseconds: UInt64(remaining * 1_000_000_000))
+                }
                 guard !Task.isCancelled else { return }
+
                 releaseSleepAssertion()
                 UserDefaults.standard.set(KeepAwakeDuration.off.rawValue, forKey: UserDefaultsKeys.MobileAccess.keepAwakeDuration)
+
+                let durationLabel = duration.label
+                await ntfyClient.sendIfEnabled(
+                    event: .operationComplete,
+                    title: L10n("keepAwake.expired.title"),
+                    body: L10n("keepAwake.expired.body", durationLabel),
+                    repoName: repoName
+                )
             }
         } else {
             keepAwakeExpiresAt = nil

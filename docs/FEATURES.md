@@ -160,11 +160,16 @@
 | Branch Management | Checkout, create, merge, rebase, push, pull, rename, delete |
 | Tag Management | Create lightweight, annotated, and GPG-signed tags with message editor; push tags to remote; delete local and remote tags |
 | Stash Management | Create (with message), apply, pop, drop stashes |
-| Recovery Vault | Inspect active/dangling snapshots, copy refs, and restore recovery snapshots safely |
+| Recovery Vault | Inspect active/dangling snapshots with paginated "Show More" view, copy refs, and restore safely |
+| Stash & Tags Empty States | Helpful guidance text when stash or tag lists are empty |
 | Interactive Rebase | Visual UI: pick, reword, edit, squash, fixup, drop + reorder |
 | Cherry-pick | Apply a specific commit onto current branch |
 | Revert | Create revert commit |
-| Reset (Soft/Hard) | Reset branch to a commit |
+| Reset (Soft/Hard) | Reset branch to a commit with confirmation showing lost commit count and uncommitted files |
+| Active Operation Banner | Persistent banner during merge/rebase/cherry-pick with Continue and Abort buttons plus conflict count |
+| Abort Warning | Confirmation dialog before aborting operations when files have been resolved |
+| Friendly Error Messages | User-friendly messages for rebase conflicts, detached HEAD, diverged branches, submodule errors, and more |
+| Network Retry | Automatic single retry with 2s delay for transient network failures on push/pull/fetch |
 | Custom Command | Execute arbitrary `git` command |
 | Discard Changes | Revert file changes (with confirmation) |
 | Add to .gitignore | Ignore a file from context menu |
@@ -201,6 +206,9 @@
 | Commit Split Advisor | Suggests how to split a large staged diff into multiple atomic commits |
 | Commit Message Style | Toggle between compact (single-line) and detailed (header + bullet points) AI-generated messages |
 | Pre-Commit Review Gate | Automatic AI review before committing — shows findings and lets you fix or commit anyway |
+| Quota Exceeded Banner | Actionable banner when AI quota is reached with "Switch Provider" and "Dismiss" buttons |
+| Concurrency Gate | Limits concurrent AI operations (max 2) with user-visible "busy" message |
+| Code Review Progress | Per-file progress indicator showing "Reviewing file 3/12: FileName.swift" |
 | Provider Config | Anthropic (Claude), OpenAI (GPT), Google (Gemini), API keys in Keychain |
 | Connected Providers | Multiple AI providers connected simultaneously — e.g., keep OpenAI for Whisper while using Claude as default |
 
@@ -208,9 +216,14 @@
 
 | Feature | Description |
 |---------|-------------|
-| AI Portability | Migrate AI configurations (CLAUDE.md, .cursorrules, AGENTS.md) between repositories |
-| Migration Console | Visual console showing migration progress and status |
-| Reverse Sync | Sync changes back from target to source repository |
+| AI Portability | Sync AI configurations (CLAUDE.md, .cursor/rules, AGENTS.md, GEMINI.md) between tools |
+| Analyze & Sync | Discover source artifacts, map to destination paths, preview rendered content, and sync selected files |
+| AI Smart Sync | Optional AI-powered content transformation that adapts semantics for the destination tool |
+| Content Validation | Automatic compatibility checks per destination (frontmatter, syntax leaks, unsupported directives) with amber warning indicators |
+| Compatibility Score | AI-generated 0-100% confidence score shown per file after AI Smart Sync |
+| Cache-Based Mapping | Hash-based cache ensures repeat syncs are deterministic and fast |
+| Loading & Cancel | Background analysis/apply with progress indicator and cancel button |
+| Preview Truncation | Smart truncation at nearest newline with "[truncated]" indicator |
 
 ## AI Modes
 
@@ -242,6 +255,10 @@
 | Notifications Tab | ntfy topic, pull request events, PR polling interval, Auto-review toggle | — |
 | Find in Files | Search across all repository files with grouped results and go-to-line | `⇧⌘F` |
 | Ntfy Push Notifications | Configurable ntfy server/topic for push notifications on Git events and AI completions | Settings |
+| PR Merged/Closed Alerts | Notification when a tracked PR is merged or closed during polling | Settings |
+| Keep-Awake Warnings | Local notifications at 15 min and 5 min before prevent-sleep timer expires | — |
+| Notification Retry | Failed notifications are queued (max 10) and retried on next successful send | — |
+| PR Event Batching | Multiple PR notifications within 30 seconds are batched into a single summary | — |
 | Force Push Options | Force Push with Lease (safe) and Force Push (override) when push is rejected due to divergence | — |
 
 ## AI Diff Explanation

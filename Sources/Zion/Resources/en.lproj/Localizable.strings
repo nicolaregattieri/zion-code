@@ -1788,8 +1788,22 @@
 "keepAwake.duration.4h" = "4 Hours";
 "keepAwake.duration.8h" = "8 Hours";
 "keepAwake.duration.indefinite" = "Indefinite";
+"keepAwake.expired.title" = "Prevent Sleep Ended";
+"keepAwake.expired.body" = "Your prevent sleep timer (%@) has expired. The Mac can now sleep normally.";
+"keepAwake.warning.title" = "Prevent Sleep Ending Soon";
+"keepAwake.warning.15min" = "Prevent sleep will end in 15 minutes. Extend it in Settings if needed.";
+"keepAwake.warning.5min" = "Prevent sleep will end in 5 minutes. Extend it in Settings if needed.";
 "ntfy.event.terminalPromptDetected" = "Remote terminal waiting for input";
 "ntfy.event.terminalPromptDetected.hint" = "Mobile Remote Access only. This does not answer the prompt through ntfy. It only reminds you that a remote terminal session is waiting for input so you can reopen the mobile remote session and respond.";
+"ntfy.event.prMergedOrClosed" = "PR merged or closed";
+"ntfy.event.operationComplete" = "Long operation completed";
+"ntfy.prMergedClosed.title" = "PR Closed";
+"ntfy.prMergedClosed.body" = "PR %@ has been merged or closed.";
+"pr.notification.request.riskScore" = "Risk score: %d/100";
+"pr.notification.request.topFinding" = "Top finding: %@";
+"pr.complexity.small" = "Small review";
+"pr.complexity.medium" = "Medium review";
+"pr.complexity.large" = "Large review";
 
 // Mobile Access — Onboarding Steps
 "mobile.access.step.header" = "Step %lld — %@";
@@ -1846,6 +1860,8 @@
 "mobile.status.waitingForPairing" = "Mobile Access: Waiting for pairing";
 "mobile.status.connected" = "Mobile Access: %lld device(s) connected";
 "mobile.status.error" = "Mobile Access: Error";
+"mobile.status.mode.wan" = "Internet tunnel active";
+"mobile.status.mode.lanOnly" = "LAN only (no tunnel)";
 
 // Accessibility Labels — icon-only buttons
 "accessibility.dismiss" = "Dismiss";
@@ -1910,6 +1926,22 @@
 "map.ai.connectedProviders.title" = "Connected Providers";
 "map.ai.connectedProviders.description" = "Keep multiple AI providers connected at the same time. For example, use OpenAI just for Whisper while Claude or Gemini is the default assistant.";
 "map.ai.connectedProviders.tip1" = "Configure each provider in Settings > AI. Connected providers appear in the Connected Providers section.";
+"help.ai.quotaBanner" = "Actionable banner when AI quota is exceeded with quick provider switch";
+"map.ai.quotaBanner.title" = "Quota Exceeded Banner";
+"map.ai.quotaBanner.description" = "When an AI provider's quota is reached, a banner appears with the provider name, a Switch Provider button, and a Dismiss option.";
+"help.ai.bridgeSync" = "AI Smart Sync adapts content semantics when bridging between AI tools";
+"map.ai.bridgeSync.title" = "Bridge AI Smart Sync";
+"map.ai.bridgeSync.description" = "Optional AI-powered content transformation that adapts syntax and structure for the destination tool (e.g., Claude XML directives to Codex markdown).";
+"map.ai.bridgeSync.tip1" = "Click the AI Sync button in Bridge after analyzing. Validation warnings show compatibility issues per file.";
+"help.ops.activeOperation" = "Continue/Abort banner during merge, rebase, or cherry-pick with conflict count";
+"map.ops.activeOperation.title" = "Active Operation Banner";
+"map.ops.activeOperation.description" = "A persistent banner appears during merge, rebase, or cherry-pick with Continue and Abort buttons. Shows the number of files with conflicts.";
+"help.ops.emptyStates" = "Helpful guidance text when stash or tag lists are empty";
+"map.ops.emptyStates.title" = "Empty State Hints";
+"map.ops.emptyStates.description" = "Stash and Tags sections show helpful guidance text when their lists are empty, directing users to the input fields above.";
+"help.mobile.keepAwakeWarnings" = "Local notifications at 15 min and 5 min before prevent-sleep expires";
+"map.mobile.keepAwakeWarnings.title" = "Keep-Awake Timer Warnings";
+"map.mobile.keepAwakeWarnings.description" = "Local macOS notifications at 15 minutes and 5 minutes before the prevent-sleep timer expires, plus a final notification when it ends.";
 
 // Voice-to-text — 1.6.0
 "speech.button.tooltip" = "Voice Input";
@@ -2159,7 +2191,22 @@
 "bridge.reason.newImport" = "No prior mirror was found, so this will be imported as a new destination file.";
 "bridge.reason.multipleCandidates" = "More than one file resolves to this destination path. Review before syncing.";
 "bridge.reason.unsupported" = "Bridge does not know a safe native destination shape for this file.";
+"bridge.action.cancel" = "Cancel";
+"bridge.preview.truncated" = "[truncated]";
 "bridge.open.hint" = "Open Zion Bridge";
+"bridge.action.aiSync" = "AI Sync";
+"bridge.action.aiSync.hint" = "Use AI to adapt content semantics for the destination tool";
+"bridge.status.aiTransformed" = "AI content transformation complete.";
+"bridge.validation.title" = "Compatibility Warnings";
+"bridge.validation.cursor.noFrontmatter" = "Missing YAML frontmatter. Cursor rules require --- delimited frontmatter.";
+"bridge.validation.cursor.wrongExtension" = "Destination path should use .mdc extension for Cursor rules.";
+"bridge.validation.cursor.unsupportedDirectives" = "Contains Claude-specific XML directives that Cursor does not support.";
+"bridge.validation.claude.cursorSyntax" = "Contains Cursor-specific frontmatter syntax (alwaysApply) that may confuse Claude.";
+"bridge.validation.claude.codexSyntax" = "Contains Codex skill wrapper boilerplate that should be stripped for Claude.";
+"bridge.validation.codex.missingSkillFrontmatter" = "Codex skills require YAML frontmatter with name and description fields.";
+"bridge.validation.gemini.claudeDirectives" = "Contains Claude-specific XML tool directives that Gemini does not support.";
+"bridge.validation.emptyContent" = "Rendered content is empty. The source file may have been stripped completely.";
+"bridge.detail.compatibility" = "AI Compatibility";
 
 // Divergence Resolution
 "divergence.title" = "Divergent Branches";
@@ -2174,3 +2221,43 @@
 "divergence.option.forceAlign.desc" = "Discard local commits and reset to remote. A recovery snapshot will be created first.";
 
 "sidebar.release" = "Release";
+
+"recovery.showMore" = "Show %d more snapshots";
+"stash.empty.hint" = "No stashes yet. Use the field above to stash your uncommitted changes.";
+"tags.empty.hint" = "No tags in this repository. Use the field above to create a tag at the current commit.";
+
+// AI Quota
+"ai.quota.exceeded.title" = "AI Quota Exceeded";
+"ai.quota.exceeded.message" = "Your %@ quota has been reached. Switch providers or wait for it to reset.";
+"ai.quota.exceeded.switchProvider" = "Switch Provider";
+"ai.quota.exceeded.retry" = "Dismiss";
+
+// Error Classifier — Phase 4D
+"error.git.rebaseInProgress" = "A rebase is in progress. Continue, abort, or skip.";
+"error.git.cherryPickFailed" = "Cherry-pick failed due to conflicts.";
+"error.git.detachedHead" = "HEAD is detached. Create a branch to save your work.";
+"error.git.diverged" = "Local and remote branches have diverged. Pull or rebase to resolve.";
+"error.git.submoduleError" = "Submodule operation failed. Check submodule initialization.";
+"error.git.nothingToCommit" = "Nothing to commit. Working tree is clean.";
+"error.git.rebaseContinueNoChanges" = "No changes to commit. Use --skip or resolve conflicts.";
+"error.git.remoteNotFound" = "Remote repository not found. Check the URL.";
+"error.git.seeLog" = "See Operations log for details.";
+
+// Git Operations Safety — Phase 4A/4B/4C
+"reset.hard.confirm.title" = "Reset to Target";
+"reset.hard.confirm.message" = "This will reset to %@. This action cannot be undone.";
+"reset.hard.confirm.commits" = "%d commit(s) will be discarded.";
+"reset.hard.confirm.uncommitted" = "%d uncommitted file(s) will be lost.";
+"reset.hard.confirm.proceed" = "Reset";
+"ops.active.continue" = "Continue";
+"ops.active.abort" = "Abort";
+"ops.active.merge" = "Merge in progress";
+"ops.active.rebase" = "Rebase in progress";
+"ops.active.cherryPick" = "Cherry-pick in progress";
+"ops.active.conflicts" = "%d file(s) with conflicts";
+"ops.abort.confirm.title" = "Abort %@?";
+"ops.abort.confirm.message" = "You have %d file(s) with conflicts. Aborting will discard all resolved changes.";
+"ops.abort.confirm.proceed" = "Abort";
+
+// AI Concurrency Gate
+"ai.busy" = "Another AI operation is in progress. Please wait.";

@@ -335,6 +335,8 @@ extension RepositoryViewModel {
     func loadDiffForCommitFile(commitID: String, file: String) {
         guard let url = repositoryURL else { return }
         selectedCommitFile = file
+        currentCommitFileDiff = ""
+        currentCommitFileDiffHunks = []
 
         // Cache hit: set diff directly, no Task needed
         let cacheKey = "\(commitID):\(file)"
@@ -347,7 +349,6 @@ extension RepositoryViewModel {
 
         isLoadingCommitFileDiff = true
         Task {
-            defer { isLoadingCommitFileDiff = false }
             do {
                 let diff = try await worker.runAction(
                     args: ["diff", "\(commitID)~1", commitID, "--", file],
@@ -356,13 +357,18 @@ extension RepositoryViewModel {
                 let raw = diff.isEmpty ? L10n("Nenhuma mudanca.") : diff
                 let hunks = Self.parseDiffHunks(diff)
                 commitFileDiffCache.set(cacheKey, value: (raw: raw, hunks: hunks))
+
+                // Only apply results if this file is still the selected one
+                guard selectedCommitFile == file else { return }
                 currentCommitFileDiff = raw
                 currentCommitFileDiffHunks = hunks
             } catch {
                 logger.log(.warn, "Failed to load commit file diff: \(error.localizedDescription)", context: "\(commitID):\(file)", source: #function)
+                guard selectedCommitFile == file else { return }
                 currentCommitFileDiff = L10n("error.generic", error.localizedDescription)
                 currentCommitFileDiffHunks = []
             }
+            isLoadingCommitFileDiff = false
         }
     }
 

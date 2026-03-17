@@ -66,6 +66,8 @@ struct HelpSheet: View {
                     "help.ops.rebase", "help.ops.hunk", "help.ops.tags",
                     "help.ops.forcepush",
                     "help.ops.init", "help.ops.recovery",
+                    "help.ops.activeOperation",
+                    "help.ops.emptyStates",
                     "help.stashBadge"]
         case .worktrees:
             return ["help.worktree.parallel", "help.worktree.quick", "help.worktree.terminal"]
@@ -76,6 +78,8 @@ struct HelpSheet: View {
                     "help.ai.split", "help.ai.style", "help.ai.precommit",
                     "help.ai.slashcommands",
                     "help.ai.connectedProviders",
+                    "help.ai.quotaBanner",
+                    "help.ai.bridgeSync",
                     "help.aiSummary"]
         case .customization:
             return ["help.customization.languages", "help.customization.appearance",
@@ -100,7 +104,8 @@ struct HelpSheet: View {
         case .mobileAccess:
             return ["help.mobile.pairing", "help.mobile.terminal", "help.mobile.quickActions",
                     "help.mobile.multiProject", "help.mobile.lanMode",
-                    "help.mobile.cloudflare", "help.mobile.preventSleep"]
+                    "help.mobile.cloudflare", "help.mobile.preventSleep",
+                    "help.mobile.keepAwakeWarnings"]
         case .bisect:
             return ["help.bisect.start", "help.bisect.banner", "help.bisect.visual",
                     "help.bisect.ai", "help.bisect.statusPill"]

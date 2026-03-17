@@ -58,7 +58,8 @@ final class RepositoryViewModelBridgeTests: XCTestCase {
             reason: "reason",
             sourcePreview: "source",
             destinationPreview: "destination",
-            renderedContent: action == .create || action == .update ? "rendered" : nil
+            renderedContent: action == .create || action == .update ? "rendered" : nil,
+            validationWarnings: []
         )
     }
 }
