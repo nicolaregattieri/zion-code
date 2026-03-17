@@ -1872,6 +1872,8 @@
 "mobile.status.waitingForPairing" = "Acceso Móvil: Esperando emparejamiento";
 "mobile.status.connected" = "Acceso Móvil: %lld dispositivo(s) conectado(s)";
 "mobile.status.error" = "Acceso Móvil: Error";
+"mobile.status.mode.wan" = "Tunel internet activo";
+"mobile.status.mode.lanOnly" = "Solo LAN (sin tunel)";
 
 // Accessibility Labels — icon-only buttons
 "accessibility.dismiss" = "Cerrar";

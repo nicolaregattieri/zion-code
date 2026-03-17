@@ -1860,6 +1860,8 @@
 "mobile.status.waitingForPairing" = "Mobile Access: Waiting for pairing";
 "mobile.status.connected" = "Mobile Access: %lld device(s) connected";
 "mobile.status.error" = "Mobile Access: Error";
+"mobile.status.mode.wan" = "Internet tunnel active";
+"mobile.status.mode.lanOnly" = "LAN only (no tunnel)";
 
 // Accessibility Labels — icon-only buttons
 "accessibility.dismiss" = "Dismiss";

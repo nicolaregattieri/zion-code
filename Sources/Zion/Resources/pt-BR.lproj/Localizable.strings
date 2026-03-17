@@ -1813,6 +1813,8 @@
 "mobile.status.waitingForPairing" = "Acesso Mobile: Aguardando pareamento";
 "mobile.status.connected" = "Acesso Mobile: %lld dispositivo(s) conectado(s)";
 "mobile.status.error" = "Acesso Mobile: Erro";
+"mobile.status.mode.wan" = "Tunel internet ativo";
+"mobile.status.mode.lanOnly" = "Apenas LAN (sem tunel)";
 
 // Accessibility Labels — icon-only buttons
 "accessibility.dismiss" = "Fechar";
