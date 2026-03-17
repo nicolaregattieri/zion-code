@@ -34,6 +34,28 @@ enum ErrorClassifier {
             // Push rejection
             ("\\[rejected\\].*non-fast-forward", { _ in L10n("error.git.pushRejected") }),
             ("Updates were rejected because the tip", { _ in L10n("error.git.pushRejected") }),
+
+            // Rebase
+            ("rebase in progress", { _ in L10n("error.git.rebaseInProgress") }),
+            ("No changes - did you forget", { _ in L10n("error.git.rebaseContinueNoChanges") }),
+
+            // Cherry-pick
+            ("cherry-pick is not possible|cannot cherry-pick", { _ in L10n("error.git.cherryPickFailed") }),
+
+            // Detached HEAD
+            ("HEAD detached|You are in 'detached HEAD' state", { _ in L10n("error.git.detachedHead") }),
+
+            // Diverged branches
+            ("have diverged", { _ in L10n("error.git.diverged") }),
+
+            // Submodule
+            ("Submodule.*failed|submodule.*not initialized", { _ in L10n("error.git.submoduleError") }),
+
+            // Empty commit
+            ("nothing to commit", { _ in L10n("error.git.nothingToCommit") }),
+
+            // Remote not found
+            ("fatal: '.*' does not appear to be a git repository", { _ in L10n("error.git.remoteNotFound") }),
         ]
 
         for (pattern, message) in patterns {
@@ -50,5 +72,14 @@ enum ErrorClassifier {
             }
         }
         return nil
+    }
+
+    /// Like `classify`, but always returns a message. Falls back to the first sentence of stderr.
+    static func classifyOrFallback(_ stderr: String) -> String {
+        if let classified = classify(stderr) {
+            return classified
+        }
+        let firstSentence = stderr.prefix(120).components(separatedBy: CharacterSet(charactersIn: ".\n")).first ?? ""
+        return firstSentence.trimmingCharacters(in: .whitespacesAndNewlines) + ". " + L10n("error.git.seeLog")
     }
 }

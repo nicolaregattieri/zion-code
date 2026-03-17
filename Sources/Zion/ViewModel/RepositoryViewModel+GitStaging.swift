@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 extension RepositoryViewModel {
     enum CommitScope {
@@ -109,9 +110,41 @@ extension RepositoryViewModel {
         runGitAction(label: "Rename Remote", args: ["remote", "rename", oldName, newName])
     }
 
-    func abortMerge() { runGitAction(label: "Abort Merge", args: ["merge", "--abort"]) }
-    func abortRebase() { runGitAction(label: "Abort Rebase", args: ["rebase", "--abort"]) }
-    func abortCherryPick() { runGitAction(label: "Abort Cherry-pick", args: ["cherry-pick", "--abort"]) }
+    func abortMerge() {
+        confirmAbort(operation: "Merge") {
+            self.runGitAction(label: "Abort Merge", args: ["merge", "--abort"])
+        }
+    }
+
+    func abortRebase() {
+        confirmAbort(operation: "Rebase") {
+            self.runGitAction(label: "Abort Rebase", args: ["rebase", "--abort"])
+        }
+    }
+
+    func abortCherryPick() {
+        confirmAbort(operation: "Cherry-pick") {
+            self.runGitAction(label: "Abort Cherry-pick", args: ["cherry-pick", "--abort"])
+        }
+    }
+
+    private func confirmAbort(operation: String, onConfirm: @escaping () -> Void) {
+        guard !conflictedFiles.isEmpty else {
+            onConfirm()
+            return
+        }
+
+        let alert = NSAlert()
+        alert.alertStyle = NSAlert.Style.warning
+        alert.messageText = L10n("ops.abort.confirm.title", operation)
+        alert.informativeText = L10n("ops.abort.confirm.message", conflictedFiles.count)
+        alert.addButton(withTitle: L10n("ops.abort.confirm.proceed"))
+        alert.addButton(withTitle: L10n("Cancelar"))
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            onConfirm()
+        }
+    }
 
     func localBranchExists(named name: String) -> Bool {
         branchInfos.contains(where: { !$0.isRemote && $0.name == name })
