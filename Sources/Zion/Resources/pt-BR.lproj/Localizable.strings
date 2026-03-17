@@ -1741,8 +1741,22 @@
 "keepAwake.duration.4h" = "4 Horas";
 "keepAwake.duration.8h" = "8 Horas";
 "keepAwake.duration.indefinite" = "Indefinido";
+"keepAwake.expired.title" = "Prevencao de Suspensao Encerrada";
+"keepAwake.expired.body" = "Seu timer de prevencao de suspensao (%@) expirou. O Mac pode dormir normalmente agora.";
+"keepAwake.warning.title" = "Prevencao de Suspensao Acabando";
+"keepAwake.warning.15min" = "A prevencao de suspensao vai encerrar em 15 minutos. Estenda nas Configuracoes se necessario.";
+"keepAwake.warning.5min" = "A prevencao de suspensao vai encerrar em 5 minutos. Estenda nas Configuracoes se necessario.";
 "ntfy.event.terminalPromptDetected" = "Terminal remoto aguardando entrada";
 "ntfy.event.terminalPromptDetected.hint" = "Somente para Acesso Remoto Mobile. Isso não responde o prompt pelo ntfy. Apenas avisa que uma sessão remota está aguardando entrada para você reabrir a sessão mobile remota e responder.";
+"ntfy.event.prMergedOrClosed" = "PR mergeado ou fechado";
+"ntfy.event.operationComplete" = "Operacao longa concluida";
+"ntfy.prMergedClosed.title" = "PR Fechado";
+"ntfy.prMergedClosed.body" = "PR %@ foi mergeado ou fechado.";
+"pr.notification.request.riskScore" = "Score de risco: %d/100";
+"pr.notification.request.topFinding" = "Principal achado: %@";
+"pr.complexity.small" = "Revisao pequena";
+"pr.complexity.medium" = "Revisao media";
+"pr.complexity.large" = "Revisao grande";
 
 // Mobile Access — Onboarding Steps
 "mobile.access.step.header" = "Passo %lld — %@";
@@ -1910,6 +1924,22 @@
 "map.ai.connectedProviders.title" = "Provedores Conectados";
 "map.ai.connectedProviders.description" = "Mantenha múltiplos provedores de IA conectados ao mesmo tempo. Por exemplo, use OpenAI apenas para Whisper enquanto Claude ou Gemini é o assistente padrão.";
 "map.ai.connectedProviders.tip1" = "Configure cada provedor em Configurações > IA. Os provedores conectados aparecem na seção Provedores Conectados.";
+"help.ai.quotaBanner" = "Banner com acao quando a cota de IA e excedida com troca rapida de provedor";
+"map.ai.quotaBanner.title" = "Banner de Cota Excedida";
+"map.ai.quotaBanner.description" = "Quando a cota de um provedor de IA e atingida, um banner aparece com o nome do provedor, botao Trocar Provedor e opcao Dispensar.";
+"help.ai.bridgeSync" = "AI Smart Sync adapta a semantica do conteudo ao migrar entre ferramentas de IA";
+"map.ai.bridgeSync.title" = "Bridge AI Smart Sync";
+"map.ai.bridgeSync.description" = "Transformacao opcional por IA que adapta sintaxe e estrutura para a ferramenta destino (ex: diretivas XML do Claude para markdown do Codex).";
+"map.ai.bridgeSync.tip1" = "Clique no botao AI Sync no Bridge apos analisar. Avisos de validacao mostram problemas de compatibilidade por arquivo.";
+"help.ops.activeOperation" = "Banner de Continuar/Abortar durante merge, rebase ou cherry-pick com contagem de conflitos";
+"map.ops.activeOperation.title" = "Banner de Operacao Ativa";
+"map.ops.activeOperation.description" = "Um banner persistente aparece durante merge, rebase ou cherry-pick com botoes Continuar e Abortar. Mostra o numero de arquivos com conflitos.";
+"help.ops.emptyStates" = "Texto de orientacao quando listas de stash ou tags estao vazias";
+"map.ops.emptyStates.title" = "Dicas de Estado Vazio";
+"map.ops.emptyStates.description" = "As secoes Stash e Tags mostram texto de orientacao quando suas listas estao vazias, direcionando usuarios aos campos de entrada acima.";
+"help.mobile.keepAwakeWarnings" = "Notificacoes locais 15 min e 5 min antes do timer de prevencao de suspensao expirar";
+"map.mobile.keepAwakeWarnings.title" = "Avisos do Timer de Prevencao";
+"map.mobile.keepAwakeWarnings.description" = "Notificacoes locais do macOS 15 minutos e 5 minutos antes do timer de prevencao de suspensao expirar, mais uma notificacao final quando encerra.";
 
 // Voice-to-text — 1.6.0
 "speech.button.tooltip" = "Entrada de Voz";
@@ -2159,7 +2189,22 @@
 "bridge.reason.newImport" = "Nenhum espelho anterior foi encontrado, então isso será importado como um novo arquivo de destino.";
 "bridge.reason.multipleCandidates" = "Mais de um arquivo resolve para este caminho de destino. Revise antes de sincronizar.";
 "bridge.reason.unsupported" = "O Bridge não conhece um formato nativo seguro de destino para este arquivo.";
+"bridge.action.cancel" = "Cancelar";
+"bridge.preview.truncated" = "[truncado]";
 "bridge.open.hint" = "Abrir Zion Bridge";
+"bridge.action.aiSync" = "Sync IA";
+"bridge.action.aiSync.hint" = "Usar IA para adaptar a semantica do conteudo para a ferramenta destino";
+"bridge.status.aiTransformed" = "Transformacao de conteudo por IA concluida.";
+"bridge.validation.title" = "Avisos de Compatibilidade";
+"bridge.validation.cursor.noFrontmatter" = "Frontmatter YAML ausente. Regras do Cursor exigem frontmatter delimitado por ---.";
+"bridge.validation.cursor.wrongExtension" = "Caminho destino deve usar extensao .mdc para regras do Cursor.";
+"bridge.validation.cursor.unsupportedDirectives" = "Contem diretivas XML do Claude que o Cursor nao suporta.";
+"bridge.validation.claude.cursorSyntax" = "Contem sintaxe de frontmatter do Cursor (alwaysApply) que pode confundir o Claude.";
+"bridge.validation.claude.codexSyntax" = "Contem boilerplate de skill do Codex que deve ser removido para o Claude.";
+"bridge.validation.codex.missingSkillFrontmatter" = "Skills do Codex exigem frontmatter YAML com campos name e description.";
+"bridge.validation.gemini.claudeDirectives" = "Contem diretivas XML de ferramentas do Claude que o Gemini nao suporta.";
+"bridge.validation.emptyContent" = "Conteudo renderizado esta vazio. O arquivo fonte pode ter sido removido completamente.";
+"bridge.detail.compatibility" = "Compatibilidade IA";
 
 // Divergence Resolution
 "divergence.title" = "Branches Divergentes";
@@ -2174,3 +2219,43 @@
 "divergence.option.forceAlign.desc" = "Descarta commits locais e reseta para o remoto. Um snapshot de recuperação será criado antes.";
 
 "sidebar.release" = "Release";
+
+"recovery.showMore" = "Mostrar mais %d snapshots";
+"stash.empty.hint" = "Nenhum stash ainda. Use o campo acima para guardar alteracoes nao commitadas.";
+"tags.empty.hint" = "Nenhuma tag neste repositorio. Use o campo acima para criar uma tag no commit atual.";
+
+// AI Quota
+"ai.quota.exceeded.title" = "Cota de IA Excedida";
+"ai.quota.exceeded.message" = "Sua cota do %@ foi atingida. Troque de provedor ou aguarde.";
+"ai.quota.exceeded.switchProvider" = "Trocar Provedor";
+"ai.quota.exceeded.retry" = "Dispensar";
+
+// Error Classifier — Phase 4D
+"error.git.rebaseInProgress" = "Rebase em andamento. Continue, aborte ou pule.";
+"error.git.cherryPickFailed" = "Cherry-pick falhou devido a conflitos.";
+"error.git.detachedHead" = "HEAD esta desanexado. Crie uma branch para salvar seu trabalho.";
+"error.git.diverged" = "Branches local e remota divergiram. Faca pull ou rebase.";
+"error.git.submoduleError" = "Operacao de submodulo falhou. Verifique a inicializacao.";
+"error.git.nothingToCommit" = "Nada para commitar. Arvore de trabalho limpa.";
+"error.git.rebaseContinueNoChanges" = "Sem alteracoes para commitar. Use --skip ou resolva conflitos.";
+"error.git.remoteNotFound" = "Repositorio remoto nao encontrado. Verifique a URL.";
+"error.git.seeLog" = "Veja o log de Operacoes para detalhes.";
+
+// Git Operations Safety — Phase 4A/4B/4C
+"reset.hard.confirm.title" = "Resetar para o Alvo";
+"reset.hard.confirm.message" = "Isso vai resetar para %@. Esta acao nao pode ser desfeita.";
+"reset.hard.confirm.commits" = "%d commit(s) serao descartados.";
+"reset.hard.confirm.uncommitted" = "%d arquivo(s) nao commitados serao perdidos.";
+"reset.hard.confirm.proceed" = "Resetar";
+"ops.active.continue" = "Continuar";
+"ops.active.abort" = "Abortar";
+"ops.active.merge" = "Merge em andamento";
+"ops.active.rebase" = "Rebase em andamento";
+"ops.active.cherryPick" = "Cherry-pick em andamento";
+"ops.active.conflicts" = "%d arquivo(s) com conflitos";
+"ops.abort.confirm.title" = "Abortar %@?";
+"ops.abort.confirm.message" = "Voce tem %d arquivo(s) com conflitos. Abortar vai descartar todas as resolucoes.";
+"ops.abort.confirm.proceed" = "Abortar";
+
+// AI Concurrency Gate
+"ai.busy" = "Outra operacao de IA em andamento. Aguarde.";

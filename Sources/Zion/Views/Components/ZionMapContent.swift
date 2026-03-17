@@ -138,6 +138,8 @@ struct ZionMapContent {
                              tips: ["map.ops.tags.tip1"]),
                 ZionMapEntry("map.ops.forcepush.title", description: "map.ops.forcepush.description",
                              tips: ["map.ops.forcepush.tip1"]),
+                ZionMapEntry("map.ops.activeOperation.title", description: "map.ops.activeOperation.description"),
+                ZionMapEntry("map.ops.emptyStates.title", description: "map.ops.emptyStates.description"),
             ]
 
         case .worktrees:
@@ -173,6 +175,9 @@ struct ZionMapContent {
                              tips: ["map.ai.slashcommands.tip1"]),
                 ZionMapEntry("map.ai.connectedProviders.title", description: "map.ai.connectedProviders.description",
                              tips: ["map.ai.connectedProviders.tip1"]),
+                ZionMapEntry("map.ai.quotaBanner.title", description: "map.ai.quotaBanner.description"),
+                ZionMapEntry("map.ai.bridgeSync.title", description: "map.ai.bridgeSync.description",
+                             tips: ["map.ai.bridgeSync.tip1"]),
             ]
 
         case .customization:
@@ -255,6 +260,7 @@ struct ZionMapContent {
                 ZionMapEntry("map.mobile.cloudflare.title", description: "map.mobile.cloudflare.description",
                              tips: ["map.mobile.cloudflare.tip1"]),
                 ZionMapEntry("map.mobile.preventSleep.title", description: "map.mobile.preventSleep.description"),
+                ZionMapEntry("map.mobile.keepAwakeWarnings.title", description: "map.mobile.keepAwakeWarnings.description"),
             ]
 
         case .clone:
