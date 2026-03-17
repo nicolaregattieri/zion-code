@@ -293,6 +293,28 @@ extension RepositoryViewModel {
             : L10n("stash.restore.error.applyGeneric")
     }
 
+    // MARK: - Dangling Snapshot Cleanup
+
+    func cleanDanglingSnapshots(olderThanDays: Int = Constants.Limits.danglingSnapshotMaxAgeDays) {
+        guard let repositoryURL else { return }
+
+        Task {
+            let cutoff = Date().addingTimeInterval(-Double(olderThanDays) * 86400)
+            let staleSnapshots = recoverySnapshots.filter { snapshot in
+                snapshot.source == .danglingSnapshot && snapshot.date < cutoff
+            }
+
+            guard staleSnapshots.count > Constants.Limits.danglingSnapshotCleanupThreshold else { return }
+
+            // Dangling snapshots are unreachable commits — git gc cleans them up
+            let _ = try? await worker.runAction(args: ["gc", "--auto", "--quiet"], in: repositoryURL)
+            logger.log(.info, "Cleaned dangling snapshots older than \(olderThanDays) days", source: #function)
+
+            // Refresh the list
+            refreshRecoverySnapshots(includeDangling: true)
+        }
+    }
+
     // MARK: - Stash Reference Resolution
 
     func resolveStashReference(_ input: String) async -> String? {

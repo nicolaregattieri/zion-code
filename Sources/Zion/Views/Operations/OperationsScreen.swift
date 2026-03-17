@@ -6,6 +6,7 @@ struct OperationsScreen: View {
     let performGitAction: (String, String, Bool, @escaping () -> Void) -> Void
     let branchContextMenu: (String) -> AnyView
     @Environment(\.zionModeEnabled) private var zionModeEnabled
+    @State private var recoveryVaultVisibleCount: Int = 16
 
     var body: some View {
         ScrollView {
@@ -449,6 +450,12 @@ struct OperationsScreen: View {
                     performGitAction(L10n("Criar stash"), L10n("Salvar alteracoes locais no stash?"), false) { model.createStash() }
                 }.buttonStyle(.borderedProminent).tint(DesignSystem.Colors.actionPrimary)
             }
+            if model.stashes.isEmpty {
+                Text(L10n("stash.empty.hint"))
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
             Picker(L10n("Stash"), selection: $model.selectedStash) {
                 ForEach(model.stashes, id: \.self) { stash in Text(stash).tag(stash) }
             }.pickerStyle(.menu).disabled(model.stashes.isEmpty)
@@ -473,6 +480,12 @@ struct OperationsScreen: View {
                 .buttonStyle(.borderedProminent)
                 .tint(DesignSystem.Colors.actionPrimary)
                 Button(L10n("Remover")) { performGitAction(L10n("Remover tag"), L10n("Deseja remover a tag informada?"), true) { model.deleteTag() } }.buttonStyle(.bordered).tint(DesignSystem.Colors.destructive)
+            }
+            if model.tags.isEmpty {
+                Text(L10n("tags.empty.hint"))
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .sheet(isPresented: $model.isTagDetailSheetVisible) {
@@ -512,7 +525,7 @@ struct OperationsScreen: View {
             } else {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 8) {
-                        ForEach(model.recoverySnapshots.prefix(16)) { snapshot in
+                        ForEach(model.recoverySnapshots.prefix(recoveryVaultVisibleCount)) { snapshot in
                             HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                                 VStack(alignment: .leading, spacing: 2) {
                                     HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
@@ -558,6 +571,14 @@ struct OperationsScreen: View {
                             .padding(8)
                             .background(DesignSystem.Colors.glassMinimal)
                             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
+                        }
+                        if model.recoverySnapshots.count > recoveryVaultVisibleCount {
+                            Button(L10n("recovery.showMore", model.recoverySnapshots.count - recoveryVaultVisibleCount)) {
+                                recoveryVaultVisibleCount += 16
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .frame(maxWidth: .infinity, alignment: .center)
                         }
                     }
                     .padding(.vertical, 2)

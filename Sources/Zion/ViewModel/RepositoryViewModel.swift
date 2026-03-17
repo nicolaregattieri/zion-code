@@ -168,6 +168,7 @@ final class RepositoryViewModel {
     var isBridgeLoading: Bool = false
     var isBridgeApplying: Bool = false
     @ObservationIgnored let bridgeService = BridgeService()
+    @ObservationIgnored var bridgeAnalysisTask: Task<Void, Never>?
 
     // Git Hosting Provider integration
     var pullRequests: [HostedPRInfo] = []
@@ -181,6 +182,7 @@ final class RepositoryViewModel {
     @ObservationIgnored var prTask: Task<Void, Never>?
     @ObservationIgnored var pullRequestLoadToken = UUID()
     @ObservationIgnored var observedOpenPRIDs: Set<Int>?
+    @ObservationIgnored var previousPRTitles: [Int: String] = [:]
 
     // Branch review
     var isBranchReviewSheetVisible: Bool = false
@@ -211,6 +213,9 @@ final class RepositoryViewModel {
     var selectedReviewFileID: UUID?
     var isCodeReviewLoading: Bool = false
     var codeReviewStats: CodeReviewStats = CodeReviewStats(totalFiles: 0, totalAdditions: 0, totalDeletions: 0, commitCount: 0, criticalCount: 0, warningCount: 0, suggestionCount: 0)
+    var codeReviewProgressCurrent: Int = 0
+    var codeReviewProgressTotal: Int = 0
+    var codeReviewProgressFileName: String = ""
     @ObservationIgnored var codeReviewTask: Task<Void, Never>?
 
     // PR Review Queue
@@ -253,6 +258,7 @@ final class RepositoryViewModel {
     var isChangelogSheetVisible: Bool = false
     var changelogFromRef: String = ""
     var changelogToRef: String = "HEAD"
+    var aiHistorySearchError: String?
     var aiHistorySearchResult: AIHistorySearchResult?
     var isSemanticSearchActive: Bool = false
     var branchSummaries: [String: String] = [:]
@@ -297,6 +303,7 @@ final class RepositoryViewModel {
         didSet { UserDefaults.standard.set(commitMessageStyle.rawValue, forKey: UserDefaultsKeys.AI.commitMessageStyle) }
     }
     @ObservationIgnored let aiClient = AIClient()
+    @ObservationIgnored let aiSemaphore = AsyncSemaphore(maxConcurrent: 2)
     @ObservationIgnored let repoMemoryService = RepoMemoryService()
     @ObservationIgnored var aiTask: Task<Void, Never>?
     @ObservationIgnored var repoMemoryTask: Task<Void, Never>?
@@ -324,6 +331,7 @@ final class RepositoryViewModel {
             _cachedAIKey = newValue
             _cachedAIKeyProvider = aiProvider
             _aiKeyRevision += 1 // Trigger observation
+            aiQuotaExceeded = false // Reset on key change
         }
     }
 
@@ -400,6 +408,8 @@ final class RepositoryViewModel {
     @ObservationIgnored var sleepTimerTask: Task<Void, Never>?
     var keepAwakeExpiresAt: Date?
     var isPreventingSleep = false
+    var keepAwakeWarning15Sent = false
+    var keepAwakeWarning5Sent = false
     @ObservationIgnored var wakeObserver: NSObjectProtocol?
     @ObservationIgnored var activeGitActionToken: UUID?
 
