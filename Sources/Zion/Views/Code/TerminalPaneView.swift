@@ -28,6 +28,12 @@ struct TerminalPaneView: View {
                         .padding(.top, 4)
                 }
             }
+            .overlay {
+                if model.terminalSessions.count > 1, focusedSessionID != session.id {
+                    Color.black.opacity(DesignSystem.Opacity.whisper)
+                        .allowsHitTesting(false)
+                }
+            }
             .overlay(alignment: .topTrailing) {
                 if model.terminalSessions.count > 1 {
                     SearchNavButton(
@@ -38,6 +44,7 @@ struct TerminalPaneView: View {
                     .padding(4)
                 }
             }
+            .animation(.easeInOut(duration: 0.15), value: focusedSessionID)
             .padding(.horizontal, DesignSystem.Spacing.micro)
             .contentShape(Rectangle())
             .onTapGesture { model.focusedSessionID = session.id }

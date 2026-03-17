@@ -22,6 +22,7 @@ struct TerminalTabChip: View {
             Text(title)
                 .font(.system(size: 10, weight: isActive ? .bold : .regular, design: .monospaced))
                 .lineLimit(1)
+                .help(title)
 
             if sessions.count > 1 {
                 Text("\(sessions.count)")

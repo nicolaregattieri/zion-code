@@ -86,6 +86,7 @@ struct CommitRowView: View {
                     .font(DesignSystem.Typography.sectionTitle)
                     .lineLimit(1)
                     .foregroundStyle(.primary)
+                    .help(commit.subject)
                 
                 metadataRow
                 decorationRow

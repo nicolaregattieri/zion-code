@@ -2194,3 +2194,5 @@
 "divergence.option.merge.desc" = "Crea un commit de merge preservando ambos historiales.";
 "divergence.option.forceAlign" = "Forzar Alineación con Remoto";
 "divergence.option.forceAlign.desc" = "Descarta commits locales y resetea al remoto. Se creará una instantánea de recuperación primero.";
+
+"sidebar.release" = "Release";

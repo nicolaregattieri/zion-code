@@ -305,6 +305,7 @@ private struct PROpenRow: View {
                         Text(pr.title)
                             .font(DesignSystem.Typography.bodyMedium)
                             .lineLimit(1)
+                            .help(pr.title)
                     }
 
                     HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
@@ -316,6 +317,7 @@ private struct PROpenRow: View {
                             .font(DesignSystem.Typography.monoMeta)
                             .foregroundStyle(.tertiary)
                             .lineLimit(1)
+                            .help("\(pr.headBranch) → \(pr.baseBranch)")
 
                         if pr.isDraft {
                             Text(L10n("pr.draft"))

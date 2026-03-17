@@ -48,7 +48,7 @@ struct StatusChip: View {
             Image(systemName: icon)
                 .font(DesignSystem.Typography.label)
                 .foregroundStyle(tint)
-            
+
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
                     .font(DesignSystem.Typography.metaBold)
@@ -57,10 +57,13 @@ struct StatusChip: View {
                 Text(value)
                     .font(DesignSystem.Typography.monoLabel)
                     .lineLimit(1)
+                    .truncationMode(.tail)
             }
+            Spacer(minLength: 0)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
+        .help(value)
         .background(
             RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous)
                 .fill(tint.opacity(0.12))
