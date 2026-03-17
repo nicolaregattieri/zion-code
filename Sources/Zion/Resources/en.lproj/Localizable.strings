@@ -478,7 +478,7 @@
 // Clipboard
 "help.clipboard.capture" = "Automatically captures everything you copy to the clipboard";
 "help.clipboard.paste" = "Click to paste in terminal, double-click to execute";
-"help.clipboard.drag" = "Drag items directly into the terminal";
+"help.clipboard.drag" = "Drag items into the terminal or drop onto the file browser to import";
 "help.clipboard.images" = "Captures copied images with automatic cleanup";
 
 // Operations
@@ -718,8 +718,8 @@
 "map.clipboard.capture.tip1" = "The clipboard keeps up to 20 items, automatically removing the oldest.";
 "map.clipboard.paste.title" = "Paste and Execute";
 "map.clipboard.paste.description" = "Click an item to paste in terminal. Double-click to execute immediately (sends with Enter).";
-"map.clipboard.drag.title" = "Drag to Terminal";
-"map.clipboard.drag.description" = "Drag clipboard items directly into any terminal pane.";
+"map.clipboard.drag.title" = "Drag to Terminal or File Browser";
+"map.clipboard.drag.description" = "Drag clipboard items directly into any terminal pane, or drop onto the file browser to import the file into your repository.";
 "map.clipboard.images.title" = "Image Capture";
 "map.clipboard.images.description" = "Copied images are saved as temporary JPEGs. Automatic cleanup after 1 hour and on app exit.";
 "map.clipboard.images.tip1" = "Useful for capturing screenshots to paste in issues or documentation.";
@@ -1016,7 +1016,7 @@
 "help.code.saveas" = "Save As to choose file name and location (⇧⌘S)";
 "help.code.openineditor" = "Open changed files in the editor from any screen";
 "help.code.contextmenu" = "Full context menu in the file browser (new, rename, copy, paste, delete)";
-"help.code.filebrowserdnd" = "Drag and drop files within the file browser to move or import from Finder";
+"help.code.filebrowserdnd" = "Drag and drop files within the file browser to move or import from Finder or Smart Clipboard";
 "help.code.findreplace" = "Find and Replace in the editor with match highlighting (⌘F / ⌘H)";
 "help.code.markdownpreview" = "Side-by-side Markdown preview for .md files, with clickable links and local images";
 "help.code.tabsize" = "Configurable tab size and indent style (2/4/8, spaces or tabs)";

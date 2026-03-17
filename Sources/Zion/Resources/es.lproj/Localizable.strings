@@ -424,7 +424,7 @@
 // Clipboard
 "help.clipboard.capture" = "Captura automáticamente todo lo que copias al portapapeles";
 "help.clipboard.paste" = "Clic para pegar en terminal, doble clic para ejecutar";
-"help.clipboard.drag" = "Arrastra elementos directamente al terminal";
+"help.clipboard.drag" = "Arrastra elementos al terminal o suéltalos en el navegador de archivos para importarlos";
 "help.clipboard.images" = "Captura imágenes copiadas con limpieza automática";
 
 // Operations
@@ -715,8 +715,8 @@
 "map.clipboard.capture.tip1" = "El portapapeles mantiene hasta 20 elementos, eliminando los más antiguos automáticamente.";
 "map.clipboard.paste.title" = "Pegar y Ejecutar";
 "map.clipboard.paste.description" = "Haz clic en un elemento para pegar en el terminal. Doble clic para ejecutar inmediatamente (envía con Enter).";
-"map.clipboard.drag.title" = "Arrastrar al Terminal";
-"map.clipboard.drag.description" = "Arrastra elementos del portapapeles directamente a cualquier panel del terminal.";
+"map.clipboard.drag.title" = "Arrastrar al Terminal o Navegador de Archivos";
+"map.clipboard.drag.description" = "Arrastra elementos del portapapeles directamente a cualquier panel del terminal, o suéltalos en el navegador de archivos para importar el archivo al repositorio.";
 "map.clipboard.images.title" = "Captura de Imágenes";
 "map.clipboard.images.description" = "Las imágenes copiadas se guardan como JPEG temporal. Limpieza automática después de 1 hora y al salir del app.";
 "map.clipboard.images.tip1" = "Útil para capturar screenshots y pegar en issues o documentación.";
@@ -1013,7 +1013,7 @@
 "help.code.saveas" = "Guardar Como para elegir nombre y ubicación del archivo (⇧⌘S)";
 "help.code.openineditor" = "Abrir archivos modificados en el editor desde cualquier pantalla";
 "help.code.contextmenu" = "Menú contextual completo en el navegador de archivos (nuevo, renombrar, copiar, pegar, eliminar)";
-"help.code.filebrowserdnd" = "Arrastra y suelta archivos en el navegador para mover o importar desde Finder";
+"help.code.filebrowserdnd" = "Arrastra y suelta archivos en el navegador para mover o importar desde Finder o Smart Clipboard";
 "help.code.findreplace" = "Buscar y Reemplazar en el editor con resaltado de resultados (⌘F / ⌘H)";
 "help.code.markdownpreview" = "Vista previa Markdown lado a lado para archivos .md, con enlaces clicables e imágenes locales";
 "help.code.tabsize" = "Tamaño de tabulación y estilo de indentación configurables (2/4/8, espacios o tabs)";
