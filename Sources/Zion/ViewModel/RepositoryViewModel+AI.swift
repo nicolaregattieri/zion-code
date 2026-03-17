@@ -40,6 +40,13 @@ extension RepositoryViewModel {
 
         aiTask?.cancel()
         aiTask = Task {
+            guard await !aiSemaphore.isFull else {
+                statusMessage = L10n("ai.busy")
+                return
+            }
+            await aiSemaphore.acquire()
+            defer { Task { await aiSemaphore.release() } }
+
             isGeneratingAIMessage = true
             defer { isGeneratingAIMessage = false }
 
@@ -135,6 +142,13 @@ extension RepositoryViewModel {
 
     func suggestPRDescription(baseBranch: String) async -> (title: String, body: String)? {
         guard let url = repositoryURL, isAIConfigured else { return nil }
+
+        guard await !aiSemaphore.isFull else {
+            statusMessage = L10n("ai.busy")
+            return nil
+        }
+        await aiSemaphore.acquire()
+        defer { Task { await aiSemaphore.release() } }
 
         isGeneratingAIMessage = true
         defer { isGeneratingAIMessage = false }
@@ -244,6 +258,13 @@ extension RepositoryViewModel {
 
         aiTask?.cancel()
         aiTask = Task {
+            guard await !aiSemaphore.isFull else {
+                statusMessage = L10n("ai.busy")
+                return
+            }
+            await aiSemaphore.acquire()
+            defer { Task { await aiSemaphore.release() } }
+
             isGeneratingAIMessage = true
             defer { isGeneratingAIMessage = false }
 

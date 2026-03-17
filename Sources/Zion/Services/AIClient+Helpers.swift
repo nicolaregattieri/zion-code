@@ -465,27 +465,60 @@ extension AIClient {
 
     func parsePRResponse(_ raw: String) -> (title: String, body: String) {
         let lines = raw.components(separatedBy: "\n")
-        var title = ""
-        var bodyLines: [String] = []
+
+        // Strategy 1: TITLE:/BODY: markers
+        var markerTitle = ""
+        var markerBodyLines: [String] = []
         var inBody = false
 
         for line in lines {
             if line.hasPrefix("TITLE:") {
-                title = line.replacingOccurrences(of: "TITLE:", with: "").trimmingCharacters(in: .whitespaces)
+                markerTitle = line.replacingOccurrences(of: "TITLE:", with: "").trimmingCharacters(in: .whitespaces)
             } else if line.hasPrefix("BODY:") {
                 inBody = true
             } else if inBody {
-                bodyLines.append(line)
+                markerBodyLines.append(line)
             }
         }
 
-        if title.isEmpty {
-            // Fallback: use first line as title, rest as body
-            title = lines.first ?? ""
-            bodyLines = Array(lines.dropFirst())
+        if !markerTitle.isEmpty {
+            return (
+                Self.cleanPRTitle(markerTitle),
+                markerBodyLines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+            )
         }
 
-        return (title, bodyLines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines))
+        // Strategy 2: Markdown heading on first non-empty line
+        let nonEmptyLines = lines.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        if let first = nonEmptyLines.first, first.hasPrefix("#") {
+            let headingTitle = first.replacingOccurrences(of: #"^#+\s*"#, with: "", options: .regularExpression)
+            let rest = Array(lines.drop(while: { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || $0 == first }))
+            return (
+                Self.cleanPRTitle(headingTitle),
+                rest.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+            )
+        }
+
+        // Strategy 3: First non-empty line as title, rest as body
+        let firstNonEmpty = nonEmptyLines.first ?? ""
+        let rest = Array(lines.drop(while: { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || $0 == firstNonEmpty }))
+        return (
+            Self.cleanPRTitle(firstNonEmpty),
+            rest.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+        )
+    }
+
+    static func cleanPRTitle(_ raw: String) -> String {
+        var title = raw
+            .replacingOccurrences(of: #"^#+\s*"#, with: "", options: .regularExpression)
+            .replacingOccurrences(of: #"\*\*([^*]+)\*\*"#, with: "$1", options: .regularExpression)
+            .replacingOccurrences(of: #"`([^`]+)`"#, with: "$1", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if title.count > 72 {
+            let index = title.index(title.startIndex, offsetBy: 69)
+            title = String(title[..<index]) + "..."
+        }
+        return title
     }
 }
 

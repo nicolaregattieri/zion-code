@@ -11,6 +11,13 @@ extension RepositoryViewModel {
 
         aiTask?.cancel()
         aiTask = Task {
+            guard await !aiSemaphore.isFull else {
+                statusMessage = L10n("ai.busy")
+                return
+            }
+            await aiSemaphore.acquire()
+            defer { Task { await aiSemaphore.release() } }
+
             isGeneratingAIMessage = true
             defer { isGeneratingAIMessage = false }
 
@@ -55,6 +62,13 @@ extension RepositoryViewModel {
 
         aiTask?.cancel()
         aiTask = Task {
+            guard await !aiSemaphore.isFull else {
+                statusMessage = L10n("ai.busy")
+                return
+            }
+            await aiSemaphore.acquire()
+            defer { Task { await aiSemaphore.release() } }
+
             isGeneratingAIMessage = true
             defer { isGeneratingAIMessage = false }
 
@@ -85,6 +99,7 @@ extension RepositoryViewModel {
                     ? (result.matches.isEmpty ? L10n("graph.ai.noMatches") : L10n("graph.ai.answerFallback"))
                     : result.answer
                 logger.log(.ai, "Semantic search OK: \(result.matches.count) results")
+                aiHistorySearchError = nil
                 aiHistorySearchResult = AIHistorySearchResult(answer: answer, matches: result.matches)
             } catch {
                 if error is CancellationError {
@@ -95,6 +110,7 @@ extension RepositoryViewModel {
                 }
                 logger.log(.error, "AI semantic search failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
                 aiHistorySearchResult = nil
+                aiHistorySearchError = error.localizedDescription
                 lastError = error.localizedDescription
             }
         }
@@ -103,6 +119,7 @@ extension RepositoryViewModel {
     func resetSemanticSearchResults() {
         aiTask?.cancel()
         aiHistorySearchResult = nil
+        aiHistorySearchError = nil
     }
 
     func clearSemanticSearch() {
@@ -205,6 +222,13 @@ extension RepositoryViewModel {
 
         aiTask?.cancel()
         aiTask = Task {
+            guard await !aiSemaphore.isFull else {
+                statusMessage = L10n("ai.busy")
+                return
+            }
+            await aiSemaphore.acquire()
+            defer { Task { await aiSemaphore.release() } }
+
             isGeneratingAIMessage = true
             defer { isGeneratingAIMessage = false }
 
