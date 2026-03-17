@@ -206,19 +206,15 @@ struct ClipboardDrawer: View {
             }
         }
         .onDrag {
-            let provider = NSItemProvider(object: item.text as NSString)
             let isFile = item.isImage || item.category == .path
             if isFile {
                 let fileURL = URL(fileURLWithPath: item.text)
-                provider.registerFileRepresentation(
-                    forTypeIdentifier: UTType.fileURL.identifier,
-                    visibility: .all
-                ) { completion in
-                    completion(fileURL, false, nil)
-                    return nil
-                }
+                let provider = NSItemProvider(object: fileURL as NSURL)
+                provider.registerObject(item.text as NSString, visibility: .all)
+                return provider
+            } else {
+                return NSItemProvider(object: item.text as NSString)
             }
-            return provider
         }
         .onHover { h in hoveredItemID = h ? item.id : nil }
         .contextMenu {
