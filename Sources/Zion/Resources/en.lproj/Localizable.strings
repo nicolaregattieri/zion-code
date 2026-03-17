@@ -2172,3 +2172,5 @@
 "divergence.option.merge.desc" = "Create a merge commit preserving both histories.";
 "divergence.option.forceAlign" = "Force Align to Remote";
 "divergence.option.forceAlign.desc" = "Discard local commits and reset to remote. A recovery snapshot will be created first.";
+
+"sidebar.release" = "Release";

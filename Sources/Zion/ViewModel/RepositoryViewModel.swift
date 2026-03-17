@@ -62,6 +62,10 @@ final class RepositoryViewModel {
     var inferBranchOrigins: Bool = true
     var hasMoreCommits: Bool = false
     var tags: [String] = []
+
+    var latestReleaseTag: String? {
+        tags.first
+    }
     var stashes: [String] = []
     var selectedStash: String = ""
     var recoverySnapshots: [RecoverySnapshot] = []

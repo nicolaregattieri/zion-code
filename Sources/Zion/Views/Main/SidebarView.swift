@@ -101,8 +101,8 @@ struct SidebarView: View {
                 .frame(width: 44, height: 44)
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(model.repositoryURL?.lastPathComponent ?? L10n("Zion Code")).font(DesignSystem.Typography.sheetTitle).lineLimit(1)
-                    Text(model.repositoryURL?.path ?? L10n("Modo editor livre")).font(DesignSystem.Typography.monoLabel).foregroundStyle(.secondary).lineLimit(1)
+                    Text(model.repositoryURL?.lastPathComponent ?? L10n("Zion Code")).font(DesignSystem.Typography.sheetTitle).lineLimit(1).help(model.repositoryURL?.lastPathComponent ?? L10n("Zion Code"))
+                    Text(model.repositoryURL?.path ?? L10n("Modo editor livre")).font(DesignSystem.Typography.monoLabel).foregroundStyle(.secondary).lineLimit(1).help(model.repositoryURL?.path ?? L10n("Modo editor livre"))
                 }
                 Spacer(minLength: 0)
                 
@@ -120,8 +120,11 @@ struct SidebarView: View {
                 }
             }
             if model.repositoryURL != nil {
-                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
-                    let isDetached = model.currentBranch.contains("detached")
+                let isDetached = model.currentBranch.contains("detached")
+                let hasStashes = model.stashes.count > 0
+                let hasRelease = model.latestReleaseTag != nil
+                let chipCount = 2 + (hasStashes ? 1 : 0) + (hasRelease ? 1 : 0)
+                FlowLayout(spacing: DesignSystem.Spacing.iconTextGap, maxItemsPerRow: chipCount > 3 ? 2 : chipCount) {
                     StatusChip(
                         title: isDetached ? "HEAD" : L10n("Branch"),
                         value: model.currentBranch,
@@ -129,8 +132,11 @@ struct SidebarView: View {
                         icon: isDetached ? "anchor" : "crown.fill"
                     )
                     StatusChip(title: L10n("Commit"), value: model.headShortHash, tint: DesignSystem.Colors.info, icon: "number")
-                    if model.stashes.count > 0 {
+                    if hasStashes {
                         StatusChip(title: L10n("Stashes"), value: "\(model.stashes.count)", tint: DesignSystem.Colors.brandPrimary, icon: "tray.full.fill")
+                    }
+                    if let latestTag = model.latestReleaseTag {
+                        StatusChip(title: L10n("sidebar.release"), value: latestTag, tint: DesignSystem.Colors.searchHighlight, icon: "tag.fill")
                     }
                 }
             }
@@ -233,6 +239,7 @@ struct SidebarView: View {
                             .font(DesignSystem.Typography.monoMeta)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
+                            .help(model.derivedWorktreeBranch)
                     }
                     if !model.derivedWorktreePath.isEmpty {
                         Text(model.derivedWorktreePath)
@@ -240,6 +247,7 @@ struct SidebarView: View {
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                             .truncationMode(.middle)
+                            .help(model.derivedWorktreePath)
                     }
                 }
             }
@@ -295,6 +303,7 @@ struct SidebarView: View {
                             Text(wt.branch.isEmpty ? URL(fileURLWithPath: wt.path).lastPathComponent : wt.branch)
                                 .font(DesignSystem.Typography.monoBody)
                                 .lineLimit(1)
+                                .help(wt.branch.isEmpty ? URL(fileURLWithPath: wt.path).lastPathComponent : wt.branch)
                             if wt.isMainWorktree {
                                 Text(L10n("worktree.main.badge"))
                                     .font(DesignSystem.Typography.monoMeta)
@@ -311,6 +320,7 @@ struct SidebarView: View {
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                             .truncationMode(.middle)
+                            .help(wt.path)
                         HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                             Circle()
                                 .fill(worktreeStatusColor(wt))
@@ -546,11 +556,11 @@ struct SidebarView: View {
                                 .font(DesignSystem.Typography.label)
                                 .foregroundStyle(isMain ? DesignSystem.Colors.warning : (isCurrent ? Color.accentColor : Color.secondary))
                         }
-                        Text(node.title).font(DesignSystem.Typography.monoLabel).fontWeight(isCurrent || isMain ? .bold : .regular).lineLimit(1)
+                        Text(node.title).font(DesignSystem.Typography.monoLabel).fontWeight(isCurrent || isMain ? .bold : .regular).lineLimit(1).help(node.title)
                         if isCurrent { Text(L10n("current")).font(DesignSystem.Typography.micro).padding(.horizontal, 4).padding(.vertical, 1).background(DesignSystem.Colors.selectionBackground).foregroundStyle(Color.accentColor).clipShape(Capsule()) }
                     }
                 }
-                if !node.subtitle.isEmpty { Text(node.subtitle).font(DesignSystem.Typography.meta).foregroundStyle(.secondary).lineLimit(1) }
+                if !node.subtitle.isEmpty { Text(node.subtitle).font(DesignSystem.Typography.meta).foregroundStyle(.secondary).lineLimit(1).help(node.subtitle) }
             }
             Spacer()
             if let branch = node.branchName, !isMain, !isCurrent {
