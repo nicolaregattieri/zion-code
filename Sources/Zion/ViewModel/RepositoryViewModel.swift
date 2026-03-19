@@ -118,7 +118,7 @@ final class RepositoryViewModel {
     @ObservationIgnored var terminalSendCallbacks: [UUID: (Data) -> Void] = [:]
 
     // Avatar cache (Gravatar)
-    @ObservationIgnored var avatarCache: [String: NSImage] = [:]
+    @ObservationIgnored let avatarCache = NSCache<NSString, NSImage>()
     @ObservationIgnored var avatarDownloadTasks: Set<String> = []
 
     // Hunk diff state

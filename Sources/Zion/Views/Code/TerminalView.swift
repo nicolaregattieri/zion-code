@@ -99,6 +99,14 @@ struct TerminalTabView: NSViewRepresentable {
         // The active owner is bound during startProcess/reattach. We intentionally
         // avoid writing cache ownership here to prevent stale dismantle calls
         // from clobbering a newer live coordinator/view pair.
+        // If we are no longer the active owner (view replaced by reattach), remove our
+        // monitors now — killProcess won't be called for us and orphaned global NSEvent
+        // monitors accumulate overhead on every app-wide mouse/keyboard event.
+        if !isCurrentOwner {
+            coordinator.removeShiftEnterMonitor()
+            coordinator.removeMouseInteractionMonitors()
+            coordinator.removeFreezeResetObserver()
+        }
     }
 
     private func applyTheme(to view: SwiftTerm.TerminalView, context: Context) {
@@ -191,6 +199,7 @@ struct TerminalTabView: NSViewRepresentable {
         private var manualScrollFreezeActive = false
         private var manualScrollFreezeIntentActive = false
         private var preciseScrollLineAccumulator: CGFloat = 0
+        private var resignActiveObserver: Any?
         private static let outputFlushIntervalNanos: UInt64 = 8_000_000
         private static let maxBufferedOutputDuringDragSelection = 1_048_576
         private static let forcedFlushChunkBytes = 65_536
@@ -288,6 +297,7 @@ struct TerminalTabView: NSViewRepresentable {
             self.terminalView = view
             installShiftEnterMonitor()
             installMouseInteractionMonitors()
+            installFreezeResetObserver()
             let url = parent.session.workingDirectory
             let sessionID = parent.session.id
 
@@ -348,6 +358,7 @@ struct TerminalTabView: NSViewRepresentable {
             self.terminalView = view
             installShiftEnterMonitor()
             installMouseInteractionMonitors()
+            installFreezeResetObserver()
             if process != nil {
                 processIsDead = false
                 parent.session.isAlive = true
@@ -392,6 +403,7 @@ struct TerminalTabView: NSViewRepresentable {
             process = nil
             removeShiftEnterMonitor()
             removeMouseInteractionMonitors()
+            removeFreezeResetObserver()
             pendingOutputFlushTask?.cancel()
             pendingOutputFlushTask = nil
             pendingTerminalOutput.removeAll(keepingCapacity: false)
@@ -441,7 +453,7 @@ struct TerminalTabView: NSViewRepresentable {
             }
         }
 
-        private func removeShiftEnterMonitor() {
+        fileprivate func removeShiftEnterMonitor() {
             if let monitor = shiftEnterMonitor {
                 NSEvent.removeMonitor(monitor)
                 shiftEnterMonitor = nil
@@ -546,7 +558,7 @@ struct TerminalTabView: NSViewRepresentable {
             }
         }
 
-        private func removeMouseInteractionMonitors() {
+        fileprivate func removeMouseInteractionMonitors() {
             if let monitor = keyDownMonitor {
                 NSEvent.removeMonitor(monitor)
                 keyDownMonitor = nil
@@ -568,6 +580,32 @@ struct TerminalTabView: NSViewRepresentable {
                 scrollWheelMonitor = nil
             }
             preciseScrollLineAccumulator = 0
+        }
+
+        private func installFreezeResetObserver() {
+            guard resignActiveObserver == nil else { return }
+            resignActiveObserver = NotificationCenter.default.addObserver(
+                forName: NSApplication.didResignActiveNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    self.dragSelectionFreezeActive = false
+                    self.persistentSelectionFreezeActive = false
+                    self.manualScrollFreezeActive = false
+                    self.manualScrollFreezeIntentActive = false
+                    self.preciseScrollLineAccumulator = 0
+                    self.flushPendingTerminalOutput(force: true)
+                }
+            }
+        }
+
+        fileprivate func removeFreezeResetObserver() {
+            if let obs = resignActiveObserver {
+                NotificationCenter.default.removeObserver(obs)
+                resignActiveObserver = nil
+            }
         }
 
         private var isSelectionOutputFrozen: Bool {

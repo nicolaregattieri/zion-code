@@ -535,7 +535,7 @@ extension RepositoryViewModel {
         guard !email.isEmpty else { return nil }
         guard UserDefaults.standard.bool(forKey: UserDefaultsKeys.General.graphAuthorAvatarsEnabled) else { return nil }
         let key = email.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        if let cached = avatarCache[key] { return cached }
+        if let cached = avatarCache.object(forKey: key as NSString) { return cached }
         // Start download if not already in-flight
         if !avatarDownloadTasks.contains(key) {
             avatarDownloadTasks.insert(key)
@@ -546,7 +546,7 @@ extension RepositoryViewModel {
                 do {
                     let (data, _) = try await URLSession.shared.data(from: url)
                     if let image = NSImage(data: data) {
-                        avatarCache[key] = image
+                        avatarCache.setObject(image, forKey: key as NSString)
                     }
                 } catch {
                     // Silently fail — identicon fallback handled by Gravatar
