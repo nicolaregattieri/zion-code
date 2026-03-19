@@ -298,9 +298,7 @@ struct TerminalTabView: NSViewRepresentable {
 
                 // Register send callback so ClipboardDrawer can paste text into this terminal
                 parent.model?.registerTerminalSendCallback(sessionID: sessionID) { [weak self] data in
-                    Task { @MainActor in
-                        self?.process?.send(data: ArraySlice(data))
-                    }
+                    self?.process?.send(data: ArraySlice(data))
                 }
 
                 var env = ProcessInfo.processInfo.environment
@@ -371,9 +369,7 @@ struct TerminalTabView: NSViewRepresentable {
             // Re-register send callback for clipboard
             let sessionID = parent.session.id
             parent.model?.registerTerminalSendCallback(sessionID: sessionID) { [weak self] data in
-                Task { @MainActor in
-                    self?.process?.send(data: ArraySlice(data))
-                }
+                self?.process?.send(data: ArraySlice(data))
             }
 
             // Force theme re-application
