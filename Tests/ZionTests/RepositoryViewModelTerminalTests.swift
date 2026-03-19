@@ -201,4 +201,71 @@ final class RepositoryViewModelTerminalTests: XCTestCase {
 
         XCTAssertEqual(vm.focusedSessionID, first.id)
     }
+
+    // MARK: - splitFocusedTerminal
+
+    func testSplitHorizontalDividesFocusedPaneInHalf() {
+        let vm = RepositoryViewModel()
+        let dir = URL(fileURLWithPath: "/tmp/repo")
+        vm.createTerminalSession(workingDirectory: dir, label: "main")
+
+        vm.splitFocusedTerminal(direction: .horizontal)
+
+        let tab = vm.terminalTabs[0]
+        guard case .split(let direction, _, _) = tab.content else {
+            return XCTFail("Expected split content")
+        }
+        XCTAssertEqual(direction, .horizontal)
+        XCTAssertEqual(tab.ratio, 0.5, accuracy: 0.001,
+                       "First split should always be 50/50")
+    }
+
+    func testSplitDoesNotRedistributeSiblingRatios() {
+        let vm = RepositoryViewModel()
+        let dir = URL(fileURLWithPath: "/tmp/repo")
+
+        // Create an initial session and split it horizontally
+        vm.createTerminalSession(workingDirectory: dir, label: "first")
+        vm.splitFocusedTerminal(direction: .horizontal)
+
+        let tab = vm.terminalTabs[0]
+        // Manually resize: give the first pane 70% of space
+        tab.ratio = 0.7
+
+        // Now focus the second pane (the new one created by split) and split it again
+        let secondSession = tab.allSessions().last!
+        vm.focusedSessionID = secondSession.id
+        vm.splitFocusedTerminal(direction: .horizontal)
+
+        // The top-level ratio should still be 0.7 — sibling was not touched
+        XCTAssertEqual(tab.ratio, 0.7, accuracy: 0.001,
+                       "Sibling pane ratio must not be redistributed when splitting the focused pane")
+    }
+
+    func testSplitVerticalDividesFocusedPaneInHalf() {
+        let vm = RepositoryViewModel()
+        let dir = URL(fileURLWithPath: "/tmp/repo")
+        vm.createTerminalSession(workingDirectory: dir, label: "main")
+
+        vm.splitFocusedTerminal(direction: .vertical)
+
+        let tab = vm.terminalTabs[0]
+        guard case .split(let direction, _, _) = tab.content else {
+            return XCTFail("Expected split content")
+        }
+        XCTAssertEqual(direction, .vertical)
+        XCTAssertEqual(tab.ratio, 0.5, accuracy: 0.001)
+    }
+
+    func testSplitFocusesNewPane() {
+        let vm = RepositoryViewModel()
+        let dir = URL(fileURLWithPath: "/tmp/repo")
+        vm.createTerminalSession(workingDirectory: dir, label: "main")
+        let originalID = vm.focusedSessionID
+
+        vm.splitFocusedTerminal(direction: .horizontal)
+
+        XCTAssertNotEqual(vm.focusedSessionID, originalID,
+                          "Focus should move to the newly created pane")
+    }
 }
