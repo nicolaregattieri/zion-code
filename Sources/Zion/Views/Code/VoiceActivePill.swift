@@ -32,13 +32,18 @@ struct VoiceActivePill: View {
                 }
                 .frame(height: 16)
 
-                // Live transcript (truncated)
+                // Live transcript (Apple) or recording placeholder (Gemini/Whisper)
                 if !speechService.currentTranscript.isEmpty {
                     Text(speechService.currentTranscript)
                         .font(DesignSystem.Typography.bodySmall)
                         .foregroundStyle(.primary)
                         .lineLimit(1)
                         .truncationMode(.head)
+                        .frame(maxWidth: 280, alignment: .leading)
+                } else if speechService.selectedEngine != .apple {
+                    Text(L10n("speech.recording.placeholder"))
+                        .font(DesignSystem.Typography.bodySmall)
+                        .foregroundStyle(.secondary)
                         .frame(maxWidth: 280, alignment: .leading)
                 }
 

@@ -14,6 +14,10 @@ struct TerminalSettingsTab: View {
         SpeechEngineSupport.isWhisperAvailable()
     }
 
+    private var isGeminiAvailable: Bool {
+        SpeechEngineSupport.isGeminiAvailable()
+    }
+
     private var speechEngineSelection: Binding<String> {
         Binding(
             get: {
@@ -73,21 +77,21 @@ struct TerminalSettingsTab: View {
             Section {
                 Picker(L10n("speech.engine"), selection: speechEngineSelection) {
                     Text(L10n("speech.engine.apple")).tag("apple")
+                    Text(L10n("speech.engine.gemini")).tag("gemini")
                     Text(L10n("speech.engine.whisper")).tag("whisper")
-                        .disabled(!isWhisperAvailable)
                 }
 
                 Text(L10n("settings.speech.engine.hint"))
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
 
-                if !isWhisperAvailable {
-                    Label(L10n("settings.speech.engine.whisperUnavailable"), systemImage: "exclamationmark.triangle.fill")
+                if !isGeminiAvailable {
+                    Label(L10n("settings.speech.engine.geminiUnavailable"), systemImage: "exclamationmark.triangle.fill")
                         .font(DesignSystem.Typography.labelMedium)
                         .foregroundStyle(DesignSystem.Colors.warning)
 
                     SettingsLink {
-                        Label(L10n("settings.speech.engine.configureOpenAI"), systemImage: "sparkles")
+                        Label(L10n("settings.speech.engine.configureGemini"), systemImage: "sparkles")
                             .font(DesignSystem.Typography.label)
                     }
                     .buttonStyle(.bordered)

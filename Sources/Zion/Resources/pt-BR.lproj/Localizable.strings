@@ -1949,12 +1949,19 @@
 "speech.language" = "Idioma";
 "speech.engine" = "Motor";
 "speech.engine.apple" = "Apple Speech (Grátis)";
+"speech.engine.gemini" = "Google Gemini (Grátis)";
 "speech.engine.whisper" = "OpenAI Whisper";
 "speech.recovery.whisperMissingKey" = "O OpenAI Whisper precisa de uma chave de API OpenAI conectada.";
 "speech.recovery.whisperQuotaExceeded" = "A cota do OpenAI Whisper foi excedida ou o saldo não está disponível.";
 "speech.recovery.whisperTemporarilyUnavailable" = "O OpenAI Whisper está temporariamente indisponível. Tente Apple Speech ou repita em instantes.";
 "speech.recovery.whisperFailed" = "A transcrição com Whisper falhou. Tente Apple Speech ou revise sua chave OpenAI.";
+"speech.recovery.geminiMissingKey" = "O Google Gemini precisa de uma chave de API Gemini conectada. Configure nas configurações de IA.";
+"speech.recovery.geminiQuotaExceeded" = "A cota do Google Gemini foi excedida. Tente Apple Speech ou repita em instantes.";
+"speech.recovery.geminiTemporarilyUnavailable" = "O Google Gemini está temporariamente indisponível. Tente Apple Speech ou repita em instantes.";
+"speech.recovery.geminiTranscribeFailed" = "A transcrição com Gemini falhou. Tente Apple Speech ou revise sua chave Gemini.";
+"speech.recording.placeholder" = "Gravando... a transcrição fica pronta quando você parar.";
 "speech.recovery.useAppleSpeech" = "Usar Apple Speech";
+"speech.recovery.useGemini" = "Usar Gemini";
 "speech.recovery.manageOpenAI" = "Gerenciar OpenAI";
 "speech.send" = "Enviar para o Terminal";
 "speech.permission.denied" = "Acesso ao microfone ou reconhecimento de fala negado. Ative em Ajustes do Sistema > Privacidade e Segurança.";
@@ -1962,10 +1969,12 @@
 "speech.permission.alert.openSettings" = "Abrir Ajustes do Sistema";
 "speech.permission.alert.micMessage" = "O Zion precisa de acesso ao microfone para entrada de voz. Ative em Ajustes do Sistema > Privacidade e Segurança > Microfone.";
 "speech.permission.alert.speechMessage" = "O Zion precisa de acesso ao reconhecimento de fala. Ative em Ajustes do Sistema > Privacidade e Segurança > Reconhecimento de Fala.";
-"speech.recovery.alert.title" = "Erro do Whisper";
+"speech.recovery.alert.title" = "Erro de Entrada de Voz";
 "speech.error.unavailable" = "O reconhecimento de fala não está disponível para o idioma selecionado.";
-"settings.speech.engine.hint" = "Apple Speech é gratuito e em tempo real. Whisper requer uma chave de API OpenAI (configurada nas configurações de IA).";
+"settings.speech.engine.hint" = "Apple Speech é gratuito e em tempo real. Google Gemini usa sua chave Gemini (plano gratuito). Whisper requer uma chave de API OpenAI.";
+"settings.speech.engine.geminiUnavailable" = "O Google Gemini fica indisponível até que uma chave de API Gemini seja conectada nas configurações de IA.";
 "settings.speech.engine.whisperUnavailable" = "O OpenAI Whisper fica indisponível até que uma chave de API OpenAI seja conectada nas configurações de IA.";
+"settings.speech.engine.configureGemini" = "Configurar Chave Gemini";
 "settings.speech.engine.configureOpenAI" = "Configurar Chave OpenAI";
 
 // Git Bisect
