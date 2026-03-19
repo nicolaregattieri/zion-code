@@ -299,27 +299,20 @@ struct SourceCodeEditor: NSViewRepresentable {
 
         @MainActor
         func scrollToLine(_ lineNumber: Int, in textView: NSTextView) {
-            let string = textView.string
-            guard !string.isEmpty else { return }
+            let nsString = textView.string as NSString
+            let totalLength = nsString.length
+            guard totalLength > 0, lineNumber > 0 else { return }
             var currentLine = 1
-            for (i, char) in string.enumerated() {
-                if currentLine == lineNumber {
-                    let nsLocation = i
-                    let range = NSRange(location: nsLocation, length: 0)
-                    textView.setSelectedRange(range)
-                    textView.scrollRangeToVisible(range)
-                    return
-                }
-                if char == "\n" {
-                    currentLine += 1
-                }
+            var pos = 0
+            while pos < totalLength && currentLine < lineNumber {
+                let range = nsString.lineRange(for: NSRange(location: pos, length: 0))
+                pos = range.upperBound
+                currentLine += 1
             }
-            // If lineNumber exceeds total lines, go to last line
-            if let lastNewline = string.lastIndex(of: "\n") {
-                let nsLocation = string.distance(from: string.startIndex, to: string.index(after: lastNewline))
-                textView.setSelectedRange(NSRange(location: nsLocation, length: 0))
-                textView.scrollRangeToVisible(NSRange(location: nsLocation, length: 0))
-            }
+            let location = min(pos, totalLength)
+            let range = NSRange(location: location, length: 0)
+            textView.setSelectedRange(range)
+            textView.scrollRangeToVisible(range)
         }
 
         @MainActor

@@ -222,12 +222,13 @@ extension RepositoryViewModel {
     }
 
     func sortedExpandedDirectoryPaths(_ paths: some Sequence<String>) -> [String] {
-        paths.sorted { lhs, rhs in
-            let lhsDepth = lhs.split(separator: "/").count
-            let rhsDepth = rhs.split(separator: "/").count
-            if lhsDepth != rhsDepth { return lhsDepth < rhsDepth }
-            return lhs.localizedStandardCompare(rhs) == .orderedAscending
-        }
+        paths
+            .map { ($0, $0.split(separator: "/").count) }
+            .sorted { lhs, rhs in
+                if lhs.1 != rhs.1 { return lhs.1 < rhs.1 }
+                return lhs.0.localizedStandardCompare(rhs.0) == .orderedAscending
+            }
+            .map(\.0)
     }
 
     func findItem(path: String, in items: [FileItem]) -> FileItem? {
