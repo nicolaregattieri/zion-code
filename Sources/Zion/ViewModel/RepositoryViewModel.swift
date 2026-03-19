@@ -251,7 +251,7 @@ final class RepositoryViewModel {
     var isReviewVisible: Bool = false
     @ObservationIgnored var commitDetailsCache = LRUCache<String, String>(capacity: Constants.Limits.commitDetailsCacheSize)
     @ObservationIgnored var commitFileDiffCache = LRUCache<String, (raw: String, hunks: [DiffHunk])>(capacity: Constants.Limits.commitFileDiffCacheSize)
-    var commitReviewCache: [String: [ReviewFinding]] = [:]
+    @ObservationIgnored var commitReviewCache: [String: [ReviewFinding]] = [:]
     var reviewingCommitID: String?
     var selectedCommitDetailTab: CommitDetailTab = .details
     var aiChangelog: String = ""
