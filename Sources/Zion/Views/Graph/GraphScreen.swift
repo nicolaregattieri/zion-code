@@ -192,6 +192,7 @@ struct GraphScreen: View {
                 let rowWidth = commitRowWidth(for: geometry.size.width)
 
                 ScrollView([.horizontal, .vertical], showsIndicators: true) {
+                    let avatarsEnabled = UserDefaults.standard.bool(forKey: UserDefaultsKeys.General.graphAuthorAvatarsEnabled)
                     let remoteNames = model.remotes.map(\.name)
                     let hasAdditionalWorktrees = model.worktrees.contains { !$0.isMainWorktree }
                     let worktreeBranchNames = Set(
@@ -268,7 +269,7 @@ struct GraphScreen: View {
                                 worktreeBranches: worktreeBranchNames,
                                 rootWorktreeBranches: rootWorktreeBranchNames,
                                 bisectRole: model.bisectRole(for: commit.id),
-                                avatarImage: model.avatarImage(for: commit.email)
+                                avatarImage: avatarsEnabled ? model.avatarImage(for: commit.email) : nil
                             )
                             .frame(width: rowWidth, alignment: .leading)
                             .id(commit.id)
