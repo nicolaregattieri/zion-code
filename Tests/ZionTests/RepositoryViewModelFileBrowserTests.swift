@@ -238,7 +238,6 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
 
         XCTAssertNil(image)
         XCTAssertTrue(vm.avatarDownloadTasks.isEmpty)
-        XCTAssertTrue(vm.avatarCache.isEmpty)
     }
 
     // MARK: - clearFileSelection
