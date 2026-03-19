@@ -155,7 +155,7 @@ extension RepositoryViewModel {
         guard !file.isEmpty else { return }
 
         if let entry = statusEntry(for: file), entry.isUntracked {
-            runDestructiveGitAction(label: "Discard", args: ["clean", "-fd", "--", entry.path], operationTag: "discard")
+            runDestructiveGitAction(label: "Discard", args: ["clean", "-ffd", "--", entry.path], operationTag: "discard")
             return
         }
 
@@ -643,6 +643,7 @@ extension RepositoryViewModel {
         activeGitActionToken = actionToken
         isBusy = true
         armBusyWatchdog()
+        extendFileWatcherGitMetadataSuppression(by: 2.0)
 
         let commandSummary = redactedGitCommandSummary(args: args)
         logger.log(.git, commandSummary, context: label)
@@ -679,7 +680,8 @@ extension RepositoryViewModel {
                 } else {
                     statusMessage = "\(label): \(output.prefix(240))"
                 }
-                logger.log(.git, "\(label) OK", context: commandSummary)
+                let outputSnippet = output.clean.isEmpty ? "(no output)" : String(output.clean.prefix(120))
+                logger.log(.git, "\(label) OK", context: "\(commandSummary) | \(outputSnippet)")
                 guard activeGitActionToken == actionToken else { return }
                 activeGitActionToken = nil
                 refreshRepository(setBusy: true, origin: .gitAction)
