@@ -32,27 +32,34 @@ extension AIClient {
 
         var lastError: Error?
         for modelID in candidates {
-            do {
-                switch provider {
-                case .anthropic:
-                    return try await callAnthropic(payload: payload, apiKey: apiKey, maxTokens: maxTokens, modelID: modelID)
-                case .openai:
-                    return try await callOpenAI(payload: payload, apiKey: apiKey, maxTokens: maxTokens, modelID: modelID)
-                case .gemini:
-                    return try await callGemini(payload: payload, apiKey: apiKey, maxTokens: maxTokens, modelID: modelID)
-                case .none:
-                    throw AIError.noProvider
-                }
-            } catch let error as AIError {
-                switch error {
-                case .apiError, .invalidResponse:
+            for attempt in 0..<2 {
+                do {
+                    switch provider {
+                    case .anthropic:
+                        return try await callAnthropic(payload: payload, apiKey: apiKey, maxTokens: maxTokens, modelID: modelID)
+                    case .openai:
+                        return try await callOpenAI(payload: payload, apiKey: apiKey, maxTokens: maxTokens, modelID: modelID)
+                    case .gemini:
+                        return try await callGemini(payload: payload, apiKey: apiKey, maxTokens: maxTokens, modelID: modelID)
+                    case .none:
+                        throw AIError.noProvider
+                    }
+                } catch let error as AIError {
+                    switch error {
+                    case .temporarilyUnavailable where attempt == 0:
+                        lastError = error
+                        try? await Task.sleep(for: .seconds(2))
+                        continue
+                    case .apiError, .invalidResponse:
+                        lastError = error
+                        break
+                    default:
+                        throw error
+                    }
+                } catch {
                     lastError = error
-                    continue
-                default:
-                    throw error
                 }
-            } catch {
-                lastError = error
+                break
             }
         }
 

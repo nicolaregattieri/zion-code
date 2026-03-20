@@ -424,6 +424,7 @@ extension RepositoryViewModel {
                 recentReposData = encoded
             }
             refreshRecentWorktreeCounts()
+            refreshRecentChangedCounts()
         }
     }
 
@@ -526,6 +527,20 @@ extension RepositoryViewModel {
                 }
             }
             recentWorktreeCounts = counts
+        }
+    }
+
+    func refreshRecentChangedCounts() {
+        let roots = recentRepositories
+        Task {
+            for root in roots {
+                guard FileManager.default.fileExists(atPath: root.path) else { continue }
+                // Skip the currently active repo (it uses live uncommittedCount)
+                if canonicalRecentRepositoryURL(for: repositoryURL ?? URL(fileURLWithPath: "/")) == root { continue }
+                // Skip repos already monitored via background stash
+                if backgroundRepoStates.keys.contains(where: { canonicalRecentRepositoryURL(for: $0) == root }) { continue }
+                await updateChangedFileCount(for: root)
+            }
         }
     }
 
@@ -900,7 +915,8 @@ extension RepositoryViewModel {
                 in: url
             )
             let count = output.split(separator: "\n").count
-            backgroundRepoChangedFiles[url] = count
+            let canonical = canonicalRecentRepositoryURL(for: url)
+            backgroundRepoChangedFiles[canonical] = count
         } catch {
             // Silently fail — repo may be unavailable
         }
