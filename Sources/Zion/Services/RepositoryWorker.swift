@@ -938,6 +938,128 @@ actor RepositoryWorker {
         )
     }
 
+    // MARK: - Full History Search
+
+    func searchFullHistory(
+        query: String,
+        in repositoryURL: URL,
+        excludeHashes: Set<String>
+    ) throws -> [GitSearchResult] {
+        let sep = Constants.gitFieldSeparator
+        let format = ["%H", "%h", "%an", "%ad", "%s", "%D"].joined(separator: String(sep))
+        var allResults: [GitSearchResult] = []
+        var seenHashes: Set<String> = []
+
+        func addResults(from output: String, source: GitSearchResult.Source) {
+            let lines = output.split(separator: "\n", omittingEmptySubsequences: true)
+            for line in lines {
+                let fields = line.split(separator: sep, omittingEmptySubsequences: false).map(String.init)
+                guard fields.count >= 5 else { continue }
+                let fullHash = fields[0].trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !fullHash.isEmpty,
+                      !excludeHashes.contains(fullHash),
+                      !seenHashes.contains(fullHash) else { continue }
+                seenHashes.insert(fullHash)
+
+                let shortHash = fields[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                let author = fields[2].trimmingCharacters(in: .whitespacesAndNewlines)
+                let dateStr = fields[3].trimmingCharacters(in: .whitespacesAndNewlines)
+                let subject = fields[4].trimmingCharacters(in: .whitespacesAndNewlines)
+                let decorations: [String] = fields.count > 5
+                    ? fields[5].split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                    : []
+                let date = parseISODate(dateStr)
+
+                allResults.append(GitSearchResult(
+                    id: fullHash,
+                    shortHash: shortHash,
+                    author: author,
+                    date: date,
+                    subject: subject,
+                    decorations: decorations,
+                    source: source
+                ))
+            }
+        }
+
+        // Search commit messages
+        let messageOutput = try runActionAllowingFailure(
+            args: ["log", "--all", "--grep=\(query)", "-i",
+                   "--format=\(format)", "--date=iso-strict", "-n", "50"],
+            in: repositoryURL
+        )
+        if messageOutput.status == 0 { addResults(from: messageOutput.output, source: .message) }
+
+        // Search by author
+        let authorOutput = try runActionAllowingFailure(
+            args: ["log", "--all", "--author=\(query)", "-i",
+                   "--format=\(format)", "--date=iso-strict", "-n", "50"],
+            in: repositoryURL
+        )
+        if authorOutput.status == 0 { addResults(from: authorOutput.output, source: .author) }
+
+        // Search by hash prefix (only if 4+ hex chars)
+        let hexChars = CharacterSet(charactersIn: "0123456789abcdefABCDEF")
+        if query.count >= 4 && query.unicodeScalars.allSatisfy({ hexChars.contains($0) }) {
+            let hashOutput = try runActionAllowingFailure(
+                args: ["log", "-1", "--format=\(format)", "--date=iso-strict", query],
+                in: repositoryURL
+            )
+            if hashOutput.status == 0 { addResults(from: hashOutput.output, source: .hash) }
+        }
+
+        // Search branches
+        let branchOutput = try runActionAllowingFailure(
+            args: ["branch", "--all", "--list", "*\(query)*",
+                   "--format=%(refname:short) %(objectname)"],
+            in: repositoryURL
+        )
+        if branchOutput.status == 0 {
+            for line in branchOutput.output.split(separator: "\n", omittingEmptySubsequences: true) {
+                let parts = line.split(separator: " ", maxSplits: 1).map(String.init)
+                guard parts.count == 2 else { continue }
+                let branchName = parts[0]
+                let fullHash = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !excludeHashes.contains(fullHash), !seenHashes.contains(fullHash) else { continue }
+                seenHashes.insert(fullHash)
+                // Get commit info for this hash
+                let info = try runActionAllowingFailure(
+                    args: ["log", "-1", "--format=\(format)", "--date=iso-strict", fullHash],
+                    in: repositoryURL
+                )
+                if info.status == 0 {
+                    addResults(from: info.output, source: .branch(branchName))
+                }
+            }
+        }
+
+        // Search tags
+        let tagOutput = try runActionAllowingFailure(
+            args: ["tag", "--list", "*\(query)*",
+                   "--format=%(refname:short) %(objectname)"],
+            in: repositoryURL
+        )
+        if tagOutput.status == 0 {
+            for line in tagOutput.output.split(separator: "\n", omittingEmptySubsequences: true) {
+                let parts = line.split(separator: " ", maxSplits: 1).map(String.init)
+                guard parts.count == 2 else { continue }
+                let tagName = parts[0]
+                let fullHash = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !excludeHashes.contains(fullHash), !seenHashes.contains(fullHash) else { continue }
+                seenHashes.insert(fullHash)
+                let info = try runActionAllowingFailure(
+                    args: ["log", "-1", "--format=\(format)", "--date=iso-strict", fullHash],
+                    in: repositoryURL
+                )
+                if info.status == 0 {
+                    addResults(from: info.output, source: .tag(tagName))
+                }
+            }
+        }
+
+        return Array(allResults.prefix(50))
+    }
+
     func parseISODate(_ value: String) -> Date {
         if let parsed = isoDateWithFractions.date(from: value) {
             return parsed

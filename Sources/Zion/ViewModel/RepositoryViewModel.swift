@@ -261,6 +261,13 @@ final class RepositoryViewModel {
     var aiHistorySearchError: String?
     var aiHistorySearchResult: AIHistorySearchResult?
     var isSemanticSearchActive: Bool = false
+
+    // Full history search
+    var gitSearchResults: [GitSearchResult] = []
+    var isGitSearching: Bool = false
+    var gitSearchQuery: String = ""
+    @ObservationIgnored var gitSearchTask: Task<Void, Never>?
+
     var branchSummaries: [String: String] = [:]
     var aiBlameExplanation: String = ""
     var aiBlameEntryID: UUID?
