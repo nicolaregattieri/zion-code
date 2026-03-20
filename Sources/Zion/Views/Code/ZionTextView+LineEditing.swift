@@ -100,7 +100,25 @@ extension ZionTextView {
         let indent = indentString
 
         if sel.length == 0 {
-            insertText(indent, replacementRange: sel)
+            if editorUseTabs {
+                insertText("\t", replacementRange: sel)
+            } else {
+                let nsString = string as NSString
+                let lineRange = nsString.lineRange(for: NSRange(location: sel.location, length: 0))
+                let textBeforeCursor = nsString.substring(
+                    with: NSRange(location: lineRange.location, length: sel.location - lineRange.location)
+                )
+                var column = 0
+                for ch in textBeforeCursor {
+                    if ch == "\t" {
+                        column = ((column / editorTabSize) + 1) * editorTabSize
+                    } else {
+                        column += 1
+                    }
+                }
+                let spacesNeeded = editorTabSize - (column % editorTabSize)
+                insertText(String(repeating: " ", count: spacesNeeded), replacementRange: sel)
+            }
             return
         }
 

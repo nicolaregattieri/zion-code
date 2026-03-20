@@ -65,6 +65,11 @@ struct SourceCodeEditor: NSViewRepresentable {
         textView.onFindNextShortcut = onFindNextShortcut
         textView.onFindPreviousShortcut = onFindPreviousShortcut
 
+        let defaultPS = NSMutableParagraphStyle()
+        defaultPS.tabStops = []
+        defaultPS.defaultTabInterval = context.coordinator.tabStopInterval(for: textView, tabSize: tabSize)
+        textView.defaultParagraphStyle = defaultPS
+
         scrollView.documentView = textView
 
         let ruler = LineNumberRulerView(textView: textView)
@@ -173,15 +178,20 @@ struct SourceCodeEditor: NSViewRepresentable {
             coord.lastHighlightedExtension = fileExtension
         }
 
-        // Line spacing
-        if lineSpacing != coord.lastLineSpacing || fileChanged {
+        // Line spacing + tab stops
+        let tabSizeChanged = tabSize != coord.lastTabSize
+        if lineSpacing != coord.lastLineSpacing || tabSizeChanged || needsFontUpdate || fileChanged {
             let paragraphStyle = NSMutableParagraphStyle()
             paragraphStyle.lineSpacing = CGFloat(lineSpacing)
+            paragraphStyle.tabStops = []
+            paragraphStyle.defaultTabInterval = coord.tabStopInterval(for: textView, tabSize: tabSize)
             let fullRange = NSRange(location: 0, length: (textView.string as NSString).length)
             if fullRange.length > 0 {
                 textView.textStorage?.addAttribute(.paragraphStyle, value: paragraphStyle, range: fullRange)
             }
+            textView.defaultParagraphStyle = paragraphStyle
             coord.lastLineSpacing = lineSpacing
+            coord.lastTabSize = tabSize
         }
 
         // Letter spacing
@@ -271,6 +281,7 @@ struct SourceCodeEditor: NSViewRepresentable {
         var lastFocusRequestID: Int = -1
         var lastLineSpacing: Double?
         var lastLetterSpacing: Double?
+        var lastTabSize: Int?
         private var highlightDebounceTask: DispatchWorkItem?
         init(_ parent: SourceCodeEditor) {
             self.parent = parent
@@ -285,6 +296,12 @@ struct SourceCodeEditor: NSViewRepresentable {
 
         deinit {
             NotificationCenter.default.removeObserver(self, name: .formatCodeFile, object: nil)
+        }
+
+        func tabStopInterval(for textView: NSTextView, tabSize: Int) -> CGFloat {
+            let font = textView.font ?? NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
+            let charWidth = NSString(" ").size(withAttributes: [.font: font]).width
+            return charWidth * CGFloat(tabSize)
         }
 
         @MainActor @objc private func handleFormatCodeFile(_ notification: Notification) {
@@ -457,6 +474,10 @@ struct SourceCodeEditor: NSViewRepresentable {
             let lang = detectLanguage(from: parent.fileExtension)
             let paragraphStyle = NSMutableParagraphStyle()
             paragraphStyle.lineSpacing = CGFloat(parent.lineSpacing)
+            let font = textView.font ?? NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
+            let charWidth = NSString(" ").size(withAttributes: [.font: font]).width
+            paragraphStyle.tabStops = []
+            paragraphStyle.defaultTabInterval = charWidth * CGFloat(parent.tabSize)
 
             textStorage.beginEditing()
 
