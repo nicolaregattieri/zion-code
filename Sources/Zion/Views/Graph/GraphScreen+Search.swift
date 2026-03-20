@@ -112,6 +112,12 @@ extension GraphScreen {
         searchMatchIDSet = Set(searchMatchIDs)
         if currentMatchIndex >= searchMatchIDs.count { currentMatchIndex = 0 }
         aiMatchIDSet = []
+
+        if searchMatchIDs.isEmpty && !query.isEmpty && !model.isSemanticSearchActive {
+            model.searchFullHistory(query: query)
+        } else {
+            model.clearGitSearch()
+        }
     }
 
     func navigateSearch(direction: Int, proxy: ScrollViewProxy) {
@@ -144,6 +150,137 @@ extension GraphScreen {
                 || fullHash.hasPrefix(normalizedHash)
                 || normalizedHash.hasPrefix(shortHash)
         }
+    }
+
+    static let gitSearchResultsScrollTarget = "graph.gitSearchResults.scrollTarget"
+
+    func gitSearchResultsPanel(proxy: ScrollViewProxy) -> some View {
+        HStack(spacing: 0) {
+            Color.clear
+                .frame(width: commitGraphColumnWidth)
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+                    Image(systemName: "magnifyingglass")
+                        .font(DesignSystem.Typography.labelBold)
+                        .foregroundStyle(DesignSystem.Colors.brandPrimary)
+                    Text(L10n("graph.search.historyTitle"))
+                        .font(DesignSystem.Typography.sectionTitle)
+                    if !model.gitSearchResults.isEmpty {
+                        Text("\(model.gitSearchResults.count) \(L10n("graph.search.historyResults"))")
+                            .font(DesignSystem.Typography.monoLabelBold)
+                            .foregroundStyle(DesignSystem.Colors.brandPrimary)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(DesignSystem.Colors.glassElevated)
+                            .clipShape(Capsule())
+                    }
+                }
+
+                if model.isGitSearching && model.gitSearchResults.isEmpty {
+                    HStack(spacing: DesignSystem.Spacing.iconTextGap) {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text(L10n("graph.search.historyLoading"))
+                            .font(DesignSystem.Typography.bodySmall)
+                            .foregroundStyle(.secondary)
+                    }
+                } else if model.gitSearchResults.isEmpty {
+                    Text(L10n("graph.ai.noMatches"))
+                        .font(DesignSystem.Typography.bodySmall)
+                        .foregroundStyle(.secondary)
+                } else {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(model.gitSearchResults) { result in
+                            Button {
+                                model.selectCommit(result.id)
+                                model.loadCommitDetails(for: result.id)
+                            } label: {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+                                        Text(result.shortHash)
+                                            .font(DesignSystem.Typography.monoLabelBold)
+                                            .foregroundStyle(DesignSystem.Colors.brandPrimary)
+                                        Text(result.subject)
+                                            .font(DesignSystem.Typography.bodySmallSemibold)
+                                            .foregroundStyle(.primary)
+                                            .lineLimit(1)
+                                        Spacer()
+                                        gitSearchSourceBadge(result.source)
+                                    }
+                                    HStack(spacing: DesignSystem.Spacing.iconTextGap) {
+                                        Text(result.author)
+                                            .font(DesignSystem.Typography.label)
+                                            .foregroundStyle(.secondary)
+                                        Spacer()
+                                        Text(result.date, style: .date)
+                                            .font(DesignSystem.Typography.label)
+                                            .foregroundStyle(.tertiary)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(10)
+                                .background(DesignSystem.Colors.glassMinimal)
+                                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous)
+                                        .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
+                                )
+                                .contentShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous))
+                            }
+                            .buttonStyle(.plain)
+                            .cursorArrow()
+                            .contextMenu {
+                                Button {
+                                    NSPasteboard.general.clearContents()
+                                    NSPasteboard.general.setString(result.id, forType: .string)
+                                } label: {
+                                    Label(L10n("Copiar Hash"), systemImage: "doc.on.doc")
+                                }
+                                Button {
+                                    performGitAction(
+                                        L10n("Cherry-pick"),
+                                        L10n("Deseja aplicar o commit %@ na branch atual?", result.shortHash),
+                                        false
+                                    ) {
+                                        model.cherryPick(commitHash: result.id)
+                                    }
+                                } label: {
+                                    Label(L10n("Cherry-pick"), systemImage: "arrow.triangle.branch")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .padding(12)
+            .background(DesignSystem.Colors.glassSubtle)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous)
+                    .stroke(DesignSystem.Colors.brandPrimary.opacity(0.5), lineWidth: 1)
+            )
+            .padding(.trailing, 16)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    func gitSearchSourceBadge(_ source: GitSearchResult.Source) -> some View {
+        let label: String = switch source {
+        case .message: L10n("graph.search.source.message")
+        case .author: L10n("graph.search.source.author")
+        case .hash: L10n("graph.search.source.hash")
+        case .branch(let name): "\(L10n("graph.search.source.branch")): \(name)"
+        case .tag(let name): "\(L10n("graph.search.source.tag")): \(name)"
+        }
+        Text(label)
+            .font(DesignSystem.Typography.monoMetaBold)
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 2)
+            .background(DesignSystem.Colors.glassElevated)
+            .clipShape(Capsule())
     }
 
     func aiHistoryResultsPanel(proxy: ScrollViewProxy) -> some View {

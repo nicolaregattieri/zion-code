@@ -215,6 +215,13 @@ struct GraphScreen: View {
                                 .id(Self.semanticResultsScrollTarget)
                         }
 
+                        if !model.gitSearchResults.isEmpty || model.isGitSearching {
+                            gitSearchResultsPanel(proxy: proxy)
+                                .padding(.top, DesignSystem.Spacing.standard)
+                                .frame(width: rowWidth, alignment: .leading)
+                                .id(Self.gitSearchResultsScrollTarget)
+                        }
+
                         // PENDING CHANGES - TOP OF THE LIST
                         if !model.uncommittedChanges.isEmpty {
                             pendingChangesRow

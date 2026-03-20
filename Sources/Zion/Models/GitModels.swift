@@ -66,6 +66,26 @@ struct AIHistorySearchResult: Hashable, Sendable {
     let matches: [AIHistorySearchMatch]
 }
 
+// MARK: - Full History Search
+
+struct GitSearchResult: Identifiable, Hashable, Sendable {
+    let id: String           // full hash
+    let shortHash: String
+    let author: String
+    let date: Date
+    let subject: String
+    let decorations: [String]
+
+    enum Source: Hashable, Sendable {
+        case message
+        case author
+        case hash
+        case branch(String)
+        case tag(String)
+    }
+    var source: Source
+}
+
 // MARK: - Branch & Remote
 
 struct BranchInfo: Identifiable, Hashable, Sendable {

@@ -2271,3 +2271,13 @@
 
 // AI Concurrency Gate
 "ai.busy" = "Outra operacao de IA em andamento. Aguarde.";
+
+// Full History Search
+"graph.search.historyResults" = "no historico completo";
+"graph.search.historyTitle" = "Encontrado no historico completo";
+"graph.search.historyLoading" = "Buscando historico completo...";
+"graph.search.source.message" = "mensagem";
+"graph.search.source.author" = "autor";
+"graph.search.source.hash" = "hash";
+"graph.search.source.branch" = "branch";
+"graph.search.source.tag" = "tag";

@@ -988,6 +988,44 @@ extension RepositoryViewModel {
     }
 
 
+    // MARK: - Full History Search
+
+    func searchFullHistory(query: String) {
+        gitSearchTask?.cancel()
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let url = repositoryURL else {
+            clearGitSearch()
+            return
+        }
+
+        gitSearchQuery = trimmed
+        isGitSearching = true
+        let loadedHashes = Set(commits.map(\.id))
+
+        gitSearchTask = Task {
+            defer { if !Task.isCancelled { isGitSearching = false } }
+            do {
+                let results = try await worker.searchFullHistory(
+                    query: trimmed,
+                    in: url,
+                    excludeHashes: loadedHashes
+                )
+                guard !Task.isCancelled else { return }
+                gitSearchResults = results
+            } catch {
+                guard !Task.isCancelled else { return }
+                gitSearchResults = []
+            }
+        }
+    }
+
+    func clearGitSearch() {
+        gitSearchTask?.cancel()
+        gitSearchResults = []
+        isGitSearching = false
+        gitSearchQuery = ""
+    }
+
     // MARK: - Helpers
 
     func defaultCommitLimit(for reference: String?) -> Int {

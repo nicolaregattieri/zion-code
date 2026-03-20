@@ -96,6 +96,13 @@ extension GraphScreen {
                         Text("\(aiResult.matches.count) \(L10n("resultados"))")
                             .font(DesignSystem.Typography.monoLabelBold)
                             .foregroundStyle(DesignSystem.Colors.semanticSearch)
+                    } else if !model.isSemanticSearchActive && searchMatchIDs.isEmpty && !model.gitSearchResults.isEmpty {
+                        Text("\(model.gitSearchResults.count) \(L10n("graph.search.historyResults"))")
+                            .font(DesignSystem.Typography.monoLabelBold)
+                            .foregroundStyle(DesignSystem.Colors.brandPrimary)
+                    } else if model.isGitSearching {
+                        ProgressView()
+                            .controlSize(.mini)
                     }
 
                     Button {
@@ -105,6 +112,7 @@ extension GraphScreen {
                         aiMatchIDSet = []
                         currentMatchIndex = 0
                         model.resetSemanticSearchResults()
+                        model.clearGitSearch()
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.secondary)
