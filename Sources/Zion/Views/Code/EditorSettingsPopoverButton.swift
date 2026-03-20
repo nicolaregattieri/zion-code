@@ -38,6 +38,11 @@ struct EditorSettingsPopoverButton: View {
                         }
                         .pickerStyle(.segmented)
                         .frame(width: 120)
+                        if model.fileDetectedTabSize != nil || model.fileDetectedUseTabs != nil {
+                            Text(L10n("settings.editor.detectedFromFile"))
+                                .font(DesignSystem.Typography.meta)
+                                .foregroundStyle(.tertiary)
+                        }
                     }
 
                     Toggle(L10n("settings.editor.useTabs"), isOn: $model.editorUseTabs)
