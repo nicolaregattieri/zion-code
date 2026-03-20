@@ -11,34 +11,54 @@ struct VoiceActivePill: View {
     @State private var timerTask: Task<Void, Never>?
     @State private var animationTask: Task<Void, Never>?
 
+    private var isProcessing: Bool { speechService.state == .processing }
+
     var body: some View {
         Button {
+            guard !isProcessing else { return }
             onStop()
         } label: {
             HStack(spacing: DesignSystem.Spacing.standard) {
-                // Pulsing red dot
-                Circle()
-                    .fill(DesignSystem.Colors.error)
-                    .frame(width: 8, height: 8)
-                    .shadow(color: DesignSystem.Colors.error.opacity(0.6), radius: 4)
+                if isProcessing {
+                    // Spinner while Gemini/Whisper transcribes
+                    ProgressView()
+                        .controlSize(.small)
+                        .tint(DesignSystem.Colors.error)
+                } else {
+                    // Pulsing red dot
+                    Circle()
+                        .fill(DesignSystem.Colors.error)
+                        .frame(width: 8, height: 8)
+                        .shadow(color: DesignSystem.Colors.error.opacity(0.6), radius: 4)
 
-                // Animated waveform bars
-                HStack(spacing: 2) {
-                    ForEach(0..<5, id: \.self) { i in
-                        RoundedRectangle(cornerRadius: 1)
-                            .fill(DesignSystem.Colors.error.opacity(0.8))
-                            .frame(width: 3, height: barLevels[i] * 16)
+                    // Animated waveform bars
+                    HStack(spacing: 2) {
+                        ForEach(0..<5, id: \.self) { i in
+                            RoundedRectangle(cornerRadius: 1)
+                                .fill(DesignSystem.Colors.error.opacity(0.8))
+                                .frame(width: 3, height: barLevels[i] * 16)
+                        }
                     }
+                    .frame(height: 16)
                 }
-                .frame(height: 16)
 
-                // Live transcript (truncated)
-                if !speechService.currentTranscript.isEmpty {
+                // Status text
+                if isProcessing {
+                    Text(L10n("speech.processing.placeholder"))
+                        .font(DesignSystem.Typography.bodySmall)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: 280, alignment: .leading)
+                } else if !speechService.currentTranscript.isEmpty {
                     Text(speechService.currentTranscript)
                         .font(DesignSystem.Typography.bodySmall)
                         .foregroundStyle(.primary)
                         .lineLimit(1)
                         .truncationMode(.head)
+                        .frame(maxWidth: 280, alignment: .leading)
+                } else if speechService.selectedEngine != .apple {
+                    Text(L10n("speech.recording.placeholder"))
+                        .font(DesignSystem.Typography.bodySmall)
+                        .foregroundStyle(.secondary)
                         .frame(maxWidth: 280, alignment: .leading)
                 }
 

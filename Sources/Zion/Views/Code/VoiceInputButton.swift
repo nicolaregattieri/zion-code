@@ -77,6 +77,11 @@ struct VoiceInputButton: View {
                 speechService.selectedEngine = .apple
                 speechService.clearRecoveryIssue()
             }
+            Button(L10n("speech.recovery.useGemini")) {
+                speechService.selectedEngine = .gemini
+                speechService.clearRecoveryIssue()
+            }
+            .disabled(!speechService.isGeminiAvailable)
             Button(L10n("Cancelar"), role: .cancel) {
                 speechService.clearRecoveryIssue()
             }
@@ -95,28 +100,19 @@ struct VoiceInputButton: View {
                 .font(DesignSystem.Typography.bodyMedium)
 
             // Engine picker
-            if speechService.isWhisperAvailable {
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.micro) {
-                    Text(L10n("speech.engine"))
-                        .font(DesignSystem.Typography.label)
-                        .foregroundStyle(.secondary)
-                    Picker("", selection: $speechService.selectedEngine) {
-                        ForEach(SpeechRecognitionService.Engine.allCases) { engine in
-                            Text(engine.label).tag(engine)
-                        }
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.micro) {
+                Text(L10n("speech.engine"))
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(.secondary)
+                Picker("", selection: $speechService.selectedEngine) {
+                    ForEach(SpeechRecognitionService.Engine.allCases) { engine in
+                        Text(engine.label).tag(engine)
                     }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
                 }
-            } else {
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.micro) {
-                    Text(L10n("speech.engine"))
-                        .font(DesignSystem.Typography.label)
-                        .foregroundStyle(.secondary)
-                    Text(L10n("settings.speech.engine.whisperUnavailable"))
-                        .font(DesignSystem.Typography.label)
-                        .foregroundStyle(.secondary)
-                    openAISettingsLink(label: L10n("settings.speech.engine.configureOpenAI"))
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                if !speechService.isGeminiAvailable && !speechService.isWhisperAvailable {
+                    openAISettingsLink(label: L10n("settings.speech.engine.configureGemini"))
                 }
             }
 
@@ -192,7 +188,7 @@ struct VoiceInputButton: View {
                     locale: speechService.selectedLocale,
                     targetSessionID: sessionID
                 )
-            case .whisper:
+            case .whisper, .gemini:
                 speechService.startRecording(targetSessionID: sessionID)
             }
 
@@ -206,7 +202,7 @@ struct VoiceInputButton: View {
                         locale: speechService.selectedLocale,
                         targetSessionID: sessionID
                     )
-                case .whisper:
+                case .whisper, .gemini:
                     speechService.startRecording(targetSessionID: sessionID)
                 }
             }
@@ -220,7 +216,7 @@ struct VoiceInputButton: View {
             switch speechService.selectedEngine {
             case .apple:
                 result = speechService.stopListening()
-            case .whisper:
+            case .whisper, .gemini:
                 result = await speechService.stopAndTranscribe()
             }
 

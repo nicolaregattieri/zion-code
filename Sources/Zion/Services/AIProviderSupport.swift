@@ -83,12 +83,25 @@ enum SpeechEngineSupport {
         AIProviderSupport.isConnected(provider: .openai, loadKey: loadKey)
     }
 
+    static func isGeminiAvailable(
+        loadKey: (AIProvider) -> String? = AIClient.loadAPIKey
+    ) -> Bool {
+        AIProviderSupport.isConnected(provider: .gemini, loadKey: loadKey)
+    }
+
     static func effectiveEngine(
         storedValue: String?,
         loadKey: (AIProvider) -> String? = AIClient.loadAPIKey
     ) -> SpeechRecognitionService.Engine {
-        let storedEngine = SpeechRecognitionService.Engine(rawValue: storedValue ?? "") ?? .apple
-        guard storedEngine == .whisper else { return storedEngine }
-        return isWhisperAvailable(loadKey: loadKey) ? .whisper : .apple
+        switch SpeechRecognitionService.Engine(rawValue: storedValue ?? "") {
+        case .whisper:
+            return isWhisperAvailable(loadKey: loadKey) ? .whisper : .apple
+        case .gemini:
+            return isGeminiAvailable(loadKey: loadKey) ? .gemini : .apple
+        case .apple:
+            return .apple
+        case nil:
+            return .apple
+        }
     }
 }

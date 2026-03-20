@@ -18,6 +18,7 @@ final class SpeechRecognitionService {
 
     enum Engine: String, CaseIterable, Identifiable {
         case apple
+        case gemini
         case whisper
 
         var id: String { rawValue }
@@ -25,6 +26,7 @@ final class SpeechRecognitionService {
         var label: String {
             switch self {
             case .apple: return L10n("speech.engine.apple")
+            case .gemini: return L10n("speech.engine.gemini")
             case .whisper: return L10n("speech.engine.whisper")
             }
         }
@@ -50,6 +52,10 @@ final class SpeechRecognitionService {
         case whisperQuotaExceeded
         case whisperTemporarilyUnavailable
         case whisperFailed
+        case geminiMissingKey
+        case geminiQuotaExceeded
+        case geminiTemporarilyUnavailable
+        case geminiTranscribeFailed
 
         var message: String {
             switch self {
@@ -61,6 +67,14 @@ final class SpeechRecognitionService {
                 return L10n("speech.recovery.whisperTemporarilyUnavailable")
             case .whisperFailed:
                 return L10n("speech.recovery.whisperFailed")
+            case .geminiMissingKey:
+                return L10n("speech.recovery.geminiMissingKey")
+            case .geminiQuotaExceeded:
+                return L10n("speech.recovery.geminiQuotaExceeded")
+            case .geminiTemporarilyUnavailable:
+                return L10n("speech.recovery.geminiTemporarilyUnavailable")
+            case .geminiTranscribeFailed:
+                return L10n("speech.recovery.geminiTranscribeFailed")
             }
         }
     }
@@ -92,6 +106,10 @@ final class SpeechRecognitionService {
     /// Whether an OpenAI key is configured (determines if Whisper option shows).
     var isWhisperAvailable: Bool {
         SpeechEngineSupport.isWhisperAvailable()
+    }
+
+    var isGeminiAvailable: Bool {
+        SpeechEngineSupport.isGeminiAvailable()
     }
 
     var isActive: Bool {
@@ -283,6 +301,10 @@ final class SpeechRecognitionService {
     }
 
     func stopAndTranscribe() async -> (transcript: String, sessionID: UUID?) {
+        guard state == .recording else {
+            logger.log(.warn, "stopAndTranscribe: skipped (state=\(state), expected .recording)", context: "Speech")
+            return ("", targetSessionID)
+        }
         let sessionID = targetSessionID
 
         logger.log(.info, "stopAndTranscribe: stopping engine…", context: "Speech")
@@ -293,40 +315,70 @@ final class SpeechRecognitionService {
 
         guard let wavData = encodeWAV() else {
             logger.log(.error, "stopAndTranscribe: encodeWAV failed (no frames or empty)", context: "Speech")
-            recoveryIssue = .whisperFailed
+            recoveryIssue = selectedEngine == .gemini ? .geminiTranscribeFailed : .whisperFailed
             cleanup()
             return ("", sessionID)
         }
         logger.log(.info, "stopAndTranscribe: WAV encoded (\(wavData.count) bytes)", context: "Speech")
 
-        guard let apiKey = AIClient.loadAPIKey(for: .openai) else {
-            logger.log(.error, "stopAndTranscribe: no OpenAI API key", context: "Speech")
-            recoveryIssue = .whisperMissingKey
-            cleanup()
-            return ("", sessionID)
-        }
-
-        do {
-            logger.log(.info, "stopAndTranscribe: sending to Whisper API…", context: "Speech")
-            let transcript = try await transcribeWithWhisper(wavData: wavData, apiKey: apiKey)
-            logger.log(.info, "stopAndTranscribe: transcript received (\(transcript.count) chars)", context: "Speech")
-            cleanup()
-            return (transcript, sessionID)
-        } catch let error as AIError {
-            logger.log(.error, "stopAndTranscribe: AIError — \(error)", context: "Speech")
-            switch error {
-            case .quotaExceeded:
-                recoveryIssue = .whisperQuotaExceeded
-            case .temporarilyUnavailable:
-                recoveryIssue = .whisperTemporarilyUnavailable
-            default:
-                recoveryIssue = .whisperFailed
+        switch selectedEngine {
+        case .whisper:
+            guard let apiKey = AIClient.loadAPIKey(for: .openai) else {
+                logger.log(.error, "stopAndTranscribe: no OpenAI API key", context: "Speech")
+                recoveryIssue = .whisperMissingKey
+                cleanup()
+                return ("", sessionID)
             }
-            cleanup()
-            return ("", sessionID)
-        } catch {
-            logger.log(.error, "stopAndTranscribe: \(error.localizedDescription)", context: "Speech")
-            recoveryIssue = .whisperFailed
+            do {
+                logger.log(.info, "stopAndTranscribe: sending to Whisper API…", context: "Speech")
+                let transcript = try await transcribeWithWhisper(wavData: wavData, apiKey: apiKey)
+                logger.log(.info, "stopAndTranscribe: transcript received (\(transcript.count) chars)", context: "Speech")
+                cleanup()
+                return (transcript, sessionID)
+            } catch let error as AIError {
+                logger.log(.error, "stopAndTranscribe: AIError — \(error)", context: "Speech")
+                switch error {
+                case .quotaExceeded: recoveryIssue = .whisperQuotaExceeded
+                case .temporarilyUnavailable: recoveryIssue = .whisperTemporarilyUnavailable
+                default: recoveryIssue = .whisperFailed
+                }
+                cleanup()
+                return ("", sessionID)
+            } catch {
+                logger.log(.error, "stopAndTranscribe: \(error.localizedDescription)", context: "Speech")
+                recoveryIssue = .whisperFailed
+                cleanup()
+                return ("", sessionID)
+            }
+        case .gemini:
+            guard let apiKey = AIClient.loadAPIKey(for: .gemini) else {
+                logger.log(.error, "stopAndTranscribe: no Gemini API key", context: "Speech")
+                recoveryIssue = .geminiMissingKey
+                cleanup()
+                return ("", sessionID)
+            }
+            do {
+                logger.log(.info, "stopAndTranscribe: sending to Gemini API…", context: "Speech")
+                let transcript = try await transcribeWithGemini(wavData: wavData, apiKey: apiKey)
+                logger.log(.info, "stopAndTranscribe: transcript received (\(transcript.count) chars)", context: "Speech")
+                cleanup()
+                return (transcript, sessionID)
+            } catch let error as AIError {
+                logger.log(.error, "stopAndTranscribe: AIError — \(error)", context: "Speech")
+                switch error {
+                case .quotaExceeded: recoveryIssue = .geminiQuotaExceeded
+                case .temporarilyUnavailable: recoveryIssue = .geminiTemporarilyUnavailable
+                default: recoveryIssue = .geminiTranscribeFailed
+                }
+                cleanup()
+                return ("", sessionID)
+            } catch {
+                logger.log(.error, "stopAndTranscribe: \(error.localizedDescription)", context: "Speech")
+                recoveryIssue = .geminiTranscribeFailed
+                cleanup()
+                return ("", sessionID)
+            }
+        case .apple:
             cleanup()
             return ("", sessionID)
         }
@@ -346,7 +398,7 @@ final class SpeechRecognitionService {
             _ = stopListening()
         case (.whisper, .idle):
             startRecording(targetSessionID: targetSessionID)
-        case (.whisper, .recording):
+        case (.whisper, .recording), (.gemini, .recording):
             Task { _ = await stopAndTranscribe() }
         default:
             break
@@ -476,6 +528,47 @@ final class SpeechRecognitionService {
             throw AIError.invalidResponse
         }
 
+        return text.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func transcribeWithGemini(wavData: Data, apiKey: String) async throws -> String {
+        let modelID = AIModelCatalogService.selection(for: .gemini, mode: .efficient, lane: .transcription).primaryModelID
+        let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/\(modelID):generateContent")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
+        request.timeoutInterval = 30
+
+        let body: [String: Any] = [
+            "contents": [[
+                "parts": [
+                    ["inline_data": ["mime_type": "audio/wav", "data": wavData.base64EncodedString()]],
+                    ["text": "Transcribe this audio exactly as spoken. Return only the transcription, nothing else."]
+                ]
+            ]],
+            "generationConfig": ["maxOutputTokens": 1000]
+        ]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw AIError.invalidResponse }
+
+        if http.statusCode == 400 || http.statusCode == 401 { throw AIError.invalidKey }
+        if http.statusCode == 503 { throw AIError.temporarilyUnavailable }
+        if http.statusCode == 429 { throw AIError.quotaExceeded }
+        guard http.statusCode == 200 else {
+            throw AIError.apiError("Gemini transcription request failed (\(http.statusCode)).")
+        }
+
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        guard let candidates = json?["candidates"] as? [[String: Any]],
+              let firstCandidate = candidates.first,
+              let content = firstCandidate["content"] as? [String: Any],
+              let parts = content["parts"] as? [[String: Any]],
+              let text = parts.first?["text"] as? String else {
+            throw AIError.invalidResponse
+        }
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }

@@ -1949,12 +1949,20 @@
 "speech.language" = "Language";
 "speech.engine" = "Engine";
 "speech.engine.apple" = "Apple Speech (Free)";
+"speech.engine.gemini" = "Google Gemini (Free)";
 "speech.engine.whisper" = "OpenAI Whisper";
 "speech.recovery.whisperMissingKey" = "OpenAI Whisper needs a connected OpenAI API key.";
 "speech.recovery.whisperQuotaExceeded" = "OpenAI Whisper quota was exceeded or the balance is unavailable.";
 "speech.recovery.whisperTemporarilyUnavailable" = "OpenAI Whisper is temporarily unavailable. Try Apple Speech or retry in a moment.";
 "speech.recovery.whisperFailed" = "Whisper transcription failed. Try Apple Speech or review your OpenAI key.";
+"speech.recovery.geminiMissingKey" = "Google Gemini needs a connected Gemini API key. Configure it in AI settings.";
+"speech.recovery.geminiQuotaExceeded" = "Google Gemini quota was exceeded. Try Apple Speech or retry in a moment.";
+"speech.recovery.geminiTemporarilyUnavailable" = "Google Gemini is temporarily unavailable. Try Apple Speech or retry in a moment.";
+"speech.recovery.geminiTranscribeFailed" = "Gemini transcription failed. Try Apple Speech or review your Gemini key.";
+"speech.recording.placeholder" = "Recording... transcription ready when you stop.";
+"speech.processing.placeholder" = "Transcribing...";
 "speech.recovery.useAppleSpeech" = "Use Apple Speech";
+"speech.recovery.useGemini" = "Use Gemini";
 "speech.recovery.manageOpenAI" = "Manage OpenAI";
 "speech.send" = "Send to Terminal";
 "speech.permission.denied" = "Microphone or speech recognition access denied. Enable in System Settings > Privacy & Security.";
@@ -1962,10 +1970,12 @@
 "speech.permission.alert.openSettings" = "Open System Settings";
 "speech.permission.alert.micMessage" = "Zion needs microphone access for voice input. Enable it in System Settings > Privacy & Security > Microphone.";
 "speech.permission.alert.speechMessage" = "Zion needs speech recognition access. Enable it in System Settings > Privacy & Security > Speech Recognition.";
-"speech.recovery.alert.title" = "Whisper Error";
+"speech.recovery.alert.title" = "Voice Input Error";
 "speech.error.unavailable" = "Speech recognition is not available for the selected language.";
-"settings.speech.engine.hint" = "Apple Speech is free and real-time. Whisper requires an OpenAI API key (configured in AI settings).";
+"settings.speech.engine.hint" = "Apple Speech is free and real-time. Google Gemini uses your Gemini key (free tier). Whisper requires an OpenAI API key.";
+"settings.speech.engine.geminiUnavailable" = "Google Gemini is unavailable until a Gemini API key is connected in AI settings.";
 "settings.speech.engine.whisperUnavailable" = "OpenAI Whisper is unavailable until an OpenAI API key is connected in AI settings.";
+"settings.speech.engine.configureGemini" = "Configure Gemini Key";
 "settings.speech.engine.configureOpenAI" = "Configure OpenAI Key";
 
 // Git Bisect
