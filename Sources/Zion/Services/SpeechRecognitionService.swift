@@ -541,10 +541,15 @@ final class SpeechRecognitionService {
         request.timeoutInterval = 30
 
         let body: [String: Any] = [
+            "systemInstruction": [
+                "parts": [
+                    ["text": "You are a speech-to-text transcriber. Output ONLY the exact words spoken in the audio. No preamble, no commentary, no formatting. If the audio is silent or unintelligible, return an empty string."]
+                ]
+            ],
             "contents": [[
                 "parts": [
                     ["inline_data": ["mime_type": "audio/wav", "data": wavData.base64EncodedString()]],
-                    ["text": "Transcribe this audio exactly as spoken. Return only the transcription, nothing else."]
+                    ["text": "Transcribe."]
                 ]
             ]],
             "generationConfig": ["maxOutputTokens": 1000]
