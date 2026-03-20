@@ -852,7 +852,8 @@ final class RepositoryViewModel {
                 monitorTask: nil,
                 burstUntil: nil
             )
-            backgroundRepoChangedFiles[previousURL] = uncommittedCount
+            let canonicalPreviousURL = canonicalRecentRepositoryURL(for: previousURL)
+            backgroundRepoChangedFiles[canonicalPreviousURL] = uncommittedCount
             startBackgroundMonitor(for: previousURL)
             // DON'T set terminalTabs = [] here — let the restore/create below do a direct swap
         } else if previousURL == nil {
@@ -874,7 +875,7 @@ final class RepositoryViewModel {
             terminalTabs = restored.terminalTabs
             activeTabID = restored.activeTabID
             focusedSessionID = restored.focusedSessionID
-            backgroundRepoChangedFiles.removeValue(forKey: url)
+            backgroundRepoChangedFiles.removeValue(forKey: canonicalRecentRepositoryURL(for: url))
             // Reset isAlive for sessions that died while stashed — lets updateNSView restart them
             for tab in terminalTabs {
                 for session in tab.allSessions() where !session.isAlive {
