@@ -22,7 +22,7 @@ enum ErrorClassifier {
             ("Please commit your changes or stash them", { _ in L10n("error.git.uncommittedChanges") }),
 
             // Branch / ref issues
-            ("already exists", { _ in L10n("error.git.alreadyExists") }),
+            ("fatal:.*already exists|A branch named.*already exists|A tag named.*already exists", { _ in L10n("error.git.alreadyExists") }),
             ("not a valid branch name", { _ in L10n("error.git.invalidBranchName") }),
 
             // Worktree

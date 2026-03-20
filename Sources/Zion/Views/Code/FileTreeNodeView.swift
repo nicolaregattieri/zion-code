@@ -231,16 +231,13 @@ private struct FolderDropTarget: ViewModifier {
     @Binding var isDropTarget: Bool
 
     func body(content: Content) -> some View {
-        if isDirectory {
-            content
-                .dropDestination(for: URL.self) { urls, _ in
-                    model.handleFileDrop(urls, into: folderURL)
-                    return true
-                } isTargeted: { targeted in
-                    isDropTarget = targeted
-                }
-        } else {
-            content
-        }
+        content
+            .dropDestination(for: URL.self) { urls, _ in
+                let target = isDirectory ? folderURL : folderURL.deletingLastPathComponent()
+                model.handleFileDrop(urls, into: target)
+                return true
+            } isTargeted: { targeted in
+                isDropTarget = isDirectory ? targeted : false
+            }
     }
 }
