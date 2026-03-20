@@ -1972,6 +1972,7 @@
 "speech.recovery.geminiTemporarilyUnavailable" = "Google Gemini está temporalmente no disponible. Prueba Apple Speech o reintenta en un momento.";
 "speech.recovery.geminiTranscribeFailed" = "La transcripción con Gemini falló. Prueba Apple Speech o revisa tu clave de Gemini.";
 "speech.recording.placeholder" = "Grabando... la transcripción estará lista cuando pares.";
+"speech.processing.placeholder" = "Transcribiendo...";
 "speech.recovery.useAppleSpeech" = "Usar Apple Speech";
 "speech.recovery.useGemini" = "Usar Gemini";
 "speech.recovery.manageOpenAI" = "Gestionar OpenAI";

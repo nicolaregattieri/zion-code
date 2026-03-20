@@ -1960,6 +1960,7 @@
 "speech.recovery.geminiTemporarilyUnavailable" = "Google Gemini is temporarily unavailable. Try Apple Speech or retry in a moment.";
 "speech.recovery.geminiTranscribeFailed" = "Gemini transcription failed. Try Apple Speech or review your Gemini key.";
 "speech.recording.placeholder" = "Recording... transcription ready when you stop.";
+"speech.processing.placeholder" = "Transcribing...";
 "speech.recovery.useAppleSpeech" = "Use Apple Speech";
 "speech.recovery.useGemini" = "Use Gemini";
 "speech.recovery.manageOpenAI" = "Manage OpenAI";

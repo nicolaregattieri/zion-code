@@ -532,7 +532,7 @@ final class SpeechRecognitionService {
     }
 
     private func transcribeWithGemini(wavData: Data, apiKey: String) async throws -> String {
-        let modelID = "gemini-2.5-flash-lite"
+        let modelID = AIModelCatalogService.selection(for: .gemini, mode: .efficient, lane: .transcription).primaryModelID
         let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/\(modelID):generateContent")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
