@@ -548,6 +548,8 @@ struct FindInFilesView: View {
     private func installKeyMonitor() {
         removeKeyMonitor()
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            guard focusedField != nil else { return event }
+
             if event.keyCode == 53 { // Escape
                 onClose()
                 return nil
