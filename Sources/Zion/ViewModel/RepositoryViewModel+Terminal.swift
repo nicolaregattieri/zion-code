@@ -102,16 +102,8 @@ extension RepositoryViewModel {
                     let firstNode = TerminalPaneNode(session: session)
                     let secondNode = TerminalPaneNode(session: newSession)
                     node.content = .split(direction: direction, first: firstNode, second: secondNode)
+                    node.ratio = 0.5
                     focusedSessionID = newSession.id
-
-                    // Redistribute ratios so all same-direction panes are equal
-                    if let chainRoot = TerminalPaneNode.findSameDirectionChainRoot(
-                        in: tab, containing: node.id, direction: direction
-                    ) {
-                        chainRoot.redistributeEqualRatios(forDirection: direction)
-                    } else {
-                        node.redistributeEqualRatios(forDirection: direction)
-                    }
                     return
                 }
             }
@@ -132,16 +124,8 @@ extension RepositoryViewModel {
                     let firstNode = TerminalPaneNode(session: session)
                     let secondNode = TerminalPaneNode(session: newSession)
                     node.content = .split(direction: direction, first: firstNode, second: secondNode)
+                    node.ratio = 0.5
                     focusedSessionID = newSession.id
-
-                    // Redistribute ratios so all same-direction panes are equal
-                    if let chainRoot = TerminalPaneNode.findSameDirectionChainRoot(
-                        in: tab, containing: node.id, direction: direction
-                    ) {
-                        chainRoot.redistributeEqualRatios(forDirection: direction)
-                    } else {
-                        node.redistributeEqualRatios(forDirection: direction)
-                    }
                     return
                 }
             }
