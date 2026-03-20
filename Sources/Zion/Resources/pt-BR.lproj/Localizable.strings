@@ -2281,3 +2281,4 @@
 "graph.search.source.hash" = "hash";
 "graph.search.source.branch" = "branch";
 "graph.search.source.tag" = "tag";
+"settings.editor.detectedFromFile" = "Detectado do arquivo";

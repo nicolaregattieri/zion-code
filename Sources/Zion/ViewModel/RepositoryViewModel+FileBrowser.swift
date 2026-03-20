@@ -667,6 +667,15 @@ extension RepositoryViewModel {
         selectedCodeFile = activeItem
         editorFocusRequestID += 1
         if restoreDraftIfAvailable(for: activeItem) {
+            if let draftContent = draftFileContents[activeItem.id] {
+                if let detected = IndentationDetector.detect(in: draftContent) {
+                    fileDetectedTabSize = detected.tabSize
+                    fileDetectedUseTabs = detected.useTabs
+                } else {
+                    fileDetectedTabSize = nil
+                    fileDetectedUseTabs = nil
+                }
+            }
             if navigateToCode {
                 navigateToCodeRequested = true
             }
@@ -697,6 +706,13 @@ extension RepositoryViewModel {
                 missingOpenFileIDs.remove(itemID)
                 if kind == .text || kind == .markdown {
                     let resolvedContent = content ?? ""
+                    if let detected = IndentationDetector.detect(in: resolvedContent) {
+                        fileDetectedTabSize = detected.tabSize
+                        fileDetectedUseTabs = detected.useTabs
+                    } else {
+                        fileDetectedTabSize = nil
+                        fileDetectedUseTabs = nil
+                    }
                     originalFileContents[itemID] = resolvedContent
                     if !isDraftBuffered(for: itemID) {
                         draftFileContents[itemID] = resolvedContent

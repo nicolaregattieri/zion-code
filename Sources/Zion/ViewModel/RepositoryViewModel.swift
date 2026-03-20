@@ -638,9 +638,13 @@ final class RepositoryViewModel {
     @ObservationIgnored private var repoEditorConfig: EditorConfig?
     var hasRepoEditorConfig: Bool { repoEditorConfig != nil }
 
-    // Effective editor properties — repo config overrides global
-    var effectiveTabSize: Int { repoEditorConfig?.tabSize ?? editorTabSize }
-    var effectiveUseTabs: Bool { repoEditorConfig?.useTabs ?? editorUseTabs }
+    // Per-file detected indentation (overrides repo config and global setting)
+    var fileDetectedTabSize: Int?
+    var fileDetectedUseTabs: Bool?
+
+    // Effective editor properties — file detection > repo config > global
+    var effectiveTabSize: Int { fileDetectedTabSize ?? repoEditorConfig?.tabSize ?? editorTabSize }
+    var effectiveUseTabs: Bool { fileDetectedUseTabs ?? repoEditorConfig?.useTabs ?? editorUseTabs }
     var effectiveFontSize: Double { repoEditorConfig?.fontSize ?? editorFontSize }
     var effectiveRulerColumn: Int { repoEditorConfig?.rulerColumn ?? editorRulerColumn }
     var effectiveLineSpacing: Double { repoEditorConfig?.lineSpacing ?? editorLineSpacing }
