@@ -462,9 +462,10 @@ actor RepositoryWorker {
 
         let output = try git.run(args: args, in: repositoryURL).stdout
 
-        let parsed = collapseStashHelperCommits(in: parseCommits(from: output))
-        let hasMore = parsed.count > effectiveLimit
-        let visibleParsed = hasMore ? Array(parsed.prefix(effectiveLimit)) : parsed
+        let rawParsed = parseCommits(from: output)
+        let hasMore = rawParsed.count > effectiveLimit
+        let parsed = collapseStashHelperCommits(in: hasMore ? Array(rawParsed.prefix(effectiveLimit)) : rawParsed)
+        let visibleParsed = parsed
 
         // When showing all branches, compute main-chain to pin main line to lane 0
         let mainChain: Set<String>
