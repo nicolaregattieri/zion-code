@@ -1167,6 +1167,12 @@ extension RepositoryViewModel {
         alert.addButton(withTitle: L10n("Cancelar"))
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         for item in items {
+            if !FileManager.default.fileExists(atPath: item.url.path) {
+                if let idx = openedFiles.firstIndex(where: { $0.id == item.id }) {
+                    performCloseFile(id: openedFiles[idx].id, discardDraft: true)
+                }
+                continue
+            }
             do {
                 try FileManager.default.removeItem(at: item.url)
                 if let idx = openedFiles.firstIndex(where: { $0.id == item.id }) {
@@ -1248,8 +1254,11 @@ extension RepositoryViewModel {
             let parentURL = item.url.deletingLastPathComponent()
             let ext = item.url.pathExtension
             let baseName = ext.isEmpty ? item.name : String(item.name.dropLast(ext.count + 1))
-            let newName = ext.isEmpty ? "\(baseName) copy" : "\(baseName) copy.\(ext)"
-            let newURL = parentURL.appendingPathComponent(newName)
+            let firstName = ext.isEmpty ? "\(baseName) copy" : "\(baseName) copy.\(ext)"
+            var newURL = parentURL.appendingPathComponent(firstName)
+            if FileManager.default.fileExists(atPath: newURL.path) {
+                newURL = uniqueDestinationURL(for: newURL)
+            }
             do {
                 try FileManager.default.copyItem(at: item.url, to: newURL)
             } catch { handleError(error) }
@@ -1285,7 +1294,10 @@ extension RepositoryViewModel {
     func pasteFileItem(into parentURL: URL) {
         guard let clipboard = fileBrowserClipboard else { return }
         for url in clipboard.urls {
-            let destURL = parentURL.appendingPathComponent(url.lastPathComponent)
+            var destURL = parentURL.appendingPathComponent(url.lastPathComponent)
+            if FileManager.default.fileExists(atPath: destURL.path) {
+                destURL = uniqueDestinationURL(for: destURL)
+            }
             do {
                 if clipboard.isCut {
                     try FileManager.default.moveItem(at: url, to: destURL)
