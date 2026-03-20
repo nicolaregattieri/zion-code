@@ -48,7 +48,7 @@ extension CodeScreen {
             }
             .padding(.bottom, DesignSystem.Spacing.compact)
         }
-        .padding(.top, DesignSystem.Spacing.cardPadding)
+        .padding(.top, DesignSystem.Spacing.compact)
         .background {
             if isTerminalTransparent {
                 ZStack {
@@ -221,7 +221,7 @@ extension CodeScreen {
                 .padding(.trailing, 16)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, DesignSystem.Spacing.compact)
     }
 
     // MARK: - Terminal Search
