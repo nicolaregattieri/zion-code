@@ -52,6 +52,13 @@ struct RepositoryLoadOptions: Sendable {
         inferOrigins: false
     )
 
+    static let worktreeStatus = RepositoryLoadOptions(
+        includeWorktreeStatus: true,
+        includeBranchTree: false,
+        includeTagsAndStashes: false,
+        inferOrigins: false
+    )
+
     static let stashRefresh = RepositoryLoadOptions(
         includeWorktreeStatus: true,
         includeBranchTree: false,

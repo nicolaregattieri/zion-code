@@ -1065,6 +1065,10 @@ extension RepositoryViewModel {
 
     // MARK: - File Browser Context Menu Operations
 
+    private func refreshGitStatusAfterFileOperation() {
+        refreshRepository(setBusy: false, options: .worktreeStatus, origin: .fileWatcher)
+    }
+
     func isSafeFileOrFolderName(_ name: String) -> Bool {
         guard !name.isEmpty else { return false }
         guard name != ".", name != ".." else { return false }
@@ -1112,6 +1116,7 @@ extension RepositoryViewModel {
         do {
             try "".write(to: fileURL, atomically: true, encoding: .utf8)
             refreshFileTree()
+            refreshGitStatusAfterFileOperation()
             let item = FileItem(url: fileURL, isDirectory: false, children: nil)
             selectCodeFile(item)
         } catch {
@@ -1144,6 +1149,7 @@ extension RepositoryViewModel {
         do {
             try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
             refreshFileTree()
+            refreshGitStatusAfterFileOperation()
         } catch {
             handleError(error)
         }
@@ -1184,6 +1190,7 @@ extension RepositoryViewModel {
         }
         selectedFileIDs.subtract(items.map(\.id))
         refreshFileTree()
+        refreshGitStatusAfterFileOperation()
     }
 
     func renameFileItem(_ item: FileItem) {
@@ -1239,6 +1246,7 @@ extension RepositoryViewModel {
                 missingOpenFileIDs.remove(item.id)
             }
             refreshFileTree()
+            refreshGitStatusAfterFileOperation()
         } catch {
             handleError(error)
         }
@@ -1264,6 +1272,7 @@ extension RepositoryViewModel {
             } catch { handleError(error) }
         }
         refreshFileTree()
+        refreshGitStatusAfterFileOperation()
     }
 
     func copyFileItem(_ item: FileItem) {
@@ -1331,6 +1340,7 @@ extension RepositoryViewModel {
         }
         fileBrowserClipboard = nil
         refreshFileTree()
+        refreshGitStatusAfterFileOperation()
     }
 
     // MARK: - Drag & Drop
@@ -1371,6 +1381,7 @@ extension RepositoryViewModel {
 
         if !internalURLs.isEmpty || !externalURLs.isEmpty {
             refreshFileTree()
+            refreshGitStatusAfterFileOperation()
         }
     }
 
