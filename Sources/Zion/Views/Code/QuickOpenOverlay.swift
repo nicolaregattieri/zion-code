@@ -41,61 +41,72 @@ struct QuickOpenOverlay: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        ZStack {
+            // Backdrop — dismiss on click
+            Color.black.opacity(0.25)
+                .ignoresSafeArea()
+                .onTapGesture { isVisible = false }
+
             VStack(spacing: 0) {
-                HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
-                    Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                    TextField(L10n("Buscar arquivo..."), text: $query)
-                        .textFieldStyle(.plain)
-                        .font(DesignSystem.Typography.bodyLarge)
-                        .focused($isSearchFocused)
-                        .onSubmit { selectCurrentFile() }
-                }
-                .padding(12)
+                VStack(spacing: 0) {
+                    HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
+                        Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                        TextField(L10n("Buscar arquivo..."), text: $query)
+                            .textFieldStyle(.plain)
+                            .font(DesignSystem.Typography.bodyLarge)
+                            .focused($isSearchFocused)
+                            .onSubmit { selectCurrentFile() }
+                    }
+                    .padding(12)
 
-                Divider()
+                    Divider()
 
-                ScrollViewReader { scrollProxy in
-                    ScrollView {
-                        VStack(spacing: 0) {
-                            let files = filteredFiles
-                            ForEach(Array(files.enumerated()), id: \.element.id) { index, file in
-                                quickOpenRow(file: file, isSelected: index == selectedIndex)
+                    ScrollViewReader { scrollProxy in
+                        ScrollView {
+                            VStack(spacing: 0) {
+                                let files = filteredFiles
+                                ForEach(Array(files.enumerated()), id: \.element.id) { index, file in
+                                    QuickOpenRow(
+                                        file: file,
+                                        isSelected: index == selectedIndex,
+                                        relativePath: relativePath(for: file)
+                                    )
                                     .id(index)
                                     .onTapGesture {
                                         model.selectCodeFile(file)
                                         isVisible = false
                                     }
-                            }
-                            if files.isEmpty {
-                                Text(L10n("Nenhum arquivo encontrado"))
-                                    .foregroundStyle(.secondary)
-                                    .padding(20)
+                                }
+                                if files.isEmpty {
+                                    Text(L10n("Nenhum arquivo encontrado"))
+                                        .foregroundStyle(.secondary)
+                                        .padding(20)
+                                }
                             }
                         }
-                    }
-                    .frame(maxHeight: 400)
-                    .onChange(of: selectedIndex) { _, idx in
-                        scrollProxy.scrollTo(idx, anchor: .center)
+                        .frame(maxHeight: 400)
+                        .onChange(of: selectedIndex) { _, idx in
+                            scrollProxy.scrollTo(idx, anchor: .center)
+                        }
                     }
                 }
+                .frame(width: 500)
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius, style: .continuous).stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1))
+                .shadow(color: DesignSystem.Colors.shadowDark, radius: 20, y: 10)
+
+                Spacer()
             }
-            .frame(width: 500)
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius, style: .continuous).stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1))
-            .shadow(color: DesignSystem.Colors.shadowDark, radius: 20, y: 10)
+            .padding(.top, 60)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .padding(.top, 60)
-        .background(DesignSystem.Colors.shadowDark)
-        .contentShape(Rectangle())
-        .onTapGesture { isVisible = false }
         .onAppear {
             query = ""
             selectedIndex = 0
-            isSearchFocused = true
             installKeyMonitor()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                isSearchFocused = true
+            }
         }
         .onDisappear {
             removeKeyMonitor()
@@ -129,13 +140,27 @@ struct QuickOpenOverlay: View {
         }
     }
 
-    private func quickOpenRow(file: FileItem, isSelected: Bool) -> some View {
-        let relativePath: String = {
-            guard let repoURL = model.repositoryURL else { return file.name }
-            return file.url.path.replacingOccurrences(of: repoURL.path + "/", with: "")
-        }()
+    private func relativePath(for file: FileItem) -> String {
+        guard let repoURL = model.repositoryURL else { return file.name }
+        return file.url.path.replacingOccurrences(of: repoURL.path + "/", with: "")
+    }
 
-        return HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
+    private func selectCurrentFile() {
+        let files = filteredFiles
+        guard selectedIndex < files.count else { return }
+        model.selectCodeFile(files[selectedIndex])
+        isVisible = false
+    }
+}
+
+private struct QuickOpenRow: View {
+    let file: FileItem
+    let isSelected: Bool
+    let relativePath: String
+    @State private var isHovered: Bool = false
+
+    var body: some View {
+        HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
             Image(systemName: "doc.text").foregroundStyle(.secondary).font(DesignSystem.Typography.body)
             VStack(alignment: .leading, spacing: 1) {
                 Text(file.name).font(.system(size: 13, weight: .medium))
@@ -145,14 +170,8 @@ struct QuickOpenOverlay: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
-        .background(isSelected ? DesignSystem.Colors.selectionBackground : Color.clear)
+        .background(isSelected ? DesignSystem.Colors.selectionBackground : (isHovered ? DesignSystem.Interactive.hoverBackground : Color.clear))
         .contentShape(Rectangle())
-    }
-
-    private func selectCurrentFile() {
-        let files = filteredFiles
-        guard selectedIndex < files.count else { return }
-        model.selectCodeFile(files[selectedIndex])
-        isVisible = false
+        .onHover { isHovered = $0 }
     }
 }
