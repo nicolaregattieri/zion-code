@@ -674,6 +674,10 @@ extension RepositoryViewModel {
             do {
                 let _ = try await worker.runAction(args: args, in: repositoryURL)
                 try Task.checkCancellation()
+                let branch = worktree.branch.clean
+                if !branch.isEmpty {
+                    _ = try? await worker.runAction(args: ["branch", "-d", branch], in: repositoryURL)
+                }
                 closeTerminalSession(forWorktree: worktree.id)
                 clearError()
                 statusMessage = force
@@ -708,6 +712,10 @@ extension RepositoryViewModel {
                 let _ = try await worker.runAction(args: ["clean", "-fd"], in: targetURL)
                 let _ = try await worker.runAction(args: ["worktree", "remove", worktree.path], in: repositoryURL)
                 try Task.checkCancellation()
+                let branch = worktree.branch.clean
+                if !branch.isEmpty {
+                    _ = try? await worker.runAction(args: ["branch", "-d", branch], in: repositoryURL)
+                }
                 closeTerminalSession(forWorktree: worktree.id)
                 clearError()
                 statusMessage = L10n("worktree.remove.discarded.success", worktreeDisplayName(worktree))
@@ -1017,17 +1025,26 @@ extension RepositoryViewModel {
         guard let repositoryURL else { return }
         let repoName = repositoryURL.lastPathComponent
         let parentDir = repositoryURL.deletingLastPathComponent()
-        var worktreeCounter = 1
-        while FileManager.default.fileExists(atPath: parentDir.appendingPathComponent("\(repoName)-wt-\(worktreeCounter)").path) {
-            worktreeCounter += 1
-        }
-        let wtPath = parentDir.appendingPathComponent("\(repoName)-wt-\(worktreeCounter)").path
-        let branchName = "wt-\(worktreeCounter)"
 
         actionTask?.cancel()
         isBusy = true
         actionTask = Task {
             do {
+                let branchListOutput = try await worker.runAction(args: ["branch", "--list", "--format=%(refname:short)"], in: repositoryURL)
+                let tagListOutput = try await worker.runAction(args: ["tag", "--list"], in: repositoryURL)
+                let existingRefs = Set(
+                    (branchListOutput + "\n" + tagListOutput)
+                        .split(separator: "\n")
+                        .map { $0.trimmingCharacters(in: .whitespaces) }
+                )
+                var worktreeCounter = 1
+                while FileManager.default.fileExists(atPath: parentDir.appendingPathComponent("\(repoName)-wt-\(worktreeCounter)").path)
+                        || existingRefs.contains("wt-\(worktreeCounter)") {
+                    worktreeCounter += 1
+                }
+                let wtPath = parentDir.appendingPathComponent("\(repoName)-wt-\(worktreeCounter)").path
+                let branchName = "wt-\(worktreeCounter)"
+                try Task.checkCancellation()
                 let _ = try await worker.runAction(args: ["worktree", "add", "-b", branchName, wtPath], in: repositoryURL)
                 try Task.checkCancellation()
                 clearError()

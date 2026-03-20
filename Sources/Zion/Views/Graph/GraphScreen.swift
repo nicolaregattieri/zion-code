@@ -209,12 +209,10 @@ struct GraphScreen: View {
                         : []
                     LazyVStack(spacing: 0) {
                         if model.isSemanticSearchActive, (model.isGeneratingAIMessage || model.aiHistorySearchResult != nil) {
-                            Color.clear
-                                .frame(height: 12)
-                                .id(Self.semanticResultsScrollTarget)
                             aiHistoryResultsPanel(proxy: proxy)
-                                .padding(.top, 8)
+                                .padding(.top, DesignSystem.Spacing.standard)
                                 .frame(width: rowWidth, alignment: .leading)
+                                .id(Self.semanticResultsScrollTarget)
                         }
 
                         // PENDING CHANGES - TOP OF THE LIST
