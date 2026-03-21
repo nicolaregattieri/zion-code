@@ -61,9 +61,9 @@ cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
   <key>CFBundleIdentifier</key>
   <string>com.nicolaregattieri.zion.app</string>
   <key>CFBundleVersion</key>
-  <string>50</string>
+  <string>51</string>
   <key>CFBundleShortVersionString</key>
-  <string>1.7.0</string>
+  <string>1.7.1</string>
   <key>CFBundleExecutable</key>
   <string>Zion</string>
   <key>CFBundlePackageType</key>
