@@ -2,86 +2,6 @@ import SwiftUI
 import AppKit
 @preconcurrency import SwiftTerm
 
-final class TerminalProcessOutputPump: @unchecked Sendable {
-    typealias FlushHandler = @Sendable (Data) -> Void
-
-    private let stateQueue: DispatchQueue
-    private let flushInterval: DispatchTimeInterval
-    private let immediateFlushThreshold: Int
-    private let onFlush: FlushHandler
-
-    private var bufferedOutput = Data()
-    private var scheduledFlushWorkItem: DispatchWorkItem?
-
-    init(
-        label: String,
-        flushIntervalNanos: UInt64 = 8_000_000,
-        immediateFlushThreshold: Int = 32_768,
-        onFlush: @escaping FlushHandler
-    ) {
-        self.stateQueue = DispatchQueue(label: label, qos: .userInitiated)
-        self.flushInterval = .nanoseconds(Int(flushIntervalNanos))
-        self.immediateFlushThreshold = immediateFlushThreshold
-        self.onFlush = onFlush
-    }
-
-    func enqueue(_ slice: ArraySlice<UInt8>) {
-        guard !slice.isEmpty else { return }
-        let chunk = Data(slice)
-        stateQueue.async { [weak self] in
-            guard let self else { return }
-            self.bufferedOutput.append(chunk)
-
-            if Self.shouldFlushImmediately(
-                bufferedByteCount: self.bufferedOutput.count,
-                threshold: self.immediateFlushThreshold
-            ) {
-                self.flushLocked()
-                return
-            }
-
-            self.scheduleFlushIfNeededLocked()
-        }
-    }
-
-    func reset() {
-        stateQueue.async { [weak self] in
-            guard let self else { return }
-            self.scheduledFlushWorkItem?.cancel()
-            self.scheduledFlushWorkItem = nil
-            self.bufferedOutput.removeAll(keepingCapacity: false)
-        }
-    }
-
-    private func scheduleFlushIfNeededLocked() {
-        guard scheduledFlushWorkItem == nil else { return }
-
-        let workItem = DispatchWorkItem { [weak self] in
-            self?.flushLocked()
-        }
-        scheduledFlushWorkItem = workItem
-        stateQueue.asyncAfter(deadline: .now() + flushInterval, execute: workItem)
-    }
-
-    private func flushLocked() {
-        scheduledFlushWorkItem?.cancel()
-        scheduledFlushWorkItem = nil
-        guard !bufferedOutput.isEmpty else { return }
-
-        let payload = bufferedOutput
-        bufferedOutput.removeAll(keepingCapacity: true)
-        onFlush(payload)
-    }
-
-    static func shouldFlushImmediately(bufferedByteCount: Int, threshold: Int) -> Bool {
-        bufferedByteCount >= threshold
-    }
-}
-
-private final class TerminalCoordinatorWeakBox: @unchecked Sendable {
-    weak var coordinator: TerminalTabView.Coordinator?
-}
-
 // MARK: - TerminalTabView
 
 struct TerminalTabView: NSViewRepresentable {
@@ -257,8 +177,6 @@ struct TerminalTabView: NSViewRepresentable {
     class Coordinator: NSObject, SwiftTerm.TerminalViewDelegate, SwiftTerm.LocalProcessDelegate {
         var parent: TerminalTabView
         let generationID = UUID()
-        nonisolated let processCallbackQueue: DispatchQueue
-        nonisolated let processOutputPump: TerminalProcessOutputPump
         private var process: LocalProcess?
         private weak var terminalView: SwiftTerm.TerminalView?
         private(set) var processIsDead = false
@@ -288,21 +206,6 @@ struct TerminalTabView: NSViewRepresentable {
 
         init(_ parent: TerminalTabView) {
             self.parent = parent
-            let sessionID = parent.session.id.uuidString
-            let coordinatorBox = TerminalCoordinatorWeakBox()
-            self.processCallbackQueue = DispatchQueue(
-                label: "app.zion.terminal.process-callback.\(sessionID)",
-                qos: .userInitiated
-            )
-            self.processOutputPump = TerminalProcessOutputPump(
-                label: "app.zion.terminal.output-pump.\(sessionID)"
-            ) { [weak coordinatorBox] payload in
-                Task { @MainActor [weak coordinatorBox] in
-                    coordinatorBox?.coordinator?.handleCoalescedProcessOutput(payload)
-                }
-            }
-            super.init()
-            coordinatorBox.coordinator = self
         }
 
         var shortGeneration: String {
@@ -399,7 +302,7 @@ struct TerminalTabView: NSViewRepresentable {
             let sessionID = parent.session.id
 
             Task {
-                let process = LocalProcess(delegate: self, dispatchQueue: self.processCallbackQueue)
+                let process = LocalProcess(delegate: self, dispatchQueue: .main)
                 self.process = process
                 self.processIsDead = false
 
@@ -504,7 +407,6 @@ struct TerminalTabView: NSViewRepresentable {
             pendingOutputFlushTask?.cancel()
             pendingOutputFlushTask = nil
             pendingTerminalOutput.removeAll(keepingCapacity: false)
-            processOutputPump.reset()
             pointerDownInTerminal = false
             dragSelectionFreezeActive = false
             persistentSelectionFreezeActive = false
@@ -854,37 +756,6 @@ struct TerminalTabView: NSViewRepresentable {
             if !pendingTerminalOutput.isEmpty, !isTerminalOutputFrozen {
                 schedulePendingOutputFlushIfNeeded()
             }
-        }
-
-        private func handleCoalescedProcessOutput(_ payload: Data) {
-            let currentOwner = isCurrentOwner()
-            if !currentOwner {
-                if Self.shouldRecoverOwnerBinding(
-                    isCurrentOwner: currentOwner,
-                    bridgeMatchesCoordinator: parent.session._processBridge === self
-                ) {
-                    ensureOwnerBinding(reason: "dataReceived.recover")
-                } else {
-                    DiagnosticLogger.shared.log(
-                        .info,
-                        "dataReceived ignored (stale)",
-                        context: "\(parent.session.label)(\(parent.session.id.uuidString.prefix(4))) gen=\(shortGeneration)",
-                        source: "TerminalTabView"
-                    )
-                    return
-                }
-            }
-
-            if terminalView == nil, let rebound = parent.session._cachedView as? SwiftTerm.TerminalView {
-                terminalView = rebound
-                DiagnosticLogger.shared.log(
-                    .info,
-                    "dataReceived rebound terminalView",
-                    context: "\(parent.session.label)(\(parent.session.id.uuidString.prefix(4))) gen=\(shortGeneration)",
-                    source: "TerminalTabView"
-                )
-            }
-            queueTerminalOutput(ArraySlice(payload))
         }
 
         private func isShiftReturn(_ event: NSEvent) -> Bool {
@@ -1345,7 +1216,36 @@ struct TerminalTabView: NSViewRepresentable {
         }
 
         nonisolated func dataReceived(slice: ArraySlice<UInt8>) {
-            processOutputPump.enqueue(slice)
+            Task { @MainActor in
+                let currentOwner = isCurrentOwner()
+                if !currentOwner {
+                    if Self.shouldRecoverOwnerBinding(
+                        isCurrentOwner: currentOwner,
+                        bridgeMatchesCoordinator: parent.session._processBridge === self
+                    ) {
+                        ensureOwnerBinding(reason: "dataReceived.recover")
+                    } else {
+                        DiagnosticLogger.shared.log(
+                            .info,
+                            "dataReceived ignored (stale)",
+                            context: "\(parent.session.label)(\(parent.session.id.uuidString.prefix(4))) gen=\(shortGeneration)",
+                            source: "TerminalTabView"
+                        )
+                        return
+                    }
+                }
+
+                if terminalView == nil, let rebound = parent.session._cachedView as? SwiftTerm.TerminalView {
+                    terminalView = rebound
+                    DiagnosticLogger.shared.log(
+                        .info,
+                        "dataReceived rebound terminalView",
+                        context: "\(parent.session.label)(\(parent.session.id.uuidString.prefix(4))) gen=\(shortGeneration)",
+                        source: "TerminalTabView"
+                    )
+                }
+                queueTerminalOutput(slice)
+            }
         }
 
         nonisolated func getWindowSize() -> winsize {

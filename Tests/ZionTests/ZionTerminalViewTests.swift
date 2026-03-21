@@ -2,84 +2,8 @@ import XCTest
 import SwiftTerm
 @testable import Zion
 
-private actor TerminalProcessOutputRecorder {
-    private var payloads: [Data] = []
-
-    func append(_ data: Data) {
-        payloads.append(data)
-    }
-
-    func allPayloads() -> [Data] {
-        payloads
-    }
-}
-
 @MainActor
 final class ZionTerminalViewTests: XCTestCase {
-    func testProcessOutputPumpCoalescesRapidChunksIntoSingleFlush() async {
-        let expectation = expectation(description: "coalesced flush")
-        expectation.expectedFulfillmentCount = 1
-        let recorder = TerminalProcessOutputRecorder()
-
-        let pump = TerminalProcessOutputPump(
-            label: "test.coalesced",
-            flushIntervalNanos: 20_000_000,
-            immediateFlushThreshold: 1024
-        ) { data in
-            Task {
-                await recorder.append(data)
-                expectation.fulfill()
-            }
-        }
-
-        pump.enqueue(ArraySlice("hello ".utf8))
-        pump.enqueue(ArraySlice("world".utf8))
-
-        await fulfillment(of: [expectation], timeout: 1.0)
-        let payloads = await recorder.allPayloads()
-        XCTAssertEqual(payloads.count, 1)
-        XCTAssertEqual(String(data: payloads[0], encoding: .utf8), "hello world")
-    }
-
-    func testProcessOutputPumpFlushesImmediatelyAtThreshold() async {
-        let expectation = expectation(description: "threshold flush")
-        expectation.expectedFulfillmentCount = 1
-        let recorder = TerminalProcessOutputRecorder()
-
-        let pump = TerminalProcessOutputPump(
-            label: "test.threshold",
-            flushIntervalNanos: 1_000_000_000,
-            immediateFlushThreshold: 8
-        ) { data in
-            Task {
-                await recorder.append(data)
-                expectation.fulfill()
-            }
-        }
-
-        pump.enqueue(ArraySlice("1234".utf8))
-        pump.enqueue(ArraySlice("5678".utf8))
-
-        await fulfillment(of: [expectation], timeout: 0.2)
-        let received = await recorder.allPayloads().first
-        XCTAssertEqual(String(data: received ?? Data(), encoding: .utf8), "12345678")
-    }
-
-    func testProcessOutputPumpImmediateFlushDecisionUsesThreshold() {
-        XCTAssertFalse(
-            TerminalProcessOutputPump.shouldFlushImmediately(
-                bufferedByteCount: 31_999,
-                threshold: 32_000
-            )
-        )
-        XCTAssertTrue(
-            TerminalProcessOutputPump.shouldFlushImmediately(
-                bufferedByteCount: 32_000,
-                threshold: 32_000
-            )
-        )
-    }
-
     func testPreciseScrollUsesReducedRowHeightForSmootherTrackpadScroll() {
         XCTAssertEqual(
             ZionTerminalView.preciseScrollLineHeight(viewHeight: 180, terminalRows: 10),
