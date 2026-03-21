@@ -13,6 +13,7 @@ struct NeonProgressLine: View {
 
     @Environment(\.zionModeEnabled) private var zionModeEnabled
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var shimmerPhase: CGFloat = 0
     @State private var pulseOpacity: Double = 0.4
@@ -36,6 +37,13 @@ struct NeonProgressLine: View {
                 y: 1
             )
             .onAppear { startAnimation() }
+            .onChange(of: scenePhase) { _, newPhase in
+                if newPhase == .active {
+                    startAnimation()
+                } else {
+                    stopAnimation()
+                }
+            }
     }
 
     @ViewBuilder
@@ -103,6 +111,14 @@ struct NeonProgressLine: View {
 
         case .static:
             break
+        }
+    }
+
+    private func stopAnimation() {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            shimmerPhase = 0
+            pulseOpacity = 0.4
+            pulseGradientShift = 0
         }
     }
 }

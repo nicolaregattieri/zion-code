@@ -200,7 +200,7 @@ struct TerminalTabView: NSViewRepresentable {
         private var manualScrollFreezeIntentActive = false
         private var preciseScrollLineAccumulator: CGFloat = 0
         private var resignActiveObserver: Any?
-        private static let outputFlushIntervalNanos: UInt64 = 8_000_000
+        private static let outputFlushIntervalNanos: UInt64 = 16_000_000
         private static let maxBufferedOutputDuringDragSelection = 1_048_576
         private static let forcedFlushChunkBytes = 65_536
 

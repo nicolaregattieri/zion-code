@@ -139,12 +139,12 @@ final class ClipboardMonitor {
         purgeOldTempFiles()
         lastChangeCount = NSPasteboard.general.changeCount
         // Use .common mode so the timer fires even during UI interactions (scrolling, resizing)
-        let pollTimer = Timer(timeInterval: 0.5, repeats: true) { [weak self] _ in
+        let pollTimer = Timer(timeInterval: 1.5, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.poll()
             }
         }
-        RunLoop.main.add(pollTimer, forMode: .common)
+        RunLoop.main.add(pollTimer, forMode: .default)
         timer = pollTimer
     }
 

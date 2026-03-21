@@ -3,7 +3,9 @@ import SwiftUI
 struct LiquidBackgroundView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.zionModeEnabled) private var zionMode
+    @Environment(\.scenePhase) private var scenePhase
     @State private var phase: Bool = false
+    @State private var isAnimating: Bool = false
 
     var body: some View {
         ZStack {
@@ -42,10 +44,28 @@ struct LiquidBackgroundView: View {
                     .offset(x: phase ? -310 : -370, y: phase ? -200 : -240)
             }
         }
-        .onAppear {
-            withAnimation(.easeInOut(duration: 8).repeatForever(autoreverses: true)) {
-                phase.toggle()
+        .onAppear { startAnimation() }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                startAnimation()
+            } else {
+                stopAnimation()
             }
+        }
+    }
+
+    private func startAnimation() {
+        guard !isAnimating else { return }
+        isAnimating = true
+        withAnimation(.easeInOut(duration: 8).repeatForever(autoreverses: true)) {
+            phase.toggle()
+        }
+    }
+
+    private func stopAnimation() {
+        isAnimating = false
+        withAnimation(.easeInOut(duration: 0.3)) {
+            phase = false
         }
     }
 }

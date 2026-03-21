@@ -109,6 +109,7 @@ extension RepositoryViewModel {
                 try? await Task.sleep(nanoseconds: Constants.Timing.backgroundFetchInterval)
                 if Task.isCancelled { break }
                 if isSwitchingRepository { continue }
+                guard NSApp.isActive else { continue }
                 await checkBehindRemote()
                 await checkPRReviewRequests()
             }
