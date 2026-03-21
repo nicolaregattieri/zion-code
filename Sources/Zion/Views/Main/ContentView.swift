@@ -520,68 +520,64 @@ struct ContentView: View {
     }
 
     private var workspaceHost: some View {
+        // All sections are kept in the ZStack at stable structural positions to avoid
+        // destroying/creating heavy views (terminals, graph, operations) on section switches.
         ZStack {
-            // CodeScreen is always rendered to keep terminal sessions alive
-            CodeScreen(model: model, onOpenFolder: { openRepositoryPanel() }, isZenMode: zenModeEnabled)
+            CodeScreen(model: model, onOpenFolder: { openRepositoryPanel() }, isZenMode: zenModeEnabled, isVisible: selectedSection == .code)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .opacity(selectedSection == .code ? 1 : 0)
                 .allowsHitTesting(selectedSection == .code)
 
-            if selectedSection != .code {
-                nonCodeContent
+            if model.repositoryURL != nil {
+                nonCodeSharedBanners
+                    .opacity(selectedSection != .code ? 1 : 0)
+                    .allowsHitTesting(selectedSection != .code)
+
+                GraphScreen(
+                    model: model,
+                    commitSearchQuery: $commitSearchQuery,
+                    performGitAction: { t, m, d, a in performGitAction(title: t, message: m, destructive: d, action: a) },
+                    commitContextMenu: { commit in AnyView(commitContextMenu(for: commit)) },
+                    branchContextMenu: { branch in AnyView(branchContextMenu(for: branch)) },
+                    tagContextMenu: { tag in AnyView(tagContextMenu(for: tag)) }
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .opacity(selectedSection == .graph ? 1 : 0)
+                .allowsHitTesting(selectedSection == .graph)
+
+                OperationsScreen(
+                    model: model,
+                    performGitAction: { t, m, d, a in performGitAction(title: t, message: m, destructive: d, action: a) },
+                    branchContextMenu: { branch in AnyView(branchContextMenu(for: branch)) }
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .opacity(selectedSection == .operations ? 1 : 0)
+                .allowsHitTesting(selectedSection == .operations)
+            } else if selectedSection != .code {
+                WelcomeScreen(model: model, onOpen: { openRepositoryPanel() }, onInit: { initRepositoryPanel() })
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .transition(.opacity)
             }
         }
         .animation(DesignSystem.Motion.panel, value: selectedSection)
     }
 
     @ViewBuilder
-    private var nonCodeContent: some View {
-        if model.repositoryURL == nil {
-            WelcomeScreen(model: model, onOpen: { openRepositoryPanel() }, onInit: { initRepositoryPanel() })
-        } else {
-            ZStack {
-                VStack(spacing: 0) {
-                    if model.hasConflicts || model.isMerging || model.isRebasing || model.isCherryPicking {
-                        conflictWarningBar
-                            .zIndex(999)
-                    }
-
-                    if model.bisectPhase != .inactive {
-                        BisectBanner(model: model)
-                            .zIndex(998)
-                            .transition(DesignSystem.Motion.slideFromTop)
-                    }
-
-                    nonCodeMainContent
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
+    private var nonCodeSharedBanners: some View {
+        VStack(spacing: 0) {
+            if model.hasConflicts || model.isMerging || model.isRebasing || model.isCherryPicking {
+                conflictWarningBar
+                    .zIndex(999)
             }
-        }
-    }
 
-    @ViewBuilder
-    private var nonCodeMainContent: some View {
-        switch selectedSection {
-        case .graph:
-            GraphScreen(
-                model: model,
-                commitSearchQuery: $commitSearchQuery,
-                performGitAction: { t, m, d, a in performGitAction(title: t, message: m, destructive: d, action: a) },
-                commitContextMenu: { commit in AnyView(commitContextMenu(for: commit)) },
-                branchContextMenu: { branch in AnyView(branchContextMenu(for: branch)) },
-                tagContextMenu: { tag in AnyView(tagContextMenu(for: tag)) }
-            )
-        case .operations:
-            OperationsScreen(
-                model: model,
-                performGitAction: { t, m, d, a in performGitAction(title: t, message: m, destructive: d, action: a) },
-                branchContextMenu: { branch in AnyView(branchContextMenu(for: branch)) }
-            )
-        case .code:
-            EmptyView() // Handled by ZStack above
+            if model.bisectPhase != .inactive {
+                BisectBanner(model: model)
+                    .zIndex(998)
+                    .transition(DesignSystem.Motion.slideFromTop)
+            }
+
+            Spacer(minLength: 0)
         }
+        .allowsHitTesting(false)
     }
 
 

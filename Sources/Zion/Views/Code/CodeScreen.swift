@@ -23,6 +23,7 @@ struct CodeScreen: View {
     @Bindable var model: RepositoryViewModel
     var onOpenFolder: (() -> Void)? = nil
     var isZenMode: Bool = false
+    var isVisible: Bool = true
     @Environment(\.zionModeEnabled) private var zionModeEnabled
     @AppStorage(UserDefaultsKeys.Editor.showBreadcrumb) var showBreadcrumbPath: Bool = true
     @State var isQuickOpenVisible: Bool = false
