@@ -60,7 +60,10 @@ extension CodeScreen {
             }
         }
         .onAppear {
-            model.createDefaultTerminalSession(repositoryURL: model.repositoryURL, branchName: model.currentBranch.isEmpty ? "zsh" : model.currentBranch)
+            model.ensureDefaultTerminalSession(
+                repositoryURL: model.repositoryURL,
+                branchName: model.currentBranch.isEmpty ? "zsh" : model.currentBranch
+            )
         }
         .background {
             // New tab

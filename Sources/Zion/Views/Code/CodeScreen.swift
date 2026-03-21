@@ -88,20 +88,15 @@ struct CodeScreen: View {
                         .environment(\.colorScheme, model.selectedTheme.isLightAppearance ? .light : .dark)
                 }
 
-                if isFileBrowserVisible && !isZenMode {
-                    DraggableSplitView(
-                        axis: .horizontal,
-                        ratio: $fileBrowserRatio,
-                        minLeading: DesignSystem.Layout.fileBrowserMinWidth,
-                        minTrailing: DesignSystem.Layout.editorMinWidth
-                    ) {
-                        fileBrowserPane
-                    } trailing: {
-                        editorTerminalContent
-                    }
-                } else {
-                    editorTerminalContent
-                }
+                // IMPORTANT: editorTerminalContent must always occupy the same structural
+                // slot to preserve NSView identity of terminal views. The file browser is
+                // layered alongside it rather than wrapping it in a conditional.
+                StableFileBrowserSplit(
+                    isVisible: isFileBrowserVisible && !isZenMode,
+                    ratio: $fileBrowserRatio,
+                    sidebar: { fileBrowserPane },
+                    content: { editorTerminalContent }
+                )
             }
 
             if isQuickOpenVisible {
@@ -275,26 +270,17 @@ struct CodeScreen: View {
         }
     }
 
-    @ViewBuilder
     private var editorTerminalContent: some View {
-        if layout == .split {
-            DraggableSplitView(
-                axis: .vertical,
-                ratio: $terminalRatio,
-                minLeading: DesignSystem.Layout.editorTerminalMinPane,
-                minTrailing: DesignSystem.Layout.editorTerminalMinPane
-            ) {
-                editorPane
-            } trailing: {
-                terminalContainer
-            }
-        } else if layout == .editorOnly {
-            editorPane
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else {
-            terminalContainer
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
+        // IMPORTANT: Both editorPane and terminalContainer must always exist in the
+        // same structural position to preserve NSView identity. Using if/else branches
+        // causes SwiftUI to destroy and recreate NSViewRepresentable views (TerminalTabView),
+        // which triggers expensive make/dismantle storms on layout changes and repo switches.
+        StableEditorTerminalSplit(
+            layout: layout,
+            terminalRatio: $terminalRatio,
+            editor: { editorPane },
+            terminal: { terminalContainer }
+        )
     }
 
     private var editorToolbar: some View {
