@@ -817,6 +817,10 @@
 "settings.general.graphAuthorAvatars" = "Activar avatares de autores en graph";
 "settings.general.graphAuthorAvatarsHint" = "Descarga identicons de Gravatar para los autores de commits. Está desactivado por defecto para evitar solicitudes externas en repositorios privados.";
 "settings.general.customPath" = "Ruta Personalizada";
+"settings.update.title" = "Actualizaciones";
+"settings.update.autoCheck" = "Buscar actualizaciones automáticamente";
+"settings.update.lastCheck" = "Última verificación";
+"settings.update.available" = "Actualización disponible";
 "settings.open" = "Abrir Configuración";
 "settings.open.hint" = "Abrir Configuración (⌘,)";
 "settings.ai.provider" = "Proveedor de IA";
