@@ -541,18 +541,12 @@ final class SpeechRecognitionService {
         request.timeoutInterval = 30
 
         let body: [String: Any] = [
-            "systemInstruction": [
-                "parts": [
-                    ["text": "You are a speech-to-text transcriber. Output ONLY the exact words spoken in the audio. No preamble, no commentary, no formatting. If the audio is silent or unintelligible, return an empty string."]
-                ]
-            ],
             "contents": [[
                 "parts": [
-                    ["inline_data": ["mime_type": "audio/wav", "data": wavData.base64EncodedString()]],
-                    ["text": "Transcribe."]
+                    ["text": "Generate a transcript of the speech."],
+                    ["inlineData": ["mimeType": "audio/wav", "data": wavData.base64EncodedString()]]
                 ]
-            ]],
-            "generationConfig": ["maxOutputTokens": 1000]
+            ]]
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
@@ -574,7 +568,16 @@ final class SpeechRecognitionService {
               let text = parts.first?["text"] as? String else {
             throw AIError.invalidResponse
         }
-        return text.trimmingCharacters(in: .whitespacesAndNewlines)
+        var result = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Strip echoed prompt if Gemini echoes the instruction
+        for prefix in ["Transcribe.", "Transcribe:", "Transcribe"] {
+            if result.hasPrefix(prefix) {
+                result = String(result.dropFirst(prefix.count))
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                break
+            }
+        }
+        return result
     }
 }
 
