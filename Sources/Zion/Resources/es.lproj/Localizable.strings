@@ -2128,6 +2128,17 @@
 
 // Shortcuts
 "shortcuts.toggleDotfiles" = "Alternar Dotfiles";
+"shortcuts.navigateCodeByLetter" = "Codigo (Editor)";
+"shortcuts.navigateGraphByLetter" = "Grafo (Arbol)";
+"shortcuts.quickCommit" = "Commit Rapido";
+"shortcuts.stageAll" = "Preparar Todos";
+"shortcuts.recorder.typeShortcut" = "Presione un atajo...";
+"shortcuts.recorder.reserved" = "Este atajo esta reservado por macOS";
+"shortcuts.recorder.conflictsWith" = "Conflicto con %@";
+"shortcuts.resetAll" = "Restablecer Todos los Atajos";
+"shortcuts.reset" = "Restablecer";
+"shortcuts.replace" = "Reemplazar";
+"shortcuts.searchPlaceholder" = "Buscar atajos...";
 
 // Missing keys (sync with en)
 "Busca" = "Buscar";

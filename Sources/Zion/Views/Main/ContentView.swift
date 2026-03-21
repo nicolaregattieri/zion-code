@@ -27,6 +27,7 @@ struct ContentView: View {
     @State var selectedSection: AppSection = .code
     @State private var commitSearchQuery: String = ""
     @State private var selectedBranchTreeNodeID: String?
+    @EnvironmentObject var shortcutRegistry: ShortcutRegistry
     @State var isShortcutsVisible: Bool = false
     @State var isHelpVisible: Bool = false
     @State private var shouldPresentOnboardingFromHelp: Bool = false

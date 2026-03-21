@@ -68,51 +68,43 @@ extension CodeScreen {
             model.ensureDefaultTerminalSession(repositoryURL: model.repositoryURL, branchName: model.currentBranch.isEmpty ? "zsh" : model.currentBranch)
         }
         .background {
-            // New tab
             Button("") {
                 let url = model.repositoryURL ?? URL(fileURLWithPath: NSHomeDirectory())
                 model.createTerminalSession(workingDirectory: url, label: model.currentBranch.isEmpty ? "zsh" : model.currentBranch)
             }
-            .keyboardShortcut("t", modifiers: .command)
+            .applyShortcutBinding(shortcutRegistry.binding(for: .newTerminalTab))
             .frame(width: 0, height: 0).opacity(0)
 
-            // Vertical split
             Button("") { model.splitFocusedTerminal(direction: .vertical) }
-                .keyboardShortcut("d", modifiers: [.command, .shift])
+                .applyShortcutBinding(shortcutRegistry.binding(for: .splitTerminalVertical))
                 .frame(width: 0, height: 0).opacity(0)
 
-            // Horizontal split
             Button("") { model.splitFocusedTerminal(direction: .horizontal) }
-                .keyboardShortcut("e", modifiers: [.command, .shift])
+                .applyShortcutBinding(shortcutRegistry.binding(for: .splitTerminalHorizontal))
                 .frame(width: 0, height: 0).opacity(0)
 
-            // Terminal zoom in (Ctrl+=)
             Button("") {
                 model.terminalFontSize = min(32, model.terminalFontSize + 1)
             }
-            .keyboardShortcut("=", modifiers: .control)
+            .applyShortcutBinding(shortcutRegistry.binding(for: .terminalZoomIn))
             .frame(width: 0, height: 0).opacity(0)
 
-            // Terminal zoom out (Ctrl+-)
             Button("") {
                 model.terminalFontSize = max(8, model.terminalFontSize - 1)
             }
-            .keyboardShortcut("-", modifiers: .control)
+            .applyShortcutBinding(shortcutRegistry.binding(for: .terminalZoomOut))
             .frame(width: 0, height: 0).opacity(0)
 
-            // Close focused split pane (Cmd+Shift+W)
             Button("") { model.closeFocusedTerminalPane() }
-                .keyboardShortcut("w", modifiers: [.command, .shift])
+                .applyShortcutBinding(shortcutRegistry.binding(for: .closeTerminalSplit))
                 .frame(width: 0, height: 0).opacity(0)
 
-            // Git Blame (Cmd+Shift+B)
             Button("") { model.toggleBlame() }
-                .keyboardShortcut("b", modifiers: [.command, .shift])
+                .applyShortcutBinding(shortcutRegistry.binding(for: .gitBlame))
                 .frame(width: 0, height: 0).opacity(0)
 
-            // Voice input toggle (⌘⌥X)
             Button("") { voiceToggleRequestID += 1 }
-                .keyboardShortcut("x", modifiers: [.command, .option])
+                .applyShortcutBinding(shortcutRegistry.binding(for: .toggleSpeechInput))
                 .frame(width: 0, height: 0).opacity(0)
         }
     }

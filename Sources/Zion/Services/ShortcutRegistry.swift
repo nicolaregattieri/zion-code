@@ -91,6 +91,10 @@ enum ShortcutActionID: String, CaseIterable, Codable, Hashable {
     case zenMode
     case zionMode
     case showKeyboardShortcuts
+    case navigateCodeByLetter
+    case navigateGraphByLetter
+    case quickCommit
+    case stageAll
 }
 
 enum ShortcutKey: Codable, Hashable {
@@ -337,9 +341,9 @@ final class ShortcutRegistry: ObservableObject {
             .init(id: .saveAs, context: .editor, section: .editor, titleKey: "Salvar Como...", defaultBinding: .init(key: .character("s"), modifiers: [.command, .shift])),
             .init(id: .find, context: .editor, section: .editor, titleKey: "shortcuts.find", defaultBinding: .init(key: .character("f"), modifiers: [.command])),
             .init(id: .findAlias, context: .editor, section: .editor, titleKey: "shortcuts.findAlias", defaultBinding: .init(key: .character("f"), modifiers: [.control])),
-            .init(id: .findReplace, context: .editor, section: .editor, titleKey: "shortcuts.findReplace", defaultBinding: .init(key: .character("h"), modifiers: [.command])),
+            .init(id: .findReplace, context: .editor, section: .editor, titleKey: "shortcuts.findReplace", defaultBinding: .init(key: .character("f"), modifiers: [.command, .option])),
             .init(id: .findInFiles, context: .editor, section: .editor, titleKey: "shortcuts.findInFiles", defaultBinding: .init(key: .character("f"), modifiers: [.command, .shift])),
-            .init(id: .goToLine, context: .editor, section: .editor, titleKey: "shortcuts.goToLine", defaultBinding: .init(key: .character("g"), modifiers: [.command])),
+            .init(id: .goToLine, context: .editor, section: .editor, titleKey: "shortcuts.goToLine", defaultBinding: .init(key: .character("g"), modifiers: [.control])),
             .init(id: .findPrevious, context: .editor, section: .editor, titleKey: "shortcuts.findPrevious", defaultBinding: .init(key: .character("g"), modifiers: [.command, .shift])),
             .init(id: .toggleComment, context: .editor, section: .editor, titleKey: "shortcuts.toggleComment", defaultBinding: .init(key: .character("/"), modifiers: [.command])),
             .init(id: .deleteSelection, context: .fileBrowser, section: .editor, titleKey: "Excluir", defaultBinding: .init(key: .delete, modifiers: [.command])),
@@ -352,7 +356,7 @@ final class ShortcutRegistry: ObservableObject {
 
             .init(id: .toggleTerminal, context: .terminal, section: .terminal, titleKey: "Terminal", defaultBinding: .init(key: .character("j"), modifiers: [.command])),
             .init(id: .maximizeTerminal, context: .terminal, section: .terminal, titleKey: "Maximizar terminal", defaultBinding: .init(key: .character("j"), modifiers: [.command, .control])),
-            .init(id: .newTerminalTab, context: .terminal, section: .terminal, titleKey: "Nova aba", defaultBinding: .init(key: .character("t"), modifiers: [.command])),
+            .init(id: .newTerminalTab, context: .terminal, section: .terminal, titleKey: "Nova aba", defaultBinding: .init(key: .character("t"), modifiers: [.command, .shift])),
             .init(id: .splitTerminalVertical, context: .terminal, section: .terminal, titleKey: "Dividir verticalmente", defaultBinding: .init(key: .character("d"), modifiers: [.command, .shift])),
             .init(id: .splitTerminalHorizontal, context: .terminal, section: .terminal, titleKey: "Dividir horizontalmente", defaultBinding: .init(key: .character("e"), modifiers: [.command, .shift])),
             .init(id: .closeTerminalSplit, context: .terminal, section: .terminal, titleKey: "Fechar painel dividido", defaultBinding: .init(key: .character("w"), modifiers: [.command, .shift])),
@@ -362,16 +366,43 @@ final class ShortcutRegistry: ObservableObject {
             .init(id: .terminalZoomOut, context: .terminal, section: .terminal, titleKey: "Zoom out", defaultBinding: .init(key: .character("-"), modifiers: [.control])),
 
             .init(id: .graphFind, context: .graph, section: .graph, titleKey: "Buscar no grafo", defaultBinding: .init(key: .character("f"), modifiers: [.command])),
-            .init(id: .bisectGood, context: .graph, section: .graph, titleKey: "bisect.good", defaultBinding: .init(key: .character("g"), modifiers: [.command, .shift])),
-            .init(id: .bisectBad, context: .graph, section: .graph, titleKey: "bisect.bad", defaultBinding: .init(key: .character("b"), modifiers: [.command, .shift])),
-            .init(id: .bisectSkip, context: .graph, section: .graph, titleKey: "bisect.skip", defaultBinding: .init(key: .character("s"), modifiers: [.command, .shift])),
+            .init(id: .bisectGood, context: .graph, section: .graph, titleKey: "bisect.good", defaultBinding: .init(key: .character("g"), modifiers: [.command, .control])),
+            .init(id: .bisectBad, context: .graph, section: .graph, titleKey: "bisect.bad", defaultBinding: .init(key: .character("b"), modifiers: [.command, .control])),
+            .init(id: .bisectSkip, context: .graph, section: .graph, titleKey: "bisect.skip", defaultBinding: .init(key: .character("s"), modifiers: [.command, .control])),
 
             .init(id: .refreshRepository, context: .global, section: .general, titleKey: "shortcuts.refreshRepository", defaultBinding: .init(key: .character("r"), modifiers: [.command])),
             .init(id: .codeReview, context: .global, section: .general, titleKey: "shortcuts.codeReview", defaultBinding: .init(key: .character("r"), modifiers: [.command, .shift])),
             .init(id: .openSettings, context: .global, section: .general, titleKey: "help.settings.title", defaultBinding: .init(key: .character(","), modifiers: [.command])),
-            .init(id: .zenMode, context: .global, section: .general, titleKey: "zen.mode", defaultBinding: .init(key: .character("j"), modifiers: [.command, .shift])),
+            .init(id: .zenMode, context: .global, section: .general, titleKey: "zen.mode", defaultBinding: .init(key: .character("t"), modifiers: [.command])),
             .init(id: .zionMode, context: .global, section: .general, titleKey: "shortcuts.zionMode", defaultBinding: .init(key: .character("z"), modifiers: [.command, .control])),
             .init(id: .showKeyboardShortcuts, context: .global, section: .general, titleKey: "Atalhos de Teclado", defaultBinding: .init(key: .character("k"), modifiers: [.command, .option])),
+
+            .init(id: .navigateCodeByLetter, context: .global, section: .navigation, titleKey: "shortcuts.navigateCodeByLetter", defaultBinding: .init(key: .character("e"), modifiers: [.command])),
+            .init(id: .navigateGraphByLetter, context: .global, section: .navigation, titleKey: "shortcuts.navigateGraphByLetter", defaultBinding: .init(key: .character("g"), modifiers: [.command])),
+            .init(id: .quickCommit, context: .global, section: .general, titleKey: "shortcuts.quickCommit", defaultBinding: .init(key: .return, modifiers: [.command])),
+            .init(id: .stageAll, context: .global, section: .general, titleKey: "shortcuts.stageAll", defaultBinding: .init(key: .character("a"), modifiers: [.command, .shift])),
         ]
+    }
+
+    static let reservedBindings: Set<ShortcutBinding> = [
+        .init(key: .character("q"), modifiers: [.command]),
+        .init(key: .character("w"), modifiers: [.command]),
+        .init(key: .character("m"), modifiers: [.command]),
+        .init(key: .character("h"), modifiers: [.command]),
+        .init(key: .character("c"), modifiers: [.command]),
+        .init(key: .character("v"), modifiers: [.command]),
+        .init(key: .character("x"), modifiers: [.command]),
+        .init(key: .character("z"), modifiers: [.command]),
+        .init(key: .character("a"), modifiers: [.command]),
+        .init(key: .character("z"), modifiers: [.command, .shift]),
+    ]
+
+    func isReserved(_ binding: ShortcutBinding) -> Bool {
+        Self.reservedBindings.contains(binding)
+    }
+
+    func resetAllOverrides() {
+        overrides.removeAll()
+        persistOverrides()
     }
 }

@@ -25,6 +25,7 @@ struct CodeScreen: View {
     var isZenMode: Bool = false
     var isVisible: Bool = true
     @Environment(\.zionModeEnabled) private var zionModeEnabled
+    @EnvironmentObject var shortcutRegistry: ShortcutRegistry
     @AppStorage(UserDefaultsKeys.Editor.showBreadcrumb) var showBreadcrumbPath: Bool = true
     @State var isQuickOpenVisible: Bool = false
     @State var isFileBrowserVisible: Bool = true
@@ -131,47 +132,42 @@ struct CodeScreen: View {
         }
         .background {
             Button("") { withAnimation(DesignSystem.Motion.detail) { isQuickOpenVisible.toggle() } }
-                .keyboardShortcut("p", modifiers: .command)
+                .applyShortcutBinding(shortcutRegistry.binding(for: .quickOpen))
                 .frame(width: 0, height: 0).opacity(0)
 
             Button("") {
                 guard !isZenMode else { return }
                 withAnimation(DesignSystem.Motion.panel) { isFileBrowserVisible.toggle() }
             }
-                .keyboardShortcut("b", modifiers: .command)
+                .applyShortcutBinding(shortcutRegistry.binding(for: .toggleSidebar))
                 .frame(width: 0, height: 0).opacity(0)
 
-            // Toggle terminal visibility (Cmd+J)
             Button("") {
                 guard !isZenMode else { return }
                 withAnimation(DesignSystem.Motion.detail) {
                     layout = layout == .editorOnly ? .split : .editorOnly
                 }
             }
-            .keyboardShortcut("j", modifiers: .command)
+            .applyShortcutBinding(shortcutRegistry.binding(for: .toggleTerminal))
             .frame(width: 0, height: 0).opacity(0)
 
-            // Maximize terminal (Ctrl+Cmd+J)
             Button("") {
                 guard !isZenMode else { return }
                 withAnimation(DesignSystem.Motion.detail) {
                     layout = layout == .terminalOnly ? .split : .terminalOnly
                 }
             }
-            .keyboardShortcut("j", modifiers: [.command, .control])
+            .applyShortcutBinding(shortcutRegistry.binding(for: .maximizeTerminal))
             .frame(width: 0, height: 0).opacity(0)
 
-            // New File (Cmd+N)
             Button("") { model.createNewFile() }
-                .keyboardShortcut("n", modifiers: .command)
+                .applyShortcutBinding(shortcutRegistry.binding(for: .newFile))
                 .frame(width: 0, height: 0).opacity(0)
 
-            // Save As (Cmd+Shift+S)
             Button("") { model.saveCurrentFileAs() }
-                .keyboardShortcut("s", modifiers: [.command, .shift])
+                .applyShortcutBinding(shortcutRegistry.binding(for: .saveAs))
                 .frame(width: 0, height: 0).opacity(0)
 
-            // Go to Line (Cmd+G)
             Button("") {
                 if isSearchVisible, !searchQuery.isEmpty {
                     navigateToNextMatch()
@@ -180,23 +176,20 @@ struct CodeScreen: View {
                     goToLineNumber = ""
                 }
             }
-            .keyboardShortcut("g", modifiers: .command)
+            .applyShortcutBinding(shortcutRegistry.binding(for: .goToLine))
             .frame(width: 0, height: 0).opacity(0)
 
-            // Previous find result (Shift+Cmd+G) while find UI is visible.
             Button("") {
                 guard isSearchVisible, !searchQuery.isEmpty else { return }
                 navigateToPreviousMatch()
             }
-            .keyboardShortcut("g", modifiers: [.command, .shift])
+            .applyShortcutBinding(shortcutRegistry.binding(for: .findPrevious))
             .frame(width: 0, height: 0).opacity(0)
 
-            // Toggle dotfiles visibility (Shift+Cmd+H)
             Button("") { model.showDotfiles.toggle() }
-                .keyboardShortcut("h", modifiers: [.command, .shift])
+                .applyShortcutBinding(shortcutRegistry.binding(for: .toggleDotfiles))
                 .frame(width: 0, height: 0).opacity(0)
 
-            // Find in Files (Cmd+Shift+F) — toggle
             Button("") {
                 guard !isZenMode else { return }
                 if sidebarMode == .findInFiles && isFileBrowserVisible {
@@ -208,20 +201,17 @@ struct CodeScreen: View {
                     }
                 }
             }
-            .keyboardShortcut("f", modifiers: [.command, .shift])
+            .applyShortcutBinding(shortcutRegistry.binding(for: .findInFiles))
             .frame(width: 0, height: 0).opacity(0)
 
-            // Focus-aware Cmd+F routing
             Button("") { routeFindShortcut() }
-                .keyboardShortcut("f", modifiers: .command)
+                .applyShortcutBinding(shortcutRegistry.binding(for: .find))
                 .frame(width: 0, height: 0).opacity(0)
 
-            // Focus-aware Ctrl+F alias
             Button("") { routeFindShortcut() }
-                .keyboardShortcut("f", modifiers: .control)
+                .applyShortcutBinding(shortcutRegistry.binding(for: .findAlias))
                 .frame(width: 0, height: 0).opacity(0)
 
-            // Priority Escape routing for code screen overlays/panels
             Button("") { handleEscapeShortcut() }
                 .keyboardShortcut(.escape, modifiers: [])
                 .frame(width: 0, height: 0).opacity(0)
@@ -343,17 +333,15 @@ struct CodeScreen: View {
         }
         .background {
             Button("") { model.saveCurrentCodeFile() }
-                .keyboardShortcut("s", modifiers: .command)
+                .applyShortcutBinding(shortcutRegistry.binding(for: .save))
                 .frame(width: 0, height: 0).opacity(0)
 
-            // Replace (Cmd+H)
             Button("") { toggleReplace() }
-                .keyboardShortcut("h", modifiers: .command)
+                .applyShortcutBinding(shortcutRegistry.binding(for: .findReplace))
                 .frame(width: 0, height: 0).opacity(0)
 
-            // Format Document (Shift+Option+F)
             Button("") { model.formatCurrentFile() }
-                .keyboardShortcut("f", modifiers: [.shift, .option])
+                .applyShortcutBinding(shortcutRegistry.binding(for: .formatDocument))
                 .frame(width: 0, height: 0).opacity(0)
         }
     }
