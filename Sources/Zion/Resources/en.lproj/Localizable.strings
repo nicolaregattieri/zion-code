@@ -2126,6 +2126,17 @@
 
 // Shortcuts
 "shortcuts.toggleDotfiles" = "Toggle Dotfiles";
+"shortcuts.navigateCodeByLetter" = "Code (Editor)";
+"shortcuts.navigateGraphByLetter" = "Graph (Tree)";
+"shortcuts.quickCommit" = "Quick Commit";
+"shortcuts.stageAll" = "Stage All";
+"shortcuts.recorder.typeShortcut" = "Type shortcut...";
+"shortcuts.recorder.reserved" = "This shortcut is reserved by macOS";
+"shortcuts.recorder.conflictsWith" = "Conflicts with %@";
+"shortcuts.resetAll" = "Reset All Shortcuts";
+"shortcuts.reset" = "Reset";
+"shortcuts.replace" = "Replace";
+"shortcuts.searchPlaceholder" = "Search shortcuts...";
 "Zion Bridge" = "Zion Bridge";
 "sidebar.bridge.subtitle" = "Portable AI setup";
 "bridge.entry.title" = "AI Portability";
