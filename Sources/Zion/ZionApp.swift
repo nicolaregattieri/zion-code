@@ -223,7 +223,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         UserDefaults.standard.register(defaults: [
-            UserDefaultsKeys.Terminal.scrollbackSize: 5000,
+            UserDefaultsKeys.Terminal.scrollbackSize: 10_000,
             UserDefaultsKeys.Terminal.bellMode: "system",
             UserDefaultsKeys.Terminal.openHyperlinks: true,
             UserDefaultsKeys.Terminal.copyOnSelect: false,

@@ -2,7 +2,7 @@ import Speech
 import SwiftUI
 
 struct TerminalSettingsTab: View {
-    @AppStorage(UserDefaultsKeys.Terminal.scrollbackSize) private var scrollbackSize: Int = 5000
+    @AppStorage(UserDefaultsKeys.Terminal.scrollbackSize) private var scrollbackSize: Int = 10_000
     @AppStorage(UserDefaultsKeys.Terminal.bellMode) private var bellMode: String = "system"
     @AppStorage(UserDefaultsKeys.Terminal.openHyperlinks) private var openHyperlinks: Bool = true
     @AppStorage(UserDefaultsKeys.Terminal.copyOnSelect) private var copyOnSelect: Bool = false
