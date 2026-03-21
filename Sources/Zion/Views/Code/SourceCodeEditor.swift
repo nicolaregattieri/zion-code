@@ -298,7 +298,7 @@ struct SourceCodeEditor: NSViewRepresentable {
             NotificationCenter.default.removeObserver(self, name: .formatCodeFile, object: nil)
         }
 
-        func tabStopInterval(for textView: NSTextView, tabSize: Int) -> CGFloat {
+        @MainActor func tabStopInterval(for textView: NSTextView, tabSize: Int) -> CGFloat {
             let font = textView.font ?? NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
             let charWidth = NSString(" ").size(withAttributes: [.font: font]).width
             return charWidth * CGFloat(tabSize)
