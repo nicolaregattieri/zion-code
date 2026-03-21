@@ -1,22 +1,7 @@
 import Foundation
 
-private final class DataAccumulator: @unchecked Sendable {
-    private var data = Data()
-    private let lock = NSLock()
-
-    func append(_ chunk: Data) {
-        guard !chunk.isEmpty else { return }
-        lock.lock()
-        data.append(chunk)
-        lock.unlock()
-    }
-
-    func value() -> Data {
-        lock.lock()
-        let snapshot = data
-        lock.unlock()
-        return snapshot
-    }
+private final class SendableBox: @unchecked Sendable {
+    var data = Data()
 }
 
 enum GitClientError: LocalizedError {
@@ -73,21 +58,6 @@ struct GitClient {
         process.standardOutput = stdoutPipe
         process.standardError = stderrPipe
 
-        let stdoutAccumulator = DataAccumulator()
-        let stderrAccumulator = DataAccumulator()
-
-        stdoutPipe.fileHandleForReading.readabilityHandler = { handle in
-            let chunk = handle.availableData
-            guard !chunk.isEmpty else { return }
-            stdoutAccumulator.append(chunk)
-        }
-
-        stderrPipe.fileHandleForReading.readabilityHandler = { handle in
-            let chunk = handle.availableData
-            guard !chunk.isEmpty else { return }
-            stderrAccumulator.append(chunk)
-        }
-
         try process.run()
 
         if let inputData = stdin.data(using: .utf8) {
@@ -95,16 +65,8 @@ struct GitClient {
         }
         stdinPipe.fileHandleForWriting.closeFile()
 
-        process.waitUntilExit()
+        let (stdoutData, stderrData) = readPipesUntilExit(process: process, stdout: stdoutPipe, stderr: stderrPipe)
 
-        stdoutPipe.fileHandleForReading.readabilityHandler = nil
-        stderrPipe.fileHandleForReading.readabilityHandler = nil
-
-        stdoutAccumulator.append(stdoutPipe.fileHandleForReading.readDataToEndOfFile())
-        stderrAccumulator.append(stderrPipe.fileHandleForReading.readDataToEndOfFile())
-
-        let stdoutData = stdoutAccumulator.value()
-        let stderrData = stderrAccumulator.value()
         let stdout = String(data: stdoutData, encoding: .utf8) ?? ""
         let stderr = String(data: stderrData, encoding: .utf8) ?? ""
 
@@ -197,36 +159,36 @@ struct GitClient {
         process.standardOutput = stdoutPipe
         process.standardError = stderrPipe
 
-        let stdoutAccumulator = DataAccumulator()
-        let stderrAccumulator = DataAccumulator()
-
-        stdoutPipe.fileHandleForReading.readabilityHandler = { handle in
-            let chunk = handle.availableData
-            guard !chunk.isEmpty else { return }
-            stdoutAccumulator.append(chunk)
-        }
-
-        stderrPipe.fileHandleForReading.readabilityHandler = { handle in
-            let chunk = handle.availableData
-            guard !chunk.isEmpty else { return }
-            stderrAccumulator.append(chunk)
-        }
-
         try process.run()
-        process.waitUntilExit()
 
-        stdoutPipe.fileHandleForReading.readabilityHandler = nil
-        stderrPipe.fileHandleForReading.readabilityHandler = nil
+        let (stdoutData, stderrData) = readPipesUntilExit(process: process, stdout: stdoutPipe, stderr: stderrPipe)
 
-        stdoutAccumulator.append(stdoutPipe.fileHandleForReading.readDataToEndOfFile())
-        stderrAccumulator.append(stderrPipe.fileHandleForReading.readDataToEndOfFile())
-
-        let stdoutData = stdoutAccumulator.value()
-        let stderrData = stderrAccumulator.value()
         let stdout = String(data: stdoutData, encoding: .utf8) ?? ""
         let stderr = String(data: stderrData, encoding: .utf8) ?? ""
 
         return GitCommandResult(stdout: stdout, stderr: stderr, status: process.terminationStatus)
+    }
+
+    /// Reads stdout and stderr pipes concurrently on background threads while waiting for process exit.
+    /// Uses readDataToEndOfFile() instead of readabilityHandler to avoid GCD dispatch source overhead
+    /// (each readabilityHandler creates an fd_monitoring queue that fires fstat/read on every data chunk).
+    private func readPipesUntilExit(process: Process, stdout: Pipe, stderr: Pipe) -> (stdout: Data, stderr: Data) {
+        let stdoutBox = SendableBox()
+        let stderrBox = SendableBox()
+        let group = DispatchGroup()
+        group.enter()
+        DispatchQueue.global(qos: .userInitiated).async {
+            stdoutBox.data = stdout.fileHandleForReading.readDataToEndOfFile()
+            group.leave()
+        }
+        group.enter()
+        DispatchQueue.global(qos: .userInitiated).async {
+            stderrBox.data = stderr.fileHandleForReading.readDataToEndOfFile()
+            group.leave()
+        }
+        process.waitUntilExit()
+        group.wait()
+        return (stdoutBox.data, stderrBox.data)
     }
 
     private func commandSummary(for args: [String]) -> String {
