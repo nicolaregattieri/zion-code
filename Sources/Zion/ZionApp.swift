@@ -33,6 +33,7 @@ struct ZionApp: App {
             ContentView()
                 .id(uiLanguageRaw)
                 .environment(\.locale, uiLanguage.locale)
+                .environment(updater)
                 .environmentObject(shortcutRegistry)
         }
         .windowResizability(.contentMinSize)
@@ -85,7 +86,10 @@ struct ZionApp: App {
 
                 Divider()
 
-                Button(L10n("Buscar Atualizacoes...")) {
+                Button(updater.updateAvailable && updater.latestVersion != nil
+                    ? "\(L10n("Buscar Atualizacoes...")) (\(updater.latestVersion!))"
+                    : L10n("Buscar Atualizacoes...")
+                ) {
                     updater.checkForUpdates()
                 }
                 .disabled(!updater.canCheckForUpdates)
@@ -109,7 +113,7 @@ struct ZionApp: App {
         }
 
         Settings {
-            SettingsView()
+            SettingsView(updater: updater)
                 .id(uiLanguageRaw)
                 .environment(\.locale, uiLanguage.locale)
                 .environmentObject(shortcutRegistry)
