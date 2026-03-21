@@ -89,7 +89,7 @@
 | File Browser Context Menu | Right-click: new file/folder, rename, duplicate, copy, cut, paste, delete, reveal in Finder | — |
 | File Browser Drag & Drop | Move files and folders within the repo by dragging; drop on empty space to move to root; import from Finder or Smart Clipboard | — |
 | File Watcher | Auto-reload on external changes | — |
-| Find/Replace | In-editor search with match highlighting and navigation | `⌘F` (alias `⌃F`) / `⌘H` / `⌘G` / `⇧⌘G` |
+| Find/Replace | In-editor search with match highlighting and navigation | `⌘F` (alias `⌃F`) / `⌥⌘F` / `⌃G` / `⇧⌘G` |
 | Select Next Occurrence | Multi-cursor selection for next matching occurrence | `⌘D` |
 | Go to Definition | Jump to symbol definition (opens in new tab) | `F12` / `⌘Click` |
 | Find References | List references of the selected symbol across repository files | `⇧F12` |
@@ -100,7 +100,7 @@
 | Indent Guides | Subtle vertical lines at each indent level | Settings |
 | Editor Settings Tab | Dedicated Settings tab for all editor preferences | `⌘,` |
 | Per-Repo Config | `.zion/editor.json` overrides global editor settings | — |
-| Go to Line | Jump to a specific line number | `⌘G` |
+| Go to Line | Jump to a specific line number | `⌃G` |
 | File History | View commit history for any file from context menu or toolbar | — |
 | Open With / Drag & Drop | Open files from Finder (Open With, double-click) or drag onto editor; auto-detects Git repo | — |
 | Format Document | Built-in code formatting for 16+ languages (JSON, XML, HTML, CSS, JS/TS, Python, Go, Rust, Swift, SQL, YAML, and more) | `⇧⌥F` |
@@ -114,7 +114,7 @@
 | Real PTY | Native PTY with login shell and xterm-256color | — |
 | Toggle Terminal | Show/hide terminal pane | `⌘J` |
 | Maximize Terminal | Terminal-only layout | `⌃⌘J` |
-| New Tab | Create new terminal tab | `⌘T` |
+| New Tab | Create new terminal tab | `⇧⌘T` |
 | Split Vertical | Split focused pane vertically | `⇧⌘D` |
 | Split Horizontal | Split focused pane horizontally | `⇧⌘E` |
 | Close Split | Close focused split pane | `⇧⌘W` |
@@ -367,7 +367,7 @@
 | Settings Window | Native macOS Settings window (`⌘,`) with General, Editor, Terminal, AI, Notifications, and Mobile tabs |
 | Language | Portuguese (BR), English, Spanish, System |
 | Appearance Mode | System, Light, Dark |
-| Focus Mode | Full-screen code/terminal focus layout with explicit in-screen exit affordance (`⇧⌘J`) |
+| Focus Mode | Full-screen code/terminal focus layout with explicit in-screen exit affordance (`⌘T`) |
 | Confirmation Mode | Never / Destructive Only / All |
 | Background Fetch | Auto-checks remote every 60s |
 | Recent Repositories | Root-only list (up to 10) with per-project `WT n` badge |
@@ -411,11 +411,15 @@
 
 ## Keyboard Shortcuts
 
+All shortcuts are customizable via the Keyboard Shortcuts editor (`⌥⌘K`). Click any shortcut row to record a new key combination.
+
 | Shortcut | Action |
 |----------|--------|
 | `⌘1` | Code workspace |
 | `⌘2` | Graph workspace |
 | `⌘3` | Operations workspace |
+| `⌘E` | Code workspace (mnemonic) |
+| `⌘G` | Graph workspace (mnemonic) |
 | `⌥⌘K` | Keyboard shortcuts sheet |
 | `⌘P` | Quick Open |
 | `⌘B` | Toggle file browser |
@@ -426,7 +430,7 @@
 | `⌘,` | Open settings window |
 | `⌘J` | Toggle terminal |
 | `⌃⌘J` | Maximize terminal |
-| `⌘T` | New terminal tab |
+| `⇧⌘T` | New terminal tab |
 | `⇧⌘D` | Split vertical |
 | `⇧⌘E` | Split horizontal |
 | `⇧⌘W` | Close split pane |
@@ -434,21 +438,24 @@
 | `⌃-` | Terminal zoom out |
 | `⌘F` | Context search (graph, editor, terminal) |
 | `⌃F` | Find alias in editor |
-| `⌘G` | Go to Line / Find Next (when search open) |
+| `⌃G` | Go to Line / Find Next (when search open) |
 | `⇧⌘G` | Find Previous |
-| `⌘H` | Find & Replace |
+| `⌥⌘F` | Find & Replace |
 | `⌘Delete` | Delete selected file/folder in file browser |
 | `⌘D` | Select Next Occurrence |
 | `F12` | Go to Definition |
 | `⇧F12` | Find References |
 | `⇧⌘R` | Code Review |
 | `⇧⌘H` | Toggle dotfiles visibility |
-| `⇧⌘B` | Toggle Git Blame / Bisect: mark as bad (contextual — bisect shortcuts active only during an active bisect session) |
-| `⇧⌘G` | Find Previous / Bisect: mark as good (contextual) |
-| `⇧⌘S` | Save As / Bisect: skip commit (contextual) |
+| `⇧⌘B` | Toggle Git Blame |
+| `⌃⌘G` | Bisect: mark as good (active bisect only) |
+| `⌃⌘B` | Bisect: mark as bad (active bisect only) |
+| `⌃⌘S` | Bisect: skip commit (active bisect only) |
 | `⇧⌥F` | Format Document |
 | `⌃⌘Z` | Toggle Zion Mode |
 | `⌥⌘X` | Voice Input |
-| `⇧⌘J` | Focus/Zen Mode |
+| `⌘T` | Focus/Zen Mode |
+| `⌘Enter` | Quick Commit |
+| `⇧⌘A` | Stage All |
 | `↑↓` | Navigate commits |
 | `Esc` | Deselect / close |
