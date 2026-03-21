@@ -23,6 +23,7 @@ struct CodeScreen: View {
     @Bindable var model: RepositoryViewModel
     var onOpenFolder: (() -> Void)? = nil
     var isZenMode: Bool = false
+    var isVisible: Bool = true
     @Environment(\.zionModeEnabled) private var zionModeEnabled
     @AppStorage(UserDefaultsKeys.Editor.showBreadcrumb) var showBreadcrumbPath: Bool = true
     @State var isQuickOpenVisible: Bool = false
@@ -88,20 +89,12 @@ struct CodeScreen: View {
                         .environment(\.colorScheme, model.selectedTheme.isLightAppearance ? .light : .dark)
                 }
 
-                if isFileBrowserVisible && !isZenMode {
-                    DraggableSplitView(
-                        axis: .horizontal,
-                        ratio: $fileBrowserRatio,
-                        minLeading: DesignSystem.Layout.fileBrowserMinWidth,
-                        minTrailing: DesignSystem.Layout.editorMinWidth
-                    ) {
-                        fileBrowserPane
-                    } trailing: {
-                        editorTerminalContent
-                    }
-                } else {
-                    editorTerminalContent
-                }
+                StableFileBrowserSplit(
+                    isVisible: isFileBrowserVisible && !isZenMode,
+                    ratio: $fileBrowserRatio,
+                    sidebar: { fileBrowserPane },
+                    content: { editorTerminalContent }
+                )
             }
 
             if isQuickOpenVisible {
@@ -275,26 +268,13 @@ struct CodeScreen: View {
         }
     }
 
-    @ViewBuilder
     private var editorTerminalContent: some View {
-        if layout == .split {
-            DraggableSplitView(
-                axis: .vertical,
-                ratio: $terminalRatio,
-                minLeading: DesignSystem.Layout.editorTerminalMinPane,
-                minTrailing: DesignSystem.Layout.editorTerminalMinPane
-            ) {
-                editorPane
-            } trailing: {
-                terminalContainer
-            }
-        } else if layout == .editorOnly {
-            editorPane
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else {
-            terminalContainer
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
+        StableEditorTerminalSplit(
+            layout: layout,
+            terminalRatio: $terminalRatio,
+            editor: { editorPane },
+            terminal: { terminalContainer }
+        )
     }
 
     var editorPane: some View {

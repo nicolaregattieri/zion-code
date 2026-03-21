@@ -163,6 +163,11 @@ extension RepositoryViewModel {
         createTerminalSession(workingDirectory: workingDirectory, label: branchName)
     }
 
+    func ensureDefaultTerminalSession(repositoryURL: URL?, branchName: String) {
+        guard terminalTabs.isEmpty else { return }
+        createDefaultTerminalSession(repositoryURL: repositoryURL, branchName: branchName)
+    }
+
     // MARK: - Terminal Paste
 
     func sendTextToActiveTerminal(_ text: String) {
