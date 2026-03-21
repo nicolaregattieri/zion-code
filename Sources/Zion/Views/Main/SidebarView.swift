@@ -9,14 +9,14 @@ struct SidebarView: View {
     @Binding var appearanceRaw: String
 
     @AppStorage(UserDefaultsKeys.Sidebar.recentsExpanded) private var isRecentsExpanded: Bool = true
-    @State private var branchSearchQuery: String = ""
-    @State private var isNewWorktreeExpanded: Bool = false
-    @State private var hoveredSection: AppSection?
-    @State private var hoveredWorktreePath: String?
+    @State var branchSearchQuery: String = ""
+    @State var isNewWorktreeExpanded: Bool = false
+    @State var hoveredSection: AppSection?
+    @State var hoveredWorktreePath: String?
 
     let onOpen: () -> Void
     let branchContextMenu: (String) -> AnyView
-    
+
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(spacing: 16) {
@@ -105,7 +105,7 @@ struct SidebarView: View {
                     Text(model.repositoryURL?.path ?? L10n("Modo editor livre")).font(DesignSystem.Typography.monoLabel).foregroundStyle(.secondary).lineLimit(1).help(model.repositoryURL?.path ?? L10n("Modo editor livre"))
                 }
                 Spacer(minLength: 0)
-                
+
                 if model.repositoryURL == nil {
                     Button(action: onOpen) {
                         Image(systemName: "folder.badge.plus")
@@ -161,230 +161,6 @@ struct SidebarView: View {
         .contentShape(Rectangle())
     }
 
-    private var nonCurrentWorktrees: [WorktreeItem] {
-        model.worktrees.filter { !$0.isCurrent }
-    }
-
-    private var worktreesCard: some View {
-        GlassCard(spacing: 10) {
-            CardHeader(L10n("Worktrees"), icon: "square.split.2x2") {
-                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-                    Text("\(nonCurrentWorktrees.count)")
-                        .font(DesignSystem.Typography.labelBold)
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Capsule().fill(DesignSystem.Colors.brandPrimary.opacity(0.7)))
-                    Button {
-                        withAnimation(DesignSystem.Motion.panel) {
-                            isNewWorktreeExpanded.toggle()
-                        }
-                    } label: {
-                        Label(L10n("worktree.smart.new"), systemImage: "plus")
-                            .font(DesignSystem.Typography.label)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                }
-            }
-
-            if isNewWorktreeExpanded {
-                smartWorktreeInlineForm
-            }
-
-            if nonCurrentWorktrees.isEmpty {
-                Text(L10n("worktree.smart.empty"))
-                    .font(DesignSystem.Typography.bodySmall)
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(nonCurrentWorktrees) { wt in
-                    worktreeRow(wt)
-                }
-            }
-        }
-        .padding(.horizontal, 10)
-        .featureTourAnchor(.worktrees)
-    }
-
-    private var smartWorktreeInlineForm: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
-                Picker(L10n("worktree.smart.prefix"), selection: $model.worktreePrefix) {
-                    ForEach(WorktreePrefix.allCases) { prefix in
-                        Text(L10n(prefix.l10nKey)).tag(prefix)
-                    }
-                }
-                .pickerStyle(.menu)
-                .frame(width: 120)
-
-                TextField(L10n("worktree.smart.name.placeholder"), text: $model.worktreeNameInput)
-                    .textFieldStyle(.roundedBorder)
-
-                Button(L10n("worktree.smart.createOpen")) {
-                    model.smartCreateWorktree()
-                    selectedSection = .code
-                    withAnimation(DesignSystem.Motion.panel) {
-                        isNewWorktreeExpanded = false
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(DesignSystem.Colors.actionPrimary)
-                .disabled(!model.canSmartCreateWorktree)
-            }
-
-            if !model.derivedWorktreeBranch.isEmpty || !model.derivedWorktreePath.isEmpty {
-                HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
-                    if !model.derivedWorktreeBranch.isEmpty {
-                        Text("branch: \(model.derivedWorktreeBranch)")
-                            .font(DesignSystem.Typography.monoMeta)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                            .help(model.derivedWorktreeBranch)
-                    }
-                    if !model.derivedWorktreePath.isEmpty {
-                        Text(model.derivedWorktreePath)
-                            .font(DesignSystem.Typography.monoMeta)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                            .help(model.derivedWorktreePath)
-                    }
-                }
-            }
-
-            Button {
-                withAnimation(DesignSystem.Motion.panel) {
-                    model.isWorktreeAdvancedExpanded.toggle()
-                }
-            } label: {
-                Label(
-                    L10n("worktree.smart.advanced"),
-                    systemImage: model.isWorktreeAdvancedExpanded ? "chevron.down" : "chevron.right"
-                )
-                .font(DesignSystem.Typography.label)
-                .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-
-            if model.isWorktreeAdvancedExpanded {
-                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
-                    TextField(L10n("/caminho/para/worktree"), text: $model.worktreePathInput)
-                        .textFieldStyle(.roundedBorder)
-                    TextField(L10n("branch (opcional)"), text: $model.worktreeBranchInput)
-                        .textFieldStyle(.roundedBorder)
-                }
-            }
-        }
-        .padding(8)
-        .background(
-            RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
-                .fill(DesignSystem.Colors.glassSubtle)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
-                .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
-        )
-    }
-
-    private func worktreeRow(_ wt: WorktreeItem) -> some View {
-        let isHovered = hoveredWorktreePath == wt.path
-
-        return HStack(spacing: DesignSystem.Spacing.iconTextGap) {
-            Button {
-                model.openWorktreeInZion(
-                    wt,
-                    navigateToCode: false,
-                    sectionAfterOpen: selectedSection
-                )
-            } label: {
-                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-                            Text(wt.branch.isEmpty ? URL(fileURLWithPath: wt.path).lastPathComponent : wt.branch)
-                                .font(DesignSystem.Typography.monoBody)
-                                .lineLimit(1)
-                                .help(wt.branch.isEmpty ? URL(fileURLWithPath: wt.path).lastPathComponent : wt.branch)
-                            if wt.isMainWorktree {
-                                Text(L10n("worktree.main.badge"))
-                                    .font(DesignSystem.Typography.monoMeta)
-                                    .padding(.horizontal, 5)
-                                    .padding(.vertical, 2)
-                                    .background(DesignSystem.Colors.success.opacity(0.18))
-                                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous))
-                                    .foregroundStyle(DesignSystem.Colors.success)
-                                    .help(L10n("worktree.main.hint"))
-                            }
-                        }
-                        Text(wt.path)
-                            .font(DesignSystem.Typography.monoMeta)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                            .help(wt.path)
-                        HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-                            Circle()
-                                .fill(worktreeStatusColor(wt))
-                                .frame(width: 6, height: 6)
-                            Text("\(wt.uncommittedCount)")
-                                .font(DesignSystem.Typography.monoMeta)
-                                .foregroundStyle(.secondary)
-                            if wt.hasConflicts {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .font(DesignSystem.Typography.metaBold)
-                                    .foregroundStyle(DesignSystem.Colors.destructive)
-                                    .help(L10n("Conflitos"))
-                            }
-                        }
-                    }
-                    Spacer(minLength: 0)
-                }
-            }
-            .buttonStyle(.plain)
-            .help(L10n("Abrir no Zion Code"))
-
-            Button {
-                model.openWorktreeTerminal(wt)
-            } label: {
-                Image(systemName: "terminal.fill")
-                    .font(DesignSystem.Typography.bodySmall)
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            .help(L10n("Terminal"))
-
-            if !wt.isMainWorktree {
-                Button {
-                    model.requestWorktreeRemoval(wt)
-                } label: {
-                    Image(systemName: "trash")
-                        .font(DesignSystem.Typography.bodySmall)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .help(L10n("Remover worktree"))
-            }
-        }
-        .padding(.vertical, 4)
-        .padding(.horizontal, 8)
-        .background(
-            RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
-                .fill(isHovered ? DesignSystem.Colors.glassHover : DesignSystem.Colors.glassSubtle)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
-                .stroke(isHovered ? DesignSystem.Colors.glassStroke : DesignSystem.Colors.glassHover, lineWidth: 1)
-        )
-        .onHover { hovering in
-            hoveredWorktreePath = hovering ? wt.path : nil
-        }
-    }
-
-    private func worktreeStatusColor(_ worktree: WorktreeItem) -> Color {
-        if worktree.hasConflicts { return DesignSystem.Colors.destructive }
-        if worktree.uncommittedCount > 0 { return DesignSystem.Colors.warning }
-        return DesignSystem.Colors.success
-    }
-
     private var workspaceCard: some View {
         GlassCard(spacing: 8) {
             CardHeader(L10n("Workspace"), icon: "macwindow.on.rectangle")
@@ -401,7 +177,7 @@ struct SidebarView: View {
         let isSelected = selectedSection == section
         let isDisabled = section != .code && model.repositoryURL == nil
         let isHovered = hoveredSection == section
-        
+
         return Button { selectedSection = section } label: {
             HStack(alignment: .center, spacing: DesignSystem.Spacing.toolbarItemGap) {
                 Image(systemName: section.icon)
@@ -419,7 +195,7 @@ struct SidebarView: View {
                 .opacity(isDisabled ? DesignSystem.Opacity.dim : DesignSystem.Opacity.full)
 
                 Spacer(minLength: 0)
-                
+
                 if isDisabled {
                     Image(systemName: "lock.fill")
                         .font(DesignSystem.Typography.label)
@@ -460,150 +236,6 @@ struct SidebarView: View {
         .disabled(isDisabled)
         .onHover { hovering in
             hoveredSection = hovering ? section : nil
-        }
-    }
-
-    private var filteredBranchTree: [BranchTreeNode] {
-        guard !branchSearchQuery.isEmpty else { return model.branchTree }
-        return model.branchTree.compactMap { filterBranchNode($0, query: branchSearchQuery) }
-    }
-
-    private func filterBranchNode(_ node: BranchTreeNode, query: String) -> BranchTreeNode? {
-        // Leaf node: match on title
-        if node.children.isEmpty {
-            return node.title.localizedCaseInsensitiveContains(query) ? node : nil
-        }
-        // Group node: keep if any child matches
-        let filteredChildren = node.children.compactMap { filterBranchNode($0, query: query) }
-        if filteredChildren.isEmpty { return nil }
-        return BranchTreeNode(
-            id: node.id,
-            title: node.title,
-            subtitle: node.subtitle,
-            branchName: node.branchName,
-            children: filteredChildren
-        )
-    }
-
-    private var sidebarBranchExplorer: some View {
-        GlassCard(spacing: 0) {
-            CardHeader(L10n("Branches"), icon: "arrow.triangle.branch") {
-                Text("\(model.branchInfos.count) \(L10n("refs"))").font(DesignSystem.Typography.label).foregroundStyle(.secondary)
-            }
-            .padding(.horizontal, 12).padding(.top, 12).padding(.bottom, 8)
-
-            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
-                Image(systemName: "magnifyingglass")
-                    .font(DesignSystem.Typography.meta)
-                    .foregroundStyle(.secondary)
-                TextField(L10n("Filtrar branches..."), text: $branchSearchQuery)
-                    .textFieldStyle(.plain)
-                    .font(DesignSystem.Typography.bodySmall)
-                if !branchSearchQuery.isEmpty {
-                    Button { branchSearchQuery = "" } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(DesignSystem.Typography.label)
-                            .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 5)
-            .background(DesignSystem.Colors.glassSubtle)
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
-            .padding(.horizontal, 12)
-            .padding(.bottom, 8)
-
-            Divider()
-            if filteredBranchTree.isEmpty {
-                VStack(spacing: 8) {
-                    Image(systemName: branchSearchQuery.isEmpty ? "arrow.triangle.branch" : "magnifyingglass")
-                        .font(DesignSystem.Typography.iconLarge).foregroundStyle(.secondary)
-                    Text(branchSearchQuery.isEmpty ? L10n("Sem branches detectadas") : L10n("Nenhuma branch encontrada"))
-                        .font(DesignSystem.Typography.sheetTitle)
-                }
-                .frame(maxWidth: .infinity, minHeight: 120)
-            } else {
-                List(selection: $selectedBranchTreeNodeID) {
-                    ForEach(filteredBranchTree) { root in
-                        OutlineGroup([root], children: \.outlineChildren) { node in
-                            branchTreeNodeRow(node).tag(node.id)
-                        }
-                    }
-                }
-                .listStyle(.sidebar)
-                .controlSize(.small)
-                .frame(minHeight: 120, maxHeight: 250)
-            }
-        }
-    }
-
-    private func branchTreeNodeRow(_ node: BranchTreeNode) -> some View {
-        let isMain = ["main", "master", "develop", "dev"].contains(node.title.lowercased())
-        let isCurrent = node.branchName == model.currentBranch
-        let isFocusLoading = node.branchName == model.branchFocusLoadingBranch && model.isBranchFocusLoading
-        return HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-            VStack(alignment: .leading, spacing: 2) {
-                if node.isGroup { Text(node.title).font(DesignSystem.Typography.sheetTitle) } else {
-                    HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-                        if isFocusLoading {
-                            ProgressView()
-                                .controlSize(.mini)
-                                .frame(width: 12, height: 12)
-                        } else {
-                            Image(systemName: isMain ? "shield.fill" : "arrow.triangle.branch")
-                                .font(DesignSystem.Typography.label)
-                                .foregroundStyle(isMain ? DesignSystem.Colors.warning : (isCurrent ? Color.accentColor : Color.secondary))
-                        }
-                        Text(node.title).font(DesignSystem.Typography.monoLabel).fontWeight(isCurrent || isMain ? .bold : .regular).lineLimit(1).help(node.title)
-                        if isCurrent { Text(L10n("current")).font(DesignSystem.Typography.micro).padding(.horizontal, 4).padding(.vertical, 1).background(DesignSystem.Colors.selectionBackground).foregroundStyle(Color.accentColor).clipShape(Capsule()) }
-                    }
-                }
-                if !node.subtitle.isEmpty { Text(node.subtitle).font(DesignSystem.Typography.meta).foregroundStyle(.secondary).lineLimit(1).help(node.subtitle) }
-            }
-            Spacer()
-            if let branch = node.branchName, !isMain, !isCurrent {
-                Button {
-                    let alert = NSAlert()
-                    alert.messageText = L10n("Remover branch local")
-                    alert.informativeText = L10n("Deseja remover a branch local %@?", branch)
-                    alert.addButton(withTitle: L10n("Remover"))
-                    alert.addButton(withTitle: L10n("Cancelar"))
-                    if alert.runModal() == .alertFirstButtonReturn {
-                        model.deleteLocalBranch(branch, force: false)
-                    }
-                } label: {
-                    Image(systemName: "trash").font(DesignSystem.Typography.meta).foregroundStyle(DesignSystem.Colors.destructiveMuted)
-                }
-                .buttonStyle(.plain)
-                .padding(4)
-                .background(DesignSystem.Colors.destructiveBg)
-                .clipShape(Circle())
-            }
-        }
-        .padding(.vertical, node.isGroup ? 4 : 2)
-        .padding(.horizontal, 6)
-        .background(
-            RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius)
-                .fill(isCurrent ? DesignSystem.Colors.selectionBackground : Color.clear)
-        )
-        .overlay(
-            isCurrent ? RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius).stroke(DesignSystem.Colors.selectionBorder, lineWidth: 1) : nil
-        )
-        .contentShape(Rectangle())
-        .onTapGesture { if let branch = node.branchName { selectedBranchTreeNodeID = node.id; model.branchInput = branch } }
-        .onTapGesture(count: 2) {
-            if let branch = node.branchName, !isFocusLoading {
-                selectedBranchTreeNodeID = node.id
-                model.branchInput = branch
-                model.setBranchFocus(branch)
-            }
-        }
-        .contextMenu {
-            if let branch = node.branchName {
-                branchContextMenu(branch)
-            }
         }
     }
 
