@@ -95,6 +95,8 @@ struct CodeScreen: View {
                     sidebar: { fileBrowserPane },
                     content: { editorTerminalContent }
                 )
+                .animation(DesignSystem.Motion.panel, value: isFileBrowserVisible)
+                .animation(DesignSystem.Motion.panel, value: isZenMode)
             }
 
             if isQuickOpenVisible {
@@ -275,6 +277,7 @@ struct CodeScreen: View {
             editor: { editorPane },
             terminal: { terminalContainer }
         )
+        .animation(DesignSystem.Motion.detail, value: layout)
     }
 
     var editorPane: some View {

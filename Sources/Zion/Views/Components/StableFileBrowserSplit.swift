@@ -9,14 +9,22 @@ struct StableFileBrowserSplit<Sidebar: View, Content: View>: View {
     @ViewBuilder let sidebar: Sidebar
     @ViewBuilder let content: Content
 
+    @GestureState private var dragOffset: CGFloat = 0
+
     var body: some View {
         GeometryReader { geo in
             let totalWidth = geo.size.width
             let dividerSize: CGFloat = isVisible ? 8 : 0
             let available = totalWidth - dividerSize
-            let sidebarWidth: CGFloat = isVisible
-                ? max(DesignSystem.Layout.fileBrowserMinWidth, min(available - DesignSystem.Layout.editorMinWidth, available * ratio))
-                : 0
+
+            // Live drag preview
+            let baseLeading = available * ratio
+            let proposedLeading = baseLeading + dragOffset
+            let clampedLeading = max(
+                DesignSystem.Layout.fileBrowserMinWidth,
+                min(available - DesignSystem.Layout.editorMinWidth, proposedLeading)
+            )
+            let sidebarWidth: CGFloat = isVisible ? clampedLeading : 0
 
             HStack(spacing: 0) {
                 sidebar
@@ -26,20 +34,18 @@ struct StableFileBrowserSplit<Sidebar: View, Content: View>: View {
                     .opacity(isVisible ? 1 : 0)
 
                 if isVisible {
-                    sidebarDivider(available: available)
+                    sidebarDivider(available: available, baseLeading: baseLeading)
                 }
 
                 content
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
+            .coordinateSpace(name: "fileBrowserSplit")
         }
     }
 
-    @GestureState private var dragOffset: CGFloat = 0
-
-    private func sidebarDivider(available: CGFloat) -> some View {
-        let baseLeading = available * ratio
-        return Rectangle()
+    private func sidebarDivider(available: CGFloat, baseLeading: CGFloat) -> some View {
+        Rectangle()
             .fill(Color.clear)
             .frame(width: 8)
             .contentShape(Rectangle())
@@ -47,7 +53,7 @@ struct StableFileBrowserSplit<Sidebar: View, Content: View>: View {
                 if hovering { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() }
             }
             .gesture(
-                DragGesture()
+                DragGesture(coordinateSpace: .named("fileBrowserSplit"))
                     .updating($dragOffset) { value, state, _ in
                         state = value.translation.width
                     }

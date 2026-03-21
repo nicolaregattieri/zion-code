@@ -10,20 +10,30 @@ struct StableEditorTerminalSplit<Editor: View, Terminal: View>: View {
     @ViewBuilder let editor: Editor
     @ViewBuilder let terminal: Terminal
 
+    @GestureState private var dragOffset: CGFloat = 0
+
     var body: some View {
         GeometryReader { geo in
             let totalHeight = geo.size.height
             let dividerSize: CGFloat = layout == .split ? 8 : 0
             let available = totalHeight - dividerSize
 
+            // Live drag preview: compute leading (editor) height including drag offset
+            let baseEditorHeight = available * (1 - terminalRatio)
+            let proposedEditorHeight = baseEditorHeight + dragOffset
+            let clampedEditorHeight = max(
+                DesignSystem.Layout.editorTerminalMinPane,
+                min(available - DesignSystem.Layout.editorTerminalMinPane, proposedEditorHeight)
+            )
+
             let editorHeight: CGFloat = switch layout {
-            case .split: available * (1 - terminalRatio)
+            case .split: clampedEditorHeight
             case .editorOnly: totalHeight
             case .terminalOnly: 0
             }
 
             let terminalHeight: CGFloat = switch layout {
-            case .split: available * terminalRatio
+            case .split: available - clampedEditorHeight
             case .editorOnly: 0
             case .terminalOnly: totalHeight
             }
@@ -36,7 +46,7 @@ struct StableEditorTerminalSplit<Editor: View, Terminal: View>: View {
                     .opacity(layout == .terminalOnly ? 0 : 1)
 
                 if layout == .split {
-                    splitDivider(available: available)
+                    splitDivider(available: available, baseEditorHeight: baseEditorHeight)
                 }
 
                 terminal
@@ -45,14 +55,12 @@ struct StableEditorTerminalSplit<Editor: View, Terminal: View>: View {
                     .allowsHitTesting(layout != .editorOnly)
                     .opacity(layout == .editorOnly ? 0 : 1)
             }
+            .coordinateSpace(name: "editorTerminalSplit")
         }
     }
 
-    @GestureState private var dragOffset: CGFloat = 0
-
-    private func splitDivider(available: CGFloat) -> some View {
-        let baseTrailing = available * terminalRatio
-        return Rectangle()
+    private func splitDivider(available: CGFloat, baseEditorHeight: CGFloat) -> some View {
+        Rectangle()
             .fill(Color.clear)
             .frame(height: 8)
             .contentShape(Rectangle())
@@ -60,17 +68,17 @@ struct StableEditorTerminalSplit<Editor: View, Terminal: View>: View {
                 if hovering { NSCursor.resizeUpDown.push() } else { NSCursor.pop() }
             }
             .gesture(
-                DragGesture()
+                DragGesture(coordinateSpace: .named("editorTerminalSplit"))
                     .updating($dragOffset) { value, state, _ in
                         state = value.translation.height
                     }
                     .onEnded { value in
-                        let delta = -value.translation.height
-                        let newTrailing = max(
+                        let delta = value.translation.height
+                        let newEditorHeight = max(
                             DesignSystem.Layout.editorTerminalMinPane,
-                            min(available - DesignSystem.Layout.editorTerminalMinPane, baseTrailing + delta)
+                            min(available - DesignSystem.Layout.editorTerminalMinPane, baseEditorHeight + delta)
                         )
-                        terminalRatio = newTrailing / available
+                        terminalRatio = 1 - (newEditorHeight / available)
                     }
             )
     }
