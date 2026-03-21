@@ -67,6 +67,13 @@ extension ZionTextView {
             }
         }
 
+        // Format Document (⇧⌥F) — also intercept here because NSTextView
+        // may bypass performKeyEquivalent for Option-modified keys.
+        if flags == [.shift, .option], event.charactersIgnoringModifiers?.lowercased() == "f" {
+            NotificationCenter.default.post(name: .formatDocument, object: nil)
+            return
+        }
+
         switch (event.keyCode, flags) {
         case (126, .option):          // Option+Up: Move line up
             moveLineUp()
