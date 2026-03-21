@@ -163,6 +163,30 @@ final class RepositoryViewModelTerminalTests: XCTestCase {
         XCTAssertEqual(session?.workingDirectory.path, homePath)
     }
 
+    func testEnsureDefaultTerminalSessionCreatesOnlyWhenEmpty() {
+        let vm = RepositoryViewModel()
+        let dir = URL(fileURLWithPath: "/tmp/repo")
+
+        vm.ensureDefaultTerminalSession(repositoryURL: dir, branchName: "main")
+
+        XCTAssertEqual(vm.terminalTabs.count, 1)
+        XCTAssertEqual(vm.terminalSessions.first?.workingDirectory.path, dir.path)
+    }
+
+    func testEnsureDefaultTerminalSessionPreservesExistingFocusedSplit() {
+        let vm = RepositoryViewModel()
+        let dir = URL(fileURLWithPath: "/tmp/repo")
+
+        vm.createTerminalSession(workingDirectory: dir, label: "main")
+        vm.splitFocusedTerminal(direction: .horizontal)
+        let restoredFocusedID = vm.focusedSessionID
+
+        vm.ensureDefaultTerminalSession(repositoryURL: dir, branchName: "main")
+
+        XCTAssertEqual(vm.terminalTabs.count, 1)
+        XCTAssertEqual(vm.focusedSessionID, restoredFocusedID)
+    }
+
     // MARK: - targeted terminal send routing
 
     func testSendTextToTerminalRoutesToProvidedSession() {

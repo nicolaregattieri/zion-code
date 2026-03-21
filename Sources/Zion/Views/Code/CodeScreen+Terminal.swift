@@ -24,7 +24,12 @@ extension CodeScreen {
             Divider()
 
             ZStack {
-                if model.terminalTabs.isEmpty {
+                if !isVisible {
+                    // When CodeScreen is hidden (e.g. in Ops/Graph), skip terminal NSView
+                    // rendering entirely. Sessions and processes stay alive in the model;
+                    // cached views are restored via makeNSView CACHED when returning to Code.
+                    Color.clear
+                } else if model.terminalTabs.isEmpty {
                     VStack(spacing: 8) {
                         Image(systemName: "terminal").font(.title).foregroundStyle(.secondary)
                         Text(L10n("Nenhum terminal aberto")).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
@@ -60,7 +65,7 @@ extension CodeScreen {
             }
         }
         .onAppear {
-            model.createDefaultTerminalSession(repositoryURL: model.repositoryURL, branchName: model.currentBranch.isEmpty ? "zsh" : model.currentBranch)
+            model.ensureDefaultTerminalSession(repositoryURL: model.repositoryURL, branchName: model.currentBranch.isEmpty ? "zsh" : model.currentBranch)
         }
         .background {
             // New tab
