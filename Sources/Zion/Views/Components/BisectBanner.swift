@@ -2,6 +2,7 @@ import SwiftUI
 
 struct BisectBanner: View {
     @Bindable var model: RepositoryViewModel
+    @EnvironmentObject private var shortcutRegistry: ShortcutRegistry
 
     var body: some View {
         Group {
@@ -80,7 +81,7 @@ struct BisectBanner: View {
                 .buttonStyle(.borderedProminent)
                 .tint(DesignSystem.Colors.success)
                 .controlSize(.small)
-                .keyboardShortcut("g", modifiers: [.command, .shift])
+                .applyShortcutBinding(shortcutRegistry.binding(for: .bisectGood))
                 .help(L10n("bisect.good.hint"))
                 .accessibilityLabel(L10n("bisect.good"))
 
@@ -92,7 +93,7 @@ struct BisectBanner: View {
                 .buttonStyle(.borderedProminent)
                 .tint(DesignSystem.Colors.destructive)
                 .controlSize(.small)
-                .keyboardShortcut("b", modifiers: [.command, .shift])
+                .applyShortcutBinding(shortcutRegistry.binding(for: .bisectBad))
                 .help(L10n("bisect.bad.hint"))
                 .accessibilityLabel(L10n("bisect.bad"))
 
@@ -101,7 +102,7 @@ struct BisectBanner: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
-                .keyboardShortcut("s", modifiers: [.command, .shift])
+                .applyShortcutBinding(shortcutRegistry.binding(for: .bisectSkip))
                 .help(L10n("bisect.skip.hint"))
                 .accessibilityLabel(L10n("bisect.skip"))
 

@@ -44,7 +44,7 @@ extension ContentView {
                             zenModeEnabled = true
                         }
                     } label: { Image(systemName: "arrow.up.left.and.arrow.down.right") }
-                        .help(L10n("zen.enter") + " (⇧⌘J)")
+                        .help(L10n("zen.enter") + " (⌘T)")
                         .accessibilityLabel(L10n("zen.enter"))
                     Button {
                         model.loadReflog()
@@ -117,28 +117,45 @@ extension ContentView {
     var keyboardShortcutBridge: some View {
         Group {
             Button("") { route(.requestSection(.code)) }
-                .keyboardShortcut("1", modifiers: .command)
+                .applyShortcutBinding(shortcutRegistry.binding(for: .navigateCode))
             Button("") { route(.requestSection(.graph)) }
-                .keyboardShortcut("2", modifiers: .command)
+                .applyShortcutBinding(shortcutRegistry.binding(for: .navigateGraph))
             Button("") { route(.requestSection(.operations)) }
-                .keyboardShortcut("3", modifiers: .command)
+                .applyShortcutBinding(shortcutRegistry.binding(for: .navigateOperations))
+            Button("") { route(.requestSection(.code)) }
+                .applyShortcutBinding(shortcutRegistry.binding(for: .navigateCodeByLetter))
+            Button("") { route(.requestSection(.graph)) }
+                .applyShortcutBinding(shortcutRegistry.binding(for: .navigateGraphByLetter))
             Button("") {
                 if model.repositoryURL != nil {
                     model.isBranchReviewSheetVisible = false
                     model.isCodeReviewVisible = true
                 }
             }
-            .keyboardShortcut("r", modifiers: [.command, .shift])
+            .applyShortcutBinding(shortcutRegistry.binding(for: .codeReview))
             Button("") {
                 withAnimation(DesignSystem.Motion.panel) {
                     zenModeEnabled.toggle()
                 }
             }
-            .keyboardShortcut("J", modifiers: [.command, .shift])
+            .applyShortcutBinding(shortcutRegistry.binding(for: .zenMode))
             Button("") {
                 zionModeEnabled.toggle()
             }
-            .keyboardShortcut("z", modifiers: [.command, .control])
+            .applyShortcutBinding(shortcutRegistry.binding(for: .zionMode))
+            Button("") {
+                if model.repositoryURL != nil {
+                    model.stageAllFiles()
+                }
+            }
+            .applyShortcutBinding(shortcutRegistry.binding(for: .stageAll))
+            Button("") {
+                if model.repositoryURL != nil {
+                    route(.requestSection(.graph))
+                    NotificationCenter.default.post(name: .focusCommitField, object: nil)
+                }
+            }
+            .applyShortcutBinding(shortcutRegistry.binding(for: .quickCommit))
         }
         .frame(width: 0, height: 0)
         .opacity(0)

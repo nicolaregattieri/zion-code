@@ -16,6 +16,7 @@ extension Notification.Name {
     static let openAISettings = Notification.Name("openAISettings")
     static let refreshRepoMemory = Notification.Name("refreshRepoMemory")
     static let clearRepoMemory = Notification.Name("clearRepoMemory")
+    static let focusCommitField = Notification.Name("focusCommitField")
 }
 
 @main
@@ -58,12 +59,12 @@ struct ZionApp: App {
                 Button(L10n("zen.mode")) {
                     NotificationCenter.default.post(name: .toggleZenMode, object: nil)
                 }
-                .keyboardShortcut("J", modifiers: [.command, .shift])
+                .applyShortcutBinding(shortcutRegistry.binding(for: .zenMode))
 
                 Button("Zion Mode") {
                     NotificationCenter.default.post(name: .toggleZionMode, object: nil)
                 }
-                .keyboardShortcut("z", modifiers: [.command, .control])
+                .applyShortcutBinding(shortcutRegistry.binding(for: .zionMode))
             }
 
             CommandGroup(replacing: .help) {
@@ -195,7 +196,7 @@ struct ZionApp: App {
     }
 }
 
-private extension View {
+extension View {
     @ViewBuilder
     func applyShortcutBinding(_ binding: ShortcutBinding?) -> some View {
         if let binding,

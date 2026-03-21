@@ -10,6 +10,7 @@ struct GraphScreen: View {
     let branchContextMenu: (String) -> AnyView
     let tagContextMenu: (String) -> AnyView
 
+    @EnvironmentObject private var shortcutRegistry: ShortcutRegistry
     @State var currentMatchIndex: Int = 0
     @State var searchMatchIDs: [String] = []
     @State var searchMatchIDSet: Set<String> = []
@@ -133,9 +134,15 @@ struct GraphScreen: View {
                     model.selectChangeFile(nil)
                 }
             }
+            .onReceive(NotificationCenter.default.publisher(for: .focusCommitField)) { _ in
+                if model.uncommittedCount > 0 {
+                    showingPendingChanges = true
+                    isShowingQuickCommit = true
+                }
+            }
             .background {
                 Button("") { isSearchFocused = true }
-                    .keyboardShortcut("f", modifiers: .command)
+                    .applyShortcutBinding(shortcutRegistry.binding(for: .graphFind))
                     .frame(width: 0, height: 0).opacity(0)
             }
         }
