@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct GeneralSettingsTab: View {
+    var updater: SparkleUpdater
     @AppStorage(UserDefaultsKeys.General.uiLanguage) private var uiLanguageRaw: String = AppLanguage.system.rawValue
     @AppStorage(UserDefaultsKeys.General.appearance) private var appearanceRaw: String = AppAppearance.system.rawValue
     @AppStorage(UserDefaultsKeys.General.confirmationMode) private var confirmationModeRaw: String = ConfirmationMode.destructiveOnly.rawValue
@@ -97,6 +98,35 @@ struct GeneralSettingsTab: View {
                     ForEach(AppAppearance.allCases) { mode in
                         Text(mode.label).tag(mode.rawValue)
                     }
+                }
+            }
+
+            // Updates
+            Section(L10n("settings.update.title")) {
+                Toggle(L10n("settings.update.autoCheck"), isOn: Binding(
+                    get: { updater.automaticallyChecksForUpdates },
+                    set: { updater.automaticallyChecksForUpdates = $0 }
+                ))
+
+                if let lastCheck = updater.lastUpdateCheck {
+                    HStack {
+                        Text(L10n("settings.update.lastCheck"))
+                            .font(DesignSystem.Typography.bodySmall)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text(lastCheck, style: .relative)
+                            .font(DesignSystem.Typography.bodySmall)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                HStack {
+                    Spacer()
+                    Button(L10n("Buscar Atualizacoes...")) {
+                        updater.checkForUpdates()
+                    }
+                    .controlSize(.small)
+                    .disabled(!updater.canCheckForUpdates)
                 }
             }
 

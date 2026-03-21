@@ -27,6 +27,7 @@ private enum SettingsTab: String, CaseIterable {
 }
 
 struct SettingsView: View {
+    var updater: SparkleUpdater
     @State private var selectedTab: SettingsTab = .general
     @State private var hoveredTab: SettingsTab?
     @AppStorage(UserDefaultsKeys.General.uiLanguage) private var uiLanguageRaw: String = AppLanguage.system.rawValue
@@ -76,7 +77,7 @@ struct SettingsView: View {
             // Content area
             Group {
                 switch selectedTab {
-                case .general:       GeneralSettingsTab()
+                case .general:       GeneralSettingsTab(updater: updater)
                 case .editor:        EditorSettingsTab()
                 case .terminal:      TerminalSettingsTab()
                 case .ai:            AISettingsTab()

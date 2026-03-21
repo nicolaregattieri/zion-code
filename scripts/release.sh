@@ -143,6 +143,21 @@ echo ""
 echo "=== Step 6/6: Generating appcast.xml ==="
 PUB_DATE=$(date -u +"%a, %d %b %Y %H:%M:%S %z")
 
+# Build release notes HTML from commits since last tag
+PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+RELEASE_NOTES_HTML=""
+if [ -n "$PREV_TAG" ]; then
+    COMMIT_ITEMS=$(git log --pretty=format:"<li>%s</li>" "$PREV_TAG..HEAD" --no-merges 2>/dev/null || echo "")
+    if [ -n "$COMMIT_ITEMS" ]; then
+        RELEASE_NOTES_HTML="<h3>Zion $VERSION</h3><ul>$COMMIT_ITEMS</ul>"
+    fi
+fi
+
+DESCRIPTION_BLOCK=""
+if [ -n "$RELEASE_NOTES_HTML" ]; then
+    DESCRIPTION_BLOCK="      <description><![CDATA[$RELEASE_NOTES_HTML]]></description>"
+fi
+
 cat > "$APPCAST_PATH" <<EOF
 <?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -152,6 +167,7 @@ cat > "$APPCAST_PATH" <<EOF
     <item>
       <title>Zion $VERSION</title>
       <pubDate>$PUB_DATE</pubDate>
+$DESCRIPTION_BLOCK
       <sparkle:version>$BUILD</sparkle:version>
       <sparkle:shortVersionString>$VERSION</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>

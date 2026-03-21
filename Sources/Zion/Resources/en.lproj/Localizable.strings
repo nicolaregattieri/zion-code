@@ -820,6 +820,10 @@
 "settings.general.graphAuthorAvatars" = "Enable author avatars in graph";
 "settings.general.graphAuthorAvatarsHint" = "Downloads Gravatar identicons for commit authors. Disabled by default to avoid external requests for private repositories.";
 "settings.general.customPath" = "Custom Path";
+"settings.update.title" = "Updates";
+"settings.update.autoCheck" = "Check for updates automatically";
+"settings.update.lastCheck" = "Last check";
+"settings.update.available" = "Update available";
 "settings.open" = "Open Settings";
 "settings.open.hint" = "Open Settings (⌘,)";
 "settings.ai.provider" = "AI Provider";

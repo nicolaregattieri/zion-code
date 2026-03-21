@@ -8,6 +8,7 @@ struct SidebarView: View {
     @Binding var uiLanguageRaw: String
     @Binding var appearanceRaw: String
 
+    @Environment(SparkleUpdater.self) private var updater: SparkleUpdater?
     @AppStorage(UserDefaultsKeys.Sidebar.recentsExpanded) private var isRecentsExpanded: Bool = true
     @State var branchSearchQuery: String = ""
     @State var isNewWorktreeExpanded: Bool = false
@@ -267,6 +268,30 @@ struct SidebarView: View {
                         .font(DesignSystem.Typography.meta)
                         .foregroundStyle(DesignSystem.Colors.warning)
                         .help(L10n("Notificações ativas"))
+                }
+
+                // Update available
+                if let updater, updater.updateAvailable {
+                    Button {
+                        updater.checkForUpdates()
+                    } label: {
+                        HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
+                            Image(systemName: "arrow.down.circle.fill")
+                                .font(DesignSystem.Typography.meta)
+                            if let version = updater.latestVersion {
+                                Text(version)
+                                    .font(DesignSystem.Typography.micro)
+                            }
+                        }
+                        .foregroundStyle(DesignSystem.Colors.success)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(DesignSystem.Colors.success.opacity(0.15))
+                        .clipShape(Capsule())
+                        .contentShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .help(L10n("settings.update.available"))
                 }
 
                 Spacer()
