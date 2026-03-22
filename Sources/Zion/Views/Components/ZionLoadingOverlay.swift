@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ZionLoadingOverlay: View {
+    var message: String = L10n("switch.overlay.loading")
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -12,7 +13,7 @@ struct ZionLoadingOverlay: View {
             VStack(spacing: DesignSystem.Spacing.smallCornerRadius) {
                 zionLoader
 
-                Text(L10n("switch.overlay.loading"))
+                Text(message)
                     .font(DesignSystem.Typography.bodyMedium)
                     .foregroundStyle(DesignSystem.Colors.brandWhite.opacity(0.78))
             }

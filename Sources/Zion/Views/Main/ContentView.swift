@@ -36,6 +36,8 @@ struct ContentView: View {
     @State private var splitViewVisibility: NavigationSplitViewVisibility = .all
     @State private var zenLayoutActive = false
     @State private var zenTerminalFullscreen = false
+    @State private var zenTransitioning = false
+    @State private var zenTransitionMessage = ""
     @State private var preZenSplitVisibility: NavigationSplitViewVisibility?
     @State private var pendingNavigationAfterZenExit: AppSection?
     @State private var isConflictResolverPromptVisible: Bool = false
@@ -86,7 +88,7 @@ struct ContentView: View {
                 if section != .code {
                     pendingNavigationAfterZenExit = section
                 }
-                zenModeEnabled = false
+                toggleZenMode()
                 return
             }
             guard section == .code || model.repositoryURL != nil else {
@@ -104,14 +106,14 @@ struct ContentView: View {
             model.isBridgeVisible = false
             if zenModeEnabled {
                 pendingNavigationAfterZenExit = .graph
-                zenModeEnabled = false
+                toggleZenMode()
             } else {
                 selectedSection = .graph
             }
         case .navigateToCode:
             model.isBridgeVisible = false
             if zenModeEnabled {
-                zenModeEnabled = false
+                toggleZenMode()
             }
             selectedSection = .code
         }
@@ -186,54 +188,8 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
             model.syncSettingsFromDefaults()
         }
-        .onChange(of: zenModeEnabled) { _, enabled in
-            if enabled {
-                // Enter Phase 1: Terminal goes fullscreen
-                selectedSection = .code
-                model.enterZenMode()
-                preZenSplitVisibility = splitViewVisibility
-                withAnimation(DesignSystem.Motion.panel) {
-                    zenTerminalFullscreen = true
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + Constants.Timing.zenModeStepDelay) {
-                    withAnimation(DesignSystem.Motion.panel) {
-                        zenLayoutActive = true
-                    }
-                }
-                // Only collapse sidebar if it was open
-                if splitViewVisibility != .detailOnly {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + Constants.Timing.zenModeRestoreDelay) {
-                        withAnimation(DesignSystem.Motion.panel) {
-                            splitViewVisibility = .detailOnly
-                        }
-                    }
-                }
-            } else {
-                model.exitZenMode()
-                let restoreVisibility = preZenSplitVisibility ?? .all
-                preZenSplitVisibility = nil
-                // Exit Phase 1: Sidebar appears (mirrors enter phase 3)
-                // No withAnimation — NavigationSplitView animates columnVisibility internally
-                if restoreVisibility != .detailOnly {
-                    splitViewVisibility = restoreVisibility
-                }
-                // Exit Phase 2: File browser + editor toolbar restore (mirrors enter phase 2)
-                DispatchQueue.main.asyncAfter(deadline: .now() + Constants.Timing.zenModeStepDelay) {
-                    withAnimation(DesignSystem.Motion.panel) {
-                        zenLayoutActive = false
-                        if let pending = pendingNavigationAfterZenExit {
-                            pendingNavigationAfterZenExit = nil
-                            selectedSection = pending
-                        }
-                    }
-                }
-                // Exit Phase 3: Terminal shrinks back to split (mirrors enter phase 1)
-                DispatchQueue.main.asyncAfter(deadline: .now() + Constants.Timing.zenModeRestoreDelay) {
-                    withAnimation(DesignSystem.Motion.panel) {
-                        zenTerminalFullscreen = false
-                    }
-                }
-            }
+        .onChange(of: zenModeEnabled) { _, _ in
+            // All zen mode logic handled by toggleZenMode() which shows overlay first
         }
         .onChange(of: model.repositoryURL) { _, url in
             if url != nil {
@@ -314,7 +270,7 @@ struct ContentView: View {
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .toggleZenMode)) { _ in
-            zenModeEnabled.toggle()
+            toggleZenMode()
         }
         .onReceive(NotificationCenter.default.publisher(for: .toggleZionMode)) { _ in
             zionModeEnabled.toggle()
@@ -419,6 +375,12 @@ struct ContentView: View {
         ZStack {
             LiquidBackgroundView().ignoresSafeArea()
             navigationShell
+            if zenTransitioning {
+                ZionLoadingOverlay(message: zenTransitionMessage)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+                    .zIndex(100)
+            }
         }
         .coordinateSpace(name: "featureTour")
     }
@@ -611,6 +573,53 @@ struct ContentView: View {
         let panel = NSOpenPanel()
         panel.canChooseFiles = false; panel.canChooseDirectories = true; panel.canCreateDirectories = true
         if panel.runModal() == .OK, let selectedURL = panel.url { model.openRepository(selectedURL) }
+    }
+
+    func toggleZenMode() {
+        guard !zenTransitioning else { return }
+
+        // Step 1: Show overlay FIRST — nothing else changes yet
+        zenTransitionMessage = zenModeEnabled ? L10n("zen.exiting") : L10n("zen.entering")
+        withAnimation(DesignSystem.Motion.panel) {
+            zenTransitioning = true
+        }
+
+        // Step 2: After overlay fully covers screen, snap ALL state at once
+        DispatchQueue.main.asyncAfter(deadline: .now() + Constants.Timing.zenModeRestoreDelay) {
+            var transaction = Transaction(animation: nil)
+            transaction.disablesAnimations = true
+            withTransaction(transaction) {
+                let entering = !zenModeEnabled
+                if entering {
+                    preZenSplitVisibility = splitViewVisibility
+                    zenModeEnabled = true
+                    selectedSection = .code
+                    zenLayoutActive = true
+                    zenTerminalFullscreen = true
+                    splitViewVisibility = .detailOnly
+                    model.enterZenMode()
+                } else {
+                    let restoreVisibility = preZenSplitVisibility ?? .all
+                    preZenSplitVisibility = nil
+                    zenModeEnabled = false
+                    zenLayoutActive = false
+                    zenTerminalFullscreen = false
+                    splitViewVisibility = restoreVisibility
+                    model.exitZenMode()
+                    if let pending = pendingNavigationAfterZenExit {
+                        pendingNavigationAfterZenExit = nil
+                        selectedSection = pending
+                    }
+                }
+            }
+
+            // Step 3: After layout settles, remove overlay
+            DispatchQueue.main.asyncAfter(deadline: .now() + Constants.Timing.zenModeStepDelay) {
+                withAnimation(DesignSystem.Motion.panel) {
+                    zenTransitioning = false
+                }
+            }
+        }
     }
 
     private func initRepositoryPanel() {

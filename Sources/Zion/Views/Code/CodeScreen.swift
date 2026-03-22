@@ -98,7 +98,6 @@ struct CodeScreen: View {
                     content: { editorTerminalContent }
                 )
                 .animation(DesignSystem.Motion.panel, value: isFileBrowserVisible)
-                .animation(DesignSystem.Motion.panel, value: isZenMode)
             }
 
             if model.isRepositorySwitchRefreshingInBackground {
@@ -270,9 +269,7 @@ struct CodeScreen: View {
             applyZenModeState(zenTerminalFullscreen)
         }
         .onChange(of: zenTerminalFullscreen) { _, enabled in
-            withAnimation(DesignSystem.Motion.panel) {
-                applyZenModeState(enabled)
-            }
+            applyZenModeState(enabled)
         }
         .onReceive(NotificationCenter.default.publisher(for: .formatDocument)) { _ in
             model.formatCurrentFile()
