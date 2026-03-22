@@ -190,7 +190,7 @@ extension CodeScreen {
             TerminalToolbarButton(
                 icon: "plus",
                 color: accentColor,
-                tooltip: L10n("Novo terminal") + " (⌘T)"
+                tooltip: L10n("Novo terminal") + " (⇧⌘T)"
             ) {
                 let url = model.repositoryURL ?? URL(fileURLWithPath: NSHomeDirectory())
                 let label = model.currentBranch.isEmpty ? "zsh" : model.currentBranch
