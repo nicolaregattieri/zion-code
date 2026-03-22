@@ -32,6 +32,8 @@ enum Constants {
         static let busyWatchdogTimeout: UInt64 = 60_000_000_000
         /// Safety timeout to force-clear isSwitchingRepository if finalization never fires (10s)
         static let repositorySwitchWatchdogTimeout: UInt64 = 10_000_000_000
+        /// Grace period before escalating SIGTERM to SIGKILL for frozen terminals (500ms)
+        static let processKillEscalation: UInt64 = 500_000_000
     }
 
     enum Limits {

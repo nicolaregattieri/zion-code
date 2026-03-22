@@ -31,10 +31,23 @@ final class TerminalSession: Identifiable {
     func killCachedProcess() {
         DiagnosticLogger.shared.log(.info, "killCachedProcess", context: "\(label)(\(id.uuidString.prefix(4))) pid=\(_shellPid) preserve=\(_shouldPreserve)", source: "TerminalSession")
         _shouldPreserve = false
-        if _shellPid > 0 {
-            kill(_shellPid, SIGTERM)
+        let pid = _shellPid
+        if pid > 0 {
+            kill(pid, SIGTERM)
+            // Escalate to SIGKILL for frozen processes that ignore SIGTERM
+            Task {
+                try? await Task.sleep(nanoseconds: Constants.Timing.processKillEscalation)
+                if kill(pid, 0) == 0 {
+                    kill(pid, SIGKILL)
+                }
+            }
         }
         _shellPid = 0
+        // Hide the NSView immediately so it vanishes before SwiftUI's dismantle cycle
+        if let view = _cachedView as? NSView {
+            view.isHidden = true
+            view.removeFromSuperview()
+        }
         _cachedView = nil
         _cachedTerminal = nil
         _processBridge = nil
