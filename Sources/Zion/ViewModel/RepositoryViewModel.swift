@@ -101,6 +101,11 @@ final class RepositoryViewModel {
     var terminalTabs: [TerminalPaneNode] = []
     var activeTabID: UUID?
     var focusedSessionID: UUID?
+    @ObservationIgnored lazy var terminalOutputCoordinator: TerminalOutputCoordinator = {
+        let c = TerminalOutputCoordinator()
+        c.viewModel = self
+        return c
+    }()
 
     /// Flat list of all sessions across all tabs (backward compat + tab bar)
     var terminalSessions: [TerminalSession] {
