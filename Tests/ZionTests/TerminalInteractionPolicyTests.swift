@@ -148,4 +148,25 @@ final class TerminalInteractionPolicyTests: XCTestCase {
             )
         )
     }
+
+    func testShouldReleaseManualScrollFreezeOnNonCommandKeyDownOnly() {
+        XCTAssertTrue(
+            TerminalTabView.Coordinator.shouldReleaseManualScrollFreezeOnKeyDown(
+                hasManualScrollFreeze: true,
+                hasCommandModifier: false
+            )
+        )
+        XCTAssertFalse(
+            TerminalTabView.Coordinator.shouldReleaseManualScrollFreezeOnKeyDown(
+                hasManualScrollFreeze: true,
+                hasCommandModifier: true
+            )
+        )
+        XCTAssertFalse(
+            TerminalTabView.Coordinator.shouldReleaseManualScrollFreezeOnKeyDown(
+                hasManualScrollFreeze: false,
+                hasCommandModifier: false
+            )
+        )
+    }
 }
