@@ -487,6 +487,7 @@ extension RepositoryViewModel {
     func enqueueFileWatcherEvent(_ event: FileWatcher.ChangeEvent) {
         guard !isSwitchingRepository else { return }
         pendingFileWatcherEvent = pendingFileWatcherEvent?.merged(with: event) ?? event
+        guard !isZenModePaused else { return }
         processPendingFileWatcherEventIfNeeded()
     }
 

@@ -345,6 +345,10 @@ extension RepositoryViewModel {
             return
         }
 
+        if isZenModePaused && (origin == .autoTimer || origin == .fileWatcher) {
+            return
+        }
+
         if Self.shouldSkipRefreshWhileBusy(setBusy: setBusy, isBusy: isBusy, origin: origin) {
             logger.log(.info, "refreshRepository skipped while busy", context: "origin=\(origin.rawValue)", source: #function)
             return

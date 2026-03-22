@@ -34,6 +34,7 @@ struct SourceCodeEditor: NSViewRepresentable {
     var onToggleFindUI: (() -> Void)?
     var onFindNextShortcut: (() -> Void)?
     var onFindPreviousShortcut: (() -> Void)?
+    var isEditorVisible: Bool = true
 
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSScrollView()
@@ -101,6 +102,8 @@ struct SourceCodeEditor: NSViewRepresentable {
         guard let textView = nsView.documentView as? ZionTextView else { return }
 
         context.coordinator.parent = self
+
+        guard isEditorVisible else { return }
 
         let colors = getEditorColors(for: theme)
         textView.backgroundColor = colors.background
