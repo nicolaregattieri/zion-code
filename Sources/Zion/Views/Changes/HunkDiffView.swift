@@ -11,7 +11,7 @@ struct HunkDiffView: View {
     var body: some View {
         Group {
             if isScrollEnabled {
-                ScrollView {
+                ScrollView([.horizontal, .vertical]) {
                     content
                 }
             } else {
@@ -166,7 +166,7 @@ struct HunkDiffView: View {
             Text(line.content)
                 .font(DesignSystem.Typography.monoBody)
                 .foregroundStyle(textColor)
-                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
 
             Spacer()
         }
