@@ -51,6 +51,7 @@ extension SourceCodeEditor.Coordinator {
         if parent.text != textView.string {
             parent.text = textView.string
         }
+        needsScrollToCursor = true
         textView.enclosingScrollView?.verticalRulerView?.needsDisplay = true
 
         highlightDebounceTask?.cancel()

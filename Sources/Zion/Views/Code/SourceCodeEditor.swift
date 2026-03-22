@@ -247,6 +247,12 @@ struct SourceCodeEditor: NSViewRepresentable {
             }
         }
 
+        // Scroll to cursor after all attribute changes (highlighting resets scroll position)
+        if coord.needsScrollToCursor {
+            coord.needsScrollToCursor = false
+            textView.scrollRangeToVisible(textView.selectedRange())
+        }
+
         textView.needsDisplay = true
     }
 
@@ -283,6 +289,7 @@ struct SourceCodeEditor: NSViewRepresentable {
         var lastLetterSpacing: Double?
         var lastTabSize: Int?
         var highlightDebounceTask: DispatchWorkItem?
+        var needsScrollToCursor: Bool = false
 
         init(_ parent: SourceCodeEditor) {
             self.parent = parent
