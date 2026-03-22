@@ -1667,7 +1667,7 @@
 "settings.terminal.bell.system" = "System Beep";
 "settings.terminal.advanced" = "Advanced";
 "settings.terminal.openHyperlinks" = "Open Hyperlinks on Cmd+Click";
-"settings.terminal.openHyperlinks.hint" = "OSC 8 links open in the default browser when Cmd+clicked.";
+"settings.terminal.openHyperlinks.hint" = "URLs open in the browser and file paths open in the editor when Cmd+clicked.";
 "settings.terminal.aiImageDisplay" = "AI Image Generation & Helpers";
 "settings.terminal.aiImageDisplay.hint" = "Installs zion-img helpers and zion_display in your home folder. Generated AI images are saved to zion-image/ in the current project for preview in Zion.";
 "settings.terminal.selection" = "Selection";
