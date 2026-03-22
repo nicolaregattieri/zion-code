@@ -195,8 +195,6 @@ struct TerminalTabView: NSViewRepresentable {
         private var pointerDownInTerminal = false
         private var dragSelectionFreezeActive = false
         private var persistentSelectionFreezeActive = false
-        private var manualScrollFreezeActive = false
-        private var manualScrollFreezeIntentActive = false
         private var preciseScrollLineAccumulator: CGFloat = 0
         private var resignActiveObserver: Any?
         private weak var outputCoordinator: TerminalOutputCoordinator?
@@ -265,13 +263,6 @@ struct TerminalTabView: NSViewRepresentable {
             hasCommandModifier: Bool
         ) -> Bool {
             hasPersistentSelectionFreeze && !hasCommandModifier
-        }
-
-        static func shouldReleaseManualScrollFreezeOnKeyDown(
-            hasManualScrollFreeze: Bool,
-            hasCommandModifier: Bool
-        ) -> Bool {
-            hasManualScrollFreeze && !hasCommandModifier
         }
 
         static func shouldConsumePreciseScroll(
@@ -420,8 +411,6 @@ struct TerminalTabView: NSViewRepresentable {
             pointerDownInTerminal = false
             dragSelectionFreezeActive = false
             persistentSelectionFreezeActive = false
-            manualScrollFreezeActive = false
-            manualScrollFreezeIntentActive = false
             parent.session._shellPid = 0
             if isCurrentOwner() {
                 parent.session._processBridge = nil
@@ -480,15 +469,6 @@ struct TerminalTabView: NSViewRepresentable {
                         hasCommandModifier: hasCommand
                     ) {
                         self.releasePersistentSelectionFreezeIfNeeded(flushImmediately: true)
-                    }
-                    if Self.shouldReleaseManualScrollFreezeOnKeyDown(
-                        hasManualScrollFreeze: self.manualScrollFreezeActive,
-                        hasCommandModifier: hasCommand
-                    ) {
-                        // Clear SwiftTerm's userScrolling BEFORE flushing so Terminal.scroll()
-                        // auto-snaps yDisp to yBase instead of drifting toward 0.
-                        self.terminalView?.getTerminal().userScrolling = false
-                        self.releaseManualScrollFreezeIfNeeded(flushImmediately: true)
                     }
                     return event
                 }
@@ -553,11 +533,8 @@ struct TerminalTabView: NSViewRepresentable {
                 )
                 guard shouldConsumeScroll else {
                     self.preciseScrollLineAccumulator = 0
-                    self.finishManualScrollFreezeGestureIfNeeded(for: view)
                     return event
                 }
-
-                self.beginManualScrollFreezeIntentIfNeeded(for: view, event: event)
 
                 let lineHeight = ZionTerminalView.preciseScrollLineHeight(
                     viewHeight: view.bounds.height,
@@ -572,7 +549,6 @@ struct TerminalTabView: NSViewRepresentable {
 
                 if step.lines != 0 {
                     view.applyDiscreteScroll(lines: step.lines)
-                    self.syncManualScrollFreezeState(for: view)
                 }
                 return nil
             }
@@ -613,8 +589,6 @@ struct TerminalTabView: NSViewRepresentable {
                     guard let self else { return }
                     self.dragSelectionFreezeActive = false
                     self.persistentSelectionFreezeActive = false
-                    self.manualScrollFreezeActive = false
-                    self.manualScrollFreezeIntentActive = false
                     self.preciseScrollLineAccumulator = 0
                     self.flushPendingTerminalOutput(force: true)
                 }
@@ -633,7 +607,7 @@ struct TerminalTabView: NSViewRepresentable {
         }
 
         private var isTerminalOutputFrozen: Bool {
-            isSelectionOutputFrozen || manualScrollFreezeActive || manualScrollFreezeIntentActive
+            isSelectionOutputFrozen
         }
 
         private func resetPreciseScrollAccumulatorIfNeeded(for event: NSEvent) {
@@ -642,53 +616,6 @@ struct TerminalTabView: NSViewRepresentable {
                 momentumPhase: event.momentumPhase
             ) {
                 preciseScrollLineAccumulator = 0
-                if let view = terminalView as? ZionTerminalView {
-                    finishManualScrollFreezeGestureIfNeeded(for: view)
-                }
-            }
-        }
-
-        private func beginManualScrollFreezeIntentIfNeeded(for view: ZionTerminalView, event: NSEvent) {
-            guard !manualScrollFreezeActive else { return }
-            guard ZionTerminalView.shouldStartManualScrollFreezeIntent(
-                scrollingDeltaY: event.scrollingDeltaY,
-                scrollPosition: view.scrollPosition,
-                canScroll: view.canScroll
-            ) else { return }
-            manualScrollFreezeIntentActive = true
-        }
-
-        private func syncManualScrollFreezeState(for view: SwiftTerm.TerminalView) {
-            let shouldFreeze = ZionTerminalView.shouldKeepManualScrollFreeze(
-                scrollPosition: view.scrollPosition,
-                canScroll: view.canScroll
-            )
-
-            manualScrollFreezeIntentActive = false
-            manualScrollFreezeActive = shouldFreeze
-
-            if !shouldFreeze {
-                flushPendingTerminalOutput(force: true)
-            }
-        }
-
-        private func finishManualScrollFreezeGestureIfNeeded(for view: ZionTerminalView) {
-            guard manualScrollFreezeIntentActive else { return }
-            manualScrollFreezeIntentActive = false
-            if !ZionTerminalView.shouldKeepManualScrollFreeze(
-                scrollPosition: view.scrollPosition,
-                canScroll: view.canScroll
-            ) {
-                flushPendingTerminalOutput(force: true)
-            }
-        }
-
-        private func releaseManualScrollFreezeIfNeeded(flushImmediately: Bool) {
-            guard manualScrollFreezeActive else { return }
-            manualScrollFreezeActive = false
-            manualScrollFreezeIntentActive = false
-            if flushImmediately {
-                flushPendingTerminalOutput(force: true)
             }
         }
 
@@ -843,10 +770,6 @@ struct TerminalTabView: NSViewRepresentable {
         }
 
         nonisolated func scrolled(source: SwiftTerm.TerminalView, position: Double) {
-            Task { @MainActor in
-                guard source === self.terminalView else { return }
-                self.syncManualScrollFreezeState(for: source)
-            }
         }
         nonisolated func setTerminalTitle(source: SwiftTerm.TerminalView, title: String) {
             Task { @MainActor in
