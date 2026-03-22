@@ -114,7 +114,7 @@ struct SidebarView: View {
                 if model.repositoryURL == nil {
                     Button(action: onOpen) {
                         Image(systemName: "folder.badge.plus")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(DesignSystem.Typography.subtitle)
                             .foregroundStyle(.white)
                             .padding(8)
                             .background(Color.accentColor)
@@ -257,7 +257,7 @@ struct SidebarView: View {
                     default: return "🌐"
                     }
                 }()
-                Text(langLabel).font(.system(size: 16))
+                Text(langLabel).font(DesignSystem.Typography.sheetTitle)
 
                 // AI status
                 if model.aiProvider != .none {
@@ -317,29 +317,9 @@ struct SidebarView: View {
         GlassCard(spacing: 10) {
             CardHeader(L10n("bridge.entry.title"), icon: "arrow.trianglehead.branch", subtitle: L10n("bridge.entry.subtitle"))
 
-            Button {
+            BridgeAccessButton {
                 model.isBridgeVisible = true
-            } label: {
-                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(L10n("bridge.title"))
-                            .font(DesignSystem.Typography.sectionTitle)
-                        Text(L10n("bridge.subtitle"))
-                            .font(DesignSystem.Typography.bodySmall)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
-                    }
-
-                    Spacer(minLength: 0)
-
-                    Image(systemName: "arrow.right")
-                        .font(DesignSystem.Typography.metaBold)
-                        .foregroundStyle(DesignSystem.Colors.ai)
-                }
-                .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
-            .help(L10n("bridge.open.hint"))
         }
         .padding(.horizontal, 10)
     }
@@ -414,5 +394,45 @@ private struct RecentProjectRow: View {
         }
         .buttonStyle(.plain)
         .onHover { h in isHovered = h }
+    }
+}
+
+private struct BridgeAccessButton: View {
+    let action: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(L10n("bridge.title"))
+                        .font(DesignSystem.Typography.sectionTitle)
+                    Text(L10n("bridge.subtitle"))
+                        .font(DesignSystem.Typography.bodySmall)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "arrow.right")
+                    .font(DesignSystem.Typography.metaBold)
+                    .foregroundStyle(DesignSystem.Colors.ai)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius)
+                    .fill(isHovered ? DesignSystem.Colors.glassHover : Color.clear)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius)
+                    .stroke(isHovered ? DesignSystem.Colors.glassStroke : Color.clear, lineWidth: 1)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { h in isHovered = h }
+        .help(L10n("bridge.open.hint"))
     }
 }

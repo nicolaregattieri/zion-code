@@ -15,7 +15,7 @@ extension SidebarView {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
-                        .background(Capsule().fill(DesignSystem.Colors.brandPrimary.opacity(0.7)))
+                        .background(Capsule().fill(DesignSystem.Colors.brandPrimary.opacity(DesignSystem.Opacity.visible)))
                     Button {
                         withAnimation(DesignSystem.Motion.panel) {
                             isNewWorktreeExpanded.toggle()
@@ -148,7 +148,7 @@ extension SidebarView {
                             if wt.isMainWorktree {
                                 Text(L10n("worktree.main.badge"))
                                     .font(DesignSystem.Typography.monoMeta)
-                                    .padding(.horizontal, 5)
+                                    .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
                                     .background(DesignSystem.Colors.success.opacity(0.18))
                                     .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous))
