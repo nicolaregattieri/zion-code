@@ -24,7 +24,7 @@ extension CodeScreen {
                 Text(L10n("zen.exit"))
                     .font(DesignSystem.Typography.bodyMedium)
                 if showsShortcutHint {
-                    Text("⇧⌘J")
+                    Text("⌘T")
                         .font(DesignSystem.Typography.monoLabel)
                         .foregroundStyle(.secondary)
                 }
@@ -46,7 +46,7 @@ extension CodeScreen {
             )
         }
         .buttonStyle(.plain)
-        .help(L10n("zen.exit") + " (⇧⌘J)")
+        .help(L10n("zen.exit") + " (⌘T)")
         .accessibilityLabel(L10n("zen.exit"))
     }
 
