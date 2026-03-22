@@ -126,7 +126,7 @@ struct PRInboxCard: View {
         } else {
             VStack(spacing: 4) {
                 ForEach(model.prReviewQueue) { item in
-                    PRInboxRow(item: item) {
+                    PRInboxRow(item: item, model: model) {
                         model.openPRInCodeReview(item)
                     }
                 }
@@ -172,7 +172,7 @@ struct PRInboxCard: View {
         } else {
             VStack(spacing: 4) {
                 ForEach(allOpenPRs) { pr in
-                    PROpenRow(pr: pr) {
+                    PROpenRow(pr: pr, model: model) {
                         model.openPRFromInfo(pr)
                     }
                 }
@@ -289,6 +289,7 @@ struct PRInboxCard: View {
 
 private struct PROpenRow: View {
     let pr: GitHubPRInfo
+    var model: RepositoryViewModel
     let onTap: () -> Void
     @State private var isHovered = false
 
@@ -366,14 +367,13 @@ private struct PROpenRow: View {
         }
     }
 
+    @ViewBuilder
     private var authorAvatar: some View {
-        let initial = pr.author.prefix(1).uppercased()
-        let hue = Double(abs(pr.author.hashValue) % 360) / 360.0
-
-        return Text(initial)
-            .font(DesignSystem.Typography.labelBold)
-            .foregroundStyle(.white)
-            .frame(width: 22, height: 22)
-            .background(Circle().fill(Color(hue: hue, saturation: 0.6, brightness: 0.8)))
+        if let avatar = model.avatarImage(forUsername: pr.author, prURL: pr.url) {
+            Image(nsImage: avatar)
+                .resizable()
+                .frame(width: 22, height: 22)
+                .clipShape(Circle())
+        }
     }
 }

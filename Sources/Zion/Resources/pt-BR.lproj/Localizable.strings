@@ -713,8 +713,8 @@
 "settings.general.tools" = "Ferramentas";
 "settings.general.safety" = "Segurança";
 "settings.general.confirmation" = "Modo de Confirmação";
-"settings.general.graphAuthorAvatars" = "Ativar avatares de autores no graph";
-"settings.general.graphAuthorAvatarsHint" = "Baixa identicons do Gravatar para autores de commits. Fica desativado por padrão para evitar requisições externas em repositórios privados.";
+"settings.general.graphAuthorAvatars" = "Ativar avatares de autores";
+"settings.general.graphAuthorAvatarsHint" = "Baixa avatares do Gravatar e GitHub/GitLab.";
 "settings.general.customPath" = "Caminho Personalizado";
 "settings.update.title" = "Atualizações";
 "settings.update.autoCheck" = "Buscar atualizações automaticamente";

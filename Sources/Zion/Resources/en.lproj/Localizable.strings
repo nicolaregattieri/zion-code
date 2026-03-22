@@ -817,8 +817,8 @@
 "settings.general.tools" = "Tools";
 "settings.general.safety" = "Safety";
 "settings.general.confirmation" = "Confirmation Mode";
-"settings.general.graphAuthorAvatars" = "Enable author avatars in graph";
-"settings.general.graphAuthorAvatarsHint" = "Downloads Gravatar identicons for commit authors. Disabled by default to avoid external requests for private repositories.";
+"settings.general.graphAuthorAvatars" = "Enable author avatars";
+"settings.general.graphAuthorAvatarsHint" = "Downloads avatars from Gravatar and GitHub/GitLab.";
 "settings.general.customPath" = "Custom Path";
 "settings.update.title" = "Updates";
 "settings.update.autoCheck" = "Check for updates automatically";

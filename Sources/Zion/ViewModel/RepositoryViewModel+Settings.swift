@@ -458,7 +458,42 @@ extension RepositoryViewModel {
         }
     }
 
-    // MARK: - Gravatar Avatars
+    // MARK: - Avatars
+
+    /// Fetch avatar for a hosting provider username (GitHub, GitLab).
+    /// Uses the same shared `avatarCache` as Gravatar avatars.
+    func avatarImage(forUsername username: String, prURL: String) -> NSImage? {
+        guard !username.isEmpty else { return nil }
+        guard UserDefaults.standard.bool(forKey: UserDefaultsKeys.General.graphAuthorAvatarsEnabled) else { return nil }
+        let key = "user:\(username)"
+        if let cached = avatarCache.object(forKey: key as NSString) { return cached }
+        if !avatarDownloadTasks.contains(key) {
+            avatarDownloadTasks.insert(key)
+            Task { [weak self] in
+                guard let self else { return }
+                let urlString: String?
+                if prURL.contains("github.com") {
+                    urlString = "https://github.com/\(username).png?size=40"
+                } else if prURL.contains("gitlab.com") {
+                    urlString = "https://gitlab.com/\(username).png?width=40"
+                } else {
+                    urlString = nil
+                }
+                guard let urlString, let url = URL(string: urlString) else {
+                    avatarDownloadTasks.remove(key)
+                    return
+                }
+                do {
+                    let (data, _) = try await URLSession.shared.data(from: url)
+                    if let image = NSImage(data: data) {
+                        avatarCache.setObject(image, forKey: key as NSString)
+                    }
+                } catch {}
+                avatarDownloadTasks.remove(key)
+            }
+        }
+        return nil
+    }
 
     func avatarImage(for email: String) -> NSImage? {
         guard !email.isEmpty else { return nil }
