@@ -40,8 +40,8 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
     case prAutoReviewComplete = "prAutoReviewComplete"
     // Terminal
     case terminalPromptDetected = "terminalPromptDetected"
-    // System
-    case operationComplete = "operationComplete"
+    // Mobile Remote
+    case keepAwakeWarning = "keepAwakeWarning"
 
     var id: String { rawValue }
 
@@ -55,8 +55,8 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
             return .github
         case .terminalPromptDetected:
             return .mobileRemote
-        case .operationComplete:
-            return .gitOps
+        case .keepAwakeWarning:
+            return .mobileRemote
         }
     }
 
@@ -69,7 +69,7 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
         case .prMergedOrClosed: return L10n("ntfy.event.prMergedOrClosed")
         case .prAutoReviewComplete: return L10n("ntfy.event.prAutoReviewComplete")
         case .terminalPromptDetected: return L10n("ntfy.event.terminalPromptDetected")
-        case .operationComplete: return L10n("ntfy.event.operationComplete")
+        case .keepAwakeWarning: return L10n("ntfy.event.keepAwakeWarning")
         }
     }
 
@@ -82,7 +82,7 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
         case .prMergedOrClosed: return 3
         case .prAutoReviewComplete: return 4
         case .terminalPromptDetected: return 5
-        case .operationComplete: return 3
+        case .keepAwakeWarning: return 3
         }
     }
 
@@ -95,7 +95,7 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
         case .prMergedOrClosed: return "checkered_flag"
         case .prAutoReviewComplete: return "mag"
         case .terminalPromptDetected: return "bell"
-        case .operationComplete: return "white_check_mark"
+        case .keepAwakeWarning: return "hourglass"
         }
     }
 
@@ -105,7 +105,7 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .newRemoteCommits,
              .prCreated, .prReviewRequested, .prMergedOrClosed, .prAutoReviewComplete,
-             .terminalPromptDetected, .operationComplete:
+             .terminalPromptDetected, .keepAwakeWarning:
             return true
         case .cloneComplete:
             return false // synchronous -- result appears instantly in UI
@@ -117,7 +117,7 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
         case .cloneComplete, .newRemoteCommits,
              .prCreated, .prReviewRequested, .prMergedOrClosed, .prAutoReviewComplete:
             return true
-        case .terminalPromptDetected, .operationComplete:
+        case .terminalPromptDetected, .keepAwakeWarning:
             return false
         }
     }
@@ -125,7 +125,7 @@ enum NtfyEvent: String, CaseIterable, Identifiable, Sendable {
     /// Whether this event should only be delivered as a local macOS notification (never remote).
     var isLocalOnly: Bool {
         switch self {
-        case .operationComplete: return true
+        case .keepAwakeWarning: return true
         default: return false
         }
     }
@@ -215,7 +215,7 @@ actor NtfyClient {
             await sendLocalNotification(title: fullTitle, body: fullBody)
         }
 
-        // Local-only events (e.g., operationComplete) skip remote delivery
+        // Local-only events (e.g., keepAwakeWarning) skip remote delivery
         guard !event.isLocalOnly else { return }
 
         if plan.deliverRemote {

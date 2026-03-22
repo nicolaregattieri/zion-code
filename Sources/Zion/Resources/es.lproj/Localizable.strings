@@ -814,8 +814,8 @@
 "settings.general.tools" = "Herramientas";
 "settings.general.safety" = "Seguridad";
 "settings.general.confirmation" = "Modo de Confirmación";
-"settings.general.graphAuthorAvatars" = "Activar avatares de autores en graph";
-"settings.general.graphAuthorAvatarsHint" = "Descarga identicons de Gravatar para los autores de commits. Está desactivado por defecto para evitar solicitudes externas en repositorios privados.";
+"settings.general.graphAuthorAvatars" = "Activar avatares de autores";
+"settings.general.graphAuthorAvatarsHint" = "Descarga avatares de Gravatar y GitHub/GitLab.";
 "settings.general.customPath" = "Ruta Personalizada";
 "settings.update.title" = "Actualizaciones";
 "settings.update.autoCheck" = "Buscar actualizaciones automáticamente";
@@ -1812,7 +1812,7 @@
 "ntfy.event.terminalPromptDetected" = "Terminal remota esperando entrada";
 "ntfy.event.terminalPromptDetected.hint" = "Solo para Acceso Remoto Móvil. Esto no responde el prompt por ntfy. Solo recuerda que una sesión remota está esperando entrada para que vuelvas a abrir la sesión móvil remota y respondas.";
 "ntfy.event.prMergedOrClosed" = "PR fusionado o cerrado";
-"ntfy.event.operationComplete" = "Operacion larga completada";
+"ntfy.event.keepAwakeWarning" = "Aviso del temporizador keep-awake";
 "ntfy.prMergedClosed.title" = "PR Cerrado";
 "ntfy.prMergedClosed.body" = "PR %@ ha sido fusionado o cerrado.";
 "pr.notification.request.riskScore" = "Puntuacion de riesgo: %d/100";

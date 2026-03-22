@@ -901,7 +901,7 @@ extension RepositoryViewModel {
                     guard !Task.isCancelled else { return }
                     keepAwakeWarning15Sent = true
                     await ntfyClient.sendIfEnabled(
-                        event: .operationComplete,
+                        event: .keepAwakeWarning,
                         title: L10n("keepAwake.warning.title"),
                         body: L10n("keepAwake.warning.15min"),
                         repoName: repoName
@@ -917,7 +917,7 @@ extension RepositoryViewModel {
                     guard !Task.isCancelled else { return }
                     keepAwakeWarning5Sent = true
                     await ntfyClient.sendIfEnabled(
-                        event: .operationComplete,
+                        event: .keepAwakeWarning,
                         title: L10n("keepAwake.warning.title"),
                         body: L10n("keepAwake.warning.5min"),
                         repoName: repoName
@@ -937,7 +937,7 @@ extension RepositoryViewModel {
 
                 let durationLabel = duration.label
                 await ntfyClient.sendIfEnabled(
-                    event: .operationComplete,
+                    event: .keepAwakeWarning,
                     title: L10n("keepAwake.expired.title"),
                     body: L10n("keepAwake.expired.body", durationLabel),
                     repoName: repoName

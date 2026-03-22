@@ -817,8 +817,8 @@
 "settings.general.tools" = "Tools";
 "settings.general.safety" = "Safety";
 "settings.general.confirmation" = "Confirmation Mode";
-"settings.general.graphAuthorAvatars" = "Enable author avatars in graph";
-"settings.general.graphAuthorAvatarsHint" = "Downloads Gravatar identicons for commit authors. Disabled by default to avoid external requests for private repositories.";
+"settings.general.graphAuthorAvatars" = "Enable author avatars";
+"settings.general.graphAuthorAvatarsHint" = "Downloads avatars from Gravatar and GitHub/GitLab.";
 "settings.general.customPath" = "Custom Path";
 "settings.update.title" = "Updates";
 "settings.update.autoCheck" = "Check for updates automatically";
@@ -1800,7 +1800,7 @@
 "ntfy.event.terminalPromptDetected" = "Remote terminal waiting for input";
 "ntfy.event.terminalPromptDetected.hint" = "Mobile Remote Access only. This does not answer the prompt through ntfy. It only reminds you that a remote terminal session is waiting for input so you can reopen the mobile remote session and respond.";
 "ntfy.event.prMergedOrClosed" = "PR merged or closed";
-"ntfy.event.operationComplete" = "Long operation completed";
+"ntfy.event.keepAwakeWarning" = "Keep-awake timer warning";
 "ntfy.prMergedClosed.title" = "PR Closed";
 "ntfy.prMergedClosed.body" = "PR %@ has been merged or closed.";
 "pr.notification.request.riskScore" = "Risk score: %d/100";

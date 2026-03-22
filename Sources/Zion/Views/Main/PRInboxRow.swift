@@ -2,13 +2,13 @@ import SwiftUI
 
 struct PRInboxRow: View {
     let item: PRReviewItem
+    var model: RepositoryViewModel
     let onTap: () -> Void
     @State private var isHovered = false
 
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: DesignSystem.Spacing.iconTextGap) {
-                // Author initial in colored circle
                 authorAvatar
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -74,15 +74,14 @@ struct PRInboxRow: View {
         }
     }
 
+    @ViewBuilder
     private var authorAvatar: some View {
-        let initial = item.pr.author.prefix(1).uppercased()
-        let hue = Double(abs(item.pr.author.hashValue) % 360) / 360.0
-
-        return Text(initial)
-            .font(DesignSystem.Typography.labelBold)
-            .foregroundStyle(.white)
-            .frame(width: 22, height: 22)
-            .background(Circle().fill(Color(hue: hue, saturation: 0.6, brightness: 0.8)))
+        if let avatar = model.avatarImage(forUsername: item.pr.author, prURL: item.pr.url) {
+            Image(nsImage: avatar)
+                .resizable()
+                .frame(width: 22, height: 22)
+                .clipShape(Circle())
+        }
     }
 
     @ViewBuilder
