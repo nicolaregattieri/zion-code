@@ -35,7 +35,7 @@ struct BridgeScreen: View {
         GlassCard(spacing: 12) {
             HStack(alignment: .center, spacing: 14) {
                 Image(systemName: "arrow.left.arrow.right.circle")
-                    .font(.system(size: 24, weight: .semibold))
+                    .font(DesignSystem.Typography.onboardingTitle)
                     .foregroundStyle(DesignSystem.Colors.ai)
                     .frame(width: 44, height: 44)
                     .background(
@@ -242,7 +242,7 @@ struct BridgeScreen: View {
                     model.toggleBridgeRowSelection(row)
                 } label: {
                     Image(systemName: isSyncSelected ? "checkmark.circle.fill" : "circle")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(DesignSystem.Typography.sheetTitle)
                         .foregroundStyle(isSyncSelected ? DesignSystem.Colors.actionPrimary : .secondary)
                         .frame(width: 24, height: 24)
                         .contentShape(Rectangle())
@@ -251,8 +251,8 @@ struct BridgeScreen: View {
                 .help(isSyncSelected ? L10n("bridge.selection.remove") : L10n("bridge.selection.add"))
             } else {
                 Image(systemName: "minus.circle")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.secondary.opacity(0.5))
+                    .font(DesignSystem.Typography.sheetTitle)
+                    .foregroundStyle(.secondary.opacity(DesignSystem.Opacity.muted))
                     .frame(width: 24, height: 24)
             }
 

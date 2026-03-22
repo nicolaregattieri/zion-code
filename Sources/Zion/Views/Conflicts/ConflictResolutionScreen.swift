@@ -199,7 +199,7 @@ struct ConflictResolutionScreen: View {
             } else {
                 VStack(spacing: 16) {
                     Image(systemName: "arrow.left.circle")
-                        .font(.system(size: 40))
+                        .font(DesignSystem.Typography.onboardingFeatureIcon)
                         .foregroundStyle(.secondary)
                     Text(L10n("Selecione um arquivo com conflito"))
                         .font(DesignSystem.Typography.subtitle)

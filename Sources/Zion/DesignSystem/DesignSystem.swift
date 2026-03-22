@@ -254,6 +254,7 @@ struct DesignSystem {
 
         // Monospaced bold/medium
         static let monoMetaBold = Font.system(size: 9, weight: .bold, design: .monospaced)
+        static let monoMetaMedium = Font.system(size: 9, weight: .medium, design: .monospaced)
         static let monoSmallBold = Font.system(size: 11, weight: .bold, design: .monospaced)
         static let monoBodyBold = Font.system(size: 12, weight: .bold, design: .monospaced)
         static let monoLabelMedium = Font.system(size: 10, weight: .medium, design: .monospaced)

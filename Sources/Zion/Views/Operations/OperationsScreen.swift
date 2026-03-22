@@ -155,7 +155,7 @@ struct FileStatusRow: View {
 
             if isStaged {
                 Text(L10n("STAGED"))
-                    .font(.system(size: 7, weight: .black))
+                    .font(DesignSystem.Typography.micro)
                     .padding(.horizontal, 4).padding(.vertical, 1)
                     .background(DesignSystem.Colors.fileStaged.opacity(0.2))
                     .foregroundStyle(DesignSystem.Colors.fileStaged)
@@ -235,7 +235,7 @@ struct PreCommitCheckCard: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                 Image(systemName: "shield.checkered")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(DesignSystem.Typography.subtitle)
                     .foregroundStyle(criticalCount > 0 ? DesignSystem.Colors.destructive : DesignSystem.Colors.ai)
                 Text(L10n("precommit.gate.title"))
                     .font(DesignSystem.Typography.bodyBold)

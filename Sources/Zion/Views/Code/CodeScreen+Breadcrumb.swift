@@ -10,7 +10,7 @@ extension CodeScreen {
                 ForEach(Array(breadcrumbItems.enumerated()), id: \.offset) { index, item in
                     if index > 0 {
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 8, weight: .semibold))
+                            .font(DesignSystem.Typography.micro)
                             .foregroundStyle(DesignSystem.Colors.textTertiary)
                     }
                     breadcrumbSegmentView(item)
@@ -39,7 +39,7 @@ extension CodeScreen {
             }
         } else {
             Text(item.title)
-                .font(.system(size: 10, weight: item.isFile ? .semibold : .regular, design: .monospaced))
+                .font(item.isFile ? DesignSystem.Typography.monoLabelMedium : DesignSystem.Typography.monoLabel)
                 .lineLimit(1)
                 .foregroundStyle(item.isFile ? Color.primary : DesignSystem.Colors.textSecondary)
         }

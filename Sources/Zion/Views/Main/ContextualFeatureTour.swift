@@ -213,7 +213,7 @@ struct ContextualFeatureTourOverlay: View {
                 HStack(spacing: 10) {
                     if let iconHint = currentStep.iconHint {
                         Image(systemName: iconHint)
-                            .font(.system(size: 18, weight: .semibold))
+                            .font(DesignSystem.Typography.sheetIcon)
                             .foregroundStyle(.white)
                             .frame(width: 34, height: 34)
                             .background(DesignSystem.Colors.actionPrimary)

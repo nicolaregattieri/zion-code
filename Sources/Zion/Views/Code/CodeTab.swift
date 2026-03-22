@@ -16,7 +16,7 @@ struct CodeTab: View {
         HStack(spacing: DesignSystem.Spacing.iconTextGap) {
             if isMissing {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 8, weight: .bold))
+                    .font(DesignSystem.Typography.micro)
                     .foregroundStyle(DesignSystem.Colors.destructive)
                     .help(L10n("editor.tab.missingTooltip"))
             } else if isUnsaved {
@@ -28,7 +28,7 @@ struct CodeTab: View {
                 .foregroundStyle(isActive ? accentColor : .secondary)
 
             Text(file.name)
-                .font(.system(size: 11, weight: isActive ? .bold : .regular))
+                .font(isActive ? DesignSystem.Typography.bodySmallBold : DesignSystem.Typography.bodySmall)
                 .lineLimit(1)
                 .help(file.name)
 

@@ -105,7 +105,7 @@ extension GraphScreen {
         } label: {
             HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                 inlineStatusIcon(index: indexStatus, worktree: workTreeStatus).font(DesignSystem.Typography.bodyLarge)
-                Text(file).font(.system(size: 12, weight: isSelected ? .bold : .regular, design: .monospaced)).lineLimit(1).truncationMode(.middle)
+                Text(file).font(isSelected ? DesignSystem.Typography.monoBodyBold : DesignSystem.Typography.monoBody).lineLimit(1).truncationMode(.middle)
                 Spacer()
                 if indexStatus != " " && indexStatus != "?" {
                     Circle().fill(DesignSystem.Colors.fileStaged).frame(width: 6, height: 6)

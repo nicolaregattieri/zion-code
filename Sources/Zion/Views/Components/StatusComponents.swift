@@ -16,8 +16,7 @@ struct StatPill: View {
             
             VStack(alignment: .leading, spacing: 1) {
                 Text(value)
-                    .font(.system(.headline, design: .rounded))
-                    .fontWeight(.bold)
+                    .font(DesignSystem.Typography.sheetTitle)
                 Text(title)
                     .font(DesignSystem.Typography.labelSemibold)
                     .foregroundStyle(.secondary)
