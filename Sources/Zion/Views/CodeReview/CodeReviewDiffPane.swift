@@ -121,7 +121,10 @@ struct CodeReviewDiffPane: View {
         }()
 
         let lineNumber = line.newLineNumber ?? line.oldLineNumber
-        let commentsForLine = file.inlineComments.filter { $0.line == lineNumber }
+        // Show comments only on addition/context lines to avoid duplicates on modified lines
+        // (deletion + addition at same line number). For deletion-only lines, show comments normally.
+        let showComments = line.type != .deletion || line.newLineNumber != nil
+        let commentsForLine = showComments ? file.inlineComments.filter { $0.line == lineNumber } : []
 
         return VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 0) {
@@ -165,7 +168,7 @@ struct CodeReviewDiffPane: View {
             }
 
             // Inline comment input
-            if activeCommentLine == lineNumber, let ln = lineNumber {
+            if showComments, activeCommentLine == lineNumber, let ln = lineNumber {
                 PRInlineCommentInput(
                     path: file.path,
                     line: ln,
@@ -191,7 +194,8 @@ struct CodeReviewDiffPane: View {
     @ViewBuilder
     private func addCommentGutter(line: DiffLine) -> some View {
         let lineNumber = line.newLineNumber ?? line.oldLineNumber
-        if lineNumber != nil, currentPRNumber != nil {
+        let canComment = line.type != .deletion || line.newLineNumber != nil
+        if lineNumber != nil, currentPRNumber != nil, canComment {
             Button {
                 activeCommentLine = lineNumber
             } label: {
