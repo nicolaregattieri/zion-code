@@ -85,8 +85,8 @@ struct ZionLoadingOverlay: View {
     private func orbitPhase(for date: Date) -> CGFloat {
         let cycle: TimeInterval = 1.1
         let t = date.timeIntervalSinceReferenceDate
-        let normalized = (t.remainder(dividingBy: cycle) + cycle).remainder(dividingBy: cycle) / cycle
-        return CGFloat(normalized)
+        let fractional = t.truncatingRemainder(dividingBy: cycle) / cycle
+        return CGFloat(fractional >= 0 ? fractional : fractional + 1)
     }
 
     @ViewBuilder
