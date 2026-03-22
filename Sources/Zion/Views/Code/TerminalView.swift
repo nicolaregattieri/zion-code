@@ -267,6 +267,13 @@ struct TerminalTabView: NSViewRepresentable {
             hasPersistentSelectionFreeze && !hasCommandModifier
         }
 
+        static func shouldReleaseManualScrollFreezeOnKeyDown(
+            hasManualScrollFreeze: Bool,
+            hasCommandModifier: Bool
+        ) -> Bool {
+            hasManualScrollFreeze && !hasCommandModifier
+        }
+
         static func shouldConsumePreciseScroll(
             hasPreciseScrollingDeltas: Bool,
             isTerminalFocused: Bool,
@@ -467,11 +474,18 @@ struct TerminalTabView: NSViewRepresentable {
             if keyDownMonitor == nil {
                 keyDownMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
                     guard let self else { return event }
+                    let hasCommand = event.modifierFlags.contains(.command)
                     if Self.shouldReleasePersistentSelectionFreezeOnKeyDown(
                         hasPersistentSelectionFreeze: self.persistentSelectionFreezeActive,
-                        hasCommandModifier: event.modifierFlags.contains(.command)
+                        hasCommandModifier: hasCommand
                     ) {
                         self.releasePersistentSelectionFreezeIfNeeded(flushImmediately: true)
+                    }
+                    if Self.shouldReleaseManualScrollFreezeOnKeyDown(
+                        hasManualScrollFreeze: self.manualScrollFreezeActive,
+                        hasCommandModifier: hasCommand
+                    ) {
+                        self.releaseManualScrollFreezeIfNeeded(flushImmediately: true)
                     }
                     return event
                 }
@@ -662,6 +676,15 @@ struct TerminalTabView: NSViewRepresentable {
                 scrollPosition: view.scrollPosition,
                 canScroll: view.canScroll
             ) {
+                flushPendingTerminalOutput(force: true)
+            }
+        }
+
+        private func releaseManualScrollFreezeIfNeeded(flushImmediately: Bool) {
+            guard manualScrollFreezeActive else { return }
+            manualScrollFreezeActive = false
+            manualScrollFreezeIntentActive = false
+            if flushImmediately {
                 flushPendingTerminalOutput(force: true)
             }
         }
