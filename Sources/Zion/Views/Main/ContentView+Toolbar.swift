@@ -134,9 +134,7 @@ extension ContentView {
             }
             .applyShortcutBinding(shortcutRegistry.binding(for: .codeReview))
             Button("") {
-                withAnimation(DesignSystem.Motion.panel) {
-                    zenModeEnabled.toggle()
-                }
+                toggleZenMode()
             }
             .applyShortcutBinding(shortcutRegistry.binding(for: .zenMode))
             Button("") {

@@ -34,6 +34,12 @@ enum Constants {
         static let repositorySwitchWatchdogTimeout: UInt64 = 10_000_000_000
         /// Grace period before escalating SIGTERM to SIGKILL for frozen terminals (500ms)
         static let processKillEscalation: UInt64 = 500_000_000
+        /// Delay between zen mode choreography steps (250ms)
+        static let zenModeStepDelay: TimeInterval = 0.25
+        /// Delay before restoring layout after zen mode sidebar appears (500ms)
+        static let zenModeRestoreDelay: TimeInterval = 0.5
+        /// Debounce before restarting background tasks after zen exit (15s)
+        static let zenModeResumeDebounce: UInt64 = 15_000_000_000
     }
 
     enum Limits {

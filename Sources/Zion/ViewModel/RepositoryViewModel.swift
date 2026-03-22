@@ -117,6 +117,10 @@ final class RepositoryViewModel {
         set { focusedSessionID = newValue }
     }
 
+    // Zen mode
+    @ObservationIgnored var isZenModePaused = false
+    @ObservationIgnored var zenResumeTask: Task<Void, Never>?
+
     // Clipboard
     @ObservationIgnored let clipboardMonitor = ClipboardMonitor()
     @ObservationIgnored var _isReloadingExpandedDirs = false
