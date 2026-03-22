@@ -71,9 +71,13 @@ struct SidebarView: View {
                                         changedCount: model.recentChangedCount(for: url),
                                         worktreeCount: model.recentWorktreeCounts[url] ?? 0
                                     ) {
-                                        withAnimation(DesignSystem.Motion.detail) {
-                                            model.nextSectionAfterRepositoryOpen = selectedSection
-                                            model.openRepository(url)
+                                        withAnimation(.spring(duration: 0.3, bounce: 0.1)) {
+                                            model.saveRecentRepository(url)
+                                        }
+                                        model.nextSectionAfterRepositoryOpen = selectedSection
+                                        Task { @MainActor in
+                                            try? await Task.sleep(for: .milliseconds(250))
+                                            model.openRepository(url, silent: true)
                                         }
                                     }
                                 }
