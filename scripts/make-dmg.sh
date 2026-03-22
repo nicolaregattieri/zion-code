@@ -23,6 +23,9 @@ APP_ICON_Y=190
 
 echo "Creating premium DMG for $APP_NAME..."
 
+# Eject any existing Zion volume (e.g. from a previous DMG)
+hdiutil detach "/Volumes/$VOLUME_NAME" 2>/dev/null || true
+
 if [ ! -d "$APP_PATH" ]; then
     echo "Error: $APP_PATH not found. Run ./scripts/make-app.sh first."
     exit 1
