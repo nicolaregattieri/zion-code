@@ -873,46 +873,92 @@ struct TerminalTabView: NSViewRepresentable {
                 .trimmingCharacters(in: .whitespacesAndNewlines)
                 .trimmingCharacters(in: CharacterSet(charactersIn: "\"'<>[](){}"))
 
-            if let localPath = localPathIfExists(from: trimmedLink) {
-                NSWorkspace.shared.open(URL(fileURLWithPath: localPath))
-                return
-            }
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                let repoURL = parent.model?.repositoryURL
 
-            if let fixedup = trimmedLink.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
-                if let url = NSURLComponents(string: fixedup) {
-                    if let actualUrl = url.url {
-                        NSWorkspace.shared.open(actualUrl)
+                if let resolved = resolveLocalLink(from: trimmedLink, repositoryURL: repoURL) {
+                    let fileURL = URL(fileURLWithPath: resolved.path)
+                    let isEditable = EditorFileInspector.isTextFile(fileURL)
+                        || EditorFileInspector.contentKind(for: fileURL) == .markdown
+
+                    if isEditable, let model = parent.model {
+                        model.openExternalFiles([fileURL])
+                        if let line = resolved.line {
+                            model.editorJumpLineTarget = line
+                            model.editorJumpToken += 1
+                        }
+                    } else {
+                        NSWorkspace.shared.open(fileURL)
+                    }
+                    return
+                }
+
+                if let fixedup = trimmedLink.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
+                    if let url = NSURLComponents(string: fixedup) {
+                        if let actualUrl = url.url {
+                            NSWorkspace.shared.open(actualUrl)
+                        }
                     }
                 }
             }
         }
 
-        private nonisolated func localPathIfExists(from link: String) -> String? {
+        private struct ResolvedLink {
+            let path: String
+            let line: Int?
+            let column: Int?
+        }
+
+        private nonisolated func resolveLocalLink(from link: String, repositoryURL: URL?) -> ResolvedLink? {
             guard !link.isEmpty else { return nil }
             let lowercased = link.lowercased()
+            let fileManager = FileManager.default
 
             var path: String
             if lowercased.hasPrefix("file://"), let fileURL = URL(string: link), fileURL.isFileURL {
                 path = fileURL.path
             } else if link.hasPrefix("/") || link.hasPrefix("~/") {
                 path = (link as NSString).expandingTildeInPath
+            } else if let repositoryURL {
+                path = repositoryURL.appendingPathComponent(link).path
             } else {
                 return nil
             }
 
-            let fileManager = FileManager.default
             if fileManager.fileExists(atPath: path) {
-                return path
+                return ResolvedLink(path: path, line: nil, column: nil)
             }
 
-            if let suffixRange = path.range(of: #":\d+(?::\d+)?$"#, options: .regularExpression) {
-                let withoutLineColumn = String(path[..<suffixRange.lowerBound])
-                if fileManager.fileExists(atPath: withoutLineColumn) {
-                    return withoutLineColumn
+            if let (stripped, line, column) = extractLineColumn(from: path) {
+                if fileManager.fileExists(atPath: stripped) {
+                    return ResolvedLink(path: stripped, line: line, column: column)
+                }
+            }
+
+            // Try resolving the raw link against repo after stripping line:col
+            if let repositoryURL, !link.hasPrefix("/") && !link.hasPrefix("~/") && !lowercased.hasPrefix("file://") {
+                if let (strippedLink, line, column) = extractLineColumn(from: link) {
+                    let repoPath = repositoryURL.appendingPathComponent(strippedLink).path
+                    if fileManager.fileExists(atPath: repoPath) {
+                        return ResolvedLink(path: repoPath, line: line, column: column)
+                    }
                 }
             }
 
             return nil
+        }
+
+        private nonisolated func extractLineColumn(from path: String) -> (path: String, line: Int, column: Int?)? {
+            guard let suffixRange = path.range(of: #":(\d+)(?::(\d+))?$"#, options: .regularExpression) else {
+                return nil
+            }
+            let suffix = String(path[suffixRange]).dropFirst() // drop leading ":"
+            let parts = suffix.split(separator: ":")
+            guard let line = Int(parts[0]), line > 0 else { return nil }
+            let column = parts.count > 1 ? Int(parts[1]) : nil
+            let stripped = String(path[..<suffixRange.lowerBound])
+            return (stripped, line, column)
         }
 
         // MARK: - LocalProcessDelegate
@@ -965,6 +1011,8 @@ struct TerminalTabView: NSViewRepresentable {
 
         nonisolated func dataReceived(slice: ArraySlice<UInt8>) {
             Task { @MainActor in
+                // Session was explicitly killed -- drop all further data
+                guard parent.session._shouldPreserve else { return }
                 let currentOwner = isCurrentOwner()
                 if !currentOwner {
                     if Self.shouldRecoverOwnerBinding(
