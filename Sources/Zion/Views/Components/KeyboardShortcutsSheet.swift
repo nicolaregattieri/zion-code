@@ -186,7 +186,7 @@ struct KeyboardShortcutsSheet: View {
                     HStack(spacing: 4) {
                         if let display = binding?.displayString {
                             Text(display)
-                                .font(.system(size: 12, weight: .medium, design: .monospaced))
+                                .font(DesignSystem.Typography.monoBody)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
                                 .background(DesignSystem.Colors.glassSubtle)
@@ -198,7 +198,7 @@ struct KeyboardShortcutsSheet: View {
                                 shortcutRegistry.setOverride(nil, for: definition.id)
                             } label: {
                                 Image(systemName: "arrow.counterclockwise")
-                                    .font(.system(size: 10))
+                                    .font(DesignSystem.Typography.label)
                                     .foregroundStyle(.secondary)
                             }
                             .buttonStyle(.plain)
@@ -243,7 +243,7 @@ struct KeyboardShortcutsSheet: View {
 
         return HStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 10))
+                .font(DesignSystem.Typography.label)
                 .foregroundStyle(DesignSystem.Colors.warning)
             Text(conflictText)
                 .font(DesignSystem.Typography.label)
@@ -282,7 +282,7 @@ struct KeyboardShortcutsSheet: View {
                 .foregroundStyle(.secondary)
             Spacer()
             Text(keys)
-                .font(.system(size: 12, weight: .medium, design: .monospaced))
+                .font(DesignSystem.Typography.monoBody)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
                 .background(DesignSystem.Colors.glassSubtle)

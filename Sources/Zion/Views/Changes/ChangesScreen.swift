@@ -135,7 +135,7 @@ struct ChangesScreen: View {
                     .font(DesignSystem.Typography.bodyLarge)
 
                 Text(file)
-                    .font(.system(size: 12, weight: isSelected ? .bold : .regular, design: .monospaced))
+                    .font(isSelected ? DesignSystem.Typography.monoBodyBold : DesignSystem.Typography.monoBody)
                     .lineLimit(1)
                     .truncationMode(.middle)
 

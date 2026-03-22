@@ -23,7 +23,7 @@ struct GitAuthPromptSheet: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
                 Image(systemName: "key.fill")
-                    .font(.system(size: 18))
+                    .font(DesignSystem.Typography.sheetIcon)
                     .foregroundStyle(DesignSystem.Colors.warning)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(L10n("git.auth.title"))

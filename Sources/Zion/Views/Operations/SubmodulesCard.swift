@@ -29,7 +29,7 @@ struct SubmodulesCard: View {
 
                             VStack(alignment: .leading, spacing: 1) {
                                 Text(sub.name)
-                                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                                    .font(DesignSystem.Typography.monoBody)
                                 Text(sub.path)
                                     .font(DesignSystem.Typography.label)
                                     .foregroundStyle(.secondary)

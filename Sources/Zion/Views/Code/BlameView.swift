@@ -57,7 +57,7 @@ struct BlameView: View {
 
                 VStack(alignment: .leading, spacing: 0) {
                     Text(entry.shortHash)
-                        .font(.system(size: 9, weight: .medium, design: .monospaced))
+                        .font(DesignSystem.Typography.monoMetaMedium)
                         .foregroundStyle(color)
                     Text(entry.author.components(separatedBy: " ").first ?? entry.author)
                         .font(DesignSystem.Typography.meta)
@@ -73,7 +73,7 @@ struct BlameView: View {
                         explanationEntryID = entry.id
                     } label: {
                         Image(systemName: "sparkles")
-                            .font(.system(size: 8))
+                            .font(DesignSystem.Typography.micro)
                             .foregroundStyle(DesignSystem.Colors.semanticSearch)
                     }
                     .buttonStyle(.plain)
@@ -96,7 +96,7 @@ struct BlameView: View {
                     }
                 } else {
                     Text(relativeDate(entry.date))
-                        .font(.system(size: 8))
+                        .font(DesignSystem.Typography.micro)
                         .foregroundStyle(.tertiary)
                 }
             }

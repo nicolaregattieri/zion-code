@@ -2319,3 +2319,5 @@
 "graph.search.source.branch" = "branch";
 "graph.search.source.tag" = "tag";
 "settings.editor.detectedFromFile" = "Detectado del archivo";
+"statusbar.mobile.wan" = "WAN";
+"statusbar.mobile.lan" = "LAN";

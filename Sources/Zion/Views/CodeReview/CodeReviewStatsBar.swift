@@ -60,7 +60,7 @@ struct CodeReviewStatsBar: View {
             Image(systemName: icon)
                 .font(DesignSystem.Typography.meta)
             Text(value)
-                .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                .font(DesignSystem.Typography.monoSmallMedium)
             if let label {
                 Text(label)
                     .font(DesignSystem.Typography.meta)

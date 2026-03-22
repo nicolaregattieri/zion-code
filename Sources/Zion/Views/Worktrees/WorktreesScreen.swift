@@ -178,7 +178,7 @@ struct WorktreeCardView: View {
                 if worktree.isMainWorktree {
                     Text(L10n("worktree.main.badge"))
                         .font(DesignSystem.Typography.monoMeta)
-                        .padding(.horizontal, 5)
+                        .padding(.horizontal, 6)
                         .padding(.vertical, 2)
                         .background(DesignSystem.Colors.success.opacity(0.18))
                         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous))

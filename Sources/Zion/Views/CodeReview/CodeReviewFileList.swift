@@ -50,7 +50,7 @@ struct CodeReviewFileList: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(URL(fileURLWithPath: file.path).lastPathComponent)
-                        .font(.system(size: 11, weight: isSelected ? .bold : .medium, design: .monospaced))
+                        .font(isSelected ? DesignSystem.Typography.monoSmallBold : DesignSystem.Typography.monoSmallMedium)
                         .lineLimit(1)
 
                     Text(file.path)

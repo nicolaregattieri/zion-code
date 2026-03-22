@@ -354,14 +354,14 @@ private struct WorktreePill: View {
         Button(action: action) {
             HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 Text("⊞")
-                    .font(.system(size: 11, weight: isCurrent ? .bold : .semibold))
+                    .font(isCurrent ? DesignSystem.Typography.bodySmallBold : DesignSystem.Typography.bodySmallSemibold)
                 Text(branch)
-                    .font(.system(size: 11, weight: isCurrent ? .bold : .semibold, design: .monospaced))
+                    .font(isCurrent ? DesignSystem.Typography.monoSmallBold : DesignSystem.Typography.monoSmallMedium)
                     .lineLimit(1)
                 if isMainWorktree && showRootBadge {
                     Text(L10n("worktree.main.badge"))
                         .font(DesignSystem.Typography.monoMetaBold)
-                        .padding(.horizontal, 5)
+                        .padding(.horizontal, 6)
                         .padding(.vertical, 2)
                         .background(DesignSystem.Colors.success.opacity(0.18))
                         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous))

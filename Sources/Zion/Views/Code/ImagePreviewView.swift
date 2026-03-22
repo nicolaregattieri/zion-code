@@ -132,7 +132,7 @@ struct ImagePreviewView: View {
         if hasLoadError {
             VStack(spacing: 10) {
                 Image(systemName: "photo.badge.exclamationmark")
-                    .font(.system(size: 24))
+                    .font(DesignSystem.Typography.onboardingTitle)
                     .foregroundStyle(.secondary)
                 Text(L10n("editor.image.loadFailed"))
                     .font(DesignSystem.Typography.body)

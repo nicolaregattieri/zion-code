@@ -21,7 +21,7 @@ extension ContentView {
                 .font(DesignSystem.Typography.monoLabel)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
-                .background(zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(0.12) : DesignSystem.Colors.statusGreenBg)
+                .background(zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(DesignSystem.Opacity.selectedSubtle) : DesignSystem.Colors.statusGreenBg)
                 .foregroundStyle(zionModeEnabled ? DesignSystem.ZionMode.neonMagenta : DesignSystem.Colors.success)
                 .clipShape(Capsule())
 
@@ -37,7 +37,7 @@ extension ContentView {
                     .padding(.vertical, 3)
                     .background(
                         zionModeEnabled
-                            ? DesignSystem.ZionMode.neonGold.opacity(0.12)
+                            ? DesignSystem.ZionMode.neonGold.opacity(DesignSystem.Opacity.selectedSubtle)
                             : (model.behindRemoteCount > 0 ? DesignSystem.Colors.statusOrangeBg : DesignSystem.Colors.statusBlueBg)
                     )
                     .foregroundStyle(
@@ -58,7 +58,7 @@ extension ContentView {
                     .font(DesignSystem.Typography.label)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
-                    .background(zionModeEnabled ? DesignSystem.ZionMode.neonOrange.opacity(0.12) : DesignSystem.Colors.statusOrangeBg)
+                    .background(zionModeEnabled ? DesignSystem.ZionMode.neonOrange.opacity(DesignSystem.Opacity.selectedSubtle) : DesignSystem.Colors.statusOrangeBg)
                     .foregroundStyle(zionModeEnabled ? DesignSystem.ZionMode.neonOrange : DesignSystem.Colors.warning)
                     .clipShape(Capsule())
                 }
@@ -105,7 +105,7 @@ extension ContentView {
                                 }
                             }
                             if mobileAccessReady {
-                                Text(model.isTunnelReady ? "WAN" : "LAN")
+                                Text(model.isTunnelReady ? L10n("statusbar.mobile.wan") : L10n("statusbar.mobile.lan"))
                                     .font(DesignSystem.Typography.meta)
                                     .opacity(DesignSystem.Opacity.visible)
                             }
@@ -201,7 +201,7 @@ extension ContentView {
                     .transition(.opacity.animation(.easeOut(duration: 0.3)))
             } else {
                 if zionModeEnabled {
-                    DesignSystem.ZionMode.neonMagenta.opacity(0.25)
+                    DesignSystem.ZionMode.neonMagenta.opacity(DesignSystem.Opacity.subtle)
                         .frame(height: 1)
                         .transition(.opacity.animation(.easeIn(duration: 0.5)))
                 } else {
@@ -229,11 +229,11 @@ extension ContentView {
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 4)
-        .background(zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(0.03) : DesignSystem.Colors.glassSubtle)
+        .background(zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(DesignSystem.Opacity.whisper) : DesignSystem.Colors.glassSubtle)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous)
-                .stroke(zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(0.12) : DesignSystem.Colors.glassBorderDark, lineWidth: 1)
+                .stroke(zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(DesignSystem.Opacity.selectedSubtle) : DesignSystem.Colors.glassBorderDark, lineWidth: 1)
         )
     }
 
@@ -255,11 +255,11 @@ extension ContentView {
             .padding(.vertical, 3)
             .background(
                 RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous)
-                    .fill(isSelected ? (zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(0.12) : DesignSystem.Colors.selectionBackground) : Color.clear)
+                    .fill(isSelected ? (zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(DesignSystem.Opacity.selectedSubtle) : DesignSystem.Colors.selectionBackground) : Color.clear)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous)
-                    .stroke(isSelected ? (zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(0.15) : DesignSystem.Colors.selectionBorder) : Color.clear, lineWidth: 1)
+                    .stroke(isSelected ? (zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(DesignSystem.Opacity.faint) : DesignSystem.Colors.selectionBorder) : Color.clear, lineWidth: 1)
             )
             .overlay(alignment: .bottom) {
                 if isSelected && zionModeEnabled {
@@ -268,7 +268,7 @@ extension ContentView {
                         .padding(.horizontal, 4)
                         .clipShape(Capsule())
                         .opacity(DesignSystem.Opacity.visible)
-                        .shadow(color: DesignSystem.ZionMode.neonMagenta.opacity(0.2),
+                        .shadow(color: DesignSystem.ZionMode.neonMagenta.opacity(DesignSystem.Opacity.dim),
                                 radius: 1, y: 1)
                         .transition(.opacity)
                         .animation(DesignSystem.Motion.detail, value: isSelected)
@@ -321,9 +321,9 @@ extension ContentView {
 
     private var bisectPillBg: Color {
         if case .foundCulprit = model.bisectPhase {
-            return zionModeEnabled ? DesignSystem.ZionMode.neonOrange.opacity(0.12) : DesignSystem.Colors.destructiveBg
+            return zionModeEnabled ? DesignSystem.ZionMode.neonOrange.opacity(DesignSystem.Opacity.selectedSubtle) : DesignSystem.Colors.destructiveBg
         }
-        return zionModeEnabled ? DesignSystem.ZionMode.neonCyan.opacity(0.12) : DesignSystem.Colors.statusBlueBg
+        return zionModeEnabled ? DesignSystem.ZionMode.neonCyan.opacity(DesignSystem.Opacity.selectedSubtle) : DesignSystem.Colors.statusBlueBg
     }
 
     private var bisectPillFg: Color {
@@ -358,13 +358,13 @@ extension ContentView {
         case .disabled:
             return .clear
         case .starting:
-            return zionModeEnabled ? DesignSystem.ZionMode.neonCyan.opacity(0.12) : DesignSystem.Colors.statusBlueBg
+            return zionModeEnabled ? DesignSystem.ZionMode.neonCyan.opacity(DesignSystem.Opacity.selectedSubtle) : DesignSystem.Colors.statusBlueBg
         case .waitingForPairing:
-            return zionModeEnabled ? DesignSystem.ZionMode.neonOrange.opacity(0.12) : DesignSystem.Colors.statusOrangeBg
+            return zionModeEnabled ? DesignSystem.ZionMode.neonOrange.opacity(DesignSystem.Opacity.selectedSubtle) : DesignSystem.Colors.statusOrangeBg
         case .connected:
-            return zionModeEnabled ? DesignSystem.ZionMode.neonCyan.opacity(0.12) : DesignSystem.Colors.statusGreenBg
+            return zionModeEnabled ? DesignSystem.ZionMode.neonCyan.opacity(DesignSystem.Opacity.selectedSubtle) : DesignSystem.Colors.statusGreenBg
         case .error:
-            return zionModeEnabled ? DesignSystem.ZionMode.neonOrange.opacity(0.12) : DesignSystem.Colors.error.opacity(0.12)
+            return zionModeEnabled ? DesignSystem.ZionMode.neonOrange.opacity(DesignSystem.Opacity.selectedSubtle) : DesignSystem.Colors.error.opacity(DesignSystem.Opacity.selectedSubtle)
         }
     }
 

@@ -134,7 +134,7 @@ struct RepositoryStatsCard: View {
                 .font(DesignSystem.Typography.bodyLarge)
                 .foregroundStyle(color)
             Text(value)
-                .font(.system(size: 16, weight: .bold, design: .monospaced))
+                .font(DesignSystem.Typography.sheetTitle)
             Text(label)
                 .font(DesignSystem.Typography.meta)
                 .foregroundStyle(.secondary)

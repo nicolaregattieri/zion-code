@@ -56,7 +56,7 @@ struct PRInboxCard: View {
                             .foregroundStyle(.white)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Capsule().fill(DesignSystem.Colors.ai.opacity(0.7)))
+                            .background(Capsule().fill(DesignSystem.Colors.ai.opacity(DesignSystem.Opacity.visible)))
                     }
 
                     Button {
@@ -339,7 +339,7 @@ private struct PROpenRow: View {
 
                 Image(systemName: "chevron.right")
                     .font(DesignSystem.Typography.micro)
-                    .foregroundStyle(.secondary.opacity(0.5))
+                    .foregroundStyle(.secondary.opacity(DesignSystem.Opacity.muted))
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 6)

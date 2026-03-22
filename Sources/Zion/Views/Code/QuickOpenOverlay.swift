@@ -163,7 +163,7 @@ private struct QuickOpenRow: View {
         HStack(spacing: DesignSystem.Spacing.toolbarItemGap) {
             Image(systemName: "doc.text").foregroundStyle(.secondary).font(DesignSystem.Typography.body)
             VStack(alignment: .leading, spacing: 1) {
-                Text(file.name).font(.system(size: 13, weight: .medium))
+                Text(file.name).font(DesignSystem.Typography.cardBodyMedium)
                 Text(relativePath).font(DesignSystem.Typography.label).foregroundStyle(.secondary).lineLimit(1)
             }
             Spacer()

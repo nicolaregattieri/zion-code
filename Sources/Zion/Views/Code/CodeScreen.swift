@@ -517,7 +517,7 @@ struct CodeScreen: View {
 
     var emptyEditorView: some View {
         VStack(spacing: 16) {
-            Image(systemName: "pencil.and.outline").font(.system(size: 40)).foregroundStyle(.secondary)
+            Image(systemName: "pencil.and.outline").font(DesignSystem.Typography.onboardingFeatureIcon).foregroundStyle(.secondary)
             Text(L10n("Selecione um arquivo")).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -526,7 +526,7 @@ struct CodeScreen: View {
     var unsupportedFileView: some View {
         VStack(spacing: 10) {
             Image(systemName: "doc.badge.questionmark")
-                .font(.system(size: 24))
+                .font(DesignSystem.Typography.onboardingTitle)
                 .foregroundStyle(.secondary)
             Text(L10n("editor.file.unsupported"))
                 .font(DesignSystem.Typography.body)

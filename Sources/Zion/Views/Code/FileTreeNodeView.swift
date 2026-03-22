@@ -46,7 +46,7 @@ struct FileTreeNodeView: View {
                     }
 
                     Text(item.name)
-                        .font(.system(size: 12, weight: isSelected ? .bold : .regular, design: .monospaced))
+                        .font(isSelected ? DesignSystem.Typography.monoBodyBold : DesignSystem.Typography.monoBody)
                         .lineLimit(1)
                         .help(item.name)
                         .foregroundStyle(isSelected ? (isDark ? .white : DesignSystem.Colors.info) : (isModified ? DesignSystem.Colors.warning : .primary))
