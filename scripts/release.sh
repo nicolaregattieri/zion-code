@@ -259,6 +259,21 @@ $COMMIT_LOG
     echo ""
     echo "Release published: https://github.com/$GITHUB_REPO/releases/tag/$TAG"
     echo "Users running Zion will be notified automatically via Sparkle."
+
+    # --- Trigger Vercel redeploy so website picks up new version ---
+    VERCEL_DEPLOY_HOOK="${VERCEL_DEPLOY_HOOK:-}"
+    if [ -n "$VERCEL_DEPLOY_HOOK" ]; then
+        echo ""
+        echo "=== Triggering Vercel production redeploy ==="
+        if curl -sf -X POST "$VERCEL_DEPLOY_HOOK" > /dev/null; then
+            echo "  Vercel deploy triggered. Site will update in ~30s."
+        else
+            echo "  WARNING: Vercel deploy hook failed. Redeploy manually from the Vercel dashboard."
+        fi
+    else
+        echo ""
+        echo "  Tip: Set VERCEL_DEPLOY_HOOK in .zion-release.local to auto-redeploy the website."
+    fi
 else
     echo ""
     echo "To upload to GitHub Releases, run:"
