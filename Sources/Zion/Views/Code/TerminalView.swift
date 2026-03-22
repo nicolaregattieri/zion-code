@@ -884,6 +884,8 @@ struct TerminalTabView: NSViewRepresentable {
                             model.editorJumpLineTarget = line
                             model.editorJumpToken += 1
                         }
+                    } else if fileURL.pathExtension == "app" || fileURL.hasDirectoryPath {
+                        NSWorkspace.shared.activateFileViewerSelecting([fileURL])
                     } else {
                         NSWorkspace.shared.open(fileURL)
                     }
