@@ -292,4 +292,52 @@ final class RepositoryViewModelTerminalTests: XCTestCase {
         XCTAssertNotEqual(vm.focusedSessionID, originalID,
                           "Focus should move to the newly created pane")
     }
+
+    // MARK: - closeTerminalSession in splits
+
+    func testCloseSessionInNestedSplitPreservesSiblings() {
+        let vm = RepositoryViewModel()
+        let dir = URL(fileURLWithPath: "/tmp/repo")
+
+        // Create 3 sessions: A, then split to get B, then split B to get C
+        vm.createTerminalSession(workingDirectory: dir, label: "A")
+        let sessionA = vm.terminalSessions.first!
+
+        vm.splitFocusedTerminal(direction: .vertical)
+        let sessionB = vm.terminalSessions.first(where: { $0.id == vm.focusedSessionID })!
+
+        vm.splitFocusedTerminal(direction: .vertical)
+        let sessionC = vm.terminalSessions.first(where: { $0.id == vm.focusedSessionID })!
+
+        XCTAssertEqual(vm.terminalSessions.count, 3)
+
+        // Close the middle session (B)
+        vm.closeTerminalSession(sessionB)
+
+        let remaining = vm.terminalSessions
+        XCTAssertEqual(remaining.count, 2, "Should have 2 sessions after closing middle")
+        XCTAssertTrue(remaining.contains(where: { $0.id == sessionA.id }), "Session A should survive")
+        XCTAssertTrue(remaining.contains(where: { $0.id == sessionC.id }), "Session C should survive")
+    }
+
+    func testCloseSessionUpdatesFocusToSurvivor() {
+        let vm = RepositoryViewModel()
+        let dir = URL(fileURLWithPath: "/tmp/repo")
+
+        vm.createTerminalSession(workingDirectory: dir, label: "A")
+        vm.splitFocusedTerminal(direction: .vertical)
+
+        let sessions = vm.terminalSessions
+        XCTAssertEqual(sessions.count, 2)
+
+        // Focus is on the second (new) session; close it
+        let focused = sessions.first(where: { $0.id == vm.focusedSessionID })!
+        let survivor = sessions.first(where: { $0.id != vm.focusedSessionID })!
+
+        vm.closeTerminalSession(focused)
+
+        XCTAssertEqual(vm.terminalSessions.count, 1)
+        XCTAssertEqual(vm.focusedSessionID, survivor.id,
+                       "Focus should move to the surviving session")
+    }
 }

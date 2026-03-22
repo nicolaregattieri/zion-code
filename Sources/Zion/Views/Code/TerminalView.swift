@@ -192,7 +192,6 @@ struct TerminalTabView: NSViewRepresentable {
         private var mouseUpMonitor: Any?
         private var scrollWheelMonitor: Any?
         private var pendingTerminalOutput = Data()
-        private var pendingOutputFlushTask: Task<Void, Never>?
         private var pointerDownInTerminal = false
         private var dragSelectionFreezeActive = false
         private var persistentSelectionFreezeActive = false
@@ -200,7 +199,7 @@ struct TerminalTabView: NSViewRepresentable {
         private var manualScrollFreezeIntentActive = false
         private var preciseScrollLineAccumulator: CGFloat = 0
         private var resignActiveObserver: Any?
-        private static let outputFlushIntervalNanos: UInt64 = 16_000_000
+        private weak var outputCoordinator: TerminalOutputCoordinator?
         private static let maxBufferedOutputDuringDragSelection = 1_048_576
         private static let forcedFlushChunkBytes = 65_536
 
@@ -349,6 +348,8 @@ struct TerminalTabView: NSViewRepresentable {
                 // Force theme re-application on next updateNSView cycle
                 self.lastAppliedTheme = nil
 
+                // Register with centralized output coordinator
+                self.registerWithOutputCoordinator()
             }
         }
 
@@ -385,6 +386,9 @@ struct TerminalTabView: NSViewRepresentable {
 
             // Force theme re-application
             self.lastAppliedTheme = nil
+
+            // Re-register with centralized output coordinator
+            registerWithOutputCoordinator()
         }
 
         func restartProcess(view: SwiftTerm.TerminalView) {
@@ -404,8 +408,7 @@ struct TerminalTabView: NSViewRepresentable {
             removeShiftEnterMonitor()
             removeMouseInteractionMonitors()
             removeFreezeResetObserver()
-            pendingOutputFlushTask?.cancel()
-            pendingOutputFlushTask = nil
+            unregisterFromOutputCoordinator()
             pendingTerminalOutput.removeAll(keepingCapacity: false)
             pointerDownInTerminal = false
             dragSelectionFreezeActive = false
@@ -719,19 +722,53 @@ struct TerminalTabView: NSViewRepresentable {
                 return
             }
 
-            schedulePendingOutputFlushIfNeeded()
+            outputCoordinator?.notifyDataAvailable()
         }
 
-        private func schedulePendingOutputFlushIfNeeded() {
-            guard pendingOutputFlushTask == nil else { return }
-            pendingOutputFlushTask = Task { @MainActor [weak self] in
-                try? await Task.sleep(nanoseconds: Self.outputFlushIntervalNanos)
-                guard let self else { return }
-                self.pendingOutputFlushTask = nil
-                self.flushPendingTerminalOutput()
+        // MARK: - Output Coordinator Integration
+
+        fileprivate func registerWithOutputCoordinator() {
+            guard let coordinator = parent.model?.terminalOutputCoordinator else { return }
+            outputCoordinator = coordinator
+            let sessionID = parent.session.id
+            coordinator.register(sessionID: sessionID, coordinator: self) { [weak self] budget in
+                self?.flushWithBudget(budget) ?? false
             }
         }
 
+        fileprivate func unregisterFromOutputCoordinator() {
+            outputCoordinator?.unregister(sessionID: parent.session.id)
+            outputCoordinator = nil
+        }
+
+        /// Called by the centralized output coordinator with a byte budget.
+        /// Returns true if there is still pending data after this flush.
+        private func flushWithBudget(_ maxBytes: Int) -> Bool {
+            guard !pendingTerminalOutput.isEmpty else { return false }
+            guard !isTerminalOutputFrozen else { return true }
+
+            if terminalView == nil, let rebound = parent.session._cachedView as? SwiftTerm.TerminalView {
+                terminalView = rebound
+            }
+            guard let view = terminalView else { return false }
+
+            let payload: Data
+            if pendingTerminalOutput.count > maxBytes {
+                payload = pendingTerminalOutput.prefix(maxBytes)
+                pendingTerminalOutput.removeFirst(maxBytes)
+            } else {
+                payload = pendingTerminalOutput
+                pendingTerminalOutput.removeAll(keepingCapacity: true)
+            }
+            let bytes = Array(payload)
+            view.feed(byteArray: bytes[...])
+            parent.model?.notifyTerminalOutput(sessionID: parent.session.id, data: payload)
+
+            return !pendingTerminalOutput.isEmpty
+        }
+
+        /// Force-flush for freeze release, process termination, etc.
+        /// Bypasses the coordinator -- flushes immediately on the main thread.
         private func flushPendingTerminalOutput(force: Bool = false) {
             guard !pendingTerminalOutput.isEmpty else { return }
             guard force || !isTerminalOutputFrozen else { return }
@@ -754,7 +791,7 @@ struct TerminalTabView: NSViewRepresentable {
             parent.model?.notifyTerminalOutput(sessionID: parent.session.id, data: payload)
 
             if !pendingTerminalOutput.isEmpty, !isTerminalOutputFrozen {
-                schedulePendingOutputFlushIfNeeded()
+                outputCoordinator?.notifyDataAvailable()
             }
         }
 
