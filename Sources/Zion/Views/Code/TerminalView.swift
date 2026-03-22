@@ -485,6 +485,9 @@ struct TerminalTabView: NSViewRepresentable {
                         hasManualScrollFreeze: self.manualScrollFreezeActive,
                         hasCommandModifier: hasCommand
                     ) {
+                        // Clear SwiftTerm's userScrolling BEFORE flushing so Terminal.scroll()
+                        // auto-snaps yDisp to yBase instead of drifting toward 0.
+                        self.terminalView?.getTerminal().userScrolling = false
                         self.releaseManualScrollFreezeIfNeeded(flushImmediately: true)
                     }
                     return event
