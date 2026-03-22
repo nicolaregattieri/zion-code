@@ -100,6 +100,12 @@ struct CodeScreen: View {
                 .animation(DesignSystem.Motion.panel, value: isZenMode)
             }
 
+            if model.isRepositorySwitchRefreshingInBackground {
+                ZionLoadingOverlay()
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius))
+                    .allowsHitTesting(false)
+            }
+
             if isQuickOpenVisible {
                 QuickOpenOverlay(
                     model: model,

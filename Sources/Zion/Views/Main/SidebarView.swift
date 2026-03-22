@@ -71,7 +71,7 @@ struct SidebarView: View {
                                         changedCount: model.recentChangedCount(for: url),
                                         worktreeCount: model.recentWorktreeCounts[url] ?? 0
                                     ) {
-                                        withAnimation {
+                                        withAnimation(DesignSystem.Motion.detail) {
                                             model.nextSectionAfterRepositoryOpen = selectedSection
                                             model.openRepository(url)
                                         }
