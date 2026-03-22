@@ -431,6 +431,13 @@ struct TerminalTabView: NSViewRepresentable {
 
         func prepareForFileDrop() {
             ensureOwnerBinding(reason: "fileDrop")
+            // Clear any stale drag-selection freeze left over from the clipboard drag gesture.
+            // Drag-and-drop consumes leftMouseUp, so the normal freeze-release path may not fire.
+            if dragSelectionFreezeActive || pointerDownInTerminal {
+                dragSelectionFreezeActive = false
+                pointerDownInTerminal = false
+                flushPendingTerminalOutput(force: true)
+            }
             parent.model?.activateTerminalSession(parent.session)
             if let view = terminalView {
                 view.window?.makeFirstResponder(view)
@@ -482,7 +489,10 @@ struct TerminalTabView: NSViewRepresentable {
                     ) {
                         self.releasePersistentSelectionFreezeIfNeeded(flushImmediately: true)
                     }
-                    guard self.isTerminalFocused else { return event }
+                    guard self.isTerminalFocused,
+                          let view = self.terminalView,
+                          view.isMousePoint(view.convert(event.locationInWindow, from: nil), in: view.bounds)
+                    else { return event }
                     self.pointerDownInTerminal = true
                     return event
                 }
