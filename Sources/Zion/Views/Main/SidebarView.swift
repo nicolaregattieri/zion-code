@@ -62,29 +62,34 @@ struct SidebarView: View {
                     }
 
                     if isRecentsExpanded {
-                        ScrollView(showsIndicators: true) {
-                            VStack(spacing: 4) {
-                                ForEach(model.recentRepositories, id: \.self) { url in
-                                    RecentProjectRow(
-                                        url: url,
-                                        isCurrent: model.recentRepositoryRoot(for: model.pendingRepositoryURL ?? model.repositoryURL) == url,
-                                        changedCount: model.recentChangedCount(for: url),
-                                        worktreeCount: model.recentWorktreeCounts[url] ?? 0
-                                    ) {
-                                        guard model.recentRepositoryRoot(for: model.repositoryURL) != url else { return }
-                                        let hasSnapshot = model.hasRepositorySnapshot(for: url)
-                                        withAnimation(.spring(duration: 0.3, bounce: 0.1)) {
-                                            model.saveRecentRepository(url)
-                                            model.pendingRepositoryURL = url
-                                        }
-                                        model.nextSectionAfterRepositoryOpen = selectedSection
-                                        Task { @MainActor in
-                                            // Let the spring animation (0.3s) complete before
-                                            // openRepository runs heavy synchronous work on MainActor.
-                                            // Snapshot repos use a shorter delay since work is lightweight.
-                                            let delay: Duration = hasSnapshot ? .milliseconds(50) : .milliseconds(350)
-                                            try? await Task.sleep(for: delay)
-                                            model.openRepository(url, silent: true)
+                        ScrollViewReader { proxy in
+                            ScrollView(showsIndicators: true) {
+                                VStack(spacing: 4) {
+                                    Color.clear.frame(height: 0).id("recents-top")
+                                    ForEach(model.recentRepositories, id: \.self) { url in
+                                        RecentProjectRow(
+                                            url: url,
+                                            isCurrent: model.recentRepositoryRoot(for: model.pendingRepositoryURL ?? model.repositoryURL) == url,
+                                            changedCount: model.recentChangedCount(for: url),
+                                            worktreeCount: model.recentWorktreeCounts[url] ?? 0
+                                        ) {
+                                            guard model.recentRepositoryRoot(for: model.repositoryURL) != url else { return }
+                                            withAnimation(.spring(duration: 0.3, bounce: 0.1)) {
+                                                model.saveRecentRepository(url)
+                                                model.pendingRepositoryURL = url
+                                            }
+                                            model.nextSectionAfterRepositoryOpen = selectedSection
+                                            Task { @MainActor in
+                                                try? await Task.sleep(for: .milliseconds(50))
+                                                withAnimation(.spring(duration: 0.3, bounce: 0.1)) {
+                                                    proxy.scrollTo("recents-top", anchor: .top)
+                                                }
+                                                // Let the spring animation (0.3s) complete before
+                                                // openRepository runs heavy synchronous work on MainActor
+                                                // (terminal stash/restore, file watchers, snapshot capture).
+                                                try? await Task.sleep(for: .milliseconds(300))
+                                                model.openRepository(url, silent: true)
+                                            }
                                         }
                                     }
                                 }
