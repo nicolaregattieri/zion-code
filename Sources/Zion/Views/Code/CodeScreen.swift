@@ -23,6 +23,7 @@ struct CodeScreen: View {
     @Bindable var model: RepositoryViewModel
     var onOpenFolder: (() -> Void)? = nil
     var isZenMode: Bool = false
+    var zenTerminalFullscreen: Bool = false
     var isVisible: Bool = true
     @Environment(\.zionModeEnabled) private var zionModeEnabled
     @EnvironmentObject var shortcutRegistry: ShortcutRegistry
@@ -142,14 +143,20 @@ struct CodeScreen: View {
                 .frame(width: 0, height: 0).opacity(0)
 
             Button("") {
-                guard !isZenMode else { return }
+                if isZenMode {
+                    NotificationCenter.default.post(name: .toggleZenMode, object: nil)
+                    return
+                }
                 withAnimation(DesignSystem.Motion.panel) { isFileBrowserVisible.toggle() }
             }
                 .applyShortcutBinding(shortcutRegistry.binding(for: .toggleSidebar))
                 .frame(width: 0, height: 0).opacity(0)
 
             Button("") {
-                guard !isZenMode else { return }
+                if isZenMode {
+                    NotificationCenter.default.post(name: .toggleZenMode, object: nil)
+                    return
+                }
                 withAnimation(DesignSystem.Motion.detail) {
                     layout = layout == .editorOnly ? .split : .editorOnly
                 }
@@ -158,7 +165,10 @@ struct CodeScreen: View {
             .frame(width: 0, height: 0).opacity(0)
 
             Button("") {
-                guard !isZenMode else { return }
+                if isZenMode {
+                    NotificationCenter.default.post(name: .toggleZenMode, object: nil)
+                    return
+                }
                 withAnimation(DesignSystem.Motion.detail) {
                     layout = layout == .terminalOnly ? .split : .terminalOnly
                 }
@@ -197,7 +207,10 @@ struct CodeScreen: View {
                 .frame(width: 0, height: 0).opacity(0)
 
             Button("") {
-                guard !isZenMode else { return }
+                if isZenMode {
+                    NotificationCenter.default.post(name: .toggleZenMode, object: nil)
+                    return
+                }
                 if sidebarMode == .findInFiles && isFileBrowserVisible {
                     closeFindInFilesPanel()
                 } else {
@@ -254,9 +267,9 @@ struct CodeScreen: View {
             focusFileBrowserResponder()
         }
         .onAppear {
-            applyZenModeState(isZenMode)
+            applyZenModeState(zenTerminalFullscreen)
         }
-        .onChange(of: isZenMode) { _, enabled in
+        .onChange(of: zenTerminalFullscreen) { _, enabled in
             withAnimation(DesignSystem.Motion.panel) {
                 applyZenModeState(enabled)
             }
@@ -419,7 +432,8 @@ struct CodeScreen: View {
             onFindPreviousShortcut: {
                 guard isSearchVisible, !searchQuery.isEmpty else { return }
                 navigateToPreviousMatch()
-            }
+            },
+            isEditorVisible: !zenTerminalFullscreen && layout != .terminalOnly
         )
         .help(L10n("help.code.navigation"))
     }
