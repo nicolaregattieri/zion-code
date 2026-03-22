@@ -11,13 +11,14 @@ struct HunkDiffView: View {
     var body: some View {
         Group {
             if isScrollEnabled {
-                ScrollView([.horizontal, .vertical]) {
+                ScrollView {
                     content
                 }
             } else {
                 content
             }
         }
+        .clipped()
         .background(DesignSystem.Colors.glassInset)
     }
 
@@ -122,7 +123,7 @@ struct HunkDiffView: View {
             prefix = " "
         }
 
-        return HStack(spacing: 0) {
+        return HStack(alignment: .top, spacing: 0) {
             // Line selection checkbox for changed lines
             if line.type != .context {
                 Button {
@@ -166,7 +167,6 @@ struct HunkDiffView: View {
             Text(line.content)
                 .font(DesignSystem.Typography.monoBody)
                 .foregroundStyle(textColor)
-                .fixedSize(horizontal: true, vertical: false)
 
             Spacer()
         }
