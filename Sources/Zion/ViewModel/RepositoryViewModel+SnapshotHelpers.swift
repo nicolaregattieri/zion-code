@@ -156,6 +156,7 @@ extension RepositoryViewModel {
         }
 
         repositoryURL = url
+        pendingRepositoryURL = nil
         repoMemorySnapshot = nil
         repoMemoryLastRefreshedAt = nil
         repoMemoryStatusMessage = L10n("settings.ai.repoMemory.status.loading")
