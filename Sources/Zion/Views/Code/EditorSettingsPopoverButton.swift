@@ -78,6 +78,19 @@ struct EditorSettingsPopoverButton: View {
                     Toggle(L10n("settings.editor.showIndentGuides"), isOn: $model.editorShowIndentGuides)
                         .font(DesignSystem.Typography.bodySmall)
 
+                    HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+                        Text(L10n("settings.editor.renderWhitespace"))
+                            .font(DesignSystem.Typography.label)
+                            .foregroundStyle(.secondary)
+                        Picker("", selection: $model.editorRenderWhitespace) {
+                            Text(L10n("settings.editor.renderWhitespace.none")).tag("none")
+                            Text(L10n("settings.editor.renderWhitespace.trailing")).tag("trailing")
+                            Text(L10n("settings.editor.renderWhitespace.all")).tag("all")
+                        }
+                        .pickerStyle(.segmented)
+                        .frame(width: 150)
+                    }
+
                     Toggle(L10n("settings.editor.showRuler"), isOn: $model.editorShowRuler)
                         .font(DesignSystem.Typography.bodySmall)
 
@@ -95,6 +108,9 @@ struct EditorSettingsPopoverButton: View {
                             .frame(width: 120)
                         }
                     }
+
+                    Toggle(L10n("settings.editor.scrollPastEnd"), isOn: $model.editorScrollPastEnd)
+                        .font(DesignSystem.Typography.bodySmall)
                 }
 
                 Divider()
@@ -109,6 +125,9 @@ struct EditorSettingsPopoverButton: View {
                         .font(DesignSystem.Typography.bodySmall)
 
                     Toggle(L10n("settings.editor.jsonSortKeys"), isOn: $model.editorJsonSortKeys)
+                        .font(DesignSystem.Typography.bodySmall)
+
+                    Toggle(L10n("settings.editor.trimTrailingWhitespace"), isOn: $model.editorTrimTrailingWhitespace)
                         .font(DesignSystem.Typography.bodySmall)
                 }
 

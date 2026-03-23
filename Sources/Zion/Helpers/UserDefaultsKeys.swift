@@ -27,6 +27,10 @@ enum UserDefaultsKeys {
         static let formatOnSave = "editor.formatOnSave"
         static let jsonSortKeys = "editor.jsonSortKeys"
         static let showBreadcrumb = "editor.showBreadcrumb"
+        static let trimTrailingWhitespace = "editor.trimTrailingWhitespace"
+        static let renderWhitespace = "editor.renderWhitespace"
+        static let topPadding = "editor.topPadding"
+        static let scrollPastEnd = "editor.scrollPastEnd"
     }
 
     // MARK: - Terminal

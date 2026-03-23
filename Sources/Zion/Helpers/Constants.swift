@@ -40,6 +40,10 @@ enum Constants {
         static let zenModeRestoreDelay: TimeInterval = 0.5
         /// Debounce before restarting background tasks after zen exit (15s)
         static let zenModeResumeDebounce: UInt64 = 15_000_000_000
+        /// Debounce before computing selection occurrence highlights (100ms)
+        static let selectionOccurrenceDebounce: TimeInterval = 0.1
+        /// Debounce before filtering file browser tree (150ms)
+        static let fileBrowserFilterDebounce: TimeInterval = 0.15
     }
 
     enum Limits {
@@ -67,6 +71,10 @@ enum Constants {
         static let maxFileContentPreviewLength = 500
         /// Maximum characters to show in clipboard preview text
         static let clipboardPreviewTruncationLength = 60
+        /// Maximum document size for selection occurrence highlight scanning
+        static let maxOccurrenceHighlightDocSize = 500_000
+        /// Maximum occurrence highlight matches to render
+        static let maxOccurrenceHighlightMatches = 500
         /// Maximum cached commit detail results (keyed by commit hash)
         static let commitDetailsCacheSize = 64
         /// Maximum cached commit file diff results (keyed by commitID:filePath)

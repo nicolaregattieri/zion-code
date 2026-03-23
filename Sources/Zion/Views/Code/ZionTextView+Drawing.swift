@@ -22,19 +22,17 @@ extension ZionTextView {
         path.stroke()
     }
 
-    func drawBracketHighlight(range: NSRange, in rect: NSRect) {
+    func drawRangeHighlight(range: NSRange, color: NSColor, in rect: NSRect) {
         guard let layoutManager = layoutManager, let textContainer = textContainer else { return }
         let glyphRange = layoutManager.glyphRange(forCharacterRange: range, actualCharacterRange: nil)
-        var bracketRect = layoutManager.boundingRect(forGlyphRange: glyphRange, in: textContainer)
-        bracketRect.origin.y += textContainerOrigin.y
-        bracketRect.origin.x += textContainerOrigin.x
+        var highlightRect = layoutManager.boundingRect(forGlyphRange: glyphRange, in: textContainer)
+        highlightRect.origin.y += textContainerOrigin.y
+        highlightRect.origin.x += textContainerOrigin.x
 
-        guard bracketRect.intersects(rect) else { return }
+        guard highlightRect.intersects(rect) else { return }
 
-        let color = NSColor.systemBlue.withAlphaComponent(0.2)
         color.setFill()
-        let highlightRect = bracketRect.insetBy(dx: -1, dy: -1)
-        let path = NSBezierPath(roundedRect: highlightRect, xRadius: 2, yRadius: 2)
+        let path = NSBezierPath(roundedRect: highlightRect.insetBy(dx: -1, dy: -1), xRadius: 2, yRadius: 2)
         path.fill()
     }
 
@@ -88,11 +86,107 @@ extension ZionTextView {
     }
 
     func drawBracketHighlightPair(in rect: NSRect) {
+        let color = NSColor.systemBlue.withAlphaComponent(0.2)
         if let range = matchingBracketRange {
-            drawBracketHighlight(range: range, in: rect)
+            drawRangeHighlight(range: range, color: color, in: rect)
         }
         if let range = secondBracketRange {
-            drawBracketHighlight(range: range, in: rect)
+            drawRangeHighlight(range: range, color: color, in: rect)
+        }
+    }
+
+    // MARK: - Occurrence Highlights
+
+    func drawOccurrenceHighlights(in rect: NSRect) {
+        let color = isLightTheme
+            ? NSColor.systemYellow.withAlphaComponent(0.20)
+            : NSColor.systemYellow.withAlphaComponent(0.15)
+        for range in occurrenceHighlightRanges {
+            drawRangeHighlight(range: range, color: color, in: rect)
+        }
+    }
+
+    // MARK: - Render Whitespace
+
+    func drawWhitespaceGlyphs(in rect: NSRect) {
+        guard let layoutManager = layoutManager, let textContainer = textContainer, let font = self.font else { return }
+        guard !string.isEmpty else { return }
+
+        let color = isLightTheme
+            ? NSColor.black.withAlphaComponent(0.18)
+            : NSColor.white.withAlphaComponent(0.18)
+
+        let dotFont = NSFont.monospacedSystemFont(ofSize: font.pointSize * 0.8, weight: .regular)
+        let dotAttrs: [NSAttributedString.Key: Any] = [.font: dotFont, .foregroundColor: color]
+
+        let middleDot: NSString = "\u{00B7}"
+        let tabArrow: NSString = "\u{2192}"
+
+        let visibleGlyphRange = layoutManager.glyphRange(forBoundingRect: visibleRect, in: textContainer)
+        let visibleCharRange = layoutManager.characterRange(forGlyphRange: visibleGlyphRange, actualGlyphRange: nil)
+
+        let nsString = string as NSString
+        let mode = editorRenderWhitespace
+
+        var lineStart = visibleCharRange.location
+        while lineStart < NSMaxRange(visibleCharRange) && lineStart < nsString.length {
+            let lineRange = nsString.lineRange(for: NSRange(location: lineStart, length: 0))
+            let lineText = nsString.substring(with: lineRange)
+
+            // Find last non-whitespace offset for trailing mode
+            var lastNonWSOffset = -1
+            for (i, ch) in lineText.enumerated() {
+                if ch != " " && ch != "\t" && ch != "\n" && ch != "\r" {
+                    lastNonWSOffset = i
+                }
+            }
+
+            for (charOffset, ch) in lineText.enumerated() {
+                guard ch == " " || ch == "\t" else { continue }
+
+                let shouldRender: Bool
+                switch mode {
+                case "all":
+                    shouldRender = true
+                case "trailing":
+                    shouldRender = charOffset > lastNonWSOffset
+                case "boundary":
+                    let prevIsWS = charOffset == 0 || {
+                        let prev = lineText[lineText.index(lineText.startIndex, offsetBy: charOffset - 1)]
+                        return prev == " " || prev == "\t"
+                    }()
+                    let nextIsWS: Bool = {
+                        let nextIdx = charOffset + 1
+                        guard nextIdx < lineText.count else { return true }
+                        let next = lineText[lineText.index(lineText.startIndex, offsetBy: nextIdx)]
+                        return next == " " || next == "\t" || next == "\n"
+                    }()
+                    shouldRender = prevIsWS || nextIsWS
+                default:
+                    shouldRender = false
+                }
+
+                guard shouldRender else { continue }
+
+                let charIndex = lineRange.location + charOffset
+                let charRange = NSRange(location: charIndex, length: 1)
+                let glyphRange = layoutManager.glyphRange(forCharacterRange: charRange, actualCharacterRange: nil)
+                var glyphRect = layoutManager.boundingRect(forGlyphRange: glyphRange, in: textContainer)
+                glyphRect.origin.y += textContainerOrigin.y
+                glyphRect.origin.x += textContainerOrigin.x
+
+                guard glyphRect.intersects(rect) else { continue }
+
+                let glyph: NSString = ch == "\t" ? tabArrow : middleDot
+                let glyphSize = glyph.size(withAttributes: dotAttrs)
+                let drawPoint = NSPoint(
+                    x: glyphRect.origin.x + (glyphRect.width - glyphSize.width) / 2,
+                    y: glyphRect.origin.y + (glyphRect.height - glyphSize.height) / 2
+                )
+                glyph.draw(at: drawPoint, withAttributes: dotAttrs)
+            }
+
+            lineStart = NSMaxRange(lineRange)
         }
     }
 }

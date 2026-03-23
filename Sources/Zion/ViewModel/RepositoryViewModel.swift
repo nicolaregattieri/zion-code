@@ -504,6 +504,18 @@ final class RepositoryViewModel {
     var editorJsonSortKeys: Bool = false {
         didSet { UserDefaults.standard.set(editorJsonSortKeys, forKey: UserDefaultsKeys.Editor.jsonSortKeys) }
     }
+    var editorTrimTrailingWhitespace: Bool = false {
+        didSet { UserDefaults.standard.set(editorTrimTrailingWhitespace, forKey: UserDefaultsKeys.Editor.trimTrailingWhitespace) }
+    }
+    var editorRenderWhitespace: String = "none" {
+        didSet { UserDefaults.standard.set(editorRenderWhitespace, forKey: UserDefaultsKeys.Editor.renderWhitespace) }
+    }
+    var editorTopPadding: Double = 6.0 {
+        didSet { UserDefaults.standard.set(editorTopPadding, forKey: UserDefaultsKeys.Editor.topPadding) }
+    }
+    var editorScrollPastEnd: Bool = true {
+        didSet { UserDefaults.standard.set(editorScrollPastEnd, forKey: UserDefaultsKeys.Editor.scrollPastEnd) }
+    }
 
     // Terminal font settings
     var terminalFontSize: Double = 13.0 {

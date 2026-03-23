@@ -15,6 +15,22 @@ extension CodeScreen {
 
                 if sidebarMode == .fileTree {
                     HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
+                        Button {
+                            withAnimation(DesignSystem.Motion.detail) {
+                                isFileBrowserFilterVisible.toggle()
+                                if !isFileBrowserFilterVisible { fileBrowserFilterText = "" }
+                            }
+                        } label: {
+                            Image(systemName: "line.3.horizontal.decrease")
+                                .frame(width: DesignSystem.IconSize.editorToolbarFrame.width,
+                                       height: DesignSystem.IconSize.editorToolbarFrame.height)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain).cursorArrow()
+                        .foregroundStyle(isFileBrowserFilterVisible ? Color.accentColor : .secondary)
+                        .help(L10n("fileBrowser.filter"))
+                        .accessibilityLabel(L10n("fileBrowser.filter"))
+
                         Button { model.showDotfiles.toggle() } label: {
                             Image(systemName: model.showDotfiles ? "eye" : "eye.slash")
                                 .frame(width: DesignSystem.IconSize.editorToolbarFrame.width,
@@ -41,6 +57,25 @@ extension CodeScreen {
             .padding(.vertical, 6)
 
             Divider()
+
+            if isFileBrowserFilterVisible && sidebarMode == .fileTree {
+                HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
+                    Image(systemName: "magnifyingglass")
+                        .font(DesignSystem.Typography.meta)
+                        .foregroundStyle(.tertiary)
+                    TextField(L10n("fileBrowser.filter.placeholder"), text: $fileBrowserFilterText)
+                        .textFieldStyle(.plain)
+                        .font(DesignSystem.Typography.body)
+                        .onExitCommand {
+                            fileBrowserFilterText = ""
+                            isFileBrowserFilterVisible = false
+                        }
+                }
+                .padding(.horizontal, DesignSystem.Spacing.cardPadding)
+                .padding(.vertical, 4)
+                .background(DesignSystem.Colors.glassSubtle)
+                Divider()
+            }
 
             if sidebarMode == .findInFiles {
                 FindInFilesView(
@@ -70,21 +105,24 @@ extension CodeScreen {
 
                     ScrollView {
                         VStack(alignment: .leading, spacing: 0) {
-                            if model.repositoryFiles.isEmpty {
+                            let displayFiles = filteredRepositoryFiles
+                            if displayFiles.isEmpty {
                                 VStack(spacing: 16) {
                                     Text(L10n("Nenhum arquivo encontrado")).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
-                                    Button {
-                                        onOpenFolder?()
-                                    } label: {
-                                        Label(L10n("Selecionar Pasta"), systemImage: "folder.badge.plus")
+                                    if !isFileBrowserFilterVisible {
+                                        Button {
+                                            onOpenFolder?()
+                                        } label: {
+                                            Label(L10n("Selecionar Pasta"), systemImage: "folder.badge.plus")
+                                        }
+                                        .buttonStyle(.bordered)
+                                        .controlSize(.small)
                                     }
-                                    .buttonStyle(.bordered)
-                                    .controlSize(.small)
                                 }
                                 .padding(DesignSystem.Spacing.sectionGap)
                                 .frame(maxWidth: .infinity)
                             } else {
-                                ForEach(model.repositoryFiles) { item in
+                                ForEach(displayFiles) { item in
                                     FileTreeNodeView(
                                         model: model,
                                         item: item,
@@ -135,7 +173,11 @@ extension CodeScreen {
                 model.findInFilesScopeRequest = nil
             }
         }
+        .onChange(of: fileBrowserFilterText) { _, _ in
+            recomputeFileBrowserFilter()
+        }
         .onChange(of: model.repositoryURL) { _, _ in
+            cachedFilteredFiles = nil
             sidebarMode = .fileTree
             findInFilesQuery = ""
             findInFilesInclude = ""
@@ -178,6 +220,26 @@ extension CodeScreen {
         }
         .buttonStyle(.plain)
         .help(tooltip)
+    }
+
+    var filteredRepositoryFiles: [FileItem] {
+        if fileBrowserFilterText.isEmpty { return model.repositoryFiles }
+        return cachedFilteredFiles ?? model.repositoryFiles
+    }
+
+    func recomputeFileBrowserFilter() {
+        filterDebounceTask?.cancel()
+        guard !fileBrowserFilterText.isEmpty else {
+            cachedFilteredFiles = nil
+            return
+        }
+        let query = fileBrowserFilterText.lowercased()
+        let files = model.repositoryFiles
+        let task = DispatchWorkItem { [self] in
+            cachedFilteredFiles = files.compactMap { EditorHelpers.filterFileTree($0, query: query) }
+        }
+        filterDebounceTask = task
+        DispatchQueue.main.asyncAfter(deadline: .now() + Constants.Timing.fileBrowserFilterDebounce, execute: task)
     }
 
     func closeFindInFilesPanel() {

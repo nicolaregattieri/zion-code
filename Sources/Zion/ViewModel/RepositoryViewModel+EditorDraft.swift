@@ -118,20 +118,29 @@ extension RepositoryViewModel {
     }
 
     func formatEditorContentForSave(_ content: String, file: FileItem) -> String {
-        guard editorFormatOnSave else { return content }
-        let ext = file.url.pathExtension
-        guard CodeFormatter.canFormat(fileExtension: ext) else { return content }
+        var result = content
 
-        let opts = FormatOptions(
-            tabSize: effectiveTabSize,
-            useTabs: editorUseTabs,
-            jsonSortKeys: editorJsonSortKeys
-        )
-
-        if case let .success(formatted) = CodeFormatter.format(content, fileExtension: ext, options: opts) {
-            return formatted
+        // Format on save
+        if editorFormatOnSave {
+            let ext = file.url.pathExtension
+            if CodeFormatter.canFormat(fileExtension: ext) {
+                let opts = FormatOptions(
+                    tabSize: effectiveTabSize,
+                    useTabs: editorUseTabs,
+                    jsonSortKeys: editorJsonSortKeys
+                )
+                if case let .success(formatted) = CodeFormatter.format(result, fileExtension: ext, options: opts) {
+                    result = formatted
+                }
+            }
         }
-        return content
+
+        // Trim trailing whitespace
+        if editorTrimTrailingWhitespace {
+            result = EditorHelpers.trimTrailingWhitespace(result)
+        }
+
+        return result
     }
 
     func applySavedContent(_ content: String, to file: FileItem) {

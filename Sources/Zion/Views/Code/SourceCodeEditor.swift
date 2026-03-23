@@ -20,6 +20,12 @@ struct SourceCodeEditor: NSViewRepresentable {
     var rulerColumn: Int = 80
     var bracketPairHighlight: Bool = true
     var showIndentGuides: Bool = false
+    var renderWhitespace: String = "none"
+    var topPadding: Double = 6.0
+    var scrollPastEnd: Bool = true
+    var searchMatchCase: Bool = false
+    var searchRegex: Bool = false
+    var searchWholeWord: Bool = false
     var searchQuery: String = ""
     var currentMatchIndex: Int = 0
     var searchScrollRequestID: Int = 0
@@ -49,7 +55,7 @@ struct SourceCodeEditor: NSViewRepresentable {
         textView.isRichText = false
         textView.drawsBackground = true
         textView.usesAdaptiveColorMappingForDarkAppearance = false
-        textView.textContainerInset = NSSize(width: 6, height: 6)
+        textView.textContainerInset = NSSize(width: 6, height: CGFloat(topPadding))
         textView.autoresizingMask = [.width]
         textView.isVerticallyResizable = true
         textView.delegate = context.coordinator
@@ -137,6 +143,28 @@ struct SourceCodeEditor: NSViewRepresentable {
         textView.columnRulerPosition = rulerColumn
         textView.editorBracketPairHighlight = bracketPairHighlight
         textView.editorShowIndentGuides = showIndentGuides
+        textView.editorRenderWhitespace = renderWhitespace
+
+        // Cursor color from theme
+        if textView.insertionPointColor != colors.text {
+            textView.insertionPointColor = colors.text
+        }
+
+        // Top padding
+        let desiredTopInset = CGFloat(topPadding)
+        if abs(textView.textContainerInset.height - desiredTopInset) > 0.5 {
+            textView.textContainerInset = NSSize(width: 6, height: desiredTopInset)
+            textView.needsDisplay = true
+            if let ruler = nsView.verticalRulerView as? LineNumberRulerView {
+                ruler.needsDisplay = true
+            }
+        }
+
+        // Scroll past end
+        let desiredBottomInset: CGFloat = scrollPastEnd ? max(nsView.contentSize.height - 60, 0) : 0
+        if abs(nsView.contentInsets.bottom - desiredBottomInset) > 1 {
+            nsView.contentInsets.bottom = desiredBottomInset
+        }
 
         let coord = context.coordinator
         let fileChanged = activeFileID != coord.lastActiveFileID
@@ -218,11 +246,15 @@ struct SourceCodeEditor: NSViewRepresentable {
 
         // Search highlights
         let searchChanged = searchQuery != coord.lastSearchQuery || text != coord.lastSearchText || fileChanged
+            || searchMatchCase != coord.lastSearchMatchCase || searchRegex != coord.lastSearchRegex || searchWholeWord != coord.lastSearchWholeWord
         if searchChanged {
             coord.updateSearchHighlights(in: textView, query: searchQuery, currentIndex: currentMatchIndex)
             coord.lastSearchQuery = searchQuery
             coord.lastSearchText = text
             coord.lastCurrentMatchIndex = currentMatchIndex
+            coord.lastSearchMatchCase = searchMatchCase
+            coord.lastSearchRegex = searchRegex
+            coord.lastSearchWholeWord = searchWholeWord
             onMatchCountChanged?(coord.searchMatchRanges.count)
         } else if currentMatchIndex != coord.lastCurrentMatchIndex || searchScrollRequestID != coord.lastSearchScrollRequestID {
             coord.updateCurrentMatchHighlight(in: textView, currentIndex: currentMatchIndex)
@@ -293,6 +325,9 @@ struct SourceCodeEditor: NSViewRepresentable {
         var lastTabSize: Int?
         var highlightDebounceTask: DispatchWorkItem?
         var needsScrollToCursor: Bool = false
+        var lastSearchMatchCase: Bool = false
+        var lastSearchRegex: Bool = false
+        var lastSearchWholeWord: Bool = false
 
         init(_ parent: SourceCodeEditor) {
             self.parent = parent

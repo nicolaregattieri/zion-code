@@ -43,6 +43,13 @@ struct CodeScreen: View {
     @State var currentMatchIndex: Int = 0
     @State var searchScrollRequestID: Int = 0
     @State var findSearchFocusRequestID: Int = 0
+    @State var isMatchCase: Bool = false
+    @State var isRegexSearch: Bool = false
+    @State var isWholeWord: Bool = false
+    @State var fileBrowserFilterText: String = ""
+    @State var isFileBrowserFilterVisible: Bool = false
+    @State var cachedFilteredFiles: [FileItem]?
+    @State var filterDebounceTask: DispatchWorkItem?
     @StateObject var fileBrowserResponderReference = FileBrowserResponderReference()
     @State var selectedBrowserIndex: Int = -1
     @State var fileBrowserScrollTargetID: String?
@@ -398,6 +405,12 @@ struct CodeScreen: View {
             rulerColumn: model.effectiveRulerColumn,
             bracketPairHighlight: model.editorBracketPairHighlight,
             showIndentGuides: model.effectiveShowIndentGuides,
+            renderWhitespace: model.editorRenderWhitespace,
+            topPadding: model.editorTopPadding,
+            scrollPastEnd: model.editorScrollPastEnd,
+            searchMatchCase: isMatchCase,
+            searchRegex: isRegexSearch,
+            searchWholeWord: isWholeWord,
             searchQuery: isSearchVisible ? searchQuery : "",
             currentMatchIndex: currentMatchIndex,
             searchScrollRequestID: searchScrollRequestID,

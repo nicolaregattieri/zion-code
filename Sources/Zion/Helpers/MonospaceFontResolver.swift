@@ -61,6 +61,16 @@ enum MonospaceFontResolver {
             candidates += ["Courier", "CourierNewPSMT"]
         case "hacknerdfont", "hacknerdfontmono", "hacknerdfontmonoregular", "hacknfm":
             candidates += ["HackNerdFontMono-Regular", "Hack Nerd Font Mono", "Hack", "Hack-Regular"]
+        case "sourcecodepro", "sourcecodeproregular":
+            candidates += ["Source Code Pro", "SourceCodePro-Regular"]
+        case "ibmplexmono", "ibmplexmonoregular":
+            candidates += ["IBM Plex Mono", "IBMPlexMono", "IBMPlexMono-Regular"]
+        case "cascadiacode", "cascadiacoderegular":
+            candidates += ["Cascadia Code", "CascadiaCode-Regular"]
+        case "inconsolata", "inconsolataregular":
+            candidates += ["Inconsolata", "Inconsolata-Regular"]
+        case "anonymouspro", "anonymousproregular":
+            candidates += ["Anonymous Pro", "AnonymousPro-Regular"]
         default:
             break
         }
