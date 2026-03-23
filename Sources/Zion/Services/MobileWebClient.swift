@@ -75,8 +75,9 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;ba
 #terminal-wrap{flex:1;overflow:hidden;position:relative}
 #xterm-container{height:100%;width:100%}
 .xterm{height:100%!important}
-.xterm-viewport{-webkit-overflow-scrolling:touch!important;touch-action:pan-y!important}
-.xterm-screen{touch-action:pan-y!important}
+.xterm-viewport{-webkit-overflow-scrolling:touch!important;touch-action:pan-y!important;z-index:1!important;background-color:transparent!important;scrollbar-width:none!important}
+.xterm-viewport::-webkit-scrollbar{display:none!important}
+#xterm-container{background-color:#110b1f}
 #loading-overlay{display:none;position:absolute;inset:0;z-index:5;background:var(--bg);align-items:center;justify-content:center;flex-direction:column;gap:12px}
 #loading-overlay.visible{display:flex}
 #loading-overlay .spinner{width:24px;height:24px;border-width:2px}
@@ -178,78 +179,9 @@ function initTerminal() {
     new ResizeObserver(() => fitAddon && fitAddon.fit())
         .observe($('#xterm-container'));
 
-    // Momentum scrolling — iOS-style inertia with velocity smoothing and rubber-band stop.
-    // xterm.js handles direct 1:1 drag; we add coast-after-release physics.
-    (function() {
-      const el = term.element;
-      if (!el) return;
-      let lastY = 0, lastT = 0, vy = 0, raf = null;
-      let samples = []; // recent velocity samples for smoothing
-      const DECEL = 0.005;      // px/ms² deceleration
-      const MIN_V = 0.15;       // px/ms stop threshold
-      const BOOST = 1.2;        // slight initial multiplier
-      const MAX_SAMPLES = 5;    // velocity averaging window
-      let residual = 0;         // sub-line fractional accumulator
-
-      el.addEventListener('touchstart', e => {
-        if (raf) { cancelAnimationFrame(raf); raf = null; }
-        vy = 0; residual = 0;
-        samples = [];
-        lastY = e.touches[0].clientY;
-        lastT = performance.now();
-      }, { passive: true });
-
-      el.addEventListener('touchmove', e => {
-        const y = e.touches[0].clientY;
-        const t = performance.now();
-        const dt = t - lastT || 1;
-        const v = (y - lastY) / dt;
-        // Keep a sliding window of recent velocity samples
-        samples.push(v);
-        if (samples.length > MAX_SAMPLES) samples.shift();
-        lastY = y;
-        lastT = t;
-      }, { passive: true });
-
-      el.addEventListener('touchend', () => {
-        if (samples.length === 0) return;
-        // Weighted average — recent samples count more (iOS-style)
-        let wSum = 0, wDiv = 0;
-        for (let i = 0; i < samples.length; i++) {
-          const w = i + 1;
-          wSum += samples[i] * w;
-          wDiv += w;
-        }
-        vy = (wSum / wDiv) * BOOST;
-        if (Math.abs(vy) < MIN_V) return;
-        residual = 0;
-
-        const rowH = el.offsetHeight / term.rows || 16;
-        let lastFrame = performance.now();
-
-        const coast = () => {
-          const now = performance.now();
-          const dt = now - lastFrame;
-          lastFrame = now;
-
-          // Linear deceleration (iOS-like — not exponential)
-          const sign = vy > 0 ? 1 : -1;
-          vy -= sign * DECEL * dt;
-          // Stop when velocity crosses zero or falls below threshold
-          if (sign * vy <= MIN_V) { raf = null; return; }
-
-          // Accumulate fractional lines for smooth sub-line scrolling
-          residual += -(vy * dt) / rowH;
-          const lines = Math.trunc(residual);
-          if (lines !== 0) {
-            residual -= lines;
-            term.scrollLines(lines);
-          }
-          raf = requestAnimationFrame(coast);
-        };
-        raf = requestAnimationFrame(coast);
-      }, { passive: true });
-    })();
+    // Touch scrolling is handled natively by .xterm-viewport (CSS z-index
+    // brings it above .xterm-screen so it receives touch events directly).
+    // iOS provides built-in momentum/inertia scrolling.
 
 }
 
