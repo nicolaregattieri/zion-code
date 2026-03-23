@@ -137,14 +137,7 @@ extension RepositoryViewModel {
 
         // Trim trailing whitespace
         if editorTrimTrailingWhitespace {
-            result = result
-                .split(separator: "\n", omittingEmptySubsequences: false)
-                .map { line in
-                    var s = String(line)
-                    while s.last == " " || s.last == "\t" { s.removeLast() }
-                    return s
-                }
-                .joined(separator: "\n")
+            result = EditorHelpers.trimTrailingWhitespace(result)
         }
 
         return result

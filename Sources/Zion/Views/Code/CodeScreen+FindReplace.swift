@@ -212,22 +212,8 @@ extension CodeScreen {
         searchScrollRequestID += 1
     }
 
-    // MARK: - Search Regex Builder
-
     private func buildSearchRegex() -> NSRegularExpression? {
-        guard !searchQuery.isEmpty else { return nil }
-        var pattern: String
-        if isRegexSearch {
-            pattern = searchQuery
-        } else {
-            pattern = NSRegularExpression.escapedPattern(for: searchQuery)
-        }
-        if isWholeWord {
-            pattern = "\\b\(pattern)\\b"
-        }
-        var options: NSRegularExpression.Options = []
-        if !isMatchCase { options.insert(.caseInsensitive) }
-        return try? NSRegularExpression(pattern: pattern, options: options)
+        EditorHelpers.buildSearchRegex(query: searchQuery, matchCase: isMatchCase, isRegex: isRegexSearch, wholeWord: isWholeWord)
     }
 
     func recomputeFindMatches() {

@@ -236,24 +236,10 @@ extension CodeScreen {
         let query = fileBrowserFilterText.lowercased()
         let files = model.repositoryFiles
         let task = DispatchWorkItem { [self] in
-            cachedFilteredFiles = files.compactMap { filterFileTree($0, query: query) }
+            cachedFilteredFiles = files.compactMap { EditorHelpers.filterFileTree($0, query: query) }
         }
         filterDebounceTask = task
         DispatchQueue.main.asyncAfter(deadline: .now() + Constants.Timing.fileBrowserFilterDebounce, execute: task)
-    }
-
-    func filterFileTree(_ item: FileItem, query: String) -> FileItem? {
-        if !item.isDirectory {
-            return item.name.lowercased().contains(query) ? item : nil
-        }
-        let filteredChildren = (item.children ?? []).compactMap { filterFileTree($0, query: query) }
-        if filteredChildren.isEmpty && !item.name.lowercased().contains(query) { return nil }
-        return FileItem(
-            url: item.url,
-            isDirectory: true,
-            children: filteredChildren.isEmpty ? nil : filteredChildren,
-            isGitIgnored: item.isGitIgnored
-        )
     }
 
     func closeFindInFilesPanel() {

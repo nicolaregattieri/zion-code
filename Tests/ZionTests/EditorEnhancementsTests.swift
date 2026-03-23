@@ -169,46 +169,17 @@ final class EditorEnhancementsTests: XCTestCase {
         XCTAssertFalse(MonospaceFontResolver.isAvailable(name: "NonExistentFont12345"))
     }
 
-    // MARK: - Helpers
+    // MARK: - Helpers (delegate to production code)
 
     private func trimTrailingWhitespace(_ content: String) -> String {
-        content
-            .split(separator: "\n", omittingEmptySubsequences: false)
-            .map { line in
-                var s = String(line)
-                while s.last == " " || s.last == "\t" { s.removeLast() }
-                return s
-            }
-            .joined(separator: "\n")
+        EditorHelpers.trimTrailingWhitespace(content)
     }
 
     private func filterFileTree(_ item: FileItem, query: String) -> FileItem? {
-        if !item.isDirectory {
-            return item.name.lowercased().contains(query) ? item : nil
-        }
-        let filteredChildren = (item.children ?? []).compactMap { filterFileTree($0, query: query) }
-        if filteredChildren.isEmpty && !item.name.lowercased().contains(query) { return nil }
-        return FileItem(
-            url: item.url,
-            isDirectory: true,
-            children: filteredChildren.isEmpty ? nil : filteredChildren,
-            isGitIgnored: item.isGitIgnored
-        )
+        EditorHelpers.filterFileTree(item, query: query)
     }
 
     private func buildTestSearchRegex(query: String, matchCase: Bool, isRegex: Bool, wholeWord: Bool) -> NSRegularExpression? {
-        guard !query.isEmpty else { return nil }
-        var pattern: String
-        if isRegex {
-            pattern = query
-        } else {
-            pattern = NSRegularExpression.escapedPattern(for: query)
-        }
-        if wholeWord {
-            pattern = "\\b\(pattern)\\b"
-        }
-        var options: NSRegularExpression.Options = []
-        if !matchCase { options.insert(.caseInsensitive) }
-        return try? NSRegularExpression(pattern: pattern, options: options)
+        EditorHelpers.buildSearchRegex(query: query, matchCase: matchCase, isRegex: isRegex, wholeWord: wholeWord)
     }
 }

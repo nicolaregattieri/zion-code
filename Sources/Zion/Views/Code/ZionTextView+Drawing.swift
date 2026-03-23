@@ -22,19 +22,17 @@ extension ZionTextView {
         path.stroke()
     }
 
-    func drawBracketHighlight(range: NSRange, in rect: NSRect) {
+    func drawRangeHighlight(range: NSRange, color: NSColor, in rect: NSRect) {
         guard let layoutManager = layoutManager, let textContainer = textContainer else { return }
         let glyphRange = layoutManager.glyphRange(forCharacterRange: range, actualCharacterRange: nil)
-        var bracketRect = layoutManager.boundingRect(forGlyphRange: glyphRange, in: textContainer)
-        bracketRect.origin.y += textContainerOrigin.y
-        bracketRect.origin.x += textContainerOrigin.x
+        var highlightRect = layoutManager.boundingRect(forGlyphRange: glyphRange, in: textContainer)
+        highlightRect.origin.y += textContainerOrigin.y
+        highlightRect.origin.x += textContainerOrigin.x
 
-        guard bracketRect.intersects(rect) else { return }
+        guard highlightRect.intersects(rect) else { return }
 
-        let color = NSColor.systemBlue.withAlphaComponent(0.2)
         color.setFill()
-        let highlightRect = bracketRect.insetBy(dx: -1, dy: -1)
-        let path = NSBezierPath(roundedRect: highlightRect, xRadius: 2, yRadius: 2)
+        let path = NSBezierPath(roundedRect: highlightRect.insetBy(dx: -1, dy: -1), xRadius: 2, yRadius: 2)
         path.fill()
     }
 
@@ -88,31 +86,23 @@ extension ZionTextView {
     }
 
     func drawBracketHighlightPair(in rect: NSRect) {
+        let color = NSColor.systemBlue.withAlphaComponent(0.2)
         if let range = matchingBracketRange {
-            drawBracketHighlight(range: range, in: rect)
+            drawRangeHighlight(range: range, color: color, in: rect)
         }
         if let range = secondBracketRange {
-            drawBracketHighlight(range: range, in: rect)
+            drawRangeHighlight(range: range, color: color, in: rect)
         }
     }
 
     // MARK: - Occurrence Highlights
 
     func drawOccurrenceHighlights(in rect: NSRect) {
-        guard let layoutManager = layoutManager, let textContainer = textContainer else { return }
         let color = isLightTheme
             ? NSColor.systemYellow.withAlphaComponent(0.20)
             : NSColor.systemYellow.withAlphaComponent(0.15)
-        color.setFill()
-
         for range in occurrenceHighlightRanges {
-            let glyphRange = layoutManager.glyphRange(forCharacterRange: range, actualCharacterRange: nil)
-            var highlightRect = layoutManager.boundingRect(forGlyphRange: glyphRange, in: textContainer)
-            highlightRect.origin.y += textContainerOrigin.y
-            highlightRect.origin.x += textContainerOrigin.x
-            guard highlightRect.intersects(rect) else { continue }
-            let path = NSBezierPath(roundedRect: highlightRect.insetBy(dx: -1, dy: -1), xRadius: 2, yRadius: 2)
-            path.fill()
+            drawRangeHighlight(range: range, color: color, in: rect)
         }
     }
 
