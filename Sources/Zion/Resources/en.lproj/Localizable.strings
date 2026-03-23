@@ -1074,6 +1074,7 @@
 "settings.editor.autoCloseQuotes" = "Auto-close quotes";
 "settings.editor.popover.title" = "Editor Settings";
 "settings.editor.formatting" = "Formatting";
+"settings.editor.allSettings" = "All Editor Settings...";
 "settings.editor.formatOnSave" = "Format on Save";
 "settings.editor.jsonSortKeys" = "JSON: Sort keys";
 "settings.editor.trimTrailingWhitespace" = "Trim Trailing Whitespace";

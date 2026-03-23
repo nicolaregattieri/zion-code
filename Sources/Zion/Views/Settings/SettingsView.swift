@@ -97,5 +97,8 @@ struct SettingsView: View {
         .onReceive(NotificationCenter.default.publisher(for: .openAISettings)) { _ in
             selectedTab = .ai
         }
+        .onReceive(NotificationCenter.default.publisher(for: .openEditorSettings)) { _ in
+            selectedTab = .editor
+        }
     }
 }
