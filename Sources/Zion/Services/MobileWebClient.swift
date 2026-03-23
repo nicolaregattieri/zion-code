@@ -84,7 +84,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;ba
 #loading-label{font-size:12px;color:var(--text3);letter-spacing:0.3px}
 
 /* -- Quick actions -- */
-#quick-actions{display:none;padding:8px 16px;background:var(--surface);border-top:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap}
+#quick-actions{display:none;padding:8px 16px;background:var(--surface);border-top:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;touch-action:none}
 #quick-actions.visible{display:flex;gap:6px}
 .qa-btn{min-width:44px;min-height:44px;padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:var(--mono);font-size:14px;font-weight:500;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .12s}
 .qa-btn:active{background:var(--accent);border-color:var(--accent);color:#fff;transform:scale(0.95)}
@@ -101,7 +101,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;ba
 #btn-abort{background:var(--error);color:#fff}
 
 /* -- Input bar -- */
-#input-bar{display:flex;gap:8px;padding:10px 16px;background:var(--surface);border-top:1px solid var(--border);padding-bottom:max(10px,env(safe-area-inset-bottom))}
+#input-bar{display:flex;gap:8px;padding:10px 16px;background:var(--surface);border-top:1px solid var(--border);padding-bottom:max(10px,env(safe-area-inset-bottom));touch-action:none}
 #cmd-input{flex:1;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14px;outline:none;-webkit-appearance:none;transition:border-color .15s}
 #cmd-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-subtle)}
 #btn-send{padding:10px 18px;border-radius:var(--radius);border:none;background:var(--accent);color:#fff;font-weight:600;font-size:14px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .1s}
