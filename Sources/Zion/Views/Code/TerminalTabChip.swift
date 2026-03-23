@@ -40,10 +40,10 @@ struct TerminalTabChip: View {
                 Image(systemName: "xmark")
                     .font(DesignSystem.Typography.micro)
                     .foregroundStyle(.secondary)
+                    .frame(width: 16, height: 16)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .frame(width: 16, height: 16)
-            .contentShape(Rectangle())
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 5)

@@ -17,10 +17,10 @@ extension CodeScreen {
                         .frame(width: 28, height: 24)
                         .background(DesignSystem.Colors.glassSubtle)
                         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
+                        .frame(width: 32, height: 26)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .frame(width: 32, height: 26)
-                .contentShape(Rectangle())
                 .help(L10n("editor.replace.placeholder"))
 
                 // Search field
@@ -61,7 +61,10 @@ extension CodeScreen {
 
                 // Nav buttons
                 Button { navigateToPreviousMatch() } label: {
-                    Image(systemName: "chevron.up").font(DesignSystem.Typography.labelMedium)
+                    Image(systemName: "chevron.up")
+                        .font(DesignSystem.Typography.labelMedium)
+                        .frame(width: 20, height: 20)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)
                 .disabled(matchCount == 0)
@@ -69,7 +72,10 @@ extension CodeScreen {
                 .accessibilityLabel(L10n("editor.search.previous"))
 
                 Button { navigateToNextMatch() } label: {
-                    Image(systemName: "chevron.down").font(DesignSystem.Typography.labelMedium)
+                    Image(systemName: "chevron.down")
+                        .font(DesignSystem.Typography.labelMedium)
+                        .frame(width: 20, height: 20)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)
                 .disabled(matchCount == 0)
@@ -80,11 +86,13 @@ extension CodeScreen {
 
                 // Close
                 Button { closeSearch() } label: {
-                    Image(systemName: "xmark").font(DesignSystem.Typography.labelBold).foregroundStyle(.secondary)
+                    Image(systemName: "xmark")
+                        .font(DesignSystem.Typography.labelBold)
+                        .foregroundStyle(.secondary)
+                        .frame(width: 20, height: 20)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .frame(width: 20, height: 20)
-                .contentShape(Rectangle())
                 .help(L10n("Esc"))
                 .accessibilityLabel(L10n("Esc"))
             }
@@ -142,6 +150,7 @@ extension CodeScreen {
                 .frame(width: 22, height: 22)
                 .background(isOn.wrappedValue ? DesignSystem.Colors.glassSubtle : Color.clear)
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .help(tooltip)

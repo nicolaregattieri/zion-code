@@ -69,10 +69,10 @@ struct PRInboxCard: View {
                             .foregroundStyle(.secondary)
                             .rotationEffect(.degrees(isExpanded ? 90 : 0))
                             .animation(DesignSystem.Motion.panel, value: isExpanded)
+                            .frame(width: 20, height: 20)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .frame(width: 20, height: 20)
-                    .contentShape(Rectangle())
                     .accessibilityLabel(isExpanded ? L10n("accessibility.collapse") : L10n("accessibility.expand"))
                 }
             }

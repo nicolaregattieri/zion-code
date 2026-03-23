@@ -13,12 +13,12 @@ struct SearchNavButton: View {
             Image(systemName: icon)
                 .font(DesignSystem.Typography.label)
                 .foregroundStyle(isSecondary ? .secondary : .primary)
+                .frame(width: 20, height: 20)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .frame(width: 20, height: 20)
         .background(isHovered ? DesignSystem.Interactive.hoverBackground : Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius))
-        .contentShape(Rectangle())
         .onHover { h in isHovered = h }
         .help(tooltip)
         .accessibilityLabel(tooltip)

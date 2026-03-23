@@ -136,9 +136,10 @@ struct HunkDiffView: View {
                     Image(systemName: isSelected ? "checkmark.square.fill" : "square")
                         .font(DesignSystem.Typography.label)
                         .foregroundStyle(isSelected ? Color.accentColor : .secondary)
+                        .frame(width: 20, height: 20)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .frame(width: 20)
             } else {
                 Spacer().frame(width: 20)
             }
