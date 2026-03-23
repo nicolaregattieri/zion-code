@@ -133,6 +133,35 @@ struct RepositorySwitchSnapshot {
     let uncommittedCount: Int
     let repositoryFiles: [FileItem]
     let expandedPaths: Set<String>
+
+    /// Empty snapshot used to clear stale data during FRESH repository opens.
+    static let empty = RepositorySwitchSnapshot(
+        capturedAt: .distantPast,
+        commitLimit: 0,
+        focusedBranch: nil,
+        currentBranch: "",
+        headShortHash: "",
+        branchInfos: [],
+        branches: [],
+        branchTree: [],
+        tags: [],
+        stashes: [],
+        selectedStash: "",
+        worktrees: [],
+        remotes: [],
+        commits: [],
+        hasMoreCommits: false,
+        selectedCommitID: nil,
+        hasConflicts: false,
+        isMerging: false,
+        isRebasing: false,
+        isCherryPicking: false,
+        isGitRepository: true,
+        uncommittedChanges: [],
+        uncommittedCount: 0,
+        repositoryFiles: [],
+        expandedPaths: []
+    )
 }
 
 struct IgnoredPathsCacheEntry {

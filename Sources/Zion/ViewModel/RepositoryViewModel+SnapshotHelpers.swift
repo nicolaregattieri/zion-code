@@ -65,6 +65,20 @@ extension RepositoryViewModel {
         isSwitchingRepository = false
     }
 
+    /// Clears branch/commit/worktree data from the previous repo so the UI
+    /// does not display stale trees, pills, or commit lists while the new
+    /// repo's `refreshRepository` loads in the background.
+    /// Uses `RepositorySwitchSnapshot.empty` so any new snapshot field is
+    /// automatically covered without a second place to maintain.
+    func clearStaleRepositoryData() {
+        let preservedCommitLimit = commitLimit
+        applyRepositorySnapshot(.empty)
+        commitLimit = preservedCommitLimit
+        aheadRemoteCount = 0
+        behindRemoteCount = 0
+        statusMessage = L10n("switch.loading.status", repositoryURL?.lastPathComponent ?? "")
+    }
+
     /// Safety net: force-clears isSwitchingRepository after a timeout if finalization never fires.
     func armSwitchWatchdog(for url: URL, switchToken: UUID) {
         Task { [weak self] in
@@ -264,6 +278,10 @@ extension RepositoryViewModel {
                 refreshRepositoryFirst: true
             )
         } else {
+            // FRESH open: clear stale data from previous repo so the UI
+            // shows a loading/empty state instead of the old repo's tree.
+            clearStaleRepositoryData()
+
             refreshRepository(
                 setBusy: true,
                 options: .full,

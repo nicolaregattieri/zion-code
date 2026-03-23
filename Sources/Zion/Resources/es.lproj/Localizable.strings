@@ -9,6 +9,7 @@
 "Operacoes" = "Operaciones";
 "Worktrees" = "Worktrees";
 "switch.overlay.loading" = "Cambiando de proyecto...";
+"switch.loading.status" = "Cargando %@...";
 "zen.entering" = "Entrando en Zen Mode...";
 "zen.exiting" = "Saliendo del Zen Mode...";
 "Historico visual, navega em commits e merges" = "Historial visual, navega commits y merges";
