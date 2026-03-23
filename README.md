@@ -248,7 +248,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-[MIT](LICENSE) — Use it, fork it, ship it.
+[MIT](LICENSE)
 
 ## Project Identity
 
