@@ -9,6 +9,7 @@
 "Operacoes" = "Operations";
 "Worktrees" = "Worktrees";
 "switch.overlay.loading" = "Switching project...";
+"switch.loading.status" = "Loading %@...";
 "zen.entering" = "Entering Zen Mode...";
 "zen.exiting" = "Exiting Zen Mode...";
 "Seguranca" = "Security";

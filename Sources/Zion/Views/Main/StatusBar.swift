@@ -12,18 +12,20 @@ extension ContentView {
 
             if model.repositoryURL != nil && !model.isRepositorySwitchBlocking {
                 // Branch pill
-                HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
-                    Image(systemName: "arrow.triangle.branch")
-                        .font(DesignSystem.Typography.meta)
-                    Text(model.currentBranch)
-                        .lineLimit(1)
+                if !model.currentBranch.isEmpty {
+                    HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
+                        Image(systemName: "arrow.triangle.branch")
+                            .font(DesignSystem.Typography.meta)
+                        Text(model.currentBranch)
+                            .lineLimit(1)
+                    }
+                    .font(DesignSystem.Typography.monoLabel)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(DesignSystem.Opacity.selectedSubtle) : DesignSystem.Colors.statusGreenBg)
+                    .foregroundStyle(zionModeEnabled ? DesignSystem.ZionMode.neonMagenta : DesignSystem.Colors.success)
+                    .clipShape(Capsule())
                 }
-                .font(DesignSystem.Typography.monoLabel)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
-                .background(zionModeEnabled ? DesignSystem.ZionMode.neonMagenta.opacity(DesignSystem.Opacity.selectedSubtle) : DesignSystem.Colors.statusGreenBg)
-                .foregroundStyle(zionModeEnabled ? DesignSystem.ZionMode.neonMagenta : DesignSystem.Colors.success)
-                .clipShape(Capsule())
 
                 // Ahead remote badge
                 if model.aheadRemoteCount > 0 {
