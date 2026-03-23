@@ -29,8 +29,13 @@ class ZionTextView: NSTextView {
     var columnRulerPosition: Int = 80
     var editorBracketPairHighlight: Bool = true
     var editorShowIndentGuides: Bool = false
+    var editorRenderWhitespace: String = "none"
     var matchingBracketRange: NSRange?
     var secondBracketRange: NSRange?
+
+    // Occurrence highlight
+    var occurrenceHighlightRanges: [NSRange] = []
+    private var occurrenceDebounceTask: DispatchWorkItem?
 
     var indentString: String {
         editorUseTabs ? "\t" : String(repeating: " ", count: editorTabSize)
@@ -85,6 +90,16 @@ class ZionTextView: NSTextView {
         if editorShowIndentGuides {
             drawIndentGuides(in: rect)
         }
+
+        // Occurrence highlight
+        if !occurrenceHighlightRanges.isEmpty {
+            drawOccurrenceHighlights(in: rect)
+        }
+
+        // Whitespace glyphs
+        if editorRenderWhitespace != "none" {
+            drawWhitespaceGlyphs(in: rect)
+        }
     }
 
     // MARK: - Bracket Matching
@@ -125,6 +140,48 @@ class ZionTextView: NSTextView {
     private func drawBothBrackets(_ pos1: Int, _ pos2: Int) {
         matchingBracketRange = NSRange(location: pos1, length: 1)
         secondBracketRange = NSRange(location: pos2, length: 1)
+        needsDisplay = true
+    }
+
+    // MARK: - Occurrence Highlight
+
+    func debounceOccurrenceHighlight() {
+        occurrenceDebounceTask?.cancel()
+        let task = DispatchWorkItem { [weak self] in
+            self?.updateOccurrenceHighlight()
+        }
+        occurrenceDebounceTask = task
+        DispatchQueue.main.asyncAfter(deadline: .now() + Constants.Timing.selectionOccurrenceDebounce, execute: task)
+    }
+
+    private func updateOccurrenceHighlight() {
+        occurrenceHighlightRanges = []
+
+        let nsString = string as NSString
+        guard nsString.length < Constants.Limits.maxOccurrenceHighlightDocSize else {
+            needsDisplay = true
+            return
+        }
+
+        guard let range = currentSymbolRange(), range.length > 1 else {
+            needsDisplay = true
+            return
+        }
+
+        let word = nsString.substring(with: range)
+        let escaped = NSRegularExpression.escapedPattern(for: word)
+        guard let regex = try? NSRegularExpression(pattern: "\\b\(escaped)\\b", options: []) else {
+            needsDisplay = true
+            return
+        }
+
+        let matches = regex.matches(in: string, range: NSRange(location: 0, length: nsString.length))
+        occurrenceHighlightRanges = Array(
+            matches.prefix(Constants.Limits.maxOccurrenceHighlightMatches)
+                .map(\.range)
+                .filter { $0 != range }
+        )
+
         needsDisplay = true
     }
 

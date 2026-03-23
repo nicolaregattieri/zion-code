@@ -92,6 +92,18 @@ extension RepositoryViewModel {
         if defaults.object(forKey: UserDefaultsKeys.Editor.jsonSortKeys) != nil {
             editorJsonSortKeys = defaults.bool(forKey: UserDefaultsKeys.Editor.jsonSortKeys)
         }
+        if defaults.object(forKey: UserDefaultsKeys.Editor.trimTrailingWhitespace) != nil {
+            editorTrimTrailingWhitespace = defaults.bool(forKey: UserDefaultsKeys.Editor.trimTrailingWhitespace)
+        }
+        if let rw = defaults.string(forKey: UserDefaultsKeys.Editor.renderWhitespace) {
+            editorRenderWhitespace = rw
+        }
+        if defaults.object(forKey: UserDefaultsKeys.Editor.topPadding) != nil {
+            editorTopPadding = defaults.double(forKey: UserDefaultsKeys.Editor.topPadding)
+        }
+        if defaults.object(forKey: UserDefaultsKeys.Editor.scrollPastEnd) != nil {
+            editorScrollPastEnd = defaults.bool(forKey: UserDefaultsKeys.Editor.scrollPastEnd)
+        }
         // Terminal font settings
         if defaults.object(forKey: UserDefaultsKeys.Terminal.fontSize) != nil {
             terminalFontSize = defaults.double(forKey: UserDefaultsKeys.Terminal.fontSize)
@@ -233,6 +245,17 @@ extension RepositoryViewModel {
         if fos != editorFormatOnSave { editorFormatOnSave = fos }
         let jsk = defaults.bool(forKey: UserDefaultsKeys.Editor.jsonSortKeys)
         if jsk != editorJsonSortKeys { editorJsonSortKeys = jsk }
+        let ttw = defaults.bool(forKey: UserDefaultsKeys.Editor.trimTrailingWhitespace)
+        if ttw != editorTrimTrailingWhitespace { editorTrimTrailingWhitespace = ttw }
+        if let rw = defaults.string(forKey: UserDefaultsKeys.Editor.renderWhitespace), rw != editorRenderWhitespace {
+            editorRenderWhitespace = rw
+        }
+        if defaults.object(forKey: UserDefaultsKeys.Editor.topPadding) != nil {
+            let tp = defaults.double(forKey: UserDefaultsKeys.Editor.topPadding)
+            if tp != editorTopPadding { editorTopPadding = tp }
+        }
+        let spe = defaults.bool(forKey: UserDefaultsKeys.Editor.scrollPastEnd)
+        if spe != editorScrollPastEnd { editorScrollPastEnd = spe }
 
         // MARK: Terminal settings
         let tfs = defaults.double(forKey: UserDefaultsKeys.Terminal.fontSize)

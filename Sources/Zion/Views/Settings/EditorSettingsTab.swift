@@ -1,6 +1,14 @@
 import SwiftUI
 
 struct EditorSettingsTab: View {
+    private static let systemFonts = ["SF Mono", "Menlo", "Monaco", "Courier"]
+    private static let installableFonts = [
+        "Fira Code", "JetBrains Mono", "Hack", "Roboto Mono",
+        "Source Code Pro", "IBM Plex Mono", "Cascadia Code",
+        "Hack Nerd Font Mono", "Inconsolata", "Anonymous Pro"
+    ]
+    private static let cachedInstalledFonts: [String] = installableFonts.filter { MonospaceFontResolver.isAvailable(name: $0) }
+
     @AppStorage(UserDefaultsKeys.Editor.theme) private var themeRaw: String = EditorTheme.dracula.rawValue
     @AppStorage(UserDefaultsKeys.Editor.fontFamily) private var fontFamily: String = "SF Mono"
     @AppStorage(UserDefaultsKeys.Editor.fontSize) private var fontSize: Double = 13.0
@@ -21,6 +29,10 @@ struct EditorSettingsTab: View {
 
     @AppStorage(UserDefaultsKeys.Editor.formatOnSave) private var formatOnSave: Bool = false
     @AppStorage(UserDefaultsKeys.Editor.jsonSortKeys) private var jsonSortKeys: Bool = false
+    @AppStorage(UserDefaultsKeys.Editor.trimTrailingWhitespace) private var trimTrailingWhitespace: Bool = false
+    @AppStorage(UserDefaultsKeys.Editor.renderWhitespace) private var renderWhitespace: String = "none"
+    @AppStorage(UserDefaultsKeys.Editor.topPadding) private var topPadding: Double = 6.0
+    @AppStorage(UserDefaultsKeys.Editor.scrollPastEnd) private var scrollPastEnd: Bool = true
 
     @AppStorage(UserDefaultsKeys.FileBrowser.showHiddenFiles) private var showDotfiles: Bool = true
 
@@ -34,12 +46,19 @@ struct EditorSettingsTab: View {
                 }
 
                 Picker(L10n("settings.editor.font"), selection: $fontFamily) {
-                    Text("SF Mono").tag("SF Mono")
-                    Text("Menlo").tag("Menlo")
-                    Text("Monaco").tag("Monaco")
-                    Text("Courier").tag("Courier")
-                    Text("Fira Code").tag("Fira Code")
-                    Text("JetBrains Mono").tag("JetBrains Mono")
+                    Section(L10n("settings.editor.font.system")) {
+                        ForEach(Self.systemFonts, id: \.self) { name in
+                            Text(name).tag(name)
+                        }
+                    }
+                    if !Self.cachedInstalledFonts.isEmpty {
+                        let installed = Self.cachedInstalledFonts
+                        Section(L10n("settings.editor.font.installed")) {
+                            ForEach(installed, id: \.self) { name in
+                                Text(name).tag(name)
+                            }
+                        }
+                    }
                 }
 
                 HStack {
@@ -97,6 +116,13 @@ struct EditorSettingsTab: View {
 
                 Toggle(L10n("settings.editor.showIndentGuides"), isOn: $showIndentGuides)
 
+                Picker(L10n("settings.editor.renderWhitespace"), selection: $renderWhitespace) {
+                    Text(L10n("settings.editor.renderWhitespace.none")).tag("none")
+                    Text(L10n("settings.editor.renderWhitespace.boundary")).tag("boundary")
+                    Text(L10n("settings.editor.renderWhitespace.trailing")).tag("trailing")
+                    Text(L10n("settings.editor.renderWhitespace.all")).tag("all")
+                }
+
                 Toggle(L10n("settings.editor.showRuler"), isOn: $showRuler)
 
                 if showRuler {
@@ -106,6 +132,18 @@ struct EditorSettingsTab: View {
                         Text("120").tag(120)
                     }
                     .pickerStyle(.segmented)
+                }
+
+                Toggle(L10n("settings.editor.scrollPastEnd"), isOn: $scrollPastEnd)
+
+                HStack {
+                    Text(L10n("settings.editor.topPadding"))
+                    Spacer()
+                    Slider(value: $topPadding, in: 0...60, step: 2)
+                        .frame(width: 120)
+                    Text("\(Int(topPadding))pt")
+                        .font(DesignSystem.Typography.monoSmall)
+                        .frame(width: 36, alignment: .trailing)
                 }
             }
 
@@ -117,6 +155,8 @@ struct EditorSettingsTab: View {
                 Toggle(L10n("settings.editor.formatOnSave"), isOn: $formatOnSave)
 
                 Toggle(L10n("settings.editor.jsonSortKeys"), isOn: $jsonSortKeys)
+
+                Toggle(L10n("settings.editor.trimTrailingWhitespace"), isOn: $trimTrailingWhitespace)
             }
 
         }

@@ -1075,8 +1075,20 @@
 "settings.editor.formatting" = "Formatting";
 "settings.editor.formatOnSave" = "Format on Save";
 "settings.editor.jsonSortKeys" = "JSON: Sort keys";
+"settings.editor.trimTrailingWhitespace" = "Trim Trailing Whitespace";
+"settings.editor.renderWhitespace" = "Render Whitespace";
+"settings.editor.renderWhitespace.none" = "None";
+"settings.editor.renderWhitespace.boundary" = "Boundary";
+"settings.editor.renderWhitespace.trailing" = "Trailing";
+"settings.editor.renderWhitespace.all" = "All";
+"settings.editor.topPadding" = "Top Padding";
+"settings.editor.scrollPastEnd" = "Scroll Past End";
+"settings.editor.font.system" = "System Fonts";
+"settings.editor.font.installed" = "Installed Fonts";
 "fileBrowser.toggleHidden" = "Toggle Hidden Files";
 "fileBrowser.dropMove" = "Failed to move file";
+"fileBrowser.filter" = "Filter Files";
+"fileBrowser.filter.placeholder" = "Filter by name...";
 "settings.editor.fileBrowser" = "File Browser";
 "settings.editor.showDotfiles" = "Show Hidden Files (.env, .gitignore, etc.)";
 
@@ -1085,6 +1097,9 @@
 "editor.search.noResults" = "None";
 "editor.search.previous" = "Previous";
 "editor.search.next" = "Next";
+"editor.search.matchCase" = "Match Case";
+"editor.search.wholeWord" = "Whole Word";
+"editor.search.regex" = "Regex";
 "editor.replace.placeholder" = "Replace...";
 "editor.replace.one" = "Replace";
 "editor.replace.all" = "Replace All";

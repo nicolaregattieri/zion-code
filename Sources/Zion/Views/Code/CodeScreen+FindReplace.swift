@@ -44,6 +44,13 @@ extension CodeScreen {
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
                 .frame(maxWidth: 280)
 
+                // Search option toggles
+                HStack(spacing: 2) {
+                    findOptionToggle(icon: "textformat", isOn: $isMatchCase, tooltip: L10n("editor.search.matchCase"))
+                    findOptionToggle(icon: "textformat.abc", isOn: $isWholeWord, tooltip: L10n("editor.search.wholeWord"))
+                    findOptionToggle(icon: "curlybraces", isOn: $isRegexSearch, tooltip: L10n("editor.search.regex"))
+                }
+
                 // Match count
                 if !searchQuery.isEmpty {
                     Text(matchCount > 0 ? "\(currentMatchIndex + 1)/\(matchCount)" : L10n("editor.search.noResults"))
@@ -122,6 +129,24 @@ extension CodeScreen {
         }
     }
 
+    @ViewBuilder
+    func findOptionToggle(icon: String, isOn: Binding<Bool>, tooltip: String) -> some View {
+        Button {
+            isOn.wrappedValue.toggle()
+            recomputeFindMatches()
+            searchScrollRequestID += 1
+        } label: {
+            Image(systemName: icon)
+                .font(DesignSystem.Typography.meta)
+                .foregroundStyle(isOn.wrappedValue ? Color.accentColor : .secondary)
+                .frame(width: 22, height: 22)
+                .background(isOn.wrappedValue ? DesignSystem.Colors.glassSubtle : Color.clear)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
+        }
+        .buttonStyle(.plain)
+        .help(tooltip)
+    }
+
     func openSearch(applySeedIfPresent: Bool) {
         withAnimation(DesignSystem.Motion.detail) {
             isSearchVisible = true
@@ -187,14 +212,31 @@ extension CodeScreen {
         searchScrollRequestID += 1
     }
 
+    // MARK: - Search Regex Builder
+
+    private func buildSearchRegex() -> NSRegularExpression? {
+        guard !searchQuery.isEmpty else { return nil }
+        var pattern: String
+        if isRegexSearch {
+            pattern = searchQuery
+        } else {
+            pattern = NSRegularExpression.escapedPattern(for: searchQuery)
+        }
+        if isWholeWord {
+            pattern = "\\b\(pattern)\\b"
+        }
+        var options: NSRegularExpression.Options = []
+        if !isMatchCase { options.insert(.caseInsensitive) }
+        return try? NSRegularExpression(pattern: pattern, options: options)
+    }
+
     func recomputeFindMatches() {
         guard isSearchVisible, !searchQuery.isEmpty else {
             matchCount = 0
             currentMatchIndex = 0
             return
         }
-        let escaped = NSRegularExpression.escapedPattern(for: searchQuery)
-        guard let regex = try? NSRegularExpression(pattern: escaped, options: .caseInsensitive) else {
+        guard let regex = buildSearchRegex() else {
             matchCount = 0
             currentMatchIndex = 0
             return
@@ -211,15 +253,15 @@ extension CodeScreen {
 
     func replaceCurrent() {
         guard matchCount > 0, !searchQuery.isEmpty else { return }
-        let escaped = NSRegularExpression.escapedPattern(for: searchQuery)
-        guard let regex = try? NSRegularExpression(pattern: escaped, options: .caseInsensitive) else { return }
+        guard let regex = buildSearchRegex() else { return }
         let nsString = model.codeFileContent as NSString
         let matches = regex.matches(in: model.codeFileContent, options: [], range: NSRange(location: 0, length: nsString.length))
         guard currentMatchIndex < matches.count else { return }
 
         let range = matches[currentMatchIndex].range
         guard let swiftRange = Range(range, in: model.codeFileContent) else { return }
-        model.codeFileContent.replaceSubrange(swiftRange, with: replaceQuery)
+        let replacement = isRegexSearch ? replaceQuery : replaceQuery
+        model.codeFileContent.replaceSubrange(swiftRange, with: replacement)
 
         // Recalculate after replacement
         if currentMatchIndex >= matchCount - 1 {
@@ -229,10 +271,10 @@ extension CodeScreen {
 
     func replaceAll() {
         guard !searchQuery.isEmpty else { return }
-        let escaped = NSRegularExpression.escapedPattern(for: searchQuery)
-        guard let regex = try? NSRegularExpression(pattern: escaped, options: .caseInsensitive) else { return }
+        guard let regex = buildSearchRegex() else { return }
         let nsString = model.codeFileContent as NSString
-        model.codeFileContent = regex.stringByReplacingMatches(in: model.codeFileContent, options: [], range: NSRange(location: 0, length: nsString.length), withTemplate: NSRegularExpression.escapedTemplate(for: replaceQuery))
+        let template = isRegexSearch ? replaceQuery : NSRegularExpression.escapedTemplate(for: replaceQuery)
+        model.codeFileContent = regex.stringByReplacingMatches(in: model.codeFileContent, options: [], range: NSRange(location: 0, length: nsString.length), withTemplate: template)
         currentMatchIndex = 0
     }
 }

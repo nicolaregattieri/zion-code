@@ -71,6 +71,7 @@ extension SourceCodeEditor.Coordinator {
     func textViewDidChangeSelection(_ notification: Notification) {
         guard let textView = notification.object as? ZionTextView else { return }
         textView.updateBracketMatch()
+        textView.debounceOccurrenceHighlight()
         textView.needsDisplay = true
     }
 
@@ -332,8 +333,18 @@ extension SourceCodeEditor.Coordinator {
 
         guard !query.isEmpty else { return }
 
-        let escaped = NSRegularExpression.escapedPattern(for: query)
-        guard let regex = try? NSRegularExpression(pattern: escaped, options: .caseInsensitive) else { return }
+        var pattern: String
+        if parent.searchRegex {
+            pattern = query
+        } else {
+            pattern = NSRegularExpression.escapedPattern(for: query)
+        }
+        if parent.searchWholeWord {
+            pattern = "\\b\(pattern)\\b"
+        }
+        var regexOptions: NSRegularExpression.Options = []
+        if !parent.searchMatchCase { regexOptions.insert(.caseInsensitive) }
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: regexOptions) else { return }
         let matches = regex.matches(in: textView.string, options: [], range: fullRange)
 
         searchMatchRanges = matches.map { $0.range }
