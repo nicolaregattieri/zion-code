@@ -17,15 +17,16 @@ struct EditorSettingsPopoverButton: View {
         .help(L10n("settings.editor.popover.title"))
         .accessibilityLabel(L10n("settings.editor.popover.title"))
         .popover(isPresented: $isPresented) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 14) {
                 Text(L10n("settings.editor.popover.title"))
                     .font(DesignSystem.Typography.bodyMedium)
 
-                // Editing section
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(L10n("settings.editor.editing"))
-                        .font(DesignSystem.Typography.labelMedium)
-                        .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 10) {
+                    Toggle(L10n("settings.editor.lineWrap"), isOn: $model.isLineWrappingEnabled)
+                        .font(DesignSystem.Typography.bodySmall)
+
+                    Toggle(L10n("settings.editor.showBreadcrumb"), isOn: $showBreadcrumbPath)
+                        .font(DesignSystem.Typography.bodySmall)
 
                     HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                         Text(L10n("settings.editor.tabSize"))
@@ -47,123 +48,58 @@ struct EditorSettingsPopoverButton: View {
 
                     Toggle(L10n("settings.editor.useTabs"), isOn: $model.editorUseTabs)
                         .font(DesignSystem.Typography.bodySmall)
-
-                    Toggle(L10n("settings.editor.autoCloseBrackets"), isOn: $model.editorAutoCloseBrackets)
-                        .font(DesignSystem.Typography.bodySmall)
-
-                    Toggle(L10n("settings.editor.autoCloseQuotes"), isOn: $model.editorAutoCloseQuotes)
-                        .font(DesignSystem.Typography.bodySmall)
-
-                    Toggle(L10n("settings.editor.bracketPairHighlight"), isOn: $model.editorBracketPairHighlight)
-                        .font(DesignSystem.Typography.bodySmall)
                 }
 
                 Divider()
 
-                // Display section
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(L10n("settings.editor.display"))
-                        .font(DesignSystem.Typography.labelMedium)
-                        .foregroundStyle(.secondary)
-
-                    Toggle(L10n("settings.editor.lineWrap"), isOn: $model.isLineWrappingEnabled)
-                        .font(DesignSystem.Typography.bodySmall)
-
-                    Toggle(L10n("settings.editor.showBreadcrumb"), isOn: $showBreadcrumbPath)
-                        .font(DesignSystem.Typography.bodySmall)
-
-                    Toggle(L10n("settings.editor.highlightCurrentLine"), isOn: $model.editorHighlightCurrentLine)
-                        .font(DesignSystem.Typography.bodySmall)
-
-                    Toggle(L10n("settings.editor.showIndentGuides"), isOn: $model.editorShowIndentGuides)
-                        .font(DesignSystem.Typography.bodySmall)
-
+                VStack(alignment: .leading, spacing: 10) {
                     HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-                        Text(L10n("settings.editor.renderWhitespace"))
+                        Text(L10n("settings.editor.lineSpacing"))
                             .font(DesignSystem.Typography.label)
                             .foregroundStyle(.secondary)
-                        Picker("", selection: $model.editorRenderWhitespace) {
-                            Text(L10n("settings.editor.renderWhitespace.none")).tag("none")
-                            Text(L10n("settings.editor.renderWhitespace.trailing")).tag("trailing")
-                            Text(L10n("settings.editor.renderWhitespace.all")).tag("all")
-                        }
-                        .pickerStyle(.segmented)
-                        .frame(width: 150)
+                        Slider(value: $model.editorLineSpacing, in: 0.0...20.0, step: 0.5)
+                            .frame(width: 100)
+                        Text(String(format: "%.1fpt", model.editorLineSpacing))
+                            .font(DesignSystem.Typography.monoLabel)
+                            .frame(width: 42)
                     }
 
-                    Toggle(L10n("settings.editor.showRuler"), isOn: $model.editorShowRuler)
-                        .font(DesignSystem.Typography.bodySmall)
-
-                    if model.editorShowRuler {
-                        HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-                            Text(L10n("settings.editor.rulerColumn"))
-                                .font(DesignSystem.Typography.label)
-                                .foregroundStyle(.secondary)
-                            Picker("", selection: $model.editorRulerColumn) {
-                                Text("80").tag(80)
-                                Text("100").tag(100)
-                                Text("120").tag(120)
-                            }
-                            .pickerStyle(.segmented)
-                            .frame(width: 120)
-                        }
+                    HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+                        Text(L10n("settings.editor.letterSpacing"))
+                            .font(DesignSystem.Typography.label)
+                            .foregroundStyle(.secondary)
+                        Slider(value: $model.editorLetterSpacing, in: -1.0...5.0, step: 0.1)
+                            .frame(width: 100)
+                        Text(String(format: "%.1f", model.editorLetterSpacing))
+                            .font(DesignSystem.Typography.monoLabel)
+                            .frame(width: 30)
                     }
-
-                    Toggle(L10n("settings.editor.scrollPastEnd"), isOn: $model.editorScrollPastEnd)
-                        .font(DesignSystem.Typography.bodySmall)
                 }
 
                 Divider()
 
-                // Formatting section
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(L10n("settings.editor.formatting"))
-                        .font(DesignSystem.Typography.labelMedium)
-                        .foregroundStyle(.secondary)
-
-                    Toggle(L10n("settings.editor.formatOnSave"), isOn: $model.editorFormatOnSave)
-                        .font(DesignSystem.Typography.bodySmall)
-
-                    Toggle(L10n("settings.editor.jsonSortKeys"), isOn: $model.editorJsonSortKeys)
-                        .font(DesignSystem.Typography.bodySmall)
-
-                    Toggle(L10n("settings.editor.trimTrailingWhitespace"), isOn: $model.editorTrimTrailingWhitespace)
-                        .font(DesignSystem.Typography.bodySmall)
+                SettingsLink {
+                    HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+                        Image(systemName: "gearshape")
+                            .font(DesignSystem.Typography.label)
+                        Text(L10n("settings.editor.allSettings"))
+                            .font(DesignSystem.Typography.bodySmall)
+                    }
+                    .foregroundStyle(DesignSystem.Colors.actionPrimary)
                 }
-
-                Divider()
-
-                // Line spacing
-                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-                    Text(L10n("settings.editor.lineSpacing"))
-                        .font(DesignSystem.Typography.label)
-                        .foregroundStyle(.secondary)
-                    Slider(value: $model.editorLineSpacing, in: 0.0...20.0, step: 0.5)
-                        .frame(width: 100)
-                    Text(String(format: "%.1fpt", model.editorLineSpacing))
-                        .font(DesignSystem.Typography.monoLabel)
-                        .frame(width: 42)
-                }
-
-                Divider()
-
-                // Letter spacing
-                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-                    Text(L10n("settings.editor.letterSpacing"))
-                        .font(DesignSystem.Typography.label)
-                        .foregroundStyle(.secondary)
-                    Slider(value: $model.editorLetterSpacing, in: -1.0...5.0, step: 0.1)
-                        .frame(width: 100)
-                    Text(String(format: "%.1f", model.editorLetterSpacing))
-                        .font(DesignSystem.Typography.monoLabel)
-                        .frame(width: 30)
-                }
+                .buttonStyle(.plain)
+                .simultaneousGesture(TapGesture().onEnded {
+                    isPresented = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        NotificationCenter.default.post(name: .openEditorSettings, object: nil)
+                    }
+                })
             }
             .controlSize(.small)
             .toggleStyle(SwitchToggleStyle(tint: DesignSystem.Colors.actionPrimary))
             .tint(DesignSystem.Colors.actionPrimary)
-            .padding(12)
-            .frame(width: 260)
+            .padding(14)
+            .frame(width: 280)
         }
     }
 }

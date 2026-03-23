@@ -970,6 +970,7 @@
 "settings.editor.autoCloseQuotes" = "Fechar aspas automaticamente";
 "settings.editor.popover.title" = "Configurações do Editor";
 "settings.editor.formatting" = "Formatação";
+"settings.editor.allSettings" = "Todas as Configurações do Editor...";
 "settings.editor.formatOnSave" = "Formatar ao Salvar";
 "settings.editor.jsonSortKeys" = "JSON: Ordenar chaves";
 "settings.editor.trimTrailingWhitespace" = "Remover Espacos no Final";

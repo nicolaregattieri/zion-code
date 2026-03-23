@@ -1071,6 +1071,7 @@
 "settings.editor.autoCloseQuotes" = "Cerrar comillas automáticamente";
 "settings.editor.popover.title" = "Configuración del Editor";
 "settings.editor.formatting" = "Formato";
+"settings.editor.allSettings" = "Todas las Configuraciones del Editor...";
 "settings.editor.formatOnSave" = "Formatear al Guardar";
 "settings.editor.jsonSortKeys" = "JSON: Ordenar claves";
 "settings.editor.trimTrailingWhitespace" = "Eliminar Espacios al Final";
