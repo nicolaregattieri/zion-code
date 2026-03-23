@@ -168,6 +168,7 @@ final class ClipboardMonitor {
         if Date().timeIntervalSince(lastPurge) > 600 {
             lastPurge = Date()
             purgeOldTempFiles()
+            removeOrphanedImageItems()
         }
 
         let pb = NSPasteboard.general
@@ -284,6 +285,16 @@ final class ClipboardMonitor {
             }
         }
         return dir.appendingPathComponent(UUID().uuidString + ".jpg")
+    }
+
+    /// Remove clipboard items whose backing image files were purged
+    private func removeOrphanedImageItems() {
+        let fm = FileManager.default
+        let prefix = Self.imageDir.path
+        items.removeAll { item in
+            guard item.isImage, item.text.hasPrefix(prefix) else { return false }
+            return !fm.fileExists(atPath: item.text)
+        }
     }
 
     /// Delete temp files belonging to specific clipboard items
