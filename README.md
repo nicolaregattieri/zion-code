@@ -91,6 +91,8 @@ A dashboard for everything Git. Commit with hunk and line-level staging, interac
 
 Scan a QR code to pair your phone with Zion. See live terminal output with full ANSI colors powered by xterm.js. Approve, deny, or abort AI prompts. Switch between terminal sessions across all open projects. Works over Cloudflare Tunnel (remote) or LAN (local Wi-Fi). All communication encrypted with AES-256-GCM.
 
+LAN is the preferred path when your iPhone and Mac are on the same network. Remote access over Cloudflare Tunnel is currently a convenience path built on the free tunnel model, so reconnects or an occasional refresh can happen in edge cases.
+
 <p align="center">
   <img src="docs/screenshots/mobile-remote.png" width="32%" alt="Mobile Remote Access — QR pairing and session list" />
   &nbsp;&nbsp;&nbsp;
@@ -211,7 +213,7 @@ Zion is keyboard-first. Press `Cmd+/` to see all shortcuts inside the app.
 | **Tags** | Create lightweight, annotated, and GPG-signed tags; push to remote; delete local and remote tags |
 | **AI** | Commit messages, diff explanations, PR descriptions, code review, conflict resolution, changelog generator, semantic search, branch summarizer, blame explainer, commit split advisor, stash messages, pre-commit review gate. Providers: Anthropic / OpenAI / Google |
 | **Git Hosting** | GitHub (via `gh` CLI), GitLab (PAT, self-hosted), Bitbucket (app passwords). Auto-detection from remote URLs. PR list, create, inline comments, review submission |
-| **Mobile** | QR pairing, AES-256-GCM encryption, xterm.js terminal with ANSI colors, prompt actions (approve/deny/abort), quick actions (Ctrl+C/D, Esc, Tab, arrows), multi-project sessions, Cloudflare tunnel or LAN mode, keep-awake |
+| **Mobile** | QR pairing, AES-256-GCM encryption, xterm.js terminal with ANSI colors, prompt actions (approve/deny/abort), quick actions (Ctrl+C/D, Esc, Tab, arrows), multi-project sessions, Cloudflare tunnel or LAN mode, keep-awake. LAN is preferred; WAN uses the current free tunnel path. |
 | **Recovery** | Auto-snapshot before destructive ops (reset, rebase, discard), named stash refs (`zion-pre-*`), restore from Operations Center |
 | **Worktrees** | Smart create (prefix+name), graph quick-switch pills, copy/move pending changes, dedicated terminal, remove/prune |
 | **Remotes** | Fetch all, pull, push (normal/force-with-lease/force), divergence warning, ahead/behind badges, add/remove, connection test |
