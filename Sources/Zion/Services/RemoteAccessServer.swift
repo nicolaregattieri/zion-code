@@ -563,7 +563,7 @@ actor RemoteAccessServer {
         connection.receiveMessage { [weak self] data, context, _, error in
             guard let self else { return }
             Task {
-                if let error {
+                if error != nil {
                     await self.wsConnectionClosed(connection: connection)
                     return
                 }
@@ -603,20 +603,18 @@ actor RemoteAccessServer {
                 lastPollTime[token] = ContinuousClock.now
             }
 
-        case .sessionList:
+        case .pair:
             // Client is pairing: payload contains token
-            if let pairData = try? decoder.decode(WSPairPayload.self, from: message.payload) {
+            if let pairData = try? decoder.decode(PairingPayload.self, from: message.payload) {
                 wsHandlePair(token: pairData.token, mode: pairData.mode, connection: connection)
             }
+
+        case .sessionList:
+            break
 
         default:
             break
         }
-    }
-
-    private struct WSPairPayload: Codable {
-        let token: String
-        let mode: String?
     }
 
     private func wsHandlePair(token: String, mode: String?, connection: NWConnection) {
@@ -639,7 +637,12 @@ actor RemoteAccessServer {
         wsConnections[token] = connection
 
         let count = authenticatedTokens.count
-        Task { await onConnectionCountChanged?(count) }
+        Task {
+            await onConnectionCountChanged?(count)
+            await MainActor.run {
+                DiagnosticLogger.shared.log(.info, "WebSocket client paired", context: "mode=\(mode ?? "unknown"), total=\(count)", source: "RemoteAccessServer")
+            }
+        }
 
         wsSendJSON(connection: connection, json: #"{"status":"paired"}"#)
     }
