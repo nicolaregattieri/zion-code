@@ -316,6 +316,16 @@ extension RepositoryViewModel {
         prPollingTimer?.cancel()
         backgroundFetchTask?.cancel()
         autoRefreshTask?.cancel()
+
+        // Cancel any in-flight git action (e.g. fetch) so isBusy doesn't stay stuck
+        // on the new repo after a switch.
+        actionTask?.cancel()
+        actionTask = nil
+        activeGitActionToken = nil
+        if isBusy {
+            isBusy = false
+            disarmBusyWatchdog()
+        }
     }
 
     func scheduleDeferredRepositoryLoads(

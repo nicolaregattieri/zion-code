@@ -718,6 +718,16 @@ extension RepositoryViewModel {
                 self.logger.log(.warn, "Busy watchdog fired — force-clearing isBusy", source: #function)
                 self.isBusy = false
             }
+            // Also clear stale git action token so subsequent actions aren't blocked
+            // after the watchdog fires. Without this, a slow fetch that outlives the
+            // watchdog leaves activeGitActionToken set, causing "Git action skipped
+            // (another action in progress)" for every user retry.
+            if self.activeGitActionToken != nil {
+                self.logger.log(.warn, "Busy watchdog: clearing stale activeGitActionToken", source: #function)
+                self.actionTask?.cancel()
+                self.actionTask = nil
+                self.activeGitActionToken = nil
+            }
         }
     }
 
