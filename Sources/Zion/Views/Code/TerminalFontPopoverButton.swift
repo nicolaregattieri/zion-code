@@ -13,9 +13,7 @@ struct TerminalFontPopoverButton: View {
             Image(systemName: "textformat.size")
                 .font(DesignSystem.IconSize.toolbar)
                 .foregroundStyle(accentColor)
-                .frame(width: DesignSystem.IconSize.terminalToolbarFrame.width,
-                       height: DesignSystem.IconSize.terminalToolbarFrame.height)
-                .contentShape(Rectangle())
+                .iconHitTarget(DesignSystem.IconSize.terminalToolbarFrame)
         }
         .buttonStyle(.plain)
         .background(isHovered ? DesignSystem.Interactive.hoverBackground : Color.clear)

@@ -172,8 +172,7 @@ struct SidebarView: View {
                 .foregroundStyle(.secondary)
                 .rotationEffect(.degrees(isExpanded.wrappedValue ? 90 : 0))
                 .animation(DesignSystem.Motion.panel, value: isExpanded.wrappedValue)
-                .frame(width: 20, height: 20)
-                .contentShape(Rectangle())
+                .iconHitTarget()
         }
         .buttonStyle(.plain)
     }

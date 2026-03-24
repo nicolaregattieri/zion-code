@@ -244,8 +244,7 @@ struct BridgeScreen: View {
                     Image(systemName: isSyncSelected ? "checkmark.circle.fill" : "circle")
                         .font(DesignSystem.Typography.sheetTitle)
                         .foregroundStyle(isSyncSelected ? DesignSystem.Colors.actionPrimary : .secondary)
-                        .frame(width: 24, height: 24)
-                        .contentShape(Rectangle())
+                        .iconHitTarget(DesignSystem.IconSize.standardFrame)
                 }
                 .buttonStyle(.plain)
                 .help(isSyncSelected ? L10n("bridge.selection.remove") : L10n("bridge.selection.add"))

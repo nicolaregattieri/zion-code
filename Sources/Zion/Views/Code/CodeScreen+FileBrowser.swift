@@ -22,9 +22,7 @@ extension CodeScreen {
                             }
                         } label: {
                             Image(systemName: "line.3.horizontal.decrease")
-                                .frame(width: DesignSystem.IconSize.editorToolbarFrame.width,
-                                       height: DesignSystem.IconSize.editorToolbarFrame.height)
-                                .contentShape(Rectangle())
+                                .iconHitTarget(DesignSystem.IconSize.editorToolbarFrame)
                         }
                         .buttonStyle(.plain).cursorArrow()
                         .foregroundStyle(isFileBrowserFilterVisible ? Color.accentColor : .secondary)
@@ -33,9 +31,7 @@ extension CodeScreen {
 
                         Button { model.showDotfiles.toggle() } label: {
                             Image(systemName: model.showDotfiles ? "eye" : "eye.slash")
-                                .frame(width: DesignSystem.IconSize.editorToolbarFrame.width,
-                                       height: DesignSystem.IconSize.editorToolbarFrame.height)
-                                .contentShape(Rectangle())
+                                .iconHitTarget(DesignSystem.IconSize.editorToolbarFrame)
                         }
                         .buttonStyle(.plain).cursorArrow().foregroundStyle(.secondary)
                         .help(L10n("fileBrowser.toggleHidden") + " (⇧⌘H)")
@@ -43,9 +39,7 @@ extension CodeScreen {
 
                         Button { model.refreshFileTree() } label: {
                             Image(systemName: "arrow.clockwise")
-                                .frame(width: DesignSystem.IconSize.editorToolbarFrame.width,
-                                       height: DesignSystem.IconSize.editorToolbarFrame.height)
-                                .contentShape(Rectangle())
+                                .iconHitTarget(DesignSystem.IconSize.editorToolbarFrame)
                         }
                         .buttonStyle(.plain).cursorArrow().foregroundStyle(.secondary)
                         .help(L10n("Atualizar arvore de arquivos"))
@@ -212,8 +206,7 @@ extension CodeScreen {
         } label: {
             Image(systemName: icon)
                 .font(DesignSystem.Typography.bodySmall)
-                .frame(width: 26, height: 22)
-                .contentShape(Rectangle())
+                .iconHitTarget(CGSize(width: 26, height: 22))
                 .foregroundStyle(sidebarMode == mode ? .primary : .secondary)
                 .background(sidebarMode == mode ? DesignSystem.Colors.selectionBackground : Color.clear)
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius))

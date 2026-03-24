@@ -202,8 +202,7 @@ struct CodeReviewDiffPane: View {
                 Image(systemName: "plus")
                     .font(DesignSystem.Typography.micro)
                     .foregroundStyle(DesignSystem.Colors.info)
-                    .frame(width: 16, height: 16)
-                    .contentShape(Rectangle())
+                    .iconHitTarget(DesignSystem.IconSize.smallFrame)
             }
             .buttonStyle(.plain)
             .opacity(0.4)

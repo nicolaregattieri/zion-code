@@ -140,9 +140,7 @@ extension CodeScreen {
                 } label: {
                     Image(systemName: "rectangle.topthird.inset.filled")
                         .font(DesignSystem.Typography.bodyMedium)
-                        .frame(width: DesignSystem.IconSize.editorToolbarFrame.width,
-                               height: DesignSystem.IconSize.editorToolbarFrame.height)
-                        .contentShape(Rectangle())
+                        .iconHitTarget(DesignSystem.IconSize.editorToolbarFrame)
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(layout == .editorOnly ? Color.accentColor : .secondary)
@@ -154,9 +152,7 @@ extension CodeScreen {
                 } label: {
                     Image(systemName: "rectangle.split.1x2")
                         .font(DesignSystem.Typography.bodyMedium)
-                        .frame(width: DesignSystem.IconSize.editorToolbarFrame.width,
-                               height: DesignSystem.IconSize.editorToolbarFrame.height)
-                        .contentShape(Rectangle())
+                        .iconHitTarget(DesignSystem.IconSize.editorToolbarFrame)
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(layout == .split ? Color.accentColor : .secondary)
@@ -168,9 +164,7 @@ extension CodeScreen {
                 } label: {
                     Image(systemName: "rectangle.bottomthird.inset.filled")
                         .font(DesignSystem.Typography.bodyMedium)
-                        .frame(width: DesignSystem.IconSize.editorToolbarFrame.width,
-                               height: DesignSystem.IconSize.editorToolbarFrame.height)
-                        .contentShape(Rectangle())
+                        .iconHitTarget(DesignSystem.IconSize.editorToolbarFrame)
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(layout == .terminalOnly ? Color.accentColor : .secondary)

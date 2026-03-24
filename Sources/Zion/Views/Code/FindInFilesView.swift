@@ -223,8 +223,7 @@ struct FindInFilesView: View {
                         Image(systemName: "xmark.circle.fill")
                             .font(DesignSystem.Typography.label)
                             .foregroundStyle(.secondary)
-                            .frame(width: 14, height: 14)
-                            .contentShape(Rectangle())
+                            .iconHitTarget(CGSize(width: 14, height: 14))
                     }
                     .buttonStyle(.plain)
                 }

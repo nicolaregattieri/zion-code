@@ -13,8 +13,7 @@ struct SearchNavButton: View {
             Image(systemName: icon)
                 .font(DesignSystem.Typography.label)
                 .foregroundStyle(isSecondary ? .secondary : .primary)
-                .frame(width: 20, height: 20)
-                .contentShape(Rectangle())
+                .iconHitTarget()
         }
         .buttonStyle(.plain)
         .background(isHovered ? DesignSystem.Interactive.hoverBackground : Color.clear)

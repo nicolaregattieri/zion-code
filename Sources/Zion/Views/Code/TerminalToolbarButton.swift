@@ -15,9 +15,7 @@ struct TerminalToolbarButton: View {
             Image(systemName: icon)
                 .font(DesignSystem.IconSize.toolbar)
                 .foregroundStyle(color)
-                .frame(width: DesignSystem.IconSize.terminalToolbarFrame.width,
-                       height: DesignSystem.IconSize.terminalToolbarFrame.height)
-                .contentShape(Rectangle())
+                .iconHitTarget(DesignSystem.IconSize.terminalToolbarFrame)
         }
         .buttonStyle(.plain)
         .background(isHovered ? DesignSystem.Interactive.hoverBackground : Color.clear)

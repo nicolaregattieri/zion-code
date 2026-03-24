@@ -17,8 +17,7 @@ extension CodeScreen {
                         .frame(width: 28, height: 24)
                         .background(DesignSystem.Colors.glassSubtle)
                         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
-                        .frame(width: 32, height: 26)
-                        .contentShape(Rectangle())
+                        .iconHitTarget(CGSize(width: 32, height: 26))
                 }
                 .buttonStyle(.plain)
                 .help(L10n("editor.replace.placeholder"))
@@ -63,8 +62,7 @@ extension CodeScreen {
                 Button { navigateToPreviousMatch() } label: {
                     Image(systemName: "chevron.up")
                         .font(DesignSystem.Typography.labelMedium)
-                        .frame(width: 20, height: 20)
-                        .contentShape(Rectangle())
+                        .iconHitTarget()
                 }
                 .buttonStyle(.borderless)
                 .disabled(matchCount == 0)
@@ -74,8 +72,7 @@ extension CodeScreen {
                 Button { navigateToNextMatch() } label: {
                     Image(systemName: "chevron.down")
                         .font(DesignSystem.Typography.labelMedium)
-                        .frame(width: 20, height: 20)
-                        .contentShape(Rectangle())
+                        .iconHitTarget()
                 }
                 .buttonStyle(.borderless)
                 .disabled(matchCount == 0)
@@ -89,8 +86,7 @@ extension CodeScreen {
                     Image(systemName: "xmark")
                         .font(DesignSystem.Typography.labelBold)
                         .foregroundStyle(.secondary)
-                        .frame(width: 20, height: 20)
-                        .contentShape(Rectangle())
+                        .iconHitTarget()
                 }
                 .buttonStyle(.plain)
                 .help(L10n("Esc"))
