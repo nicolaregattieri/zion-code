@@ -195,4 +195,77 @@ final class MobileAccessStatusBadgeTests: XCTestCase {
             XCTFail("Shared state should mirror VM state")
         }
     }
+
+    // MARK: - Keep Awake Payload
+
+    func testBuildKeepAwakeStatusPayloadWhenOff() {
+        let previous = UserDefaults.standard.string(forKey: UserDefaultsKeys.MobileAccess.keepAwakeDuration)
+        defer {
+            if let previous {
+                UserDefaults.standard.set(previous, forKey: UserDefaultsKeys.MobileAccess.keepAwakeDuration)
+            } else {
+                UserDefaults.standard.removeObject(forKey: UserDefaultsKeys.MobileAccess.keepAwakeDuration)
+            }
+        }
+
+        UserDefaults.standard.set(KeepAwakeDuration.off.rawValue, forKey: UserDefaultsKeys.MobileAccess.keepAwakeDuration)
+
+        let vm = RepositoryViewModel()
+        vm.isPreventingSleep = false
+        vm.keepAwakeExpiresAt = nil
+
+        let payload = vm.buildKeepAwakeStatusPayload()
+
+        XCTAssertFalse(payload.isActive)
+        XCTAssertNil(payload.expiresAt)
+        XCTAssertEqual(payload.durationLabel, KeepAwakeDuration.off.label)
+    }
+
+    func testBuildKeepAwakeStatusPayloadWhenTimed() {
+        let previous = UserDefaults.standard.string(forKey: UserDefaultsKeys.MobileAccess.keepAwakeDuration)
+        defer {
+            if let previous {
+                UserDefaults.standard.set(previous, forKey: UserDefaultsKeys.MobileAccess.keepAwakeDuration)
+            } else {
+                UserDefaults.standard.removeObject(forKey: UserDefaultsKeys.MobileAccess.keepAwakeDuration)
+            }
+        }
+
+        UserDefaults.standard.set(KeepAwakeDuration.oneHour.rawValue, forKey: UserDefaultsKeys.MobileAccess.keepAwakeDuration)
+
+        let vm = RepositoryViewModel()
+        let expiry = Date.now.addingTimeInterval(3600)
+        vm.isPreventingSleep = true
+        vm.keepAwakeExpiresAt = expiry
+
+        let payload = vm.buildKeepAwakeStatusPayload()
+
+        XCTAssertTrue(payload.isActive)
+        XCTAssertNotNil(payload.expiresAt)
+        XCTAssertEqual(payload.expiresAt!.timeIntervalSince1970, expiry.timeIntervalSince1970, accuracy: 0.001)
+        XCTAssertEqual(payload.durationLabel, KeepAwakeDuration.oneHour.label)
+    }
+
+    func testBuildKeepAwakeStatusPayloadWhenIndefinite() {
+        let previous = UserDefaults.standard.string(forKey: UserDefaultsKeys.MobileAccess.keepAwakeDuration)
+        defer {
+            if let previous {
+                UserDefaults.standard.set(previous, forKey: UserDefaultsKeys.MobileAccess.keepAwakeDuration)
+            } else {
+                UserDefaults.standard.removeObject(forKey: UserDefaultsKeys.MobileAccess.keepAwakeDuration)
+            }
+        }
+
+        UserDefaults.standard.set(KeepAwakeDuration.indefinite.rawValue, forKey: UserDefaultsKeys.MobileAccess.keepAwakeDuration)
+
+        let vm = RepositoryViewModel()
+        vm.isPreventingSleep = true
+        vm.keepAwakeExpiresAt = nil
+
+        let payload = vm.buildKeepAwakeStatusPayload()
+
+        XCTAssertTrue(payload.isActive)
+        XCTAssertNil(payload.expiresAt)
+        XCTAssertEqual(payload.durationLabel, KeepAwakeDuration.indefinite.label)
+    }
 }

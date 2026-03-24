@@ -160,6 +160,7 @@ extension RepositoryViewModel {
         mobileAccessTunnelURL = ""
         isTunnelReady = false
         terminalOutputBuffers.removeAll()
+        promptContextBuffers.removeAll()
         terminalLastSentRows.removeAll()
         hasEnsuredRemoteTerminals = false
         PromptDetector.resetDedup()
@@ -226,6 +227,7 @@ extension RepositoryViewModel {
 
         // Always re-send session list and screen snapshots (handles page refresh / re-pair)
         sendSessionList()
+        sendKeepAwakeStatus()
         sendAllScreenUpdates()
     }
 
@@ -281,8 +283,11 @@ extension RepositoryViewModel {
         // Prompt detection uses stripped text
         if let text = String(data: data, encoding: .utf8) {
             let stripped = stripANSI(text)
-            if !stripped.isEmpty, let detection = PromptDetector.detect(in: stripped) {
-                sendPromptDetected(sessionID: sessionID, detection: detection)
+            if !stripped.isEmpty {
+                appendPromptContext(stripped, for: sessionID)
+                if let detection = PromptDetector.detect(in: stripped) {
+                    sendPromptDetected(sessionID: sessionID, detection: detection)
+                }
             }
         }
 
@@ -578,6 +583,22 @@ extension RepositoryViewModel {
         }
     }
 
+    private func sendKeepAwakeStatus() {
+        let payload = buildKeepAwakeStatusPayload()
+        guard let payloadData = try? JSONEncoder().encode(payload) else { return }
+
+        let message = RemoteMessage(
+            type: .keepAwakeStatus,
+            sessionID: nil,
+            payload: payloadData,
+            timestamp: Date()
+        )
+
+        Task {
+            await remoteAccessServer?.broadcast(message)
+        }
+    }
+
     private func throttleScreenUpdate(for sessionID: UUID) {
         let now = ContinuousClock.now
         let cooldown = Duration.nanoseconds(Constants.RemoteAccess.screenUpdateDebounceNanoseconds)
@@ -647,7 +668,8 @@ extension RepositoryViewModel {
             data: "",
             fullSync: false,
             hasPrompt: true,
-            promptText: detection.promptText
+            promptText: detection.promptText,
+            promptContext: promptContext(for: sessionID)
         )
         guard let payloadData = try? JSONEncoder().encode(promptPayload) else { return }
 
@@ -722,11 +744,22 @@ extension RepositoryViewModel {
         return SessionListPayload(sessions: allSessions)
     }
 
+    func buildKeepAwakeStatusPayload() -> KeepAwakeStatusPayload {
+        let raw = UserDefaults.standard.string(forKey: UserDefaultsKeys.MobileAccess.keepAwakeDuration) ?? "off"
+        let duration = KeepAwakeDuration(rawValue: raw) ?? .off
+
+        return KeepAwakeStatusPayload(
+            isActive: isPreventingSleep,
+            expiresAt: isPreventingSleep ? keepAwakeExpiresAt : nil,
+            durationLabel: duration.label
+        )
+    }
+
     func buildScreenUpdate(for sessionID: UUID) -> ScreenUpdatePayload {
         guard let terminal = terminalForSession(sessionID) else {
             return ScreenUpdatePayload(
                 sessionID: sessionID, data: "", fullSync: true,
-                hasPrompt: false, promptText: nil
+                hasPrompt: false, promptText: nil, promptContext: nil
             )
         }
 
@@ -746,7 +779,7 @@ extension RepositoryViewModel {
         if let lastRows = terminalLastSentRows[sessionID], lastRows == currentRows {
             return ScreenUpdatePayload(
                 sessionID: sessionID, data: "", fullSync: false,
-                hasPrompt: false, promptText: nil
+                hasPrompt: false, promptText: nil, promptContext: nil
             )
         }
 
@@ -759,7 +792,8 @@ extension RepositoryViewModel {
             data: Data(output.utf8).base64EncodedString(),
             fullSync: true,
             hasPrompt: false,
-            promptText: nil
+            promptText: nil,
+            promptContext: nil
         )
     }
 
@@ -946,6 +980,8 @@ extension RepositoryViewModel {
         } else {
             keepAwakeExpiresAt = nil
         }
+
+        sendKeepAwakeStatus()
     }
 
     func releaseSleepAssertion() {
@@ -953,6 +989,7 @@ extension RepositoryViewModel {
         sleepTimerTask = nil
         keepAwakeExpiresAt = nil
         isPreventingSleep = false
+        sendKeepAwakeStatus()
         guard sleepAssertionID != 0 else { return }
         IOPMAssertionRelease(sleepAssertionID)
         sleepAssertionID = 0
@@ -977,6 +1014,28 @@ extension RepositoryViewModel {
             withTemplate: ""
         )
     }
+
+    private func appendPromptContext(_ text: String, for sessionID: UUID) {
+        let newLines = text
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        guard !newLines.isEmpty else { return }
+
+        var lines = promptContextBuffers[sessionID] ?? []
+        lines.append(contentsOf: newLines)
+        if lines.count > 80 {
+            lines = Array(lines.suffix(80))
+        }
+        promptContextBuffers[sessionID] = lines
+    }
+
+    private func promptContext(for sessionID: UUID) -> String? {
+        let lines = promptContextBuffers[sessionID] ?? []
+        guard !lines.isEmpty else { return nil }
+        return Array(lines.suffix(40)).joined(separator: "\n")
+    }
 }
 
 // MARK: - RemoteAccessServer callback helpers
@@ -990,4 +1049,3 @@ extension RemoteAccessServer {
         self.onConnectionCountChanged = onConnectionCount
     }
 }
-

@@ -5,6 +5,7 @@ import Foundation
 enum RemoteMessageType: String, Codable, Sendable {
     case pair
     case sessionList
+    case keepAwakeStatus
     case screenUpdate
     case streamData
     case promptDetected
@@ -39,6 +40,12 @@ struct SessionListPayload: Codable, Sendable {
     let sessions: [SessionInfo]
 }
 
+struct KeepAwakeStatusPayload: Codable, Sendable {
+    let isActive: Bool
+    let expiresAt: Date?
+    let durationLabel: String
+}
+
 struct PairingPayload: Codable, Sendable {
     let token: String
     let mode: String?
@@ -50,6 +57,7 @@ struct ScreenUpdatePayload: Codable, Sendable {
     let fullSync: Bool         // true = client resets terminal before writing
     let hasPrompt: Bool
     let promptText: String?
+    let promptContext: String?
 }
 
 struct SendInputPayload: Codable, Sendable {
