@@ -280,6 +280,22 @@ extension RepositoryViewModel {
         // Mark this session as dirty (has new output since last send)
         terminalOutputBuffers[sessionID] = Data([1])
 
+        let streamPayload = StreamDataPayload(
+            sessionID: sessionID,
+            data: data.base64EncodedString()
+        )
+        if let payloadData = try? JSONEncoder().encode(streamPayload) {
+            let message = RemoteMessage(
+                type: .streamData,
+                sessionID: sessionID,
+                payload: payloadData,
+                timestamp: Date()
+            )
+            Task {
+                await remoteAccessServer?.broadcast(message)
+            }
+        }
+
         // Prompt detection uses stripped text
         if let text = String(data: data, encoding: .utf8) {
             let stripped = stripANSI(text)
