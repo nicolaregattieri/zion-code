@@ -146,9 +146,7 @@ extension CodeScreen {
                 } label: {
                     Image(systemName: "square.split.2x1")
                         .font(DesignSystem.Typography.bodyMedium)
-                        .frame(width: DesignSystem.IconSize.editorToolbarFrame.width,
-                               height: DesignSystem.IconSize.editorToolbarFrame.height)
-                        .contentShape(Rectangle())
+                        .iconHitTarget(DesignSystem.IconSize.editorToolbarFrame)
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(.secondary)
@@ -160,9 +158,7 @@ extension CodeScreen {
                 } label: {
                     Image(systemName: "square.split.1x2")
                         .font(DesignSystem.Typography.bodyMedium)
-                        .frame(width: DesignSystem.IconSize.editorToolbarFrame.width,
-                               height: DesignSystem.IconSize.editorToolbarFrame.height)
-                        .contentShape(Rectangle())
+                        .iconHitTarget(DesignSystem.IconSize.editorToolbarFrame)
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(.secondary)

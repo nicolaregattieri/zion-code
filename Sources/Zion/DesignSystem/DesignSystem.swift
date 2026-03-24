@@ -319,6 +319,28 @@ struct DesignSystem {
         static let statusFrame = CGSize(width: 32, height: 32)
     }
 
+    // MARK: - Hit Target Modifier
+
+    /// Applies a fixed frame + rectangular content shape inside a button label
+    /// so the entire area is clickable (required for .plain/.borderless buttons).
+    struct IconHitTarget: ViewModifier {
+        let size: CGSize
+        func body(content: Content) -> some View {
+            content
+                .frame(width: size.width, height: size.height)
+                .contentShape(Rectangle())
+        }
+    }
+}
+
+extension View {
+    /// Makes the full frame area clickable. Use inside button labels for .plain/.borderless styles.
+    func iconHitTarget(_ size: CGSize = DesignSystem.IconSize.compactFrame) -> some View {
+        modifier(DesignSystem.IconHitTarget(size: size))
+    }
+}
+
+extension DesignSystem {
     // MARK: - Interactive State Tokens
 
     struct Interactive {

@@ -20,9 +20,7 @@ struct VoiceInputButton: View {
             Image(systemName: speechService.isActive ? "mic.fill" : "mic")
                 .font(DesignSystem.IconSize.toolbar)
                 .foregroundStyle(buttonColor)
-                .frame(width: DesignSystem.IconSize.terminalToolbarFrame.width,
-                       height: DesignSystem.IconSize.terminalToolbarFrame.height)
-                .contentShape(Rectangle())
+                .iconHitTarget(DesignSystem.IconSize.terminalToolbarFrame)
                 .overlay(alignment: .topTrailing) {
                     if speechService.isActive {
                         Circle()
