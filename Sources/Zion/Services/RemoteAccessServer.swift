@@ -15,6 +15,9 @@ actor RemoteAccessServer {
     // Pending events queue per token (consumed on poll)
     private var pendingEvents: [String: [RemoteMessage]] = [:]
 
+    // WebSocket connections: token → NWConnection (persistent, messages pushed directly)
+    private var wsConnections: [String: NWConnection] = [:]
+
     // Rate limiting: token → [request timestamps]
     private var requestTimestamps: [String: [ContinuousClock.Instant]] = [:]
 
@@ -39,9 +42,12 @@ actor RemoteAccessServer {
 
     // MARK: - Lifecycle
 
+    private var wsListener: NWListener?
+
     func start(port: UInt16, key: SymmetricKey) throws {
         pairingKey = key
 
+        // HTTP listener (existing polling clients + web client)
         let parameters = NWParameters.tcp
         let nwPort = NWEndpoint.Port(rawValue: port)!
         let newListener = try NWListener(using: parameters, on: nwPort)
@@ -58,12 +64,41 @@ actor RemoteAccessServer {
 
         listener = newListener
         newListener.start(queue: .global(qos: .userInitiated))
+
+        // WebSocket listener (native iOS app)
+        let wsParams = NWParameters.tcp
+        let wsOptions = NWProtocolWebSocket.Options()
+        wsOptions.autoReplyPing = true
+        wsParams.defaultProtocolStack.applicationProtocols.insert(wsOptions, at: 0)
+
+        let wsPort = NWEndpoint.Port(rawValue: port + 1)!
+        let newWSListener = try NWListener(using: wsParams, on: wsPort)
+
+        newWSListener.stateUpdateHandler = { [weak self] state in
+            guard let self else { return }
+            Task { await self.handleWSListenerState(state) }
+        }
+
+        newWSListener.newConnectionHandler = { [weak self] connection in
+            guard let self else { return }
+            Task { await self.handleNewWSConnection(connection) }
+        }
+
+        wsListener = newWSListener
+        newWSListener.start(queue: .global(qos: .userInitiated))
+
         startDisconnectChecker()
     }
 
     func stop() {
         listener?.cancel()
         listener = nil
+        wsListener?.cancel()
+        wsListener = nil
+        for (_, conn) in wsConnections {
+            conn.cancel()
+        }
+        wsConnections.removeAll()
         disconnectCheckTask?.cancel()
         disconnectCheckTask = nil
         authenticatedTokens.removeAll()
@@ -83,6 +118,10 @@ actor RemoteAccessServer {
     func disconnectAll() {
         authenticatedTokens.removeAll()
         pendingEvents.removeAll()
+        for (_, conn) in wsConnections {
+            conn.cancel()
+        }
+        wsConnections.removeAll()
         lastPollTime.removeAll()
         requestTimestamps.removeAll()
         tokenModes.removeAll()
@@ -172,9 +211,16 @@ actor RemoteAccessServer {
 
     func broadcast(_ message: RemoteMessage) async {
         for token in authenticatedTokens {
+            // WebSocket clients: push directly
+            if let wsConn = wsConnections[token] {
+                let isLAN = tokenModes[token] == true
+                wsSendMessage(message, to: wsConn, isLAN: isLAN, key: pairingKey)
+                continue
+            }
+
+            // HTTP polling clients: queue for next poll
             var queue = pendingEvents[token] ?? []
             queue.append(message)
-            // Keep last N events to prevent memory growth
             if queue.count > Constants.RemoteAccess.maxPendingEventsPerToken {
                 queue = Array(queue.suffix(Constants.RemoteAccess.maxPendingEventsPerToken))
             }
@@ -479,6 +525,171 @@ actor RemoteAccessServer {
     private func handleAction(params: [String: String], request: String, body: Data, connection: NWConnection) {
         // Same as handleInput — both go through onMessageReceived
         handleInput(params: params, request: request, body: body, connection: connection)
+    }
+
+    // MARK: - WebSocket
+
+    private func handleWSListenerState(_ state: NWListener.State) {
+        switch state {
+        case .ready:
+            Task { @MainActor in
+                DiagnosticLogger.shared.log(.info, "WebSocket server ready", source: "RemoteAccessServer")
+            }
+        case .failed(let error):
+            Task { @MainActor in
+                DiagnosticLogger.shared.log(.error, "WebSocket listener failed", context: error.localizedDescription, source: "RemoteAccessServer")
+            }
+        default:
+            break
+        }
+    }
+
+    private func handleNewWSConnection(_ connection: NWConnection) {
+        connection.stateUpdateHandler = { [weak self] state in
+            guard let self else { return }
+            switch state {
+            case .ready:
+                Task { await self.wsReadMessage(connection: connection) }
+            case .failed, .cancelled:
+                Task { await self.wsConnectionClosed(connection: connection) }
+            default:
+                break
+            }
+        }
+        connection.start(queue: .global(qos: .userInitiated))
+    }
+
+    private func wsReadMessage(connection: NWConnection) {
+        connection.receiveMessage { [weak self] data, context, _, error in
+            guard let self else { return }
+            Task {
+                if let error {
+                    await self.wsConnectionClosed(connection: connection)
+                    return
+                }
+
+                guard let data, !data.isEmpty else {
+                    // Keep reading
+                    await self.wsReadMessage(connection: connection)
+                    return
+                }
+
+                await self.handleWSMessage(data: data, connection: connection)
+                await self.wsReadMessage(connection: connection)
+            }
+        }
+    }
+
+    private func handleWSMessage(data: Data, connection: NWConnection) {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+
+        guard let message = try? decoder.decode(RemoteMessage.self, from: data) else {
+            return
+        }
+
+        switch message.type {
+        case .sendInput, .sendAction:
+            // Check if this connection is authenticated
+            guard let token = wsConnectionToken(for: connection) else {
+                // First message must be a pair request
+                return
+            }
+            if isRateLimited(token: token) { return }
+            Task { await onMessageReceived?(message) }
+
+        case .heartbeat:
+            if let token = wsConnectionToken(for: connection) {
+                lastPollTime[token] = ContinuousClock.now
+            }
+
+        case .sessionList:
+            // Client is pairing: payload contains token
+            if let pairData = try? decoder.decode(WSPairPayload.self, from: message.payload) {
+                wsHandlePair(token: pairData.token, mode: pairData.mode, connection: connection)
+            }
+
+        default:
+            break
+        }
+    }
+
+    private struct WSPairPayload: Codable {
+        let token: String
+        let mode: String?
+    }
+
+    private func wsHandlePair(token: String, mode: String?, connection: NWConnection) {
+        guard authenticatedTokens.contains(token) || isValidPairingToken(token) || token == persistedToken else {
+            wsSendJSON(connection: connection, json: #"{"error":"invalid_token"}"#)
+            return
+        }
+
+        if !authenticatedTokens.contains(token),
+           authenticatedTokens.count >= Constants.RemoteAccess.maxConcurrentConnections {
+            wsSendJSON(connection: connection, json: #"{"error":"max_connections"}"#)
+            return
+        }
+
+        authenticatedTokens.insert(token)
+        tokenModes[token] = (mode == "lan")
+        lastPollTime[token] = ContinuousClock.now
+
+        // Store WebSocket connection for push delivery
+        wsConnections[token] = connection
+
+        let count = authenticatedTokens.count
+        Task { await onConnectionCountChanged?(count) }
+
+        wsSendJSON(connection: connection, json: #"{"status":"paired"}"#)
+    }
+
+    private func wsConnectionToken(for connection: NWConnection) -> String? {
+        for (token, conn) in wsConnections where conn === connection {
+            return token
+        }
+        return nil
+    }
+
+    private func wsConnectionClosed(connection: NWConnection) {
+        guard let token = wsConnectionToken(for: connection) else { return }
+        wsConnections.removeValue(forKey: token)
+        authenticatedTokens.remove(token)
+        if token != persistedToken {
+            pendingEvents.removeValue(forKey: token)
+        }
+        lastPollTime.removeValue(forKey: token)
+        requestTimestamps.removeValue(forKey: token)
+        tokenModes.removeValue(forKey: token)
+
+        let count = authenticatedTokens.count
+        Task { await onConnectionCountChanged?(count) }
+    }
+
+    /// Send a JSON string over WebSocket
+    private func wsSendJSON(connection: NWConnection, json: String) {
+        let metadata = NWProtocolWebSocket.Metadata(opcode: .text)
+        let context = NWConnection.ContentContext(identifier: "ws", metadata: [metadata])
+        connection.send(content: Data(json.utf8), contentContext: context, completion: .contentProcessed { _ in })
+    }
+
+    /// Send a RemoteMessage to a specific WebSocket connection
+    private func wsSendMessage(_ message: RemoteMessage, to connection: NWConnection, isLAN: Bool, key: SymmetricKey?) {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        guard let jsonData = try? encoder.encode(message) else { return }
+
+        let sendData: Data
+        if isLAN {
+            sendData = jsonData
+        } else {
+            guard let key, let encrypted = try? RemoteAccessEncryption.encrypt(jsonData, using: key) else { return }
+            sendData = encrypted
+        }
+
+        let metadata = NWProtocolWebSocket.Metadata(opcode: isLAN ? .text : .binary)
+        let context = NWConnection.ContentContext(identifier: "ws", metadata: [metadata])
+        connection.send(content: sendData, contentContext: context, completion: .contentProcessed { _ in })
     }
 
     // MARK: - HTTP Helpers
