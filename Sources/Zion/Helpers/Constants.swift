@@ -89,6 +89,7 @@ enum Constants {
 
     enum RemoteAccess {
         static let defaultPort: UInt16 = 19_847
+        static let wsPort: UInt16 = 19_848
         static let maxPendingEventsPerToken = 100
         static let heartbeatIntervalNanoseconds: UInt64 = 15_000_000_000
         static let tunnelURLTimeoutNanoseconds: UInt64 = 30_000_000_000

@@ -3,6 +3,7 @@ import Foundation
 // MARK: - Wire Protocol
 
 enum RemoteMessageType: String, Codable, Sendable {
+    case pair
     case sessionList
     case screenUpdate
     case streamData
@@ -36,6 +37,11 @@ struct SessionInfo: Codable, Sendable {
 
 struct SessionListPayload: Codable, Sendable {
     let sessions: [SessionInfo]
+}
+
+struct PairingPayload: Codable, Sendable {
+    let token: String
+    let mode: String?
 }
 
 struct ScreenUpdatePayload: Codable, Sendable {
