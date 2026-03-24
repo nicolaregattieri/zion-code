@@ -40,9 +40,7 @@ extension ContentView {
             if model.repositoryURL != nil {
                 ControlGroup {
                     Button {
-                        withAnimation(DesignSystem.Motion.panel) {
-                            zenModeEnabled = true
-                        }
+                        toggleZenMode()
                     } label: { Image(systemName: "arrow.up.left.and.arrow.down.right") }
                         .help(L10n("zen.enter") + " (⌘T)")
                         .accessibilityLabel(L10n("zen.enter"))
