@@ -20,10 +20,10 @@ struct ClipboardPopoverButton: View {
                 }
             }
             .foregroundStyle(isPresented ? Color.accentColor : accentColor)
+            .frame(height: 24)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.borderless)
-        .frame(height: 24)
-        .contentShape(Rectangle())
         .help(L10n("Clipboard"))
         .popover(isPresented: $isPresented) {
             ClipboardDrawer(model: model)
