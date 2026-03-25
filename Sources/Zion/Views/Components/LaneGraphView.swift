@@ -56,21 +56,15 @@ struct LaneGraphView: View {
             for edge in commit.outgoingEdges where edge.from != edge.to {
                 let startX = laneX(edge.from)
                 let endX = laneX(edge.to)
-                let laneDist = abs(endX - startX)
-                let arcHeight = min(laneDist * 1.2, (size.height - centerY) * 0.6)
-                let arcTop = centerY + 4
-                let arcBottom = arcTop + arcHeight
-                let arcMidY = (arcTop + arcBottom) / 2
+                let drop = size.height - centerY
 
                 var edgePath = Path()
                 edgePath.move(to: CGPoint(x: startX, y: centerY))
-                edgePath.addLine(to: CGPoint(x: startX, y: arcTop))
                 edgePath.addCurve(
-                    to: CGPoint(x: endX, y: arcBottom),
-                    control1: CGPoint(x: startX, y: arcMidY),
-                    control2: CGPoint(x: endX, y: arcMidY)
+                    to: CGPoint(x: endX, y: size.height),
+                    control1: CGPoint(x: startX, y: centerY + drop * 0.6),
+                    control2: CGPoint(x: endX, y: centerY + drop * 0.4)
                 )
-                edgePath.addLine(to: CGPoint(x: endX, y: size.height))
                 context.stroke(edgePath, with: .color(color(forKey: edge.colorKey).opacity(0.8)),
                                style: StrokeStyle(lineWidth: 2.0, lineCap: .round, lineJoin: .round))
             }
