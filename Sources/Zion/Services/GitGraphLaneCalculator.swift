@@ -85,6 +85,7 @@ struct GitGraphLaneCalculator {
             let lane = laneForCommit(
                 commit.hash,
                 isMainChain: isMainChain,
+                mainChain: mainChain,
                 hashes: &activeLaneHashes,
                 colorKeys: &activeLaneColorKeys
             )
@@ -186,6 +187,7 @@ struct GitGraphLaneCalculator {
     /// Ensures a main-chain hash occupies lane 0 by relocating whatever is currently there.
     private func evictToLane0(
         _ hash: String,
+        mainChain: Set<String>,
         hashes: inout [String?],
         colorKeys: inout [Int?]
     ) -> Int {
@@ -198,8 +200,13 @@ struct GitGraphLaneCalculator {
 
         // Find the lane this hash currently occupies (if any) so we can relocate the occupant there
         let previousLane = hashes.firstIndex(where: { $0 == hash })
+        let previousColorKey = previousLane.flatMap { colorKeys[$0] }
         let occupant = hashes[0]
         let occupantColorKey = colorKeys[0]
+        let shouldDropExistingMainOccupant =
+            previousLane == nil &&
+            occupant.map(mainChain.contains) == true &&
+            mainChain.contains(hash)
 
         // Clear the hash's previous position FIRST to avoid overwriting the occupant
         // when targetLane == previousLane (swap case).
@@ -209,7 +216,7 @@ struct GitGraphLaneCalculator {
         }
 
         // Relocate the lane 0 occupant (if any) to make room
-        if let occupant {
+        if let occupant, !shouldDropExistingMainOccupant {
             let targetLane: Int
             if let previousLane {
                 // Swap: put the occupant where the main-chain hash was
@@ -224,17 +231,19 @@ struct GitGraphLaneCalculator {
 
         // Place the main-chain hash at lane 0
         hashes[0] = hash
+        colorKeys[0] = previousColorKey
         return 0
     }
 
     private func laneForCommit(
         _ hash: String,
         isMainChain: Bool,
+        mainChain: Set<String>,
         hashes: inout [String?],
         colorKeys: inout [Int?]
     ) -> Int {
         if isMainChain {
-            return evictToLane0(hash, hashes: &hashes, colorKeys: &colorKeys)
+            return evictToLane0(hash, mainChain: mainChain, hashes: &hashes, colorKeys: &colorKeys)
         }
         if let existing = hashes.firstIndex(where: { $0 == hash }) {
             return existing
@@ -272,7 +281,7 @@ struct GitGraphLaneCalculator {
             // Main-chain commit already reserved at wrong lane — evict to lane 0
             let lane: Int
             if isMain && existing != 0 {
-                lane = evictToLane0(hash, hashes: &hashes, colorKeys: &colorKeys)
+                lane = evictToLane0(hash, mainChain: mainChain, hashes: &hashes, colorKeys: &colorKeys)
             } else {
                 lane = existing
             }
@@ -313,7 +322,7 @@ struct GitGraphLaneCalculator {
                 )
                 return (0, colorKey)
             }
-            lane = evictToLane0(hash, hashes: &hashes, colorKeys: &colorKeys)
+            lane = evictToLane0(hash, mainChain: mainChain, hashes: &hashes, colorKeys: &colorKeys)
         } else {
             lane = firstAvailableLane(preferred: preferred, hashes: &hashes, colorKeys: &colorKeys)
         }
