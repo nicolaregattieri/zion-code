@@ -225,6 +225,7 @@
 "Zion Code" = "Zion Code";
 "Modo editor livre" = "Modo editor libre";
 "Abrir Pasta" = "Abrir Carpeta";
+"Abra uma pasta para acessar %@" = "Abre una carpeta para acceder a %@";
 "Abrir o repositorio no seu editor ou terminal favorito." = "Abre el repositorio en el editor integrado de Zion.";
 
 // Toolbar
@@ -2161,6 +2162,8 @@
 "shortcuts.resetAll" = "Restablecer Todos los Atajos";
 "shortcuts.reset" = "Restablecer";
 "shortcuts.replace" = "Reemplazar";
+"menu.undo" = "Deshacer";
+"menu.redo" = "Rehacer";
 "shortcuts.searchPlaceholder" = "Buscar atajos...";
 
 // Missing keys (sync with en)

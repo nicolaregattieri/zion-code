@@ -69,7 +69,28 @@ struct FindInFilesMatch: Identifiable {
     let file: String
     let line: Int
     let preview: String
-    var id: String { "\(file):\(line)" }
+    let column: Int?
+    let matchLength: Int?
+    var id: String {
+        if let column {
+            return "\(file):\(line):\(column)"
+        }
+        return "\(file):\(line)"
+    }
+
+    init(
+        file: String,
+        line: Int,
+        preview: String,
+        column: Int? = nil,
+        matchLength: Int? = nil
+    ) {
+        self.file = file
+        self.line = line
+        self.preview = preview
+        self.column = column
+        self.matchLength = matchLength
+    }
 }
 
 struct FindInFilesFileResult: Identifiable {

@@ -4,6 +4,13 @@ import XCTest
 @MainActor
 final class RepositoryViewModelFileBrowserTests: XCTestCase {
 
+    private func makeTemporaryDirectory() throws -> URL {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        return directory
+    }
+
     // MARK: - parseFindInFilesOutput
 
     func testParseFindInFilesOutputMultipleMatchesAcrossFiles() {
@@ -65,12 +72,136 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
         XCTAssertEqual(results[0].matches[0].preview, "# Project Title")
     }
 
+    func testParseFindInFilesOutputWithQueryTracksEachMatchColumn() {
+        let output = "README.md:1:foo foo foo"
+
+        let results = RepositoryViewModel.parseFindInFilesOutput(output, query: "foo", maxMatches: 100)
+
+        XCTAssertEqual(results.count, 1)
+        XCTAssertEqual(results[0].matches.count, 3)
+        XCTAssertEqual(results[0].matches.compactMap(\.column), [1, 5, 9])
+        XCTAssertEqual(results[0].matches.compactMap(\.matchLength), [3, 3, 3])
+        XCTAssertEqual(Set(results[0].matches.map(\.id)).count, 3)
+    }
+
+    // MARK: - replace in files
+
+    func testReplaceInFileUsesSelectedMatchColumnOnRepeatedLine() throws {
+        let vm = RepositoryViewModel()
+        let tempDir = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let fileURL = tempDir.appendingPathComponent("App.swift")
+        try "foo foo foo\n".write(to: fileURL, atomically: true, encoding: .utf8)
+        vm.repositoryURL = tempDir
+
+        let didReplace = vm.replaceInFile(
+            match: FindInFilesMatch(file: "App.swift", line: 1, preview: "foo foo foo", column: 5, matchLength: 3),
+            query: "foo",
+            replacement: "bar"
+        )
+
+        XCTAssertTrue(didReplace)
+        XCTAssertEqual(try String(contentsOf: fileURL, encoding: .utf8), "foo bar foo\n")
+    }
+
+    func testReplaceAllInFilesUpdatesActiveEditorState() throws {
+        let vm = RepositoryViewModel()
+        let tempDir = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let fileURL = tempDir.appendingPathComponent("App.swift")
+        try "foo foo\n".write(to: fileURL, atomically: true, encoding: .utf8)
+        vm.repositoryURL = tempDir
+
+        let item = FileItem(url: fileURL, isDirectory: false, children: nil)
+        vm.openedFiles = [item]
+        vm.selectedCodeFile = item
+        vm.activeFileID = item.id
+        vm.originalFileContents[item.id] = "foo foo\n"
+        vm.draftFileContents[item.id] = "foo foo\n"
+        vm.codeFileContent = "foo foo\n"
+
+        let replacementCount = vm.replaceAllInFiles(
+            results: [
+                FindInFilesFileResult(
+                    file: "App.swift",
+                    matches: [
+                        FindInFilesMatch(file: "App.swift", line: 1, preview: "foo foo", column: 1, matchLength: 3),
+                        FindInFilesMatch(file: "App.swift", line: 1, preview: "foo foo", column: 5, matchLength: 3),
+                    ]
+                )
+            ],
+            query: "foo",
+            replacement: "bar"
+        )
+
+        XCTAssertEqual(replacementCount, 2)
+        XCTAssertEqual(try String(contentsOf: fileURL, encoding: .utf8), "bar bar\n")
+        XCTAssertEqual(vm.codeFileContent, "bar bar\n")
+        XCTAssertEqual(vm.draftFileContents[item.id], "bar bar\n")
+        XCTAssertEqual(vm.originalFileContents[item.id], "bar bar\n")
+        XCTAssertFalse(vm.unsavedFiles.contains(item.id))
+    }
+
+    func testReplaceAllInFilesUndoRestoresDiskAndEditorState() throws {
+        let vm = RepositoryViewModel()
+
+        let tempDir = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let fileURL = tempDir.appendingPathComponent("App.swift")
+        try "foo foo\n".write(to: fileURL, atomically: true, encoding: .utf8)
+        vm.repositoryURL = tempDir
+
+        let item = FileItem(url: fileURL, isDirectory: false, children: nil)
+        vm.openedFiles = [item]
+        vm.selectedCodeFile = item
+        vm.activeFileID = item.id
+        vm.originalFileContents[item.id] = "foo foo\n"
+        vm.draftFileContents[item.id] = "foo foo\n"
+        vm.codeFileContent = "foo foo\n"
+
+        let replacementCount = vm.replaceAllInFiles(
+            results: [
+                FindInFilesFileResult(
+                    file: "App.swift",
+                    matches: [
+                        FindInFilesMatch(file: "App.swift", line: 1, preview: "foo foo", column: 1, matchLength: 3),
+                        FindInFilesMatch(file: "App.swift", line: 1, preview: "foo foo", column: 5, matchLength: 3),
+                    ]
+                )
+            ],
+            query: "foo",
+            replacement: "bar"
+        )
+
+        XCTAssertEqual(replacementCount, 2)
+        XCTAssertTrue(vm.hasPendingWorkspaceReplaceUndo)
+
+        vm.performPreferredUndo()
+
+        XCTAssertEqual(try String(contentsOf: fileURL, encoding: .utf8), "foo foo\n")
+        XCTAssertEqual(vm.codeFileContent, "foo foo\n")
+        XCTAssertEqual(vm.draftFileContents[item.id], "foo foo\n")
+        XCTAssertEqual(vm.originalFileContents[item.id], "foo foo\n")
+        XCTAssertFalse(vm.unsavedFiles.contains(item.id))
+        XCTAssertTrue(vm.hasPendingWorkspaceReplaceRedo)
+
+        vm.performPreferredRedo()
+
+        XCTAssertEqual(try String(contentsOf: fileURL, encoding: .utf8), "bar bar\n")
+        XCTAssertEqual(vm.codeFileContent, "bar bar\n")
+        XCTAssertEqual(vm.draftFileContents[item.id], "bar bar\n")
+        XCTAssertEqual(vm.originalFileContents[item.id], "bar bar\n")
+        XCTAssertFalse(vm.unsavedFiles.contains(item.id))
+    }
+
     // MARK: - isTextFile
 
     func testIsTextFileAcceptsDotEnv() throws {
         let vm = RepositoryViewModel()
-        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
-        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        let tempDir = try makeTemporaryDirectory()
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
         let envFile = tempDir.appendingPathComponent(".env")
@@ -82,8 +213,7 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
 
     func testIsTextFileRejectsBinaryWithoutExtension() throws {
         let vm = RepositoryViewModel()
-        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
-        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        let tempDir = try makeTemporaryDirectory()
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
         let binaryFile = tempDir.appendingPathComponent("payload")

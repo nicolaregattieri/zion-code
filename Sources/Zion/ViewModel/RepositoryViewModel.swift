@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import SwiftUI
 import CryptoKit
@@ -7,6 +8,17 @@ import IOKit.pwr_mgt
 
 @Observable @MainActor
 final class RepositoryViewModel {
+    final class WeakReference {
+        weak var value: RepositoryViewModel?
+    }
+
+    struct ReplaceUndoEntry {
+        let targetContents: [String: String]
+        let inverseContents: [String: String]
+    }
+
+    static let activeReference = WeakReference()
+
     enum CommitDetailTab {
         case details
         case aiReview
@@ -35,6 +47,12 @@ final class RepositoryViewModel {
     }
 
     var repositoryURL: URL?
+    var hasOpenWorkspace: Bool { repositoryURL != nil }
+    var hasGitWorkspace: Bool { repositoryURL != nil && isGitRepository }
+
+    func canAccess(_ section: AppSection) -> Bool {
+        section == .code || hasOpenWorkspace
+    }
     var currentBranch: String = "-" {
         didSet {
             guard currentBranch != oldValue else { return }
@@ -445,8 +463,18 @@ final class RepositoryViewModel {
     @ObservationIgnored var originalFileContents: [String: String] = [:]
     @ObservationIgnored var draftFileContents: [String: String] = [:]
     @ObservationIgnored var isApplyingEditorContent: Bool = false
+    @ObservationIgnored var replaceUndoStack: [ReplaceUndoEntry] = []
+    @ObservationIgnored var replaceRedoStack: [ReplaceUndoEntry] = []
     @ObservationIgnored var dirtyFileCloseDecisionHandler: ((FileItem) -> EditorDirtyCloseDecision)? = nil
     @ObservationIgnored var untitledCounter: Int = 0
+
+    var hasPendingWorkspaceReplaceUndo: Bool {
+        !replaceUndoStack.isEmpty
+    }
+
+    var hasPendingWorkspaceReplaceRedo: Bool {
+        !replaceRedoStack.isEmpty
+    }
 
     // File browser clipboard (cut/copy/paste)
     @ObservationIgnored var fileBrowserClipboard: (urls: [URL], isCut: Bool)?

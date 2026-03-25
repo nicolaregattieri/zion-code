@@ -10,6 +10,11 @@ extension RepositoryViewModel {
         refreshRepository(setBusy: true, origin: .userInitiated)
     }
 
+    func refreshWorkspace() {
+        refreshFileTree()
+        refreshRepository(setBusy: true, origin: .userInitiated)
+    }
+
     func selectCommit(_ commitID: String?) {
         if selectedCommitID != commitID {
             selectedCommitFile = nil
@@ -481,7 +486,9 @@ extension RepositoryViewModel {
                 if recoverySnapshotsRepositoryPath == repositoryURL.path {
                     refreshRecoverySnapshots(includeDangling: false)
                 }
-                let refreshedStatusMessage = L10n("Repositorio carregado: %@ · %@ commits", repositoryURL.lastPathComponent, "\(payload.commits.count)")
+                let refreshedStatusMessage = payload.isGitRepository
+                    ? L10n("Repositorio carregado: %@ · %@ commits", repositoryURL.lastPathComponent, "\(payload.commits.count)")
+                    : L10n("Este diretorio nao possui um repositorio Git inicializado.")
                 if statusMessage != refreshedStatusMessage {
                     statusMessage = refreshedStatusMessage
                 }

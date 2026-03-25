@@ -8,6 +8,18 @@ extension ZionTextView {
         let flags = event.modifierFlags.intersection([.command, .option, .shift, .control])
         let key = event.charactersIgnoringModifiers?.lowercased()
 
+        if flags == .command, key == "z" {
+            DiagnosticLogger.shared.log(.info, "editor.cmd+z intercepted", context: currentFilePath, source: #function)
+            RepositoryViewModel.activeReference.value?.performPreferredUndo()
+            return true
+        }
+
+        if flags == [.command, .shift], key == "z" {
+            DiagnosticLogger.shared.log(.info, "editor.cmd+shift+z intercepted", context: currentFilePath, source: #function)
+            RepositoryViewModel.activeReference.value?.performPreferredRedo()
+            return true
+        }
+
         if (flags == .command || flags == .control), key == "f" {
             emitFindSeedFromSelection()
             return false
@@ -39,19 +51,32 @@ extension ZionTextView {
 
     override func keyDown(with event: NSEvent) {
         let flags = event.modifierFlags.intersection([.command, .option, .shift, .control])
+        let key = event.charactersIgnoringModifiers?.lowercased()
 
-        if flags == .command, event.charactersIgnoringModifiers?.lowercased() == "g" {
+        if flags == .command, key == "z" {
+            DiagnosticLogger.shared.log(.info, "editor.cmd+z keyDown", context: currentFilePath, source: #function)
+            RepositoryViewModel.activeReference.value?.performPreferredUndo()
+            return
+        }
+
+        if flags == [.command, .shift], key == "z" {
+            DiagnosticLogger.shared.log(.info, "editor.cmd+shift+z keyDown", context: currentFilePath, source: #function)
+            RepositoryViewModel.activeReference.value?.performPreferredRedo()
+            return
+        }
+
+        if flags == .command, key == "g" {
             onFindNextShortcut?()
             return
         }
 
-        if flags == [.command, .shift], event.charactersIgnoringModifiers?.lowercased() == "g" {
+        if flags == [.command, .shift], key == "g" {
             onFindPreviousShortcut?()
             return
         }
 
         // VSCode-like command: add next occurrence selection.
-        if flags == .command, event.charactersIgnoringModifiers?.lowercased() == "d" {
+        if flags == .command, key == "d" {
             selectNextOccurrence()
             return
         }
@@ -69,7 +94,7 @@ extension ZionTextView {
 
         // Format Document (⇧⌥F) — also intercept here because NSTextView
         // may bypass performKeyEquivalent for Option-modified keys.
-        if flags == [.shift, .option], event.charactersIgnoringModifiers?.lowercased() == "f" {
+        if flags == [.shift, .option], key == "f" {
             NotificationCenter.default.post(name: .formatDocument, object: nil)
             return
         }

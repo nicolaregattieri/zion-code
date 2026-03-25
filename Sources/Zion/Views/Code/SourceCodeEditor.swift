@@ -189,7 +189,11 @@ struct SourceCodeEditor: NSViewRepresentable {
         }
 
         // Update text
-        if text != textView.string || fileChanged {
+        let externalTextChange = text != textView.string
+        if externalTextChange || fileChanged {
+            // Any model-driven content swap invalidates NSTextView's local undo stack.
+            // Replace-in-files uses a workspace undo path instead.
+            textView.undoManager?.removeAllActions()
             let sel = textView.selectedRange()
             textView.string = text
             let clampedLoc = min(sel.location, (text as NSString).length)

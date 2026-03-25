@@ -159,6 +159,8 @@ extension RepositoryViewModel {
         isSwitchingRepository = true
         logger.log(.info, "switch.start", context: "target=\(url.lastPathComponent) token=\(switchToken.uuidString.prefix(8))", source: #function)
         cancelRepositoryBackgroundActivityForSwitch()
+        replaceUndoStack.removeAll()
+        replaceRedoStack.removeAll()
         dismissPendingChangesSummary()
         lastNotifiedBehindCount = 0
         observedOpenPRIDs = nil

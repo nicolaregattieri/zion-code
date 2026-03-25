@@ -245,27 +245,68 @@ extension CodeScreen {
     func replaceCurrent() {
         guard matchCount > 0, !searchQuery.isEmpty else { return }
         guard let regex = buildSearchRegex() else { return }
-        let nsString = model.codeFileContent as NSString
-        let matches = regex.matches(in: model.codeFileContent, options: [], range: NSRange(location: 0, length: nsString.length))
+        guard let textView = ZionTextView.activeTextViewReference.value else { return }
+        let content = textView.string
+        let nsString = content as NSString
+        let matches = regex.matches(in: content, options: [], range: NSRange(location: 0, length: nsString.length))
         guard currentMatchIndex < matches.count else { return }
 
-        let range = matches[currentMatchIndex].range
-        guard let swiftRange = Range(range, in: model.codeFileContent) else { return }
-        let replacement = isRegexSearch ? replaceQuery : replaceQuery
-        model.codeFileContent.replaceSubrange(swiftRange, with: replacement)
+        let match = matches[currentMatchIndex]
+        let replacement = isRegexSearch
+            ? regex.replacementString(for: match, in: content, offset: 0, template: replaceQuery)
+            : replaceQuery
+        guard applyEditorReplacement(in: textView, range: match.range, replacement: replacement) else { return }
 
-        // Recalculate after replacement
-        if currentMatchIndex >= matchCount - 1 {
-            currentMatchIndex = max(0, matchCount - 2)
+        recomputeFindMatches()
+        if matchCount == 0 {
+            currentMatchIndex = 0
+        } else if currentMatchIndex >= matchCount {
+            currentMatchIndex = matchCount - 1
         }
+        searchScrollRequestID += 1
     }
 
     func replaceAll() {
         guard !searchQuery.isEmpty else { return }
         guard let regex = buildSearchRegex() else { return }
-        let nsString = model.codeFileContent as NSString
+        guard let textView = ZionTextView.activeTextViewReference.value else { return }
+        let content = textView.string
+        let nsString = content as NSString
         let template = isRegexSearch ? replaceQuery : NSRegularExpression.escapedTemplate(for: replaceQuery)
-        model.codeFileContent = regex.stringByReplacingMatches(in: model.codeFileContent, options: [], range: NSRange(location: 0, length: nsString.length), withTemplate: template)
+        let replaced = regex.stringByReplacingMatches(
+            in: content,
+            options: [],
+            range: NSRange(location: 0, length: nsString.length),
+            withTemplate: template
+        )
+        guard replaced != content else { return }
+        guard applyEditorContentReplacement(in: textView, content: replaced) else { return }
+        recomputeFindMatches()
         currentMatchIndex = 0
+        searchScrollRequestID += 1
+    }
+
+    private func applyEditorReplacement(in textView: ZionTextView, range: NSRange, replacement: String) -> Bool {
+        guard textView.shouldChangeText(in: range, replacementString: replacement) else { return false }
+        textView.textStorage?.replaceCharacters(in: range, with: replacement)
+        textView.didChangeText()
+        let replacementLength = (replacement as NSString).length
+        let selectedRange = NSRange(location: range.location, length: replacementLength)
+        textView.setSelectedRange(selectedRange)
+        textView.scrollRangeToVisible(selectedRange)
+        textView.window?.makeFirstResponder(textView)
+        return true
+    }
+
+    private func applyEditorContentReplacement(in textView: ZionTextView, content: String) -> Bool {
+        let fullRange = NSRange(location: 0, length: (textView.string as NSString).length)
+        guard textView.shouldChangeText(in: fullRange, replacementString: content) else { return false }
+        textView.replaceCharacters(in: fullRange, with: content)
+        textView.didChangeText()
+        let selectedRange = NSRange(location: 0, length: 0)
+        textView.setSelectedRange(selectedRange)
+        textView.scrollRangeToVisible(selectedRange)
+        textView.window?.makeFirstResponder(textView)
+        return true
     }
 }

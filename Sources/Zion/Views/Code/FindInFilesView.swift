@@ -84,9 +84,12 @@ struct FindInFilesView: View {
     @Binding var results: [FindInFilesFileResult]
     @Binding var isSearching: Bool
     @Binding var scopePath: String?
+    var focusRequestID: Int = 0
     let onClose: () -> Void
 
     @State private var showFilters: Bool = false
+    @State private var showReplace: Bool = false
+    @State private var replaceQuery: String = ""
     @State private var expandedFiles: Set<String> = []
     @State private var revealedMatchCounts: [String: Int] = [:]
     @State private var searchTask: Task<Void, Never>?
@@ -97,6 +100,7 @@ struct FindInFilesView: View {
 
     private enum FocusField: Hashable {
         case query
+        case replace
         case include
         case exclude
     }
@@ -107,6 +111,11 @@ struct FindInFilesView: View {
 
     private var totalMatches: Int {
         FindInFilesViewLogic.totalMatchCount(in: results)
+    }
+
+    private var selectedMatch: FindInFilesMatch? {
+        guard let selectedMatchID else { return nil }
+        return flattenedMatches.first(where: { $0.id == selectedMatchID })
     }
 
     private var selectedMatchPositionText: String? {
@@ -132,6 +141,12 @@ struct FindInFilesView: View {
             removeKeyMonitor()
             searchTask?.cancel()
         }
+        .onChange(of: focusRequestID) { _, _ in
+            focusedField = .query
+        }
+        .onChange(of: showReplace) { _, isVisible in
+            focusedField = isVisible ? .replace : .query
+        }
     }
 
     // MARK: - Search Fields
@@ -139,6 +154,21 @@ struct FindInFilesView: View {
     private var searchFields: some View {
         VStack(spacing: 6) {
             HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+                Button {
+                    withAnimation(DesignSystem.Motion.detail) {
+                        showReplace.toggle()
+                    }
+                } label: {
+                    Image(systemName: showReplace ? "chevron.down" : "chevron.right")
+                        .font(DesignSystem.Typography.metaBold)
+                        .foregroundStyle(.secondary)
+                        .frame(width: 18, height: 18)
+                        .background(DesignSystem.Colors.glassSubtle)
+                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius))
+                }
+                .buttonStyle(.plain)
+                .help(L10n("editor.replace.placeholder"))
+
                 Image(systemName: "magnifyingglass")
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
@@ -203,6 +233,10 @@ struct FindInFilesView: View {
             .background(DesignSystem.Colors.glassBackground)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
 
+            if showReplace {
+                replaceFields
+            }
+
             if showFilters {
                 filterFields
             }
@@ -249,6 +283,44 @@ struct FindInFilesView: View {
         }
         .onChange(of: excludePattern) { _, _ in
             debounceSearch()
+        }
+    }
+
+    private var replaceFields: some View {
+        HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+            Spacer().frame(width: 26)
+
+            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
+                Image(systemName: "arrow.2.squarepath")
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(.secondary)
+
+                TextField(L10n("editor.replace.placeholder"), text: $replaceQuery)
+                    .textFieldStyle(.plain)
+                    .font(DesignSystem.Typography.monoBody)
+                    .focused($focusedField, equals: .replace)
+                    .onSubmit { replaceSelectedMatch() }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(DesignSystem.Colors.glassBackground)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
+
+            Button(L10n("editor.replace.one")) {
+                replaceSelectedMatch()
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .disabled(selectedMatch == nil || query.isEmpty)
+
+            Button(L10n("editor.replace.all")) {
+                replaceAllMatches()
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .disabled(results.isEmpty || query.isEmpty)
+
+            Spacer(minLength: 0)
         }
     }
 
@@ -396,7 +468,7 @@ struct FindInFilesView: View {
                     .foregroundStyle(.tertiary)
                     .frame(width: 32, alignment: .trailing)
 
-                highlightedPreview(match.preview, query: query)
+                highlightedPreview(for: match)
                     .lineLimit(1)
                     .truncationMode(.tail)
 
@@ -411,18 +483,45 @@ struct FindInFilesView: View {
         .buttonStyle(.plain)
     }
 
-    private func highlightedPreview(_ text: String, query: String) -> some View {
-        let trimmed = text.trimmingCharacters(in: .whitespaces)
+    private func highlightedPreview(for match: FindInFilesMatch) -> some View {
+        let text = match.preview.trimmingCharacters(in: CharacterSet(charactersIn: "\r"))
+
+        if let column = match.column,
+           let matchLength = match.matchLength,
+           column > 0 {
+            let nsText = text as NSString
+            let range = NSRange(location: column - 1, length: matchLength)
+            if NSMaxRange(range) <= nsText.length,
+               let swiftRange = Range(range, in: text) {
+                let before = String(text[text.startIndex..<swiftRange.lowerBound])
+                let matched = String(text[swiftRange])
+                let after = String(text[swiftRange.upperBound...])
+
+                return (
+                    Text(before)
+                    .font(DesignSystem.Typography.monoMeta)
+                    .foregroundStyle(.secondary)
+                + Text(matched)
+                    .font(DesignSystem.Typography.monoMeta)
+                    .bold()
+                    .foregroundStyle(.primary)
+                + Text(after)
+                    .font(DesignSystem.Typography.monoMeta)
+                    .foregroundStyle(.secondary)
+                )
+            }
+        }
+
         guard !query.isEmpty,
-              let range = trimmed.range(of: query, options: .caseInsensitive) else {
-            return Text(trimmed)
+              let range = text.range(of: query, options: .caseInsensitive) else {
+            return Text(text)
                 .font(DesignSystem.Typography.monoMeta)
                 .foregroundStyle(.secondary)
         }
 
-        let before = String(trimmed[trimmed.startIndex..<range.lowerBound])
-        let matched = String(trimmed[range])
-        let after = String(trimmed[range.upperBound...])
+        let before = String(text[text.startIndex..<range.lowerBound])
+        let matched = String(text[range])
+        let after = String(text[range.upperBound...])
 
         return Text(before)
             .font(DesignSystem.Typography.monoMeta)
@@ -538,10 +637,50 @@ struct FindInFilesView: View {
         let location = EditorSymbolLocation(
             relativePath: match.file,
             line: match.line,
-            column: 0,
+            column: match.column ?? 0,
             preview: match.preview
         )
         model.openEditorLocation(location)
+    }
+
+    private func replaceSelectedMatch() {
+        guard let selectedMatch else { return }
+        guard model.replaceInFile(match: selectedMatch, query: query, replacement: replaceQuery) else { return }
+        triggerSearch(openDirectionAfterSearch: 1)
+        returnFocusToEditor()
+    }
+
+    private func replaceAllMatches() {
+        guard model.replaceAllInFiles(results: results, query: query, replacement: replaceQuery) > 0 else { return }
+        triggerSearch()
+        returnFocusToEditor()
+    }
+
+    private func returnFocusToEditor() {
+        model.editorFocusRequestID += 1
+        focusedField = nil
+        let editorTextView = ZionTextView.activeTextViewReference.value
+        NSApp.keyWindow?.endEditing(for: nil)
+        DiagnosticLogger.shared.log(
+            .info,
+            "findInFiles.returnFocus.request",
+            context: "currentResponder=\(String(describing: NSApplication.shared.keyWindow?.firstResponder.map { type(of: $0) }))",
+            source: #function
+        )
+        DispatchQueue.main.async {
+            DispatchQueue.main.async {
+                guard let textView = editorTextView ?? ZionTextView.activeTextViewReference.value,
+                      let window = textView.window ?? NSApp.keyWindow else { return }
+                window.makeFirstResponder(nil)
+                window.makeFirstResponder(textView)
+                DiagnosticLogger.shared.log(
+                    .info,
+                    "findInFiles.returnFocus.applied",
+                    context: "newResponder=\(String(describing: window.firstResponder.map { type(of: $0) }))",
+                    source: #function
+                )
+            }
+        }
     }
 
     private func installKeyMonitor() {
