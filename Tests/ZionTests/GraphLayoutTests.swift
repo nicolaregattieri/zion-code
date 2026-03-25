@@ -397,6 +397,41 @@ final class GraphLayoutTests: XCTestCase {
         }
     }
 
+    func testDetachedBranchTipDoesNotLeaveOrphanSideLaneOnAdvancedMain() throws {
+        // Topology from ai-shopify-plan:
+        //   pvt-store-shopify
+        //   main
+        //   reset
+        //   feature-base
+        //
+        // The side tip points to the older main-chain ancestor, skipping the
+        // latest main commit. The graph should not keep a stray side lane alive
+        // through the newer main rows after the tip already curved into lane 0.
+        let commits = [
+            makeCommit(hash: "pvt-tip", parents: ["feature-base"], decorations: ["HEAD -> pvt-store-shopify"]),
+            makeCommit(hash: "main-tip", parents: ["reset"], decorations: ["main"]),
+            makeCommit(hash: "reset", parents: ["feature-base"]),
+            makeCommit(hash: "feature-base", parents: ["root"], decorations: ["feature/simulation-2"]),
+            makeCommit(hash: "root", parents: []),
+        ]
+
+        let mainChain = GitGraphLaneCalculator.mainFirstParentChain(from: commits)
+        let layout = calculator.layout(for: commits, mainChain: mainChain)
+        let layoutByID = Dictionary(uniqueKeysWithValues: layout.map { ($0.id, $0) })
+
+        let sideTip = try XCTUnwrap(layoutByID["pvt-tip"])
+        XCTAssertEqual(sideTip.lane, 1)
+        XCTAssertEqual(sideTip.outgoingEdges.map(\.to), [0], "The detached tip should already curve back into the main lane")
+
+        let mainTip = try XCTUnwrap(layoutByID["main-tip"])
+        XCTAssertFalse(mainTip.incomingLanes.contains(1), "The advanced main tip should not inherit an orphan side lane")
+        XCTAssertFalse(mainTip.outgoingLanes.contains(1), "The advanced main tip should not keep the detached lane alive")
+
+        let reset = try XCTUnwrap(layoutByID["reset"])
+        XCTAssertFalse(reset.incomingLanes.contains(1), "The reset row should stay clean once the detached tip has collapsed")
+        XCTAssertFalse(reset.outgoingLanes.contains(1), "The reset row should continue only on the main lane")
+    }
+
     func testNestedSideBranchDoesNotLeaveDuplicateParallelLane() throws {
         // Reference shape:
         //   main-tip
