@@ -543,7 +543,7 @@ final class SpeechRecognitionService {
         let body: [String: Any] = [
             "contents": [[
                 "parts": [
-                    ["text": "Generate a transcript of the speech."],
+                    ["text": "Transcribe this audio exactly as spoken. Output only the spoken words as plain text. Do not add timestamps, speaker labels, formatting, or annotations."],
                     ["inlineData": ["mimeType": "audio/wav", "data": wavData.base64EncodedString()]]
                 ]
             ]]
