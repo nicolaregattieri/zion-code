@@ -208,14 +208,6 @@ struct FindInFilesView: View {
                     }
                 }
 
-                if !query.isEmpty {
-                    SearchNavButton(icon: "xmark.circle.fill", tooltip: L10n("Limpar busca"), isSecondary: true) {
-                        query = ""
-                        selectedMatchID = nil
-                        triggerSearch()
-                    }
-                }
-
                 SearchNavButton(
                     icon: "line.3.horizontal.decrease.circle\(showFilters ? ".fill" : "")",
                     tooltip: L10n("Filtros"),
