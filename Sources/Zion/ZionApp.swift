@@ -47,6 +47,26 @@ struct ZionApp: App {
                 }
             }
 
+            CommandGroup(replacing: .undoRedo) {
+                Button(L10n("menu.undo")) {
+                    if let model = RepositoryViewModel.activeReference.value {
+                        model.performPreferredUndo()
+                    } else {
+                        NSApp.sendAction(Selector(("undo:")), to: nil, from: nil)
+                    }
+                }
+                .keyboardShortcut("z", modifiers: [.command])
+
+                Button(L10n("menu.redo")) {
+                    if let model = RepositoryViewModel.activeReference.value {
+                        model.performPreferredRedo()
+                    } else {
+                        NSApp.sendAction(Selector(("redo:")), to: nil, from: nil)
+                    }
+                }
+                .keyboardShortcut("z", modifiers: [.command, .shift])
+            }
+
             CommandMenu(L10n("format.menu")) {
                 shortcutCommandButton(L10n("format.document"), action: .formatDocument) {
                     NotificationCenter.default.post(name: .formatDocument, object: nil)

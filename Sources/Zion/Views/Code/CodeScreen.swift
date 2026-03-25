@@ -48,6 +48,7 @@ struct CodeScreen: View {
     @State var isWholeWord: Bool = false
     @State var fileBrowserFilterText: String = ""
     @State var isFileBrowserFilterVisible: Bool = false
+    @FocusState var isFileBrowserFilterFocused: Bool
     @State var cachedFilteredFiles: [FileItem]?
     @State var filterDebounceTask: DispatchWorkItem?
     @StateObject var fileBrowserResponderReference = FileBrowserResponderReference()
@@ -79,6 +80,7 @@ struct CodeScreen: View {
     @State var findInFilesResults: [FindInFilesFileResult] = []
     @State var isFindInFilesSearching: Bool = false
     @State var findInFilesScopePath: String? = nil
+    @State var findInFilesFocusRequestID: Int = 0
 
     @AppStorage(UserDefaultsKeys.Terminal.opacity) var terminalOpacity: Double = 0.92
 
@@ -224,6 +226,7 @@ struct CodeScreen: View {
                     if !isFileBrowserVisible {
                         withAnimation(DesignSystem.Motion.panel) { isFileBrowserVisible = true }
                     }
+                    findInFilesFocusRequestID += 1
                 }
             }
             .applyShortcutBinding(shortcutRegistry.binding(for: .findInFiles))

@@ -15,13 +15,13 @@ extension ContentView {
                     .accessibilityLabel(L10n("Clonar repositorio remoto"))
             }
 
-            Button { model.refreshRepository() } label: { Image(systemName: "arrow.clockwise") }
+            Button { model.refreshWorkspace() } label: { Image(systemName: "arrow.clockwise") }
                 .disabled(model.repositoryURL == nil)
                 .help(L10n("Atualizar status do repositório"))
                 .accessibilityLabel(L10n("Atualizar status do repositório"))
                 .keyboardShortcut("r", modifiers: .command)
 
-            if model.repositoryURL != nil {
+            if model.hasGitWorkspace {
                 ControlGroup {
                     Button { model.fetch() } label: { Image(systemName: "arrow.triangle.2.circlepath") }
                         .help(L10n("Fetch: Busca atualizações remotas"))
@@ -37,7 +37,7 @@ extension ContentView {
         }
 
         ToolbarItemGroup(placement: .primaryAction) {
-            if model.repositoryURL != nil {
+            if model.hasGitWorkspace {
                 ControlGroup {
                     Button {
                         toggleZenMode()
@@ -125,7 +125,7 @@ extension ContentView {
             Button("") { route(.requestSection(.graph)) }
                 .applyShortcutBinding(shortcutRegistry.binding(for: .navigateGraphByLetter))
             Button("") {
-                if model.repositoryURL != nil {
+                if model.hasGitWorkspace {
                     model.isBranchReviewSheetVisible = false
                     model.isCodeReviewVisible = true
                 }
@@ -140,13 +140,13 @@ extension ContentView {
             }
             .applyShortcutBinding(shortcutRegistry.binding(for: .zionMode))
             Button("") {
-                if model.repositoryURL != nil {
+                if model.hasGitWorkspace {
                     model.stageAllFiles()
                 }
             }
             .applyShortcutBinding(shortcutRegistry.binding(for: .stageAll))
             Button("") {
-                if model.repositoryURL != nil {
+                if model.hasGitWorkspace {
                     route(.requestSection(.graph))
                     NotificationCenter.default.post(name: .focusCommitField, object: nil)
                 }

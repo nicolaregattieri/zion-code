@@ -10,7 +10,7 @@ extension ContentView {
 
             Spacer()
 
-            if model.repositoryURL != nil && !model.isRepositorySwitchBlocking {
+            if model.hasGitWorkspace && !model.isRepositorySwitchBlocking {
                 // Branch pill
                 if !model.currentBranch.isEmpty {
                     HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
@@ -241,7 +241,7 @@ extension ContentView {
 
     func statusBarSectionButton(_ section: AppSection) -> some View {
         let isSelected = selectedSection == section
-        let isDisabled = section != .code && model.repositoryURL == nil
+        let isDisabled = !model.canAccess(section)
 
         return Button {
             route(.requestSection(section))

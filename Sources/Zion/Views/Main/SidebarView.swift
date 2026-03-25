@@ -27,19 +27,19 @@ struct SidebarView: View {
 
                 recentProjectsCard
 
-                if model.repositoryURL != nil {
+                if model.hasGitWorkspace {
                     worktreesCard
                 }
 
-                if model.repositoryURL != nil, model.hasHostingProvider {
+                if model.hasGitWorkspace, model.hasHostingProvider {
                     PRInboxCard(model: model)
                 }
 
-                if model.repositoryURL != nil {
+                if model.hasGitWorkspace {
                     bridgeAccessCard
                 }
 
-                if selectedSection == .graph, model.repositoryURL != nil {
+                if selectedSection == .graph, model.hasGitWorkspace {
                     sidebarBranchExplorer.padding(.horizontal, 10)
                 }
 
@@ -136,7 +136,7 @@ struct SidebarView: View {
                     .help(L10n("Abrir Pasta"))
                 }
             }
-            if model.repositoryURL != nil {
+            if model.hasGitWorkspace {
                 let isDetached = model.currentBranch.contains("detached")
                 let hasStashes = model.stashes.count > 0
                 let hasRelease = model.latestReleaseTag != nil
@@ -191,7 +191,7 @@ struct SidebarView: View {
 
     private func workspaceButton(for section: AppSection) -> some View {
         let isSelected = selectedSection == section
-        let isDisabled = section != .code && model.repositoryURL == nil
+        let isDisabled = !model.canAccess(section)
         let isHovered = hoveredSection == section
 
         return Button { selectedSection = section } label: {

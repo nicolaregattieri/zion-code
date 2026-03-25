@@ -180,6 +180,7 @@
 "Zion Code" = "Zion Code";
 "Modo editor livre" = "Modo editor livre";
 "Abrir Pasta" = "Abrir Pasta";
+"Abra uma pasta para acessar %@" = "Abra uma pasta para acessar %@";
 "Abrir o repositorio no seu editor ou terminal favorito." = "Abrir o repositório no editor integrado do Zion.";
 
 // Toolbar
@@ -2159,6 +2160,8 @@
 "shortcuts.resetAll" = "Redefinir Todos os Atalhos";
 "shortcuts.reset" = "Redefinir";
 "shortcuts.replace" = "Substituir";
+"menu.undo" = "Desfazer";
+"menu.redo" = "Refazer";
 "shortcuts.searchPlaceholder" = "Buscar atalhos...";
 "Zion Bridge" = "Zion Bridge";
 "sidebar.bridge.subtitle" = "Setup portátil para IA";

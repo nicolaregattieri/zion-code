@@ -278,6 +278,7 @@
 "Zion Code" = "Zion Code";
 "Modo editor livre" = "Free editor mode";
 "Abrir Pasta" = "Open Folder";
+"Abra uma pasta para acessar %@" = "Open a folder to access %@";
 "Abrir o repositorio no seu editor ou terminal favorito." = "Open repository in Zion's integrated editor.";
 
 // Toolbar
@@ -2159,6 +2160,8 @@
 "shortcuts.resetAll" = "Reset All Shortcuts";
 "shortcuts.reset" = "Reset";
 "shortcuts.replace" = "Replace";
+"menu.undo" = "Undo";
+"menu.redo" = "Redo";
 "shortcuts.searchPlaceholder" = "Search shortcuts...";
 "Zion Bridge" = "Zion Bridge";
 "sidebar.bridge.subtitle" = "Portable AI setup";

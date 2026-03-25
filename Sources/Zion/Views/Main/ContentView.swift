@@ -67,7 +67,7 @@ struct ContentView: View {
             return .onboarding
         }
         if !model.openedFiles.isEmpty { return .workspace }
-        if model.repositoryURL == nil || !model.isGitRepository {
+        if model.repositoryURL == nil {
             return .welcome
         }
         return .workspace
@@ -91,8 +91,8 @@ struct ContentView: View {
                 toggleZenMode()
                 return
             }
-            guard section == .code || model.repositoryURL != nil else {
-                model.statusMessage = L10n("Abra um repositorio para acessar %@", L10n(section.title))
+            guard model.canAccess(section) else {
+                model.statusMessage = L10n("Abra uma pasta para acessar %@", L10n(section.title))
                 return
             }
             model.isBridgeVisible = false
@@ -140,6 +140,7 @@ struct ContentView: View {
         .environment(\.locale, uiLanguage.locale)
         .environment(\.zionModeEnabled, zionModeEnabled)
         .onAppear {
+            RepositoryViewModel.activeReference.value = model
             logger.log(.info, "Boot: starting", source: "ContentView")
             model.clipboardMonitor.start()
             model.restoreEditorSettings()
@@ -183,6 +184,9 @@ struct ContentView: View {
             }
         }
         .onDisappear {
+            if RepositoryViewModel.activeReference.value === model {
+                RepositoryViewModel.activeReference.value = nil
+            }
             model.clipboardMonitor.stop()
         }
         .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
@@ -263,7 +267,7 @@ struct ContentView: View {
             route(.showOnboardingFromHelp)
         }
         .onReceive(NotificationCenter.default.publisher(for: .showFeatureTour)) { _ in
-            if model.repositoryURL != nil {
+            if model.hasGitWorkspace {
                 startFeatureTour()
             } else {
                 route(.showOnboardingFromHelp)
@@ -476,7 +480,7 @@ struct ContentView: View {
     private var detailViewHost: some View {
         if launchPhase == .bootstrapping {
             Color.clear // Liquid background shows through during bootstrap
-        } else if model.isBridgeVisible, model.repositoryURL != nil {
+        } else if model.isBridgeVisible, model.hasGitWorkspace {
             BridgeScreen(model: model)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
@@ -517,7 +521,7 @@ struct ContentView: View {
                 .opacity(selectedSection == .code ? 1 : 0)
                 .allowsHitTesting(selectedSection == .code)
 
-            if model.repositoryURL != nil {
+            if model.hasGitWorkspace {
                 nonCodeSharedBanners
                     .opacity(selectedSection != .code ? 1 : 0)
                     .allowsHitTesting(selectedSection != .code)
@@ -633,7 +637,7 @@ struct ContentView: View {
     }
 
     private func startFeatureTour() {
-        guard model.repositoryURL != nil, model.isGitRepository else { return }
+        guard model.hasGitWorkspace else { return }
 
         if zenModeEnabled {
             zenModeEnabled = false

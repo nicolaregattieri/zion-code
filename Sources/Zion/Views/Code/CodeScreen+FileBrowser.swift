@@ -18,7 +18,9 @@ extension CodeScreen {
                         Button {
                             withAnimation(DesignSystem.Motion.detail) {
                                 isFileBrowserFilterVisible.toggle()
-                                if !isFileBrowserFilterVisible { fileBrowserFilterText = "" }
+                                if !isFileBrowserFilterVisible {
+                                    fileBrowserFilterText = ""
+                                }
                             }
                         } label: {
                             Image(systemName: "line.3.horizontal.decrease")
@@ -60,6 +62,7 @@ extension CodeScreen {
                     TextField(L10n("fileBrowser.filter.placeholder"), text: $fileBrowserFilterText)
                         .textFieldStyle(.plain)
                         .font(DesignSystem.Typography.body)
+                        .focused($isFileBrowserFilterFocused)
                         .onExitCommand {
                             fileBrowserFilterText = ""
                             isFileBrowserFilterVisible = false
@@ -80,6 +83,7 @@ extension CodeScreen {
                     results: $findInFilesResults,
                     isSearching: $isFindInFilesSearching,
                     scopePath: $findInFilesScopePath,
+                    focusRequestID: findInFilesFocusRequestID,
                     onClose: { closeFindInFilesPanel() }
                 )
             } else {
@@ -164,7 +168,18 @@ extension CodeScreen {
                 if !isFileBrowserVisible {
                     withAnimation(DesignSystem.Motion.panel) { isFileBrowserVisible = true }
                 }
+                findInFilesFocusRequestID += 1
                 model.findInFilesScopeRequest = nil
+            }
+        }
+        .onChange(of: isFileBrowserFilterVisible) { _, isVisible in
+            guard sidebarMode == .fileTree else { return }
+            if isVisible {
+                Task { @MainActor in
+                    isFileBrowserFilterFocused = true
+                }
+            } else {
+                isFileBrowserFilterFocused = false
             }
         }
         .onChange(of: fileBrowserFilterText) { _, _ in
@@ -203,6 +218,9 @@ extension CodeScreen {
     func sidebarModeButton(mode: SidebarMode, icon: String, tooltip: String) -> some View {
         Button {
             withAnimation(DesignSystem.Motion.detail) { sidebarMode = mode }
+            if mode == .findInFiles {
+                findInFilesFocusRequestID += 1
+            }
         } label: {
             Image(systemName: icon)
                 .font(DesignSystem.Typography.bodySmall)
