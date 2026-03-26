@@ -12,7 +12,7 @@ struct WelcomeScreen: View {
             VStack(spacing: 32) {
                 VStack(spacing: 16) {
                     Group {
-                        if let logoURL = Bundle.module.url(forResource: "zion-logo", withExtension: "png"),
+                        if let logoURL = Bundle.zionResources.url(forResource: "zion-logo", withExtension: "png"),
                            let nsImage = NSImage(contentsOf: logoURL) {
                             Image(nsImage: nsImage)
                                 .resizable()

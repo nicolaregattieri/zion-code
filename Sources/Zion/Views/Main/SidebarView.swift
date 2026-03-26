@@ -108,7 +108,7 @@ struct SidebarView: View {
         GlassCard(spacing: 12) {
             HStack(alignment: .center, spacing: 14) {
                 Group {
-                    if let logoURL = Bundle.module.url(forResource: "zion-logo", withExtension: "png"),
+                    if let logoURL = Bundle.zionResources.url(forResource: "zion-logo", withExtension: "png"),
                        let nsImage = NSImage(contentsOf: logoURL) {
                         Image(nsImage: nsImage)
                             .resizable()

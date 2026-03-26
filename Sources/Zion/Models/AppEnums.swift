@@ -26,30 +26,31 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     }
 
     var bundle: Bundle {
-        if self == .system { return .module }
+        let resourceBundle = Bundle.zionResources
+        if self == .system { return resourceBundle }
 
         let resName = self.rawValue
         let normalizedName = AppLanguage.normalizedLocalizationIdentifier(resName)
 
         // SwiftPM may lowercase localized resource directories (for example pt-BR -> pt-br).
-        let resolvedLocalization = Bundle.module.localizations.first {
+        let resolvedLocalization = resourceBundle.localizations.first {
             AppLanguage.normalizedLocalizationIdentifier($0) == normalizedName
         } ?? resName
 
         // Try to find the lproj bundle in the module's resource bundle
-        if let url = Bundle.module.url(forResource: resolvedLocalization, withExtension: "lproj"),
+        if let url = resourceBundle.url(forResource: resolvedLocalization, withExtension: "lproj"),
            let bundle = Bundle(url: url) {
             return bundle
         }
 
         // Fallback: try search in subdirectories if processing messed with structure
-        if let path = Bundle.module.path(forResource: resolvedLocalization, ofType: "lproj", inDirectory: nil) ??
-                      Bundle.module.path(forResource: resolvedLocalization, ofType: "lproj", inDirectory: "Resources"),
+        if let path = resourceBundle.path(forResource: resolvedLocalization, ofType: "lproj", inDirectory: nil) ??
+                      resourceBundle.path(forResource: resolvedLocalization, ofType: "lproj", inDirectory: "Resources"),
            let bundle = Bundle(path: path) {
             return bundle
         }
 
-        return .module
+        return resourceBundle
     }
 
     static func storedSelection(from defaults: UserDefaults = .standard) -> AppLanguage {
