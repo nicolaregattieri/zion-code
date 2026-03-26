@@ -315,7 +315,7 @@ extension RepositoryViewModel {
 
     func formatCurrentFile() {
         guard let file = selectedCodeFile else { return }
-        let ext = file.url.pathExtension
+        let ext = editorFileExtension(for: file.url)
         guard CodeFormatter.canFormat(fileExtension: ext) else {
             statusMessage = L10n("format.unsupported")
             return
@@ -353,6 +353,10 @@ extension RepositoryViewModel {
     var selectedEditorContentKind: EditorContentKind {
         guard let selectedCodeFile else { return .text }
         return editorContentKind(for: selectedCodeFile.url)
+    }
+
+    func editorFileExtension(for url: URL) -> String {
+        EditorFileInspector.editorFileExtension(for: url)
     }
 
     func editorContentKind(for url: URL) -> EditorContentKind {

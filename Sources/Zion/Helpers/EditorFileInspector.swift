@@ -28,8 +28,40 @@ enum EditorFileInspector {
         "png", "jpg", "jpeg", "gif", "webp", "bmp", "tiff", "tif", "svg",
     ]
 
-    static func contentKind(for url: URL) -> EditorContentKind {
+    static func editorFileExtension(for url: URL) -> String {
+        let fileName = url.lastPathComponent.lowercased()
+
+        if fileName == ".env" || fileName.hasPrefix(".env.") {
+            return "env"
+        }
+
+        switch fileName {
+        case ".editorconfig", ".gitconfig", ".npmrc", ".yarnrc":
+            return "ini"
+        case ".bashrc", ".bash_profile", ".bash_logout", ".profile", ".envrc":
+            return "sh"
+        case ".zshrc", ".zprofile", ".zlogin", ".zlogout", ".zshenv":
+            return "zsh"
+        case ".gitignore", ".gitattributes", ".gitmodules", ".ignore", ".dockerignore":
+            return "conf"
+        case "dockerfile", "containerfile":
+            return "dockerfile"
+        case "gemfile", "rakefile", "podfile", "brewfile", "fastfile", "appfile", "deliverfile", "matchfile", "scanfile", "snapfile":
+            return "rb"
+        default:
+            break
+        }
+
         let ext = url.pathExtension.lowercased()
+        if !ext.isEmpty {
+            return ext
+        }
+
+        return ""
+    }
+
+    static func contentKind(for url: URL) -> EditorContentKind {
+        let ext = editorFileExtension(for: url)
         if ext == "md" || ext == "markdown" {
             return .markdown
         }
@@ -96,7 +128,9 @@ enum EditorFileInspector {
     private static func isLikelyTextFileByContent(_ url: URL, maxBytes: Int = 8_192) -> Bool {
         guard let handle = try? FileHandle(forReadingFrom: url) else { return false }
         defer { try? handle.close() }
-        guard let data = try? handle.read(upToCount: maxBytes) else { return false }
+        guard let data = try? handle.read(upToCount: maxBytes) else {
+            return (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) == 0
+        }
         if data.isEmpty { return true }
         if data.contains(0) { return false }
         if String(data: data, encoding: .utf8) != nil { return true }

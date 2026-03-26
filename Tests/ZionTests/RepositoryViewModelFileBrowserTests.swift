@@ -211,6 +211,30 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
         XCTAssertEqual(vm.editorContentKind(for: envFile), .text)
     }
 
+    func testIsTextFileAcceptsEmptyDotEnv() throws {
+        let vm = RepositoryViewModel()
+        let tempDir = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let envFile = tempDir.appendingPathComponent(".env")
+        FileManager.default.createFile(atPath: envFile.path, contents: Data())
+
+        XCTAssertTrue(vm.isTextFile(envFile))
+        XCTAssertEqual(vm.editorContentKind(for: envFile), .text)
+    }
+
+    func testIsTextFileRejectsBinaryDotEnv() throws {
+        let vm = RepositoryViewModel()
+        let tempDir = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let envFile = tempDir.appendingPathComponent(".env")
+        try Data([0x00, 0xff, 0x00, 0xff]).write(to: envFile)
+
+        XCTAssertFalse(vm.isTextFile(envFile))
+        XCTAssertEqual(vm.editorContentKind(for: envFile), .unsupported)
+    }
+
     func testIsTextFileRejectsBinaryWithoutExtension() throws {
         let vm = RepositoryViewModel()
         let tempDir = try makeTemporaryDirectory()
@@ -830,6 +854,18 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
         XCTAssertEqual(vm.editorContentKind(for: url), .image)
     }
 
+    func testEditorFileExtensionRecognizesDotEnvVariants() {
+        let vm = RepositoryViewModel()
+
+        XCTAssertEqual(vm.editorFileExtension(for: URL(fileURLWithPath: "/tmp/.env")), "env")
+        XCTAssertEqual(vm.editorFileExtension(for: URL(fileURLWithPath: "/tmp/.env.local")), "env")
+        XCTAssertEqual(vm.editorFileExtension(for: URL(fileURLWithPath: "/tmp/.zshrc")), "zsh")
+        XCTAssertEqual(vm.editorFileExtension(for: URL(fileURLWithPath: "/tmp/.npmrc")), "ini")
+        XCTAssertEqual(vm.editorFileExtension(for: URL(fileURLWithPath: "/tmp/Dockerfile")), "dockerfile")
+        XCTAssertEqual(vm.editorFileExtension(for: URL(fileURLWithPath: "/tmp/Gemfile")), "rb")
+        XCTAssertEqual(vm.editorFileExtension(for: URL(fileURLWithPath: "/tmp/config.yaml")), "yaml")
+    }
+
     func testEditorContentKindTreatsUntitledTempFilesAsText() {
         let vm = RepositoryViewModel()
         let tempURL = ZionTemp.directory.appendingPathComponent("Untitled")
@@ -895,6 +931,29 @@ final class RepositoryViewModelFileBrowserTests: XCTestCase {
 
         XCTAssertEqual(vm.selectedEditorContentKind, .text)
         XCTAssertEqual(vm.activeFileID, item.id)
+
+        for _ in 0..<20 where vm.codeFileContent != expected {
+            try await Task.sleep(nanoseconds: 50_000_000)
+        }
+
+        XCTAssertEqual(vm.codeFileContent, expected)
+        XCTAssertEqual(vm.originalFileContents[item.id], expected)
+    }
+
+    func testSelectCodeFileDotEnvLoadsAsText() async throws {
+        let vm = RepositoryViewModel()
+        let tempDir = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let envURL = tempDir.appendingPathComponent(".env")
+        let expected = "API_KEY=test-value\n"
+        try expected.write(to: envURL, atomically: true, encoding: .utf8)
+        let item = FileItem(url: envURL, isDirectory: false, children: nil)
+
+        vm.selectCodeFile(item)
+
+        XCTAssertEqual(vm.selectedEditorContentKind, .text)
+        XCTAssertEqual(vm.editorFileExtension(for: envURL), "env")
 
         for _ in 0..<20 where vm.codeFileContent != expected {
             try await Task.sleep(nanoseconds: 50_000_000)
