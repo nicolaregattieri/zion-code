@@ -397,7 +397,7 @@ struct CodeScreen: View {
             lineSpacing: model.effectiveLineSpacing,
             isLineWrappingEnabled: model.isLineWrappingEnabled,
             activeFileID: model.activeFileID,
-            fileExtension: model.selectedCodeFile?.url.pathExtension ?? "",
+            fileExtension: model.selectedCodeFile.map { model.editorFileExtension(for: $0.url) } ?? "",
             tabSize: model.effectiveTabSize,
             useTabs: model.effectiveUseTabs,
             autoCloseBrackets: model.editorAutoCloseBrackets,

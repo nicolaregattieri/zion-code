@@ -129,7 +129,13 @@ extension CodeScreen {
             .buttonStyle(.bordered)
             .help(L10n("format.document") + " (⇧⌥F)")
             .accessibilityLabel(L10n("format.document"))
-            .disabled(model.activeFileID == nil || !isTextEditorActive || !CodeFormatter.canFormat(fileExtension: model.selectedCodeFile?.url.pathExtension ?? ""))
+            .disabled(
+                model.activeFileID == nil
+                    || !isTextEditorActive
+                    || !CodeFormatter.canFormat(
+                        fileExtension: model.selectedCodeFile.map { model.editorFileExtension(for: $0.url) } ?? ""
+                    )
+            )
 
             Divider().frame(height: 14).padding(.horizontal, 4)
 

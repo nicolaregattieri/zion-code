@@ -122,7 +122,7 @@ extension RepositoryViewModel {
 
         // Format on save
         if editorFormatOnSave {
-            let ext = file.url.pathExtension
+            let ext = editorFileExtension(for: file.url)
             if CodeFormatter.canFormat(fileExtension: ext) {
                 let opts = FormatOptions(
                     tabSize: effectiveTabSize,
