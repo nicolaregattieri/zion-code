@@ -1,0 +1,33 @@
+{
+  "originHash" : "14fd6e42cbce82dcf451550be2496902da50a57da00114815b75fed1b2971fd1",
+  "pins" : [
+    {
+      "identity" : "sparkle",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/sparkle-project/Sparkle.git",
+      "state" : {
+        "revision" : "5581748cef2bae787496fe6d61139aebe0a451f6",
+        "version" : "2.8.1"
+      }
+    },
+    {
+      "identity" : "swift-argument-parser",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-argument-parser",
+      "state" : {
+        "revision" : "c5d11a805e765f52ba34ec7284bd4fcd6ba68615",
+        "version" : "1.7.0"
+      }
+    },
+    {
+      "identity" : "swiftterm",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/nicolaregattieri/SwiftTerm.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "53c71965adeacef8f4878128db2a6bf85c6926c7"
+      }
+    }
+  ],
+  "version" : 3
+}
