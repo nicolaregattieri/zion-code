@@ -128,7 +128,7 @@ final class DesignSystemTokenTests: XCTestCase {
         var counts: [String: Int] = [:]
 
         for locale in locales {
-            guard let path = Bundle.module.path(
+            guard let path = Bundle.zionResources.path(
                 forResource: "Localizable",
                 ofType: "strings",
                 inDirectory: nil,

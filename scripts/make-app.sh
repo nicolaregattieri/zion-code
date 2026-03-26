@@ -29,10 +29,14 @@ cp "$BIN_PATH" "$APP_DIR/Contents/MacOS/Zion"
 # Add rpath so @rpath/Sparkle.framework resolves to Contents/Frameworks/
 install_name_tool -add_rpath @executable_path/../Frameworks "$APP_DIR/Contents/MacOS/Zion"
 
-# Copy resources bundle
+# Copy SwiftPM resources into the app's main Resources directory so shipped builds
+# resolve assets/localizations through Bundle.main without depending on a nested bundle.
 BUNDLE_PATH="$(find .build -name "Zion_Zion.bundle" | grep "/release/" | head -n 1)"
 if [ -n "$BUNDLE_PATH" ]; then
-  cp -R "$BUNDLE_PATH" "$APP_DIR/Contents/Resources/"
+  find "$BUNDLE_PATH" -mindepth 1 -maxdepth 1 \
+    ! -name "_CodeSignature" \
+    ! -name "Info.plist" \
+    -exec cp -R {} "$APP_DIR/Contents/Resources/" \;
 fi
 
 if [ -f "$ROOT_DIR/Resources/ZionAppIcon.icns" ]; then
@@ -61,9 +65,9 @@ cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
   <key>CFBundleIdentifier</key>
   <string>com.nicolaregattieri.zion.app</string>
   <key>CFBundleVersion</key>
-  <string>61</string>
+  <string>62</string>
   <key>CFBundleShortVersionString</key>
-  <string>1.7.11</string>
+  <string>1.7.12</string>
   <key>CFBundleExecutable</key>
   <string>Zion</string>
   <key>CFBundlePackageType</key>

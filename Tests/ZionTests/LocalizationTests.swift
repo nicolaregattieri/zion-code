@@ -75,6 +75,18 @@ final class LocalizationTests: XCTestCase {
         XCTAssertEqual(L10n("Sobre o Zion"), "Sobre o Zion")
     }
 
+    func testZionResourcesBundleExposesAppAssets() {
+        let bundle = Bundle.zionResources
+        let normalizedLocalizations = Set(bundle.localizations.map {
+            $0.replacingOccurrences(of: "_", with: "-").lowercased()
+        })
+
+        XCTAssertNotNil(bundle.url(forResource: "zion-logo", withExtension: "png"))
+        XCTAssertTrue(normalizedLocalizations.contains("en"))
+        XCTAssertTrue(normalizedLocalizations.contains("pt-br"))
+        XCTAssertTrue(normalizedLocalizations.contains("es"))
+    }
+
     // MARK: - Bisect L10n Keys
 
     func testBisectLocalizationKeysExist() {
@@ -168,7 +180,7 @@ final class LocalizationTests: XCTestCase {
         let locales = ["en", "pt-BR", "es"]
 
         for locale in locales {
-            guard let path = Bundle.module.path(forResource: "Localizable", ofType: "strings", inDirectory: nil, forLocalization: locale),
+            guard let path = Bundle.zionResources.path(forResource: "Localizable", ofType: "strings", inDirectory: nil, forLocalization: locale),
                   let content = try? String(contentsOfFile: path, encoding: .utf8) else {
                 // Fallback: just check the keys parse from the file directly
                 continue
@@ -295,7 +307,7 @@ final class LocalizationTests: XCTestCase {
         let locales = ["en", "pt-BR", "es"]
 
         for locale in locales {
-            guard let path = Bundle.module.path(forResource: "Localizable", ofType: "strings", inDirectory: nil, forLocalization: locale),
+            guard let path = Bundle.zionResources.path(forResource: "Localizable", ofType: "strings", inDirectory: nil, forLocalization: locale),
                   let content = try? String(contentsOfFile: path, encoding: .utf8) else {
                 continue
             }

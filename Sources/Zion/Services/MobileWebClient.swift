@@ -7,7 +7,7 @@ enum MobileWebClient {
 
     private static func loadResource(_ name: String, ext: String) -> String {
         // Try Sources/Zion/Resources/Web/ (SPM flattens subdirectories)
-        if let url = Bundle.module.url(forResource: name, withExtension: ext) {
+        if let url = Bundle.zionResources.url(forResource: name, withExtension: ext) {
             return (try? String(contentsOf: url, encoding: .utf8)) ?? ""
         }
         return ""
