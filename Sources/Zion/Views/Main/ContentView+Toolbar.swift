@@ -6,6 +6,14 @@ extension ContentView {
     @ToolbarContentBuilder
     var mainToolbar: some ToolbarContent {
         ToolbarItemGroup(placement: .navigation) {
+            if shellLayoutProfile.usesCompactToolbar {
+                Button { togglePrimarySidebar() } label: {
+                    Image(systemName: isPrimarySidebarVisible ? "sidebar.leading" : "sidebar.left")
+                }
+                .help(L10n("Barra lateral"))
+                .accessibilityLabel(L10n("Barra lateral"))
+            }
+
             ControlGroup {
                 Button { openRepositoryPanel() } label: { Image(systemName: "folder") }
                     .help(L10n("Abrir repositório"))
@@ -21,7 +29,7 @@ extension ContentView {
                 .accessibilityLabel(L10n("Atualizar status do repositório"))
                 .keyboardShortcut("r", modifiers: .command)
 
-            if model.hasGitWorkspace {
+            if model.hasGitWorkspace, !shellLayoutProfile.usesCompactToolbar {
                 ControlGroup {
                     Button { model.fetch() } label: { Image(systemName: "arrow.triangle.2.circlepath") }
                         .help(L10n("Fetch: Busca atualizações remotas"))
@@ -38,29 +46,55 @@ extension ContentView {
 
         ToolbarItemGroup(placement: .primaryAction) {
             if model.hasGitWorkspace {
-                ControlGroup {
+                if shellLayoutProfile.usesCompactToolbar {
                     Button {
                         toggleZenMode()
                     } label: { Image(systemName: "arrow.up.left.and.arrow.down.right") }
                         .help(L10n("zen.enter") + " (⌘T)")
                         .accessibilityLabel(L10n("zen.enter"))
-                    Button {
-                        model.loadReflog()
-                        model.isReflogVisible = true
-                    } label: {
-                        Image(systemName: "clock.arrow.circlepath")
-                    }
-                    .help(L10n("Reflog / Desfazer"))
-                    .accessibilityLabel(L10n("Reflog / Desfazer"))
-                }
 
-                Button {
-                    model.isBridgeVisible = true
-                } label: {
-                    Image(systemName: "arrow.trianglehead.branch")
+                    Menu {
+                        Button(L10n("Fetch: Busca atualizações remotas")) { model.fetch() }
+                        Button(L10n("Pull: Puxa alterações da branch atual")) { model.pull() }
+                        Button(L10n("Push: Envia alterações locais")) { model.requestPush() }
+                        Divider()
+                        Button(L10n("Reflog / Desfazer")) {
+                            model.loadReflog()
+                            model.isReflogVisible = true
+                        }
+                        Button(L10n("bridge.open.hint")) {
+                            model.isBridgeVisible = true
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                    }
+                    .help(L10n("Mais"))
+                    .accessibilityLabel(L10n("Mais"))
+                } else {
+                    ControlGroup {
+                        Button {
+                            toggleZenMode()
+                        } label: { Image(systemName: "arrow.up.left.and.arrow.down.right") }
+                            .help(L10n("zen.enter") + " (⌘T)")
+                            .accessibilityLabel(L10n("zen.enter"))
+                        Button {
+                            model.loadReflog()
+                            model.isReflogVisible = true
+                        } label: {
+                            Image(systemName: "clock.arrow.circlepath")
+                        }
+                        .help(L10n("Reflog / Desfazer"))
+                        .accessibilityLabel(L10n("Reflog / Desfazer"))
+                    }
+
+                    Button {
+                        model.isBridgeVisible = true
+                    } label: {
+                        Image(systemName: "arrow.trianglehead.branch")
+                    }
+                    .help(L10n("bridge.open.hint"))
+                    .accessibilityLabel(L10n("bridge.open.hint"))
                 }
-                .help(L10n("bridge.open.hint"))
-                .accessibilityLabel(L10n("bridge.open.hint"))
             }
 
             Button { isHelpVisible = true } label: { Image(systemName: "questionmark.circle") }

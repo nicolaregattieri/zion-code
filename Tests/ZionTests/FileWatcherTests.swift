@@ -13,6 +13,8 @@ final class FileWatcherTests: XCTestCase {
 
         XCTAssertNotNil(event)
         XCTAssertEqual(event?.hasTreeImpact, true)
+        XCTAssertEqual(event?.hasStructuralImpact, false)
+        XCTAssertEqual(event?.hasWorktreeStatusImpact, true)
         XCTAssertEqual(event?.hasGitMetadataImpact, false)
         XCTAssertEqual(event?.requiresRescan, false)
     }
@@ -25,6 +27,8 @@ final class FileWatcherTests: XCTestCase {
 
         XCTAssertNotNil(event)
         XCTAssertEqual(event?.hasTreeImpact, false)
+        XCTAssertEqual(event?.hasStructuralImpact, false)
+        XCTAssertEqual(event?.hasWorktreeStatusImpact, true)
         XCTAssertEqual(event?.hasGitMetadataImpact, true)
         XCTAssertEqual(event?.requiresRescan, false)
     }
@@ -46,20 +50,38 @@ final class FileWatcherTests: XCTestCase {
 
         XCTAssertNotNil(event)
         XCTAssertEqual(event?.hasTreeImpact, false)
+        XCTAssertEqual(event?.hasStructuralImpact, false)
+        XCTAssertEqual(event?.hasWorktreeStatusImpact, true)
         XCTAssertEqual(event?.hasGitMetadataImpact, false)
         XCTAssertEqual(event?.requiresRescan, true)
+    }
+
+    func testClassifyChangeEventCreatedFileHasStructuralImpact() {
+        let event = FileWatcher.classifyChangeEvent(
+            paths: ["/tmp/repo/Sources/new.swift"],
+            flags: [FSEventStreamEventFlags(kFSEventStreamEventFlagItemCreated)]
+        )
+
+        XCTAssertNotNil(event)
+        XCTAssertEqual(event?.hasTreeImpact, true)
+        XCTAssertEqual(event?.hasStructuralImpact, true)
+        XCTAssertEqual(event?.hasWorktreeStatusImpact, true)
     }
 
     func testChangeEventMergedCoalescesFlagsAndPaths() {
         let treeEvent = FileWatcher.ChangeEvent(
             changedPaths: ["/tmp/repo/a.swift"],
             hasTreeImpact: true,
+            hasStructuralImpact: false,
+            hasWorktreeStatusImpact: true,
             hasGitMetadataImpact: false,
             requiresRescan: false
         )
         let gitEvent = FileWatcher.ChangeEvent(
             changedPaths: ["/tmp/repo/.git/index", "/tmp/repo/a.swift"],
             hasTreeImpact: false,
+            hasStructuralImpact: true,
+            hasWorktreeStatusImpact: true,
             hasGitMetadataImpact: true,
             requiresRescan: true
         )
@@ -70,6 +92,8 @@ final class FileWatcherTests: XCTestCase {
         XCTAssertTrue(merged.changedPaths.contains("/tmp/repo/a.swift"))
         XCTAssertTrue(merged.changedPaths.contains("/tmp/repo/.git/index"))
         XCTAssertEqual(merged.hasTreeImpact, true)
+        XCTAssertEqual(merged.hasStructuralImpact, true)
+        XCTAssertEqual(merged.hasWorktreeStatusImpact, true)
         XCTAssertEqual(merged.hasGitMetadataImpact, true)
         XCTAssertEqual(merged.requiresRescan, true)
     }

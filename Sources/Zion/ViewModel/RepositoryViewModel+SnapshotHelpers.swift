@@ -311,6 +311,10 @@ extension RepositoryViewModel {
         deferredRepositoryLoadTask?.cancel()
         refreshTask?.cancel()
         fileTreeRefreshTask?.cancel()
+        fileTreeRefreshTask = nil
+        isRefreshingFileTree = false
+        pendingFileTreeRefreshRepositoryURL = nil
+        pendingFileTreeRefreshForceReload = false
         prTask?.cancel()
         submoduleTask?.cancel()
         signatureStatusTask?.cancel()
@@ -527,45 +531,24 @@ extension RepositoryViewModel {
         pendingFileWatcherEvent = nil
         isApplyingFileWatcherRefresh = true
 
-        if event.hasTreeImpact || event.requiresRescan {
-            if isBusy {
-                pendingFileWatcherEvent = (pendingFileWatcherEvent?.merged(
-                    with: FileWatcher.ChangeEvent(
-                        changedPaths: event.changedPaths,
-                        hasTreeImpact: true,
-                        hasGitMetadataImpact: event.hasGitMetadataImpact,
-                        requiresRescan: event.requiresRescan
-                    )
-                )) ?? FileWatcher.ChangeEvent(
-                    changedPaths: event.changedPaths,
-                    hasTreeImpact: true,
-                    hasGitMetadataImpact: event.hasGitMetadataImpact,
-                    requiresRescan: event.requiresRescan
-                )
-            } else {
-                refreshFileTree()
+        if isBusy {
+            pendingFileWatcherEvent = (pendingFileWatcherEvent?.merged(with: event)) ?? event
+        } else {
+            if event.hasStructuralImpact || event.requiresRescan {
+                refreshFileTree(forceReloadExpandedDirectories: true)
+            }
+
+            if event.hasTreeImpact {
                 reloadSelectedCodeFileFromDiskIfNeeded(event: event)
             }
-        }
 
-        if event.hasGitMetadataImpact || event.requiresRescan {
-            if isBusy {
-                pendingFileWatcherEvent = (pendingFileWatcherEvent?.merged(
-                    with: FileWatcher.ChangeEvent(
-                        changedPaths: event.changedPaths,
-                        hasTreeImpact: event.hasTreeImpact,
-                        hasGitMetadataImpact: true,
-                        requiresRescan: event.requiresRescan
-                    )
-                )) ?? FileWatcher.ChangeEvent(
-                    changedPaths: event.changedPaths,
-                    hasTreeImpact: event.hasTreeImpact,
-                    hasGitMetadataImpact: true,
-                    requiresRescan: event.requiresRescan
-                )
-            } else if Date() < suppressFileWatcherGitMetadataUntil {
-            } else {
-                refreshRepository(setBusy: false, origin: .fileWatcher)
+            if event.hasWorktreeStatusImpact {
+                if Date() < suppressFileWatcherGitMetadataUntil && !event.hasTreeImpact {
+                    // Skip watcher-only git metadata noise while an explicit git action
+                    // is already expected to refresh worktree state.
+                } else {
+                    refreshRepository(setBusy: false, options: .worktreeStatus, origin: .fileWatcher)
+                }
             }
         }
 

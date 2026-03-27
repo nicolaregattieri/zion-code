@@ -34,11 +34,14 @@ struct ContentView: View {
     @State private var isFeatureTourVisible: Bool = false
     @State private var currentFeatureTourIndex: Int = 0
     @State private var splitViewVisibility: NavigationSplitViewVisibility = .all
+    @State private var shellWidth: CGFloat = DesignSystem.Layout.windowMinWidth
     @State private var zenLayoutActive = false
     @State private var zenTerminalFullscreen = false
     @State private var zenTransitioning = false
     @State private var zenTransitionMessage = ""
     @State private var preZenSplitVisibility: NavigationSplitViewVisibility?
+    @State private var preCompactSplitVisibility: NavigationSplitViewVisibility?
+    @State private var isCompactSidebarCollapsed = false
     @State private var pendingNavigationAfterZenExit: AppSection?
     @State private var isConflictResolverPromptVisible: Bool = false
     @State private var hasShownConflictResolverPromptForCurrentConflictState: Bool = false
@@ -74,6 +77,12 @@ struct ContentView: View {
     }
 
     private let logger = DiagnosticLogger.shared
+    var shellLayoutProfile: AppShellLayoutProfile {
+        AppShellLayoutProfile(width: shellWidth)
+    }
+    var isPrimarySidebarVisible: Bool {
+        splitViewVisibility != .detailOnly
+    }
 
     func route(_ event: NavigationEvent) {
         switch event {
@@ -178,6 +187,7 @@ struct ContentView: View {
             zenLayoutActive = zenModeEnabled
             zenTerminalFullscreen = zenModeEnabled
             splitViewVisibility = zenModeEnabled ? .detailOnly : .all
+            applyResponsiveShellLayout(for: shellWidth)
             if zenModeEnabled {
                 selectedSection = .code
                 model.enterZenMode()
@@ -387,6 +397,7 @@ struct ContentView: View {
             }
         }
         .coordinateSpace(name: "featureTour")
+        .background(shellWidthReader)
     }
 
     private var navigationShell: some View {
@@ -459,6 +470,18 @@ struct ContentView: View {
         }
         .background {
             keyboardShortcutBridge
+        }
+    }
+
+    private var shellWidthReader: some View {
+        GeometryReader { proxy in
+            Color.clear
+                .onAppear {
+                    updateShellWidth(proxy.size.width)
+                }
+                .onChange(of: proxy.size) { _, size in
+                    updateShellWidth(size.width)
+                }
         }
     }
 
@@ -554,6 +577,33 @@ struct ContentView: View {
         .animation(DesignSystem.Motion.panel, value: selectedSection)
     }
 
+    func updateShellWidth(_ width: CGFloat) {
+        guard width.isFinite, width > 0 else { return }
+        let roundedWidth = width.rounded(.toNearestOrAwayFromZero)
+        guard roundedWidth != shellWidth else { return }
+        shellWidth = roundedWidth
+        applyResponsiveShellLayout(for: roundedWidth)
+    }
+
+    func applyResponsiveShellLayout(for width: CGFloat) {
+        guard !zenLayoutActive else { return }
+
+        let profile = AppShellLayoutProfile(width: width)
+        if profile.prefersCollapsedPrimarySidebar {
+            guard !isCompactSidebarCollapsed else { return }
+            preCompactSplitVisibility = splitViewVisibility
+            splitViewVisibility = .detailOnly
+            isCompactSidebarCollapsed = true
+            return
+        }
+
+        guard isCompactSidebarCollapsed else { return }
+        let restoreVisibility = preCompactSplitVisibility ?? .all
+        splitViewVisibility = restoreVisibility
+        preCompactSplitVisibility = nil
+        isCompactSidebarCollapsed = false
+    }
+
     @ViewBuilder
     private var nonCodeSharedBanners: some View {
         VStack(spacing: 0) {
@@ -577,6 +627,14 @@ struct ContentView: View {
         let panel = NSOpenPanel()
         panel.canChooseFiles = false; panel.canChooseDirectories = true; panel.canCreateDirectories = true
         if panel.runModal() == .OK, let selectedURL = panel.url { model.openRepository(selectedURL) }
+    }
+
+    func togglePrimarySidebar() {
+        splitViewVisibility = splitViewVisibility == .detailOnly ? .all : .detailOnly
+        if !shellLayoutProfile.prefersCollapsedPrimarySidebar {
+            preCompactSplitVisibility = splitViewVisibility
+            isCompactSidebarCollapsed = false
+        }
     }
 
     func toggleZenMode() {
@@ -609,6 +667,7 @@ struct ContentView: View {
                     zenLayoutActive = false
                     zenTerminalFullscreen = false
                     splitViewVisibility = restoreVisibility
+                    applyResponsiveShellLayout(for: shellWidth)
                     model.exitZenMode()
                     if let pending = pendingNavigationAfterZenExit {
                         pendingNavigationAfterZenExit = nil
@@ -644,6 +703,7 @@ struct ContentView: View {
             zenLayoutActive = false
             zenTerminalFullscreen = false
             splitViewVisibility = .all
+            applyResponsiveShellLayout(for: shellWidth)
         }
 
         currentFeatureTourIndex = 0

@@ -234,6 +234,7 @@
 "Fetch: Busca atualizações remotas" = "Fetch: actualizar referencias remotas (sin cambiar la rama local)";
 "Pull: Puxa alterações da branch atual" = "Pull: aplicar commits remotos en la rama actual";
 "Push: Envia alterações locais" = "Push: Envía cambios locales";
+"Mais" = "Más";
 "Abrir no Editor de Código" = "Abrir en Editor de Código";
 
 // GraphScreen

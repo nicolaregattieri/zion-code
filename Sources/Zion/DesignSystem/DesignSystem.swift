@@ -24,6 +24,9 @@ struct DesignSystem {
         // Window
         static let windowMinWidth: CGFloat = 900
         static let windowMinHeight: CGFloat = 640
+        static let compactShellWidthThreshold: CGFloat = 1180
+        static let compactToolbarWidthThreshold: CGFloat = 1100
+        static let compactStatusBarWidthThreshold: CGFloat = 1160
 
         // Sidebar
         static let sidebarMinWidth: CGFloat = 260
@@ -34,6 +37,10 @@ struct DesignSystem {
         static let editorTerminalMinPane: CGFloat = 100
         static let markdownPreviewMinLeading: CGFloat = 260
         static let markdownPreviewMinTrailing: CGFloat = 240
+        static let verticalMarkdownPreviewWidthThreshold: CGFloat = 980
+        static let autoCollapseFileBrowserWidthThreshold: CGFloat = 860
+        static let markdownPreviewVerticalMinLeading: CGFloat = 220
+        static let markdownPreviewVerticalMinTrailing: CGFloat = 180
 
         // GraphScreen splits
         static let commitListMinWidth: CGFloat = 300

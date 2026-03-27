@@ -614,6 +614,9 @@ final class RepositoryViewModel {
     @ObservationIgnored var symbolIndexRebuildRepositoryURL: URL?
     @ObservationIgnored var fileTreeRefreshTask: Task<Void, Never>?
     @ObservationIgnored var fileTreeRefreshRequestID = UUID()
+    @ObservationIgnored var isRefreshingFileTree = false
+    @ObservationIgnored var pendingFileTreeRefreshForceReload = false
+    @ObservationIgnored var pendingFileTreeRefreshRepositoryURL: URL?
 
     @ObservationIgnored var repoEditorConfig: EditorConfig?
     var hasRepoEditorConfig: Bool { repoEditorConfig != nil }

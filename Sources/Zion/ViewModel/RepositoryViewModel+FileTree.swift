@@ -5,17 +5,30 @@ extension RepositoryViewModel {
     // MARK: - File Tree Loading & Enumeration
 
     func refreshFileTree(forceReloadExpandedDirectories: Bool = true) {
-        guard let url = repositoryURL else { return }
+        guard let url = repositoryURL?.standardizedFileURL else { return }
+        if isRefreshingFileTree {
+            pendingFileTreeRefreshRepositoryURL = url
+            pendingFileTreeRefreshForceReload = pendingFileTreeRefreshForceReload || forceReloadExpandedDirectories
+            return
+        }
+        runFileTreeRefresh(for: url, forceReloadExpandedDirectories: forceReloadExpandedDirectories)
+    }
+
+    private func runFileTreeRefresh(for url: URL, forceReloadExpandedDirectories: Bool) {
         let requestID = UUID()
         fileTreeRefreshRequestID = requestID
-        fileTreeRefreshTask?.cancel()
+        isRefreshingFileTree = true
+        pendingFileTreeRefreshRepositoryURL = nil
+        pendingFileTreeRefreshForceReload = false
         fileTreeRefreshTask = Task { [weak self] in
             guard let self else { return }
-            // Phase 1: load top-level only (instant)
+            defer {
+                self.completeFileTreeRefresh(requestID: requestID, repositoryURL: url)
+            }
+
             let initial = await self.loadFiles(at: url, ignoredPaths: nil, maxDepth: 0)
             guard !Task.isCancelled else { return }
 
-            // Phase 2: refine with gitignore — build final value before assigning
             let ignoredPaths = await self.loadGitIgnoredPaths(for: url)
             let files: [FileItem]
             if !ignoredPaths.isEmpty {
@@ -25,7 +38,7 @@ extension RepositoryViewModel {
             }
 
             guard !Task.isCancelled else { return }
-            guard self.fileTreeRefreshRequestID == requestID, self.repositoryURL == url else { return }
+            guard self.fileTreeRefreshRequestID == requestID, self.repositoryURL?.standardizedFileURL == url else { return }
 
             self.repositoryFiles = self.mergeTopLevel(old: self.repositoryFiles, new: files)
             self.reloadExpandedDirectories(forceReload: forceReloadExpandedDirectories)
@@ -35,6 +48,21 @@ extension RepositoryViewModel {
             self.captureRepositorySnapshot(for: url)
             self.scheduleEditorSymbolIndexRebuild(repositoryURL: url)
         }
+    }
+
+    private func completeFileTreeRefresh(requestID: UUID, repositoryURL: URL) {
+        guard fileTreeRefreshRequestID == requestID else { return }
+        fileTreeRefreshTask = nil
+        isRefreshingFileTree = false
+
+        guard let pendingURL = pendingFileTreeRefreshRepositoryURL,
+              pendingURL == repositoryURL,
+              repositoryURL == self.repositoryURL?.standardizedFileURL else { return }
+
+        let pendingForceReload = pendingFileTreeRefreshForceReload
+        pendingFileTreeRefreshRepositoryURL = nil
+        pendingFileTreeRefreshForceReload = false
+        runFileTreeRefresh(for: pendingURL, forceReloadExpandedDirectories: pendingForceReload)
     }
 
     func reloadExpandedDirectories(forceReload: Bool = false) {

@@ -6,6 +6,8 @@ final class FileWatcher {
     struct ChangeEvent: Sendable {
         let changedPaths: [String]
         let hasTreeImpact: Bool
+        let hasStructuralImpact: Bool
+        let hasWorktreeStatusImpact: Bool
         let hasGitMetadataImpact: Bool
         let requiresRescan: Bool
 
@@ -13,6 +15,8 @@ final class FileWatcher {
             ChangeEvent(
                 changedPaths: Array(Set(changedPaths + other.changedPaths)).sorted(),
                 hasTreeImpact: hasTreeImpact || other.hasTreeImpact,
+                hasStructuralImpact: hasStructuralImpact || other.hasStructuralImpact,
+                hasWorktreeStatusImpact: hasWorktreeStatusImpact || other.hasWorktreeStatusImpact,
                 hasGitMetadataImpact: hasGitMetadataImpact || other.hasGitMetadataImpact,
                 requiresRescan: requiresRescan || other.requiresRescan
             )
@@ -92,14 +96,21 @@ final class FileWatcher {
 
     static func classifyChangeEvent(paths: [String], flags: [FSEventStreamEventFlags]) -> ChangeEvent? {
         let normalizedPaths = paths.map(Self.normalizePath)
+        let eventPairs = Array(zip(normalizedPaths, flags))
         let hasTreeImpact = normalizedPaths.contains { !Self.isInsideGitDirectory($0) }
+        let hasStructuralImpact = eventPairs.contains { path, flag in
+            !Self.isInsideGitDirectory(path) && Self.isStructuralFlag(flag)
+        }
         let hasGitMetadataImpact = normalizedPaths.contains(where: Self.isGitMetadataPath)
         let requiresRescan = flags.contains(where: Self.isRescanFlag)
+        let hasWorktreeStatusImpact = hasTreeImpact || hasGitMetadataImpact || requiresRescan
 
-        guard hasTreeImpact || hasGitMetadataImpact || requiresRescan else { return nil }
+        guard hasWorktreeStatusImpact else { return nil }
         return ChangeEvent(
             changedPaths: normalizedPaths,
             hasTreeImpact: hasTreeImpact,
+            hasStructuralImpact: hasStructuralImpact,
+            hasWorktreeStatusImpact: hasWorktreeStatusImpact,
             hasGitMetadataImpact: hasGitMetadataImpact,
             requiresRescan: requiresRescan
         )
@@ -128,6 +139,15 @@ final class FileWatcher {
                 | kFSEventStreamEventFlagUserDropped
                 | kFSEventStreamEventFlagKernelDropped
                 | kFSEventStreamEventFlagRootChanged
+        )
+        return (flag & mask) != 0
+    }
+
+    static func isStructuralFlag(_ flag: FSEventStreamEventFlags) -> Bool {
+        let mask = FSEventStreamEventFlags(
+            kFSEventStreamEventFlagItemCreated
+                | kFSEventStreamEventFlagItemRemoved
+                | kFSEventStreamEventFlagItemRenamed
         )
         return (flag & mask) != 0
     }
