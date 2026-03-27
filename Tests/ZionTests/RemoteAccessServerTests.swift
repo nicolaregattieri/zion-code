@@ -522,6 +522,67 @@ final class RemoteAccessDualModeTests: XCTestCase {
         XCTAssertEqual(payload.sessionID, sessionID)
     }
 
+    @MainActor
+    func testRepoNameForSessionReturnsActiveRepoForActiveSession() {
+        let vm = RepositoryViewModel()
+        let activeRepoURL = URL(fileURLWithPath: "/tmp/ai-shopify-plan")
+        vm.repositoryURL = activeRepoURL
+        vm.createTerminalSession(workingDirectory: activeRepoURL, label: "main")
+
+        guard let sessionID = vm.terminalSessions.first?.id else {
+            return XCTFail("Expected an active terminal session")
+        }
+
+        XCTAssertEqual(vm.repoName(for: sessionID), "ai-shopify-plan")
+    }
+
+    @MainActor
+    func testRepoNameForSessionReturnsBackgroundRepoForBackgroundSession() {
+        let vm = RepositoryViewModel()
+        vm.repositoryURL = URL(fileURLWithPath: "/tmp/ai-shopify-plan")
+
+        let backgroundRepoURL = URL(fileURLWithPath: "/tmp/zion-code-YEdxVgx")
+        let backgroundSession = TerminalSession(workingDirectory: backgroundRepoURL, label: "main")
+        vm.backgroundRepoStates[backgroundRepoURL] = BackgroundRepoState(
+            terminalTabs: [TerminalPaneNode(session: backgroundSession)],
+            activeTabID: nil,
+            focusedSessionID: nil,
+            fileWatcher: FileWatcher(),
+            monitorTask: nil,
+            burstUntil: nil
+        )
+
+        XCTAssertEqual(vm.repoName(for: backgroundSession.id), "zion-code-YEdxVgx")
+    }
+
+    @MainActor
+    func testRepoNameForSessionPrefersSessionOwnerOverCurrentActiveRepo() {
+        let vm = RepositoryViewModel()
+        vm.repositoryURL = URL(fileURLWithPath: "/tmp/ai-shopify-plan")
+
+        let promptingRepoURL = URL(fileURLWithPath: "/tmp/zion-code-YEdxVgx")
+        let promptingSession = TerminalSession(workingDirectory: promptingRepoURL, label: "main")
+        vm.backgroundRepoStates[promptingRepoURL] = BackgroundRepoState(
+            terminalTabs: [TerminalPaneNode(session: promptingSession)],
+            activeTabID: nil,
+            focusedSessionID: nil,
+            fileWatcher: FileWatcher(),
+            monitorTask: nil,
+            burstUntil: nil
+        )
+
+        XCTAssertEqual(vm.repoName(for: promptingSession.id), "zion-code-YEdxVgx")
+        XCTAssertNotEqual(vm.repoName(for: promptingSession.id), "ai-shopify-plan")
+    }
+
+    @MainActor
+    func testRepoNameForSessionReturnsEmptyForUnknownSession() {
+        let vm = RepositoryViewModel()
+        vm.repositoryURL = URL(fileURLWithPath: "/tmp/ai-shopify-plan")
+
+        XCTAssertEqual(vm.repoName(for: UUID()), "")
+    }
+
     func testDisableClearsBothQRs() async throws {
         let vm = RepositoryViewModel()
         vm.mobileAccessLanQRImage = NSImage()
