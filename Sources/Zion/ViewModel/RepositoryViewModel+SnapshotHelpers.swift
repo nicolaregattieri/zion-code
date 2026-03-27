@@ -231,8 +231,11 @@ extension RepositoryViewModel {
             backgroundRepoChangedFiles.removeValue(forKey: canonicalRecentRepositoryURL(for: url))
             // Reset isAlive for sessions that died while stashed — lets updateNSView restart them
             for tab in terminalTabs {
-                for session in tab.allSessions() where !session.isAlive {
-                    session.isAlive = true
+                for session in tab.allSessions() {
+                    session._needsProjectSwitchDisplayResync = true
+                    if !session.isAlive {
+                        session.isAlive = true
+                    }
                 }
             }
         } else {

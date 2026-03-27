@@ -13,6 +13,7 @@ final class TerminalSessionTests: XCTestCase {
         session._processBridge = NSObject()
         session._activeCoordinatorGeneration = UUID()
         session._shellPid = 0
+        session._needsProjectSwitchDisplayResync = true
 
         session.killCachedProcess()
 
@@ -22,6 +23,7 @@ final class TerminalSessionTests: XCTestCase {
         XCTAssertNil(session._processBridge)
         XCTAssertNil(session._activeCoordinatorGeneration)
         XCTAssertEqual(session._shellPid, 0)
+        XCTAssertFalse(session._needsProjectSwitchDisplayResync)
     }
 
     func testKillCachedProcessIsIdempotent() {
@@ -60,5 +62,14 @@ final class TerminalSessionTests: XCTestCase {
                 bridgeMatchesCoordinator: false
             )
         )
+    }
+
+    func testTerminalSessionStartsWithoutProjectSwitchDisplayResync() {
+        let session = TerminalSession(
+            workingDirectory: URL(fileURLWithPath: "/tmp/repo"),
+            label: "main"
+        )
+
+        XCTAssertFalse(session._needsProjectSwitchDisplayResync)
     }
 }

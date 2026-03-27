@@ -76,6 +76,7 @@ struct TerminalTabView: NSViewRepresentable {
     func updateNSView(_ nsView: SwiftTerm.TerminalView, context: Context) {
         applyTheme(to: nsView, context: context)
         applyInteractionPolicy(to: nsView)
+        context.coordinator.performPendingDisplayResyncIfNeeded(view: nsView)
 
         // Read isAlive for @Observable tracking (processTerminated changes it,
         // which triggers this updateNSView call)
@@ -197,9 +198,13 @@ struct TerminalTabView: NSViewRepresentable {
         private var persistentSelectionFreezeActive = false
         private var preciseScrollLineAccumulator: CGFloat = 0
         private var resignActiveObserver: Any?
+        private var displayResyncTask: Task<Void, Never>?
+        private var needsDisplayResyncAfterReuse = false
         private weak var outputCoordinator: TerminalOutputCoordinator?
         private static let maxBufferedOutputDuringDragSelection = 1_048_576
         private static let forcedFlushChunkBytes = 65_536
+        private static let displayResyncPollNanos: UInt64 = 16_000_000
+        private static let maxDisplayResyncAttempts = 8
 
         init(_ parent: TerminalTabView) {
             self.parent = parent
@@ -232,6 +237,19 @@ struct TerminalTabView: NSViewRepresentable {
 
         static func shouldRecoverOwnerBinding(isCurrentOwner: Bool, bridgeMatchesCoordinator: Bool) -> Bool {
             !isCurrentOwner && bridgeMatchesCoordinator
+        }
+
+        static func canPerformDisplayResync(hasWindow: Bool, bounds: CGSize) -> Bool {
+            hasWindow && bounds.width > 0 && bounds.height > 0
+        }
+
+        static func shouldRetryDisplayResync(
+            hasWindow: Bool,
+            bounds: CGSize,
+            attempt: Int,
+            maxAttempts: Int
+        ) -> Bool {
+            !canPerformDisplayResync(hasWindow: hasWindow, bounds: bounds) && attempt + 1 < maxAttempts
         }
 
         static func shouldStartDragFreeze(
@@ -375,6 +393,7 @@ struct TerminalTabView: NSViewRepresentable {
 
             // Re-cache for future restructures (split → unsplit → split again)
             bindAsCurrentOwner(view: view)
+            needsDisplayResyncAfterReuse = parent.session._needsProjectSwitchDisplayResync
 
             // Re-register send callback for clipboard
             let sessionID = parent.session.id
@@ -393,6 +412,9 @@ struct TerminalTabView: NSViewRepresentable {
             // Reset synchronously to prevent double-fire from updateNSView
             // (startProcess sets it inside a Task, leaving a window for re-entry)
             processIsDead = false
+            needsDisplayResyncAfterReuse = false
+            displayResyncTask?.cancel()
+            displayResyncTask = nil
             killProcess()
             view.getTerminal().resetToInitialState()
             startProcess(view: view)
@@ -411,12 +433,73 @@ struct TerminalTabView: NSViewRepresentable {
             pointerDownInTerminal = false
             dragSelectionFreezeActive = false
             persistentSelectionFreezeActive = false
+            needsDisplayResyncAfterReuse = false
+            displayResyncTask?.cancel()
+            displayResyncTask = nil
             parent.session._shellPid = 0
             if isCurrentOwner() {
                 parent.session._processBridge = nil
                 parent.session._activeCoordinatorGeneration = nil
             }
             parent.model?.unregisterTerminalSendCallback(sessionID: parent.session.id)
+        }
+
+        func performPendingDisplayResyncIfNeeded(view: SwiftTerm.TerminalView) {
+            guard needsDisplayResyncAfterReuse else { return }
+            needsDisplayResyncAfterReuse = false
+            parent.session._needsProjectSwitchDisplayResync = false
+            scheduleDisplayResync(for: view, reason: "reattach")
+        }
+
+        private func scheduleDisplayResync(for view: SwiftTerm.TerminalView, reason: String) {
+            displayResyncTask?.cancel()
+            displayResyncTask = Task { @MainActor [weak self, weak view] in
+                guard let self else { return }
+
+                for attempt in 0..<Self.maxDisplayResyncAttempts {
+                    guard !Task.isCancelled else { return }
+                    guard let view else { return }
+
+                    let bounds = view.bounds.size
+                    let hasWindow = view.window != nil
+                    if Self.canPerformDisplayResync(hasWindow: hasWindow, bounds: bounds) {
+                        self.performDisplayResync(on: view, reason: reason, attempt: attempt)
+                        self.displayResyncTask = nil
+                        return
+                    }
+
+                    guard Self.shouldRetryDisplayResync(
+                        hasWindow: hasWindow,
+                        bounds: bounds,
+                        attempt: attempt,
+                        maxAttempts: Self.maxDisplayResyncAttempts
+                    ) else {
+                        self.displayResyncTask = nil
+                        return
+                    }
+
+                    try? await Task.sleep(nanoseconds: Self.displayResyncPollNanos)
+                }
+
+                self.displayResyncTask = nil
+            }
+        }
+
+        private func performDisplayResync(
+            on view: SwiftTerm.TerminalView,
+            reason: String,
+            attempt: Int
+        ) {
+            DiagnosticLogger.shared.log(
+                .info,
+                "terminal.displayResync",
+                context: "\(parent.session.label)(\(parent.session.id.uuidString.prefix(4))) reason=\(reason) attempt=\(attempt)",
+                source: "TerminalTabView"
+            )
+            view.getTerminal().updateFullScreen()
+            view.setFrameSize(view.frame.size)
+            view.needsDisplay = true
+            view.layoutSubtreeIfNeeded()
         }
 
         func insertSoftLineBreak() {
