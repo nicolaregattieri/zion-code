@@ -4,6 +4,22 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
+UPDATE_SWIFTTERM="${ZION_UPDATE_SWIFTTERM:-0}"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --update-swifterm)
+      UPDATE_SWIFTTERM=1
+      shift
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      echo "Usage: $0 [--update-swifterm]" >&2
+      exit 1
+      ;;
+  esac
+done
+
 DEFAULT_ENV_FILE="$ROOT_DIR/.zion-release.local"
 ENV_FILE="${ZION_ENV_FILE:-$DEFAULT_ENV_FILE}"
 if [ -f "$ENV_FILE" ]; then
@@ -13,6 +29,11 @@ fi
 
 export SWIFTPM_MODULECACHE_OVERRIDE="$ROOT_DIR/.build/module-cache"
 export CLANG_MODULE_CACHE_PATH="$ROOT_DIR/.build/clang-module-cache"
+
+if [ "$UPDATE_SWIFTTERM" = "1" ]; then
+  echo "Updating SwiftTerm dependency from its configured branch..."
+  swift package update SwiftTerm
+fi
 
 swift build -c release
 
