@@ -747,7 +747,7 @@ extension RepositoryViewModel {
         guard !setBusy && isBusy else { return false }
         // Deferred repository-switch refresh is responsible for finalizing switch state.
         // If we skip it while busy, `isSwitchingRepository` can remain true.
-        return origin != .repositorySwitch
+        return origin != .repositorySwitch && origin != .fileWatcher
     }
 
     // MARK: - Helpers

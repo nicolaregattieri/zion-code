@@ -64,12 +64,15 @@ struct CodeScreen: View {
     @State var voiceToggleRequestID: Int = 0
     @State var speechService = SpeechRecognitionService()
     @State var markdownPreviewRatio: CGFloat = 0.5
+    @State var markdownPreviewVerticalRatio: CGFloat = 0.58
     @State var isMarkdownPreviewVisible: Bool = false
     @FocusState var isTerminalSearchFocused: Bool
     @State var isSymbolResultsVisible: Bool = false
     @State var symbolResultsMode: EditorSymbolResultsMode = .definitions
     @State var symbolResultsQuery: String = ""
     @State var symbolResults: [EditorSymbolLocation] = []
+    @State var contentWidth: CGFloat = DesignSystem.Layout.windowMinWidth
+    @State var didAutoCollapseFileBrowserForCompactWidth = false
 
     // Find in Files
     enum SidebarMode { case fileTree, findInFiles }
@@ -83,6 +86,9 @@ struct CodeScreen: View {
     @State var findInFilesFocusRequestID: Int = 0
 
     @AppStorage(UserDefaultsKeys.Terminal.opacity) var terminalOpacity: Double = 0.92
+    var layoutProfile: CodeScreenLayoutProfile {
+        CodeScreenLayoutProfile(width: contentWidth)
+    }
 
     /// Ghostty-style terminal transparency: automatically enabled in Zen Mode
     var isTerminalTransparent: Bool {
@@ -277,10 +283,12 @@ struct CodeScreen: View {
         }
         .onAppear {
             applyZenModeState(zenTerminalFullscreen)
+            applyResponsiveCodeLayout(for: contentWidth)
         }
         .onChange(of: zenTerminalFullscreen) { _, enabled in
             applyZenModeState(enabled)
         }
+        .background(contentWidthReader)
         .onReceive(NotificationCenter.default.publisher(for: .formatDocument)) { _ in
             model.formatCurrentFile()
         }
@@ -327,10 +335,14 @@ struct CodeScreen: View {
                         )
                     } else if isMarkdownPreviewActive {
                         DraggableSplitView(
-                            axis: .horizontal,
-                            ratio: $markdownPreviewRatio,
-                            minLeading: DesignSystem.Layout.markdownPreviewMinLeading,
-                            minTrailing: DesignSystem.Layout.markdownPreviewMinTrailing
+                            axis: layoutProfile.prefersVerticalMarkdownPreview ? .vertical : .horizontal,
+                            ratio: layoutProfile.prefersVerticalMarkdownPreview ? $markdownPreviewVerticalRatio : $markdownPreviewRatio,
+                            minLeading: layoutProfile.prefersVerticalMarkdownPreview
+                                ? DesignSystem.Layout.markdownPreviewVerticalMinLeading
+                                : DesignSystem.Layout.markdownPreviewMinLeading,
+                            minTrailing: layoutProfile.prefersVerticalMarkdownPreview
+                                ? DesignSystem.Layout.markdownPreviewVerticalMinTrailing
+                                : DesignSystem.Layout.markdownPreviewMinTrailing
                         ) {
                             sourceEditorView
                         } trailing: {
@@ -560,5 +572,40 @@ struct CodeScreen: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var contentWidthReader: some View {
+        GeometryReader { proxy in
+            Color.clear
+                .onAppear {
+                    updateContentWidth(proxy.size.width)
+                }
+                .onChange(of: proxy.size) { _, size in
+                    updateContentWidth(size.width)
+                }
+        }
+    }
+
+    func updateContentWidth(_ width: CGFloat) {
+        guard width.isFinite, width > 0 else { return }
+        let roundedWidth = width.rounded(.toNearestOrAwayFromZero)
+        guard roundedWidth != contentWidth else { return }
+        contentWidth = roundedWidth
+        applyResponsiveCodeLayout(for: roundedWidth)
+    }
+
+    func applyResponsiveCodeLayout(for width: CGFloat) {
+        let profile = CodeScreenLayoutProfile(width: width)
+        if profile.prefersAutoCollapsedFileBrowser {
+            if isFileBrowserVisible && !didAutoCollapseFileBrowserForCompactWidth {
+                withAnimation(DesignSystem.Motion.panel) {
+                    isFileBrowserVisible = false
+                }
+            }
+            didAutoCollapseFileBrowserForCompactWidth = true
+            return
+        }
+
+        didAutoCollapseFileBrowserForCompactWidth = false
     }
 }

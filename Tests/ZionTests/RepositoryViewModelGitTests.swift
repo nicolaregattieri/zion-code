@@ -336,7 +336,7 @@ final class RepositoryViewModelGitTests: XCTestCase {
 
     func testShouldSkipRefreshWhileBusyForSilentRefresh() {
         XCTAssertTrue(RepositoryViewModel.shouldSkipRefreshWhileBusy(setBusy: false, isBusy: true, origin: .autoTimer))
-        XCTAssertTrue(RepositoryViewModel.shouldSkipRefreshWhileBusy(setBusy: false, isBusy: true, origin: .fileWatcher))
+        XCTAssertFalse(RepositoryViewModel.shouldSkipRefreshWhileBusy(setBusy: false, isBusy: true, origin: .fileWatcher))
     }
 
     func testShouldSkipRefreshWhileBusyForInteractiveRefresh() {

@@ -4,7 +4,10 @@ extension ContentView {
 
     var statusBar: some View {
         HStack(spacing: 12) {
-            Text(model.statusMessage).lineLimit(1).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
+            Text(model.statusMessage)
+                .lineLimit(1)
+                .font(DesignSystem.Typography.label)
+                .foregroundStyle(.secondary)
 
             statusBarQuickNavigation
 
@@ -181,7 +184,7 @@ extension ContentView {
                 .clipShape(Capsule())
             }
 
-            if let repositoryURL = model.repositoryURL {
+            if !shellLayoutProfile.usesCompactStatusBar, let repositoryURL = model.repositoryURL {
                 Text(repositoryURL.path).lineLimit(1).font(DesignSystem.Typography.monoLabel).foregroundStyle(.tertiary)
             }
         }
@@ -242,6 +245,7 @@ extension ContentView {
     func statusBarSectionButton(_ section: AppSection) -> some View {
         let isSelected = selectedSection == section
         let isDisabled = !model.canAccess(section)
+        let label = statusBarSectionLabel(section)
 
         return Button {
             route(.requestSection(section))
@@ -249,9 +253,11 @@ extension ContentView {
             HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 Image(systemName: section.icon)
                     .font(DesignSystem.Typography.metaSemibold)
-                Text(statusBarSectionLabel(section))
-                    .font(DesignSystem.Typography.labelSemibold)
-                    .lineLimit(1)
+                if !shellLayoutProfile.usesCompactStatusBar {
+                    Text(label)
+                        .font(DesignSystem.Typography.labelSemibold)
+                        .lineLimit(1)
+                }
             }
             .padding(.horizontal, 6)
             .padding(.vertical, 3)
@@ -280,8 +286,8 @@ extension ContentView {
         .buttonStyle(.plain)
         .disabled(isDisabled)
         .opacity(isDisabled ? 0.45 : 1)
-        .help(statusBarSectionLabel(section))
-        .accessibilityLabel(statusBarSectionLabel(section))
+        .help(label)
+        .accessibilityLabel(label)
     }
 
     var statusBarSettingsButton: some View {
@@ -289,9 +295,11 @@ extension ContentView {
             HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 Image(systemName: "gearshape")
                     .font(DesignSystem.Typography.metaSemibold)
-                Text(L10n("status.nav.settings"))
-                    .font(DesignSystem.Typography.labelSemibold)
-                    .lineLimit(1)
+                if !shellLayoutProfile.usesCompactStatusBar {
+                    Text(L10n("status.nav.settings"))
+                        .font(DesignSystem.Typography.labelSemibold)
+                        .lineLimit(1)
+                }
             }
             .padding(.horizontal, 6)
             .padding(.vertical, 3)
