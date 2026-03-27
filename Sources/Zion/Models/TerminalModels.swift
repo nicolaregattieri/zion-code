@@ -18,6 +18,7 @@ final class TerminalSession: Identifiable {
     @ObservationIgnored var _activeCoordinatorGeneration: UUID?
     @ObservationIgnored var _shellPid: Int32 = 0
     @ObservationIgnored var _shouldPreserve = true        // false after explicit kill
+    @ObservationIgnored var _needsProjectSwitchDisplayResync = false
 
     init(workingDirectory: URL, label: String, worktreeID: String? = nil) {
         self.workingDirectory = workingDirectory
@@ -52,6 +53,7 @@ final class TerminalSession: Identifiable {
         _cachedTerminal = nil
         _processBridge = nil
         _activeCoordinatorGeneration = nil
+        _needsProjectSwitchDisplayResync = false
     }
 }
 
