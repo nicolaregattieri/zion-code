@@ -657,7 +657,7 @@ extension RepositoryViewModel {
     }
 
     private func sendPromptDetected(sessionID: UUID, detection: PromptDetector.Detection) {
-        let repoName = repositoryURL?.lastPathComponent ?? ""
+        let repoName = repoName(for: sessionID)
 
         // Send via ntfy push if phone is not connected
         let isPhoneConnected: Bool
@@ -699,6 +699,18 @@ extension RepositoryViewModel {
         Task {
             await remoteAccessServer?.broadcast(message)
         }
+    }
+
+    func repoName(for sessionID: UUID) -> String {
+        if terminalTabs.contains(where: { $0.findNode(containing: sessionID) != nil }) {
+            return repositoryURL?.lastPathComponent ?? ""
+        }
+
+        for (url, state) in backgroundRepoStates where state.terminalTabs.contains(where: { $0.findNode(containing: sessionID) != nil }) {
+            return url.lastPathComponent
+        }
+
+        return ""
     }
 
     // MARK: - Payload Builders
