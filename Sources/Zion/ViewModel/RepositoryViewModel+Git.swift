@@ -408,9 +408,7 @@ extension RepositoryViewModel {
                 branches = payload.branches
                 focusedBranch = payload.focusedBranch
                 branchTree = payload.branchTree
-                tags = payload.tags
-                stashes = payload.stashes
-                selectedStash = payload.selectedStash
+                applyTagAndStashPayload(payload, includeTagsAndStashes: effectiveOptions.includeTagsAndStashes)
                 let resolvedWorktrees = mergeWorktreeStatusIfNeeded(
                     payload.worktrees,
                     includeWorktreeStatus: effectiveOptions.includeWorktreeStatus
