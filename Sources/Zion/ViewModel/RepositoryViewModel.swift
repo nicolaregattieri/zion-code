@@ -86,6 +86,14 @@ final class RepositoryViewModel {
     }
     var stashes: [String] = []
     var selectedStash: String = ""
+
+    func applyTagAndStashPayload(_ payload: RepositoryLoadPayload, includeTagsAndStashes: Bool) {
+        guard includeTagsAndStashes else { return }
+        tags = payload.tags
+        stashes = payload.stashes
+        selectedStash = payload.selectedStash
+    }
+
     var recoverySnapshots: [RecoverySnapshot] = []
     var isRecoverySnapshotsLoading: Bool = false
     var recoverySnapshotsStatus: String = ""
