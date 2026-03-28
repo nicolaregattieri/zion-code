@@ -496,10 +496,8 @@ struct TerminalTabView: NSViewRepresentable {
                 context: "\(parent.session.label)(\(parent.session.id.uuidString.prefix(4))) reason=\(reason) attempt=\(attempt)",
                 source: "TerminalTabView"
             )
-            view.getTerminal().updateFullScreen()
-            view.setFrameSize(view.frame.size)
-            view.needsDisplay = true
             view.layoutSubtreeIfNeeded()
+            view.resyncDisplayAfterViewRestore()
         }
 
         func insertSoftLineBreak() {
