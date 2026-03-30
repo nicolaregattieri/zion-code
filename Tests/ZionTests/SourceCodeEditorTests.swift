@@ -93,6 +93,25 @@ final class SourceCodeEditorTests: XCTestCase {
     }
 
     @MainActor
+    func testApplyHighlightingFallsBackToPlainTextForLargeDocuments() {
+        let text = String(repeating: "let value = 1\n", count: 20_000)
+        let textView = makeTextView(text: text)
+        let editor = SourceCodeEditor(text: .constant(text), theme: .tokyoNight, fileExtension: "swift")
+        let coordinator = SourceCodeEditor.Coordinator(editor)
+        let colors = editor.getEditorColors(for: editor.theme)
+
+        coordinator.applyHighlighting(to: textView, colors: colors)
+
+        XCTAssertTrue(coordinator.lastHighlightUsedReducedMode)
+
+        let keywordRange = (text as NSString).range(of: "let")
+        XCTAssertNotEqual(keywordRange.location, NSNotFound)
+
+        let keywordColor = textView.textStorage?.attribute(.foregroundColor, at: keywordRange.location, effectiveRange: nil) as? NSColor
+        XCTAssertEqual(keywordColor, colors.text)
+    }
+
+    @MainActor
     func testSearchHighlightsClearWhenQueryBecomesEmpty() {
         let textView = makeTextView(text: "foo\nbar\nfoo\n")
         let editor = SourceCodeEditor(text: .constant(textView.string), theme: .tokyoNight, fileExtension: "swift")

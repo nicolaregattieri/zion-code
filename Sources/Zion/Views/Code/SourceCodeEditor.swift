@@ -89,7 +89,7 @@ struct SourceCodeEditor: NSViewRepresentable {
         scrollView.backgroundColor = colors.background
         context.coordinator.applyHighlighting(to: textView, colors: colors)
 
-        context.coordinator.lastHighlightedText = text
+        context.coordinator.lastHighlightedSignature = context.coordinator.documentSignature(for: text)
         context.coordinator.lastHighlightedTheme = theme
         context.coordinator.lastHighlightedExtension = fileExtension
         context.coordinator.lastActiveFileID = activeFileID
@@ -202,13 +202,25 @@ struct SourceCodeEditor: NSViewRepresentable {
         }
 
         // Re-highlight if needed
-        let needsHighlight = text != coord.lastHighlightedText ||
-            theme != coord.lastHighlightedTheme ||
-            fileExtension != coord.lastHighlightedExtension ||
-            fileChanged
+        let textSignature = coord.documentSignature(for: text)
+        let useReducedHighlighting = coord.shouldUseReducedHighlighting(for: textSignature)
+        let needsHighlight: Bool
+        if useReducedHighlighting {
+            needsHighlight = externalTextChange ||
+                theme != coord.lastHighlightedTheme ||
+                fileExtension != coord.lastHighlightedExtension ||
+                fileChanged ||
+                !coord.lastHighlightUsedReducedMode
+        } else {
+            needsHighlight = textSignature != coord.lastHighlightedSignature ||
+                theme != coord.lastHighlightedTheme ||
+                fileExtension != coord.lastHighlightedExtension ||
+                fileChanged ||
+                coord.lastHighlightUsedReducedMode
+        }
         if needsHighlight {
             coord.applyHighlighting(to: textView, colors: colors)
-            coord.lastHighlightedText = text
+            coord.lastHighlightedSignature = textSignature
             coord.lastHighlightedTheme = theme
             coord.lastHighlightedExtension = fileExtension
         }
@@ -249,12 +261,13 @@ struct SourceCodeEditor: NSViewRepresentable {
         }
 
         // Search highlights
-        let searchChanged = searchQuery != coord.lastSearchQuery || text != coord.lastSearchText || fileChanged
+        let searchTextSignature = coord.documentSignature(for: text)
+        let searchChanged = searchQuery != coord.lastSearchQuery || searchTextSignature != coord.lastSearchTextSignature || fileChanged
             || searchMatchCase != coord.lastSearchMatchCase || searchRegex != coord.lastSearchRegex || searchWholeWord != coord.lastSearchWholeWord
         if searchChanged {
             coord.updateSearchHighlights(in: textView, query: searchQuery, currentIndex: currentMatchIndex)
             coord.lastSearchQuery = searchQuery
-            coord.lastSearchText = text
+            coord.lastSearchTextSignature = searchTextSignature
             coord.lastCurrentMatchIndex = currentMatchIndex
             coord.lastSearchMatchCase = searchMatchCase
             coord.lastSearchRegex = searchRegex
@@ -305,9 +318,17 @@ struct SourceCodeEditor: NSViewRepresentable {
         var parent: SourceCodeEditor
         weak var installedTextView: NSTextView?
         var lastActiveFileID: String?
-        var lastHighlightedText: String?
+        struct DocumentSignature: Equatable {
+            let utf16Length: Int
+            let hashValue: Int
+        }
+
+        static let largeFileHighlightUTF16Threshold = 200_000
+
+        var lastHighlightedSignature: DocumentSignature?
         var lastHighlightedTheme: EditorTheme?
         var lastHighlightedExtension: String?
+        var lastHighlightUsedReducedMode: Bool = false
         var regexCache: [String: NSRegularExpression] = [:]
         var cachedFont: NSFont?
         var cachedFontSize: Double?
@@ -315,7 +336,7 @@ struct SourceCodeEditor: NSViewRepresentable {
         var cachedColors: SourceCodeEditor.EditorColors?
         var cachedColorsTheme: EditorTheme?
         var lastSearchQuery: String = ""
-        var lastSearchText: String = ""
+        var lastSearchTextSignature: DocumentSignature?
         var lastCurrentMatchIndex: Int = 0
         var lastSearchScrollRequestID: Int = 0
         var searchMatchRanges: [NSRange] = []
