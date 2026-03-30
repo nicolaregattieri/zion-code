@@ -96,6 +96,13 @@ final class MobileAccessStatusBadgeTests: XCTestCase {
         let error = L10n("mobile.status.error")
         XCTAssertFalse(error.isEmpty, "mobile.status.error key missing")
         XCTAssertNotEqual(error, "mobile.status.error", "Key returned raw")
+
+        let tunnelStartup = L10n("mobile.access.error.startupFailed", "detail")
+        XCTAssertTrue(tunnelStartup.contains("detail"), "Expected startup failure localization to interpolate detail")
+
+        let dnsFailure = L10n("mobile.access.error.dnsFailed")
+        XCTAssertFalse(dnsFailure.isEmpty, "mobile.access.error.dnsFailed key missing")
+        XCTAssertNotEqual(dnsFailure, "mobile.access.error.dnsFailed", "Key returned raw")
     }
 
     func testMobileStatusConnectedFormatsDeviceCount() {
@@ -186,14 +193,17 @@ final class MobileAccessStatusBadgeTests: XCTestCase {
     func testSyncToSharedState() {
         let vm = RepositoryViewModel()
         vm.mobileAccessConnectionState = .waitingForPairing
+        vm.mobileAccessTunnelErrorMessage = "Tunnel unavailable"
 
         // Simulate what syncRemoteAccessState does
         let shared = RemoteAccessState.shared
         shared.connectionState = vm.mobileAccessConnectionState
+        shared.tunnelErrorMessage = vm.mobileAccessTunnelErrorMessage
 
         if case .waitingForPairing = shared.connectionState {} else {
             XCTFail("Shared state should mirror VM state")
         }
+        XCTAssertEqual(shared.tunnelErrorMessage, "Tunnel unavailable")
     }
 
     // MARK: - Keep Awake Payload

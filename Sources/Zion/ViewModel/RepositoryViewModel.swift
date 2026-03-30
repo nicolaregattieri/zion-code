@@ -395,10 +395,13 @@ final class RepositoryViewModel {
     var mobileAccessLanURL: String = ""
     var mobileAccessTunnelQRImage: NSImage?
     var mobileAccessTunnelURL: String = ""
+    var mobileAccessTunnelErrorMessage: String?
     var isTunnelReady: Bool = false
     var pairedDevices: [PairedDevice] = []
     @ObservationIgnored var remoteAccessServer: RemoteAccessServer?
     @ObservationIgnored var tunnelManager: CloudflareTunnelManager?
+    @ObservationIgnored var remoteAccessStartupTask: Task<Void, Never>?
+    @ObservationIgnored var remoteAccessTunnelTask: Task<Void, Never>?
     @ObservationIgnored var terminalOutputBuffers: [UUID: Data] = [:]
     @ObservationIgnored var promptContextBuffers: [UUID: [String]] = [:]
     @ObservationIgnored var terminalLastSentRows: [UUID: [String]] = [:]

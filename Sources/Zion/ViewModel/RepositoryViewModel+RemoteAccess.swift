@@ -9,15 +9,23 @@ extension RepositoryViewModel {
     // MARK: - Enable / Disable
 
     func enableRemoteAccess() {
+        remoteAccessStartupTask?.cancel()
+        remoteAccessTunnelTask?.cancel()
         acquireSleepAssertionIfNeeded()
         isMobileAccessEnabled = true
         observeSystemWake()
         mobileAccessConnectionState = .starting
+        mobileAccessTunnelErrorMessage = nil
+        mobileAccessTunnelQRImage = nil
+        mobileAccessTunnelURL = ""
+        isTunnelReady = false
         RemoteAccessState.shared.isCloudflaredMissing = false
         syncRemoteAccessState()
 
-        Task {
+        remoteAccessStartupTask = Task { [weak self] in
+            guard let self else { return }
             do {
+                try Task.checkCancellation()
                 // 1. Generate or load pairing key (detached to avoid blocking MainActor
                 //    if macOS shows a Keychain authorization dialog)
                 let key: SymmetricKey = await Task.detached {
@@ -61,6 +69,8 @@ extension RepositoryViewModel {
                     try await server.start(port: Constants.RemoteAccess.defaultPort, key: key)
                 }
 
+                try Task.checkCancellation()
+
                 // 3. Load or create persisted pairing token
                 let pairingToken = await loadOrCreatePairingToken()
                 await remoteAccessServer?.setPersistedToken(pairingToken)
@@ -85,18 +95,25 @@ extension RepositoryViewModel {
                 startHeartbeat()
 
                 // 5. Start tunnel in background (non-blocking, LAN works independently)
-                Task { [weak self] in
+                remoteAccessTunnelTask?.cancel()
+                remoteAccessTunnelTask = Task { [weak self] in
                     guard let self else { return }
                     do {
+                        try Task.checkCancellation()
                         // Check cloudflared availability
                         let isInstalled = await CloudflareTunnelManager.isCloudflaredInstalled()
                         guard isInstalled else {
                             await MainActor.run {
                                 let shared = RemoteAccessState.shared
                                 shared.isCloudflaredMissing = true
+                                self.mobileAccessTunnelErrorMessage = nil
+                                self.isTunnelReady = false
+                                self.syncRemoteAccessState()
                             }
                             return
                         }
+
+                        try Task.checkCancellation()
 
                         // Reuse tunnel if still alive
                         let tunnelURL: String
@@ -109,8 +126,11 @@ extension RepositoryViewModel {
                             tunnelURL = try await tunnel.start(localPort: Constants.RemoteAccess.defaultPort)
                         }
 
+                        try Task.checkCancellation()
+
                         await MainActor.run {
                             self.mobileAccessTunnelURL = tunnelURL
+                            self.mobileAccessTunnelErrorMessage = nil
                             self.mobileAccessTunnelQRImage = QRCodeGenerator.generatePairingQR(
                                 tunnelURL: tunnelURL,
                                 keyBase64: keyBase64,
@@ -121,13 +141,22 @@ extension RepositoryViewModel {
                             self.isTunnelReady = true
                             self.syncRemoteAccessState()
                         }
+                    } catch is CancellationError {
+                        return
                     } catch {
                         await MainActor.run {
+                            self.mobileAccessTunnelErrorMessage = error.localizedDescription
+                            self.mobileAccessTunnelQRImage = nil
+                            self.mobileAccessTunnelURL = ""
+                            self.isTunnelReady = false
+                            self.syncRemoteAccessState()
                             self.logger.log(.warn, "Tunnel failed, LAN still active", context: error.localizedDescription, source: #function)
                         }
                     }
                 }
 
+            } catch is CancellationError {
+                return
             } catch {
                 mobileAccessConnectionState = .error(error.localizedDescription)
                 syncRemoteAccessState()
@@ -137,6 +166,24 @@ extension RepositoryViewModel {
     }
 
     func disableRemoteAccess() {
+        applyRemoteAccessDisabledState()
+
+        let server = remoteAccessServer
+        remoteAccessServer = nil
+        let tunnel = tunnelManager
+        tunnelManager = nil
+
+        Task {
+            await server?.stop()
+            await tunnel?.stop()
+        }
+    }
+
+    private func applyRemoteAccessDisabledState() {
+        remoteAccessStartupTask?.cancel()
+        remoteAccessStartupTask = nil
+        remoteAccessTunnelTask?.cancel()
+        remoteAccessTunnelTask = nil
         isMobileAccessEnabled = false
         removeSystemWakeObserver()
         releaseSleepAssertion()
@@ -146,18 +193,12 @@ extension RepositoryViewModel {
         screenUpdateDebounceTasks.removeAll()
         screenUpdateThrottleDeadlines.removeAll()
 
-        Task {
-            await remoteAccessServer?.stop()
-            remoteAccessServer = nil
-            await tunnelManager?.stop()
-            tunnelManager = nil
-        }
-
         mobileAccessConnectionState = .disabled
         mobileAccessLanQRImage = nil
         mobileAccessLanURL = ""
         mobileAccessTunnelQRImage = nil
         mobileAccessTunnelURL = ""
+        mobileAccessTunnelErrorMessage = nil
         isTunnelReady = false
         terminalOutputBuffers.removeAll()
         promptContextBuffers.removeAll()
@@ -172,9 +213,28 @@ extension RepositoryViewModel {
         RemoteAccessEncryption.deletePairingToken()
         pairedDevices.removeAll()
         if isMobileAccessEnabled {
-            disableRemoteAccess()
-            enableRemoteAccess()
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                applyRemoteAccessDisabledState()
+                await stopRemoteAccessInfrastructure()
+                enableRemoteAccess()
+            }
         }
+    }
+
+    private func stopRemoteAccessInfrastructure() async {
+        remoteAccessStartupTask?.cancel()
+        remoteAccessStartupTask = nil
+        remoteAccessTunnelTask?.cancel()
+        remoteAccessTunnelTask = nil
+
+        let server = remoteAccessServer
+        remoteAccessServer = nil
+        let tunnel = tunnelManager
+        tunnelManager = nil
+
+        await server?.stop()
+        await tunnel?.stop()
     }
 
     // MARK: - Pairing Token Persistence
@@ -854,6 +914,7 @@ extension RepositoryViewModel {
         shared.lanURL = mobileAccessLanURL
         shared.tunnelQRImage = mobileAccessTunnelQRImage
         shared.tunnelURL = mobileAccessTunnelURL
+        shared.tunnelErrorMessage = mobileAccessTunnelErrorMessage
         shared.isTunnelReady = isTunnelReady
     }
 

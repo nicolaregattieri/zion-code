@@ -589,6 +589,7 @@ final class RemoteAccessDualModeTests: XCTestCase {
         vm.mobileAccessTunnelQRImage = NSImage()
         vm.mobileAccessLanURL = "http://192.168.1.1:19847"
         vm.mobileAccessTunnelURL = "https://test.trycloudflare.com"
+        vm.mobileAccessTunnelErrorMessage = "DNS failed"
         vm.isTunnelReady = true
 
         vm.disableRemoteAccess()
@@ -597,7 +598,52 @@ final class RemoteAccessDualModeTests: XCTestCase {
         XCTAssertNil(vm.mobileAccessTunnelQRImage)
         XCTAssertEqual(vm.mobileAccessLanURL, "")
         XCTAssertEqual(vm.mobileAccessTunnelURL, "")
+        XCTAssertNil(vm.mobileAccessTunnelErrorMessage)
         XCTAssertFalse(vm.isTunnelReady)
+    }
+}
+
+final class CloudflareTunnelManagerTests: XCTestCase {
+    func testClassifyTunnelOutputExtractsURL() {
+        let output = """
+        2026-03-30T20:00:00Z INF Requesting new quick Tunnel on trycloudflare.com...
+        2026-03-30T20:00:01Z INF +------------------------------------------------------------+
+        2026-03-30T20:00:01Z INF |  Your quick Tunnel has been created! Visit it at:         |
+        2026-03-30T20:00:01Z INF |  https://zion-preview.trycloudflare.com                    |
+        """
+
+        let result = CloudflareTunnelManager.classifyTunnelOutput(output)
+        XCTAssertEqual(result, .url("https://zion-preview.trycloudflare.com"))
+    }
+
+    func testClassifyTunnelOutputDetectsRateLimit() {
+        let output = "2026-03-30T20:00:01Z ERR 429 Too Many Requests"
+        let result = CloudflareTunnelManager.classifyTunnelOutput(output)
+        XCTAssertEqual(result, .rateLimited)
+    }
+
+    func testClassifyTunnelOutputDetectsStartupFailure() {
+        let output = """
+        2026-03-30T20:03:59Z INF Requesting new quick Tunnel on trycloudflare.com...
+        failed to request quick Tunnel: Post "https://api.trycloudflare.com/tunnel": dial tcp: lookup api.trycloudflare.com: no such host
+        """
+
+        let result = CloudflareTunnelManager.classifyTunnelOutput(output)
+        XCTAssertEqual(
+            result,
+            .startupFailed(#"failed to request quick Tunnel: Post "https://api.trycloudflare.com/tunnel": dial tcp: lookup api.trycloudflare.com: no such host"#)
+        )
+    }
+
+    func testStartupFailureDescriptionMapsDNSFailuresToFriendlyMessage() {
+        let error = CloudflareTunnelManager.TunnelError.startupFailed(
+            #"failed to request quick Tunnel: Post "https://api.trycloudflare.com/tunnel": dial tcp: lookup api.trycloudflare.com: no such host"#
+        )
+
+        XCTAssertEqual(
+            error.errorDescription,
+            L10n("mobile.access.error.dnsFailed")
+        )
     }
 }
 

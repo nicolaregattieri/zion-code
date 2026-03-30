@@ -1799,6 +1799,9 @@
 "mobile.access.error.parseFailed" = "Failed to parse tunnel URL from cloudflared output";
 "mobile.access.error.timeout" = "Timed out waiting for Cloudflare tunnel";
 "mobile.access.error.rateLimited" = "Cloudflare rate limit reached. Wait a few minutes and try again.";
+"mobile.access.error.startupFailed" = "Cloudflare tunnel failed to start. %@";
+"mobile.access.error.dnsFailed" = "Cloudflare tunnel could not resolve Cloudflare's servers. Check your connection or DNS and try again.";
+"mobile.access.error.localServerUnavailable" = "Cloudflare tunnel reached your Mac, but Zion's local remote server was unavailable. Try toggling Mobile Access off and on again.";
 "mobile.access.error.keyNotFound" = "Encryption key not found. Try regenerating the pairing key.";
 "mobile.access.lan.title" = "Local Network";
 "mobile.access.lan.description" = "Scan to connect over Wi-Fi. Both devices must be on the same network.";

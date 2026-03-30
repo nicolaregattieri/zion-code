@@ -1,6 +1,7 @@
 import Foundation
 
 actor CloudflareTunnelManager {
+    private static let tunnelURLPattern = try! NSRegularExpression(pattern: #"https://[a-z0-9.-]+\.trycloudflare\.com"#)
     private var process: Process?
     private var tunnelURL: String?
 
@@ -109,16 +110,23 @@ actor CloudflareTunnelManager {
     // MARK: - URL Parsing
 
     private func parseTunnelURL(from pipe: Pipe) async throws -> String {
-        let urlPattern = try NSRegularExpression(pattern: #"https://[a-z0-9-]+\.trycloudflare\.com"#)
         let handle = pipe.fileHandleForReading
 
         return try await withCheckedThrowingContinuation { continuation in
             let state = TunnelParseState()
 
-            handle.readabilityHandler = { [urlPattern] fileHandle in
+            handle.readabilityHandler = { fileHandle in
                 let newData = fileHandle.availableData
                 guard !newData.isEmpty else {
+                    if let result = Self.classifyTunnelOutput(state.currentText() ?? "") {
+                        if state.tryResume() {
+                            fileHandle.readabilityHandler = nil
+                            continuation.resume(with: result.result)
+                        }
+                        return
+                    }
                     if state.tryResume() {
+                        fileHandle.readabilityHandler = nil
                         continuation.resume(throwing: TunnelError.urlParsingFailed)
                     }
                     return
@@ -127,22 +135,10 @@ actor CloudflareTunnelManager {
                 state.appendData(newData)
                 guard let text = state.currentText() else { return }
 
-                // Check for rate limiting or other errors
-                if text.contains("429") || text.contains("Too Many Requests") {
+                if let result = Self.classifyTunnelOutput(text) {
                     if state.tryResume() {
                         fileHandle.readabilityHandler = nil
-                        continuation.resume(throwing: TunnelError.rateLimited)
-                    }
-                    return
-                }
-
-                let range = NSRange(text.startIndex..., in: text)
-                if let match = urlPattern.firstMatch(in: text, range: range),
-                   let matchRange = Range(match.range, in: text) {
-                    let url = String(text[matchRange])
-                    if state.tryResume() {
-                        fileHandle.readabilityHandler = nil
-                        continuation.resume(returning: url)
+                        continuation.resume(with: result.result)
                     }
                 }
             }
@@ -156,6 +152,41 @@ actor CloudflareTunnelManager {
                 }
             }
         }
+    }
+
+    static func classifyTunnelOutput(_ text: String) -> TunnelOutputResult? {
+        let range = NSRange(text.startIndex..., in: text)
+        if let match = tunnelURLPattern.firstMatch(in: text, range: range),
+           let matchRange = Range(match.range, in: text) {
+            let candidate = String(text[matchRange])
+            if URL(string: candidate)?.host != "api.trycloudflare.com" {
+                return .url(candidate)
+            }
+        }
+
+        if text.contains("429") || text.contains("Too Many Requests") {
+            return .rateLimited
+        }
+
+        let lines = text
+            .split(whereSeparator: \.isNewline)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        if let failureLine = lines.last(where: Self.isFailureLine(_:)) {
+            return .startupFailed(failureLine)
+        }
+
+        return nil
+    }
+
+    private static func isFailureLine(_ line: String) -> Bool {
+        let lowercased = line.lowercased()
+        return lowercased.hasPrefix("failed ")
+            || lowercased.contains("failed to request quick tunnel")
+            || lowercased.contains("lookup ")
+            || lowercased.contains("no such host")
+            || lowercased.contains("unable to reach")
     }
 
     /// Thread-safe state holder for tunnel URL parsing
@@ -192,6 +223,7 @@ actor CloudflareTunnelManager {
         case urlParsingFailed
         case timeout
         case rateLimited
+        case startupFailed(String)
 
         var errorDescription: String? {
             switch self {
@@ -203,6 +235,36 @@ actor CloudflareTunnelManager {
                 return L10n("mobile.access.error.timeout")
             case .rateLimited:
                 return L10n("mobile.access.error.rateLimited")
+            case .startupFailed(let message):
+                return Self.userFacingStartupError(for: message)
+            }
+        }
+
+        private static func userFacingStartupError(for message: String) -> String {
+            let lowercased = message.lowercased()
+            if lowercased.contains("lookup ") || lowercased.contains("no such host") {
+                return L10n("mobile.access.error.dnsFailed")
+            }
+            if lowercased.contains("connection refused") {
+                return L10n("mobile.access.error.localServerUnavailable")
+            }
+            return L10n("mobile.access.error.startupFailed", message)
+        }
+    }
+
+    enum TunnelOutputResult: Equatable {
+        case url(String)
+        case rateLimited
+        case startupFailed(String)
+
+        var result: Result<String, TunnelError> {
+            switch self {
+            case .url(let url):
+                return .success(url)
+            case .rateLimited:
+                return .failure(.rateLimited)
+            case .startupFailed(let message):
+                return .failure(.startupFailed(message))
             }
         }
     }
