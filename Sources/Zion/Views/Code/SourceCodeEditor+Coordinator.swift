@@ -59,7 +59,7 @@ extension SourceCodeEditor.Coordinator {
             guard let self else { return }
             let colors = self.parent.getEditorColors(for: self.parent.theme)
             self.applyHighlighting(to: textView, colors: colors)
-            self.lastHighlightedText = textView.string
+            self.lastHighlightedSignature = self.documentSignature(for: textView.string)
             self.lastHighlightedTheme = self.parent.theme
             self.lastHighlightedExtension = self.parent.fileExtension
         }
@@ -172,6 +172,17 @@ extension SourceCodeEditor.Coordinator {
         }
     }
 
+    func documentSignature(for text: String) -> SourceCodeEditor.Coordinator.DocumentSignature {
+        SourceCodeEditor.Coordinator.DocumentSignature(
+            utf16Length: text.utf16.count,
+            hashValue: text.hashValue
+        )
+    }
+
+    func shouldUseReducedHighlighting(for signature: SourceCodeEditor.Coordinator.DocumentSignature) -> Bool {
+        signature.utf16Length > SourceCodeEditor.Coordinator.largeFileHighlightUTF16Threshold
+    }
+
     // MARK: - Syntax Highlighting
 
     @MainActor
@@ -180,6 +191,7 @@ extension SourceCodeEditor.Coordinator {
         let length = string.utf16.count
         guard length > 0, let textStorage = textView.textStorage else { return }
         let range = NSRange(location: 0, length: length)
+        let signature = documentSignature(for: string)
         let lang = detectLanguage(from: parent.fileExtension)
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.lineSpacing = CGFloat(parent.lineSpacing)
@@ -198,7 +210,14 @@ extension SourceCodeEditor.Coordinator {
             .kern: CGFloat(parent.letterSpacing)
         ], range: range)
 
+        guard !shouldUseReducedHighlighting(for: signature) else {
+            lastHighlightUsedReducedMode = true
+            textStorage.endEditing()
+            return
+        }
+
         // 2. Language highlighting
+        lastHighlightUsedReducedMode = false
         switch lang {
         case .json:
             highlight(pattern: #""[^"\\]*(?:\\.[^"\\]*)*"\s*:"#, in: string, color: colors.keyword, storage: textStorage)
