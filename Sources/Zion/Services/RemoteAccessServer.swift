@@ -3,6 +3,23 @@ import Foundation
 import Network
 
 actor RemoteAccessServer {
+    nonisolated static func isAddressInUseError(_ error: Error) -> Bool {
+        if let nwError = error as? NWError,
+           case .posix(let code) = nwError,
+           code == .EADDRINUSE
+        {
+            return true
+        }
+
+        let nsError = error as NSError
+        if nsError.domain == NSPOSIXErrorDomain && nsError.code == Int(EADDRINUSE) {
+            return true
+        }
+
+        let description = error.localizedDescription.lowercased()
+        return description.contains("address already in use") || description.contains("error 48")
+    }
+
     private final class ListenerStartupGate: @unchecked Sendable {
         private let lock = NSLock()
         private var continuation: CheckedContinuation<Void, Error>?
@@ -289,6 +306,7 @@ actor RemoteAccessServer {
                 DiagnosticLogger.shared.log(.info, "Remote access server ready", source: "RemoteAccessServer")
             }
         case .failed(let error):
+            guard !Self.isAddressInUseError(error) else { return }
             Task { @MainActor in
                 DiagnosticLogger.shared.log(.error, "Remote access listener failed", context: error.localizedDescription, source: "RemoteAccessServer")
             }
@@ -588,6 +606,7 @@ actor RemoteAccessServer {
                 DiagnosticLogger.shared.log(.info, "WebSocket server ready", source: "RemoteAccessServer")
             }
         case .failed(let error):
+            guard !Self.isAddressInUseError(error) else { return }
             Task { @MainActor in
                 DiagnosticLogger.shared.log(.error, "WebSocket listener failed", context: error.localizedDescription, source: "RemoteAccessServer")
             }

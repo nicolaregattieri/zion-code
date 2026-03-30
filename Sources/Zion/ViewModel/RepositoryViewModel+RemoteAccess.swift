@@ -5,6 +5,8 @@ import IOKit.pwr_mgt
 @preconcurrency import SwiftTerm
 
 extension RepositoryViewModel {
+    private static let remoteAccessBindRetryCount = 3
+    private static let remoteAccessBindRetryDelayNanoseconds: UInt64 = 400_000_000
 
     // MARK: - Enable / Disable
 
@@ -66,7 +68,7 @@ extension RepositoryViewModel {
                         }
                     )
 
-                    try await server.start(port: Constants.RemoteAccess.defaultPort, key: key)
+                    try await startRemoteAccessServerWithRetry(server, key: key)
                 }
 
                 try Task.checkCancellation()
@@ -235,6 +237,43 @@ extension RepositoryViewModel {
 
         await server?.stop()
         await tunnel?.stop()
+    }
+
+    private func startRemoteAccessServerWithRetry(_ server: RemoteAccessServer, key: SymmetricKey) async throws {
+        var sawTransientBindFailure = false
+
+        for attempt in 0..<Self.remoteAccessBindRetryCount {
+            do {
+                try await server.start(port: Constants.RemoteAccess.defaultPort, key: key)
+                if sawTransientBindFailure {
+                    logger.log(.info, "Remote access recovered after transient port contention", source: #function)
+                }
+                return
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                let isTransientBindFailure = RemoteAccessServer.isAddressInUseError(error)
+                let hasRetryRemaining = attempt < Self.remoteAccessBindRetryCount - 1
+
+                guard isTransientBindFailure && hasRetryRemaining else {
+                    throw error
+                }
+
+                if !sawTransientBindFailure {
+                    logger.log(
+                        .warn,
+                        "Remote access waiting for previous session to release port",
+                        context: error.localizedDescription,
+                        source: #function
+                    )
+                }
+
+                sawTransientBindFailure = true
+                await server.stop()
+                try Task.checkCancellation()
+                try? await Task.sleep(nanoseconds: Self.remoteAccessBindRetryDelayNanoseconds)
+            }
+        }
     }
 
     // MARK: - Pairing Token Persistence
