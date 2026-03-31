@@ -44,6 +44,7 @@ enum UserDefaultsKeys {
         static let openHyperlinks = "terminal.openHyperlinks"
         static let copyOnSelect = "terminal.copyOnSelect"
         static let aiImageDisplay = "terminal.aiImageDisplay"
+        static let useMetalRenderer = "terminal.useMetalRenderer"
     }
 
     // MARK: - Speech
