@@ -75,7 +75,7 @@ struct OpsBranchCard: View {
                                 .padding(.horizontal, 8).padding(.vertical, 5).contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
-                            .onTapGesture(count: 2) {
+                            .onNativeDoubleClick {
                                 performGitAction(L10n("Checkout branch"), L10n("Fazer checkout da branch %@?", branch.name), false) {
                                     model.checkout(reference: branch.name)
                                 }

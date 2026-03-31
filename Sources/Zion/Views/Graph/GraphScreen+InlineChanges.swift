@@ -125,7 +125,7 @@ extension GraphScreen {
         .onHover { hovering in
             hoveredInlineFilePath = hovering ? file : nil
         }
-        .onTapGesture(count: 2) {
+        .onNativeDoubleClick {
             model.openFileInEditor(relativePath: file)
         }
         .contextMenu {

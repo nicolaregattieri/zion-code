@@ -159,7 +159,7 @@ private struct TerminalSplitView: View {
                         node.ratio = newLeading / available
                     }
             )
-            .onTapGesture(count: 2) {
+            .onNativeDoubleClick {
                 withAnimation(.easeInOut(duration: 0.2)) {
                     node.ratio = 0.5
                 }
