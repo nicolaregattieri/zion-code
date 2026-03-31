@@ -32,6 +32,12 @@ struct TerminalTabView: NSViewRepresentable {
             context.coordinator.reattach(view: cachedView)
             // Don't clear cache — reattach re-populates it for future restructures
             applyTheme(to: cachedView, context: context)
+            // Force immediate full redraw — the async resync poll can fire before
+            // SwiftUI finalizes the new layout (e.g., after a split), causing stale
+            // content. This ensures AppKit redraws the full viewport on the next
+            // draw cycle, regardless of layout timing.
+            cachedView.getTerminal().updateFullScreen()
+            cachedView.needsDisplay = true
             // Hide SwiftTerm's legacy scroller (we don't need a visible scrollbar)
             for subview in cachedView.subviews where subview is NSScroller {
                 subview.isHidden = true
