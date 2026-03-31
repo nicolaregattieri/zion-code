@@ -144,7 +144,6 @@ struct ContentView: View {
 
     private var rootEnvironmentView: some View {
         rootShell
-        .id(uiLanguageRaw)
         .preferredColorScheme(zionModeEnabled ? .dark : appearance.colorScheme)
         .environment(\.locale, uiLanguage.locale)
         .environment(\.zionModeEnabled, zionModeEnabled)
