@@ -7,9 +7,19 @@ extension RepositoryViewModel {
 
     func checkout(reference: String) {
         let target = reference.clean
-        guard !target.isEmpty else { return }
-        guard !isBusy else { return }
-        guard activeGitActionToken == nil else { return }
+        DiagnosticLogger.shared.log(.info, "checkout ENTER", context: "ref=\(reference) target=\(target) isBusy=\(isBusy) activeToken=\(activeGitActionToken != nil) currentBranch=\(currentBranch)", source: "checkout(reference:)")
+        guard !target.isEmpty else {
+            DiagnosticLogger.shared.log(.warn, "checkout BAIL: empty target", source: "checkout(reference:)")
+            return
+        }
+        guard !isBusy else {
+            DiagnosticLogger.shared.log(.warn, "checkout BAIL: isBusy", source: "checkout(reference:)")
+            return
+        }
+        guard activeGitActionToken == nil else {
+            DiagnosticLogger.shared.log(.warn, "checkout BAIL: activeGitActionToken", source: "checkout(reference:)")
+            return
+        }
 
         // Determine local branch name if it's a remote ref
         var localName = target
@@ -21,6 +31,7 @@ extension RepositoryViewModel {
         }
 
         if localName == currentBranch {
+            DiagnosticLogger.shared.log(.warn, "checkout BAIL: already on branch", context: localName, source: "checkout(reference:)")
             return
         }
 

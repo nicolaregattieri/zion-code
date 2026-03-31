@@ -247,6 +247,7 @@ struct GraphScreen: View {
                                 isAIConfigured: model.isAIConfigured,
                                 isReviewingThisCommit: model.reviewingCommitID == commit.id,
                                 onCheckout: { branch in
+                                    DiagnosticLogger.shared.log(.info, "graph.onCheckout", context: "branch=\(branch) isBusy=\(model.isBusy) activeToken=\(model.activeGitActionToken != nil)", source: "GraphScreen")
                                     let isRemote = model.isRemoteRefName(branch)
                                     if isRemote {
                                         let title = L10n("Checkout & Pull")
