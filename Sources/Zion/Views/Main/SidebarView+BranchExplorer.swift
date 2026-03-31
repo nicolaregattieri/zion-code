@@ -132,7 +132,7 @@ extension SidebarView {
         )
         .contentShape(Rectangle())
         .onTapGesture { if let branch = node.branchName { selectedBranchTreeNodeID = node.id; model.branchInput = branch } }
-        .onTapGesture(count: 2) {
+        .onNativeDoubleClick {
             if let branch = node.branchName, !isFocusLoading {
                 selectedBranchTreeNodeID = node.id
                 model.branchInput = branch

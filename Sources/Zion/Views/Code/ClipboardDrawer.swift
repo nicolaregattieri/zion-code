@@ -189,7 +189,7 @@ struct ClipboardDrawer: View {
         .background(isHovered ? DesignSystem.Colors.glassHover : Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
         .contentShape(Rectangle())
-        .onTapGesture(count: 2) {
+        .onNativeDoubleClick {
             if hasText {
                 let isFile = item.isImage || item.category == .path
                 if isFile {
