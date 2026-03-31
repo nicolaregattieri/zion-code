@@ -393,7 +393,10 @@ struct TerminalTabView: NSViewRepresentable {
 
             // Re-cache for future restructures (split → unsplit → split again)
             bindAsCurrentOwner(view: view)
-            needsDisplayResyncAfterReuse = parent.session._needsProjectSwitchDisplayResync
+            // Always resync after reattach — SwiftUI dismantles/recreates views
+            // on tab switches, layout changes, and splits, not just repo switches.
+            // Without this, the cached view shows stale content until a resize.
+            needsDisplayResyncAfterReuse = true
 
             // Re-register send callback for clipboard
             let sessionID = parent.session.id
