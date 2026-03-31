@@ -32,8 +32,10 @@ struct ZionApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .id(uiLanguageRaw)
                 .environment(\.locale, uiLanguage.locale)
+                .onChange(of: uiLanguageRaw) { _, _ in
+                    LocaleSignal.shared.bump()
+                }
                 .environment(updater)
                 .environmentObject(shortcutRegistry)
         }

@@ -99,7 +99,15 @@ struct AppLocalizationContext {
     var bundle: Bundle { resolvedLanguage.bundle }
 }
 
+@Observable
+final class LocaleSignal: @unchecked Sendable {
+    nonisolated(unsafe) static let shared = LocaleSignal()
+    var revision: UInt = 0
+    func bump() { revision &+= 1 }
+}
+
 func L10n(_ key: String, _ args: CVarArg...) -> String {
+    let _ = LocaleSignal.shared.revision
     let context = AppLanguage.localizationContext()
     let format = context.bundle.localizedString(forKey: key, value: nil, table: nil)
 
