@@ -1703,6 +1703,8 @@
 "settings.terminal.openHyperlinks.hint" = "Las URLs se abren en el navegador y las rutas de archivos se abren en el editor al hacer Cmd+clic.";
 "settings.terminal.aiImageDisplay" = "Generación de Imágenes por IA y Helpers";
 "settings.terminal.aiImageDisplay.hint" = "Instala los helpers de zion-img y zion_display en tu carpeta home. Las imágenes generadas por IA se guardan en zion-image/ dentro del proyecto actual para previsualizarlas en Zion.";
+"settings.terminal.metalRenderer" = "Renderizado Acelerado por GPU (Metal)";
+"settings.terminal.metalRenderer.hint" = "Usa la GPU para renderizar el contenido del terminal. Puede mejorar el rendimiento de scroll con salida intensa. Requiere reabrir los terminales para aplicar. Experimental.";
 "settings.terminal.selection" = "Selección";
 "settings.terminal.copyOnSelect" = "Copiar al Seleccionar";
 "recent.active.hint" = "Sesión activa";

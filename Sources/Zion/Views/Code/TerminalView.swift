@@ -66,6 +66,16 @@ struct TerminalTabView: NSViewRepresentable {
 
         context.coordinator.startProcess(view: terminalView)
 
+        // GPU-accelerated rendering (experimental, off by default)
+        if UserDefaults.standard.bool(forKey: UserDefaultsKeys.Terminal.useMetalRenderer) {
+            do {
+                try terminalView.setUseMetal(true)
+                Self.log.log(.info, "Metal renderer enabled", source: "TerminalTabView")
+            } catch {
+                Self.log.log(.warn, "Metal renderer failed: \(error.localizedDescription)", source: "TerminalTabView")
+            }
+        }
+
         // Hide SwiftTerm's legacy scroller (we don't need a visible scrollbar)
         for subview in terminalView.subviews where subview is NSScroller {
             subview.isHidden = true
