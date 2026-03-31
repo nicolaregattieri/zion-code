@@ -1752,6 +1752,9 @@
 "mobile.access.error.parseFailed" = "Falha ao extrair URL do túnel da saída do cloudflared";
 "mobile.access.error.timeout" = "Tempo esgotado aguardando túnel Cloudflare";
 "mobile.access.error.rateLimited" = "Limite de requisições Cloudflare atingido. Aguarde alguns minutos e tente novamente.";
+"mobile.access.error.startupFailed" = "Falha ao iniciar o túnel Cloudflare. %@";
+"mobile.access.error.dnsFailed" = "O túnel Cloudflare não conseguiu resolver os servidores da Cloudflare. Verifique sua conexão ou DNS e tente novamente.";
+"mobile.access.error.localServerUnavailable" = "O túnel Cloudflare alcançou seu Mac, mas o servidor local remoto do Zion não estava disponível. Tente desligar e ligar o Mobile Access novamente.";
 "mobile.access.error.keyNotFound" = "Chave de criptografia não encontrada. Tente regenerar a chave de pareamento.";
 "mobile.access.lan.title" = "Rede Local";
 "mobile.access.lan.description" = "Escaneie para conectar via Wi-Fi. Os dispositivos devem estar na mesma rede.";

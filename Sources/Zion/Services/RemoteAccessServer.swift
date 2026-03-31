@@ -3,6 +3,55 @@ import Foundation
 import Network
 
 actor RemoteAccessServer {
+    nonisolated static func isAddressInUseError(_ error: Error) -> Bool {
+        if let nwError = error as? NWError,
+           case .posix(let code) = nwError,
+           code == .EADDRINUSE
+        {
+            return true
+        }
+
+        let nsError = error as NSError
+        if nsError.domain == NSPOSIXErrorDomain && nsError.code == Int(EADDRINUSE) {
+            return true
+        }
+
+        let description = error.localizedDescription.lowercased()
+        return description.contains("address already in use") || description.contains("error 48")
+    }
+
+    private final class ListenerStartupGate: @unchecked Sendable {
+        private let lock = NSLock()
+        private var continuation: CheckedContinuation<Void, Error>?
+        private var result: Result<Void, Error>?
+
+        func waitUntilResolved() async throws {
+            try await withCheckedThrowingContinuation { continuation in
+                lock.lock()
+                if let result {
+                    lock.unlock()
+                    continuation.resume(with: result)
+                    return
+                }
+                self.continuation = continuation
+                lock.unlock()
+            }
+        }
+
+        func resolve(with result: Result<Void, Error>) {
+            lock.lock()
+            guard self.result == nil else {
+                lock.unlock()
+                return
+            }
+            self.result = result
+            let continuation = self.continuation
+            self.continuation = nil
+            lock.unlock()
+            continuation?.resume(with: result)
+        }
+    }
+
     private var listener: NWListener?
     private var pairingKey: SymmetricKey?
     private var validPairingTokens: [String: ContinuousClock.Instant] = [:]  // token → creation time
@@ -44,15 +93,24 @@ actor RemoteAccessServer {
 
     private var wsListener: NWListener?
 
-    func start(port: UInt16, key: SymmetricKey) throws {
+    func start(port: UInt16, key: SymmetricKey) async throws {
         pairingKey = key
 
         // HTTP listener (existing polling clients + web client)
         let parameters = NWParameters.tcp
         let nwPort = NWEndpoint.Port(rawValue: port)!
         let newListener = try NWListener(using: parameters, on: nwPort)
+        let httpStartupGate = ListenerStartupGate()
 
-        newListener.stateUpdateHandler = { [weak self] state in
+        newListener.stateUpdateHandler = { [weak self, httpStartupGate] state in
+            switch state {
+            case .ready:
+                httpStartupGate.resolve(with: .success(()))
+            case .failed(let error):
+                httpStartupGate.resolve(with: .failure(error))
+            default:
+                break
+            }
             guard let self else { return }
             Task { await self.handleListenerState(state) }
         }
@@ -73,8 +131,17 @@ actor RemoteAccessServer {
 
         let wsPort = NWEndpoint.Port(rawValue: port + 1)!
         let newWSListener = try NWListener(using: wsParams, on: wsPort)
+        let wsStartupGate = ListenerStartupGate()
 
-        newWSListener.stateUpdateHandler = { [weak self] state in
+        newWSListener.stateUpdateHandler = { [weak self, wsStartupGate] state in
+            switch state {
+            case .ready:
+                wsStartupGate.resolve(with: .success(()))
+            case .failed(let error):
+                wsStartupGate.resolve(with: .failure(error))
+            default:
+                break
+            }
             guard let self else { return }
             Task { await self.handleWSListenerState(state) }
         }
@@ -87,6 +154,8 @@ actor RemoteAccessServer {
         wsListener = newWSListener
         newWSListener.start(queue: .global(qos: .userInitiated))
 
+        try await httpStartupGate.waitUntilResolved()
+        try await wsStartupGate.waitUntilResolved()
         startDisconnectChecker()
     }
 
@@ -237,6 +306,7 @@ actor RemoteAccessServer {
                 DiagnosticLogger.shared.log(.info, "Remote access server ready", source: "RemoteAccessServer")
             }
         case .failed(let error):
+            guard !Self.isAddressInUseError(error) else { return }
             Task { @MainActor in
                 DiagnosticLogger.shared.log(.error, "Remote access listener failed", context: error.localizedDescription, source: "RemoteAccessServer")
             }
@@ -536,6 +606,7 @@ actor RemoteAccessServer {
                 DiagnosticLogger.shared.log(.info, "WebSocket server ready", source: "RemoteAccessServer")
             }
         case .failed(let error):
+            guard !Self.isAddressInUseError(error) else { return }
             Task { @MainActor in
                 DiagnosticLogger.shared.log(.error, "WebSocket listener failed", context: error.localizedDescription, source: "RemoteAccessServer")
             }

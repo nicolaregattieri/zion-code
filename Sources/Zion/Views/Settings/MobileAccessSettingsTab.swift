@@ -153,6 +153,21 @@ struct MobileAccessSettingsTab: View {
                     )
                     .foregroundStyle(DesignSystem.Colors.success)
                 }
+            } else if let tunnelError = state.tunnelErrorMessage, !tunnelError.isEmpty {
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
+                    Text(tunnelError)
+                        .font(DesignSystem.Typography.label)
+                        .foregroundStyle(DesignSystem.Colors.error)
+
+                    Button(L10n("mobile.access.step.error.retry")) {
+                        isEnabled = false
+                        Task {
+                            try? await Task.sleep(nanoseconds: 200_000_000)
+                            isEnabled = true
+                        }
+                    }
+                    .font(DesignSystem.Typography.label)
+                }
             } else if state.isCloudflaredMissing {
                 cloudflaredInstallView
             } else {
@@ -256,6 +271,7 @@ struct MobileAccessSettingsTab: View {
                 Button(L10n("Cancelar"), role: .cancel) {}
                 Button(L10n("mobile.access.regenerateKey.confirm"), role: .destructive) {
                     RemoteAccessState.shared.shouldRegenerateKey = true
+                    NotificationCenter.default.post(name: UserDefaults.didChangeNotification, object: nil)
                 }
             } message: {
                 Text(L10n("mobile.access.regenerateKey.hint"))

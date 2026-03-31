@@ -13,6 +13,7 @@ final class RemoteAccessState {
     var lanURL: String = ""
     var tunnelQRImage: NSImage?
     var tunnelURL: String = ""
+    var tunnelErrorMessage: String?
     var isTunnelReady: Bool = false
     var isCloudflaredMissing: Bool = false
     var isCloudflaredInstalled: Bool = false
