@@ -82,6 +82,7 @@ struct DecorationPill: View {
         )
         .shadow(color: isCurrent ? DesignSystem.Colors.selectionBackground : .clear, radius: 4, y: 1)
         .onTapGesture(count: 2) {
+            DiagnosticLogger.shared.log(.info, "pill.doubleTap", context: "name=\(name) type=\(type) isCurrent=\(isCurrent)", source: "DecorationPill")
             if type != .tag { onCheckout(name) }
         }
         .contextMenu {
