@@ -5,13 +5,9 @@ actor BitbucketClient: GitHostingProvider {
     private var cachedCredentials: (username: String, appPassword: String)?
     private var didAttemptKeychainLookup = false
 
-    /// Inject credentials for authentication. Called from settings.
-    func setCredentials(username: String, appPassword: String) {
-        if username.isEmpty || appPassword.isEmpty {
-            cachedCredentials = nil
-        } else {
-            cachedCredentials = (username, appPassword)
-        }
+    /// Invalidate cached credentials so the next API call re-resolves.
+    func invalidateCache() {
+        cachedCredentials = nil
         didAttemptKeychainLookup = false
     }
 
@@ -22,7 +18,7 @@ actor BitbucketClient: GitHostingProvider {
     }
 
     func hasToken() async -> Bool {
-        resolveCredentials() != nil
+        !HostingAccountStore.accounts(for: .bitbucket).isEmpty || resolveLegacyCredentials() != nil
     }
 
     // MARK: - Remote Parsing
@@ -54,14 +50,28 @@ actor BitbucketClient: GitHostingProvider {
 
     // MARK: - Auth Header
 
-    private func authHeader() -> String? {
-        guard let creds = resolveCredentials() else { return nil }
+    /// Resolve auth header for a specific remote using multi-account matching.
+    private func resolveAuthHeader(for remote: HostedRemote) -> String? {
+        guard let creds = resolveCredentialsForRemote(remote) else { return nil }
         let credString = "\(creds.username):\(creds.appPassword)"
         guard let data = credString.data(using: .utf8) else { return nil }
         return "Basic \(data.base64EncodedString())"
     }
 
-    private func resolveCredentials() -> (username: String, appPassword: String)? {
+    /// Multi-account credential resolution.
+    private func resolveCredentialsForRemote(_ remote: HostedRemote) -> (username: String, appPassword: String)? {
+        if let account = HostingAccountStore.resolveAccount(for: remote),
+           let secret = HostingAccountStore.loadSecret(for: account)?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+           !secret.isEmpty,
+           let bbUser = account.bitbucketUsername, !bbUser.isEmpty {
+            return (username: bbUser, appPassword: secret)
+        }
+        return resolveLegacyCredentials()
+    }
+
+    /// Legacy single-account credential resolution.
+    private func resolveLegacyCredentials() -> (username: String, appPassword: String)? {
         if let creds = cachedCredentials,
            !creds.username.isEmpty,
            !creds.appPassword.isEmpty {
@@ -88,10 +98,36 @@ actor BitbucketClient: GitHostingProvider {
         segment.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)
     }
 
+    // MARK: - Owner Discovery
+
+    /// Fetch the authenticated username and accessible workspaces for a given credential.
+    static func fetchAccessibleOwners(username: String, appPassword: String) async -> (username: String, owners: [String]) {
+        let credString = "\(username):\(appPassword)"
+        guard let credData = credString.data(using: .utf8) else { return (username, [username]) }
+        let auth = "Basic \(credData.base64EncodedString())"
+
+        guard let url = URL(string: "https://api.bitbucket.org/2.0/user/permissions/workspaces?pagelen=100") else {
+            return (username, [username])
+        }
+        var request = URLRequest(url: url)
+        request.setValue(auth, forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 10
+
+        var workspaces: [String] = []
+        if let (data, response) = try? await URLSession.shared.data(for: request),
+           let http = response as? HTTPURLResponse, http.statusCode == 200,
+           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let values = json["values"] as? [[String: Any]] {
+            workspaces = values.compactMap { ($0["workspace"] as? [String: Any])?["slug"] as? String }
+        }
+
+        return (username: username, owners: [username] + workspaces)
+    }
+
     // MARK: - GitHostingProvider
 
     func fetchPullRequests(remote: HostedRemote) async -> [HostedPRInfo] {
-        guard let auth = authHeader() else { return [] }
+        guard let auth = resolveAuthHeader(for: remote) else { return [] }
         guard let owner = Self.encodePathSegment(remote.owner),
               let repo = Self.encodePathSegment(remote.repo) else { return [] }
         let urlString = "https://api.bitbucket.org/2.0/repositories/\(owner)/\(repo)/pullrequests?state=OPEN&pagelen=30"
@@ -142,7 +178,7 @@ actor BitbucketClient: GitHostingProvider {
     }
 
     func fetchPRDiff(remote: HostedRemote, prNumber: Int) async -> String? {
-        guard let auth = authHeader() else { return nil }
+        guard let auth = resolveAuthHeader(for: remote) else { return nil }
         guard let owner = Self.encodePathSegment(remote.owner),
               let repo = Self.encodePathSegment(remote.repo) else { return nil }
         let urlString = "https://api.bitbucket.org/2.0/repositories/\(owner)/\(repo)/pullrequests/\(prNumber)/diff"
@@ -162,7 +198,7 @@ actor BitbucketClient: GitHostingProvider {
     }
 
     func fetchPRFiles(remote: HostedRemote, prNumber: Int) async -> [(filename: String, status: String, additions: Int, deletions: Int, patch: String)] {
-        guard let auth = authHeader() else { return [] }
+        guard let auth = resolveAuthHeader(for: remote) else { return [] }
         guard let owner = Self.encodePathSegment(remote.owner),
               let repo = Self.encodePathSegment(remote.repo) else { return [] }
         let urlString = "https://api.bitbucket.org/2.0/repositories/\(owner)/\(repo)/pullrequests/\(prNumber)/diffstat?pagelen=100"
@@ -196,7 +232,7 @@ actor BitbucketClient: GitHostingProvider {
     }
 
     func createPullRequest(remote: HostedRemote, title: String, body: String, head: String, base: String, draft: Bool) async throws -> HostedPRInfo {
-        guard let auth = authHeader() else { throw HostingError.noToken }
+        guard let auth = resolveAuthHeader(for: remote) else { throw HostingError.noToken }
         guard let owner = Self.encodePathSegment(remote.owner),
               let repo = Self.encodePathSegment(remote.repo) else { throw HostingError.invalidURL }
         let urlString = "https://api.bitbucket.org/2.0/repositories/\(owner)/\(repo)/pullrequests"

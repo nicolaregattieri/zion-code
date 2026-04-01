@@ -261,6 +261,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         ])
 
         registerFonts()
+
+        // Hosting credential migrations
+        HostingCredentialStore.migrateFromUserDefaults()
+        HostingAccountStore.migrateFromSingleAccount()
+
         ClipboardMonitor.purgeStaleFilesOnLaunch()
         ZionTemp.purgeStaleFiles()
         NSApp.setActivationPolicy(.regular)

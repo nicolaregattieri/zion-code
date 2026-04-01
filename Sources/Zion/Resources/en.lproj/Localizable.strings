@@ -1731,6 +1731,14 @@
 "hosting.github.authSuccess" = "Authenticated as %@";
 "hosting.github.authExpired" = "Authorization expired. Try again.";
 "hosting.github.authError" = "Authentication failed.";
+"hosting.github.addAnother" = "Add Another";
+
+// MARK: - Multi-Account Hosting
+"hosting.addWithPAT" = "Add with Token";
+"hosting.add" = "Add";
+"hosting.pat.placeholder" = "Personal Access Token";
+"hosting.account.invalidToken" = "Invalid token. Check the token and try again.";
+"hosting.bitbucket.usernameRequired" = "Username is required for Bitbucket.";
 
 // MARK: - PR Comments & Reviews
 "pr.comment.reply" = "Reply";

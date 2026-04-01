@@ -1743,6 +1743,14 @@
 "hosting.github.authSuccess" = "Autenticado como %@";
 "hosting.github.authExpired" = "Autorizacion expirada. Intenta de nuevo.";
 "hosting.github.authError" = "Error de autenticacion.";
+"hosting.github.addAnother" = "Agregar Otra";
+
+// MARK: - Multi-Account Hosting
+"hosting.addWithPAT" = "Agregar con Token";
+"hosting.add" = "Agregar";
+"hosting.pat.placeholder" = "Token de Acceso Personal";
+"hosting.account.invalidToken" = "Token invalido. Verifica el token e intenta de nuevo.";
+"hosting.bitbucket.usernameRequired" = "El nombre de usuario es obligatorio para Bitbucket.";
 
 // MARK: - PR Comments & Reviews
 "pr.comment.reply" = "Responder";

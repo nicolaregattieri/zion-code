@@ -117,6 +117,8 @@ enum UserDefaultsKeys {
     enum GitHosting {
         static let gitlabHost = "zion.gitlab.host"
         static let bitbucketUsername = "zion.bitbucket.username"
+        static let accounts = "zion.hosting.accounts"
+        static let migratedToMultiAccount = "zion.hosting.migrated-to-multi-account"
     }
 
     // MARK: - File Browser
