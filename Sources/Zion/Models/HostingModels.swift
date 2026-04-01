@@ -63,6 +63,37 @@ struct HostedPRInfo: Identifiable, Sendable {
     }
 }
 
+// MARK: - Multi-Account
+
+/// A single authenticated account for a hosting provider.
+struct HostingAccount: Identifiable, Codable, Sendable, Hashable {
+    let id: String
+    let kind: GitHostingKind
+    var username: String
+    var label: String
+    /// Orgs/users this account can access (populated from API).
+    var owners: [String]
+    /// Bitbucket-specific username for Basic auth.
+    var bitbucketUsername: String?
+    /// Self-hosted GitLab instance host.
+    var gitlabHost: String?
+
+    /// The Keychain account key for this specific account's secret.
+    var keychainAccountKey: String {
+        "\(kind.rawValue).account.\(id)"
+    }
+
+    init(kind: GitHostingKind, username: String, label: String, owners: [String], bitbucketUsername: String? = nil, gitlabHost: String? = nil) {
+        self.id = UUID().uuidString
+        self.kind = kind
+        self.username = username
+        self.label = label
+        self.owners = owners
+        self.bitbucketUsername = bitbucketUsername
+        self.gitlabHost = gitlabHost
+    }
+}
+
 // MARK: - Backward Compatibility
 
 /// Typealias for migration — existing code referencing GitHubPRInfo still compiles.

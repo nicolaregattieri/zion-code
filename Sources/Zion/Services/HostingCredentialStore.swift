@@ -71,6 +71,52 @@ enum HostingCredentialStore {
         SecItemDelete(query as CFDictionary)
     }
 
+    // MARK: - Generic Account-Key Operations
+
+    /// Save a secret using an arbitrary account key (for multi-account support).
+    static func saveSecret(_ secret: String, forAccountKey key: String) {
+        guard !secret.isEmpty else {
+            deleteSecret(forAccountKey: key)
+            return
+        }
+        let data = Data(secret.utf8)
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: key,
+        ]
+        SecItemDelete(query as CFDictionary)
+        var add = query
+        add[kSecValueData as String] = data
+        add[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+        _ = SecItemAdd(add as CFDictionary, nil)
+    }
+
+    /// Load a secret using an arbitrary account key.
+    static func loadSecret(forAccountKey key: String) -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: key,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+        ]
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        guard status == errSecSuccess, let data = result as? Data else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    /// Delete a secret using an arbitrary account key.
+    static func deleteSecret(forAccountKey key: String) {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: key,
+        ]
+        SecItemDelete(query as CFDictionary)
+    }
+
     // MARK: - Migration
 
     /// Migrates hosting secrets from UserDefaults to Keychain.

@@ -1,7 +1,7 @@
 import Foundation
 
 /// Identifies the kind of git hosting service.
-enum GitHostingKind: String, Sendable, CaseIterable, Identifiable {
+enum GitHostingKind: String, Codable, Sendable, CaseIterable, Identifiable {
     case github
     case gitlab
     case bitbucket
