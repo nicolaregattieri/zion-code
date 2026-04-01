@@ -5,9 +5,9 @@ actor GitLabClient: GitHostingProvider {
     private var cachedToken: String?
     private var didAttemptKeychainLookup = false
 
-    /// Inject a PAT for authentication. Called from settings when the user configures GitLab credentials.
-    func setToken(_ token: String?) {
-        cachedToken = token
+    /// Invalidate cached credentials so the next API call re-resolves.
+    func invalidateCache() {
+        cachedToken = nil
         didAttemptKeychainLookup = false
     }
 
@@ -19,7 +19,7 @@ actor GitLabClient: GitHostingProvider {
     }
 
     func hasToken() async -> Bool {
-        getToken() != nil
+        !HostingAccountStore.accounts(for: .gitlab).isEmpty || getLegacyToken() != nil
     }
 
     // MARK: - Remote Parsing
@@ -65,7 +65,19 @@ actor GitLabClient: GitHostingProvider {
 
     // MARK: - Token
 
-    private func getToken() -> String? {
+    /// Resolve the appropriate token for a specific remote, using multi-account matching first.
+    private func resolveToken(for remote: HostedRemote) -> String? {
+        if let account = HostingAccountStore.resolveAccount(for: remote),
+           let secret = HostingAccountStore.loadSecret(for: account)?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+           !secret.isEmpty {
+            return secret
+        }
+        return getLegacyToken()
+    }
+
+    /// Legacy single-account token resolution.
+    private func getLegacyToken() -> String? {
         if let token = cachedToken, !token.isEmpty {
             return token
         }
@@ -87,10 +99,42 @@ actor GitLabClient: GitHostingProvider {
             .replacingOccurrences(of: "/", with: "%2F")
     }
 
+    // MARK: - Owner Discovery
+
+    /// Fetch the authenticated username and accessible groups for a given token.
+    static func fetchAccessibleOwners(token: String, host: String? = nil) async -> (username: String, owners: [String]) {
+        let baseURL = host.map { "https://\($0)/api/v4" } ?? "https://gitlab.com/api/v4"
+
+        guard let userURL = URL(string: "\(baseURL)/user") else { return ("", []) }
+        var request = URLRequest(url: userURL)
+        request.setValue(token, forHTTPHeaderField: "PRIVATE-TOKEN")
+        request.timeoutInterval = 10
+
+        guard let (data, response) = try? await URLSession.shared.data(for: request),
+              let http = response as? HTTPURLResponse, http.statusCode == 200,
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let username = json["username"] as? String else { return ("", []) }
+
+        var groups: [String] = []
+        if let groupsURL = URL(string: "\(baseURL)/groups?min_access_level=10&per_page=100") {
+            var groupsRequest = URLRequest(url: groupsURL)
+            groupsRequest.setValue(token, forHTTPHeaderField: "PRIVATE-TOKEN")
+            groupsRequest.timeoutInterval = 10
+
+            if let (groupsData, groupsResponse) = try? await URLSession.shared.data(for: groupsRequest),
+               let groupsHTTP = groupsResponse as? HTTPURLResponse, groupsHTTP.statusCode == 200,
+               let groupsJSON = try? JSONSerialization.jsonObject(with: groupsData) as? [[String: Any]] {
+                groups = groupsJSON.compactMap { $0["full_path"] as? String }
+            }
+        }
+
+        return (username: username, owners: [username] + groups)
+    }
+
     // MARK: - GitHostingProvider
 
     func fetchPullRequests(remote: HostedRemote) async -> [HostedPRInfo] {
-        guard let token = getToken() else { return [] }
+        guard let token = resolveToken(for: remote) else { return [] }
         guard let projectPath = Self.encodeProjectPath(remote.owner, remote.repo) else { return [] }
         let baseURL = remote.apiBaseURL
         let urlString = "\(baseURL)/projects/\(projectPath)/merge_requests?state=opened&per_page=30"
@@ -130,7 +174,7 @@ actor GitLabClient: GitHostingProvider {
     }
 
     func fetchPRsRequestingMyReview(remote: HostedRemote) async -> [HostedPRInfo] {
-        guard let token = getToken() else { return [] }
+        guard let token = resolveToken(for: remote) else { return [] }
         guard let projectPath = Self.encodeProjectPath(remote.owner, remote.repo) else { return [] }
         let baseURL = remote.apiBaseURL
         let urlString = "\(baseURL)/projects/\(projectPath)/merge_requests?state=opened&reviewer_username=self&per_page=30"
@@ -168,7 +212,7 @@ actor GitLabClient: GitHostingProvider {
     }
 
     func fetchPRDiff(remote: HostedRemote, prNumber: Int) async -> String? {
-        guard let token = getToken() else { return nil }
+        guard let token = resolveToken(for: remote) else { return nil }
         guard let projectPath = Self.encodeProjectPath(remote.owner, remote.repo) else { return nil }
         let baseURL = remote.apiBaseURL
         let urlString = "\(baseURL)/projects/\(projectPath)/merge_requests/\(prNumber)/changes"
@@ -193,7 +237,7 @@ actor GitLabClient: GitHostingProvider {
     }
 
     func fetchPRFiles(remote: HostedRemote, prNumber: Int) async -> [(filename: String, status: String, additions: Int, deletions: Int, patch: String)] {
-        guard let token = getToken() else { return [] }
+        guard let token = resolveToken(for: remote) else { return [] }
         guard let projectPath = Self.encodeProjectPath(remote.owner, remote.repo) else { return [] }
         let baseURL = remote.apiBaseURL
         let urlString = "\(baseURL)/projects/\(projectPath)/merge_requests/\(prNumber)/changes"
@@ -234,7 +278,7 @@ actor GitLabClient: GitHostingProvider {
     }
 
     func createPullRequest(remote: HostedRemote, title: String, body: String, head: String, base: String, draft: Bool) async throws -> HostedPRInfo {
-        guard let token = getToken() else { throw HostingError.noToken }
+        guard let token = resolveToken(for: remote) else { throw HostingError.noToken }
         guard let projectPath = Self.encodeProjectPath(remote.owner, remote.repo) else { throw HostingError.invalidURL }
         let baseURL = remote.apiBaseURL
         let urlString = "\(baseURL)/projects/\(projectPath)/merge_requests"

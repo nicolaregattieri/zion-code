@@ -294,22 +294,20 @@ struct PullRequestSheet: View {
         errorMessage = nil
 
         Task {
-            // Save to Keychain and inject into the client
+            // Save to Keychain and invalidate client cache so it picks up the new token
             switch kind {
             case .github:
                 HostingCredentialStore.saveSecret(token, for: .githubPAT)
-                await model.githubClient.setToken(token)
+                await model.githubClient.invalidateCache()
             case .gitlab:
                 HostingCredentialStore.saveSecret(token, for: .gitlabPAT)
-                await model.gitlabClient.setToken(token)
+                await model.gitlabClient.invalidateCache()
             case .bitbucket:
-                // For Bitbucket, the inline field stores app password; username comes from settings
-                let username = UserDefaults.standard.string(forKey: UserDefaultsKeys.GitHosting.bitbucketUsername) ?? ""
                 HostingCredentialStore.saveSecret(token, for: .bitbucketAppPassword)
-                await model.bitbucketClient.setCredentials(username: username, appPassword: token)
+                await model.bitbucketClient.invalidateCache()
             case .azureDevOps:
                 HostingCredentialStore.saveSecret(token, for: .azureDevOpsPAT)
-                await model.azureDevOpsClient.setToken(token)
+                await model.azureDevOpsClient.invalidateCache()
             }
 
             needsTokenForKind = nil

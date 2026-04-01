@@ -7,13 +7,9 @@ actor AzureDevOpsClient: GitHostingProvider {
 
     private static let apiVersion = "7.1"
 
-    /// Inject PAT for authentication. Called from settings.
-    func setToken(_ token: String?) {
-        if let token, !token.isEmpty {
-            cachedToken = token
-        } else {
-            cachedToken = nil
-        }
+    /// Invalidate cached credentials so the next API call re-resolves.
+    func invalidateCache() {
+        cachedToken = nil
         didAttemptKeychainLookup = false
     }
 
@@ -24,7 +20,7 @@ actor AzureDevOpsClient: GitHostingProvider {
     }
 
     func hasToken() async -> Bool {
-        resolvedToken() != nil
+        !HostingAccountStore.accounts(for: .azureDevOps).isEmpty || resolvedLegacyToken() != nil
     }
 
     // MARK: - Remote Parsing
@@ -81,15 +77,27 @@ actor AzureDevOpsClient: GitHostingProvider {
 
     // MARK: - Auth Header
 
-    /// ADO uses Basic auth with empty username and PAT as password.
-    private func authHeader() -> String? {
-        guard let token = resolvedToken() else { return nil }
+    /// Resolve auth header for a specific remote using multi-account matching.
+    private func resolveAuthHeader(for remote: HostedRemote) -> String? {
+        guard let token = resolveToken(for: remote) else { return nil }
         let credString = ":\(token)"
         guard let data = credString.data(using: .utf8) else { return nil }
         return "Basic \(data.base64EncodedString())"
     }
 
-    private func resolvedToken() -> String? {
+    /// Multi-account token resolution.
+    private func resolveToken(for remote: HostedRemote) -> String? {
+        if let account = HostingAccountStore.resolveAccount(for: remote),
+           let secret = HostingAccountStore.loadSecret(for: account)?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+           !secret.isEmpty {
+            return secret
+        }
+        return resolvedLegacyToken()
+    }
+
+    /// Legacy single-account token resolution.
+    private func resolvedLegacyToken() -> String? {
         if let token = cachedToken, !token.isEmpty {
             return token
         }
@@ -116,7 +124,7 @@ actor AzureDevOpsClient: GitHostingProvider {
     // MARK: - GitHostingProvider
 
     func fetchPullRequests(remote: HostedRemote) async -> [HostedPRInfo] {
-        guard let auth = authHeader() else { return [] }
+        guard let auth = resolveAuthHeader(for: remote) else { return [] }
         guard let url = adoURL(path: "pullrequests", remote: remote) else { return [] }
 
         var request = URLRequest(url: url)
@@ -149,7 +157,7 @@ actor AzureDevOpsClient: GitHostingProvider {
     }
 
     func createPullRequest(remote: HostedRemote, title: String, body: String, head: String, base: String, draft: Bool) async throws -> HostedPRInfo {
-        guard let auth = authHeader() else { throw HostingError.noToken }
+        guard let auth = resolveAuthHeader(for: remote) else { throw HostingError.noToken }
         guard let url = adoURL(path: "pullrequests", remote: remote) else { throw HostingError.invalidURL }
 
         var request = URLRequest(url: url)

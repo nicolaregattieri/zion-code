@@ -7,12 +7,10 @@ actor GitHubClient: GitHostingProvider {
     private var cachedCLIToken: String?
     private var cachedUsername: String?
 
-    /// Inject a PAT for authentication. Called from settings when the user configures GitHub credentials.
-    func setToken(_ token: String?) {
-        let cleaned = token?.trimmingCharacters(in: .whitespacesAndNewlines)
-        injectedPAT = (cleaned?.isEmpty == true) ? nil : cleaned
+    /// Invalidate cached credentials so the next API call re-resolves from Keychain/CLI.
+    func invalidateCache() {
+        injectedPAT = nil
         didAttemptKeychainPATLookup = false
-        // Clear cached CLI token so getToken() re-evaluates priority
         cachedCLIToken = nil
         cachedUsername = nil
     }
@@ -79,7 +77,19 @@ actor GitHubClient: GitHostingProvider {
 
     // MARK: - Token
 
-    private func getToken() async -> String? {
+    /// Resolve the appropriate token for a specific remote, using multi-account matching first.
+    private func resolveToken(for remote: HostedRemote) async -> String? {
+        if let account = HostingAccountStore.resolveAccount(for: remote),
+           let secret = HostingAccountStore.loadSecret(for: account)?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+           !secret.isEmpty {
+            return secret
+        }
+        return await getLegacyToken()
+    }
+
+    /// Legacy single-account token resolution (fallback for pre-migration users).
+    private func getLegacyToken() async -> String? {
         // 1. Settings PAT takes priority
         if let pat = injectedPAT { return pat }
 
@@ -132,9 +142,10 @@ actor GitHubClient: GitHostingProvider {
         return nil
     }
 
-    /// Check whether any authentication is configured (PAT or `gh` CLI).
+    /// Check whether any authentication is configured (PAT, multi-account, or `gh` CLI).
     func hasToken() async -> Bool {
-        await getToken() != nil
+        if !HostingAccountStore.accounts(for: .github).isEmpty { return true }
+        return await getLegacyToken() != nil
     }
 
     /// Percent-encode a path segment for safe GitHub API URL interpolation.
@@ -179,10 +190,43 @@ actor GitHubClient: GitHostingProvider {
         }
     }
 
+    // MARK: - Owner Discovery
+
+    /// Fetch the authenticated username and all accessible orgs for a given token.
+    static func fetchAccessibleOwners(token: String) async -> (username: String, owners: [String]) {
+        guard let url = URL(string: "https://api.github.com/user") else { return ("", []) }
+        var request = URLRequest(url: url)
+        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 10
+
+        guard let (data, response) = try? await URLSession.shared.data(for: request),
+              let http = response as? HTTPURLResponse, http.statusCode == 200,
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let login = json["login"] as? String else { return ("", []) }
+
+        // Fetch orgs
+        var orgs: [String] = []
+        if let orgsURL = URL(string: "https://api.github.com/user/orgs?per_page=100") {
+            var orgsRequest = URLRequest(url: orgsURL)
+            orgsRequest.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+            orgsRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            orgsRequest.timeoutInterval = 10
+
+            if let (orgsData, orgsResponse) = try? await URLSession.shared.data(for: orgsRequest),
+               let orgsHTTP = orgsResponse as? HTTPURLResponse, orgsHTTP.statusCode == 200,
+               let orgsJSON = try? JSONSerialization.jsonObject(with: orgsData) as? [[String: Any]] {
+                orgs = orgsJSON.compactMap { $0["login"] as? String }
+            }
+        }
+
+        return (username: login, owners: [login] + orgs)
+    }
+
     // MARK: - GitHostingProvider
 
     func fetchPullRequests(remote: HostedRemote) async -> [HostedPRInfo] {
-        let token = await getToken()
+        let token = await resolveToken(for: remote)
         guard let owner = Self.encodePathSegment(remote.owner),
               let repo = Self.encodePathSegment(remote.repo) else { return [] }
         let urlString = "https://api.github.com/repos/\(owner)/\(repo)/pulls?state=open&per_page=30"
@@ -231,7 +275,7 @@ actor GitHubClient: GitHostingProvider {
     }
 
     func fetchPRsRequestingMyReview(remote: HostedRemote) async -> [HostedPRInfo] {
-        guard let token = await getToken() else { return [] }
+        guard let token = await resolveToken(for: remote) else { return [] }
         guard let username = await fetchAuthenticatedUsername(token: token) else { return [] }
 
         guard let owner = Self.encodePathSegment(remote.owner),
@@ -273,7 +317,7 @@ actor GitHubClient: GitHostingProvider {
     }
 
     func fetchPRDiff(remote: HostedRemote, prNumber: Int) async -> String? {
-        guard let token = await getToken() else { return nil }
+        guard let token = await resolveToken(for: remote) else { return nil }
         guard let owner = Self.encodePathSegment(remote.owner),
               let repo = Self.encodePathSegment(remote.repo) else { return nil }
         let urlString = "https://api.github.com/repos/\(owner)/\(repo)/pulls/\(prNumber)"
@@ -294,7 +338,7 @@ actor GitHubClient: GitHostingProvider {
     }
 
     func fetchPRFiles(remote: HostedRemote, prNumber: Int) async -> [(filename: String, status: String, additions: Int, deletions: Int, patch: String)] {
-        guard let token = await getToken() else { return [] }
+        guard let token = await resolveToken(for: remote) else { return [] }
         guard let owner = Self.encodePathSegment(remote.owner),
               let repo = Self.encodePathSegment(remote.repo) else { return [] }
         let urlString = "https://api.github.com/repos/\(owner)/\(repo)/pulls/\(prNumber)/files?per_page=100"
@@ -324,7 +368,7 @@ actor GitHubClient: GitHostingProvider {
     }
 
     func createPullRequest(remote: HostedRemote, title: String, body: String, head: String, base: String, draft: Bool) async throws -> HostedPRInfo {
-        guard let token = await getToken() else {
+        guard let token = await resolveToken(for: remote) else {
             throw HostingError.noToken
         }
 
@@ -381,7 +425,7 @@ actor GitHubClient: GitHostingProvider {
     // MARK: - PR Comments & Reviews (Phase 2)
 
     func fetchPRComments(remote: HostedRemote, prNumber: Int) async -> [PRComment] {
-        guard let token = await getToken() else { return [] }
+        guard let token = await resolveToken(for: remote) else { return [] }
         guard let owner = Self.encodePathSegment(remote.owner),
               let repo = Self.encodePathSegment(remote.repo) else { return [] }
         let urlString = "https://api.github.com/repos/\(owner)/\(repo)/pulls/\(prNumber)/comments?per_page=100"
@@ -427,7 +471,7 @@ actor GitHubClient: GitHostingProvider {
     }
 
     func postPRComment(remote: HostedRemote, prNumber: Int, body: String, commitID: String, path: String, line: Int) async throws -> PRComment {
-        guard let token = await getToken() else { throw HostingError.noToken }
+        guard let token = await resolveToken(for: remote) else { throw HostingError.noToken }
         guard let owner = Self.encodePathSegment(remote.owner),
               let repo = Self.encodePathSegment(remote.repo) else { throw HostingError.invalidURL }
         let urlString = "https://api.github.com/repos/\(owner)/\(repo)/pulls/\(prNumber)/comments"
@@ -472,7 +516,7 @@ actor GitHubClient: GitHostingProvider {
     }
 
     func fetchPRReviews(remote: HostedRemote, prNumber: Int) async -> [PRReviewSummary] {
-        guard let token = await getToken() else { return [] }
+        guard let token = await resolveToken(for: remote) else { return [] }
         guard let owner = Self.encodePathSegment(remote.owner),
               let repo = Self.encodePathSegment(remote.repo) else { return [] }
         let urlString = "https://api.github.com/repos/\(owner)/\(repo)/pulls/\(prNumber)/reviews"
@@ -517,7 +561,7 @@ actor GitHubClient: GitHostingProvider {
     }
 
     func submitPRReview(remote: HostedRemote, prNumber: Int, body: String, event: PRReviewEvent, comments: [PRReviewDraftComment]) async throws {
-        guard let token = await getToken() else { throw HostingError.noToken }
+        guard let token = await resolveToken(for: remote) else { throw HostingError.noToken }
         guard let owner = Self.encodePathSegment(remote.owner),
               let repo = Self.encodePathSegment(remote.repo) else { throw HostingError.invalidURL }
         let urlString = "https://api.github.com/repos/\(owner)/\(repo)/pulls/\(prNumber)/reviews"
