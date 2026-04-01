@@ -468,6 +468,7 @@ final class RepositoryViewModel {
     var editorFocusRequestID: Int = 0
     var expandedPaths: Set<String> = []
     var findInFilesScopeRequest: String? = nil
+    var revealFileInBrowserRequestID: Int = 0
 
     // Tracking unsaved changes per file
     var unsavedFiles: Set<String> = []

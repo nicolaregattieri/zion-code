@@ -115,6 +115,30 @@ extension RepositoryViewModel {
         return flat.filter { selectedFileIDs.contains($0.id) }
     }
 
+    // MARK: - Reveal in File Browser
+
+    func revealFileInBrowser(_ fileID: String) {
+        guard let repositoryURL else { return }
+
+        let repoPath = repositoryURL.path
+        guard fileID.hasPrefix(repoPath) else { return }
+
+        let relativePath = String(fileID.dropFirst(repoPath.count + 1))
+        let components = relativePath.split(separator: "/").dropLast()
+        var currentPath = repoPath
+        for component in components {
+            currentPath += "/\(component)"
+            if !expandedPaths.contains(currentPath) {
+                expandedPaths.insert(currentPath)
+                loadChildrenIfNeeded(for: currentPath)
+            }
+        }
+
+        selectedFileIDs = [fileID]
+        lastClickedFileID = fileID
+        revealFileInBrowserRequestID += 1
+    }
+
     // MARK: - Editor Symbol Integration
 
     func findEditorDefinitions(for query: EditorSymbolQuery) async -> [EditorSymbolLocation] {

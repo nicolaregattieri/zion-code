@@ -2188,6 +2188,9 @@
 "editor.tab.closeLeft" = "Cerrar a la Izquierda";
 "editor.tab.closeRight" = "Cerrar a la Derecha";
 "editor.tab.closeAll" = "Cerrar Todos";
+"editor.tab.revealInBrowser" = "Mostrar en Explorador";
+"editor.tab.copyPath" = "Copiar Ruta";
+"editor.tab.copyRelativePath" = "Copiar Ruta Relativa";
 "editor.tab.missingTooltip" = "Archivo eliminado en disco";
 "editor.tab.unsavedClose.title" = "Cambios Sin Guardar";
 "editor.tab.unsavedClose.message" = "¿Quieres guardar los cambios de \"%@\" antes de cerrar?";

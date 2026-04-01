@@ -84,6 +84,35 @@ struct CodeTab: View {
             Button { model.closeAllFiles() } label: {
                 Label(L10n("editor.tab.closeAll"), systemImage: "xmark.square")
             }
+
+            Divider()
+
+            Button { model.revealFileInBrowser(file.id) } label: {
+                Label(L10n("editor.tab.revealInBrowser"), systemImage: "sidebar.left")
+            }
+
+            Button { NSWorkspace.shared.activateFileViewerSelecting([file.url]) } label: {
+                Label(L10n("Revelar no Finder"), systemImage: "folder")
+            }
+
+            Divider()
+
+            Button {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(file.url.path, forType: .string)
+            } label: {
+                Label(L10n("editor.tab.copyPath"), systemImage: "doc.on.doc")
+            }
+
+            Button {
+                if let repoURL = model.repositoryURL {
+                    let relative = file.url.path.replacingOccurrences(of: repoURL.path + "/", with: "")
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(relative, forType: .string)
+                }
+            } label: {
+                Label(L10n("editor.tab.copyRelativePath"), systemImage: "doc.on.doc")
+            }
         }
     }
 }

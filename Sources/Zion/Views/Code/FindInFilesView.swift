@@ -142,7 +142,10 @@ struct FindInFilesView: View {
             searchTask?.cancel()
         }
         .onChange(of: focusRequestID) { _, _ in
-            focusedField = .query
+            focusedField = nil
+            Task { @MainActor in
+                focusedField = .query
+            }
         }
         .onChange(of: showReplace) { _, isVisible in
             focusedField = isVisible ? .replace : .query
