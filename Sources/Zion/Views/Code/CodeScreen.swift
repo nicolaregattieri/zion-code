@@ -250,10 +250,13 @@ struct CodeScreen: View {
                 .keyboardShortcut(.escape, modifiers: [])
                 .frame(width: 0, height: 0).opacity(0)
         }
-        .onChange(of: model.activeFileID) { _, _ in
+        .onChange(of: model.activeFileID) { _, newActiveID in
             isMarkdownPreviewVisible = false
             if !isTextEditorActive {
                 closeSearch()
+            }
+            if let newActiveID, isFileBrowserVisible, sidebarMode == .fileTree {
+                model.revealFileInBrowser(newActiveID)
             }
         }
         .onChange(of: model.editorJumpToken) { _, _ in

@@ -154,6 +154,12 @@ extension CodeScreen {
                         scrollProxy.scrollTo(target, anchor: .center)
                     }
                 }
+                .onChange(of: model.revealFileInBrowserRequestID) { _, _ in
+                    guard let target = model.lastClickedFileID else { return }
+                    withAnimation(DesignSystem.Motion.snappy) {
+                        scrollProxy.scrollTo(target, anchor: .center)
+                    }
+                }
             }
             } // end else (fileTree mode)
 
