@@ -515,6 +515,13 @@ struct TerminalTabView: NSViewRepresentable {
                 context: "\(parent.session.label)(\(parent.session.id.uuidString.prefix(4))) reason=\(reason) attempt=\(attempt)",
                 source: "TerminalTabView"
             )
+            // Notify the child process to do a full TUI redraw.
+            // Without this, TUI apps (Claude Code/Ink) keep stale content in
+            // the buffer because they don't know the terminal was stashed.
+            let pid = parent.session._shellPid
+            if pid > 0 {
+                kill(pid, SIGWINCH)
+            }
             view.layoutSubtreeIfNeeded()
             view.resyncDisplayAfterViewRestore()
         }
