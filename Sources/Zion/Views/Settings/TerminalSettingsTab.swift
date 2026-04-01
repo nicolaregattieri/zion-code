@@ -7,7 +7,7 @@ struct TerminalSettingsTab: View {
     @AppStorage(UserDefaultsKeys.Terminal.openHyperlinks) private var openHyperlinks: Bool = true
     @AppStorage(UserDefaultsKeys.Terminal.copyOnSelect) private var copyOnSelect: Bool = false
     @AppStorage(UserDefaultsKeys.Terminal.aiImageDisplay) private var aiImageDisplay: Bool = false
-    @AppStorage(UserDefaultsKeys.Terminal.useMetalRenderer) private var useMetalRenderer: Bool = false
+
     @AppStorage(UserDefaultsKeys.Speech.engine) private var speechEngine: String = "apple"
     @AppStorage(UserDefaultsKeys.Speech.locale) private var speechLocale: String = Locale.current.identifier
 
@@ -72,11 +72,6 @@ struct TerminalSettingsTab: View {
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
 
-                Toggle(L10n("settings.terminal.metalRenderer"), isOn: $useMetalRenderer)
-
-                Text(L10n("settings.terminal.metalRenderer.hint"))
-                    .font(DesignSystem.Typography.label)
-                    .foregroundStyle(.secondary)
             } header: {
                 Text(L10n("settings.terminal.advanced"))
             }
