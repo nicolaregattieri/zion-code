@@ -505,15 +505,17 @@ struct TerminalTabView: NSViewRepresentable {
                 context: "\(parent.session.label)(\(parent.session.id.uuidString.prefix(4))) reason=\(reason) attempt=\(attempt)",
                 source: "TerminalTabView"
             )
-            // Notify the child process to do a full TUI redraw.
-            // Without this, TUI apps (Claude Code/Ink) keep stale content in
-            // the buffer because they don't know the terminal was stashed.
-            let pid = parent.session._shellPid
-            if pid > 0 {
-                kill(pid, SIGWINCH)
-            }
             view.layoutSubtreeIfNeeded()
             view.resyncDisplayAfterViewRestore()
+            // Force synchronous draw — the async pipeline (queuePendingDisplay)
+            // can be skipped if pendingDisplay is already true from a previous
+            // cycle. displayIfNeeded() bypasses that and draws immediately,
+            // which is why manual resize always fixes the display.
+            view.getTerminal().updateFullScreen()
+            view.needsDisplay = true
+            if view.window != nil {
+                view.displayIfNeeded()
+            }
         }
 
         func insertSoftLineBreak() {

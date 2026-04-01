@@ -1,16 +1,16 @@
 import SwiftUI
 
 extension View {
-    /// Reliable double-click handler that uses `.simultaneousGesture`
-    /// to coexist with parent single-tap gestures without conflicts.
+    /// Reliable double-click handler for macOS.
     ///
-    /// SwiftUI's TapGesture(count: 2) internally uses the system's
-    /// double-click timing from NSEvent, respecting accessibility
-    /// and user preferences. `.simultaneousGesture` ensures it won't
-    /// be blocked by parent gestures (e.g., commit row selection).
+    /// Declares both count:2 (action) and count:1 (absorber) gestures
+    /// on the same view, forcing SwiftUI to wait for the system's
+    /// double-click timeout before disambiguating. Without the count:1
+    /// absorber, parent single-tap gestures fire immediately and
+    /// interfere with double-click recognition.
     func onNativeDoubleClick(perform action: @escaping () -> Void) -> some View {
-        simultaneousGesture(
-            TapGesture(count: 2).onEnded(action)
-        )
+        self
+            .onTapGesture(count: 2, perform: action)
+            .onTapGesture(count: 1) { }
     }
 }
