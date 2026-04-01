@@ -7,14 +7,16 @@ struct GeneralSettingsTab: View {
     @AppStorage(UserDefaultsKeys.General.confirmationMode) private var confirmationModeRaw: String = ConfirmationMode.destructiveOnly.rawValue
     @AppStorage(UserDefaultsKeys.General.zionModeEnabled) private var zionModeEnabled: Bool = false
     @AppStorage(UserDefaultsKeys.General.graphAuthorAvatarsEnabled) private var graphAuthorAvatarsEnabled: Bool = false
-    @AppStorage(UserDefaultsKeys.GitHosting.gitlabHost) private var gitlabHost: String = ""
-    @AppStorage(UserDefaultsKeys.GitHosting.bitbucketUsername) private var bitbucketUsername: String = ""
+    // Multi-account state
+    @State private var accounts: [HostingAccount] = []
 
-    // Secrets — backed by Keychain, NOT UserDefaults
-    @State private var githubPAT: String = ""
-    @State private var gitlabPAT: String = ""
-    @State private var bitbucketAppPassword: String = ""
-    @State private var azureDevOpsPAT: String = ""
+    // Add-account form state
+    @State private var newTokenKind: GitHostingKind?
+    @State private var newPAT: String = ""
+    @State private var newBitbucketUsername: String = ""
+    @State private var newGitLabHost: String = ""
+    @State private var isAddingAccount: Bool = false
+    @State private var addAccountError: String?
 
     // GitHub Device Flow state
     @State private var deviceFlowState: DeviceFlowState = .idle
@@ -130,77 +132,31 @@ struct GeneralSettingsTab: View {
                 }
             }
 
-            // Git Hosting
+            // Git Hosting — Multi-Account
             Section(L10n("settings.hosting.title")) {
                 // GitHub
                 DisclosureGroup(L10n("settings.hosting.github")) {
+                    accountList(for: .github)
                     gitHubDeviceFlowSection
-                    SecureField(L10n("hosting.github.pat"), text: $githubPAT)
-                        .textFieldStyle(.roundedBorder)
-                        .onChange(of: githubPAT) { _, newValue in
-                            HostingCredentialStore.saveSecret(newValue, for: .githubPAT)
-                        }
-                    HStack {
-                        Text(L10n("hosting.github.hint"))
-                            .font(DesignSystem.Typography.bodySmall)
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        Link(L10n("hosting.generateToken"),
-                             destination: URL(string: "https://github.com/settings/tokens/new?scopes=repo&description=Zion")!)
-                            .font(DesignSystem.Typography.bodySmall)
-                    }
+                    addAccountSection(kind: .github, tokenURL: "https://github.com/settings/tokens/new?scopes=repo&description=Zion")
                 }
 
                 // GitLab
                 DisclosureGroup(L10n("settings.hosting.gitlab")) {
-                    SecureField(L10n("hosting.gitlab.pat"), text: $gitlabPAT)
-                        .textFieldStyle(.roundedBorder)
-                        .onChange(of: gitlabPAT) { _, newValue in
-                            HostingCredentialStore.saveSecret(newValue, for: .gitlabPAT)
-                        }
-                    TextField(L10n("hosting.gitlab.host"), text: $gitlabHost)
-                        .textFieldStyle(.roundedBorder)
-                    HStack {
-                        Spacer()
-                        Link(L10n("hosting.generateToken"),
-                             destination: URL(string: "https://\(gitlabHost.isEmpty ? "gitlab.com" : gitlabHost)/-/user_settings/personal_access_tokens")!)
-                            .font(DesignSystem.Typography.bodySmall)
-                    }
+                    accountList(for: .gitlab)
+                    addAccountSection(kind: .gitlab, tokenURL: "https://gitlab.com/-/user_settings/personal_access_tokens")
                 }
 
                 // Bitbucket
                 DisclosureGroup(L10n("settings.hosting.bitbucket")) {
-                    TextField(L10n("hosting.bitbucket.username"), text: $bitbucketUsername)
-                        .textFieldStyle(.roundedBorder)
-                    SecureField(L10n("hosting.bitbucket.appPassword"), text: $bitbucketAppPassword)
-                        .textFieldStyle(.roundedBorder)
-                        .onChange(of: bitbucketAppPassword) { _, newValue in
-                            HostingCredentialStore.saveSecret(newValue, for: .bitbucketAppPassword)
-                        }
-                    HStack {
-                        Spacer()
-                        Link(L10n("hosting.generateToken"),
-                             destination: URL(string: "https://bitbucket.org/account/settings/app-passwords/")!)
-                            .font(DesignSystem.Typography.bodySmall)
-                    }
+                    accountList(for: .bitbucket)
+                    addAccountSection(kind: .bitbucket, tokenURL: "https://bitbucket.org/account/settings/app-passwords/")
                 }
 
                 // Azure DevOps
                 DisclosureGroup(L10n("settings.hosting.azureDevOps")) {
-                    SecureField(L10n("hosting.azure.pat"), text: $azureDevOpsPAT)
-                        .textFieldStyle(.roundedBorder)
-                        .onChange(of: azureDevOpsPAT) { _, newValue in
-                            HostingCredentialStore.saveSecret(newValue, for: .azureDevOpsPAT)
-                        }
-                    HStack {
-                        Text(L10n("hosting.azure.hint"))
-                            .font(DesignSystem.Typography.bodySmall)
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        Link(L10n("hosting.generateToken"),
-                             destination: URL(string: "https://dev.azure.com/_usersSettings/tokens")!)
-                            .font(DesignSystem.Typography.bodySmall)
-                    }
+                    accountList(for: .azureDevOps)
+                    addAccountSection(kind: .azureDevOps, tokenURL: "https://dev.azure.com/_usersSettings/tokens")
                 }
             }
 
@@ -221,11 +177,7 @@ struct GeneralSettingsTab: View {
         }
         .formStyle(.grouped)
         .onAppear {
-            // Load secrets from Keychain
-            githubPAT = HostingCredentialStore.loadSecret(for: .githubPAT) ?? ""
-            gitlabPAT = HostingCredentialStore.loadSecret(for: .gitlabPAT) ?? ""
-            bitbucketAppPassword = HostingCredentialStore.loadSecret(for: .bitbucketAppPassword) ?? ""
-            azureDevOpsPAT = HostingCredentialStore.loadSecret(for: .azureDevOpsPAT) ?? ""
+            accounts = HostingAccountStore.allAccounts()
 
             if zionModeEnabled {
                 withAnimation(DesignSystem.Motion.glowPulse) {
@@ -246,20 +198,90 @@ struct GeneralSettingsTab: View {
         }
     }
 
+    // MARK: - Account List
+
+    @ViewBuilder
+    private func accountList(for kind: GitHostingKind) -> some View {
+        let kindAccounts: [HostingAccount] = accounts.filter { $0.kind == kind }
+        if !kindAccounts.isEmpty {
+            ForEach(kindAccounts) { account in
+                accountRow(account)
+            }
+        }
+    }
+
+    private func accountRow(_ account: HostingAccount) -> some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Text(account.label)
+                        .font(DesignSystem.Typography.body)
+                    Text("@\(account.username)")
+                        .font(DesignSystem.Typography.bodySmall)
+                        .foregroundStyle(.secondary)
+                }
+                if !account.owners.isEmpty {
+                    Text(account.owners.joined(separator: ", "))
+                        .font(DesignSystem.Typography.bodySmall)
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
+                }
+            }
+            Spacer()
+            Button(role: .destructive) {
+                removeAccount(account)
+            } label: {
+                Image(systemName: "trash")
+                    .font(DesignSystem.Typography.bodySmall)
+            }
+            .buttonStyle(.borderless)
+            .controlSize(.small)
+        }
+    }
+
+    // MARK: - Add Account Section
+
+    @ViewBuilder
+    private func addAccountSection(kind: GitHostingKind, tokenURL: String) -> some View {
+        DisclosureGroup(L10n("hosting.addWithPAT")) {
+            if kind == .bitbucket {
+                TextField(L10n("hosting.bitbucket.username"), text: $newBitbucketUsername)
+                    .textFieldStyle(.roundedBorder)
+            }
+            if kind == .gitlab {
+                TextField(L10n("hosting.gitlab.host"), text: $newGitLabHost)
+                    .textFieldStyle(.roundedBorder)
+            }
+            SecureField(L10n("hosting.pat.placeholder"), text: $newPAT)
+                .textFieldStyle(.roundedBorder)
+
+            HStack {
+                if isAddingAccount && newTokenKind == kind {
+                    ProgressView()
+                        .controlSize(.small)
+                }
+                if let error = addAccountError, newTokenKind == kind {
+                    Text(error)
+                        .font(DesignSystem.Typography.bodySmall)
+                        .foregroundStyle(DesignSystem.Colors.destructive)
+                }
+                Spacer()
+                Link(L10n("hosting.generateToken"), destination: URL(string: tokenURL)!)
+                    .font(DesignSystem.Typography.bodySmall)
+                Button(L10n("hosting.add")) {
+                    addManualAccount(kind: kind)
+                }
+                .controlSize(.small)
+                .disabled(newPAT.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isAddingAccount)
+            }
+        }
+    }
+
     // MARK: - GitHub Device Flow Section
 
     @ViewBuilder
     private var gitHubDeviceFlowSection: some View {
         switch deviceFlowState {
-        case .idle:
-            Button {
-                startDeviceFlow()
-            } label: {
-                Label(L10n("hosting.github.signIn"), systemImage: "person.badge.key")
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.small)
-
         case .showingCode, .polling:
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
@@ -292,6 +314,11 @@ struct GeneralSettingsTab: View {
                     .foregroundStyle(DesignSystem.Colors.success)
                 Text(L10n("hosting.github.authSuccess", username))
                     .font(DesignSystem.Typography.bodySmall)
+                Spacer()
+                Button(L10n("hosting.github.addAnother")) {
+                    deviceFlowState = .idle
+                }
+                .controlSize(.small)
             }
 
         case .error(let message):
@@ -306,8 +333,19 @@ struct GeneralSettingsTab: View {
                 }
                 .controlSize(.small)
             }
+
+        default: // .idle
+            Button {
+                startDeviceFlow()
+            } label: {
+                Label(L10n("hosting.github.signIn"), systemImage: "person.badge.key")
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.small)
         }
     }
+
+    // MARK: - Actions
 
     private func startDeviceFlow() {
         deviceFlowState = .showingCode
@@ -323,13 +361,20 @@ struct GeneralSettingsTab: View {
                     interval: codeResponse.interval
                 )
 
-                // Save to Keychain and update state
-                HostingCredentialStore.saveSecret(tokenResponse.accessToken, for: .githubPAT)
-                githubPAT = tokenResponse.accessToken
+                // Discover username and orgs
+                let (username, owners) = await GitHubClient.fetchAccessibleOwners(token: tokenResponse.accessToken)
+                let label = username.isEmpty ? "GitHub" : username
 
-                // Fetch username for display
-                let username = await fetchGitHubUsername(token: tokenResponse.accessToken)
-                deviceFlowState = .success(username ?? "GitHub")
+                let account = HostingAccount(
+                    kind: .github,
+                    username: username.isEmpty ? "unknown" : username,
+                    label: label,
+                    owners: owners
+                )
+                HostingAccountStore.addAccount(account, secret: tokenResponse.accessToken)
+                accounts = HostingAccountStore.allAccounts()
+
+                deviceFlowState = .success("@\(username)")
             } catch GitHubDeviceFlow.DeviceFlowError.expired {
                 deviceFlowState = .error(L10n("hosting.github.authExpired"))
             } catch {
@@ -338,14 +383,75 @@ struct GeneralSettingsTab: View {
         }
     }
 
-    private func fetchGitHubUsername(token: String) async -> String? {
-        guard let url = URL(string: "https://api.github.com/user") else { return nil }
-        var request = URLRequest(url: url)
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-        guard let (data, _) = try? await URLSession.shared.data(for: request),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let login = json["login"] as? String else { return nil }
-        return "@\(login)"
+    private func addManualAccount(kind: GitHostingKind) {
+        let token = newPAT.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !token.isEmpty else { return }
+
+        isAddingAccount = true
+        addAccountError = nil
+        newTokenKind = kind
+
+        Task {
+            switch kind {
+            case .github:
+                let (username, owners) = await GitHubClient.fetchAccessibleOwners(token: token)
+                guard !username.isEmpty else {
+                    addAccountError = L10n("hosting.account.invalidToken")
+                    isAddingAccount = false
+                    return
+                }
+                let account = HostingAccount(kind: .github, username: username, label: username, owners: owners)
+                HostingAccountStore.addAccount(account, secret: token)
+
+            case .gitlab:
+                let host = newGitLabHost.trimmingCharacters(in: .whitespacesAndNewlines)
+                let (username, owners) = await GitLabClient.fetchAccessibleOwners(
+                    token: token,
+                    host: host.isEmpty ? nil : host
+                )
+                guard !username.isEmpty else {
+                    addAccountError = L10n("hosting.account.invalidToken")
+                    isAddingAccount = false
+                    return
+                }
+                let account = HostingAccount(
+                    kind: .gitlab, username: username, label: username, owners: owners,
+                    gitlabHost: host.isEmpty ? nil : host
+                )
+                HostingAccountStore.addAccount(account, secret: token)
+
+            case .bitbucket:
+                let bbUser = newBitbucketUsername.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !bbUser.isEmpty else {
+                    addAccountError = L10n("hosting.bitbucket.usernameRequired")
+                    isAddingAccount = false
+                    return
+                }
+                let (_, owners) = await BitbucketClient.fetchAccessibleOwners(username: bbUser, appPassword: token)
+                let account = HostingAccount(
+                    kind: .bitbucket, username: bbUser, label: bbUser, owners: owners,
+                    bitbucketUsername: bbUser
+                )
+                HostingAccountStore.addAccount(account, secret: token)
+
+            case .azureDevOps:
+                // Azure DevOps doesn't have a simple API to discover orgs
+                // Create account with empty owners; user's repos will match via legacy fallback
+                let account = HostingAccount(kind: .azureDevOps, username: "default", label: "Azure DevOps", owners: [])
+                HostingAccountStore.addAccount(account, secret: token)
+            }
+
+            accounts = HostingAccountStore.allAccounts()
+            newPAT = ""
+            newBitbucketUsername = ""
+            newGitLabHost = ""
+            isAddingAccount = false
+            newTokenKind = nil
+        }
+    }
+
+    private func removeAccount(_ account: HostingAccount) {
+        HostingAccountStore.removeAccount(account)
+        accounts = HostingAccountStore.allAccounts()
     }
 }
