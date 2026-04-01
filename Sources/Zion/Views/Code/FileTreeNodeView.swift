@@ -13,7 +13,15 @@ struct FileTreeNodeView: View {
         let isSelected = model.selectedFileIDs.contains(item.id) ||
                          (model.selectedFileIDs.isEmpty && model.activeFileID == item.id)
         let isDark = model.selectedTheme.isDark
-        let isModified = model.uncommittedChanges.contains { $0.hasSuffix(item.name) }
+        let isModified: Bool = {
+            if item.isDirectory {
+                guard let repoPath = model.repositoryURL?.path else { return false }
+                let relativePath = item.url.path.replacingOccurrences(of: repoPath + "/", with: "")
+                return model.uncommittedChanges.contains { $0.contains(relativePath + "/") }
+            } else {
+                return model.uncommittedChanges.contains { $0.hasSuffix(item.name) }
+            }
+        }()
         let isIgnored = item.isGitIgnored
 
         VStack(alignment: .leading, spacing: 0) {
