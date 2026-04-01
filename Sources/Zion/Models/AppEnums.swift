@@ -101,7 +101,7 @@ struct AppLocalizationContext {
 
 @Observable
 final class LocaleSignal: @unchecked Sendable {
-    nonisolated(unsafe) static let shared = LocaleSignal()
+    static let shared = LocaleSignal()
     var revision: UInt = 0
     func bump() { revision &+= 1 }
 }
