@@ -2150,6 +2150,9 @@
 "editor.tab.closeLeft" = "Fechar à Esquerda";
 "editor.tab.closeRight" = "Fechar à Direita";
 "editor.tab.closeAll" = "Fechar Todos";
+"editor.tab.revealInBrowser" = "Revelar no Navegador";
+"editor.tab.copyPath" = "Copiar Caminho";
+"editor.tab.copyRelativePath" = "Copiar Caminho Relativo";
 "editor.tab.missingTooltip" = "Arquivo removido no disco";
 "editor.tab.unsavedClose.title" = "Alterações Não Salvas";
 "editor.tab.unsavedClose.message" = "Deseja salvar as alterações de \"%@\" antes de fechar?";

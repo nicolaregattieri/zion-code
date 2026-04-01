@@ -2150,6 +2150,9 @@
 "editor.tab.closeLeft" = "Close to the Left";
 "editor.tab.closeRight" = "Close to the Right";
 "editor.tab.closeAll" = "Close All";
+"editor.tab.revealInBrowser" = "Reveal in File Browser";
+"editor.tab.copyPath" = "Copy Path";
+"editor.tab.copyRelativePath" = "Copy Relative Path";
 "editor.tab.missingTooltip" = "File deleted on disk";
 "editor.tab.unsavedClose.title" = "Unsaved Changes";
 "editor.tab.unsavedClose.message" = "Do you want to save the changes to \"%@\" before closing?";
