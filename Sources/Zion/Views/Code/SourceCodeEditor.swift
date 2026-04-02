@@ -53,6 +53,15 @@ struct SourceCodeEditor: NSViewRepresentable {
         textView.isSelectable = true
         textView.allowsUndo = true
         textView.isRichText = false
+        textView.isAutomaticQuoteSubstitutionEnabled = false
+        textView.isAutomaticDashSubstitutionEnabled = false
+        textView.isAutomaticTextReplacementEnabled = false
+        textView.isAutomaticSpellingCorrectionEnabled = false
+        textView.isAutomaticTextCompletionEnabled = false
+        textView.isAutomaticLinkDetectionEnabled = false
+        textView.isContinuousSpellCheckingEnabled = false
+        textView.isGrammarCheckingEnabled = false
+        textView.smartInsertDeleteEnabled = false
         textView.drawsBackground = true
         textView.usesAdaptiveColorMappingForDarkAppearance = false
         textView.textContainerInset = NSSize(width: 6, height: CGFloat(topPadding))
@@ -191,14 +200,17 @@ struct SourceCodeEditor: NSViewRepresentable {
         // Update text
         let externalTextChange = text != textView.string
         if externalTextChange || fileChanged {
-            // Any model-driven content swap invalidates NSTextView's local undo stack.
-            // Replace-in-files uses a workspace undo path instead.
-            textView.undoManager?.removeAllActions()
-            let sel = textView.selectedRange()
-            textView.string = text
-            let clampedLoc = min(sel.location, (text as NSString).length)
-            let clampedLen = min(sel.length, max(0, (text as NSString).length - clampedLoc))
-            textView.setSelectedRange(NSRange(location: clampedLoc, length: clampedLen))
+            if !coord.isInternalEdit {
+                // Only clear undo for truly external changes (file switch, replace-in-files).
+                // User edits propagate through textDidChange -> binding -> updateNSView;
+                // clearing undo there would destroy multi-level Cmd+Z history.
+                textView.undoManager?.removeAllActions()
+                let sel = textView.selectedRange()
+                textView.string = text
+                let clampedLoc = min(sel.location, (text as NSString).length)
+                let clampedLen = min(sel.length, max(0, (text as NSString).length - clampedLoc))
+                textView.setSelectedRange(NSRange(location: clampedLoc, length: clampedLen))
+            }
         }
 
         // Re-highlight if needed
@@ -350,6 +362,7 @@ struct SourceCodeEditor: NSViewRepresentable {
         var lastTabSize: Int?
         var highlightDebounceTask: DispatchWorkItem?
         var needsScrollToCursor: Bool = false
+        var isInternalEdit: Bool = false
         var lastSearchMatchCase: Bool = false
         var lastSearchRegex: Bool = false
         var lastSearchWholeWord: Bool = false
