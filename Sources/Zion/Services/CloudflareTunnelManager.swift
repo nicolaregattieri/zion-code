@@ -59,6 +59,7 @@ actor CloudflareTunnelManager {
 
     /// Kill any orphaned cloudflared tunnel processes targeting the same port
     private static func killOrphanedProcesses(port: UInt16) {
+        guard (1024...65535).contains(Int(port)) else { return }
         let proc = Process()
         proc.executableURL = URL(fileURLWithPath: "/usr/bin/pkill")
         proc.arguments = ["-f", "cloudflared tunnel --url http://localhost:\(port)"]
