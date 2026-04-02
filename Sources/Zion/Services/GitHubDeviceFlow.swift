@@ -51,7 +51,7 @@ actor GitHubDeviceFlow {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
 
-        let body = "client_id=\(clientID)&scope=repo"
+        let body = "client_id=\(clientID)&scope=repo read:org"
         request.httpBody = body.data(using: .utf8)
 
         let (data, response) = try await URLSession.shared.data(for: request)
