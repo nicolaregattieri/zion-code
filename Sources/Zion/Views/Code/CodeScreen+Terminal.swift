@@ -31,7 +31,7 @@ extension CodeScreen {
                     Color.clear
                 } else if model.terminalTabs.isEmpty {
                     VStack(spacing: 8) {
-                        Image(systemName: "terminal").font(.title).foregroundStyle(.secondary)
+                        Image(systemName: "terminal").font(DesignSystem.Typography.decorativeIcon).foregroundStyle(.secondary)
                         Text(L10n("Nenhum terminal aberto")).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)

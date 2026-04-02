@@ -162,7 +162,7 @@ extension GraphScreen {
                 let isStaged = model.statusEntry(for: file)?.isStaged ?? false
                 HStack {
                     Image(systemName: "doc.text").foregroundStyle(.secondary)
-                    Text(file).font(.system(.subheadline, design: .monospaced)).fontWeight(.bold)
+                    Text(file).font(DesignSystem.Typography.monoSmallBold)
                     Spacer()
                     Button { model.unstageFile(file) } label: {
                         Label(L10n("Unstage"), systemImage: "minus")

@@ -143,16 +143,16 @@ struct ContextualFeatureTourOverlay: View {
                         cutoutRect: frame,
                         cornerRadius: DesignSystem.Spacing.cardCornerRadius + 2
                     )
-                    .fill(Color.black.opacity(0.58), style: FillStyle(eoFill: true))
+                    .fill(DesignSystem.Colors.tourScrim, style: FillStyle(eoFill: true))
 
                     RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius + 2, style: .continuous)
-                        .stroke(Color.white.opacity(0.45), lineWidth: 1.5)
+                        .stroke(DesignSystem.Colors.glassBorderLight, lineWidth: 1.5)
                         .frame(width: frame.width, height: frame.height)
                         .position(x: frame.midX, y: frame.midY)
 
                     tourCard(in: containerSize, targetFrame: frame)
                 } else {
-                    Color.black.opacity(0.58)
+                    DesignSystem.Colors.tourScrim
 
                     tourCardNoSpotlight(in: containerSize)
                 }
@@ -267,7 +267,7 @@ struct ContextualFeatureTourOverlay: View {
             RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous)
                 .stroke(DesignSystem.Colors.glassBorderLight, lineWidth: 1)
         )
-        .shadow(color: Color.black.opacity(0.25), radius: 18, y: 10)
+        .shadow(color: DesignSystem.Colors.modalScrim, radius: 18, y: 10)
     }
 
     private func cardPosition(in containerSize: CGSize, targetFrame: CGRect) -> CGPoint {

@@ -2358,3 +2358,5 @@
 "settings.editor.detectedFromFile" = "Detectado del archivo";
 "statusbar.mobile.wan" = "WAN";
 "statusbar.mobile.lan" = "LAN";
+"settings.general.zionMode" = "Modo Zion";
+"settings.mobile.qrCode.accessibility" = "Codigo QR para emparejamiento movil";

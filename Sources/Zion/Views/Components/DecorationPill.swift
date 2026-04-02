@@ -27,18 +27,19 @@ struct DecorationPill: View {
 
         HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
             if isMain {
-                Image(systemName: "shield.fill").font(.system(size: 8))
+                Image(systemName: "shield.fill").font(DesignSystem.IconSize.tiny)
             } else if type == .tag {
-                Image(systemName: "tag.fill").font(.system(size: 7))
+                Image(systemName: "tag.fill").font(DesignSystem.IconSize.tiny)
             } else if type == .remoteBranch {
-                Image(systemName: "icloud.fill").font(.system(size: 8))
+                Image(systemName: "icloud.fill").font(DesignSystem.IconSize.tiny)
             }
             if isCurrent {
-                Image(systemName: "checkmark.circle.fill").font(.system(size: 8))
+                Image(systemName: "checkmark.circle.fill").font(DesignSystem.IconSize.tiny)
             }
 
             Text(name)
-                .font(.system(size: 10, weight: isHighlighted ? .heavy : .bold, design: .monospaced))
+                .font(DesignSystem.Typography.monoLabelBold)
+                .fontWeight(isHighlighted ? .heavy : .bold)
                 .lineLimit(1)
                 .frame(maxWidth: 200)
 

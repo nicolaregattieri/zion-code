@@ -203,12 +203,12 @@ extension ContentView {
         .overlay(alignment: .top) {
             if model.isBusy || model.isRepositorySwitchRefreshingInBackground {
                 NeonProgressLine(mode: .shimmer)
-                    .transition(.opacity.animation(.easeOut(duration: 0.3)))
+                    .transition(.opacity.animation(DesignSystem.Motion.panel))
             } else {
                 if zionModeEnabled {
                     DesignSystem.ZionMode.neonMagenta.opacity(DesignSystem.Opacity.subtle)
                         .frame(height: 1)
-                        .transition(.opacity.animation(.easeIn(duration: 0.5)))
+                        .transition(.opacity.animation(DesignSystem.Motion.panel))
                 } else {
                     Divider().opacity(DesignSystem.Opacity.subtle)
                 }

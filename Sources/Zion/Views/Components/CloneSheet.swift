@@ -63,10 +63,10 @@ struct CloneSheet: View {
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     Text(L10n("URL do repositorio"))
-                        .font(.subheadline.weight(.medium))
+                        .font(DesignSystem.Typography.subtitle)
                     if !protocolBadge.isEmpty {
                         Text(protocolBadge)
-                            .font(.caption2.weight(.bold))
+                            .font(DesignSystem.Typography.labelBold)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(protocolBadge == "SSH" ? DesignSystem.Colors.statusOrangeBg : DesignSystem.Colors.statusGreenBg)
@@ -84,7 +84,7 @@ struct CloneSheet: View {
             // Destination folder
             VStack(alignment: .leading, spacing: 6) {
                 Text(L10n("Pasta de destino"))
-                    .font(.subheadline.weight(.medium))
+                    .font(DesignSystem.Typography.subtitle)
                 HStack(spacing: DesignSystem.Spacing.iconTextGap) {
                     TextField("~/Developer", text: $destinationPath)
                         .textFieldStyle(.roundedBorder)
@@ -99,7 +99,7 @@ struct CloneSheet: View {
             if !repoName.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(L10n("Nome do repositorio"))
-                        .font(.subheadline.weight(.medium))
+                        .font(DesignSystem.Typography.subtitle)
                     TextField("repo", text: $repoName)
                         .textFieldStyle(.roundedBorder)
                 }
@@ -112,7 +112,7 @@ struct CloneSheet: View {
                         .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
                     Text(destinationURL.path)
-                        .font(.caption.monospaced())
+                        .font(DesignSystem.Typography.monoLabel)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.middle)
@@ -126,7 +126,7 @@ struct CloneSheet: View {
                         .controlSize(.small)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Text(model.cloneProgress)
-                        .font(.caption.monospaced())
+                        .font(DesignSystem.Typography.monoLabel)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
                         .frame(maxWidth: .infinity, alignment: .leading)

@@ -37,7 +37,7 @@ struct SymbolResultsSheet: View {
                     } label: {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("\(location.relativePath):\(location.line)")
-                                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                                .font(DesignSystem.Typography.monoBody).fontWeight(.semibold)
                             Text(location.preview)
                                 .font(DesignSystem.Typography.bodySmall)
                                 .foregroundStyle(.secondary)

@@ -45,7 +45,7 @@ struct MarkdownPreviewView: View {
             headingView(text: text, level: level)
         case .paragraph(let text):
             markdownTextView(text)
-                .font(.system(size: 13))
+                .font(DesignSystem.Typography.cardBody)
                 .lineSpacing(4)
                 .foregroundStyle(theme.colors.text)
                 .padding(.vertical, 6)
@@ -69,7 +69,7 @@ struct MarkdownPreviewView: View {
             tableView(headers: headers, rows: rows, alignments: alignments)
         case .raw(let text):
             Text(text)
-                .font(.system(size: 13))
+                .font(DesignSystem.Typography.cardBody)
                 .foregroundStyle(theme.colors.text)
                 .padding(.vertical, 4)
         }
@@ -114,7 +114,7 @@ struct MarkdownPreviewView: View {
             VStack(alignment: .leading, spacing: 4) {
                 ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
                     markdownTextView(line)
-                        .font(.system(size: 13))
+                        .font(DesignSystem.Typography.cardBody)
                         .lineSpacing(4)
                         .foregroundStyle(theme.colors.comment)
                 }
@@ -182,12 +182,12 @@ struct MarkdownPreviewView: View {
 
             if let checked = item.isChecked {
                 Image(systemName: checked ? "checkmark.square.fill" : "square")
-                    .font(.system(size: 12))
+                    .font(DesignSystem.Typography.body)
                     .foregroundStyle(checked ? theme.colors.keyword : theme.colors.comment.opacity(0.5))
                     .frame(width: 20, alignment: .leading)
             } else if ordered {
                 Text("\(index + 1).")
-                    .font(.system(size: 13, weight: .medium, design: .monospaced))
+                    .font(DesignSystem.Typography.monoCardBody)
                     .foregroundStyle(theme.colors.keyword.opacity(0.7))
                     .frame(width: 24, alignment: .trailing)
                     .padding(.trailing, 6)
@@ -198,7 +198,7 @@ struct MarkdownPreviewView: View {
                 default: "\u{2023}"
                 }
                 Text(bullet)
-                    .font(.system(size: 13))
+                    .font(DesignSystem.Typography.cardBody)
                     .foregroundStyle(theme.colors.keyword.opacity(0.6))
                     .frame(width: 16, alignment: .center)
                     .padding(.trailing, 6)
@@ -206,7 +206,7 @@ struct MarkdownPreviewView: View {
 
             if let text = item.text {
                 markdownTextView(text)
-                    .font(.system(size: 13))
+                    .font(DesignSystem.Typography.cardBody)
                     .lineSpacing(4)
                     .foregroundStyle(theme.colors.text)
             }
@@ -226,7 +226,7 @@ struct MarkdownPreviewView: View {
                     let alignment = colIndex < alignments.count ? alignments[colIndex] : .leading
 
                     Text(header)
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(DesignSystem.Typography.bodySemibold)
                         .foregroundStyle(theme.colors.text)
                         .frame(maxWidth: .infinity, alignment: Alignment(horizontal: horizontalAlignment(alignment), vertical: .center))
                         .padding(.horizontal, 10)
@@ -249,14 +249,14 @@ struct MarkdownPreviewView: View {
 
                         if let attributed = Self.parseMarkdown(cell) {
                             markdownTextView(attributed)
-                                .font(.system(size: 12))
+                                .font(DesignSystem.Typography.body)
                                 .foregroundStyle(theme.colors.text)
                                 .frame(maxWidth: .infinity, alignment: Alignment(horizontal: horizontalAlignment(alignment), vertical: .center))
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 6)
                         } else {
                             Text(cell)
-                                .font(.system(size: 12))
+                                .font(DesignSystem.Typography.body)
                                 .foregroundStyle(theme.colors.text)
                                 .frame(maxWidth: .infinity, alignment: Alignment(horizontal: horizontalAlignment(alignment), vertical: .center))
                                 .padding(.horizontal, 10)
@@ -296,7 +296,7 @@ struct MarkdownPreviewView: View {
     private var emptyStateView: some View {
         VStack(spacing: 10) {
             Image(systemName: "doc.text.magnifyingglass")
-                .font(.system(size: 22))
+                .font(DesignSystem.Typography.settingsTabIcon)
                 .foregroundStyle(.secondary)
             Text(L10n("editor.markdown.empty"))
                 .font(DesignSystem.Typography.body)
