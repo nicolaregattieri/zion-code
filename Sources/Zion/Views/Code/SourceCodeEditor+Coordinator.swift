@@ -49,7 +49,9 @@ extension SourceCodeEditor.Coordinator {
     func textDidChange(_ notification: Notification) {
         guard let textView = notification.object as? NSTextView else { return }
         if parent.text != textView.string {
+            isInternalEdit = true
             parent.text = textView.string
+            isInternalEdit = false
         }
         needsScrollToCursor = true
         textView.enclosingScrollView?.verticalRulerView?.needsDisplay = true
