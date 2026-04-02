@@ -32,12 +32,10 @@ struct TerminalTabView: NSViewRepresentable {
             context.coordinator.reattach(view: cachedView)
             // Don't clear cache — reattach re-populates it for future restructures
             applyTheme(to: cachedView, context: context)
-            // Force immediate full redraw — the async resync poll can fire before
-            // SwiftUI finalizes the new layout (e.g., after a split), causing stale
-            // content. This ensures AppKit redraws the full viewport on the next
-            // draw cycle, regardless of layout timing.
-            cachedView.getTerminal().updateFullScreen()
-            cachedView.needsDisplay = true
+            // Don't call updateFullScreen() here — it fires before SwiftUI finalizes
+            // the new layout, causing a stale frame that can ghost over the correct
+            // content. The performDisplayResync path (via updateNSView) handles this
+            // with proper layout + resync sequencing.
             // Hide SwiftTerm's legacy scroller (we don't need a visible scrollbar)
             for subview in cachedView.subviews where subview is NSScroller {
                 subview.isHidden = true
@@ -507,6 +505,9 @@ struct TerminalTabView: NSViewRepresentable {
             )
             view.layoutSubtreeIfNeeded()
             view.resyncDisplayAfterViewRestore()
+            // Clear stale Core Animation snapshots that can ghost over the
+            // correct content after a cached view reattach.
+            view.layer?.removeAllAnimations()
             // Force synchronous draw — the async pipeline (queuePendingDisplay)
             // can be skipped if pendingDisplay is already true from a previous
             // cycle. displayIfNeeded() bypasses that and draws immediately,
