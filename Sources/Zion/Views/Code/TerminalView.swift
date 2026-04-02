@@ -517,6 +517,21 @@ struct TerminalTabView: NSViewRepresentable {
             if view.window != nil {
                 view.displayIfNeeded()
             }
+            // Send synthetic SIGWINCH to force TUI apps (Claude, Codex, vim, etc.)
+            // to fully repaint. Without this, the process thinks the screen is
+            // unchanged and we get ghost frames / duplicated output.
+            // setWinSize triggers SIGWINCH even when cols/rows haven't changed.
+            if let fd = process?.childfd, fd >= 0 {
+                let terminal = view.getTerminal()
+                let frame = view.frame
+                var size = winsize(
+                    ws_row: UInt16(terminal.rows),
+                    ws_col: UInt16(terminal.cols),
+                    ws_xpixel: UInt16(frame.width),
+                    ws_ypixel: UInt16(frame.height)
+                )
+                let _ = PseudoTerminalHelpers.setWinSize(masterPtyDescriptor: fd, windowSize: &size)
+            }
         }
 
         func insertSoftLineBreak() {
