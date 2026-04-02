@@ -18,17 +18,22 @@ struct TruncatingHStack: Layout {
 
     struct CacheData {
         var overflow: Int = 0
+        var sizes: [CGSize] = []
     }
 
     func makeCache(subviews: Subviews) -> CacheData {
-        CacheData()
+        CacheData(sizes: subviews.map { $0.sizeThatFits(.unspecified) })
+    }
+
+    func updateCache(_ cache: inout CacheData, subviews: Subviews) {
+        cache.sizes = subviews.map { $0.sizeThatFits(.unspecified) }
     }
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout CacheData) -> CGSize {
         guard !subviews.isEmpty else { return .zero }
 
         let maxWidth = proposal.width ?? .infinity
-        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
+        let sizes = cache.sizes
 
         // The last subview is the overflow indicator
         let contentSubviews = subviews.dropLast()
@@ -86,7 +91,7 @@ struct TruncatingHStack: Layout {
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout CacheData) {
         guard !subviews.isEmpty else { return }
 
-        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
+        let sizes = cache.sizes
         let contentSubviews = Array(subviews.dropLast())
         let overflowSubview = subviews.last!
         let overflowSize = sizes.last!
