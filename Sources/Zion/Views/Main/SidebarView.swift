@@ -77,6 +77,7 @@ struct SidebarView: View {
                                             withAnimation(DesignSystem.Motion.springInteractive) {
                                                 model.saveRecentRepository(url)
                                                 model.pendingRepositoryURL = url
+                                                model.prepareBlockingRepositorySwitch(for: url)
                                             }
                                             model.nextSectionAfterRepositoryOpen = selectedSection
                                             Task { @MainActor in

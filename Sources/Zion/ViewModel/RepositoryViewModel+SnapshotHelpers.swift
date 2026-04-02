@@ -14,6 +14,12 @@ extension RepositoryViewModel {
         repositorySwitchSnapshots[url] != nil
     }
 
+    func prepareBlockingRepositorySwitch(for url: URL) {
+        guard !hasRepositorySnapshot(for: url) else { return }
+        isSwitchingRepository = true
+        isBlockingRepositorySwitch = true
+    }
+
     func applyRepositorySnapshotIfFresh(for url: URL) -> Bool {
         guard let snapshot = repositorySwitchSnapshots[url],
               Date().timeIntervalSince(snapshot.capturedAt) <= repositorySwitchSnapshotTTL else {
