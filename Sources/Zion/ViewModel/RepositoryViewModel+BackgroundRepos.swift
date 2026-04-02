@@ -181,6 +181,7 @@ extension RepositoryViewModel {
                 if Task.isCancelled { break }
 
                 if isSwitchingRepository { continue }
+                guard NSApp.isActive else { continue }
 
                 // Refresh without showing busy indicator to avoid UI flickering
                 refreshRepository(setBusy: false, origin: .autoTimer)

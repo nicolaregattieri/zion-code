@@ -291,6 +291,7 @@ extension RepositoryViewModel {
                 try? await Task.sleep(nanoseconds: Self.prPollingIntervalNanoseconds(for: prPollingIntervalMinutes))
                 if Task.isCancelled { break }
                 if isSwitchingRepository { continue }
+                guard NSApp.isActive else { continue }
                 await refreshPullRequestsCatalog(notifyOnNewPRs: true)
                 refreshPRReviewQueue()
             }
