@@ -449,10 +449,7 @@ final class RepositoryViewModel {
 
     // Zion Code state
     var repositoryFiles: [FileItem] = [] {
-        didSet {
-            isFlatFileCacheDirty = true
-            rebuildFlatFileCache()  // Rebuild immediately so it's ready when views ask
-        }
+        didSet { isFlatFileCacheDirty = true }
     }
     var openedFiles: [FileItem] = []
     var missingOpenFileIDs: Set<String> = []
@@ -613,7 +610,7 @@ final class RepositoryViewModel {
 
     // Performance caches
     var maxLaneCount: Int = 1
-    var flatFileCache: [FileItem] = []
+    @ObservationIgnored var flatFileCache: [FileItem] = []
     @ObservationIgnored var isFlatFileCacheDirty: Bool = true
     var editorJumpLineTarget: Int = 0
     var editorJumpToken: Int = 0
