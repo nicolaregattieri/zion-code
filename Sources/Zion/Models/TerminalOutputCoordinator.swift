@@ -65,8 +65,37 @@ final class TerminalOutputCoordinator {
     // MARK: - Scheduling
 
     /// Called by individual coordinators when new data arrives.
+    /// Fast path: flushes the focused terminal immediately (no sleep) so
+    /// keystroke echo appears within the same frame. Background terminals
+    /// and remaining data go through the batched sleep path.
     func notifyDataAvailable() {
-        guard flushTask == nil, !entries.isEmpty else { return }
+        guard !entries.isEmpty else { return }
+
+        // Fast path — flush focused terminal immediately for responsive typing.
+        // Only fires when no batched flush is already scheduled, so heavy
+        // output still coalesces through scheduleBatchFlush().
+        if flushTask == nil, let focusedID = viewModel?.focusedSessionID,
+           let entry = entries[focusedID] {
+            var hasPending = entry.flush(Self.maxBytesPerFrame)
+
+            // Also flush any other terminals that may have data
+            for (sessionID, otherEntry) in entries where sessionID != focusedID {
+                if otherEntry.flush(Self.maxBytesPerFrame / max(1, entries.count)) {
+                    hasPending = true
+                }
+            }
+
+            if hasPending {
+                scheduleBatchFlush()
+            }
+            return
+        }
+
+        scheduleBatchFlush()
+    }
+
+    private func scheduleBatchFlush() {
+        guard flushTask == nil else { return }
         flushTask = Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: self?.flushInterval ?? Self.baseIntervalNanos)
             guard let self else { return }
