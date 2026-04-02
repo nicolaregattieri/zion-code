@@ -34,7 +34,7 @@ struct ZionMapDetailPage: View {
 
             HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
                 Image(systemName: section.icon)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(DesignSystem.IconSize.sectionHeader)
                     .foregroundStyle(section.color)
                 Text(L10n(section.titleKey))
                     .font(DesignSystem.Typography.bodyLargeBold)
@@ -53,7 +53,8 @@ struct ZionMapDetailPage: View {
     private var sectionHero: some View {
         HStack(spacing: 16) {
             Image(systemName: section.icon)
-                .font(.system(size: 24, weight: .semibold))
+                .font(DesignSystem.Typography.onboardingTitle)
+                .fontWeight(.semibold)
                 .foregroundStyle(section.color)
                 .frame(width: 48, height: 48)
                 .background(section.color.opacity(0.12))
@@ -61,9 +62,9 @@ struct ZionMapDetailPage: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(L10n(section.titleKey))
-                    .font(.system(size: 18, weight: .bold))
+                    .font(DesignSystem.Typography.sheetSectionTitle)
                 Text(L10n(section.subtitleKey))
-                    .font(.system(size: 13))
+                    .font(DesignSystem.Typography.cardBody)
                     .foregroundStyle(.secondary)
             }
         }

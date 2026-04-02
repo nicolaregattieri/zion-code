@@ -226,7 +226,7 @@ struct ChangesScreen: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 Image(systemName: "doc.text").foregroundStyle(.secondary)
-                Text(file).font(.system(.subheadline, design: .monospaced)).fontWeight(.bold)
+                Text(file).font(DesignSystem.Typography.monoSmallBold)
                 Spacer()
                 if model.isAIConfigured {
                     Button {

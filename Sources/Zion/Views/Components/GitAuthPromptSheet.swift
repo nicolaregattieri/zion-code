@@ -43,7 +43,7 @@ struct GitAuthPromptSheet: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(L10n("git.auth.username.label"))
-                    .font(.caption.weight(.semibold))
+                    .font(DesignSystem.Typography.labelSemibold)
                     .foregroundStyle(.secondary)
                 TextField(L10n("git.auth.username.placeholder"), text: $username)
                     .textFieldStyle(.roundedBorder)
@@ -51,7 +51,7 @@ struct GitAuthPromptSheet: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(L10n("git.auth.secret.label"))
-                    .font(.caption.weight(.semibold))
+                    .font(DesignSystem.Typography.labelSemibold)
                     .foregroundStyle(.secondary)
                 SecureField(L10n("git.auth.secret.placeholder"), text: $secret)
                     .textFieldStyle(.roundedBorder)

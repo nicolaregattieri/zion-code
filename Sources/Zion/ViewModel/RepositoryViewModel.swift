@@ -338,7 +338,7 @@ final class RepositoryViewModel {
 
     @ObservationIgnored var _cachedAIKey: String?
     @ObservationIgnored var _cachedAIKeyProvider: AIProvider?
-    var _aiKeyRevision: Int = 0
+    @ObservationIgnored var _aiKeyRevision: Int = 0
 
     // Commit signing
     var commitSignatureStatus: [String: String] = [:] // hash -> "G"/"N"/"B"/etc
@@ -449,7 +449,10 @@ final class RepositoryViewModel {
 
     // Zion Code state
     var repositoryFiles: [FileItem] = [] {
-        didSet { isFlatFileCacheDirty = true }
+        didSet {
+            isFlatFileCacheDirty = true
+            rebuildFlatFileCache()  // Rebuild immediately so it's ready when views ask
+        }
     }
     var openedFiles: [FileItem] = []
     var missingOpenFileIDs: Set<String> = []

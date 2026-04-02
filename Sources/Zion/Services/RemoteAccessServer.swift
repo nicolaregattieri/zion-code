@@ -271,9 +271,17 @@ actor RemoteAccessServer {
 
     // MARK: - Sanitization
 
-    /// Only allow URL-safe base64 chars + UUID chars for injected values
+    /// Escape a string for safe injection into a JS single-quoted literal.
+    /// Preserves base64 characters (+, /, =) while preventing JS injection.
     private static func sanitizeForJS(_ value: String) -> String {
-        value.filter { $0.isLetter || $0.isNumber || $0 == "-" || $0 == "_" }
+        value
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "'", with: "\\'")
+            .replacingOccurrences(of: "\n", with: "\\n")
+            .replacingOccurrences(of: "\r", with: "\\r")
+            .replacingOccurrences(of: "<", with: "\\u003c")
+            .replacingOccurrences(of: ">", with: "\\u003e")
     }
 
     // MARK: - Broadcasting
@@ -414,6 +422,13 @@ actor RemoteAccessServer {
         let basePath = pathComponents.first ?? "/"
         let queryString = pathComponents.count > 1 ? pathComponents[1] : ""
         let params = parseQuery(queryString)
+
+        // Route whitelist: reject unknown paths early
+        let allowedRoutes: Set<String> = ["/", "/pair", "/poll", "/input", "/action"]
+        guard method == "OPTIONS" || allowedRoutes.contains(basePath) else {
+            sendHTTP(connection: connection, status: "404 Not Found", body: "Not Found")
+            return
+        }
 
         switch (method, basePath) {
         case ("GET", "/"):

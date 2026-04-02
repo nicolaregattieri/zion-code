@@ -43,7 +43,7 @@ struct QuickOpenOverlay: View {
     var body: some View {
         ZStack {
             // Backdrop — dismiss on click
-            Color.black.opacity(0.25)
+            DesignSystem.Colors.modalScrim
                 .ignoresSafeArea()
                 .onTapGesture { isVisible = false }
 

@@ -74,14 +74,14 @@ struct SidebarView: View {
                                             worktreeCount: model.recentWorktreeCounts[url] ?? 0
                                         ) {
                                             guard model.recentRepositoryRoot(for: model.repositoryURL) != url else { return }
-                                            withAnimation(.spring(duration: 0.3, bounce: 0.1)) {
+                                            withAnimation(DesignSystem.Motion.springInteractive) {
                                                 model.saveRecentRepository(url)
                                                 model.pendingRepositoryURL = url
                                             }
                                             model.nextSectionAfterRepositoryOpen = selectedSection
                                             Task { @MainActor in
                                                 try? await Task.sleep(for: .milliseconds(50))
-                                                withAnimation(.spring(duration: 0.3, bounce: 0.1)) {
+                                                withAnimation(DesignSystem.Motion.springInteractive) {
                                                     proxy.scrollTo("recents-top", anchor: .top)
                                                 }
                                                 // Let the spring animation (0.3s) complete before

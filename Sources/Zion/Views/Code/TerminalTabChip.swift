@@ -20,7 +20,7 @@ struct TerminalTabChip: View {
                 .frame(width: 6, height: 6)
 
             Text(title)
-                .font(.system(size: 10, weight: isActive ? .bold : .regular, design: .monospaced))
+                .font(isActive ? DesignSystem.Typography.monoLabelBold : DesignSystem.Typography.monoLabel)
                 .lineLimit(1)
                 .help(title)
 

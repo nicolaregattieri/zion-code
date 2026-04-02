@@ -136,7 +136,7 @@ struct NotificationSettingsTab: View {
                             }
                             .padding(.top, 4)
                         }
-                        .font(.caption.weight(.medium))
+                        .font(DesignSystem.Typography.labelMedium)
                         .foregroundStyle(DesignSystem.Colors.info)
                     }
                 }

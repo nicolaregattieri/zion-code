@@ -13,7 +13,7 @@ struct ShortcutRecorderView: View {
     var body: some View {
         HStack(spacing: 6) {
             Text(L10n("shortcuts.recorder.typeShortcut"))
-                .font(.system(size: 12, weight: .medium, design: .monospaced))
+                .font(DesignSystem.Typography.monoBody).fontWeight(.medium)
                 .foregroundStyle(DesignSystem.Colors.brandPrimary)
                 .opacity(isPulsing ? 1.0 : 0.4)
                 .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: isPulsing)

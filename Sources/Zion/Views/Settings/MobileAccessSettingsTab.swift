@@ -192,6 +192,7 @@ struct MobileAccessSettingsTab: View {
                 .interpolation(.none)
                 .resizable()
                 .frame(width: 140, height: 140)
+                .accessibilityLabel(L10n("settings.mobile.qrCode.accessibility"))
             Spacer()
         }
     }

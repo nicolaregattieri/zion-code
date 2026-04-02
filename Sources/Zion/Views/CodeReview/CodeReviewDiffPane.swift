@@ -14,8 +14,7 @@ struct CodeReviewDiffPane: View {
                         Image(systemName: file.status.icon)
                             .foregroundStyle(file.status.color)
                         Text(file.path)
-                            .font(.system(.subheadline, design: .monospaced))
-                            .fontWeight(.bold)
+                            .font(DesignSystem.Typography.monoSmallBold)
                         Spacer()
                         if !file.inlineComments.isEmpty {
                             HStack(spacing: DesignSystem.Spacing.iconInlineGap) {

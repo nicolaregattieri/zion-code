@@ -47,7 +47,7 @@ struct GeneralSettingsTab: View {
                                     endPoint: .bottomTrailing
                                 ))
                                 : AnyShapeStyle(.linearGradient(
-                                    colors: [.purple, .orange],
+                                    colors: [DesignSystem.ZionMode.neonMagenta, DesignSystem.ZionMode.neonGold],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ))
@@ -61,7 +61,7 @@ struct GeneralSettingsTab: View {
                                     endPoint: .bottomTrailing
                                 )
                                 : LinearGradient(
-                                    colors: [.purple.opacity(0.15), .orange.opacity(0.15)],
+                                    colors: [DesignSystem.ZionMode.neonMagenta.opacity(0.15), DesignSystem.ZionMode.neonGold.opacity(0.15)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
@@ -73,7 +73,7 @@ struct GeneralSettingsTab: View {
                         )
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Zion Mode")
+                        Text(L10n("settings.general.zionMode"))
                             .font(DesignSystem.Typography.sectionTitle)
                         Text(L10n("settings.zionMode.subtitle"))
                             .font(DesignSystem.Typography.bodySmall)
@@ -288,7 +288,7 @@ struct GeneralSettingsTab: View {
                     Text(L10n("hosting.github.enterCode"))
                         .font(DesignSystem.Typography.bodySmall)
                     Text(deviceFlowUserCode)
-                        .font(.system(.body, design: .monospaced).bold())
+                        .font(DesignSystem.Typography.monoBodyBold)
                         .textSelection(.enabled)
                 }
                 HStack(spacing: 12) {

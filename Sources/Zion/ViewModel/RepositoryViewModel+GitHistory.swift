@@ -258,7 +258,7 @@ extension RepositoryViewModel {
     // MARK: - Diff Parsing
 
     static func parseDiffHunks(_ rawDiff: String) -> [DiffHunk] {
-        let lines = rawDiff.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        let lines = rawDiff.split(separator: "\n", omittingEmptySubsequences: false)
         var hunks: [DiffHunk] = []
         var i = 0
 
@@ -322,7 +322,7 @@ extension RepositoryViewModel {
                 i += 1
             }
 
-            hunks.append(DiffHunk(header: header, oldStart: oldStart, oldCount: oldCount,
+            hunks.append(DiffHunk(header: String(header), oldStart: oldStart, oldCount: oldCount,
                                   newStart: newStart, newCount: newCount, lines: diffLines))
         }
 

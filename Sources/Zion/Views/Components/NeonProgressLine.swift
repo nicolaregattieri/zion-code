@@ -78,7 +78,7 @@ struct NeonProgressLine: View {
             Rectangle()
                 .fill(
                     LinearGradient(
-                        colors: [.clear, Color.white.opacity(0.3), .clear],
+                        colors: [.clear, DesignSystem.Colors.neonShimmer, .clear],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
