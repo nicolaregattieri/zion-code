@@ -76,18 +76,17 @@ final class TerminalOutputCoordinator {
         // output still coalesces through scheduleBatchFlush().
         if flushTask == nil, let focusedID = viewModel?.focusedSessionID,
            let entry = entries[focusedID] {
-            var hasPending = entry.flush(Self.maxBytesPerFrame)
+            _ = entry.flush(Self.maxBytesPerFrame)
 
             // Also flush any other terminals that may have data
             for (sessionID, otherEntry) in entries where sessionID != focusedID {
-                if otherEntry.flush(Self.maxBytesPerFrame / max(1, entries.count)) {
-                    hasPending = true
-                }
+                _ = otherEntry.flush(Self.maxBytesPerFrame / max(1, entries.count))
             }
 
-            if hasPending {
-                scheduleBatchFlush()
-            }
+            // Always schedule a batch flush as cooldown — prevents the fast path
+            // from firing on every single data notification (which would saturate
+            // the main thread with synchronous flushes, starving input events).
+            scheduleBatchFlush()
             return
         }
 
