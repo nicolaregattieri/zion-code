@@ -355,7 +355,7 @@ extension RepositoryViewModel {
 
     func loadRecentRepositories() {
         if let urls = try? JSONDecoder().decode([URL].self, from: recentReposData) {
-            let normalized = normalizeRecentRepositories(urls)
+            let normalized = Array(normalizeRecentRepositories(urls).prefix(Constants.Limits.maxRecentRepositories))
             recentRepositories = normalized
             if let encoded = try? JSONEncoder().encode(normalized) {
                 recentReposData = encoded
@@ -371,7 +371,7 @@ extension RepositoryViewModel {
         current = normalizeRecentRepositories(current)
         current.removeAll { $0 == canonical }
         current.insert(canonical, at: 0)
-        let limited = Array(current.prefix(10))
+        let limited = Array(current.prefix(Constants.Limits.maxRecentRepositories))
         if let encoded = try? JSONEncoder().encode(limited) {
             recentReposData = encoded
             recentRepositories = limited
@@ -511,7 +511,8 @@ extension RepositoryViewModel {
                 do {
                     let (data, _) = try await URLSession.shared.data(from: url)
                     if let image = NSImage(data: data) {
-                        avatarCache.setObject(image, forKey: key as NSString)
+                        let cost = image.tiffRepresentation?.count ?? 4096
+                        avatarCache.setObject(image, forKey: key as NSString, cost: cost)
                     }
                 } catch {}
                 avatarDownloadTasks.remove(key)
@@ -537,7 +538,8 @@ extension RepositoryViewModel {
                 do {
                     let (data, _) = try await URLSession.shared.data(from: url)
                     if let image = NSImage(data: data) {
-                        avatarCache.setObject(image, forKey: key as NSString)
+                        let cost = image.tiffRepresentation?.count ?? 4096
+                        avatarCache.setObject(image, forKey: key as NSString, cost: cost)
                     }
                 } catch {
                     // Silently fail — identicon fallback handled by Gravatar

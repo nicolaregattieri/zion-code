@@ -105,8 +105,8 @@ extension RepositoryViewModel {
     func startBackgroundFetch() {
         backgroundFetchTask?.cancel()
         backgroundFetchTask = Task {
-            // Stagger: offset from auto-refresh to prevent overlapping git operations.
-            try? await Task.sleep(nanoseconds: 15_000_000_000)
+            // Stagger: offset from auto-refresh and PR polling to prevent overlap at startup.
+            try? await Task.sleep(nanoseconds: Constants.Timing.backgroundFetchInitialDelay)
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: Constants.Timing.backgroundFetchInterval)
                 if Task.isCancelled { break }
@@ -133,8 +133,40 @@ extension RepositoryViewModel {
         let previousAhead = aheadRemoteCount
 
         do {
-            // Keep remote refs current so graph/status can reflect hosted merges without manual refresh.
-            let _ = try await worker.runAction(args: ["fetch", "--all", "--prune"], in: url)
+            // Pre-check: compare local tracking ref with remote to avoid expensive fetch
+            // when nothing has changed on the remote. (RT-003)
+            let shouldFetch: Bool
+            do {
+                let trackingRef = try await worker.runAction(
+                    args: ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"],
+                    in: url
+                ).trimmingCharacters(in: .whitespacesAndNewlines)
+                let localRef = try await worker.runAction(
+                    args: ["rev-parse", trackingRef],
+                    in: url
+                ).trimmingCharacters(in: .whitespacesAndNewlines)
+                // Extract remote name and branch from "origin/main" format
+                let parts = trackingRef.split(separator: "/", maxSplits: 1)
+                if parts.count == 2 {
+                    let remote = String(parts[0])
+                    let branch = String(parts[1])
+                    let lsOutput = try await worker.runAction(
+                        args: ["ls-remote", "--heads", remote, "refs/heads/\(branch)"],
+                        in: url
+                    ).trimmingCharacters(in: .whitespacesAndNewlines)
+                    let remoteHash = lsOutput.split(separator: "\t").first.map(String.init) ?? ""
+                    shouldFetch = remoteHash != localRef
+                } else {
+                    shouldFetch = true
+                }
+            } catch {
+                // No upstream configured or ls-remote failed -- always fetch as fallback
+                shouldFetch = true
+            }
+
+            if shouldFetch {
+                let _ = try await worker.runAction(args: ["fetch", "--all", "--prune"], in: url)
+            }
             // Check how many commits behind
             let behindOutput = try await worker.runAction(
                 args: ["rev-list", "--count", "HEAD..@{upstream}"],
@@ -291,8 +323,8 @@ extension RepositoryViewModel {
     func startPRPollingTimer() {
         prPollingTimer?.cancel()
         prPollingTimer = Task {
-            // Stagger: PR polling is lowest priority, delay first tick by 60s.
-            try? await Task.sleep(nanoseconds: 60_000_000_000)
+            // Stagger: PR polling is lowest priority, delayed to avoid overlap with other timers.
+            try? await Task.sleep(nanoseconds: Constants.Timing.prPollingInitialDelay)
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: Self.prPollingIntervalNanoseconds(for: prPollingIntervalMinutes))
                 if Task.isCancelled { break }
@@ -345,8 +377,8 @@ extension RepositoryViewModel {
         } catch {
             // Retry once for transient network errors on network commands
             if isNetworkCommand(args), isTransientNetworkError(error) {
-                logger.log(.warn, "Transient network error, retrying in 2s…", context: commandSummary)
-                try await Task.sleep(nanoseconds: 2_000_000_000)
+                logger.log(.warn, "Transient network error, retrying…", context: commandSummary)
+                try await Task.sleep(nanoseconds: Constants.Timing.networkRetryDelay)
                 do {
                     return try await worker.runAction(args: args, in: repositoryURL)
                 } catch {

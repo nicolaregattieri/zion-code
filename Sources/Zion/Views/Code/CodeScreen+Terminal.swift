@@ -35,6 +35,12 @@ extension CodeScreen {
                         Text(L10n("Nenhum terminal aberto")).font(DesignSystem.Typography.label).foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .onAppear {
+                        model.ensureDefaultTerminalSession(
+                            repositoryURL: model.repositoryURL,
+                            branchName: model.currentBranch.isEmpty ? (model.repositoryURL?.lastPathComponent ?? "") : model.currentBranch
+                        )
+                    }
                 } else {
                     ForEach(model.terminalTabs) { tab in
                         TerminalPaneView(

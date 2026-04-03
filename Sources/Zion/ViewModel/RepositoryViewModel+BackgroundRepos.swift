@@ -103,6 +103,34 @@ extension RepositoryViewModel {
         backgroundRepoChangedFiles.removeAll()
     }
 
+    /// Evict background repo states beyond the allowed limit, preferring to keep
+    /// repos that appear in the recent list. Evicted repos get their terminals killed
+    /// and file watchers stopped to free memory (PERF-015).
+    func evictExcessBackgroundRepoStates(keeping maxCount: Int) {
+        guard backgroundRepoStates.count > maxCount else { return }
+        let recentSet = Set(recentRepositories)
+        // Sort: repos NOT in recents are evicted first
+        let sorted = backgroundRepoStates.keys.sorted { a, b in
+            let aRecent = recentSet.contains(canonicalRecentRepositoryURL(for: a))
+            let bRecent = recentSet.contains(canonicalRecentRepositoryURL(for: b))
+            if aRecent != bRecent { return bRecent } // non-recent first for eviction
+            return false
+        }
+        let toEvict = sorted.prefix(backgroundRepoStates.count - maxCount)
+        for url in toEvict {
+            guard let state = backgroundRepoStates.removeValue(forKey: url) else { continue }
+            state.monitorTask?.cancel()
+            state.fileWatcher.stop()
+            for tab in state.terminalTabs {
+                for session in tab.allSessions() {
+                    session.killCachedProcess()
+                }
+            }
+            backgroundRepoChangedFiles.removeValue(forKey: canonicalRecentRepositoryURL(for: url))
+            logger.log(.info, "EVICT background repo", context: url.lastPathComponent, source: #function)
+        }
+    }
+
     // MARK: - Repository Statistics
 
     func loadRepositoryStats() {
@@ -187,22 +215,55 @@ extension RepositoryViewModel {
 
     func startAutoRefreshTimer() {
         autoRefreshTask?.cancel()
-        autoRefreshTask = Task {
-            // Stagger: wait one full interval before the first tick so we don't overlap
-            // with the refresh that just completed from the repository switch.
-            try? await Task.sleep(nanoseconds: Constants.Timing.backgroundMonitorInterval)
+        autoRefreshTask = Task { [weak self] in
+            // Stagger: wait 45s before the first tick so we don't overlap
+            // with the refresh that just completed from the repository switch
+            // and don't coincide with backgroundFetch (30s) or PR polling (90s).
+            try? await Task.sleep(nanoseconds: Constants.Timing.autoRefreshInitialDelay)
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: Constants.Timing.backgroundMonitorInterval)
-
-                if Task.isCancelled { break }
-
+                guard let self, !Task.isCancelled else { break }
                 if isSwitchingRepository { continue }
                 guard NSApp.isActive else { continue }
                 guard !isBackgroundFetching else { continue }
 
-                // Refresh without showing busy indicator to avoid UI flickering
-                refreshRepository(setBusy: false, origin: .autoTimer)
+                // Lightweight check: only full refresh if HEAD or status changed (RT-001)
+                await autoRefreshIfChanged()
             }
+        }
+    }
+
+    /// Checks HEAD hash and uncommitted count. Only triggers a full refresh
+    /// if something actually changed since last refresh. This replaces the old
+    /// approach of running 15-40 git processes every 60s regardless of state.
+    private func autoRefreshIfChanged() async {
+        guard let url = repositoryURL else { return }
+        do {
+            let newHead = try await worker.runAction(args: ["rev-parse", "HEAD"], in: url).trimmingCharacters(in: .whitespacesAndNewlines)
+            let statusOutput = try await worker.runAction(args: ["status", "--porcelain"], in: url)
+            let newStatusLines = statusOutput.split(separator: "\n").map { String($0) }
+            let newCount = newStatusLines.count
+            let headChanged = !newHead.hasPrefix(headShortHash) && headShortHash != "-"
+            let statusChanged = newCount != uncommittedCount
+            if headChanged || statusChanged {
+                logger.log(.info, "autoRefresh: change detected (head=\(headChanged) status=\(statusChanged))", source: #function)
+                // Status changed -- update badges immediately without full reload
+                if statusChanged && !headChanged {
+                    let didChange = uncommittedChanges != newStatusLines
+                    if didChange {
+                        uncommittedChanges = newStatusLines
+                    }
+                    if uncommittedCount != newCount {
+                        uncommittedCount = newCount
+                    }
+                } else {
+                    // HEAD changed -- full refresh needed (new commit, checkout, rebase, etc.)
+                    refreshRepository(setBusy: false, origin: .autoTimer)
+                }
+            }
+        } catch {
+            // Fallback: if lightweight check fails, do a full refresh
+            refreshRepository(setBusy: false, origin: .autoTimer)
         }
     }
 

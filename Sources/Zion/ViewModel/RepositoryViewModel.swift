@@ -102,13 +102,55 @@ final class RepositoryViewModel {
     var isRebasing: Bool = false
     var isCherryPicking: Bool = false
     var isGitRepository: Bool = true
-    var uncommittedChanges: [String] = []
-    var uncommittedCount: Int = 0
-    var selectedChangeFile: String?
-    var currentFileDiff: String = ""
-    var currentFileDiffLines: [String] {
-        currentFileDiff.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+    var uncommittedChanges: [String] = [] {
+        didSet { rebuildUncommittedLookupSets() }
     }
+    var uncommittedCount: Int = 0
+
+    // Pre-computed sets for O(1) file tree lookups (PERF-005)
+    @ObservationIgnored var uncommittedFileNames: Set<String> = []
+    @ObservationIgnored var uncommittedDirectoryPrefixes: Set<String> = []
+
+    private func rebuildUncommittedLookupSets() {
+        var names = Set<String>()
+        var dirs = Set<String>()
+        for change in uncommittedChanges {
+            // Porcelain lines have a 3-char status prefix: "XY path" (e.g. " M src/foo.txt")
+            let filePath = change.count > 3 ? String(change.dropFirst(3)) : change
+            // Handle renames: "R  old -> new" -- use the new path
+            let resolvedPath: String
+            if let arrowRange = filePath.range(of: " -> ") {
+                resolvedPath = String(filePath[arrowRange.upperBound...])
+            } else {
+                resolvedPath = filePath
+            }
+            if let lastSlash = resolvedPath.lastIndex(of: "/") {
+                names.insert(String(resolvedPath[resolvedPath.index(after: lastSlash)...]))
+                // Build directory prefixes: "src/foo/bar.txt" -> "src/foo/", "src/"
+                var dirPath = resolvedPath[resolvedPath.startIndex..<lastSlash]
+                while !dirPath.isEmpty {
+                    dirs.insert(String(dirPath) + "/")
+                    if let prevSlash = dirPath.lastIndex(of: "/") {
+                        dirPath = dirPath[dirPath.startIndex..<prevSlash]
+                    } else {
+                        dirs.insert(String(dirPath) + "/")
+                        break
+                    }
+                }
+            } else {
+                names.insert(resolvedPath)
+            }
+        }
+        uncommittedFileNames = names
+        uncommittedDirectoryPrefixes = dirs
+    }
+    var selectedChangeFile: String?
+    var currentFileDiff: String = "" {
+        didSet {
+            currentFileDiffLines = currentFileDiff.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        }
+    }
+    var currentFileDiffLines: [String] = []
     var selectedCommitFile: String?
     var currentCommitFileDiff: String = ""
     var currentCommitFileDiffHunks: [DiffHunk] = []
@@ -145,7 +187,12 @@ final class RepositoryViewModel {
     @ObservationIgnored var terminalSendCallbacks: [UUID: (Data) -> Void] = [:]
 
     // Avatar cache (Gravatar)
-    @ObservationIgnored let avatarCache = NSCache<NSString, NSImage>()
+    @ObservationIgnored let avatarCache: NSCache<NSString, NSImage> = {
+        let cache = NSCache<NSString, NSImage>()
+        cache.countLimit = 200
+        cache.totalCostLimit = 10 * 1024 * 1024 // 10 MB
+        return cache
+    }()
     @ObservationIgnored var avatarDownloadTasks: Set<String> = []
     @ObservationIgnored let avatarSemaphore = AsyncSemaphore(maxConcurrent: 3)
 
@@ -183,6 +230,12 @@ final class RepositoryViewModel {
     var navigateToGraphRequested: Bool = false
     var navigateToCodeRequested: Bool = false
     var nextSectionAfterRepositoryOpen: AppSection?
+
+    /// Current active section, synced from ContentView. Used for tab-aware loading:
+    /// - .code: only load branch + status + file tree (editor + terminal)
+    /// - .graph: load full commit graph, branches, tags, stashes
+    /// - .operations: load uncommitted changes + branch info for git ops
+    @ObservationIgnored var activeSection: AppSection = .code
     var pendingExternalFiles: [URL] = []
 
     // Bridge
@@ -265,7 +318,7 @@ final class RepositoryViewModel {
     var isReviewVisible: Bool = false
     @ObservationIgnored var commitDetailsCache = LRUCache<String, String>(capacity: Constants.Limits.commitDetailsCacheSize)
     @ObservationIgnored var commitFileDiffCache = LRUCache<String, (raw: String, hunks: [DiffHunk])>(capacity: Constants.Limits.commitFileDiffCacheSize)
-    @ObservationIgnored var commitReviewCache: [String: [ReviewFinding]] = [:]
+    @ObservationIgnored var commitReviewCache = LRUCache<String, [ReviewFinding]>(capacity: 32)
     var reviewingCommitID: String?
     var selectedCommitDetailTab: CommitDetailTab = .details
     var aiChangelog: String = ""
@@ -595,6 +648,11 @@ final class RepositoryViewModel {
     var shouldClosePopovers: Bool = false
     @ObservationIgnored let logger = DiagnosticLogger.shared
 
+    /// Tracks whether the full graph data (commits, branches, tags) has been loaded
+    /// for the current repository. Reset on repo switch. When the user is on Code tab,
+    /// we skip the heavy graph load and defer it until they navigate to Graph/Ops.
+    @ObservationIgnored var hasLoadedFullGraphForCurrentRepo = false
+
     var recentReposData: Data {
         get { UserDefaults.standard.data(forKey: UserDefaultsKeys.General.recentRepositories) ?? Data() }
         set { UserDefaults.standard.set(newValue, forKey: UserDefaultsKeys.General.recentRepositories) }
@@ -635,9 +693,9 @@ final class RepositoryViewModel {
     @ObservationIgnored let worker = RepositoryWorker()
     @ObservationIgnored let fileWatcher = FileWatcher()
 
-    @ObservationIgnored let defaultCommitLimitAll = 300
-    @ObservationIgnored let defaultCommitLimitFocused = 200
-    @ObservationIgnored let commitPageSize = 300
+    @ObservationIgnored let defaultCommitLimitAll = 100
+    @ObservationIgnored let defaultCommitLimitFocused = 100
+    @ObservationIgnored let commitPageSize = 200
     @ObservationIgnored let maxCommitLimit = 5000
     @ObservationIgnored var commitLimit = 300
     @ObservationIgnored var refreshRequestID = UUID()
@@ -671,10 +729,54 @@ final class RepositoryViewModel {
     @ObservationIgnored var prPollingTimer: Task<Void, Never>?
 
     deinit {
+        // Git & refresh tasks
+        refreshTask?.cancel()
+        detailsTask?.cancel()
+        actionTask?.cancel()
         deferredRepositoryLoadTask?.cancel()
         autoRefreshTask?.cancel()
-        prPollingTimer?.cancel()
         fileWatcherGateTask?.cancel()
+        fileTreeRefreshTask?.cancel()
+        commitStatsTask?.cancel()
+        pushPreflightTask?.cancel()
+        busyWatchdogTask?.cancel()
+
+        // Background sync tasks
+        backgroundFetchTask?.cancel()
+        prPollingTimer?.cancel()
+        prPollingTask?.cancel()
+        prTask?.cancel()
+        signatureStatusTask?.cancel()
+        submoduleTask?.cancel()
+
+        // AI tasks
+        aiTask?.cancel()
+        repoMemoryTask?.cancel()
+        codeReviewTask?.cancel()
+        explainDiffTask?.cancel()
+        bisectTask?.cancel()
+        pendingSummaryTask?.cancel()
+
+        // Editor & history tasks
+        blameTask?.cancel()
+        reflogTask?.cancel()
+        fileHistoryTask?.cancel()
+        recoverySnapshotsTask?.cancel()
+        gitSearchTask?.cancel()
+        editorSymbolIndexTask?.cancel()
+        bridgeAnalysisTask?.cancel()
+        conflictTask?.cancel()
+        cloneTask?.cancel()
+
+        // Remote access tasks
+        remoteAccessStartupTask?.cancel()
+        remoteAccessTunnelTask?.cancel()
+        heartbeatTask?.cancel()
+        sleepTimerTask?.cancel()
+
+        // Misc
+        zenResumeTask?.cancel()
+
         let states = backgroundRepoStates
         for (_, state) in states {
             state.monitorTask?.cancel()

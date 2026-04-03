@@ -6,6 +6,7 @@ import Foundation
 struct LRUCache<Key: Hashable, Value> {
     private var storage: [Key: Value] = [:]
     private var order: [Key] = []
+    private var keySet: Set<Key> = []
     let capacity: Int
 
     init(capacity: Int) {
@@ -17,18 +18,24 @@ struct LRUCache<Key: Hashable, Value> {
     }
 
     mutating func set(_ key: Key, value: Value) {
-        order.removeAll { $0 == key }
+        if keySet.contains(key) {
+            order.removeAll { $0 == key }
+        } else {
+            keySet.insert(key)
+        }
         order.append(key)
         storage[key] = value
         while order.count > capacity {
             let evicted = order.removeFirst()
             storage.removeValue(forKey: evicted)
+            keySet.remove(evicted)
         }
     }
 
     mutating func clear() {
         storage.removeAll()
         order.removeAll()
+        keySet.removeAll()
     }
 
     var count: Int { storage.count }

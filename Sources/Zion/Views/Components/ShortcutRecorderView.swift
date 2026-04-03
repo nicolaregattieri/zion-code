@@ -49,7 +49,7 @@ struct ShortcutRecorderView: View {
             if ShortcutRegistry.reservedBindings.contains(binding) {
                 reservedWarning = true
                 Task {
-                    try? await Task.sleep(nanoseconds: 2_000_000_000)
+                    try? await Task.sleep(nanoseconds: Constants.Timing.shortcutRecordingTimeout)
                     reservedWarning = false
                 }
                 return nil

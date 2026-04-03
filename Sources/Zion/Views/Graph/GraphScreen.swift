@@ -113,7 +113,7 @@ struct GraphScreen: View {
                 }
                 searchDebounceTask?.cancel()
                 searchDebounceTask = Task {
-                    try? await Task.sleep(nanoseconds: 150_000_000)
+                    try? await Task.sleep(nanoseconds: Constants.Timing.commitSearchDebounce)
                     guard !Task.isCancelled else { return }
                     updateSearchMatches()
                     if !searchMatchIDs.isEmpty {

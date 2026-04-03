@@ -29,7 +29,7 @@ struct OpsCommitCard: View {
                         }
 
                         ScrollView {
-                            VStack(alignment: .leading, spacing: 4) {
+                            LazyVStack(alignment: .leading, spacing: 4) {
                                 ForEach(model.uncommittedChanges, id: \.self) { change in
                                     FileStatusRow(model: model, line: change, performGitAction: performGitAction)
                                 }

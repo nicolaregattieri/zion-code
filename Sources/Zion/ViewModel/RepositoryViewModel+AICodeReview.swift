@@ -363,7 +363,7 @@ extension RepositoryViewModel {
     }
 
     func cachedReviewFindings(for commitID: String) -> [ReviewFinding]? {
-        commitReviewCache[commitID]
+        commitReviewCache.get(commitID)
     }
 
     func clearCommitReviewSelectionStateOnCommitChange() {
@@ -406,7 +406,7 @@ extension RepositoryViewModel {
                         file: "general",
                         message: L10n("graph.commit.review.nodiff")
                     )]
-                    commitReviewCache[commitID] = findings
+                    commitReviewCache.set(commitID, value: findings)
                     aiReviewFindings = findings
                     isReviewVisible = true
                     if selectedCommitID == commitID {
@@ -426,7 +426,7 @@ extension RepositoryViewModel {
                 )
 
                 logger.log(.ai, "Commit review generated OK: \(findings.count) findings", context: commitID)
-                commitReviewCache[commitID] = findings
+                commitReviewCache.set(commitID, value: findings)
                 aiReviewFindings = findings
                 isReviewVisible = true
                 if selectedCommitID == commitID {
