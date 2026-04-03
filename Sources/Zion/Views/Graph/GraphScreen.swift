@@ -130,6 +130,10 @@ struct GraphScreen: View {
                 }
                 scrollToSemanticResults(proxy: proxy)
             }
+            .onChange(of: model.gitSearchResults) { _, newValue in
+                guard !newValue.isEmpty else { return }
+                scrollToGitSearchResults(proxy: proxy)
+            }
             .onChange(of: model.uncommittedChanges) { _, changes in
                 if changes.isEmpty, showingPendingChanges {
                     showingPendingChanges = false
