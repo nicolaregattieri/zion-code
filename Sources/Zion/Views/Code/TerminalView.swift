@@ -503,6 +503,10 @@ struct TerminalTabView: NSViewRepresentable {
                 context: "\(parent.session.label)(\(parent.session.id.uuidString.prefix(4))) reason=\(reason) attempt=\(attempt)",
                 source: "TerminalTabView"
             )
+            // Flush any output that accumulated while the view was cached.
+            // Without this, the terminal buffer is stale and the draw below
+            // renders an incomplete TUI (e.g., missing status bar below input).
+            flushPendingTerminalOutput(force: true)
             view.layoutSubtreeIfNeeded()
             view.resyncDisplayAfterViewRestore()
             // Clear stale Core Animation snapshots that can ghost over the
