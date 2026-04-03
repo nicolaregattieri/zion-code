@@ -115,7 +115,6 @@ struct RepositorySwitchSnapshot {
     let headShortHash: String
     let branchInfos: [BranchInfo]
     let branches: [String]
-    let branchTree: [BranchTreeNode]
     let tags: [String]
     let stashes: [String]
     let selectedStash: String
@@ -143,7 +142,6 @@ struct RepositorySwitchSnapshot {
         headShortHash: "",
         branchInfos: [],
         branches: [],
-        branchTree: [],
         tags: [],
         stashes: [],
         selectedStash: "",

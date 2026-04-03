@@ -26,7 +26,6 @@ struct ContentView: View {
     @State private var launchPhase: LaunchPhase = .bootstrapping
     @State var selectedSection: AppSection = .code
     @State private var commitSearchQuery: String = ""
-    @State private var selectedBranchTreeNodeID: String?
     @EnvironmentObject var shortcutRegistry: ShortcutRegistry
     @State var isShortcutsVisible: Bool = false
     @State var isHelpVisible: Bool = false
@@ -410,7 +409,6 @@ struct ContentView: View {
             SidebarView(
                 model: model,
                 selectedSection: $selectedSection,
-                selectedBranchTreeNodeID: $selectedBranchTreeNodeID,
                 confirmationModeRaw: $confirmationModeRaw,
                 uiLanguageRaw: $uiLanguageRaw,
                 appearanceRaw: $appearanceRaw,

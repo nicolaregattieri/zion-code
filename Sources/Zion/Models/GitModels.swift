@@ -99,16 +99,6 @@ struct BranchInfo: Identifiable, Hashable, Sendable {
     var shortHead: String { String(head.prefix(8)) }
 }
 
-struct BranchTreeNode: Identifiable, Hashable, Sendable {
-    let id: String
-    let title: String
-    let subtitle: String
-    let branchName: String?
-    let children: [BranchTreeNode]
-    var isGroup: Bool { branchName == nil }
-    var outlineChildren: [BranchTreeNode]? { children.isEmpty ? nil : children }
-}
-
 struct RemoteInfo: Identifiable, Hashable, Sendable {
     let name: String
     let url: String

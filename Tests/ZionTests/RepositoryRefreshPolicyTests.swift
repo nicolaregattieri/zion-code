@@ -37,7 +37,7 @@ final class RepositoryRefreshPolicyTests: XCTestCase {
             branchInfos: [],
             branches: [],
             focusedBranch: nil,
-            branchTree: [],
+
             tags: [],
             stashes: [],
             selectedStash: "",
@@ -77,7 +77,7 @@ final class RepositoryRefreshPolicyTests: XCTestCase {
             branchInfos: [],
             branches: [],
             focusedBranch: nil,
-            branchTree: [],
+
             tags: ["v1.2.4"],
             stashes: ["stash@{0}: new"],
             selectedStash: "stash@{0}: new",

@@ -3,14 +3,12 @@ import SwiftUI
 struct SidebarView: View {
     @Bindable var model: RepositoryViewModel
     @Binding var selectedSection: AppSection
-    @Binding var selectedBranchTreeNodeID: String?
     @Binding var confirmationModeRaw: String
     @Binding var uiLanguageRaw: String
     @Binding var appearanceRaw: String
 
     @Environment(SparkleUpdater.self) private var updater: SparkleUpdater?
     @AppStorage(UserDefaultsKeys.Sidebar.recentsExpanded) private var isRecentsExpanded: Bool = true
-    @State var branchSearchQuery: String = ""
     @State var isNewWorktreeExpanded: Bool = false
     @State var hoveredSection: AppSection?
     @State var hoveredWorktreePath: String?
@@ -38,10 +36,6 @@ struct SidebarView: View {
 
                 if model.hasGitWorkspace {
                     bridgeAccessCard
-                }
-
-                if selectedSection == .graph, model.hasGitWorkspace {
-                    sidebarBranchExplorer.padding(.horizontal, 10)
                 }
 
                 quickSettingsRow

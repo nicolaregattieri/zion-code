@@ -59,7 +59,6 @@ actor RepositoryWorker {
                 branchInfos: [],
                 branches: [],
                 focusedBranch: nil,
-                branchTree: [],
                 tags: [],
                 stashes: [],
                 selectedStash: "",
@@ -85,9 +84,6 @@ actor RepositoryWorker {
         let infos = try branchInfoList(in: repositoryURL)
         let names = infos.map(\.name)
         let resolvedFocused = focusedBranch.flatMap { names.contains($0) ? $0 : nil }
-        let tree = options.includeBranchTree
-            ? try buildBranchTree(in: repositoryURL, using: infos, inferOrigins: options.inferOrigins)
-            : []
         let loadedTags = options.includeTagsAndStashes ? try tagList(in: repositoryURL) : []
         let loadedStashes = options.includeTagsAndStashes ? try stashList(in: repositoryURL) : []
         let stashSelection = loadedStashes.contains(selectedStash) ? selectedStash : (loadedStashes.first ?? "")
@@ -124,7 +120,6 @@ actor RepositoryWorker {
             branchInfos: infos,
             branches: names,
             focusedBranch: resolvedFocused,
-            branchTree: tree,
             tags: loadedTags,
             stashes: loadedStashes,
             selectedStash: stashSelection,
