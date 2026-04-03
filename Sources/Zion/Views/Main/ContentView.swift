@@ -238,7 +238,10 @@ struct ContentView: View {
                 isConflictResolverPromptVisible = false
             }
         }
-        .onChange(of: selectedSection) { _, _ in
+        .onChange(of: selectedSection) { _, newSection in
+            model.activeSection = newSection
+            // Load deferred data when navigating to a tab that needs it
+            model.loadDeferredDataForSection(newSection)
             if shouldPresentOnboardingFromHelp {
                 return
             }

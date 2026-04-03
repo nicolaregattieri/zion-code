@@ -17,9 +17,9 @@ struct FileTreeNodeView: View {
             if item.isDirectory {
                 guard let repoPath = model.repositoryURL?.path else { return false }
                 let relativePath = item.url.path.replacingOccurrences(of: repoPath + "/", with: "")
-                return model.uncommittedChanges.contains { $0.contains(relativePath + "/") }
+                return model.uncommittedDirectoryPrefixes.contains(relativePath + "/")
             } else {
-                return model.uncommittedChanges.contains { $0.hasSuffix(item.name) }
+                return model.uncommittedFileNames.contains(item.name)
             }
         }()
         let isIgnored = item.isGitIgnored
