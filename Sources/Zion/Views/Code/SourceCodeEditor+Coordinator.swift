@@ -66,7 +66,7 @@ extension SourceCodeEditor.Coordinator {
             self.lastHighlightedExtension = self.parent.fileExtension
         }
         highlightDebounceTask = task
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: task)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: task)
     }
 
     @MainActor
