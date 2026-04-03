@@ -26,7 +26,7 @@ final class FileWatcher {
     private nonisolated(unsafe) var eventStream: FSEventStreamRef?
     private var debounceTask: Task<Void, Never>?
     private var pendingEvent: ChangeEvent?
-    private let debounceInterval: UInt64 = 350_000_000 // 350ms
+    private let debounceInterval: UInt64 = Constants.Timing.fileWatcherDebounce
 
     var onChange: ((ChangeEvent) -> Void)?
 
@@ -57,7 +57,7 @@ final class FileWatcher {
             &context,
             pathsToWatch,
             FSEventStreamEventId(kFSEventStreamEventIdSinceNow),
-            0.25,
+            Constants.Timing.fileWatcherLatency,
             UInt32(kFSEventStreamCreateFlagFileEvents | kFSEventStreamCreateFlagUseCFTypes)
         ) else {
             DiagnosticLogger.shared.log(.warn, "FileWatcher: failed to create FSEventStream", context: directory.path, source: #function)

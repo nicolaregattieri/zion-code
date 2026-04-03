@@ -547,7 +547,7 @@ struct FindInFilesView: View {
 
         searchTask = Task {
             if debounced {
-                try? await Task.sleep(for: .milliseconds(300))
+                try? await Task.sleep(nanoseconds: Constants.Timing.findInFilesSearchDebounce)
                 guard !Task.isCancelled else { return }
             }
             await performSearch(requestID: requestID, openDirectionAfterSearch: openDirectionAfterSearch)

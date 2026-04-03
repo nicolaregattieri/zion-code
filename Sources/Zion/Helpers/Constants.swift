@@ -7,46 +7,200 @@ enum Constants {
     /// ASCII Record Separator (0x1E) used as record delimiter in git format strings
     static let gitRecordSeparator = Character(UnicodeScalar(0x1E)!)
 
+    // MARK: - Timing Control Center
+    //
+    // All timing constants in one place. Grouped by behavior so you can
+    // see at a glance when each background system fires and how they
+    // coordinate with each other.
+    //
+    // TAB-AWARE LOADING:
+    //   Code tab:  branch + status + file tree only (3 git cmds, ~100ms)
+    //   Graph tab: full commit graph + branches + tags + stashes (15+ cmds)
+    //   Ops tab:   full refresh (needs branch info for operations)
+    //   Switching tabs triggers deferred load if graph not yet loaded.
+    //
+    // STARTUP STAGGER (after repository switch finalization):
+    //   +0s   Initial refresh (Code: lightweight, Graph/Ops: full)
+    //   +30s  backgroundFetchInitialDelay -- first remote fetch
+    //   +45s  autoRefreshInitialDelay -- first lightweight HEAD check
+    //   +90s  prPollingInitialDelay -- first PR badge update
+    //
+    // STEADY STATE (recurring intervals, staggered to avoid overlap):
+    //   Every 60s   autoRefreshInterval -- lightweight HEAD + status check
+    //   Every 300s  backgroundFetchInterval -- remote fetch (with ls-remote pre-check)
+    //   Every 300s  prPollingInterval -- PR badge update
+    //   Every 2.0s  clipboardPollInterval -- pasteboard changeCount check
+    //
+    // FILE WATCHER (event-driven, not polling):
+    //   FSEvents latency: 0.5s (OS delivers events in batches)
+    //   Debounce: 500ms (coalesce rapid changes before processing)
+    //   Content change -> git status only (1 command, <1s feedback)
+    //   Git metadata change -> full worktreeStatus refresh
+    //
+    // INACTIVE REPOS (background monitoring for change badges):
+    //   Idle: every 300s (5min)
+    //   Burst after file change: every 15s for 60s, then back to idle
+
     enum Timing {
-        /// Delay before starting deferred repository loads after a repo switch (250ms)
-        static let repositorySwitchDeferral: UInt64 = 250_000_000
-        /// Polling interval while waiting for busy state to clear during repo switch (50ms)
-        static let repositorySwitchPollInterval: UInt64 = 50_000_000
-        /// Maximum number of polling attempts during repo switch wait
-        static let maxRepositorySwitchAttempts = 40
-        /// Interval between background fetch cycles (120s)
-        static let backgroundFetchInterval: UInt64 = 120_000_000_000
-        /// Interval between background monitor / auto-refresh cycles (60s)
-        static let backgroundMonitorInterval: UInt64 = 60_000_000_000
-        /// Idle polling interval for inactive repositories (5min)
-        static let inactiveBackgroundMonitorIdleInterval: UInt64 = 300_000_000_000
-        /// Burst polling interval right after an inactive repo file watcher signal (15s)
-        static let inactiveBackgroundMonitorBurstInterval: UInt64 = 15_000_000_000
-        /// Duration of burst mode for inactive repositories after signal (30s)
-        static let inactiveBackgroundMonitorBurstWindow: UInt64 = 30_000_000_000
-        /// Interval between PR review queue polling cycles (5min)
-        static let prPollingInterval: UInt64 = 5 * 60 * 1_000_000_000
-        /// Delay before opening conflict resolver after transfer support (600ms)
-        static let transferSupportDelay: UInt64 = 600_000_000
-        /// Safety timeout to force-clear isBusy if a refresh never completes (60s)
-        static let busyWatchdogTimeout: UInt64 = 60_000_000_000
-        /// Safety timeout to force-clear isSwitchingRepository if finalization never fires (10s)
-        static let repositorySwitchWatchdogTimeout: UInt64 = 10_000_000_000
-        /// Grace period before escalating SIGTERM to SIGKILL for frozen terminals (500ms)
-        static let processKillEscalation: UInt64 = 500_000_000
-        /// Delay between zen mode choreography steps (250ms)
+
+        // --- Background Sync (recurring) ---
+
+        /// How often the auto-refresh timer checks for external changes.
+        /// Runs a lightweight HEAD + status check; only triggers full refresh if something changed.
+        static let autoRefreshInterval: UInt64 = 60_000_000_000 // 60s
+
+        /// How often Zion fetches from remote to update behind/ahead badges.
+        /// Uses ls-remote pre-check to skip expensive fetch when remote is unchanged.
+        static let backgroundFetchInterval: UInt64 = 300_000_000_000 // 5min
+
+        /// How often Zion polls GitHub/GitLab/Bitbucket for new PRs and review requests.
+        static let prPollingInterval: UInt64 = 5 * 60 * 1_000_000_000 // 5min
+
+        /// How often the clipboard monitor checks NSPasteboard.changeCount.
+        /// Cheap O(1) integer comparison; only does work when clipboard actually changed.
+        /// 2s keeps copy-paste workflow responsive without wasting cycles.
+        static let clipboardPollInterval: TimeInterval = 2.0
+
+        // --- Startup Stagger (initial delays after repo switch) ---
+        // These spread out the first tick of each timer to avoid a CPU spike.
+
+        /// Delay before the first remote fetch after opening a repository.
+        static let backgroundFetchInitialDelay: UInt64 = 30_000_000_000 // 30s
+
+        /// Delay before the first auto-refresh check after opening a repository.
+        static let autoRefreshInitialDelay: UInt64 = 45_000_000_000 // 45s
+
+        /// Delay before the first PR poll after opening a repository.
+        static let prPollingInitialDelay: UInt64 = 90_000_000_000 // 90s
+
+        // --- File Watcher ---
+
+        /// FSEvents latency: how long the OS batches file system events before delivering.
+        /// 0.5s keeps file-save feedback under 1s while still coalescing bulk writes.
+        static let fileWatcherLatency: TimeInterval = 0.5
+
+        /// Debounce window after receiving file events before processing.
+        /// Coalesces rapid changes (e.g., `npm install` writing 100 files) into one refresh.
+        static let fileWatcherDebounce: UInt64 = 500_000_000 // 500ms
+
+        // --- Inactive Repo Monitoring ---
+
+        /// Polling interval for background repos when idle (no file changes detected).
+        static let inactiveRepoIdleInterval: UInt64 = 300_000_000_000 // 5min
+
+        /// Polling interval for background repos in burst mode (right after a file change).
+        static let inactiveRepoBurstInterval: UInt64 = 15_000_000_000 // 15s
+
+        /// How long burst mode lasts after a file change before reverting to idle.
+        /// 60s catches longer-running external operations (CI builds, rebases).
+        static let inactiveRepoBurstDuration: UInt64 = 60_000_000_000 // 60s
+
+        // --- Repository Switch ---
+
+        /// Delay before starting deferred loads after a repo switch.
+        /// Gives the UI time to render the snapshot before heavy work begins.
+        static let repositorySwitchDeferral: UInt64 = 250_000_000 // 250ms
+
+        /// Polling interval while waiting for busy state to clear during repo switch.
+        static let repositorySwitchPollInterval: UInt64 = 50_000_000 // 50ms
+
+        /// Maximum polling attempts before giving up on busy state during switch.
+        static let maxRepositorySwitchAttempts = 40 // 40 x 50ms = 2s max
+
+        /// Safety timeout to force-clear isSwitchingRepository if finalization never fires.
+        static let repositorySwitchWatchdogTimeout: UInt64 = 10_000_000_000 // 10s
+
+        // --- Retry / Network Error ---
+
+        /// Wait before retrying after a transient network error during background fetch.
+        static let networkRetryDelay: UInt64 = 2_000_000_000 // 2s
+
+        // --- Safety Watchdogs ---
+
+        /// Safety timeout to force-clear isBusy if a refresh never completes.
+        static let busyWatchdogTimeout: UInt64 = 60_000_000_000 // 60s
+
+        /// Grace period before escalating SIGTERM to SIGKILL for frozen terminal processes.
+        static let processKillEscalation: UInt64 = 500_000_000 // 500ms
+
+        // --- UI Debounces ---
+
+        /// Debounce before computing selection occurrence highlights in the editor.
+        static let selectionOccurrenceDebounce: TimeInterval = 0.1 // 100ms
+
+        /// Debounce before filtering the file browser tree after keystroke.
+        static let fileBrowserFilterDebounce: TimeInterval = 0.15 // 150ms
+
+        /// Delay before opening conflict resolver after transfer support detection.
+        static let transferSupportDelay: UInt64 = 600_000_000 // 600ms
+
+        // --- Zen Mode ---
+
+        /// Delay between zen mode choreography steps (sidebar collapse, toolbar hide, etc.).
         static let zenModeStepDelay: TimeInterval = 0.25
-        /// Delay before restoring layout after zen mode sidebar appears (500ms)
+
+        /// Delay before restoring layout after zen mode sidebar appears.
         static let zenModeRestoreDelay: TimeInterval = 0.5
-        /// Debounce before restarting background tasks after zen exit (15s)
-        static let zenModeResumeDebounce: UInt64 = 15_000_000_000
-        /// Debounce before computing selection occurrence highlights (100ms)
-        static let selectionOccurrenceDebounce: TimeInterval = 0.1
-        /// Debounce before filtering file browser tree (150ms)
-        static let fileBrowserFilterDebounce: TimeInterval = 0.15
+
+        /// Debounce before restarting background tasks after exiting zen mode.
+        /// 5s avoids accidental toggle flicker without leaving the user stale for too long.
+        static let zenModeResumeDebounce: UInt64 = 5_000_000_000 // 5s
+
+        // --- Search Debounces ---
+
+        /// Debounce before executing commit search in the graph view.
+        static let commitSearchDebounce: UInt64 = 150_000_000 // 150ms
+
+        /// Debounce before executing find-in-files search.
+        static let findInFilesSearchDebounce: UInt64 = 300_000_000 // 300ms
+
+        // --- Terminal Rendering ---
+        // Terminal output is batched to avoid starving the main thread.
+        // Formula: min(maxFlush, baseFlush + (terminalCount - 1) * perTerminalFlush)
+
+        /// Base flush interval for terminal output (single terminal). ~60fps.
+        static let terminalFlushBaseInterval: UInt64 = 16_000_000 // 16ms
+
+        /// Additional flush delay per extra terminal session.
+        static let terminalFlushPerTerminalDelay: UInt64 = 4_000_000 // 4ms
+
+        /// Maximum flush interval regardless of terminal count.
+        static let terminalFlushMaxInterval: UInt64 = 32_000_000 // 32ms
+
+        /// Maximum bytes flushed per terminal per frame.
+        static let terminalFlushMaxBytesPerFrame = 196_608 // 192KB
+
+        // --- Notifications ---
+
+        /// How long to batch PR notification events before sending (ntfy).
+        /// 10s is long enough to batch CI bot spam, short enough for timely single-PR alerts.
+        static let notificationBatchWindow: UInt64 = 10_000_000_000 // 10s
+
+        // --- AI ---
+
+        /// Wait before retrying after an AI API transient error.
+        static let aiRetryDelay: TimeInterval = 2.0
+
+        /// Timeout for shortcut key recording before auto-cancelling.
+        /// 5s gives users time to think about which key combo to use.
+        static let shortcutRecordingTimeout: UInt64 = 5_000_000_000 // 5s
+
+        // --- File Watcher Gate ---
+
+        /// Cooldown after processing a file watcher event before accepting the next.
+        /// Slightly wider than debounce rhythm to avoid overlapping refreshes.
+        static let fileWatcherGateCooldown: UInt64 = 350_000_000 // 350ms
+
+        // --- Legacy aliases (kept for backward compat during migration) ---
+        static let backgroundMonitorInterval: UInt64 = autoRefreshInterval
+        static let inactiveBackgroundMonitorIdleInterval: UInt64 = inactiveRepoIdleInterval
+        static let inactiveBackgroundMonitorBurstInterval: UInt64 = inactiveRepoBurstInterval
+        static let inactiveBackgroundMonitorBurstWindow: UInt64 = inactiveRepoBurstDuration
     }
 
     enum Limits {
+        /// Maximum recent repositories shown in sidebar and persisted
+        static let maxRecentRepositories = 5
         /// Maximum reflog entries to display
         static let reflogEntryLimit = 50
         /// Maximum dangling commits to inspect during recovery snapshot scan
