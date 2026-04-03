@@ -551,7 +551,7 @@ struct CodeScreen: View {
                 }
             }
         }
-        .padding(.leading, 36)
+        .padding(.leading, DesignSystem.Spacing.tabBarLeading)
         .frame(height: 38)
         .background(model.selectedTheme.colors.background)
         .environment(\.colorScheme, model.selectedTheme.isLightAppearance ? .light : .dark)

@@ -14,6 +14,7 @@ struct SidebarView: View {
     @State var isNewWorktreeExpanded: Bool = false
     @State var hoveredSection: AppSection?
     @State var hoveredWorktreePath: String?
+    @State var showLockedHintForSection: AppSection?
 
     let onOpen: () -> Void
     let branchContextMenu: (String) -> AnyView
@@ -195,31 +196,40 @@ struct SidebarView: View {
         let isDisabled = !model.canAccess(section)
         let isHovered = hoveredSection == section
 
-        return Button { selectedSection = section } label: {
-            HStack(alignment: .center, spacing: DesignSystem.Spacing.toolbarItemGap) {
-                Image(systemName: section.icon)
-                    .font(DesignSystem.Typography.sectionTitle)
-                    .frame(width: 18)
-                    .foregroundStyle(isSelected ? .primary : .secondary)
+        return Button {
+            if isDisabled {
+                withAnimation(DesignSystem.Motion.detail) {
+                    showLockedHintForSection = showLockedHintForSection == section ? nil : section
+                }
+            } else {
+                showLockedHintForSection = nil
+                selectedSection = section
+            }
+        } label: {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .center, spacing: DesignSystem.Spacing.toolbarItemGap) {
+                    Image(systemName: section.icon)
+                        .font(DesignSystem.Typography.sectionTitle)
+                        .frame(width: 18)
+                        .foregroundStyle(isSelected ? .primary : .secondary)
+                        .opacity(isDisabled ? DesignSystem.Opacity.dim : DesignSystem.Opacity.full)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(L10n(section.title)).font(DesignSystem.Typography.sectionTitle).lineLimit(1)
+                            .foregroundStyle(isSelected ? .primary : .secondary)
+                        Text(L10n(section.subtitle)).font(DesignSystem.Typography.bodySmall).foregroundStyle(.secondary).lineLimit(2)
+                            .opacity(isSelected ? DesignSystem.Opacity.full : (isDisabled ? DesignSystem.Opacity.dim : DesignSystem.Opacity.visible))
+                    }
                     .opacity(isDisabled ? DesignSystem.Opacity.dim : DesignSystem.Opacity.full)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(L10n(section.title)).font(DesignSystem.Typography.sectionTitle).lineLimit(1)
-                        .foregroundStyle(isSelected ? .primary : .secondary)
-                    Text(L10n(section.subtitle)).font(DesignSystem.Typography.bodySmall).foregroundStyle(.secondary).lineLimit(2)
-                        .opacity(isSelected ? DesignSystem.Opacity.full : (isDisabled ? DesignSystem.Opacity.dim : DesignSystem.Opacity.visible))
-                }
-                .opacity(isDisabled ? DesignSystem.Opacity.dim : DesignSystem.Opacity.full)
+                    Spacer(minLength: 0)
 
-                Spacer(minLength: 0)
-
-                if isDisabled {
-                    Image(systemName: "lock.fill")
-                        .font(DesignSystem.Typography.label)
-                        .foregroundStyle(.secondary)
-                        .opacity(DesignSystem.Opacity.muted)
-                        .help(L10n("sidebar.locked.hint"))
-                } else if section == .graph && model.behindRemoteCount > 0 {
+                    if isDisabled {
+                        Image(systemName: "lock.fill")
+                            .font(DesignSystem.Typography.label)
+                            .foregroundStyle(.secondary)
+                            .opacity(DesignSystem.Opacity.muted)
+                    } else if section == .graph && model.behindRemoteCount > 0 {
                     Text("\(model.behindRemoteCount)")
                         .font(DesignSystem.Typography.monoMeta)
                         .padding(.horizontal, 5)
@@ -236,21 +246,35 @@ struct SidebarView: View {
                         .foregroundStyle(DesignSystem.Colors.info)
                         .clipShape(Capsule())
                 }
+                }
+                .contentShape(Rectangle())
+                .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 10).padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius)
+                        .fill(isSelected ? DesignSystem.Colors.glassHover : (isHovered ? DesignSystem.Colors.glassMinimal : Color.clear))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius)
+                        .stroke(isSelected ? DesignSystem.Colors.selectionBackground : (isHovered ? DesignSystem.Colors.glassStroke : Color.clear), lineWidth: 1)
+                )
+
+                if isDisabled && showLockedHintForSection == section {
+                    HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
+                        Image(systemName: "info.circle")
+                            .font(DesignSystem.Typography.meta)
+                        Text(L10n("sidebar.locked.hint"))
+                            .font(DesignSystem.Typography.meta)
+                    }
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 10)
+                    .padding(.bottom, 4)
+                    .transition(DesignSystem.Motion.fade)
+                }
             }
-            .contentShape(Rectangle())
-            .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 10).padding(.vertical, 8)
-            .background(
-                RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius)
-                    .fill(isSelected ? DesignSystem.Colors.glassHover : (isHovered ? DesignSystem.Colors.glassMinimal : Color.clear))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius)
-                    .stroke(isSelected ? DesignSystem.Colors.selectionBackground : (isHovered ? DesignSystem.Colors.glassStroke : Color.clear), lineWidth: 1)
-            )
             .animation(DesignSystem.Motion.detail, value: isSelected)
+            .animation(DesignSystem.Motion.detail, value: showLockedHintForSection)
         }
         .buttonStyle(.plain)
-        .disabled(isDisabled)
         .onHover { hovering in
             hoveredSection = hovering ? section : nil
         }
