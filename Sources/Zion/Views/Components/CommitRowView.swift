@@ -150,10 +150,9 @@ struct CommitRowView: View {
             }
         }
         .contentShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius))
-        .scaleEffect(isHovered && !isSelected ? 1.015 : 1.0)
         .shadow(color: isHovered && !isSelected ? DesignSystem.Colors.selectionBackground : .clear, radius: 8, y: 2)
-        .animation(DesignSystem.Motion.springInteractive, value: isHovered)
-        .animation(DesignSystem.Motion.springInteractive, value: isSelected)
+        .animation(.linear(duration: 0.1), value: isHovered)
+        .animation(.linear(duration: 0.12), value: isSelected)
         .onHover { hovering in isHovered = hovering }
         .onTapGesture { onSelect() }
         .opacity(bisectRole == .outsideRange ? DesignSystem.Opacity.dim : DesignSystem.Opacity.full)
