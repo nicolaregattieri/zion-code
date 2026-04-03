@@ -267,7 +267,8 @@ actor RepositoryWorker {
             if hashOutput.status == 0 { addResults(from: hashOutput.output, source: .hash) }
         }
 
-        // Search branches
+        // Search branches (always include -- ref name is unique info even if commit was already found)
+        var seenBranches: Set<String> = []
         let branchOutput = try runActionAllowingFailure(
             args: ["branch", "--all", "--list", "*\(query)*",
                    "--format=%(refname:short) %(objectname)"],
@@ -279,9 +280,8 @@ actor RepositoryWorker {
                 guard parts.count == 2 else { continue }
                 let branchName = parts[0]
                 let fullHash = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !excludeHashes.contains(fullHash), !seenHashes.contains(fullHash) else { continue }
-                seenHashes.insert(fullHash)
-                // Get commit info for this hash
+                guard !seenBranches.contains(branchName) else { continue }
+                seenBranches.insert(branchName)
                 let info = try runActionAllowingFailure(
                     args: ["log", "-1", "--format=\(format)", "--date=iso-strict", fullHash],
                     in: repositoryURL
@@ -292,7 +292,8 @@ actor RepositoryWorker {
             }
         }
 
-        // Search tags
+        // Search tags (always include -- ref name is unique info even if commit was already found)
+        var seenTags: Set<String> = []
         let tagOutput = try runActionAllowingFailure(
             args: ["tag", "--list", "*\(query)*",
                    "--format=%(refname:short) %(objectname)"],
@@ -304,8 +305,8 @@ actor RepositoryWorker {
                 guard parts.count == 2 else { continue }
                 let tagName = parts[0]
                 let fullHash = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !excludeHashes.contains(fullHash), !seenHashes.contains(fullHash) else { continue }
-                seenHashes.insert(fullHash)
+                guard !seenTags.contains(tagName) else { continue }
+                seenTags.insert(tagName)
                 let info = try runActionAllowingFailure(
                     args: ["log", "-1", "--format=\(format)", "--date=iso-strict", fullHash],
                     in: repositoryURL

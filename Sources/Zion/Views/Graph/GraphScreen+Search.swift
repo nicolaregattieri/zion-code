@@ -141,6 +141,14 @@ extension GraphScreen {
         }
     }
 
+    func scrollToGitSearchResults(proxy: ScrollViewProxy) {
+        DispatchQueue.main.async {
+            withAnimation(DesignSystem.Motion.springInteractive) {
+                proxy.scrollTo(Self.gitSearchResultsScrollTarget, anchor: .top)
+            }
+        }
+    }
+
     func matchingCommit(for hash: String) -> Commit? {
         let normalizedHash = hash.lowercased()
         return model.commits.first { commit in
@@ -195,6 +203,11 @@ extension GraphScreen {
                             Button {
                                 model.selectCommit(result.id)
                                 model.loadCommitDetails(for: result.id)
+                                if model.commits.contains(where: { $0.id == result.id }) {
+                                    withAnimation(DesignSystem.Motion.springInteractive) {
+                                        proxy.scrollTo(result.id, anchor: .center)
+                                    }
+                                }
                             } label: {
                                 VStack(alignment: .leading, spacing: 6) {
                                     HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
@@ -224,7 +237,12 @@ extension GraphScreen {
                                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous)
-                                        .stroke(DesignSystem.Colors.glassBorderDark, lineWidth: 1)
+                                        .stroke(
+                                            model.selectedCommitID == result.id
+                                                ? DesignSystem.Colors.brandPrimary
+                                                : DesignSystem.Colors.glassBorderDark,
+                                            lineWidth: model.selectedCommitID == result.id ? 2 : 1
+                                        )
                                 )
                                 .contentShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous))
                             }

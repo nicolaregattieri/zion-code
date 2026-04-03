@@ -113,6 +113,10 @@ extension GraphScreen {
                         currentMatchIndex = 0
                         model.resetSemanticSearchResults()
                         model.clearGitSearch()
+                        if let selected = model.selectedCommitID,
+                           !model.commits.contains(where: { $0.id == selected }) {
+                            model.selectCommit(model.commits.first?.id)
+                        }
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.secondary)
