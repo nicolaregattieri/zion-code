@@ -30,6 +30,11 @@ extension RepositoryViewModel {
             }
         }
 
+        if localName == "HEAD" {
+            DiagnosticLogger.shared.log(.warn, "checkout BAIL: symbolic HEAD ref", context: target, source: "checkout(reference:)")
+            return
+        }
+
         if localName == currentBranch {
             DiagnosticLogger.shared.log(.warn, "checkout BAIL: already on branch", context: localName, source: "checkout(reference:)")
             return
@@ -136,6 +141,14 @@ extension RepositoryViewModel {
                         remoteTarget = target
                         break
                     }
+                }
+
+                if localName == "HEAD" {
+                    DiagnosticLogger.shared.log(.warn, "checkoutAndPull BAIL: symbolic HEAD ref", context: target, source: "checkoutAndPull(reference:)")
+                    activeGitActionToken = nil
+                    isBusy = false
+                    disarmBusyWatchdog()
+                    return
                 }
 
                 // 2. Perform Smart Checkout

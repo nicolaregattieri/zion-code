@@ -13,6 +13,7 @@ struct DecorationPill: View {
 
     var body: some View {
         let (name, type) = parseDecoration(decoration, remotes: remotes)
+        let isRemoteHEAD = isRemoteHEADRef(name, type: type, remotes: remotes)
         let isCurrent = checkIsCurrent(name: name, type: type, current: currentBranch)
         let isMain = ["main", "master", "develop", "dev"].contains(name.lowercased())
         let isBranchDecoration = type == .localBranch || type == .head
@@ -84,10 +85,12 @@ struct DecorationPill: View {
         .shadow(color: isCurrent ? DesignSystem.Colors.selectionBackground : .clear, radius: 4, y: 1)
         .onNativeDoubleClick {
             DiagnosticLogger.shared.log(.info, "pill.doubleTap", context: "name=\(name) type=\(type) isCurrent=\(isCurrent)", source: "DecorationPill")
-            if type != .tag { onCheckout(name) }
+            if type != .tag && !isRemoteHEAD { onCheckout(name) }
         }
         .contextMenu {
-            if type == .tag {
+            if isRemoteHEAD {
+                // display-only pill, no actions
+            } else if type == .tag {
                 tagContextMenu(name)
             } else if type != .other {
                 branchContextMenu(name)
@@ -106,8 +109,9 @@ struct DecorationPill: View {
         if type == .tag {
             return L10n("Tag: %@", name) + worktreeSuffix
         }
-        let suffix = isCurrent ? L10n("(Atual)") : L10n("(Double-click para checkout)")
-        return L10n("Branch: %@", name) + " " + suffix + worktreeSuffix
+        let isHEADRef = isRemoteHEADRef(name, type: type, remotes: remotes)
+        let suffix = isCurrent ? L10n("(Atual)") : (isHEADRef ? "" : L10n("(Double-click para checkout)"))
+        return L10n("Branch: %@", name) + (suffix.isEmpty ? "" : " " + suffix) + worktreeSuffix
     }
 
     private func checkIsCurrent(name: String, type: DecorationType, current: String) -> Bool {
@@ -116,6 +120,11 @@ struct DecorationPill: View {
         if current.hasPrefix("detached (tag: ") && type == .tag && current.contains(name) { return true }
         if current.hasPrefix("detached (") && current.contains(name) { return true } // matches hash
         return false
+    }
+
+    private func isRemoteHEADRef(_ name: String, type: DecorationType, remotes: [String]) -> Bool {
+        guard type == .remoteBranch else { return false }
+        return remotes.contains { name == "\($0)/HEAD" }
     }
 
     private func parseDecoration(_ decoration: String, remotes: [String]) -> (String, DecorationType) {
