@@ -6,7 +6,8 @@ struct LaneGraphView: View {
     let isSelected: Bool
     let isHead: Bool
     let height: CGFloat
-    
+    var maxColumnWidth: CGFloat = DesignSystem.Layout.graphColumnMaxWidth
+
     private let leadingPadding: CGFloat = 10
     private let trailingPadding: CGFloat = 12
     private let laneSpacing: CGFloat = 20
@@ -90,12 +91,21 @@ struct LaneGraphView: View {
 
     private var graphWidth: CGFloat {
         let span = CGFloat(max(laneCount - 1, 0)) * laneSpacing
-        return max(leadingPadding + trailingPadding + span, minimumWidth)
+        let natural = max(leadingPadding + trailingPadding + span, minimumWidth)
+        return min(natural, maxColumnWidth)
+    }
+
+    private var effectiveSpacing: CGFloat {
+        let available = graphWidth - leadingPadding - trailingPadding
+        let needed = CGFloat(max(laneCount - 1, 0)) * laneSpacing
+        if needed <= available { return laneSpacing }
+        let compressed = available / CGFloat(max(laneCount - 1, 1))
+        return max(compressed, DesignSystem.Layout.graphLaneSpacingMin)
     }
 
     private func laneX(_ lane: Int) -> CGFloat {
         let maxLaneIndex = max(laneCount - 1, 0)
-        let rightAlignedOffset = CGFloat(maxLaneIndex - lane) * laneSpacing
+        let rightAlignedOffset = CGFloat(maxLaneIndex - lane) * effectiveSpacing
         return graphWidth - trailingPadding - rightAlignedOffset
     }
 
