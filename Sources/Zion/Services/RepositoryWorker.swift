@@ -246,9 +246,9 @@ actor RepositoryWorker {
             }
         }
 
-        // Search commit messages
+        // Search commit messages (--fixed-strings prevents ReDoS via user-crafted regex)
         let messageOutput = try runActionAllowingFailure(
-            args: ["log", "--all", "--grep=\(query)", "-i",
+            args: ["log", "--all", "--fixed-strings", "--grep=\(query)", "-i",
                    "--format=\(format)", "--date=iso-strict", "-n", "50"],
             in: repositoryURL
         )
@@ -256,7 +256,7 @@ actor RepositoryWorker {
 
         // Search by author
         let authorOutput = try runActionAllowingFailure(
-            args: ["log", "--all", "--author=\(query)", "-i",
+            args: ["log", "--all", "--fixed-strings", "--author=\(query)", "-i",
                    "--format=\(format)", "--date=iso-strict", "-n", "50"],
             in: repositoryURL
         )
