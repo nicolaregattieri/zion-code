@@ -71,11 +71,9 @@ final class RepositoryViewModel {
     var branches: [String] = []
     var branchInfos: [BranchInfo] = []
     var mergedBranchesPreview: [String] = []
-    var branchTree: [BranchTreeNode] = []
     var focusedBranch: String?
     var isBranchFocusLoading: Bool = false
     var branchFocusLoadingBranch: String?
-    var inferBranchOrigins: Bool = true
     var hasMoreCommits: Bool = false
     var tags: [String] = []
 

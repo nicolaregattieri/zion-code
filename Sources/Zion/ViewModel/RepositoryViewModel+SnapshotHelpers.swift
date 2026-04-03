@@ -46,7 +46,6 @@ extension RepositoryViewModel {
         headShortHash = snapshot.headShortHash
         branchInfos = snapshot.branchInfos
         branches = snapshot.branches
-        branchTree = snapshot.branchTree
         tags = snapshot.tags
         stashes = snapshot.stashes
         selectedStash = snapshot.selectedStash
@@ -108,7 +107,6 @@ extension RepositoryViewModel {
             headShortHash: headShortHash,
             branchInfos: branchInfos,
             branches: branches,
-            branchTree: branchTree,
             tags: tags,
             stashes: stashes,
             selectedStash: selectedStash,

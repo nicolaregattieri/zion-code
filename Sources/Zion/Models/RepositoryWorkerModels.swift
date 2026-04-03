@@ -12,7 +12,6 @@ struct RepositoryLoadPayload: Sendable {
     let branchInfos: [BranchInfo]
     let branches: [String]
     let focusedBranch: String?
-    let branchTree: [BranchTreeNode]
     let tags: [String]
     let stashes: [String]
     let selectedStash: String
@@ -34,35 +33,25 @@ struct RepositoryLoadPayload: Sendable {
 
 struct RepositoryLoadOptions: Sendable {
     let includeWorktreeStatus: Bool
-    let includeBranchTree: Bool
     let includeTagsAndStashes: Bool
-    let inferOrigins: Bool
 
     static let full = RepositoryLoadOptions(
         includeWorktreeStatus: true,
-        includeBranchTree: true,
-        includeTagsAndStashes: true,
-        inferOrigins: true
+        includeTagsAndStashes: true
     )
 
     static let critical = RepositoryLoadOptions(
         includeWorktreeStatus: false,
-        includeBranchTree: true,
-        includeTagsAndStashes: true,
-        inferOrigins: false
+        includeTagsAndStashes: true
     )
 
     static let worktreeStatus = RepositoryLoadOptions(
         includeWorktreeStatus: true,
-        includeBranchTree: false,
-        includeTagsAndStashes: false,
-        inferOrigins: false
+        includeTagsAndStashes: false
     )
 
     static let stashRefresh = RepositoryLoadOptions(
         includeWorktreeStatus: true,
-        includeBranchTree: false,
-        includeTagsAndStashes: true,
-        inferOrigins: false
+        includeTagsAndStashes: true
     )
 }

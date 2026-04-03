@@ -448,7 +448,7 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
             headShortHash: "bbbbbbbb",
             branchInfos: [],
             branches: ["feature/stale"],
-            branchTree: [],
+
             tags: [],
             stashes: [],
             selectedStash: "",

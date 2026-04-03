@@ -373,9 +373,7 @@ extension RepositoryViewModel {
         let selectedStashSnapshot = selectedStash
         let effectiveOptions = RepositoryLoadOptions(
             includeWorktreeStatus: options.includeWorktreeStatus,
-            includeBranchTree: options.includeBranchTree,
-            includeTagsAndStashes: options.includeTagsAndStashes,
-            inferOrigins: options.inferOrigins && inferBranchOrigins
+            includeTagsAndStashes: options.includeTagsAndStashes
         )
         let commitLimitSnapshot = commitLimit
         extendFileWatcherGitMetadataSuppression(by: 1.2)
@@ -408,9 +406,6 @@ extension RepositoryViewModel {
                 branchInfos = payload.branchInfos
                 branches = payload.branches
                 focusedBranch = payload.focusedBranch
-                if effectiveOptions.includeBranchTree {
-                    branchTree = payload.branchTree
-                }
                 applyTagAndStashPayload(payload, includeTagsAndStashes: effectiveOptions.includeTagsAndStashes)
                 let resolvedWorktrees = mergeWorktreeStatusIfNeeded(
                     payload.worktrees,
