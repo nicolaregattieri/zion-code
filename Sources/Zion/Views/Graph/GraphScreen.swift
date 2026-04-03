@@ -300,6 +300,21 @@ struct GraphScreen: View {
                     .frame(minWidth: rowWidth, alignment: .leading)
                 }
             }
+            if model.commits.isEmpty && model.uncommittedChanges.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "point.3.filled.connected.trianglepath.dotted")
+                        .font(DesignSystem.Typography.emptyStateIcon)
+                        .foregroundStyle(.tertiary)
+                    Text(L10n("graph.empty.title"))
+                        .font(DesignSystem.Typography.sheetTitle)
+                        .foregroundStyle(.secondary)
+                    Text(L10n("graph.empty.hint"))
+                        .font(DesignSystem.Typography.bodySmall)
+                        .foregroundStyle(.tertiary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 40)
+            }
             if model.hasMoreCommits { loadMoreButton }
         }
     }

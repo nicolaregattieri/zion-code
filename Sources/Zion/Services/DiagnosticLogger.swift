@@ -22,6 +22,7 @@ final class DiagnosticLogger {
 
     private var entries: [LogEntry] = []
     private let maxEntries = 500
+    private let maxSanitizedLineLength = 200
     private let timeFormatter: DateFormatter = {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "HH:mm:ss"
@@ -126,8 +127,8 @@ final class DiagnosticLogger {
         )
 
         // Truncate very long lines
-        if result.count > maxEntries {
-            result = String(result.prefix(maxEntries)) + "...[truncated]"
+        if result.count > maxSanitizedLineLength {
+            result = String(result.prefix(maxSanitizedLineLength)) + "...[truncated]"
         }
 
         return result

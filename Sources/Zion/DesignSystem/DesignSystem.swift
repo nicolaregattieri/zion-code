@@ -201,6 +201,7 @@ struct DesignSystem {
         static let statusBarClearance: CGFloat = 44
         static let clipboardDrawerClearance: CGFloat = 40
         static let toolbarTrailing: CGFloat = 8
+        static let tabBarLeading: CGFloat = 36   // Clearance for macOS window controls
 
         // Icon spacing by context
         static let iconTextGap: CGFloat = 8        // Icon + text in normal rows (CardHeader, sidebar items)
@@ -310,6 +311,10 @@ struct DesignSystem {
         static let faint: Double = 0.15
         static let ghost: Double = 0.08
         static let whisper: Double = 0.04
+
+        // Semantic tints for status backgrounds & badges
+        static let tintBackground: Double = 0.12
+        static let tintBadge: Double = 0.2
     }
 
     // MARK: - Icon Size Tokens

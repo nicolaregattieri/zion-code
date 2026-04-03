@@ -104,9 +104,17 @@ struct GitClient {
         onProgress: @escaping @Sendable (String) -> Void,
         mode: GitExecutionMode = .normal
     ) throws -> Process {
+        let trimmedURL = remoteURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedURL.isEmpty,
+              !trimmedURL.hasPrefix("-"),
+              !trimmedURL.lowercased().hasPrefix("ext::"),
+              !trimmedURL.lowercased().hasPrefix("fd::") else {
+            throw GitClientError.commandFailed(command: "clone", message: "Invalid or unsafe remote URL")
+        }
+
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = ["git", "clone", "--progress", remoteURL, destination.path]
+        process.arguments = ["git", "clone", "--progress", "--", trimmedURL, destination.path]
         process.currentDirectoryURL = destination.deletingLastPathComponent()
 
         let environmentSetup = try prepareEnvironment(for: mode)

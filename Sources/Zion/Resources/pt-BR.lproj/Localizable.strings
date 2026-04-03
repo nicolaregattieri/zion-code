@@ -1866,6 +1866,8 @@
 // Empty state hints
 "worktrees.emptyHint" = "Use o formulário acima para criar seu primeiro worktree.";
 "branches.emptyHint" = "As branches aparecem após o primeiro commit.";
+"graph.empty.title" = "Nenhum commit ainda";
+"graph.empty.hint" = "Faça seu primeiro commit para ver o gráfico de histórico.";
 
 // Sidebar
 "sidebar.locked.hint" = "Abra um repositório para desbloquear esta seção.";
