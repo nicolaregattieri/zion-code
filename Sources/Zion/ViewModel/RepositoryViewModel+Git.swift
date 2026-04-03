@@ -10,9 +10,77 @@ extension RepositoryViewModel {
         refreshRepository(setBusy: true, origin: .userInitiated)
     }
 
+    /// Lightweight refresh: only runs `git status --porcelain` to update uncommitted
+    /// badges without reloading commits, branches, or any other heavy data. Used by
+    /// file watcher for content-only changes (user saved a file). (RT-002)
+    func refreshStatusOnly() {
+        guard let url = repositoryURL else { return }
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                let statusOutput = try await worker.runAction(args: ["status", "--porcelain"], in: url)
+                let newLines = statusOutput.split(separator: "\n").map { String($0) }
+                let newCount = newLines.count
+                if uncommittedChanges != newLines { uncommittedChanges = newLines }
+                if uncommittedCount != newCount { uncommittedCount = newCount }
+            } catch {
+                // Fallback to full refresh if status-only fails
+                refreshRepository(setBusy: false, origin: .fileWatcher)
+            }
+        }
+    }
+
     func refreshWorkspace() {
         refreshFileTree()
         refreshRepository(setBusy: true, origin: .userInitiated)
+    }
+
+    // MARK: - Tab-Aware Loading
+
+    /// Called when user switches tabs. Loads deferred data if the target tab needs it.
+    func loadDeferredDataForSection(_ section: AppSection) {
+        guard repositoryURL != nil else { return }
+        switch section {
+        case .graph, .operations:
+            if !hasLoadedFullGraphForCurrentRepo {
+                hasLoadedFullGraphForCurrentRepo = true
+                refreshRepository(setBusy: true, origin: .userInitiated)
+            }
+        case .code:
+            break // Code tab only needs branch + status + file tree (already loaded)
+        }
+    }
+
+    /// Lightweight repo switch load for Code tab: only loads what the editor and
+    /// terminal need (current branch, uncommitted status, file tree).
+    /// Defers heavy graph/commit data until the user navigates to Graph or Ops.
+    func refreshForCodeTabOnly() {
+        guard let url = repositoryURL else { return }
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                let branch = try await worker.runAction(args: ["rev-parse", "--abbrev-ref", "HEAD"], in: url)
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                let head = try await worker.runAction(args: ["rev-parse", "--short", "HEAD"], in: url)
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                let statusOutput = try await worker.runAction(args: ["status", "--porcelain"], in: url)
+                let newLines = statusOutput.split(separator: "\n").map { String($0) }
+
+                if currentBranch != branch { currentBranch = branch }
+                if headShortHash != head { headShortHash = head }
+                if uncommittedChanges != newLines { uncommittedChanges = newLines }
+                if uncommittedCount != newLines.count { uncommittedCount = newLines.count }
+
+                let conflictResult = try? await worker.runAction(args: ["ls-files", "--unmerged"], in: url)
+                let newHasConflicts = !(conflictResult?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
+                if hasConflicts != newHasConflicts { hasConflicts = newHasConflicts }
+
+                statusMessage = L10n("Repositorio carregado: %@ · %@", url.lastPathComponent, branch)
+            } catch {
+                // Fallback to full refresh
+                refreshRepository(setBusy: true, origin: .repositorySwitch)
+            }
+        }
     }
 
     func selectCommit(_ commitID: String?) {
@@ -401,11 +469,12 @@ extension RepositoryViewModel {
                 }
 
                 clearError()
-                currentBranch = payload.currentBranch
-                headShortHash = payload.headShortHash
-                branchInfos = payload.branchInfos
-                branches = payload.branches
-                focusedBranch = payload.focusedBranch
+                // Guard every assignment to avoid redundant @Observable notifications (RT-004)
+                if currentBranch != payload.currentBranch { currentBranch = payload.currentBranch }
+                if headShortHash != payload.headShortHash { headShortHash = payload.headShortHash }
+                if branches != payload.branches { branches = payload.branches }
+                if branchInfos != payload.branchInfos { branchInfos = payload.branchInfos }
+                if focusedBranch != payload.focusedBranch { focusedBranch = payload.focusedBranch }
                 applyTagAndStashPayload(payload, includeTagsAndStashes: effectiveOptions.includeTagsAndStashes)
                 let resolvedWorktrees = mergeWorktreeStatusIfNeeded(
                     payload.worktrees,
@@ -417,11 +486,18 @@ extension RepositoryViewModel {
                 if let root = recentRepositoryRoot(for: repositoryURL) {
                     recentWorktreeCounts[root] = max(resolvedWorktrees.count - 1, 0)
                 }
-                remotes = payload.remotes
+                if remotes != payload.remotes { remotes = payload.remotes }
 
-                commits = mergeExistingStats(into: payload.commits)
-                recalculateMaxLaneCount()
-                hasMoreCommits = payload.hasMoreCommits
+                let mergedCommits = mergeExistingStats(into: payload.commits)
+                // Fast-path: skip graph re-render if commits haven't changed
+                let commitsChanged = commits.count != mergedCommits.count
+                    || commits.first?.id != mergedCommits.first?.id
+                    || commits.last?.id != mergedCommits.last?.id
+                if commitsChanged {
+                    commits = mergedCommits
+                    recalculateMaxLaneCount()
+                }
+                if hasMoreCommits != payload.hasMoreCommits { hasMoreCommits = payload.hasMoreCommits }
 
                 // Preserve user's selection if they clicked a different commit while
                 // this refresh was in flight. The snapshot captured what was selected
@@ -443,12 +519,12 @@ extension RepositoryViewModel {
                     currentCommitFileDiffHunks = []
                     clearCommitReviewSelectionStateOnCommitChange()
                 }
-                selectedCommitID = effectiveSelectedCommitID
-                hasConflicts = payload.hasConflicts
-                isMerging = payload.isMerging
-                isRebasing = payload.isRebasing
-                isCherryPicking = payload.isCherryPicking
-                isGitRepository = payload.isGitRepository
+                if selectedCommitID != effectiveSelectedCommitID { selectedCommitID = effectiveSelectedCommitID }
+                if hasConflicts != payload.hasConflicts { hasConflicts = payload.hasConflicts }
+                if isMerging != payload.isMerging { isMerging = payload.isMerging }
+                if isRebasing != payload.isRebasing { isRebasing = payload.isRebasing }
+                if isCherryPicking != payload.isCherryPicking { isCherryPicking = payload.isCherryPicking }
+                if isGitRepository != payload.isGitRepository { isGitRepository = payload.isGitRepository }
                 // Only update bisect from payload if we're not mid-flow
                 if bisectPhase == .inactive && payload.isBisecting {
                     bisectPhase = .active(currentHash: payload.bisectCurrentHash, stepsRemaining: 0)
@@ -489,7 +565,10 @@ extension RepositoryViewModel {
                 if statusMessage != refreshedStatusMessage {
                     statusMessage = refreshedStatusMessage
                 }
-                captureRepositorySnapshot(for: repositoryURL)
+                // Snapshots only needed for repo switching -- skip on background ticks (RT-006)
+                if origin == .userInitiated || origin == .gitAction || origin == .repositorySwitch {
+                    captureRepositorySnapshot(for: repositoryURL)
+                }
                 if setBusy {
                     isBusy = false
                     disarmBusyWatchdog()
@@ -511,8 +590,11 @@ extension RepositoryViewModel {
                         logger.log(.info, "details.reload skipped (same commit)", context: "origin=\(origin.rawValue)", source: #function)
                     }
                 }
-                loadCommitStats()
-                prefetchCommitDetails(for: Array(payload.commits.prefix(Constants.Limits.commitDetailsPrefetchCount).map(\.id)))
+                // Stats and prefetch are decorative -- skip on background ticks (RT-005)
+                if origin == .userInitiated || origin == .gitAction || origin == .repositorySwitch {
+                    loadCommitStats()
+                    prefetchCommitDetails(for: Array(payload.commits.prefix(Constants.Limits.commitDetailsPrefetchCount).map(\.id)))
+                }
                 ensureTerminalBridgeHealth(context: "refreshRepository.success.\(origin.rawValue)")
                 onFinish?()
             } catch is CancellationError {
