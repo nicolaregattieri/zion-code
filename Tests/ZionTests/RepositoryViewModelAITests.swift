@@ -313,7 +313,7 @@ final class RepositoryViewModelAITests: XCTestCase {
     func testCachedReviewFindingsReturnsCachedValue() {
         let vm = RepositoryViewModel()
         let findings = [ReviewFinding(severity: .warning, file: "a.swift", message: "Issue")]
-        vm.commitReviewCache["abc123"] = findings
+        vm.commitReviewCache.set("abc123", value: findings)
 
         let result = vm.cachedReviewFindings(for: "abc123")
         XCTAssertNotNil(result)
