@@ -65,9 +65,7 @@ final class RepositoryViewModel {
             scheduleRepoMemoryRefreshIfNeeded()
         }
     }
-    var commits: [Commit] = [] {
-        didSet { recalculateMaxLaneCount() }
-    }
+    var commits: [Commit] = []
     var selectedCommitID: String?
     var commitDetails: String = "Selecione um commit para ver os detalhes."
     var branches: [String] = []
@@ -109,14 +107,10 @@ final class RepositoryViewModel {
     var uncommittedChanges: [String] = []
     var uncommittedCount: Int = 0
     var selectedChangeFile: String?
-    var currentFileDiff: String = "" {
-        didSet {
-            currentFileDiffLines = currentFileDiff
-                .split(separator: "\n", omittingEmptySubsequences: false)
-                .map(String.init)
-        }
+    var currentFileDiff: String = ""
+    var currentFileDiffLines: [String] {
+        currentFileDiff.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
     }
-    var currentFileDiffLines: [String] = []
     var selectedCommitFile: String?
     var currentCommitFileDiff: String = ""
     var currentCommitFileDiffHunks: [DiffHunk] = []
@@ -155,6 +149,7 @@ final class RepositoryViewModel {
     // Avatar cache (Gravatar)
     @ObservationIgnored let avatarCache = NSCache<NSString, NSImage>()
     @ObservationIgnored var avatarDownloadTasks: Set<String> = []
+    @ObservationIgnored let avatarSemaphore = AsyncSemaphore(maxConcurrent: 3)
 
     // Hunk diff state
     var currentFileDiffHunks: [DiffHunk] = []
@@ -296,7 +291,7 @@ final class RepositoryViewModel {
     var isSplitVisible: Bool = false
     var repoMemorySnapshot: RepoMemorySnapshot?
     var isRepoMemoryRefreshing: Bool = false
-    var repoMemoryLastRefreshedAt: Date?
+    @ObservationIgnored var repoMemoryLastRefreshedAt: Date?
     var repoMemoryStatusMessage: String = ""
 
     // Pre-Commit AI Review Gate
@@ -341,7 +336,7 @@ final class RepositoryViewModel {
     @ObservationIgnored var _aiKeyRevision: Int = 0
 
     // Commit signing
-    var commitSignatureStatus: [String: String] = [:] // hash -> "G"/"N"/"B"/etc
+    @ObservationIgnored var commitSignatureStatus: [String: String] = [:] // hash -> "G"/"N"/"B"/etc
     @ObservationIgnored var signatureStatusTask: Task<Void, Never>?
     @ObservationIgnored var signatureStatusLoadToken = UUID()
 
@@ -353,6 +348,7 @@ final class RepositoryViewModel {
     var divergenceResolution: DivergenceContext?
     @ObservationIgnored var busyWatchdogTask: Task<Void, Never>?
     @ObservationIgnored var backgroundFetchTask: Task<Void, Never>?
+    @ObservationIgnored var isBackgroundFetching = false
     @ObservationIgnored var lastNotifiedBehindCount: Int = 0
     @ObservationIgnored var notifiedReviewRequestPRIDs: Set<Int> = []
     @ObservationIgnored var autoFetchCredentialFailures: Int = 0
@@ -660,7 +656,7 @@ final class RepositoryViewModel {
     @ObservationIgnored var fileWatcherGateTask: Task<Void, Never>?
     @ObservationIgnored var suppressFileWatcherGitMetadataUntil: Date = .distantPast
     var pendingRepositoryURL: URL?
-    var isSwitchingRepository = false
+    @ObservationIgnored var isSwitchingRepository = false
     var isBlockingRepositorySwitch = false
     @ObservationIgnored var cachedWorktreeStatusByPath: [String: (uncommittedCount: Int, hasConflicts: Bool)] = [:]
     @ObservationIgnored var cachedIgnoredPaths: Set<String>?

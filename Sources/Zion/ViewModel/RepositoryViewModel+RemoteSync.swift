@@ -105,13 +105,17 @@ extension RepositoryViewModel {
     func startBackgroundFetch() {
         backgroundFetchTask?.cancel()
         backgroundFetchTask = Task {
+            // Stagger: offset from auto-refresh to prevent overlapping git operations.
+            try? await Task.sleep(nanoseconds: 15_000_000_000)
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: Constants.Timing.backgroundFetchInterval)
                 if Task.isCancelled { break }
                 if isSwitchingRepository { continue }
                 guard NSApp.isActive else { continue }
+                isBackgroundFetching = true
                 await checkBehindRemote()
                 await checkPRReviewRequests()
+                isBackgroundFetching = false
             }
         }
     }
@@ -287,6 +291,8 @@ extension RepositoryViewModel {
     func startPRPollingTimer() {
         prPollingTimer?.cancel()
         prPollingTimer = Task {
+            // Stagger: PR polling is lowest priority, delay first tick by 60s.
+            try? await Task.sleep(nanoseconds: 60_000_000_000)
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: Self.prPollingIntervalNanoseconds(for: prPollingIntervalMinutes))
                 if Task.isCancelled { break }

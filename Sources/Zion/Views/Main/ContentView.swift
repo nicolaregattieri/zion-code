@@ -320,6 +320,12 @@ struct ContentView: View {
                 }
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
+            model.pauseBackgroundWatchers()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            model.resumeBackgroundWatchers()
+        }
         .animation(DesignSystem.Motion.detail, value: model.isRepositorySwitchBlocking)
     }
 
