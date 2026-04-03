@@ -14,16 +14,16 @@ enum Constants {
         static let repositorySwitchPollInterval: UInt64 = 50_000_000
         /// Maximum number of polling attempts during repo switch wait
         static let maxRepositorySwitchAttempts = 40
-        /// Interval between background fetch cycles (60s)
-        static let backgroundFetchInterval: UInt64 = 60_000_000_000
-        /// Interval between background monitor / auto-refresh cycles (30s)
-        static let backgroundMonitorInterval: UInt64 = 30_000_000_000
-        /// Idle polling interval for inactive repositories (3min)
-        static let inactiveBackgroundMonitorIdleInterval: UInt64 = 180_000_000_000
-        /// Burst polling interval right after an inactive repo file watcher signal (10s)
-        static let inactiveBackgroundMonitorBurstInterval: UInt64 = 10_000_000_000
-        /// Duration of burst mode for inactive repositories after signal (60s)
-        static let inactiveBackgroundMonitorBurstWindow: UInt64 = 60_000_000_000
+        /// Interval between background fetch cycles (120s)
+        static let backgroundFetchInterval: UInt64 = 120_000_000_000
+        /// Interval between background monitor / auto-refresh cycles (60s)
+        static let backgroundMonitorInterval: UInt64 = 60_000_000_000
+        /// Idle polling interval for inactive repositories (5min)
+        static let inactiveBackgroundMonitorIdleInterval: UInt64 = 300_000_000_000
+        /// Burst polling interval right after an inactive repo file watcher signal (15s)
+        static let inactiveBackgroundMonitorBurstInterval: UInt64 = 15_000_000_000
+        /// Duration of burst mode for inactive repositories after signal (30s)
+        static let inactiveBackgroundMonitorBurstWindow: UInt64 = 30_000_000_000
         /// Interval between PR review queue polling cycles (5min)
         static let prPollingInterval: UInt64 = 5 * 60 * 1_000_000_000
         /// Delay before opening conflict resolver after transfer support (600ms)
