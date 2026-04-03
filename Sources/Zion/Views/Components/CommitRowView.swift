@@ -20,6 +20,7 @@ struct CommitRowView: View {
     let rootWorktreeBranches: Set<String>
     var bisectRole: BisectCommitRole = .none
     var avatarImage: NSImage? = nil
+    var graphColumnMaxWidth: CGFloat = DesignSystem.Layout.graphColumnMaxWidth
     
     @State private var isHovered = false
     @State private var decorationOverflow: Int = 0
@@ -51,7 +52,8 @@ struct CommitRowView: View {
             laneCount: laneCount,
             isSelected: isSelected,
             isHead: commit.decorations.contains(where: { $0.contains("HEAD") }),
-            height: rowHeight
+            height: rowHeight,
+            maxColumnWidth: graphColumnMaxWidth
         )
         .onTapGesture { onSelect() }
     }

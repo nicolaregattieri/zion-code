@@ -32,13 +32,15 @@ struct GraphScreen: View {
     @FocusState var isGraphFocused: Bool
 
     var commitRowMinWidth: CGFloat {
-        let laneWidth = CGFloat(max(model.maxLaneCount, 1)) * 20
-        return max(DesignSystem.Layout.commitRowFloor, laneWidth + DesignSystem.Layout.commitRowLaneOffset)
+        let rawLaneWidth = CGFloat(max(model.maxLaneCount, 1)) * 20
+        let cappedLaneWidth = min(rawLaneWidth, DesignSystem.Layout.graphColumnMaxWidth)
+        return max(DesignSystem.Layout.commitRowFloor, cappedLaneWidth + DesignSystem.Layout.commitRowLaneOffset)
     }
 
     var commitGraphColumnWidth: CGFloat {
         let span = CGFloat(max(model.maxLaneCount - 1, 0)) * 20
-        return max(10 + 12 + span, 56)
+        let uncapped = max(10 + 12 + span, 56)
+        return min(uncapped, DesignSystem.Layout.graphColumnMaxWidth)
     }
 
     private var commitRowMaxWidth: CGFloat {
@@ -198,7 +200,7 @@ struct GraphScreen: View {
             GeometryReader { geometry in
                 let rowWidth = commitRowWidth(for: geometry.size.width)
 
-                ScrollView([.horizontal, .vertical], showsIndicators: true) {
+                ScrollView(.vertical, showsIndicators: true) {
                     let avatarsEnabled = UserDefaults.standard.bool(forKey: UserDefaultsKeys.General.graphAuthorAvatarsEnabled)
                     let remoteNames = model.remotes.map(\.name)
                     let hasAdditionalWorktrees = model.worktrees.contains { !$0.isMainWorktree }
@@ -282,7 +284,8 @@ struct GraphScreen: View {
                                 worktreeBranches: worktreeBranchNames,
                                 rootWorktreeBranches: rootWorktreeBranchNames,
                                 bisectRole: model.bisectRole(for: commit.id),
-                                avatarImage: avatarsEnabled ? model.avatarImage(for: commit.email) : nil
+                                avatarImage: avatarsEnabled ? model.avatarImage(for: commit.email) : nil,
+                                graphColumnMaxWidth: commitGraphColumnWidth
                             )
                             .frame(width: rowWidth, alignment: .leading)
                             .id(commit.id)

@@ -47,6 +47,8 @@ struct DesignSystem {
         static let commitDetailMinWidth: CGFloat = 250
         static let commitRowFloor: CGFloat = 380
         static let commitRowLaneOffset: CGFloat = 200
+        static let graphColumnMaxWidth: CGFloat = 180
+        static let graphLaneSpacingMin: CGFloat = 6
         static let graphInlineSplitMinLeading: CGFloat = 150
         static let graphInlineSplitMinTrailing: CGFloat = 200
 
