@@ -932,6 +932,7 @@ extension RepositoryViewModel {
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: Constants.RemoteAccess.heartbeatIntervalNanoseconds)
                 if Task.isCancelled { break }
+                guard await (remoteAccessServer?.connectedDeviceCount ?? 0) > 0 else { continue }
 
                 let message = RemoteMessage(
                     type: .heartbeat,

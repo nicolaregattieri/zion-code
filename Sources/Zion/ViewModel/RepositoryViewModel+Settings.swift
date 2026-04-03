@@ -494,6 +494,8 @@ extension RepositoryViewModel {
             avatarDownloadTasks.insert(key)
             Task { [weak self] in
                 guard let self else { return }
+                await avatarSemaphore.acquire()
+                defer { Task { await self.avatarSemaphore.release() } }
                 let urlString: String?
                 if prURL.contains("github.com") {
                     urlString = "https://github.com/\(username).png?size=40"
@@ -528,6 +530,8 @@ extension RepositoryViewModel {
             avatarDownloadTasks.insert(key)
             Task { [weak self] in
                 guard let self else { return }
+                await avatarSemaphore.acquire()
+                defer { Task { await self.avatarSemaphore.release() } }
                 let hash = Insecure.MD5.hash(data: Data(key.utf8)).map { String(format: "%02x", $0) }.joined()
                 guard let url = URL(string: "https://gravatar.com/avatar/\(hash)?s=40&d=identicon") else { return }
                 do {

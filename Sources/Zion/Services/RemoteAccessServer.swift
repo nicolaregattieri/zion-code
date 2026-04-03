@@ -235,6 +235,7 @@ actor RemoteAccessServer {
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: Constants.RemoteAccess.heartbeatIntervalNanoseconds)
                 guard !Task.isCancelled, let self else { break }
+                guard await self.connectedDeviceCount > 0 else { continue }
                 await self.checkDisconnectedClients()
             }
         }
