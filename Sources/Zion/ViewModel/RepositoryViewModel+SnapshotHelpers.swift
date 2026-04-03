@@ -125,6 +125,21 @@ extension RepositoryViewModel {
             repositoryFiles: repositoryFiles,
             expandedPaths: expandedPaths
         )
+        evictStaleSnapshots()
+    }
+
+    private static let snapshotEvictionTTL: TimeInterval = 60
+    private static let maxSnapshotCount = 5
+
+    private func evictStaleSnapshots() {
+        let now = Date()
+        repositorySwitchSnapshots = repositorySwitchSnapshots.filter { _, snapshot in
+            now.timeIntervalSince(snapshot.capturedAt) <= Self.snapshotEvictionTTL
+        }
+        if repositorySwitchSnapshots.count > Self.maxSnapshotCount {
+            let sorted = repositorySwitchSnapshots.sorted { $0.value.capturedAt > $1.value.capturedAt }
+            repositorySwitchSnapshots = Dictionary(uniqueKeysWithValues: sorted.prefix(Self.maxSnapshotCount).map { ($0.key, $0.value) })
+        }
     }
 
     // MARK: - recalculateMaxLaneCount
@@ -158,7 +173,6 @@ extension RepositoryViewModel {
             loadPullRequests()
             refreshPRReviewQueue()
             loadSubmodules()
-            loadBridgeState()
             return
         }
 
@@ -182,6 +196,7 @@ extension RepositoryViewModel {
 
         repositoryURL = url
         pendingRepositoryURL = nil
+        hasLoadedFullGraphForCurrentRepo = false
         repoMemorySnapshot = nil
         repoMemoryLastRefreshedAt = nil
         repoMemoryStatusMessage = L10n("settings.ai.repoMemory.status.loading")
@@ -217,6 +232,7 @@ extension RepositoryViewModel {
             let canonicalPreviousURL = canonicalRecentRepositoryURL(for: previousURL)
             backgroundRepoChangedFiles[canonicalPreviousURL] = uncommittedCount
             startBackgroundMonitor(for: previousURL)
+            evictExcessBackgroundRepoStates(keeping: Constants.Limits.maxRecentRepositories)
             // DON'T set terminalTabs = [] here — let the restore/create below do a direct swap
         } else if previousURL == nil {
             // First open — no previous repo, kill any leftover terminals
@@ -253,7 +269,7 @@ extension RepositoryViewModel {
             terminalTabs = []
             activeTabID = nil
             focusedSessionID = nil
-            createDefaultTerminalSession(repositoryURL: url, branchName: currentBranch.isEmpty ? url.lastPathComponent : currentBranch)
+            // Terminal creation deferred until pane becomes visible (PERF-011)
         }
 
         let finalStashedKeys = backgroundRepoStates.keys.map { $0.lastPathComponent }
@@ -295,16 +311,27 @@ extension RepositoryViewModel {
             // FRESH open: clear stale data from previous repo so the UI
             // shows a loading/empty state instead of the old repo's tree.
             clearStaleRepositoryData()
+            hasLoadedFullGraphForCurrentRepo = false
 
-            refreshRepository(
-                setBusy: true,
-                options: .full,
-                origin: .repositorySwitch,
-                clearRepositorySwitchStateOnBusyCompletion: false,
-                onFinish: { [weak self] in
-                    self?.finalizeRepositorySwitch(for: url, switchToken: switchToken)
-                }
-            )
+            // Tab-aware loading: if user is on Code tab, only load what the
+            // editor and terminal need (branch, status, file tree). The heavy
+            // graph/commit data loads when they navigate to Graph or Ops.
+            let targetSection = nextSectionAfterRepositoryOpen ?? activeSection
+            if targetSection == .code {
+                refreshForCodeTabOnly()
+                finalizeRepositorySwitch(for: url, switchToken: switchToken)
+            } else {
+                hasLoadedFullGraphForCurrentRepo = true
+                refreshRepository(
+                    setBusy: true,
+                    options: .full,
+                    origin: .repositorySwitch,
+                    clearRepositorySwitchStateOnBusyCompletion: false,
+                    onFinish: { [weak self] in
+                        self?.finalizeRepositorySwitch(for: url, switchToken: switchToken)
+                    }
+                )
+            }
             refreshFileTree()
             armSwitchWatchdog(for: url, switchToken: switchToken)
         }
@@ -400,10 +427,10 @@ extension RepositoryViewModel {
         refreshPRReviewQueue()
         startPRPollingTimer()
         loadSubmodules()
-        loadSignatureStatuses()
+        // loadSignatureStatuses() and loadBridgeState() deferred to on-demand
+        // (PERF-012: avoid startup work for features most users don't access immediately)
         startBackgroundFetch()
         startAutoRefreshTimer()
-        loadBridgeState()
         captureRepositorySnapshot(for: url)
         clearRepositorySwitchState()
     }
@@ -558,8 +585,13 @@ extension RepositoryViewModel {
                 if Date() < suppressFileWatcherGitMetadataUntil && !event.hasTreeImpact {
                     // Skip watcher-only git metadata noise while an explicit git action
                     // is already expected to refresh worktree state.
-                } else {
+                } else if event.hasGitMetadataImpact {
+                    // Git metadata changed (.git/HEAD, .git/refs/) -- likely a checkout,
+                    // commit, or rebase. Full refresh needed. (RT-002)
                     refreshRepository(setBusy: false, options: .worktreeStatus, origin: .fileWatcher)
+                } else {
+                    // Content-only change (file saved) -- lightweight status update (RT-002)
+                    refreshStatusOnly()
                 }
             }
         }
@@ -567,7 +599,7 @@ extension RepositoryViewModel {
         fileWatcherGateTask?.cancel()
         fileWatcherGateTask = Task { [weak self] in
             guard let self else { return }
-            try? await Task.sleep(for: .milliseconds(250))
+            try? await Task.sleep(nanoseconds: Constants.Timing.fileWatcherGateCooldown)
             guard !Task.isCancelled else { return }
             self.isApplyingFileWatcherRefresh = false
             self.processPendingFileWatcherEventIfNeeded()
