@@ -813,9 +813,19 @@ struct TerminalTabView: NSViewRepresentable {
             guard let coordinator = parent.model?.terminalOutputCoordinator else { return }
             outputCoordinator = coordinator
             let sessionID = parent.session.id
-            coordinator.register(sessionID: sessionID, coordinator: self) { [weak self] budget in
-                self?.flushWithBudget(budget) ?? false
-            }
+            coordinator.register(
+                sessionID: sessionID,
+                coordinator: self,
+                flush: { [weak self] budget in
+                    self?.flushWithBudget(budget) ?? false
+                },
+                beginFrame: { [weak self] in
+                    self?.terminalView?.getTerminal().beginSynchronizedFrame()
+                },
+                endFrame: { [weak self] in
+                    self?.terminalView?.getTerminal().endSynchronizedFrame()
+                }
+            )
         }
 
         fileprivate func unregisterFromOutputCoordinator() {

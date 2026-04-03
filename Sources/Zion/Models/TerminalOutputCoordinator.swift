@@ -15,6 +15,8 @@ final class TerminalOutputCoordinator {
     private struct Entry {
         weak var coordinator: AnyObject?  // TerminalTabView.Coordinator
         let flush: (Int) -> Bool          // flushWithBudget → returns true if pending data remains
+        let beginFrame: () -> Void        // freezes display on snapshot (DEC 2026)
+        let endFrame: () -> Void          // releases snapshot, atomic full-screen refresh
     }
 
     // MARK: - State
@@ -50,8 +52,12 @@ final class TerminalOutputCoordinator {
 
     // MARK: - Registration
 
-    func register(sessionID: UUID, coordinator: AnyObject, flush: @escaping (Int) -> Bool) {
-        entries[sessionID] = Entry(coordinator: coordinator, flush: flush)
+    func register(sessionID: UUID, coordinator: AnyObject,
+                  flush: @escaping (Int) -> Bool,
+                  beginFrame: @escaping () -> Void,
+                  endFrame: @escaping () -> Void) {
+        entries[sessionID] = Entry(coordinator: coordinator, flush: flush,
+                                    beginFrame: beginFrame, endFrame: endFrame)
     }
 
     func unregister(sessionID: UUID) {
@@ -76,15 +82,17 @@ final class TerminalOutputCoordinator {
         // output still coalesces through scheduleBatchFlush().
         if flushTask == nil, let focusedID = viewModel?.focusedSessionID,
            let entry = entries[focusedID] {
-            // Flush focused terminal with a cap so heavy output doesn't
-            // starve the main thread. Remaining data drains via batch timer.
+            // Freeze display, flush, release — atomic frame, no ghost content.
+            entry.beginFrame()
             for _ in 0..<4 {
                 if !entry.flush(Self.maxBytesPerFrame) { break }
             }
+            entry.endFrame()
 
-            // Also flush any other terminals that may have data
             for (sessionID, otherEntry) in entries where sessionID != focusedID {
+                otherEntry.beginFrame()
                 _ = otherEntry.flush(Self.maxBytesPerFrame / max(1, entries.count))
+                otherEntry.endFrame()
             }
 
             // Always schedule a batch flush as cooldown — prevents the fast path
@@ -133,6 +141,9 @@ final class TerminalOutputCoordinator {
             focusedBudget = max(1, Int(Double(Self.maxBytesPerFrame) * Self.focusedMultiplier / shares))
         }
 
+        // Begin frame for all terminals — display freezes on snapshot
+        for entry in entries.values { entry.beginFrame() }
+
         // Flush focused terminal first for lowest latency
         var hasPending = false
         if let focusedID, let entry = entries[focusedID] {
@@ -141,6 +152,9 @@ final class TerminalOutputCoordinator {
         for (sessionID, entry) in entries where sessionID != focusedID {
             if entry.flush(normalBudget) { hasPending = true }
         }
+
+        // End frame — display switches to real buffer atomically
+        for entry in entries.values { entry.endFrame() }
 
         if hasPending {
             scheduleBatchFlush()
