@@ -27,6 +27,7 @@ extension RepositoryViewModel {
                 let interval = self.nextBackgroundMonitorSleepInterval(for: url)
                 try? await Task.sleep(nanoseconds: interval)
                 if Task.isCancelled { break }
+                guard NSApp.isActive else { continue }
                 await self.updateChangedFileCount(for: url)
                 self.clearBackgroundBurstIfNeeded(for: url)
             }
@@ -73,6 +74,18 @@ extension RepositoryViewModel {
             backgroundRepoChangedFiles[canonical] = count
         } catch {
             // Silently fail — repo may be unavailable
+        }
+    }
+
+    func pauseBackgroundWatchers() {
+        for (_, state) in backgroundRepoStates {
+            state.fileWatcher.stop()
+        }
+    }
+
+    func resumeBackgroundWatchers() {
+        for (url, state) in backgroundRepoStates {
+            state.fileWatcher.watch(directory: url)
         }
     }
 
@@ -175,6 +188,9 @@ extension RepositoryViewModel {
     func startAutoRefreshTimer() {
         autoRefreshTask?.cancel()
         autoRefreshTask = Task {
+            // Stagger: wait one full interval before the first tick so we don't overlap
+            // with the refresh that just completed from the repository switch.
+            try? await Task.sleep(nanoseconds: Constants.Timing.backgroundMonitorInterval)
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: Constants.Timing.backgroundMonitorInterval)
 
@@ -182,6 +198,7 @@ extension RepositoryViewModel {
 
                 if isSwitchingRepository { continue }
                 guard NSApp.isActive else { continue }
+                guard !isBackgroundFetching else { continue }
 
                 // Refresh without showing busy indicator to avoid UI flickering
                 refreshRepository(setBusy: false, origin: .autoTimer)

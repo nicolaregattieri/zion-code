@@ -53,6 +53,7 @@ extension RepositoryViewModel {
         worktrees = snapshot.worktrees
         remotes = snapshot.remotes
         commits = snapshot.commits
+        recalculateMaxLaneCount()
         hasMoreCommits = snapshot.hasMoreCommits
         selectedCommitID = snapshot.selectedCommitID
         hasConflicts = snapshot.hasConflicts
@@ -131,9 +132,13 @@ extension RepositoryViewModel {
     // MARK: - recalculateMaxLaneCount
 
     func recalculateMaxLaneCount() {
-        let maxLane = commits
-            .flatMap { [$0.lane] + $0.incomingLanes + $0.outgoingLanes + $0.outgoingEdges.map(\.to) }
-            .max() ?? 0
+        var maxLane = 0
+        for commit in commits {
+            maxLane = max(maxLane, commit.lane)
+            for lane in commit.incomingLanes { maxLane = max(maxLane, lane) }
+            for lane in commit.outgoingLanes { maxLane = max(maxLane, lane) }
+            for edge in commit.outgoingEdges { maxLane = max(maxLane, edge.to) }
+        }
         maxLaneCount = maxLane + 1
     }
 }

@@ -284,6 +284,7 @@ extension RepositoryViewModel {
 
                 clearError()
                 commits = mergeExistingStats(into: payload.commits)
+                recalculateMaxLaneCount()
                 hasMoreCommits = payload.hasMore
                 let didSelectedCommitChange = payload.selectedCommitID != selectedCommitSnapshot
                 if didSelectedCommitChange {
@@ -424,6 +425,7 @@ extension RepositoryViewModel {
                 remotes = payload.remotes
 
                 commits = mergeExistingStats(into: payload.commits)
+                recalculateMaxLaneCount()
                 hasMoreCommits = payload.hasMoreCommits
 
                 // Preserve user's selection if they clicked a different commit while
