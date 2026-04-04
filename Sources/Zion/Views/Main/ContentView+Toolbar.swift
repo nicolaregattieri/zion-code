@@ -45,14 +45,14 @@ extension ContentView {
         }
 
         ToolbarItemGroup(placement: .primaryAction) {
+            Button {
+                toggleZenMode()
+            } label: { Image(systemName: "arrow.up.left.and.arrow.down.right") }
+                .help(L10n("zen.enter") + " (⌘T)")
+                .accessibilityLabel(L10n("zen.enter"))
+
             if model.hasGitWorkspace {
                 if shellLayoutProfile.usesCompactToolbar {
-                    Button {
-                        toggleZenMode()
-                    } label: { Image(systemName: "arrow.up.left.and.arrow.down.right") }
-                        .help(L10n("zen.enter") + " (⌘T)")
-                        .accessibilityLabel(L10n("zen.enter"))
-
                     Menu {
                         Button(L10n("Fetch: Busca atualizações remotas")) { model.fetch() }
                         Button(L10n("Pull: Puxa alterações da branch atual")) { model.pull() }
@@ -71,21 +71,14 @@ extension ContentView {
                     .help(L10n("Mais"))
                     .accessibilityLabel(L10n("Mais"))
                 } else {
-                    ControlGroup {
-                        Button {
-                            toggleZenMode()
-                        } label: { Image(systemName: "arrow.up.left.and.arrow.down.right") }
-                            .help(L10n("zen.enter") + " (⌘T)")
-                            .accessibilityLabel(L10n("zen.enter"))
-                        Button {
-                            model.loadReflog()
-                            model.isReflogVisible = true
-                        } label: {
-                            Image(systemName: "clock.arrow.circlepath")
-                        }
-                        .help(L10n("Reflog / Desfazer"))
-                        .accessibilityLabel(L10n("Reflog / Desfazer"))
+                    Button {
+                        model.loadReflog()
+                        model.isReflogVisible = true
+                    } label: {
+                        Image(systemName: "clock.arrow.circlepath")
                     }
+                    .help(L10n("Reflog / Desfazer"))
+                    .accessibilityLabel(L10n("Reflog / Desfazer"))
 
                     Button {
                         model.isBridgeVisible = true
