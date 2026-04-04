@@ -1,5 +1,5 @@
 {
-  "originHash" : "50ffa839fa5c95a218a4d3952badfa45d57857d63102b3e2e20699e907bd2631",
+  "originHash" : "06eaf121f005ee1fdea58328e43e0590bcd6550b231d346dfdf30be282aac445",
   "pins" : [
     {
       "identity" : "sparkle",
@@ -24,7 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/nicolaregattieri/SwiftTerm.git",
       "state" : {
-        "revision" : "33a6505953cc6dd0e49589d28ce9dc85bfe640ca"
+        "branch" : "a0531b8",
+        "revision" : "a0531b8e13f3155dccfdcbaff34a6683ac94703a"
       }
     }
   ],

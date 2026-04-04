@@ -40,7 +40,6 @@ struct TerminalTabView: NSViewRepresentable {
             for subview in cachedView.subviews where subview is NSScroller {
                 subview.isHidden = true
             }
-            cachedView.layer?.masksToBounds = true
             return cachedView
         }
 
@@ -75,7 +74,6 @@ struct TerminalTabView: NSViewRepresentable {
         for subview in terminalView.subviews where subview is NSScroller {
             subview.isHidden = true
         }
-        terminalView.layer?.masksToBounds = true
         return terminalView
     }
 
@@ -98,8 +96,6 @@ struct TerminalTabView: NSViewRepresentable {
     }
 
     static func dismantleNSView(_ nsView: SwiftTerm.TerminalView, coordinator: Coordinator) {
-        // Ensure display pipeline is not left frozen if view is destroyed mid-transition
-        nsView.unfreezeDisplay()
         let s = coordinator.parent.session
         let isCurrentOwner = s._activeCoordinatorGeneration == coordinator.generationID
         log.log(.info, "dismantleNSView", context: "\(s.label)(\(s.id.uuidString.prefix(4))) gen=\(coordinator.shortGeneration) current=\(isCurrentOwner) preserve=\(s._shouldPreserve) alive=\(s.isAlive) pid=\(s._shellPid)", source: "TerminalTabView")
@@ -507,8 +503,6 @@ struct TerminalTabView: NSViewRepresentable {
                 context: "\(parent.session.label)(\(parent.session.id.uuidString.prefix(4))) reason=\(reason) attempt=\(attempt)",
                 source: "TerminalTabView"
             )
-            // Skip draw if bounds are stale/zero (layout hasn't settled yet)
-            guard view.bounds.width > 0, view.bounds.height > 0 else { return }
             // Flush any output that accumulated while the view was cached.
             // Without this, the terminal buffer is stale and the draw below
             // renders an incomplete TUI (e.g., missing status bar below input).
@@ -518,9 +512,6 @@ struct TerminalTabView: NSViewRepresentable {
             // Clear stale Core Animation snapshots that can ghost over the
             // correct content after a cached view reattach.
             view.layer?.removeAllAnimations()
-            // Freeze display pipeline to prevent queued updates from firing
-            // mid-resync with stale geometry.
-            view.freezeDisplay()
             // Force synchronous draw — the async pipeline (queuePendingDisplay)
             // can be skipped if pendingDisplay is already true from a previous
             // cycle. displayIfNeeded() bypasses that and draws immediately,
@@ -530,10 +521,6 @@ struct TerminalTabView: NSViewRepresentable {
             if view.window != nil {
                 view.displayIfNeeded()
             }
-            // Force the CALayer to discard any stale rasterized content
-            view.layer?.setNeedsDisplay()
-            // Resume normal display pipeline
-            view.unfreezeDisplay()
             // Send synthetic SIGWINCH to force TUI apps (Claude, Codex, vim, etc.)
             // to fully repaint. Without this, the process thinks the screen is
             // unchanged and we get ghost frames / duplicated output.
