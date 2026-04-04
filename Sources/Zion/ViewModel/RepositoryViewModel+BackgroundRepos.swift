@@ -12,55 +12,14 @@ extension RepositoryViewModel {
             guard event.hasTreeImpact || event.hasGitMetadataImpact || event.requiresRescan else { return }
             Task { @MainActor [weak self] in
                 guard let self else { return }
-                self.markBackgroundRepoSignal(for: url)
                 await self.updateChangedFileCount(for: url)
             }
         }
         state.fileWatcher.watch(directory: url)
         state.monitorTask?.cancel()
-
-        // Inactive repositories run in adaptive mode:
-        // idle polling is slow, but watcher signals temporarily switch to a fast burst cadence.
-        state.monitorTask = Task { [weak self] in
-            while !Task.isCancelled {
-                guard let self else { break }
-                let interval = self.nextBackgroundMonitorSleepInterval(for: url)
-                try? await Task.sleep(nanoseconds: interval)
-                if Task.isCancelled { break }
-                guard NSApp.isActive else { continue }
-                await self.updateChangedFileCount(for: url)
-                self.clearBackgroundBurstIfNeeded(for: url)
-            }
-        }
+        state.monitorTask = nil
 
         backgroundRepoStates[url] = state
-    }
-
-    static func nextInactiveMonitorInterval(now: Date, burstUntil: Date?) -> UInt64 {
-        if let burstUntil, now < burstUntil {
-            return Constants.Timing.inactiveBackgroundMonitorBurstInterval
-        }
-        return Constants.Timing.inactiveBackgroundMonitorIdleInterval
-    }
-
-    func nextBackgroundMonitorSleepInterval(for url: URL, now: Date = Date()) -> UInt64 {
-        let burstUntil = backgroundRepoStates[url]?.burstUntil
-        return Self.nextInactiveMonitorInterval(now: now, burstUntil: burstUntil)
-    }
-
-    func markBackgroundRepoSignal(for url: URL, now: Date = Date()) {
-        guard var state = backgroundRepoStates[url] else { return }
-        let burstWindowSeconds = TimeInterval(Constants.Timing.inactiveBackgroundMonitorBurstWindow) / 1_000_000_000
-        state.burstUntil = now.addingTimeInterval(burstWindowSeconds)
-        backgroundRepoStates[url] = state
-    }
-
-    func clearBackgroundBurstIfNeeded(for url: URL, now: Date = Date()) {
-        guard var state = backgroundRepoStates[url], let burstUntil = state.burstUntil else { return }
-        if now >= burstUntil {
-            state.burstUntil = nil
-            backgroundRepoStates[url] = state
-        }
     }
 
     func updateChangedFileCount(for url: URL) async {
@@ -209,62 +168,6 @@ extension RepositoryViewModel {
             "xml": "XML", "toml": "TOML", "lock": "Lock", "liquid": "Liquid"
         ]
         return map[ext] ?? ext.uppercased()
-    }
-
-    // MARK: - Auto Refresh Timer
-
-    func startAutoRefreshTimer() {
-        autoRefreshTask?.cancel()
-        autoRefreshTask = Task { [weak self] in
-            // Stagger: wait 45s before the first tick so we don't overlap
-            // with the refresh that just completed from the repository switch
-            // and don't coincide with backgroundFetch (30s) or PR polling (90s).
-            try? await Task.sleep(nanoseconds: Constants.Timing.autoRefreshInitialDelay)
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: Constants.Timing.backgroundMonitorInterval)
-                guard let self, !Task.isCancelled else { break }
-                if isSwitchingRepository { continue }
-                guard NSApp.isActive else { continue }
-                guard !isBackgroundFetching else { continue }
-
-                // Lightweight check: only full refresh if HEAD or status changed (RT-001)
-                await autoRefreshIfChanged()
-            }
-        }
-    }
-
-    /// Checks HEAD hash and uncommitted count. Only triggers a full refresh
-    /// if something actually changed since last refresh. This replaces the old
-    /// approach of running 15-40 git processes every 60s regardless of state.
-    private func autoRefreshIfChanged() async {
-        guard let url = repositoryURL else { return }
-        do {
-            let newHead = try await worker.runAction(args: ["rev-parse", "HEAD"], in: url).trimmingCharacters(in: .whitespacesAndNewlines)
-            let statusOutput = try await worker.runAction(args: ["status", "--porcelain"], in: url)
-            let newStatusLines = statusOutput.split(separator: "\n").map { String($0) }
-            let newCount = newStatusLines.count
-            let headChanged = !newHead.hasPrefix(headShortHash) && headShortHash != "-"
-            let statusChanged = newCount != uncommittedCount
-            if headChanged || statusChanged {
-                logger.log(.info, "autoRefresh: change detected (head=\(headChanged) status=\(statusChanged))", source: #function)
-                // Status changed -- update badges immediately without full reload
-                if statusChanged && !headChanged {
-                    let didChange = uncommittedChanges != newStatusLines
-                    if didChange {
-                        uncommittedChanges = newStatusLines
-                    }
-                    if uncommittedCount != newCount {
-                        uncommittedCount = newCount
-                    }
-                } else {
-                    // HEAD changed -- full refresh needed (new commit, checkout, rebase, etc.)
-                    refreshRepository(setBusy: false, origin: .autoTimer)
-                }
-            }
-        } catch {
-            // Fallback: if lightweight check fails, do a full refresh
-            refreshRepository(setBusy: false, origin: .autoTimer)
-        }
     }
 
     // MARK: - Submodules

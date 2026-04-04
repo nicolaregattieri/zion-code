@@ -226,8 +226,7 @@ extension RepositoryViewModel {
                 activeTabID: activeTabID,
                 focusedSessionID: focusedSessionID,
                 fileWatcher: watcher,
-                monitorTask: nil,
-                burstUntil: nil
+                monitorTask: nil
             )
             let canonicalPreviousURL = canonicalRecentRepositoryURL(for: previousURL)
             backgroundRepoChangedFiles[canonicalPreviousURL] = uncommittedCount
@@ -360,8 +359,6 @@ extension RepositoryViewModel {
         prPollingTask?.cancel()
         prPollingTimer?.cancel()
         backgroundFetchTask?.cancel()
-        autoRefreshTask?.cancel()
-
         // Cancel any in-flight git action (e.g. fetch) so isBusy doesn't stay stuck
         // on the new repo after a switch.
         actionTask?.cancel()
@@ -430,7 +427,6 @@ extension RepositoryViewModel {
         // loadSignatureStatuses() and loadBridgeState() deferred to on-demand
         // (PERF-012: avoid startup work for features most users don't access immediately)
         startBackgroundFetch()
-        startAutoRefreshTimer()
         captureRepositorySnapshot(for: url)
         clearRepositorySwitchState()
     }

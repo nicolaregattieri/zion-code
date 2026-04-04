@@ -105,18 +105,30 @@ extension RepositoryViewModel {
     func startBackgroundFetch() {
         backgroundFetchTask?.cancel()
         backgroundFetchTask = Task {
-            // Stagger: offset from auto-refresh and PR polling to prevent overlap at startup.
-            try? await Task.sleep(nanoseconds: Constants.Timing.backgroundFetchInitialDelay)
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: Constants.Timing.backgroundFetchInterval)
-                if Task.isCancelled { break }
-                if isSwitchingRepository { continue }
-                guard NSApp.isActive else { continue }
+            // Stagger: first behind-remote check after initial delay
+            try? await Task.sleep(nanoseconds: Constants.Timing.behindRemoteCheckInitialDelay)
+            if Task.isCancelled { return }
+            if !isSwitchingRepository, NSApp.isActive {
                 isBackgroundFetching = true
                 await checkBehindRemote()
-                await checkPRReviewRequests()
                 isBackgroundFetching = false
             }
+        }
+    }
+
+    /// Triggered by NSApp.didBecomeActiveNotification to refresh behind/ahead badges.
+    /// Uses a cooldown to avoid hammering on rapid app switches.
+    func refreshOnActivate() {
+        guard repositoryURL != nil else { return }
+        guard !isSwitchingRepository else { return }
+        let elapsed = Date().timeIntervalSince(lastBehindRemoteCheckDate)
+        guard elapsed >= Constants.Timing.behindRemoteCheckCooldown else { return }
+        lastBehindRemoteCheckDate = Date()
+        backgroundFetchTask?.cancel()
+        backgroundFetchTask = Task {
+            isBackgroundFetching = true
+            await checkBehindRemote()
+            isBackgroundFetching = false
         }
     }
 

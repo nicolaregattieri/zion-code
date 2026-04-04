@@ -22,14 +22,14 @@ enum Constants {
     // STARTUP STAGGER (after repository switch finalization):
     //   +0s   Initial refresh (Code: lightweight, Graph/Ops: full)
     //   +30s  backgroundFetchInitialDelay -- first remote fetch
-    //   +45s  autoRefreshInitialDelay -- first lightweight HEAD check
+    //   +45s  behindRemoteCheckInitialDelay -- first behind-remote check
     //   +90s  prPollingInitialDelay -- first PR badge update
     //
     // STEADY STATE (recurring intervals, staggered to avoid overlap):
-    //   Every 60s   autoRefreshInterval -- lightweight HEAD + status check
+    //   On activate  behindRemoteCheck -- behind/ahead badge update (cooldown 60s)
     //   Every 300s  backgroundFetchInterval -- remote fetch (with ls-remote pre-check)
     //   Every 300s  prPollingInterval -- PR badge update
-    //   Every 2.0s  clipboardPollInterval -- pasteboard changeCount check
+    //   Every 3.0s  clipboardPollInterval -- pasteboard changeCount check (utility queue)
     //
     // FILE WATCHER (event-driven, not polling):
     //   FSEvents latency: 0.5s (OS delivers events in batches)
@@ -38,16 +38,14 @@ enum Constants {
     //   Git metadata change -> full worktreeStatus refresh
     //
     // INACTIVE REPOS (background monitoring for change badges):
-    //   Idle: every 300s (5min)
-    //   Burst after file change: every 15s for 60s, then back to idle
+    //   Event-driven via FSEvents FileWatcher (no polling)
 
     enum Timing {
 
         // --- Background Sync (recurring) ---
 
-        /// How often the auto-refresh timer checks for external changes.
-        /// Runs a lightweight HEAD + status check; only triggers full refresh if something changed.
-        static let autoRefreshInterval: UInt64 = 60_000_000_000 // 60s
+        /// Minimum cooldown between behind-remote checks triggered by app activation.
+        static let behindRemoteCheckCooldown: TimeInterval = 60
 
         /// How often Zion fetches from remote to update behind/ahead badges.
         /// Uses ls-remote pre-check to skip expensive fetch when remote is unchanged.
@@ -58,8 +56,9 @@ enum Constants {
 
         /// How often the clipboard monitor checks NSPasteboard.changeCount.
         /// Cheap O(1) integer comparison; only does work when clipboard actually changed.
-        /// 2s keeps copy-paste workflow responsive without wasting cycles.
-        static let clipboardPollInterval: TimeInterval = 2.0
+        /// 3s keeps copy-paste workflow responsive without wasting cycles.
+        /// Timer runs on utility queue with 500ms leeway for OS coalescing.
+        static let clipboardPollInterval: TimeInterval = 3.0
 
         // --- Startup Stagger (initial delays after repo switch) ---
         // These spread out the first tick of each timer to avoid a CPU spike.
@@ -67,8 +66,8 @@ enum Constants {
         /// Delay before the first remote fetch after opening a repository.
         static let backgroundFetchInitialDelay: UInt64 = 30_000_000_000 // 30s
 
-        /// Delay before the first auto-refresh check after opening a repository.
-        static let autoRefreshInitialDelay: UInt64 = 45_000_000_000 // 45s
+        /// Delay before the first behind-remote check after opening a repository.
+        static let behindRemoteCheckInitialDelay: UInt64 = 45_000_000_000 // 45s
 
         /// Delay before the first PR poll after opening a repository.
         static let prPollingInitialDelay: UInt64 = 90_000_000_000 // 90s
@@ -84,16 +83,8 @@ enum Constants {
         static let fileWatcherDebounce: UInt64 = 500_000_000 // 500ms
 
         // --- Inactive Repo Monitoring ---
-
-        /// Polling interval for background repos when idle (no file changes detected).
-        static let inactiveRepoIdleInterval: UInt64 = 300_000_000_000 // 5min
-
-        /// Polling interval for background repos in burst mode (right after a file change).
-        static let inactiveRepoBurstInterval: UInt64 = 15_000_000_000 // 15s
-
-        /// How long burst mode lasts after a file change before reverting to idle.
-        /// 60s catches longer-running external operations (CI builds, rebases).
-        static let inactiveRepoBurstDuration: UInt64 = 60_000_000_000 // 60s
+        // Background repos are now purely event-driven via FSEvents FileWatcher.
+        // No polling loop runs for inactive repos.
 
         // --- Repository Switch ---
 
@@ -191,11 +182,6 @@ enum Constants {
         /// Slightly wider than debounce rhythm to avoid overlapping refreshes.
         static let fileWatcherGateCooldown: UInt64 = 350_000_000 // 350ms
 
-        // --- Legacy aliases (kept for backward compat during migration) ---
-        static let backgroundMonitorInterval: UInt64 = autoRefreshInterval
-        static let inactiveBackgroundMonitorIdleInterval: UInt64 = inactiveRepoIdleInterval
-        static let inactiveBackgroundMonitorBurstInterval: UInt64 = inactiveRepoBurstInterval
-        static let inactiveBackgroundMonitorBurstWindow: UInt64 = inactiveRepoBurstDuration
     }
 
     enum Limits {

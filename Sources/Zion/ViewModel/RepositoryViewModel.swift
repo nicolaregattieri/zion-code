@@ -704,7 +704,7 @@ final class RepositoryViewModel {
     @ObservationIgnored var detailsTask: Task<Void, Never>?
     @ObservationIgnored var actionTask: Task<Void, Never>?
     @ObservationIgnored var pushPreflightTask: Task<Void, Never>?
-    @ObservationIgnored var autoRefreshTask: Task<Void, Never>?
+    @ObservationIgnored var lastBehindRemoteCheckDate: Date = .distantPast
     @ObservationIgnored var deferredRepositoryLoadTask: Task<Void, Never>?
     @ObservationIgnored var repositorySwitchToken = UUID()
     @ObservationIgnored var pendingFileWatcherEvent: FileWatcher.ChangeEvent?
@@ -734,7 +734,6 @@ final class RepositoryViewModel {
         detailsTask?.cancel()
         actionTask?.cancel()
         deferredRepositoryLoadTask?.cancel()
-        autoRefreshTask?.cancel()
         fileWatcherGateTask?.cancel()
         fileTreeRefreshTask?.cancel()
         commitStatsTask?.cancel()

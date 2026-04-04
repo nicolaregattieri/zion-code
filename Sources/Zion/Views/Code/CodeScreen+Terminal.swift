@@ -17,7 +17,7 @@ extension CodeScreen {
                 VoiceActivePill(speechService: speechService) {
                     voiceToggleRequestID += 1
                 }
-                .transition(DesignSystem.Motion.slideFromTop)
+                .transition(.opacity)
                 .padding(.vertical, DesignSystem.Spacing.compact)
             }
 
