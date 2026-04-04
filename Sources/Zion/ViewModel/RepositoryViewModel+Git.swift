@@ -489,8 +489,14 @@ extension RepositoryViewModel {
                 if remotes != payload.remotes { remotes = payload.remotes }
 
                 let mergedCommits = mergeExistingStats(into: payload.commits)
-                // Fast-path: skip graph re-render if commits haven't changed
-                let commitsChanged = commits.count != mergedCommits.count
+                // Fast-path: skip graph re-render if commits haven't changed.
+                // Also force update when branch labels moved (fast-forward pull
+                // keeps the same commits but moves decoration positions).
+                let branchLabelsChanged = currentBranch != payload.currentBranch
+                    || headShortHash != payload.headShortHash
+                    || branches != payload.branches
+                let commitsChanged = branchLabelsChanged
+                    || commits.count != mergedCommits.count
                     || commits.first?.id != mergedCommits.first?.id
                     || commits.last?.id != mergedCommits.last?.id
                 if commitsChanged {
