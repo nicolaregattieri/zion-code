@@ -19,19 +19,12 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        layer?.masksToBounds = true
         registerForDraggedTypes([.fileURL])
     }
 
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) is not supported")
-    }
-
-    // MARK: - Find override
-
-    override func performFindPanelAction(_ sender: Any?) {
-        NotificationCenter.default.post(name: .zionFind, object: nil)
     }
 
     // MARK: - NSDraggingDestination
