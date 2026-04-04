@@ -139,7 +139,7 @@ final class ClipboardMonitor {
         purgeOldTempFiles()
         lastChangeCount = NSPasteboard.general.changeCount
         let pollTimer = Timer(timeInterval: Constants.Timing.clipboardPollInterval, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated {
+            Task { @MainActor [weak self] in
                 self?.poll()
             }
         }

@@ -4,7 +4,6 @@ struct LiquidBackgroundView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.zionModeEnabled) private var zionMode
     @Environment(\.scenePhase) private var scenePhase
-    @Environment(\.controlActiveState) private var controlActiveState
     @State private var phase: Bool = false
     @State private var isAnimating: Bool = false
 
@@ -45,17 +44,9 @@ struct LiquidBackgroundView: View {
                     .offset(x: phase ? -310 : -370, y: phase ? -200 : -240)
             }
         }
-        .drawingGroup()
         .onAppear { startAnimation() }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
-                startAnimation()
-            } else {
-                stopAnimation()
-            }
-        }
-        .onChange(of: controlActiveState) { _, newState in
-            if newState == .key {
                 startAnimation()
             } else {
                 stopAnimation()
@@ -65,7 +56,7 @@ struct LiquidBackgroundView: View {
 
     private func startAnimation() {
         guard !isAnimating else { return }
-        guard scenePhase == .active, controlActiveState == .key else { return }
+        guard scenePhase == .active else { return }
         isAnimating = true
         withAnimation(.easeInOut(duration: 8).repeatForever(autoreverses: true)) {
             phase.toggle()
