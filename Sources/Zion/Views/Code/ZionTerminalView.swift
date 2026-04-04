@@ -28,6 +28,12 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
         fatalError("init(coder:) is not supported")
     }
 
+    // MARK: - Find override
+
+    override func performFindPanelAction(_ sender: Any?) {
+        NotificationCenter.default.post(name: .zionFind, object: nil)
+    }
+
     // MARK: - NSDraggingDestination
 
     override func draggingEntered(_ sender: any NSDraggingInfo) -> NSDragOperation {

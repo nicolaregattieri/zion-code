@@ -18,6 +18,7 @@ extension Notification.Name {
     static let refreshRepoMemory = Notification.Name("refreshRepoMemory")
     static let clearRepoMemory = Notification.Name("clearRepoMemory")
     static let focusCommitField = Notification.Name("focusCommitField")
+    static let zionFind = Notification.Name("zionFind")
 }
 
 @main

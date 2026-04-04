@@ -20,9 +20,10 @@ extension ZionTextView {
             return true
         }
 
-        if (flags == .command || flags == .control), key == "f" {
+        if flags == .command, key == "f" {
             emitFindSeedFromSelection()
-            return false
+            NotificationCenter.default.post(name: .zionFind, object: nil)
+            return true
         }
 
         if flags == .command, key == "g" {

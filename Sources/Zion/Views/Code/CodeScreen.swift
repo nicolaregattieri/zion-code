@@ -295,6 +295,9 @@ struct CodeScreen: View {
         .onReceive(NotificationCenter.default.publisher(for: .formatDocument)) { _ in
             model.formatCurrentFile()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .zionFind)) { _ in
+            routeFindShortcut()
+        }
     }
 
     private var editorTerminalContent: some View {
