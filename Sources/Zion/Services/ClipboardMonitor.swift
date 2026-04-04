@@ -145,8 +145,8 @@ final class ClipboardMonitor {
             repeating: interval,
             leeway: .milliseconds(500)
         )
-        source.setEventHandler { [weak self] in
-            Task { @MainActor [weak self] in
+        source.setEventHandler {
+            DispatchQueue.main.async { [weak self] in
                 self?.poll()
             }
         }
