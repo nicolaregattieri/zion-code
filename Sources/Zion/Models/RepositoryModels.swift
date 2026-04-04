@@ -102,7 +102,6 @@ struct BackgroundRepoState {
     var focusedSessionID: UUID?
     var fileWatcher: FileWatcher
     var monitorTask: Task<Void, Never>?
-    var burstUntil: Date?
 }
 
 // MARK: - Switch Snapshots

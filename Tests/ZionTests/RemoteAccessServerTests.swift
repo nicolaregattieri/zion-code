@@ -548,8 +548,7 @@ final class RemoteAccessDualModeTests: XCTestCase {
             activeTabID: nil,
             focusedSessionID: nil,
             fileWatcher: FileWatcher(),
-            monitorTask: nil,
-            burstUntil: nil
+            monitorTask: nil
         )
 
         XCTAssertEqual(vm.repoName(for: backgroundSession.id), "zion-code-YEdxVgx")
@@ -567,8 +566,7 @@ final class RemoteAccessDualModeTests: XCTestCase {
             activeTabID: nil,
             focusedSessionID: nil,
             fileWatcher: FileWatcher(),
-            monitorTask: nil,
-            burstUntil: nil
+            monitorTask: nil
         )
 
         XCTAssertEqual(vm.repoName(for: promptingSession.id), "zion-code-YEdxVgx")

@@ -6,8 +6,6 @@ extension RepositoryViewModel {
         isZenModePaused = true
         zenResumeTask?.cancel()
         zenResumeTask = nil
-        autoRefreshTask?.cancel()
-        autoRefreshTask = nil
     }
 
     func exitZenMode() {
@@ -16,9 +14,8 @@ extension RepositoryViewModel {
         zenResumeTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: Constants.Timing.zenModeResumeDebounce)
             guard let self, !Task.isCancelled, !self.isZenModePaused else { return }
-            self.startAutoRefreshTimer()
             self.processPendingFileWatcherEventIfNeeded()
-            self.refreshRepository(setBusy: false, origin: .autoTimer)
+            self.refreshRepository(setBusy: false, origin: .fileWatcher)
         }
     }
 }
