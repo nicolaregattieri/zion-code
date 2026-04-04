@@ -110,7 +110,7 @@ struct ClipboardItem: Identifiable, Sendable {
 final class ClipboardMonitor {
     var items: [ClipboardItem] = []
 
-    @ObservationIgnored private var timerSource: DispatchSourceTimer?
+    @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private var lastChangeCount: Int = 0
     @ObservationIgnored private var lastPurge: Date = .distantPast
 
@@ -135,28 +135,22 @@ final class ClipboardMonitor {
     }
 
     func start() {
-        guard timerSource == nil else { return }
+        guard timer == nil else { return }
         purgeOldTempFiles()
         lastChangeCount = NSPasteboard.general.changeCount
-        let source = DispatchSource.makeTimerSource(queue: .global(qos: .utility))
-        let interval = Constants.Timing.clipboardPollInterval
-        source.schedule(
-            deadline: .now() + interval,
-            repeating: interval,
-            leeway: .milliseconds(500)
-        )
-        source.setEventHandler {
-            DispatchQueue.main.async { [weak self] in
+        let pollTimer = Timer(timeInterval: Constants.Timing.clipboardPollInterval, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
                 self?.poll()
             }
         }
-        source.resume()
-        timerSource = source
+        pollTimer.tolerance = 0.5
+        RunLoop.main.add(pollTimer, forMode: .default)
+        timer = pollTimer
     }
 
     func stop() {
-        timerSource?.cancel()
-        timerSource = nil
+        timer?.invalidate()
+        timer = nil
     }
 
     func clearAll() {
@@ -344,8 +338,8 @@ final class ClipboardMonitor {
     }
 
     func cleanup() {
-        timerSource?.cancel()
-        timerSource = nil
+        timer?.invalidate()
+        timer = nil
         // Wipe all clipboard image files on shutdown
         try? FileManager.default.removeItem(at: Self.imageDir)
     }

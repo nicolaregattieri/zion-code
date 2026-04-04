@@ -19,6 +19,7 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
+        layer?.masksToBounds = true
         registerForDraggedTypes([.fileURL])
     }
 
