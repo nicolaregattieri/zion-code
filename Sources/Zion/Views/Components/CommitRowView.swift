@@ -55,6 +55,7 @@ struct CommitRowView: View {
             height: rowHeight,
             maxColumnWidth: graphColumnMaxWidth
         )
+        .onTapGesture(count: 2) { }
         .onTapGesture { onSelect() }
     }
 
@@ -154,6 +155,7 @@ struct CommitRowView: View {
         .animation(.linear(duration: 0.1), value: isHovered)
         .animation(.linear(duration: 0.12), value: isSelected)
         .onHover { hovering in isHovered = hovering }
+        .onTapGesture(count: 2) { }
         .onTapGesture { onSelect() }
         .opacity(bisectRole == .outsideRange ? DesignSystem.Opacity.dim : DesignSystem.Opacity.full)
         .contextMenu { contextMenu }
