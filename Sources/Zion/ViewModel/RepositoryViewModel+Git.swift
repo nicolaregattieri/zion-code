@@ -469,6 +469,13 @@ extension RepositoryViewModel {
                 }
 
                 clearError()
+                // Snapshot values BEFORE updating so we can detect what changed
+                // for the graph re-render decision below.
+                let oldBranch = currentBranch
+                let oldHeadShort = headShortHash
+                let oldBranches = branches
+                let oldBranchInfos = branchInfos
+
                 // Guard every assignment to avoid redundant @Observable notifications (RT-004)
                 if currentBranch != payload.currentBranch { currentBranch = payload.currentBranch }
                 if headShortHash != payload.headShortHash { headShortHash = payload.headShortHash }
@@ -490,11 +497,13 @@ extension RepositoryViewModel {
 
                 let mergedCommits = mergeExistingStats(into: payload.commits)
                 // Fast-path: skip graph re-render if commits haven't changed.
-                // Also force update when branch labels moved (fast-forward pull
-                // keeps the same commits but moves decoration positions).
-                let branchLabelsChanged = currentBranch != payload.currentBranch
-                    || headShortHash != payload.headShortHash
-                    || branches != payload.branches
+                // Also force update when branch labels or ref positions moved
+                // (e.g. fast-forward pull, push updating remote tracking refs).
+                // Compare against pre-update snapshots, not current (already updated) values.
+                let branchLabelsChanged = oldBranch != payload.currentBranch
+                    || oldHeadShort != payload.headShortHash
+                    || oldBranches != payload.branches
+                    || oldBranchInfos != payload.branchInfos
                 let commitsChanged = branchLabelsChanged
                     || commits.count != mergedCommits.count
                     || commits.first?.id != mergedCommits.first?.id
