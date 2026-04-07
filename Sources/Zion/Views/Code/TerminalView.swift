@@ -19,6 +19,10 @@ struct TerminalTabView: NSViewRepresentable {
         if let cachedView = session._cachedView as? SwiftTerm.TerminalView {
             Self.log.log(.info, "makeNSView CACHED", context: "\(session.label)(\(session.id.uuidString.prefix(4))) alive=\(session.isAlive) preserve=\(session._shouldPreserve) pid=\(session._shellPid)", source: "TerminalTabView")
             cachedView.removeFromSuperview()
+            // Clear the layer backing store — SwiftUI's NSViewRepresentable reuse
+            // keeps the CALayer bitmap across remove/add cycles, showing the old
+            // frame as a ghost until the next draw replaces it.
+            cachedView.layer?.contents = nil
             cachedView.terminalDelegate = context.coordinator
             applyInteractionPolicy(to: cachedView)
             if let zionView = cachedView as? ZionTerminalView {
@@ -377,6 +381,16 @@ struct TerminalTabView: NSViewRepresentable {
         /// The coordinator (and its LocalProcess) survived via session._processBridge.
         func reattach(view: SwiftTerm.TerminalView) {
             self.terminalView = view
+            // Transfer the LocalProcess reference from the previous owner so this
+            // coordinator can send SIGWINCH on resize and pipe input. The previous
+            // owner remains the LocalProcess delegate (set at process creation),
+            // so it forwards dataReceived to us via session._processBridge lookup.
+            if process == nil,
+               let previousBridge = parent.session._processBridge as? Coordinator,
+               previousBridge !== self,
+               let inheritedProcess = previousBridge.process {
+                self.process = inheritedProcess
+            }
             installShiftEnterMonitor()
             installMouseInteractionMonitors()
             installFreezeResetObserver()
@@ -788,7 +802,7 @@ struct TerminalTabView: NSViewRepresentable {
             }
         }
 
-        private func queueTerminalOutput(_ slice: ArraySlice<UInt8>) {
+        fileprivate func queueTerminalOutput(_ slice: ArraySlice<UInt8>) {
             guard !slice.isEmpty else { return }
             pendingTerminalOutput.append(contentsOf: slice)
 
@@ -1137,6 +1151,9 @@ struct TerminalTabView: NSViewRepresentable {
         }
 
         nonisolated func dataReceived(slice: ArraySlice<UInt8>) {
+            // Capture bytes before hopping to MainActor so we can forward them
+            // if this coordinator is no longer the active owner.
+            let capturedSlice = Array(slice)
             Task { @MainActor in
                 // Session was explicitly killed -- drop all further data
                 guard parent.session._shouldPreserve else { return }
@@ -1147,6 +1164,12 @@ struct TerminalTabView: NSViewRepresentable {
                         bridgeMatchesCoordinator: parent.session._processBridge === self
                     ) {
                         ensureOwnerBinding(reason: "dataReceived.recover")
+                    } else if let activeBridge = parent.session._processBridge as? Coordinator, activeBridge !== self {
+                        // A new Coordinator took over as owner but we're still the LocalProcess
+                        // delegate. Forward the data to the active owner so TUI apps (Claude,
+                        // Codex, vim) don't lose cursor-move sequences while the view is cached.
+                        activeBridge.queueTerminalOutput(capturedSlice[...])
+                        return
                     } else {
                         DiagnosticLogger.shared.log(
                             .info,
