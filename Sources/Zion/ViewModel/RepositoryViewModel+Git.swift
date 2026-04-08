@@ -506,8 +506,8 @@ extension RepositoryViewModel {
                     || oldBranchInfos != payload.branchInfos
                 let commitsChanged = branchLabelsChanged
                     || commits.count != mergedCommits.count
-                    || commits.first?.id != mergedCommits.first?.id
-                    || commits.last?.id != mergedCommits.last?.id
+                    || commits.first != mergedCommits.first
+                    || commits.last != mergedCommits.last
                 if commitsChanged {
                     commits = mergedCommits
                     recalculateMaxLaneCount()
