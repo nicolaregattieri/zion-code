@@ -47,6 +47,7 @@ struct TerminalTabView: NSViewRepresentable {
             return cachedView
         }
 
+        let isFocused = model?.focusedSessionID == session.id
         Self.log.log(.info, "makeNSView FRESH", context: "\(session.label)(\(session.id.uuidString.prefix(4)))", source: "TerminalTabView")
         // Fresh terminal (ZionTerminalView adds Finder drag-and-drop support)
         let terminalView = ZionTerminalView(frame: .zero)
@@ -77,6 +78,17 @@ struct TerminalTabView: NSViewRepresentable {
         // Hide SwiftTerm's legacy scroller (we don't need a visible scrollbar)
         for subview in terminalView.subviews where subview is NSScroller {
             subview.isHidden = true
+        }
+
+        // Auto-focus: when this fresh terminal is the focused session (e.g., just
+        // created by split), request first responder once the view is in the window.
+        // This doesn't touch resize/buffer logic — safe with the ghost frame guard.
+        if isFocused {
+            DispatchQueue.main.async { [weak terminalView] in
+                guard let terminalView, let window = terminalView.window else { return }
+                Self.log.log(.info, "makeNSView AUTO-FOCUS", context: "\(session.label)(\(session.id.uuidString.prefix(4)))", source: "SplitFocus")
+                window.makeFirstResponder(terminalView)
+            }
         }
         return terminalView
     }

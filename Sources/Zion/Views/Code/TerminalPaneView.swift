@@ -20,6 +20,7 @@ struct TerminalPaneView: View {
                 model: model,
                 transparentBackground: transparentBackground
             )
+            .id(session.id)
             .overlay(alignment: .top) {
                 if focusedSessionID == session.id, model.terminalSessions.count > 1 {
                     Capsule()
@@ -47,7 +48,10 @@ struct TerminalPaneView: View {
             .animation(.easeInOut(duration: 0.15), value: focusedSessionID)
             .padding(.horizontal, DesignSystem.Spacing.micro)
             .contentShape(Rectangle())
-            .onTapGesture { model.focusedSessionID = session.id }
+            .onTapGesture {
+                model.focusedSessionID = session.id
+                model.focusActiveTerminal()
+            }
             .dropDestination(for: String.self) { items, _ in
                 guard let text = items.first, !text.isEmpty else { return false }
                 model.sendTextToTerminal(text, sessionID: session.id)
