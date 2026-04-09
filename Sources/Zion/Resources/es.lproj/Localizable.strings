@@ -1536,6 +1536,7 @@
 "codereview.sameBranch.inline" = "Origen y destino no pueden ser la misma rama.";
 "codereview.sameBranch.error" = "Selecciona ramas diferentes para iniciar la revisión.";
 "Merge into Current" = "Merge en la Actual";
+"Pull into Current" = "Pull en la Actual";
 "Rebase Current onto This" = "Rebase de la Actual en esta";
 "stash.restore.error.noEntries" = "No hay entradas de stash disponibles para restaurar.";
 "stash.restore.error.invalidReference" = "La referencia de stash '%@' no es válida.";
