@@ -16,8 +16,8 @@ extension ContentView {
 
             ControlGroup {
                 Button { openRepositoryPanel() } label: { Image(systemName: "folder") }
-                    .help(L10n("Abrir repositório"))
-                    .accessibilityLabel(L10n("Abrir repositório"))
+                    .help(L10n("toolbar.openFolder"))
+                    .accessibilityLabel(L10n("toolbar.openFolder"))
                 Button { model.isCloneSheetVisible = true } label: { Image(systemName: "square.and.arrow.down.on.square") }
                     .help(L10n("Clonar repositorio remoto"))
                     .accessibilityLabel(L10n("Clonar repositorio remoto"))
