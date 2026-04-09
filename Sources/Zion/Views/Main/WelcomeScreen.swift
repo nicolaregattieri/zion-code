@@ -80,7 +80,7 @@ struct WelcomeScreen: View {
                 // Recent repositories
                 if !model.recentRepositories.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text(L10n("Recentes"))
+                        Text(L10n("sidebar.projects"))
                             .font(DesignSystem.Typography.bodySemibold)
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)

@@ -230,6 +230,7 @@
 
 // Toolbar
 "Abrir repositório" = "Abrir repositorio";
+"toolbar.openFolder" = "Abrir carpeta";
 "Atualizar status do repositório" = "Actualizar: fetch + recargar estado local del repositorio";
 "Fetch: Busca atualizações remotas" = "Fetch: actualizar referencias remotas (sin cambiar la rama local)";
 "Pull: Puxa alterações da branch atual" = "Pull: aplicar commits remotos en la rama actual";
@@ -1345,6 +1346,8 @@
 "Pop" = "Pop";
 "Prune worktrees" = "Prune worktrees";
 "Recentes" = "Recientes";
+"sidebar.projects" = "Proyectos";
+"sidebar.projects.dropHint" = "Arrastra una carpeta para agregar";
 "Remover tag" = "Eliminar tag";
 "Remover worktree" = "Eliminar worktree";
 "Saltar para" = "Saltar a";

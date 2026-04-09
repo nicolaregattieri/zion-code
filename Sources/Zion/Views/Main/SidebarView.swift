@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct SidebarView: View {
     @Bindable var model: RepositoryViewModel
@@ -8,8 +9,9 @@ struct SidebarView: View {
     @Binding var appearanceRaw: String
 
     @Environment(SparkleUpdater.self) private var updater: SparkleUpdater?
-    @AppStorage(UserDefaultsKeys.Sidebar.recentsExpanded) private var isRecentsExpanded: Bool = true
+    @AppStorage(UserDefaultsKeys.Sidebar.projectsExpanded) private var isProjectsExpanded: Bool = true
     @State var isNewWorktreeExpanded: Bool = false
+    @State var isProjectsDropTargeted: Bool = false
     @State var hoveredSection: AppSection?
     @State var hoveredWorktreePath: String?
     @State var showLockedHintForSection: AppSection?
@@ -49,45 +51,70 @@ struct SidebarView: View {
     }
 
     private var recentProjectsCard: some View {
-        Group {
-            if !model.recentRepositories.isEmpty {
-                GlassCard(spacing: 10) {
-                    CardHeader(L10n("Recentes"), icon: "clock.arrow.circlepath") {
-                        collapseToggle(isExpanded: $isRecentsExpanded)
-                    }
+        GlassCard(spacing: 10) {
+            CardHeader(L10n("sidebar.projects"), icon: "square.grid.2x2") {
+                if !model.recentRepositories.isEmpty {
+                    collapseToggle(isExpanded: $isProjectsExpanded)
+                }
+            }
 
-                    if isRecentsExpanded {
-                        VStack(spacing: 4) {
-                            ForEach(model.recentRepositories, id: \.self) { url in
-                                RecentProjectRow(
-                                    url: url,
-                                    isCurrent: model.recentRepositoryRoot(for: model.pendingRepositoryURL ?? model.repositoryURL) == url,
-                                    changedCount: model.recentChangedCount(for: url),
-                                    worktreeCount: model.recentWorktreeCounts[url] ?? 0
-                                ) {
-                                    guard model.recentRepositoryRoot(for: model.repositoryURL) != url else { return }
-                                    withAnimation(DesignSystem.Motion.springInteractive) {
-                                        model.saveRecentRepository(url)
-                                        model.pendingRepositoryURL = url
-                                        model.prepareBlockingRepositorySwitch(for: url)
-                                    }
-                                    model.nextSectionAfterRepositoryOpen = selectedSection
-                                    Task { @MainActor in
-                                        // Let the spring animation (0.3s) complete before
-                                        // openRepository runs heavy synchronous work on MainActor
-                                        // (terminal stash/restore, file watchers, snapshot capture).
-                                        try? await Task.sleep(for: .milliseconds(350))
-                                        model.openRepository(url, silent: true)
-                                    }
-                                }
+            if model.recentRepositories.isEmpty {
+                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
+                    Image(systemName: "arrow.down.doc")
+                        .foregroundStyle(.secondary)
+                    Text(L10n("sidebar.projects.dropHint"))
+                        .font(DesignSystem.Typography.meta)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+            } else if isProjectsExpanded {
+                VStack(spacing: 4) {
+                    ForEach(model.recentRepositories, id: \.self) { url in
+                        RecentProjectRow(
+                            url: url,
+                            isCurrent: model.recentRepositoryRoot(for: model.pendingRepositoryURL ?? model.repositoryURL) == url,
+                            changedCount: model.recentChangedCount(for: url),
+                            worktreeCount: model.recentWorktreeCounts[url] ?? 0
+                        ) {
+                            guard model.recentRepositoryRoot(for: model.repositoryURL) != url else { return }
+                            withAnimation(DesignSystem.Motion.springInteractive) {
+                                model.saveRecentRepository(url)
+                                model.pendingRepositoryURL = url
+                                model.prepareBlockingRepositorySwitch(for: url)
+                            }
+                            model.nextSectionAfterRepositoryOpen = selectedSection
+                            Task { @MainActor in
+                                try? await Task.sleep(for: .milliseconds(350))
+                                model.openRepository(url, silent: true)
                             }
                         }
                     }
                 }
-                .padding(.horizontal, 10)
-                .featureTourAnchor(.recentRepositories)
             }
         }
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.containerCornerRadius)
+                .stroke(DesignSystem.Colors.selectionBorder, lineWidth: 2)
+                .opacity(isProjectsDropTargeted ? 1 : 0)
+                .animation(DesignSystem.Motion.detail, value: isProjectsDropTargeted)
+        )
+        .onDrop(of: [UTType.fileURL], isTargeted: $isProjectsDropTargeted) { providers in
+            guard let provider = providers.first else { return false }
+            _ = provider.loadObject(ofClass: URL.self) { url, _ in
+                guard let url else { return }
+                var isDir = ObjCBool(false)
+                guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir),
+                      isDir.boolValue else { return }
+                DispatchQueue.main.async {
+                    model.saveRecentRepository(url)
+                    model.openRepository(url)
+                }
+            }
+            return true
+        }
+        .padding(.horizontal, 10)
+        .featureTourAnchor(.recentRepositories)
     }
 
     private var repoSummaryCard: some View {
@@ -414,6 +441,9 @@ private struct RecentProjectRow: View {
         }
         .buttonStyle(.plain)
         .onHover { h in isHovered = h }
+        .onDrag {
+            NSItemProvider(object: url as NSURL)
+        }
     }
 }
 
