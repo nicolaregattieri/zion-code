@@ -163,6 +163,8 @@ extension RepositoryViewModel {
                     let _ = try await worker.runAction(args: ["checkout", target], in: url)
                 }
 
+                await MainActor.run { currentBranch = localName }
+
                 // 3. Pull changes
                 let _ = try await runActionWithCredentialRetry(
                     label: "Pull",

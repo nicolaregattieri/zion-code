@@ -265,7 +265,7 @@ struct GraphScreen: View {
                                             }
                                         }
                                         let message = L10n("Deseja fazer checkout de %@ e puxar as alterações?", localName)
-                                        performGitAction(title, message, false) {
+                                        performGitAction(title, message, true) {
                                             model.checkoutAndPull(reference: branch)
                                         }
                                     } else {
