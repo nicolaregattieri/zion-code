@@ -294,6 +294,11 @@ struct ContentView: View {
             guard let urls = notification.userInfo?["urls"] as? [URL] else { return }
             model.openExternalFiles(urls)
         }
+        .onReceive(NotificationCenter.default.publisher(for: .openDirectoryFromFinder)) { notification in
+            guard let url = notification.userInfo?["url"] as? URL else { return }
+            model.saveRecentRepository(url)
+            model.openRepository(url)
+        }
         .onReceive(NotificationCenter.default.publisher(for: .refreshRepoMemory)) { _ in
             Task { await model.refreshRepoMemory(force: true) }
         }

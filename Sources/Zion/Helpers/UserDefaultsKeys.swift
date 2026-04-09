@@ -129,7 +129,7 @@ enum UserDefaultsKeys {
     // MARK: - Sidebar
 
     enum Sidebar {
-        static let recentsExpanded = "zion.sidebar.recentsExpanded"
+        static let projectsExpanded = "zion.sidebar.projectsExpanded"
     }
 
     // MARK: - Bridge

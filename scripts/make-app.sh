@@ -121,6 +121,18 @@ cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
   <array>
     <dict>
       <key>CFBundleTypeName</key>
+      <string>Git Repository</string>
+      <key>CFBundleTypeRole</key>
+      <string>Viewer</string>
+      <key>LSHandlerRank</key>
+      <string>Alternate</string>
+      <key>LSItemContentTypes</key>
+      <array>
+        <string>public.folder</string>
+      </array>
+    </dict>
+    <dict>
+      <key>CFBundleTypeName</key>
       <string>Source Code</string>
       <key>CFBundleTypeRole</key>
       <string>Editor</string>

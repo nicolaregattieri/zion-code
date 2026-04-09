@@ -10,6 +10,7 @@ extension Notification.Name {
     static let toggleZenMode = Notification.Name("toggleZenMode")
     static let toggleZionMode = Notification.Name("toggleZionMode")
     static let openFilesFromFinder = Notification.Name("openFilesFromFinder")
+    static let openDirectoryFromFinder = Notification.Name("openDirectoryFromFinder")
     static let formatDocument = Notification.Name("formatDocument")
     static let formatCodeFile = Notification.Name("formatCodeFile")
     static let openMobileAccessSettings = Notification.Name("openMobileAccessSettings")
@@ -240,14 +241,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @MainActor static var pendingOpenURLs: [URL] = []
 
     func application(_ application: NSApplication, open urls: [URL]) {
+        let directoryURLs = urls.filter { $0.isFileURL && $0.hasDirectoryPath }
         let fileURLs = urls.filter { $0.isFileURL && !$0.hasDirectoryPath }
-        guard !fileURLs.isEmpty else { return }
-        AppDelegate.pendingOpenURLs = fileURLs
-        NotificationCenter.default.post(
-            name: .openFilesFromFinder,
-            object: nil,
-            userInfo: ["urls": fileURLs]
-        )
+
+        if let dirURL = directoryURLs.first {
+            NotificationCenter.default.post(
+                name: .openDirectoryFromFinder,
+                object: nil,
+                userInfo: ["url": dirURL]
+            )
+        }
+
+        if !fileURLs.isEmpty {
+            AppDelegate.pendingOpenURLs = fileURLs
+            NotificationCenter.default.post(
+                name: .openFilesFromFinder,
+                object: nil,
+                userInfo: ["urls": fileURLs]
+            )
+        }
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {

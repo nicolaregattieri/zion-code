@@ -26,6 +26,8 @@
 "Abrir" = "Open";
 "Atualizar" = "Refresh";
 "Recentes" = "Recent";
+"sidebar.projects" = "Projects";
+"sidebar.projects.dropHint" = "Drop a folder to add";
 "Commits" = "Commits";
 "Detalhes" = "Details";
 "Busca" = "Search";
@@ -283,6 +285,7 @@
 
 // Toolbar
 "Abrir repositório" = "Open repository";
+"toolbar.openFolder" = "Open folder";
 "Atualizar status do repositório" = "Refresh: fetch + reload local repository state";
 "Fetch: Busca atualizações remotas" = "Fetch: update remote refs (without changing local branch)";
 "Pull: Puxa alterações da branch atual" = "Pull: apply remote commits into current branch";
