@@ -118,9 +118,9 @@ extension ContentView {
         let isRemote = info?.isRemote ?? (branch.contains("/") && !branch.hasPrefix("feature/") && !branch.hasPrefix("bugfix/"))
 
         if isRemote {
-            Button(L10n("Pull")) { model.pullIntoCurrent(fromRemoteBranch: branch) }
+            Button(L10n("Pull into Current")) { model.pullIntoCurrent(fromRemoteBranch: branch) }
         } else if let upstream = info?.upstream, !upstream.isEmpty {
-            Button(L10n("Pull")) { model.pullIntoCurrent(fromRemoteBranch: upstream) }
+            Button(L10n("Pull into Current")) { model.pullIntoCurrent(fromRemoteBranch: upstream) }
         }
 
         Button(L10n("Merge into Current")) {
@@ -143,6 +143,7 @@ extension ContentView {
 
         if !isRemote {
             Button(L10n("Criar Pull Request...")) {
+                model.prSheetTargetBranch = branch
                 model.isPRSheetVisible = true
             }
         }

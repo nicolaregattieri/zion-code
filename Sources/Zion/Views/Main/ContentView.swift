@@ -364,7 +364,7 @@ struct ContentView: View {
         .sheet(isPresented: $model.isRebaseSheetVisible) {
             InteractiveRebaseSheet(model: model)
         }
-        .sheet(isPresented: $model.isPRSheetVisible) {
+        .sheet(isPresented: $model.isPRSheetVisible, onDismiss: { model.prSheetTargetBranch = nil }) {
             PullRequestSheet(model: model)
         }
         .sheet(isPresented: $model.isCloneSheetVisible) {

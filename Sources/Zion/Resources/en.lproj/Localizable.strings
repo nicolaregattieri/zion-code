@@ -1524,6 +1524,7 @@
 "codereview.sameBranch.inline" = "Source and target cannot be the same branch.";
 "codereview.sameBranch.error" = "Select different branches to start review.";
 "Merge into Current" = "Merge into Current";
+"Pull into Current" = "Pull into Current";
 "Rebase Current onto This" = "Rebase Current onto This";
 "stash.restore.error.noEntries" = "No stash entries are available to restore.";
 "stash.restore.error.invalidReference" = "Stash reference '%@' is not valid.";

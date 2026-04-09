@@ -254,6 +254,7 @@ final class RepositoryViewModel {
     // Git Hosting Provider integration
     var pullRequests: [HostedPRInfo] = []
     var isPRSheetVisible: Bool = false
+    var prSheetTargetBranch: String?
     @ObservationIgnored let githubClient = GitHubClient()
     @ObservationIgnored let gitlabClient = GitLabClient()
     @ObservationIgnored let bitbucketClient = BitbucketClient()

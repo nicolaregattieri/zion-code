@@ -14,6 +14,10 @@ struct PullRequestSheet: View {
     @State private var needsTokenForKind: GitHostingKind?
     @State private var inlineToken: String = ""
 
+    private var headBranch: String {
+        model.prSheetTargetBranch ?? headBranch
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
@@ -23,7 +27,7 @@ struct PullRequestSheet: View {
                     .foregroundStyle(DesignSystem.Colors.success)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(L10n("Criar Pull Request")).font(DesignSystem.Typography.sheetTitle)
-                    Text(model.currentBranch)
+                    Text(headBranch)
                         .font(DesignSystem.Typography.monoSmall)
                         .foregroundStyle(.secondary)
                 }
@@ -212,18 +216,18 @@ struct PullRequestSheet: View {
             }
 
             // Default title from branch name
-            if model.currentBranch.hasPrefix("release/") {
-                let version = String(model.currentBranch.dropFirst("release/".count))
+            if headBranch.hasPrefix("release/") {
+                let version = String(headBranch.dropFirst("release/".count))
                 title = "Release \(version)"
             } else {
-                title = model.currentBranch
+                title = headBranch
                     .replacingOccurrences(of: "-", with: " ")
                     .replacingOccurrences(of: "_", with: " ")
                     .replacingOccurrences(of: "/", with: ": ")
             }
 
             // Auto-populate changelog for release branches
-            if model.currentBranch.hasPrefix("release/") {
+            if headBranch.hasPrefix("release/") {
                 Task {
                     if let changelog = await model.generateReleaseChangelog() {
                         body_ = changelog
@@ -241,9 +245,9 @@ struct PullRequestSheet: View {
         }
 
         // 2. Check if the current branch has been pushed to the remote
-        let currentBranchInfo = model.branchInfos.first { $0.name == model.currentBranch && !$0.isRemote }
+        let currentBranchInfo = model.branchInfos.first { $0.name == headBranch && !$0.isRemote }
         if let info = currentBranchInfo, info.upstream.isEmpty {
-            errorMessage = L10n("hosting.branchNotPushed", model.currentBranch)
+            errorMessage = L10n("hosting.branchNotPushed", headBranch)
             return
         }
 
@@ -273,7 +277,7 @@ struct PullRequestSheet: View {
                     remote: remote,
                     title: title,
                     body: body_,
-                    head: model.currentBranch,
+                    head: headBranch,
                     base: baseBranch,
                     draft: isDraft
                 )
@@ -324,7 +328,7 @@ struct PullRequestSheet: View {
                     remote: remote,
                     title: title,
                     body: body_,
-                    head: model.currentBranch,
+                    head: headBranch,
                     base: baseBranch,
                     draft: isDraft
                 )
