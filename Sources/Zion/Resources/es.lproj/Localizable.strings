@@ -2366,3 +2366,7 @@
 "statusbar.mobile.lan" = "LAN";
 "settings.general.zionMode" = "Modo Zion";
 "settings.mobile.qrCode.accessibility" = "Codigo QR para emparejamiento movil";
+
+// Markdown Editor Fullscreen
+"editor.markdown.fullscreen" = "Pantalla Completa";
+"editor.markdown.exitFullscreen" = "Salir de Pantalla Completa";

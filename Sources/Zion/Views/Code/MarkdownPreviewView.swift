@@ -11,7 +11,7 @@ struct MarkdownPreviewView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 0) {
+            LazyVStack(alignment: .leading, spacing: DesignSystem.Spacing.markdownBlockSpacing) {
                 if blocks.isEmpty {
                     emptyStateView
                 } else {
@@ -20,10 +20,11 @@ struct MarkdownPreviewView: View {
                     }
                 }
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 20)
+            .padding(.horizontal, DesignSystem.Spacing.screenEdge)
+            .padding(.vertical, DesignSystem.Spacing.sectionGap)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .tint(theme.colors.keyword)
         .textSelection(.enabled)
         .background(theme.colors.background)
         .environment(\.colorScheme, theme.isLightAppearance ? .light : .dark)
@@ -78,20 +79,18 @@ struct MarkdownPreviewView: View {
     // MARK: - Heading
 
     private func headingView(text: AttributedString, level: Int) -> some View {
-        let size: CGFloat
-        let weight: Font.Weight
-        switch level {
-        case 1: size = 28; weight = .bold
-        case 2: size = 22; weight = .bold
-        case 3: size = 18; weight = .semibold
-        case 4: size = 16; weight = .semibold
-        case 5: size = 14; weight = .semibold
-        default: size = 13; weight = .semibold
+        let headingFont: Font = switch level {
+        case 1: DesignSystem.Typography.markdownH1
+        case 2: DesignSystem.Typography.markdownH2
+        case 3: DesignSystem.Typography.markdownH3
+        case 4: DesignSystem.Typography.markdownH4
+        case 5: DesignSystem.Typography.markdownH5
+        default: DesignSystem.Typography.markdownH6
         }
 
         return VStack(alignment: .leading, spacing: 0) {
             markdownTextView(text)
-                .font(.system(size: size, weight: weight))
+                .font(headingFont)
                 .foregroundStyle(theme.colors.text)
 
             if level <= 2 {
@@ -120,8 +119,9 @@ struct MarkdownPreviewView: View {
                 }
             }
         }
-        .padding(.vertical, 8)
-        .padding(.leading, 4)
+        .padding(DesignSystem.Spacing.cardPadding)
+        .background(theme.colors.keyword.opacity(theme.isLightAppearance ? 0.04 : 0.06))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
     }
 
     // MARK: - Code Block
@@ -158,15 +158,16 @@ struct MarkdownPreviewView: View {
     // MARK: - Horizontal Rule
 
     private var horizontalRuleView: some View {
-        Divider()
-            .overlay(theme.colors.comment.opacity(0.3))
-            .padding(.vertical, 12)
+        RoundedRectangle(cornerRadius: 1)
+            .fill(theme.colors.comment.opacity(0.25))
+            .frame(height: 2)
+            .padding(.vertical, 16)
     }
 
     // MARK: - List
 
     private func listView(items: [MarkdownListItem], ordered: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.markdownListItemSpacing) {
             ForEach(Array(items.enumerated()), id: \.offset) { index, item in
                 listItemView(item: item, index: index, ordered: ordered)
             }
@@ -175,11 +176,9 @@ struct MarkdownPreviewView: View {
     }
 
     private func listItemView(item: MarkdownListItem, index: Int, ordered: Bool) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 0) {
-            let indent = CGFloat(item.indentLevel) * 20
+        let indent = CGFloat(item.indentLevel) * 20
 
-            Color.clear.frame(width: indent)
-
+        return HStack(alignment: .top, spacing: 0) {
             if let checked = item.isChecked {
                 Image(systemName: checked ? "checkmark.square.fill" : "square")
                     .font(DesignSystem.Typography.body)
@@ -211,7 +210,9 @@ struct MarkdownPreviewView: View {
                     .foregroundStyle(theme.colors.text)
             }
         }
-        .padding(.vertical, 2)
+        .padding(.leading, indent)
+        .padding(.vertical, 4)
+        .frame(minHeight: 20)
     }
 
     // MARK: - Table
