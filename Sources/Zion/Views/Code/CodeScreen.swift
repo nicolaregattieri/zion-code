@@ -593,9 +593,18 @@ struct CodeScreen: View {
     private var markdownPreviewPane: some View {
         VStack(spacing: 0) {
             HStack(spacing: DesignSystem.Spacing.iconTextGap) {
-                Label(L10n("editor.markdown.preview"), systemImage: "doc.text.image")
-                    .font(DesignSystem.Typography.bodyMedium)
-                    .foregroundStyle(.secondary)
+                Button {
+                    withAnimation(DesignSystem.Motion.detail) {
+                        isMarkdownPreviewVisible = false
+                    }
+                } label: {
+                    Label(L10n("editor.markdown.preview"), systemImage: "eye.fill")
+                        .font(DesignSystem.Typography.bodyMedium)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .help(L10n("editor.markdown.hidePreview"))
                 Spacer(minLength: 0)
                 Button {
                     withAnimation(DesignSystem.Motion.detail) {
