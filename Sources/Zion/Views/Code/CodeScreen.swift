@@ -252,8 +252,12 @@ struct CodeScreen: View {
                 .frame(width: 0, height: 0).opacity(0)
         }
         .onChange(of: model.activeFileID) { _, newActiveID in
-            isMarkdownPreviewVisible = false
-            isMarkdownFullscreen = false
+            let newIsMarkdown = isNewFileMarkdown(newActiveID)
+            let keepPreview = isMarkdownPreviewVisible && newIsMarkdown
+            if !keepPreview {
+                isMarkdownPreviewVisible = false
+                isMarkdownFullscreen = false
+            }
             if !isTextEditorActive {
                 closeSearch()
             }
@@ -328,6 +332,13 @@ struct CodeScreen: View {
                         .background(model.selectedTheme.colors.background)
                         .environment(\.colorScheme, model.selectedTheme.isLightAppearance ? .light : .dark)
                         .zIndex(2)
+                }
+
+                if isMarkdownFile && !isMarkdownPreviewVisible {
+                    markdownBanner
+                        .background(model.selectedTheme.colors.background)
+                        .environment(\.colorScheme, model.selectedTheme.isLightAppearance ? .light : .dark)
+                        .zIndex(1)
                 }
 
                 Group {
@@ -455,6 +466,12 @@ struct CodeScreen: View {
         model.selectedEditorContentKind == .markdown
     }
 
+    private func isNewFileMarkdown(_ fileID: FileItem.ID?) -> Bool {
+        guard let id = fileID,
+              let file = model.openedFiles.first(where: { $0.id == id }) else { return false }
+        return model.editorContentKind(for: file.url) == .markdown
+    }
+
     var isTextEditorActive: Bool {
         model.selectedEditorContentKind == .text || model.selectedEditorContentKind == .markdown
     }
@@ -530,6 +547,49 @@ struct CodeScreen: View {
         .help(L10n("help.code.navigation"))
     }
 
+    private var markdownBanner: some View {
+        HStack(spacing: DesignSystem.Spacing.iconTextGap) {
+            Image(systemName: "doc.text")
+                .font(DesignSystem.Typography.bodySmall)
+                .foregroundStyle(.tertiary)
+
+            Text("Markdown")
+                .font(DesignSystem.Typography.bodySmall)
+                .foregroundStyle(.secondary)
+
+            Spacer(minLength: 0)
+
+            Button {
+                withAnimation(DesignSystem.Motion.detail) {
+                    isMarkdownPreviewVisible = true
+                }
+            } label: {
+                Label(L10n("editor.markdown.preview"), systemImage: "eye")
+                    .font(DesignSystem.Typography.bodySmall)
+                    .frame(height: DesignSystem.Spacing.standard * 3)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.secondary)
+
+            Button {
+                withAnimation(DesignSystem.Motion.detail) {
+                    isMarkdownPreviewVisible = true
+                    isMarkdownFullscreen = true
+                }
+            } label: {
+                Label(L10n("editor.markdown.fullscreen"), systemImage: "arrow.up.left.and.arrow.down.right")
+                    .font(DesignSystem.Typography.bodySmall)
+                    .frame(height: DesignSystem.Spacing.standard * 3)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, DesignSystem.Spacing.cardPadding)
+        .padding(.vertical, DesignSystem.Spacing.iconTextGap)
+    }
+
     private var markdownPreviewPane: some View {
         VStack(spacing: 0) {
             HStack(spacing: DesignSystem.Spacing.iconTextGap) {
@@ -544,6 +604,7 @@ struct CodeScreen: View {
                 } label: {
                     Image(systemName: "arrow.up.left.and.arrow.down.right")
                         .font(DesignSystem.Typography.body)
+                        .foregroundStyle(.secondary)
                         .frame(width: 24, height: 24)
                         .contentShape(Rectangle())
                 }

@@ -82,7 +82,7 @@ extension CodeScreen {
                         isMarkdownPreviewVisible.toggle()
                     }
                 } label: {
-                    Image(systemName: isMarkdownPreviewVisible ? "doc.richtext.fill" : "doc.richtext")
+                    Image(systemName: isMarkdownPreviewVisible ? "eye.fill" : "eye")
                         .font(DesignSystem.Typography.label)
                 }
                 .buttonStyle(.bordered)
