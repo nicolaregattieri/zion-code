@@ -15,7 +15,7 @@ struct PullRequestSheet: View {
     @State private var inlineToken: String = ""
 
     private var headBranch: String {
-        model.prSheetTargetBranch ?? headBranch
+        model.prSheetTargetBranch ?? model.currentBranch
     }
 
     var body: some View {
