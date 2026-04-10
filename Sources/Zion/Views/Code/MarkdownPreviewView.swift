@@ -166,7 +166,7 @@ struct MarkdownPreviewView: View {
     // MARK: - List
 
     private func listView(items: [MarkdownListItem], ordered: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.markdownListItemSpacing) {
             ForEach(Array(items.enumerated()), id: \.offset) { index, item in
                 listItemView(item: item, index: index, ordered: ordered)
             }
@@ -175,11 +175,9 @@ struct MarkdownPreviewView: View {
     }
 
     private func listItemView(item: MarkdownListItem, index: Int, ordered: Bool) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 0) {
-            let indent = CGFloat(item.indentLevel) * 20
+        let indent = CGFloat(item.indentLevel) * 20
 
-            Color.clear.frame(width: indent)
-
+        return HStack(alignment: .top, spacing: 0) {
             if let checked = item.isChecked {
                 Image(systemName: checked ? "checkmark.square.fill" : "square")
                     .font(DesignSystem.Typography.body)
@@ -211,7 +209,9 @@ struct MarkdownPreviewView: View {
                     .foregroundStyle(theme.colors.text)
             }
         }
-        .padding(.vertical, 2)
+        .padding(.leading, indent)
+        .padding(.vertical, 4)
+        .frame(minHeight: 20)
     }
 
     // MARK: - Table
