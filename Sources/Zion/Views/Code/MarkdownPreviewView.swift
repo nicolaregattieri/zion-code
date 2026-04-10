@@ -20,8 +20,8 @@ struct MarkdownPreviewView: View {
                     }
                 }
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 20)
+            .padding(.horizontal, DesignSystem.Spacing.screenEdge)
+            .padding(.vertical, DesignSystem.Spacing.sectionGap)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .tint(theme.colors.keyword)
@@ -119,7 +119,7 @@ struct MarkdownPreviewView: View {
                 }
             }
         }
-        .padding(12)
+        .padding(DesignSystem.Spacing.cardPadding)
         .background(theme.colors.keyword.opacity(theme.isLightAppearance ? 0.04 : 0.06))
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
     }
