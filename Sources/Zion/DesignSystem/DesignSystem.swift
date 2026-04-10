@@ -218,6 +218,10 @@ struct DesignSystem {
         static let smallCornerRadius: CGFloat = 6       // Tags, tiny pills, code blocks
         static let microCornerRadius: CGFloat = 4       // Badges, progress bars, icon frames
         static let largeCornerRadius: CGFloat = 28      // Branding elements, hero cards
+
+        // Markdown spacing
+        static let markdownBlockSpacing: CGFloat = 8
+        static let markdownListItemSpacing: CGFloat = 6
     }
 
     // MARK: - Typography Tokens
@@ -296,6 +300,18 @@ struct DesignSystem {
         static let decorativeIcon = Font.system(size: 28)
         static let largeIcon = Font.system(size: 32)
         static let heroIcon = Font.system(size: 36)
+
+        // Markdown headings
+        static let markdownH1 = Font.system(size: 28, weight: .bold)
+        static let markdownH2 = Font.system(size: 22, weight: .bold)
+        static let markdownH3 = Font.system(size: 18, weight: .semibold)
+        static let markdownH4 = Font.system(size: 16, weight: .semibold)
+        static let markdownH5 = Font.system(size: 14, weight: .semibold)
+        static let markdownH6 = Font.system(size: 13, weight: .semibold)
+
+        // Markdown body
+        static let markdownBody = Font.system(size: 14)
+        static let markdownBlockquote = Font.system(size: 14)
     }
 
     // MARK: - Opacity Tokens
