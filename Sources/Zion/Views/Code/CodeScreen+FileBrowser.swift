@@ -120,11 +120,13 @@ extension CodeScreen {
                                 .padding(DesignSystem.Spacing.sectionGap)
                                 .frame(maxWidth: .infinity)
                             } else {
+                                let isFiltering = !fileBrowserFilterText.isEmpty
                                 ForEach(displayFiles) { item in
                                     FileTreeNodeView(
                                         model: model,
                                         item: item,
                                         level: 0,
+                                        isFiltering: isFiltering,
                                         onActivate: focusFileBrowserResponder
                                     )
                                     .id(item.id)

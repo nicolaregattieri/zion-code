@@ -4,12 +4,13 @@ struct FileTreeNodeView: View {
     var model: RepositoryViewModel
     let item: FileItem
     let level: Int
+    var isFiltering: Bool = false
     var onActivate: (() -> Void)? = nil
     @State private var isHovered = false
     @State private var isDropTarget = false
 
     var body: some View {
-        let isExpanded = model.expandedPaths.contains(item.id)
+        let isExpanded = isFiltering || model.expandedPaths.contains(item.id)
         let isSelected = model.selectedFileIDs.contains(item.id) ||
                          (model.selectedFileIDs.isEmpty && model.activeFileID == item.id)
         let isDark = model.selectedTheme.isDark
@@ -222,6 +223,7 @@ struct FileTreeNodeView: View {
                         model: model,
                         item: child,
                         level: level + 1,
+                        isFiltering: isFiltering,
                         onActivate: onActivate
                     )
                 }
