@@ -26,6 +26,12 @@ extension CodeScreen {
     }
 
     func handleEscapeShortcut() {
+        if isMarkdownFullscreen {
+            withAnimation(DesignSystem.Motion.detail) {
+                isMarkdownFullscreen = false
+            }
+            return
+        }
         if sidebarMode == .findInFiles && isFileBrowserVisible {
             closeFindInFilesPanel()
             return
