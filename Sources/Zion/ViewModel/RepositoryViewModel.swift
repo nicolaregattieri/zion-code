@@ -108,11 +108,11 @@ final class RepositoryViewModel {
     var uncommittedCount: Int = 0
 
     // Pre-computed sets for O(1) file tree lookups (PERF-005)
-    @ObservationIgnored var uncommittedFileNames: Set<String> = []
+    @ObservationIgnored var uncommittedFilePaths: Set<String> = []
     @ObservationIgnored var uncommittedDirectoryPrefixes: Set<String> = []
 
     private func rebuildUncommittedLookupSets() {
-        var names = Set<String>()
+        var paths = Set<String>()
         var dirs = Set<String>()
         for change in uncommittedChanges {
             // Porcelain lines have a 3-char status prefix: "XY path" (e.g. " M src/foo.txt")
@@ -124,8 +124,8 @@ final class RepositoryViewModel {
             } else {
                 resolvedPath = filePath
             }
+            paths.insert(resolvedPath)
             if let lastSlash = resolvedPath.lastIndex(of: "/") {
-                names.insert(String(resolvedPath[resolvedPath.index(after: lastSlash)...]))
                 // Build directory prefixes: "src/foo/bar.txt" -> "src/foo/", "src/"
                 var dirPath = resolvedPath[resolvedPath.startIndex..<lastSlash]
                 while !dirPath.isEmpty {
@@ -137,11 +137,9 @@ final class RepositoryViewModel {
                         break
                     }
                 }
-            } else {
-                names.insert(resolvedPath)
             }
         }
-        uncommittedFileNames = names
+        uncommittedFilePaths = paths
         uncommittedDirectoryPrefixes = dirs
     }
     var selectedChangeFile: String?
