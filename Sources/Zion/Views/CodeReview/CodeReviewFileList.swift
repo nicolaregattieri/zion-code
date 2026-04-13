@@ -4,6 +4,7 @@ struct CodeReviewFileList: View {
     let files: [CodeReviewFile]
     @Binding var selectedID: UUID?
     var onReviewAll: () -> Void
+    var onOpenInEditor: (CodeReviewFile) -> Void = { _ in }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -90,5 +91,16 @@ struct CodeReviewFileList: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .simultaneousGesture(TapGesture(count: 2).onEnded {
+            onOpenInEditor(file)
+        })
+        .help(L10n("codereview.openInEditor.hint"))
+        .contextMenu {
+            Button {
+                onOpenInEditor(file)
+            } label: {
+                Label(L10n("Abrir no Editor"), systemImage: "doc.text")
+            }
+        }
     }
 }

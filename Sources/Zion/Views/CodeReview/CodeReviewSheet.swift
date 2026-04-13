@@ -24,7 +24,11 @@ struct CodeReviewSheet: View {
                 CodeReviewFileList(
                     files: model.codeReviewFiles,
                     selectedID: $model.selectedReviewFileID,
-                    onReviewAll: { model.reviewAllCodeReviewFiles() }
+                    onReviewAll: { model.reviewAllCodeReviewFiles() },
+                    onOpenInEditor: { file in
+                        model.openFileInEditor(relativePath: file.path)
+                        dismiss()
+                    }
                 )
             } trailing: {
                 CodeReviewDiffPane(

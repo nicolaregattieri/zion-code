@@ -894,6 +894,7 @@
 // Phase 3: Code Review
 "codereview.files" = "Files";
 "codereview.reviewAll" = "Review All";
+"codereview.openInEditor.hint" = "Double-click to open in editor";
 "codereview.selectFile" = "Select a file to view details.";
 "codereview.copySummary" = "Copy Summary";
 "codereview.exportMarkdown" = "Export Markdown";
