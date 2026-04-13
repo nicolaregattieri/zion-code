@@ -15,12 +15,12 @@ struct FileTreeNodeView: View {
                          (model.selectedFileIDs.isEmpty && model.activeFileID == item.id)
         let isDark = model.selectedTheme.isDark
         let isModified: Bool = {
+            guard let repoPath = model.repositoryURL?.path else { return false }
+            let relativePath = item.url.path.replacingOccurrences(of: repoPath + "/", with: "")
             if item.isDirectory {
-                guard let repoPath = model.repositoryURL?.path else { return false }
-                let relativePath = item.url.path.replacingOccurrences(of: repoPath + "/", with: "")
                 return model.uncommittedDirectoryPrefixes.contains(relativePath + "/")
             } else {
-                return model.uncommittedFileNames.contains(item.name)
+                return model.uncommittedFilePaths.contains(relativePath)
             }
         }()
         let isIgnored = item.isGitIgnored
