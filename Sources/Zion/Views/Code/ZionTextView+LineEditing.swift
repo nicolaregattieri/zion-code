@@ -68,27 +68,26 @@ extension ZionTextView {
 
     func duplicateLineDown() {
         let nsString = string as NSString
-        let cursorPos = selectedRange().location
-        let currentLineRange = nsString.lineRange(for: NSRange(location: cursorPos, length: 0))
-        let currentLine = nsString.substring(with: currentLineRange)
-        let insertPos = NSMaxRange(currentLineRange)
-        let offsetInLine = cursorPos - currentLineRange.location
+        let sel = selectedRange()
+        let linesRange = nsString.lineRange(for: sel)
+        let block = nsString.substring(with: linesRange)
+        let insertPos = NSMaxRange(linesRange)
 
         var insertion: String
-        var newCursorPos: Int
-        if currentLine.hasSuffix("\n") {
-            insertion = currentLine
-            newCursorPos = insertPos + offsetInLine
+        var shift: Int
+        if block.hasSuffix("\n") {
+            insertion = block
+            shift = (insertion as NSString).length
         } else {
             // Last line — prepend newline
-            insertion = "\n" + currentLine
-            newCursorPos = insertPos + 1 + offsetInLine
+            insertion = "\n" + block
+            shift = (insertion as NSString).length
         }
 
         if shouldChangeText(in: NSRange(location: insertPos, length: 0), replacementString: insertion) {
             textStorage?.replaceCharacters(in: NSRange(location: insertPos, length: 0), with: insertion)
             didChangeText()
-            setSelectedRange(NSRange(location: newCursorPos, length: 0))
+            setSelectedRange(NSRange(location: sel.location + shift, length: sel.length))
         }
     }
 
