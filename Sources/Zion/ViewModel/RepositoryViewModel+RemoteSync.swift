@@ -134,6 +134,7 @@ extension RepositoryViewModel {
 
     func checkBehindRemote() async {
         guard let url = repositoryURL else { return }
+        guard isGitRepository else { return }
         if let suspendedUntil = autoFetchSuspendedUntil, suspendedUntil > Date() {
             return
         }

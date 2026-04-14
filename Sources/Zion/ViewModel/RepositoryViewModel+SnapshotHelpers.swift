@@ -195,6 +195,7 @@ extension RepositoryViewModel {
         }
 
         repositoryURL = url
+        isGitRepository = FileManager.default.fileExists(atPath: url.appendingPathComponent(".git").path)
         pendingRepositoryURL = nil
         hasLoadedFullGraphForCurrentRepo = false
         repoMemorySnapshot = nil
@@ -420,13 +421,15 @@ extension RepositoryViewModel {
 
     func finalizeRepositorySwitch(for url: URL, switchToken: UUID) {
         guard repositorySwitchToken == switchToken, repositoryURL == url else { return }
-        loadPullRequests()
-        refreshPRReviewQueue()
-        startPRPollingTimer()
-        loadSubmodules()
-        // loadSignatureStatuses() and loadBridgeState() deferred to on-demand
-        // (PERF-012: avoid startup work for features most users don't access immediately)
-        startBackgroundFetch()
+        if isGitRepository {
+            loadPullRequests()
+            refreshPRReviewQueue()
+            startPRPollingTimer()
+            loadSubmodules()
+            // loadSignatureStatuses() and loadBridgeState() deferred to on-demand
+            // (PERF-012: avoid startup work for features most users don't access immediately)
+            startBackgroundFetch()
+        }
         captureRepositorySnapshot(for: url)
         clearRepositorySwitchState()
     }

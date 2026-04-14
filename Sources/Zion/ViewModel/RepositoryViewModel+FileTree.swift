@@ -184,6 +184,11 @@ extension RepositoryViewModel {
             cachedIgnoredPaths = cached.paths
             return cached.paths
         }
+        if self.repositoryURL == repositoryURL, !isGitRepository {
+            if self.repositoryURL == repositoryURL { cachedIgnoredPaths = [] }
+            ignoredPathsCacheByRepository[repositoryURL] = IgnoredPathsCacheEntry(paths: [], capturedAt: Date())
+            return []
+        }
         do {
             let output = try await worker.runAction(
                 args: ["ls-files", "--others", "--ignored", "--exclude-standard", "--directory"],
