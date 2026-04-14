@@ -174,6 +174,11 @@ extension RepositoryViewModel {
 
     func loadSubmodules() {
         guard let url = repositoryURL else { return }
+        guard isGitRepository else {
+            submoduleTask?.cancel()
+            submodules = []
+            return
+        }
 
         submoduleTask?.cancel()
         let requestToken = UUID()
