@@ -670,6 +670,8 @@ final class RepositoryViewModel {
     @ObservationIgnored var ignoredPathsCacheByRepository: [URL: IgnoredPathsCacheEntry] = [:]
     @ObservationIgnored let repositorySwitchSnapshotTTL: TimeInterval = 5
     @ObservationIgnored let ignoredPathsCacheTTL: TimeInterval = 10
+    @ObservationIgnored let recentRepoPrefetcher = RecentRepositoryPrefetcher()
+    @ObservationIgnored var recentRepoPrefetchTask: Task<Void, Never>?
 
     @ObservationIgnored let editorSymbolIndex = EditorSymbolIndex()
     @ObservationIgnored var editorSymbolIndexTask: Task<Void, Never>?
@@ -680,6 +682,7 @@ final class RepositoryViewModel {
     @ObservationIgnored var isRefreshingFileTree = false
     @ObservationIgnored var pendingFileTreeRefreshForceReload = false
     @ObservationIgnored var pendingFileTreeRefreshRepositoryURL: URL?
+    @ObservationIgnored var fileTreeRefreshOnFinish: (() -> Void)?
 
     @ObservationIgnored var repoEditorConfig: EditorConfig?
     var hasRepoEditorConfig: Bool { repoEditorConfig != nil }

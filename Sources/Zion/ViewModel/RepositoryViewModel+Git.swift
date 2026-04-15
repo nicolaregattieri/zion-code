@@ -54,10 +54,10 @@ extension RepositoryViewModel {
     /// Lightweight repo switch load for Code tab: only loads what the editor and
     /// terminal need (current branch, uncommitted status, file tree).
     /// Defers heavy graph/commit data until the user navigates to Graph or Ops.
-    func refreshForCodeTabOnly() {
-        guard let url = repositoryURL else { return }
+    func refreshForCodeTabOnly(onFinish: (() -> Void)? = nil) {
+        guard let url = repositoryURL else { onFinish?(); return }
         Task { [weak self] in
-            guard let self else { return }
+            guard let self else { onFinish?(); return }
             do {
                 let branch = try await worker.runAction(args: ["rev-parse", "--abbrev-ref", "HEAD"], in: url)
                     .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -76,9 +76,10 @@ extension RepositoryViewModel {
                 if hasConflicts != newHasConflicts { hasConflicts = newHasConflicts }
 
                 statusMessage = L10n("Repositorio carregado: %@ · %@", url.lastPathComponent, branch)
+                onFinish?()
             } catch {
-                // Fallback to full refresh
-                refreshRepository(setBusy: true, origin: .repositorySwitch)
+                // Fallback to full refresh — delegate onFinish so the caller still gets notified
+                refreshRepository(setBusy: true, origin: .repositorySwitch, onFinish: onFinish)
             }
         }
     }

@@ -85,7 +85,7 @@ struct SidebarView: View {
                             }
                             model.nextSectionAfterRepositoryOpen = selectedSection
                             Task { @MainActor in
-                                try? await Task.sleep(for: .milliseconds(350))
+                                try? await Task.sleep(for: .milliseconds(500))
                                 model.openRepository(url, silent: true)
                             }
                         }

@@ -1,6 +1,14 @@
 import Foundation
 import SwiftUI
 
+/// Reference-type counter used to gate repository-switch finalization on
+/// multiple async completions (e.g. git status + file tree).
+@MainActor
+final class PendingCompletions {
+    var n: Int
+    init(count: Int) { self.n = count }
+}
+
 // MARK: - Repository Switch Snapshot Helpers
 
 extension RepositoryViewModel {
@@ -194,14 +202,23 @@ extension RepositoryViewModel {
             captureRepositorySnapshot(for: previousURL)
         }
 
+        let wasPendingUserClick = pendingRepositoryURL == url
+        let prefetchedLight = wasPendingUserClick
+            ? recentRepoPrefetcher.consume(for: url)
+            : nil
+
         repositoryURL = url
-        isGitRepository = FileManager.default.fileExists(atPath: url.appendingPathComponent(".git").path)
+        if let prefetchedLight {
+            isGitRepository = prefetchedLight.isGitRepository
+        } else {
+            isGitRepository = FileManager.default.fileExists(atPath: url.appendingPathComponent(".git").path)
+        }
         pendingRepositoryURL = nil
         hasLoadedFullGraphForCurrentRepo = false
         repoMemorySnapshot = nil
         repoMemoryLastRefreshedAt = nil
         repoMemoryStatusMessage = L10n("settings.ai.repoMemory.status.loading")
-        repoEditorConfig = EditorConfig.load(from: url)
+        repoEditorConfig = prefetchedLight?.editorConfig ?? EditorConfig.load(from: url)
         loadRepoMemorySnapshotIfAvailable()
         if !silent { saveRecentRepository(url) }
         commitLimit = defaultCommitLimit(for: nil)
@@ -313,13 +330,31 @@ extension RepositoryViewModel {
             clearStaleRepositoryData()
             hasLoadedFullGraphForCurrentRepo = false
 
+            // If the click had a prefetched light snapshot, paint branch/hash/count
+            // immediately so the UI isn't empty while the full refresh loads.
+            if let prefetchedLight, prefetchedLight.isGitRepository {
+                if let branch = prefetchedLight.branch { currentBranch = branch }
+                if let hash = prefetchedLight.shortHash { headShortHash = hash }
+                uncommittedCount = prefetchedLight.changedCount
+            }
+
             // Tab-aware loading: if user is on Code tab, only load what the
             // editor and terminal need (branch, status, file tree). The heavy
             // graph/commit data loads when they navigate to Graph or Ops.
             let targetSection = nextSectionAfterRepositoryOpen ?? activeSection
             if targetSection == .code {
-                refreshForCodeTabOnly()
-                finalizeRepositorySwitch(for: url, switchToken: switchToken)
+                // Wait for BOTH refreshForCodeTabOnly and refreshFileTree before
+                // finalizing, so the loading overlay only clears when the header
+                // and file browser are both ready.
+                let pending = PendingCompletions(count: 2)
+                let done: () -> Void = { [weak self] in
+                    pending.n -= 1
+                    if pending.n == 0 {
+                        self?.finalizeRepositorySwitch(for: url, switchToken: switchToken)
+                    }
+                }
+                refreshForCodeTabOnly(onFinish: done)
+                refreshFileTree(onFinish: done)
             } else {
                 hasLoadedFullGraphForCurrentRepo = true
                 refreshRepository(
@@ -331,8 +366,8 @@ extension RepositoryViewModel {
                         self?.finalizeRepositorySwitch(for: url, switchToken: switchToken)
                     }
                 )
+                refreshFileTree()
             }
-            refreshFileTree()
             armSwitchWatchdog(for: url, switchToken: switchToken)
         }
 
@@ -354,6 +389,7 @@ extension RepositoryViewModel {
         isRefreshingFileTree = false
         pendingFileTreeRefreshRepositoryURL = nil
         pendingFileTreeRefreshForceReload = false
+        fileTreeRefreshOnFinish = nil
         prTask?.cancel()
         submoduleTask?.cancel()
         signatureStatusTask?.cancel()
@@ -432,6 +468,22 @@ extension RepositoryViewModel {
         }
         captureRepositorySnapshot(for: url)
         clearRepositorySwitchState()
+        schedulePrefetchForOtherRecents(excluding: url)
+    }
+
+    /// Warms a light cache for the non-active recent repositories so the next
+    /// click paints instantly. Runs after a 3s idle delay so it doesn't compete
+    /// with whatever the user is doing in the just-opened repo.
+    func schedulePrefetchForOtherRecents(excluding active: URL) {
+        recentRepoPrefetchTask?.cancel()
+        let urls = recentRepositories
+        recentRepoPrefetcher.invalidate(active)
+        recentRepoPrefetchTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            guard !Task.isCancelled else { return }
+            guard let self else { return }
+            self.recentRepoPrefetcher.prefetch(urls: urls, excluding: active)
+        }
     }
 
     func mergeWorktreeStatusIfNeeded(_ incoming: [WorktreeItem], includeWorktreeStatus: Bool) -> [WorktreeItem] {
