@@ -329,13 +329,11 @@ struct ContentView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
             model.pauseBackgroundWatchers()
-            model.clipboardMonitor.stop()
             model.backgroundFetchTask?.cancel()
             model.backgroundFetchTask = nil
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             model.resumeBackgroundWatchers()
-            model.clipboardMonitor.start()
             model.refreshOnActivate()
         }
         .animation(DesignSystem.Motion.detail, value: model.isRepositorySwitchBlocking)
