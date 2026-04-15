@@ -5,8 +5,8 @@ import SwiftUI
 /// multiple async completions (e.g. git status + file tree).
 @MainActor
 final class PendingCompletions {
-    var n: Int
-    init(count: Int) { self.n = count }
+    var remaining: Int
+    init(count: Int) { self.remaining = count }
 }
 
 // MARK: - Repository Switch Snapshot Helpers
@@ -348,8 +348,8 @@ extension RepositoryViewModel {
                 // and file browser are both ready.
                 let pending = PendingCompletions(count: 2)
                 let done: () -> Void = { [weak self] in
-                    pending.n -= 1
-                    if pending.n == 0 {
+                    pending.remaining -= 1
+                    if pending.remaining == 0 {
                         self?.finalizeRepositorySwitch(for: url, switchToken: switchToken)
                     }
                 }
