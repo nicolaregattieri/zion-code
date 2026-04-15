@@ -1,6 +1,14 @@
 import Foundation
 import SwiftUI
 
+/// Reference-type counter used to gate repository-switch finalization on
+/// multiple async completions (e.g. git status + file tree).
+@MainActor
+final class PendingCompletions {
+    var n: Int
+    init(count: Int) { self.n = count }
+}
+
 // MARK: - Repository Switch Snapshot Helpers
 
 extension RepositoryViewModel {
@@ -335,8 +343,18 @@ extension RepositoryViewModel {
             // graph/commit data loads when they navigate to Graph or Ops.
             let targetSection = nextSectionAfterRepositoryOpen ?? activeSection
             if targetSection == .code {
-                refreshForCodeTabOnly()
-                finalizeRepositorySwitch(for: url, switchToken: switchToken)
+                // Wait for BOTH refreshForCodeTabOnly and refreshFileTree before
+                // finalizing, so the loading overlay only clears when the header
+                // and file browser are both ready.
+                let pending = PendingCompletions(count: 2)
+                let done: () -> Void = { [weak self] in
+                    pending.n -= 1
+                    if pending.n == 0 {
+                        self?.finalizeRepositorySwitch(for: url, switchToken: switchToken)
+                    }
+                }
+                refreshForCodeTabOnly(onFinish: done)
+                refreshFileTree(onFinish: done)
             } else {
                 hasLoadedFullGraphForCurrentRepo = true
                 refreshRepository(
@@ -348,8 +366,8 @@ extension RepositoryViewModel {
                         self?.finalizeRepositorySwitch(for: url, switchToken: switchToken)
                     }
                 )
+                refreshFileTree()
             }
-            refreshFileTree()
             armSwitchWatchdog(for: url, switchToken: switchToken)
         }
 
@@ -371,6 +389,7 @@ extension RepositoryViewModel {
         isRefreshingFileTree = false
         pendingFileTreeRefreshRepositoryURL = nil
         pendingFileTreeRefreshForceReload = false
+        fileTreeRefreshOnFinish = nil
         prTask?.cancel()
         submoduleTask?.cancel()
         signatureStatusTask?.cancel()

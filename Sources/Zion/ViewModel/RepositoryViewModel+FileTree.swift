@@ -4,8 +4,9 @@ extension RepositoryViewModel {
 
     // MARK: - File Tree Loading & Enumeration
 
-    func refreshFileTree(forceReloadExpandedDirectories: Bool = true) {
-        guard let url = repositoryURL?.standardizedFileURL else { return }
+    func refreshFileTree(forceReloadExpandedDirectories: Bool = true, onFinish: (() -> Void)? = nil) {
+        guard let url = repositoryURL?.standardizedFileURL else { onFinish?(); return }
+        if let onFinish { fileTreeRefreshOnFinish = onFinish }
         if isRefreshingFileTree {
             pendingFileTreeRefreshRepositoryURL = url
             pendingFileTreeRefreshForceReload = pendingFileTreeRefreshForceReload || forceReloadExpandedDirectories
@@ -57,7 +58,13 @@ extension RepositoryViewModel {
 
         guard let pendingURL = pendingFileTreeRefreshRepositoryURL,
               pendingURL == repositoryURL,
-              repositoryURL == self.repositoryURL?.standardizedFileURL else { return }
+              repositoryURL == self.repositoryURL?.standardizedFileURL else {
+            // No queued re-run — fire any stored onFinish callback now.
+            let callback = fileTreeRefreshOnFinish
+            fileTreeRefreshOnFinish = nil
+            callback?()
+            return
+        }
 
         let pendingForceReload = pendingFileTreeRefreshForceReload
         pendingFileTreeRefreshRepositoryURL = nil

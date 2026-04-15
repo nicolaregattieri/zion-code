@@ -682,6 +682,7 @@ final class RepositoryViewModel {
     @ObservationIgnored var isRefreshingFileTree = false
     @ObservationIgnored var pendingFileTreeRefreshForceReload = false
     @ObservationIgnored var pendingFileTreeRefreshRepositoryURL: URL?
+    @ObservationIgnored var fileTreeRefreshOnFinish: (() -> Void)?
 
     @ObservationIgnored var repoEditorConfig: EditorConfig?
     var hasRepoEditorConfig: Bool { repoEditorConfig != nil }
