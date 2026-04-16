@@ -44,6 +44,7 @@ struct ZionApp: App {
         .windowResizability(.contentMinSize)
         .windowToolbarStyle(.unified)
         .defaultSize(width: 1360, height: 840)
+        .handlesExternalEvents(matching: [])
         .commands {
             CommandGroup(replacing: .appInfo) {
                 Button(L10n("Sobre o Zion")) {
