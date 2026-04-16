@@ -54,6 +54,7 @@ struct ContentView: View {
     @AppStorage(UserDefaultsKeys.General.zenModeEnabled) var zenModeEnabled: Bool = false
     @AppStorage(UserDefaultsKeys.General.zionModeEnabled) var zionModeEnabled: Bool = false
     @AppStorage(UserDefaultsKeys.General.preZionModeTheme) private var preZionModeTheme: String = ""
+    @AppStorage(UserDefaultsKeys.General.openWithDrawerCollapsed) private var openWithDrawerCollapsed: Bool = false
 
     private var uiLanguage: AppLanguage { AppLanguage(rawValue: uiLanguageRaw) ?? .system }
     private var appearance: AppAppearance { AppAppearance(rawValue: appearanceRaw) ?? .system }
@@ -189,7 +190,7 @@ struct ContentView: View {
             }
             zenLayoutActive = zenModeEnabled
             zenTerminalFullscreen = zenModeEnabled
-            splitViewVisibility = zenModeEnabled ? .detailOnly : .all
+            splitViewVisibility = (zenModeEnabled || openWithDrawerCollapsed) ? .detailOnly : .all
             applyResponsiveShellLayout(for: shellWidth)
             if zenModeEnabled {
                 selectedSection = .code

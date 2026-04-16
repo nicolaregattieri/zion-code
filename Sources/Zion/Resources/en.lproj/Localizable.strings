@@ -827,6 +827,8 @@
 "settings.general.confirmation" = "Confirmation Mode";
 "settings.general.graphAuthorAvatars" = "Enable author avatars";
 "settings.general.graphAuthorAvatarsHint" = "Downloads avatars from Gravatar and GitHub/GitLab.";
+"settings.general.openWithDrawerCollapsed" = "Open Zion with the side drawer collapsed";
+"settings.general.openWithDrawerCollapsedHint" = "Launches with a cleaner workspace. Use the footer menu or click the toolbar sidebar icon to expand it.";
 "settings.general.customPath" = "Custom Path";
 "settings.update.title" = "Updates";
 "settings.update.autoCheck" = "Check for updates automatically";
