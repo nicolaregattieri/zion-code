@@ -8,17 +8,10 @@ extension ZionTextView {
         let flags = event.modifierFlags.intersection([.command, .option, .shift, .control])
         let key = event.charactersIgnoringModifiers?.lowercased()
 
-        if flags == .command, key == "z" {
-            DiagnosticLogger.shared.log(.info, "editor.cmd+z intercepted", context: currentFilePath, source: #function)
-            RepositoryViewModel.activeReference.value?.performPreferredUndo()
-            return true
-        }
-
-        if flags == [.command, .shift], key == "z" {
-            DiagnosticLogger.shared.log(.info, "editor.cmd+shift+z intercepted", context: currentFilePath, source: #function)
-            RepositoryViewModel.activeReference.value?.performPreferredRedo()
-            return true
-        }
+        // Cmd+Z / Cmd+Shift+Z are handled by the Edit menu's CommandGroup(replacing:
+        // .undoRedo) in ZionApp.swift. That path routes to performPreferredUndo when
+        // a model is available and falls back to NSApp.sendAction(undo:) otherwise,
+        // so we don't re-intercept them here.
 
         if flags == .command, key == "f" {
             emitFindSeedFromSelection()
@@ -53,18 +46,6 @@ extension ZionTextView {
     override func keyDown(with event: NSEvent) {
         let flags = event.modifierFlags.intersection([.command, .option, .shift, .control])
         let key = event.charactersIgnoringModifiers?.lowercased()
-
-        if flags == .command, key == "z" {
-            DiagnosticLogger.shared.log(.info, "editor.cmd+z keyDown", context: currentFilePath, source: #function)
-            RepositoryViewModel.activeReference.value?.performPreferredUndo()
-            return
-        }
-
-        if flags == [.command, .shift], key == "z" {
-            DiagnosticLogger.shared.log(.info, "editor.cmd+shift+z keyDown", context: currentFilePath, source: #function)
-            RepositoryViewModel.activeReference.value?.performPreferredRedo()
-            return
-        }
 
         if flags == .command, key == "g" {
             onFindNextShortcut?()
