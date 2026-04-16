@@ -230,6 +230,14 @@ extension ContentView {
                 .frame(height: 14)
                 .padding(.horizontal, 2)
 
+            StatusBarRecentsMenu(
+                model: model,
+                splitViewVisibility: $splitViewVisibility,
+                isCompactLabel: shellLayoutProfile.usesCompactStatusBar,
+                zionModeEnabled: zionModeEnabled,
+                onOpenFolder: openRepositoryPanel
+            )
+
             statusBarSettingsButton
         }
         .padding(.horizontal, 6)

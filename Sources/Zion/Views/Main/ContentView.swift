@@ -32,7 +32,7 @@ struct ContentView: View {
     @State private var shouldPresentOnboardingFromHelp: Bool = false
     @State private var isFeatureTourVisible: Bool = false
     @State private var currentFeatureTourIndex: Int = 0
-    @State private var splitViewVisibility: NavigationSplitViewVisibility = .all
+    @State var splitViewVisibility: NavigationSplitViewVisibility = .all
     @State private var shellWidth: CGFloat = DesignSystem.Layout.windowMinWidth
     @State private var zenLayoutActive = false
     @State private var zenTerminalFullscreen = false
@@ -54,6 +54,7 @@ struct ContentView: View {
     @AppStorage(UserDefaultsKeys.General.zenModeEnabled) var zenModeEnabled: Bool = false
     @AppStorage(UserDefaultsKeys.General.zionModeEnabled) var zionModeEnabled: Bool = false
     @AppStorage(UserDefaultsKeys.General.preZionModeTheme) private var preZionModeTheme: String = ""
+    @AppStorage(UserDefaultsKeys.General.openWithDrawerCollapsed) private var openWithDrawerCollapsed: Bool = false
 
     private var uiLanguage: AppLanguage { AppLanguage(rawValue: uiLanguageRaw) ?? .system }
     private var appearance: AppAppearance { AppAppearance(rawValue: appearanceRaw) ?? .system }
@@ -175,6 +176,11 @@ struct ContentView: View {
                 model.openExternalFiles(urls)
                 selectedSection = .code
             }
+            if let dirURL = AppDelegate.pendingOpenDirectoryURLs.first {
+                AppDelegate.pendingOpenDirectoryURLs = []
+                model.saveRecentRepository(dirURL)
+                model.openRepository(dirURL)
+            }
             // Robust window activation
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 if let window = NSApp.windows.first(where: { $0.isVisible }) {
@@ -184,7 +190,7 @@ struct ContentView: View {
             }
             zenLayoutActive = zenModeEnabled
             zenTerminalFullscreen = zenModeEnabled
-            splitViewVisibility = zenModeEnabled ? .detailOnly : .all
+            splitViewVisibility = (zenModeEnabled || openWithDrawerCollapsed) ? .detailOnly : .all
             applyResponsiveShellLayout(for: shellWidth)
             if zenModeEnabled {
                 selectedSection = .code

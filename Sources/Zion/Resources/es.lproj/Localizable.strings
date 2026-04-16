@@ -822,6 +822,8 @@
 "settings.general.confirmation" = "Modo de Confirmación";
 "settings.general.graphAuthorAvatars" = "Activar avatares de autores";
 "settings.general.graphAuthorAvatarsHint" = "Descarga avatares de Gravatar y GitHub/GitLab.";
+"settings.general.openWithDrawerCollapsed" = "Abrir Zion con el panel lateral contraído";
+"settings.general.openWithDrawerCollapsedHint" = "Inicia con un espacio de trabajo más limpio. Usa el menú del pie o el ícono de barra lateral para expandirlo.";
 "settings.general.customPath" = "Ruta Personalizada";
 "settings.update.title" = "Actualizaciones";
 "settings.update.autoCheck" = "Buscar actualizaciones automáticamente";
@@ -1637,6 +1639,10 @@
 "map.diag.sanitize.title" = "Sanitización de Datos";
 "map.diag.sanitize.description" = "Los logs eliminan automáticamente credenciales y datos sensibles antes de exportar o copiar.";
 "status.nav.settings" = "Configuración";
+"statusBar.recents.title" = "Recientes";
+"statusBar.recents.openFolder" = "Abrir Carpeta…";
+"statusBar.recents.showProjects" = "Mostrar Proyectos";
+"statusBar.recents.empty" = "Sin repositorios recientes";
 "format.menu" = "Formato";
 "format.document" = "Formatear Documento";
 "format.success" = "Documento formateado";

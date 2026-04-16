@@ -44,6 +44,7 @@ struct ZionApp: App {
         .windowResizability(.contentMinSize)
         .windowToolbarStyle(.unified)
         .defaultSize(width: 1360, height: 840)
+        .handlesExternalEvents(matching: [])
         .commands {
             CommandGroup(replacing: .appInfo) {
                 Button(L10n("Sobre o Zion")) {
@@ -239,12 +240,14 @@ extension View {
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     @MainActor static var pendingOpenURLs: [URL] = []
+    @MainActor static var pendingOpenDirectoryURLs: [URL] = []
 
     func application(_ application: NSApplication, open urls: [URL]) {
         let directoryURLs = urls.filter { $0.isFileURL && $0.hasDirectoryPath }
         let fileURLs = urls.filter { $0.isFileURL && !$0.hasDirectoryPath }
 
         if let dirURL = directoryURLs.first {
+            AppDelegate.pendingOpenDirectoryURLs = [dirURL]
             NotificationCenter.default.post(
                 name: .openDirectoryFromFinder,
                 object: nil,
@@ -260,6 +263,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 userInfo: ["urls": fileURLs]
             )
         }
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag {
+            for window in sender.windows where window.canBecomeMain {
+                window.makeKeyAndOrderFront(nil)
+            }
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        return true
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {

@@ -99,6 +99,8 @@ cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
   <string>ZionAppIcon</string>
   <key>LSMinimumSystemVersion</key>
   <string>14.0</string>
+  <key>LSMultipleInstancesProhibited</key>
+  <true/>
   <key>NSDocumentsFolderUsageDescription</key>
   <string>Zion needs access to your Documents folder to open and manage Git repositories.</string>
   <key>NSDownloadsFolderUsageDescription</key>

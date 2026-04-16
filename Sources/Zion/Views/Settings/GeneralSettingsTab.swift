@@ -7,6 +7,7 @@ struct GeneralSettingsTab: View {
     @AppStorage(UserDefaultsKeys.General.confirmationMode) private var confirmationModeRaw: String = ConfirmationMode.destructiveOnly.rawValue
     @AppStorage(UserDefaultsKeys.General.zionModeEnabled) private var zionModeEnabled: Bool = false
     @AppStorage(UserDefaultsKeys.General.graphAuthorAvatarsEnabled) private var graphAuthorAvatarsEnabled: Bool = false
+    @AppStorage(UserDefaultsKeys.General.openWithDrawerCollapsed) private var openWithDrawerCollapsed: Bool = false
     // Multi-account state
     @State private var accounts: [HostingAccount] = []
 
@@ -101,6 +102,12 @@ struct GeneralSettingsTab: View {
                         Text(mode.label).tag(mode.rawValue)
                     }
                 }
+
+                Toggle(L10n("settings.general.openWithDrawerCollapsed"), isOn: $openWithDrawerCollapsed)
+
+                Text(L10n("settings.general.openWithDrawerCollapsedHint"))
+                    .font(DesignSystem.Typography.bodySmall)
+                    .foregroundStyle(.secondary)
             }
 
             // Updates

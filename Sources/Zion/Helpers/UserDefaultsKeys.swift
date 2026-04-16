@@ -109,6 +109,7 @@ enum UserDefaultsKeys {
         static let zenModeEnabled = "zion.zenModeEnabled"
         static let preZionModeTheme = "zion.preZionModeTheme"
         static let recentRepositories = "zion.recentRepositories"
+        static let openWithDrawerCollapsed = "zion.openWithDrawerCollapsed"
     }
 
     // MARK: - Git Hosting
