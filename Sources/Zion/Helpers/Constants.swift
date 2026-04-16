@@ -82,6 +82,11 @@ enum Constants {
         /// Coalesces rapid changes (e.g., `npm install` writing 100 files) into one refresh.
         static let fileWatcherDebounce: UInt64 = 500_000_000 // 500ms
 
+        /// Coalescing window for the FileWatcher path deduplication layer.
+        /// Incoming FSEvents paths are buffered into a Set of parent directories and flushed
+        /// as a single ChangeEvent after this window elapses (or when the path ceiling is hit).
+        static let fileWatcherCoalesceWindow: UInt64 = 100_000_000 // 100ms
+
         // --- Inactive Repo Monitoring ---
         // Background repos are now purely event-driven via FSEvents FileWatcher.
         // No polling loop runs for inactive repos.
@@ -225,6 +230,9 @@ enum Constants {
         static let danglingSnapshotMaxAgeDays = 30
         /// Minimum dangling snapshot count to trigger automatic cleanup
         static let danglingSnapshotCleanupThreshold = 100
+        /// Maximum number of parent-directory paths the FileWatcher coalescer may buffer
+        /// before flushing immediately (safety ceiling for extreme burst writes).
+        static let fileWatcherCoalesceMaxPaths: Int = 5_000
     }
 
     enum RemoteAccess {
