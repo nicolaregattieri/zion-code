@@ -228,12 +228,33 @@ extension RepositoryViewModel {
         let file = path.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !file.isEmpty else { return }
 
-        if let entry = statusEntry(for: file), entry.isUntracked {
-            runDestructiveGitAction(label: "Discard", args: ["clean", "-ffd", "--", entry.path], operationTag: "discard")
+        // Capture status entry BEFORE the optimistic mutation removes the row.
+        let capturedEntry = statusEntry(for: file)
+
+        // Build a URL for the optimistic helper. If repositoryURL is nil the guard
+        // inside runDestructiveGitAction will catch it — we still snapshot so the
+        // revert closure is valid (it's a no-op when called on an empty snapshot).
+        let fileURL: URL
+        if let repoURL = repositoryURL {
+            fileURL = repoURL.appendingPathComponent(file)
+        } else {
+            fileURL = URL(fileURLWithPath: file)
+        }
+        let snapshot = snapshotPorcelainEntries()
+        applyOptimisticDiscard(urls: [fileURL])
+        let revertOnFailure: () -> Void = { [weak self] in self?.restorePorcelainEntries(snapshot) }
+
+        if let entry = capturedEntry, entry.isUntracked {
+            runDestructiveGitAction(
+                label: "Discard",
+                args: ["clean", "-ffd", "--", entry.path],
+                operationTag: "discard",
+                onFailure: revertOnFailure
+            )
             return
         }
 
-        if let entry = statusEntry(for: file), let originalPath = entry.originalPath {
+        if let entry = capturedEntry, let originalPath = entry.originalPath {
             var restorePaths: [String] = []
             if !originalPath.isEmpty {
                 restorePaths.append(originalPath)
@@ -247,7 +268,8 @@ extension RepositoryViewModel {
             runDestructiveGitAction(
                 label: "Discard",
                 args: ["restore", "--staged", "--worktree", "--"] + restorePaths,
-                operationTag: "discard"
+                operationTag: "discard",
+                onFailure: revertOnFailure
             )
             return
         }
@@ -255,7 +277,8 @@ extension RepositoryViewModel {
         runDestructiveGitAction(
             label: "Discard",
             args: ["restore", "--staged", "--worktree", "--", file],
-            operationTag: "discard"
+            operationTag: "discard",
+            onFailure: revertOnFailure
         )
     }
 
@@ -656,7 +679,8 @@ extension RepositoryViewModel {
         refreshOptions: RepositoryLoadOptions = .full,
         scheduleFullRefreshAfterCompletion: Bool = false,
         refreshSetBusy: Bool = true,
-        onCommandSuccess: (() -> Void)? = nil
+        onCommandSuccess: (() -> Void)? = nil,
+        onFailure: (() -> Void)? = nil
     ) {
         guard let repositoryURL else {
             lastError = GitClientError.repositoryNotSelected.localizedDescription
@@ -722,6 +746,7 @@ extension RepositoryViewModel {
                 activeGitActionToken = nil
                 isBusy = false
                 disarmBusyWatchdog()
+                onFailure?()
                 logger.log(.error, error.localizedDescription, context: commandSummary)
                 handleError(error)
             }
@@ -730,7 +755,13 @@ extension RepositoryViewModel {
 
     // MARK: - Destructive Git Action Runner
 
-    func runDestructiveGitAction(label: String, args: [String], operationTag: String, targetHint: String = "") {
+    func runDestructiveGitAction(
+        label: String,
+        args: [String],
+        operationTag: String,
+        targetHint: String = "",
+        onFailure: (() -> Void)? = nil
+    ) {
         guard let repositoryURL else {
             lastError = GitClientError.repositoryNotSelected.localizedDescription
             return
@@ -741,7 +772,7 @@ extension RepositoryViewModel {
         }
 
         guard uncommittedCount > 0 else {
-            runGitAction(label: label, args: args)
+            runGitAction(label: label, args: args, onFailure: onFailure)
             return
         }
 
@@ -803,6 +834,7 @@ extension RepositoryViewModel {
                 activeGitActionToken = nil
                 isBusy = false
                 disarmBusyWatchdog()
+                onFailure?()
                 logger.log(.error, error.localizedDescription, context: commandSummary)
                 handleError(error)
             }
