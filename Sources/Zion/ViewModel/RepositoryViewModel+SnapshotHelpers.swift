@@ -72,6 +72,14 @@ extension RepositoryViewModel {
         uncommittedCount = snapshot.uncommittedCount
         repositoryFiles = snapshot.repositoryFiles
         expandedPaths = snapshot.expandedPaths
+        let rawPaths = snapshot.expandedPaths
+        let snapshotURL = repositoryURL
+        Task { @MainActor [weak self] in
+            guard let self, let url = snapshotURL else { return }
+            let prunedSet = await self.pruneExpandedPaths(rawPaths)
+            self.expandedPaths = prunedSet
+            self.expandedPathsByRepository[url] = prunedSet
+        }
     }
 
     func clearRepositorySwitchState() {
@@ -223,7 +231,14 @@ extension RepositoryViewModel {
         if !silent { saveRecentRepository(url) }
         commitLimit = defaultCommitLimit(for: nil)
         focusedBranch = nil
-        expandedPaths = expandedPathsByRepository[url] ?? []
+        let storedPaths = expandedPathsByRepository[url] ?? []
+        expandedPaths = storedPaths
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            let prunedSet = await self.pruneExpandedPaths(storedPaths)
+            self.expandedPaths = prunedSet
+            self.expandedPathsByRepository[url] = prunedSet
+        }
         cachedIgnoredPaths = ignoredPathsCacheByRepository[url]?.paths
         worktreeNameInput = ""
         worktreePathInput = ""
