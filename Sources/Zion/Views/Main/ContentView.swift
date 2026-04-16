@@ -175,6 +175,11 @@ struct ContentView: View {
                 model.openExternalFiles(urls)
                 selectedSection = .code
             }
+            if let dirURL = AppDelegate.pendingOpenDirectoryURLs.first {
+                AppDelegate.pendingOpenDirectoryURLs = []
+                model.saveRecentRepository(dirURL)
+                model.openRepository(dirURL)
+            }
             // Robust window activation
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 if let window = NSApp.windows.first(where: { $0.isVisible }) {
