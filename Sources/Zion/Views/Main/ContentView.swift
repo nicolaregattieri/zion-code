@@ -32,7 +32,7 @@ struct ContentView: View {
     @State private var shouldPresentOnboardingFromHelp: Bool = false
     @State private var isFeatureTourVisible: Bool = false
     @State private var currentFeatureTourIndex: Int = 0
-    @State private var splitViewVisibility: NavigationSplitViewVisibility = .all
+    @State var splitViewVisibility: NavigationSplitViewVisibility = .all
     @State private var shellWidth: CGFloat = DesignSystem.Layout.windowMinWidth
     @State private var zenLayoutActive = false
     @State private var zenTerminalFullscreen = false

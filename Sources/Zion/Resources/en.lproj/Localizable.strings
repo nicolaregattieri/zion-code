@@ -1627,6 +1627,10 @@
 "map.diag.sanitize.title" = "Data Sanitization";
 "map.diag.sanitize.description" = "Logs automatically remove credentials and sensitive values before export or copy.";
 "status.nav.settings" = "Settings";
+"statusBar.recents.title" = "Recents";
+"statusBar.recents.openFolder" = "Open Folder…";
+"statusBar.recents.showProjects" = "Show Projects";
+"statusBar.recents.empty" = "No recent repositories";
 "format.menu" = "Format";
 "format.document" = "Format Document";
 "format.success" = "Document formatted";
