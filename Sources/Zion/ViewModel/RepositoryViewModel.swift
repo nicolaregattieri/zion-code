@@ -729,7 +729,7 @@ final class RepositoryViewModel {
     @ObservationIgnored var fileWatcherGateTask: Task<Void, Never>?
     @ObservationIgnored var suppressFileWatcherGitMetadataUntil: Date = .distantPast
     var pendingRepositoryURL: URL?
-    @ObservationIgnored var isSwitchingRepository = false
+    var isSwitchingRepository = false
     var isBlockingRepositorySwitch = false
     @ObservationIgnored var cachedWorktreeStatusByPath: [String: (uncommittedCount: Int, hasConflicts: Bool)] = [:]
     @ObservationIgnored var cachedIgnoredPaths: Set<String>?
