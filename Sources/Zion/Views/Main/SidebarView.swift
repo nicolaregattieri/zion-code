@@ -78,16 +78,13 @@ struct SidebarView: View {
                             worktreeCount: model.recentWorktreeCounts[url] ?? 0
                         ) {
                             guard model.recentRepositoryRoot(for: model.repositoryURL) != url else { return }
+                            model.prepareBlockingRepositorySwitch(for: url)
                             withAnimation(DesignSystem.Motion.springInteractive) {
                                 model.saveRecentRepository(url)
                                 model.pendingRepositoryURL = url
-                                model.prepareBlockingRepositorySwitch(for: url)
                             }
                             model.nextSectionAfterRepositoryOpen = selectedSection
-                            Task { @MainActor in
-                                try? await Task.sleep(for: .milliseconds(500))
-                                model.openRepository(url, silent: true)
-                            }
+                            model.openRepository(url, silent: true)
                         }
                     }
                 }

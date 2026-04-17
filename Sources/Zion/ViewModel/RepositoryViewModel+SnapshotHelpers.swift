@@ -23,9 +23,8 @@ extension RepositoryViewModel {
     }
 
     func prepareBlockingRepositorySwitch(for url: URL) {
-        guard !hasRepositorySnapshot(for: url) else { return }
         isSwitchingRepository = true
-        isBlockingRepositorySwitch = true
+        isBlockingRepositorySwitch = !hasRepositorySnapshot(for: url)
     }
 
     func applyRepositorySnapshotIfFresh(for url: URL) -> Bool {

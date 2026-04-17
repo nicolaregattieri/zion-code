@@ -342,7 +342,6 @@ struct ContentView: View {
             model.resumeBackgroundWatchers()
             model.refreshOnActivate()
         }
-        .animation(DesignSystem.Motion.detail, value: model.isRepositorySwitchBlocking)
     }
 
     private func applyFeatureTourOverlay<Content: View>(to view: Content) -> some View {
@@ -514,7 +513,6 @@ struct ContentView: View {
             .overlay {
                 if model.isRepositorySwitchBlocking {
                     ZionLoadingOverlay()
-                        .transition(.opacity)
                 }
             }
     }
