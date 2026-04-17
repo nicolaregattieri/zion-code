@@ -28,7 +28,31 @@ final class FileWatcher {
     private var pendingEvent: ChangeEvent?
     private let debounceInterval: UInt64 = Constants.Timing.fileWatcherDebounce
 
+    // MARK: - Coalescing layer
+    // Buffers incoming ChangeEvents into a Set of canonical parent-directory paths.
+    // A short timer (fileWatcherCoalesceWindow) fires after the last batch arrives;
+    // if the set grows beyond fileWatcherCoalesceMaxPaths it flushes immediately.
+    // This sits between the FSEvents callback and handleChange so the debounce
+    // layer above still runs on the coalesced output.
+
+    private var coalescerPendingPaths: Set<String> = []
+    private var coalescerPendingEvent: ChangeEvent?
+    private var coalescerTask: Task<Void, Never>?
+    private let coalescerWindow: UInt64
+
     var onChange: ((ChangeEvent) -> Void)?
+
+    // MARK: - Init
+
+    init() {
+        self.coalescerWindow = Constants.Timing.fileWatcherCoalesceWindow
+    }
+
+    /// Test seam: creates an instance whose coalescer window can be overridden.
+    /// Pass 0 to make the coalescer flush synchronously in tests.
+    internal init(coalescerWindow: UInt64) {
+        self.coalescerWindow = coalescerWindow
+    }
 
     func watch(directory: URL) {
         stop()
@@ -51,7 +75,7 @@ final class FileWatcher {
 
                 let watcher = Unmanaged<FileWatcher>.fromOpaque(info).takeUnretainedValue()
                 Task { @MainActor in
-                    watcher.handleChange(event)
+                    watcher.coalesceEvent(event)
                 }
             },
             &context,
@@ -70,6 +94,10 @@ final class FileWatcher {
     }
 
     func stop() {
+        coalescerTask?.cancel()
+        coalescerTask = nil
+        coalescerPendingPaths = []
+        coalescerPendingEvent = nil
         debounceTask?.cancel()
         debounceTask = nil
         pendingEvent = nil
@@ -80,6 +108,93 @@ final class FileWatcher {
             eventStream = nil
         }
     }
+
+    // MARK: - Coalescer implementation
+
+    /// Ingest an incoming classified event into the coalescing buffer.
+    /// Public-internal for test seam — tests call this directly instead of going through FSEvents.
+    private func coalesceEvent(_ event: ChangeEvent) {
+        // Derive canonical parent directories for each changed path.
+        for path in event.changedPaths {
+            let parent = URL(fileURLWithPath: path).deletingLastPathComponent().path
+            coalescerPendingPaths.insert(parent)
+        }
+        // Merge boolean flags into the pending event.
+        coalescerPendingEvent = coalescerPendingEvent?.merged(with: event) ?? event
+
+        // Hard ceiling: flush immediately if we've accumulated too many paths.
+        if coalescerPendingPaths.count >= Constants.Limits.fileWatcherCoalesceMaxPaths {
+            flushCoalescer()
+            return
+        }
+
+        // Reset the coalesce timer.
+        coalescerTask?.cancel()
+        let window = coalescerWindow
+        coalescerTask = Task { [weak self] in
+            guard let self else { return }
+            if window > 0 {
+                try? await Task.sleep(nanoseconds: window)
+            }
+            guard !Task.isCancelled else { return }
+            self.flushCoalescer()
+        }
+    }
+
+    private func flushCoalescer() {
+        coalescerTask?.cancel()
+        coalescerTask = nil
+        guard let base = coalescerPendingEvent else { return }
+        let dedupedParents = Array(coalescerPendingPaths).sorted()
+        coalescerPendingPaths = []
+        coalescerPendingEvent = nil
+        // Rebuild the event with deduplicated parent directory paths, preserving flags.
+        let flushed = ChangeEvent(
+            changedPaths: dedupedParents,
+            hasTreeImpact: base.hasTreeImpact,
+            hasStructuralImpact: base.hasStructuralImpact,
+            hasWorktreeStatusImpact: base.hasWorktreeStatusImpact,
+            hasGitMetadataImpact: base.hasGitMetadataImpact,
+            requiresRescan: base.requiresRescan
+        )
+        // Test seam: surface the coalesced event synchronously before the
+        // debounce layer runs, so tests can assert on coalescer behaviour
+        // without waiting for fileWatcherDebounce.
+        onCoalescedFlushForTesting?(flushed)
+        handleChange(flushed)
+    }
+
+    /// Test seam: invoked immediately after each coalesce flush, before the
+    /// debounce layer. Nil in production.
+    internal var onCoalescedFlushForTesting: ((ChangeEvent) -> Void)?
+
+    // MARK: - Test seam accessors
+
+    /// Feed a synthetic event into the coalescer without going through FSEvents.
+    /// Intended for use with `@testable import Zion` in unit tests.
+    internal func ingestForTesting(paths: [String]) {
+        // Build a minimal classified event from the supplied paths.
+        let normalizedPaths = paths.map(Self.normalizePath)
+        let event = ChangeEvent(
+            changedPaths: normalizedPaths,
+            hasTreeImpact: true,
+            hasStructuralImpact: false,
+            hasWorktreeStatusImpact: true,
+            hasGitMetadataImpact: false,
+            requiresRescan: false
+        )
+        coalesceEvent(event)
+    }
+
+    /// Number of unique parent paths currently buffered in the coalescer.
+    internal var coalescerPendingCount: Int { coalescerPendingPaths.count }
+
+    /// Synchronously flush the coalescer (useful in tests with coalescerWindow == 0).
+    internal func flushCoalescerForTesting() {
+        flushCoalescer()
+    }
+
+    // MARK: - Debounce layer
 
     private func handleChange(_ event: ChangeEvent) {
         pendingEvent = pendingEvent?.merged(with: event) ?? event
@@ -153,6 +268,8 @@ final class FileWatcher {
     }
 
     deinit {
+        coalescerTask?.cancel()
+        debounceTask?.cancel()
         if let stream = eventStream {
             FSEventStreamStop(stream)
             FSEventStreamInvalidate(stream)

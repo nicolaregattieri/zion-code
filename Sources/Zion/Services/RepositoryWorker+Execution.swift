@@ -1,5 +1,35 @@
 import Foundation
 
+/// Returns a copy of `environment` with `GIT_OPTIONAL_LOCKS=0` merged in when `args`
+/// describes a `git status` invocation, and returns `environment` unchanged for all other
+/// subcommands.  Leading `-C <path>` and `-c <key=value>` flag pairs are skipped before
+/// inspecting the first positional token, matching git's own flag ordering rules.
+///
+/// Made `internal` (not `private`) so `@testable import Zion` can call it directly from
+/// the test target (Task 4).
+func applyStatusEnvOverride(args: [String], environment: [String: String]) -> [String: String] {
+    var index = 0
+    while index < args.count {
+        let token = args[index]
+        if token == "-C" || token == "-c" {
+            // Each flag consumes itself plus one value token.
+            index += 2
+        } else if token.hasPrefix("-") {
+            // Other single-token flags (e.g. --no-pager).
+            index += 1
+        } else {
+            // First non-flag token is the git subcommand.
+            if token == "status" {
+                var updated = environment
+                updated["GIT_OPTIONAL_LOCKS"] = "0"
+                return updated
+            }
+            return environment
+        }
+    }
+    return environment
+}
+
 extension RepositoryWorker {
 
     func runAction(
@@ -56,6 +86,8 @@ extension RepositoryWorker {
         process.executableURL = URL(fileURLWithPath: executable)
         process.arguments = args
         process.currentDirectoryURL = repositoryURL
+        let baseEnvironment = ProcessInfo.processInfo.environment
+        process.environment = applyStatusEnvOverride(args: args, environment: baseEnvironment)
 
         let pipe = Pipe()
         process.standardOutput = pipe

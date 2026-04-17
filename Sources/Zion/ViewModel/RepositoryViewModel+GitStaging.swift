@@ -56,19 +56,57 @@ extension RepositoryViewModel {
     }
 
     func stageFile(_ path: String) {
-        runGitAction(label: "Stage", args: ["add", path])
+        let targetURL = repositoryURL.map { $0.appendingPathComponent(path) } ?? URL(fileURLWithPath: path)
+        let snapshot = snapshotPorcelainEntries()
+        applyOptimisticStage(urls: [targetURL])
+        runGitAction(
+            label: "Stage",
+            args: ["add", path],
+            onFailure: { [weak self] in self?.restorePorcelainEntries(snapshot) }
+        )
     }
 
     func unstageFile(_ path: String) {
-        runGitAction(label: "Unstage", args: ["reset", "HEAD", "--", path])
+        let targetURL = repositoryURL.map { $0.appendingPathComponent(path) } ?? URL(fileURLWithPath: path)
+        let snapshot = snapshotPorcelainEntries()
+        applyOptimisticUnstage(urls: [targetURL])
+        runGitAction(
+            label: "Unstage",
+            args: ["reset", "HEAD", "--", path],
+            onFailure: { [weak self] in self?.restorePorcelainEntries(snapshot) }
+        )
     }
 
     func stageAllFiles() {
-        runGitAction(label: "Stage All", args: ["add", "-A"])
+        let allURLs = uncommittedChanges.compactMap(Self.parsePorcelainStatusLine)
+            .filter { !$0.isStaged || $0.worktreeStatus != " " }
+            .compactMap { entry -> URL? in
+                guard let repoURL = repositoryURL else { return nil }
+                return repoURL.appendingPathComponent(entry.path)
+            }
+        let snapshot = snapshotPorcelainEntries()
+        applyOptimisticStage(urls: allURLs)
+        runGitAction(
+            label: "Stage All",
+            args: ["add", "-A"],
+            onFailure: { [weak self] in self?.restorePorcelainEntries(snapshot) }
+        )
     }
 
     func unstageAllFiles() {
-        runGitAction(label: "Unstage All", args: ["reset", "HEAD", "--", "."])
+        let allURLs = uncommittedChanges.compactMap(Self.parsePorcelainStatusLine)
+            .filter(\.isStaged)
+            .compactMap { entry -> URL? in
+                guard let repoURL = repositoryURL else { return nil }
+                return repoURL.appendingPathComponent(entry.path)
+            }
+        let snapshot = snapshotPorcelainEntries()
+        applyOptimisticUnstage(urls: allURLs)
+        runGitAction(
+            label: "Unstage All",
+            args: ["reset", "HEAD", "--", "."],
+            onFailure: { [weak self] in self?.restorePorcelainEntries(snapshot) }
+        )
     }
 
     func addToGitIgnore(path: String) {
