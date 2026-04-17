@@ -502,7 +502,13 @@ final class RepositoryViewModel {
     var activeFileID: String?
     var selectedFileIDs: Set<String> = []
     @ObservationIgnored var lastClickedFileID: String?
-    var selectedCodeFile: FileItem?
+    var selectedCodeFile: FileItem? {
+        didSet {
+            // Wave 3: auto-reveal parent chain in the file tree when the active
+            // editor file changes. No-op when disabled, nil, or outside the repo.
+            revealSelectedCodeFileInTree()
+        }
+    }
     var codeFileContent: String = "" {
         didSet {
             guard !isApplyingEditorContent else { return }

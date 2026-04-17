@@ -157,6 +157,41 @@ final class FileWatcherTests: XCTestCase {
         XCTAssertEqual(emitCount, 0, "No onChange should fire on a deallocated FileWatcher")
     }
 
+    // MARK: - Wave 3 filter tests
+
+    func testIsFilteredNoisePath() {
+        XCTAssertTrue(FileWatcher.isFilteredNoisePath("/tmp/repo/.git/index.lock"))
+        XCTAssertTrue(FileWatcher.isFilteredNoisePath("/tmp/repo/.git/worktrees/foo/index.lock"))
+        XCTAssertTrue(FileWatcher.isFilteredNoisePath("/tmp/repo/.git/objects/pack/pack-abc.pack.tmp"))
+        XCTAssertTrue(FileWatcher.isFilteredNoisePath("/tmp/repo/.git/.watchman-cookie-xyz"))
+        XCTAssertTrue(FileWatcher.isFilteredNoisePath("/tmp/repo/.watchman-cookie-xyz"))
+
+        XCTAssertFalse(FileWatcher.isFilteredNoisePath("/tmp/repo/Sources/main.swift"))
+        XCTAssertFalse(FileWatcher.isFilteredNoisePath("/tmp/repo/.git/index"))
+        XCTAssertFalse(FileWatcher.isFilteredNoisePath("/tmp/repo/.git/HEAD"))
+        XCTAssertFalse(FileWatcher.isFilteredNoisePath("/tmp/repo/docs/index.lock"))
+        XCTAssertFalse(FileWatcher.isFilteredNoisePath("/tmp/repo/app/pack.tmp"))
+    }
+
+    func testWatcherFiltersGitNoise() {
+        let rawPaths = [
+            "/tmp/repo/src/main.swift",
+            "/tmp/repo/.git/index.lock",
+            "/tmp/repo/.git/objects/pack/a.pack.tmp",
+            "/tmp/repo/.watchman-cookie-xyz",
+            "/tmp/repo/src/util.swift",
+        ]
+        let filtered = rawPaths.filter { !FileWatcher.isFilteredNoisePath($0) }
+        XCTAssertEqual(filtered.count, 2)
+        XCTAssertTrue(filtered.contains("/tmp/repo/src/main.swift"))
+        XCTAssertTrue(filtered.contains("/tmp/repo/src/util.swift"))
+
+        let flags = Array(repeating: FSEventStreamEventFlags(0), count: filtered.count)
+        let event = FileWatcher.classifyChangeEvent(paths: filtered, flags: flags)
+        XCTAssertNotNil(event)
+        XCTAssertEqual(event?.changedPaths.count, 2)
+    }
+
     func testChangeEventMergedCoalescesFlagsAndPaths() {
         let treeEvent = FileWatcher.ChangeEvent(
             changedPaths: ["/tmp/repo/a.swift"],

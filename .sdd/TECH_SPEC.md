@@ -1,107 +1,85 @@
-# Tech Spec: Performance Wave 2 (Operation Kind + Focus + Auto-Dispose)
+# Tech Spec: Performance Wave 3 (Primitives + Watcher Polish + autoReveal)
 
 ## Goal
-Reduce wasted CPU / log noise and build the foundation for future optimistic paths by absorbing three VS Code Git extension patterns: (1) tipified `Operation` kind with flags (`{ readOnly, blocking, remote, showProgress }`), (2) idle + window-focus gate on file-watcher-driven `refreshRepository`, and (3) auto-dispose repository state when git reports `NotAGitRepository`.
+Three finishing touches on top of Waves 1-2: (1) reusable Swift `@Throttle` / `@Debounce` property-wrapper primitives (or equivalent global helpers) that ViewModel extensions can adopt without hand-writing `Task.sleep`, (2) a watcher regex filter that drops `.git/index.lock` and `*.pack.tmp` noise before it hits the coalescer, and (3) `autoReveal` parity with VS Code — when the active editor file changes, the file tree expands parent directories and selects the file.
 
 ## Context & Motivation
-Reference: `docs/VSCODE_GIT_LEARNINGS.md` (written in Wave 1). Matching VS Code source:
-- Operation kind + `OperationManager` → `extensions/git/src/operation.ts` and `repository.ts:2695` (the `run<T>()` choke point).
-- Idle + focus gate → `repository.ts:3186-3213` (`eventuallyUpdateWhenIdleAndWait` + `whenIdleAndFocused`).
-- Auto-dispose on `NotAGitRepository` → `repository.ts:2721` (`this.state = RepositoryState.Disposed`).
+Reference: `docs/VSCODE_GIT_LEARNINGS.md`. VS Code source anchors:
+- Throttle/debounce decorators: `extensions/git/src/decorators.ts` (`_throttle`, `_sequentialize`, `debounce(delay:)`, `memoize`).
+- Watcher filter: `extensions/git/src/repository.ts:465-470` — `filterEvent(rootWatcher.event, uri => !/\.git(\/index\.lock|...)$|\/\.watchman-cookie-/.test(uri.path))`.
+- autoReveal: `extensions/vscode-main/src/vs/workbench/contrib/files/browser/views/explorerView.ts` — `selectActiveFile(reveal:)` reveals the active-editor file in the tree.
 
-Observable today:
-- Every git subcommand goes through `runGitAction` with only a `String` label. There is no way to ask "is a commit currently running?" for UI gating or to know whether a reload is safe to skip. Optimistic-path work in Wave 1 needed ad-hoc closures as a workaround.
-- `refreshRepository(origin: .fileWatcher)` fires while Zion window is in the background, wasting CPU and battery.
-- Opening a folder without `.git` (e.g. `~/Developer/liquid-flow-agent` in the runtime log) produces three warns per switch: `Failed to load submodules`, `Failed to load gitignored paths`, `Repo memory refresh failed` — each caused by a git command returning `fatal: not a git repository`. The repo state is never marked as not-a-git-repo, so subsequent watcher events keep trying.
+Observed today:
+- `FileWatcher` already has a coalescer (Wave 1) + debounce. But `.git/index.lock` file create/delete — which git itself generates during every commit — still flows through classifier into coalescer. Even though the classifier returns `nil` for pure `.git/` internals, the classifier call itself runs; filtering earlier saves work and removes an entire class of pointless iteration.
+- `*.pack.tmp` files (git GC, repack) generate FSEvents spikes. They land under `.git/objects/pack/` — same category.
+- Zion has no `@throttle` / `@debounce` reusable primitive. Wave 1 `FileWatcher` coalescer writes its own `Task` + `Task.sleep(nanoseconds:)` + cancel pattern. Wave 2 `IdleFocusGate` wrote its own 200 ms grace with another `Task.sleep`. Further waves will duplicate this unless we extract.
+- Editor opens a file via `selectedCodeFile` but tree expansion does not auto-follow when the active file lives in a currently-collapsed directory.
 
 ## Constraints
-- Language: Swift 6.2; framework: SwiftUI `@Observable`, SwiftPM executable `Zion`, macOS 14+.
-- Test runner: `swift test` (`ZionTests` in `Tests/ZionTests/`).
-- Dependencies: no new external deps. Uses `AppKit.NSApp.isActive` for window-focus detection and `NSApplication.didBecomeActiveNotification` / `willResignActiveNotification` observation.
+- Language: Swift 6.2. `@MainActor` `@Observable` ViewModel + SwiftUI.
+- Dependencies: no new external deps. Uses Combine / Foundation / AppKit only.
 - Boundaries:
-  - Must NOT change the public `runGitAction` signature's existing positional parameters (the `onFailure` closure added in Wave 1 stays). New parameters have default values.
-  - Must NOT change the destructive-op pre-snapshot pattern (`zion-pre-*` stashes).
-  - Must NOT break any Wave 1 behavior (stage/unstage/discard optimistic UI, FileWatcher coalescer, `GIT_OPTIONAL_LOCKS=0`, expansion prune).
-  - Must NOT alter editor, terminal, SwiftTerm, Sparkle, or mobile remote code paths.
-  - Must use `L10n("key")` for any new user-facing string (dot-notation key, added to `en.lproj`, `pt-BR.lproj`, `es.lproj`).
-  - Timing/limit constants go through `Constants.Timing.*` / `Constants.Limits.*`.
+  - Must NOT break Wave 1 (coalescer) or Wave 2 (Operation / gate / auto-dispose) behaviour. Tests must stay green.
+  - Must NOT touch editor, terminal, SwiftTerm, Sparkle, or mobile remote code paths.
+  - `@throttle` / `@debounce` primitives are optional to apply retroactively — this wave does NOT rewrite Wave 1/2 callers to use them. New primitives only. (Rewrite can come in a tidy-up wave if desired.)
+  - Must use `L10n("key")` for any new user-facing string.
+  - All new timing values go in `Constants.Timing.*` / `Constants.Limits.*`.
 
 ## Reuse
-- `Sources/Zion/ViewModel/RepositoryViewModel+Git.swift` — central `runGitAction` (gained `onFailure` param in Wave 1); `refreshStatusOnly`; `refreshRepository(setBusy:options:origin:...)` call sites.
-- `Sources/Zion/ViewModel/RepositoryViewModel.swift` — `@Observable` class; `@ObservationIgnored` private stored state; `isGitRepository: Bool` already exists (line 104) — piggy-back the auto-dispose state on that plus a new `isRepositoryDisposed` flag.
-- `Sources/Zion/ViewModel/RepositoryViewModel+SnapshotHelpers.swift` — hosts `startFileWatcher(for:)` (line 599 area) where watcher callbacks fire `refreshRepository(origin: .fileWatcher)`. This is the injection site for the idle+focus gate.
-- `Sources/Zion/Services/RepositoryWorker+Execution.swift` — `runAction`, `runActionAllowingFailure`, `runActionWithStdin`. For auto-dispose, inspect the stderr of failed calls and detect `fatal: not a git repository` to propagate a typed error.
-- `Sources/Zion/Services/GitClient*.swift` — existing `GitClientError` enum is the natural home for a new `.notAGitRepository` case. Grep for the enum definition; add a case.
-- `Sources/Zion/Helpers/Constants.swift` — `Constants.Timing.*` (add `refreshRepositoryIdleGrace: UInt64 = 200_000_000 // 200ms`).
+- `Sources/Zion/Services/FileWatcher.swift` — `classifyChangeEvent(paths:flags:)` at line ~97 and `isInsideGitDirectory`, `isGitMetadataPath` at line ~120+. The watcher filter hooks into the path-normalization stage, before classify.
+- `Sources/Zion/ViewModel/RepositoryViewModel+FileTree.swift` — `expandedPathsByRepository`, `loadChildrenIfNeeded(for:)`, `pruneExpandedPaths(_:)` (from Wave 1). The autoReveal helper calls `loadChildrenIfNeeded` up the parent chain.
+- `Sources/Zion/ViewModel/RepositoryViewModel.swift` — `selectedCodeFile: FileItem?` (Observable) is the active-editor file. `autoRevealOnEditorFileChange` observer attaches here.
+- `Sources/Zion/Helpers/Constants.swift` — add new `Timing.debouncePrimitiveDefault` and `Timing.throttlePrimitiveDefault` if primitives accept an optional default. Honor `Constants.*` pattern.
 
 ## Acceptance Criteria
-1. `Operation` enum exists with at least these cases wired through `runGitAction`: `status`, `add`, `commit`, `restore` (discard), `fetch`, `push`, `stash`, `checkout`, `merge`, `rebase`, `reset`, `revert`, `tag`, `branch`, `cloning`, `remote`, `log`, `diff`, `show`, `other(String)`. Every case has a statically-known `kind`, `readOnly`, `blocking`, `remote`, `showProgress` flag value. Verify: `swift test --filter ZionTests.OperationKindTests/testAllCasesHaveKnownFlags`.
-2. `OperationManager` tracks currently-running operations and exposes `isIdle`, `isRunning(_ kind: OperationKind) -> Bool`, and `shouldShowProgress() -> Bool`. Verify: `swift test --filter ZionTests.OperationManagerTests/testIsIdleTogglesCorrectly`.
-3. `runGitAction` accepts an `operation: Operation` parameter (defaulted to `.other(label)` for back-compat with existing callers); start/end the manager on begin/finish. Verify: `swift test --filter ZionTests.OperationManagerTests/testRunGitActionStartsAndEndsOperation`.
-4. At least the four Wave 1 staging/discard call sites and the `refreshStatusOnly` / `fetch` / `push` / `pull` / `commit` paths pass an explicit `Operation` case (not `.other(label)`) so they participate in `isRunning(_:)` correctly. Verify: `grep -c 'operation: \.' Sources/Zion/ViewModel/RepositoryViewModel+*.swift` returns at least `10`.
-5. `refreshRepository(origin: .fileWatcher)` is gated by idle + focus — while `NSApp.isActive == false` OR any non-read-only operation is running, the refresh request is **deferred** (not dropped). When the app becomes active and the manager reports `isIdle`, the latest deferred request fires exactly once. Multiple deferred requests during the gated period coalesce to one. Verify: `swift test --filter ZionTests.IdleFocusGateTests`.
-6. User-initiated refreshes (`origin: .userInitiated`) and repository-switch refreshes (`origin: .repositorySwitch`) BYPASS the gate — they always run immediately. Regression guard. Verify: `swift test --filter ZionTests.IdleFocusGateTests/testUserInitiatedBypassesGate`.
-7. When any `runAction` fails with stderr matching `fatal: not a git repository`, the worker throws `GitClientError.notAGitRepository`. Verify: `swift test --filter ZionTests.GitClientErrorTests/testNotAGitRepositoryDetection`.
-8. On receiving `GitClientError.notAGitRepository`, the ViewModel sets `isGitRepository = false` AND marks the repo state disposed (new `@ObservationIgnored var isRepositoryDisposed: Bool`); further watcher events and scheduled refreshes exit early; no more warns from `loadSubmodules`, `loadGitIgnoredPaths`, or `refreshRepoMemory` for the same repo during that session. Verify: `swift test --filter ZionTests.AutoDisposeTests`.
-9. Reopening a repository URL that was previously disposed **clears** the disposed flag and retries detection (so a `git init` done externally is picked up). Verify: `swift test --filter ZionTests.AutoDisposeTests/testReopenClearsDisposedFlag`.
-10. Full suite: `swift test` exits 0 (should stay at 903 baseline plus the new tests, zero pre-existing regressions).
-11. Build artifact: `./scripts/make-app.sh` exits 0 and produces `dist/Zion.app`.
+1. `Debouncer` helper exists as a reusable primitive in `Sources/Zion/Helpers/Debouncer.swift`: an `@MainActor` class with `init(interval: UInt64)` and `func schedule(_ work: @Sendable @MainActor @escaping () -> Void)` that cancels prior scheduled work and fires after `interval` ns. Verify: `swift test --filter ZionTests.DebouncerTests`.
+2. `Throttler` helper exists as a reusable primitive in `Sources/Zion/Helpers/Throttler.swift` with semantics matching VS Code `_throttle` (repository.ts:39): if running, enqueue exactly one next invocation (collapses duplicates). `init(interval: UInt64)` + `func schedule(_ work: @Sendable @MainActor @escaping () async -> Void)`. Verify: `swift test --filter ZionTests.ThrottlerTests`.
+3. `FileWatcher` drops `.git/index.lock`, `.git/<worktree>/index.lock`, and `*.pack.tmp` paths BEFORE classification. Feeding the classify layer a burst of 5 paths — 2 real, 1 `index.lock`, 1 `.pack.tmp`, 1 watchman cookie — produces a classify result whose `changedPaths` contains only the 2 real paths (+ none of the filtered ones). Verify: `swift test --filter ZionTests.FileWatcherTests/testWatcherFiltersGitNoise`.
+4. `FileWatcher.isFilteredNoisePath(_:) -> Bool` is exposed as an `internal` static helper returning true for `index.lock`, `pack.tmp`, and `.watchman-cookie-` variants. Verify: `swift test --filter ZionTests.FileWatcherTests/testIsFilteredNoisePath`.
+5. Auto-reveal: observing a change to `selectedCodeFile` triggers `revealSelectedCodeFileInTree()` which (a) computes the parent chain of the URL relative to `repositoryURL`, (b) inserts each ancestor directory into `expandedPaths`, (c) calls `loadChildrenIfNeeded` on each newly-expanded ancestor. Verify: `swift test --filter ZionTests.AutoRevealTests/testRevealExpandsParentChain`.
+6. Auto-reveal no-ops when the file is not inside the repository, when `repositoryURL == nil`, and when `autoRevealEnabled == false` (new `@AppStorage("code.autoReveal")` flag defaulting to true — value stored via existing `UserDefaults` convention, not `@AppStorage` inside `@Observable` per the project's known-bugs rule). Verify: `swift test --filter ZionTests.AutoRevealTests/testRevealSkipsWhenDisabled`.
+7. Full suite: `swift test` exits 0 (baseline 923 tests from Wave 2 + new tests, 0 failures).
+8. Build artifact: `./scripts/make-app.sh` exits 0 and produces `dist/Zion.app`.
 
 ## Architecture
 
 ### Files to create
-- `Sources/Zion/Services/Operation.swift` — hosts `enum OperationKind` and `struct Operation` with the static flags. Keep flat: one file per domain.
-- `Sources/Zion/Services/OperationManager.swift` — `@MainActor final class OperationManager` that tracks active operations via a `[OperationKind: Int]` reference count (some kinds — like `status` — can fire in overlap). Exposes `start(_:)`, `end(_:)`, `isRunning(_:)`, `isIdle`, `shouldShowProgress()`. Instance lives on `RepositoryViewModel` as `@ObservationIgnored let operations: OperationManager`.
-- `Sources/Zion/ViewModel/RepositoryViewModel+IdleFocusGate.swift` — implements the gate: a single `pendingFileWatcherRefresh: Bool` flag plus observation of `NSApplication.didBecomeActiveNotification`; when fire conditions are met, call `refreshRepository(origin: .fileWatcher)` exactly once, then clear the flag. Register the observer in `RepositoryViewModel.init` (add a call there) or lazily on first watcher event. Prefer lazy to keep init lean.
-- `Sources/Zion/ViewModel/RepositoryViewModel+AutoDispose.swift` — exposes `markRepositoryDisposed(reason:)` and the short-circuit checks `shouldSkipBecauseDisposed()` called from `refreshRepository`, `loadSubmodules`, `loadGitIgnoredPaths`, `refreshRepoMemory`, file-watcher callback fan-out. On `openRepository(_:silent:)`, clear the flag for the new URL.
-- `Tests/ZionTests/OperationKindTests.swift` — AC 1 (flags table). Table-driven: every `OperationKind` case has expected `readOnly/blocking/remote/showProgress` asserted.
-- `Tests/ZionTests/OperationManagerTests.swift` — AC 2 + AC 3 (isIdle toggle; runGitAction wraps start/end correctly; refcount handles overlap).
-- `Tests/ZionTests/IdleFocusGateTests.swift` — AC 5 + AC 6 (deferred while inactive/busy; coalesces; fires once on activation; user-initiated bypasses).
-- `Tests/ZionTests/GitClientErrorTests.swift` — AC 7 (stderr match → typed error). Drive via a mock/stub stderr string, not a real git call.
-- `Tests/ZionTests/AutoDisposeTests.swift` — AC 8 + AC 9 (dispose on error; short-circuits subsequent calls; reopen clears).
+- `Sources/Zion/Helpers/Debouncer.swift` — `@MainActor final class Debouncer` with private `Task<Void, Never>?` and `UInt64` interval. `schedule(_:)` cancels the prior task, starts a new `Task` that `await Task.sleep(nanoseconds: interval)` then invokes the closure. `cancel()` cancels without firing. `deinit` cancels the pending task.
+- `Sources/Zion/Helpers/Throttler.swift` — `@MainActor final class Throttler` mirroring VS Code `_throttle` semantics. Keep a `current: Task<Void, Never>?` and `next: (@Sendable @MainActor () async -> Void)?`. On `schedule(work:)`, if `current == nil`, fire immediately as a `Task`. When that task completes, if `next != nil`, take it and schedule the next run. Additional `schedule` calls while both current and next exist overwrite `next` (collapses duplicates to exactly one follow-up).
+- `Sources/Zion/ViewModel/RepositoryViewModel+AutoReveal.swift` — `@MainActor func revealSelectedCodeFileInTree()`. Reads `selectedCodeFile`, `repositoryURL`, and the `autoRevealEnabled` persisted flag; inserts ancestors into `expandedPaths` and calls `loadChildrenIfNeeded`. Also add `var autoRevealEnabled: Bool { get set }` as a computed property reading/writing `UserDefaults` with key `code.autoReveal` (default true). Subscribing to `selectedCodeFile` changes happens in an existing `didSet` on that property OR via a new `onChange` observer registered in `RepositoryViewModel.init`. Prefer `didSet` — simpler, no Combine.
+- `Tests/ZionTests/DebouncerTests.swift` — AC 1 tests: schedule fires once after interval; repeat-schedule cancels prior; `cancel` prevents fire; deinit is safe.
+- `Tests/ZionTests/ThrottlerTests.swift` — AC 2 tests: first call fires immediately; calls during current collapse to exactly one follow-up; idle state runs follow-up.
+- `Tests/ZionTests/AutoRevealTests.swift` — AC 5 + AC 6 tests.
 
 ### Files to modify
-- `Sources/Zion/Helpers/Constants.swift` — add `static let refreshRepositoryIdleGrace: UInt64 = 200_000_000 // 200ms` in `enum Timing`.
-- `Sources/Zion/Services/RepositoryWorker+Execution.swift` — in the existing `Process` stream path (line 85+), when the process exits non-zero and stderr begins with `fatal: not a git repository`, throw `GitClientError.notAGitRepository` instead of the generic failure.
-- `Sources/Zion/Services/GitClient*.swift` — add `case notAGitRepository` to `GitClientError`. Match L10n convention: add a new localized key `error.notAGitRepository = "Not a git repository."` + PT-BR + ES equivalents.
-- `Sources/Zion/ViewModel/RepositoryViewModel.swift` — add `@ObservationIgnored let operations = OperationManager()` (line ~100 alongside other service members) and `@ObservationIgnored var isRepositoryDisposed: Bool = false`. Provide `@MainActor` `markRepositoryDisposed(reason: String)` that sets `isGitRepository = false`, sets `isRepositoryDisposed = true`, logs the reason via `DiagnosticLogger`.
-- `Sources/Zion/ViewModel/RepositoryViewModel+Git.swift` — `runGitAction` gains `operation: Operation = .other(label)` parameter (the existing `label` stays for log continuity). In the `try` path, call `self.operations.start(operation)` before the work and `self.operations.end(operation)` in `defer`. In the `catch` path, inspect the thrown error — if it's `GitClientError.notAGitRepository`, call `markRepositoryDisposed(reason: "runGitAction: not a git repo")` before surfacing.
-- `Sources/Zion/ViewModel/RepositoryViewModel+SnapshotHelpers.swift` — `startFileWatcher(for:)` callback currently calls `refreshRepository(origin: .fileWatcher)` directly. Route through a new `requestFileWatcherRefresh()` on the IdleFocusGate extension. Also guard with `guard !isRepositoryDisposed else { return }`.
-- `Sources/Zion/ViewModel/RepositoryViewModel+Git.swift` + any extension that calls `loadSubmodules`, `loadGitIgnoredPaths`, `refreshRepoMemory` — prepend `guard !isRepositoryDisposed else { return }` (or equivalent). Must not regress the normal-repo flow.
-- Update all call sites to `runGitAction` in the ViewModel extensions to pass a concrete `operation: Operation` — start with `refreshStatusOnly`, `commit`, `fetch`, `push`, `pull`, `stageFile`, `unstageFile`, `stageAllFiles`, `unstageAllFiles`, `discardChanges(in:)`. Rest can keep the `.other(label)` default.
-- `Resources/en.lproj/Localizable.strings` + `Resources/pt-BR.lproj/Localizable.strings` + `Resources/es.lproj/Localizable.strings` — add `"error.notAGitRepository"` key with the translated strings.
+- `Sources/Zion/Services/FileWatcher.swift` — add `static func isFilteredNoisePath(_ path: String) -> Bool` that returns true if the path matches `.git/index.lock` suffix, a worktree `.git/worktrees/<name>/index.lock` pattern, a `.pack.tmp` suffix inside `.git/objects/pack/`, or contains `.watchman-cookie-`. Then in the FSEvents callback (line ~50 area) and in the test-seam `ingestForTesting(paths:)`, filter out noise paths BEFORE calling `classifyChangeEvent`. If after filtering no paths remain, skip the classify call entirely.
+- `Sources/Zion/ViewModel/RepositoryViewModel.swift` — modify `selectedCodeFile` to trigger auto-reveal: add `didSet { revealSelectedCodeFileInTree() }`. Keep the existing assignment semantics intact (no re-entry — the reveal helper is sync and does not mutate `selectedCodeFile`).
 
 ### Dependencies between files
-- `Operation.swift` and `OperationManager.swift` have no cross-dep beyond `Foundation`.
-- `RepositoryViewModel+AutoDispose.swift` depends on `GitClientError.notAGitRepository` and on `RepositoryViewModel.markRepositoryDisposed`.
-- `RepositoryViewModel+IdleFocusGate.swift` depends on `AppKit` (for `NSApp`), on `OperationManager`, and on the existing `refreshRepository` entry point.
-- Watcher callbacks in `+SnapshotHelpers` depend on both the gate and the auto-dispose guard.
-- Test files each `@testable import Zion`.
+- `Debouncer.swift` and `Throttler.swift` depend only on `Foundation` (Task / Task.sleep).
+- `FileWatcher.swift` depends on its own static regex detection; no cross-file changes.
+- `RepositoryViewModel+AutoReveal.swift` depends on existing `+FileTree` extension (`pruneExpandedPaths`, `loadChildrenIfNeeded`) and on `selectedCodeFile` / `repositoryURL` / `expandedPaths` in the main ViewModel.
 
 ## Edge Cases
-1. **Rapid app activate / resign bursts** — observer must debounce itself. Use a simple latch: when `willResignActiveNotification` fires, drop any pending one-shot gate task; when `didBecomeActiveNotification` fires and `pendingFileWatcherRefresh == true` AND `operations.isIdle`, schedule the refresh through `DispatchQueue.main.asyncAfter(wallDeadline: .now() + 0.2)` — the 200 ms grace prevents thrash if user resigns immediately again.
-2. **Operation that runs across many small subprocesses** (e.g. a big `fetch` that internally loops) — reference count on `start(_:)` / `end(_:)`. `isIdle` is true only when ALL counts are zero.
-3. **Repo becomes a git repo after `git init`** — user runs `git init` externally. Zion does not observe `.git/HEAD` creation inside a disposed repo (watcher is still active for the non-git folder). Solution: on `openRepository(_:silent:)`, always clear the disposed flag and do a one-time detection retry. Already covered by AC 9.
-4. **`fatal: not a git repository` returned by a non-status command** (e.g. `submodule` query) — should dispose just the same; the detection is stderr-based, not command-specific.
-5. **User-initiated refresh while disposed** — treat as an explicit retry. Clear the disposed flag and attempt the refresh. If it fails again with `.notAGitRepository`, re-dispose. This is the "reload" escape hatch.
-6. **`OperationManager.isIdle` during bootstrap** — before any `start(_:)` call, `isIdle` is `true`; tests that rely on this must not pre-fire a dummy operation.
-7. **Notification observer retain cycle** — use `[weak self]` in the observer block. Unregister in `deinit` of the ViewModel (if not already).
-8. **Running a command like `git -C <non-repo> log` returns exit 128 with stderr about `fatal: not a git repository`** — our detection matches this substring anywhere in stderr, not only at the start. Use `contains("fatal: not a git repository")`.
+1. **Debouncer interval 0** — fires immediately on the next run loop turn. Useful for tests. `Task.sleep(nanoseconds: 0)` still yields.
+2. **Throttler with rapid fire** — if 1000 calls come in during a 200ms window, the collapse-to-one-next rule keeps total executions at exactly 2 (current + one follow-up), not 1000.
+3. **`isFilteredNoisePath` false positives** — a user file literally named `index.lock` outside `.git/` must NOT be filtered. Anchor the suffix to `.git/index.lock$` (allow worktree `.git/worktrees/<slug>/index.lock` too).
+4. **Auto-reveal with file outside repo** — if `selectedCodeFile.url` is not a descendant of `repositoryURL`, no-op. Do not crash.
+5. **Auto-reveal during bulk repo switch** — the snapshot restore path (`+SnapshotHelpers`) sets `selectedCodeFile` while restoring. That restore run should NOT trigger a reveal that contradicts the snapshot's own `expandedPaths`. Mitigation: the auto-reveal just adds ancestors to `expandedPaths` (a merge, not replace). If a restored expansion set already contains those ancestors, this is a no-op.
+6. **Auto-reveal UI noise** — adding parents to `expandedPaths` re-fires the SwiftUI observation; if the tree is not currently visible (e.g. user on Graph tab), the expansion happens silently. No explicit visibility guard needed — SwiftUI only renders visible views.
+7. **Throttler deinit with pending next** — cancel `current`, drop `next` without firing. Document explicitly.
 
 ## Out of Scope
-- Swift `@throttle` / `@debounce` property wrapper primitives (Wave 3).
-- Watcher regex filter for `.git/index.lock` and `*.pack.tmp` (Wave 3).
-- `autoReveal` parity check (Wave 3).
-- Any refactor of existing destructive-op pre-snapshot pattern.
-- Any change to mobile remote (`openRepository(_:silent:)` bulk path) beyond clearing the disposed flag on reopen.
-- Any change to optimistic staging/discard logic from Wave 1.
-- Any new progress-indicator UI — `shouldShowProgress()` returns the flag, but wiring it to a spinner is deferred.
+- Retroactive rewrites of Wave 1 coalescer or Wave 2 idle gate to use the new Debouncer/Throttler primitives.
+- Any change to the existing FileWatcher coalescer flush cadence (Wave 1) or the 200 ms grace (Wave 2).
+- Any change to `pruneExpandedPaths` from Wave 1.
+- Any UI surface for `autoRevealEnabled` (Settings toggle comes in a later UX pass — for now it is a silent default-on flag persisted in `UserDefaults`).
+- Any change to editor code paths beyond observing `selectedCodeFile`.
 
 ## Builder Notes
-- Start Wave 2 tasks with `Operation.swift` + `OperationManager.swift` first — everything else builds on top.
-- Observing `NSApp` notifications requires importing `AppKit`. Guard with `#if os(macOS)` if the file would otherwise be cross-platform (Zion is macOS-only today so the guard is optional but idiomatic).
-- For auto-dispose, the stderr inspection lives in the lowest Process-run layer (`RepositoryWorker+Execution.swift`), not in the ViewModel. The ViewModel only reacts to the typed error.
-- When adding `Operation` cases, prefer enum-with-associated-values for string labels (e.g. `case checkout(refLabel: String)`) only where the label is needed downstream. Otherwise plain cases. Match VS Code's style but do not port every single case (ref `extensions/git/src/operation.ts` — pick the ~20 most common; use `.other(String)` for the rest).
-- L10n: any new user-facing string uses `L10n("error.notAGitRepository")` and must be added to all 3 locale files. Do NOT reuse existing Portuguese-keyed strings.
-- After implementation: `swift test` and `./scripts/make-app.sh`. Do not push or open a PR — keep it local until the user reviews.
-- Branch name: `perf/wave-2-ops-and-focus` (already checked out, stacked on Wave 1).
+- Prefer `didSet` on `selectedCodeFile` over Combine observers — the property is already `@Observable`, so a `didSet` runs synchronously on the same MainActor tick.
+- `UserDefaults` key: `"code.autoReveal"`. Default true. Follow the known-bugs rule: NO `@AppStorage` inside `@Observable`; use a computed property backed by `UserDefaults.standard.bool(forKey:)`.
+- The watcher filter regex should be fast — avoid `NSRegularExpression`. Use `hasSuffix`/`contains` on the lowercased path string. Match the VS Code approach of inline detection.
+- Throttler implementation: the trickiest part is ensuring `next` is captured exactly once and drained when `current` completes. A simple pattern — when `current` ends, check `next`, move it to `current`, fire it — is sufficient. Swift Concurrency takes care of the rest.
+- After all 8 tasks: `swift test` + `./scripts/make-app.sh`. Do not push or open a PR — stack on Wave 2 branch.
+- Branch name: `perf/wave-3-primitives-polish` (already checked out).
