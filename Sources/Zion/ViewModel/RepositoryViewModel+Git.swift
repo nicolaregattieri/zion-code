@@ -681,7 +681,7 @@ extension RepositoryViewModel {
         refreshSetBusy: Bool = true,
         onCommandSuccess: (() -> Void)? = nil,
         onFailure: (() -> Void)? = nil,
-        operation: Operation = .other("")
+        operation: GitOperation = .other("")
     ) {
         guard !isRepositoryDisposed else {
             logger.log(.warn, "runGitAction skipped (repository disposed)", context: label, source: #function)

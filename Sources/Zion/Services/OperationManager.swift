@@ -19,7 +19,7 @@ public final class OperationManager {
 
     // MARK: - Lifecycle
 
-    public func start(_ op: Operation) {
+    public func start(_ op: GitOperation) {
         counts[op.kind, default: 0] += 1
         if op.showProgress {
             progressCounts[op.kind, default: 0] += 1
@@ -29,7 +29,7 @@ public final class OperationManager {
         }
     }
 
-    public func end(_ op: Operation) {
+    public func end(_ op: GitOperation) {
         if let current = counts[op.kind], current > 1 {
             counts[op.kind] = current - 1
         } else {
