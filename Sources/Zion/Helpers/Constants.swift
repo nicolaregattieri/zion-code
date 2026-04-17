@@ -87,6 +87,10 @@ enum Constants {
         /// as a single ChangeEvent after this window elapses (or when the path ceiling is hit).
         static let fileWatcherCoalesceWindow: UInt64 = 100_000_000 // 100ms
 
+        /// Grace period applied after the app regains focus before firing a deferred
+        /// file-watcher-driven refresh. Prevents thrash on rapid activate/resign bursts.
+        static let refreshRepositoryIdleGrace: UInt64 = 200_000_000 // 200ms
+
         // --- Inactive Repo Monitoring ---
         // Background repos are now purely event-driven via FSEvents FileWatcher.
         // No polling loop runs for inactive repos.

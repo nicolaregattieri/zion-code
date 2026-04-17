@@ -4,18 +4,28 @@ private final class SendableBox: @unchecked Sendable {
     var data = Data()
 }
 
-enum GitClientError: LocalizedError {
+enum GitClientError: LocalizedError, Equatable {
     case repositoryNotSelected
+    case notAGitRepository
     case commandFailed(command: String, message: String)
 
     var errorDescription: String? {
         switch self {
         case .repositoryNotSelected:
             return L10n("Selecione um repositorio Git primeiro.")
+        case .notAGitRepository:
+            return L10n("error.notAGitRepository")
         case .commandFailed(let command, let message):
             return L10n("gitError.commandFailed", command, message)
         }
     }
+}
+
+/// Returns true when `stderr` represents git's `fatal: not a git repository` error.
+/// Case-insensitive substring match so variants like the full
+/// `fatal: not a git repository (or any parent up to mount point ...)` still match.
+func isNotAGitRepoStderr(_ stderr: String) -> Bool {
+    stderr.lowercased().contains("fatal: not a git repository")
 }
 
 struct GitCommandResult {
@@ -71,6 +81,9 @@ struct GitClient {
         let stderr = String(data: stderrData, encoding: .utf8) ?? ""
 
         if process.terminationStatus != 0 {
+            if isNotAGitRepoStderr(stderr) {
+                throw GitClientError.notAGitRepository
+            }
             let message = stderr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 ? stdout.trimmingCharacters(in: .whitespacesAndNewlines)
                 : stderr.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -88,6 +101,9 @@ struct GitClient {
     ) throws -> GitCommandResult {
         let result = try runAllowingFailure(args: args, in: repositoryURL, mode: mode)
         if result.status != 0 {
+            if isNotAGitRepoStderr(result.stderr) {
+                throw GitClientError.notAGitRepository
+            }
             let message = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 ? result.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
                 : result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)

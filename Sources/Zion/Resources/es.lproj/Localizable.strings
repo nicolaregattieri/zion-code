@@ -2,6 +2,7 @@
 "error.readFile" = "Error al leer archivo: %@";
 "error.loadDiff" = "Error al cargar diff: %@";
 "error.generic" = "Error: %@";
+"error.notAGitRepository" = "No es un repositorio git.";
 "Workspace" = "Espacio de trabajo";
 "Zion Tree" = "Zion Tree";
 "Seu cliente Git nativo para macOS." = "Tu cliente Git nativo para macOS.";

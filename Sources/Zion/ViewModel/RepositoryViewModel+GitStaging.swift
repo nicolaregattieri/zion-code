@@ -62,7 +62,8 @@ extension RepositoryViewModel {
         runGitAction(
             label: "Stage",
             args: ["add", path],
-            onFailure: { [weak self] in self?.restorePorcelainEntries(snapshot) }
+            onFailure: { [weak self] in self?.restorePorcelainEntries(snapshot) },
+            operation: .add
         )
     }
 
@@ -73,7 +74,8 @@ extension RepositoryViewModel {
         runGitAction(
             label: "Unstage",
             args: ["reset", "HEAD", "--", path],
-            onFailure: { [weak self] in self?.restorePorcelainEntries(snapshot) }
+            onFailure: { [weak self] in self?.restorePorcelainEntries(snapshot) },
+            operation: .restore
         )
     }
 
@@ -89,7 +91,8 @@ extension RepositoryViewModel {
         runGitAction(
             label: "Stage All",
             args: ["add", "-A"],
-            onFailure: { [weak self] in self?.restorePorcelainEntries(snapshot) }
+            onFailure: { [weak self] in self?.restorePorcelainEntries(snapshot) },
+            operation: .add
         )
     }
 
@@ -105,7 +108,8 @@ extension RepositoryViewModel {
         runGitAction(
             label: "Unstage All",
             args: ["reset", "HEAD", "--", "."],
-            onFailure: { [weak self] in self?.restorePorcelainEntries(snapshot) }
+            onFailure: { [weak self] in self?.restorePorcelainEntries(snapshot) },
+            operation: .restore
         )
     }
 

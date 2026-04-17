@@ -646,6 +646,15 @@ final class RepositoryViewModel {
     var isTypingQuickly: Bool = false
     var shouldClosePopovers: Bool = false
     @ObservationIgnored let logger = DiagnosticLogger.shared
+    @ObservationIgnored var isRepositoryDisposed: Bool = false
+    @ObservationIgnored let operations = OperationManager()
+
+    // IdleFocusGate (Wave 2) — defers file-watcher-driven refreshes while the app
+    // window is backgrounded or a non-read-only operation is running.
+    @ObservationIgnored var pendingFileWatcherRefresh: Bool = false
+    @ObservationIgnored var didArmActivationObserver: Bool = false
+    @ObservationIgnored var isActiveOverrideForTesting: Bool?
+    @ObservationIgnored var refreshFireCountForTesting: Int = 0
 
     /// Tracks whether the full graph data (commits, branches, tags) has been loaded
     /// for the current repository. Reset on repo switch. When the user is on Code tab,
