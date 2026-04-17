@@ -654,7 +654,9 @@ extension RepositoryViewModel {
                 } else if event.hasGitMetadataImpact {
                     // Git metadata changed (.git/HEAD, .git/refs/) -- likely a checkout,
                     // commit, or rebase. Full refresh needed. (RT-002)
-                    refreshRepository(setBusy: false, options: .worktreeStatus, origin: .fileWatcher)
+                    // Route through the idle+focus gate (Wave 2) so we defer while the
+                    // window is backgrounded or a non-read-only op is running.
+                    requestFileWatcherRefresh()
                 } else {
                     // Content-only change (file saved) -- lightweight status update (RT-002)
                     refreshStatusOnly()

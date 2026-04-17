@@ -13,6 +13,7 @@ public final class OperationManager {
 
     private var counts: [OperationKind: Int] = [:]
     private var progressCounts: [OperationKind: Int] = [:]
+    private var nonReadOnlyCount: Int = 0
 
     public init() {}
 
@@ -22,6 +23,9 @@ public final class OperationManager {
         counts[op.kind, default: 0] += 1
         if op.showProgress {
             progressCounts[op.kind, default: 0] += 1
+        }
+        if !op.readOnly {
+            nonReadOnlyCount += 1
         }
     }
 
@@ -39,6 +43,10 @@ public final class OperationManager {
                 progressCounts.removeValue(forKey: op.kind)
             }
         }
+
+        if !op.readOnly {
+            nonReadOnlyCount = max(0, nonReadOnlyCount - 1)
+        }
     }
 
     // MARK: - Queries
@@ -49,6 +57,13 @@ public final class OperationManager {
 
     public var isIdle: Bool {
         counts.isEmpty
+    }
+
+    /// True when any non-read-only operation (commit, fetch, push, etc.) is in flight.
+    /// Used by the idle+focus gate to defer file-watcher refreshes that could race
+    /// with a running mutation.
+    public var hasActiveNonReadOnlyOperation: Bool {
+        nonReadOnlyCount > 0
     }
 
     public func shouldShowProgress() -> Bool {
