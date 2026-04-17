@@ -157,8 +157,16 @@ final class FileWatcher {
             hasGitMetadataImpact: base.hasGitMetadataImpact,
             requiresRescan: base.requiresRescan
         )
+        // Test seam: surface the coalesced event synchronously before the
+        // debounce layer runs, so tests can assert on coalescer behaviour
+        // without waiting for fileWatcherDebounce.
+        onCoalescedFlushForTesting?(flushed)
         handleChange(flushed)
     }
+
+    /// Test seam: invoked immediately after each coalesce flush, before the
+    /// debounce layer. Nil in production.
+    internal var onCoalescedFlushForTesting: ((ChangeEvent) -> Void)?
 
     // MARK: - Test seam accessors
 
