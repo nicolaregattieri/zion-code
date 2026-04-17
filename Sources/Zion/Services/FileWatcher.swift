@@ -69,8 +69,20 @@ final class FileWatcher {
                 guard let info = clientCallBackInfo else { return }
                 guard numEvents > 0 else { return }
                 guard let cfArray = unsafeBitCast(eventPaths, to: NSArray.self) as? [String] else { return }
-                let paths = Array(cfArray.prefix(numEvents))
-                let flags = Array(UnsafeBufferPointer(start: eventFlags, count: numEvents))
+                let rawPaths = Array(cfArray.prefix(numEvents))
+                let flagsAll = Array(UnsafeBufferPointer(start: eventFlags, count: numEvents))
+                // Wave 3: drop .git/index.lock, *.pack.tmp, and watchman cookie
+                // files BEFORE classification so the noisy spike that git itself
+                // generates during every commit/fetch never reaches the coalescer.
+                var paths: [String] = []
+                var flags: [FSEventStreamEventFlags] = []
+                paths.reserveCapacity(rawPaths.count)
+                flags.reserveCapacity(rawPaths.count)
+                for (path, flag) in zip(rawPaths, flagsAll) where !FileWatcher.isFilteredNoisePath(path) {
+                    paths.append(path)
+                    flags.append(flag)
+                }
+                guard !paths.isEmpty else { return }
                 guard let event = FileWatcher.classifyChangeEvent(paths: paths, flags: flags) else { return }
 
                 let watcher = Unmanaged<FileWatcher>.fromOpaque(info).takeUnretainedValue()
@@ -237,6 +249,23 @@ final class FileWatcher {
 
     static func isInsideGitDirectory(_ path: String) -> Bool {
         path.contains("/.git/") || path.hasSuffix("/.git")
+    }
+
+    /// Wave 3: true for paths git itself generates during normal operation that
+    /// we never want to drive a refresh from:
+    ///   - `.git/index.lock` (any worktree)
+    ///   - `.git/objects/pack/*.pack.tmp` (git gc / repack)
+    ///   - `.watchman-cookie-*` (watchman cookie files, if a user happens to run watchman)
+    static func isFilteredNoisePath(_ path: String) -> Bool {
+        let normalized = normalizePath(path)
+        // Watchman cookie — anywhere in the tree.
+        if normalized.contains("/.watchman-cookie-") { return true }
+        // index.lock — main .git/ directory OR any worktree's .git/worktrees/<name>/index.lock.
+        if normalized.hasSuffix("/.git/index.lock") { return true }
+        if normalized.contains("/.git/worktrees/") && normalized.hasSuffix("/index.lock") { return true }
+        // pack.tmp — git gc / repack writes these under .git/objects/pack/.
+        if normalized.contains("/.git/objects/pack/") && normalized.hasSuffix(".pack.tmp") { return true }
+        return false
     }
 
     static func isGitMetadataPath(_ path: String) -> Bool {
