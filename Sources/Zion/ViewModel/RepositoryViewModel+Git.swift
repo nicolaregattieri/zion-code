@@ -680,8 +680,13 @@ extension RepositoryViewModel {
         scheduleFullRefreshAfterCompletion: Bool = false,
         refreshSetBusy: Bool = true,
         onCommandSuccess: (() -> Void)? = nil,
-        onFailure: (() -> Void)? = nil
+        onFailure: (() -> Void)? = nil,
+        operation: Operation = .other("")
     ) {
+        guard !isRepositoryDisposed else {
+            logger.log(.warn, "runGitAction skipped (repository disposed)", context: label, source: #function)
+            return
+        }
         guard let repositoryURL else {
             lastError = GitClientError.repositoryNotSelected.localizedDescription
             return
@@ -700,7 +705,10 @@ extension RepositoryViewModel {
         let commandSummary = redactedGitCommandSummary(args: args)
         logger.log(.git, commandSummary, context: label)
 
+        operations.start(operation)
+
         actionTask = Task {
+            defer { operations.end(operation) }
             do {
                 let output = try await runActionWithCredentialRetry(
                     label: label,
@@ -746,6 +754,9 @@ extension RepositoryViewModel {
                 activeGitActionToken = nil
                 isBusy = false
                 disarmBusyWatchdog()
+                if let gitErr = error as? GitClientError, gitErr == .notAGitRepository {
+                    markRepositoryDisposed(reason: "runGitAction:\(operation.kind)")
+                }
                 onFailure?()
                 logger.log(.error, error.localizedDescription, context: commandSummary)
                 handleError(error)
