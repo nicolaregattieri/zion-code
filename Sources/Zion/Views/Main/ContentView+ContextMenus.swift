@@ -173,23 +173,7 @@ extension ContentView {
                 }
             }
         } else {
-            Menu(L10n("Push to Remote")) {
-                Button(L10n("Push")) {
-                    model.pushBranch(branch, to: "origin", setUpstream: true, mode: .normal)
-                }
-                Button(L10n("push.forceWithLease")) {
-                    model.pushBranch(branch, to: "origin", setUpstream: true, mode: .forceWithLease)
-                }
-                Button(L10n("push.force")) {
-                    performGitAction(
-                        title: L10n("push.force"),
-                        message: String(format: L10n("push.force.confirm"), branch),
-                        destructive: true
-                    ) {
-                        model.pushBranch(branch, to: "origin", setUpstream: true, mode: .force)
-                    }
-                }
-            }
+            pushMenu(for: branch)
             Divider()
             Button(L10n("Renomear branch...")) {
                 let promptTitle = L10n("Renomear branch")
@@ -244,6 +228,44 @@ extension ContentView {
             performGitAction(title: L10n("Remover tag"), message: String(format: L10n("Deseja remover a tag informada?"), tag), destructive: true) {
                 model.tagInput = tag
                 model.deleteTag()
+            }
+        }
+    }
+
+    @ViewBuilder
+    func pushMenu(for branch: String) -> some View {
+        let remotes = model.remotes
+        if remotes.count >= 2 {
+            Menu(L10n("Push to Remote")) {
+                ForEach(remotes) { remote in
+                    Menu(remote.name) {
+                        pushActions(branch: branch, remoteName: remote.name)
+                    }
+                }
+            }
+        } else {
+            let target = model.resolveTargetRemote(for: .push)?.name ?? remotes.first?.name ?? "origin"
+            Menu(L10n("push.toRemote.named", target)) {
+                pushActions(branch: branch, remoteName: target)
+            }
+        }
+    }
+
+    @ViewBuilder
+    func pushActions(branch: String, remoteName: String) -> some View {
+        Button(L10n("Push")) {
+            model.pushBranch(branch, to: remoteName, setUpstream: true, mode: .normal)
+        }
+        Button(L10n("push.forceWithLease")) {
+            model.pushBranch(branch, to: remoteName, setUpstream: true, mode: .forceWithLease)
+        }
+        Button(L10n("push.force")) {
+            performGitAction(
+                title: L10n("push.force"),
+                message: String(format: L10n("push.force.confirm"), branch),
+                destructive: true
+            ) {
+                model.pushBranch(branch, to: remoteName, setUpstream: true, mode: .force)
             }
         }
     }

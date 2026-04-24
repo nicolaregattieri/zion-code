@@ -30,6 +30,7 @@
 "Pull" = "Pull";
 "Push" = "Push";
 "Push to Remote" = "Enviar para Remoto";
+"push.toRemote.named" = "Enviar para %@";
 "New Branch" = "Nova Branch";
 "Recentes" = "Recentes";
 "sidebar.projects" = "Projetos";

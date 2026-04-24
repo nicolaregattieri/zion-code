@@ -71,6 +71,7 @@
 "Pull" = "Pull";
 "Push" = "Push";
 "Push to Remote" = "Push to Remote";
+"push.toRemote.named" = "Push to %@";
 "New Branch" = "New Branch";
 "Navegue no historico, inspecione commits e veja origem das branches." = "Navigate history, inspect commits, and view branch origins.";
 "Buscar por hash, autor ou mensagem" = "Search by hash, author, or message";
