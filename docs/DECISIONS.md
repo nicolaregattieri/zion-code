@@ -38,3 +38,13 @@ Implemented code formatting for 16+ languages using built-in parsers rather than
 
 ## 2026-03-01 — EditorSymbolIndex for Go to Definition
 Built a file-level symbol index that scans Swift/JS/TS/Python/Go/Rust files for function/class/struct definitions using regex patterns. Rebuilds on file tree refresh. Trade-off: regex-based (not AST-accurate), but fast enough for Go to Definition and Find References without an LSP server.
+
+## 2026-04-23 — Single Zion instance (LSMultipleInstancesProhibited = true)
+Set `LSMultipleInstancesProhibited = true` in `Info.plist` so macOS routes every launch (dock-icon click, Finder double-click, drag-and-drop of a folder onto the dock icon, `open path/Zion.app`) back to the already-running process instead of spawning a second one. This is what makes "drop a folder on the Zion dock icon" switch the current window to that repo instead of starting a fresh app that the user then has to manage separately. Added in commit `8a63129` ("fix(app): route dock-icon folder drops to running instance").
+
+**Consequence for development/testing:** you cannot launch a second instance by double-clicking `dist/Zion.app` while another Zion is running — macOS focuses the existing one. `open -n` does **not** bypass `LSMultipleInstancesProhibited` on modern macOS; LaunchServices enforces single-instance regardless of the flag. Workarounds that actually work:
+- **Launch the binary directly**, bypassing LaunchServices entirely: `/Users/nicolaregattieri/Developer/GraphForge/dist/Zion.app/Contents/MacOS/Zion` (optionally prefixed with env vars). This is what you want for A/B testing two builds side-by-side.
+- `killall Zion && open /path/to/dist/Zion.app` — replace the running process.
+- Temporarily flip the plist flag to `false` in the dev build if you need LaunchServices-driven launches (Finder double-click) to spawn a new process. Restore before shipping.
+
+Trade-off: dev ergonomics (cannot A/B two builds side-by-side without the workaround) accepted in exchange for the much more common user-facing behavior of "dock drop = switch repo in the existing window."
