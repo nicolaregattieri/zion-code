@@ -1678,6 +1678,8 @@
 "hosting.saveAndCreate" = "Salvar & Criar PR";
 "hosting.branchNotPushed" = "Envie \"%@\" para o remote antes de criar um pull request.";
 "hosting.notSupported" = "Esta ação não é suportada pelo provedor atual.";
+"pr.remote.picker.label" = "Abrir PR em:";
+"pr.remote.single" = "Abrindo PR em %@ (%@)";
 "settings.hosting.title" = "Hospedagem Git";
 "settings.hosting.github" = "GitHub";
 "settings.hosting.gitlab" = "GitLab";

@@ -13,9 +13,14 @@ struct PullRequestSheet: View {
     @State private var isGeneratingAI: Bool = false
     @State private var needsTokenForKind: GitHostingKind?
     @State private var inlineToken: String = ""
+    @State private var selectedRemoteName: String = ""
 
     private var headBranch: String {
         model.prSheetTargetBranch ?? model.currentBranch
+    }
+
+    private var hostedRemoteList: [(remote: RemoteInfo, provider: any GitHostingProvider, hosted: HostedRemote)] {
+        model.hostedRemotes()
     }
 
     var body: some View {
@@ -39,6 +44,9 @@ struct PullRequestSheet: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    // Remote selection (only when multiple hosted remotes exist)
+                    remoteSection
+
                     // Title
                     VStack(alignment: .leading, spacing: 4) {
                         Text(L10n("Titulo")).font(DesignSystem.Typography.bodySmallBold).foregroundStyle(.secondary)
@@ -207,7 +215,20 @@ struct PullRequestSheet: View {
             .padding(16)
         }
         .frame(width: 600, height: 500)
+        .onChange(of: selectedRemoteName) { _, newValue in
+            guard !newValue.isEmpty else { return }
+            model.preferredRemoteName = newValue
+        }
         .onAppear {
+            // Seed remote selection: preferred (if still hosted) > first hosted.
+            let hosted = hostedRemoteList
+            if let preferred = model.preferredRemoteName,
+               hosted.contains(where: { $0.remote.name == preferred }) {
+                selectedRemoteName = preferred
+            } else if let first = hosted.first {
+                selectedRemoteName = first.remote.name
+            }
+
             // Default base
             if model.branches.contains("main") {
                 baseBranch = "main"
@@ -237,6 +258,41 @@ struct PullRequestSheet: View {
         }
     }
 
+    @ViewBuilder
+    private var remoteSection: some View {
+        let list = hostedRemoteList
+        if list.count >= 2 {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(L10n("pr.remote.picker.label"))
+                    .font(DesignSystem.Typography.bodySmallBold)
+                    .foregroundStyle(.secondary)
+                Picker("", selection: $selectedRemoteName) {
+                    ForEach(list, id: \.remote.name) { entry in
+                        Text("\(entry.remote.name) (\(entry.provider.kind.label))").tag(entry.remote.name)
+                    }
+                }
+                .pickerStyle(.menu)
+                .frame(maxWidth: 280)
+            }
+        } else if let single = list.first {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
+                Image(systemName: "arrow.triangle.branch")
+                    .foregroundStyle(DesignSystem.Colors.success)
+                Text(L10n("pr.remote.single", single.remote.name, single.provider.kind.label))
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func resolvedTarget() -> (provider: any GitHostingProvider, remote: HostedRemote)? {
+        if !selectedRemoteName.isEmpty,
+           let match = model.detectHostingProvider(for: selectedRemoteName) {
+            return match
+        }
+        return model.detectHostingProvider()
+    }
+
     private func createPR() {
         // 1. No remotes at all
         guard !model.remotes.isEmpty else {
@@ -251,8 +307,8 @@ struct PullRequestSheet: View {
             return
         }
 
-        // 3. Detect provider from remote URLs
-        guard let (provider, remote) = model.detectHostingProvider() else {
+        // 3. Detect provider from the selected remote (falls back to first hosted)
+        guard let (provider, remote) = resolvedTarget() else {
             errorMessage = L10n("hosting.noProviderMatch")
             return
         }
@@ -316,8 +372,8 @@ struct PullRequestSheet: View {
 
             needsTokenForKind = nil
 
-            // Retry PR creation
-            guard let (provider, remote) = model.detectHostingProvider() else {
+            // Retry PR creation (honor the currently-selected remote)
+            guard let (provider, remote) = resolvedTarget() else {
                 errorMessage = L10n("hosting.noProviderMatch")
                 isCreating = false
                 return
