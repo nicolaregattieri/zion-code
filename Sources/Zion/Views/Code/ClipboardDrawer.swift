@@ -189,7 +189,9 @@ struct ClipboardDrawer: View {
         .background(isHovered ? DesignSystem.Colors.glassHover : Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius))
         .contentShape(Rectangle())
-        .onNativeDoubleClick {
+        // Declare count:2 before count:1 so SwiftUI waits the system
+        // double-click interval before firing the single-click action.
+        .onTapGesture(count: 2) {
             if hasText {
                 let isFile = item.isImage || item.category == .path
                 if isFile {
@@ -199,10 +201,16 @@ struct ClipboardDrawer: View {
                 }
             }
         }
-        .onTapGesture {
+        .onTapGesture(count: 1) {
             if hasText {
-                let isFile = item.isImage || item.category == .path
-                model.sendTextToActiveTerminal(isFile ? TerminalShellEscaping.quotePath(item.text) : item.text)
+                if item.isImage {
+                    let imagePath = item.imagePath ?? item.text
+                    model.pasteImageFromPathToActiveTerminal(imagePath)
+                } else if item.category == .path {
+                    model.sendTextToActiveTerminal(TerminalShellEscaping.quotePath(item.text))
+                } else {
+                    model.sendTextToActiveTerminal(item.text)
+                }
             }
         }
         .onDrag {

@@ -197,6 +197,167 @@ extension RepositoryViewModel {
         terminalSendCallbacks.removeValue(forKey: sessionID)
     }
 
+    // MARK: - Terminal Image Paste
+
+    /// Stages an image on `NSPasteboard.general` and sends Ctrl+V to the active
+    /// terminal so TUIs (Claude Code, Codex) render the native `[Image]`
+    /// placeholder instead of a raw shell-quoted path.
+    func pasteImageFromPathToActiveTerminal(_ path: String) {
+        guard let activeID = activeTerminalID else { return }
+        pasteImageFromPathToTerminal(path, sessionID: activeID)
+    }
+
+    /// Per-session variant used by the terminal pane's SwiftUI drop overlay.
+    func pasteImageFromPathToTerminal(_ path: String, sessionID: UUID) {
+        guard let callback = terminalSendCallbacks[sessionID] else { return }
+        let fileURL = URL(fileURLWithPath: path)
+        guard ZionTerminalView.stageImageOnPasteboard(urls: [fileURL]) else { return }
+
+        if let session = terminalTabs
+            .flatMap({ $0.allSessions() })
+            .first(where: { $0.id == sessionID }) {
+            activateTerminalSession(session)
+        }
+
+        callback(Data([0x16]))
+    }
+
+    /// Routes a list of dropped file URLs onto the given session: images take
+    /// the image-paste path (`[Image]` placeholder), non-images fall back to
+    /// shell-escaped text paste. Returns true if at least one URL was handled.
+    @discardableResult
+    func handleFileURLsDroppedOnTerminal(_ urls: [URL], sessionID: UUID) -> Bool {
+        let fileURLs = urls.filter { $0.isFileURL }
+        guard !fileURLs.isEmpty else { return false }
+
+        let imageURLs = fileURLs.filter { ZionTerminalView.isImageFile($0) }
+        let nonImageURLs = fileURLs.filter { !ZionTerminalView.isImageFile($0) }
+
+        var handled = false
+
+        if let first = imageURLs.first,
+           let callback = terminalSendCallbacks[sessionID],
+           ZionTerminalView.stageImageOnPasteboard(urls: [first]) {
+            callback(Data([0x16]))
+            handled = true
+        }
+
+        if !nonImageURLs.isEmpty {
+            let escaped = TerminalShellEscaping.joinQuotedFileURLs(nonImageURLs)
+            if !escaped.isEmpty {
+                sendTextToTerminal(escaped, sessionID: sessionID)
+                handled = true
+            }
+        }
+
+        return handled
+    }
+
+    // MARK: - Terminal file-reference open
+
+    /// Resolves a path-like token clicked in the terminal and opens it in the
+    /// Zion editor when it points to a real file. Supports absolute paths,
+    /// tilde-expanded paths, `file://` URLs, and paths relative to the given
+    /// session working directory (falls back to the current repository URL).
+    /// Strips an optional `:line:col` suffix and jumps to that line after
+    /// opening.
+    func openPathFromTerminal(_ rawToken: String, sessionWorkingDirectory: URL?) {
+        let trimmed = rawToken
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .trimmingCharacters(in: CharacterSet(charactersIn: "\"'<>()[]{}"))
+        guard !trimmed.isEmpty else { return }
+
+        let resolution = Self.resolveTerminalPath(
+            token: trimmed,
+            sessionWorkingDirectory: sessionWorkingDirectory,
+            repositoryURL: repositoryURL,
+            fileManager: FileManager.default
+        )
+        guard let resolution else { return }
+
+        openExternalFiles([resolution.url])
+        if let line = resolution.line {
+            editorJumpLineTarget = line
+            editorJumpToken += 1
+        }
+    }
+
+    struct TerminalPathResolution: Equatable {
+        let url: URL
+        let line: Int?
+        let column: Int?
+    }
+
+    static func resolveTerminalPath(
+        token: String,
+        sessionWorkingDirectory: URL?,
+        repositoryURL: URL?,
+        fileManager: FileManager
+    ) -> TerminalPathResolution? {
+        let (base, line, column) = splitLineColumnSuffix(token)
+
+        let candidates = pathCandidates(
+            base: base,
+            sessionWorkingDirectory: sessionWorkingDirectory,
+            repositoryURL: repositoryURL
+        )
+
+        for path in candidates {
+            var isDir: ObjCBool = false
+            if fileManager.fileExists(atPath: path, isDirectory: &isDir), !isDir.boolValue {
+                return TerminalPathResolution(
+                    url: URL(fileURLWithPath: path),
+                    line: line,
+                    column: column
+                )
+            }
+        }
+        return nil
+    }
+
+    private static func pathCandidates(
+        base: String,
+        sessionWorkingDirectory: URL?,
+        repositoryURL: URL?
+    ) -> [String] {
+        var results: [String] = []
+
+        if base.hasPrefix("file://"), let url = URL(string: base), url.isFileURL {
+            results.append(url.path)
+        }
+        if base.hasPrefix("/") {
+            results.append(base)
+        } else if base.hasPrefix("~") {
+            results.append((base as NSString).expandingTildeInPath)
+        } else {
+            if let cwd = sessionWorkingDirectory {
+                results.append(cwd.appendingPathComponent(base).path)
+            }
+            if let repo = repositoryURL, repo != sessionWorkingDirectory {
+                results.append(repo.appendingPathComponent(base).path)
+            }
+        }
+        return results
+    }
+
+    private static func splitLineColumnSuffix(_ token: String) -> (base: String, line: Int?, column: Int?) {
+        // Matches tails like ":123" or ":123:45" on the end of the token.
+        let nsString = token as NSString
+        let range = NSRange(location: 0, length: nsString.length)
+        let pattern = #":(\d+)(?::(\d+))?$"#
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(in: token, range: range) else {
+            return (token, nil, nil)
+        }
+        let base = nsString.substring(to: match.range.location)
+        let line = Int(nsString.substring(with: match.range(at: 1)))
+        let columnRange = match.range(at: 2)
+        let column: Int? = columnRange.location == NSNotFound
+            ? nil
+            : Int(nsString.substring(with: columnRange))
+        return (base, line, column)
+    }
+
     func ensureTerminalBridgeHealth(context: String) {
         for session in terminalSessions {
             guard let coordinator = session._processBridge as? TerminalTabView.Coordinator else { continue }

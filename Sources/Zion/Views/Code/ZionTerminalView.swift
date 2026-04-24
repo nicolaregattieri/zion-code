@@ -8,12 +8,27 @@ import AppKit
 /// to SwiftUI's `.dropDestination(for: String.self)` handler.
 final class ZionTerminalView: SwiftTerm.TerminalView {
 
-    /// Called when the user drops one or more file URLs onto the terminal.
-    /// The string is already shell-escaped and ready to paste.
+    /// Called when the user drops one or more non-image file URLs onto the terminal.
+    /// The string is already shell-escaped and ready to paste as text.
     var onFileDrop: ((String) -> Void)?
     var onDropActivated: (() -> Void)?
 
+    /// Called to deliver raw bytes directly to the PTY.
+    /// Used for Ctrl+V (0x16) image-paste signalling so TUIs like Claude Code
+    /// read the NSPasteboard image natively.
+    var onSendBytes: (([UInt8]) -> Void)?
+
+    /// Called when the user Cmd-clicks a file-like token in the terminal.
+    /// The path is passed as-is (may be absolute, relative, or include
+    /// a `:line:col` suffix). Consumer resolves and opens.
+    var onOpenPath: ((String) -> Void)?
+
     private var dragHighlightLayer: CALayer?
+
+    /// File extensions we treat as images for drag-drop and paste routing.
+    static let imageExtensions: Set<String> = [
+        "png", "jpg", "jpeg", "gif", "tiff", "tif", "bmp", "webp", "heic", "heif"
+    ]
 
     // MARK: - Init
 
@@ -52,13 +67,54 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
         removeDragHighlight()
         let urls = fileURLs(from: sender)
         guard !urls.isEmpty else { return false }
-        let escaped = TerminalShellEscaping.joinQuotedFileURLs(urls)
-        guard !escaped.isEmpty else { return false }
 
         let target = resolvedDropTarget(using: sender)
         target.window?.makeFirstResponder(target)
         target.onDropActivated?()
-        target.onFileDrop?(escaped)
+
+        let imageURLs = urls.filter { Self.isImageFile($0) }
+        let nonImageURLs = urls.filter { !Self.isImageFile($0) }
+
+        var handled = false
+
+        if !imageURLs.isEmpty,
+           Self.stageImageOnPasteboard(urls: imageURLs) {
+            // Ctrl+V (0x16) signals Claude Code / Codex to read the NSPasteboard
+            // image natively, so the TUI renders its own [Image] placeholder
+            // instead of seeing a raw shell-quoted path string.
+            target.onSendBytes?([0x16])
+            handled = true
+        }
+
+        if !nonImageURLs.isEmpty {
+            let escaped = TerminalShellEscaping.joinQuotedFileURLs(nonImageURLs)
+            if !escaped.isEmpty {
+                target.onFileDrop?(escaped)
+                handled = true
+            }
+        }
+
+        return handled
+    }
+
+    // MARK: - Image pasteboard staging
+
+    /// True if the URL points to a file we consider an image based on extension.
+    static func isImageFile(_ url: URL) -> Bool {
+        guard url.isFileURL else { return false }
+        return imageExtensions.contains(url.pathExtension.lowercased())
+    }
+
+    /// Loads each image URL and writes it + the file URL onto NSPasteboard.general.
+    /// Returns true if at least one image was staged successfully.
+    @discardableResult
+    static func stageImageOnPasteboard(urls: [URL]) -> Bool {
+        let images: [NSImage] = urls.compactMap { NSImage(contentsOf: $0) }
+        guard !images.isEmpty else { return false }
+        let pb = NSPasteboard.general
+        pb.clearContents()
+        pb.writeObjects(images)
+        pb.writeObjects(urls as [NSURL])
         return true
     }
 
@@ -215,6 +271,103 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
         let phaseEnded = !phase.isEmpty && endedPhases.contains(phase)
         let momentumEnded = !momentumPhase.isEmpty && endedPhases.contains(momentumPhase)
         return phaseEnded || momentumEnded
+    }
+
+    // MARK: - Paste
+
+    /// Overrides SwiftTerm's text-only paste. When the pasteboard holds an
+    /// image (e.g., a screenshot), send Ctrl+V to the PTY so the TUI reads
+    /// the image from NSPasteboard itself — matches native Terminal.app /
+    /// iTerm2 behavior for Claude Code and Codex image paste.
+    override func paste(_ sender: Any) {
+        let pb = NSPasteboard.general
+        if Self.pasteboardHasImage(pb), let send = onSendBytes {
+            send([0x16])
+            return
+        }
+        super.paste(sender)
+    }
+
+    static func pasteboardHasImage(_ pb: NSPasteboard) -> Bool {
+        let hasImageObject = pb.canReadObject(forClasses: [NSImage.self], options: nil)
+        guard hasImageObject else { return false }
+
+        // Exclude pasteboards that only carry text — NSImage claims convertibility
+        // via certain URL types, but we want the image-paste path only when
+        // real image data or a recognized image file URL is present.
+        if pb.canReadItem(withDataConformingToTypes: [
+            NSPasteboard.PasteboardType.tiff.rawValue,
+            NSPasteboard.PasteboardType.png.rawValue
+        ]) {
+            return true
+        }
+        if let urls = pb.readObjects(
+            forClasses: [NSURL.self],
+            options: [.urlReadingFileURLsOnly: true]
+        ) as? [URL] {
+            return urls.contains(where: isImageFile)
+        }
+        return false
+    }
+
+    // MARK: - Cmd-click file-reference open
+    //
+    // The actual click interception lives in
+    // `TerminalTabView.Coordinator.installMouseInteractionMonitors` as an
+    // `NSEvent.addLocalMonitorForEvents` handler, because SwiftTerm's
+    // `mouseDown(with:)` is not `open` outside its module. The monitor
+    // consults `pathToken(at:)` below and dispatches through `onOpenPath`
+    // when a valid token is found.
+
+    /// Extracts a file-like token under the mouse click, using the visible
+    /// cell grid. Returns nil when the click is on whitespace or outside the
+    /// buffer. Token boundaries stop on whitespace and common wrapping
+    /// characters (`'"` parens, brackets, angle brackets, backticks, pipes,
+    /// commas, semicolons).
+    func pathToken(at event: NSEvent) -> String? {
+        let terminal = getTerminal()
+        let cols = terminal.cols
+        let rows = terminal.rows
+        guard cols > 0, rows > 0 else { return nil }
+
+        let point = convert(event.locationInWindow, from: nil)
+        let cellW = bounds.width / CGFloat(cols)
+        let cellH = bounds.height / CGFloat(rows)
+        guard cellW > 0, cellH > 0 else { return nil }
+
+        let col = min(cols - 1, max(0, Int(point.x / cellW)))
+        let visibleRow = min(rows - 1, max(0, Int((bounds.height - point.y) / cellH)))
+        let bufferRow = visibleRow + terminal.buffer.yDisp
+
+        var lineChars: [Character] = []
+        lineChars.reserveCapacity(cols)
+        for c in 0..<cols {
+            let cd = terminal.buffer.getChar(atBufferRelative: Position(col: c, row: bufferRow))
+            lineChars.append(cd.getCharacter())
+        }
+
+        return Self.extractPathToken(line: lineChars, at: col)
+    }
+
+    static func extractPathToken(line: [Character], at col: Int) -> String? {
+        guard col >= 0, col < line.count else { return nil }
+
+        let separators = CharacterSet.whitespacesAndNewlines
+            .union(CharacterSet(charactersIn: "'\"`()[]{}<>|,;"))
+        func isSeparator(_ ch: Character) -> Bool {
+            guard let scalar = ch.unicodeScalars.first else { return true }
+            return separators.contains(scalar) || ch == "\0"
+        }
+
+        if isSeparator(line[col]) { return nil }
+
+        var start = col
+        while start > 0, !isSeparator(line[start - 1]) { start -= 1 }
+        var end = col
+        while end < line.count, !isSeparator(line[end]) { end += 1 }
+
+        let token = String(line[start..<end]).trimmingCharacters(in: .whitespacesAndNewlines)
+        return token.isEmpty ? nil : token
     }
 
     // MARK: - Visual feedback

@@ -32,6 +32,12 @@ struct TerminalTabView: NSViewRepresentable {
                 zionView.onFileDrop = { [coordinator = context.coordinator] text in
                     coordinator.handleFileDrop(text)
                 }
+                zionView.onSendBytes = { [coordinator = context.coordinator] bytes in
+                    coordinator.process?.send(data: ArraySlice(bytes))
+                }
+                zionView.onOpenPath = { [coordinator = context.coordinator] token in
+                    coordinator.handleTerminalPathOpen(token)
+                }
             }
             context.coordinator.reattach(view: cachedView)
             // Don't clear cache — reattach re-populates it for future restructures
@@ -56,6 +62,12 @@ struct TerminalTabView: NSViewRepresentable {
         }
         terminalView.onFileDrop = { [coordinator = context.coordinator] text in
             coordinator.handleFileDrop(text)
+        }
+        terminalView.onSendBytes = { [coordinator = context.coordinator] bytes in
+            coordinator.process?.send(data: ArraySlice(bytes))
+        }
+        terminalView.onOpenPath = { [coordinator = context.coordinator] token in
+            coordinator.handleTerminalPathOpen(token)
         }
         applyInteractionPolicy(to: terminalView)
         terminalView.terminalDelegate = context.coordinator
@@ -198,7 +210,7 @@ struct TerminalTabView: NSViewRepresentable {
     class Coordinator: NSObject, SwiftTerm.TerminalViewDelegate, SwiftTerm.LocalProcessDelegate {
         var parent: TerminalTabView
         let generationID = UUID()
-        private var process: LocalProcess?
+        fileprivate var process: LocalProcess?
         private weak var terminalView: SwiftTerm.TerminalView?
         private(set) var processIsDead = false
         var lastAppliedTheme: EditorTheme?
@@ -419,6 +431,12 @@ struct TerminalTabView: NSViewRepresentable {
                 zionView.onFileDrop = { [weak self] text in
                     self?.handleFileDrop(text)
                 }
+                zionView.onSendBytes = { [weak self] bytes in
+                    self?.process?.send(data: ArraySlice(bytes))
+                }
+                zionView.onOpenPath = { [weak self] token in
+                    self?.handleTerminalPathOpen(token)
+                }
             }
 
             // Re-cache for future restructures (split → unsplit → split again)
@@ -594,6 +612,18 @@ struct TerminalTabView: NSViewRepresentable {
             sendText(text)
         }
 
+        /// Resolves a file-like token clicked with Cmd inside the terminal and
+        /// opens it in the Zion editor. Uses the session's spawn-time working
+        /// directory as the base for relative paths, falling back to the repo
+        /// URL on the model.
+        func handleTerminalPathOpen(_ token: String) {
+            guard let model = parent.model else { return }
+            model.openPathFromTerminal(
+                token,
+                sessionWorkingDirectory: parent.session.workingDirectory
+            )
+        }
+
         private func installShiftEnterMonitor() {
             guard shiftEnterMonitor == nil else { return }
             shiftEnterMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
@@ -634,10 +664,20 @@ struct TerminalTabView: NSViewRepresentable {
                     ) {
                         self.releasePersistentSelectionFreezeIfNeeded(flushImmediately: true)
                     }
-                    guard self.isTerminalFocused,
-                          let view = self.terminalView,
+                    guard let view = self.terminalView,
                           view.isMousePoint(view.convert(event.locationInWindow, from: nil), in: view.bounds)
                     else { return event }
+
+                    // Cmd-click → open file reference under cursor in Zion's editor.
+                    // Consumes the event so SwiftTerm doesn't start a selection.
+                    if event.modifierFlags.contains(.command),
+                       let zionView = view as? ZionTerminalView,
+                       let token = zionView.pathToken(at: event) {
+                        zionView.onOpenPath?(token)
+                        return nil
+                    }
+
+                    guard self.isTerminalFocused else { return event }
                     self.pointerDownInTerminal = true
                     return event
                 }

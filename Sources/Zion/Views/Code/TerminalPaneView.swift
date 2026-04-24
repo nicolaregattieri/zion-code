@@ -59,13 +59,11 @@ struct TerminalPaneView: View {
                 return true
             }
             .dropDestination(for: URL.self) { urls, _ in
-                let paths = urls
-                    .filter { $0.isFileURL }
-                    .map { TerminalShellEscaping.quotePath($0.path) }
-                guard !paths.isEmpty else { return false }
-                model.sendTextToTerminal(paths.joined(separator: " "), sessionID: session.id)
-                model.focusActiveTerminal()
-                return true
+                let handled = model.handleFileURLsDroppedOnTerminal(urls, sessionID: session.id)
+                if handled {
+                    model.focusActiveTerminal()
+                }
+                return handled
             }
 
         case .split(let direction, let first, let second):
