@@ -76,9 +76,11 @@ extension RepositoryViewModel {
     var hasGitHubRemote: Bool { hasHostingProvider }
 
     /// Detect which hosting provider matches the current remotes.
-    /// Tries GitHub (via `gh` CLI), then GitLab, then Bitbucket.
+    /// Walks remotes in preference order: saved preferred → `origin` → declared order.
+    /// This keeps PR polling, comment loading, and review submission talking to the same
+    /// host the user picked in the PR sheet.
     func detectHostingProvider() -> (provider: any GitHostingProvider, remote: HostedRemote)? {
-        for remote in remotes {
+        for remote in remotesInPreferenceOrder() {
             if let hosted = GitHubClient.parseRemote(remote.url) {
                 return (githubClient, hosted)
             }
@@ -93,6 +95,27 @@ extension RepositoryViewModel {
             }
         }
         return nil
+    }
+
+    /// Return `remotes` reordered so preferred is first, then `origin`, then the rest in
+    /// original order. Always contains every entry from `remotes` exactly once.
+    private func remotesInPreferenceOrder() -> [RemoteInfo] {
+        guard !remotes.isEmpty else { return [] }
+        var seen = Set<String>()
+        var ordered: [RemoteInfo] = []
+        if let preferred = preferredRemoteName,
+           let match = remotes.first(where: { $0.name == preferred }) {
+            ordered.append(match)
+            seen.insert(match.name)
+        }
+        if let origin = remotes.first(where: { $0.name == "origin" }), !seen.contains(origin.name) {
+            ordered.append(origin)
+            seen.insert(origin.name)
+        }
+        for remote in remotes where !seen.contains(remote.name) {
+            ordered.append(remote)
+        }
+        return ordered
     }
 
     /// Detect the hosted remote for the current repository (without the provider reference).

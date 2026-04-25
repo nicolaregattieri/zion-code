@@ -253,11 +253,16 @@ extension ContentView {
 
     @ViewBuilder
     func pushActions(branch: String, remoteName: String) -> some View {
+        // Set upstream only when the branch has none yet, or when its current upstream
+        // already points at the remote we're about to push to. Pushing to a different
+        // remote must NOT silently rebind the tracking branch — that breaks pull and
+        // ahead/behind checks.
+        let setUpstream = shouldSetUpstream(forBranch: branch, target: remoteName)
         Button(L10n("Push")) {
-            model.pushBranch(branch, to: remoteName, setUpstream: true, mode: .normal)
+            model.pushBranch(branch, to: remoteName, setUpstream: setUpstream, mode: .normal)
         }
         Button(L10n("push.forceWithLease")) {
-            model.pushBranch(branch, to: remoteName, setUpstream: true, mode: .forceWithLease)
+            model.pushBranch(branch, to: remoteName, setUpstream: setUpstream, mode: .forceWithLease)
         }
         Button(L10n("push.force")) {
             performGitAction(
@@ -265,9 +270,18 @@ extension ContentView {
                 message: String(format: L10n("push.force.confirm"), branch),
                 destructive: true
             ) {
-                model.pushBranch(branch, to: remoteName, setUpstream: true, mode: .force)
+                model.pushBranch(branch, to: remoteName, setUpstream: setUpstream, mode: .force)
             }
         }
+    }
+
+    private func shouldSetUpstream(forBranch branch: String, target remoteName: String) -> Bool {
+        guard let info = model.branchInfos.first(where: { $0.name == branch && !$0.isRemote }) else {
+            return true
+        }
+        if info.upstream.isEmpty { return true }
+        let currentRemote = info.upstream.split(separator: "/", maxSplits: 1).first.map(String.init) ?? ""
+        return currentRemote == remoteName
     }
 
     func copyToPasteboard(_ value: String) {

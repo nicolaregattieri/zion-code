@@ -220,11 +220,14 @@ struct PullRequestSheet: View {
             model.preferredRemoteName = newValue
         }
         .onAppear {
-            // Seed remote selection: preferred (if still hosted) > first hosted.
+            // Seed remote selection following the same priority resolveTargetRemote uses,
+            // but constrained to the subset of remotes that have a hosting provider.
             let hosted = hostedRemoteList
             if let preferred = model.preferredRemoteName,
                hosted.contains(where: { $0.remote.name == preferred }) {
                 selectedRemoteName = preferred
+            } else if let origin = hosted.first(where: { $0.remote.name == "origin" }) {
+                selectedRemoteName = origin.remote.name
             } else if let first = hosted.first {
                 selectedRemoteName = first.remote.name
             }
