@@ -119,6 +119,11 @@ enum UserDefaultsKeys {
         static let bitbucketUsername = "zion.bitbucket.username"
         static let accounts = "zion.hosting.accounts"
         static let migratedToMultiAccount = "zion.hosting.migrated-to-multi-account"
+        static let preferredRemotePrefix = "zion.hosting.preferredRemote."
+
+        static func preferredRemoteKey(repoFingerprint: String) -> String {
+            preferredRemotePrefix + repoFingerprint
+        }
     }
 
     // MARK: - File Browser

@@ -76,28 +76,111 @@ extension RepositoryViewModel {
     var hasGitHubRemote: Bool { hasHostingProvider }
 
     /// Detect which hosting provider matches the current remotes.
-    /// Tries GitHub (via `gh` CLI), then GitLab, then Bitbucket.
+    /// Honors the user's preferred remote when set; otherwise scans in order
+    /// (GitHub via `gh`, then GitLab, Bitbucket, Azure DevOps).
     func detectHostingProvider() -> (provider: any GitHostingProvider, remote: HostedRemote)? {
+        if let preferred = preferredRemoteName,
+           let match = remotes.first(where: { $0.name == preferred }),
+           let resolved = providerForRemote(match) {
+            return resolved
+        }
         for remote in remotes {
-            if let hosted = GitHubClient.parseRemote(remote.url) {
-                return (githubClient, hosted)
-            }
-            if let hosted = GitLabClient.parseRemote(remote.url) {
-                return (gitlabClient, hosted)
-            }
-            if let hosted = BitbucketClient.parseRemote(remote.url) {
-                return (bitbucketClient, hosted)
-            }
-            if let hosted = AzureDevOpsClient.parseRemote(remote.url) {
-                return (azureDevOpsClient, hosted)
+            if let resolved = providerForRemote(remote) {
+                return resolved
             }
         }
         return nil
     }
 
+    /// Detect the hosting provider for a specific remote name (e.g., `origin`, `bitbucket`).
+    /// Returns nil if the remote is unknown or its URL doesn't match any supported provider.
+    func detectHostingProvider(for remoteName: String) -> (provider: any GitHostingProvider, remote: HostedRemote)? {
+        guard let remote = remotes.first(where: { $0.name == remoteName }) else { return nil }
+        return providerForRemote(remote)
+    }
+
+    /// Returns every remote whose URL matches a supported hosting provider, preserving order.
+    func hostedRemotes() -> [(remote: RemoteInfo, provider: any GitHostingProvider, hosted: HostedRemote)] {
+        remotes.compactMap { remote in
+            guard let resolved = providerForRemote(remote) else { return nil }
+            return (remote, resolved.provider, resolved.remote)
+        }
+    }
+
     /// Detect the hosted remote for the current repository (without the provider reference).
     func detectHostedRemote() -> HostedRemote? {
         detectHostingProvider()?.remote
+    }
+
+    private func providerForRemote(_ remote: RemoteInfo) -> (provider: any GitHostingProvider, remote: HostedRemote)? {
+        if let hosted = GitHubClient.parseRemote(remote.url) {
+            return (githubClient, hosted)
+        }
+        if let hosted = GitLabClient.parseRemote(remote.url) {
+            return (gitlabClient, hosted)
+        }
+        if let hosted = BitbucketClient.parseRemote(remote.url) {
+            return (bitbucketClient, hosted)
+        }
+        if let hosted = AzureDevOpsClient.parseRemote(remote.url) {
+            return (azureDevOpsClient, hosted)
+        }
+        return nil
+    }
+
+    // MARK: - Preferred Remote (per repository)
+
+    enum RemoteTargetAction: String, Sendable {
+        case push
+        case createPR
+    }
+
+    /// Per-repo preferred remote name. Persisted in UserDefaults keyed by repo fingerprint.
+    /// Returns nil when no repository is loaded or no preference has been set.
+    var preferredRemoteName: String? {
+        get {
+            guard let fingerprint = preferredRemoteFingerprint() else { return nil }
+            return UserDefaults.standard.string(
+                forKey: UserDefaultsKeys.GitHosting.preferredRemoteKey(repoFingerprint: fingerprint)
+            )
+        }
+        set {
+            guard let fingerprint = preferredRemoteFingerprint() else { return }
+            let key = UserDefaultsKeys.GitHosting.preferredRemoteKey(repoFingerprint: fingerprint)
+            if let newValue, !newValue.isEmpty {
+                UserDefaults.standard.set(newValue, forKey: key)
+            } else {
+                UserDefaults.standard.removeObject(forKey: key)
+            }
+        }
+    }
+
+    /// Resolve the remote that should receive a given action.
+    /// Priority: preferred (if still present) → `origin` → first remote.
+    func resolveTargetRemote(for action: RemoteTargetAction) -> RemoteInfo? {
+        Self.resolveTargetRemote(in: remotes, preferred: preferredRemoteName, action: action)
+    }
+
+    /// Pure resolver exposed for tests. `action` is reserved for future per-action defaults.
+    nonisolated static func resolveTargetRemote(
+        in remotes: [RemoteInfo],
+        preferred: String?,
+        action: RemoteTargetAction
+    ) -> RemoteInfo? {
+        if let preferred, let match = remotes.first(where: { $0.name == preferred }) {
+            return match
+        }
+        if let origin = remotes.first(where: { $0.name == "origin" }) {
+            return origin
+        }
+        return remotes.first
+    }
+
+    private func preferredRemoteFingerprint() -> String? {
+        guard let url = repositoryURL else { return nil }
+        let digest = SHA256.hash(data: Data(url.path.utf8))
+        let hex = digest.map { String(format: "%02x", $0) }.joined()
+        return String(hex.prefix(16))
     }
 
     // MARK: - Background Fetch
