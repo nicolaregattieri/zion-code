@@ -21,6 +21,7 @@ struct TerminalPaneView: View {
                 transparentBackground: transparentBackground
             )
             .id(session.id)
+            .padding(.top, DesignSystem.Spacing.standard)
             .overlay(alignment: .top) {
                 if focusedSessionID == session.id, model.terminalSessions.count > 1 {
                     Capsule()
