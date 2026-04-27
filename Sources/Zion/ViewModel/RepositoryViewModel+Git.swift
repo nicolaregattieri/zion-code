@@ -977,8 +977,10 @@ extension RepositoryViewModel {
         guard !payload.isEmpty else { return nil }
 
         if let renameRange = payload.range(of: " -> ") {
-            let originalPath = String(payload[..<renameRange.lowerBound]).trimmingCharacters(in: .whitespaces)
-            let renamedPath = String(payload[renameRange.upperBound...]).trimmingCharacters(in: .whitespaces)
+            let originalRaw = String(payload[..<renameRange.lowerBound]).trimmingCharacters(in: .whitespaces)
+            let renamedRaw = String(payload[renameRange.upperBound...]).trimmingCharacters(in: .whitespaces)
+            let originalPath = unquotePorcelainPath(originalRaw)
+            let renamedPath = unquotePorcelainPath(renamedRaw)
             guard !renamedPath.isEmpty else { return nil }
             return PorcelainStatusEntry(
                 indexStatus: indexStatus,
@@ -991,9 +993,60 @@ extension RepositoryViewModel {
         return PorcelainStatusEntry(
             indexStatus: indexStatus,
             worktreeStatus: worktreeStatus,
-            path: payload,
+            path: unquotePorcelainPath(payload),
             originalPath: nil
         )
+    }
+
+    static func unquotePorcelainPath(_ raw: String) -> String {
+        guard raw.count >= 2, raw.hasPrefix("\""), raw.hasSuffix("\"") else { return raw }
+        let inner = String(raw.dropFirst().dropLast())
+        var result = ""
+        result.reserveCapacity(inner.count)
+        var bytes: [UInt8] = []
+        var iter = inner.unicodeScalars.makeIterator()
+        while let scalar = iter.next() {
+            if scalar == "\\" {
+                guard let next = iter.next() else { break }
+                switch next {
+                case "a": bytes.append(0x07)
+                case "b": bytes.append(0x08)
+                case "t": bytes.append(0x09)
+                case "n": bytes.append(0x0A)
+                case "v": bytes.append(0x0B)
+                case "f": bytes.append(0x0C)
+                case "r": bytes.append(0x0D)
+                case "\"": bytes.append(0x22)
+                case "\\": bytes.append(0x5C)
+                case "0"..."7":
+                    var octal = String(next)
+                    for _ in 0..<2 {
+                        guard let peek = iter.next() else { break }
+                        if ("0"..."7").contains(peek) {
+                            octal.append(Character(peek))
+                        } else {
+                            // Non-octal scalar already consumed; flush and continue
+                            if let value = UInt8(octal, radix: 8) { bytes.append(value) }
+                            octal = ""
+                            // Re-handle peek as a regular char
+                            if let s = String(peek).data(using: .utf8) { bytes.append(contentsOf: s) }
+                            break
+                        }
+                    }
+                    if !octal.isEmpty, let value = UInt8(octal, radix: 8) { bytes.append(value) }
+                default:
+                    if let s = String(next).data(using: .utf8) { bytes.append(contentsOf: s) }
+                }
+            } else {
+                if let s = String(scalar).data(using: .utf8) { bytes.append(contentsOf: s) }
+            }
+        }
+        if let decoded = String(bytes: bytes, encoding: .utf8) {
+            result = decoded
+        } else {
+            result = inner
+        }
+        return result
     }
 
     var hasStagedChanges: Bool {
