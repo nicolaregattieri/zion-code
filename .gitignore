@@ -72,3 +72,4 @@ codex/
 .geminiignore
 .agents/
 .claude
+.aider*
