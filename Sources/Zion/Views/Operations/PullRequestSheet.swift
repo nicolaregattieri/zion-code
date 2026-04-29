@@ -13,6 +13,7 @@ struct PullRequestSheet: View {
     @State private var isGeneratingAI: Bool = false
     @State private var needsTokenForKind: GitHostingKind?
     @State private var inlineToken: String = ""
+    @State private var selectedRemoteName: String?
 
     private var headBranch: String {
         model.prSheetTargetBranch ?? model.currentBranch
@@ -39,6 +40,9 @@ struct PullRequestSheet: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    // Remote picker (only when 2+ hosted remotes)
+                    remotePickerSection
+
                     // Title
                     VStack(alignment: .leading, spacing: 4) {
                         Text(L10n("Titulo")).font(DesignSystem.Typography.bodySmallBold).foregroundStyle(.secondary)
@@ -208,6 +212,15 @@ struct PullRequestSheet: View {
         }
         .frame(width: 600, height: 500)
         .onAppear {
+            // Default selected remote: preferred → first hosted
+            let hosted = model.hostedRemotes()
+            if let preferred = model.preferredRemoteName,
+               hosted.contains(where: { $0.remote.name == preferred }) {
+                selectedRemoteName = preferred
+            } else {
+                selectedRemoteName = hosted.first?.remote.name
+            }
+
             // Default base
             if model.branches.contains("main") {
                 baseBranch = "main"
@@ -237,6 +250,51 @@ struct PullRequestSheet: View {
         }
     }
 
+    @ViewBuilder
+    private var remotePickerSection: some View {
+        let hosted = model.hostedRemotes()
+        if hosted.count > 1 {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(L10n("pr.remote.picker.label"))
+                    .font(DesignSystem.Typography.bodySmallBold)
+                    .foregroundStyle(.secondary)
+                Picker("", selection: $selectedRemoteName) {
+                    ForEach(hosted, id: \.remote.id) { entry in
+                        Text("\(entry.remote.name) (\(entry.provider.kind.label))")
+                            .tag(Optional(entry.remote.name))
+                    }
+                }
+                .pickerStyle(.menu)
+                .frame(maxWidth: 280)
+                .onChange(of: selectedRemoteName) { _, newValue in
+                    if let newValue { model.preferredRemoteName = newValue }
+                }
+            }
+        } else if let only = hosted.first {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
+                Image(systemName: "globe").foregroundStyle(.secondary)
+                Text(L10n("pr.remote.picker.label"))
+                    .font(DesignSystem.Typography.bodySmallBold)
+                    .foregroundStyle(.secondary)
+                Text("\(only.remote.name) (\(only.provider.kind.label))")
+                    .font(DesignSystem.Typography.body)
+            }
+        }
+    }
+
+    private func resolvePRTarget() -> (provider: any GitHostingProvider, remote: HostedRemote, remoteName: String)? {
+        let hosted = model.hostedRemotes()
+        let pick: (RemoteInfo, any GitHostingProvider, HostedRemote)?
+        if let selected = selectedRemoteName,
+           let match = hosted.first(where: { $0.remote.name == selected }) {
+            pick = (match.remote, match.provider, match.hosted)
+        } else {
+            pick = hosted.first.map { ($0.remote, $0.provider, $0.hosted) }
+        }
+        guard let pick else { return nil }
+        return (pick.1, pick.2, pick.0.name)
+    }
+
     private func createPR() {
         // 1. No remotes at all
         guard !model.remotes.isEmpty else {
@@ -244,16 +302,20 @@ struct PullRequestSheet: View {
             return
         }
 
-        // 2. Check if the current branch has been pushed to the remote
-        let currentBranchInfo = model.branchInfos.first { $0.name == headBranch && !$0.isRemote }
-        if let info = currentBranchInfo, info.upstream.isEmpty {
-            errorMessage = L10n("hosting.branchNotPushed", headBranch)
+        // 2. Resolve target remote (selected → preferred → first hosted)
+        guard let target = resolvePRTarget() else {
+            errorMessage = L10n("hosting.noProviderMatch")
             return
         }
+        let provider = target.provider
+        let remote = target.remote
+        let remoteName = target.remoteName
 
-        // 3. Detect provider from remote URLs
-        guard let (provider, remote) = model.detectHostingProvider() else {
-            errorMessage = L10n("hosting.noProviderMatch")
+        // 3. Check that the branch has been pushed to the SELECTED remote
+        let pushedRefName = "\(remoteName)/\(headBranch)"
+        let pushedToTarget = model.branchInfos.contains(where: { $0.isRemote && $0.name == pushedRefName })
+        if !pushedToTarget {
+            errorMessage = L10n("pr.branchNotOnRemote", headBranch, remoteName)
             return
         }
 
@@ -316,12 +378,14 @@ struct PullRequestSheet: View {
 
             needsTokenForKind = nil
 
-            // Retry PR creation
-            guard let (provider, remote) = model.detectHostingProvider() else {
+            // Retry PR creation against the same selected target
+            guard let target = resolvePRTarget() else {
                 errorMessage = L10n("hosting.noProviderMatch")
                 isCreating = false
                 return
             }
+            let provider = target.provider
+            let remote = target.remote
 
             do {
                 let pr = try await provider.createPullRequest(

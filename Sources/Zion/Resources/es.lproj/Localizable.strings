@@ -1028,6 +1028,8 @@
 "checkout.multiRemote.upstream.switched.status" = "Upstream de %@ cambiado a %@ y pull completado";
 "checkout.multiRemote.newBranch.created" = "Rama %@ creada rastreando %@";
 "checkout.multiRemote.newBranch.exists" = "La rama '%@' ya existe localmente";
+"pr.remote.picker.label" = "Abrir PR en:";
+"pr.branchNotOnRemote" = "La rama '%@' aún no se ha enviado a '%@'. Haz push antes de crear el PR.";
 
 // New File / Save As / Open in Editor
 "Novo Arquivo" = "Nuevo Archivo";

@@ -1033,6 +1033,8 @@
 "checkout.multiRemote.upstream.switched.status" = "Upstream of %@ switched to %@ and pulled";
 "checkout.multiRemote.newBranch.created" = "Created %@ tracking %@";
 "checkout.multiRemote.newBranch.exists" = "Branch '%@' already exists locally";
+"pr.remote.picker.label" = "Open PR on:";
+"pr.branchNotOnRemote" = "Branch '%@' has not been pushed to '%@'. Push it first, then create the PR.";
 
 // New File / Save As / Open in Editor
 "Novo Arquivo" = "New File";
