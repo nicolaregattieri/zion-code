@@ -1026,6 +1026,13 @@
 "pill.postTo.section.default" = "%@ (default)";
 "pill.postTo.menu.always" = "Always push to";
 "pill.postTo.menu.always.askEachTime" = "Ask each time";
+"checkout.multiRemote.title" = "'%@' exists in multiple remotes";
+"checkout.multiRemote.message" = "Local branch '%@' currently tracks '%@'. You clicked '%@'. Choose how to proceed.";
+"checkout.multiRemote.switch" = "Switch upstream to %@ and pull";
+"checkout.multiRemote.newBranch" = "Create new branch '%@' tracking the clicked remote";
+"checkout.multiRemote.upstream.switched.status" = "Upstream of %@ switched to %@ and pulled";
+"checkout.multiRemote.newBranch.created" = "Created %@ tracking %@";
+"checkout.multiRemote.newBranch.exists" = "Branch '%@' already exists locally";
 
 // New File / Save As / Open in Editor
 "Novo Arquivo" = "New File";

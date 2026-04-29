@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct GraphScreen: View {
     static let semanticResultsScrollTarget = "graph.semanticResults.scrollTarget"
@@ -256,17 +257,44 @@ struct GraphScreen: View {
                                     DiagnosticLogger.shared.log(.info, "graph.onCheckout", context: "branch=\(branch) isBusy=\(model.isBusy) activeToken=\(model.activeGitActionToken != nil)", source: "GraphScreen")
                                     let isRemote = model.isRemoteRefName(branch)
                                     if isRemote {
-                                        let title = L10n("Checkout & Pull")
                                         var localName = branch
+                                        var remoteName = ""
                                         for remote in model.remotes {
                                             if branch.hasPrefix("\(remote.name)/") {
                                                 localName = String(branch.dropFirst(remote.name.count + 1))
+                                                remoteName = remote.name
                                                 break
                                             }
                                         }
-                                        let message = L10n("Deseja fazer checkout de %@ e puxar as alterações?", localName)
-                                        performGitAction(title, message, true) {
-                                            model.checkoutAndPull(reference: branch)
+
+                                        // Multi-remote collision: local with same name already
+                                        // exists and tracks a different remote. Surface explicit
+                                        // dialog so the user picks the intent (matches Sourcetree /
+                                        // GitGraph behavior — never silently rewrite metadata).
+                                        if let conflictUpstream = model.conflictingUpstream(forLocalName: localName, clickedRemote: branch),
+                                           !remoteName.isEmpty {
+                                            let suggestedNew = "\(remoteName)-\(localName)"
+                                            let alert = NSAlert()
+                                            alert.alertStyle = .warning
+                                            alert.messageText = L10n("checkout.multiRemote.title", localName)
+                                            alert.informativeText = L10n("checkout.multiRemote.message", localName, conflictUpstream, branch)
+                                            alert.addButton(withTitle: L10n("checkout.multiRemote.switch", branch))
+                                            alert.addButton(withTitle: L10n("checkout.multiRemote.newBranch", suggestedNew))
+                                            alert.addButton(withTitle: L10n("Cancelar"))
+                                            switch alert.runModal() {
+                                            case .alertFirstButtonReturn:
+                                                model.switchUpstreamAndPull(localName: localName, remoteTarget: branch)
+                                            case .alertSecondButtonReturn:
+                                                model.createTrackingBranch(newLocalName: suggestedNew, remoteTarget: branch)
+                                            default:
+                                                break
+                                            }
+                                        } else {
+                                            let title = L10n("Checkout & Pull")
+                                            let message = L10n("Deseja fazer checkout de %@ e puxar as alterações?", localName)
+                                            performGitAction(title, message, true) {
+                                                model.checkoutAndPull(reference: branch)
+                                            }
                                         }
                                     } else {
                                         model.checkout(reference: branch)

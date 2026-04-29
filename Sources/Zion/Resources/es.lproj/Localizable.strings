@@ -1021,6 +1021,13 @@
 "pill.postTo.section.default" = "%@ (predeterminado)";
 "pill.postTo.menu.always" = "Siempre enviar a";
 "pill.postTo.menu.always.askEachTime" = "Preguntar cada vez";
+"checkout.multiRemote.title" = "'%@' existe en múltiples remotes";
+"checkout.multiRemote.message" = "La rama local '%@' actualmente rastrea '%@'. Hiciste click en '%@'. Elige cómo proceder.";
+"checkout.multiRemote.switch" = "Cambiar upstream a %@ y hacer pull";
+"checkout.multiRemote.newBranch" = "Crear nueva rama '%@' rastreando el remote clickeado";
+"checkout.multiRemote.upstream.switched.status" = "Upstream de %@ cambiado a %@ y pull completado";
+"checkout.multiRemote.newBranch.created" = "Rama %@ creada rastreando %@";
+"checkout.multiRemote.newBranch.exists" = "La rama '%@' ya existe localmente";
 
 // New File / Save As / Open in Editor
 "Novo Arquivo" = "Nuevo Archivo";
