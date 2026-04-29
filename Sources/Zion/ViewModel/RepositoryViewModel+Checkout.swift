@@ -211,4 +211,135 @@ extension RepositoryViewModel {
         guard !target.isEmpty else { return }
         checkout(reference: target)
     }
+
+    // MARK: - Multi-remote collision flows
+
+    /// Switches an existing local branch's upstream to a different remote ref, then
+    /// checks it out and pulls. Used when the user clicks a remote-branch pill whose
+    /// local namesake currently tracks a different remote (e.g. local `main` tracks
+    /// `origin/main`, user clicks `pivotree/main` and chooses "switch upstream").
+    func switchUpstreamAndPull(localName: String, remoteTarget: String) {
+        let cleanedLocal = localName.clean
+        let cleanedRemote = remoteTarget.clean
+        guard !cleanedLocal.isEmpty, !cleanedRemote.isEmpty else { return }
+        guard !isBusy, activeGitActionToken == nil else { return }
+
+        let actionToken = UUID()
+        activeGitActionToken = actionToken
+        isBusy = true
+        armBusyWatchdog()
+
+        let url = repositoryURL
+        actionTask = Task {
+            do {
+                guard let url else { return }
+                let _ = try await worker.runAction(
+                    args: ["branch", "--set-upstream-to=\(cleanedRemote)", cleanedLocal],
+                    in: url
+                )
+                let _ = try await worker.runAction(args: ["checkout", cleanedLocal], in: url)
+                await MainActor.run { currentBranch = cleanedLocal }
+                let _ = try await runActionWithCredentialRetry(
+                    label: "Pull",
+                    args: ["pull"],
+                    in: url,
+                    commandSummary: redactedGitCommandSummary(args: ["pull"])
+                )
+                clearError()
+                statusMessage = L10n("checkout.multiRemote.upstream.switched.status", cleanedLocal, cleanedRemote)
+                guard activeGitActionToken == actionToken else { return }
+                activeGitActionToken = nil
+                refreshRepository(
+                    setBusy: true,
+                    options: .critical,
+                    origin: .gitAction,
+                    onFinish: { [weak self] in
+                        self?.refreshRepository(setBusy: false, options: .full, origin: .gitAction)
+                    }
+                )
+            } catch is CancellationError {
+                guard activeGitActionToken == actionToken else { return }
+                activeGitActionToken = nil
+                isBusy = false
+                disarmBusyWatchdog()
+            } catch {
+                guard activeGitActionToken == actionToken else { return }
+                activeGitActionToken = nil
+                isBusy = false
+                disarmBusyWatchdog()
+                if isDivergentBranchError(error) {
+                    divergenceResolution = buildDivergenceContext(branch: cleanedLocal, url: url)
+                } else {
+                    handleError(error)
+                }
+            }
+        }
+    }
+
+    /// Creates a brand-new local branch that tracks the given remote ref and checks it out.
+    /// Used when the user wants to keep the existing local namesake untouched and work
+    /// from a parallel branch (e.g., `pivotree-main` tracking `pivotree/main`).
+    func createTrackingBranch(newLocalName: String, remoteTarget: String) {
+        let cleanedNew = newLocalName.clean
+        let cleanedRemote = remoteTarget.clean
+        guard !cleanedNew.isEmpty, !cleanedRemote.isEmpty else { return }
+        guard !isBusy, activeGitActionToken == nil else { return }
+
+        if localBranchExists(named: cleanedNew) {
+            handleError(GitClientError.commandFailed(
+                command: "checkout",
+                message: L10n("checkout.multiRemote.newBranch.exists", cleanedNew)
+            ))
+            return
+        }
+
+        let actionToken = UUID()
+        activeGitActionToken = actionToken
+        isBusy = true
+        armBusyWatchdog()
+
+        let url = repositoryURL
+        actionTask = Task {
+            do {
+                guard let url else { return }
+                let _ = try await worker.runAction(
+                    args: ["checkout", "-b", cleanedNew, "--track", cleanedRemote],
+                    in: url
+                )
+                await MainActor.run { currentBranch = cleanedNew }
+                clearError()
+                statusMessage = L10n("checkout.multiRemote.newBranch.created", cleanedNew, cleanedRemote)
+                guard activeGitActionToken == actionToken else { return }
+                activeGitActionToken = nil
+                refreshRepository(
+                    setBusy: true,
+                    options: .critical,
+                    origin: .gitAction,
+                    onFinish: { [weak self] in
+                        self?.refreshRepository(setBusy: false, options: .full, origin: .gitAction)
+                    }
+                )
+            } catch is CancellationError {
+                guard activeGitActionToken == actionToken else { return }
+                activeGitActionToken = nil
+                isBusy = false
+                disarmBusyWatchdog()
+            } catch {
+                guard activeGitActionToken == actionToken else { return }
+                activeGitActionToken = nil
+                isBusy = false
+                disarmBusyWatchdog()
+                handleError(error)
+            }
+        }
+    }
+
+    /// Returns the existing local branch's upstream when it differs from the supplied
+    /// remote ref. Used by views to decide whether to surface the multi-remote dialog.
+    func conflictingUpstream(forLocalName localName: String, clickedRemote: String) -> String? {
+        guard let local = branchInfos.first(where: { !$0.isRemote && $0.name == localName }) else { return nil }
+        let upstream = local.upstream.clean
+        guard !upstream.isEmpty, upstream != clickedRemote else { return nil }
+        return upstream
+    }
 }
