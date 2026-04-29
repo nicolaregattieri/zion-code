@@ -48,6 +48,10 @@ struct SourceCodeEditor: NSViewRepresentable {
         scrollView.hasHorizontalScroller = !isLineWrappingEnabled
         scrollView.drawsBackground = true
 
+        let clipView = EditorClipView()
+        clipView.drawsBackground = true
+        scrollView.contentView = clipView
+
         let textView = ZionTextView()
         textView.isEditable = true
         textView.isSelectable = true
