@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import SwiftUI
 @preconcurrency import SwiftTerm
@@ -368,6 +369,17 @@ extension RepositoryViewModel {
     // MARK: - Terminal Search
 
     var focusedTerminalView: SwiftTerm.TerminalView? {
+        // Prefer the actual AppKit first responder so split-pane find scopes
+        // to the pane the user is typing in, not a stale focusedSessionID
+        // that only updates on tap.
+        if let window = NSApp.keyWindow,
+           var node = window.firstResponder as? NSView {
+            while true {
+                if let term = node as? SwiftTerm.TerminalView { return term }
+                guard let parent = node.superview else { break }
+                node = parent
+            }
+        }
         let session: TerminalSession? = {
             if let fid = focusedSessionID {
                 return terminalTabs.flatMap({ $0.allSessions() }).first(where: { $0.id == fid })

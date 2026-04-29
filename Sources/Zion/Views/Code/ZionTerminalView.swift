@@ -42,6 +42,16 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
         fatalError("init(coder:) is not supported")
     }
 
+    // MARK: - Find override
+
+    // Regression guard: macOS Edit > Find menu intercepts Cmd+F via
+    // performFindPanelAction: on the first responder, which would invoke
+    // SwiftTerm's native find bar. Route through Zion's .zionFind instead.
+    // Removed by accident in 482ccce; do not delete again.
+    override func performFindPanelAction(_ sender: Any?) {
+        NotificationCenter.default.post(name: .zionFind, object: nil)
+    }
+
     // MARK: - NSDraggingDestination
 
     override func draggingEntered(_ sender: any NSDraggingInfo) -> NSDragOperation {
