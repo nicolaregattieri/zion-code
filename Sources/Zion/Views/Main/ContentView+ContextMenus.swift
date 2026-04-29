@@ -23,6 +23,25 @@ extension ContentView {
     }
 
     @ViewBuilder
+    func pushMenuButtons(for branch: String, remoteName: String) -> some View {
+        Button(L10n("Push")) {
+            model.pushBranch(branch, to: remoteName, setUpstream: true, mode: .normal)
+        }
+        Button(L10n("push.forceWithLease")) {
+            model.pushBranch(branch, to: remoteName, setUpstream: true, mode: .forceWithLease)
+        }
+        Button(L10n("push.force")) {
+            performGitAction(
+                title: L10n("push.force"),
+                message: String(format: L10n("push.force.confirm"), branch),
+                destructive: true
+            ) {
+                model.pushBranch(branch, to: remoteName, setUpstream: true, mode: .force)
+            }
+        }
+    }
+
+    @ViewBuilder
     func commitContextMenu(for commit: Commit) -> some View {
         let isStash = commit.decorations.contains { $0.contains("refs/stash") }
 
@@ -174,19 +193,28 @@ extension ContentView {
             }
         } else {
             Menu(L10n("Push to Remote")) {
-                Button(L10n("Push")) {
-                    model.pushBranch(branch, to: "origin", setUpstream: true, mode: .normal)
-                }
-                Button(L10n("push.forceWithLease")) {
-                    model.pushBranch(branch, to: "origin", setUpstream: true, mode: .forceWithLease)
-                }
-                Button(L10n("push.force")) {
-                    performGitAction(
-                        title: L10n("push.force"),
-                        message: String(format: L10n("push.force.confirm"), branch),
-                        destructive: true
-                    ) {
-                        model.pushBranch(branch, to: "origin", setUpstream: true, mode: .force)
+                if model.remotes.count <= 1 {
+                    let target = model.remotes.first?.name ?? "origin"
+                    pushMenuButtons(for: branch, remoteName: target)
+                } else {
+                    let preferred = model.preferredRemoteName
+                    ForEach(model.remotes) { remote in
+                        Section(remote.name == preferred
+                            ? String(format: L10n("pill.postTo.section.default"), remote.name)
+                            : remote.name) {
+                            pushMenuButtons(for: branch, remoteName: remote.name)
+                        }
+                    }
+                    Divider()
+                    Menu(L10n("pill.postTo.menu.always")) {
+                        Button(L10n("pill.postTo.menu.always.askEachTime")) {
+                            model.preferredRemoteName = nil
+                        }
+                        ForEach(model.remotes) { remote in
+                            Button(remote.name) {
+                                model.preferredRemoteName = remote.name
+                            }
+                        }
                     }
                 }
             }

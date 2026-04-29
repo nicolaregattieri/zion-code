@@ -1018,6 +1018,9 @@
 "push.forceWithLease" = "Force Push (seguro)";
 "push.force" = "Force Push";
 "push.force.confirm" = "Esto sobrescribirá la rama remota %@. Cualquier commit en el remoto que no esté en tu rama local se perderá permanentemente. ¿Estás seguro?";
+"pill.postTo.section.default" = "%@ (predeterminado)";
+"pill.postTo.menu.always" = "Siempre enviar a";
+"pill.postTo.menu.always.askEachTime" = "Preguntar cada vez";
 
 // New File / Save As / Open in Editor
 "Novo Arquivo" = "Nuevo Archivo";
