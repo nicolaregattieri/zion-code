@@ -99,7 +99,7 @@ private struct TerminalSplitView: View {
     var transparentBackground: Bool
 
     private let dividerHitSize: CGFloat = 8
-    private let minPaneSize: CGFloat = 80
+    private let minPaneSize: CGFloat = DesignSystem.Layout.editorTerminalMinPane
 
     @GestureState private var dragOffset: CGFloat = 0
 
