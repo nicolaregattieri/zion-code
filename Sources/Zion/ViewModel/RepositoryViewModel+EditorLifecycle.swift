@@ -394,11 +394,16 @@ extension RepositoryViewModel {
     }
 
     func findGitRepository(containing fileURL: URL) -> URL? {
-        var current = fileURL.deletingLastPathComponent()
+        // RT-006: Normalize first so URLs containing `/./`, trailing dots,
+        // or unresolved symlinks don't surface as a repo root with
+        // `lastPathComponent == "."`, which then makes downstream URL
+        // equality / stash-key lookups miss the already-open repo.
+        let normalized = fileURL.standardizedFileURL.resolvingSymlinksInPath()
+        var current = normalized.deletingLastPathComponent()
         while current.path != "/" {
             let gitDir = current.appendingPathComponent(".git")
             if FileManager.default.fileExists(atPath: gitDir.path) {
-                return current
+                return current.standardizedFileURL.resolvingSymlinksInPath()
             }
             current = current.deletingLastPathComponent()
         }

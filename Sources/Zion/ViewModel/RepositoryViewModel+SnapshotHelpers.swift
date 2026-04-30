@@ -175,7 +175,17 @@ extension RepositoryViewModel {
 
 extension RepositoryViewModel {
 
-    func openRepository(_ url: URL, silent: Bool = false) {
+    func openRepository(_ rawURL: URL, silent: Bool = false) {
+        // RT-006: Normalize the URL up-front. Callers (terminal hyperlink
+        // handler, drag-drop, AppleEvent) sometimes pass URLs containing
+        // `/./` segments, trailing dots, or unresolved symlinks. Without
+        // this, two paths pointing at the same repo (e.g.
+        // `/Users/.../GraphForge` vs `/Users/.../GraphForge/.`) compare
+        // unequal, the same-repo SKIP path is missed, and terminal stash
+        // keyed by `lastPathComponent` ends up as "." with no match —
+        // producing a fresh empty terminal instead of restoring the
+        // already-open session.
+        let url = rawURL.standardizedFileURL.resolvingSymlinksInPath()
         let previousURL = repositoryURL
 
         // Same repo already open — just refresh metadata, don't touch terminals
