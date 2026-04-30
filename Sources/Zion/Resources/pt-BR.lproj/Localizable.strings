@@ -975,6 +975,7 @@
 "settings.editor.theme" = "Tema";
 "settings.editor.font" = "Fonte";
 "settings.editor.fontSize" = "Tamanho da Fonte";
+"settings.editor.markdownPreviewFontSize" = "Tamanho do Preview Markdown";
 "settings.editor.lineSpacing" = "Espaçamento de Linha";
 "settings.editor.editing" = "Edição";
 "settings.editor.tabSize" = "Tamanho do Tab";

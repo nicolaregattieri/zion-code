@@ -12,6 +12,7 @@ struct EditorSettingsTab: View {
     @AppStorage(UserDefaultsKeys.Editor.theme) private var themeRaw: String = EditorTheme.dracula.rawValue
     @AppStorage(UserDefaultsKeys.Editor.fontFamily) private var fontFamily: String = "SF Mono"
     @AppStorage(UserDefaultsKeys.Editor.fontSize) private var fontSize: Double = 13.0
+    @AppStorage(UserDefaultsKeys.Editor.markdownPreviewFontSize) private var markdownPreviewFontSize: Double = MarkdownPreviewView.defaultPreviewFontSize
     @AppStorage(UserDefaultsKeys.Editor.lineSpacing) private var lineSpacing: Double = 4.0
     @AppStorage(UserDefaultsKeys.Editor.letterSpacing) private var letterSpacing: Double = 0.0
 
@@ -64,11 +65,21 @@ struct EditorSettingsTab: View {
                 HStack {
                     Text(L10n("settings.editor.fontSize"))
                     Spacer()
-                    Stepper(value: $fontSize, in: 8...32, step: 1) {
-                        Text("\(Int(fontSize))pt")
-                            .font(DesignSystem.Typography.monoSmall)
-                            .frame(width: 36, alignment: .trailing)
-                    }
+                    Text("\(Int(fontSize))pt")
+                        .font(DesignSystem.Typography.monoSmall)
+                        .frame(width: 46, alignment: .trailing)
+                    Stepper("", value: $fontSize, in: 8...32, step: 1)
+                        .labelsHidden()
+                }
+
+                HStack {
+                    Text(L10n("settings.editor.markdownPreviewFontSize"))
+                    Spacer()
+                    Text("\(Int(markdownPreviewFontSize))pt")
+                        .font(DesignSystem.Typography.monoSmall)
+                        .frame(width: 46, alignment: .trailing)
+                    Stepper("", value: $markdownPreviewFontSize, in: 10...32, step: 1)
+                        .labelsHidden()
                 }
 
                 HStack {

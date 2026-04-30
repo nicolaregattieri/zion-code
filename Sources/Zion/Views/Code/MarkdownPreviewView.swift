@@ -7,7 +7,27 @@ struct MarkdownPreviewView: View {
     let repositoryURL: URL?
     let theme: EditorTheme
 
+    @AppStorage(UserDefaultsKeys.Editor.markdownPreviewFontSize) private var previewFontSize: Double = Self.defaultPreviewFontSize
+
     @State private var blocks: [MarkdownBlock] = []
+
+    static let defaultPreviewFontSize: Double = 15.0
+    private static let baselineBodySize: CGFloat = 13.0
+    private static let h1Size: CGFloat = 28
+    private static let h2Size: CGFloat = 22
+    private static let h3Size: CGFloat = 18
+    private static let h4Size: CGFloat = 16
+    private static let h5Size: CGFloat = 14
+    private static let h6Size: CGFloat = 13
+    private static let monoBodySize: CGFloat = 12
+    private static let monoSmallSize: CGFloat = 11
+
+    private var bodySize: CGFloat { CGFloat(previewFontSize) }
+    private var scale: CGFloat { bodySize / Self.baselineBodySize }
+    private var bodyFont: Font { .system(size: bodySize) }
+    private var bodySemibold: Font { .system(size: bodySize, weight: .semibold) }
+    private var monoBodyFont: Font { .system(size: Self.monoBodySize * scale, design: .monospaced) }
+    private var monoSmallFont: Font { .system(size: Self.monoSmallSize * scale, design: .monospaced) }
 
     var body: some View {
         ScrollView {
@@ -46,7 +66,7 @@ struct MarkdownPreviewView: View {
             headingView(text: text, level: level)
         case .paragraph(let text):
             markdownTextView(text)
-                .font(DesignSystem.Typography.cardBody)
+                .font(bodyFont)
                 .lineSpacing(4)
                 .foregroundStyle(theme.colors.text)
                 .padding(.vertical, 6)
@@ -70,7 +90,7 @@ struct MarkdownPreviewView: View {
             tableView(headers: headers, rows: rows, alignments: alignments)
         case .raw(let text):
             Text(text)
-                .font(DesignSystem.Typography.cardBody)
+                .font(bodyFont)
                 .foregroundStyle(theme.colors.text)
                 .padding(.vertical, 4)
         }
@@ -80,12 +100,12 @@ struct MarkdownPreviewView: View {
 
     private func headingView(text: AttributedString, level: Int) -> some View {
         let headingFont: Font = switch level {
-        case 1: DesignSystem.Typography.markdownH1
-        case 2: DesignSystem.Typography.markdownH2
-        case 3: DesignSystem.Typography.markdownH3
-        case 4: DesignSystem.Typography.markdownH4
-        case 5: DesignSystem.Typography.markdownH5
-        default: DesignSystem.Typography.markdownH6
+        case 1: .system(size: Self.h1Size * scale, weight: .bold)
+        case 2: .system(size: Self.h2Size * scale, weight: .bold)
+        case 3: .system(size: Self.h3Size * scale, weight: .semibold)
+        case 4: .system(size: Self.h4Size * scale, weight: .semibold)
+        case 5: .system(size: Self.h5Size * scale, weight: .semibold)
+        default: .system(size: Self.h6Size * scale, weight: .semibold)
         }
 
         return VStack(alignment: .leading, spacing: 0) {
@@ -113,7 +133,7 @@ struct MarkdownPreviewView: View {
             VStack(alignment: .leading, spacing: 4) {
                 ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
                     markdownTextView(line)
-                        .font(DesignSystem.Typography.cardBody)
+                        .font(bodyFont)
                         .lineSpacing(4)
                         .foregroundStyle(theme.colors.comment)
                 }
@@ -130,7 +150,7 @@ struct MarkdownPreviewView: View {
         VStack(alignment: .leading, spacing: 0) {
             if let language, !language.isEmpty {
                 Text(language)
-                    .font(DesignSystem.Typography.monoSmall)
+                    .font(monoSmallFont)
                     .foregroundStyle(theme.colors.comment.opacity(0.7))
                     .padding(.horizontal, 12)
                     .padding(.top, 8)
@@ -138,7 +158,7 @@ struct MarkdownPreviewView: View {
             }
             ScrollView(.horizontal, showsIndicators: false) {
                 Text(code)
-                    .font(DesignSystem.Typography.monoBody)
+                    .font(monoBodyFont)
                     .foregroundStyle(theme.colors.text.opacity(0.9))
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -181,12 +201,12 @@ struct MarkdownPreviewView: View {
         return HStack(alignment: .top, spacing: 0) {
             if let checked = item.isChecked {
                 Image(systemName: checked ? "checkmark.square.fill" : "square")
-                    .font(DesignSystem.Typography.body)
+                    .font(bodyFont)
                     .foregroundStyle(checked ? theme.colors.keyword : theme.colors.comment.opacity(0.5))
                     .frame(width: 20, alignment: .leading)
             } else if ordered {
                 Text("\(index + 1).")
-                    .font(DesignSystem.Typography.monoCardBody)
+                    .font(.system(size: bodySize, design: .monospaced))
                     .foregroundStyle(theme.colors.keyword.opacity(0.7))
                     .frame(width: 24, alignment: .trailing)
                     .padding(.trailing, 6)
@@ -197,7 +217,7 @@ struct MarkdownPreviewView: View {
                 default: "\u{2023}"
                 }
                 Text(bullet)
-                    .font(DesignSystem.Typography.cardBody)
+                    .font(bodyFont)
                     .foregroundStyle(theme.colors.keyword.opacity(0.6))
                     .frame(width: 16, alignment: .center)
                     .padding(.trailing, 6)
@@ -205,7 +225,7 @@ struct MarkdownPreviewView: View {
 
             if let text = item.text {
                 markdownTextView(text)
-                    .font(DesignSystem.Typography.cardBody)
+                    .font(bodyFont)
                     .lineSpacing(4)
                     .foregroundStyle(theme.colors.text)
             }
@@ -227,7 +247,7 @@ struct MarkdownPreviewView: View {
                     let alignment = colIndex < alignments.count ? alignments[colIndex] : .leading
 
                     Text(header)
-                        .font(DesignSystem.Typography.bodySemibold)
+                        .font(bodySemibold)
                         .foregroundStyle(theme.colors.text)
                         .frame(maxWidth: .infinity, alignment: Alignment(horizontal: horizontalAlignment(alignment), vertical: .center))
                         .padding(.horizontal, 10)
@@ -250,14 +270,14 @@ struct MarkdownPreviewView: View {
 
                         if let attributed = Self.parseMarkdown(cell) {
                             markdownTextView(attributed)
-                                .font(DesignSystem.Typography.body)
+                                .font(bodyFont)
                                 .foregroundStyle(theme.colors.text)
                                 .frame(maxWidth: .infinity, alignment: Alignment(horizontal: horizontalAlignment(alignment), vertical: .center))
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 6)
                         } else {
                             Text(cell)
-                                .font(DesignSystem.Typography.body)
+                                .font(bodyFont)
                                 .foregroundStyle(theme.colors.text)
                                 .frame(maxWidth: .infinity, alignment: Alignment(horizontal: horizontalAlignment(alignment), vertical: .center))
                                 .padding(.horizontal, 10)
