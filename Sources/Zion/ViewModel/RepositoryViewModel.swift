@@ -666,6 +666,11 @@ final class RepositoryViewModel {
     /// for the current repository. Reset on repo switch. When the user is on Code tab,
     /// we skip the heavy graph load and defer it until they navigate to Graph/Ops.
     @ObservationIgnored var hasLoadedFullGraphForCurrentRepo = false
+    /// True while a deferred Tree/Ops section-entry reload is in flight.
+    /// Drives `ZionLoadingOverlay` on Graph and Operations screens so the
+    /// first paint after returning from a long Code-only session shows a
+    /// brief loading state rather than blank/zeroed cards. (RT-004)
+    var isReloadingForSectionEntry: Bool = false
 
     var recentReposData: Data {
         get { UserDefaults.standard.data(forKey: UserDefaultsKeys.General.recentRepositories) ?? Data() }
@@ -728,6 +733,11 @@ final class RepositoryViewModel {
     @ObservationIgnored var isApplyingFileWatcherRefresh = false
     @ObservationIgnored var fileWatcherGateTask: Task<Void, Never>?
     @ObservationIgnored var suppressFileWatcherGitMetadataUntil: Date = .distantPast
+    /// Set when a structural file-watcher event is suppressed because the user
+    /// is on a non-Code section (Graph/Operations). Drained on switch back to
+    /// `.code` via `replayPendingTreeRefreshIfNeeded()`. (RT-003)
+    @ObservationIgnored var pendingFileTreeRefreshFromGate = false
+    @ObservationIgnored var sectionReturnReplayTask: Task<Void, Never>?
     var pendingRepositoryURL: URL?
     var isSwitchingRepository = false
     var isBlockingRepositorySwitch = false
@@ -752,6 +762,7 @@ final class RepositoryViewModel {
         actionTask?.cancel()
         deferredRepositoryLoadTask?.cancel()
         fileWatcherGateTask?.cancel()
+        sectionReturnReplayTask?.cancel()
         fileTreeRefreshTask?.cancel()
         commitStatsTask?.cancel()
         pushPreflightTask?.cancel()

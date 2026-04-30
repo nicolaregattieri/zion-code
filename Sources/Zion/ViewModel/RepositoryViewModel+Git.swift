@@ -30,6 +30,49 @@ extension RepositoryViewModel {
         }
     }
 
+    /// Lightweight worktree refresh: runs only `git worktree list --porcelain`,
+    /// skips per-worktree `status --porcelain` enrichment. Keeps left-drawer
+    /// Worktrees panel rows + total count accurate while user is on Zion Code,
+    /// without paying for per-worktree status spawns. Per-row uncommitted count
+    /// dot/number stays at last-known value until a full refresh
+    /// (Tree/Ops tab visit or manual reload). (RT-004)
+    func loadWorktreesOnly() {
+        guard let url = repositoryURL else { return }
+        Task { [weak self] in
+            guard let self else { return }
+            let basics: [WorktreeItem]
+            do {
+                basics = try await self.worker.worktreeList(in: url, includeStatus: false)
+            } catch {
+                return
+            }
+            // Carry forward last-known uncommittedCount/hasConflicts so the
+            // panel doesn't visually reset to zero while we skip enrichment.
+            let previousByPath = Dictionary(uniqueKeysWithValues: self.worktrees.map { ($0.path, $0) })
+            let merged: [WorktreeItem] = basics.map { item in
+                let prev = previousByPath[item.path]
+                return WorktreeItem(
+                    path: item.path,
+                    head: item.head,
+                    branch: item.branch,
+                    isMainWorktree: item.isMainWorktree,
+                    isDetached: item.isDetached,
+                    isLocked: item.isLocked,
+                    lockReason: item.lockReason,
+                    isPrunable: item.isPrunable,
+                    pruneReason: item.pruneReason,
+                    isCurrent: item.isCurrent,
+                    uncommittedCount: prev?.uncommittedCount ?? 0,
+                    hasConflicts: prev?.hasConflicts ?? false
+                )
+            }
+            if self.worktrees != merged { self.worktrees = merged }
+            if let root = self.recentRepositoryRoot(for: url) {
+                self.recentWorktreeCounts[root] = max(merged.count - 1, 0)
+            }
+        }
+    }
+
     func refreshWorkspace() {
         refreshFileTree()
         refreshRepository(setBusy: true, origin: .userInitiated)
@@ -44,7 +87,14 @@ extension RepositoryViewModel {
         case .graph, .operations:
             if !hasLoadedFullGraphForCurrentRepo {
                 hasLoadedFullGraphForCurrentRepo = true
-                refreshRepository(setBusy: true, origin: .userInitiated)
+                isReloadingForSectionEntry = true
+                refreshRepository(
+                    setBusy: true,
+                    origin: .userInitiated,
+                    onFinish: { [weak self] in
+                        self?.isReloadingForSectionEntry = false
+                    }
+                )
             }
         case .code:
             break // Code tab only needs branch + status + file tree (already loaded)

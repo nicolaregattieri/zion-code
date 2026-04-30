@@ -191,6 +191,11 @@ enum Constants {
         /// Slightly wider than debounce rhythm to avoid overlapping refreshes.
         static let fileWatcherGateCooldown: UInt64 = 350_000_000 // 350ms
 
+        /// Debounce before replaying a deferred file-tree refresh after the user
+        /// switches back to the Code section. Coalesces rapid section flips and
+        /// avoids racing the SwiftUI section-change render. (RT-003)
+        static let sectionReturnReplayDelay: UInt64 = 250_000_000 // 250ms
+
     }
 
     enum Limits {
