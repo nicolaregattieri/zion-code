@@ -31,6 +31,7 @@ enum UserDefaultsKeys {
         static let renderWhitespace = "editor.renderWhitespace"
         static let topPadding = "editor.topPadding"
         static let scrollPastEnd = "editor.scrollPastEnd"
+        static let markdownPreviewFontSize = "editor.markdownPreviewFontSize"
     }
 
     // MARK: - Terminal
