@@ -150,6 +150,55 @@ extension RepositoryViewModel {
         }
     }
 
+    /// Path-targeted refresh driven by `FileWatcher.ChangeEvent.changedPaths`.
+    /// For each event path, walks ancestors up to the repo root and ensures
+    /// every directory along the way has its children loaded. Directories
+    /// discovered for the first time on this cycle (no entry yet, or entry
+    /// with `children == nil`) are auto-added to `expandedPaths` so a file
+    /// dropped inside a brand-new folder is visible immediately — fixes the
+    /// case where `newFolder/newFile.swift` only showed the empty folder
+    /// until the user clicked it. (RT-005)
+    func ensureChildrenLoadedForChangedPaths(_ paths: [String], maxDepth: Int = 6) {
+        guard let repositoryURL = repositoryURL?.standardizedFileURL else { return }
+        let repoPath = FileWatcher.normalizePath(repositoryURL.path)
+        var ancestors = Set<String>()
+        for changed in paths {
+            let normalized = FileWatcher.normalizePath(changed)
+            guard normalized.hasPrefix(repoPath) else { continue }
+            var ancestor = URL(fileURLWithPath: normalized).deletingLastPathComponent().path
+            var hops = 0
+            while ancestor.count >= repoPath.count, ancestor.hasPrefix(repoPath), hops < maxDepth {
+                ancestors.insert(FileWatcher.normalizePath(ancestor))
+                if ancestor == repoPath { break }
+                ancestor = URL(fileURLWithPath: ancestor).deletingLastPathComponent().path
+                hops += 1
+            }
+        }
+        let sortedAncestors = sortedExpandedDirectoryPaths(ancestors)
+        var didMutateExpandedPaths = false
+        for ancestorPath in sortedAncestors {
+            // Top-level files are already merged in `runFileTreeRefresh` via
+            // the maxDepth-0 walk, so skip the repo root itself.
+            if ancestorPath == repoPath { continue }
+            // Auto-expand: when an ancestor directory has no children loaded
+            // and is not in `expandedPaths`, treat it as a brand-new folder
+            // and expand it. Without this the file inside it stays invisible
+            // until the user clicks. Existing collapsed dirs that already had
+            // children stay collapsed — children load silently and surface on
+            // first click.
+            let item = findItem(path: ancestorPath, in: repositoryFiles)
+            let isFreshDir = item?.isDirectory == true && item?.children == nil && !expandedPaths.contains(ancestorPath)
+            if isFreshDir {
+                expandedPaths.insert(ancestorPath)
+                didMutateExpandedPaths = true
+            }
+            loadChildrenIfNeeded(for: ancestorPath, forceReload: true, expectedRepositoryURL: repositoryURL)
+        }
+        if didMutateExpandedPaths {
+            expandedPathsByRepository[repositoryURL] = expandedPaths
+        }
+    }
+
     func sortedExpandedDirectoryPaths(_ paths: some Sequence<String>) -> [String] {
         paths
             .map { ($0, $0.split(separator: "/").count) }

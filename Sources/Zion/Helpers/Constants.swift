@@ -75,12 +75,15 @@ enum Constants {
         // --- File Watcher ---
 
         /// FSEvents latency: how long the OS batches file system events before delivering.
-        /// 0.5s keeps file-save feedback under 1s while still coalescing bulk writes.
-        static let fileWatcherLatency: TimeInterval = 0.5
+        /// 0.2s keeps single-file save feedback under ~400ms total while bulk writes
+        /// still get coalesced via the path ceiling and `isFilteredNoisePath` classifier. (RT-005)
+        static let fileWatcherLatency: TimeInterval = 0.2
 
         /// Debounce window after receiving file events before processing.
         /// Coalesces rapid changes (e.g., `npm install` writing 100 files) into one refresh.
-        static let fileWatcherDebounce: UInt64 = 500_000_000 // 500ms
+        /// 200ms because the coalescer (100ms) already merges adjacent paths and FSEvents
+        /// itself batches at the OS layer. (RT-005)
+        static let fileWatcherDebounce: UInt64 = 200_000_000 // 200ms
 
         /// Coalescing window for the FileWatcher path deduplication layer.
         /// Incoming FSEvents paths are buffered into a Set of parent directories and flushed
