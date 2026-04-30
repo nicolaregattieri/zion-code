@@ -248,6 +248,10 @@ struct ContentView: View {
             model.activeSection = newSection
             // Load deferred data when navigating to a tab that needs it
             model.loadDeferredDataForSection(newSection)
+            // RT-003: Drain any file-tree refresh suppressed while on Graph/Ops
+            if newSection == .code {
+                model.replayPendingTreeRefreshIfNeeded()
+            }
             if shouldPresentOnboardingFromHelp {
                 return
             }

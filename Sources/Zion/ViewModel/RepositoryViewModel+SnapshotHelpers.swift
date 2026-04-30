@@ -619,6 +619,9 @@ extension RepositoryViewModel {
         isApplyingFileWatcherRefresh = false
         fileWatcherGateTask?.cancel()
         fileWatcherGateTask = nil
+        sectionReturnReplayTask?.cancel()
+        sectionReturnReplayTask = nil
+        pendingFileTreeRefreshFromGate = false
         fileWatcher.watch(directory: url)
     }
 
@@ -639,7 +642,14 @@ extension RepositoryViewModel {
             pendingFileWatcherEvent = (pendingFileWatcherEvent?.merged(with: event)) ?? event
         } else {
             if event.hasStructuralImpact || event.requiresRescan {
-                refreshFileTree(forceReloadExpandedDirectories: true)
+                // RT-003: Skip file tree walk while user is on Graph/Operations
+                // sections — tree is not visible. Mark pending and replay on
+                // switch back to .code.
+                if activeSection == .code {
+                    refreshFileTree(forceReloadExpandedDirectories: true)
+                } else {
+                    pendingFileTreeRefreshFromGate = true
+                }
             }
 
             if event.hasTreeImpact {
@@ -693,6 +703,24 @@ extension RepositoryViewModel {
             codeFileContent = content
             originalFileContents[file.id] = content
             unsavedFiles.remove(file.id)
+        }
+    }
+
+    /// Drains a deferred file-tree refresh that was suppressed while the user
+    /// was on a non-Code section. Called from ContentView when `activeSection`
+    /// transitions back to `.code`. Debounced to coalesce rapid section flips.
+    /// (RT-003)
+    func replayPendingTreeRefreshIfNeeded() {
+        guard pendingFileTreeRefreshFromGate else { return }
+        sectionReturnReplayTask?.cancel()
+        sectionReturnReplayTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: Constants.Timing.sectionReturnReplayDelay)
+            guard !Task.isCancelled else { return }
+            guard let self else { return }
+            guard self.activeSection == .code else { return }
+            guard self.pendingFileTreeRefreshFromGate else { return }
+            self.pendingFileTreeRefreshFromGate = false
+            self.refreshFileTree(forceReloadExpandedDirectories: true)
         }
     }
 

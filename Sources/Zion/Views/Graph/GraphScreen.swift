@@ -87,7 +87,7 @@ struct GraphScreen: View {
                             .padding(.leading, 6)
                     }
 
-                    if model.isRepositorySwitchRefreshingInBackground {
+                    if model.isRepositorySwitchRefreshingInBackground || model.isReloadingForSectionEntry {
                         ZionLoadingOverlay()
                             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius))
                             .allowsHitTesting(false)

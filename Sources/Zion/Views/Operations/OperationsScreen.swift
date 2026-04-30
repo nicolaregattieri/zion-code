@@ -8,6 +8,18 @@ struct OperationsScreen: View {
     @Environment(\.zionModeEnabled) private var zionModeEnabled
 
     var body: some View {
+        ZStack {
+            opsContent
+
+            if model.isReloadingForSectionEntry {
+                ZionLoadingOverlay()
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius))
+                    .allowsHitTesting(false)
+            }
+        }
+    }
+
+    private var opsContent: some View {
         GeometryReader { geo in
             let useHorizontal = geo.size.width >= 700
             ScrollView {
