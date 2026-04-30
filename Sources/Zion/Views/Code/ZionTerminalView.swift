@@ -42,6 +42,49 @@ final class ZionTerminalView: SwiftTerm.TerminalView {
         fatalError("init(coder:) is not supported")
     }
 
+    // MARK: - Find override
+
+    // Regression guard: macOS Edit > Find menu intercepts Cmd+F via
+    // performFindPanelAction: on the first responder, which would invoke
+    // SwiftTerm's native find bar. Route through Zion's .zionFind instead.
+    // Removed by accident in 482ccce; do not delete again.
+    override func performFindPanelAction(_ sender: Any?) {
+        Self.lastFocused = self
+        NotificationCenter.default.post(name: .zionFind, object: nil)
+    }
+
+    // MARK: - Last-focused tracking
+    //
+    // The search bar TextField becomes firstResponder when Cmd+F opens it,
+    // hiding which terminal pane the user was actually in. Track the most
+    // recent terminal that received focus so find routing can target it.
+    static weak var lastFocused: ZionTerminalView?
+
+    /// One-time install of an NSEvent monitor that updates `lastFocused`
+    /// whenever a key/mouse event lands on a ZionTerminalView in the
+    /// responder chain. Uses an event monitor instead of subclass overrides
+    /// because SwiftTerm declares mouseDown/keyDown/becomeFirstResponder
+    /// as non-open and we cannot override them here.
+    static let installFocusTrackerOnce: Void = {
+        let mask: NSEvent.EventTypeMask = [.leftMouseDown, .rightMouseDown, .otherMouseDown, .keyDown]
+        NSEvent.addLocalMonitorForEvents(matching: mask) { event in
+            guard let window = event.window else { return event }
+            if event.type == .keyDown {
+                if let view = window.firstResponder as? NSView,
+                   let term = ZionTerminalView.closestTerminalView(from: view) {
+                    ZionTerminalView.lastFocused = term
+                }
+                return event
+            }
+            // Mouse: hit-test under the click point.
+            let locationInWindow = event.locationInWindow
+            if let term = ZionTerminalView.terminal(atWindowPoint: locationInWindow, in: window) {
+                ZionTerminalView.lastFocused = term
+            }
+            return event
+        }
+    }()
+
     // MARK: - NSDraggingDestination
 
     override func draggingEntered(_ sender: any NSDraggingInfo) -> NSDragOperation {

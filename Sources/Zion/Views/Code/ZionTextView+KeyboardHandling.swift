@@ -173,6 +173,14 @@ extension ZionTextView {
         NotificationCenter.default.post(name: .formatDocument, object: nil)
     }
 
+    // Belt-and-suspenders: if Cmd+F slips past performKeyEquivalent and
+    // reaches the Edit > Find menu dispatch (performFindPanelAction:),
+    // still route to Zion's find instead of NSTextFinder.
+    override func performFindPanelAction(_ sender: Any?) {
+        emitFindSeedFromSelection()
+        NotificationCenter.default.post(name: .zionFind, object: nil)
+    }
+
     func isF12(_ event: NSEvent) -> Bool {
         guard let scalar = event.charactersIgnoringModifiers?.unicodeScalars.first else { return false }
         return Int(scalar.value) == NSF12FunctionKey

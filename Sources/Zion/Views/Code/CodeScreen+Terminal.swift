@@ -236,6 +236,13 @@ extension CodeScreen {
                 .font(DesignSystem.Typography.monoBody)
                 .focused($isTerminalSearchFocused)
                 .onSubmit { terminalFindNext() }
+                .onChange(of: terminalSearchQuery) { _, newValue in
+                    if newValue.isEmpty {
+                        model.terminalClearSearch()
+                    } else {
+                        terminalFindNext()
+                    }
+                }
 
             if !terminalSearchQuery.isEmpty {
                 SearchNavButton(icon: "chevron.up", tooltip: L10n("Resultado anterior"), action: terminalFindPrevious)
