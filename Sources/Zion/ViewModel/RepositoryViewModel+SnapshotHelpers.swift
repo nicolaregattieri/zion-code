@@ -647,6 +647,12 @@ extension RepositoryViewModel {
                 // switch back to .code.
                 if activeSection == .code {
                     refreshFileTree(forceReloadExpandedDirectories: true)
+                    // RT-005: top-level walk + reloadExpandedDirectories alone
+                    // does not surface a file dropped inside a brand-new folder
+                    // (folder appears empty until clicked). Walk the event's
+                    // changed paths to surgically reload each affected parent
+                    // dir and auto-expand newly-discovered folders.
+                    ensureChildrenLoadedForChangedPaths(event.changedPaths)
                 } else {
                     pendingFileTreeRefreshFromGate = true
                 }

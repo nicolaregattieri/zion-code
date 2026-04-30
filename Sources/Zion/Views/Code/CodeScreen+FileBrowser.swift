@@ -39,13 +39,6 @@ extension CodeScreen {
                         .help(L10n("fileBrowser.toggleHidden") + " (⇧⌘H)")
                         .accessibilityLabel(L10n("fileBrowser.toggleHidden"))
 
-                        Button { model.refreshFileTree() } label: {
-                            Image(systemName: "arrow.clockwise")
-                                .iconHitTarget(DesignSystem.IconSize.editorToolbarFrame)
-                        }
-                        .buttonStyle(.plain).cursorArrow().foregroundStyle(.secondary)
-                        .help(L10n("Atualizar arvore de arquivos"))
-                        .accessibilityLabel(L10n("Atualizar arvore de arquivos"))
                     }
                 }
             }
