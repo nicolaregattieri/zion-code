@@ -34,7 +34,7 @@ struct DesignSystem {
         // CodeScreen splits
         static let fileBrowserMinWidth: CGFloat = 160
         static let editorMinWidth: CGFloat = 300
-        static let editorTerminalMinPane: CGFloat = 100
+        static let editorTerminalMinPane: CGFloat = 160
         static let markdownPreviewMinLeading: CGFloat = 260
         static let markdownPreviewMinTrailing: CGFloat = 240
         static let verticalMarkdownPreviewWidthThreshold: CGFloat = 980
