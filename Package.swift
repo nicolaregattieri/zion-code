@@ -12,7 +12,7 @@ let package = Package(
         .executable(name: "Zion", targets: ["Zion"])
     ],
     dependencies: [
-        .package(url: "https://github.com/nicolaregattieri/SwiftTerm.git", revision: "182043e"),
+        .package(url: "https://github.com/nicolaregattieri/SwiftTerm.git", revision: "c7d75a4"),
         .package(url: "https://github.com/sparkle-project/Sparkle.git", exact: "2.8.1")
     ],
     targets: [

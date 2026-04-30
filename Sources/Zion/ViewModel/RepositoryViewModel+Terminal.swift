@@ -368,6 +368,22 @@ extension RepositoryViewModel {
     // MARK: - Terminal Search
 
     var focusedTerminalView: SwiftTerm.TerminalView? {
+        // 1. Walk firstResponder up to a TerminalView (works while a terminal
+        //    has focus; fails when the search bar TextField is focused).
+        if let window = NSApp.keyWindow,
+           var node = window.firstResponder as? NSView {
+            while true {
+                if let term = node as? SwiftTerm.TerminalView { return term }
+                guard let parent = node.superview else { break }
+                node = parent
+            }
+        }
+        // 2. Search bar takes firstResponder when Cmd+F opens it; fall back
+        //    to the last terminal pane that received focus.
+        if let last = ZionTerminalView.lastFocused, last.window != nil {
+            return last
+        }
+        // 3. Last resort: focusedSessionID -> _cachedView.
         let session: TerminalSession? = {
             if let fid = focusedSessionID {
                 return terminalTabs.flatMap({ $0.allSessions() }).first(where: { $0.id == fid })

@@ -294,6 +294,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         ClipboardMonitor.purgeStaleFilesOnLaunch()
         ZionTemp.purgeStaleFiles()
+        _ = ZionTerminalView.installFocusTrackerOnce
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
     }
