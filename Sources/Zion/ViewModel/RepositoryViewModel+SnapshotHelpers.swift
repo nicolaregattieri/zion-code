@@ -632,6 +632,7 @@ extension RepositoryViewModel {
         sectionReturnReplayTask?.cancel()
         sectionReturnReplayTask = nil
         pendingFileTreeRefreshFromGate = false
+        treeOpsDataStale = false
         fileWatcher.watch(directory: url)
     }
 
