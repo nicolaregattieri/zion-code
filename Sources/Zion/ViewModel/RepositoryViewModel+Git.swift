@@ -30,46 +30,44 @@ extension RepositoryViewModel {
         }
     }
 
-    /// Lightweight worktree refresh: runs only `git worktree list --porcelain`,
-    /// skips per-worktree `status --porcelain` enrichment. Keeps left-drawer
-    /// Worktrees panel rows + total count accurate while user is on Zion Code,
-    /// without paying for per-worktree status spawns. Per-row uncommitted count
-    /// dot/number stays at last-known value until a full refresh
-    /// (Tree/Ops tab visit or manual reload). (RT-004)
-    func loadWorktreesOnly() {
+    /// Direct, finalize-free refresh used by the file-watcher pipeline while
+    /// the user is on Zion Code. Updates only Code-section UI fields
+    /// (currentBranch, headShortHash, uncommittedChanges, hasConflicts) —
+    /// skips `for-each-ref refs/heads refs/remotes`, `git log`, `git tag`,
+    /// `git stash list`, and per-worktree status enrichment. Marks
+    /// `treeOpsDataStale = true` so the next visit to Tree/Ops triggers a
+    /// background refresh of the deferred data. Does NOT call
+    /// `refreshRepository` or touch `isBusy`/`isSwitchingRepository`/
+    /// `hasLoadedFullGraphForCurrentRepo`, avoiding the finalize-chain race
+    /// that broke V3 of this perf wave. (RT-007)
+    func refreshCodeMinimal() {
         guard let url = repositoryURL else { return }
         Task { [weak self] in
             guard let self else { return }
-            let basics: [WorktreeItem]
-            do {
-                basics = try await self.worker.worktreeList(in: url, includeStatus: false)
-            } catch {
-                return
-            }
-            // Carry forward last-known uncommittedCount/hasConflicts so the
-            // panel doesn't visually reset to zero while we skip enrichment.
-            let previousByPath = Dictionary(uniqueKeysWithValues: self.worktrees.map { ($0.path, $0) })
-            let merged: [WorktreeItem] = basics.map { item in
-                let prev = previousByPath[item.path]
-                return WorktreeItem(
-                    path: item.path,
-                    head: item.head,
-                    branch: item.branch,
-                    isMainWorktree: item.isMainWorktree,
-                    isDetached: item.isDetached,
-                    isLocked: item.isLocked,
-                    lockReason: item.lockReason,
-                    isPrunable: item.isPrunable,
-                    pruneReason: item.pruneReason,
-                    isCurrent: item.isCurrent,
-                    uncommittedCount: prev?.uncommittedCount ?? 0,
-                    hasConflicts: prev?.hasConflicts ?? false
-                )
-            }
-            if self.worktrees != merged { self.worktrees = merged }
-            if let root = self.recentRepositoryRoot(for: url) {
-                self.recentWorktreeCounts[root] = max(merged.count - 1, 0)
-            }
+            let branch = (try? await self.worker.runAction(
+                args: ["rev-parse", "--abbrev-ref", "HEAD"], in: url
+            ))?.trimmingCharacters(in: .whitespacesAndNewlines) ?? self.currentBranch
+            let head = (try? await self.worker.runAction(
+                args: ["rev-parse", "--short", "HEAD"], in: url
+            ))?.trimmingCharacters(in: .whitespacesAndNewlines) ?? self.headShortHash
+            let statusOutput = (try? await self.worker.runAction(
+                args: ["status", "--porcelain"], in: url
+            )) ?? ""
+            let conflictResult = try? await self.worker.runAction(
+                args: ["ls-files", "--unmerged"], in: url
+            )
+
+            guard self.repositoryURL == url else { return }
+
+            if !branch.isEmpty, self.currentBranch != branch { self.currentBranch = branch }
+            if !head.isEmpty, self.headShortHash != head { self.headShortHash = head }
+            let newLines = statusOutput.split(separator: "\n").map { String($0) }
+            if self.uncommittedChanges != newLines { self.uncommittedChanges = newLines }
+            if self.uncommittedCount != newLines.count { self.uncommittedCount = newLines.count }
+            let newHasConflicts = !((conflictResult?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) ?? true)
+            if self.hasConflicts != newHasConflicts { self.hasConflicts = newHasConflicts }
+
+            self.treeOpsDataStale = true
         }
     }
 
@@ -86,15 +84,17 @@ extension RepositoryViewModel {
         switch section {
         case .graph, .operations:
             if !hasLoadedFullGraphForCurrentRepo {
+                // First visit to Tree/Ops for this repo — full load with overlay.
                 hasLoadedFullGraphForCurrentRepo = true
-                isReloadingForSectionEntry = true
-                refreshRepository(
-                    setBusy: true,
-                    origin: .userInitiated,
-                    onFinish: { [weak self] in
-                        self?.isReloadingForSectionEntry = false
-                    }
-                )
+                treeOpsDataStale = false
+                refreshRepository(setBusy: true, origin: .userInitiated)
+            } else if treeOpsDataStale {
+                // Subsequent visit after Code-only edits/commits — silently
+                // refresh commits/branches/tags/stashes in background. No
+                // overlay, no busy flag — last-known data stays on screen
+                // until the new payload arrives. (RT-007)
+                treeOpsDataStale = false
+                refreshRepository(setBusy: false, origin: .userInitiated)
             }
         case .code:
             break // Code tab only needs branch + status + file tree (already loaded)
@@ -493,8 +493,14 @@ extension RepositoryViewModel {
             return
         }
 
-        if isZenModePaused && (origin == .autoTimer || origin == .fileWatcher) {
+        switch evaluateRefreshGate(origin: origin) {
+        case .skip:
             return
+        case .redirect(let handler):
+            handler()
+            return
+        case .proceed:
+            break
         }
 
         if Self.shouldSkipRefreshWhileBusy(setBusy: setBusy, isBusy: isBusy, origin: origin) {

@@ -46,18 +46,11 @@ extension RepositoryViewModel {
     fileprivate func fireDeferredFileWatcherRefresh() {
         pendingFileWatcherRefresh = false
         refreshFireCountForTesting += 1
-        // RT-004: while user lives in Zion Code, run only the slim slice that
-        // Code-section UI consumes (branch, head, status, conflicts) plus a
-        // basic worktree list refresh (no per-worktree status enrichment).
-        // Tree/Ops snapshots are invalidated so the next visit to those tabs
-        // triggers a full refresh with the existing busy overlay.
-        if activeSection == .code {
-            refreshForCodeTabOnly()
-            loadWorktreesOnly()
-            hasLoadedFullGraphForCurrentRepo = false
-        } else {
-            refreshRepository(setBusy: false, options: .worktreeStatus, origin: .fileWatcher)
-        }
+        // The Code-section slim path is handled inside `refreshRepository`
+        // itself (RT-007 guard next to Zen-mode guard). Calling the standard
+        // entry here keeps Tree/Ops sections on the full `.worktreeStatus`
+        // refresh and routes Code through the lightweight branch.
+        refreshRepository(setBusy: false, options: .worktreeStatus, origin: .fileWatcher)
     }
 
     fileprivate func armActivationObserverIfNeeded() {

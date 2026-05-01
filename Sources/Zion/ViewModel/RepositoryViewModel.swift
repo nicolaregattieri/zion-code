@@ -666,11 +666,12 @@ final class RepositoryViewModel {
     /// for the current repository. Reset on repo switch. When the user is on Code tab,
     /// we skip the heavy graph load and defer it until they navigate to Graph/Ops.
     @ObservationIgnored var hasLoadedFullGraphForCurrentRepo = false
-    /// True while a deferred Tree/Ops section-entry reload is in flight.
-    /// Drives `ZionLoadingOverlay` on Graph and Operations screens so the
-    /// first paint after returning from a long Code-only session shows a
-    /// brief loading state rather than blank/zeroed cards. (RT-004)
-    var isReloadingForSectionEntry: Bool = false
+    /// Set true whenever a Code-section file-watcher event runs the minimal
+    /// refresh path (branch/head/status/conflicts only). Cleared on Tree/Ops
+    /// section entry by triggering a background refresh that re-loads
+    /// commits, branches, tags, stashes, and per-worktree enrichment.
+    /// (RT-007)
+    @ObservationIgnored var treeOpsDataStale: Bool = false
 
     var recentReposData: Data {
         get { UserDefaults.standard.data(forKey: UserDefaultsKeys.General.recentRepositories) ?? Data() }
