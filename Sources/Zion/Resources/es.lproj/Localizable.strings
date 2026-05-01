@@ -2391,3 +2391,17 @@
 // Markdown Editor Fullscreen
 "editor.markdown.fullscreen" = "Pantalla Completa";
 "editor.markdown.exitFullscreen" = "Salir de Pantalla Completa";
+
+// Editor Themes
+"theme.dracula" = "Dracula";
+"theme.cityLights" = "City Lights";
+"theme.githubLight" = "GitHub Light";
+"theme.catppuccinMocha" = "Catppuccin Mocha";
+"theme.oneDarkPro" = "One Dark Pro";
+"theme.tokyoNight" = "Tokyo Night";
+"theme.synthwave" = "SynthWave '84";
+"theme.lunarPinkSatellite" = "Lunar Pink Satellite";
+"theme.neonGreenDarkTerminal" = "Neon Green Dark Terminal";
+"theme.macOSModernDarkVenturaXcode" = "macOS Modern Dark Ventura Xcode";
+"theme.everforestProLight" = "Everforest Pro Light";
+"theme.colorblindLight" = "Colorblind Light";

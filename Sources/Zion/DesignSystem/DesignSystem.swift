@@ -475,6 +475,56 @@ extension DesignSystem {
             comment: (r: 0.337, g: 0.373, b: 0.537),      // #565f89 muted
             number: (r: 1.0, g: 0.620, b: 0.392)          // #ff9e64 orange
         )
+
+        static let lunarPinkSatellite = ThemeColors(
+            backgroundHex: 0x262626,
+            textHex: 0xdddddd,
+            keywordHex: 0xe621af,
+            typeHex: 0x79e0e2,
+            stringHex: 0xdf6cbe,
+            commentHex: 0x999999,
+            numberHex: 0x09e4e6
+        )
+
+        static let neonGreenDarkTerminal = ThemeColors(
+            backgroundHex: 0x0e0e1a,
+            textHex: 0xd5dce8,
+            keywordHex: 0x39ff14,
+            typeHex: 0x00e5ff,
+            stringHex: 0xc3e88d,
+            commentHex: 0x546e54,
+            numberHex: 0xff5370
+        )
+
+        static let macOSModernDarkVenturaXcode = ThemeColors(
+            backgroundHex: 0x232222,
+            textHex: 0xffffff,
+            keywordHex: 0xfe7ab2,
+            typeHex: 0x6bdfff,
+            stringHex: 0xfe8170,
+            commentHex: 0x7f8c98,
+            numberHex: 0xd8c87c
+        )
+
+        static let everforestProLight = ThemeColors(
+            backgroundHex: 0xfdf6e3,
+            textHex: 0x5c6a72,
+            keywordHex: 0xf85552,
+            typeHex: 0x35a77c,
+            stringHex: 0xdfa000,
+            commentHex: 0x939f91,
+            numberHex: 0xdf69ba
+        )
+
+        static let colorblindLight = ThemeColors(
+            backgroundHex: 0xffffff,
+            textHex: 0x1a1a1a,
+            keywordHex: 0xca6702,
+            typeHex: 0x005f73,
+            stringHex: 0x2a9d8f,
+            commentHex: 0x6c757d,
+            numberHex: 0xffb703
+        )
     }
 
     // MARK: - Terminal Palettes
@@ -616,6 +666,91 @@ extension DesignSystem {
             ],
             backgroundSwiftUI: swHex(0x262335),
             accentSwiftUI: swHex(0x72f1b8)
+        )
+
+        static let lunarPinkSatellite = TerminalPalette(
+            foreground: nsHex(0xdddddd),
+            background: nsHex(0x262626),
+            cursorColor: nsHex(0xffffff),
+            cursorTextColor: nsHex(0xe621af),
+            selectionBackground: nsHex(0x3f3f3f),
+            selectionForeground: nsHex(0xdddddd),
+            ansiColors: [
+                stColor(0x777777), stColor(0xc50000), stColor(0x23ad09), stColor(0xf0b800),
+                stColor(0x004aaa), stColor(0xa7097a), stColor(0x05a6a8), stColor(0xdddddd),
+                stColor(0xaaaaaa), stColor(0xff0000), stColor(0x2ae609), stColor(0xffd900),
+                stColor(0x008cff), stColor(0xe621af), stColor(0x09e4e6), stColor(0xffffff),
+            ],
+            backgroundSwiftUI: swHex(0x262626),
+            accentSwiftUI: swHex(0xe621af)
+        )
+
+        static let neonGreenDarkTerminal = TerminalPalette(
+            foreground: nsHex(0xd5dce8),
+            background: nsHex(0x0b0b16),
+            cursorColor: nsHex(0x39ff14),
+            cursorTextColor: nsHex(0x0e0e1a),
+            selectionBackground: nsHex(0x244222),
+            selectionForeground: nsHex(0xd5dce8),
+            ansiColors: [
+                stColor(0x1b1a2e), stColor(0xff5555), stColor(0x39ff14), stColor(0xffb347),
+                stColor(0x8394ff), stColor(0xbf41ff), stColor(0x00ffe2), stColor(0xd9e0eb),
+                stColor(0x505370), stColor(0xff7777), stColor(0x4dff4d), stColor(0xffc87d),
+                stColor(0xa1afff), stColor(0xd770ff), stColor(0x33ffeb), stColor(0xf0f3fa),
+            ],
+            backgroundSwiftUI: swHex(0x0b0b16),
+            accentSwiftUI: swHex(0x39ff14)
+        )
+
+        static let macOSModernDarkVenturaXcode = TerminalPalette(
+            foreground: nsHex(0xffffff),
+            background: nsHex(0x232222),
+            cursorColor: nsHex(0x128cff),
+            cursorTextColor: nsHex(0x232222),
+            selectionBackground: nsHex(0x6e6e6e),
+            selectionForeground: nsHex(0xffffff),
+            ansiColors: [
+                stColor(0x232222), stColor(0xe21515), stColor(0x4dbf57), stColor(0xffc501),
+                stColor(0x128cff), stColor(0xfe7ab2), stColor(0x4db1cb), stColor(0xdedede),
+                stColor(0x747478), stColor(0xff453a), stColor(0x32d74b), stColor(0xffd60a),
+                stColor(0x0a84ff), stColor(0xd9baff), stColor(0x6bdfff), stColor(0xffffff),
+            ],
+            backgroundSwiftUI: swHex(0x232222),
+            accentSwiftUI: swHex(0x128cff)
+        )
+
+        static let everforestProLight = TerminalPalette(
+            foreground: nsHex(0x5c6a72),
+            background: nsHex(0xfdf6e3),
+            cursorColor: nsHex(0x5c6a72),
+            cursorTextColor: nsHex(0xfdf6e3),
+            selectionBackground: nsHex(0xe6e2cc),
+            selectionForeground: nsHex(0x5c6a72),
+            ansiColors: [
+                stColor(0x5c6a72), stColor(0xf85552), stColor(0x8da101), stColor(0xdfa000),
+                stColor(0x3a94c5), stColor(0xdf69ba), stColor(0x35a77c), stColor(0x939f91),
+                stColor(0x5c6a72), stColor(0xf85552), stColor(0x8da101), stColor(0xdfa000),
+                stColor(0x3a94c5), stColor(0xdf69ba), stColor(0x35a77c), stColor(0xf4f0d9),
+            ],
+            backgroundSwiftUI: swHex(0xfdf6e3),
+            accentSwiftUI: swHex(0x8da101)
+        )
+
+        static let colorblindLight = TerminalPalette(
+            foreground: nsHex(0x1a1a1a),
+            background: nsHex(0xffffff),
+            cursorColor: nsHex(0x005f73),
+            cursorTextColor: nsHex(0xffffff),
+            selectionBackground: nsHex(0xbee9e8),
+            selectionForeground: nsHex(0x1a1a1a),
+            ansiColors: [
+                stColor(0x1a1a1a), stColor(0xe63946), stColor(0x2a9d8f), stColor(0xffb703),
+                stColor(0x219ebc), stColor(0x3d405b), stColor(0x005f73), stColor(0xe0e0e0),
+                stColor(0x6c757d), stColor(0xe63946), stColor(0x2a9d8f), stColor(0xf4a261),
+                stColor(0x8ecae6), stColor(0xca6702), stColor(0x219ebc), stColor(0xffffff),
+            ],
+            backgroundSwiftUI: swHex(0xffffff),
+            accentSwiftUI: swHex(0x005f73)
         )
     }
 

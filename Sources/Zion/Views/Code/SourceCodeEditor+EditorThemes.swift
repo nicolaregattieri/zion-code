@@ -81,6 +81,70 @@ extension SourceCodeEditor {
                 number: NSColor(srgbRed: 0.976, green: 0.494, blue: 0.447, alpha: 1.0),
                 call: NSColor(srgbRed: 0.447, green: 0.945, blue: 0.722, alpha: 1.0)
             )
+        case .lunarPinkSatellite:
+            return EditorColors(
+                background: Self.nsHex(0x262626),
+                text: Self.nsHex(0xdddddd),
+                keyword: Self.nsHex(0xe621af),
+                type: Self.nsHex(0x79e0e2),
+                string: Self.nsHex(0xdf6cbe),
+                comment: Self.nsHex(0x999999),
+                number: Self.nsHex(0x09e4e6),
+                call: Self.nsHex(0x05a6a8)
+            )
+        case .neonGreenDarkTerminal:
+            return EditorColors(
+                background: Self.nsHex(0x0e0e1a),
+                text: Self.nsHex(0xd5dce8),
+                keyword: Self.nsHex(0x39ff14),
+                type: Self.nsHex(0x00e5ff),
+                string: Self.nsHex(0xc3e88d),
+                comment: Self.nsHex(0x546e54),
+                number: Self.nsHex(0xff5370),
+                call: Self.nsHex(0x82aaff)
+            )
+        case .macOSModernDarkVenturaXcode:
+            return EditorColors(
+                background: Self.nsHex(0x232222),
+                text: Self.nsHex(0xffffff),
+                keyword: Self.nsHex(0xfe7ab2),
+                type: Self.nsHex(0x6bdfff),
+                string: Self.nsHex(0xfe8170),
+                comment: Self.nsHex(0x7f8c98),
+                number: Self.nsHex(0xd8c87c),
+                call: Self.nsHex(0x4db1cb)
+            )
+        case .everforestProLight:
+            return EditorColors(
+                background: Self.nsHex(0xfdf6e3),
+                text: Self.nsHex(0x5c6a72),
+                keyword: Self.nsHex(0xf85552),
+                type: Self.nsHex(0x35a77c),
+                string: Self.nsHex(0xdfa000),
+                comment: Self.nsHex(0x939f91),
+                number: Self.nsHex(0xdf69ba),
+                call: Self.nsHex(0x8da101)
+            )
+        case .colorblindLight:
+            return EditorColors(
+                background: Self.nsHex(0xffffff),
+                text: Self.nsHex(0x1a1a1a),
+                keyword: Self.nsHex(0xca6702),
+                type: Self.nsHex(0x005f73),
+                string: Self.nsHex(0x2a9d8f),
+                comment: Self.nsHex(0x6c757d),
+                number: Self.nsHex(0xffb703),
+                call: Self.nsHex(0x2a9d8f)
+            )
         }
+    }
+
+    private static func nsHex(_ hex: UInt32) -> NSColor {
+        NSColor(
+            srgbRed: CGFloat((hex >> 16) & 0xFF) / 255,
+            green: CGFloat((hex >> 8) & 0xFF) / 255,
+            blue: CGFloat(hex & 0xFF) / 255,
+            alpha: 1.0
+        )
     }
 }
