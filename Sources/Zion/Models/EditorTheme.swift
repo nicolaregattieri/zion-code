@@ -4,16 +4,22 @@ import AppKit
 
 enum EditorTheme: String, CaseIterable, Identifiable {
     case dracula, cityLights, githubLight, catppuccinMocha, oneDarkPro, tokyoNight, synthwave
+    case lunarPinkSatellite, neonGreenDarkTerminal, macOSModernDarkVenturaXcode, everforestProLight, colorblindLight
     var id: String { rawValue }
     var label: String {
         switch self {
-        case .dracula: return "Dracula"
-        case .cityLights: return "City Lights"
-        case .githubLight: return "GitHub Light"
-        case .catppuccinMocha: return "Catppuccin Mocha"
-        case .oneDarkPro: return "One Dark Pro"
-        case .tokyoNight: return "Tokyo Night"
-        case .synthwave: return "SynthWave '84"
+        case .dracula: return L10n("theme.dracula")
+        case .cityLights: return L10n("theme.cityLights")
+        case .githubLight: return L10n("theme.githubLight")
+        case .catppuccinMocha: return L10n("theme.catppuccinMocha")
+        case .oneDarkPro: return L10n("theme.oneDarkPro")
+        case .tokyoNight: return L10n("theme.tokyoNight")
+        case .synthwave: return L10n("theme.synthwave")
+        case .lunarPinkSatellite: return L10n("theme.lunarPinkSatellite")
+        case .neonGreenDarkTerminal: return L10n("theme.neonGreenDarkTerminal")
+        case .macOSModernDarkVenturaXcode: return L10n("theme.macOSModernDarkVenturaXcode")
+        case .everforestProLight: return L10n("theme.everforestProLight")
+        case .colorblindLight: return L10n("theme.colorblindLight")
         }
     }
     var isDark: Bool { true } // GOLDEN RULE — always true for ALL themes
@@ -21,8 +27,10 @@ enum EditorTheme: String, CaseIterable, Identifiable {
     /// Visual appearance — true light theme (light bg, dark text)
     var isLightAppearance: Bool {
         switch self {
-        case .githubLight: return true
-        case .dracula, .cityLights, .catppuccinMocha, .oneDarkPro, .tokyoNight, .synthwave: return false
+        case .githubLight, .everforestProLight, .colorblindLight: return true
+        case .dracula, .cityLights, .catppuccinMocha, .oneDarkPro, .tokyoNight, .synthwave,
+             .lunarPinkSatellite, .neonGreenDarkTerminal, .macOSModernDarkVenturaXcode:
+            return false
         }
     }
 }
@@ -72,6 +80,34 @@ struct ThemeColors {
         self.nsComment = NSColor(srgbRed: comment.r, green: comment.g, blue: comment.b, alpha: 1)
         self.nsNumber = NSColor(srgbRed: number.r, green: number.g, blue: number.b, alpha: 1)
     }
+
+    init(
+        backgroundHex: UInt32,
+        textHex: UInt32,
+        keywordHex: UInt32,
+        typeHex: UInt32,
+        stringHex: UInt32,
+        commentHex: UInt32,
+        numberHex: UInt32
+    ) {
+        self.init(
+            background: Self.rgb(backgroundHex),
+            text: Self.rgb(textHex),
+            keyword: Self.rgb(keywordHex),
+            type: Self.rgb(typeHex),
+            string: Self.rgb(stringHex),
+            comment: Self.rgb(commentHex),
+            number: Self.rgb(numberHex)
+        )
+    }
+
+    private static func rgb(_ hex: UInt32) -> (r: CGFloat, g: CGFloat, b: CGFloat) {
+        (
+            r: CGFloat((hex >> 16) & 0xFF) / 255,
+            g: CGFloat((hex >> 8) & 0xFF) / 255,
+            b: CGFloat(hex & 0xFF) / 255
+        )
+    }
 }
 
 // MARK: - Theme → Colors mapping
@@ -86,6 +122,11 @@ extension EditorTheme {
         case .oneDarkPro: return DesignSystem.EditorThemes.oneDarkPro
         case .tokyoNight: return DesignSystem.EditorThemes.tokyoNight
         case .synthwave: return DesignSystem.EditorThemes.synthwave
+        case .lunarPinkSatellite: return DesignSystem.EditorThemes.lunarPinkSatellite
+        case .neonGreenDarkTerminal: return DesignSystem.EditorThemes.neonGreenDarkTerminal
+        case .macOSModernDarkVenturaXcode: return DesignSystem.EditorThemes.macOSModernDarkVenturaXcode
+        case .everforestProLight: return DesignSystem.EditorThemes.everforestProLight
+        case .colorblindLight: return DesignSystem.EditorThemes.colorblindLight
         }
     }
 
@@ -98,6 +139,11 @@ extension EditorTheme {
         case .oneDarkPro: return DesignSystem.TerminalPalettes.oneDarkPro
         case .tokyoNight: return DesignSystem.TerminalPalettes.tokyoNight
         case .synthwave: return DesignSystem.TerminalPalettes.synthwave
+        case .lunarPinkSatellite: return DesignSystem.TerminalPalettes.lunarPinkSatellite
+        case .neonGreenDarkTerminal: return DesignSystem.TerminalPalettes.neonGreenDarkTerminal
+        case .macOSModernDarkVenturaXcode: return DesignSystem.TerminalPalettes.macOSModernDarkVenturaXcode
+        case .everforestProLight: return DesignSystem.TerminalPalettes.everforestProLight
+        case .colorblindLight: return DesignSystem.TerminalPalettes.colorblindLight
         }
     }
 }
