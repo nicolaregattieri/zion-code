@@ -265,8 +265,36 @@ final class FileWatcher {
         if normalized.contains("/.git/worktrees/") && normalized.hasSuffix("/index.lock") { return true }
         // pack.tmp — git gc / repack writes these under .git/objects/pack/.
         if normalized.contains("/.git/objects/pack/") && normalized.hasSuffix(".pack.tmp") { return true }
+        // Common gitignored noise: package-manager / build / cache dirs that
+        // generate spurious FSEvents during installs and rebuilds. These
+        // directories are virtually always gitignored, so a refresh triggered
+        // by them is wasted work that drives editor lag in JS/TS repos.
+        for needle in Self.noiseDirectoryNeedles {
+            if normalized.contains(needle) { return true }
+        }
         return false
     }
+
+    /// Substrings that mark a path as living inside a noisy gitignored
+    /// directory tree. Match is `contains` so any depth below the directory
+    /// counts (e.g. `node_modules/foo/bar/index.js`).
+    private static let noiseDirectoryNeedles: [String] = [
+        "/node_modules/",
+        "/.next/",
+        "/.nuxt/",
+        "/.svelte-kit/",
+        "/.turbo/",
+        "/.parcel-cache/",
+        "/.yarn/cache/",
+        "/.pnpm-store/",
+        "/__pycache__/",
+        "/.venv/",
+        "/.tox/",
+        "/.gradle/",
+        "/.DerivedData/",
+        "/DerivedData/",
+        "/.swiftpm/"
+    ]
 
     static func isGitMetadataPath(_ path: String) -> Bool {
         path.contains("/.git/index")
