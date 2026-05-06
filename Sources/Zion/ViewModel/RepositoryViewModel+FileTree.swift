@@ -303,7 +303,7 @@ extension RepositoryViewModel {
             let isDirectory = (try? item.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
             let children: [FileItem]?
 
-            if isDirectory && maxDepth > 0 {
+            if isDirectory && maxDepth > 0 && !isIgnored {
                 children = try enumerateFiles(
                     at: item,
                     ignoredPaths: ignoredPaths,
