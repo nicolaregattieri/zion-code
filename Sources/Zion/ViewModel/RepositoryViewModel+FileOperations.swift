@@ -198,6 +198,7 @@ extension RepositoryViewModel {
 
     func duplicateFileItems(_ items: [FileItem]) {
         guard !items.isEmpty else { return }
+        var createdPaths: [String] = []
         for item in items {
             let parentURL = item.url.deletingLastPathComponent()
             let ext = item.url.pathExtension
@@ -209,7 +210,11 @@ extension RepositoryViewModel {
             }
             do {
                 try FileManager.default.copyItem(at: item.url, to: newURL)
+                createdPaths.append(newURL.path)
             } catch { handleError(error) }
+        }
+        if !createdPaths.isEmpty {
+            ensureChildrenLoadedForChangedPaths(createdPaths)
         }
         refreshFileTree()
         refreshGitStatusAfterFileOperation()
