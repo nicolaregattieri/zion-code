@@ -42,6 +42,13 @@ extension RepositoryViewModel {
     /// that broke V3 of this perf wave. (RT-007)
     func refreshCodeMinimal() {
         guard let url = repositoryURL else { return }
+        // Plain folder (no .git): nothing to read from git, and spawning four
+        // subprocesses for every file-watcher event would just waste CPU and
+        // pollute the diagnostic log with errors. No state wipe needed here:
+        // by the time refreshCodeMinimal can fire, openRepository has already
+        // run clearStaleRepositoryData (FRESH) or applyRepositorySnapshot
+        // (RESTORE) — git fields are already aligned with this folder.
+        guard isGitRepository else { return }
         Task { [weak self] in
             guard let self else { return }
             let branch = (try? await self.worker.runAction(
@@ -106,6 +113,24 @@ extension RepositoryViewModel {
     /// Defers heavy graph/commit data until the user navigates to Graph or Ops.
     func refreshForCodeTabOnly(onFinish: (() -> Void)? = nil) {
         guard let url = repositoryURL else { onFinish?(); return }
+        // Plain folder open path: skip git subprocesses entirely so the
+        // PendingCompletions counter in openRepository can drain and
+        // finalizeRepositorySwitch fires. Without this the catch-block
+        // fallback to refreshRepository can be rejected by
+        // shouldSkipRefreshWhileBusy, the onFinish callback gets dropped,
+        // and the switch watchdog has to force-clear the stuck state.
+        if !isGitRepository {
+            // Wipe every git-derived field so a stale snapshot restored by
+            // openRepository (e.g. user previously had .git in this folder
+            // and removed it) does not bleed branches/tags/stashes from the
+            // old state into the Code header, sidebar, or Graph.
+            wipeRepoStateForNonRepo()
+            statusMessage = L10n("Pasta carregada: %@", url.lastPathComponent)
+            logger.log(.info, "refreshForCodeTabOnly: non-repo folder, skipping git calls",
+                       context: "url=\(url.lastPathComponent)", source: #function)
+            onFinish?()
+            return
+        }
         Task { [weak self] in
             guard let self else { onFinish?(); return }
             do {
@@ -132,6 +157,33 @@ extension RepositoryViewModel {
                 refreshRepository(setBusy: true, origin: .repositorySwitch, onFinish: onFinish)
             }
         }
+    }
+
+    /// Resets every git-derived field on the view-model. Used when a folder
+    /// without `.git` is opened so the Code header / sidebar / Graph never
+    /// show data from a previous repo. Mirrors the fields written by
+    /// `applyRepositorySnapshot` minus `repositoryFiles` / `expandedPaths`
+    /// (those are owned by the file-tree refresh path).
+    func wipeRepoStateForNonRepo() {
+        if !currentBranch.isEmpty { currentBranch = "" }
+        if !headShortHash.isEmpty { headShortHash = "" }
+        if focusedBranch != nil { focusedBranch = nil }
+        if !branchInfos.isEmpty { branchInfos = [] }
+        if !branches.isEmpty { branches = [] }
+        if !tags.isEmpty { tags = [] }
+        if !stashes.isEmpty { stashes = [] }
+        if !selectedStash.isEmpty { selectedStash = "" }
+        if !worktrees.isEmpty { worktrees = [] }
+        if !remotes.isEmpty { remotes = [] }
+        if !commits.isEmpty { commits = [] }
+        if hasMoreCommits { hasMoreCommits = false }
+        if selectedCommitID != nil { selectedCommitID = nil }
+        if !uncommittedChanges.isEmpty { uncommittedChanges = [] }
+        if uncommittedCount != 0 { uncommittedCount = 0 }
+        if hasConflicts { hasConflicts = false }
+        if isMerging { isMerging = false }
+        if isRebasing { isRebasing = false }
+        if isCherryPicking { isCherryPicking = false }
     }
 
     func selectCommit(_ commitID: String?) {
@@ -490,14 +542,21 @@ extension RepositoryViewModel {
         guard let repositoryURL else {
             lastError = GitClientError.repositoryNotSelected.localizedDescription
             hasMoreCommits = false
+            onFinish?()
             return
         }
 
         switch evaluateRefreshGate(origin: origin) {
         case .skip:
+            onFinish?()
             return
         case .redirect(let handler):
+            // Redirect handlers (e.g. refreshCodeMinimal) do not propagate the
+            // outer caller's onFinish — drain it here so the caller's
+            // completion chain (PendingCompletions on repo switch, etc.) sees
+            // every refresh attempt resolve.
             handler()
+            onFinish?()
             return
         case .proceed:
             break
@@ -505,6 +564,7 @@ extension RepositoryViewModel {
 
         if Self.shouldSkipRefreshWhileBusy(setBusy: setBusy, isBusy: isBusy, origin: origin) {
             logger.log(.info, "refreshRepository skipped while busy", context: "origin=\(origin.rawValue)", source: #function)
+            onFinish?()
             return
         }
 

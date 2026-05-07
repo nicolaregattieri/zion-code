@@ -133,6 +133,7 @@
 "Filtro de branch ativo: %@ · %@ commits" = "Filtro de rama activo: %@ · %@ commits";
 "Visualizando todas as branches · %@ commits" = "Viendo todas las ramas · %@ commits";
 "Repositorio carregado: %@ · %@ commits" = "Repositorio cargado: %@ · %@ commits";
+"Pasta carregada: %@" = "Carpeta cargada: %@ (sin git)";
 "Resolva os conflitos na sua IDE favorita." = "Conflictos detectados. Abre el resolvedor de Zion para continuar.";
 "Limpeza" = "Limpieza";
 "Remover branches locais que ja foram mescladas na main." = "Eliminar ramas locales que ya han sido fusionadas en main.";

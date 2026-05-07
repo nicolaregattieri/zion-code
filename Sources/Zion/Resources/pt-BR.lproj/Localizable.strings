@@ -84,6 +84,7 @@
 "Filtro de branch ativo: %@ · %@ commits" = "Filtro de branch ativo: %@ · %@ commits";
 "Visualizando todas as branches · %@ commits" = "Visualizando todas as branches · %@ commits";
 "Repositorio carregado: %@ · %@ commits" = "Repositório carregado: %@ · %@ commits";
+"Pasta carregada: %@" = "Pasta carregada: %@ (sem git)";
 "Resolva os conflitos na sua IDE favorita." = "Conflitos detectados. Abra o resolvedor do Zion para continuar.";
 "Limpeza" = "Limpeza";
 "Remover branches locais que ja foram mescladas na main." = "Remover branches locais que já foram mescladas na main.";

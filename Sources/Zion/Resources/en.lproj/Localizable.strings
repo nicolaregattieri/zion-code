@@ -187,6 +187,7 @@
 "Filtro de branch ativo: %@ · %@ commits" = "Branch filter active: %@ · %@ commits";
 "Visualizando todas as branches · %@ commits" = "Viewing all branches · %@ commits";
 "Repositorio carregado: %@ · %@ commits" = "Repository loaded: %@ · %@ commits";
+"Pasta carregada: %@" = "Folder loaded: %@ (no git)";
 "Resolva os conflitos na sua IDE favorita." = "Conflicts detected. Open Zion Conflict Resolver to continue.";
 "Limpeza" = "Clean Up";
 "Remover branches locais que ja foram mescladas na main." = "Remove local branches that have already been merged into main.";
