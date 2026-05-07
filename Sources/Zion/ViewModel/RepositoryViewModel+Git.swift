@@ -42,6 +42,10 @@ extension RepositoryViewModel {
     /// that broke V3 of this perf wave. (RT-007)
     func refreshCodeMinimal() {
         guard let url = repositoryURL else { return }
+        // Plain folder (no .git): nothing to read from git, and spawning four
+        // subprocesses for every file-watcher event would just waste CPU and
+        // pollute the diagnostic log with errors.
+        guard isGitRepository else { return }
         Task { [weak self] in
             guard let self else { return }
             let branch = (try? await self.worker.runAction(
@@ -106,6 +110,25 @@ extension RepositoryViewModel {
     /// Defers heavy graph/commit data until the user navigates to Graph or Ops.
     func refreshForCodeTabOnly(onFinish: (() -> Void)? = nil) {
         guard let url = repositoryURL else { onFinish?(); return }
+        // Plain folder open path: skip git subprocesses entirely so the
+        // PendingCompletions counter in openRepository can drain and
+        // finalizeRepositorySwitch fires. Without this the catch-block
+        // fallback to refreshRepository can be rejected by
+        // shouldSkipRefreshWhileBusy, the onFinish callback gets dropped,
+        // and the switch watchdog has to force-clear the stuck state.
+        if !isGitRepository {
+            // Wipe stale fields from any previous repo so the UI doesn't
+            // show the wrong branch / status while the user is on a plain
+            // folder.
+            if !currentBranch.isEmpty { currentBranch = "" }
+            if !headShortHash.isEmpty { headShortHash = "" }
+            if !uncommittedChanges.isEmpty { uncommittedChanges = [] }
+            if uncommittedCount != 0 { uncommittedCount = 0 }
+            if hasConflicts { hasConflicts = false }
+            statusMessage = L10n("Pasta carregada: %@", url.lastPathComponent)
+            onFinish?()
+            return
+        }
         Task { [weak self] in
             guard let self else { onFinish?(); return }
             do {
@@ -490,14 +513,17 @@ extension RepositoryViewModel {
         guard let repositoryURL else {
             lastError = GitClientError.repositoryNotSelected.localizedDescription
             hasMoreCommits = false
+            onFinish?()
             return
         }
 
         switch evaluateRefreshGate(origin: origin) {
         case .skip:
+            onFinish?()
             return
         case .redirect(let handler):
             handler()
+            onFinish?()
             return
         case .proceed:
             break
@@ -505,6 +531,7 @@ extension RepositoryViewModel {
 
         if Self.shouldSkipRefreshWhileBusy(setBusy: setBusy, isBusy: isBusy, origin: origin) {
             logger.log(.info, "refreshRepository skipped while busy", context: "origin=\(origin.rawValue)", source: #function)
+            onFinish?()
             return
         }
 
