@@ -198,6 +198,7 @@ extension RepositoryViewModel {
 
     func duplicateFileItems(_ items: [FileItem]) {
         guard !items.isEmpty else { return }
+        var createdPaths: [String] = []
         for item in items {
             let parentURL = item.url.deletingLastPathComponent()
             let ext = item.url.pathExtension
@@ -209,7 +210,11 @@ extension RepositoryViewModel {
             }
             do {
                 try FileManager.default.copyItem(at: item.url, to: newURL)
+                createdPaths.append(newURL.path)
             } catch { handleError(error) }
+        }
+        if !createdPaths.isEmpty {
+            ensureChildrenLoadedForChangedPaths(createdPaths)
         }
         refreshFileTree()
         refreshGitStatusAfterFileOperation()
@@ -242,6 +247,7 @@ extension RepositoryViewModel {
 
     func pasteFileItem(into parentURL: URL) {
         guard let clipboard = fileBrowserClipboard else { return }
+        var pastedPaths: [String] = []
         for url in clipboard.urls {
             var destURL = parentURL.appendingPathComponent(url.lastPathComponent)
             if FileManager.default.fileExists(atPath: destURL.path) {
@@ -250,6 +256,8 @@ extension RepositoryViewModel {
             do {
                 if clipboard.isCut {
                     try FileManager.default.moveItem(at: url, to: destURL)
+                    pastedPaths.append(destURL.path)
+                    pastedPaths.append(url.path)
                     let oldPath = url.path
                     if let idx = openedFiles.firstIndex(where: { $0.id == oldPath }) {
                         let newItem = FileItem(url: destURL, isDirectory: false, children: nil)
@@ -273,12 +281,16 @@ extension RepositoryViewModel {
                     }
                 } else {
                     try FileManager.default.copyItem(at: url, to: destURL)
+                    pastedPaths.append(destURL.path)
                 }
             } catch {
                 handleError(error)
             }
         }
         fileBrowserClipboard = nil
+        if !pastedPaths.isEmpty {
+            ensureChildrenLoadedForChangedPaths(pastedPaths)
+        }
         refreshFileTree()
         refreshGitStatusAfterFileOperation()
     }
