@@ -10,10 +10,16 @@ set -euo pipefail
 #   ./scripts/release.sh upload   — also upload to GitHub Releases (requires gh CLI)
 #
 # Prerequisites:
-#   - Sparkle tools at /tmp/bin/ (sign_update). Install once with:
+#   - Sparkle sign_update tool. Search order:
+#       1. $ZION_SPARKLE_BIN/sign_update (explicit override)
+#       2. ~/.zion/bin/sign_update (persistent — survives reboots, recommended)
+#       3. /tmp/bin/sign_update (legacy, wiped on reboot)
+#     Install permanently with:
+#       mkdir -p ~/.zion/bin
 #       cd /tmp
 #       curl -LO https://github.com/sparkle-project/Sparkle/releases/download/2.8.1/Sparkle-2.8.1.tar.xz
 #       tar xf Sparkle-2.8.1.tar.xz
+#       cp /tmp/bin/sign_update ~/.zion/bin/
 #   - EdDSA key pair in macOS Keychain (created automatically by sign_update on first run)
 #   - Optional `.zion-release.local` file with:
 #       export CODESIGN_IDENTITY="Developer ID Application: Your Name"
@@ -38,7 +44,18 @@ APP_PATH="$DIST_DIR/Zion.app"
 ZIP_PATH="$DIST_DIR/Zion.zip"
 DMG_PATH="$DIST_DIR/Zion.dmg"
 APPCAST_PATH="$DIST_DIR/appcast.xml"
-SPARKLE_BIN="/tmp/bin"
+# Sparkle sign_update lookup. Search in priority order:
+#   1. $ZION_SPARKLE_BIN (explicit override)
+#   2. ~/.zion/bin (persistent install — recommended, survives reboots)
+#   3. /tmp/bin (legacy location — wiped on reboot, will keep nagging)
+# First match wins.
+SPARKLE_BIN=""
+for candidate in "${ZION_SPARKLE_BIN:-}" "$HOME/.zion/bin" "/tmp/bin"; do
+    if [ -n "$candidate" ] && [ -x "$candidate/sign_update" ]; then
+        SPARKLE_BIN="$candidate"
+        break
+    fi
+done
 GITHUB_REPO="nicolaregattieri/zion-code"
 DOWNLOAD_BASE="https://github.com/$GITHUB_REPO/releases/download"
 CODESIGN_IDENTITY="${CODESIGN_IDENTITY:--}"
@@ -61,13 +78,18 @@ if [ "${1:-}" = "upload" ] && [ "$ENABLE_APPLE_NOTARIZATION" -ne 1 ]; then
 fi
 
 # --- Check Sparkle sign_update exists ---
-if [ ! -f "$SPARKLE_BIN/sign_update" ]; then
-    echo "ERROR: Sparkle sign_update not found at $SPARKLE_BIN/sign_update"
+if [ -z "$SPARKLE_BIN" ]; then
+    echo "ERROR: Sparkle sign_update not found in any of:"
+    echo "  \$ZION_SPARKLE_BIN  (currently: ${ZION_SPARKLE_BIN:-unset})"
+    echo "  ~/.zion/bin       (persistent — recommended)"
+    echo "  /tmp/bin          (volatile — wiped on reboot)"
     echo ""
-    echo "Install once with:"
+    echo "Install permanently with:"
+    echo "  mkdir -p ~/.zion/bin"
     echo "  cd /tmp"
     echo "  curl -LO https://github.com/sparkle-project/Sparkle/releases/download/2.8.1/Sparkle-2.8.1.tar.xz"
     echo "  tar xf Sparkle-2.8.1.tar.xz"
+    echo "  cp /tmp/bin/sign_update ~/.zion/bin/"
     exit 1
 fi
 
