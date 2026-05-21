@@ -232,7 +232,10 @@ extension AIClient {
             guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
                 return false
             }
-            UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: UserDefaultsKeys.AI.localLastHealthyAt)
+            let timestamp = Date().timeIntervalSince1970
+            await MainActor.run {
+                UserDefaults.standard.set(timestamp, forKey: UserDefaultsKeys.AI.localLastHealthyAt)
+            }
             return true
         } catch {
             return false
