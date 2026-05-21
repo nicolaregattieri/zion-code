@@ -73,3 +73,5 @@ codex/
 .agents/
 .claude
 .aider*
+
+.sdd/
