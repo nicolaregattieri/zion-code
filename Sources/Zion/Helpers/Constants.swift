@@ -184,6 +184,15 @@ enum Constants {
         /// Wait before retrying after an AI API transient error.
         static let aiRetryDelay: TimeInterval = 2.0
 
+        /// How often to poll a local LLM endpoint for health status (seconds).
+        static let localHealthPollSeconds: Int = 5
+
+        /// How long a local LLM health check result is considered fresh before re-polling.
+        static let localHealthFreshnessSeconds: TimeInterval = 30
+
+        /// Default request timeout for local LLM API calls.
+        static let localDefaultRequestTimeoutSeconds: TimeInterval = 60
+
         /// Timeout for shortcut key recording before auto-cancelling.
         /// 5s gives users time to think about which key combo to use.
         static let shortcutRecordingTimeout: UInt64 = 5_000_000_000 // 5s
