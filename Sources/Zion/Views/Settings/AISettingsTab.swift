@@ -13,6 +13,7 @@ struct AISettingsTab: View {
     @State private var aiKeyInput: String = ""
     @State private var editingProvider: AIProvider?
     @State private var connectionRefreshID: Int = 0
+    @State private var localConfig: LocalLLMConfig = LocalLLMConfig()
 
     private var defaultProvider: AIProvider {
         AIProvider(rawValue: aiProviderRaw) ?? .none
@@ -79,14 +80,18 @@ struct AISettingsTab: View {
                 }
             }
 
-            Section(L10n("settings.ai.connectedProviders")) {
-                ForEach(providerConnections, id: \.provider) { info in
-                    providerRow(info)
-                }
+            if defaultProvider == .local {
+                LocalLLMSettingsSection(config: $localConfig)
+            } else {
+                Section(L10n("settings.ai.connectedProviders")) {
+                    ForEach(providerConnections, id: \.provider) { info in
+                        providerRow(info)
+                    }
 
-                Text(L10n("settings.ai.connectedProviders.hint"))
-                    .font(DesignSystem.Typography.label)
-                    .foregroundStyle(.secondary)
+                    Text(L10n("settings.ai.connectedProviders.hint"))
+                        .font(DesignSystem.Typography.label)
+                        .foregroundStyle(.secondary)
+                }
             }
 
             if defaultProvider != .none {
@@ -176,6 +181,10 @@ struct AISettingsTab: View {
         .tint(DesignSystem.Colors.actionPrimary)
         .onAppear {
             cancelEditing()
+            localConfig = AIClient.loadLocalConfig() ?? LocalLLMConfig()
+        }
+        .onChange(of: localConfig) { _, newValue in
+            AIClient.saveLocalConfig(newValue)
         }
     }
 
