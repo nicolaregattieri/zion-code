@@ -2406,3 +2406,29 @@
 "theme.macOSModernDarkVenturaXcode" = "macOS Modern Dark Ventura Xcode";
 "theme.everforestProLight" = "Everforest Pro Light";
 "theme.colorblindLight" = "Colorblind Light";
+
+// Local LLM Support (Ollama Phase 1)
+"settings.ai.provider.local" = "Local / Compatible con OpenAI";
+"settings.ai.local.serverURL" = "URL del servidor";
+"settings.ai.local.serverURL.hint" = "ej.: http://localhost:11434/v1 (Ollama, LM Studio, MLX server, OpenRouter)";
+"settings.ai.local.model" = "Modelo";
+"settings.ai.local.model.refresh" = "Actualizar modelos";
+"settings.ai.local.model.empty" = "No se encontraron modelos";
+"settings.ai.local.model.recommended" = "Recomendado";
+"settings.ai.local.model.discoveryHint" = "Haz clic en Actualizar modelos para listar lo instalado en el servidor. O consulta: `ollama list` (Ollama), pestaña Models (LM Studio) o openrouter.ai/models (OpenRouter).";
+"settings.ai.local.model.lightFallback" = "Modelo liviano de respaldo";
+"settings.ai.local.timeout" = "Tiempo de espera de solicitud";
+"settings.ai.local.timeout.unit" = "segundos";
+"settings.ai.local.health.healthy" = "Conectado";
+"settings.ai.local.health.unhealthy" = "Inaccesible";
+"settings.ai.local.health.lastCheckedAt" = "Última comprobación a las %@";
+"settings.ai.local.health.test" = "Probar conexión";
+"settings.ai.local.singleModelWarning" = "El modo local usa un solo modelo para todas las tareas. Elige el mejor modelo para tus necesidades.";
+"settings.ai.local.toolCallingDisabled" = "Las funciones estructuradas (sugerencias de commit, revisión de código) están desactivadas en modo local.";
+"settings.ai.local.apiKey.optional" = "Clave de API (opcional)";
+"settings.ai.local.error.connectionFailed" = "Conexión fallida. Verifica la URL del servidor e inténtalo de nuevo.";
+"settings.ai.local.error.serverNotFound" = "Servidor no encontrado. Asegúrate de que el backend esté en ejecución.";
+"settings.ai.local.error.modelError" = "Modelo no encontrado en el servidor local. Ve a Settings → AI, haz clic en Actualizar modelos y elige uno que esté cargado.";
+"settings.ai.local.error.toolCallingUnsupported" = "Este modelo no admite llamadas a herramientas.";
+"settings.ai.local.hint.ollamaServe" = "¿Ollama está en ejecución? Prueba: `ollama serve`";
+"settings.ai.local.hint.ollamaPull" = "Descarga el modelo primero: `ollama pull qwen3-coder:30b`";

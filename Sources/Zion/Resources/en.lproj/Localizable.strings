@@ -2384,3 +2384,29 @@
 "theme.macOSModernDarkVenturaXcode" = "macOS Modern Dark Ventura Xcode";
 "theme.everforestProLight" = "Everforest Pro Light";
 "theme.colorblindLight" = "Colorblind Light";
+
+// Local LLM Support (Ollama Phase 1)
+"settings.ai.provider.local" = "Local / OpenAI-compatible";
+"settings.ai.local.serverURL" = "Server URL";
+"settings.ai.local.serverURL.hint" = "e.g. http://localhost:11434/v1 (Ollama, LM Studio, MLX server, OpenRouter)";
+"settings.ai.local.model" = "Model";
+"settings.ai.local.model.refresh" = "Refresh models";
+"settings.ai.local.model.empty" = "No models found";
+"settings.ai.local.model.recommended" = "Recommended";
+"settings.ai.local.model.discoveryHint" = "Click Refresh models to list what's installed on your server. Or look it up: `ollama list` (Ollama), the Models tab (LM Studio), or openrouter.ai/models (OpenRouter).";
+"settings.ai.local.model.lightFallback" = "Light fallback model";
+"settings.ai.local.timeout" = "Request timeout";
+"settings.ai.local.timeout.unit" = "seconds";
+"settings.ai.local.health.healthy" = "Connected";
+"settings.ai.local.health.unhealthy" = "Unreachable";
+"settings.ai.local.health.lastCheckedAt" = "Last checked at %@";
+"settings.ai.local.health.test" = "Test connection";
+"settings.ai.local.singleModelWarning" = "Local mode uses one model for all tasks. Choose the best model for your needs.";
+"settings.ai.local.toolCallingDisabled" = "Structured features (commit suggestions, code review) are disabled in local mode.";
+"settings.ai.local.apiKey.optional" = "API Key (optional)";
+"settings.ai.local.error.connectionFailed" = "Connection failed. Check your server URL and try again.";
+"settings.ai.local.error.serverNotFound" = "Server not found. Make sure the backend is running.";
+"settings.ai.local.error.modelError" = "Model not found on the local server. Open Settings → AI, click Refresh models, and pick one that's actually loaded.";
+"settings.ai.local.error.toolCallingUnsupported" = "This model does not support tool calling.";
+"settings.ai.local.hint.ollamaServe" = "Is Ollama running? Try: `ollama serve`";
+"settings.ai.local.hint.ollamaPull" = "Pull model first: `ollama pull qwen3-coder:30b`";

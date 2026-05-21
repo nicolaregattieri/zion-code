@@ -218,7 +218,7 @@ enum DivergenceResolution {
 // MARK: - AI
 
 enum AIProvider: String, CaseIterable, Identifiable {
-    case none, anthropic, openai, gemini
+    case none, anthropic, openai, gemini, local
     var id: String { rawValue }
     var label: String {
         switch self {
@@ -226,6 +226,7 @@ enum AIProvider: String, CaseIterable, Identifiable {
         case .anthropic: return L10n("Anthropic (Claude)")
         case .openai: return L10n("OpenAI (GPT)")
         case .gemini: return L10n("Google (Gemini)")
+        case .local: return L10n("settings.ai.provider.local")
         }
     }
 }

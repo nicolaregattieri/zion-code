@@ -50,6 +50,16 @@ struct AIPromptPayload {
 
 actor AIClient {
 
+    // MARK: - Injectable URLSession (test-only)
+
+    /// Injected URLSession used by the `.local` dispatch path. Nil in production (uses URLSession.shared).
+    var _testURLSession: URLSession? = nil
+
+    /// Sets the injectable URLSession. For use in unit tests only.
+    func set_testURLSession(_ session: URLSession) {
+        _testURLSession = session
+    }
+
     // MARK: - Keychain
 
     private static let keychainService = "com.zion.ai-api-key"

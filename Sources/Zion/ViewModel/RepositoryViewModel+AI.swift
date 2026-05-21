@@ -126,6 +126,13 @@ extension RepositoryViewModel {
                     aiQuotaExceeded = true
                 } else if let aiErr = error as? AIError, case .temporarilyUnavailable = aiErr {
                     statusMessage = L10n("IA temporariamente indisponivel. Sugestao local aplicada.")
+                } else if let aiErr = error as? AIError {
+                    switch aiErr {
+                    case .localConnectionFailed, .localServerNotFound, .localModelError, .localAPIError, .localToolCallingUnsupported:
+                        statusMessage = aiErr.errorDescription ?? L10n("settings.ai.local.error.modelError")
+                    default:
+                        break
+                    }
                 }
                 logger.log(.error, "AI commit message failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
                 // Fallback to heuristic on AI failure

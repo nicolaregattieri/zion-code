@@ -62,6 +62,8 @@ enum UserDefaultsKeys {
         static let commitMessageStyle = "zion.commitMessageStyle"
         static let preCommitReview = "zion.preCommitReview"
         static let transferSupportHints = "zion.aiTransferSupportHints"
+        static let localConfig = "zion.ai.localConfig"
+        static let localLastHealthyAt = "zion.ai.localLastHealthyAt"
     }
 
     // MARK: - Repo Memory

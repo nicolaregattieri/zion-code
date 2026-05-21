@@ -29,7 +29,11 @@ extension RepositoryViewModel {
     }
 
     var isAIConfigured: Bool {
-        aiProvider != .none && !aiAPIKey.isEmpty
+        if aiProvider == .none { return false }
+        if aiProvider == .local {
+            return AIClient.loadLocalConfig() != nil
+        }
+        return !aiAPIKey.isEmpty
     }
 }
 

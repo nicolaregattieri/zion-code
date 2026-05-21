@@ -19,7 +19,7 @@ struct AIQuotaRecoveryInfo: Equatable {
 }
 
 enum AIProviderSupport {
-    static let configurableProviders: [AIProvider] = [.anthropic, .openai, .gemini]
+    static let configurableProviders: [AIProvider] = [.anthropic, .openai, .gemini, .local]
 
     static func dashboardURL(for provider: AIProvider) -> URL? {
         switch provider {
@@ -29,6 +29,8 @@ enum AIProviderSupport {
             return URL(string: "https://platform.openai.com/api-keys")
         case .gemini:
             return URL(string: "https://aistudio.google.com/apikey")
+        case .local:
+            return URL(string: "https://ollama.com/library")
         case .none:
             return nil
         }
@@ -36,13 +38,27 @@ enum AIProviderSupport {
 
     static func isConnected(
         provider: AIProvider,
-        loadKey: (AIProvider) -> String? = AIClient.loadAPIKey
+        loadKey: (AIProvider) -> String? = AIClient.loadAPIKey,
+        loadLocalConfig: () -> LocalLLMConfig? = AIClient.loadLocalConfig,
+        localHealthProbe: (LocalLLMConfig) -> Bool = { _ in
+            let lastHealthy = UserDefaults.standard.double(forKey: UserDefaultsKeys.AI.localLastHealthyAt)
+            guard lastHealthy > 0 else { return false }
+            return Date().timeIntervalSince1970 - lastHealthy < Constants.Timing.localHealthFreshnessSeconds
+        }
     ) -> Bool {
+        if provider == .local {
+            guard let config = loadLocalConfig() else { return false }
+            return localHealthProbe(config)
+        }
         guard provider != .none else { return false }
         guard let key = loadKey(provider)?.trimmingCharacters(in: .whitespacesAndNewlines) else {
             return false
         }
         return !key.isEmpty
+    }
+
+    static func probeOnce(config: LocalLLMConfig) async -> Bool {
+        await AIClient.probeHealth(config: config)
     }
 
     static func connectionInfo(
