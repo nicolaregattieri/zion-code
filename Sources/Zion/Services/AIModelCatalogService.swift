@@ -12,8 +12,7 @@ enum AIModelCatalogService {
         case .none:
             return AIResolvedModelSelection(lane: lane, primaryModelID: "", fallbackModelIDs: [])
         case .local:
-            // Placeholder — full routing handled in task 7+
-            return AIResolvedModelSelection(lane: lane, primaryModelID: "", fallbackModelIDs: [])
+            return localSelection(mode: mode, lane: lane)
         }
     }
 
@@ -97,6 +96,16 @@ enum AIModelCatalogService {
         case .transcription:
             return makeSelection(lane: lane, primary: efficientChat, fallbacks: [smartChat])
         }
+    }
+
+    private static func localSelection(mode: AIMode, lane: AITaskLane) -> AIResolvedModelSelection {
+        guard let config = AIClient.loadLocalConfig() else {
+            return AIResolvedModelSelection(lane: lane, primaryModelID: "", fallbackModelIDs: [])
+        }
+        if lane == .transcription {
+            return AIResolvedModelSelection(lane: lane, primaryModelID: "", fallbackModelIDs: [])
+        }
+        return makeSelection(lane: lane, primary: config.modelName, fallbacks: [])
     }
 
     private static func makeSelection(lane: AITaskLane, primary: String, fallbacks: [String]) -> AIResolvedModelSelection {
