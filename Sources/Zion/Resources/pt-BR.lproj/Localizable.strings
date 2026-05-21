@@ -2406,7 +2406,7 @@
 "settings.ai.local.apiKey.optional" = "Chave de API (opcional)";
 "settings.ai.local.error.connectionFailed" = "Conexão falhou. Verifique a URL do servidor e tente novamente.";
 "settings.ai.local.error.serverNotFound" = "Servidor não encontrado. Certifique-se de que o backend está em execução.";
-"settings.ai.local.error.modelError" = "Erro no modelo. O modelo selecionado pode não estar disponível.";
+"settings.ai.local.error.modelError" = "Modelo não encontrado no servidor local. Vá em Settings → AI, clique em Atualizar modelos e escolha um que esteja carregado.";
 "settings.ai.local.error.toolCallingUnsupported" = "Este modelo não suporta chamadas de ferramentas.";
 "settings.ai.local.hint.ollamaServe" = "O Ollama está em execução? Tente: `ollama serve`";
 "settings.ai.local.hint.ollamaPull" = "Baixe o modelo primeiro: `ollama pull qwen3-coder:30b`";

@@ -156,7 +156,9 @@ extension AIClient {
                     case 200:
                         break
                     case 404:
-                        continuation.finish(throwing: AIError.localServerNotFound)
+                        // 404 on /chat/completions typically means model name mismatch —
+                        // the endpoint exists (probe passed) but the model wasn't found.
+                        continuation.finish(throwing: AIError.localModelError)
                         return
                     case 500:
                         continuation.finish(throwing: AIError.localModelError)
