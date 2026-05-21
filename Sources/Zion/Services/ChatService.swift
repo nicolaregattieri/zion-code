@@ -425,12 +425,15 @@ final class ChatService {
             prepended to every user message. Treat it as ground truth.
 
             Slash commands available to the user: /diff /log /status /file /commit.
-            Their output appears as fenced blocks in the message.
+            Their output appears as fenced blocks in the message. When the user asks
+            something that needs file content, a diff, or a specific commit and that
+            context is NOT already in the message, ASK them to send the relevant slash
+            command — example: "Send `/file Sources/Foo.swift` and I'll review it."
+            Do NOT refuse with "I can't show code"; instead, guide the user to share
+            the context via slash commands.
 
             Output style: concise. Code blocks for commands, file paths, hashes.
             Never invent file paths or commit SHAs you haven't seen in context.
-            If you'd need to run a command to answer, instruct the user to type that
-            slash command first.
             """,
             untrustedSections: [
                 AIUntrustedPromptSection(
