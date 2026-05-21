@@ -2393,6 +2393,7 @@
 "settings.ai.local.model.refresh" = "Refresh models";
 "settings.ai.local.model.empty" = "No models found";
 "settings.ai.local.model.recommended" = "Recommended";
+"settings.ai.local.model.discoveryHint" = "Click Refresh models to list what's installed on your server. Or look it up: `ollama list` (Ollama), the Models tab (LM Studio), or openrouter.ai/models (OpenRouter).";
 "settings.ai.local.model.lightFallback" = "Light fallback model";
 "settings.ai.local.timeout" = "Request timeout";
 "settings.ai.local.timeout.unit" = "seconds";

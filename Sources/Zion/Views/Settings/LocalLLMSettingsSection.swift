@@ -145,23 +145,10 @@ struct LocalLLMSettingsSection: View {
     }
 
     private var recommendedHint: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            HStack(spacing: 4) {
-                Text(L10n("settings.ai.local.model.recommended") + ":")
-                    .font(DesignSystem.Typography.label)
-                    .foregroundStyle(.secondary)
-                Text("qwen3-coder:30b")
-                    .font(DesignSystem.Typography.monoLabel)
-            }
-            HStack(spacing: 4) {
-                Text(L10n("settings.ai.local.model.lightFallback") + ":")
-                    .font(DesignSystem.Typography.label)
-                    .foregroundStyle(.secondary)
-                Text("qwen2.5-coder:7b")
-                    .font(DesignSystem.Typography.monoLabel)
-                    .foregroundStyle(.secondary)
-            }
-        }
+        Text(L10n("settings.ai.local.model.discoveryHint"))
+            .font(DesignSystem.Typography.label)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     private var timeoutStepper: some View {
