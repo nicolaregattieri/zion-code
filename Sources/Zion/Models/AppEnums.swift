@@ -248,7 +248,7 @@ enum FeatureSection: String, CaseIterable, Identifiable {
     case tree, code, terminal, clipboard, operations, worktrees, ai,
          customization, diagnostics, conflicts, settings, diffExplanation,
          codeReview, prInbox, autoUpdates, zionMode, mobileAccess, bisect,
-         clone, repoStats, remotes, submodules, hosting
+         clone, repoStats, remotes, submodules, hosting, chat
     var id: String { rawValue }
 
     var icon: String {
@@ -276,6 +276,7 @@ enum FeatureSection: String, CaseIterable, Identifiable {
         case .remotes: return "network"
         case .submodules: return "shippingbox.fill"
         case .hosting: return "server.rack"
+        case .chat: return "bubble.left.and.bubble.right"
         }
     }
 
@@ -304,6 +305,7 @@ enum FeatureSection: String, CaseIterable, Identifiable {
         case .remotes: return DesignSystem.Colors.commitSplit
         case .submodules: return DesignSystem.Colors.warning
         case .hosting: return DesignSystem.Colors.brandPrimary
+        case .chat: return DesignSystem.Colors.brandPrimary
         }
     }
 
@@ -332,6 +334,7 @@ enum FeatureSection: String, CaseIterable, Identifiable {
         case .remotes: return "help.remotes.title"
         case .submodules: return "help.submodules.title"
         case .hosting: return "help.hosting.title"
+        case .chat: return L10n("chat.title")
         }
     }
 
@@ -341,13 +344,14 @@ enum FeatureSection: String, CaseIterable, Identifiable {
 }
 
 enum AppSection: String, CaseIterable, Identifiable {
-    case code, graph, operations
+    case code, graph, operations, chat
     var id: String { rawValue }
     var title: String {
         switch self {
         case .code: return "Zion Code"
         case .graph: return "Zion Tree"
         case .operations: return "Zion Ops"
+        case .chat: return L10n("chat.title")
         }
     }
     var icon: String {
@@ -355,6 +359,7 @@ enum AppSection: String, CaseIterable, Identifiable {
         case .graph: return "point.3.connected.trianglepath.dotted"
         case .code: return "terminal.fill"
         case .operations: return "gearshape"
+        case .chat: return "bubble.left.and.bubble.right"
         }
     }
     var subtitle: String {
@@ -362,6 +367,7 @@ enum AppSection: String, CaseIterable, Identifiable {
         case .graph: return L10n("sidebar.graph.subtitle")
         case .code: return L10n("sidebar.code.subtitle")
         case .operations: return L10n("sidebar.operations.subtitle")
+        case .chat: return L10n("chat.title")
         }
     }
 }

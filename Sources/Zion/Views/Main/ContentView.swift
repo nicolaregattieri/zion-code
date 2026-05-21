@@ -591,6 +591,15 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .opacity(selectedSection == .operations ? 1 : 0)
                 .allowsHitTesting(selectedSection == .operations)
+
+                ChatScreen(
+                    chat: model.chatService,
+                    repoURL: model.repositoryURL,
+                    branch: model.currentBranch ?? ""
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .opacity(selectedSection == .chat ? 1 : 0)
+                .allowsHitTesting(selectedSection == .chat)
             } else if selectedSection != .code {
                 WelcomeScreen(model: model, onOpen: { openRepositoryPanel() }, onInit: { initRepositoryPanel() })
                     .frame(maxWidth: .infinity, maxHeight: .infinity)

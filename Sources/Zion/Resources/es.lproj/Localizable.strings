@@ -2432,3 +2432,25 @@
 "settings.ai.local.error.toolCallingUnsupported" = "Este modelo no admite llamadas a herramientas.";
 "settings.ai.local.hint.ollamaServe" = "¿Ollama está en ejecución? Prueba: `ollama serve`";
 "settings.ai.local.hint.ollamaPull" = "Descarga el modelo primero: `ollama pull qwen3-coder:30b`";
+
+// MARK: - Chat (Zion Talks)
+"chat.title" = "Zion Talks";
+"chat.emptyState.headline" = "Pregunta cualquier cosa sobre tu repositorio";
+"chat.emptyState.example.history" = "Resumir commits recientes";
+"chat.emptyState.example.branch" = "¿Qué cambió en esta rama?";
+"chat.emptyState.example.diff" = "Explicar el diff actual";
+"chat.composer.hint" = "Escribe un mensaje — usa /diff, /log, /file <ruta>";
+"chat.composer.send" = "Enviar";
+"chat.composer.stop" = "Detener";
+"chat.composer.newChat" = "Nuevo Chat";
+"chat.slash.diff.label" = "/diff — adjuntar diff actual";
+"chat.slash.log.label" = "/log — adjuntar commits recientes";
+"chat.slash.status.label" = "/status — adjuntar estado del árbol de trabajo";
+"chat.slash.file.label" = "/file <ruta> — adjuntar contenido del archivo";
+"chat.slash.commit.label" = "/commit — adjuntar detalles del último commit";
+"chat.error.aiNotConfigured" = "Configura un proveedor de IA en Ajustes para empezar a chatear.";
+"chat.error.send.title" = "Error al enviar el mensaje";
+"chat.contextHeader" = "Repositorio: %@ · rama %@ · HEAD %@ · %d archivo(s) sin confirmar";
+"chat.slash.fileOutsideRepo" = "La ruta especificada está fuera del repositorio.";
+"chat.slash.empty.diff" = "No hay cambios para mostrar. Tu árbol de trabajo está limpio.";
+"chat.head.unknown" = "?";

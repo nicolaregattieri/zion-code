@@ -32,6 +32,7 @@ enum AILimits {
     static let fileReviewTokens = 400
     static let pendingSummaryTokens = 150
     static let bisectExplainTokens = 600
+    static let maxFileContentPreviewLength = 8_000
 }
 
 struct AIUntrustedPromptSection {

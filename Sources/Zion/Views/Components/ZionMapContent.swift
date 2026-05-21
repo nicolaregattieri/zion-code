@@ -323,6 +323,9 @@ struct ZionMapContent {
                 ZionMapEntry("map.zionMode.restore.title", description: "map.zionMode.restore.description"),
                 ZionMapEntry("map.zionMode.theme.title", description: "map.zionMode.theme.description"),
             ]
+
+        case .chat:
+            return []
         }
     }
 }

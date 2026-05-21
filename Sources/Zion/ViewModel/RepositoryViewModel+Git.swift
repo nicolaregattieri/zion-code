@@ -105,6 +105,8 @@ extension RepositoryViewModel {
             }
         case .code:
             break // Code tab only needs branch + status + file tree (already loaded)
+        case .chat:
+            break
         }
     }
 

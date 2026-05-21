@@ -2410,3 +2410,25 @@
 "settings.ai.local.error.toolCallingUnsupported" = "This model does not support tool calling.";
 "settings.ai.local.hint.ollamaServe" = "Is Ollama running? Try: `ollama serve`";
 "settings.ai.local.hint.ollamaPull" = "Pull model first: `ollama pull qwen3-coder:30b`";
+
+// MARK: - Chat (Zion Talks)
+"chat.title" = "Zion Talks";
+"chat.emptyState.headline" = "Ask anything about your repository";
+"chat.emptyState.example.history" = "Summarize recent commits";
+"chat.emptyState.example.branch" = "What changed in this branch?";
+"chat.emptyState.example.diff" = "Explain the current diff";
+"chat.composer.hint" = "Type a message — use /diff, /log, /file <path>";
+"chat.composer.send" = "Send";
+"chat.composer.stop" = "Stop";
+"chat.composer.newChat" = "New Chat";
+"chat.slash.diff.label" = "/diff — attach current diff";
+"chat.slash.log.label" = "/log — attach recent commits";
+"chat.slash.status.label" = "/status — attach working tree status";
+"chat.slash.file.label" = "/file <path> — attach file contents";
+"chat.slash.commit.label" = "/commit — attach last commit details";
+"chat.error.aiNotConfigured" = "Set up an AI provider in Settings to start chatting.";
+"chat.error.send.title" = "Failed to send message";
+"chat.contextHeader" = "Repository: %@ · branch %@ · HEAD %@ · %d uncommitted file(s)";
+"chat.slash.fileOutsideRepo" = "The specified path is outside the repository.";
+"chat.slash.empty.diff" = "No changes to show. Your working tree is clean.";
+"chat.head.unknown" = "?";

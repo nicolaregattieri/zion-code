@@ -715,6 +715,7 @@ final class RepositoryViewModel {
     @ObservationIgnored let git = GitClient()
     @ObservationIgnored let worker = RepositoryWorker()
     @ObservationIgnored let fileWatcher = FileWatcher()
+    @ObservationIgnored var _chatService: ChatService?
 
     @ObservationIgnored let defaultCommitLimitAll = 100
     @ObservationIgnored let defaultCommitLimitFocused = 100
