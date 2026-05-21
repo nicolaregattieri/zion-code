@@ -543,6 +543,11 @@ enum AIError: LocalizedError {
     case quotaExceeded
     case temporarilyUnavailable
     case apiError(String)
+    case localConnectionFailed
+    case localServerNotFound
+    case localModelError
+    case localAPIError(String)
+    case localToolCallingUnsupported
 
     var errorDescription: String? {
         switch self {
@@ -552,6 +557,11 @@ enum AIError: LocalizedError {
         case .quotaExceeded: return L10n("Cota da API excedida ou saldo insuficiente")
         case .temporarilyUnavailable: return L10n("IA temporariamente indisponivel. Tente novamente em instantes.")
         case .apiError(let msg): return msg
+        case .localConnectionFailed: return L10n("settings.ai.local.error.connectionFailed")
+        case .localServerNotFound: return L10n("settings.ai.local.error.serverNotFound")
+        case .localModelError: return L10n("settings.ai.local.error.modelError")
+        case .localAPIError(let msg): return msg
+        case .localToolCallingUnsupported: return L10n("settings.ai.local.error.toolCallingUnsupported")
         }
     }
 }

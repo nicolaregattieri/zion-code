@@ -62,4 +62,19 @@ extension AIClient {
 
         return LocalStreamChunk(text: text, done: isDone)
     }
+
+    // MARK: - Model Discovery Parser
+
+    /// Parses an OpenAI-compatible `/v1/models` JSON response into an array of model IDs.
+    ///
+    /// Expected shape: `{"object": "list", "data": [{"id": "model-name", ...}, ...]}`
+    ///
+    /// Throws `AIError.invalidResponse` if the JSON is malformed or the `data` key is missing.
+    static func parseOpenAIModelsResponse(_ data: Data) throws -> [String] {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let dataArray = json["data"] as? [[String: Any]] else {
+            throw AIError.invalidResponse
+        }
+        return dataArray.compactMap { $0["id"] as? String }
+    }
 }
