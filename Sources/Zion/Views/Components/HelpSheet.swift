@@ -122,6 +122,8 @@ struct HelpSheet: View {
         case .hosting:
             return ["help.hosting.autoDetect", "help.hosting.providers",
                     "help.hosting.createPR", "help.hosting.aiDescription"]
+        case .chat:
+            return []
         }
     }
 
