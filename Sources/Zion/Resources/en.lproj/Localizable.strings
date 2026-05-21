@@ -2386,14 +2386,9 @@
 "theme.colorblindLight" = "Colorblind Light";
 
 // Local LLM Support (Ollama Phase 1)
-"settings.ai.provider.local" = "Local";
-"settings.ai.local.backend" = "Backend";
-"settings.ai.local.backend.ollama" = "Ollama";
-"settings.ai.local.backend.llamaCppServer" = "llama.cpp Server";
-"settings.ai.local.backend.lmStudio" = "LM Studio";
-"settings.ai.local.backend.customOpenAI" = "Custom OpenAI-compatible";
+"settings.ai.provider.local" = "Local / OpenAI-compatible";
 "settings.ai.local.serverURL" = "Server URL";
-"settings.ai.local.serverURL.hint" = "e.g. http://localhost:11434";
+"settings.ai.local.serverURL.hint" = "e.g. http://localhost:11434/v1 (Ollama, LM Studio, MLX server, OpenRouter)";
 "settings.ai.local.model" = "Model";
 "settings.ai.local.model.refresh" = "Refresh models";
 "settings.ai.local.model.empty" = "No models found";

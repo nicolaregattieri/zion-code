@@ -5,11 +5,6 @@ final class LocalLLMLocalizationTests: XCTestCase {
 
     private let requiredKeys: [String] = [
         "settings.ai.provider.local",
-        "settings.ai.local.backend",
-        "settings.ai.local.backend.ollama",
-        "settings.ai.local.backend.llamaCppServer",
-        "settings.ai.local.backend.lmStudio",
-        "settings.ai.local.backend.customOpenAI",
         "settings.ai.local.serverURL",
         "settings.ai.local.serverURL.hint",
         "settings.ai.local.model",

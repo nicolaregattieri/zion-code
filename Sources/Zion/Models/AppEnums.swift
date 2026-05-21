@@ -231,27 +231,6 @@ enum AIProvider: String, CaseIterable, Identifiable {
     }
 }
 
-enum LocalLLMBackend: String, CaseIterable, Identifiable, Codable {
-    case ollama, llamaCppServer, lmStudio, customOpenAI
-    var id: String { rawValue }
-    var label: String {
-        switch self {
-        case .ollama: return L10n("settings.ai.local.backend.ollama")
-        case .llamaCppServer: return L10n("settings.ai.local.backend.llamaCppServer")
-        case .lmStudio: return L10n("settings.ai.local.backend.lmStudio")
-        case .customOpenAI: return L10n("settings.ai.local.backend.customOpenAI")
-        }
-    }
-    var defaultURL: String {
-        switch self {
-        case .ollama: return "http://localhost:11434"
-        case .llamaCppServer: return "http://localhost:8080"
-        case .lmStudio: return "http://localhost:1234"
-        case .customOpenAI: return ""
-        }
-    }
-}
-
 enum CommitMessageStyle: String, CaseIterable, Identifiable {
     case compact, detailed
     var id: String { rawValue }
