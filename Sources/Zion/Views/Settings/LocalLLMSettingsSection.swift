@@ -208,6 +208,11 @@ struct LocalLLMSettingsSection: View {
         defer { isDiscovering = false }
         let models = (try? await AIClient.discoverModels(config: config)) ?? []
         discoveredModels = models
+        // Auto-select when server serves a single model and the configured name doesn't match.
+        // Common case: MLX server, llama.cpp server, mlx_lm.server — all serve one model.
+        if models.count == 1, !models.contains(config.modelName) {
+            config.modelName = models[0]
+        }
     }
 
     private func probeHealth() async {
@@ -226,6 +231,9 @@ struct LocalLLMSettingsSection: View {
                     let models = (try? await AIClient.discoverModels(config: config)) ?? []
                     if !models.isEmpty {
                         discoveredModels = models
+                        if models.count == 1, !models.contains(config.modelName) {
+                            config.modelName = models[0]
+                        }
                     }
                 }
                 try? await Task.sleep(nanoseconds: UInt64(Constants.Timing.localHealthPollSeconds) * 1_000_000_000)
