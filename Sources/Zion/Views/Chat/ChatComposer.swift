@@ -101,7 +101,7 @@ struct ChatComposer: View {
                     .stroke(DesignSystem.Colors.glassStroke, lineWidth: 1)
             )
             .onSubmit {
-                // Return without modifiers does nothing by default for multiline
+                if canSend { onSend() }
             }
     }
 
@@ -129,7 +129,7 @@ struct ChatComposer: View {
         .buttonStyle(.plain)
         .disabled(!canSend)
         .help(L10n("chat.composer.send"))
-        .keyboardShortcut(.return, modifiers: .command)
+        .keyboardShortcut(.return, modifiers: [])
     }
 
     private var stopButton: some View {
