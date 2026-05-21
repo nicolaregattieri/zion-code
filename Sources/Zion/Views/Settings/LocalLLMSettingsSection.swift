@@ -32,7 +32,6 @@ struct LocalLLMSettingsSection: View {
                 actionButtons
             }
             .padding(.vertical, 4)
-            .labelsHidden()
         } header: {
             Text(L10n("settings.ai.provider.local"))
         }
@@ -69,6 +68,7 @@ struct LocalLLMSettingsSection: View {
 
             TextField("http://localhost:11434/v1", text: $config.serverURL)
                 .textFieldStyle(.plain)
+                .labelsHidden()
                 .font(DesignSystem.Typography.body)
                 .padding(8)
                 .background(
@@ -93,6 +93,7 @@ struct LocalLLMSettingsSection: View {
 
             SecureField("", text: $config.apiKey, prompt: Text(verbatim: "sk-..."))
                 .textFieldStyle(.plain)
+                .labelsHidden()
                 .font(DesignSystem.Typography.body)
                 .padding(8)
                 .background(
@@ -114,6 +115,7 @@ struct LocalLLMSettingsSection: View {
             HStack(spacing: 8) {
                 TextField("qwen3-coder:30b", text: $config.modelName)
                     .textFieldStyle(.plain)
+                    .labelsHidden()
                     .font(DesignSystem.Typography.body)
                     .padding(8)
                     .background(
