@@ -255,10 +255,9 @@ final class ShortcutRegistry: ObservableObject {
         loadOverrides()
 
         defaultsObserver = NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
-                Task { @MainActor in
-                    self?.loadOverrides()
-                }
+                self?.loadOverrides()
             }
     }
 
