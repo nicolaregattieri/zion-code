@@ -2432,3 +2432,13 @@
 "chat.slash.fileOutsideRepo" = "O caminho especificado está fora do repositório.";
 "chat.slash.empty.diff" = "Nenhuma alteração para exibir. Sua árvore de trabalho está limpa.";
 "chat.head.unknown" = "?";
+"chat.thread.list.title" = "Conversas";
+"chat.thread.new" = "Nova conversa";
+"chat.thread.delete" = "Excluir";
+"chat.thread.rename" = "Renomear";
+"chat.thread.untitled" = "Sem título %@";
+"chat.thread.confirmDelete" = "Excluir esta conversa? Esta ação não pode ser desfeita.";
+"chat.thread.lastUpdatedAt" = "Atualizado %@";
+"chat.thread.empty" = "Nenhuma conversa ainda";
+"chat.thread.sidebar.toggle" = "Alternar conversas";
+"chat.persistence.error" = "Falha ao salvar o histórico do chat. Continuando em memória.";

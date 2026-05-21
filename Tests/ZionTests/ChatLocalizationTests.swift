@@ -24,6 +24,16 @@ final class ChatLocalizationTests: XCTestCase {
         "chat.slash.fileOutsideRepo",
         "chat.slash.empty.diff",
         "chat.head.unknown",
+        "chat.thread.list.title",
+        "chat.thread.new",
+        "chat.thread.delete",
+        "chat.thread.rename",
+        "chat.thread.untitled",
+        "chat.thread.confirmDelete",
+        "chat.thread.lastUpdatedAt",
+        "chat.thread.empty",
+        "chat.thread.sidebar.toggle",
+        "chat.persistence.error",
     ]
 
     func testAllRequiredKeysPresentInAllLocales() {
