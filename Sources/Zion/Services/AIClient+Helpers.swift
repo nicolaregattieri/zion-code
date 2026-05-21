@@ -26,6 +26,14 @@ extension AIClient {
             }
         }
 
+        // Local provider: bypass model catalog and dispatch directly to callLocalLLM.
+        if provider == .local {
+            let config = Self.loadLocalConfig() ?? LocalLLMConfig()
+            let modelID = config.modelName.isEmpty ? LocalLLMConfig().modelName : config.modelName
+            let session = _testURLSession ?? URLSession.shared
+            return try await callLocalLLM(payload: payload, config: config, maxTokens: maxTokens, modelID: modelID, urlSession: session)
+        }
+
         let selection = AIModelCatalogService.selection(for: provider, mode: mode, lane: lane)
         let candidates = selection.allCandidateModelIDs.filter { !$0.isEmpty }
         guard !candidates.isEmpty else { throw AIError.noProvider }
@@ -44,7 +52,7 @@ extension AIClient {
                     case .none:
                         throw AIError.noProvider
                     case .local:
-                        // Placeholder — full local routing handled in task 7+
+                        // Unreachable — .local is handled above before the candidates loop
                         throw AIError.noProvider
                     }
                 } catch let error as AIError {
