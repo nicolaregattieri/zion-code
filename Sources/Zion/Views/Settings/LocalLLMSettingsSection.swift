@@ -35,17 +35,23 @@ struct LocalLLMSettingsSection: View {
                     .font(DesignSystem.Typography.body)
             }
 
-            // Model picker
-            if discoveredModels.isEmpty {
-                LabeledContent(L10n("settings.ai.local.model")) {
-                    TextField(L10n("settings.ai.local.model.empty"), text: $config.modelName)
+            // Model — free TextField; discovered models offered as Menu suggestions
+            LabeledContent(L10n("settings.ai.local.model")) {
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+                    TextField("qwen3-coder:30b", text: $config.modelName)
                         .textFieldStyle(.plain)
                         .font(DesignSystem.Typography.body)
-                }
-            } else {
-                Picker(L10n("settings.ai.local.model"), selection: $config.modelName) {
-                    ForEach(discoveredModels, id: \.self) { model in
-                        Text(model).tag(model)
+
+                    if !discoveredModels.isEmpty {
+                        Menu {
+                            ForEach(discoveredModels, id: \.self) { model in
+                                Button(model) { config.modelName = model }
+                            }
+                        } label: {
+                            Image(systemName: "chevron.down.circle")
+                        }
+                        .menuStyle(.borderlessButton)
+                        .fixedSize()
                     }
                 }
             }
@@ -138,10 +144,6 @@ struct LocalLLMSettingsSection: View {
         defer { isDiscovering = false }
         let models = (try? await AIClient.discoverModels(config: config)) ?? []
         discoveredModels = models
-        // If the current modelName isn't in the discovered list and list is non-empty, pick first
-        if !models.isEmpty && !models.contains(config.modelName) {
-            config.modelName = models[0]
-        }
     }
 
     private func probeHealth() async {
