@@ -69,7 +69,7 @@ struct AISettingsTab: View {
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
 
-                if defaultProvider != .none && !isDefaultProviderConnected {
+                if defaultProvider != .none && defaultProvider != .local && !isDefaultProviderConnected {
                     Label(L10n("settings.ai.defaultProvider.missingKey"), systemImage: "exclamationmark.triangle.fill")
                         .font(DesignSystem.Typography.labelMedium)
                         .foregroundStyle(DesignSystem.Colors.warning)

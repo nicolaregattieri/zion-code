@@ -21,120 +21,192 @@ struct LocalLLMSettingsSection: View {
 
     var body: some View {
         Section(L10n("settings.ai.provider.local")) {
-            // Server URL
-            LabeledContent(L10n("settings.ai.local.serverURL")) {
-                TextField(L10n("settings.ai.local.serverURL.hint"), text: $config.serverURL)
-                    .textFieldStyle(.plain)
-                    .font(DesignSystem.Typography.body)
+            VStack(alignment: .leading, spacing: 16) {
+                statusRow
+                serverURLField
+                apiKeyField
+                modelField
+                recommendedHint
+                timeoutStepper
+                warningsBlock
+                actionButtons
             }
+            .padding(.vertical, 4)
+        }
+    }
 
-            // API Key (optional)
-            LabeledContent(L10n("settings.ai.local.apiKey.optional")) {
-                SecureField(L10n("settings.ai.local.apiKey.optional"), text: $config.apiKey)
-                    .textFieldStyle(.plain)
-                    .font(DesignSystem.Typography.body)
-            }
+    // MARK: - Components
 
-            // Model — free TextField; discovered models offered as Menu suggestions
-            LabeledContent(L10n("settings.ai.local.model")) {
-                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-                    TextField("qwen3-coder:30b", text: $config.modelName)
-                        .textFieldStyle(.plain)
-                        .font(DesignSystem.Typography.body)
+    private var statusRow: some View {
+        HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+            Circle()
+                .fill(healthColor)
+                .frame(width: 8, height: 8)
 
-                    if !discoveredModels.isEmpty {
-                        Menu {
-                            ForEach(discoveredModels, id: \.self) { model in
-                                Button(model) { config.modelName = model }
-                            }
-                        } label: {
-                            Image(systemName: "chevron.down.circle")
-                        }
-                        .menuStyle(.borderlessButton)
-                        .fixedSize()
-                    }
-                }
-            }
+            Text(isHealthy
+                ? L10n("settings.ai.local.health.healthy")
+                : L10n("settings.ai.local.health.unhealthy"))
+                .font(DesignSystem.Typography.labelMedium)
+                .foregroundStyle(healthColor)
 
-            // Recommended model hint
-            VStack(alignment: .leading, spacing: 4) {
-                Text(L10n("settings.ai.local.model.recommended") + ": qwen3-coder:30b")
-                    .font(DesignSystem.Typography.labelBold)
-                    .foregroundStyle(.secondary)
-                Text(L10n("settings.ai.local.model.lightFallback") + ": qwen2.5-coder:7b")
+            if !lastCheckedText.isEmpty {
+                Text(lastCheckedText)
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
             }
-            .padding(.vertical, 2)
 
-            // Request timeout stepper
-            Stepper(
-                value: $config.requestTimeoutSeconds,
-                in: 5...600,
-                step: 5
-            ) {
-                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-                    Text(L10n("settings.ai.local.timeout"))
-                        .font(DesignSystem.Typography.body)
-                    Text("\(config.requestTimeoutSeconds) \(L10n("settings.ai.local.timeout.unit"))")
-                        .font(DesignSystem.Typography.monoLabel)
-                        .foregroundStyle(.secondary)
+            Spacer()
+        }
+    }
+
+    private var serverURLField: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(L10n("settings.ai.local.serverURL"))
+                .font(DesignSystem.Typography.labelBold)
+
+            TextField("http://localhost:11434/v1", text: $config.serverURL)
+                .textFieldStyle(.plain)
+                .font(DesignSystem.Typography.body)
+                .padding(8)
+                .background(
+                    RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                        .fill(DesignSystem.Colors.glassHover)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                        .stroke(DesignSystem.Colors.glassStroke, lineWidth: 1)
+                )
+
+            Text(L10n("settings.ai.local.serverURL.hint"))
+                .font(DesignSystem.Typography.label)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var apiKeyField: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(L10n("settings.ai.local.apiKey.optional"))
+                .font(DesignSystem.Typography.labelBold)
+
+            SecureField("", text: $config.apiKey, prompt: Text(verbatim: "sk-..."))
+                .textFieldStyle(.plain)
+                .font(DesignSystem.Typography.body)
+                .padding(8)
+                .background(
+                    RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                        .fill(DesignSystem.Colors.glassHover)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                        .stroke(DesignSystem.Colors.glassStroke, lineWidth: 1)
+                )
+        }
+    }
+
+    private var modelField: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(L10n("settings.ai.local.model"))
+                .font(DesignSystem.Typography.labelBold)
+
+            HStack(spacing: 8) {
+                TextField("qwen3-coder:30b", text: $config.modelName)
+                    .textFieldStyle(.plain)
+                    .font(DesignSystem.Typography.body)
+                    .padding(8)
+                    .background(
+                        RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                            .fill(DesignSystem.Colors.glassHover)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                            .stroke(DesignSystem.Colors.glassStroke, lineWidth: 1)
+                    )
+
+                if !discoveredModels.isEmpty {
+                    Menu {
+                        ForEach(discoveredModels, id: \.self) { model in
+                            Button(model) { config.modelName = model }
+                        }
+                    } label: {
+                        Label(L10n("settings.ai.local.model.refresh"), systemImage: "chevron.down.circle")
+                            .labelStyle(.iconOnly)
+                            .font(DesignSystem.Typography.body)
+                    }
+                    .menuStyle(.borderlessButton)
+                    .fixedSize()
                 }
             }
+        }
+    }
 
-            // Health indicator row
-            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-                Circle()
-                    .fill(healthColor)
-                    .frame(width: 6, height: 6)
-
-                Text(isHealthy
-                    ? L10n("settings.ai.local.health.healthy")
-                    : L10n("settings.ai.local.health.unhealthy"))
-                    .font(DesignSystem.Typography.labelMedium)
-                    .foregroundStyle(healthColor)
-
-                if !lastCheckedText.isEmpty {
-                    Text(lastCheckedText)
-                        .font(DesignSystem.Typography.label)
-                        .foregroundStyle(.secondary)
-                }
+    private var recommendedHint: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 4) {
+                Text(L10n("settings.ai.local.model.recommended") + ":")
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(.secondary)
+                Text("qwen3-coder:30b")
+                    .font(DesignSystem.Typography.monoLabel)
             }
-            .padding(.vertical, 2)
-
-            // Warning: single model configured
-            if discoveredModels.count == 1 {
-                Label(L10n("settings.ai.local.singleModelWarning"), systemImage: "exclamationmark.triangle.fill")
-                    .font(DesignSystem.Typography.labelMedium)
-                    .foregroundStyle(DesignSystem.Colors.warning)
+            HStack(spacing: 4) {
+                Text(L10n("settings.ai.local.model.lightFallback") + ":")
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(.secondary)
+                Text("qwen2.5-coder:7b")
+                    .font(DesignSystem.Typography.monoLabel)
+                    .foregroundStyle(.secondary)
             }
+        }
+    }
 
-            // Warning: tool calling may be limited
-            Label(L10n("settings.ai.local.toolCallingDisabled"), systemImage: "info.circle.fill")
-                .font(DesignSystem.Typography.labelMedium)
+    private var timeoutStepper: some View {
+        Stepper(value: $config.requestTimeoutSeconds, in: 5...600, step: 5) {
+            HStack(spacing: 4) {
+                Text(L10n("settings.ai.local.timeout"))
+                    .font(DesignSystem.Typography.body)
+                Spacer()
+                Text("\(config.requestTimeoutSeconds)")
+                    .font(DesignSystem.Typography.monoLabel)
+                Text(L10n("settings.ai.local.timeout.unit"))
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var warningsBlock: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Label(L10n("settings.ai.local.singleModelWarning"), systemImage: "exclamationmark.triangle.fill")
+                .font(DesignSystem.Typography.label)
                 .foregroundStyle(DesignSystem.Colors.warning)
+            Label(L10n("settings.ai.local.toolCallingDisabled"), systemImage: "info.circle.fill")
+                .font(DesignSystem.Typography.label)
+                .foregroundStyle(.secondary)
+        }
+    }
 
-            // Action buttons
-            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-                Button(L10n("settings.ai.local.model.refresh")) {
-                    Task { await discoverModels() }
-                }
-                .buttonStyle(.bordered)
-                .disabled(isDiscovering)
-
-                Button(L10n("settings.ai.local.health.test")) {
-                    Task { await probeHealth() }
-                }
-                .buttonStyle(.bordered)
-                .disabled(isTesting)
+    private var actionButtons: some View {
+        HStack(spacing: DesignSystem.Spacing.iconTextGap) {
+            Button {
+                Task { await discoverModels() }
+            } label: {
+                Label(L10n("settings.ai.local.model.refresh"), systemImage: "arrow.clockwise")
             }
+            .buttonStyle(.bordered)
+            .disabled(isDiscovering)
+
+            Button {
+                Task { await probeHealth() }
+            } label: {
+                Label(L10n("settings.ai.local.health.test"), systemImage: "antenna.radiowaves.left.and.right")
+            }
+            .buttonStyle(.bordered)
+            .disabled(isTesting)
+
+            Spacer()
         }
-        .onAppear {
-            startPolling()
-        }
-        .onDisappear {
-            stopPolling()
-        }
+        .onAppear { startPolling() }
+        .onDisappear { stopPolling() }
     }
 
     // MARK: - Actions
@@ -152,8 +224,6 @@ struct LocalLLMSettingsSection: View {
         isHealthy = await AIClient.probeHealth(config: config)
         lastChecked = Date()
     }
-
-    // MARK: - Auto-poll
 
     private func startPolling() {
         pollTask = Task {
