@@ -406,6 +406,7 @@ extension RepositoryViewModel {
     }
 
     func cancelRepositoryBackgroundActivityForSwitch() {
+        resetChatService()
         deferredRepositoryLoadTask?.cancel()
         refreshTask?.cancel()
         fileTreeRefreshTask?.cancel()
