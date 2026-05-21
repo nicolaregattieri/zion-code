@@ -25,7 +25,7 @@ struct AISettingsTab: View {
 
     private var providerConnections: [AIProviderConnectionInfo] {
         let _ = connectionRefreshID
-        return AIProviderSupport.connectionInfo()
+        return AIProviderSupport.connectionInfo().filter { $0.provider != .local }
     }
 
     private var isDefaultProviderConnected: Bool {
