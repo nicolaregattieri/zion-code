@@ -20,7 +20,7 @@ struct LocalLLMSettingsSection: View {
     }
 
     var body: some View {
-        Section(L10n("settings.ai.provider.local")) {
+        Section {
             VStack(alignment: .leading, spacing: 16) {
                 statusRow
                 serverURLField
@@ -32,6 +32,9 @@ struct LocalLLMSettingsSection: View {
                 actionButtons
             }
             .padding(.vertical, 4)
+            .labelsHidden()
+        } header: {
+            Text(L10n("settings.ai.provider.local"))
         }
     }
 
