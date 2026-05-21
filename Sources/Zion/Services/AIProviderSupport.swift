@@ -31,6 +31,8 @@ enum AIProviderSupport {
             return URL(string: "https://aistudio.google.com/apikey")
         case .none:
             return nil
+        case .local:
+            return nil
         }
     }
 

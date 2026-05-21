@@ -11,6 +11,9 @@ enum AIModelCatalogService {
             return geminiSelection(mode: mode, lane: lane)
         case .none:
             return AIResolvedModelSelection(lane: lane, primaryModelID: "", fallbackModelIDs: [])
+        case .local:
+            // Placeholder — full routing handled in task 7+
+            return AIResolvedModelSelection(lane: lane, primaryModelID: "", fallbackModelIDs: [])
         }
     }
 

@@ -43,6 +43,9 @@ extension AIClient {
                         return try await callGemini(payload: payload, apiKey: apiKey, maxTokens: maxTokens, modelID: modelID)
                     case .none:
                         throw AIError.noProvider
+                    case .local:
+                        // Placeholder — full local routing handled in task 7+
+                        throw AIError.noProvider
                     }
                 } catch let error as AIError {
                     switch error {
