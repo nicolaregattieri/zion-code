@@ -133,3 +133,89 @@ final class ChatStorageTests: XCTestCase {
         XCTAssertTrue(threadsB.isEmpty)
     }
 }
+
+// MARK: - ChatPlanPersistenceTests
+
+final class ChatPlanPersistenceTests: XCTestCase {
+
+    private func makeStorage() -> ChatStorage {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        return ChatStorage(baseDirectory: dir)
+    }
+
+    private let repoID = "plantestrepo01"
+
+    func testChatPlanRoundTripViaAppendMessage() async throws {
+        let storage = makeStorage()
+        let threadID = UUID()
+        let thread = ChatThread(
+            id: threadID,
+            messages: [],
+            createdAt: Date(),
+            repoID: repoID,
+            title: "Plan Round-Trip Thread"
+        )
+        try await storage.saveThread(thread, repoID: repoID)
+
+        let plan = ChatPlan(
+            id: UUID(),
+            rawXML: "<plan><step>do something</step></plan>",
+            steps: [
+                ChatPlanStep(commitMessage: "feat: add foo", filePaths: ["Sources/Foo.swift", "Tests/FooTests.swift"], summary: "Add Foo feature"),
+                ChatPlanStep(commitMessage: nil, filePaths: [], summary: "Cleanup")
+            ]
+        )
+        let message = ChatMessage(
+            id: UUID(),
+            role: .assistant,
+            content: "Here is the plan.",
+            timestamp: Date(timeIntervalSince1970: 2_000_000),
+            isStreaming: false,
+            plan: plan
+        )
+
+        try await storage.appendMessage(message, threadID: threadID, repoID: repoID)
+
+        let loaded = try await storage.loadMessages(threadID: threadID, repoID: repoID)
+        XCTAssertEqual(loaded.count, 1)
+        let loadedMsg = try XCTUnwrap(loaded.first)
+        XCTAssertEqual(loadedMsg.id, message.id)
+        XCTAssertEqual(loadedMsg.content, message.content)
+        let loadedPlan = try XCTUnwrap(loadedMsg.plan)
+        XCTAssertEqual(loadedPlan, plan)
+        XCTAssertEqual(loadedPlan.id, plan.id)
+        XCTAssertEqual(loadedPlan.rawXML, plan.rawXML)
+        XCTAssertEqual(loadedPlan.steps.count, 2)
+        XCTAssertEqual(loadedPlan.steps[0].commitMessage, "feat: add foo")
+        XCTAssertEqual(loadedPlan.steps[0].filePaths, ["Sources/Foo.swift", "Tests/FooTests.swift"])
+        XCTAssertEqual(loadedPlan.steps[0].summary, "Add Foo feature")
+        XCTAssertNil(loadedPlan.steps[1].commitMessage)
+    }
+
+    func testMessageWithNilPlanRoundTrips() async throws {
+        let storage = makeStorage()
+        let threadID = UUID()
+        let thread = ChatThread(
+            id: threadID,
+            messages: [],
+            createdAt: Date(),
+            repoID: repoID,
+            title: "No Plan Thread"
+        )
+        try await storage.saveThread(thread, repoID: repoID)
+
+        let message = ChatMessage(
+            id: UUID(),
+            role: .user,
+            content: "No plan here.",
+            timestamp: Date(timeIntervalSince1970: 3_000_000),
+            isStreaming: false
+        )
+        try await storage.appendMessage(message, threadID: threadID, repoID: repoID)
+
+        let loaded = try await storage.loadMessages(threadID: threadID, repoID: repoID)
+        XCTAssertEqual(loaded.count, 1)
+        XCTAssertNil(loaded.first?.plan)
+    }
+}
