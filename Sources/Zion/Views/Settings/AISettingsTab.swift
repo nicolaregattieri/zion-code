@@ -32,7 +32,9 @@ struct AISettingsTab: View {
 
     private var providerConnections: [AIProviderConnectionInfo] {
         let _ = connectionRefreshID
-        return AIProviderSupport.connectionInfo().filter { $0.provider != .local }
+        return AIProviderSupport.connectionInfo().filter {
+            $0.provider != .local && $0.provider != .claudeCLI && $0.provider != .codexCLI
+        }
     }
 
     private var isDefaultProviderConnected: Bool {
@@ -76,7 +78,7 @@ struct AISettingsTab: View {
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
 
-                if defaultProvider != .none && defaultProvider != .local && !isDefaultProviderConnected {
+                if defaultProvider != .none && defaultProvider != .local && defaultProvider != .claudeCLI && defaultProvider != .codexCLI && !isDefaultProviderConnected {
                     Label(L10n("settings.ai.defaultProvider.missingKey"), systemImage: "exclamationmark.triangle.fill")
                         .font(DesignSystem.Typography.labelMedium)
                         .foregroundStyle(DesignSystem.Colors.warning)
