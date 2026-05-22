@@ -7,6 +7,21 @@ enum ChatRole: Equatable {
     case assistant
 }
 
+// MARK: - ToolEventStatus
+
+enum ToolEventStatus: String, Codable {
+    case pending, running, completed, failed
+}
+
+// MARK: - ChatToolEvent
+
+struct ChatToolEvent: Identifiable, Equatable, Codable {
+    let id: String
+    let name: String
+    var status: ToolEventStatus
+    let argsPreview: String
+}
+
 // MARK: - ChatMessage
 
 struct ChatMessage: Identifiable, Equatable {
@@ -15,19 +30,25 @@ struct ChatMessage: Identifiable, Equatable {
     var content: String
     let timestamp: Date
     var isStreaming: Bool
+    var autoInjectedIntent: String? = nil
+    var toolEvents: [ChatToolEvent]? = nil
 
     init(
         id: UUID = UUID(),
         role: ChatRole,
         content: String,
         timestamp: Date = Date(),
-        isStreaming: Bool = false
+        isStreaming: Bool = false,
+        autoInjectedIntent: String? = nil,
+        toolEvents: [ChatToolEvent]? = nil
     ) {
         self.id = id
         self.role = role
         self.content = content
         self.timestamp = timestamp
         self.isStreaming = isStreaming
+        self.autoInjectedIntent = autoInjectedIntent
+        self.toolEvents = toolEvents
     }
 }
 
