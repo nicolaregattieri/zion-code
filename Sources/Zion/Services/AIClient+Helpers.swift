@@ -542,6 +542,16 @@ extension AIClient {
     }
 }
 
+// MARK: - Stream Events
+
+enum StreamEvent: @unchecked Sendable {
+    case textDelta(String)
+    case toolCallStart(id: String, name: String)
+    case toolCallArgsDelta(id: String, jsonChunk: String)
+    case toolCallComplete(id: String, name: String, arguments: [String: Any])
+    case done
+}
+
 // MARK: - Error Types
 
 enum AIError: LocalizedError {
@@ -556,6 +566,9 @@ enum AIError: LocalizedError {
     case localModelError
     case localAPIError(String)
     case localToolCallingUnsupported
+    case toolExecutionFailed(String)
+    case maxToolHopsExceeded
+    case toolCallingNotSupported
 
     var errorDescription: String? {
         switch self {
@@ -570,6 +583,9 @@ enum AIError: LocalizedError {
         case .localModelError: return L10n("settings.ai.local.error.modelError")
         case .localAPIError(let msg): return msg
         case .localToolCallingUnsupported: return L10n("settings.ai.local.error.toolCallingUnsupported")
+        case .toolExecutionFailed(let msg): return String(format: L10n("ai.error.toolExecution.failed"), msg)
+        case .maxToolHopsExceeded: return L10n("chat.tool.error.maxHops")
+        case .toolCallingNotSupported: return L10n("ai.error.toolCalling.notSupported")
         }
     }
 }

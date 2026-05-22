@@ -2450,3 +2450,5 @@
 "chat.harness.intent.status" = "git status";
 "chat.harness.intent.fileContent" = "arquivo: %@";
 "chat.harness.intent.commitDetails" = "commit %@";
+"ai.error.toolExecution.failed" = "Falha na execução da ferramenta: %@";
+"ai.error.toolCalling.notSupported" = "Provider selecionado não suporta tool calling.";
