@@ -9,7 +9,9 @@ extension RepositoryViewModel {
     var chatService: ChatService {
         if let existing = _chatService { return existing }
         let builder = ChatContextBuilder(worker: worker)
-        let svc = ChatService(ai: aiClient, worker: worker, contextBuilder: builder)
+        let url = repositoryURL ?? URL(fileURLWithPath: NSTemporaryDirectory())
+        let harness = ZionHarness(worker: worker, repoURL: url)
+        let svc = ChatService(ai: aiClient, worker: worker, contextBuilder: builder, harness: harness)
         _chatService = svc
         return svc
     }

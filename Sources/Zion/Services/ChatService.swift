@@ -17,14 +17,16 @@ final class ChatService {
     @ObservationIgnored private let ai: AIClient
     @ObservationIgnored private let worker: RepositoryWorker
     @ObservationIgnored private let contextBuilder: ChatContextBuilder
+    @ObservationIgnored private let harness: ZionHarness
     @ObservationIgnored private let streamProvider: ((LocalLLMConfig, AIPromptPayload, Int, String) -> AsyncThrowingStream<String, Error>)?
 
     // MARK: - Init (production)
 
-    init(ai: AIClient, worker: RepositoryWorker, contextBuilder: ChatContextBuilder) {
+    init(ai: AIClient, worker: RepositoryWorker, contextBuilder: ChatContextBuilder, harness: ZionHarness) {
         self.ai = ai
         self.worker = worker
         self.contextBuilder = contextBuilder
+        self.harness = harness
         self.streamProvider = nil
     }
 
@@ -34,11 +36,13 @@ final class ChatService {
         ai: AIClient,
         worker: RepositoryWorker,
         contextBuilder: ChatContextBuilder,
+        harness: ZionHarness,
         streamProvider: @escaping (LocalLLMConfig, AIPromptPayload, Int, String) -> AsyncThrowingStream<String, Error>
     ) {
         self.ai = ai
         self.worker = worker
         self.contextBuilder = contextBuilder
+        self.harness = harness
         self.streamProvider = streamProvider
     }
 
@@ -69,8 +73,43 @@ final class ChatService {
             expandedText = await contextBuilder.expandSlashCommands(text, repoURL: repoURL)
         }
 
-        let userMessage = ChatMessage(role: .user, content: expandedText)
-        thread.messages.append(userMessage)
+        // MARK: Intent fallback — auto-inject git context for tool-incapable providers
+        let toolsEnabled = UserDefaults.standard.object(forKey: "chat.toolsEnabled") as? Bool ?? true
+        let autoInject = UserDefaults.standard.object(forKey: "chat.autoInject") as? Bool ?? true
+        let useTools = toolsEnabled && provider.supportsToolCalling
+
+        if !useTools && autoInject, let intent = IntentClassifier.classify(text) {
+            let (args, label): ([String], String)
+            switch intent {
+            case .lastCommit:
+                args = ["show", "HEAD", "--patch"]
+                label = L10n("chat.harness.intent.lastCommit")
+            case .currentChanges:
+                args = ["diff", "HEAD"]
+                label = L10n("chat.harness.intent.currentChanges")
+            case .recentHistory:
+                args = ["log", "--oneline", "-20"]
+                label = L10n("chat.harness.intent.recentHistory")
+            case .status:
+                args = ["status", "--porcelain"]
+                label = L10n("chat.harness.intent.status")
+            case .fileContent(let path):
+                args = ["show", "HEAD:\(path)"]
+                label = String(format: L10n("chat.harness.intent.fileContent"), path)
+            case .commitDetails(let sha):
+                args = ["show", sha, "--patch"]
+                label = String(format: L10n("chat.harness.intent.commitDetails"), sha)
+            }
+            if let output = try? await worker.runAction(args: args, in: repoURL) {
+                let truncated = String(output.prefix(AILimits.maxDiffContentLength))
+                expandedText = "```\n\(truncated)\n```\n\n" + expandedText
+            }
+            // Append the user message now with intent label
+            let userMsg = ChatMessage(role: .user, content: expandedText, autoInjectedIntent: label)
+            thread.messages.append(userMsg)
+        } else {
+            thread.messages.append(ChatMessage(role: .user, content: expandedText))
+        }
 
         let assistantMessage = ChatMessage(role: .assistant, content: "", isStreaming: true)
         thread.messages.append(assistantMessage)
@@ -148,12 +187,13 @@ final class ChatService {
         await task.value
     }
 
-    /// Resets the thread to an empty state.
+    /// Resets the thread to an empty state and clears harness session state.
     func newThread() {
         activeTask?.cancel()
         activeTask = nil
         isStreaming = false
         thread = ChatThread()
+        Task { await harness.resetSession() }
     }
 
     /// Cancels the active streaming task.
