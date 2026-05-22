@@ -47,9 +47,16 @@ struct AIPromptPayload {
     let taskInstructions: String
     let untrustedSections: [AIUntrustedPromptSection]
     let suspiciousPatterns: [String]
+    /// Working directory for subprocess-based providers (`.claudeCLI`/`.codexCLI`). Defaults to nil.
+    var cwd: URL? = nil
 }
 
 actor AIClient {
+
+    // MARK: - CLI Discovery
+
+    /// Shared CLIDiscoveryService for resolving installed CLI tool paths and versions.
+    let cliDiscovery = CLIDiscoveryService()
 
     // MARK: - Injectable URLSession (test-only)
 

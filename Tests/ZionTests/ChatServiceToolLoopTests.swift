@@ -62,9 +62,14 @@ final class ChatServiceToolLoopTests: XCTestCase {
             userMsg?.autoInjectedIntent,
             "autoInjectedIntent should be set for intent-matched, tool-incapable provider"
         )
+        // Phase 3.5 sticky context: user.content stays clean (just typed text); diff goes to internalContext
+        XCTAssertNotNil(
+            userMsg?.internalContext,
+            "internalContext should be set with fenced diff when injection occurs"
+        )
         XCTAssertTrue(
-            userMsg?.content.hasPrefix("```") == true,
-            "User message content should start with fenced block when injection occurs"
+            userMsg?.internalContext?.hasPrefix("```") == true,
+            "internalContext should start with fenced block"
         )
     }
 
@@ -126,10 +131,12 @@ final class ChatServiceToolLoopTests: XCTestCase {
             branch: "main"
         )
 
+        // Phase 3.5: pre-flight intent runs for ALL providers (not gated). Tool loop is Phase 4+.
+        // So autoInjectedIntent IS expected to be set when classifier matches.
         let userMsg = service.thread.messages.first(where: { $0.role == .user })
-        XCTAssertNil(
+        XCTAssertNotNil(
             userMsg?.autoInjectedIntent,
-            "autoInjectedIntent should be nil when provider supports tool calling"
+            "autoInjectedIntent should be set even when provider supports tools (sticky context fires for all)"
         )
     }
 

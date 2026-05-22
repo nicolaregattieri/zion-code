@@ -1071,7 +1071,6 @@
 "Recortar %d Itens" = "Cut %d Items";
 "Duplicar %d Itens" = "Duplicate %d Items";
 "Excluir %d Itens" = "Delete %d Items";
-"Adicionar ao .gitignore" = "Add to .gitignore";
 "Esta acao nao pode ser desfeita." = "This action cannot be undone.";
 
 // Editor Settings Tab
@@ -1492,7 +1491,6 @@
 
 // Wave 2: Branch Search
 "Filtrar branches..." = "Filter branches...";
-"Nenhuma branch encontrada" = "No branches found";
 
 // Wave 2: AI Pending Changes Summary
 "Resumo IA das mudancas" = "AI summary of changes";
@@ -2462,6 +2460,10 @@
 "chat.message.copied" = "Copied!";
 "ai.error.toolExecution.failed" = "Tool execution failed: %@";
 "ai.error.toolCalling.notSupported" = "Selected provider doesn't support tool calling.";
+"ai.error.cli.notInstalled" = "%@ is not installed. Install it and try again.";
+"ai.error.cli.notAuthenticated" = "%@ is not authenticated. Run `%@ login` in a terminal.";
+"ai.error.cli.execFailed" = "CLI error: %@";
+"ai.error.cli.versionTooOld" = "CLI version too old (required: %@, found: %@). Please update.";
 "chat.thread.list.title" = "Conversations";
 "chat.thread.new" = "New thread";
 "chat.thread.delete" = "Delete";
@@ -2472,3 +2474,20 @@
 "chat.thread.empty" = "No conversations yet";
 "chat.thread.sidebar.toggle" = "Toggle conversations";
 "chat.persistence.error" = "Failed to save chat history. Continuing in memory.";
+
+// MARK: - Phase 4: CLI Providers
+"settings.ai.provider.claudeCLI" = "Claude Code (subscription)";
+"settings.ai.provider.codexCLI" = "Codex CLI (ChatGPT)";
+"settings.ai.cli.subscription.title" = "Subscription CLIs";
+"settings.ai.cli.installed" = "Installed v%@";
+"settings.ai.cli.notInstalled" = "Not installed";
+"settings.ai.cli.notInstalled.claude.hint" = "Install: `npm install -g @anthropic-ai/claude-code`";
+"settings.ai.cli.notInstalled.codex.hint" = "Install Codex CLI from https://github.com/openai/codex";
+"settings.ai.cli.notAuthenticated.claude.hint" = "Run `claude auth` in Terminal";
+"settings.ai.cli.notAuthenticated.codex.hint" = "Run `codex login` in Terminal";
+"settings.ai.cli.allowEdits" = "Allow file edits";
+"settings.ai.cli.allowEdits.hint" = "When enabled, the CLI can create, modify, and delete files in your repository.";
+"settings.ai.cli.refresh" = "Refresh";
+"chat.cli.tool.running" = "Running %@...";
+"chat.cli.tool.completed" = "%@ completed";
+"chat.cli.tool.failed" = "%@ failed";

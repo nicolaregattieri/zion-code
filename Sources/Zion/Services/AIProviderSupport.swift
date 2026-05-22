@@ -19,7 +19,7 @@ struct AIQuotaRecoveryInfo: Equatable {
 }
 
 enum AIProviderSupport {
-    static let configurableProviders: [AIProvider] = [.anthropic, .openai, .gemini, .local]
+    static let configurableProviders: [AIProvider] = [.anthropic, .openai, .gemini, .local, .claudeCLI, .codexCLI]
 
     static func dashboardURL(for provider: AIProvider) -> URL? {
         switch provider {
@@ -31,9 +31,20 @@ enum AIProviderSupport {
             return URL(string: "https://aistudio.google.com/apikey")
         case .local:
             return URL(string: "https://ollama.com/library")
+        case .claudeCLI:
+            return URL(string: "https://docs.anthropic.com/en/docs/claude-code")
+        case .codexCLI:
+            return URL(string: "https://github.com/openai/codex")
         case .none:
             return nil
         }
+    }
+
+    static func isCLIConnected(provider: AIProvider, discovery: CLIDiscoveryService) async -> Bool {
+        guard provider == .claudeCLI || provider == .codexCLI else { return false }
+        let tool: CLITool = provider == .claudeCLI ? .claude : .codex
+        let status = await discovery.status(for: tool)
+        return status.installed && (status.isAuthenticated ?? false)
     }
 
     static func isConnected(
@@ -49,6 +60,10 @@ enum AIProviderSupport {
         if provider == .local {
             guard let config = loadLocalConfig() else { return false }
             return localHealthProbe(config)
+        }
+        if provider == .claudeCLI || provider == .codexCLI {
+            // CLI connection requires async probe via isCLIConnected(provider:discovery:)
+            return false
         }
         guard provider != .none else { return false }
         guard let key = loadKey(provider)?.trimmingCharacters(in: .whitespacesAndNewlines) else {

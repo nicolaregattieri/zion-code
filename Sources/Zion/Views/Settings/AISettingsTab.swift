@@ -9,6 +9,7 @@ struct AISettingsTab: View {
     @AppStorage("chat.toolsEnabled") private var chatToolsEnabled: Bool = true
     @AppStorage("chat.allowEdits") private var chatAllowEdits: Bool = false
     @AppStorage("chat.autoInject") private var chatAutoInject: Bool = true
+    @AppStorage("chat.cliAllowEdits") private var chatCLIAllowEdits: Bool = false
     @AppStorage(UserDefaultsKeys.RepoMemory.activeRepoName) private var repoMemoryRepoName: String = ""
     @AppStorage(UserDefaultsKeys.RepoMemory.lastRefresh) private var repoMemoryLastRefresh: Double = 0
     @AppStorage(UserDefaultsKeys.RepoMemory.ready) private var repoMemoryReady: Bool = false
@@ -17,6 +18,9 @@ struct AISettingsTab: View {
     @State private var editingProvider: AIProvider?
     @State private var connectionRefreshID: Int = 0
     @State private var localConfig: LocalLLMConfig = LocalLLMConfig()
+    @State private var claudeStatus: CLIToolStatus?
+    @State private var codexStatus: CLIToolStatus?
+    @State private var cliDiscovery = CLIDiscoveryService()
 
     private var defaultProvider: AIProvider {
         AIProvider(rawValue: aiProviderRaw) ?? .none
@@ -28,7 +32,9 @@ struct AISettingsTab: View {
 
     private var providerConnections: [AIProviderConnectionInfo] {
         let _ = connectionRefreshID
-        return AIProviderSupport.connectionInfo().filter { $0.provider != .local }
+        return AIProviderSupport.connectionInfo().filter {
+            $0.provider != .local && $0.provider != .claudeCLI && $0.provider != .codexCLI
+        }
     }
 
     private var isDefaultProviderConnected: Bool {
@@ -72,7 +78,7 @@ struct AISettingsTab: View {
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
 
-                if defaultProvider != .none && defaultProvider != .local && !isDefaultProviderConnected {
+                if defaultProvider != .none && defaultProvider != .local && defaultProvider != .claudeCLI && defaultProvider != .codexCLI && !isDefaultProviderConnected {
                     Label(L10n("settings.ai.defaultProvider.missingKey"), systemImage: "exclamationmark.triangle.fill")
                         .font(DesignSystem.Typography.labelMedium)
                         .foregroundStyle(DesignSystem.Colors.warning)
@@ -95,6 +101,19 @@ struct AISettingsTab: View {
                         .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
                 }
+            }
+
+            Section(L10n("settings.ai.cli.subscription.title")) {
+                cliToolRow(tool: .claude, status: claudeStatus)
+                cliToolRow(tool: .codex, status: codexStatus)
+
+                Toggle(L10n("settings.ai.cli.allowEdits"), isOn: $chatCLIAllowEdits)
+                Text(L10n("settings.ai.cli.allowEdits.hint"))
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(.secondary)
+            }
+            .task {
+                await refreshCLIStatus()
             }
 
             if defaultProvider != .none {
@@ -204,6 +223,109 @@ struct AISettingsTab: View {
             AIClient.saveLocalConfig(newValue)
         }
     }
+
+    // MARK: - CLI Status
+
+    private func refreshCLIStatus() async {
+        async let claudeResult = cliDiscovery.status(for: .claude, refresh: true)
+        async let codexResult = cliDiscovery.status(for: .codex, refresh: true)
+        let (c, d) = await (claudeResult, codexResult)
+        claudeStatus = c
+        codexStatus = d
+    }
+
+    @ViewBuilder
+    private func cliToolRow(tool: CLITool, status: CLIToolStatus?) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+                Text(tool.rawValue.prefix(1).uppercased() + tool.rawValue.dropFirst())
+                    .font(DesignSystem.Typography.bodySemibold)
+
+                Spacer()
+
+                if let status {
+                    cliStatusPill(status: status)
+                } else {
+                    ProgressView()
+                        .scaleEffect(0.7)
+                }
+
+                Button(L10n("settings.ai.cli.refresh")) {
+                    Task {
+                        let fresh = await cliDiscovery.status(for: tool, refresh: true)
+                        if tool == .claude {
+                            claudeStatus = fresh
+                        } else {
+                            codexStatus = fresh
+                        }
+                    }
+                }
+                .buttonStyle(.bordered)
+                .font(DesignSystem.Typography.label)
+            }
+
+            if let status {
+                if status.installed {
+                    if let version = status.version {
+                        Text(L10n("settings.ai.cli.installed", version))
+                            .font(DesignSystem.Typography.label)
+                            .foregroundStyle(.secondary)
+                    }
+                    if status.isAuthenticated != true {
+                        let hintKey = tool == .claude
+                            ? "settings.ai.cli.notAuthenticated.claude.hint"
+                            : "settings.ai.cli.notAuthenticated.codex.hint"
+                        Text(L10n(hintKey))
+                            .font(DesignSystem.Typography.label)
+                            .foregroundStyle(DesignSystem.Colors.warning)
+                    }
+                } else {
+                    let hintKey = tool == .claude
+                        ? "settings.ai.cli.notInstalled.claude.hint"
+                        : "settings.ai.cli.notInstalled.codex.hint"
+                    HStack(spacing: DesignSystem.Spacing.iconTextGap) {
+                        Text(L10n(hintKey))
+                            .font(DesignSystem.Typography.label)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button {
+                            let pasteboard = NSPasteboard.general
+                            pasteboard.clearContents()
+                            pasteboard.setString(L10n(hintKey), forType: .string)
+                        } label: {
+                            Image(systemName: "doc.on.doc")
+                                .font(DesignSystem.Typography.label)
+                        }
+                        .buttonStyle(.borderless)
+                        .help(L10n("chat.code.copy"))
+                    }
+                }
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
+    @ViewBuilder
+    private func cliStatusPill(status: CLIToolStatus) -> some View {
+        let (color, label): (Color, String) = {
+            if status.installed && status.isAuthenticated == true {
+                return (DesignSystem.Colors.success, L10n("settings.ai.provider.status.connected"))
+            } else if status.installed {
+                return (DesignSystem.Colors.warning, L10n("settings.ai.provider.status.notConnected"))
+            } else {
+                return (DesignSystem.Colors.error, L10n("settings.ai.cli.notInstalled"))
+            }
+        }()
+        Text(label)
+            .font(DesignSystem.Typography.metaSemibold)
+            .foregroundStyle(color)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(color.opacity(0.12))
+            .clipShape(Capsule())
+    }
+
+    // MARK: - Provider Rows
 
     @ViewBuilder
     private func providerRow(_ info: AIProviderConnectionInfo) -> some View {

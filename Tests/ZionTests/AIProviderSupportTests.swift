@@ -22,7 +22,7 @@ final class AIProviderSupportTests: XCTestCase {
             }
         }
 
-        XCTAssertEqual(info.count, 4)
+        XCTAssertEqual(info.count, 6)
         XCTAssertTrue(info.first(where: { $0.provider == .openai })?.isConnected == true)
         XCTAssertTrue(info.first(where: { $0.provider == .gemini })?.isConnected == true)
         XCTAssertTrue(info.first(where: { $0.provider == .anthropic })?.isConnected == false)

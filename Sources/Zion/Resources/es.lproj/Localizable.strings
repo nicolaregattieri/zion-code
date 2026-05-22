@@ -1066,7 +1066,6 @@
 "Recortar %d Itens" = "Cortar %d Elementos";
 "Duplicar %d Itens" = "Duplicar %d Elementos";
 "Excluir %d Itens" = "Eliminar %d Elementos";
-"Adicionar ao .gitignore" = "Agregar a .gitignore";
 "Esta acao nao pode ser desfeita." = "Esta acción no se puede deshacer.";
 
 // Editor Settings Tab
@@ -1508,7 +1507,6 @@
 
 // Wave 2: Branch Search
 "Filtrar branches..." = "Filtrar ramas...";
-"Nenhuma branch encontrada" = "No se encontraron ramas";
 
 // Wave 2: AI Pending Changes Summary
 "Resumo IA das mudancas" = "Resumen IA de los cambios";
@@ -2484,6 +2482,10 @@
 "chat.harness.intent.commitDetails" = "commit %@";
 "ai.error.toolExecution.failed" = "Error en la ejecución de la herramienta: %@";
 "ai.error.toolCalling.notSupported" = "El proveedor seleccionado no admite tool calling.";
+"ai.error.cli.notInstalled" = "%@ no está instalado. Instálalo e inténtalo de nuevo.";
+"ai.error.cli.notAuthenticated" = "%@ no está autenticado. Ejecuta `%@ login` en la terminal.";
+"ai.error.cli.execFailed" = "Error del CLI: %@";
+"ai.error.cli.versionTooOld" = "Versión del CLI demasiado antigua (requerida: %@, encontrada: %@). Actualiza.";
 "chat.thread.list.title" = "Conversaciones";
 "chat.thread.new" = "Nueva conversación";
 "chat.thread.delete" = "Eliminar";
@@ -2494,3 +2496,20 @@
 "chat.thread.empty" = "Sin conversaciones aún";
 "chat.thread.sidebar.toggle" = "Mostrar/ocultar conversaciones";
 "chat.persistence.error" = "Error al guardar el historial del chat. Continuando en memoria.";
+
+// MARK: - Phase 4: CLI Providers
+"settings.ai.provider.claudeCLI" = "Claude Code (suscripción)";
+"settings.ai.provider.codexCLI" = "Codex CLI (ChatGPT)";
+"settings.ai.cli.subscription.title" = "CLIs de suscripción";
+"settings.ai.cli.installed" = "Instalado v%@";
+"settings.ai.cli.notInstalled" = "No instalado";
+"settings.ai.cli.notInstalled.claude.hint" = "Instalar: `npm install -g @anthropic-ai/claude-code`";
+"settings.ai.cli.notInstalled.codex.hint" = "Instalar Codex CLI desde https://github.com/openai/codex";
+"settings.ai.cli.notAuthenticated.claude.hint" = "Ejecuta `claude auth` en Terminal";
+"settings.ai.cli.notAuthenticated.codex.hint" = "Ejecuta `codex login` en Terminal";
+"settings.ai.cli.allowEdits" = "Permitir edición de archivos";
+"settings.ai.cli.allowEdits.hint" = "Cuando está activado, el CLI puede crear, modificar y eliminar archivos en tu repositorio.";
+"settings.ai.cli.refresh" = "Actualizar";
+"chat.cli.tool.running" = "Ejecutando %@...";
+"chat.cli.tool.completed" = "%@ completado";
+"chat.cli.tool.failed" = "%@ falló";
