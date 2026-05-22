@@ -8,6 +8,7 @@ final class LocalServerLauncherTests: XCTestCase {
     func testDetectFromURL() {
         XCTAssertEqual(LocalEngineKind.detect(from: "http://localhost:11434/v1"), .ollama)
         XCTAssertEqual(LocalEngineKind.detect(from: "http://127.0.0.1:8080/v1"), .mlx)
+        XCTAssertEqual(LocalEngineKind.detect(from: "http://localhost:1234/v1"), .lmStudio)
         XCTAssertEqual(LocalEngineKind.detect(from: "http://localhost:8000/v1"), .llamaCpp)
         XCTAssertEqual(LocalEngineKind.detect(from: "http://localhost:9999/v1"), .custom)
         XCTAssertEqual(LocalEngineKind.detect(from: "not a url"), .custom)

@@ -9,6 +9,8 @@ struct LocalLLMSettingsSection: View {
     @State private var pollTask: Task<Void, Never>? = nil
     @State private var isDiscovering: Bool = false
     @State private var isTesting: Bool = false
+    @State private var isStopping: Bool = false
+    @State private var stopFeedback: String? = nil
 
     private var healthColor: Color {
         isHealthy ? DesignSystem.Colors.success : DesignSystem.Colors.destructive
@@ -151,6 +153,7 @@ struct LocalLLMSettingsSection: View {
             Text(L10n("settings.ai.local.engine.ollama")).tag(LocalEngineKind.ollama)
             Text(L10n("settings.ai.local.engine.mlx")).tag(LocalEngineKind.mlx)
             Text(L10n("settings.ai.local.engine.llamaCpp")).tag(LocalEngineKind.llamaCpp)
+            Text(L10n("settings.ai.local.engine.lmStudio")).tag(LocalEngineKind.lmStudio)
             Text(L10n("settings.ai.local.engine.custom")).tag(LocalEngineKind.custom)
         }
     }
@@ -217,10 +220,43 @@ struct LocalLLMSettingsSection: View {
             .buttonStyle(.bordered)
             .disabled(isTesting)
 
+            Button(role: .destructive) {
+                Task { await stopServer() }
+            } label: {
+                Label(L10n("settings.ai.local.server.stop"), systemImage: "stop.circle")
+            }
+            .buttonStyle(.bordered)
+            .disabled(isStopping || !isHealthy)
+
             Spacer()
         }
         .onAppear { startPolling() }
         .onDisappear { stopPolling() }
+        .overlay(alignment: .topTrailing) {
+            if let msg = stopFeedback {
+                Text(msg)
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func stopServer() async {
+        isStopping = true
+        defer { isStopping = false }
+        let launcher = LocalServerLauncher()
+        let outcome = await launcher.stop(config: config)
+        switch outcome {
+        case .stopped(let pid):
+            stopFeedback = L10n("settings.ai.local.server.stopped", "\(pid)")
+            isHealthy = false
+        case .notRunning:
+            stopFeedback = L10n("settings.ai.local.server.stop.notRunning")
+        case .noOwnerProcess:
+            stopFeedback = L10n("settings.ai.local.server.stop.noOwner")
+        case .failed(let message):
+            stopFeedback = L10n("settings.ai.local.server.stop.failed", message)
+        }
     }
 
     // MARK: - Actions

@@ -8,6 +8,7 @@ enum LocalEngineKind: String, Codable, CaseIterable, Equatable {
     case ollama
     case mlx
     case llamaCpp
+    case lmStudio
     case custom // user-managed; auto-start is a no-op
 
     /// Best-effort detection from the configured server URL. Falls back to
@@ -18,6 +19,7 @@ enum LocalEngineKind: String, Codable, CaseIterable, Equatable {
         switch port {
         case 11434: return .ollama
         case 8080: return .mlx
+        case 1234: return .lmStudio
         case 8000, 8081, 8090: return .llamaCpp
         default: return .custom
         }
@@ -75,7 +77,7 @@ actor LocalServerLauncher {
         switch engine {
         case .custom:
             return .unsupported
-        case .ollama, .mlx, .llamaCpp:
+        case .ollama, .mlx, .llamaCpp, .lmStudio:
             break
         }
 
@@ -109,6 +111,11 @@ actor LocalServerLauncher {
             candidates = ["mlx_lm.server"]
         case .llamaCpp:
             candidates = ["llama-server", "server"]
+        case .lmStudio:
+            // `lms` is LM Studio's CLI (`lms server start`). It is installed via
+            // LM Studio itself ("Install Command Line Tool") and lands either in
+            // /usr/local/bin or alongside the app bundle.
+            candidates = ["lms"]
         case .custom:
             return nil
         }
@@ -157,6 +164,9 @@ actor LocalServerLauncher {
             // pre-bake a config. Pass the port and let llama-server use its
             // existing config / env.
             return ["--port", port]
+        case .lmStudio:
+            // `lms server start --port <port>` daemonises and exits 0.
+            return ["server", "start", "--port", port]
         case .custom:
             return []
         }
@@ -167,8 +177,73 @@ actor LocalServerLauncher {
         case .ollama: return "11434"
         case .mlx: return "8080"
         case .llamaCpp: return "8000"
+        case .lmStudio: return "1234"
         case .custom: return "8080"
         }
+    }
+
+    // MARK: - Stop
+
+    enum StopOutcome: Equatable {
+        case notRunning
+        case stopped(pid: Int32)
+        case noOwnerProcess
+        case failed(String)
+    }
+
+    /// Stops a running local server by looking up which process is listening on
+    /// the configured port (via `lsof -ti :<port>`) and sending SIGTERM.
+    /// Falls back to SIGKILL after a 2 s grace period if the process refuses
+    /// to exit. We do NOT rely on a persisted PID — the process may have died
+    /// and the OS may have recycled the id, so port lookup is the source of
+    /// truth.
+    func stop(config: LocalLLMConfig) async -> StopOutcome {
+        guard await probe(config) else { return .notRunning }
+
+        guard let port = URL(string: config.serverURL)?.port else {
+            return .failed("Could not parse port from server URL")
+        }
+
+        let lsof = URL(fileURLWithPath: "/usr/sbin/lsof")
+        guard FileManager.default.isExecutableFile(atPath: lsof.path) else {
+            return .failed("lsof not found at /usr/sbin/lsof")
+        }
+
+        let lsofProcess = Process()
+        lsofProcess.executableURL = lsof
+        lsofProcess.arguments = ["-ti", ":\(port)"]
+        let stdoutPipe = Pipe()
+        lsofProcess.standardOutput = stdoutPipe
+        lsofProcess.standardError = FileHandle.nullDevice
+
+        do {
+            try lsofProcess.run()
+            lsofProcess.waitUntilExit()
+        } catch {
+            return .failed("lsof failed: \(error.localizedDescription)")
+        }
+
+        let data = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+        let text = String(data: data, encoding: .utf8) ?? ""
+        let pids = text
+            .split(whereSeparator: { $0.isNewline })
+            .compactMap { Int32($0.trimmingCharacters(in: .whitespaces)) }
+
+        guard let pid = pids.first else { return .noOwnerProcess }
+
+        Darwin.kill(pid, SIGTERM)
+
+        // Grace period: poll up to 2 s for the process to actually exit.
+        let deadline = Date().addingTimeInterval(2.0)
+        while Date() < deadline {
+            try? await Task.sleep(nanoseconds: 100_000_000)
+            if Darwin.kill(pid, 0) != 0 { return .stopped(pid: pid) } // process gone
+        }
+        // Forced kill if still alive.
+        if Darwin.kill(pid, 0) == 0 {
+            Darwin.kill(pid, SIGKILL)
+        }
+        return .stopped(pid: pid)
     }
 
     // MARK: - Real process runner
