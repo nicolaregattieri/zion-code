@@ -31,6 +31,9 @@ final class ChatService {
     /// Set when a persistence operation fails; consumed by UI to surface a one-time error.
     var lastPersistenceError: String?
 
+    /// Live tool events from the active CLI stream. Cleared automatically after each event completes.
+    var pendingToolEvents: [ChatToolEvent] = []
+
     // MARK: - Private (non-observable)
 
     @ObservationIgnored private var activeTask: Task<Void, Never>?
@@ -39,6 +42,7 @@ final class ChatService {
     @ObservationIgnored private let contextBuilder: ChatContextBuilder
     @ObservationIgnored private let harness: ZionHarness
     @ObservationIgnored private let streamProvider: ((LocalLLMConfig, AIPromptPayload, Int, String) -> AsyncThrowingStream<String, Error>)?
+    @ObservationIgnored private let cliStreamProvider: ((AIPromptPayload, URL) -> AsyncThrowingStream<CLIStreamEvent, Error>)?
 
     /// Injected storage (nil = volatile/test)
     @ObservationIgnored private let storage: ChatStorage?
@@ -55,6 +59,7 @@ final class ChatService {
         self.contextBuilder = contextBuilder
         self.harness = harness
         self.streamProvider = nil
+        self.cliStreamProvider = nil
         self.storage = storage
         self.repoID = repoID
 
@@ -79,6 +84,32 @@ final class ChatService {
         self.contextBuilder = contextBuilder
         self.harness = harness
         self.streamProvider = streamProvider
+        self.cliStreamProvider = nil
+        self.storage = storage
+        self.repoID = repoID
+
+        if storage != nil {
+            Task { await self.reloadFromStorage() }
+        }
+    }
+
+    // MARK: - Init (CLI test injection)
+
+    init(
+        ai: AIClient,
+        worker: RepositoryWorker,
+        contextBuilder: ChatContextBuilder,
+        harness: ZionHarness,
+        cliStreamProvider: @escaping (AIPromptPayload, URL) -> AsyncThrowingStream<CLIStreamEvent, Error>,
+        storage: ChatStorage? = nil,
+        repoID: String = ""
+    ) {
+        self.ai = ai
+        self.worker = worker
+        self.contextBuilder = contextBuilder
+        self.harness = harness
+        self.streamProvider = nil
+        self.cliStreamProvider = cliStreamProvider
         self.storage = storage
         self.repoID = repoID
 
@@ -301,7 +332,8 @@ final class ChatService {
                 }
             }
 
-            let payload = Self.makePayload(for: expandedText)
+            var payload = Self.makePayload(for: expandedText)
+            payload.cwd = repoURL
 
             switch provider {
             case .local:
@@ -317,10 +349,32 @@ final class ChatService {
                 let stream = await self.ai.streamOpenAI(payload: payload, apiKey: apiKey, maxTokens: 2048, modelID: modelID)
                 await self.consumeStream(stream, assistantID: assistantID, threadID: threadID)
 
-            case .claudeCLI, .codexCLI:
-                await MainActor.run {
-                    self.setAssistantContent(id: assistantID, content: L10n("ai.error.cli.notInstalled"))
+            case .claudeCLI:
+                let stream: AsyncThrowingStream<CLIStreamEvent, Error>
+                if let injected = self.cliStreamProvider {
+                    stream = injected(payload, repoURL)
+                } else {
+                    stream = await self.ai.streamClaudeCLI(
+                        payload: payload,
+                        cwd: repoURL,
+                        maxTokens: 2048,
+                        allowEdits: UserDefaults.standard.bool(forKey: "chat.cliAllowEdits")
+                    )
                 }
+                await self.consumeCLIStream(stream, assistantID: assistantID, threadID: threadID)
+
+            case .codexCLI:
+                let stream: AsyncThrowingStream<CLIStreamEvent, Error>
+                if let injected = self.cliStreamProvider {
+                    stream = injected(payload, repoURL)
+                } else {
+                    stream = await self.ai.streamCodexCLI(
+                        payload: payload,
+                        cwd: repoURL,
+                        allowEdits: UserDefaults.standard.bool(forKey: "chat.cliAllowEdits")
+                    )
+                }
+                await self.consumeCLIStream(stream, assistantID: assistantID, threadID: threadID)
 
             case .gemini, .none:
                 do {
@@ -397,6 +451,74 @@ final class ChatService {
             }
         } catch {
             // Leave whatever was accumulated
+        }
+    }
+
+    private func consumeCLIStream(_ stream: AsyncThrowingStream<CLIStreamEvent, Error>, assistantID: UUID, threadID: UUID) async {
+        var streamCompleted = false
+        do {
+            for try await event in stream {
+                if Task.isCancelled { break }
+                // Discard late events after .done / .error
+                if streamCompleted { break }
+
+                switch event {
+                case .textDelta(let text):
+                    await MainActor.run {
+                        self.appendAssistantDelta(id: assistantID, delta: text)
+                        self.scheduleDebounce(for: assistantID, threadID: threadID)
+                    }
+
+                case .toolStart(let id, let name, let description):
+                    await MainActor.run {
+                        let event = ChatToolEvent(id: id, name: name, status: .running, argsPreview: String(description.prefix(60)))
+                        if let idx = self.pendingToolEvents.firstIndex(where: { $0.id == id }) {
+                            self.pendingToolEvents[idx] = event
+                        } else {
+                            self.pendingToolEvents.append(event)
+                        }
+                    }
+
+                case .toolEnd(let id, let success):
+                    await MainActor.run {
+                        if let idx = self.pendingToolEvents.firstIndex(where: { $0.id == id }) {
+                            self.pendingToolEvents[idx].status = success ? .completed : .failed
+                        }
+                    }
+                    // Schedule cleanup after delay
+                    let capturedID = id
+                    Task { @MainActor in
+                        try? await Task.sleep(nanoseconds: UInt64(Constants.Timing.toolEventCleanupDelay * 1_000_000_000))
+                        self.pendingToolEvents.removeAll { $0.id == capturedID }
+                    }
+
+                case .done:
+                    streamCompleted = true
+                    // Flush any remaining .running events to .completed
+                    await MainActor.run {
+                        for idx in self.pendingToolEvents.indices where self.pendingToolEvents[idx].status == .running {
+                            self.pendingToolEvents[idx].status = .completed
+                        }
+                    }
+
+                case .error(let msg):
+                    streamCompleted = true
+                    await MainActor.run {
+                        // Flush remaining .running events to .failed
+                        for idx in self.pendingToolEvents.indices where self.pendingToolEvents[idx].status == .running {
+                            self.pendingToolEvents[idx].status = .failed
+                        }
+                        self.appendAssistantDelta(id: assistantID, delta: "\n\n" + msg)
+                    }
+                }
+            }
+        } catch {
+            // Leave whatever was accumulated
+            await MainActor.run {
+                for idx in self.pendingToolEvents.indices where self.pendingToolEvents[idx].status == .running {
+                    self.pendingToolEvents[idx].status = .failed
+                }
+            }
         }
     }
 
