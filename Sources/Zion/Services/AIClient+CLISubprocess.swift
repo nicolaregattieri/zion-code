@@ -13,6 +13,9 @@ enum CLIStreamEvent: Equatable {
     /// Emitted at end-of-turn when the CLI reports a USD cost
     /// (claude `total_cost_usd`). Codex Plus is unmetered → never emits.
     case turnCost(usd: Double)
+    /// Emitted at end-of-turn with token counts so we can show usage even when
+    /// the provider does not report a dollar figure (codex Plus / local LLM).
+    case turnUsage(inputTokens: Int, outputTokens: Int)
     case done
     case error(String)
 }
@@ -29,11 +32,28 @@ extension AIClient {
     /// only care about the first event can use the legacy single-return helper.
     static func parseClaudeJSONLEvents(_ line: Data) -> [CLIStreamEvent] {
         guard let event = parseClaudeJSONLLine(line) else { return [] }
-        // Result line carries cost + done semantics. Emit both.
+        // Result line carries cost + usage + done semantics. Emit all.
         if case .turnCost = event {
-            return [event, .done]
+            var events: [CLIStreamEvent] = [event]
+            if let usage = claudeResultUsage(line: line) {
+                events.append(usage)
+            }
+            events.append(.done)
+            return events
         }
         return [event]
+    }
+
+    /// Extracts a `.turnUsage` event from a `result` JSONL line. Separate from
+    /// the single-event parser because result lines also carry cost+done.
+    private static func claudeResultUsage(line: Data) -> CLIStreamEvent? {
+        guard let root = (try? JSONSerialization.jsonObject(with: line)) as? [String: Any],
+              (root["type"] as? String) == "result",
+              let usage = root["usage"] as? [String: Any] else { return nil }
+        let input = (usage["input_tokens"] as? Int) ?? 0
+        let output = (usage["output_tokens"] as? Int) ?? 0
+        if input == 0 && output == 0 { return nil }
+        return .turnUsage(inputTokens: input, outputTokens: output)
     }
 
     /// Parses a single JSONL line emitted by `claude --output-format stream-json`.
@@ -113,10 +133,32 @@ extension AIClient {
     /// Multi-event variant — see `parseClaudeJSONLEvents`.
     static func parseCodexJSONLEvents(_ line: Data) -> [CLIStreamEvent] {
         guard let event = parseCodexJSONLLine(line) else { return [] }
+        // turn.completed for codex carries usage but no $ cost. Emit usage + done.
+        // (claude variant emits cost + usage + done — handled above.)
+        if case .done = event, let usage = codexTurnUsage(line: line) {
+            return [usage, event]
+        }
         if case .turnCost = event {
-            return [event, .done]
+            var events: [CLIStreamEvent] = [event]
+            if let usage = codexTurnUsage(line: line) {
+                events.append(usage)
+            }
+            events.append(.done)
+            return events
         }
         return [event]
+    }
+
+    private static func codexTurnUsage(line: Data) -> CLIStreamEvent? {
+        guard let root = (try? JSONSerialization.jsonObject(with: line)) as? [String: Any] else { return nil }
+        // v0.131+ top-level usage; legacy msg.usage. Either works.
+        let usage = (root["usage"] as? [String: Any])
+            ?? ((root["msg"] as? [String: Any])?["usage"] as? [String: Any])
+        guard let usage else { return nil }
+        let input = (usage["input_tokens"] as? Int) ?? 0
+        let output = (usage["output_tokens"] as? Int) ?? 0
+        if input == 0 && output == 0 { return nil }
+        return .turnUsage(inputTokens: input, outputTokens: output)
     }
 
     /// Parses a single JSONL line emitted by `codex exec --json` (v0.131+).

@@ -545,6 +545,11 @@ final class ChatService {
                         self.addTurnCost(usd, threadID: threadID)
                     }
 
+                case .turnUsage(let input, let output):
+                    await MainActor.run {
+                        self.addTurnUsage(input: input, output: output, threadID: threadID)
+                    }
+
                 case .done:
                     streamCompleted = true
                     // Flush any remaining .running events to .completed
@@ -639,6 +644,12 @@ final class ChatService {
     fileprivate func addTurnCost(_ usd: Double, threadID: UUID) {
         guard let tIdx = threads.firstIndex(where: { $0.id == threadID }) else { return }
         threads[tIdx].totalCostUSD += usd
+    }
+
+    fileprivate func addTurnUsage(input: Int, output: Int, threadID: UUID) {
+        guard let tIdx = threads.firstIndex(where: { $0.id == threadID }) else { return }
+        threads[tIdx].totalInputTokens += input
+        threads[tIdx].totalOutputTokens += output
     }
 
     fileprivate func attachToolEventToAssistant(assistantID: UUID, id: String, status: ToolEventStatus, output: String?) {

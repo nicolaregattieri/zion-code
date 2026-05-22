@@ -76,6 +76,10 @@ struct ChatThread: Identifiable, Equatable {
     /// Sum of `total_cost_usd` reported by the CLI on each turn's terminating
     /// event. Codex Plus is unmetered → stays 0.
     var totalCostUSD: Double = 0
+    /// Cumulative token usage across all turns of this thread, summed from
+    /// every provider that reports it (claude, codex, OpenAI-compatible local).
+    var totalInputTokens: Int = 0
+    var totalOutputTokens: Int = 0
 
     init(
         id: UUID = UUID(),
@@ -85,7 +89,9 @@ struct ChatThread: Identifiable, Equatable {
         title: String = ChatThread.defaultTitle(),
         cliSessionID: String? = nil,
         cliSessionProvider: String? = nil,
-        totalCostUSD: Double = 0
+        totalCostUSD: Double = 0,
+        totalInputTokens: Int = 0,
+        totalOutputTokens: Int = 0
     ) {
         self.id = id
         self.messages = messages
@@ -95,6 +101,8 @@ struct ChatThread: Identifiable, Equatable {
         self.cliSessionID = cliSessionID
         self.cliSessionProvider = cliSessionProvider
         self.totalCostUSD = totalCostUSD
+        self.totalInputTokens = totalInputTokens
+        self.totalOutputTokens = totalOutputTokens
     }
 
     static func defaultTitle(date: Date = Date()) -> String {

@@ -46,7 +46,8 @@ actor ChatStorage {
     func loadThreads(repoID: String) async throws -> [ChatThread] {
         let db = try connection(for: repoID)
         let sql = """
-            SELECT id, title, created_at, updated_at, cli_session_id, cli_session_provider, total_cost_usd
+            SELECT id, title, created_at, updated_at, cli_session_id, cli_session_provider,
+                   total_cost_usd, total_input_tokens, total_output_tokens
             FROM threads
             WHERE repo_id = ?
             ORDER BY updated_at DESC;
@@ -68,6 +69,8 @@ actor ChatStorage {
             let cliSessionProvider: String? = sqlite3_column_type(stmt, 5) == SQLITE_NULL
                 ? nil : String(cString: sqlite3_column_text(stmt, 5))
             let totalCost = sqlite3_column_double(stmt, 6)
+            let totalInputTokens = Int(sqlite3_column_int64(stmt, 7))
+            let totalOutputTokens = Int(sqlite3_column_int64(stmt, 8))
             guard let id = UUID(uuidString: idStr) else { continue }
             threads.append(ChatThread(
                 id: id,
@@ -77,7 +80,9 @@ actor ChatStorage {
                 title: title,
                 cliSessionID: cliSessionID,
                 cliSessionProvider: cliSessionProvider,
-                totalCostUSD: totalCost
+                totalCostUSD: totalCost,
+                totalInputTokens: totalInputTokens,
+                totalOutputTokens: totalOutputTokens
             ))
         }
         return threads
@@ -86,14 +91,18 @@ actor ChatStorage {
     func saveThread(_ thread: ChatThread, repoID: String) async throws {
         let db = try connection(for: repoID)
         let sql = """
-            INSERT INTO threads (id, repo_id, title, created_at, updated_at, cli_session_id, cli_session_provider, total_cost_usd)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO threads (id, repo_id, title, created_at, updated_at,
+                                 cli_session_id, cli_session_provider, total_cost_usd,
+                                 total_input_tokens, total_output_tokens)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
               title = excluded.title,
               updated_at = excluded.updated_at,
               cli_session_id = excluded.cli_session_id,
               cli_session_provider = excluded.cli_session_provider,
-              total_cost_usd = excluded.total_cost_usd;
+              total_cost_usd = excluded.total_cost_usd,
+              total_input_tokens = excluded.total_input_tokens,
+              total_output_tokens = excluded.total_output_tokens;
             """
         var stmt: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
@@ -119,6 +128,8 @@ actor ChatStorage {
             sqlite3_bind_null(stmt, 7)
         }
         sqlite3_bind_double(stmt, 8, thread.totalCostUSD)
+        sqlite3_bind_int64(stmt, 9, Int64(thread.totalInputTokens))
+        sqlite3_bind_int64(stmt, 10, Int64(thread.totalOutputTokens))
 
         guard sqlite3_step(stmt) == SQLITE_DONE else {
             throw sqliteError(db)
@@ -322,6 +333,8 @@ actor ChatStorage {
         try? exec(db: db, sql: "ALTER TABLE threads ADD COLUMN cli_session_id TEXT NULL;")
         try? exec(db: db, sql: "ALTER TABLE threads ADD COLUMN cli_session_provider TEXT NULL;")
         try? exec(db: db, sql: "ALTER TABLE threads ADD COLUMN total_cost_usd REAL DEFAULT 0;")
+        try? exec(db: db, sql: "ALTER TABLE threads ADD COLUMN total_input_tokens INTEGER DEFAULT 0;")
+        try? exec(db: db, sql: "ALTER TABLE threads ADD COLUMN total_output_tokens INTEGER DEFAULT 0;")
     }
 
     private func exec(db: OpaquePointer, sql: String) throws {

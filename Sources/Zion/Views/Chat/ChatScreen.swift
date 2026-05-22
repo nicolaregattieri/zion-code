@@ -68,6 +68,16 @@ struct ChatScreen: View {
         GlassCard(spacing: 8, expanding: true) {
             CardHeader(L10n("chat.card.conversation"), icon: "bubble.left.and.bubble.right.fill") {
                 HStack(spacing: 6) {
+                    let totalTokens = chat.thread.totalInputTokens + chat.thread.totalOutputTokens
+                    if totalTokens > 0 {
+                        Text(Self.formatTokens(totalTokens))
+                            .font(DesignSystem.Typography.monoLabelBold)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(DesignSystem.Colors.glassSubtle)
+                            .clipShape(Capsule())
+                            .help(L10n("chat.tokens.tooltip"))
+                    }
                     if chat.thread.totalCostUSD > 0 {
                         Text(String(format: "$%.3f", chat.thread.totalCostUSD))
                             .font(DesignSystem.Typography.monoLabelBold)
@@ -192,6 +202,12 @@ struct ChatScreen: View {
     }
 
     // MARK: - Helpers
+
+    private static func formatTokens(_ count: Int) -> String {
+        if count < 1_000 { return "\(count) tok" }
+        if count < 10_000 { return String(format: "%.1fk tok", Double(count) / 1_000) }
+        return "\(count / 1_000)k tok"
+    }
 
     private func scrollToLast(proxy: ScrollViewProxy) {
         guard let lastID = chat.thread.messages.last?.id else { return }

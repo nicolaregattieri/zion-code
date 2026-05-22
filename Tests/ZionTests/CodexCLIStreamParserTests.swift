@@ -139,6 +139,12 @@ final class CodexCLIStreamParserTests: XCTestCase {
         XCTAssertEqual(AIClient.parseCodexJSONLLine(data(json)), .done)
     }
 
+    func testV0131TurnCompletedEventsEmitUsageThenDone() {
+        let json = #"{"type":"turn.completed","usage":{"input_tokens":28298,"output_tokens":7}}"#
+        let events = AIClient.parseCodexJSONLEvents(data(json))
+        XCTAssertEqual(events, [.turnUsage(inputTokens: 28298, outputTokens: 7), .done])
+    }
+
     func testV0131ThreadStartedYieldsSessionID() {
         let json = #"{"type":"thread.started","thread_id":"abc"}"#
         XCTAssertEqual(AIClient.parseCodexJSONLLine(data(json)), .sessionStarted(id: "abc"))

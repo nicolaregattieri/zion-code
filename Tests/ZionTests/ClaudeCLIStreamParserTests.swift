@@ -151,6 +151,12 @@ final class ClaudeCLIStreamParserTests: XCTestCase {
         XCTAssertEqual(events, [.turnCost(usd: 0.05), .done])
     }
 
+    func testResultEventsEmitsCostUsageDone() {
+        let json = #"{"type":"result","subtype":"success","total_cost_usd":0.05,"usage":{"input_tokens":42,"output_tokens":7}}"#
+        let events = AIClient.parseClaudeJSONLEvents(data(json))
+        XCTAssertEqual(events, [.turnCost(usd: 0.05), .turnUsage(inputTokens: 42, outputTokens: 7), .done])
+    }
+
     func testToolResultCapturesStringContent() {
         let json = #"{"type":"tool_result","tool_use_id":"t9","is_error":false,"content":"file: foo.swift\nfunc bar() {}"}"#
         if case .toolEnd(_, _, let output) = AIClient.parseClaudeJSONLLine(data(json)) {
