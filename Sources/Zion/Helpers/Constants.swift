@@ -210,6 +210,9 @@ enum Constants {
         /// Delay before cleaning up tool-event state after a tool call completes.
         static let toolEventCleanupDelay: TimeInterval = 3.0
 
+        /// Maximum age for per-spawn MCP config files before the stale-config sweep removes them.
+        static let mcpConfigStaleSeconds: TimeInterval = 3600 // 1 hour
+
         /// Timeout for shortcut key recording before auto-cancelling.
         /// 5s gives users time to think about which key combo to use.
         static let shortcutRecordingTimeout: UInt64 = 5_000_000_000 // 5s

@@ -328,10 +328,38 @@ extension AIClient {
             args.append(contentsOf: ["--resume", sid])
         }
 
+        // Inject MCP config so the zion-mcp tool server is available to claude.
+        var configURL: URL? = nil
+        if let binaryPath = MCPConfigBuilder.resolveBinaryPath() {
+            if let url = try? MCPConfigBuilder.build(cwd: cwd, binaryPath: binaryPath) {
+                args.append(contentsOf: ["--mcp-config", url.path])
+                configURL = url
+            }
+        } else {
+            Task { await DiagnosticLogger.shared.log(.warn, "zion-mcp binary not found — MCP tools will be unavailable for this claude run", source: "streamClaudeCLI") }
+        }
+
         let prompt = AIClient.renderUserMessage(from: payload)
-        return spawnCLIStream(absPath: absPath, args: args, cwd: cwd, stdinData: Data(prompt.utf8)) { line in
+        let stream = spawnCLIStream(absPath: absPath, args: args, cwd: cwd, stdinData: Data(prompt.utf8)) { line in
             AIClient.parseClaudeJSONLEvents(line)
         }
+        // Capture config path so the @Sendable onTermination closure can clean it up.
+        if let capturedConfigURL = configURL {
+            return AsyncThrowingStream { continuation in
+                Task {
+                    do {
+                        for try await event in stream {
+                            continuation.yield(event)
+                        }
+                        continuation.finish()
+                    } catch {
+                        continuation.finish(throwing: error)
+                    }
+                    try? FileManager.default.removeItem(at: capturedConfigURL)
+                }
+            }
+        }
+        return stream
     }
 
     /// Streams events from a `codex` CLI subprocess.
@@ -376,6 +404,18 @@ extension AIClient {
                 "-s", sandbox,
                 "-"
             ]
+        }
+
+        // Inject MCP server flags so codex can call zion tools.
+        // codex uses -c key=value pairs instead of a config file.
+        if let binaryPath = MCPConfigBuilder.resolveBinaryPath() {
+            let argsJSON = "[\"--repo\",\"\(cwd.path)\"]"
+            args.append(contentsOf: [
+                "-c", "mcp_servers.zion.command=\(binaryPath)",
+                "-c", "mcp_servers.zion.args=\(argsJSON)"
+            ])
+        } else {
+            Task { await DiagnosticLogger.shared.log(.warn, "zion-mcp binary not found — MCP tools will be unavailable for this codex run", source: "streamCodexCLI") }
         }
 
         let prompt = AIClient.renderUserMessage(from: payload)
