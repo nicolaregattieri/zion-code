@@ -9,6 +9,7 @@ struct ChatScreen: View {
     let branch: String
 
     @State private var composerText: String = ""
+    @State private var planMode: PlanModeState = PlanModeState.current()
 
     @AppStorage("chat.threadListVisible") private var threadListVisible: Bool = true
 
@@ -48,6 +49,18 @@ struct ChatScreen: View {
                     .font(DesignSystem.Typography.subtitle)
             }
             Spacer()
+            Button {
+                planMode = (planMode == .planFirst) ? .autoApply : .planFirst
+                PlanModeState.set(planMode)
+            } label: {
+                Image(systemName: "wand.and.rays")
+                    .font(DesignSystem.Typography.body)
+                    .foregroundStyle(planMode == .planFirst ? DesignSystem.Colors.ai : DesignSystem.Colors.textTertiary)
+                    .frame(width: 28, height: 28)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help(L10n("chat.plan.mode.label"))
             Button {
                 threadListVisible.toggle()
             } label: {
@@ -152,6 +165,21 @@ struct ChatScreen: View {
                             }
                             ChatMessageBubble(message: message)
                                 .id(message.id)
+                            if message.role == .assistant, let plan = message.plan {
+                                let msgID = message.id
+                                PlanCard(plan: plan, isStreaming: message.isStreaming) { action in
+                                    switch action {
+                                    case .apply:
+                                        chat.applyPlan(messageID: msgID)
+                                    case .reject:
+                                        chat.rejectPlan(messageID: msgID)
+                                    case .reedit(let xml):
+                                        chat.editPlan(messageID: msgID, xml: xml)
+                                    }
+                                }
+                                .padding(.horizontal, DesignSystem.Spacing.cardPadding)
+                                .padding(.vertical, DesignSystem.Spacing.compact)
+                            }
                         }
                     }
                 }
