@@ -6,7 +6,16 @@ import Darwin
 enum CLIStreamEvent: Equatable {
     case textDelta(String)
     case toolStart(id: String, name: String, description: String)
-    case toolEnd(id: String, success: Bool)
+    case toolEnd(id: String, success: Bool, output: String?)
+    /// Emitted once per stream when the CLI exposes a session/thread identifier
+    /// the next turn can resume against (`claude --resume`, `codex exec resume`).
+    case sessionStarted(id: String)
+    /// Emitted at end-of-turn when the CLI reports a USD cost
+    /// (claude `total_cost_usd`). Codex Plus is unmetered → never emits.
+    case turnCost(usd: Double)
+    /// Emitted at end-of-turn with token counts so we can show usage even when
+    /// the provider does not report a dollar figure (codex Plus / local LLM).
+    case turnUsage(inputTokens: Int, outputTokens: Int)
     case done
     case error(String)
 }
@@ -18,7 +27,38 @@ extension AIClient {
     // MARK: Claude JSONL Parser
 
     /// Parses a single JSONL line emitted by `claude --output-format stream-json`.
+    /// Returns the events the line resolves to (most lines produce 0 or 1, but
+    /// `result` can emit both a `turnCost` and a terminal `done`). Callers that
+    /// only care about the first event can use the legacy single-return helper.
+    static func parseClaudeJSONLEvents(_ line: Data) -> [CLIStreamEvent] {
+        guard let event = parseClaudeJSONLLine(line) else { return [] }
+        // Result line carries cost + usage + done semantics. Emit all.
+        if case .turnCost = event {
+            var events: [CLIStreamEvent] = [event]
+            if let usage = claudeResultUsage(line: line) {
+                events.append(usage)
+            }
+            events.append(.done)
+            return events
+        }
+        return [event]
+    }
+
+    /// Extracts a `.turnUsage` event from a `result` JSONL line. Separate from
+    /// the single-event parser because result lines also carry cost+done.
+    private static func claudeResultUsage(line: Data) -> CLIStreamEvent? {
+        guard let root = (try? JSONSerialization.jsonObject(with: line)) as? [String: Any],
+              (root["type"] as? String) == "result",
+              let usage = root["usage"] as? [String: Any] else { return nil }
+        let input = (usage["input_tokens"] as? Int) ?? 0
+        let output = (usage["output_tokens"] as? Int) ?? 0
+        if input == 0 && output == 0 { return nil }
+        return .turnUsage(inputTokens: input, outputTokens: output)
+    }
+
+    /// Parses a single JSONL line emitted by `claude --output-format stream-json`.
     /// Returns nil for malformed input or unrecognised event types.
+    /// Use `parseClaudeJSONLEvents` when you need every event the line yields.
     static func parseClaudeJSONLLine(_ line: Data) -> CLIStreamEvent? {
         guard !line.isEmpty,
               let root = (try? JSONSerialization.jsonObject(with: line)) as? [String: Any]
@@ -27,6 +67,16 @@ extension AIClient {
         guard let type = root["type"] as? String else { return nil }
 
         switch type {
+        case "system":
+            // {type:"system", subtype:"init", session_id:"<uuid>"}
+            if let subtype = root["subtype"] as? String,
+               subtype == "init",
+               let sessionID = root["session_id"] as? String,
+               !sessionID.isEmpty {
+                return .sessionStarted(id: sessionID)
+            }
+            return nil
+
         case "assistant":
             // {type:"assistant", message:{content:[{type:"text", text:"..."}]}}
             guard let message = root["message"] as? [String: Any],
@@ -56,12 +106,17 @@ extension AIClient {
             return .toolStart(id: id, name: name, description: description)
 
         case "tool_result":
-            // {type:"tool_result", tool_use_id, is_error:bool}
+            // {type:"tool_result", tool_use_id, is_error:bool, content: string|[blocks]}
             guard let toolUseId = root["tool_use_id"] as? String else { return nil }
             let isError = root["is_error"] as? Bool ?? false
-            return .toolEnd(id: toolUseId, success: !isError)
+            let output = claudeToolOutput(from: root["content"])
+            return .toolEnd(id: toolUseId, success: !isError, output: output)
 
         case "result":
+            // End-of-turn. Claude reports total_cost_usd on this event.
+            if let cost = root["total_cost_usd"] as? Double, cost > 0 {
+                return .turnCost(usd: cost)
+            }
             return .done
 
         case "error":
@@ -75,6 +130,37 @@ extension AIClient {
 
     // MARK: Codex JSONL Parser
 
+    /// Multi-event variant — see `parseClaudeJSONLEvents`.
+    static func parseCodexJSONLEvents(_ line: Data) -> [CLIStreamEvent] {
+        guard let event = parseCodexJSONLLine(line) else { return [] }
+        // turn.completed for codex carries usage but no $ cost. Emit usage + done.
+        // (claude variant emits cost + usage + done — handled above.)
+        if case .done = event, let usage = codexTurnUsage(line: line) {
+            return [usage, event]
+        }
+        if case .turnCost = event {
+            var events: [CLIStreamEvent] = [event]
+            if let usage = codexTurnUsage(line: line) {
+                events.append(usage)
+            }
+            events.append(.done)
+            return events
+        }
+        return [event]
+    }
+
+    private static func codexTurnUsage(line: Data) -> CLIStreamEvent? {
+        guard let root = (try? JSONSerialization.jsonObject(with: line)) as? [String: Any] else { return nil }
+        // v0.131+ top-level usage; legacy msg.usage. Either works.
+        let usage = (root["usage"] as? [String: Any])
+            ?? ((root["msg"] as? [String: Any])?["usage"] as? [String: Any])
+        guard let usage else { return nil }
+        let input = (usage["input_tokens"] as? Int) ?? 0
+        let output = (usage["output_tokens"] as? Int) ?? 0
+        if input == 0 && output == 0 { return nil }
+        return .turnUsage(inputTokens: input, outputTokens: output)
+    }
+
     /// Parses a single JSONL line emitted by `codex exec --json` (v0.131+).
     /// The schema places event details under a top-level `type` key, with
     /// item payloads nested under `item`. Older `msg.type` schemas are also
@@ -87,6 +173,12 @@ extension AIClient {
         // v0.131+: top-level `type` + nested `item`/`usage` payloads.
         if let topType = root["type"] as? String {
             switch topType {
+            case "thread.started":
+                if let threadID = root["thread_id"] as? String, !threadID.isEmpty {
+                    return .sessionStarted(id: threadID)
+                }
+                return nil
+
             case "item.completed":
                 guard let item = root["item"] as? [String: Any],
                       let itemType = item["type"] as? String
@@ -104,12 +196,17 @@ extension AIClient {
                     let id = (item["id"] as? String) ?? (item["call_id"] as? String) ?? ""
                     let success = (item["status"] as? String) == "success"
                         || (item["exit_code"] as? Int) == 0
-                    return .toolEnd(id: id, success: success)
+                    let output = (item["output"] as? String) ?? (item["result"] as? String)
+                    return .toolEnd(id: id, success: success, output: output.map { String($0.prefix(1024)) })
                 default:
                     return nil
                 }
 
             case "turn.completed", "task_complete":
+                if let usage = root["usage"] as? [String: Any],
+                   let cost = usage["total_cost_usd"] as? Double, cost > 0 {
+                    return .turnCost(usd: cost)
+                }
                 return .done
 
             case "error":
@@ -141,7 +238,8 @@ extension AIClient {
         case "function_call_end":
             guard let callId = msg["call_id"] as? String else { return nil }
             let exitCode = msg["exit_code"] as? Int ?? 1
-            return .toolEnd(id: callId, success: exitCode == 0)
+            let output = (msg["output"] as? String) ?? (msg["stdout"] as? String)
+            return .toolEnd(id: callId, success: exitCode == 0, output: output.map { String($0.prefix(1024)) })
 
         case "task_complete":
             return .done
@@ -152,6 +250,21 @@ extension AIClient {
     }
 
     // MARK: - Private Helpers
+
+    /// Extracts a UTF-8 string from Claude's `tool_result.content`.
+    /// The content can be a bare string OR an array of text blocks
+    /// (`[{"type":"text","text":"..."}]`). Truncated to 1024 chars so a giant
+    /// file read doesn't bloat persisted messages.
+    private static func claudeToolOutput(from raw: Any?) -> String? {
+        if let text = raw as? String, !text.isEmpty {
+            return String(text.prefix(1024))
+        }
+        if let blocks = raw as? [[String: Any]] {
+            let joined = blocks.compactMap { ($0["text"] as? String) }.joined(separator: "\n")
+            return joined.isEmpty ? nil : String(joined.prefix(1024))
+        }
+        return nil
+    }
 
     /// Builds a ≤60-char description from a Claude tool input dict.
     /// Priority: command > file_path > pattern > path > first string value.
@@ -188,7 +301,8 @@ extension AIClient {
         payload: AIPromptPayload,
         cwd: URL,
         maxTokens: Int,
-        allowEdits: Bool
+        allowEdits: Bool,
+        resumeSessionID: String? = nil
     ) async -> AsyncThrowingStream<CLIStreamEvent, Error> {
         let discovery = CLIDiscoveryService()
         let toolStatus = await discovery.status(for: .claude)
@@ -200,7 +314,7 @@ extension AIClient {
         let absPath = toolPath.path
         let permissionMode = allowEdits ? "acceptEdits" : "plan"
         _ = maxTokens // Claude CLI does not expose a max-tokens flag; budget is gated via --max-budget-usd.
-        let args: [String] = [
+        var args: [String] = [
             "-p", "-",
             "--output-format", "stream-json",
             "--verbose",
@@ -208,10 +322,15 @@ extension AIClient {
             "--permission-mode", permissionMode,
             "--max-budget-usd", "1.00"
         ]
+        // Resume a prior server-side session if we captured one on the previous
+        // turn. Skips re-sending the entire conversation context.
+        if let sid = resumeSessionID, !sid.isEmpty {
+            args.append(contentsOf: ["--resume", sid])
+        }
 
         let prompt = AIClient.renderUserMessage(from: payload)
         return spawnCLIStream(absPath: absPath, args: args, cwd: cwd, stdinData: Data(prompt.utf8)) { line in
-            AIClient.parseClaudeJSONLLine(line)
+            AIClient.parseClaudeJSONLEvents(line)
         }
     }
 
@@ -223,7 +342,8 @@ extension AIClient {
     func streamCodexCLI(
         payload: AIPromptPayload,
         cwd: URL,
-        allowEdits: Bool
+        allowEdits: Bool,
+        resumeSessionID: String? = nil
     ) async -> AsyncThrowingStream<CLIStreamEvent, Error> {
         let discovery = CLIDiscoveryService()
         let toolStatus = await discovery.status(for: .codex)
@@ -234,18 +354,33 @@ extension AIClient {
 
         let absPath = toolPath.path
         let sandbox = allowEdits ? "workspace-write" : "read-only"
-        let args: [String] = [
-            "exec",
-            "--json",
-            "--skip-git-repo-check",
-            "-C", cwd.path,
-            "-s", sandbox,
-            "-"
-        ]
+        var args: [String]
+        if let sid = resumeSessionID, !sid.isEmpty {
+            // `codex exec resume <id>` continues the prior conversation rather
+            // than starting fresh; sandbox / cd flags still apply.
+            args = [
+                "exec",
+                "--json",
+                "--skip-git-repo-check",
+                "-C", cwd.path,
+                "-s", sandbox,
+                "resume", sid,
+                "-"
+            ]
+        } else {
+            args = [
+                "exec",
+                "--json",
+                "--skip-git-repo-check",
+                "-C", cwd.path,
+                "-s", sandbox,
+                "-"
+            ]
+        }
 
         let prompt = AIClient.renderUserMessage(from: payload)
         return spawnCLIStream(absPath: absPath, args: args, cwd: cwd, stdinData: Data(prompt.utf8)) { line in
-            AIClient.parseCodexJSONLLine(line)
+            AIClient.parseCodexJSONLEvents(line)
         }
     }
 
@@ -290,7 +425,7 @@ extension AIClient {
         args: [String],
         cwd: URL,
         stdinData: Data,
-        parser: @escaping @Sendable (Data) -> CLIStreamEvent?
+        parser: @escaping @Sendable (Data) -> [CLIStreamEvent]
     ) -> AsyncThrowingStream<CLIStreamEvent, Error> {
         return AsyncThrowingStream { continuation in
             let process = Process()
@@ -382,7 +517,7 @@ extension AIClient {
                 for try await byte in stdoutHandle.bytes {
                     if byte == newlineByte {
                         if !lineBuffer.isEmpty {
-                            if let event = parser(lineBuffer) {
+                            for event in parser(lineBuffer) {
                                 continuation.yield(event)
                             }
                             lineBuffer.removeAll(keepingCapacity: true)
@@ -394,7 +529,7 @@ extension AIClient {
 
                 // Flush any trailing partial line (no trailing newline)
                 if !lineBuffer.isEmpty {
-                    if let event = parser(lineBuffer) {
+                    for event in parser(lineBuffer) {
                         continuation.yield(event)
                     }
                 }

@@ -70,7 +70,7 @@ final class CodexCLIStreamParserTests: XCTestCase {
         {"msg":{"type":"function_call_end","call_id":"c1","exit_code":0}}
         """
         let event = AIClient.parseCodexJSONLLine(data(json))
-        XCTAssertEqual(event, .toolEnd(id: "c1", success: true))
+        XCTAssertEqual(event, .toolEnd(id: "c1", success: true, output: nil))
     }
 
     func testFunctionCallEndFailure() {
@@ -78,7 +78,7 @@ final class CodexCLIStreamParserTests: XCTestCase {
         {"msg":{"type":"function_call_end","call_id":"c1","exit_code":1}}
         """
         let event = AIClient.parseCodexJSONLLine(data(json))
-        XCTAssertEqual(event, .toolEnd(id: "c1", success: false))
+        XCTAssertEqual(event, .toolEnd(id: "c1", success: false, output: nil))
     }
 
     func testFunctionCallEndNonZeroExitFailure() {
@@ -86,7 +86,7 @@ final class CodexCLIStreamParserTests: XCTestCase {
         {"msg":{"type":"function_call_end","call_id":"c3","exit_code":127}}
         """
         let event = AIClient.parseCodexJSONLLine(data(json))
-        XCTAssertEqual(event, .toolEnd(id: "c3", success: false))
+        XCTAssertEqual(event, .toolEnd(id: "c3", success: false, output: nil))
     }
 
     func testFunctionCallEndMissingExitCodeDefaultsToFailure() {
@@ -94,7 +94,7 @@ final class CodexCLIStreamParserTests: XCTestCase {
         {"msg":{"type":"function_call_end","call_id":"c4"}}
         """
         let event = AIClient.parseCodexJSONLLine(data(json))
-        XCTAssertEqual(event, .toolEnd(id: "c4", success: false))
+        XCTAssertEqual(event, .toolEnd(id: "c4", success: false, output: nil))
     }
 
     // MARK: - Task Complete
@@ -139,9 +139,15 @@ final class CodexCLIStreamParserTests: XCTestCase {
         XCTAssertEqual(AIClient.parseCodexJSONLLine(data(json)), .done)
     }
 
-    func testV0131ThreadStartedIgnored() {
+    func testV0131TurnCompletedEventsEmitUsageThenDone() {
+        let json = #"{"type":"turn.completed","usage":{"input_tokens":28298,"output_tokens":7}}"#
+        let events = AIClient.parseCodexJSONLEvents(data(json))
+        XCTAssertEqual(events, [.turnUsage(inputTokens: 28298, outputTokens: 7), .done])
+    }
+
+    func testV0131ThreadStartedYieldsSessionID() {
         let json = #"{"type":"thread.started","thread_id":"abc"}"#
-        XCTAssertNil(AIClient.parseCodexJSONLLine(data(json)))
+        XCTAssertEqual(AIClient.parseCodexJSONLLine(data(json)), .sessionStarted(id: "abc"))
     }
 
     func testV0131FunctionCall() {

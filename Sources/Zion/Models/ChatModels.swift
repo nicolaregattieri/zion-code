@@ -20,6 +20,9 @@ struct ChatToolEvent: Identifiable, Equatable, Codable {
     let name: String
     var status: ToolEventStatus
     let argsPreview: String
+    /// Truncated stdout/result string captured from the tool's terminating event.
+    /// Bound to 1024 chars upstream in the parser so persisted messages stay small.
+    var output: String? = nil
 }
 
 // MARK: - ChatMessage
@@ -64,19 +67,42 @@ struct ChatThread: Identifiable, Equatable {
     let createdAt: Date
     var repoID: String
     var title: String
+    /// Captured from the CLI provider's first event of the previous turn so the
+    /// next turn can resume the same server-side session
+    /// (`claude --resume <id>` / `codex exec resume <id>`).
+    /// Provider-specific: cleared whenever the user switches providers.
+    var cliSessionID: String? = nil
+    var cliSessionProvider: String? = nil
+    /// Sum of `total_cost_usd` reported by the CLI on each turn's terminating
+    /// event. Codex Plus is unmetered → stays 0.
+    var totalCostUSD: Double = 0
+    /// Cumulative token usage across all turns of this thread, summed from
+    /// every provider that reports it (claude, codex, OpenAI-compatible local).
+    var totalInputTokens: Int = 0
+    var totalOutputTokens: Int = 0
 
     init(
         id: UUID = UUID(),
         messages: [ChatMessage] = [],
         createdAt: Date = Date(),
         repoID: String = "",
-        title: String = ChatThread.defaultTitle()
+        title: String = ChatThread.defaultTitle(),
+        cliSessionID: String? = nil,
+        cliSessionProvider: String? = nil,
+        totalCostUSD: Double = 0,
+        totalInputTokens: Int = 0,
+        totalOutputTokens: Int = 0
     ) {
         self.id = id
         self.messages = messages
         self.createdAt = createdAt
         self.repoID = repoID
         self.title = title
+        self.cliSessionID = cliSessionID
+        self.cliSessionProvider = cliSessionProvider
+        self.totalCostUSD = totalCostUSD
+        self.totalInputTokens = totalInputTokens
+        self.totalOutputTokens = totalOutputTokens
     }
 
     static func defaultTitle(date: Date = Date()) -> String {

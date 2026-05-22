@@ -81,7 +81,7 @@ final class ClaudeCLIStreamParserTests: XCTestCase {
         {"type":"tool_result","tool_use_id":"t1","is_error":false}
         """
         let event = AIClient.parseClaudeJSONLLine(data(json))
-        XCTAssertEqual(event, .toolEnd(id: "t1", success: true))
+        XCTAssertEqual(event, .toolEnd(id: "t1", success: true, output: nil))
     }
 
     func testToolResultFailure() {
@@ -89,7 +89,7 @@ final class ClaudeCLIStreamParserTests: XCTestCase {
         {"type":"tool_result","tool_use_id":"t1","is_error":true}
         """
         let event = AIClient.parseClaudeJSONLLine(data(json))
-        XCTAssertEqual(event, .toolEnd(id: "t1", success: false))
+        XCTAssertEqual(event, .toolEnd(id: "t1", success: false, output: nil))
     }
 
     func testToolResultDefaultsToSuccessWhenIsErrorAbsent() {
@@ -97,7 +97,7 @@ final class ClaudeCLIStreamParserTests: XCTestCase {
         {"type":"tool_result","tool_use_id":"t2"}
         """
         let event = AIClient.parseClaudeJSONLLine(data(json))
-        XCTAssertEqual(event, .toolEnd(id: "t2", success: true))
+        XCTAssertEqual(event, .toolEnd(id: "t2", success: true, output: nil))
     }
 
     // MARK: - Done
@@ -126,6 +126,53 @@ final class ClaudeCLIStreamParserTests: XCTestCase {
         """
         let event = AIClient.parseClaudeJSONLLine(data(json))
         XCTAssertEqual(event, .error("Unknown error"))
+    }
+
+    // MARK: - Session resume + cost (Phase 6)
+
+    func testSystemInitYieldsSessionStarted() {
+        let json = #"{"type":"system","subtype":"init","session_id":"sess_42"}"#
+        XCTAssertEqual(AIClient.parseClaudeJSONLLine(data(json)), .sessionStarted(id: "sess_42"))
+    }
+
+    func testSystemInitWithoutSessionIDIsNil() {
+        let json = #"{"type":"system","subtype":"init"}"#
+        XCTAssertNil(AIClient.parseClaudeJSONLLine(data(json)))
+    }
+
+    func testResultWithCostYieldsTurnCost() {
+        let json = #"{"type":"result","subtype":"success","total_cost_usd":0.0993795}"#
+        XCTAssertEqual(AIClient.parseClaudeJSONLLine(data(json)), .turnCost(usd: 0.0993795))
+    }
+
+    func testResultEventsEmitsCostThenDone() {
+        let json = #"{"type":"result","subtype":"success","total_cost_usd":0.05}"#
+        let events = AIClient.parseClaudeJSONLEvents(data(json))
+        XCTAssertEqual(events, [.turnCost(usd: 0.05), .done])
+    }
+
+    func testResultEventsEmitsCostUsageDone() {
+        let json = #"{"type":"result","subtype":"success","total_cost_usd":0.05,"usage":{"input_tokens":42,"output_tokens":7}}"#
+        let events = AIClient.parseClaudeJSONLEvents(data(json))
+        XCTAssertEqual(events, [.turnCost(usd: 0.05), .turnUsage(inputTokens: 42, outputTokens: 7), .done])
+    }
+
+    func testToolResultCapturesStringContent() {
+        let json = #"{"type":"tool_result","tool_use_id":"t9","is_error":false,"content":"file: foo.swift\nfunc bar() {}"}"#
+        if case .toolEnd(_, _, let output) = AIClient.parseClaudeJSONLLine(data(json)) {
+            XCTAssertEqual(output, "file: foo.swift\nfunc bar() {}")
+        } else {
+            XCTFail("Expected toolEnd")
+        }
+    }
+
+    func testToolResultCapturesArrayContent() {
+        let json = #"{"type":"tool_result","tool_use_id":"t10","is_error":false,"content":[{"type":"text","text":"hello"},{"type":"text","text":"world"}]}"#
+        if case .toolEnd(_, _, let output) = AIClient.parseClaudeJSONLLine(data(json)) {
+            XCTAssertEqual(output, "hello\nworld")
+        } else {
+            XCTFail("Expected toolEnd")
+        }
     }
 
     // MARK: - Malformed / Nil cases

@@ -351,27 +351,33 @@ final class ChatService {
 
             case .claudeCLI:
                 let stream: AsyncThrowingStream<CLIStreamEvent, Error>
+                await MainActor.run { self.stampSessionProvider("claude", threadID: threadID) }
                 if let injected = self.cliStreamProvider {
                     stream = injected(payload, repoURL)
                 } else {
+                    let resumeID = await MainActor.run { self.resumeSessionID(for: "claude", threadID: threadID) }
                     stream = await self.ai.streamClaudeCLI(
                         payload: payload,
                         cwd: repoURL,
                         maxTokens: 2048,
-                        allowEdits: UserDefaults.standard.bool(forKey: "chat.cliAllowEdits")
+                        allowEdits: UserDefaults.standard.bool(forKey: "chat.cliAllowEdits"),
+                        resumeSessionID: resumeID
                     )
                 }
                 await self.consumeCLIStream(stream, assistantID: assistantID, threadID: threadID)
 
             case .codexCLI:
                 let stream: AsyncThrowingStream<CLIStreamEvent, Error>
+                await MainActor.run { self.stampSessionProvider("codex", threadID: threadID) }
                 if let injected = self.cliStreamProvider {
                     stream = injected(payload, repoURL)
                 } else {
+                    let resumeID = await MainActor.run { self.resumeSessionID(for: "codex", threadID: threadID) }
                     stream = await self.ai.streamCodexCLI(
                         payload: payload,
                         cwd: repoURL,
-                        allowEdits: UserDefaults.standard.bool(forKey: "chat.cliAllowEdits")
+                        allowEdits: UserDefaults.standard.bool(forKey: "chat.cliAllowEdits"),
+                        resumeSessionID: resumeID
                     )
                 }
                 await self.consumeCLIStream(stream, assistantID: assistantID, threadID: threadID)
@@ -512,17 +518,36 @@ final class ChatService {
                         }
                     }
 
-                case .toolEnd(let id, let success):
+                case .toolEnd(let id, let success, let output):
                     await MainActor.run {
                         if let idx = self.pendingToolEvents.firstIndex(where: { $0.id == id }) {
                             self.pendingToolEvents[idx].status = success ? .completed : .failed
+                            self.pendingToolEvents[idx].output = output
                         }
+                        // Also persist the final tool event into the assistant message so
+                        // it survives a thread reload (pendingToolEvents is transient).
+                        self.attachToolEventToAssistant(assistantID: assistantID, id: id, status: success ? .completed : .failed, output: output)
                     }
                     // Schedule cleanup after delay
                     let capturedID = id
                     Task { @MainActor in
                         try? await Task.sleep(nanoseconds: UInt64(Constants.Timing.toolEventCleanupDelay * 1_000_000_000))
                         self.pendingToolEvents.removeAll { $0.id == capturedID }
+                    }
+
+                case .sessionStarted(let sessionID):
+                    await MainActor.run {
+                        self.recordCLISessionID(sessionID, threadID: threadID)
+                    }
+
+                case .turnCost(let usd):
+                    await MainActor.run {
+                        self.addTurnCost(usd, threadID: threadID)
+                    }
+
+                case .turnUsage(let input, let output):
+                    await MainActor.run {
+                        self.addTurnUsage(input: input, output: output, threadID: threadID)
                     }
 
                 case .done:
@@ -573,6 +598,78 @@ final class ChatService {
         for tIdx in threads.indices {
             if let mIdx = threads[tIdx].messages.firstIndex(where: { $0.id == id }) {
                 threads[tIdx].messages[mIdx].isStreaming = isStreaming
+                return
+            }
+        }
+    }
+
+    // MARK: - CLI session resume + cost tracking (MainActor)
+
+    /// Returns the CLI session id stored on the thread when it was opened with
+    /// the same provider. Switching providers clears the resume so we don't
+    /// hand a claude session id to codex (or vice versa).
+    func resumeSessionID(for provider: String, threadID: UUID) -> String? {
+        guard let tIdx = threads.firstIndex(where: { $0.id == threadID }) else { return nil }
+        let thread = threads[tIdx]
+        if thread.cliSessionProvider == provider {
+            return thread.cliSessionID
+        }
+        return nil
+    }
+
+    fileprivate func stampSessionProvider(_ provider: String, threadID: UUID) {
+        guard let tIdx = threads.firstIndex(where: { $0.id == threadID }) else { return }
+        // Switching providers within the same thread invalidates the prior
+        // session id (claude id != codex id).
+        if threads[tIdx].cliSessionProvider != provider {
+            threads[tIdx].cliSessionProvider = provider
+            threads[tIdx].cliSessionID = nil
+        }
+    }
+
+    fileprivate func recordCLISessionID(_ sessionID: String, threadID: UUID) {
+        guard let tIdx = threads.firstIndex(where: { $0.id == threadID }) else { return }
+        // Only record if empty — re-emitted session lines on subsequent turns are
+        // the same id; defensive against future schema additions.
+        if threads[tIdx].cliSessionID == nil {
+            threads[tIdx].cliSessionID = sessionID
+            // Provider tag is recovered from the active provider at send time; we
+            // do the actual binding in attachToolEventToAssistant below since both
+            // happen in the same MainActor consumer arm.
+        } else {
+            threads[tIdx].cliSessionID = sessionID
+        }
+    }
+
+    fileprivate func addTurnCost(_ usd: Double, threadID: UUID) {
+        guard let tIdx = threads.firstIndex(where: { $0.id == threadID }) else { return }
+        threads[tIdx].totalCostUSD += usd
+    }
+
+    fileprivate func addTurnUsage(input: Int, output: Int, threadID: UUID) {
+        guard let tIdx = threads.firstIndex(where: { $0.id == threadID }) else { return }
+        threads[tIdx].totalInputTokens += input
+        threads[tIdx].totalOutputTokens += output
+    }
+
+    fileprivate func attachToolEventToAssistant(assistantID: UUID, id: String, status: ToolEventStatus, output: String?) {
+        for tIdx in threads.indices {
+            if let mIdx = threads[tIdx].messages.firstIndex(where: { $0.id == assistantID }) {
+                var events = threads[tIdx].messages[mIdx].toolEvents ?? []
+                if let existing = events.firstIndex(where: { $0.id == id }) {
+                    events[existing].status = status
+                    events[existing].output = output
+                } else {
+                    let pending = pendingToolEvents.first(where: { $0.id == id })
+                    events.append(ChatToolEvent(
+                        id: id,
+                        name: pending?.name ?? "tool",
+                        status: status,
+                        argsPreview: pending?.argsPreview ?? "",
+                        output: output
+                    ))
+                }
+                threads[tIdx].messages[mIdx].toolEvents = events
                 return
             }
         }
