@@ -31,7 +31,7 @@ enum AIProviderSupport {
             return URL(string: "https://aistudio.google.com/apikey")
         case .local:
             return URL(string: "https://ollama.com/library")
-        case .none:
+        case .none, .claudeCLI, .codexCLI:
             return nil
         }
     }

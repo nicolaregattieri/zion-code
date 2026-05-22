@@ -47,6 +47,8 @@ struct AIPromptPayload {
     let taskInstructions: String
     let untrustedSections: [AIUntrustedPromptSection]
     let suspiciousPatterns: [String]
+    /// Working directory for subprocess-based providers (`.claudeCLI`/`.codexCLI`). Defaults to nil.
+    var cwd: URL? = nil
 }
 
 actor AIClient {

@@ -9,7 +9,7 @@ enum AIModelCatalogService {
             return anthropicSelection(mode: mode, lane: lane)
         case .gemini:
             return geminiSelection(mode: mode, lane: lane)
-        case .none:
+        case .none, .claudeCLI, .codexCLI:
             return AIResolvedModelSelection(lane: lane, primaryModelID: "", fallbackModelIDs: [])
         case .local:
             return localSelection(mode: mode, lane: lane)

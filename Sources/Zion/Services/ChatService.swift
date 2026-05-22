@@ -317,6 +317,11 @@ final class ChatService {
                 let stream = await self.ai.streamOpenAI(payload: payload, apiKey: apiKey, maxTokens: 2048, modelID: modelID)
                 await self.consumeStream(stream, assistantID: assistantID, threadID: threadID)
 
+            case .claudeCLI, .codexCLI:
+                await MainActor.run {
+                    self.setAssistantContent(id: assistantID, content: L10n("ai.error.cli.notInstalled"))
+                }
+
             case .gemini, .none:
                 do {
                     let response = try await self.ai.call(
