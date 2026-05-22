@@ -24,14 +24,16 @@ final class AIClientCLIDispatchTests: XCTestCase {
         )
     }
 
-    /// Builds a minimal AIPromptPayload with a cwd set.
+    /// Builds a minimal AIPromptPayload with a cwd set to a path that cannot exist.
+    /// We use a non-existent directory so that any CLI subprocess will fail at chdir,
+    /// proving routing without depending on whether the CLI is installed locally.
     private func makePayloadWithCwd() -> AIPromptPayload {
         AIPromptPayload(
             systemInstructions: "sys",
             taskInstructions: "task",
             untrustedSections: [],
             suspiciousPatterns: [],
-            cwd: URL(fileURLWithPath: "/tmp")
+            cwd: URL(fileURLWithPath: "/nonexistent-zion-cli-test-\(UUID().uuidString)")
         )
     }
 

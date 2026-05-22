@@ -159,15 +159,14 @@ extension AIClient {
 
         let absPath = toolPath.path
         let permissionMode = allowEdits ? "acceptEdits" : "plan"
+        _ = maxTokens // Claude CLI does not expose a max-tokens flag; budget is gated via --max-budget-usd.
         let args: [String] = [
             "-p", "-",
             "--output-format", "stream-json",
             "--verbose",
             "--include-partial-messages",
             "--permission-mode", permissionMode,
-            "--max-budget-usd", "1.00",
-            "--append-system-prompt", "Zion safety preamble",
-            "--max-tokens", "\(maxTokens)"
+            "--max-budget-usd", "1.00"
         ]
 
         let prompt = AIClient.renderUserMessage(from: payload)
@@ -198,6 +197,7 @@ extension AIClient {
         let args: [String] = [
             "exec",
             "--json",
+            "--skip-git-repo-check",
             "-C", cwd.path,
             "-s", sandbox,
             "-"
@@ -262,10 +262,7 @@ extension AIClient {
             process.standardInput = stdinPipe
             process.standardOutput = stdoutPipe
             process.standardError = stderrPipe
-            process.environment = [
-                "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin",
-                "HOME": NSHomeDirectory()
-            ]
+            process.environment = AIClient.buildCLIEnvironment(binaryPath: absPath)
 
             // Wrap with setsid (or posix_spawn group) so child becomes new process group leader
             let useSetsid = FileManager.default.fileExists(atPath: "/usr/bin/setsid")
@@ -374,6 +371,54 @@ extension AIClient {
                 }
             }
         }
+    }
+}
+
+// MARK: - CLI Environment
+
+extension AIClient {
+    /// Builds a minimal, deterministic environment for CLI subprocesses.
+    ///
+    /// CLI tools (claude, codex) require certain variables to function correctly under
+    /// the Hardened Runtime, where the parent process inherits an empty environment when
+    /// none is provided to Process. Specifically:
+    /// - `HOME` so the CLI can locate `~/.claude/` and `~/.codex/` config directories.
+    /// - `USER` so macOS Keychain APIs (used by Claude Code for OAuth tokens) can
+    ///   resolve the current user identity. Without it Claude returns "Not logged in".
+    /// - `PATH` containing the parent directory of the CLI binary plus common system bins.
+    ///   nvm/Homebrew installs depend on co-located helpers (`node`, `npx`, etc.).
+    /// - `LANG` for UTF-8 stdout when the CLI streams non-ASCII content.
+    /// - `TMPDIR` so tools that create temporary files (e.g. session caches) succeed.
+    ///
+    /// This list is intentionally narrow — we do not inherit the full parent environment
+    /// to avoid leaking secrets or test variables into the subprocess.
+    static func buildCLIEnvironment(binaryPath: String) -> [String: String] {
+        let parentEnv = ProcessInfo.processInfo.environment
+        let binaryDir = (binaryPath as NSString).deletingLastPathComponent
+        let basePaths = ["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", "/bin"]
+        var pathComponents = [binaryDir]
+        pathComponents.append(contentsOf: basePaths.filter { $0 != binaryDir })
+
+        var env: [String: String] = [
+            "HOME": NSHomeDirectory(),
+            "PATH": pathComponents.joined(separator: ":"),
+            "LANG": parentEnv["LANG"] ?? "en_US.UTF-8"
+        ]
+        if let user = parentEnv["USER"] ?? parentEnv["LOGNAME"] {
+            env["USER"] = user
+            env["LOGNAME"] = user
+        } else {
+            // Fallback: NSUserName() works under Hardened Runtime without env propagation.
+            let user = NSUserName()
+            env["USER"] = user
+            env["LOGNAME"] = user
+        }
+        if let tmp = parentEnv["TMPDIR"] {
+            env["TMPDIR"] = tmp
+        }
+        // Pass through shell so any helpers that spawn sub-shells use a sane default.
+        env["SHELL"] = parentEnv["SHELL"] ?? "/bin/sh"
+        return env
     }
 }
 

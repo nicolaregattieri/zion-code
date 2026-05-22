@@ -80,21 +80,38 @@ actor CLIDiscoveryService {
     }
 
     private func buildProbePaths(for tool: CLITool) -> [String] {
+        let home = NSHomeDirectory()
         var paths: [String] = [
             "/opt/homebrew/bin/\(tool.rawValue)",
             "/usr/local/bin/\(tool.rawValue)",
-            "\(NSHomeDirectory())/.local/bin/\(tool.rawValue)"
+            "\(home)/.local/bin/\(tool.rawValue)",
+            "\(home)/.bun/bin/\(tool.rawValue)",
+            "\(home)/.volta/bin/\(tool.rawValue)",
+            "\(home)/.deno/bin/\(tool.rawValue)",
         ]
 
-        // nvm glob: ~/.nvm/versions/node/*/bin/<cli>
-        let nvmNodeBase = "\(NSHomeDirectory())/.nvm/versions/node"
-        if let nodeDirs = try? FileManager.default.contentsOfDirectory(atPath: nvmNodeBase) {
-            for nodeDir in nodeDirs.sorted() {
-                paths.append("\(nvmNodeBase)/\(nodeDir)/bin/\(tool.rawValue)")
+        // nvm: ~/.nvm/versions/node/*/bin/<cli>
+        appendNodeManagerPaths(into: &paths, base: "\(home)/.nvm/versions/node", tool: tool)
+        // fnm (default install): ~/.fnm/node-versions/*/installation/bin/<cli>
+        let fnmBase = "\(home)/.fnm/node-versions"
+        if let dirs = try? FileManager.default.contentsOfDirectory(atPath: fnmBase) {
+            for dir in dirs.sorted() {
+                paths.append("\(fnmBase)/\(dir)/installation/bin/\(tool.rawValue)")
             }
         }
+        // asdf: ~/.asdf/installs/nodejs/*/bin/<cli>
+        appendNodeManagerPaths(into: &paths, base: "\(home)/.asdf/installs/nodejs", tool: tool)
+        // n: /usr/local/n/versions/node/*/bin/<cli>
+        appendNodeManagerPaths(into: &paths, base: "/usr/local/n/versions/node", tool: tool)
 
         return paths
+    }
+
+    private func appendNodeManagerPaths(into paths: inout [String], base: String, tool: CLITool) {
+        guard let dirs = try? FileManager.default.contentsOfDirectory(atPath: base) else { return }
+        for dir in dirs.sorted() {
+            paths.append("\(base)/\(dir)/bin/\(tool.rawValue)")
+        }
     }
 
     // MARK: - Version
