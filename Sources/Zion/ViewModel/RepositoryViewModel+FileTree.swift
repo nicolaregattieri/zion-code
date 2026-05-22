@@ -86,7 +86,8 @@ extension RepositoryViewModel {
     /// on directories that still exist. This avoids the collapse-then-expand flicker
     /// caused by replacing the entire array.
     func mergeTopLevel(old: [FileItem], new: [FileItem]) -> [FileItem] {
-        mergeDirectoryChildren(old: old, new: new)
+        if new.isEmpty && !old.isEmpty { return old }
+        return mergeDirectoryChildren(old: old, new: new)
     }
 
     /// Merge directory children while preserving already loaded descendants to avoid
