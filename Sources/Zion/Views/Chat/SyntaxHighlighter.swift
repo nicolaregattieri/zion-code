@@ -4,8 +4,18 @@ import SwiftUI
 /// Token coverage: keywords, types, strings, numbers, comments, function names, attributes.
 enum SyntaxHighlighter {
 
+    /// Memoize highlighted AttributedString per (source, language) to skip regex passes
+    /// on every SwiftUI body call (streaming deltas re-render the whole tree).
+    private static var cache: [String: AttributedString] = [:]
+    private static let cacheLimit = 200
+
     static func highlight(_ source: String, language: String?) -> AttributedString {
         let lang = normalize(language)
+        let key = "\(lang)::\(source)"
+        if let hit = cache[key] { return hit }
+        if cache.count > cacheLimit {
+            cache.removeAll(keepingCapacity: true)
+        }
         var attributed = AttributedString(source)
         let nsSource = source as NSString
         let fullRange = NSRange(location: 0, length: nsSource.length)
@@ -20,6 +30,7 @@ enum SyntaxHighlighter {
         for token in tokens {
             apply(token: token, to: &attributed, in: nsSource, fullRange: fullRange)
         }
+        cache[key] = attributed
         return attributed
     }
 
