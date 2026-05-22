@@ -28,7 +28,7 @@ struct ChatThreadList: View {
                     .background(DesignSystem.Colors.glassBorder)
                 listContent
             }
-            .frame(width: Self.expandedWidth)
+            .frame(maxWidth: .infinity)
         }
     }
 
