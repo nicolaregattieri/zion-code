@@ -1071,7 +1071,6 @@
 "Recortar %d Itens" = "Cut %d Items";
 "Duplicar %d Itens" = "Duplicate %d Items";
 "Excluir %d Itens" = "Delete %d Items";
-"Adicionar ao .gitignore" = "Add to .gitignore";
 "Esta acao nao pode ser desfeita." = "This action cannot be undone.";
 
 // Editor Settings Tab
@@ -1492,7 +1491,6 @@
 
 // Wave 2: Branch Search
 "Filtrar branches..." = "Filter branches...";
-"Nenhuma branch encontrada" = "No branches found";
 
 // Wave 2: AI Pending Changes Summary
 "Resumo IA das mudancas" = "AI summary of changes";
@@ -2493,7 +2491,3 @@
 "chat.cli.tool.running" = "Running %@...";
 "chat.cli.tool.completed" = "%@ completed";
 "chat.cli.tool.failed" = "%@ failed";
-"ai.error.cli.notInstalled" = "CLI not installed";
-"ai.error.cli.notAuthenticated" = "CLI not authenticated";
-"ai.error.cli.versionTooOld" = "CLI version too old";
-"ai.error.cli.execFailed" = "CLI execution failed: %@";

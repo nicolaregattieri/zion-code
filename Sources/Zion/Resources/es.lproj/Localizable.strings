@@ -1066,7 +1066,6 @@
 "Recortar %d Itens" = "Cortar %d Elementos";
 "Duplicar %d Itens" = "Duplicar %d Elementos";
 "Excluir %d Itens" = "Eliminar %d Elementos";
-"Adicionar ao .gitignore" = "Agregar a .gitignore";
 "Esta acao nao pode ser desfeita." = "Esta acción no se puede deshacer.";
 
 // Editor Settings Tab
@@ -1508,7 +1507,6 @@
 
 // Wave 2: Branch Search
 "Filtrar branches..." = "Filtrar ramas...";
-"Nenhuma branch encontrada" = "No se encontraron ramas";
 
 // Wave 2: AI Pending Changes Summary
 "Resumo IA das mudancas" = "Resumen IA de los cambios";
@@ -2419,8 +2417,6 @@
 
 // Local LLM Support (Ollama Phase 1)
 "settings.ai.provider.local" = "Local / Compatible con OpenAI";
-"settings.ai.provider.claudeCLI" = "Claude Code (CLI)";
-"settings.ai.provider.codexCLI" = "Codex CLI";
 "settings.ai.local.serverURL" = "URL del servidor";
 "settings.ai.local.serverURL.hint" = "ej.: http://localhost:11434/v1 (Ollama, LM Studio, MLX server, OpenRouter)";
 "settings.ai.local.model" = "Modelo";
@@ -2517,7 +2513,3 @@
 "chat.cli.tool.running" = "Ejecutando %@...";
 "chat.cli.tool.completed" = "%@ completado";
 "chat.cli.tool.failed" = "%@ falló";
-"ai.error.cli.notInstalled" = "CLI no instalado";
-"ai.error.cli.notAuthenticated" = "CLI no autenticado";
-"ai.error.cli.versionTooOld" = "Versión del CLI demasiado antigua";
-"ai.error.cli.execFailed" = "Error en la ejecución del CLI: %@";

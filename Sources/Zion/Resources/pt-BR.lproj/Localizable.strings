@@ -967,7 +967,6 @@
 "Recortar %d Itens" = "Recortar %d Itens";
 "Duplicar %d Itens" = "Duplicar %d Itens";
 "Excluir %d Itens" = "Excluir %d Itens";
-"Adicionar ao .gitignore" = "Adicionar ao .gitignore";
 "Esta acao nao pode ser desfeita." = "Esta ação não pode ser desfeita.";
 
 // Editor Settings Tab
@@ -1234,7 +1233,6 @@
 "Nao foi possivel acessar o repositorio remoto." = "Não foi possível acessar o repositório remoto.";
 "Possiveis solucoes:" = "Possíveis soluções:";
 "Verifique se sua chave SSH esta adicionada ao ssh-agent." = "Verifique se sua chave SSH está adicionada ao ssh-agent.";
-"Configuracao SSH" = "Configuração SSH";
 "Teste a conexao SSH com o GitHub." = "Teste a conexão SSH com o GitHub.";
 "Autentique-se com o GitHub CLI para configurar credenciais." = "Autentique-se com o GitHub CLI para configurar credenciais.";
 "Verifique as credenciais salvas no Keychain Access do macOS." = "Verifique as credenciais salvas no Keychain Access do macOS.";
@@ -2397,8 +2395,6 @@
 
 // Local LLM Support (Ollama Phase 1)
 "settings.ai.provider.local" = "Local / OpenAI-compatível";
-"settings.ai.provider.claudeCLI" = "Claude Code (CLI)";
-"settings.ai.provider.codexCLI" = "Codex CLI";
 "settings.ai.local.serverURL" = "URL do servidor";
 "settings.ai.local.serverURL.hint" = "ex.: http://localhost:11434/v1 (Ollama, LM Studio, MLX server, OpenRouter)";
 "settings.ai.local.model" = "Modelo";
@@ -2495,7 +2491,3 @@
 "chat.cli.tool.running" = "Executando %@...";
 "chat.cli.tool.completed" = "%@ concluído";
 "chat.cli.tool.failed" = "%@ falhou";
-"ai.error.cli.notInstalled" = "CLI não instalado";
-"ai.error.cli.notAuthenticated" = "CLI não autenticado";
-"ai.error.cli.versionTooOld" = "Versão do CLI muito antiga";
-"ai.error.cli.execFailed" = "Falha na execução do CLI: %@";
