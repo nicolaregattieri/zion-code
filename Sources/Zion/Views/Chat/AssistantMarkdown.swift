@@ -9,7 +9,7 @@ struct AssistantMarkdown: View {
 
     /// Process-wide chunk cache. Markdown parsing is pure: same content → same chunks.
     /// Avoids re-parsing every SwiftUI body() call (streaming deltas trigger full re-render).
-    private static var chunkCache: [String: [Chunk]] = [:]
+    nonisolated(unsafe) private static var chunkCache: [String: [Chunk]] = [:]
     private static let cacheLimit = 200
 
     private static func cachedChunks(for source: String) -> [Chunk] {

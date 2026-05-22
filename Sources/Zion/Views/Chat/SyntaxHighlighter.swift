@@ -6,7 +6,7 @@ enum SyntaxHighlighter {
 
     /// Memoize highlighted AttributedString per (source, language) to skip regex passes
     /// on every SwiftUI body call (streaming deltas re-render the whole tree).
-    private static var cache: [String: AttributedString] = [:]
+    nonisolated(unsafe) private static var cache: [String: AttributedString] = [:]
     private static let cacheLimit = 200
 
     static func highlight(_ source: String, language: String?) -> AttributedString {
