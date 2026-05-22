@@ -2536,3 +2536,4 @@
 "chat.screen.subtitle" = "Conversa con tu repositorio.";
 "chat.card.conversation" = "Conversación";
 "chat.card.history" = "Historial";
+"chat.cost.tooltip" = "Coste total de la suscripción en este hilo (reportado por el CLI de claude).";

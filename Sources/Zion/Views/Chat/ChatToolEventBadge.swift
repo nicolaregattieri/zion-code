@@ -5,23 +5,64 @@ import SwiftUI
 struct ChatToolEventBadge: View {
 
     let event: ChatToolEvent
+    @State private var isExpanded: Bool = false
+
+    private var canExpand: Bool {
+        !(event.argsPreview.isEmpty) || !(event.output ?? "").isEmpty
+    }
 
     var body: some View {
-        HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-            Image(systemName: iconName)
-                .font(DesignSystem.Typography.label)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
+        VStack(alignment: .leading, spacing: 4) {
+            Button {
+                if canExpand { isExpanded.toggle() }
+            } label: {
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+                    Image(systemName: iconName)
+                        .font(DesignSystem.Typography.label)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
 
-            Text(labelText)
-                .font(DesignSystem.Typography.label)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    Text(labelText)
+                        .font(DesignSystem.Typography.label)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
 
-            trailingIndicator
+                    if !event.argsPreview.isEmpty {
+                        Text(event.argsPreview)
+                            .font(DesignSystem.Typography.monoLabel)
+                            .foregroundStyle(DesignSystem.Colors.textTertiary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
+
+                    trailingIndicator
+
+                    if canExpand {
+                        Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                            .font(DesignSystem.Typography.label)
+                            .foregroundStyle(DesignSystem.Colors.textTertiary)
+                    }
+                }
+                .padding(.horizontal, DesignSystem.Spacing.compact)
+                .padding(.vertical, 3)
+                .background(DesignSystem.Colors.glassHover)
+                .clipShape(Capsule())
+                .contentShape(Capsule())
+            }
+            .buttonStyle(.plain)
+
+            if isExpanded, let output = event.output, !output.isEmpty {
+                ScrollView(.vertical) {
+                    Text(output)
+                        .font(DesignSystem.Typography.monoLabel)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(8)
+                }
+                .frame(maxHeight: 220)
+                .background(DesignSystem.Colors.glassSubtle)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius))
+            }
         }
-        .padding(.horizontal, DesignSystem.Spacing.compact)
-        .padding(.vertical, 3)
-        .background(DesignSystem.Colors.glassHover)
-        .clipShape(Capsule())
     }
 
     // MARK: - Private

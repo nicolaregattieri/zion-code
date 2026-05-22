@@ -59,7 +59,7 @@ struct ChatMessageBubble: View {
                 if let events = message.toolEvents, !events.isEmpty {
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.micro) {
                         ForEach(events) { event in
-                            ToolEventBadge(event: event)
+                            ChatToolEventBadge(event: event)
                         }
                     }
                 }

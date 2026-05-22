@@ -18,7 +18,7 @@ final class CLISubprocessCancellationTests: XCTestCase {
             args: ["60"],
             cwd: cwd,
             stdinData: Data()
-        ) { _ in nil }  // parser: sleep emits nothing
+        ) { _ in [] }  // parser: sleep emits nothing
 
         // Start consuming in a cancellable task
         let consumeTask = Task {
@@ -83,7 +83,7 @@ final class CLISubprocessCancellationTests: XCTestCase {
             args: ["60"],
             cwd: cwd,
             stdinData: Data()
-        ) { _ in nil }
+        ) { _ in [] }
 
         let consumeTask = Task {
             for try await _ in stream { }

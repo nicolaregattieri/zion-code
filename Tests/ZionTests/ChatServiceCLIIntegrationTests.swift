@@ -112,7 +112,7 @@ final class ChatServiceCLIIntegrationTests: XCTestCase {
 
         // Yield textDelta + toolEnd
         await bridge.yield(.textDelta("done"))
-        await bridge.yield(.toolEnd(id: toolID, success: true))
+        await bridge.yield(.toolEnd(id: toolID, success: true, output: nil))
         try await Task.sleep(nanoseconds: 50_000_000)
         capturedCompleted = service.pendingToolEvents
 
@@ -141,7 +141,7 @@ final class ChatServiceCLIIntegrationTests: XCTestCase {
         let service = makeService(repoURL: repoURL) { _, _ in
             AsyncThrowingStream<CLIStreamEvent, Error> { continuation in
                 continuation.yield(.toolStart(id: toolID, name: "write_file", description: "Writing"))
-                continuation.yield(.toolEnd(id: toolID, success: true))
+                continuation.yield(.toolEnd(id: toolID, success: true, output: nil))
                 continuation.yield(.done)
                 continuation.finish()
             }

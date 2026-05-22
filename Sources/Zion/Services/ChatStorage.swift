@@ -45,7 +45,12 @@ actor ChatStorage {
 
     func loadThreads(repoID: String) async throws -> [ChatThread] {
         let db = try connection(for: repoID)
-        let sql = "SELECT id, title, created_at, updated_at FROM threads WHERE repo_id = ? ORDER BY updated_at DESC;"
+        let sql = """
+            SELECT id, title, created_at, updated_at, cli_session_id, cli_session_provider, total_cost_usd
+            FROM threads
+            WHERE repo_id = ?
+            ORDER BY updated_at DESC;
+            """
         var stmt: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
             throw sqliteError(db)
@@ -58,13 +63,21 @@ actor ChatStorage {
             let idStr = String(cString: sqlite3_column_text(stmt, 0))
             let title = String(cString: sqlite3_column_text(stmt, 1))
             let createdAt = sqlite3_column_double(stmt, 2)
+            let cliSessionID: String? = sqlite3_column_type(stmt, 4) == SQLITE_NULL
+                ? nil : String(cString: sqlite3_column_text(stmt, 4))
+            let cliSessionProvider: String? = sqlite3_column_type(stmt, 5) == SQLITE_NULL
+                ? nil : String(cString: sqlite3_column_text(stmt, 5))
+            let totalCost = sqlite3_column_double(stmt, 6)
             guard let id = UUID(uuidString: idStr) else { continue }
             threads.append(ChatThread(
                 id: id,
                 messages: [],
                 createdAt: Date(timeIntervalSince1970: createdAt),
                 repoID: repoID,
-                title: title
+                title: title,
+                cliSessionID: cliSessionID,
+                cliSessionProvider: cliSessionProvider,
+                totalCostUSD: totalCost
             ))
         }
         return threads
@@ -73,11 +86,14 @@ actor ChatStorage {
     func saveThread(_ thread: ChatThread, repoID: String) async throws {
         let db = try connection(for: repoID)
         let sql = """
-            INSERT INTO threads (id, repo_id, title, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO threads (id, repo_id, title, created_at, updated_at, cli_session_id, cli_session_provider, total_cost_usd)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
               title = excluded.title,
-              updated_at = excluded.updated_at;
+              updated_at = excluded.updated_at,
+              cli_session_id = excluded.cli_session_id,
+              cli_session_provider = excluded.cli_session_provider,
+              total_cost_usd = excluded.total_cost_usd;
             """
         var stmt: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
@@ -92,6 +108,17 @@ actor ChatStorage {
         sqlite3_bind_text(stmt, 3, thread.title, -1, sqliteTransient)
         sqlite3_bind_double(stmt, 4, thread.createdAt.timeIntervalSince1970)
         sqlite3_bind_double(stmt, 5, now)
+        if let sid = thread.cliSessionID {
+            sqlite3_bind_text(stmt, 6, sid, -1, sqliteTransient)
+        } else {
+            sqlite3_bind_null(stmt, 6)
+        }
+        if let prov = thread.cliSessionProvider {
+            sqlite3_bind_text(stmt, 7, prov, -1, sqliteTransient)
+        } else {
+            sqlite3_bind_null(stmt, 7)
+        }
+        sqlite3_bind_double(stmt, 8, thread.totalCostUSD)
 
         guard sqlite3_step(stmt) == SQLITE_DONE else {
             throw sqliteError(db)
@@ -288,6 +315,13 @@ actor ChatStorage {
             ON messages(thread_id, created_at);
             """
         try exec(db: db, sql: indexSQL)
+
+        // v2 migration: CLI session resume + cumulative subscription cost.
+        // sqlite3 ALTER TABLE ADD COLUMN errors if the column already exists,
+        // so we swallow that specific error. Any other failure still throws.
+        try? exec(db: db, sql: "ALTER TABLE threads ADD COLUMN cli_session_id TEXT NULL;")
+        try? exec(db: db, sql: "ALTER TABLE threads ADD COLUMN cli_session_provider TEXT NULL;")
+        try? exec(db: db, sql: "ALTER TABLE threads ADD COLUMN total_cost_usd REAL DEFAULT 0;")
     }
 
     private func exec(db: OpaquePointer, sql: String) throws {

@@ -67,12 +67,24 @@ struct ChatScreen: View {
     private var conversationCard: some View {
         GlassCard(spacing: 8, expanding: true) {
             CardHeader(L10n("chat.card.conversation"), icon: "bubble.left.and.bubble.right.fill") {
-                Text("\(chat.thread.messages.count)")
-                    .font(DesignSystem.Typography.monoLabelBold)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(DesignSystem.Colors.glassSubtle)
-                    .clipShape(Capsule())
+                HStack(spacing: 6) {
+                    if chat.thread.totalCostUSD > 0 {
+                        Text(String(format: "$%.3f", chat.thread.totalCostUSD))
+                            .font(DesignSystem.Typography.monoLabelBold)
+                            .foregroundStyle(DesignSystem.Colors.brandPrimary)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(DesignSystem.Colors.glassSubtle)
+                            .clipShape(Capsule())
+                            .help(L10n("chat.cost.tooltip"))
+                    }
+                    Text("\(chat.thread.messages.count)")
+                        .font(DesignSystem.Typography.monoLabelBold)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(DesignSystem.Colors.glassSubtle)
+                        .clipShape(Capsule())
+                }
             }
             messageList
             if repoURL != nil {
