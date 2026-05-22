@@ -43,7 +43,7 @@ public enum IntentClassifier {
 
     // MARK: Private — patterns
 
-    // .lastCommit
+    // .lastCommit (broad — also catches generic "show me code" without explicit path/sha)
     private static let lastCommitPatterns: [String] = [
         "last\\s+commit",
         "ultimo\\s+commit",
@@ -51,6 +51,10 @@ public enum IntentClassifier {
         "show\\s+(me\\s+the\\s+)?last\\s+commit",
         "show\\s+commit(?!\\s+[a-f0-9]{7,40})",   // "show commit" without a SHA
         "what\\s+was\\s+committed",
+        "show\\s+(me\\s+)?(some\\s+|a\\s+|the\\s+|any\\s+)?(piece\\s+of\\s+)?code",
+        "mostre?\\s+(uma\\s+|um\\s+)?(parte\\s+do\\s+|pedaco\\s+de\\s+|trecho\\s+de\\s+)?codigo",
+        "mostra\\s+(uma\\s+)?linha",
+        "give\\s+me\\s+(some\\s+|the\\s+|any\\s+)?code",
     ]
 
     // .currentChanges

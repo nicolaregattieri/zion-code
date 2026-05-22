@@ -105,11 +105,26 @@ final class ChatService {
             }
         }
 
+        // Build conversation history block (last 10 messages BEFORE appending current) for multi-turn context
+        let historyMessages = thread.messages.suffix(10)
+        var historyBlock = ""
+        if !historyMessages.isEmpty {
+            historyBlock = "## Conversation so far\n\n"
+            for msg in historyMessages {
+                let speaker = msg.role == .user ? "User" : "Assistant"
+                historyBlock += "**\(speaker):** \(msg.content)\n\n"
+            }
+        }
+
         // User bubble shows ONLY clean displayContent + chip (if injected)
         thread.messages.append(ChatMessage(role: .user, content: displayContent, autoInjectedIntent: injectedLabel))
 
-        // Payload that goes to model = hidden context + user text
-        let expandedText: String = hiddenContext.isEmpty ? displayContent : (hiddenContext + "\n\n" + displayContent)
+        // Payload that goes to model = history + hidden context + user text
+        var parts: [String] = []
+        if !historyBlock.isEmpty { parts.append(historyBlock) }
+        if !hiddenContext.isEmpty { parts.append(hiddenContext) }
+        parts.append("## Current user message\n\n" + displayContent)
+        let expandedText: String = parts.joined(separator: "\n\n")
 
         let assistantMessage = ChatMessage(role: .assistant, content: "", isStreaming: true)
         thread.messages.append(assistantMessage)
