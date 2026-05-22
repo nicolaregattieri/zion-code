@@ -2531,3 +2531,8 @@
 "settings.ai.local.server.stop.notRunning" = "Ya detenido";
 "settings.ai.local.server.stop.noOwner" = "Ningún proceso escucha en ese puerto";
 "settings.ai.local.server.stop.failed" = "Falló al detener: %@";
+
+"chat.screen.title" = "Zion Talks";
+"chat.screen.subtitle" = "Conversa con tu repositorio.";
+"chat.card.conversation" = "Conversación";
+"chat.card.history" = "Historial";

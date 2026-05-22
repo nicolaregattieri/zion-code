@@ -2509,3 +2509,8 @@
 "settings.ai.local.server.stop.notRunning" = "Already stopped";
 "settings.ai.local.server.stop.noOwner" = "No process owns the port";
 "settings.ai.local.server.stop.failed" = "Stop failed: %@";
+
+"chat.screen.title" = "Zion Talks";
+"chat.screen.subtitle" = "Chat with your repository.";
+"chat.card.conversation" = "Conversation";
+"chat.card.history" = "History";

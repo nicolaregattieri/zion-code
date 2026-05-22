@@ -2509,3 +2509,8 @@
 "settings.ai.local.server.stop.notRunning" = "Já está parado";
 "settings.ai.local.server.stop.noOwner" = "Nenhum processo escuta nessa porta";
 "settings.ai.local.server.stop.failed" = "Falha ao parar: %@";
+
+"chat.screen.title" = "Zion Talks";
+"chat.screen.subtitle" = "Converse com seu repositório.";
+"chat.card.conversation" = "Conversa";
+"chat.card.history" = "Histórico";
