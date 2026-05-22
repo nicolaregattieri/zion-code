@@ -62,19 +62,19 @@ final class ChatService {
     ) async {
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
 
-        // Inject git context header into the first user message only
+        // Build display content (what user sees in bubble) — keep clean, just the typed text + explicit slash expansions
+        let displayContent = await contextBuilder.expandSlashCommands(text, repoURL: repoURL)
+
+        // Build hidden context that goes to the model but NOT to the bubble
         let isFirstMessage = thread.messages.filter { $0.role == .user }.isEmpty
-        var expandedText: String
+        var hiddenContext = ""
         if isFirstMessage {
-            let header = await contextBuilder.gitContextHeader(repoURL: repoURL, branch: branch)
-            let rawExpanded = await contextBuilder.expandSlashCommands(text, repoURL: repoURL)
-            expandedText = header + "\n\n" + rawExpanded
-        } else {
-            expandedText = await contextBuilder.expandSlashCommands(text, repoURL: repoURL)
+            hiddenContext = await contextBuilder.gitContextHeader(repoURL: repoURL, branch: branch)
         }
 
         // MARK: Pre-flight intent injection — runs for ALL providers (tool loop NYI Phase 3)
         let autoInject = UserDefaults.standard.object(forKey: "chat.autoInject") as? Bool ?? true
+        var injectedLabel: String? = nil
 
         if autoInject, let intent = IntentClassifier.classify(text) {
             let (args, label): ([String], String)
@@ -100,14 +100,16 @@ final class ChatService {
             }
             if let output = try? await worker.runAction(args: args, in: repoURL) {
                 let truncated = String(output.prefix(AILimits.maxDiffContentLength))
-                expandedText = "```\n\(truncated)\n```\n\n" + expandedText
+                hiddenContext += (hiddenContext.isEmpty ? "" : "\n\n") + "```\n\(truncated)\n```"
+                injectedLabel = label
             }
-            // Append the user message now with intent label
-            let userMsg = ChatMessage(role: .user, content: expandedText, autoInjectedIntent: label)
-            thread.messages.append(userMsg)
-        } else {
-            thread.messages.append(ChatMessage(role: .user, content: expandedText))
         }
+
+        // User bubble shows ONLY clean displayContent + chip (if injected)
+        thread.messages.append(ChatMessage(role: .user, content: displayContent, autoInjectedIntent: injectedLabel))
+
+        // Payload that goes to model = hidden context + user text
+        let expandedText: String = hiddenContext.isEmpty ? displayContent : (hiddenContext + "\n\n" + displayContent)
 
         let assistantMessage = ChatMessage(role: .assistant, content: "", isStreaming: true)
         thread.messages.append(assistantMessage)
