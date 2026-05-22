@@ -1,4 +1,5 @@
 import Foundation
+import Security
 
 // MARK: - CLIToolStatus
 
@@ -16,16 +17,19 @@ actor CLIDiscoveryService {
     // MARK: - Injectable process runner
 
     typealias ProcessRunner = @Sendable (String, [String], TimeInterval) async -> (Int32, String, String)
+    typealias AuthChecker = @Sendable (CLITool) async -> Bool
 
     // MARK: - Private state
 
     private let processRunner: ProcessRunner
+    private let authChecker: AuthChecker
     private static let cacheKeyPrefix = "cli.discovery"
 
     // MARK: - Init
 
-    init(processRunner: ProcessRunner? = nil) {
+    init(processRunner: ProcessRunner? = nil, authChecker: AuthChecker? = nil) {
         self.processRunner = processRunner ?? CLIDiscoveryService.realProcessRunner
+        self.authChecker = authChecker ?? CLIDiscoveryService.realAuthChecker
     }
 
     // MARK: - Public API
@@ -111,40 +115,52 @@ actor CLIDiscoveryService {
     // MARK: - Auth Check
 
     private func resolveAuth(absPath: String, tool: CLITool) async -> Bool? {
+        await authChecker(tool)
+    }
+
+    private static let realAuthChecker: AuthChecker = { tool in
         switch tool {
         case .claude:
-            return await checkClaudeAuth(absPath: absPath)
+            return CLIDiscoveryService.checkClaudeAuthRealtime()
         case .codex:
-            return await checkCodexAuth(absPath: absPath)
+            return CLIDiscoveryService.checkCodexAuthRealtime()
         }
     }
 
-    private func checkClaudeAuth(absPath: String) async -> Bool {
-        let (exitCode, stdout, _) = await processRunner(
-            absPath,
-            ["-p", "ping", "--output-format", "json"],
-            Constants.Timing.cliAuthProbeTimeout
-        )
-        if exitCode != 0 { return false }
-        // Check for permission_denials field in JSON
-        if let data = stdout.data(using: .utf8),
-           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let denials = json["permission_denials"],
-           !(denials is NSNull) {
-            // If permission_denials key is present (and non-null), treat as unauthenticated
+    static func checkClaudeAuthRealtime() -> Bool {
+        // Claude Code stores subscription credentials in the macOS keychain
+        // under service "Claude Code-credentials" (kSecClassGenericPassword).
+        // Probing existence avoids spawning the CLI (which consumes quota and
+        // requires stdin interaction). Fallback: legacy ~/.claude/.credentials.json.
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: "Claude Code-credentials",
+            kSecMatchLimit as String: kSecMatchLimitOne,
+            kSecReturnAttributes as String: false,
+            kSecReturnData as String: false,
+        ]
+        let status = SecItemCopyMatching(query as CFDictionary, nil)
+        if status == errSecSuccess { return true }
+
+        let legacyPath = "\(NSHomeDirectory())/.claude/.credentials.json"
+        if FileManager.default.fileExists(atPath: legacyPath),
+           let attrs = try? FileManager.default.attributesOfItem(atPath: legacyPath),
+           let size = attrs[.size] as? Int, size > 0 {
+            return true
+        }
+        return false
+    }
+
+    static func checkCodexAuthRealtime() -> Bool {
+        // Codex stores ChatGPT credentials in ~/.codex/auth.json (file mode 0600).
+        // Existence + non-empty is sufficient — the CLI itself refreshes tokens.
+        let authPath = "\(NSHomeDirectory())/.codex/auth.json"
+        guard FileManager.default.fileExists(atPath: authPath),
+              let attrs = try? FileManager.default.attributesOfItem(atPath: authPath),
+              let size = attrs[.size] as? Int, size > 0 else {
             return false
         }
         return true
-    }
-
-    private func checkCodexAuth(absPath: String) async -> Bool {
-        let tmpDir = ProcessInfo.processInfo.environment["TMPDIR"] ?? "/tmp"
-        let (exitCode, _, _) = await processRunner(
-            absPath,
-            ["exec", "--json", "-s", "read-only", "-C", tmpDir],
-            Constants.Timing.cliAuthProbeTimeout
-        )
-        return exitCode == 0
     }
 
     // MARK: - Cache

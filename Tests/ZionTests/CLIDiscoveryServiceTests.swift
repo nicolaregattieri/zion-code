@@ -54,7 +54,7 @@ final class CLIDiscoveryServiceTests: XCTestCase {
     }
 
     // MARK: - testAuthDetected
-    // Claude ping returns valid JSON without permission_denials → isAuthenticated true
+    // authChecker returns true → isAuthenticated true
 
     func testAuthDetected() async {
         let binaryPath = "/usr/local/bin/claude"
@@ -62,19 +62,14 @@ final class CLIDiscoveryServiceTests: XCTestCase {
             if executable == "/usr/bin/which" {
                 return (0, binaryPath, "")
             }
-            if executable == binaryPath {
-                if arguments == ["--version"] {
-                    return (0, "claude 1.2.3", "")
-                }
-                if arguments.contains("--output-format") {
-                    // Valid JSON, no permission_denials
-                    return (0, #"{"result": "pong", "session_id": "abc"}"#, "")
-                }
+            if executable == binaryPath, arguments == ["--version"] {
+                return (0, "claude 1.2.3", "")
             }
             return (1, "", "")
         }
+        let authChecker: CLIDiscoveryService.AuthChecker = { _ in true }
 
-        let svc = CLIDiscoveryService(processRunner: runner)
+        let svc = CLIDiscoveryService(processRunner: runner, authChecker: authChecker)
         let result = await svc.status(for: .claude, refresh: true)
 
         XCTAssertTrue(result.installed)
@@ -82,7 +77,7 @@ final class CLIDiscoveryServiceTests: XCTestCase {
     }
 
     // MARK: - testAuthMissing
-    // Claude ping returns non-zero exit → isAuthenticated false
+    // authChecker returns false → isAuthenticated false
 
     func testAuthMissing() async {
         let binaryPath = "/usr/local/bin/claude"
@@ -90,18 +85,14 @@ final class CLIDiscoveryServiceTests: XCTestCase {
             if executable == "/usr/bin/which" {
                 return (0, binaryPath, "")
             }
-            if executable == binaryPath {
-                if arguments == ["--version"] {
-                    return (0, "claude 1.2.3", "")
-                }
-                if arguments.contains("--output-format") {
-                    return (1, "", "Error: Not authenticated")
-                }
+            if executable == binaryPath, arguments == ["--version"] {
+                return (0, "claude 1.2.3", "")
             }
             return (1, "", "")
         }
+        let authChecker: CLIDiscoveryService.AuthChecker = { _ in false }
 
-        let svc = CLIDiscoveryService(processRunner: runner)
+        let svc = CLIDiscoveryService(processRunner: runner, authChecker: authChecker)
         let result = await svc.status(for: .claude, refresh: true)
 
         XCTAssertTrue(result.installed)
