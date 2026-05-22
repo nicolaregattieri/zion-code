@@ -65,9 +65,13 @@ struct ChatMessageBubble: View {
     @ViewBuilder
     private var assistantBubble: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
-            assistantContent
-            if message.isStreaming {
-                StreamingDot()
+            if message.isStreaming && message.content.isEmpty {
+                ChatThinkingIndicator()
+            } else {
+                assistantContent
+                if message.isStreaming {
+                    StreamingDot()
+                }
             }
         }
         .padding(.horizontal, DesignSystem.Spacing.standard)
