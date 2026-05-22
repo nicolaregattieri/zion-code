@@ -34,6 +34,21 @@ extension AIClient {
             return try await callLocalLLM(payload: payload, config: config, maxTokens: maxTokens, modelID: modelID, urlSession: session)
         }
 
+        // CLI providers: bypass model catalog and dispatch directly to subprocess methods.
+        if provider == .claudeCLI {
+            guard let cwd = payload.cwd else {
+                throw AIError.cliError(stderr: "missing cwd", exitCode: -1)
+            }
+            return try await callClaudeCLI(payload: payload, cwd: cwd, maxTokens: maxTokens)
+        }
+
+        if provider == .codexCLI {
+            guard let cwd = payload.cwd else {
+                throw AIError.cliError(stderr: "missing cwd", exitCode: -1)
+            }
+            return try await callCodexCLI(payload: payload, cwd: cwd)
+        }
+
         let selection = AIModelCatalogService.selection(for: provider, mode: mode, lane: lane)
         let candidates = selection.allCandidateModelIDs.filter { !$0.isEmpty }
         guard !candidates.isEmpty else { throw AIError.noProvider }
@@ -49,7 +64,10 @@ extension AIClient {
                         return try await callOpenAI(payload: payload, apiKey: apiKey, maxTokens: maxTokens, modelID: modelID)
                     case .gemini:
                         return try await callGemini(payload: payload, apiKey: apiKey, maxTokens: maxTokens, modelID: modelID)
-                    case .none, .claudeCLI, .codexCLI:
+                    case .none:
+                        throw AIError.noProvider
+                    case .claudeCLI, .codexCLI:
+                        // Unreachable — CLI providers are handled above before the candidates loop
                         throw AIError.noProvider
                     case .local:
                         // Unreachable — .local is handled above before the candidates loop

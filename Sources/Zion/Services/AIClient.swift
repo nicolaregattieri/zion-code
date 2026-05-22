@@ -53,6 +53,11 @@ struct AIPromptPayload {
 
 actor AIClient {
 
+    // MARK: - CLI Discovery
+
+    /// Shared CLIDiscoveryService for resolving installed CLI tool paths and versions.
+    let cliDiscovery = CLIDiscoveryService()
+
     // MARK: - Injectable URLSession (test-only)
 
     /// Injected URLSession used by the `.local` dispatch path. Nil in production (uses URLSession.shared).
