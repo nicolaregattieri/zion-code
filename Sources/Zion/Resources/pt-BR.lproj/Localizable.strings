@@ -2397,6 +2397,8 @@
 
 // Local LLM Support (Ollama Phase 1)
 "settings.ai.provider.local" = "Local / OpenAI-compatível";
+"settings.ai.provider.claudeCLI" = "Claude Code (CLI)";
+"settings.ai.provider.codexCLI" = "Codex CLI";
 "settings.ai.local.serverURL" = "URL do servidor";
 "settings.ai.local.serverURL.hint" = "ex.: http://localhost:11434/v1 (Ollama, LM Studio, MLX server, OpenRouter)";
 "settings.ai.local.model" = "Modelo";
@@ -2462,6 +2464,10 @@
 "chat.harness.intent.commitDetails" = "commit %@";
 "ai.error.toolExecution.failed" = "Falha na execução da ferramenta: %@";
 "ai.error.toolCalling.notSupported" = "Provider selecionado não suporta tool calling.";
+"ai.error.cli.notInstalled" = "%@ não está instalado. Instale-o e tente novamente.";
+"ai.error.cli.notAuthenticated" = "%@ não está autenticado. Execute `%@ login` no terminal.";
+"ai.error.cli.execFailed" = "Erro do CLI: %@";
+"ai.error.cli.versionTooOld" = "Versão do CLI muito antiga (requerida: %@, encontrada: %@). Atualize.";
 "chat.thread.list.title" = "Conversas";
 "chat.thread.new" = "Nova conversa";
 "chat.thread.delete" = "Excluir";
@@ -2472,3 +2478,24 @@
 "chat.thread.empty" = "Nenhuma conversa ainda";
 "chat.thread.sidebar.toggle" = "Alternar conversas";
 "chat.persistence.error" = "Falha ao salvar o histórico do chat. Continuando em memória.";
+
+// MARK: - Phase 4: CLI Providers
+"settings.ai.provider.claudeCLI" = "Claude Code (assinatura)";
+"settings.ai.provider.codexCLI" = "Codex CLI (ChatGPT)";
+"settings.ai.cli.subscription.title" = "CLIs de assinatura";
+"settings.ai.cli.installed" = "Instalado v%@";
+"settings.ai.cli.notInstalled" = "Não instalado";
+"settings.ai.cli.notInstalled.claude.hint" = "Instalar: `npm install -g @anthropic-ai/claude-code`";
+"settings.ai.cli.notInstalled.codex.hint" = "Instalar o Codex CLI em https://github.com/openai/codex";
+"settings.ai.cli.notAuthenticated.claude.hint" = "Execute `claude auth` no Terminal";
+"settings.ai.cli.notAuthenticated.codex.hint" = "Execute `codex login` no Terminal";
+"settings.ai.cli.allowEdits" = "Permitir edições de arquivo";
+"settings.ai.cli.allowEdits.hint" = "Quando ativado, o CLI pode criar, modificar e excluir arquivos no seu repositório.";
+"settings.ai.cli.refresh" = "Atualizar";
+"chat.cli.tool.running" = "Executando %@...";
+"chat.cli.tool.completed" = "%@ concluído";
+"chat.cli.tool.failed" = "%@ falhou";
+"ai.error.cli.notInstalled" = "CLI não instalado";
+"ai.error.cli.notAuthenticated" = "CLI não autenticado";
+"ai.error.cli.versionTooOld" = "Versão do CLI muito antiga";
+"ai.error.cli.execFailed" = "Falha na execução do CLI: %@";
