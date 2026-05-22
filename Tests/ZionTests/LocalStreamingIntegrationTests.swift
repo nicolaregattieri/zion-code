@@ -111,9 +111,9 @@ final class LocalStreamingIntegrationTests: XCTestCase {
                 modelID: "test-model",
                 urlSession: session
             )
-            XCTFail("Expected AIError.localServerNotFound to be thrown")
+            XCTFail("Expected AIError.localModelError to be thrown")
         } catch let error as AIError {
-            XCTAssertEqual(error, AIError.localServerNotFound)
+            XCTAssertEqual(error, AIError.localModelError)
         } catch {
             XCTFail("Unexpected error type: \(error)")
         }
