@@ -78,6 +78,17 @@ struct ChatScreen: View {
                         }
                     } else {
                         ForEach(chat.thread.messages) { message in
+                            if message.role == .assistant && message.isStreaming && message.id == chat.thread.messages.last(where: { $0.role == .assistant && $0.isStreaming })?.id && !chat.pendingToolEvents.isEmpty {
+                                VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
+                                    ForEach(chat.pendingToolEvents) { event in
+                                        ChatToolEventBadge(event: event)
+                                            .transition(.opacity.combined(with: .move(edge: .top)))
+                                    }
+                                }
+                                .padding(.horizontal, DesignSystem.Spacing.cardPadding)
+                                .padding(.top, DesignSystem.Spacing.compact)
+                                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: chat.pendingToolEvents.count)
+                            }
                             ChatMessageBubble(message: message)
                                 .id(message.id)
                         }
