@@ -73,12 +73,10 @@ final class ChatService {
             expandedText = await contextBuilder.expandSlashCommands(text, repoURL: repoURL)
         }
 
-        // MARK: Intent fallback — auto-inject git context for tool-incapable providers
-        let toolsEnabled = UserDefaults.standard.object(forKey: "chat.toolsEnabled") as? Bool ?? true
+        // MARK: Pre-flight intent injection — runs for ALL providers (tool loop NYI Phase 3)
         let autoInject = UserDefaults.standard.object(forKey: "chat.autoInject") as? Bool ?? true
-        let useTools = toolsEnabled && provider.supportsToolCalling
 
-        if !useTools && autoInject, let intent = IntentClassifier.classify(text) {
+        if autoInject, let intent = IntentClassifier.classify(text) {
             let (args, label): ([String], String)
             switch intent {
             case .lastCommit:

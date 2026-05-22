@@ -44,6 +44,8 @@ struct ChatScreen: View {
                     }
                 }
                 .padding(.vertical, DesignSystem.Spacing.standard)
+                .frame(maxWidth: 900)
+                .frame(maxWidth: .infinity)
             }
             .onChange(of: chat.thread.messages.count) {
                 scrollToLast(proxy: proxy)

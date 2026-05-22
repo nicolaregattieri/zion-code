@@ -1,145 +1,128 @@
 import SwiftUI
 
-// MARK: - ChatMessageBubble
-
 struct ChatMessageBubble: View {
 
     let message: ChatMessage
 
-    // MARK: - Body
-
     var body: some View {
-        HStack(alignment: .bottom, spacing: DesignSystem.Spacing.compact) {
+        Group {
             if message.role == .user {
-                Spacer(minLength: DesignSystem.Spacing.sectionGap)
-                bubbleContent
-                    .bubbleStyle(isUser: true)
+                userRow
             } else {
-                bubbleContent
-                    .bubbleStyle(isUser: false)
-                Spacer(minLength: DesignSystem.Spacing.sectionGap)
+                assistantRow
             }
         }
         .padding(.horizontal, DesignSystem.Spacing.cardPadding)
-        .padding(.vertical, DesignSystem.Spacing.micro)
+        .padding(.vertical, DesignSystem.Spacing.compact)
     }
 
-    // MARK: - Bubble Content
+    // MARK: - User row (right-aligned compact bubble)
 
-    @ViewBuilder
-    private var bubbleContent: some View {
-        VStack(alignment: message.role == .user ? .trailing : .leading,
-               spacing: DesignSystem.Spacing.micro) {
-            if message.role == .assistant, let events = message.toolEvents, !events.isEmpty {
-                toolEventBadges(events)
+    private var userRow: some View {
+        VStack(alignment: .trailing, spacing: DesignSystem.Spacing.compact) {
+            HStack(alignment: .top, spacing: DesignSystem.Spacing.standard) {
+                Spacer(minLength: DesignSystem.Spacing.sectionGap)
+                Text(message.content)
+                    .font(DesignSystem.Typography.body)
+                    .foregroundStyle(DesignSystem.Colors.brandWhite)
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .multilineTextAlignment(.leading)
+                    .padding(.horizontal, DesignSystem.Spacing.standard)
+                    .padding(.vertical, DesignSystem.Spacing.compact)
+                    .frame(maxWidth: 560, alignment: .leading)
+                    .background(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [DesignSystem.Colors.brandPrimary, DesignSystem.Colors.brandInk],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .shadow(color: DesignSystem.Colors.brandPrimary.opacity(0.25), radius: 8, x: 0, y: 2)
+                    )
             }
-            messageText
-            if message.isStreaming {
-                streamingIndicator
+            if let intent = message.autoInjectedIntent {
+                AutoInjectionChip(intentLabel: intent)
             }
-            if message.role == .user, let intent = message.autoInjectedIntent {
-                HStack {
-                    Spacer()
-                    AutoInjectionChip(intentLabel: intent)
+        }
+    }
+
+    // MARK: - Assistant row (full-width Claude/ChatGPT style)
+
+    private var assistantRow: some View {
+        HStack(alignment: .top, spacing: DesignSystem.Spacing.standard) {
+            assistantAvatar
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
+                if let events = message.toolEvents, !events.isEmpty {
+                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.micro) {
+                        ForEach(events) { event in
+                            ToolEventBadge(event: event)
+                        }
+                    }
+                }
+                assistantContent
+                if message.isStreaming {
+                    StreamingDot()
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
-    // MARK: - Tool Event Badges
-
-    @ViewBuilder
-    private func toolEventBadges(_ events: [ChatToolEvent]) -> some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.micro) {
-            ForEach(events) { event in
-                ToolEventBadge(event: event)
-            }
-        }
-    }
-
-    // MARK: - Message Text
-
-    @ViewBuilder
-    private var messageText: some View {
-        if message.role == .assistant {
-            assistantText
-        } else {
-            Text(message.content)
-                .font(DesignSystem.Typography.body)
+    private var assistantAvatar: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [DesignSystem.Colors.brandPrimary, DesignSystem.Colors.brandInk],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 28, height: 28)
+            Image(systemName: "sparkles")
+                .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(DesignSystem.Colors.brandWhite)
-                .textSelection(.enabled)
-                .fixedSize(horizontal: false, vertical: true)
         }
+        .overlay(
+            Circle()
+                .strokeBorder(DesignSystem.Colors.glassBorder, lineWidth: 1)
+        )
     }
 
     @ViewBuilder
-    private var assistantText: some View {
-        if let attributed = try? AttributedString(markdown: message.content,
-                                                  options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)) {
+    private var assistantContent: some View {
+        if let attributed = try? AttributedString(
+            markdown: message.content,
+            options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)
+        ) {
             Text(attributed)
                 .font(DesignSystem.Typography.body)
                 .foregroundStyle(DesignSystem.Colors.textPrimary)
                 .textSelection(.enabled)
                 .fixedSize(horizontal: false, vertical: true)
+                .multilineTextAlignment(.leading)
         } else {
             Text(message.content)
                 .font(DesignSystem.Typography.body)
                 .foregroundStyle(DesignSystem.Colors.textPrimary)
                 .textSelection(.enabled)
                 .fixedSize(horizontal: false, vertical: true)
+                .multilineTextAlignment(.leading)
         }
     }
-
-    // MARK: - Streaming Indicator
-
-    private var streamingIndicator: some View {
-        StreamingDot()
-    }
 }
-
-// MARK: - Bubble Style Modifier
-
-private struct BubbleStyleModifier: ViewModifier {
-    let isUser: Bool
-
-    func body(content: Content) -> some View {
-        content
-            .padding(.horizontal, DesignSystem.Spacing.cardPadding)
-            .padding(.vertical, DesignSystem.Spacing.compact)
-            .background(
-                RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius)
-                    .fill(isUser ? DesignSystem.Colors.brandPrimary.opacity(DesignSystem.Opacity.muted) : DesignSystem.Colors.glassElevated)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius)
-                            .strokeBorder(
-                                isUser ? DesignSystem.Colors.brandPrimary.opacity(DesignSystem.Opacity.dim) : DesignSystem.Colors.glassBorder,
-                                lineWidth: 1
-                            )
-                    )
-            )
-    }
-}
-
-private extension View {
-    func bubbleStyle(isUser: Bool) -> some View {
-        modifier(BubbleStyleModifier(isUser: isUser))
-    }
-}
-
-// MARK: - Streaming Dot
 
 private struct StreamingDot: View {
-    @State private var opacity: Double = DesignSystem.Opacity.visible
-
+    @State private var pulse = false
     var body: some View {
         Circle()
-            .fill(DesignSystem.Colors.ai)
-            .frame(width: DesignSystem.Spacing.compact, height: DesignSystem.Spacing.compact)
-            .opacity(opacity)
-            .onAppear {
-                withAnimation(DesignSystem.Motion.glowPulse) {
-                    opacity = DesignSystem.Opacity.dim
-                }
-            }
+            .fill(DesignSystem.Colors.brandPrimary)
+            .frame(width: 6, height: 6)
+            .opacity(pulse ? 0.3 : 1.0)
+            .animation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true), value: pulse)
+            .onAppear { pulse = true }
     }
 }
