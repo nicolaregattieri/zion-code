@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 
 // MARK: - CLIStreamEvent
 
@@ -128,5 +129,278 @@ extension AIClient {
             }
         }
         return ""
+    }
+}
+
+// MARK: - CLI Subprocess Streaming
+
+extension AIClient {
+
+    // MARK: Public API
+
+    /// Streams events from a `claude` CLI subprocess.
+    /// - Parameters:
+    ///   - payload: Prompt payload; `renderUserMessage` is written to stdin.
+    ///   - cwd: Working directory for the subprocess.
+    ///   - maxTokens: Token budget passed via `--max-tokens`.
+    ///   - allowEdits: When true, uses `acceptEdits` permission mode; otherwise `plan`.
+    func streamClaudeCLI(
+        payload: AIPromptPayload,
+        cwd: URL,
+        maxTokens: Int,
+        allowEdits: Bool
+    ) async -> AsyncThrowingStream<CLIStreamEvent, Error> {
+        let discovery = CLIDiscoveryService()
+        let toolStatus = await discovery.status(for: .claude)
+
+        guard toolStatus.installed, let toolPath = toolStatus.path else {
+            return AsyncThrowingStream { $0.finish(throwing: AIError.cliNotInstalled(.claude)) }
+        }
+
+        let absPath = toolPath.path
+        let permissionMode = allowEdits ? "acceptEdits" : "plan"
+        let args: [String] = [
+            "-p", "-",
+            "--output-format", "stream-json",
+            "--verbose",
+            "--include-partial-messages",
+            "--permission-mode", permissionMode,
+            "--max-budget-usd", "1.00",
+            "--append-system-prompt", "Zion safety preamble",
+            "--max-tokens", "\(maxTokens)"
+        ]
+
+        let prompt = AIClient.renderUserMessage(from: payload)
+        return spawnCLIStream(absPath: absPath, args: args, cwd: cwd, stdinData: Data(prompt.utf8)) { line in
+            AIClient.parseClaudeJSONLLine(line)
+        }
+    }
+
+    /// Streams events from a `codex` CLI subprocess.
+    /// - Parameters:
+    ///   - payload: Prompt payload; `renderUserMessage` is written to stdin.
+    ///   - cwd: Working directory for the subprocess.
+    ///   - allowEdits: When true, uses `workspace-write` sandbox; otherwise `read-only`.
+    func streamCodexCLI(
+        payload: AIPromptPayload,
+        cwd: URL,
+        allowEdits: Bool
+    ) async -> AsyncThrowingStream<CLIStreamEvent, Error> {
+        let discovery = CLIDiscoveryService()
+        let toolStatus = await discovery.status(for: .codex)
+
+        guard toolStatus.installed, let toolPath = toolStatus.path else {
+            return AsyncThrowingStream { $0.finish(throwing: AIError.cliNotInstalled(.codex)) }
+        }
+
+        let absPath = toolPath.path
+        let sandbox = allowEdits ? "workspace-write" : "read-only"
+        let args: [String] = [
+            "exec",
+            "--json",
+            "-C", cwd.path,
+            "-s", sandbox,
+            "-"
+        ]
+
+        let prompt = AIClient.renderUserMessage(from: payload)
+        return spawnCLIStream(absPath: absPath, args: args, cwd: cwd, stdinData: Data(prompt.utf8)) { line in
+            AIClient.parseCodexJSONLLine(line)
+        }
+    }
+
+    /// Non-streaming Claude CLI call: concatenates all textDelta events and returns the full text.
+    func callClaudeCLI(payload: AIPromptPayload, cwd: URL, maxTokens: Int) async throws -> String {
+        let stream = await streamClaudeCLI(payload: payload, cwd: cwd, maxTokens: maxTokens, allowEdits: false)
+        var result = ""
+        for try await event in stream {
+            if case .textDelta(let text) = event {
+                result += text
+            }
+        }
+        return result
+    }
+
+    /// Non-streaming Codex CLI call: concatenates all textDelta events and returns the full text.
+    func callCodexCLI(payload: AIPromptPayload, cwd: URL) async throws -> String {
+        let stream = await streamCodexCLI(payload: payload, cwd: cwd, allowEdits: false)
+        var result = ""
+        for try await event in stream {
+            if case .textDelta(let text) = event {
+                result += text
+            }
+        }
+        return result
+    }
+
+    // MARK: - Internal: Process Group Spawn
+
+    /// Spawns a CLI process as a new process group (via setsid or posix_spawn SETPGROUP).
+    /// Reads stdout line-by-line, parsing each line with `parser`.
+    /// On AsyncThrowingStream termination (cancel or finish), sends SIGTERM then SIGKILL.
+    ///
+    /// - Parameters:
+    ///   - absPath: Absolute path to the CLI binary.
+    ///   - args: Arguments passed to the binary.
+    ///   - cwd: Working directory.
+    ///   - stdinData: Data to write to the process stdin, then close.
+    ///   - parser: Closure that parses a JSONL line (Data) into a CLIStreamEvent, or nil to skip.
+    nonisolated func spawnCLIStream(
+        absPath: String,
+        args: [String],
+        cwd: URL,
+        stdinData: Data,
+        parser: @escaping @Sendable (Data) -> CLIStreamEvent?
+    ) -> AsyncThrowingStream<CLIStreamEvent, Error> {
+        return AsyncThrowingStream { continuation in
+            let process = Process()
+            let stdinPipe = Pipe()
+            let stdoutPipe = Pipe()
+            let stderrPipe = Pipe()
+
+            process.currentDirectoryURL = cwd
+            process.standardInput = stdinPipe
+            process.standardOutput = stdoutPipe
+            process.standardError = stderrPipe
+            process.environment = [
+                "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin",
+                "HOME": NSHomeDirectory()
+            ]
+
+            // Wrap with setsid (or posix_spawn group) so child becomes new process group leader
+            let useSetsid = FileManager.default.fileExists(atPath: "/usr/bin/setsid")
+            if useSetsid {
+                // Shell wrapper: exec setsid <absPath> <args...>
+                process.executableURL = URL(fileURLWithPath: "/bin/sh")
+                var shellCmd = "exec /usr/bin/setsid \(shellEscape(absPath))"
+                for arg in args {
+                    shellCmd += " \(shellEscape(arg))"
+                }
+                process.arguments = ["-c", shellCmd]
+            } else {
+                // Direct launch — set process group via posix_spawn attribute
+                // We use a QualityOfService-aware approach: set the group after launch
+                process.executableURL = URL(fileURLWithPath: absPath)
+                process.arguments = args
+            }
+
+            // Cancellation: SIGTERM the process group, then SIGKILL after grace
+            continuation.onTermination = { [weak process] _ in
+                guard let process = process else { return }
+                let pid = process.processIdentifier
+                guard pid > 0 else { return }
+                // Kill the entire process group (negative pid = group)
+                Darwin.kill(-pid, SIGTERM)
+                let graceNanos = UInt64(Constants.Timing.cliSigkillGrace * 1_000_000_000)
+                Task {
+                    try? await Task.sleep(nanoseconds: graceNanos)
+                    if process.isRunning {
+                        Darwin.kill(-pid, SIGKILL)
+                    }
+                }
+            }
+
+            // Launch
+            do {
+                try process.run()
+            } catch {
+                continuation.finish(throwing: AIError.cliError(stderr: error.localizedDescription, exitCode: -1))
+                return
+            }
+
+            // If not using setsid, set process group manually after launch
+            if !useSetsid {
+                let pid = process.processIdentifier
+                if pid > 0 {
+                    Darwin.setpgid(pid, pid)
+                }
+            }
+
+            // Write stdin then close
+            let stdinHandle = stdinPipe.fileHandleForWriting
+            do {
+                try stdinHandle.write(contentsOf: stdinData)
+                try stdinHandle.close()
+            } catch {
+                // Non-fatal; process may still start
+            }
+
+            // Drain stderr concurrently (keep last 2KB)
+            let stderrHandle = stderrPipe.fileHandleForReading
+            let stderrBuffer = StderrBuffer()
+
+            Task {
+                let stderrData = stderrHandle.readDataToEndOfFile()
+                if let text = String(data: stderrData, encoding: .utf8) {
+                    await stderrBuffer.append(text)
+                }
+            }
+
+            // Read stdout line by line using async bytes sequence
+            Task {
+                let stdoutHandle = stdoutPipe.fileHandleForReading
+                var lineBuffer = Data()
+                let newlineByte = UInt8(ascii: "\n")
+
+                for try await byte in stdoutHandle.bytes {
+                    if byte == newlineByte {
+                        if !lineBuffer.isEmpty {
+                            if let event = parser(lineBuffer) {
+                                continuation.yield(event)
+                            }
+                            lineBuffer.removeAll(keepingCapacity: true)
+                        }
+                    } else {
+                        lineBuffer.append(byte)
+                    }
+                }
+
+                // Flush any trailing partial line (no trailing newline)
+                if !lineBuffer.isEmpty {
+                    if let event = parser(lineBuffer) {
+                        continuation.yield(event)
+                    }
+                }
+
+                // Wait for process to exit
+                process.waitUntilExit()
+                let exitCode = process.terminationStatus
+
+                if exitCode != 0 {
+                    let stderrText = await stderrBuffer.last2KB()
+                    continuation.finish(throwing: AIError.cliError(stderr: stderrText, exitCode: exitCode))
+                } else {
+                    continuation.finish()
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Shell Escaping Helper
+
+private func shellEscape(_ str: String) -> String {
+    // Wrap in single quotes, escape any embedded single quotes
+    let escaped = str.replacingOccurrences(of: "'", with: "'\\''")
+    return "'\(escaped)'"
+}
+
+// MARK: - Stderr Buffer Actor
+
+/// Thread-safe buffer that keeps the last 2KB of stderr output.
+private actor StderrBuffer {
+    private var text: String = ""
+    private static let maxLength = 2048
+
+    func append(_ chunk: String) {
+        text += chunk
+        if text.count > Self.maxLength {
+            let dropCount = text.count - Self.maxLength
+            text = String(text.dropFirst(dropCount))
+        }
+    }
+
+    func last2KB() -> String {
+        return text
     }
 }
