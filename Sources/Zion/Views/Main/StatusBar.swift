@@ -225,6 +225,7 @@ extension ContentView {
             statusBarSectionButton(.code)
             statusBarSectionButton(.graph)
             statusBarSectionButton(.operations)
+            statusBarSectionButton(.chat)
 
             Divider()
                 .frame(height: 14)

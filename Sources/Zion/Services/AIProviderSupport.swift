@@ -90,6 +90,28 @@ enum AIProviderSupport {
             alternativeProviders: alternativeProviders(excluding: defaultProvider, loadKey: loadKey)
         )
     }
+
+    // MARK: - Tool Calling
+
+    /// Returns true if the given local model name is known to support tool calling.
+    /// Matching is case-insensitive.
+    static func localModelSupportsTools(_ name: String) -> Bool {
+        let patterns: [String] = [
+            "qwen3-coder",
+            "qwen2\\.5-coder",
+            "llama-3\\.[3-9]",
+            "mistral-large",
+            "deepseek-v3",
+            "gpt-oss",
+            "glm-4"
+        ]
+        let combined = patterns.joined(separator: "|")
+        guard let regex = try? NSRegularExpression(pattern: combined, options: .caseInsensitive) else {
+            return false
+        }
+        let range = NSRange(name.startIndex..., in: name)
+        return regex.firstMatch(in: name, options: [], range: range) != nil
+    }
 }
 
 enum SpeechEngineSupport {

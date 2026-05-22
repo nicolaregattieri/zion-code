@@ -37,6 +37,7 @@ final class ChatService {
     @ObservationIgnored private let ai: AIClient
     @ObservationIgnored private let worker: RepositoryWorker
     @ObservationIgnored private let contextBuilder: ChatContextBuilder
+    @ObservationIgnored private let harness: ZionHarness
     @ObservationIgnored private let streamProvider: ((LocalLLMConfig, AIPromptPayload, Int, String) -> AsyncThrowingStream<String, Error>)?
 
     /// Injected storage (nil = volatile/test)
@@ -48,10 +49,11 @@ final class ChatService {
 
     // MARK: - Init (production)
 
-    init(ai: AIClient, worker: RepositoryWorker, contextBuilder: ChatContextBuilder, storage: ChatStorage? = nil, repoID: String = "") {
+    init(ai: AIClient, worker: RepositoryWorker, contextBuilder: ChatContextBuilder, harness: ZionHarness, storage: ChatStorage? = nil, repoID: String = "") {
         self.ai = ai
         self.worker = worker
         self.contextBuilder = contextBuilder
+        self.harness = harness
         self.streamProvider = nil
         self.storage = storage
         self.repoID = repoID
@@ -67,6 +69,7 @@ final class ChatService {
         ai: AIClient,
         worker: RepositoryWorker,
         contextBuilder: ChatContextBuilder,
+        harness: ZionHarness,
         streamProvider: @escaping (LocalLLMConfig, AIPromptPayload, Int, String) -> AsyncThrowingStream<String, Error>,
         storage: ChatStorage? = nil,
         repoID: String = ""
@@ -74,6 +77,7 @@ final class ChatService {
         self.ai = ai
         self.worker = worker
         self.contextBuilder = contextBuilder
+        self.harness = harness
         self.streamProvider = streamProvider
         self.storage = storage
         self.repoID = repoID
@@ -171,24 +175,74 @@ final class ChatService {
     ) async {
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
 
-        // Ensure we have at least one thread
+        // Ensure we have at least one thread (Phase 2 multi-thread)
         if threads.isEmpty { createThread() }
-
         let threadID = activeThreadID
 
-        // Inject git context header into the first user message only
+        // Build display content (what user sees in bubble) — keep clean, just typed text + explicit slash expansions
+        let displayContent = await contextBuilder.expandSlashCommands(text, repoURL: repoURL)
+
+        // Build hidden context that goes to the model but NOT to the bubble
         let isFirstMessage = thread.messages.filter { $0.role == .user }.isEmpty
-        var expandedText: String
+        var hiddenContext = ""
         if isFirstMessage {
-            let header = await contextBuilder.gitContextHeader(repoURL: repoURL, branch: branch)
-            let rawExpanded = await contextBuilder.expandSlashCommands(text, repoURL: repoURL)
-            expandedText = header + "\n\n" + rawExpanded
-        } else {
-            expandedText = await contextBuilder.expandSlashCommands(text, repoURL: repoURL)
+            hiddenContext = await contextBuilder.gitContextHeader(repoURL: repoURL, branch: branch)
         }
 
-        let userMessage = ChatMessage(role: .user, content: expandedText)
+        // MARK: Pre-flight intent injection — runs for ALL providers (tool loop NYI Phase 3)
+        let autoInject = UserDefaults.standard.object(forKey: "chat.autoInject") as? Bool ?? true
+        var injectedLabel: String? = nil
+
+        if autoInject, let intent = IntentClassifier.classify(text) {
+            let (args, label): ([String], String)
+            switch intent {
+            case .lastCommit:
+                args = ["show", "HEAD", "--patch"]
+                label = L10n("chat.harness.intent.lastCommit")
+            case .currentChanges:
+                args = ["diff", "HEAD"]
+                label = L10n("chat.harness.intent.currentChanges")
+            case .recentHistory:
+                args = ["log", "--oneline", "-20"]
+                label = L10n("chat.harness.intent.recentHistory")
+            case .status:
+                args = ["status", "--porcelain"]
+                label = L10n("chat.harness.intent.status")
+            case .fileContent(let path):
+                args = ["show", "HEAD:\(path)"]
+                label = String(format: L10n("chat.harness.intent.fileContent"), path)
+            case .commitDetails(let sha):
+                args = ["show", sha, "--patch"]
+                label = String(format: L10n("chat.harness.intent.commitDetails"), sha)
+            }
+            if let output = try? await worker.runAction(args: args, in: repoURL) {
+                let truncated = String(output.prefix(AILimits.maxDiffContentLength))
+                hiddenContext += (hiddenContext.isEmpty ? "" : "\n\n") + "```\n\(truncated)\n```"
+                injectedLabel = label
+            }
+        }
+
+        // Build conversation history block (last 10 messages BEFORE appending current) for multi-turn context
+        let historyMessages = thread.messages.suffix(10)
+        var historyBlock = ""
+        if !historyMessages.isEmpty {
+            historyBlock = "## Conversation so far\n\n"
+            for msg in historyMessages {
+                let speaker = msg.role == .user ? "User" : "Assistant"
+                historyBlock += "**\(speaker):** \(msg.content)\n\n"
+            }
+        }
+
+        // User bubble shows ONLY clean displayContent + chip (if injected)
+        let userMessage = ChatMessage(role: .user, content: displayContent, autoInjectedIntent: injectedLabel)
         thread.messages.append(userMessage)
+
+        // Payload that goes to model = history + hidden context + user text
+        var parts: [String] = []
+        if !historyBlock.isEmpty { parts.append(historyBlock) }
+        if !hiddenContext.isEmpty { parts.append(hiddenContext) }
+        parts.append("## Current user message\n\n" + displayContent)
+        let expandedText: String = parts.joined(separator: "\n\n")
 
         // Persist user message
         Task {
@@ -272,12 +326,13 @@ final class ChatService {
         await task.value
     }
 
-    /// Resets to a new empty thread (volatile — creates a fresh thread and activates it).
+    /// Creates a fresh thread (Phase 2 multi-thread) and clears harness session state (Phase 3).
     func newThread() {
         activeTask?.cancel()
         activeTask = nil
         isStreaming = false
         createThread()
+        Task { await harness.resetSession() }
     }
 
     /// Cancels the active streaming task.

@@ -1,148 +1,127 @@
 {
   "version": 1,
-  "spec_hash": "sha256:52600c35e9c9d6dea8c12316d73459e0a4df56acc414e376227a8d1a106ed47e",
-  "created_at": "2026-04-16T23:30:00Z",
+  "spec_hash": "sha256:c5deb3116e1799474f9f24f416fcee687dc3fae8e7dc9c349407d6844d18dc0e",
+  "created_at": "2026-05-21T23:35:00Z",
   "waves": 5,
   "tasks": [
     {
       "id": 1,
-      "title": "Operation enum + OperationManager (foundation)",
-      "description": "Create `Sources/Zion/Services/Operation.swift` defining `enum OperationKind` and `struct Operation`. OperationKind cases (at minimum): `status`, `add`, `commit`, `restore`, `fetch`, `push`, `pull`, `stash`, `checkout`, `merge`, `rebase`, `reset`, `revert`, `tag`, `branch`, `cloning`, `remote`, `log`, `diff`, `show`, `other(String)`. `Operation` is a struct with `kind: OperationKind`, `readOnly: Bool`, `blocking: Bool`, `remote: Bool`, `showProgress: Bool`, and a static factory per kind (e.g. `static var status: Operation { .init(kind: .status, readOnly: true, blocking: false, remote: false, showProgress: false) }` and `static func other(_ label: String) -> Operation`). Flag values follow VS Code conventions: status/log/diff/show = readOnly true; fetch/push/pull/cloning = remote true; commit/merge/rebase/reset/revert/checkout = blocking true; commit/fetch/push/pull/cloning = showProgress true. Then create `Sources/Zion/Services/OperationManager.swift` — `@MainActor final class OperationManager` with a private `[OperationKind: Int]` reference counter. Public API: `func start(_ op: Operation)`, `func end(_ op: Operation)`, `func isRunning(_ kind: OperationKind) -> Bool`, `var isIdle: Bool` (true when all counts are 0), `func shouldShowProgress() -> Bool` (true when any active op has `showProgress == true`). Handle overlapping calls correctly via refcount (start +1, end -1, min 0).",
+      "title": "ZionTools — tool schemas (OpenAI + Anthropic envelopes)",
+      "description": "Create Sources/Zion/Services/ZionTools.swift with `struct ZionTools` defining 6 tools: read, edit, write, bash, grep, glob. Each tool has a stable JSON Schema. Two exporters: `static func toolSchemasJSON() -> [[String: Any]]` returns OpenAI shape `{type:'function', function:{name, description, parameters: JSONSchema}}`; `static func anthropicToolSchemas() -> [[String: Any]]` returns Anthropic shape `{name, description, input_schema}`. Edit tool MUST mirror Anthropic text_editor_20250728 str_replace semantics — params: `path: String, edits: [{oldText: String, newText: String}]`. Read: `path, offset?, limit?`. Write: `path, content`. Bash: `command, timeout?`. Grep: `pattern, path?, glob?, ignoreCase?`. Glob: `pattern, path?`. Write Tests/ZionTests/ZionToolsTests.swift: assert toolSchemasJSON returns 6 entries, all with required JSONSchema fields; assert anthropicToolSchemas envelope differs (no `function` wrapper, uses `input_schema` not `parameters`); assert edit schema contains oldText + newText keys.",
       "files": [
-        "Sources/Zion/Services/Operation.swift",
-        "Sources/Zion/Services/OperationManager.swift"
+        "Sources/Zion/Services/ZionTools.swift",
+        "Tests/ZionTests/ZionToolsTests.swift"
       ],
       "criteria": [
-        "swift build exits 0",
-        "grep -q 'enum OperationKind' Sources/Zion/Services/Operation.swift",
-        "grep -q 'struct Operation' Sources/Zion/Services/Operation.swift",
-        "grep -q 'final class OperationManager' Sources/Zion/Services/OperationManager.swift",
-        "grep -q 'var isIdle' Sources/Zion/Services/OperationManager.swift"
+        "swift test --filter ZionToolsTests",
+        "grep -E 'static func toolSchemasJSON|static func anthropicToolSchemas' Sources/Zion/Services/ZionTools.swift | wc -l"
       ],
       "deps": [],
       "wave": 1,
-      "status": "done",
-      "cycles": 1,
-      "started_at": "2026-04-16T23:35:00Z",
-      "completed_at": "2026-04-16T23:37:00Z",
-      "commit_sha": "3046bf4b5702f15a1edbbac7d0c481c4fc493f2f",
+      "status": "pending",
+      "cycles": 0,
+      "started_at": null,
+      "completed_at": null,
+      "commit_sha": null,
       "blocked_reason": null
     },
     {
       "id": 2,
-      "title": "GitClientError.notAGitRepository + stderr detection",
-      "description": "Add `case notAGitRepository` to the existing `GitClientError` enum (grep `enum GitClientError` under `Sources/Zion/Services/` to find its file; should be in `GitClient*.swift`). In `Sources/Zion/Services/RepositoryWorker+Execution.swift` — in the `runProcessStream` path and in any place where a failed git Process's stderr is surfaced — detect the substring `fatal: not a git repository` (case-insensitive match on lowercase: `stderr.lowercased().contains(\"fatal: not a git repository\")`). When detected, throw `GitClientError.notAGitRepository` instead of the generic `.commandFailed(...)`. Do NOT alter the normal success path. The `runAction*` methods in the same file currently delegate to `git.run(...)`/`git.runAllowingFailure(...)` inside `GitClient`; the detection should live as low as the stderr is available — if `GitClient`'s own `run` surfaces stderr in the throw, add the detection there; otherwise wrap the `runAction*` paths. Prefer the lowest-layer fix for coverage across all entry points. Add `L10n` usage is NOT needed in this task — error messages are produced by the ViewModel's existing `handleError` path in Task 4.",
+      "title": "AIProvider.supportsToolCalling + localModelSupportsTools whitelist",
+      "description": "Modify Sources/Zion/Models/AppEnums.swift: add `extension AIProvider { var supportsToolCalling: Bool { ... } }` after the enum (around line 220). Returns true for .anthropic and .openai; false for .gemini and .none; for .local consults AIProviderSupport.localModelSupportsTools using the user's loaded model name (read from LocalLLMConfig via AIClient.loadLocalConfig()?.modelName ?? ''). Modify Sources/Zion/Services/AIProviderSupport.swift: add `static func localModelSupportsTools(_ name: String) -> Bool` with case-insensitive regex whitelist: `qwen3-coder`, `qwen2\\.5-coder`, `llama-3\\.[3-9]`, `mistral-large`, `deepseek-v3`, `gpt-oss`, `glm-4`. Write Tests/ZionTests/AIProviderSupportToolsTests.swift: 8 assertions covering all enum cases + 4 model name positives + 2 negatives.",
       "files": [
-        "Sources/Zion/Services/RepositoryWorker+Execution.swift"
+        "Sources/Zion/Models/AppEnums.swift",
+        "Sources/Zion/Services/AIProviderSupport.swift",
+        "Tests/ZionTests/AIProviderSupportToolsTests.swift"
       ],
       "criteria": [
-        "swift build exits 0",
-        "grep -q 'notAGitRepository' Sources/Zion/Services/RepositoryWorker+Execution.swift",
-        "grep -q 'fatal: not a git repository' Sources/Zion/Services/RepositoryWorker+Execution.swift"
+        "swift test --filter AIProviderSupportToolsTests",
+        "swift build 2>&1 | tail -3"
       ],
       "deps": [],
       "wave": 1,
-      "status": "done",
-      "cycles": 1,
-      "started_at": "2026-04-16T23:37:30Z",
-      "completed_at": "2026-04-16T23:39:30Z",
-      "commit_sha": "50a0b85535248fba61541887fc1a709801e1b95a",
+      "status": "pending",
+      "cycles": 0,
+      "started_at": null,
+      "completed_at": null,
+      "commit_sha": null,
       "blocked_reason": null
     },
     {
       "id": 3,
-      "title": "IdleFocusGate extension + watcher hookup",
-      "description": "Create `Sources/Zion/ViewModel/RepositoryViewModel+IdleFocusGate.swift`. Adds `@MainActor func requestFileWatcherRefresh()` that: (1) if `NSApp.isActive == true` AND `operations.isIdle == true`, calls `refreshRepository(origin: .fileWatcher)` immediately; (2) otherwise sets a private `pendingFileWatcherRefresh: Bool = true` (add as `@ObservationIgnored private var` on `RepositoryViewModel` in `RepositoryViewModel.swift`) and arms a one-time `NSApplication.didBecomeActiveNotification` observer (only if not already armed). On receiving `didBecomeActive`, after a 200 ms grace (`Constants.Timing.refreshRepositoryIdleGrace`), if `pendingFileWatcherRefresh && operations.isIdle`, fire the refresh once, clear the flag, and remove the observer. User-initiated and repository-switch refreshes must bypass this gate — route only the `.fileWatcher` origin through `requestFileWatcherRefresh()`. Modify `Sources/Zion/ViewModel/RepositoryViewModel+SnapshotHelpers.swift` — in the `startFileWatcher(for:)` callback (line 599 area), replace the direct `refreshRepository(origin: .fileWatcher)` call with `requestFileWatcherRefresh()`. Also modify `Sources/Zion/Helpers/Constants.swift` — add `static let refreshRepositoryIdleGrace: UInt64 = 200_000_000 // 200ms` inside `enum Timing`. Add `@ObservationIgnored private var` for `pendingFileWatcherRefresh` and `didArmActivationObserver` on the main `RepositoryViewModel` class (file: `Sources/Zion/ViewModel/RepositoryViewModel.swift`). Operation count check requires Task 1's `OperationManager` — assumes `self.operations` exists (added in Task 4).",
+      "title": "ChatModels (autoInjectedIntent + toolEvents) + L10n keys (3 locales) + test",
+      "description": "Modify Sources/Zion/Models/ChatModels.swift: add `var autoInjectedIntent: String? = nil` and `var toolEvents: [ChatToolEvent]? = nil` to struct ChatMessage. Add `struct ChatToolEvent: Identifiable, Equatable { let id: String; let name: String; var status: ToolEventStatus; let argsPreview: String }`. Add `enum ToolEventStatus: String, Codable { case pending, running, completed, failed }`. Update Codable/Equatable (auto-synth where possible). All defaults nil — existing call sites and tests stay green. Add 18 L10n keys to en/pt-BR/es Localizable.strings: chat.tool.running (%@), chat.tool.completed (%@), chat.tool.failed (%@), chat.tool.error.readBeforeEdit, chat.tool.error.fileExists, chat.tool.error.outsideRepo, chat.tool.error.bashNotAllowed, chat.tool.error.maxHops, chat.tool.error.editsDisabled, chat.tool.error.invalidEdit, chat.tool.error.textNotFound, chat.harness.autoIncluded (%@), chat.harness.intent.lastCommit, chat.harness.intent.currentChanges, chat.harness.intent.recentHistory, chat.harness.intent.status, chat.harness.intent.fileContent (%@), chat.harness.intent.commitDetails (%@). Extend Tests/ZionTests/ChatLocalizationTests.swift requiredKeys with these 18.",
       "files": [
-        "Sources/Zion/ViewModel/RepositoryViewModel+IdleFocusGate.swift",
-        "Sources/Zion/ViewModel/RepositoryViewModel+SnapshotHelpers.swift",
-        "Sources/Zion/ViewModel/RepositoryViewModel.swift",
-        "Sources/Zion/Helpers/Constants.swift"
+        "Sources/Zion/Models/ChatModels.swift",
+        "Sources/Zion/Resources/en.lproj/Localizable.strings",
+        "Sources/Zion/Resources/pt-BR.lproj/Localizable.strings",
+        "Sources/Zion/Resources/es.lproj/Localizable.strings",
+        "Tests/ZionTests/ChatLocalizationTests.swift"
       ],
       "criteria": [
-        "swift build exits 0",
-        "grep -q 'requestFileWatcherRefresh' Sources/Zion/ViewModel/RepositoryViewModel+IdleFocusGate.swift",
-        "grep -q 'requestFileWatcherRefresh' Sources/Zion/ViewModel/RepositoryViewModel+SnapshotHelpers.swift",
-        "grep -q 'refreshRepositoryIdleGrace' Sources/Zion/Helpers/Constants.swift",
-        "grep -q 'didBecomeActiveNotification' Sources/Zion/ViewModel/RepositoryViewModel+IdleFocusGate.swift"
+        "swift test --filter ChatLocalizationTests"
       ],
-      "deps": [1],
-      "wave": 2,
-      "status": "done",
-      "cycles": 1,
-      "started_at": "2026-04-16T23:46:30Z",
-      "completed_at": "2026-04-16T23:48:30Z",
-      "commit_sha": "30c00207f236c1a965137a3587c824528c5fec28",
+      "deps": [],
+      "wave": 1,
+      "status": "pending",
+      "cycles": 0,
+      "started_at": null,
+      "completed_at": null,
+      "commit_sha": null,
       "blocked_reason": null
     },
     {
       "id": 4,
-      "title": "Auto-dispose + L10n + runGitAction integration",
-      "description": "This is the central integration task. Create `Sources/Zion/ViewModel/RepositoryViewModel+AutoDispose.swift` with: (1) `@MainActor func markRepositoryDisposed(reason: String)` — sets `isGitRepository = false`, sets `isRepositoryDisposed = true`, logs a warn via `DiagnosticLogger.shared.log(.warn, reason, ...)`. (2) `@MainActor func shouldSkipBecauseDisposed() -> Bool` that returns `isRepositoryDisposed`. (3) On `openRepository(_:silent:)` call path, clear `isRepositoryDisposed = false` for the newly opened URL — find the right hook in `RepositoryViewModel.swift` or `+SnapshotHelpers.swift`. Add `@ObservationIgnored var isRepositoryDisposed: Bool = false` and `@ObservationIgnored let operations = OperationManager()` as stored members on `RepositoryViewModel.swift` near the other service members (around line 100). Modify `Sources/Zion/ViewModel/RepositoryViewModel+Git.swift`: `runGitAction` gains `operation: Operation = .other(\"\")` parameter (new, with default — if caller does not pass one, build from the `label` param: `.other(label)`); at the start of the try block call `self.operations.start(operation)`; in the `defer` (or finally equivalent) call `self.operations.end(operation)`; in the catch path, if `error is GitClientError` AND the case is `.notAGitRepository`, call `markRepositoryDisposed(reason: \"runGitAction:\\(operation.kind)\")` before re-throwing. Also prepend `guard !isRepositoryDisposed else { throw GitClientError.notAGitRepository }` (or equivalent no-op return) at the very top of `runGitAction` so disposed repos short-circuit. For `loadSubmodules`, `loadGitIgnoredPaths`, `refreshRepoMemory` (grep for them across `Sources/Zion/ViewModel/`), prepend `guard !isRepositoryDisposed else { return }`. Update a handful of high-traffic call sites to pass explicit `operation:` — at minimum: `refreshStatusOnly` → `.status`, `commit(...)` → `.commit`, `fetch` → `.fetch`, `push` → `.push`, `pull` → `.pull`, stage/unstage/discard → `.add` / `.restore` / `.restore`. Add L10n key `error.notAGitRepository` to `Resources/en.lproj/Localizable.strings` (\"Not a git repository.\"), `Resources/pt-BR.lproj/Localizable.strings` (\"Não é um repositório git.\"), and `Resources/es.lproj/Localizable.strings` (\"No es un repositorio git.\"). At most 5 files listed below — if a secondary ViewModel extension also needs the guard (e.g. submodule or repo-memory paths live in their own extension), add the guard there too but keep the file count at or below 5 for this task; if more are needed, flag it as TASK_GAP.",
+      "title": "IntentClassifier + tests",
+      "description": "Create Sources/Zion/Services/IntentClassifier.swift with `enum HarnessIntent: Equatable { case lastCommit; case currentChanges; case recentHistory; case status; case fileContent(path: String); case commitDetails(sha: String) }` + `static func classify(_ text: String) -> HarnessIntent?`. Regex/keyword based, line-anchored, conservative (return nil unless high confidence). Match EN + PT-BR phrasings: 'last commit'/'ultimo commit'/'latest commit' → .lastCommit; 'current changes'/'what changed'/'que mudou'/'uncommitted'/'my changes' → .currentChanges; 'history'/'historico'/'recent commits'/'ultimos commits' → .recentHistory; 'status'/'estado do repo'/'staged'/'working tree' → .status; pattern '(show|read|abre|veja|ver|explica|review) <path>' where path matches `\\S+\\.\\w+` → .fileContent(path); pattern '(commit|sha) <7-40 hex>' → .commitDetails(sha). Conservative — must NOT match 'what is SSE?' or unrelated text. Write Tests/ZionTests/IntentClassifierTests.swift: >=12 assertions covering each intent positive EN + positive PT-BR + negative/ambiguous nil.",
       "files": [
-        "Sources/Zion/ViewModel/RepositoryViewModel+AutoDispose.swift",
-        "Sources/Zion/ViewModel/RepositoryViewModel.swift",
-        "Sources/Zion/ViewModel/RepositoryViewModel+Git.swift",
-        "Sources/Zion/ViewModel/RepositoryViewModel+GitStaging.swift",
-        "Resources/en.lproj/Localizable.strings"
+        "Sources/Zion/Services/IntentClassifier.swift",
+        "Tests/ZionTests/IntentClassifierTests.swift"
       ],
       "criteria": [
-        "swift build exits 0",
-        "grep -q 'markRepositoryDisposed' Sources/Zion/ViewModel/RepositoryViewModel+AutoDispose.swift",
-        "grep -q 'isRepositoryDisposed' Sources/Zion/ViewModel/RepositoryViewModel.swift",
-        "grep -q 'operations = OperationManager' Sources/Zion/ViewModel/RepositoryViewModel.swift",
-        "grep -q 'operations.start\\|operations\\.start' Sources/Zion/ViewModel/RepositoryViewModel+Git.swift",
-        "grep -q 'operations.end\\|operations\\.end' Sources/Zion/ViewModel/RepositoryViewModel+Git.swift",
-        "grep -q 'operation: \\.status\\|operation: \\.commit\\|operation: \\.fetch' Sources/Zion/ViewModel/RepositoryViewModel+Git.swift",
-        "grep -q 'error.notAGitRepository' Resources/en.lproj/Localizable.strings"
+        "swift test --filter IntentClassifierTests"
       ],
-      "deps": [1, 2],
-      "wave": 2,
-      "status": "done",
-      "cycles": 2,
-      "started_at": "2026-04-16T23:40:00Z",
-      "completed_at": "2026-04-16T23:46:00Z",
-      "commit_sha": "4f5737cbbae06187a61bac3b1042b7634c7f14e4",
+      "deps": [],
+      "wave": 1,
+      "status": "pending",
+      "cycles": 0,
+      "started_at": null,
+      "completed_at": null,
+      "commit_sha": null,
       "blocked_reason": null
     },
     {
       "id": 5,
-      "title": "L10n: add notAGitRepository to pt-BR + es",
-      "description": "Add the `error.notAGitRepository` key to the Portuguese (BR) and Spanish locale files to match the English string added in Task 4. Keys: `error.notAGitRepository = \"Não é um repositório git.\"` (pt-BR) and `error.notAGitRepository = \"No es un repositorio git.\"` (es). Respect existing ordering (append near other `error.*` keys if present, otherwise append at end).",
+      "title": "ZionHarness actor + FileMutationQueue + tests",
+      "description": "Create Sources/Zion/Services/ZionHarness.swift with `actor ZionHarness { let worker: RepositoryWorker; let repoURL: URL; private var sessionReadFiles: Set<URL>; private let mutationQueue: FileMutationQueue; func execute(toolCall: ToolCall) async -> ToolResult; func resetSession() }`. Includes `struct ToolCall { let id: String; let name: String; let arguments: [String: Any] }`, `struct ToolResult { let toolCallID: String; let content: String; let isError: Bool }`, `enum HarnessError: Error`. Nested `private actor FileMutationQueue` keyed by absolute path (serializes writes/edits to same path). Hard rules: (a) edit on path not in sessionReadFiles → error chat.tool.error.readBeforeEdit; (b) write on existing path → error chat.tool.error.fileExists; (c) bash command must match `^(git|swift|ls|pwd|cat|echo)\\s` regex else chat.tool.error.bashNotAllowed; (d) all paths resolved via URL.resolvingSymlinksInPath().standardized must hasPrefix repoURL.standardized → else chat.tool.error.outsideRepo; (e) read adds to sessionReadFiles. Honor @AppStorage('chat.allowEdits') default false (read via UserDefaults.standard — actor context). Read: cap 8000 lines / 1MB, return truncation marker. Bash: cap 100 lines / 1MB, spill to tmp file with marker. Write Tests/ZionTests/ZionHarnessTests.swift with these scenarios: test_edit_rejected_without_prior_read, test_write_rejected_when_file_exists, test_bash_allowlist_enforced (positive git status + negative rm -rf), test_path_outside_repo_rejected (../etc/passwd + symlink), test_file_mutation_queue_serializes, test_session_reset_on_new_thread, test_edit_empty_oldText_rejected, test_edit_text_not_found_returns_context. Use temp git repo via FileManager.temporaryDirectory + Process to git init.",
       "files": [
-        "Resources/pt-BR.lproj/Localizable.strings",
-        "Resources/es.lproj/Localizable.strings"
+        "Sources/Zion/Services/ZionHarness.swift",
+        "Tests/ZionTests/ZionHarnessTests.swift"
       ],
       "criteria": [
-        "swift build exits 0",
-        "grep -q 'error.notAGitRepository' Resources/pt-BR.lproj/Localizable.strings",
-        "grep -q 'error.notAGitRepository' Resources/es.lproj/Localizable.strings"
+        "swift test --filter ZionHarnessTests"
       ],
-      "deps": [4],
-      "wave": 3,
-      "status": "done",
-      "cycles": 1,
-      "started_at": "2026-04-16T23:48:45Z",
-      "completed_at": "2026-04-16T23:49:15Z",
-      "commit_sha": "19a19efd3a6ee0c961f0a5ba4f4c5fd394833194",
+      "deps": [1],
+      "wave": 2,
+      "status": "pending",
+      "cycles": 0,
+      "started_at": null,
+      "completed_at": null,
+      "commit_sha": null,
       "blocked_reason": null
     },
     {
       "id": 6,
-      "title": "OperationKind + OperationManager tests",
-      "description": "Create `Tests/ZionTests/OperationKindTests.swift` with a table-driven test asserting every declared `OperationKind` case has the expected `readOnly/blocking/remote/showProgress` flag values. At minimum cover: `.status` (readOnly true, others false), `.commit` (blocking + showProgress), `.fetch/.push/.pull` (remote + showProgress), `.log/.diff/.show` (readOnly), `.other(String)` (all false by default). Create `Tests/ZionTests/OperationManagerTests.swift` with: `testIsIdleTogglesCorrectly` (start a .status op → isIdle false → end → isIdle true); `testRefcountHandlesOverlap` (start .status twice, end once → still running, end again → idle); `testIsRunningByKind` (start .commit → isRunning(.commit) true, isRunning(.fetch) false); `testShouldShowProgress` (start .status → false, start .commit → true). Do not invoke `runGitAction` in these tests — they exercise the Manager directly.",
+      "title": "StreamEvent enum + AIError tool cases",
+      "description": "Modify Sources/Zion/Services/AIClient+Helpers.swift: add `enum StreamEvent { case textDelta(String); case toolCallStart(id: String, name: String); case toolCallArgsDelta(id: String, jsonChunk: String); case toolCallComplete(id: String, name: String, arguments: [String: Any]); case done }` (single source of truth for tool-streaming events across providers). Add AIError cases: `.toolExecutionFailed(String)`, `.maxToolHopsExceeded`, `.toolCallingNotSupported`. Extend errorDescription switch with L10n keys (use chat.tool.error.* keys added in task 3 + new key ai.error.toolCalling.notSupported).",
       "files": [
-        "Tests/ZionTests/OperationKindTests.swift",
-        "Tests/ZionTests/OperationManagerTests.swift"
+        "Sources/Zion/Services/AIClient+Helpers.swift"
       ],
       "criteria": [
-        "swift test --filter ZionTests.OperationKindTests exits 0",
-        "swift test --filter ZionTests.OperationManagerTests exits 0",
-        "swift test --filter ZionTests.OperationManagerTests/testIsIdleTogglesCorrectly exits 0",
-        "swift test --filter ZionTests.OperationManagerTests/testRefcountHandlesOverlap exits 0"
+        "swift build 2>&1 | tail -3"
       ],
-      "deps": [4],
-      "wave": 3,
+      "deps": [3],
+      "wave": 2,
       "status": "pending",
       "cycles": 0,
       "started_at": null,
@@ -152,19 +131,18 @@
     },
     {
       "id": 7,
-      "title": "GitClientError + AutoDispose tests",
-      "description": "Create `Tests/ZionTests/GitClientErrorTests.swift`. Test `testNotAGitRepositoryDetection`: feed a synthetic stderr string `\"fatal: not a git repository (or any parent up to mount point /tmp)\"` into the detection path (expose the detection as a small pure helper if it isn't already, e.g. `internal func isNotAGitRepoStderr(_ s: String) -> Bool` in `RepositoryWorker+Execution.swift`). Assert true for the fatal string, false for `\"nothing to commit\"`, false for empty. Create `Tests/ZionTests/AutoDisposeTests.swift`. Seeded with a `RepositoryViewModel()`: `testMarkRepositoryDisposedSetsFlags` (call `markRepositoryDisposed(reason:)` → `isGitRepository == false`, `isRepositoryDisposed == true`); `testShouldSkipBecauseDisposed` (after dispose, returns true; before dispose, false); `testReopenClearsDisposedFlag` (dispose a repo, call `openRepository(url, silent: false)` with a test URL, assert the flag clears). If `openRepository` cannot be driven from a unit test (e.g. requires a real URL on disk), fall back to a direct test of the clear path — create a `@testable` helper `clearDisposedFlagForTesting()` or similar seam. Document the fallback in a test comment.",
+      "title": "Provider stream-with-tools (Anthropic + OpenAI + Local) + protocol parser tests",
+      "description": "Modify Sources/Zion/Services/AIClient+Anthropic.swift: IF file exists (Phase 2 merged on master), add `func streamAnthropicWithTools(payload: AIPromptPayload, apiKey: String, tools: [[String: Any]], maxTokens: Int) -> AsyncThrowingStream<StreamEvent, Error>`. IF file does NOT exist, create it with Phase 2 baseline `streamAnthropic` AND the tools variant. Parse Messages API SSE: detect `event: content_block_start` (text vs tool_use type), `event: content_block_delta` with `delta.type == 'text_delta'` (emit textDelta) or `'input_json_delta'` (accumulate partial JSON per block index, emit toolCallArgsDelta), `event: content_block_stop` (if block was tool_use, dispatch toolCallComplete with assembled JSON), `event: message_stop` (emit .done). Modify Sources/Zion/Services/AIClient+OpenAI.swift: IF exists add `func streamOpenAIWithTools(...)` ELSE create with Phase 2 baseline + tools variant. Parse Chat Completions SSE: `choices[0].delta.content` → textDelta; `choices[0].delta.tool_calls[i].id/function.name/function.arguments` → accumulate per index, emit toolCallComplete on first non-tool-call delta or stream end. Modify Sources/Zion/Services/AIClient+Local.swift: add `func streamLocalWithTools(payload: AIPromptPayload, config: LocalLLMConfig, tools: [[String: Any]], maxTokens: Int, modelID: String) -> AsyncThrowingStream<StreamEvent, Error>`. Same OpenAI-compat shape (works for Ollama 0.3+, MLX-LM, vLLM, llama.cpp). Write Tests/ZionTests/ToolStreamingProtocolTests.swift with canned SSE fixtures for all 3 providers asserting StreamEvent sequence is correct (text deltas + tool call accumulation + complete).",
       "files": [
-        "Tests/ZionTests/GitClientErrorTests.swift",
-        "Tests/ZionTests/AutoDisposeTests.swift"
+        "Sources/Zion/Services/AIClient+Anthropic.swift",
+        "Sources/Zion/Services/AIClient+OpenAI.swift",
+        "Sources/Zion/Services/AIClient+Local.swift",
+        "Tests/ZionTests/ToolStreamingProtocolTests.swift"
       ],
       "criteria": [
-        "swift test --filter ZionTests.GitClientErrorTests exits 0",
-        "swift test --filter ZionTests.AutoDisposeTests exits 0",
-        "swift test --filter ZionTests.AutoDisposeTests/testMarkRepositoryDisposedSetsFlags exits 0",
-        "swift test --filter ZionTests.AutoDisposeTests/testReopenClearsDisposedFlag exits 0"
+        "swift test --filter ToolStreamingProtocolTests"
       ],
-      "deps": [4],
+      "deps": [6],
       "wave": 3,
       "status": "pending",
       "cycles": 0,
@@ -175,20 +153,18 @@
     },
     {
       "id": 8,
-      "title": "IdleFocusGate tests",
-      "description": "Create `Tests/ZionTests/IdleFocusGateTests.swift`. Tests: `testDeferredWhenInactive` — set `NSApp.isActive` substitute (the gate should accept an override flag for testing; expose `internal var isActiveOverrideForTesting: Bool?` on the IdleFocusGate extension that, when set, is used instead of `NSApp.isActive`); set override to false; call `requestFileWatcherRefresh()`; assert no immediate `refreshRepository` call (mock via test seam counter) and `pendingFileWatcherRefresh == true`. `testDeferredWhenNonReadOnlyOpRunning` — set override to true, but start a `.commit` op on the manager; call `requestFileWatcherRefresh()`; assert deferred. `testCoalescesMultipleDeferred` — defer three times, all should collapse to one pending flag. `testFiresOnceOnActivation` — set override to false + defer + set override to true + post a synthetic `didBecomeActiveNotification` (or call a test-only `simulateActivationForTesting()` seam); after the 200 ms grace, assert refresh fired exactly once. `testUserInitiatedBypassesGate` — call `refreshRepository(origin: .userInitiated)` while gate conditions would block; assert it ran immediately. Provide a test seam counter for \"refresh fired\" (e.g. `internal var refreshFireCountForTesting: Int`) that the real `refreshRepository` increments so tests can observe without invoking real git.",
+      "title": "ChatService tool-streaming loop + intent fallback + tests",
+      "description": "Modify Sources/Zion/Services/ChatService.swift: inject `@ObservationIgnored private let harness: ZionHarness` via init (update both prod + test init signatures). In send(): read @AppStorage('chat.toolsEnabled') default true, 'chat.allowEdits' default false, 'chat.autoInject' default true via UserDefaults.standard.bool(forKey:) (since ChatService is @Observable not view). Compute `useTools = toolsEnabled && provider.supportsToolCalling`. If useTools: call provider stream-with-tools variant with ZionTools.toolSchemasJSON() (or anthropicToolSchemas() for .anthropic). Loop max 10 hops: for each StreamEvent — textDelta → append to last assistant message; toolCallStart → append ChatToolEvent(status: running) to message.toolEvents; toolCallComplete → await harness.execute(toolCall), append result as assistant tool_result content + update toolEvent status. After 10 hops: append `{error: max_hops_exceeded}` synthetic tool result, force one final non-tool call. If !useTools: if autoInject on, call IntentClassifier.classify(originalUserText); if hit, run command via worker (git show HEAD --patch / git diff HEAD / etc), prepend fenced output to expandedText, set user message.autoInjectedIntent = intent label string. newThread() calls await harness.resetSession(). Write Tests/ZionTests/ChatServiceToolLoopTests.swift: test_full_tool_loop (mock provider yields tool call → harness mocked → assistant text), test_max_hops_enforced (mock yields 11 calls → maxHops error), test_auto_injection_when_no_tools (gemini provider + 'last commit' message → autoInjectedIntent set + fenced block present), test_settings_toggles_respected (toolsEnabled false → no tool loop, allowEdits false → edit rejected with editsDisabled error). Use injected streamProvider seam.",
       "files": [
-        "Tests/ZionTests/IdleFocusGateTests.swift"
+        "Sources/Zion/Services/ChatService.swift",
+        "Tests/ZionTests/ChatServiceToolLoopTests.swift"
       ],
       "criteria": [
-        "swift test --filter ZionTests.IdleFocusGateTests exits 0",
-        "swift test --filter ZionTests.IdleFocusGateTests/testDeferredWhenInactive exits 0",
-        "swift test --filter ZionTests.IdleFocusGateTests/testCoalescesMultipleDeferred exits 0",
-        "swift test --filter ZionTests.IdleFocusGateTests/testFiresOnceOnActivation exits 0",
-        "swift test --filter ZionTests.IdleFocusGateTests/testUserInitiatedBypassesGate exits 0"
+        "swift test --filter ChatServiceToolLoopTests",
+        "swift test --filter ChatServiceTests"
       ],
-      "deps": [3, 4],
-      "wave": 3,
+      "deps": [1, 4, 5, 7],
+      "wave": 4,
       "status": "pending",
       "cycles": 0,
       "started_at": null,
@@ -198,16 +174,60 @@
     },
     {
       "id": 9,
-      "title": "Full suite + build verify",
-      "description": "Run `swift test` and `./scripts/make-app.sh` to verify zero regressions and a buildable artifact. If any test fails that did not fail on Wave 1, fix it. Do not add new features. If `make-app.sh` fails on signing or packaging, investigate but do not skip signing. Report pass/fail with counts.",
-      "files": [],
-      "criteria": [
-        "swift test exits 0",
-        "./scripts/make-app.sh exits 0",
-        "test -d dist/Zion.app"
+      "title": "RepositoryViewModel+Chat harness wiring",
+      "description": "Modify Sources/Zion/ViewModel/RepositoryViewModel+Chat.swift: at the ChatService construction site, instantiate `let harness = ZionHarness(worker: <repo worker>, repoURL: repositoryURL)` and pass to ChatService init. Update init signature usage to match task 8 changes. resetChatService() flow unchanged — harness lives inside ChatService and resets per newThread().",
+      "files": [
+        "Sources/Zion/ViewModel/RepositoryViewModel+Chat.swift"
       ],
-      "deps": [5, 6, 7, 8],
+      "criteria": [
+        "swift build 2>&1 | tail -3"
+      ],
+      "deps": [5, 8],
       "wave": 4,
+      "status": "pending",
+      "cycles": 0,
+      "started_at": null,
+      "completed_at": null,
+      "commit_sha": null,
+      "blocked_reason": null
+    },
+    {
+      "id": 10,
+      "title": "ToolEventBadge + AutoInjectionChip + bubble integration",
+      "description": "Create Sources/Zion/Views/Chat/ToolEventBadge.swift: `struct ToolEventBadge: View` ephemeral capsule. Inputs: event: ChatToolEvent. Renders icon (SF Symbol per tool name: 'doc.text' for read, 'pencil' for edit, 'square.and.pencil' for write, 'terminal' for bash, 'magnifyingglass' for grep/glob, 'gearshape' default) + tool name + truncated argsPreview (first 60 chars) + status indicator (ProgressView while running, checkmark when completed, xmark when failed). DesignSystem.Colors.glassHover capsule background, DesignSystem.Typography.label. L10n chat.tool.running/completed/failed format strings. Create Sources/Zion/Views/Chat/AutoInjectionChip.swift: `struct AutoInjectionChip: View` small label with sparkle icon + L10n('chat.harness.autoIncluded', intentLabel). DesignSystem tokens only. Modify Sources/Zion/Views/Chat/ChatMessageBubble.swift: when message.autoInjectedIntent != nil and role == .user, render AutoInjectionChip below bubble (HStack with Spacer + chip aligned right). When message.toolEvents != nil and !empty, render VStack of ToolEventBadge ABOVE assistant bubble. Preserve existing bubble layout for messages without these fields.",
+      "files": [
+        "Sources/Zion/Views/Chat/ToolEventBadge.swift",
+        "Sources/Zion/Views/Chat/AutoInjectionChip.swift",
+        "Sources/Zion/Views/Chat/ChatMessageBubble.swift"
+      ],
+      "criteria": [
+        "swift build 2>&1 | tail -3",
+        "grep -nE '(Color\\.[a-z]+\\.opacity|Font\\.[a-z]+|cornerRadius:\\s*[0-9])' Sources/Zion/Views/Chat/ToolEventBadge.swift Sources/Zion/Views/Chat/AutoInjectionChip.swift | wc -l"
+      ],
+      "deps": [3, 8],
+      "wave": 5,
+      "status": "pending",
+      "cycles": 0,
+      "started_at": null,
+      "completed_at": null,
+      "commit_sha": null,
+      "blocked_reason": null
+    },
+    {
+      "id": 11,
+      "title": "Settings UI + StatusBar footer shortcut + dist build",
+      "description": "Modify Sources/Zion/Views/Settings/AISettingsTab.swift: add new Section('AI Harness') with three Toggle controls bound to @AppStorage('chat.toolsEnabled') default true, @AppStorage('chat.allowEdits') default false, @AppStorage('chat.autoInject') default true. Below toggles add a read-only label showing current local model tool-capability: 'Tool calling: supported' or 'not supported' computed from AIProviderSupport.localModelSupportsTools(currentLocalModelName). All labels via L10n. Section visible only when defaultProvider != .none. Modify Sources/Zion/Views/Main/StatusBar.swift around line 225-227 (HStack with statusBarSectionButton calls): append `statusBarSectionButton(.chat)` after the existing .code/.graph/.operations row so Zion Talks gets its footer shortcut. If statusBarSectionLabel(_:) switch at line 321 is non-exhaustive after adding .chat to AppSection earlier, add `.chat: return L10n('chat.title')`. Icon resolves via AppSection.chat.icon (bubble.left.and.bubble.right) already defined. Run swift build + ./scripts/make-app.sh; verify dist/Zion.app/Contents/MacOS/Zion executable. Run full swift test, confirm 'Test Suite All tests passed'.",
+      "files": [
+        "Sources/Zion/Views/Settings/AISettingsTab.swift",
+        "Sources/Zion/Views/Main/StatusBar.swift"
+      ],
+      "criteria": [
+        "swift build 2>&1 | tail -3",
+        "./scripts/make-app.sh && test -x dist/Zion.app/Contents/MacOS/Zion",
+        "swift test 2>&1 | tail -10 | grep -E \"Test Suite 'All tests' passed\""
+      ],
+      "deps": [8, 10],
+      "wave": 5,
       "status": "pending",
       "cycles": 0,
       "started_at": null,

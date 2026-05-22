@@ -231,6 +231,20 @@ enum AIProvider: String, CaseIterable, Identifiable {
     }
 }
 
+extension AIProvider {
+    var supportsToolCalling: Bool {
+        switch self {
+        case .anthropic, .openai:
+            return true
+        case .gemini, .none:
+            return false
+        case .local:
+            let modelName = AIClient.loadLocalConfig()?.modelName ?? ""
+            return AIProviderSupport.localModelSupportsTools(modelName)
+        }
+    }
+}
+
 enum CommitMessageStyle: String, CaseIterable, Identifiable {
     case compact, detailed
     var id: String { rawValue }

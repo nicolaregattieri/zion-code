@@ -16,12 +16,15 @@ final class ChatServiceTests: XCTestCase {
 
     /// Makes a service with an injected streamProvider for tests (no real network).
     private func makeService(
+        repoURL: URL? = nil,
         streamProvider: @escaping (LocalLLMConfig, AIPromptPayload, Int, String) -> AsyncThrowingStream<String, Error>
     ) -> ChatService {
         let worker = makeWorker()
         let ai = makeAI()
         let builder = makeContextBuilder(worker: worker)
-        return ChatService(ai: ai, worker: worker, contextBuilder: builder, streamProvider: streamProvider)
+        let url = repoURL ?? URL(fileURLWithPath: NSTemporaryDirectory())
+        let harness = ZionHarness(worker: worker, repoURL: url)
+        return ChatService(ai: ai, worker: worker, contextBuilder: builder, harness: harness, streamProvider: streamProvider)
     }
 
     private func dummyRepoURL() throws -> URL {

@@ -6,6 +6,9 @@ struct AISettingsTab: View {
     @AppStorage(UserDefaultsKeys.AI.commitMessageStyle) private var commitStyleRaw: String = CommitMessageStyle.compact.rawValue
     @AppStorage(UserDefaultsKeys.AI.preCommitReview) private var preCommitReviewEnabled: Bool = false
     @AppStorage(UserDefaultsKeys.AI.transferSupportHints) private var aiTransferSupportHints: Bool = true
+    @AppStorage("chat.toolsEnabled") private var chatToolsEnabled: Bool = true
+    @AppStorage("chat.allowEdits") private var chatAllowEdits: Bool = false
+    @AppStorage("chat.autoInject") private var chatAutoInject: Bool = true
     @AppStorage(UserDefaultsKeys.RepoMemory.activeRepoName) private var repoMemoryRepoName: String = ""
     @AppStorage(UserDefaultsKeys.RepoMemory.lastRefresh) private var repoMemoryLastRefresh: Double = 0
     @AppStorage(UserDefaultsKeys.RepoMemory.ready) private var repoMemoryReady: Bool = false
@@ -166,6 +169,20 @@ struct AISettingsTab: View {
                         }
                         .disabled(repoMemoryRepoName.isEmpty)
                     }
+                }
+            }
+
+            Section(L10n("settings.ai.harness.title")) {
+                Toggle(L10n("settings.ai.harness.toolsEnabled"), isOn: $chatToolsEnabled)
+                Toggle(L10n("settings.ai.harness.allowEdits"), isOn: $chatAllowEdits)
+                Toggle(L10n("settings.ai.harness.autoInject"), isOn: $chatAutoInject)
+
+                if defaultProvider == .local {
+                    let modelName = AIClient.loadLocalConfig()?.modelName ?? ""
+                    let supported = AIProviderSupport.localModelSupportsTools(modelName)
+                    Text(supported ? L10n("settings.ai.harness.toolCapability.supported") : L10n("settings.ai.harness.toolCapability.notSupported"))
+                        .font(DesignSystem.Typography.label)
+                        .foregroundStyle(.secondary)
                 }
             }
 

@@ -1,0 +1,219 @@
+{
+  "version": 1,
+  "spec_hash": "sha256:52600c35e9c9d6dea8c12316d73459e0a4df56acc414e376227a8d1a106ed47e",
+  "created_at": "2026-04-16T23:30:00Z",
+  "waves": 5,
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Operation enum + OperationManager (foundation)",
+      "description": "Create `Sources/Zion/Services/Operation.swift` defining `enum OperationKind` and `struct Operation`. OperationKind cases (at minimum): `status`, `add`, `commit`, `restore`, `fetch`, `push`, `pull`, `stash`, `checkout`, `merge`, `rebase`, `reset`, `revert`, `tag`, `branch`, `cloning`, `remote`, `log`, `diff`, `show`, `other(String)`. `Operation` is a struct with `kind: OperationKind`, `readOnly: Bool`, `blocking: Bool`, `remote: Bool`, `showProgress: Bool`, and a static factory per kind (e.g. `static var status: Operation { .init(kind: .status, readOnly: true, blocking: false, remote: false, showProgress: false) }` and `static func other(_ label: String) -> Operation`). Flag values follow VS Code conventions: status/log/diff/show = readOnly true; fetch/push/pull/cloning = remote true; commit/merge/rebase/reset/revert/checkout = blocking true; commit/fetch/push/pull/cloning = showProgress true. Then create `Sources/Zion/Services/OperationManager.swift` — `@MainActor final class OperationManager` with a private `[OperationKind: Int]` reference counter. Public API: `func start(_ op: Operation)`, `func end(_ op: Operation)`, `func isRunning(_ kind: OperationKind) -> Bool`, `var isIdle: Bool` (true when all counts are 0), `func shouldShowProgress() -> Bool` (true when any active op has `showProgress == true`). Handle overlapping calls correctly via refcount (start +1, end -1, min 0).",
+      "files": [
+        "Sources/Zion/Services/Operation.swift",
+        "Sources/Zion/Services/OperationManager.swift"
+      ],
+      "criteria": [
+        "swift build exits 0",
+        "grep -q 'enum OperationKind' Sources/Zion/Services/Operation.swift",
+        "grep -q 'struct Operation' Sources/Zion/Services/Operation.swift",
+        "grep -q 'final class OperationManager' Sources/Zion/Services/OperationManager.swift",
+        "grep -q 'var isIdle' Sources/Zion/Services/OperationManager.swift"
+      ],
+      "deps": [],
+      "wave": 1,
+      "status": "done",
+      "cycles": 1,
+      "started_at": "2026-04-16T23:35:00Z",
+      "completed_at": "2026-04-16T23:37:00Z",
+      "commit_sha": "3046bf4b5702f15a1edbbac7d0c481c4fc493f2f",
+      "blocked_reason": null
+    },
+    {
+      "id": 2,
+      "title": "GitClientError.notAGitRepository + stderr detection",
+      "description": "Add `case notAGitRepository` to the existing `GitClientError` enum (grep `enum GitClientError` under `Sources/Zion/Services/` to find its file; should be in `GitClient*.swift`). In `Sources/Zion/Services/RepositoryWorker+Execution.swift` — in the `runProcessStream` path and in any place where a failed git Process's stderr is surfaced — detect the substring `fatal: not a git repository` (case-insensitive match on lowercase: `stderr.lowercased().contains(\"fatal: not a git repository\")`). When detected, throw `GitClientError.notAGitRepository` instead of the generic `.commandFailed(...)`. Do NOT alter the normal success path. The `runAction*` methods in the same file currently delegate to `git.run(...)`/`git.runAllowingFailure(...)` inside `GitClient`; the detection should live as low as the stderr is available — if `GitClient`'s own `run` surfaces stderr in the throw, add the detection there; otherwise wrap the `runAction*` paths. Prefer the lowest-layer fix for coverage across all entry points. Add `L10n` usage is NOT needed in this task — error messages are produced by the ViewModel's existing `handleError` path in Task 4.",
+      "files": [
+        "Sources/Zion/Services/RepositoryWorker+Execution.swift"
+      ],
+      "criteria": [
+        "swift build exits 0",
+        "grep -q 'notAGitRepository' Sources/Zion/Services/RepositoryWorker+Execution.swift",
+        "grep -q 'fatal: not a git repository' Sources/Zion/Services/RepositoryWorker+Execution.swift"
+      ],
+      "deps": [],
+      "wave": 1,
+      "status": "done",
+      "cycles": 1,
+      "started_at": "2026-04-16T23:37:30Z",
+      "completed_at": "2026-04-16T23:39:30Z",
+      "commit_sha": "50a0b85535248fba61541887fc1a709801e1b95a",
+      "blocked_reason": null
+    },
+    {
+      "id": 3,
+      "title": "IdleFocusGate extension + watcher hookup",
+      "description": "Create `Sources/Zion/ViewModel/RepositoryViewModel+IdleFocusGate.swift`. Adds `@MainActor func requestFileWatcherRefresh()` that: (1) if `NSApp.isActive == true` AND `operations.isIdle == true`, calls `refreshRepository(origin: .fileWatcher)` immediately; (2) otherwise sets a private `pendingFileWatcherRefresh: Bool = true` (add as `@ObservationIgnored private var` on `RepositoryViewModel` in `RepositoryViewModel.swift`) and arms a one-time `NSApplication.didBecomeActiveNotification` observer (only if not already armed). On receiving `didBecomeActive`, after a 200 ms grace (`Constants.Timing.refreshRepositoryIdleGrace`), if `pendingFileWatcherRefresh && operations.isIdle`, fire the refresh once, clear the flag, and remove the observer. User-initiated and repository-switch refreshes must bypass this gate — route only the `.fileWatcher` origin through `requestFileWatcherRefresh()`. Modify `Sources/Zion/ViewModel/RepositoryViewModel+SnapshotHelpers.swift` — in the `startFileWatcher(for:)` callback (line 599 area), replace the direct `refreshRepository(origin: .fileWatcher)` call with `requestFileWatcherRefresh()`. Also modify `Sources/Zion/Helpers/Constants.swift` — add `static let refreshRepositoryIdleGrace: UInt64 = 200_000_000 // 200ms` inside `enum Timing`. Add `@ObservationIgnored private var` for `pendingFileWatcherRefresh` and `didArmActivationObserver` on the main `RepositoryViewModel` class (file: `Sources/Zion/ViewModel/RepositoryViewModel.swift`). Operation count check requires Task 1's `OperationManager` — assumes `self.operations` exists (added in Task 4).",
+      "files": [
+        "Sources/Zion/ViewModel/RepositoryViewModel+IdleFocusGate.swift",
+        "Sources/Zion/ViewModel/RepositoryViewModel+SnapshotHelpers.swift",
+        "Sources/Zion/ViewModel/RepositoryViewModel.swift",
+        "Sources/Zion/Helpers/Constants.swift"
+      ],
+      "criteria": [
+        "swift build exits 0",
+        "grep -q 'requestFileWatcherRefresh' Sources/Zion/ViewModel/RepositoryViewModel+IdleFocusGate.swift",
+        "grep -q 'requestFileWatcherRefresh' Sources/Zion/ViewModel/RepositoryViewModel+SnapshotHelpers.swift",
+        "grep -q 'refreshRepositoryIdleGrace' Sources/Zion/Helpers/Constants.swift",
+        "grep -q 'didBecomeActiveNotification' Sources/Zion/ViewModel/RepositoryViewModel+IdleFocusGate.swift"
+      ],
+      "deps": [1],
+      "wave": 2,
+      "status": "done",
+      "cycles": 1,
+      "started_at": "2026-04-16T23:46:30Z",
+      "completed_at": "2026-04-16T23:48:30Z",
+      "commit_sha": "30c00207f236c1a965137a3587c824528c5fec28",
+      "blocked_reason": null
+    },
+    {
+      "id": 4,
+      "title": "Auto-dispose + L10n + runGitAction integration",
+      "description": "This is the central integration task. Create `Sources/Zion/ViewModel/RepositoryViewModel+AutoDispose.swift` with: (1) `@MainActor func markRepositoryDisposed(reason: String)` — sets `isGitRepository = false`, sets `isRepositoryDisposed = true`, logs a warn via `DiagnosticLogger.shared.log(.warn, reason, ...)`. (2) `@MainActor func shouldSkipBecauseDisposed() -> Bool` that returns `isRepositoryDisposed`. (3) On `openRepository(_:silent:)` call path, clear `isRepositoryDisposed = false` for the newly opened URL — find the right hook in `RepositoryViewModel.swift` or `+SnapshotHelpers.swift`. Add `@ObservationIgnored var isRepositoryDisposed: Bool = false` and `@ObservationIgnored let operations = OperationManager()` as stored members on `RepositoryViewModel.swift` near the other service members (around line 100). Modify `Sources/Zion/ViewModel/RepositoryViewModel+Git.swift`: `runGitAction` gains `operation: Operation = .other(\"\")` parameter (new, with default — if caller does not pass one, build from the `label` param: `.other(label)`); at the start of the try block call `self.operations.start(operation)`; in the `defer` (or finally equivalent) call `self.operations.end(operation)`; in the catch path, if `error is GitClientError` AND the case is `.notAGitRepository`, call `markRepositoryDisposed(reason: \"runGitAction:\\(operation.kind)\")` before re-throwing. Also prepend `guard !isRepositoryDisposed else { throw GitClientError.notAGitRepository }` (or equivalent no-op return) at the very top of `runGitAction` so disposed repos short-circuit. For `loadSubmodules`, `loadGitIgnoredPaths`, `refreshRepoMemory` (grep for them across `Sources/Zion/ViewModel/`), prepend `guard !isRepositoryDisposed else { return }`. Update a handful of high-traffic call sites to pass explicit `operation:` — at minimum: `refreshStatusOnly` → `.status`, `commit(...)` → `.commit`, `fetch` → `.fetch`, `push` → `.push`, `pull` → `.pull`, stage/unstage/discard → `.add` / `.restore` / `.restore`. Add L10n key `error.notAGitRepository` to `Resources/en.lproj/Localizable.strings` (\"Not a git repository.\"), `Resources/pt-BR.lproj/Localizable.strings` (\"Não é um repositório git.\"), and `Resources/es.lproj/Localizable.strings` (\"No es un repositorio git.\"). At most 5 files listed below — if a secondary ViewModel extension also needs the guard (e.g. submodule or repo-memory paths live in their own extension), add the guard there too but keep the file count at or below 5 for this task; if more are needed, flag it as TASK_GAP.",
+      "files": [
+        "Sources/Zion/ViewModel/RepositoryViewModel+AutoDispose.swift",
+        "Sources/Zion/ViewModel/RepositoryViewModel.swift",
+        "Sources/Zion/ViewModel/RepositoryViewModel+Git.swift",
+        "Sources/Zion/ViewModel/RepositoryViewModel+GitStaging.swift",
+        "Resources/en.lproj/Localizable.strings"
+      ],
+      "criteria": [
+        "swift build exits 0",
+        "grep -q 'markRepositoryDisposed' Sources/Zion/ViewModel/RepositoryViewModel+AutoDispose.swift",
+        "grep -q 'isRepositoryDisposed' Sources/Zion/ViewModel/RepositoryViewModel.swift",
+        "grep -q 'operations = OperationManager' Sources/Zion/ViewModel/RepositoryViewModel.swift",
+        "grep -q 'operations.start\\|operations\\.start' Sources/Zion/ViewModel/RepositoryViewModel+Git.swift",
+        "grep -q 'operations.end\\|operations\\.end' Sources/Zion/ViewModel/RepositoryViewModel+Git.swift",
+        "grep -q 'operation: \\.status\\|operation: \\.commit\\|operation: \\.fetch' Sources/Zion/ViewModel/RepositoryViewModel+Git.swift",
+        "grep -q 'error.notAGitRepository' Resources/en.lproj/Localizable.strings"
+      ],
+      "deps": [1, 2],
+      "wave": 2,
+      "status": "done",
+      "cycles": 2,
+      "started_at": "2026-04-16T23:40:00Z",
+      "completed_at": "2026-04-16T23:46:00Z",
+      "commit_sha": "4f5737cbbae06187a61bac3b1042b7634c7f14e4",
+      "blocked_reason": null
+    },
+    {
+      "id": 5,
+      "title": "L10n: add notAGitRepository to pt-BR + es",
+      "description": "Add the `error.notAGitRepository` key to the Portuguese (BR) and Spanish locale files to match the English string added in Task 4. Keys: `error.notAGitRepository = \"Não é um repositório git.\"` (pt-BR) and `error.notAGitRepository = \"No es un repositorio git.\"` (es). Respect existing ordering (append near other `error.*` keys if present, otherwise append at end).",
+      "files": [
+        "Resources/pt-BR.lproj/Localizable.strings",
+        "Resources/es.lproj/Localizable.strings"
+      ],
+      "criteria": [
+        "swift build exits 0",
+        "grep -q 'error.notAGitRepository' Resources/pt-BR.lproj/Localizable.strings",
+        "grep -q 'error.notAGitRepository' Resources/es.lproj/Localizable.strings"
+      ],
+      "deps": [4],
+      "wave": 3,
+      "status": "done",
+      "cycles": 1,
+      "started_at": "2026-04-16T23:48:45Z",
+      "completed_at": "2026-04-16T23:49:15Z",
+      "commit_sha": "19a19efd3a6ee0c961f0a5ba4f4c5fd394833194",
+      "blocked_reason": null
+    },
+    {
+      "id": 6,
+      "title": "OperationKind + OperationManager tests",
+      "description": "Create `Tests/ZionTests/OperationKindTests.swift` with a table-driven test asserting every declared `OperationKind` case has the expected `readOnly/blocking/remote/showProgress` flag values. At minimum cover: `.status` (readOnly true, others false), `.commit` (blocking + showProgress), `.fetch/.push/.pull` (remote + showProgress), `.log/.diff/.show` (readOnly), `.other(String)` (all false by default). Create `Tests/ZionTests/OperationManagerTests.swift` with: `testIsIdleTogglesCorrectly` (start a .status op → isIdle false → end → isIdle true); `testRefcountHandlesOverlap` (start .status twice, end once → still running, end again → idle); `testIsRunningByKind` (start .commit → isRunning(.commit) true, isRunning(.fetch) false); `testShouldShowProgress` (start .status → false, start .commit → true). Do not invoke `runGitAction` in these tests — they exercise the Manager directly.",
+      "files": [
+        "Tests/ZionTests/OperationKindTests.swift",
+        "Tests/ZionTests/OperationManagerTests.swift"
+      ],
+      "criteria": [
+        "swift test --filter ZionTests.OperationKindTests exits 0",
+        "swift test --filter ZionTests.OperationManagerTests exits 0",
+        "swift test --filter ZionTests.OperationManagerTests/testIsIdleTogglesCorrectly exits 0",
+        "swift test --filter ZionTests.OperationManagerTests/testRefcountHandlesOverlap exits 0"
+      ],
+      "deps": [4],
+      "wave": 3,
+      "status": "pending",
+      "cycles": 0,
+      "started_at": null,
+      "completed_at": null,
+      "commit_sha": null,
+      "blocked_reason": null
+    },
+    {
+      "id": 7,
+      "title": "GitClientError + AutoDispose tests",
+      "description": "Create `Tests/ZionTests/GitClientErrorTests.swift`. Test `testNotAGitRepositoryDetection`: feed a synthetic stderr string `\"fatal: not a git repository (or any parent up to mount point /tmp)\"` into the detection path (expose the detection as a small pure helper if it isn't already, e.g. `internal func isNotAGitRepoStderr(_ s: String) -> Bool` in `RepositoryWorker+Execution.swift`). Assert true for the fatal string, false for `\"nothing to commit\"`, false for empty. Create `Tests/ZionTests/AutoDisposeTests.swift`. Seeded with a `RepositoryViewModel()`: `testMarkRepositoryDisposedSetsFlags` (call `markRepositoryDisposed(reason:)` → `isGitRepository == false`, `isRepositoryDisposed == true`); `testShouldSkipBecauseDisposed` (after dispose, returns true; before dispose, false); `testReopenClearsDisposedFlag` (dispose a repo, call `openRepository(url, silent: false)` with a test URL, assert the flag clears). If `openRepository` cannot be driven from a unit test (e.g. requires a real URL on disk), fall back to a direct test of the clear path — create a `@testable` helper `clearDisposedFlagForTesting()` or similar seam. Document the fallback in a test comment.",
+      "files": [
+        "Tests/ZionTests/GitClientErrorTests.swift",
+        "Tests/ZionTests/AutoDisposeTests.swift"
+      ],
+      "criteria": [
+        "swift test --filter ZionTests.GitClientErrorTests exits 0",
+        "swift test --filter ZionTests.AutoDisposeTests exits 0",
+        "swift test --filter ZionTests.AutoDisposeTests/testMarkRepositoryDisposedSetsFlags exits 0",
+        "swift test --filter ZionTests.AutoDisposeTests/testReopenClearsDisposedFlag exits 0"
+      ],
+      "deps": [4],
+      "wave": 3,
+      "status": "pending",
+      "cycles": 0,
+      "started_at": null,
+      "completed_at": null,
+      "commit_sha": null,
+      "blocked_reason": null
+    },
+    {
+      "id": 8,
+      "title": "IdleFocusGate tests",
+      "description": "Create `Tests/ZionTests/IdleFocusGateTests.swift`. Tests: `testDeferredWhenInactive` — set `NSApp.isActive` substitute (the gate should accept an override flag for testing; expose `internal var isActiveOverrideForTesting: Bool?` on the IdleFocusGate extension that, when set, is used instead of `NSApp.isActive`); set override to false; call `requestFileWatcherRefresh()`; assert no immediate `refreshRepository` call (mock via test seam counter) and `pendingFileWatcherRefresh == true`. `testDeferredWhenNonReadOnlyOpRunning` — set override to true, but start a `.commit` op on the manager; call `requestFileWatcherRefresh()`; assert deferred. `testCoalescesMultipleDeferred` — defer three times, all should collapse to one pending flag. `testFiresOnceOnActivation` — set override to false + defer + set override to true + post a synthetic `didBecomeActiveNotification` (or call a test-only `simulateActivationForTesting()` seam); after the 200 ms grace, assert refresh fired exactly once. `testUserInitiatedBypassesGate` — call `refreshRepository(origin: .userInitiated)` while gate conditions would block; assert it ran immediately. Provide a test seam counter for \"refresh fired\" (e.g. `internal var refreshFireCountForTesting: Int`) that the real `refreshRepository` increments so tests can observe without invoking real git.",
+      "files": [
+        "Tests/ZionTests/IdleFocusGateTests.swift"
+      ],
+      "criteria": [
+        "swift test --filter ZionTests.IdleFocusGateTests exits 0",
+        "swift test --filter ZionTests.IdleFocusGateTests/testDeferredWhenInactive exits 0",
+        "swift test --filter ZionTests.IdleFocusGateTests/testCoalescesMultipleDeferred exits 0",
+        "swift test --filter ZionTests.IdleFocusGateTests/testFiresOnceOnActivation exits 0",
+        "swift test --filter ZionTests.IdleFocusGateTests/testUserInitiatedBypassesGate exits 0"
+      ],
+      "deps": [3, 4],
+      "wave": 3,
+      "status": "pending",
+      "cycles": 0,
+      "started_at": null,
+      "completed_at": null,
+      "commit_sha": null,
+      "blocked_reason": null
+    },
+    {
+      "id": 9,
+      "title": "Full suite + build verify",
+      "description": "Run `swift test` and `./scripts/make-app.sh` to verify zero regressions and a buildable artifact. If any test fails that did not fail on Wave 1, fix it. Do not add new features. If `make-app.sh` fails on signing or packaging, investigate but do not skip signing. Report pass/fail with counts.",
+      "files": [],
+      "criteria": [
+        "swift test exits 0",
+        "./scripts/make-app.sh exits 0",
+        "test -d dist/Zion.app"
+      ],
+      "deps": [5, 6, 7, 8],
+      "wave": 4,
+      "status": "pending",
+      "cycles": 0,
+      "started_at": null,
+      "completed_at": null,
+      "commit_sha": null,
+      "blocked_reason": null
+    }
+  ]
+}

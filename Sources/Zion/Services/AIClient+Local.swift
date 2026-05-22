@@ -212,6 +212,41 @@ extension AIClient {
         return result
     }
 
+    // MARK: - Streaming with Tools
+
+    /// Streams a local OpenAI-compatible LLM request with tool support.
+    ///
+    /// Uses the same SSE shape as OpenAI cloud (`choices[0].delta.tool_calls`).
+    /// Posts to `<config.serverURL>/chat/completions`. Adds Authorization header
+    /// only when `config.apiKey` is non-empty.
+    func streamLocalWithTools(
+        payload: AIPromptPayload,
+        config: LocalLLMConfig,
+        tools: [[String: Any]],
+        maxTokens: Int,
+        modelID: String,
+        urlSession: URLSession = .shared
+    ) -> AsyncThrowingStream<StreamEvent, Error> {
+        guard let baseURL = URL(string: config.serverURL) else {
+            return AsyncThrowingStream { $0.finish(throwing: AIError.invalidResponse) }
+        }
+        let endpoint = baseURL.appendingPathComponent("chat/completions")
+
+        let authHeader: (field: String, value: String)? = config.apiKey.isEmpty
+            ? nil
+            : ("Authorization", "Bearer \(config.apiKey)")
+
+        return streamOpenAICompatWithTools(
+            payload: payload,
+            url: endpoint,
+            authHeader: authHeader,
+            tools: tools,
+            maxTokens: maxTokens,
+            modelID: modelID,
+            urlSession: urlSession
+        )
+    }
+
     // MARK: - Health Probe
 
     /// Probes the local LLM server's `/models` endpoint.

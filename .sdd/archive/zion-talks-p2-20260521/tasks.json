@@ -1,0 +1,215 @@
+{
+  "version": 1,
+  "spec_hash": "sha256:13c04f6226b3ad19f6742776eb3e897cc28d7e3997af7ceeb386736db318d6d9",
+  "created_at": "2026-05-21T16:05:00Z",
+  "waves": 4,
+  "tasks": [
+    {
+      "id": 1,
+      "title": "ChatModels (repoID + title) + Constants debounce",
+      "description": "Modify Sources/Zion/Models/ChatModels.swift: add `var repoID: String` and `var title: String` to ChatThread. Update memberwise init (default `title: String = ChatThread.defaultTitle()` and `repoID: String = \"\"` for back-compat in tests). Add `static func defaultTitle(date: Date = Date()) -> String` returning `String(format: L10n(\"chat.thread.untitled\"), DateFormatter.chatThreadShort.string(from: date))`. Add private cached `static let chatThreadShort: DateFormatter` returning yyyy-MM-dd HH:mm. Update Equatable/Codable (auto-synth where possible). Modify Sources/Zion/Helpers/Constants.swift inside `enum Timing`: add `static let chatPersistenceDebounce: TimeInterval = 0.5`. Keep ChatModels multi-struct file exception.",
+      "files": [
+        "Sources/Zion/Models/ChatModels.swift",
+        "Sources/Zion/Helpers/Constants.swift"
+      ],
+      "criteria": [
+        "swift build 2>&1 | tail -5",
+        "swift test --filter ChatModelsTests"
+      ],
+      "deps": [],
+      "wave": 1,
+      "status": "pending",
+      "cycles": 0,
+      "started_at": null,
+      "completed_at": null,
+      "commit_sha": null,
+      "blocked_reason": null
+    },
+    {
+      "id": 2,
+      "title": "L10n keys (multi-thread) + extend localization test",
+      "description": "Add 10 new L10n keys to all 3 locale files (en, pt-BR, es): chat.thread.list.title, chat.thread.new, chat.thread.delete, chat.thread.rename, chat.thread.untitled (with %@ format token), chat.thread.confirmDelete, chat.thread.lastUpdatedAt (with %@ token), chat.thread.empty, chat.thread.sidebar.toggle, chat.persistence.error. Translate naturally per locale. Extend Tests/ZionTests/ChatLocalizationTests.swift requiredKeys array with these 10 keys so it still passes.",
+      "files": [
+        "Sources/Zion/Resources/en.lproj/Localizable.strings",
+        "Sources/Zion/Resources/pt-BR.lproj/Localizable.strings",
+        "Sources/Zion/Resources/es.lproj/Localizable.strings",
+        "Tests/ZionTests/ChatLocalizationTests.swift"
+      ],
+      "criteria": [
+        "swift test --filter ChatLocalizationTests"
+      ],
+      "deps": [],
+      "wave": 1,
+      "status": "pending",
+      "cycles": 0,
+      "started_at": null,
+      "completed_at": null,
+      "commit_sha": null,
+      "blocked_reason": null
+    },
+    {
+      "id": 3,
+      "title": "Anthropic SSE parser + tests",
+      "description": "Create Sources/Zion/Services/AIClient+Anthropic.swift as actor extension on AIClient. Add `static func parseAnthropicSSEEvent(eventName: String, data: Data) -> LocalStreamChunk?` (reuse LocalStreamChunk from AIClient+Local.swift). Handle event types: message_start (no-op → nil), content_block_start (nil), content_block_delta (parse data JSON `{\"type\":\"content_block_delta\",\"delta\":{\"type\":\"text_delta\",\"text\":\"...\"}}` and return LocalStreamChunk(text: extracted, done: false); if delta.type != text_delta return nil), content_block_stop (nil), message_delta (nil), message_stop (LocalStreamChunk(text: \"\", done: true)). Malformed JSON → nil (no throw). Unknown event → nil. Write Tests/ZionTests/AnthropicStreamParserTests.swift with 5 cases: testContentBlockTextDelta, testNonTextDeltaIgnored, testMessageStopMarksDone, testMalformedJSONReturnsNil, testUnknownEventReturnsNil.",
+      "files": [
+        "Sources/Zion/Services/AIClient+Anthropic.swift",
+        "Tests/ZionTests/AnthropicStreamParserTests.swift"
+      ],
+      "criteria": [
+        "swift test --filter AnthropicStreamParserTests"
+      ],
+      "deps": [],
+      "wave": 1,
+      "status": "pending",
+      "cycles": 0,
+      "started_at": null,
+      "completed_at": null,
+      "commit_sha": null,
+      "blocked_reason": null
+    },
+    {
+      "id": 4,
+      "title": "OpenAI SSE parser test (verifies reuse)",
+      "description": "Create Tests/ZionTests/OpenAIStreamParserTests.swift verifying that the existing AIClient.parseOpenAISSELine (in AIClient+Local.swift) correctly handles cloud OpenAI variant. Cases: testCloudDeltaContentExtracted (`data: {\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}` → text \"hi\"), testCloudDoneSentinel (`data: [DONE]` → done: true), testCloudFinishReasonMarksDone (chunk with `finish_reason: \"stop\"` → done: true), testCloudEmptyDeltaSkipped (delta without content → empty text or nil). No new production code — only confirms reuse.",
+      "files": [
+        "Tests/ZionTests/OpenAIStreamParserTests.swift"
+      ],
+      "criteria": [
+        "swift test --filter OpenAIStreamParserTests"
+      ],
+      "deps": [],
+      "wave": 1,
+      "status": "pending",
+      "cycles": 0,
+      "started_at": null,
+      "completed_at": null,
+      "commit_sha": null,
+      "blocked_reason": null
+    },
+    {
+      "id": 5,
+      "title": "ChatStorage (SQLite) + tests",
+      "description": "Create Sources/Zion/Services/ChatStorage.swift as `actor ChatStorage`. `import SQLite3`. Owns lazy `OpaquePointer?` per repoID. Public API: init(baseDirectory: URL? = nil) (nil = default ~/Library/Application Support/Zion/chats), `static func repoID(for url: URL) -> String` (SHA256 of absolute path, first 16 hex chars), `func loadThreads(repoID:) async throws -> [ChatThread]` (returns ordered by updated_at desc), `func saveThread(_:repoID:) async throws` (upsert by id), `func loadMessages(threadID:repoID:) async throws -> [ChatMessage]` (ordered by created_at asc), `func appendMessage(_:threadID:repoID:) async throws`, `func updateMessage(_:repoID:) async throws`, `func deleteThread(_ id:repoID:) async throws`, `func renameThread(_ id:title:repoID:) async throws`. private func connection(for repoID) opens DB lazily, runs `PRAGMA foreign_keys = ON;` + the schema CREATE statements (threads, messages, idx_messages_thread_created). Throw ChatStorageError.sqlite(code: Int32, message: String) on any sqlite3 failure. Create Tests/ZionTests/ChatStorageTests.swift using temp directory via baseDirectory init: testSchemaCreatedOnFirstOpen, testThreadInsertLoadRoundTrip, testMessagesPreserveOrder, testDeleteThreadCascadesMessages, testRepoIsolation (two repoIDs are independent).",
+      "files": [
+        "Sources/Zion/Services/ChatStorage.swift",
+        "Tests/ZionTests/ChatStorageTests.swift"
+      ],
+      "criteria": [
+        "swift test --filter ChatStorageTests"
+      ],
+      "deps": [1],
+      "wave": 2,
+      "status": "pending",
+      "cycles": 0,
+      "started_at": null,
+      "completed_at": null,
+      "commit_sha": null,
+      "blocked_reason": null
+    },
+    {
+      "id": 6,
+      "title": "Cloud streamers (Anthropic + OpenAI) + integration tests",
+      "description": "Extend Sources/Zion/Services/AIClient+Anthropic.swift with `func streamAnthropic(payload:apiKey:maxTokens:modelID:) -> AsyncThrowingStream<String, Error>` posting to https://api.anthropic.com/v1/messages with headers x-api-key, anthropic-version: 2023-06-01, content-type: application/json, body {model, max_tokens, stream: true, messages: []}. Use URLSession.bytes(for:) and iterate `asyncBytes.lines`, accumulating `event: NAME` and `data: BODY` pairs separated by blank lines (SSE format), call parseAnthropicSSEEvent. Yield text deltas; finish on done flag. Map status 401/403→AIError.invalidAPIKey (existing case if available, else .anthropicAPIError(String)), 429→.quotaExceeded, other non-2xx→.anthropicAPIError. Create Sources/Zion/Services/AIClient+OpenAI.swift with `func streamOpenAI(payload:apiKey:maxTokens:modelID:) -> AsyncThrowingStream<String, Error>` posting to https://api.openai.com/v1/chat/completions with Authorization: Bearer apiKey, body {model, max_tokens, stream: true, messages}. Use existing parseOpenAISSELine. Same status mapping pattern. Modify Sources/Zion/Services/AIClient.swift to add internal `var urlSessionForStreaming: URLSession = .shared` + internal `func _setStreamingSession(_:)` test seam. Write Tests/ZionTests/ChatStreamingCloudIntegrationTests.swift using URLProtocol mock + injected session via _setStreamingSession. Cases: testAnthropicAssemblesText (canned SSE → \"hello\"), testOpenAIAssemblesText (canned SSE → \"hi\"), testAnthropic401ThrowsAuthError.",
+      "files": [
+        "Sources/Zion/Services/AIClient+Anthropic.swift",
+        "Sources/Zion/Services/AIClient+OpenAI.swift",
+        "Sources/Zion/Services/AIClient.swift",
+        "Tests/ZionTests/ChatStreamingCloudIntegrationTests.swift"
+      ],
+      "criteria": [
+        "swift test --filter ChatStreamingCloudIntegrationTests"
+      ],
+      "deps": [3, 4],
+      "wave": 2,
+      "status": "pending",
+      "cycles": 0,
+      "started_at": null,
+      "completed_at": null,
+      "commit_sha": null,
+      "blocked_reason": null
+    },
+    {
+      "id": 7,
+      "title": "ChatThreadList + ChatThreadRow views",
+      "description": "Create Sources/Zion/Views/Chat/ChatThreadList.swift: `struct ChatThreadList: View`. Inputs: threads: [ChatThread], activeThreadID: UUID, onSelect: (UUID) -> Void, onNew: () -> Void, onDelete: (UUID) -> Void, onRename: (UUID, String) -> Void, isCollapsed: Binding<Bool>. Layout: header HStack with + New thread Button (L10n chat.thread.new) and collapse toggle Button (L10n chat.thread.sidebar.toggle) → ScrollView { LazyVStack { ForEach(threads) { ChatThreadRow(...) } } }. Empty state shows L10n chat.thread.empty centered. Width fixed 200pt when expanded; rendered as hidden when isCollapsed.wrappedValue. Create Sources/Zion/Views/Chat/ChatThreadRow.swift: `struct ChatThreadRow: View`. Inputs: thread: ChatThread, isSelected: Bool, onSelect: () -> Void, onDelete: () -> Void, onRename: (String) -> Void. Local @State var renaming: Bool, @State var draftTitle: String, @State var isHovered: Bool, @State var showDeleteAlert: Bool. Title: Text or TextField (when renaming) with onSubmit to commit, Escape to cancel. Relative date subtitle via RelativeDateTimeFormatter. Trash button visible only on hover. Selected background DesignSystem.Colors.selectionBackground. Context menu: Rename + Delete. Double-click title enters rename. Native Alert keyed by L10n chat.thread.confirmDelete on delete. NO hardcoded colors/fonts/cornerRadius.",
+      "files": [
+        "Sources/Zion/Views/Chat/ChatThreadList.swift",
+        "Sources/Zion/Views/Chat/ChatThreadRow.swift"
+      ],
+      "criteria": [
+        "swift build 2>&1 | tail -5",
+        "grep -nE '(Color\\.[a-z]+\\.opacity|Font\\.[a-z]+|cornerRadius:\\s*[0-9])' Sources/Zion/Views/Chat/ChatThreadList.swift Sources/Zion/Views/Chat/ChatThreadRow.swift | wc -l"
+      ],
+      "deps": [1, 2],
+      "wave": 2,
+      "status": "pending",
+      "cycles": 0,
+      "started_at": null,
+      "completed_at": null,
+      "commit_sha": null,
+      "blocked_reason": null
+    },
+    {
+      "id": 8,
+      "title": "ChatService multi-thread + persistence + cloud dispatch + tests",
+      "description": "Modify Sources/Zion/Services/ChatService.swift: (1) replace `var thread: ChatThread` with `var threads: [ChatThread] = []` + `var activeThreadID: UUID`. Add computed `var thread: ChatThread { get/set }` mapped through threads/activeThreadID for back-compat. (2) Inject `@ObservationIgnored private let storage: ChatStorage` + `@ObservationIgnored private let repoID: String` in init. (3) On init Task { await reloadFromStorage() } — load threads, if none create one default. On error: log + lastPersistenceError + L10n chat.persistence.error; continue volatile. (4) New methods createThread / deleteThread / renameThread / selectThread — mutate threads then fire-and-forget storage op. deleteThread of active picks next-most-recent or creates new if none. (5) On send: append user msg; if active thread title equals a defaultTitle pattern, set title to first 60 chars of user msg via renameThread. (6) Dispatch streaming: .local → streamLocalLLM (existing), .openai → streamOpenAI, .anthropic → streamAnthropic, .gemini and .none → existing AIClient.call non-streaming. (7) Streaming consumer: append delta to last assistant message in active thread; debounce persistence via Task keyed by message id at Constants.Timing.chatPersistenceDebounce (500ms); FORCE final flush with is_streaming=0 on stream completion (cancel debounce). Write Tests/ZionTests/ChatServiceMultiThreadTests.swift: testCreateThreadAppendsAndActivates, testSelectThreadSwapsActive, testDeleteActiveThreadSelectsNextOrCreates, testRenameThreadUpdatesTitle, testInitLoadsPersistedThreads (use temp ChatStorage(baseDirectory: tmpdir)).",
+      "files": [
+        "Sources/Zion/Services/ChatService.swift",
+        "Tests/ZionTests/ChatServiceMultiThreadTests.swift"
+      ],
+      "criteria": [
+        "swift test --filter ChatServiceMultiThreadTests",
+        "swift test --filter ChatServiceTests"
+      ],
+      "deps": [1, 5, 6],
+      "wave": 3,
+      "status": "pending",
+      "cycles": 0,
+      "started_at": null,
+      "completed_at": null,
+      "commit_sha": null,
+      "blocked_reason": null
+    },
+    {
+      "id": 9,
+      "title": "RepositoryViewModel+Chat wiring (storage + repoID)",
+      "description": "Modify Sources/Zion/ViewModel/RepositoryViewModel+Chat.swift: compute `let repoID = ChatStorage.repoID(for: repositoryURL)` when constructing the lazy ChatService. Add an app-level shared ChatStorage instance — store as `@ObservationIgnored private(set) var chatStorage = ChatStorage()` on RepositoryViewModel (modify Sources/Zion/ViewModel/RepositoryViewModel.swift to add the stored property — must be internal access). Pass both storage and repoID to ChatService init. resetChatService() unchanged.",
+      "files": [
+        "Sources/Zion/ViewModel/RepositoryViewModel+Chat.swift",
+        "Sources/Zion/ViewModel/RepositoryViewModel.swift"
+      ],
+      "criteria": [
+        "swift build 2>&1 | tail -5"
+      ],
+      "deps": [5, 8],
+      "wave": 3,
+      "status": "pending",
+      "cycles": 0,
+      "started_at": null,
+      "completed_at": null,
+      "commit_sha": null,
+      "blocked_reason": null
+    },
+    {
+      "id": 10,
+      "title": "ChatScreen sidebar integration + dist build",
+      "description": "Modify Sources/Zion/Views/Chat/ChatScreen.swift to wrap existing chat column in HStack { ChatThreadList(threads: chat.threads, activeThreadID: chat.activeThreadID, ...) when !threadListCollapsed; existing chat content right }. Add `@AppStorage(\"chat.threadListVisible\") private var threadListVisible: Bool = true`. Header button toggles. Wire callbacks: onSelect → chat.selectThread, onNew → chat.createThread, onDelete → chat.deleteThread, onRename → chat.renameThread. Do not modify composer / message bubble internals — only the outer container. Run `swift build` then `./scripts/make-app.sh`; verify dist/Zion.app/Contents/MacOS/Zion executable. Run full `swift test` and confirm Test Suite 'All tests' passed.",
+      "files": [
+        "Sources/Zion/Views/Chat/ChatScreen.swift"
+      ],
+      "criteria": [
+        "swift build 2>&1 | tail -5",
+        "./scripts/make-app.sh && test -x dist/Zion.app/Contents/MacOS/Zion",
+        "swift test 2>&1 | tail -20 | grep -E \"Test Suite 'All tests' passed\""
+      ],
+      "deps": [7, 8, 9],
+      "wave": 4,
+      "status": "pending",
+      "cycles": 0,
+      "started_at": null,
+      "completed_at": null,
+      "commit_sha": null,
+      "blocked_reason": null
+    }
+  ]
+}

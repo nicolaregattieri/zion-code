@@ -1,0 +1,234 @@
+{
+  "version": 1,
+  "spec_hash": "sha256:e87affa97f5fcdaf7d0863c0097181c74539f7fff60808b923c9acf316f2e1f0",
+  "created_at": "2026-05-21T13:35:00Z",
+  "waves": 5,
+  "tasks": [
+    {
+      "id": 1,
+      "title": "ChatModels (ChatRole + ChatMessage + ChatThread)",
+      "description": "Create Sources/Zion/Models/ChatModels.swift with: `enum ChatRole { case user, assistant }`, `struct ChatMessage: Identifiable, Equatable { let id: UUID; let role: ChatRole; var content: String; let timestamp: Date; var isStreaming: Bool }`, `struct ChatThread: Identifiable, Equatable { let id: UUID; var messages: [ChatMessage]; let createdAt: Date }`. One file with enum + two structs is allowed (follows GitModels.swift precedent — verify by reading that file). Write Tests/ZionTests/ChatModelsTests.swift covering: testMessageEquatableRoundTrip (same id+content+role → equal; different content → unequal), testMessageIdUnique (two default-init messages have different UUIDs), testThreadEquatableRoundTrip.",
+      "files": [
+        "Sources/Zion/Models/ChatModels.swift",
+        "Tests/ZionTests/ChatModelsTests.swift"
+      ],
+      "criteria": [
+        "swift test --filter ChatModelsTests"
+      ],
+      "deps": [],
+      "wave": 1,
+      "status": "done",
+      "cycles": 1,
+      "started_at": "2026-05-21T13:40:00Z",
+      "completed_at": "2026-05-21T15:30:00Z",
+      "commit_sha": "merged-in-pr-436",
+      "blocked_reason": null
+    },
+    {
+      "id": 2,
+      "title": "AILimits + AppEnums additions",
+      "description": "Two small edits. (a) Sources/Zion/Services/AIClient.swift: inside `enum AILimits` (lines ~4-34) add `static let maxFileContentPreviewLength = 8_000`. Single-line addition. (b) Sources/Zion/Models/AppEnums.swift: add `chat` case to BOTH `AppSection` (~line 343) AND `FeatureSection` (~line 247). For FeatureSection.chat: icon `\"bubble.left.and.bubble.right\"`, color `DesignSystem.Colors.brandPrimary`, titleKey/label `\"chat.title\"` via L10n. For AppSection.chat: title + icon `bubble.left.and.bubble.right`. Verify existing case ordering/style and match. Ensure both enums remain exhaustive across the codebase — if compile breaks elsewhere due to non-exhaustive switches, add `default: break` placeholder only where strictly needed and document in DONE report.",
+      "files": [
+        "Sources/Zion/Services/AIClient.swift",
+        "Sources/Zion/Models/AppEnums.swift"
+      ],
+      "criteria": [
+        "swift build 2>&1 | tail -5",
+        "grep -n 'maxFileContentPreviewLength' Sources/Zion/Services/AIClient.swift | wc -l",
+        "grep -n 'bubble.left.and.bubble.right' Sources/Zion/Models/AppEnums.swift"
+      ],
+      "deps": [],
+      "wave": 1,
+      "status": "done",
+      "cycles": 1,
+      "started_at": "2026-05-21T13:40:00Z",
+      "completed_at": "2026-05-21T15:30:00Z",
+      "commit_sha": "merged-in-pr-436",
+      "blocked_reason": null
+    },
+    {
+      "id": 3,
+      "title": "L10n keys (en/pt-BR/es) + ChatLocalizationTests",
+      "description": "Add all chat L10n keys listed in spec section 'L10n Keys' to all 3 locale files. Required keys: chat.title, chat.emptyState.headline, chat.emptyState.example.history, chat.emptyState.example.branch, chat.emptyState.example.diff, chat.composer.hint, chat.composer.send, chat.composer.stop, chat.composer.newChat, chat.slash.diff.label, chat.slash.log.label, chat.slash.status.label, chat.slash.file.label, chat.slash.commit.label, chat.error.aiNotConfigured, chat.error.send.title, chat.contextHeader (with %@ %@ %@ %d positional tokens preserved), chat.slash.fileOutsideRepo, chat.slash.empty.diff, chat.head.unknown. Translate naturally for EN/PT-BR/ES. Write Tests/ZionTests/ChatLocalizationTests.swift loading each .lproj/Localizable.strings via Bundle.zionResources, asserting all required keys exist + non-empty in en, pt-BR, es.",
+      "files": [
+        "Sources/Zion/Resources/en.lproj/Localizable.strings",
+        "Sources/Zion/Resources/pt-BR.lproj/Localizable.strings",
+        "Sources/Zion/Resources/es.lproj/Localizable.strings",
+        "Tests/ZionTests/ChatLocalizationTests.swift"
+      ],
+      "criteria": [
+        "swift test --filter ChatLocalizationTests"
+      ],
+      "deps": [],
+      "wave": 1,
+      "status": "done",
+      "cycles": 1,
+      "started_at": "2026-05-21T13:40:00Z",
+      "completed_at": "2026-05-21T15:30:00Z",
+      "commit_sha": "merged-in-pr-436",
+      "blocked_reason": null
+    },
+    {
+      "id": 4,
+      "title": "ChatContextBuilder + slash parser + tests",
+      "description": "Create Sources/Zion/Services/ChatContextBuilder.swift with: `struct ChatContextBuilder { let worker: RepositoryWorker }`. Add nested `enum SlashCommand: Equatable { case diff; case log; case status; case file(path: String); case commit(sha: String) }`. Add `static func parseSlashCommand(_ line: String) -> SlashCommand?` (pure; line-anchored regex `^\\s*/(diff|log|status|file|commit)(\\s+(.+))?$`; rejects unknown; rejects file/commit without args). Add `func gitContextHeader(repoURL: URL, branch: String) async -> String` (calls worker `rev-parse --short=7 HEAD` and `status --porcelain | wc -l`; formats L10n chat.contextHeader with repo name (URL last component), branch, SHA or `?` on failure, uncommitted count). Add `func expandSlashCommands(_ text: String, repoURL: URL) async -> String` (scans lines, replaces each matching slash line with appended fenced block of git output truncated to AILimits.maxDiffContentLength / maxCommitLogLength / maxFileContentPreviewLength; safe path resolution for /file — rejects outside-repo with L10n chat.slash.fileOutsideRepo line; empty diff outputs L10n chat.slash.empty.diff). Inline-slash inside URLs MUST NOT match — line anchored regex. Write Tests/ZionTests/ChatSlashCommandParserTests.swift (7 cases per AC4) and Tests/ZionTests/ChatContextBuilderTests.swift (7 cases per AC5; use temp git repo via GitTestHelper pattern, find existing helper or create simple seed).",
+      "files": [
+        "Sources/Zion/Services/ChatContextBuilder.swift",
+        "Tests/ZionTests/ChatSlashCommandParserTests.swift",
+        "Tests/ZionTests/ChatContextBuilderTests.swift"
+      ],
+      "criteria": [
+        "swift test --filter ChatSlashCommandParserTests",
+        "swift test --filter ChatContextBuilderTests"
+      ],
+      "deps": [2, 3],
+      "wave": 2,
+      "status": "done",
+      "cycles": 1,
+      "started_at": "2026-05-21T13:40:00Z",
+      "completed_at": "2026-05-21T15:30:00Z",
+      "commit_sha": "merged-in-pr-436",
+      "blocked_reason": null
+    },
+    {
+      "id": 5,
+      "title": "ChatService + tests",
+      "description": "Create Sources/Zion/Services/ChatService.swift: `@MainActor @Observable final class ChatService`. Stored: `var thread: ChatThread`, `var isStreaming: Bool = false`, `@ObservationIgnored private var activeTask: Task<Void, Never>?`, `@ObservationIgnored private let ai: AIClient`, `@ObservationIgnored private let worker: RepositoryWorker`, `@ObservationIgnored private let contextBuilder: ChatContextBuilder`, `@ObservationIgnored private let streamProvider: ((LocalLLMConfig, AIPromptPayload, Int, String) -> AsyncThrowingStream<String, Error>)?` (optional injection for tests). Init takes ai, worker, contextBuilder; init-overload accepts streamProvider for tests. Methods: `func send(text:provider:apiKey:mode:repoURL:branch:) async` — appends user ChatMessage, expands slash commands via contextBuilder, prepends gitContextHeader to FIRST user msg of payload, builds AIPromptPayload via AIClient.makePromptPayload, appends pending assistant ChatMessage(isStreaming: true). If provider == .local: stream via AIClient.streamLocalLLM (or injected provider) and update last msg content per delta on main actor; else fall back to AIClient.call(...) non-streaming and atomic-replace. Sets isStreaming = false on completion/cancel/error. On AIError: replace pending message with system error message using L10n chat.error.send.title + localizedDescription. `func newThread()` — replaces thread with fresh empty ChatThread. `func stop()` — cancels activeTask, flips isStreaming to false, leaves partial content in last message. Write Tests/ZionTests/ChatServiceTests.swift (4 cases per AC6: testSendAppendsUserAndAssistantMessages, testStopCancelsActiveTask, testNewThreadClearsMessages, testStreamingTokenAppendUpdatesLastMessage) — inject mock streamProvider returning canned AsyncThrowingStream.",
+      "files": [
+        "Sources/Zion/Services/ChatService.swift",
+        "Tests/ZionTests/ChatServiceTests.swift"
+      ],
+      "criteria": [
+        "swift test --filter ChatServiceTests"
+      ],
+      "deps": [1, 2, 4],
+      "wave": 3,
+      "status": "done",
+      "cycles": 1,
+      "started_at": "2026-05-21T13:40:00Z",
+      "completed_at": "2026-05-21T15:30:00Z",
+      "commit_sha": "merged-in-pr-436",
+      "blocked_reason": null
+    },
+    {
+      "id": 6,
+      "title": "ChatMessageBubble view",
+      "description": "Create Sources/Zion/Views/Chat/ChatMessageBubble.swift: `struct ChatMessageBubble: View`. Takes a ChatMessage. User messages: right-aligned (HStack { Spacer(); content }), brand-tinted background (DesignSystem.Colors.brandPrimary.opacity via existing token — find an existing semantic token, do NOT use raw .opacity literal). Assistant messages: left-aligned, surface-tinted background (DesignSystem.Colors.glassHover or similar surface token). Assistant content rendered as markdown via AttributedString(markdown: content). On AttributedString failure, fall back to plain Text. Use DesignSystem.Typography.body for content, DesignSystem.Typography.codeMono for fenced code segments if reachable via attributed-string runs (otherwise body is acceptable v1). NO hardcoded colors, fonts, or cornerRadius literals — all via DesignSystem tokens. Add subtle isStreaming indicator (blinking dot or ProgressView) when message.isStreaming == true.",
+      "files": [
+        "Sources/Zion/Views/Chat/ChatMessageBubble.swift"
+      ],
+      "criteria": [
+        "swift build 2>&1 | tail -5",
+        "grep -nE '(Color\\.[a-z]+\\.opacity|Font\\.[a-z]+|cornerRadius:\\s*[0-9])' Sources/Zion/Views/Chat/ChatMessageBubble.swift | wc -l"
+      ],
+      "deps": [1],
+      "wave": 3,
+      "status": "done",
+      "cycles": 1,
+      "started_at": "2026-05-21T13:40:00Z",
+      "completed_at": "2026-05-21T15:30:00Z",
+      "commit_sha": "merged-in-pr-436",
+      "blocked_reason": null
+    },
+    {
+      "id": 7,
+      "title": "ChatComposer view",
+      "description": "Create Sources/Zion/Views/Chat/ChatComposer.swift: `struct ChatComposer: View`. Inputs: `@Bindable var chat: ChatService`, `@Binding var text: String`, action closures for send/stop/newChat. Renders: TextField (or TextEditor) with placeholder L10n chat.composer.hint, send Button (icon `paperplane.fill`, disabled while chat.isStreaming or text empty after trim), keyboard shortcut Cmd+Return to send, stop Button (icon `stop.fill`) visible only while chat.isStreaming, newChat Button (icon `trash`) calls newChat closure, provider mini-picker (Menu populated from AIProvider.allCases filtered by AIProviderSupport configured — read selection via @AppStorage(\"ai.defaultProvider\")). All colors/fonts/spacing via DesignSystem.* tokens. All visible strings via L10n. No hardcoded literals.",
+      "files": [
+        "Sources/Zion/Views/Chat/ChatComposer.swift"
+      ],
+      "criteria": [
+        "swift build 2>&1 | tail -5",
+        "grep -nE '(Color\\.[a-z]+\\.opacity|Font\\.[a-z]+|cornerRadius:\\s*[0-9])' Sources/Zion/Views/Chat/ChatComposer.swift | wc -l"
+      ],
+      "deps": [5],
+      "wave": 3,
+      "status": "done",
+      "cycles": 1,
+      "started_at": "2026-05-21T13:40:00Z",
+      "completed_at": "2026-05-21T15:30:00Z",
+      "commit_sha": "merged-in-pr-436",
+      "blocked_reason": null
+    },
+    {
+      "id": 8,
+      "title": "ChatEmptyState view",
+      "description": "Create Sources/Zion/Views/Chat/ChatEmptyState.swift: `struct ChatEmptyState: View`. Takes a closure `onPickPrompt: (String) -> Void`. Renders headline L10n chat.emptyState.headline + 3 tappable example cards (L10n chat.emptyState.example.history, .branch, .diff). Each card calls onPickPrompt with its text. Use DesignSystem tokens only.",
+      "files": [
+        "Sources/Zion/Views/Chat/ChatEmptyState.swift"
+      ],
+      "criteria": [
+        "swift build 2>&1 | tail -5",
+        "grep -nE '(Color\\.[a-z]+\\.opacity|Font\\.[a-z]+|cornerRadius:\\s*[0-9])' Sources/Zion/Views/Chat/ChatEmptyState.swift | wc -l"
+      ],
+      "deps": [3],
+      "wave": 3,
+      "status": "done",
+      "cycles": 1,
+      "started_at": "2026-05-21T13:40:00Z",
+      "completed_at": "2026-05-21T15:30:00Z",
+      "commit_sha": "merged-in-pr-436",
+      "blocked_reason": null
+    },
+    {
+      "id": 9,
+      "title": "ChatScreen view (composition)",
+      "description": "Create Sources/Zion/Views/Chat/ChatScreen.swift: `struct ChatScreen: View`. Inputs: `@Bindable var chat: ChatService`, repoURL: URL?, branch: String. Holds composer text via @State. Reads provider/apiKey/mode via @AppStorage matching existing RepositoryViewModel+AI.swift conventions (find via grep). Layout: VStack { ScrollViewReader { ScrollView { LazyVStack of ChatMessageBubble OR ChatEmptyState when messages.isEmpty }; ChatComposer pinned bottom }. Auto-scrolls to last message id when new message appended or content updates. Wire send button: call chat.send(text:provider:apiKey:mode:repoURL:branch:) Task; clear composer text after submit. New-chat button: chat.newThread(). Stop: chat.stop(). Empty repoURL: ChatEmptyState only, composer disabled. No hardcoded literals.",
+      "files": [
+        "Sources/Zion/Views/Chat/ChatScreen.swift"
+      ],
+      "criteria": [
+        "swift build 2>&1 | tail -5",
+        "test -f Sources/Zion/Views/Chat/ChatScreen.swift"
+      ],
+      "deps": [5, 6, 7, 8],
+      "wave": 4,
+      "status": "done",
+      "cycles": 1,
+      "started_at": "2026-05-21T13:40:00Z",
+      "completed_at": "2026-05-21T15:30:00Z",
+      "commit_sha": "merged-in-pr-436",
+      "blocked_reason": null
+    },
+    {
+      "id": 10,
+      "title": "RepositoryViewModel+Chat (per-repo ChatService lifecycle)",
+      "description": "Create Sources/Zion/ViewModel/RepositoryViewModel+Chat.swift — extension on RepositoryViewModel exposing `var chatService: ChatService { get }` backed by `@ObservationIgnored private var _chatService: ChatService?` created lazily once `repositoryURL` and the per-repo `worker` are available. Add `func resetChatService()` called when repositoryURL changes. Hook into existing repo-switch path (find via grep for where repositoryURL is reassigned in RepositoryViewModel — likely in openRepository or similar). DO NOT modify save-recents logic. Use `_chatService?.stop()` then `_chatService = nil` to reset. ChatService init takes the existing AIClient instance from the view model + the per-repo RepositoryWorker + a ChatContextBuilder.",
+      "files": [
+        "Sources/Zion/ViewModel/RepositoryViewModel+Chat.swift"
+      ],
+      "criteria": [
+        "swift build 2>&1 | tail -5"
+      ],
+      "deps": [5],
+      "wave": 4,
+      "status": "done",
+      "cycles": 1,
+      "started_at": "2026-05-21T13:40:00Z",
+      "completed_at": "2026-05-21T15:30:00Z",
+      "commit_sha": "merged-in-pr-436",
+      "blocked_reason": null
+    },
+    {
+      "id": 11,
+      "title": "Sidebar + ContentView wiring + dist build",
+      "description": "Modify Sources/Zion/Views/Main/SidebarView.swift: the chat entry is rendered automatically via ForEach(AppSection.allCases) once .chat exists (task 2 added it). Confirm the icon/label render correctly; if a per-case switch surfaces, add `.chat` arm. Modify Sources/Zion/Views/Main/ContentView.swift: add ChatScreen overlay following the existing .code / .graph / .operations opacity+hitTesting pattern. Pass `chat: model.chatService`, `repoURL: model.repositoryURL`, `branch: model.currentBranch ?? \"\"`. Add no new @State beyond what RepositoryViewModel+Chat exposes. Run `swift build` and `./scripts/make-app.sh`; verify `dist/Zion.app/Contents/MacOS/Zion` is executable. Run full `swift test` to ensure no regressions.",
+      "files": [
+        "Sources/Zion/Views/Main/SidebarView.swift",
+        "Sources/Zion/Views/Main/ContentView.swift"
+      ],
+      "criteria": [
+        "swift build 2>&1 | tail -5",
+        "./scripts/make-app.sh && test -x dist/Zion.app/Contents/MacOS/Zion"
+      ],
+      "deps": [9, 10],
+      "wave": 5,
+      "status": "done",
+      "cycles": 1,
+      "started_at": "2026-05-21T13:40:00Z",
+      "completed_at": "2026-05-21T15:30:00Z",
+      "commit_sha": "merged-in-pr-436",
+      "blocked_reason": null
+    }
+  ]
+}
