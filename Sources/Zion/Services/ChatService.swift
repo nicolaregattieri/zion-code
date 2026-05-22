@@ -8,8 +8,28 @@ final class ChatService {
 
     // MARK: - Observable State
 
-    var thread: ChatThread = ChatThread()
+    /// All threads for this repo, ordered most-recent-first.
+    var threads: [ChatThread] = []
+
+    /// The ID of the currently active thread.
+    var activeThreadID: UUID = UUID()
+
+    /// Forwarding computed property — back-compat for callers that use `service.thread`.
+    var thread: ChatThread {
+        get {
+            threads.first { $0.id == activeThreadID } ?? ChatThread()
+        }
+        set {
+            if let idx = threads.firstIndex(where: { $0.id == activeThreadID }) {
+                threads[idx] = newValue
+            }
+        }
+    }
+
     var isStreaming: Bool = false
+
+    /// Set when a persistence operation fails; consumed by UI to surface a one-time error.
+    var lastPersistenceError: String?
 
     // MARK: - Private (non-observable)
 
@@ -19,13 +39,26 @@ final class ChatService {
     @ObservationIgnored private let contextBuilder: ChatContextBuilder
     @ObservationIgnored private let streamProvider: ((LocalLLMConfig, AIPromptPayload, Int, String) -> AsyncThrowingStream<String, Error>)?
 
+    /// Injected storage (nil = volatile/test)
+    @ObservationIgnored private let storage: ChatStorage?
+    @ObservationIgnored private let repoID: String
+
+    /// Pending debounce tasks keyed by message UUID
+    @ObservationIgnored private var persistDebounce: [UUID: Task<Void, Never>] = [:]
+
     // MARK: - Init (production)
 
-    init(ai: AIClient, worker: RepositoryWorker, contextBuilder: ChatContextBuilder) {
+    init(ai: AIClient, worker: RepositoryWorker, contextBuilder: ChatContextBuilder, storage: ChatStorage? = nil, repoID: String = "") {
         self.ai = ai
         self.worker = worker
         self.contextBuilder = contextBuilder
         self.streamProvider = nil
+        self.storage = storage
+        self.repoID = repoID
+
+        if storage != nil {
+            Task { await self.reloadFromStorage() }
+        }
     }
 
     // MARK: - Init (test injection)
@@ -34,20 +67,100 @@ final class ChatService {
         ai: AIClient,
         worker: RepositoryWorker,
         contextBuilder: ChatContextBuilder,
-        streamProvider: @escaping (LocalLLMConfig, AIPromptPayload, Int, String) -> AsyncThrowingStream<String, Error>
+        streamProvider: @escaping (LocalLLMConfig, AIPromptPayload, Int, String) -> AsyncThrowingStream<String, Error>,
+        storage: ChatStorage? = nil,
+        repoID: String = ""
     ) {
         self.ai = ai
         self.worker = worker
         self.contextBuilder = contextBuilder
         self.streamProvider = streamProvider
+        self.storage = storage
+        self.repoID = repoID
+
+        if storage != nil {
+            Task { await self.reloadFromStorage() }
+        }
+    }
+
+    // MARK: - Thread Management
+
+    /// Loads persisted threads. On error: logs + sets lastPersistenceError, continues volatile.
+    private func reloadFromStorage() async {
+        guard let storage else { return }
+        do {
+            var loaded = try await storage.loadThreads(repoID: repoID)
+            if loaded.isEmpty {
+                let fresh = ChatThread(repoID: repoID)
+                try await storage.saveThread(fresh, repoID: repoID)
+                loaded = [fresh]
+            } else {
+                // Eagerly load messages for each thread
+                for i in loaded.indices {
+                    let msgs = (try? await storage.loadMessages(threadID: loaded[i].id, repoID: repoID)) ?? []
+                    loaded[i].messages = msgs
+                }
+            }
+            threads = loaded
+            activeThreadID = loaded[0].id
+        } catch {
+            DiagnosticLogger.shared.log(.error, "ChatService: failed to load threads", context: error.localizedDescription, source: "ChatService")
+            lastPersistenceError = L10n("chat.persistence.error")
+            let fallback = ChatThread(repoID: repoID)
+            threads = [fallback]
+            activeThreadID = fallback.id
+        }
+    }
+
+    /// Creates a new thread, appends it as the first element, and activates it.
+    func createThread() {
+        let t = ChatThread(repoID: repoID)
+        threads.insert(t, at: 0)
+        activeThreadID = t.id
+        Task { await persistThread(t) }
+    }
+
+    /// Deletes a thread by id. If it was active, selects the next most-recent or creates a new one.
+    func deleteThread(_ id: UUID) {
+        let wasActive = id == activeThreadID
+        threads.removeAll { $0.id == id }
+        Task {
+            try? await storage?.deleteThread(id, repoID: repoID)
+        }
+        if wasActive {
+            if let first = threads.first {
+                activeThreadID = first.id
+            } else {
+                let fresh = ChatThread(repoID: repoID)
+                threads = [fresh]
+                activeThreadID = fresh.id
+                Task { await persistThread(fresh) }
+            }
+        }
+    }
+
+    /// Renames a thread.
+    func renameThread(_ id: UUID, title: String) {
+        guard let idx = threads.firstIndex(where: { $0.id == id }) else { return }
+        threads[idx].title = title
+        Task {
+            do {
+                try await storage?.renameThread(id, title: title, repoID: repoID)
+            } catch {
+                lastPersistenceError = L10n("chat.persistence.error")
+            }
+        }
+    }
+
+    /// Switches the active thread to `id`.
+    func selectThread(_ id: UUID) {
+        guard threads.contains(where: { $0.id == id }) else { return }
+        activeThreadID = id
     }
 
     // MARK: - Public API
 
     /// Sends a user message and receives a response.
-    ///
-    /// - For `.local` provider: streams via `AIClient.streamLocalLLM` (or injected provider).
-    /// - For other providers: falls back to non-streaming `AIClient.call`.
     func send(
         text: String,
         provider: AIProvider,
@@ -57,6 +170,11 @@ final class ChatService {
         branch: String
     ) async {
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+
+        // Ensure we have at least one thread
+        if threads.isEmpty { createThread() }
+
+        let threadID = activeThreadID
 
         // Inject git context header into the first user message only
         let isFirstMessage = thread.messages.filter { $0.role == .user }.isEmpty
@@ -72,9 +190,33 @@ final class ChatService {
         let userMessage = ChatMessage(role: .user, content: expandedText)
         thread.messages.append(userMessage)
 
+        // Persist user message
+        Task {
+            do {
+                try await storage?.appendMessage(userMessage, threadID: threadID, repoID: repoID)
+            } catch {
+                lastPersistenceError = L10n("chat.persistence.error")
+            }
+        }
+
+        // Auto-title: if thread title is the default pattern, use first 60 chars of user text
+        if isDefaultTitle(thread.title) {
+            let titleText = String(text.prefix(60))
+            renameThread(activeThreadID, title: titleText)
+        }
+
         let assistantMessage = ChatMessage(role: .assistant, content: "", isStreaming: true)
         thread.messages.append(assistantMessage)
-        let assistantIndex = thread.messages.count - 1
+        let assistantID = assistantMessage.id
+
+        // Persist initial (empty, streaming) assistant message
+        Task {
+            do {
+                try await storage?.appendMessage(assistantMessage, threadID: threadID, repoID: repoID)
+            } catch {
+                lastPersistenceError = L10n("chat.persistence.error")
+            }
+        }
 
         isStreaming = true
 
@@ -82,46 +224,32 @@ final class ChatService {
             defer {
                 Task { @MainActor in
                     self.isStreaming = false
-                    if assistantIndex < self.thread.messages.count {
-                        self.thread.messages[assistantIndex].isStreaming = false
-                    }
+                    self.updateAssistantIsStreaming(id: assistantID, isStreaming: false)
+                    // Final flush to persistence
+                    self.cancelDebounce(for: assistantID)
+                    Task { await self.flushMessageToPersistence(id: assistantID, threadID: threadID) }
                 }
             }
 
             let payload = Self.makePayload(for: expandedText)
 
-            if provider == .local {
-                let config = AIClient.loadLocalConfig() ?? LocalLLMConfig()
-                let modelID = config.modelName.isEmpty ? LocalLLMConfig().modelName : config.modelName
-                let maxTokens = 2048
+            switch provider {
+            case .local:
+                await self.runLocalStream(payload: payload, assistantID: assistantID)
 
-                let stream: AsyncThrowingStream<String, Error>
-                if let injected = streamProvider {
-                    stream = injected(config, payload, maxTokens, modelID)
-                } else {
-                    stream = await ai.streamLocalLLM(
-                        payload: payload,
-                        config: config,
-                        maxTokens: maxTokens,
-                        modelID: modelID
-                    )
-                }
+            case .anthropic:
+                let modelID = AIModelCatalogService.selection(for: .anthropic, mode: mode, lane: .general).primaryModelID
+                let stream = await self.ai.streamAnthropic(payload: payload, apiKey: apiKey, maxTokens: 2048, modelID: modelID)
+                await self.consumeStream(stream, assistantID: assistantID, threadID: threadID)
 
+            case .openai:
+                let modelID = AIModelCatalogService.selection(for: .openai, mode: mode, lane: .general).primaryModelID
+                let stream = await self.ai.streamOpenAI(payload: payload, apiKey: apiKey, maxTokens: 2048, modelID: modelID)
+                await self.consumeStream(stream, assistantID: assistantID, threadID: threadID)
+
+            case .gemini, .none:
                 do {
-                    for try await delta in stream {
-                        if Task.isCancelled { break }
-                        await MainActor.run {
-                            if assistantIndex < self.thread.messages.count {
-                                self.thread.messages[assistantIndex].content += delta
-                            }
-                        }
-                    }
-                } catch {
-                    // Stream error: leave whatever was accumulated
-                }
-            } else {
-                do {
-                    let response = try await ai.call(
+                    let response = try await self.ai.call(
                         payload: payload,
                         provider: provider,
                         apiKey: apiKey,
@@ -130,15 +258,11 @@ final class ChatService {
                         mode: mode
                     )
                     await MainActor.run {
-                        if assistantIndex < self.thread.messages.count {
-                            self.thread.messages[assistantIndex].content = response
-                        }
+                        self.setAssistantContent(id: assistantID, content: response)
                     }
                 } catch {
                     await MainActor.run {
-                        if assistantIndex < self.thread.messages.count {
-                            self.thread.messages[assistantIndex].content = L10n("chat.error.generic")
-                        }
+                        self.setAssistantContent(id: assistantID, content: L10n("chat.error.generic"))
                     }
                 }
             }
@@ -148,12 +272,12 @@ final class ChatService {
         await task.value
     }
 
-    /// Resets the thread to an empty state.
+    /// Resets to a new empty thread (volatile — creates a fresh thread and activates it).
     func newThread() {
         activeTask?.cancel()
         activeTask = nil
         isStreaming = false
-        thread = ChatThread()
+        createThread()
     }
 
     /// Cancels the active streaming task.
@@ -163,7 +287,120 @@ final class ChatService {
         isStreaming = false
     }
 
+    // MARK: - Private Stream Helpers
+
+    private func runLocalStream(payload: AIPromptPayload, assistantID: UUID) async {
+        let config = AIClient.loadLocalConfig() ?? LocalLLMConfig()
+        let modelID = config.modelName.isEmpty ? LocalLLMConfig().modelName : config.modelName
+        let maxTokens = 2048
+        let threadID = activeThreadID
+
+        let stream: AsyncThrowingStream<String, Error>
+        if let injected = streamProvider {
+            stream = injected(config, payload, maxTokens, modelID)
+        } else {
+            stream = await ai.streamLocalLLM(
+                payload: payload,
+                config: config,
+                maxTokens: maxTokens,
+                modelID: modelID
+            )
+        }
+
+        await consumeStream(stream, assistantID: assistantID, threadID: threadID)
+    }
+
+    private func consumeStream(_ stream: AsyncThrowingStream<String, Error>, assistantID: UUID, threadID: UUID) async {
+        do {
+            for try await delta in stream {
+                if Task.isCancelled { break }
+                await MainActor.run {
+                    self.appendAssistantDelta(id: assistantID, delta: delta)
+                    self.scheduleDebounce(for: assistantID, threadID: threadID)
+                }
+            }
+        } catch {
+            // Leave whatever was accumulated
+        }
+    }
+
+    // MARK: - Private State Mutation Helpers (must be called on MainActor)
+
+    private func appendAssistantDelta(id: UUID, delta: String) {
+        guard let tIdx = threads.firstIndex(where: { $0.id == activeThreadID }),
+              let mIdx = threads[tIdx].messages.firstIndex(where: { $0.id == id }) else { return }
+        threads[tIdx].messages[mIdx].content += delta
+    }
+
+    private func setAssistantContent(id: UUID, content: String) {
+        guard let tIdx = threads.firstIndex(where: { $0.id == activeThreadID }),
+              let mIdx = threads[tIdx].messages.firstIndex(where: { $0.id == id }) else { return }
+        threads[tIdx].messages[mIdx].content = content
+    }
+
+    private func updateAssistantIsStreaming(id: UUID, isStreaming: Bool) {
+        for tIdx in threads.indices {
+            if let mIdx = threads[tIdx].messages.firstIndex(where: { $0.id == id }) {
+                threads[tIdx].messages[mIdx].isStreaming = isStreaming
+                return
+            }
+        }
+    }
+
+    // MARK: - Persistence Helpers
+
+    private func persistThread(_ t: ChatThread) async {
+        do {
+            try await storage?.saveThread(t, repoID: repoID)
+        } catch {
+            await MainActor.run { self.lastPersistenceError = L10n("chat.persistence.error") }
+        }
+    }
+
+    private func scheduleDebounce(for messageID: UUID, threadID: UUID) {
+        persistDebounce[messageID]?.cancel()
+        persistDebounce[messageID] = Task {
+            try? await Task.sleep(for: .seconds(Constants.Timing.chatPersistenceDebounce))
+            guard !Task.isCancelled else { return }
+            await self.flushMessageToPersistence(id: messageID, threadID: threadID)
+        }
+    }
+
+    private func cancelDebounce(for messageID: UUID) {
+        persistDebounce[messageID]?.cancel()
+        persistDebounce.removeValue(forKey: messageID)
+    }
+
+    private func flushMessageToPersistence(id: UUID, threadID: UUID) async {
+        guard let storage else { return }
+        // Find the message across all threads
+        var msg: ChatMessage?
+        for t in threads where msg == nil {
+            msg = t.messages.first { $0.id == id }
+        }
+        guard let message = msg else { return }
+        do {
+            try await storage.updateMessage(message, repoID: repoID)
+        } catch {
+            await MainActor.run { self.lastPersistenceError = L10n("chat.persistence.error") }
+        }
+    }
+
     // MARK: - Private Helpers
+
+    private func isDefaultTitle(_ title: String) -> Bool {
+        // Default title format: "Untitled yyyy-MM-dd HH:mm" (locale-specific)
+        // We match by checking if the title starts with L10n("chat.thread.untitled") base,
+        // which is a %@ format string, so we test against a prefix approach.
+        let untitledBase = L10n("chat.thread.untitled", "").trimmingCharacters(in: .whitespaces)
+        // If format string is "Untitled %@", base becomes "Untitled "
+        // If L10n("chat.thread.untitled") strips the %@, match the prefix
+        if untitledBase.isEmpty {
+            // Fallback: check if title matches "Untitled XXXX" pattern
+            return title.hasPrefix("Untitled ")
+        }
+        return title.hasPrefix(untitledBase)
+    }
 
     private static func makePayload(for text: String) -> AIPromptPayload {
         AIClient.makePromptPayload(
@@ -188,12 +425,18 @@ final class ChatService {
             prepended to every user message. Treat it as ground truth.
 
             Slash commands available to the user: /diff /log /status /file /commit.
-            Their output appears as fenced blocks in the message.
+            Their output appears as fenced blocks in the message. When context is NOT
+            already provided, ASK the user to send the right slash command. Map intent:
+            - "last commit", "ultimo commit", "current changes" → /diff or /log
+            - "show file X" → /file <path>
+            - "what changed in <sha>" → /commit <sha>
+            - "working tree state" → /status
+            Be specific. Example: "Send `/log` and I'll summarize the last commits"
+            or "Send `/file Sources/Foo.swift` and I'll review it."
+            Do NOT refuse with "I can't show code"; guide the user.
 
             Output style: concise. Code blocks for commands, file paths, hashes.
             Never invent file paths or commit SHAs you haven't seen in context.
-            If you'd need to run a command to answer, instruct the user to type that
-            slash command first.
             """,
             untrustedSections: [
                 AIUntrustedPromptSection(

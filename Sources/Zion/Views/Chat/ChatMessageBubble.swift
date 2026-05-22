@@ -1,61 +1,97 @@
 import SwiftUI
 
-// MARK: - ChatMessageBubble
-
 struct ChatMessageBubble: View {
 
     let message: ChatMessage
 
-    // MARK: - Body
-
     var body: some View {
-        HStack(alignment: .bottom, spacing: DesignSystem.Spacing.compact) {
+        HStack(alignment: .top, spacing: DesignSystem.Spacing.standard) {
             if message.role == .user {
-                Spacer(minLength: DesignSystem.Spacing.sectionGap)
-                bubbleContent
-                    .bubbleStyle(isUser: true)
+                Spacer(minLength: 48)
+                userBubble
             } else {
-                bubbleContent
-                    .bubbleStyle(isUser: false)
-                Spacer(minLength: DesignSystem.Spacing.sectionGap)
+                assistantAvatar
+                assistantBubble
+                Spacer(minLength: 48)
             }
         }
         .padding(.horizontal, DesignSystem.Spacing.cardPadding)
-        .padding(.vertical, DesignSystem.Spacing.micro)
+        .padding(.vertical, DesignSystem.Spacing.compact)
     }
 
-    // MARK: - Bubble Content
+    private var assistantAvatar: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [DesignSystem.Colors.brandPrimary, DesignSystem.Colors.brandInk],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 28, height: 28)
+            Image(systemName: "sparkles")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(DesignSystem.Colors.brandWhite)
+        }
+        .overlay(
+            Circle()
+                .strokeBorder(DesignSystem.Colors.glassBorder, lineWidth: 1)
+        )
+    }
 
     @ViewBuilder
-    private var bubbleContent: some View {
-        VStack(alignment: message.role == .user ? .trailing : .leading,
-               spacing: DesignSystem.Spacing.micro) {
-            messageText
-            if message.isStreaming {
-                streamingIndicator
+    private var userBubble: some View {
+        Text(message.content)
+            .font(DesignSystem.Typography.body)
+            .foregroundStyle(DesignSystem.Colors.brandWhite)
+            .textSelection(.enabled)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, DesignSystem.Spacing.standard)
+            .padding(.vertical, DesignSystem.Spacing.compact)
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [DesignSystem.Colors.brandPrimary, DesignSystem.Colors.brandInk],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .shadow(color: DesignSystem.Colors.brandPrimary.opacity(0.25), radius: 8, x: 0, y: 2)
+            )
+    }
+
+    @ViewBuilder
+    private var assistantBubble: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
+            if message.isStreaming && message.content.isEmpty {
+                ChatThinkingIndicator()
+            } else {
+                assistantContent
+                if message.isStreaming {
+                    StreamingDot()
+                }
             }
         }
-    }
-
-    // MARK: - Message Text
-
-    @ViewBuilder
-    private var messageText: some View {
-        if message.role == .assistant {
-            assistantText
-        } else {
-            Text(message.content)
-                .font(DesignSystem.Typography.body)
-                .foregroundStyle(DesignSystem.Colors.brandWhite)
-                .textSelection(.enabled)
-                .fixedSize(horizontal: false, vertical: true)
-        }
+        .padding(.horizontal, DesignSystem.Spacing.standard)
+        .padding(.vertical, DesignSystem.Spacing.compact)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(DesignSystem.Colors.glassHover)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .strokeBorder(DesignSystem.Colors.glassBorder, lineWidth: 1)
+                )
+        )
     }
 
     @ViewBuilder
-    private var assistantText: some View {
-        if let attributed = try? AttributedString(markdown: message.content,
-                                                  options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)) {
+    private var assistantContent: some View {
+        if let attributed = try? AttributedString(
+            markdown: message.content,
+            options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)
+        ) {
             Text(attributed)
                 .font(DesignSystem.Typography.body)
                 .foregroundStyle(DesignSystem.Colors.textPrimary)
@@ -69,57 +105,17 @@ struct ChatMessageBubble: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
-
-    // MARK: - Streaming Indicator
-
-    private var streamingIndicator: some View {
-        StreamingDot()
-    }
 }
-
-// MARK: - Bubble Style Modifier
-
-private struct BubbleStyleModifier: ViewModifier {
-    let isUser: Bool
-
-    func body(content: Content) -> some View {
-        content
-            .padding(.horizontal, DesignSystem.Spacing.cardPadding)
-            .padding(.vertical, DesignSystem.Spacing.compact)
-            .background(
-                RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius)
-                    .fill(isUser ? DesignSystem.Colors.brandPrimary.opacity(DesignSystem.Opacity.muted) : DesignSystem.Colors.glassElevated)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius)
-                            .strokeBorder(
-                                isUser ? DesignSystem.Colors.brandPrimary.opacity(DesignSystem.Opacity.dim) : DesignSystem.Colors.glassBorder,
-                                lineWidth: 1
-                            )
-                    )
-            )
-    }
-}
-
-private extension View {
-    func bubbleStyle(isUser: Bool) -> some View {
-        modifier(BubbleStyleModifier(isUser: isUser))
-    }
-}
-
-// MARK: - Streaming Dot
 
 private struct StreamingDot: View {
-    @State private var opacity: Double = DesignSystem.Opacity.visible
+    @State private var pulse = false
 
     var body: some View {
         Circle()
-            .fill(DesignSystem.Colors.ai)
-            .frame(width: DesignSystem.Spacing.compact, height: DesignSystem.Spacing.compact)
-            .opacity(opacity)
-            .onAppear {
-                withAnimation(DesignSystem.Motion.glowPulse) {
-                    opacity = DesignSystem.Opacity.dim
-                }
-            }
+            .fill(DesignSystem.Colors.brandPrimary)
+            .frame(width: 6, height: 6)
+            .opacity(pulse ? 0.3 : 1.0)
+            .animation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true), value: pulse)
+            .onAppear { pulse = true }
     }
 }

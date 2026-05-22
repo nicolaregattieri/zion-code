@@ -2432,3 +2432,13 @@
 "chat.slash.fileOutsideRepo" = "The specified path is outside the repository.";
 "chat.slash.empty.diff" = "No changes to show. Your working tree is clean.";
 "chat.head.unknown" = "?";
+"chat.thread.list.title" = "Conversations";
+"chat.thread.new" = "New thread";
+"chat.thread.delete" = "Delete";
+"chat.thread.rename" = "Rename";
+"chat.thread.untitled" = "Untitled %@";
+"chat.thread.confirmDelete" = "Delete this conversation? This cannot be undone.";
+"chat.thread.lastUpdatedAt" = "Updated %@";
+"chat.thread.empty" = "No conversations yet";
+"chat.thread.sidebar.toggle" = "Toggle conversations";
+"chat.persistence.error" = "Failed to save chat history. Continuing in memory.";

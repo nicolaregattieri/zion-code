@@ -9,7 +9,8 @@ extension RepositoryViewModel {
     var chatService: ChatService {
         if let existing = _chatService { return existing }
         let builder = ChatContextBuilder(worker: worker)
-        let svc = ChatService(ai: aiClient, worker: worker, contextBuilder: builder)
+        let repoID = repositoryURL.map { ChatStorage.repoID(for: $0) } ?? ""
+        let svc = ChatService(ai: aiClient, worker: worker, contextBuilder: builder, storage: chatStorage, repoID: repoID)
         _chatService = svc
         return svc
     }
