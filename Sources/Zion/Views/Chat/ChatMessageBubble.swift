@@ -30,9 +30,29 @@ struct ChatMessageBubble: View {
     private var bubbleContent: some View {
         VStack(alignment: message.role == .user ? .trailing : .leading,
                spacing: DesignSystem.Spacing.micro) {
+            if message.role == .assistant, let events = message.toolEvents, !events.isEmpty {
+                toolEventBadges(events)
+            }
             messageText
             if message.isStreaming {
                 streamingIndicator
+            }
+            if message.role == .user, let intent = message.autoInjectedIntent {
+                HStack {
+                    Spacer()
+                    AutoInjectionChip(intentLabel: intent)
+                }
+            }
+        }
+    }
+
+    // MARK: - Tool Event Badges
+
+    @ViewBuilder
+    private func toolEventBadges(_ events: [ChatToolEvent]) -> some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.micro) {
+            ForEach(events) { event in
+                ToolEventBadge(event: event)
             }
         }
     }
