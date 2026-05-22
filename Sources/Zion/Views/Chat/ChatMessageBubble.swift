@@ -30,8 +30,8 @@ struct ChatMessageBubble: View {
                     )
                 )
                 .frame(width: 28, height: 28)
-            Image(systemName: "sparkle")
-                .font(DesignSystem.Typography.label)
+            Image(systemName: "sparkles")
+                .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(DesignSystem.Colors.brandWhite)
         }
         .overlay(
@@ -74,7 +74,7 @@ struct ChatMessageBubble: View {
         .padding(.vertical, DesignSystem.Spacing.compact)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(.ultraThinMaterial)
+                .fill(DesignSystem.Colors.glassHover)
                 .overlay(
                     RoundedRectangle(cornerRadius: 18, style: .continuous)
                         .strokeBorder(DesignSystem.Colors.glassBorder, lineWidth: 1)
