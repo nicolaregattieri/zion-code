@@ -1374,6 +1374,12 @@
 "settings.ai.preCommitReview" = "Review Pre-Commit";
 "settings.ai.preCommitReview.toggle" = "Ejecutar review con IA antes de commitear";
 "settings.ai.preCommitReview.hint" = "Cuando está activo, hacer clic en Commit primero ejecuta un code review con IA. Aún puedes commitear incluso si se encuentran problemas.";
+"settings.ai.harness.title" = "Harness de IA";
+"settings.ai.harness.toolsEnabled" = "Activar tool calling";
+"settings.ai.harness.allowEdits" = "Permitir edición de archivos";
+"settings.ai.harness.autoInject" = "Auto-incluir contexto git";
+"settings.ai.harness.toolCapability.supported" = "Tool calling: soportado por el modelo local actual";
+"settings.ai.harness.toolCapability.notSupported" = "Tool calling: no soportado por el modelo local actual";
 "settings.ai.transferSupport" = "Soporte de Transferencia";
 "settings.ai.transferSupport.toggle" = "Mostrar sugerencias de soporte con IA para fallos al copiar/mover";
 "settings.ai.transferSupport.hint" = "Opcional. La recuperación de transferencia funciona sin IA; cuando está activo, Zion también muestra disponibilidad de orientación con IA.";
