@@ -89,7 +89,7 @@ extension AIClient {
     /// Loads a LocalLLMConfig from UserDefaults.
     ///
     /// Returns nil if nothing is stored. Logs a warning and returns defaults if the stored
-    /// version is newer than the current known version (1).
+    /// version is newer than the current known version.
     static func loadLocalConfig() -> LocalLLMConfig? {
         guard let data = UserDefaults.standard.data(forKey: UserDefaultsKeys.AI.localConfig) else {
             return nil
@@ -97,7 +97,7 @@ extension AIClient {
         guard let config = try? JSONDecoder().decode(LocalLLMConfig.self, from: data) else {
             return nil
         }
-        let currentVersion = 1
+        let currentVersion = 2
         if config.version > currentVersion {
             print("[AIClient] Warning: LocalLLMConfig version \(config.version) > current \(currentVersion); returning defaults")
             return LocalLLMConfig()

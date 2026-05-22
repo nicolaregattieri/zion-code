@@ -26,6 +26,8 @@ struct LocalLLMSettingsSection: View {
                 serverURLField
                 apiKeyField
                 modelField
+                engineRow
+                autoStartRow
                 recommendedHint
                 timeoutStepper
                 warningsBlock
@@ -141,6 +143,26 @@ struct LocalLLMSettingsSection: View {
                     .fixedSize()
                 }
             }
+        }
+    }
+
+    private var engineRow: some View {
+        Picker(L10n("settings.ai.local.engine"), selection: $config.engineKind) {
+            Text(L10n("settings.ai.local.engine.ollama")).tag(LocalEngineKind.ollama)
+            Text(L10n("settings.ai.local.engine.mlx")).tag(LocalEngineKind.mlx)
+            Text(L10n("settings.ai.local.engine.llamaCpp")).tag(LocalEngineKind.llamaCpp)
+            Text(L10n("settings.ai.local.engine.custom")).tag(LocalEngineKind.custom)
+        }
+    }
+
+    private var autoStartRow: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Toggle(L10n("settings.ai.local.autostart"), isOn: $config.autoStartEnabled)
+                .disabled(config.engineKind == .custom)
+            Text(L10n("settings.ai.local.autostart.hint"))
+                .font(DesignSystem.Typography.label)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 

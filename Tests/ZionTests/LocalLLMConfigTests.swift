@@ -4,7 +4,9 @@ import XCTest
 final class LocalLLMConfigTests: XCTestCase {
     func testDefaultsMatchSpec() {
         let config = LocalLLMConfig()
-        XCTAssertEqual(config.version, 1)
+        XCTAssertEqual(config.version, 2)
+        XCTAssertEqual(config.engineKind, .ollama)
+        XCTAssertTrue(config.autoStartEnabled)
         XCTAssertEqual(config.serverURL, "http://localhost:11434/v1")
         XCTAssertEqual(config.modelName, "qwen3-coder:30b")
         XCTAssertEqual(config.requestTimeoutSeconds, 60)
