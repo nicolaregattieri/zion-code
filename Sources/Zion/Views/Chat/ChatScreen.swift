@@ -44,7 +44,7 @@ struct ChatScreen: View {
                     }
                 }
                 .padding(.vertical, DesignSystem.Spacing.standard)
-                .frame(maxWidth: 900)
+                .frame(maxWidth: DesignSystem.Spacing.chatContentMaxWidth)
                 .frame(maxWidth: .infinity)
             }
             .onChange(of: chat.thread.messages.count) {
@@ -87,6 +87,8 @@ struct ChatScreen: View {
         )
         .padding(.horizontal, DesignSystem.Spacing.cardPadding)
         .padding(.bottom, DesignSystem.Spacing.cardPadding)
+        .frame(maxWidth: DesignSystem.Spacing.chatContentMaxWidth)
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Helpers

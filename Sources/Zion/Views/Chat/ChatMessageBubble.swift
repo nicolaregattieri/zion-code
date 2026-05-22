@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct ChatMessageBubble: View {
 
@@ -30,9 +31,9 @@ struct ChatMessageBubble: View {
                     .multilineTextAlignment(.leading)
                     .padding(.horizontal, DesignSystem.Spacing.standard)
                     .padding(.vertical, DesignSystem.Spacing.compact)
-                    .frame(maxWidth: 560, alignment: .leading)
+                    .frame(maxWidth: DesignSystem.Spacing.chatUserBubbleMaxWidth, alignment: .leading)
                     .background(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous)
                             .fill(
                                 LinearGradient(
                                     colors: [DesignSystem.Colors.brandPrimary, DesignSystem.Colors.brandInk],
@@ -81,9 +82,9 @@ struct ChatMessageBubble: View {
                         endPoint: .bottomTrailing
                     )
                 )
-                .frame(width: 28, height: 28)
+                .frame(width: DesignSystem.Spacing.chatAvatarSize, height: DesignSystem.Spacing.chatAvatarSize)
             Image(systemName: "sparkles")
-                .font(.system(size: 13, weight: .semibold))
+                .font(DesignSystem.Typography.label.weight(.semibold))
                 .foregroundStyle(DesignSystem.Colors.brandWhite)
         }
         .overlay(
@@ -94,23 +95,11 @@ struct ChatMessageBubble: View {
 
     @ViewBuilder
     private var assistantContent: some View {
-        if let attributed = try? AttributedString(
-            markdown: message.content,
-            options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)
-        ) {
-            Text(attributed)
-                .font(DesignSystem.Typography.body)
-                .foregroundStyle(DesignSystem.Colors.textPrimary)
-                .textSelection(.enabled)
-                .fixedSize(horizontal: false, vertical: true)
-                .multilineTextAlignment(.leading)
-        } else {
-            Text(message.content)
-                .font(DesignSystem.Typography.body)
-                .foregroundStyle(DesignSystem.Colors.textPrimary)
-                .textSelection(.enabled)
-                .fixedSize(horizontal: false, vertical: true)
-                .multilineTextAlignment(.leading)
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
+            AssistantMarkdown(content: message.content)
+            if !message.isStreaming && !message.content.isEmpty {
+                MessageCopyButton(content: message.content)
+            }
         }
     }
 }
@@ -120,9 +109,32 @@ private struct StreamingDot: View {
     var body: some View {
         Circle()
             .fill(DesignSystem.Colors.brandPrimary)
-            .frame(width: 6, height: 6)
-            .opacity(pulse ? 0.3 : 1.0)
+            .frame(width: DesignSystem.Spacing.streamingDotSize, height: DesignSystem.Spacing.streamingDotSize)
+            .opacity(pulse ? DesignSystem.Opacity.dim : DesignSystem.Opacity.visible)
             .animation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true), value: pulse)
             .onAppear { pulse = true }
+    }
+}
+
+private struct MessageCopyButton: View {
+    let content: String
+    @State private var copied = false
+
+    var body: some View {
+        Button {
+            let pb = NSPasteboard.general
+            pb.clearContents()
+            pb.setString(content, forType: .string)
+            copied = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { copied = false }
+        } label: {
+            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
+                Image(systemName: copied ? "checkmark" : "doc.on.doc")
+                Text(copied ? L10n("chat.message.copied") : L10n("chat.message.copy"))
+            }
+            .font(DesignSystem.Typography.metaSemibold)
+            .foregroundStyle(copied ? DesignSystem.Colors.success : DesignSystem.Colors.textSecondary)
+        }
+        .buttonStyle(.plain)
     }
 }

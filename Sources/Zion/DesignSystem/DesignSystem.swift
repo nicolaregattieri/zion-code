@@ -219,6 +219,12 @@ struct DesignSystem {
         static let microCornerRadius: CGFloat = 4       // Badges, progress bars, icon frames
         static let largeCornerRadius: CGFloat = 28      // Branding elements, hero cards
 
+        // Chat-specific layout
+        static let chatContentMaxWidth: CGFloat = 900    // Centered column for messages + composer
+        static let chatUserBubbleMaxWidth: CGFloat = 560 // User bubble caps so prose stays readable
+        static let chatAvatarSize: CGFloat = 28          // Assistant avatar circle
+        static let streamingDotSize: CGFloat = 6         // Streaming pulse indicator
+
         // Markdown spacing
         static let markdownBlockSpacing: CGFloat = 8
         static let markdownListItemSpacing: CGFloat = 6

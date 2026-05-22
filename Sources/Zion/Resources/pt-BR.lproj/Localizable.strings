@@ -1316,6 +1316,10 @@
 "settings.ai.preCommitReview" = "Review Pré-Commit";
 "settings.ai.preCommitReview.toggle" = "Executar review com IA antes de commitar";
 "settings.ai.preCommitReview.hint" = "Quando ativo, clicar em Commit primeiro executa um code review com IA. Você ainda pode commitar mesmo se problemas forem encontrados.";
+"chat.code.copy" = "Copiar";
+"chat.code.copied" = "Copiado";
+"chat.message.copy" = "Copiar mensagem";
+"chat.message.copied" = "Copiado!";
 "settings.ai.harness.title" = "Harness de IA";
 "settings.ai.harness.toolsEnabled" = "Ativar tool calling";
 "settings.ai.harness.allowEdits" = "Permitir edições de arquivo";
