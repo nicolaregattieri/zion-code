@@ -2456,6 +2456,10 @@
 "chat.harness.intent.status" = "git status";
 "chat.harness.intent.fileContent" = "file: %@";
 "chat.harness.intent.commitDetails" = "commit %@";
+"chat.code.copy" = "Copy";
+"chat.code.copied" = "Copied";
+"chat.message.copy" = "Copy message";
+"chat.message.copied" = "Copied!";
 "ai.error.toolExecution.failed" = "Tool execution failed: %@";
 "ai.error.toolCalling.notSupported" = "Selected provider doesn't support tool calling.";
 "chat.thread.list.title" = "Conversations";
