@@ -302,7 +302,8 @@ extension AIClient {
         cwd: URL,
         maxTokens: Int,
         allowEdits: Bool,
-        resumeSessionID: String? = nil
+        resumeSessionID: String? = nil,
+        modelOverride: String? = nil
     ) async -> AsyncThrowingStream<CLIStreamEvent, Error> {
         let discovery = CLIDiscoveryService()
         let toolStatus = await discovery.status(for: .claude)
@@ -326,6 +327,9 @@ extension AIClient {
         // turn. Skips re-sending the entire conversation context.
         if let sid = resumeSessionID, !sid.isEmpty {
             args.append(contentsOf: ["--resume", sid])
+        }
+        if let model = modelOverride, !model.isEmpty {
+            args.append(contentsOf: ["--model", model])
         }
 
         // Inject MCP config so the zion-mcp tool server is available to claude.
@@ -371,7 +375,8 @@ extension AIClient {
         payload: AIPromptPayload,
         cwd: URL,
         allowEdits: Bool,
-        resumeSessionID: String? = nil
+        resumeSessionID: String? = nil,
+        modelOverride: String? = nil
     ) async -> AsyncThrowingStream<CLIStreamEvent, Error> {
         let discovery = CLIDiscoveryService()
         let toolStatus = await discovery.status(for: .codex)
@@ -404,6 +409,10 @@ extension AIClient {
                 "-s", sandbox,
                 "-"
             ]
+        }
+
+        if let model = modelOverride, !model.isEmpty {
+            args.append(contentsOf: ["-c", "model=\"\(model)\""])
         }
 
         // Inject MCP server flags so codex can call zion tools.

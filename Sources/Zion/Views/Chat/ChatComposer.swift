@@ -12,6 +12,9 @@ struct ChatComposer: View {
     @AppStorage(UserDefaultsKeys.AI.provider) private var selectedProviderRaw: String = AIProvider.none.rawValue
     @FocusState private var inputFocused: Bool
 
+    @State private var selectedModelID: String = ""
+    @State private var availableModels: [String] = []
+
     private var selectedProvider: AIProvider {
         AIProvider(rawValue: selectedProviderRaw) ?? .none
     }
@@ -25,6 +28,7 @@ struct ChatComposer: View {
             inputField
             HStack(spacing: DesignSystem.Spacing.standard) {
                 providerMenu
+                modelMenu
                 Spacer()
                 newChatButton
                 if chat.isStreaming {
@@ -45,7 +49,81 @@ struct ChatComposer: View {
                 )
                 .shadow(color: Color.black.opacity(0.15), radius: 12, x: 0, y: 4)
         )
-        .onAppear { inputFocused = true }
+        .onAppear {
+            inputFocused = true
+            refreshModelList()
+        }
+        .onChange(of: selectedProviderRaw) { _, _ in refreshModelList() }
+    }
+
+    /// Public — read by ChatScreen when calling chat.send so the chosen
+    /// model is passed through to the provider stream.
+    var currentModelOverride: String? {
+        selectedModelID.isEmpty ? nil : selectedModelID
+    }
+
+    private func refreshModelList() {
+        let static_ = ProviderModelCatalog.staticModels(for: selectedProvider)
+        availableModels = static_
+        selectedModelID = ProviderModelCatalog.selectedModel(for: selectedProvider)
+        if selectedProvider == .local {
+            Task {
+                let discovered = await ProviderModelCatalog.discoverLocalModels()
+                await MainActor.run {
+                    availableModels = discovered
+                    if !discovered.isEmpty, !discovered.contains(selectedModelID) {
+                        selectedModelID = discovered.first ?? selectedModelID
+                        ProviderModelCatalog.setSelectedModel(selectedModelID, for: .local)
+                    }
+                }
+            }
+        }
+    }
+
+    private var modelMenu: some View {
+        Menu {
+            if availableModels.isEmpty {
+                Text(L10n("chat.composer.model.empty"))
+            } else {
+                ForEach(availableModels, id: \.self) { model in
+                    Button {
+                        selectedModelID = model
+                        ProviderModelCatalog.setSelectedModel(model, for: selectedProvider)
+                    } label: {
+                        HStack {
+                            Text(model)
+                            if model == selectedModelID {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
+                Image(systemName: "brain")
+                    .font(DesignSystem.Typography.label)
+                Text(selectedModelID.isEmpty ? L10n("chat.composer.model.empty") : selectedModelID)
+                    .font(DesignSystem.Typography.labelMedium)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(DesignSystem.Typography.label)
+            }
+            .foregroundStyle(DesignSystem.Colors.textSecondary)
+            .padding(.horizontal, DesignSystem.Spacing.compact)
+            .padding(.vertical, DesignSystem.Spacing.micro)
+            .background(
+                Capsule()
+                    .fill(DesignSystem.Colors.glassHover)
+            )
+            .overlay(
+                Capsule()
+                    .strokeBorder(DesignSystem.Colors.glassStroke, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .fixedSize()
     }
 
     private var inputField: some View {

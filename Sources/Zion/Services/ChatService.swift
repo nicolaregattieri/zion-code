@@ -214,7 +214,8 @@ final class ChatService {
         apiKey: String,
         mode: AIMode,
         repoURL: URL,
-        branch: String
+        branch: String,
+        modelOverride: String? = nil
     ) async {
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
 
@@ -366,12 +367,14 @@ final class ChatService {
                 await self.runLocalStream(payload: payload, assistantID: assistantID)
 
             case .anthropic:
-                let modelID = AIModelCatalogService.selection(for: .anthropic, mode: mode, lane: .general).primaryModelID
+                let defaultID = AIModelCatalogService.selection(for: .anthropic, mode: mode, lane: .general).primaryModelID
+                let modelID = modelOverride.map { $0.isEmpty ? defaultID : $0 } ?? defaultID
                 let stream = await self.ai.streamAnthropic(payload: payload, apiKey: apiKey, maxTokens: 2048, modelID: modelID)
                 await self.consumeStream(stream, assistantID: assistantID, threadID: threadID)
 
             case .openai:
-                let modelID = AIModelCatalogService.selection(for: .openai, mode: mode, lane: .general).primaryModelID
+                let defaultID = AIModelCatalogService.selection(for: .openai, mode: mode, lane: .general).primaryModelID
+                let modelID = modelOverride.map { $0.isEmpty ? defaultID : $0 } ?? defaultID
                 let stream = await self.ai.streamOpenAI(payload: payload, apiKey: apiKey, maxTokens: 2048, modelID: modelID)
                 await self.consumeStream(stream, assistantID: assistantID, threadID: threadID)
 
@@ -387,7 +390,8 @@ final class ChatService {
                         cwd: repoURL,
                         maxTokens: 2048,
                         allowEdits: UserDefaults.standard.bool(forKey: "chat.cliAllowEdits"),
-                        resumeSessionID: resumeID
+                        resumeSessionID: resumeID,
+                        modelOverride: modelOverride
                     )
                 }
                 await self.consumeCLIStream(stream, assistantID: assistantID, threadID: threadID)
@@ -403,7 +407,8 @@ final class ChatService {
                         payload: payload,
                         cwd: repoURL,
                         allowEdits: UserDefaults.standard.bool(forKey: "chat.cliAllowEdits"),
-                        resumeSessionID: resumeID
+                        resumeSessionID: resumeID,
+                        modelOverride: modelOverride
                     )
                 }
                 await self.consumeCLIStream(stream, assistantID: assistantID, threadID: threadID)

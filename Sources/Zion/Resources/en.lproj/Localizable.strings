@@ -2425,6 +2425,7 @@
 "chat.composer.send" = "Send";
 "chat.composer.stop" = "Stop";
 "chat.composer.newChat" = "New Chat";
+"chat.composer.model.empty" = "Default model";
 "chat.slash.diff.label" = "/diff — attach current diff";
 "chat.slash.log.label" = "/log — attach recent commits";
 "chat.slash.status.label" = "/status — attach working tree status";
