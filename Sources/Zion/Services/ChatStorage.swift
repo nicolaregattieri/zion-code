@@ -139,7 +139,7 @@ actor ChatStorage {
     func loadMessages(threadID: UUID, repoID: String) async throws -> [ChatMessage] {
         let db = try connection(for: repoID)
         let sql = """
-            SELECT m.id, m.role, m.content, m.created_at, m.is_streaming
+            SELECT m.id, m.role, m.content, m.created_at, m.is_streaming, m.plan_json
             FROM messages m
             JOIN threads t ON t.id = m.thread_id
             WHERE m.thread_id = ? AND t.repo_id = ?
@@ -162,6 +162,13 @@ actor ChatStorage {
             let content = String(cString: sqlite3_column_text(stmt, 2))
             let createdAt = sqlite3_column_double(stmt, 3)
             let isStreaming = sqlite3_column_int(stmt, 4) != 0
+            let plan: ChatPlan? = sqlite3_column_type(stmt, 5) != SQLITE_NULL
+                ? (sqlite3_column_text(stmt, 5).flatMap { ptr -> ChatPlan? in
+                    let jsonStr = String(cString: ptr)
+                    guard let data = jsonStr.data(using: .utf8) else { return nil }
+                    return try? JSONDecoder().decode(ChatPlan.self, from: data)
+                })
+                : nil
 
             guard let id = UUID(uuidString: idStr) else { continue }
             let role: ChatRole = roleStr == "assistant" ? .assistant : .user
@@ -171,7 +178,8 @@ actor ChatStorage {
                 role: role,
                 content: content,
                 timestamp: Date(timeIntervalSince1970: createdAt),
-                isStreaming: isStreaming
+                isStreaming: isStreaming,
+                plan: plan
             ))
         }
         return messages
@@ -180,8 +188,8 @@ actor ChatStorage {
     func appendMessage(_ message: ChatMessage, threadID: UUID, repoID: String) async throws {
         let db = try connection(for: repoID)
         let sql = """
-            INSERT INTO messages (id, thread_id, role, content, created_at, is_streaming)
-            VALUES (?, ?, ?, ?, ?, ?);
+            INSERT INTO messages (id, thread_id, role, content, created_at, is_streaming, plan_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?);
             """
         var stmt: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
@@ -198,6 +206,13 @@ actor ChatStorage {
         sqlite3_bind_text(stmt, 4, message.content, -1, sqliteTransient)
         sqlite3_bind_double(stmt, 5, message.timestamp.timeIntervalSince1970)
         sqlite3_bind_int(stmt, 6, message.isStreaming ? 1 : 0)
+        if let plan = message.plan,
+           let data = try? JSONEncoder().encode(plan),
+           let jsonStr = String(data: data, encoding: .utf8) {
+            sqlite3_bind_text(stmt, 7, jsonStr, -1, sqliteTransient)
+        } else {
+            sqlite3_bind_null(stmt, 7)
+        }
 
         guard sqlite3_step(stmt) == SQLITE_DONE else {
             throw sqliteError(db)
@@ -216,7 +231,7 @@ actor ChatStorage {
 
     func updateMessage(_ message: ChatMessage, repoID: String) async throws {
         let db = try connection(for: repoID)
-        let sql = "UPDATE messages SET content = ?, is_streaming = ? WHERE id = ?;"
+        let sql = "UPDATE messages SET content = ?, is_streaming = ?, plan_json = ? WHERE id = ?;"
         var stmt: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
             throw sqliteError(db)
@@ -226,7 +241,14 @@ actor ChatStorage {
         let idStr = message.id.uuidString
         sqlite3_bind_text(stmt, 1, message.content, -1, sqliteTransient)
         sqlite3_bind_int(stmt, 2, message.isStreaming ? 1 : 0)
-        sqlite3_bind_text(stmt, 3, idStr, -1, sqliteTransient)
+        if let plan = message.plan,
+           let data = try? JSONEncoder().encode(plan),
+           let jsonStr = String(data: data, encoding: .utf8) {
+            sqlite3_bind_text(stmt, 3, jsonStr, -1, sqliteTransient)
+        } else {
+            sqlite3_bind_null(stmt, 3)
+        }
+        sqlite3_bind_text(stmt, 4, idStr, -1, sqliteTransient)
 
         guard sqlite3_step(stmt) == SQLITE_DONE else {
             throw sqliteError(db)
@@ -335,6 +357,9 @@ actor ChatStorage {
         try? exec(db: db, sql: "ALTER TABLE threads ADD COLUMN total_cost_usd REAL DEFAULT 0;")
         try? exec(db: db, sql: "ALTER TABLE threads ADD COLUMN total_input_tokens INTEGER DEFAULT 0;")
         try? exec(db: db, sql: "ALTER TABLE threads ADD COLUMN total_output_tokens INTEGER DEFAULT 0;")
+
+        // v3 migration: ChatPlan structured plan attached to messages.
+        try? exec(db: db, sql: "ALTER TABLE messages ADD COLUMN plan_json TEXT NULL;")
     }
 
     private func exec(db: OpaquePointer, sql: String) throws {

@@ -51,6 +51,18 @@ final class ChatService {
     /// Pending debounce tasks keyed by message UUID
     @ObservationIgnored private var persistDebounce: [UUID: Task<Void, Never>] = [:]
 
+    /// Plan detector — lazy, reset at the start of each stream
+    @ObservationIgnored private var planDetector: PlanDetector?
+
+    /// The URL of the currently active repo (set during send, used by applyPlan)
+    @ObservationIgnored private var activeRepoURL: URL?
+
+    /// The active provider (set during send, used by applyPlan)
+    @ObservationIgnored private var activeProvider: AIProvider = .none
+    @ObservationIgnored private var activeAPIKey: String = ""
+    @ObservationIgnored private var activeMode: AIMode = .efficient
+    @ObservationIgnored private var activeBranch: String = ""
+
     // MARK: - Init (production)
 
     init(ai: AIClient, worker: RepositoryWorker, contextBuilder: ChatContextBuilder, harness: ZionHarness, storage: ChatStorage? = nil, repoID: String = "") {
@@ -321,6 +333,20 @@ final class ChatService {
 
         isStreaming = true
 
+        // Capture active context for applyPlan
+        activeRepoURL = repoURL
+        activeProvider = provider
+        activeAPIKey = apiKey
+        activeMode = mode
+        activeBranch = branch
+
+        // Reset plan detector for this stream
+        if PlanModeState.current() == .planFirst {
+            planDetector = PlanDetector()
+        } else {
+            planDetector = nil
+        }
+
         let task = Task<Void, Never> {
             defer {
                 Task { @MainActor in
@@ -486,6 +512,12 @@ final class ChatService {
                 await MainActor.run {
                     self.appendAssistantDelta(id: assistantID, delta: delta)
                     self.scheduleDebounce(for: assistantID, threadID: threadID)
+                    if self.planDetector != nil {
+                        if let plan = self.planDetector!.feed(delta) {
+                            self.planDetector = nil
+                            self.attachPlanToAssistant(plan, assistantID: assistantID, threadID: threadID)
+                        }
+                    }
                 }
             }
         } catch {
@@ -506,6 +538,12 @@ final class ChatService {
                     await MainActor.run {
                         self.appendAssistantDelta(id: assistantID, delta: text)
                         self.scheduleDebounce(for: assistantID, threadID: threadID)
+                        if self.planDetector != nil {
+                            if let plan = self.planDetector!.feed(text) {
+                                self.planDetector = nil
+                                self.attachPlanToAssistant(plan, assistantID: assistantID, threadID: threadID)
+                            }
+                        }
                     }
 
                 case .toolStart(let id, let name, let description):
@@ -675,6 +713,110 @@ final class ChatService {
         }
     }
 
+    // MARK: - Plan Attachment (MainActor)
+
+    private func attachPlanToAssistant(_ plan: ChatPlan, assistantID: UUID, threadID: UUID) {
+        for tIdx in threads.indices {
+            if let mIdx = threads[tIdx].messages.firstIndex(where: { $0.id == assistantID }) {
+                threads[tIdx].messages[mIdx].plan = plan
+                // Schedule persistence with a short debounce so the plan lands in storage
+                scheduleDebounce(for: assistantID, threadID: threadID)
+                return
+            }
+        }
+    }
+
+    // MARK: - Plan Actions (public API)
+
+    /// Applies the plan attached to a message: takes a recovery snapshot, then re-runs.
+    func applyPlan(messageID: UUID) {
+        guard let repoURL = activeRepoURL else { return }
+        let provider = activeProvider
+        let apiKey = activeAPIKey
+        let mode = activeMode
+        let branch = activeBranch
+
+        Task {
+            // Recovery-vault snapshot before potentially destructive apply
+            let shortUUID = String(UUID().uuidString.prefix(7))
+            let snapshotTag = "zion-pre-plan-apply-\(shortUUID)"
+            do {
+                let hash = try await worker.runAction(args: ["stash", "create"], in: repoURL)
+                let trimmedHash = hash.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmedHash.isEmpty {
+                    _ = try? await worker.runAction(
+                        args: ["stash", "store", "-m", snapshotTag, trimmedHash],
+                        in: repoURL
+                    )
+                }
+            } catch {
+                // Non-fatal — proceed even if stash fails (clean tree)
+            }
+
+            // Find the plan message and the user message that preceded it
+            let (planMessage, precedingUserText) = await MainActor.run { () -> (ChatMessage?, String?) in
+                guard let tIdx = self.threads.firstIndex(where: { $0.id == self.activeThreadID }) else {
+                    return (nil, nil)
+                }
+                let messages = self.threads[tIdx].messages
+                guard let mIdx = messages.firstIndex(where: { $0.id == messageID }) else {
+                    return (nil, nil)
+                }
+                let planMsg = messages[mIdx]
+                // Walk backwards for the preceding user message
+                let precedingUser = messages[..<mIdx].reversed().first(where: { $0.role == .user })?.content
+                return (planMsg, precedingUser)
+            }
+            guard planMessage != nil else { return }
+
+            // Build re-run text
+            let isCLI = (provider == .claudeCLI || provider == .codexCLI)
+            let rerunText: String
+            if isCLI, let userText = precedingUserText {
+                rerunText = userText
+            } else {
+                let steps = planMessage?.plan?.steps.enumerated().map { i, s in
+                    "\(i+1). \(s.summary)"
+                }.joined(separator: "\n") ?? ""
+                rerunText = "Execute the plan now:\n\(steps)"
+            }
+
+            await self.send(
+                text: rerunText,
+                provider: provider,
+                apiKey: apiKey,
+                mode: mode,
+                repoURL: repoURL,
+                branch: branch
+            )
+        }
+    }
+
+    /// Rejects the plan: clears it from the message.
+    func rejectPlan(messageID: UUID) {
+        for tIdx in threads.indices {
+            if let mIdx = threads[tIdx].messages.firstIndex(where: { $0.id == messageID }) {
+                threads[tIdx].messages[mIdx].plan = nil
+                return
+            }
+        }
+    }
+
+    /// Replaces the plan XML in a message (from PlanCard edit).
+    func editPlan(messageID: UUID, xml: String) {
+        for tIdx in threads.indices {
+            if let mIdx = threads[tIdx].messages.firstIndex(where: { $0.id == messageID }) {
+                guard var plan = threads[tIdx].messages[mIdx].plan else { return }
+                var detector = PlanDetector()
+                let updatedPlan = detector.feed(xml) ?? PlanDetector().parsePlanXML(xml)
+                plan.rawXML = xml
+                plan.steps = updatedPlan.steps
+                threads[tIdx].messages[mIdx].plan = plan
+                return
+            }
+        }
+    }
+
     // MARK: - Persistence Helpers
 
     private func persistThread(_ t: ChatThread) async {
@@ -746,11 +888,12 @@ final class ChatService {
     }
 
     private static func taskInstructions(for provider: AIProvider) -> String {
+        var base: String
         switch provider {
         case .claudeCLI, .codexCLI:
             // CLI providers bring their own tool harness (Read/Edit/Bash/Grep/etc.) and
             // session memory. We only tell them where they are and let them work.
-            return """
+            base = """
             You are running inside Zion, a native macOS git client. The working
             directory is the user's git repository — use your built-in tools
             (Read, Bash, Edit, etc.) to inspect and act on it.
@@ -762,7 +905,7 @@ final class ChatService {
             Output style: concise. Code blocks for commands, paths, hashes.
             """
         default:
-            return """
+            base = """
             You are Zion's coding assistant, embedded in a native macOS git client.
 
             What you do well:
@@ -796,5 +939,37 @@ final class ChatService {
             Never invent file paths or commit SHAs you haven't seen in context.
             """
         }
+
+        // Plan-first mode: append plan-tag directive so model wraps multi-step proposals in XML
+        if PlanModeState.current() == .planFirst {
+            base += """
+
+
+            ## Plan-first mode
+            When the user's request requires multiple coordinated changes (edits to
+            several files, a multi-step refactor, a new feature spanning many modules),
+            wrap your proposed steps in a structured XML block BEFORE writing any prose.
+            Use exactly this format:
+
+            <plan>
+              <step>
+                <commit>feat(scope): short commit message</commit>
+                <files>Sources/Foo.swift, Sources/Bar.swift</files>
+                <summary>Describe what this step does in one sentence.</summary>
+              </step>
+              <step>
+                <commit>test(scope): add unit tests for Foo</commit>
+                <files>Tests/FooTests.swift</files>
+                <summary>Add happy-path and error-path unit tests.</summary>
+              </step>
+            </plan>
+
+            Each <step> is one atomic commit. Keep summaries to one sentence.
+            After the plan block, continue with your usual explanation if needed.
+            For simple single-file questions, skip the plan block.
+            """
+        }
+
+        return base
     }
 }

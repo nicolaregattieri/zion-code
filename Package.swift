@@ -9,7 +9,8 @@ let package = Package(
         .macOS(.v14)
     ],
     products: [
-        .executable(name: "Zion", targets: ["Zion"])
+        .executable(name: "Zion", targets: ["Zion"]),
+        .executable(name: "zion-mcp", targets: ["ZionMCP"])
     ],
     dependencies: [
         .package(url: "https://github.com/nicolaregattieri/SwiftTerm.git", revision: "c7d75a4"),
@@ -26,9 +27,18 @@ let package = Package(
                 .process("Resources")
             ]
         ),
+        .executableTarget(
+            name: "ZionMCP",
+            path: "Sources/ZionMCP"
+        ),
         .testTarget(
             name: "ZionTests",
             dependencies: ["Zion"]
+        ),
+        .testTarget(
+            name: "ZionMCPTests",
+            dependencies: ["ZionMCP"],
+            path: "Tests/ZionMCPTests"
         )
     ]
 )

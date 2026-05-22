@@ -2516,3 +2516,9 @@
 "chat.card.history" = "History";
 "chat.cost.tooltip" = "Total subscription cost for this thread (reported by claude CLI).";
 "chat.tokens.tooltip" = "Total tokens (input + output) reported by the provider across all turns in this thread.";
+"chat.plan.title" = "Plan";
+"chat.plan.apply" = "Apply";
+"chat.plan.reject" = "Reject";
+"chat.plan.applying" = "Applying plan...";
+"chat.plan.rejected" = "Plan rejected.";
+"chat.plan.mode.label" = "Plan-first mode";

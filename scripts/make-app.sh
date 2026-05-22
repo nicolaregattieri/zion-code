@@ -47,6 +47,15 @@ mkdir -p "$APP_DIR/Contents/Frameworks"
 
 cp "$BIN_PATH" "$APP_DIR/Contents/MacOS/Zion"
 
+# Copy the zion-mcp MCP server binary into the bundle so it is co-located
+# with the main executable (Contents/MacOS/zion-mcp). MCPConfigBuilder
+# resolves it from Bundle.main.bundleURL.deletingLastPathComponent().
+MCP_BIN_PATH="$ROOT_DIR/.build/release/zion-mcp"
+if [ -f "$MCP_BIN_PATH" ]; then
+  cp "$MCP_BIN_PATH" "$APP_DIR/Contents/MacOS/zion-mcp"
+  chmod +x "$APP_DIR/Contents/MacOS/zion-mcp"
+fi
+
 # Add rpath so @rpath/Sparkle.framework resolves to Contents/Frameworks/
 install_name_tool -add_rpath @executable_path/../Frameworks "$APP_DIR/Contents/MacOS/Zion"
 
