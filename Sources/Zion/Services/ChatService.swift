@@ -193,6 +193,8 @@ final class ChatService {
         let autoInject = UserDefaults.standard.object(forKey: "chat.autoInject") as? Bool ?? true
         var injectedLabel: String? = nil
 
+        var freshInjection: String? = nil
+
         if autoInject, let intent = IntentClassifier.classify(text) {
             let (args, label): ([String], String)
             switch intent {
@@ -217,9 +219,19 @@ final class ChatService {
             }
             if let output = try? await worker.runAction(args: args, in: repoURL) {
                 let truncated = String(output.prefix(AILimits.maxDiffContentLength))
-                hiddenContext += (hiddenContext.isEmpty ? "" : "\n\n") + "```\n\(truncated)\n```"
+                let block = "```\n\(truncated)\n```"
+                hiddenContext += (hiddenContext.isEmpty ? "" : "\n\n") + block
                 injectedLabel = label
+                freshInjection = block
             }
+        }
+
+        // Sticky context: if NO fresh intent this turn, carry forward most recent prior user message's internalContext
+        let stickyContext: String?
+        if freshInjection != nil {
+            stickyContext = freshInjection
+        } else {
+            stickyContext = thread.messages.reversed().first(where: { $0.role == .user && $0.internalContext != nil })?.internalContext
         }
 
         // Build conversation history block (last 10 messages BEFORE appending current) for multi-turn context
@@ -233,14 +245,18 @@ final class ChatService {
             }
         }
 
-        // User bubble shows ONLY clean displayContent + chip (if injected)
-        let userMessage = ChatMessage(role: .user, content: displayContent, autoInjectedIntent: injectedLabel)
+        // User bubble shows ONLY clean displayContent + chip (if injected). Persist internalContext when fresh (sticky).
+        let userMessage = ChatMessage(role: .user, content: displayContent, autoInjectedIntent: injectedLabel, internalContext: freshInjection)
         thread.messages.append(userMessage)
 
-        // Payload that goes to model = history + hidden context + user text
+        // Payload = history + hidden context (header + fresh injection) + sticky context (if no fresh) + user text
         var parts: [String] = []
         if !historyBlock.isEmpty { parts.append(historyBlock) }
-        if !hiddenContext.isEmpty { parts.append(hiddenContext) }
+        if !hiddenContext.isEmpty {
+            parts.append(hiddenContext)
+        } else if let sticky = stickyContext {
+            parts.append("## Carried context from previous turn\n\n" + sticky)
+        }
         parts.append("## Current user message\n\n" + displayContent)
         let expandedText: String = parts.joined(separator: "\n\n")
 

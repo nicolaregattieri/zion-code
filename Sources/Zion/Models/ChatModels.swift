@@ -32,6 +32,8 @@ struct ChatMessage: Identifiable, Equatable {
     var isStreaming: Bool
     var autoInjectedIntent: String? = nil
     var toolEvents: [ChatToolEvent]? = nil
+    /// Hidden context attached to a user message (e.g. auto-injected git diff). Sent to model in payload but NOT displayed in bubble. Carried forward to subsequent turns until classifier fires a different intent.
+    var internalContext: String? = nil
 
     init(
         id: UUID = UUID(),
@@ -40,7 +42,8 @@ struct ChatMessage: Identifiable, Equatable {
         timestamp: Date = Date(),
         isStreaming: Bool = false,
         autoInjectedIntent: String? = nil,
-        toolEvents: [ChatToolEvent]? = nil
+        toolEvents: [ChatToolEvent]? = nil,
+        internalContext: String? = nil
     ) {
         self.id = id
         self.role = role
@@ -49,6 +52,7 @@ struct ChatMessage: Identifiable, Equatable {
         self.isStreaming = isStreaming
         self.autoInjectedIntent = autoInjectedIntent
         self.toolEvents = toolEvents
+        self.internalContext = internalContext
     }
 }
 

@@ -14,13 +14,13 @@ struct ChatThreadList: View {
 
     // MARK: - Constants
 
-    private static let expandedWidth: CGFloat = 200
+    private static let expandedWidth: CGFloat = 260
 
     // MARK: - Body
 
     var body: some View {
         if isCollapsed {
-            collapsedToggleButton
+            EmptyView()
         } else {
             VStack(spacing: 0) {
                 header
@@ -35,28 +35,23 @@ struct ChatThreadList: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-            Button {
-                onNew()
-            } label: {
-                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-                    Image(systemName: "plus")
-                        .font(DesignSystem.Typography.label)
-                    Text(L10n("chat.thread.new"))
-                        .font(DesignSystem.Typography.labelMedium)
-                }
-                .foregroundStyle(DesignSystem.Colors.textPrimary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .contentShape(Rectangle())
+        Button {
+            onNew()
+        } label: {
+            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+                Image(systemName: "square.and.pencil")
+                    .font(DesignSystem.Typography.body)
+                Text(L10n("chat.thread.new"))
+                    .font(DesignSystem.Typography.bodySemibold)
+                Spacer()
             }
-            .buttonStyle(.plain)
-
-            Spacer(minLength: 0)
-
-            collapseButton
+            .foregroundStyle(DesignSystem.Colors.textPrimary)
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal, DesignSystem.Spacing.standard)
-        .padding(.vertical, DesignSystem.Spacing.compact)
+        .buttonStyle(.plain)
+        .padding(.horizontal, DesignSystem.Spacing.cardPadding)
+        .padding(.top, DesignSystem.Spacing.sectionGap)
+        .padding(.bottom, DesignSystem.Spacing.standard)
     }
 
     // MARK: - List Content
@@ -99,36 +94,4 @@ struct ChatThreadList: View {
         .padding(DesignSystem.Spacing.cardPadding)
     }
 
-    // MARK: - Collapse Button
-
-    private var collapseButton: some View {
-        Button {
-            isCollapsed = true
-        } label: {
-            Image(systemName: "sidebar.left")
-                .font(DesignSystem.Typography.label)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-                .frame(width: DesignSystem.Spacing.cardPadding, height: DesignSystem.Spacing.cardPadding)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .help(L10n("chat.thread.sidebar.toggle"))
-    }
-
-    // MARK: - Collapsed Toggle Button
-
-    private var collapsedToggleButton: some View {
-        Button {
-            isCollapsed = false
-        } label: {
-            Image(systemName: "sidebar.left")
-                .font(DesignSystem.Typography.label)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-                .frame(width: DesignSystem.Spacing.cardPadding, height: DesignSystem.Spacing.cardPadding)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .help(L10n("chat.thread.sidebar.toggle"))
-        .padding(DesignSystem.Spacing.standard)
-    }
 }

@@ -16,10 +16,12 @@ final class ChatServiceMultiThreadTests: XCTestCase {
         let worker = RepositoryWorker()
         let ai = AIClient()
         let builder = ChatContextBuilder(worker: worker)
+        let harness = ZionHarness(worker: worker, repoURL: URL(fileURLWithPath: NSTemporaryDirectory()))
         return ChatService(
             ai: ai,
             worker: worker,
             contextBuilder: builder,
+            harness: harness,
             streamProvider: { _, _, _, _ in
                 AsyncThrowingStream { continuation in
                     continuation.yield("ok")
@@ -123,10 +125,12 @@ final class ChatServiceMultiThreadTests: XCTestCase {
         let worker = RepositoryWorker()
         let ai = AIClient()
         let builder = ChatContextBuilder(worker: worker)
+        let harness = ZionHarness(worker: worker, repoURL: URL(fileURLWithPath: NSTemporaryDirectory()))
         let svc = ChatService(
             ai: ai,
             worker: worker,
             contextBuilder: builder,
+            harness: harness,
             storage: storage,
             repoID: repoID
         )

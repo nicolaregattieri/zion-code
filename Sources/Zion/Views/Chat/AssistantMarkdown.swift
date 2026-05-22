@@ -7,9 +7,24 @@ struct AssistantMarkdown: View {
 
     let content: String
 
+    /// Process-wide chunk cache. Markdown parsing is pure: same content → same chunks.
+    /// Avoids re-parsing every SwiftUI body() call (streaming deltas trigger full re-render).
+    nonisolated(unsafe) private static var chunkCache: [String: [Chunk]] = [:]
+    private static let cacheLimit = 200
+
+    private static func cachedChunks(for source: String) -> [Chunk] {
+        if let hit = chunkCache[source] { return hit }
+        let chunks = parse(source)
+        if chunkCache.count > cacheLimit {
+            chunkCache.removeAll(keepingCapacity: true)
+        }
+        chunkCache[source] = chunks
+        return chunks
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
-            ForEach(Array(parse(content).enumerated()), id: \.offset) { _, chunk in
+            ForEach(Array(Self.cachedChunks(for: content).enumerated()), id: \.offset) { _, chunk in
                 switch chunk {
                 case .prose(let text):
                     proseView(text)
@@ -101,9 +116,8 @@ private struct CodeBlock: View {
 
     private var codeScrollView: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            Text(code)
+            Text(SyntaxHighlighter.highlight(code, language: language))
                 .font(DesignSystem.Typography.monoLabel)
-                .foregroundStyle(DesignSystem.Colors.textPrimary)
                 .textSelection(.enabled)
                 .padding(DesignSystem.Spacing.standard)
         }
