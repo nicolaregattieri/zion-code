@@ -32,17 +32,38 @@ struct ChatScreen: View {
                 isCollapsed: $threadListVisible.inverse
             )
 
-            Divider()
-                .background(DesignSystem.Colors.glassBorder)
+            if threadListVisible {
+                Divider().background(DesignSystem.Colors.glassBorder)
+            }
 
             // Chat content
             VStack(spacing: 0) {
+                chatHeader
                 messageList
                 if repoURL != nil {
                     composerArea
                 }
             }
         }
+    }
+
+    private var chatHeader: some View {
+        HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+            Button {
+                threadListVisible.toggle()
+            } label: {
+                Image(systemName: threadListVisible ? "sidebar.left" : "sidebar.right")
+                    .font(DesignSystem.Typography.body)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    .frame(width: DesignSystem.Spacing.cardPadding, height: DesignSystem.Spacing.cardPadding)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help(L10n("chat.thread.sidebar.toggle"))
+            Spacer()
+        }
+        .padding(.horizontal, DesignSystem.Spacing.cardPadding)
+        .padding(.vertical, DesignSystem.Spacing.compact)
     }
 
     // MARK: - Message List

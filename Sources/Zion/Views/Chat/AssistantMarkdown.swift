@@ -101,9 +101,8 @@ private struct CodeBlock: View {
 
     private var codeScrollView: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            Text(code)
+            Text(SyntaxHighlighter.highlight(code, language: language))
                 .font(DesignSystem.Typography.monoLabel)
-                .foregroundStyle(DesignSystem.Colors.textPrimary)
                 .textSelection(.enabled)
                 .padding(DesignSystem.Spacing.standard)
         }
