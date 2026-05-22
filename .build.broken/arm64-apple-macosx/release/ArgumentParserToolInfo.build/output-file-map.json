@@ -1,0 +1,13 @@
+{
+  "": {
+    "dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/ArgumentParserToolInfo.build/ArgumentParserToolInfo.d",
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/ArgumentParserToolInfo.build/ArgumentParserToolInfo.o",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/ArgumentParserToolInfo.build/primary.swiftdeps"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/.build/checkouts/swift-argument-parser/Sources/ArgumentParserToolInfo/ToolInfo.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/ArgumentParserToolInfo.build/ToolInfo.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/ArgumentParserToolInfo.build/ToolInfo~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/ArgumentParserToolInfo.build/ToolInfo.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/ArgumentParserToolInfo.build/ToolInfo.dia"
+  }
+}

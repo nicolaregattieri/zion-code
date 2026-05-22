@@ -1,7 +1,5 @@
 import SwiftUI
 
-// MARK: - ChatComposer
-
 struct ChatComposer: View {
 
     @Bindable var chat: ChatService
@@ -12,12 +10,10 @@ struct ChatComposer: View {
     let onNewChat: () -> Void
 
     @AppStorage(UserDefaultsKeys.AI.provider) private var selectedProviderRaw: String = AIProvider.none.rawValue
+    @FocusState private var inputFocused: Bool
 
-    private var selectedProvider: Binding<AIProvider> {
-        Binding(
-            get: { AIProvider(rawValue: selectedProviderRaw) ?? .none },
-            set: { selectedProviderRaw = $0.rawValue }
-        )
+    private var selectedProvider: AIProvider {
+        AIProvider(rawValue: selectedProviderRaw) ?? .none
     }
 
     private var canSend: Bool {
@@ -25,24 +21,52 @@ struct ChatComposer: View {
     }
 
     var body: some View {
-        HStack(spacing: DesignSystem.Spacing.standard) {
-            providerMenu
+        VStack(spacing: DesignSystem.Spacing.compact) {
             inputField
-            actionButtons
+            HStack(spacing: DesignSystem.Spacing.standard) {
+                providerMenu
+                Spacer()
+                newChatButton
+                if chat.isStreaming {
+                    stopButton
+                } else {
+                    sendButton
+                }
+            }
         }
         .padding(.horizontal, DesignSystem.Spacing.cardPadding)
         .padding(.vertical, DesignSystem.Spacing.standard)
         .background(
-            RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous)
-                .fill(DesignSystem.Colors.glassBackground)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .strokeBorder(DesignSystem.Colors.glassBorder, lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.15), radius: 12, x: 0, y: 4)
         )
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous)
-                .stroke(DesignSystem.Colors.glassBorder, lineWidth: 1)
-        )
+        .onAppear { inputFocused = true }
     }
 
-    // MARK: - Sub-views
+    private var inputField: some View {
+        TextField(L10n("chat.composer.hint"), text: $text, axis: .vertical)
+            .textFieldStyle(.plain)
+            .labelsHidden()
+            .font(DesignSystem.Typography.body)
+            .lineLimit(1...6)
+            .padding(.horizontal, DesignSystem.Spacing.compact)
+            .padding(.vertical, DesignSystem.Spacing.micro)
+            .focused($inputFocused)
+            .onKeyPress(.return) {
+                if NSEvent.modifierFlags.contains(.shift) {
+                    return .ignored
+                }
+                if canSend {
+                    onSend()
+                }
+                return .handled
+            }
+    }
 
     private var providerMenu: some View {
         Menu {
@@ -52,7 +76,7 @@ struct ChatComposer: View {
                 } label: {
                     HStack {
                         Text(provider.label)
-                        if selectedProvider.wrappedValue == provider {
+                        if selectedProvider == provider {
                             Image(systemName: "checkmark")
                         }
                     }
@@ -62,7 +86,7 @@ struct ChatComposer: View {
             HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 Image(systemName: "cpu")
                     .font(DesignSystem.Typography.label)
-                Text(selectedProvider.wrappedValue == .none ? L10n("settings.ai.provider.local") : selectedProvider.wrappedValue.label)
+                Text(selectedProvider == .none ? L10n("settings.ai.provider.local") : selectedProvider.label)
                     .font(DesignSystem.Typography.labelMedium)
                     .lineLimit(1)
                 Image(systemName: "chevron.up.chevron.down")
@@ -72,64 +96,38 @@ struct ChatComposer: View {
             .padding(.horizontal, DesignSystem.Spacing.compact)
             .padding(.vertical, DesignSystem.Spacing.micro)
             .background(
-                RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous)
+                Capsule()
                     .fill(DesignSystem.Colors.glassHover)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous)
-                    .stroke(DesignSystem.Colors.glassStroke, lineWidth: 1)
+                Capsule()
+                    .strokeBorder(DesignSystem.Colors.glassStroke, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
         .fixedSize()
     }
 
-    private var inputField: some View {
-        TextField(L10n("chat.composer.hint"), text: $text, axis: .vertical)
-            .textFieldStyle(.plain)
-            .labelsHidden()
-            .font(DesignSystem.Typography.body)
-            .lineLimit(1...5)
-            .padding(.horizontal, DesignSystem.Spacing.standard)
-            .padding(.vertical, DesignSystem.Spacing.compact)
-            .background(
-                RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
-                    .fill(DesignSystem.Colors.glassHover)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
-                    .stroke(DesignSystem.Colors.glassStroke, lineWidth: 1)
-            )
-            .onSubmit {
-                if canSend { onSend() }
-            }
-    }
-
-    private var actionButtons: some View {
-        HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
-            if chat.isStreaming {
-                stopButton
-            } else {
-                sendButton
-            }
-            newChatButton
-        }
-    }
-
     private var sendButton: some View {
         Button {
             onSend()
         } label: {
-            Image(systemName: "paperplane.fill")
-                .font(DesignSystem.Typography.bodySmall)
-                .frame(width: 28, height: 28)
-                .foregroundStyle(canSend ? DesignSystem.Colors.primary : DesignSystem.Colors.textTertiary)
-                .contentShape(Rectangle())
+            Image(systemName: "arrow.up")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(canSend ? DesignSystem.Colors.brandWhite : DesignSystem.Colors.textTertiary)
+                .frame(width: 30, height: 30)
+                .background(
+                    Circle()
+                        .fill(canSend
+                              ? LinearGradient(colors: [DesignSystem.Colors.brandPrimary, DesignSystem.Colors.brandInk], startPoint: .topLeading, endPoint: .bottomTrailing)
+                              : LinearGradient(colors: [DesignSystem.Colors.glassHover, DesignSystem.Colors.glassHover], startPoint: .topLeading, endPoint: .bottomTrailing))
+                )
+                .contentShape(Circle())
         }
         .buttonStyle(.plain)
         .disabled(!canSend)
         .help(L10n("chat.composer.send"))
-        .keyboardShortcut(.return, modifiers: [])
+        .keyboardShortcut(.return, modifiers: [.command])
     }
 
     private var stopButton: some View {
@@ -137,10 +135,11 @@ struct ChatComposer: View {
             onStop()
         } label: {
             Image(systemName: "stop.fill")
-                .font(DesignSystem.Typography.bodySmall)
-                .frame(width: 28, height: 28)
-                .foregroundStyle(DesignSystem.Colors.destructive)
-                .contentShape(Rectangle())
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(DesignSystem.Colors.brandWhite)
+                .frame(width: 30, height: 30)
+                .background(Circle().fill(DesignSystem.Colors.destructive))
+                .contentShape(Circle())
         }
         .buttonStyle(.plain)
         .help(L10n("chat.composer.stop"))
@@ -150,10 +149,10 @@ struct ChatComposer: View {
         Button {
             onNewChat()
         } label: {
-            Image(systemName: "trash")
-                .font(DesignSystem.Typography.bodySmall)
-                .frame(width: 28, height: 28)
+            Image(systemName: "plus.message")
+                .font(DesignSystem.Typography.body)
                 .foregroundStyle(DesignSystem.Colors.textSecondary)
+                .frame(width: 30, height: 30)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

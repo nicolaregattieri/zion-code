@@ -41,7 +41,7 @@ struct ChatMessageBubble: View {
                                     endPoint: .bottomTrailing
                                 )
                             )
-                            .shadow(color: DesignSystem.Colors.brandPrimary.opacity(0.25), radius: 8, x: 0, y: 2)
+                            .shadow(color: DesignSystem.Colors.brandPrimary.opacity(DesignSystem.Opacity.dim), radius: DesignSystem.Spacing.standard, x: 0, y: 2)
                     )
             }
             if let intent = message.autoInjectedIntent {
@@ -63,9 +63,15 @@ struct ChatMessageBubble: View {
                         }
                     }
                 }
-                assistantContent
-                if message.isStreaming {
-                    StreamingDot()
+                if message.isStreaming && message.content.isEmpty {
+                    ChatThinkingIndicator()
+                } else {
+                    AssistantMarkdown(content: message.content)
+                    if message.isStreaming {
+                        StreamingDot()
+                    } else if !message.content.isEmpty {
+                        MessageCopyButton(content: message.content)
+                    }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -91,16 +97,6 @@ struct ChatMessageBubble: View {
             Circle()
                 .strokeBorder(DesignSystem.Colors.glassBorder, lineWidth: 1)
         )
-    }
-
-    @ViewBuilder
-    private var assistantContent: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
-            AssistantMarkdown(content: message.content)
-            if !message.isStreaming && !message.content.isEmpty {
-                MessageCopyButton(content: message.content)
-            }
-        }
     }
 }
 

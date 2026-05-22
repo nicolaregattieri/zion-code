@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/ZionPackageTests.build/primary.swiftdeps"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/ZionPackageTests.derived/runner.swift": {
+    "dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/ZionPackageTests.build/runner.d",
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/ZionPackageTests.build/runner.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/ZionPackageTests.build/runner~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/ZionPackageTests.build/runner.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/ZionPackageTests.build/runner.dia"
+  }
+}

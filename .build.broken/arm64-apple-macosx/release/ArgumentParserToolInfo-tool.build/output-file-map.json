@@ -1,0 +1,13 @@
+{
+  "": {
+    "dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/ArgumentParserToolInfo-tool.build/ArgumentParserToolInfo.d",
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/ArgumentParserToolInfo-tool.build/ArgumentParserToolInfo.o",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/ArgumentParserToolInfo-tool.build/primary.swiftdeps"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/.build/checkouts/swift-argument-parser/Sources/ArgumentParserToolInfo/ToolInfo.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/ArgumentParserToolInfo-tool.build/ToolInfo.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/ArgumentParserToolInfo-tool.build/ToolInfo~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/ArgumentParserToolInfo-tool.build/ToolInfo.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/ArgumentParserToolInfo-tool.build/ToolInfo.dia"
+  }
+}

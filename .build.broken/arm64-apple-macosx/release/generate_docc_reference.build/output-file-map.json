@@ -1,0 +1,25 @@
+{
+  "": {
+    "dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/generate_docc_reference.build/generate_docc_reference.d",
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/generate_docc_reference.build/generate_docc_reference.o",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/generate_docc_reference.build/primary.swiftdeps"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/.build/checkouts/swift-argument-parser/Tools/generate-docc-reference/Extensions/ArgumentParser+Markdown.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/generate_docc_reference.build/ArgumentParser+Markdown.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/generate_docc_reference.build/ArgumentParser+Markdown~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/generate_docc_reference.build/ArgumentParser+Markdown.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/generate_docc_reference.build/ArgumentParser+Markdown.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/.build/checkouts/swift-argument-parser/Tools/generate-docc-reference/Extensions/Process+SimpleAPI.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/generate_docc_reference.build/Process+SimpleAPI.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/generate_docc_reference.build/Process+SimpleAPI~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/generate_docc_reference.build/Process+SimpleAPI.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/generate_docc_reference.build/Process+SimpleAPI.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/.build/checkouts/swift-argument-parser/Tools/generate-docc-reference/GenerateDoccReference.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/generate_docc_reference.build/GenerateDoccReference.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/generate_docc_reference.build/GenerateDoccReference~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/generate_docc_reference.build/GenerateDoccReference.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/generate_docc_reference.build/GenerateDoccReference.dia"
+  }
+}

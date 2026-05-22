@@ -42,6 +42,16 @@ final class ChatLocalizationTests: XCTestCase {
         "chat.harness.intent.status",
         "chat.harness.intent.fileContent",
         "chat.harness.intent.commitDetails",
+        "chat.thread.list.title",
+        "chat.thread.new",
+        "chat.thread.delete",
+        "chat.thread.rename",
+        "chat.thread.untitled",
+        "chat.thread.confirmDelete",
+        "chat.thread.lastUpdatedAt",
+        "chat.thread.empty",
+        "chat.thread.sidebar.toggle",
+        "chat.persistence.error",
     ]
 
     func testAllRequiredKeysPresentInAllLocales() {

@@ -181,6 +181,9 @@ enum Constants {
 
         // --- AI ---
 
+        /// Debounce before persisting chat thread changes to disk.
+        static let chatPersistenceDebounce: TimeInterval = 0.5
+
         /// Wait before retrying after an AI API transient error.
         static let aiRetryDelay: TimeInterval = 2.0
 

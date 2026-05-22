@@ -1,0 +1,33 @@
+{
+  "": {
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/Termcast.build/primary.swiftdeps"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/.build/checkouts/SwiftTerm/Sources/Termcast/AsciicastFormat.swift": {
+    "dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/Termcast.build/AsciicastFormat.d",
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/Termcast.build/AsciicastFormat.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/Termcast.build/AsciicastFormat~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/Termcast.build/AsciicastFormat.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/Termcast.build/AsciicastFormat.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/.build/checkouts/SwiftTerm/Sources/Termcast/TermcastPlayer.swift": {
+    "dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/Termcast.build/TermcastPlayer.d",
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/Termcast.build/TermcastPlayer.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/Termcast.build/TermcastPlayer~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/Termcast.build/TermcastPlayer.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/Termcast.build/TermcastPlayer.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/.build/checkouts/SwiftTerm/Sources/Termcast/TermcastRecorder.swift": {
+    "dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/Termcast.build/TermcastRecorder.d",
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/Termcast.build/TermcastRecorder.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/Termcast.build/TermcastRecorder~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/Termcast.build/TermcastRecorder.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/Termcast.build/TermcastRecorder.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/.build/checkouts/SwiftTerm/Sources/Termcast/main.swift": {
+    "dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/Termcast.build/main.d",
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/Termcast.build/main.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/Termcast.build/main~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/Termcast.build/main.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/debug/Termcast.build/main.dia"
+  }
+}

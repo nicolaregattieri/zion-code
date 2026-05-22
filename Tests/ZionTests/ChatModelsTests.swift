@@ -25,12 +25,24 @@ final class ChatModelsTests: XCTestCase {
         let id = UUID()
         let createdAt = Date()
         let msg = ChatMessage(id: UUID(), role: .assistant, content: "hi", timestamp: createdAt, isStreaming: false)
-        let t1 = ChatThread(id: id, messages: [msg], createdAt: createdAt)
-        let t2 = ChatThread(id: id, messages: [msg], createdAt: createdAt)
+        let t1 = ChatThread(id: id, messages: [msg], createdAt: createdAt, repoID: "repo1", title: "Thread 1")
+        let t2 = ChatThread(id: id, messages: [msg], createdAt: createdAt, repoID: "repo1", title: "Thread 1")
         XCTAssertEqual(t1, t2)
 
         var t3 = t1
         t3.messages = []
         XCTAssertNotEqual(t1, t3)
+    }
+
+    func testThreadDefaultTitle() {
+        let date = Date(timeIntervalSince1970: 0)
+        let title = ChatThread.defaultTitle(date: date)
+        XCTAssertFalse(title.isEmpty)
+    }
+
+    func testThreadNewFieldDefaults() {
+        let thread = ChatThread()
+        XCTAssertEqual(thread.repoID, "")
+        XCTAssertFalse(thread.title.isEmpty)
     }
 }

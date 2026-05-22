@@ -10,6 +10,8 @@ struct ChatScreen: View {
 
     @State private var composerText: String = ""
 
+    @AppStorage("chat.threadListVisible") private var threadListVisible: Bool = true
+
     @AppStorage(UserDefaultsKeys.AI.provider) private var providerRaw: String = AIProvider.none.rawValue
     @AppStorage(UserDefaultsKeys.AI.mode) private var modeRaw: String = AIMode.efficient.rawValue
 
@@ -18,10 +20,27 @@ struct ChatScreen: View {
     private var apiKey: String { AIClient.loadAPIKey(for: provider) ?? "" }
 
     var body: some View {
-        VStack(spacing: 0) {
-            messageList
-            if repoURL != nil {
-                composerArea
+        HStack(spacing: 0) {
+            // Thread list sidebar
+            ChatThreadList(
+                threads: chat.threads,
+                activeThreadID: chat.activeThreadID,
+                onSelect: { id in chat.selectThread(id) },
+                onNew: { chat.createThread() },
+                onDelete: { id in chat.deleteThread(id) },
+                onRename: { id, title in chat.renameThread(id, title: title) },
+                isCollapsed: $threadListVisible.inverse
+            )
+
+            Divider()
+                .background(DesignSystem.Colors.glassBorder)
+
+            // Chat content
+            VStack(spacing: 0) {
+                messageList
+                if repoURL != nil {
+                    composerArea
+                }
             }
         }
     }
@@ -98,5 +117,17 @@ struct ChatScreen: View {
         withAnimation {
             proxy.scrollTo(lastID, anchor: .bottom)
         }
+    }
+}
+
+// MARK: - Bool Binding Inverse
+
+private extension Binding where Value == Bool {
+    /// Returns a Binding<Bool> that inverts the wrapped value.
+    var inverse: Binding<Bool> {
+        Binding<Bool>(
+            get: { !self.wrappedValue },
+            set: { self.wrappedValue = !$0 }
+        )
     }
 }

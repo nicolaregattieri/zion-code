@@ -1,0 +1,2434 @@
+"Erro" = "Erro";
+"error.readFile" = "Erro ao ler arquivo: %@";
+"error.loadDiff" = "Erro ao carregar diff: %@";
+"error.generic" = "Erro: %@";
+"error.notAGitRepository" = "Não é um repositório git.";
+"Workspace" = "Workspace";
+"Zion Tree" = "Zion Tree";
+"Seu cliente Git nativo para macOS." = "Seu cliente Git nativo para macOS.";
+"The view from the top." = "A vista do topo.";
+"Operacoes" = "Operações";
+"Worktrees" = "Worktrees";
+"switch.overlay.loading" = "Alternando projeto...";
+"switch.loading.status" = "Carregando %@...";
+"zen.entering" = "Entrando no Zen Mode...";
+"zen.exiting" = "Saindo do Zen Mode...";
+"Seguranca" = "Segurança";
+"Confirmacao" = "Confirmação";
+"Idioma" = "Idioma";
+"Centro de Operacoes" = "Centro de Operações";
+"Configuracoes" = "Configurações";
+"Editor de Codigo" = "Editor de Código";
+"Terminal" = "Terminal";
+"Conflitos" = "Conflitos";
+"Merge" = "Merge";
+"Rebase" = "Rebase";
+"Resolver na IDE" = "Resolver na IDE";
+"Abrir" = "Abrir";
+"Atualizar" = "Atualizar";
+"Fetch" = "Fetch";
+"Pull" = "Pull";
+"Push" = "Push";
+"Push to Remote" = "Enviar para Remoto";
+"New Branch" = "Nova Branch";
+"Recentes" = "Recentes";
+"sidebar.projects" = "Projetos";
+"sidebar.projects.dropHint" = "Arraste uma pasta para adicionar";
+"Commits" = "Commits";
+"Detalhes" = "Detalhes";
+"Busca" = "Busca";
+"Saltar para" = "Saltar para";
+"Deseja fazer checkout para %@" = "Deseja fazer checkout para %@?";
+"Checkout & Pull" = "Checkout e Pull";
+"Deseja fazer checkout de %@ e puxar as alterações?" = "Deseja fazer checkout de %@ e puxar as alterações?";
+"Checkout e Pull concluídos para %@" = "Checkout e Pull concluídos para %@";
+"Branches" = "Branches";
+"Tags" = "Tags";
+"Stash" = "Stash";
+"Historico" = "Histórico";
+"Reescrita" = "Reescrita";
+"Danger Zone" = "Zona de Perigo";
+"Reset --hard" = "Reset --hard";
+"Executar" = "Executar";
+"Comando custom" = "Comando custom";
+"Fazer checkout" = "Fazer checkout";
+"Fazer checkout da nova branch" = "Fazer checkout da nova branch";
+"Nome da branch a partir de %@" = "Nome da branch a partir de %@:";
+"Checkout & Open in Editor" = "Checkout & Abrir no Editor";
+"Nova branch a partir de %@" = "Nova branch a partir de %@";
+"Remover branch remota" = "Remover branch remota";
+"Deseja remover permanentemente a branch remota %@?" = "Deseja remover permanentemente a branch remota %@?";
+"Remover branch local" = "Remover branch local";
+"Deseja remover a branch local %@?" = "Deseja remover a branch local %@?";
+"Remover branch local (Force)" = "Remover branch local (Force)";
+"Deseja remover FORCADO a branch local %@?" = "Deseja remover FORÇADO a branch local %@?";
+"Renomear branch..." = "Renomear branch...";
+"Renomear branch" = "Renomear branch";
+"Novo nome para %@:" = "Novo nome para %@:";
+"Fazer merge da branch informada na atual?" = "Fazer merge da branch informada na atual?";
+"Rebasear a branch atual no target informado?" = "Rebasear a branch atual na referência informada?";
+"Nova branch" = "Nova branch";
+"Criar" = "Criar";
+"Cancelar" = "Cancelar";
+"Confirmar" = "Confirmar";
+"Continuar" = "Continuar";
+"OK" = "OK";
+"Nova tag" = "Nova tag";
+"Nome:" = "Nome:";
+"Adicionar Tag..." = "Adicionar Tag...";
+"Criar Branch..." = "Criar Branch...";
+"Abrir no Editor" = "Abrir no Editor";
+"Copiar Hash" = "Copiar Hash";
+"Checkout & Abrir no Editor" = "Checkout & Abrir no Editor";
+"Checkout" = "Checkout";
+"Filtro de branch ativo: %@ · %@ commits" = "Filtro de branch ativo: %@ · %@ commits";
+"Visualizando todas as branches · %@ commits" = "Visualizando todas as branches · %@ commits";
+"Repositorio carregado: %@ · %@ commits" = "Repositório carregado: %@ · %@ commits";
+"Pasta carregada: %@" = "Pasta carregada: %@ (sem git)";
+"Resolva os conflitos na sua IDE favorita." = "Conflitos detectados. Abra o resolvedor do Zion para continuar.";
+"Limpeza" = "Limpeza";
+"Remover branches locais que ja foram mescladas na main." = "Remover branches locais que já foram mescladas na main.";
+"Deseja remover todas as branches locais ja mescladas?" = "Deseja remover todas as branches locais já mescladas?";
+"Prune Merged" = "Limpar Mescladas";
+"Limpeza concluida: %@ branches removidas." = "Limpeza concluída: %@ branches removidas.";
+"Branches removidas: %@" = "Branches removidas: %@";
+"Nenhuma branch mesclada encontrada." = "Nenhuma branch mesclada encontrada.";
+"Sem branches detectadas" = "Sem branches detectadas";
+"Nao e um repositorio Git" = "Não é um repositório Git";
+"Este diretorio nao possui um repositorio Git inicializado." = "Este diretório não possui um repositório Git inicializado.";
+"Inicializar Repositorio" = "Inicializar Repositório";
+"Voltar" = "Voltar";
+"Remotes" = "Remotes";
+"nome" = "nome";
+"Nenhum remote configurado" = "Nenhum remote configurado";
+"Remover remote" = "Remover remote";
+"Deseja remover o remote %@?" = "Deseja remover o remote %@?";
+"Testar conexao" = "Testar conexão";
+"Novo Commit" = "Novo Commit";
+"Gravar alteracoes no repositorio" = "Gravar alterações no repositório";
+"Mensagem do commit..." = "Mensagem do commit...";
+"Fazer Commit" = "Fazer Commit";
+"Commit" = "Commit";
+"Corrigir ultimo commit (Amend)" = "Corrigir último commit (Amend)";
+"Commit corrigido com sucesso." = "Commit corrigido com sucesso.";
+"Deseja realizar o commit de todas as alterações?" = "Deseja realizar o commit de todas as alterações?";
+"Commit realizado com sucesso." = "Commit realizado com sucesso.";
+"Acoes Rapidas" = "Ações Rápidas";
+"Arquivos alterados" = "Arquivos alterados";
+"Selecionar Tudo" = "Selecionar Tudo";
+"Desmarcar Tudo" = "Desmarcar Tudo";
+"Descartar alteracoes" = "Descartar alterações";
+"Descartar" = "Descartar";
+"Deseja reverter todas as mudancas neste arquivo? Isso nao pode ser desfeito." = "Deseja reverter todas as mudanças neste arquivo? Isso não pode ser desfeito.";
+"Adicionar ao .gitignore" = "Adicionar ao .gitignore";
+"Adicionado ao .gitignore: %@" = "Adicionado ao .gitignore: %@";
+"Alteracoes Pendentes" = "Alterações Pendentes";
+"Ver Mudanças" = "Ver Mudanças";
+"Tudo limpo!" = "Tudo limpo!";
+"Nenhuma alteração pendente no momento." = "Nenhuma alteração pendente no momento.";
+"Selecione um arquivo para ver as mudanças." = "Selecione um arquivo para ver as mudanças.";
+"Zion" = "Zion";
+"Arquivos" = "Arquivos";
+"Salvar" = "Salvar";
+"Arquivo salvo: %@" = "Arquivo salvo: %@";
+"Selecione um arquivo para editar." = "Selecione um arquivo para editar.";
+"Nenhuma mudanca detectada (ou arquivo novo nao rastreado)." = "Nenhuma mudança detectada (ou arquivo novo não rastreado).";
+"arquivos modificados" = "arquivos modificados";
+"Tenta detectar automaticamente de qual branch cada uma foi criada para organizar a arvore lateral de forma hierarquica. Recomendado para repositorios com muitas branches." = "Tenta detectar automaticamente de qual branch cada uma foi criada para organizar a árvore lateral de forma hierárquica. Recomendado para repositórios com muitas branches.";
+
+// --- Localization Audit: New Keys ---
+
+// CommitDetailContent metadata labels
+"Author" = "Autor";
+"Date" = "Data";
+"Committer" = "Committer";
+"Commit Date" = "Data do Commit";
+
+// WorktreesScreen status labels
+"branch" = "branch";
+"head" = "head";
+"detached" = "desanexado";
+"locked" = "bloqueado";
+"prunable" = "podável";
+
+// SidebarView
+"Editor" = "Editor";
+"Branch" = "Branch";
+"current" = "atual";
+
+// ContentView
+"Abort" = "Abortar";
+
+// OperationsScreen
+"ops.title" = "Zion Ops";
+"ops.branch.head" = "HEAD %@";
+"STAGED" = "STAGED";
+
+// Commit context menu
+"Apply Stash" = "Aplicar Stash";
+"Pop Stash" = "Pop Stash";
+"Drop Stash" = "Drop Stash";
+"Aplicar as mudancas deste stash na branch atual?" = "Aplicar as mudanças deste stash na branch atual?";
+"Aplicar as mudancas deste stash e REMOVER da lista?" = "Aplicar as mudanças deste stash e REMOVER da lista?";
+"Remover permanentemente este stash?" = "Remover permanentemente este stash?";
+"Checkout Stash (Inspecionar)" = "Checkout Stash (Inspecionar)";
+"Reset Branch to here (Soft)" = "Reset Branch aqui (Soft)";
+"Reset Branch to here (Hard)" = "Reset Branch aqui (Hard)";
+"Reset --soft" = "Reset --soft";
+"Resetar a branch atual para este commit mantendo as mudancas no stage?" = "Resetar a branch atual para este commit mantendo as mudanças no stage?";
+"AVISO: Isso apagara todas as mudancas nao salvas. Continuar?" = "AVISO: Isso apagará todas as mudanças não salvas. Continuar?";
+"Copiar Assunto" = "Copiar Assunto";
+"Copiar Nome da Branch" = "Copiar Nome da Branch";
+
+// SidebarView repo summary
+"Zion Code" = "Zion Code";
+"Modo editor livre" = "Modo editor livre";
+"Abrir Pasta" = "Abrir Pasta";
+"Abra uma pasta para acessar %@" = "Abra uma pasta para acessar %@";
+"Abrir o repositorio no seu editor ou terminal favorito." = "Abrir o repositório no editor integrado do Zion.";
+
+// Toolbar
+"Abrir repositório" = "Abrir repositório";
+"toolbar.openFolder" = "Abrir pasta";
+"Atualizar status do repositório" = "Atualizar: fetch + recarregar estado local";
+"Fetch: Busca atualizações remotas" = "Fetch: atualizar refs remotas (sem alterar branch local)";
+"Pull: Puxa alterações da branch atual" = "Pull: aplicar commits remotos na branch atual";
+"Push: Envia alterações locais" = "Push: Envia alterações locais";
+"Mais" = "Mais";
+"Abrir no Editor de Código" = "Abrir no Editor de Código";
+
+// GraphScreen
+"Checkout Default" = "Checkout Default";
+"Atualizar Grafo" = "Atualizar Grafo";
+"Criar Commit Rapido" = "Criar Commit Rápido";
+"Suas alteracoes serao rastreadas automaticamente (git add -A)." = "Suas alterações serão rastreadas automaticamente (git add -A).";
+"Criar Novo Stash" = "Criar Novo Stash";
+"Gerenciar Stashes..." = "Gerenciar Stashes...";
+"Mensagem do stash (opcional)" = "Mensagem do stash (opcional)";
+"Stashes Recentes" = "Stashes Recentes";
+"Fechar" = "Fechar";
+
+// CodeScreen
+"Changes" = "Alterações";
+"Stage" = "Stage";
+"Quebra de Linha Automática" = "Quebra de Linha Automática";
+"Nenhum arquivo encontrado" = "Nenhum arquivo encontrado";
+"Selecionar Pasta" = "Selecionar Pasta";
+"Selecione um arquivo" = "Selecione um arquivo";
+"Nenhum terminal aberto" = "Nenhum terminal aberto";
+"Buscar arquivo..." = "Buscar arquivo...";
+"Contextos paralelos" = "Contextos paralelos";
+
+// Stash operations
+"Apply stash" = "Aplicar stash";
+"Pop stash" = "Pop stash";
+"Drop stash" = "Drop stash";
+
+// Branch operations
+"Nenhuma branch encontrada" = "Nenhuma branch encontrada";
+"Deseja fazer checkout para %@?" = "Deseja fazer checkout para %@?";
+
+// L10n coverage fixes
+"Nunca confirmar" = "Nunca confirmar";
+"Confirmar criticas" = "Confirmar críticas";
+"Confirmar todas" = "Confirmar todas";
+"Selecionar do Disco..." = "Selecionar do Disco...";
+"Modificado" = "Modificado";
+"Nao inicializado" = "Não inicializado";
+"Sistema" = "Sistema";
+"%d commits" = "%d commits";
+"Tag: %@" = "Tag: %@";
+"Branch: %@" = "Branch: %@";
+"(Atual)" = "(Atual)";
+"(Double-click para checkout)" = "(Double-click para checkout)";
+"Chave SSH" = "Chave SSH";
+"Configuracao SSH" = "Configuração SSH";
+"Acesso ao Keychain" = "Acesso ao Keychain";
+
+// Terminal split & font
+"Fonte nao encontrada, usando fallback" = "Fonte não encontrada, usando fallback";
+"Dividir verticalmente" = "Dividir verticalmente";
+"Dividir horizontalmente" = "Dividir horizontalmente";
+"Alternar painel de arquivos" = "Alternar painel de arquivos";
+"Fonte do terminal" = "Fonte do terminal";
+"Fonte" = "Fonte";
+"Tamanho" = "Tamanho";
+
+// Worktree & pane management
+"Criar worktree rapido" = "Criar worktree rápido";
+"Fechar painel" = "Fechar painel";
+
+// Layout toggle
+"Somente editor" = "Somente editor";
+"Editor e terminal" = "Editor e terminal";
+"Somente terminal" = "Somente terminal";
+
+// Clone
+"Clonar Repositorio" = "Clonar Repositório";
+"Baixe um repositorio remoto para o disco local." = "Baixe um repositório remoto para o disco local.";
+"URL do repositorio" = "URL do repositório";
+"Pasta de destino" = "Pasta de destino";
+"Nome do repositorio" = "Nome do repositório";
+"Escolher..." = "Escolher...";
+"Escolher" = "Escolher";
+"Clonar" = "Clonar";
+"Clonar repositorio..." = "Clonar repositório...";
+"Clonar repositorio remoto" = "Clonar repositório remoto";
+
+// Clipboard explainer
+"Clipboard Inteligente" = "Clipboard Inteligente";
+"Captura automaticamente o que voce copiar" = "Captura automaticamente o que você copiar";
+"Clique para colar no terminal" = "Clique para colar no terminal";
+"Duplo clique para executar" = "Duplo clique para executar";
+"Arraste para o terminal" = "Arraste para o terminal";
+"Copie algo para comecar" = "Copie algo para começar";
+
+// Tooltips
+"Atualizar arvore de arquivos" = "Atualizar árvore de arquivos";
+"Novo terminal" = "Novo terminal";
+"Limpar busca" = "Limpar busca";
+"Resultado anterior" = "Resultado anterior";
+"Proximo resultado" = "Próximo resultado";
+"Adicionar todos ao stage" = "Adicionar todos ao stage";
+"Remover todos do stage" = "Remover todos do stage";
+
+// Keyboard Shortcuts Sheet
+"Atalhos de Teclado" = "Atalhos de Teclado";
+"Navegacao" = "Navegação";
+"Codigo" = "Código";
+"Grafo" = "Grafo";
+"Quick Open" = "Quick Open";
+"Barra lateral" = "Barra lateral";
+"Maximizar terminal" = "Maximizar terminal";
+"Nova aba" = "Nova aba";
+"Fechar painel dividido" = "Fechar painel dividido";
+"Zoom in" = "Zoom in";
+"Zoom out" = "Zoom out";
+"Buscar no grafo" = "Buscar no grafo";
+"shortcuts.find" = "Buscar";
+"shortcuts.findReplace" = "Buscar e Substituir";
+"shortcuts.goToLine" = "Ir para linha";
+"shortcuts.findNext" = "Próxima ocorrência";
+"shortcuts.findPrevious" = "Ocorrência anterior";
+"shortcuts.toggleComment" = "Alternar comentário";
+"shortcuts.terminalSearch" = "Buscar no terminal";
+"shortcuts.navigateCommits" = "Navegar commits";
+"shortcuts.closeOrDeselect" = "Fechar / desselecionar";
+"shortcuts.refreshRepository" = "Atualizar repositório";
+"shortcuts.codeReview" = "Code Review";
+"shortcuts.zionMode" = "Zion Mode";
+"shortcuts.formatDocument" = "Formatar Documento";
+"shortcuts.general" = "Geral";
+"Pressione" = "Pressione";
+"para ver todos os atalhos" = "para ver todos os atalhos";
+
+// AI Integration
+"Assistente IA" = "Assistente IA";
+"Desativado" = "Desativado";
+"Cota da API excedida ou saldo insuficiente" = "Cota da API excedida ou saldo insuficiente";
+"Cota da API excedida. Usando sugestao local." = "Cota da API excedida. Usando sugestão local.";
+"Git não encontrado" = "Git não encontrado";
+"Baixar Git" = "Baixar Git";
+"O Zion precisa do Git instalado para funcionar. Por favor, instale o Git e reinicie o app." = "O Zion precisa do Git instalado para funcionar. Por favor, instale o Git e reinicie o app.";
+"git.installCLT" = "Instalar Command Line Tools";
+"git.checkAgain" = "Verificar Novamente";
+"git.notFound.message" = "O Zion precisa do Git para funcionar. No macOS, a forma mais fácil de instalar o Git é via Command Line Tools. Você também pode baixar em git-scm.com.";
+"Chave registrada" = "Chave registrada";
+"Alterar" = "Alterar";
+"Chave de API" = "Chave de API";
+"Chave salva no Keychain" = "Chave salva no Keychain";
+"Gerar mensagem com IA" = "Gerar mensagem com IA";
+"Gerar com IA" = "Gerar com IA";
+"Explicar diff com IA" = "Explicar diff com IA";
+"Nenhum provedor de IA configurado" = "Nenhum provedor de IA configurado";
+"Chave de API invalida" = "Chave de API inválida";
+"Resposta invalida da API" = "Resposta inválida da API";
+"IA temporariamente indisponivel. Tente novamente em instantes." = "IA temporariamente indisponível. Tente novamente em instantes.";
+"IA temporariamente indisponivel. Sugestao local aplicada." = "IA temporariamente indisponível. Sugestão local aplicada.";
+"Anthropic (Claude)" = "Anthropic (Claude)";
+"OpenAI (GPT)" = "OpenAI (GPT)";
+"Google (Gemini)" = "Google (Gemini)";
+
+// Help Sheet
+"Conheca o Zion" = "Conheça o Zion";
+"help.hero.title" = "Tudo que você precisa para trabalhar com Git, nativo no seu Mac.";
+"help.hero.subtitle" = "O Zion combina visualização de grafo, editor de código, terminal integrado e operações Git — tudo em uma única interface nativa macOS.";
+"help.openOnboarding" = "Ver onboarding novamente";
+"help.openFeatureTour" = "Rever tour guiado";
+
+// Zion Tree
+"help.tree.lanes" = "Grafo visual com lanes coloridas mostrando topologia de branches e merges";
+"help.tree.search" = "Busca por hash, autor ou mensagem com navegação entre resultados (⌘F)";
+"help.tree.jumpbar" = "Jump Bar para saltar instantaneamente para main, develop ou branch padrão";
+"help.tree.pending" = "Alterações pendentes no topo do grafo com commit rápido e stash";
+"help.tree.signature" = "Verificação de assinatura GPG/SSH dos commits";
+"help.tree.navigation" = "Navegação por commits com setas e Escape para limpar a seleção";
+"help.tree.focus" = "Clique duplo em uma branch para focar o grafo naquele histórico";
+
+// Zion Code
+"help.code.editor" = "Editor com syntax highlighting, múltiplas abas e detecção de alterações externas";
+"help.code.quickopen" = "Quick Open com busca fuzzy para abrir arquivos instantaneamente (⌘P)";
+"help.code.blame" = "Git Blame inline mostrando autor, hash e data por linha";
+"help.code.themes" = "Temas de editor (Dracula, GitHub Light, etc.) e fontes configuráveis";
+"help.code.unsaved" = "Indicador visual de alterações não salvas nas abas";
+
+// Terminal
+"help.terminal.pty" = "Terminal real com PTY nativo, login shell e suporte a cores 256";
+"help.terminal.splits" = "Divide o terminal em painéis verticais (⇧⌘D) ou horizontais (⇧⌘E)";
+"help.terminal.resizeSplits" = "Arraste os divisores entre painéis para redimensionar; toque duplo para resetar 50/50";
+"help.terminal.tabs" = "Múltiplas abas de terminal com status de processo vivo";
+"help.terminal.zoom" = "Zoom independente com Ctrl+/- e fonte configurável";
+"help.terminal.persistence" = "Terminais persistem ao trocar de repositório, com badges de alterações";
+"help.terminal.transparency" = "Transparência de fundo com efeito de desfoque, ativada automaticamente no Modo Zen";
+
+// Clipboard
+"help.clipboard.capture" = "Captura automaticamente tudo que você copia na área de transferência";
+"help.clipboard.paste" = "Clique para colar no terminal, duplo clique para executar";
+"help.clipboard.drag" = "Arraste itens para o terminal ou para o navegador de arquivos";
+"help.clipboard.images" = "Captura imagens copiadas com limpeza automática";
+
+// Operations
+"help.ops.commit" = "Commit com staging individual, amend e mensagens sugeridas por IA";
+"help.ops.branch" = "Checkout, merge, rebase, push, pull e gerenciamento completo de branches";
+"help.ops.stash" = "Salvar, aplicar, pop e gerenciar stashes com mensagens";
+"help.ops.rebase" = "Rebase interativo visual com pick, squash, fixup, drop e reordenação";
+"help.ops.hunk" = "Staging por hunk e por linha — controle granular do que entra no commit";
+"help.ops.init" = "Inicialize um novo repositório Git diretamente pela tela inicial";
+"help.ops.recovery" = "Recovery Vault com snapshots para restaurar mudanças após falhas";
+
+// Worktrees
+"help.worktree.parallel" = "Trabalhe em múltiplas branches simultaneamente sem trocar contexto";
+"help.worktree.quick" = "Criação rápida com caminho e branch gerados automaticamente";
+"help.worktree.terminal" = "Cada worktree abre um terminal split dedicado";
+
+// AI
+"help.ai.commit" = "Gera mensagens de commit a partir do diff staged";
+"help.ai.diff" = "Explica diffs em linguagem natural";
+"help.ai.pr" = "Gera título e descrição de Pull Requests";
+"help.ai.stash" = "Sugere mensagens descritivas para stashes";
+
+// Customization
+"help.customization.title" = "Personalização";
+"help.customization.languages" = "Interface em Português, English e Español";
+"help.customization.confirmation" = "Controle quando exibir diálogos de confirmação";
+"help.customization.reflog" = "Reflog visual com desfazer da última ação Git";
+
+// Shortcuts highlight
+"help.shortcuts.title" = "Mais de 15 atalhos de teclado";
+"help.shortcuts.subtitle" = "Pressione ⌥⌘K para ver todos os atalhos disponíveis.";
+
+// Diagnostics
+"Exportar Diagnostico..." = "Exportar Diagnóstico...";
+"Copiar Diagnostico" = "Copiar Diagnóstico";
+"Exportar log de diagnostico" = "Exportar log de diagnóstico";
+"help.diagnostics.title" = "Diagnóstico";
+"help.diagnostics.export" = "Exporte logs pelo menu Ajuda";
+"help.diagnostics.copy" = "Copie o log para o clipboard";
+"help.diagnostics.sanitize" = "Dados sensíveis removidos automaticamente";
+
+// Conflict Resolution
+"Resolver no Zion" = "Resolver no Zion";
+"conflicts.banner.subtitle" = "Conflitos detectados. Abra o resolvedor do Zion para continuar.";
+"conflicts.open.prompt.title" = "Conflitos detectados";
+"conflicts.open.prompt.message" = "Deseja abrir o resolvedor de conflitos do Zion agora?";
+"conflicts.open.prompt.open" = "Abrir resolvedor";
+"Resolver Conflitos" = "Resolver Conflitos";
+"Aceitar Nosso" = "Aceitar Nosso";
+"Aceitar Deles" = "Aceitar Deles";
+"Aceitar Ambos" = "Aceitar Ambos";
+"Editar Manualmente" = "Editar Manualmente";
+"Aplicar" = "Aplicar";
+"Marcar como Resolvido" = "Marcar como Resolvido";
+"Continuar Merge" = "Continuar Merge";
+"Continuar Rebase" = "Continuar Rebase";
+"Todos os conflitos resolvidos!" = "Todos os conflitos resolvidos!";
+"conflitos restantes" = "conflitos restantes";
+"conflicts.jump.unresolved" = "Ir para conflitos não resolvidos";
+"Conflito" = "Conflito";
+"arquivos" = "arquivos";
+"Selecione um arquivo com conflito" = "Selecione um arquivo com conflito";
+"help.conflicts.title" = "Resolução de Conflitos";
+"help.conflicts.resolve" = "Resolva conflitos de merge direto no app";
+"help.conflicts.choose" = "Aceite Nosso, Deles, Ambos ou Edite";
+"help.conflicts.continue" = "Continue merge/rebase após resolver";
+
+// AI Smart Services
+"Resolver com IA" = "Resolver com IA";
+"Resolver conflito com IA" = "Resolver conflito com IA";
+"Revisar codigo com IA" = "Revisar código com IA";
+"Code Review" = "Code Review";
+"Review" = "Review";
+"Split" = "Split";
+"Sugerir divisao de commits com IA" = "Sugerir divisão de commits com IA";
+"Sugestao de Split" = "Sugestão de Split";
+"Changelog" = "Changelog";
+"Gerar notas de release com IA" = "Gerar notas de release com IA";
+"De (tag/hash)" = "De (tag/hash)";
+"Ate (tag/hash)" = "Até (tag/hash)";
+"Gerar" = "Gerar";
+"Copiar" = "Copiar";
+"Nenhum commit encontrado no intervalo." = "Nenhum commit encontrado no intervalo.";
+"Busca semantica com IA..." = "Busca semântica com IA...";
+"Busca semantica com IA" = "Busca semântica com IA";
+"resultados" = "resultados";
+"graph.search.aiPlaceholder" = "Pergunte ao histórico...";
+"graph.search.aiMode" = "IA";
+"graph.search.aiMode.help" = "Perguntar ao histórico com IA";
+"graph.ai.answerTitle" = "Resposta da IA";
+"graph.ai.loading" = "Buscando commits relacionados no histórico recente...";
+"graph.ai.noMatches" = "Não encontrei commits relevantes nesta janela do histórico.";
+"graph.ai.answerFallback" = "Encontrei os commits mais prováveis no histórico recente.";
+"graph.ai.openCommit" = "Abrir commit %@";
+"Resumir com IA" = "Resumir com IA";
+"Resumindo..." = "Resumindo...";
+"Explicar com IA" = "Explicar com IA";
+"Nenhuma alteracao staged para revisar." = "Nenhuma alteração staged para revisar.";
+"Critico" = "Crítico";
+"Aviso" = "Aviso";
+"Sugestao" = "Sugestão";
+
+// Help: AI Smart Services
+"help.ai.conflict" = "Resolução inteligente de conflitos de merge com IA";
+"help.ai.review" = "Code review pré-commit detectando bugs e problemas de segurança";
+"help.ai.changelog" = "Geração de changelog a partir de ranges de commits";
+"help.ai.search" = "Busca semântica em linguagem natural no histórico Git";
+"help.ai.branch" = "Resumo de branches em uma frase no menu de contexto";
+"help.ai.blame" = "Explicador de blame: entenda POR QUE o código foi alterado";
+"help.ai.split" = "Conselheiro de split de commits para commits atômicos";
+"help.ai.style" = "Alterne entre mensagens compactas ou detalhadas com bullet points";
+"Compacto" = "Compacto";
+"Detalhado" = "Detalhado";
+"Commit com IA" = "Commit com IA";
+"commit.style.compact.hint" = "Uma linha no formato Conventional Commits";
+"commit.style.detailed.hint" = "Linha de resumo + bullet points detalhando as alterações";
+
+// Appearance
+"Aparencia" = "Aparência";
+"Claro" = "Claro";
+"Escuro" = "Escuro";
+"help.customization.appearance" = "Modo claro, escuro ou automático do sistema";
+
+// Operations card subtitles
+"Salvar e restaurar alteracoes temporarias" = "Salvar e restaurar alterações temporárias";
+"Marcar pontos importantes no historico" = "Marcar pontos importantes no histórico";
+"Repositorios remotos conectados" = "Repositórios remotos conectados";
+"Selecione um commit para ver detalhes" = "Selecione um commit para ver detalhes";
+
+// ntfy Push Notifications
+"Notificacoes Push" = "Notificações Push";
+"ntfy.onboarding.hint" = "Receba notificações no celular e macOS via ntfy.sh";
+"ntfy.topic.configured" = "Tópico configurado";
+"ntfy.topic.placeholder" = "Seu tópico ntfy (ex: zion-meu-mac)";
+"ntfy.topic.privacy" = "Use um nome único e difícil de adivinhar. Qualquer pessoa com o nome do tópico pode enviar/receber notificações.";
+"ntfy.generate.tooltip" = "Gerar tópico seguro aleatório";
+"ntfy.server.hint" = "Deixe em branco para usar o servidor padrão (ntfy.sh)";
+"ntfy.advanced" = "Avançado";
+"ntfy.whatIs.title" = "O que é ntfy?";
+"ntfy.whatIs.description" = "ntfy é um serviço gratuito de notificações push. Um \"tópico\" é como um canal — qualquer dispositivo inscrito nele recebe as mensagens.";
+"ntfy.whatIs.steps" = "1. Instale o app ntfy no celular (iOS/Android)\n2. Escolha um nome de tópico único acima\n3. No app ntfy, inscreva-se no mesmo tópico\n4. Pronto! Zion enviará notificações para seus dispositivos";
+"ntfy.whatIs.learnMore" = "Saiba mais em ntfy.sh";
+"ntfy.local.toggle" = "Notificações locais do macOS";
+"ntfy.events.title" = "Eventos Notificados";
+"ntfy.test.button" = "Enviar Notificação de Teste";
+"ntfy.test.failed" = "Falha ao enviar notificação de teste. Verifique o tópico e a conexão.";
+"ntfy.group.gitOps" = "Operações Git";
+"ntfy.group.ai" = "IA";
+"ntfy.group.pullRequests" = "Pull Requests";
+"ntfy.group.mobileRemote" = "Mobile Remoto";
+"ntfy.event.cloneComplete" = "Clone concluído";
+"ntfy.event.newRemoteCommits" = "Novos commits remotos";
+"ntfy.event.prCreated" = "PR criado";
+"ntfy.event.prReviewRequested" = "Review de PR solicitado";
+
+// Zion Map — Section Subtitles
+"map.tree.subtitle" = "Visualize o histórico do Git com lanes coloridas, busca e navegação por commits.";
+"map.code.subtitle" = "Editor de código com syntax highlighting, Quick Open, blame, múltiplas abas e preview Markdown.";
+"map.terminal.subtitle" = "Terminal real com PTY nativo, splits, abas e zoom independente.";
+"map.clipboard.subtitle" = "Clipboard que captura automaticamente e cola direto no terminal.";
+"map.operations.subtitle" = "Commit, staging, branches, tags, stash, recovery vault, rebase interativo e mais.";
+"map.worktrees.subtitle" = "Trabalhe em múltiplas branches simultaneamente com terminais dedicados.";
+"map.ai.subtitle" = "Assistente de IA para commits, diffs, code review, conflitos e mais.";
+"map.customization.subtitle" = "Idioma, aparência, confirmações e reflog.";
+"map.diagnostics.subtitle" = "Log de diagnóstico com exportação e sanitização automática.";
+"map.conflicts.subtitle" = "Resolva conflitos de merge diretamente no Zion.";
+
+// Zion Map — Tree
+"map.tree.lanes.title" = "Grafo com Lanes";
+"map.tree.lanes.description" = "Visualize a topologia de branches e merges com lanes coloridas. Cada branch recebe uma cor única que persiste durante toda a navegação.";
+"map.tree.lanes.tip1" = "Double-click em uma branch para filtrar o grafo e ver apenas seus commits.";
+"map.tree.search.title" = "Busca no Grafo";
+"map.tree.search.description" = "Busque por hash, autor ou mensagem de commit. Navegue entre resultados com os botões anterior/próximo.";
+"map.tree.search.tip1" = "Use termos parciais — a busca encontra correspondências em hash, autor e mensagem.";
+"map.tree.jumpbar.title" = "Jump Bar";
+"map.tree.jumpbar.description" = "Salte instantaneamente para main, develop ou a branch padrão do repositório. Ideal para repositórios grandes.";
+"map.tree.jumpbar.tip1" = "O Jump Bar detecta automaticamente a branch padrão do repositório.";
+"map.tree.pending.title" = "Alterações Pendentes";
+"map.tree.pending.description" = "Mudanças não commitadas aparecem no topo do grafo com opções de commit rápido e stash.";
+"map.tree.pending.tip1" = "Use o commit rápido para fazer git add -A e commitar em um clique.";
+"map.tree.signature.title" = "Verificação de Assinatura";
+"map.tree.signature.description" = "Veja se commits possuem assinatura GPG ou SSH válida direto no grafo.";
+"map.tree.navigation.title" = "Navegação por Teclado";
+"map.tree.navigation.description" = "Use as setas para navegar entre commits. Escape para limpar a seleção.";
+"map.tree.navigation.tip1" = "Combine com a busca para pular para um commit e depois navegar ao redor.";
+"map.tree.focus.title" = "Foco em Branch";
+"map.tree.focus.description" = "Double-click em uma branch para filtrar o grafo e exibir apenas os commits daquela branch.";
+"map.tree.focus.tip1" = "Clique em 'Limpar' para voltar a ver todas as branches.";
+
+// Zion Map — Code
+"map.code.editor.title" = "Editor com Syntax Highlighting";
+"map.code.editor.description" = "Editor baseado em NSTextView com cache de regex para highlighting performático. Suporta múltiplos arquivos em abas.";
+"map.code.editor.tip1" = "Abra arquivos clicando na árvore ou use Quick Open para busca rápida.";
+"map.code.quickopen.title" = "Quick Open";
+"map.code.quickopen.description" = "Busca fuzzy para abrir qualquer arquivo do repositório instantaneamente. Filtra enquanto você digita.";
+"map.code.quickopen.tip1" = "Digite apenas parte do nome — a busca fuzzy encontra correspondências parciais.";
+"map.code.filebrowser.title" = "Navegador de Arquivos";
+"map.code.filebrowser.description" = "Árvore de arquivos do repositório com respeito ao .gitignore. Alterne visibilidade com ⌘B.";
+"map.code.filebrowserdnd.title" = "Arrastar e Soltar no Navegador";
+"map.code.filebrowserdnd.description" = "Mova arquivos e pastas dentro do repositório arrastando-os para uma pasta destino. Solte em espaço vazio para mover para a raiz. Importe arquivos do Finder ou Smart Clipboard.";
+"map.code.filebrowserdnd.tip1" = "Selecione múltiplos arquivos primeiro, depois arraste um para mover toda a seleção de uma vez.";
+"map.code.blame.title" = "Git Blame Inline";
+"map.code.blame.description" = "Veja autor, hash e data de cada linha diretamente no editor. Clique para ver o commit completo.";
+"map.code.blame.tip1" = "Com IA configurada, clique no blame para entender POR QUE o código foi alterado.";
+"map.code.tabs.title" = "Múltiplas Abas";
+"map.code.tabs.description" = "Abra vários arquivos simultaneamente. Abas com mudanças não salvas exibem um indicador visual.";
+"map.code.markdownpreview.title" = "Preview Markdown";
+"map.code.markdownpreview.description" = "Para arquivos .md, ative preview renderizado em painel lado a lado sem sair do editor.";
+"map.code.markdownpreview.tip1" = "Use o botão de preview na toolbar para alternar entre edição pura e edição + visualização.";
+"map.code.themes.title" = "Temas e Fontes";
+"map.code.themes.description" = "Escolha entre Dracula, GitHub Light, Catppuccin, One Dark Pro, Tokyo Night e City Lights. Fonte e tamanho configuráveis.";
+"map.code.themes.tip1" = "O tema também se aplica ao terminal integrado.";
+"map.code.watcher.title" = "Detecção de Mudanças Externas";
+"map.code.watcher.description" = "O editor detecta automaticamente quando um arquivo é alterado por outro programa e oferece recarregar.";
+
+// Zion Map — Terminal
+"map.terminal.pty.title" = "Terminal Real com PTY";
+"map.terminal.pty.description" = "Terminal completo com PTY nativo, login shell (-l) e suporte a xterm-256color. Roda qualquer comando.";
+"map.terminal.pty.tip1" = "O terminal usa sua configuração de shell padrão (zsh, bash, fish).";
+"map.terminal.splits.title" = "Splits Vertical e Horizontal";
+"map.terminal.splits.description" = "Divida o terminal em painéis verticais ou horizontais para trabalhar com múltiplos comandos lado a lado.";
+"map.terminal.splits.tip1" = "Feche um painel split com ⇧⌘W sem afetar os outros.";
+"map.terminal.resizeSplits.title" = "Painéis Split Redimensionáveis";
+"map.terminal.resizeSplits.description" = "Arraste o divisor entre painéis split para redimensioná-los. Toque duplo no divisor para resetar para split igual 50/50.";
+"map.terminal.resizeSplits.tip1" = "Um tamanho mínimo é aplicado para que você nunca perca um painel por acidente.";
+"map.terminal.tabs.title" = "Abas de Terminal";
+"map.terminal.tabs.description" = "Crie múltiplas abas de terminal, cada uma com seu processo independente e indicador de status.";
+"map.terminal.zoom.title" = "Zoom Independente";
+"map.terminal.zoom.description" = "Ajuste o tamanho da fonte do terminal independentemente do editor com Ctrl+ e Ctrl-.";
+"map.terminal.persistence.title" = "Persistência de Sessões";
+"map.terminal.persistence.description" = "Sessões de terminal persistem ao trocar de repositório. Badges laranja mostram contagem de arquivos alterados.";
+"map.terminal.persistence.tip1" = "Seus processos continuam rodando mesmo ao navegar para outro repositório.";
+
+// Zion Map — Clipboard
+"map.clipboard.capture.title" = "Captura Automática";
+"map.clipboard.capture.description" = "Monitora o clipboard do sistema e captura automaticamente texto, comandos, hashes, URLs e imagens.";
+"map.clipboard.capture.tip1" = "O clipboard mantém até 20 itens, removendo os mais antigos automaticamente.";
+"map.clipboard.paste.title" = "Colar e Executar";
+"map.clipboard.paste.description" = "Clique em um item para colar no terminal. Duplo clique para executar imediatamente (envia com Enter).";
+"map.clipboard.drag.title" = "Arrastar para o Terminal ou Navegador";
+"map.clipboard.drag.description" = "Arraste itens do clipboard diretamente para qualquer painel do terminal ou solte-os no navegador de arquivos para importá-los.";
+"map.clipboard.images.title" = "Captura de Imagens";
+"map.clipboard.images.description" = "Imagens copiadas são salvas como JPEG temporário. Limpeza automática após 1 hora e na saída do app.";
+"map.clipboard.images.tip1" = "Útil para capturar screenshots e colar em issues ou documentação.";
+
+// Zion Map — Operations
+"map.ops.commit.title" = "Commit com Staging";
+"map.ops.commit.description" = "Faça commits com staging individual por arquivo, opção de amend e mensagens geradas por IA.";
+"map.ops.commit.tip1" = "Use o botão de IA para gerar mensagens no formato Conventional Commits.";
+"map.ops.hunk.title" = "Staging por Hunk e Linha";
+"map.ops.hunk.description" = "Adicione ou remova hunks e linhas individuais do stage para controle granular do que entra no commit.";
+"map.ops.hunk.tip1" = "Perfeito para separar mudanças lógicas em commits atômicos.";
+"map.ops.branch.title" = "Gerenciamento de Branches";
+"map.ops.branch.description" = "Checkout, criação, merge, rebase, push, pull, renomear e deletar branches em uma interface unificada.";
+"map.ops.branch.tip1" = "Clique em uma branch da lista para preencher automaticamente o campo de referência.";
+"map.ops.rebase.title" = "Rebase Interativo Visual";
+"map.ops.rebase.description" = "Interface visual para pick, reword, edit, squash, fixup e drop. Reordene commits arrastando.";
+"map.ops.rebase.tip1" = "Use squash para combinar commits relacionados antes de fazer push.";
+"map.ops.stash.title" = "Gerenciamento de Stash";
+"map.ops.stash.description" = "Crie stashes com mensagens descritivas, aplique, pop ou remova. Veja stashes recentes no grafo.";
+"map.ops.recovery.title" = "Recovery Vault";
+"map.ops.recovery.description" = "Lista snapshots ativos e órfãos para recuperar mudanças após falhas de stash, reset ou transferência.";
+"map.ops.recovery.tip1" = "Use Copiar para guardar a referência e Restaurar para reaplicar no working tree atual.";
+"map.ops.tags.title" = "Gerenciamento de Tags";
+"map.ops.tags.description" = "Crie tags lightweight, anotadas ou assinadas com GPG e editor de mensagem. Envie tags para o remoto ou remova do remoto.";
+
+// Zion Map — Worktrees
+"map.worktree.parallel.title" = "Contextos Paralelos";
+"map.worktree.parallel.description" = "Trabalhe em múltiplas branches ao mesmo tempo sem trocar contexto no diretório principal.";
+"map.worktree.parallel.tip1" = "Ideal para revisar PRs enquanto trabalha em outra feature.";
+"map.worktree.quick.title" = "Criação Rápida";
+"map.worktree.quick.description" = "Crie um worktree com um clique — caminho e branch são gerados automaticamente.";
+"map.worktree.terminal.title" = "Terminal Dedicado";
+"map.worktree.terminal.description" = "Cada worktree abre automaticamente um painel de terminal split dedicado apontando para seu diretório.";
+"map.worktree.terminal.tip1" = "O terminal do worktree já abre no diretório correto, pronto para uso.";
+
+// Zion Map — AI
+"map.ai.commit.title" = "Mensagens de Commit com IA";
+"map.ai.commit.description" = "Gera mensagens de commit a partir do diff staged usando Anthropic, OpenAI ou Gemini. Fallback heurístico sem API.";
+"map.ai.commit.tip1" = "Alterne entre estilo compacto (uma linha) e detalhado (com bullet points).";
+"map.ai.diff.title" = "Explicação de Diffs";
+"map.ai.diff.description" = "Entenda qualquer diff em linguagem natural. A IA explica intenção, riscos e impacto das mudanças.";
+"map.ai.pr.title" = "Descrição de Pull Request";
+"map.ai.pr.description" = "Gera título e corpo do PR automaticamente a partir do log de commits da branch.";
+"map.ai.review.title" = "Code Review Pré-Commit";
+"map.ai.review.description" = "Análise automática do código staged detectando bugs, problemas de segurança e sugestões de melhoria.";
+"map.ai.review.tip1" = "Execute antes de cada commit para pegar problemas cedo.";
+"map.ai.conflict.title" = "Resolução de Conflitos com IA";
+"map.ai.conflict.description" = "A IA lê ambos os lados do conflito de merge e propõe uma resolução semanticamente correta.";
+"map.ai.changelog.title" = "Geração de Changelog";
+"map.ai.changelog.description" = "Gera notas de release categorizadas (Features/Fixes/Improvements) a partir de um range de commits.";
+"map.ai.search.title" = "Busca Semântica";
+"map.ai.search.description" = "Busque no histórico Git em linguagem natural, como 'quando mudamos o fluxo de autenticação?'.";
+"map.ai.search.tip1" = "Funciona melhor com perguntas sobre funcionalidades ou mudanças específicas.";
+"map.ai.blame.title" = "Explicador de Blame";
+"map.ai.blame.description" = "Clique em uma entrada de blame para entender POR QUE aquele código foi alterado, não apenas quem alterou.";
+"map.ai.split.title" = "Conselheiro de Split";
+"map.ai.split.description" = "Sugere como dividir um diff grande em múltiplos commits atômicos e focados.";
+"map.ai.style.title" = "Estilo de Mensagem";
+"map.ai.style.description" = "Alterne entre mensagens compactas (Conventional Commits) ou detalhadas (header + bullet points).";
+
+// Zion Map — Customization
+"map.custom.languages.title" = "Idiomas";
+"map.custom.languages.description" = "Interface disponível em Português (BR), English e Español. Mude a qualquer momento nas configurações.";
+"map.custom.appearance.title" = "Aparência";
+"map.custom.appearance.description" = "Escolha entre modo claro, escuro ou automático do sistema. O tema do editor acompanha.";
+"map.custom.confirmation.title" = "Diálogos de Confirmação";
+"map.custom.confirmation.description" = "Controle quando exibir confirmação: nunca, apenas ações destrutivas, ou todas as ações.";
+"map.custom.reflog.title" = "Reflog e Desfazer";
+"map.custom.reflog.description" = "Visualize as últimas 50 entradas do reflog. Desfaça a última ação Git com um clique.";
+"map.custom.reflog.tip1" = "O desfazer usa reset --soft, preservando suas mudanças no stage.";
+
+// Zion Map — Diagnostics
+"map.diag.log.title" = "Log de Diagnóstico";
+"map.diag.log.description" = "Ring-buffer que captura erros, comandos Git e chamadas de IA para depuração.";
+"map.diag.export.title" = "Exportar Log";
+"map.diag.export.description" = "Salve o log sanitizado em arquivo pelo menu Ajuda. Dados sensíveis são removidos automaticamente.";
+"map.diag.export.tip1" = "Útil para reportar bugs — inclua o log no seu relato.";
+"map.diag.copy.title" = "Copiar Log";
+"map.diag.copy.description" = "Copie o log sanitizado para o clipboard para compartilhamento rápido.";
+
+// Zion Map — Conflicts
+"map.conflicts.resolve.title" = "Resolução no App";
+"map.conflicts.resolve.description" = "Resolva conflitos de merge e rebase diretamente no Zion, sem precisar abrir outro editor.";
+"map.conflicts.resolve.tip1" = "Com IA configurada, use 'Resolver com IA' para uma sugestão automática.";
+"map.conflicts.choose.title" = "Escolha de Lado";
+"map.conflicts.choose.description" = "Aceite Nosso, Deles, Ambos, Ambos (inverso) ou edite manualmente cada região de conflito.";
+"map.conflicts.continue.title" = "Continuar Merge/Rebase";
+"map.conflicts.continue.description" = "Após resolver todos os conflitos, continue o merge ou rebase com um clique.";
+
+// Phase 1: Settings Window
+"settings.tab.general" = "Geral";
+"settings.tab.ai" = "Assistente IA";
+"settings.tab.notifications" = "Notificações";
+"settings.general.interface" = "Interface";
+"settings.general.tools" = "Ferramentas";
+"settings.general.safety" = "Segurança";
+"settings.general.confirmation" = "Modo de Confirmação";
+"settings.general.graphAuthorAvatars" = "Ativar avatares de autores";
+"settings.general.graphAuthorAvatarsHint" = "Baixa avatares do Gravatar e GitHub/GitLab.";
+"settings.general.openWithDrawerCollapsed" = "Abrir o Zion com a gaveta lateral fechada";
+"settings.general.openWithDrawerCollapsedHint" = "Inicia com um workspace mais limpo. Use o menu do rodapé ou o ícone de barra lateral da toolbar para expandir.";
+"settings.general.customPath" = "Caminho Personalizado";
+"settings.update.title" = "Atualizações";
+"settings.update.autoCheck" = "Buscar atualizações automaticamente";
+"settings.update.lastCheck" = "Última verificação";
+"settings.update.available" = "Atualização disponível";
+"settings.open" = "Abrir Configurações";
+"settings.open.hint" = "Abrir Configurações (⌘,)";
+"settings.ai.provider" = "Provedor de IA";
+"settings.ai.defaultProvider" = "Assistente de IA Padrão";
+"settings.ai.defaultProvider.hint" = "Escolha qual provedor conectado o Zion usa para mensagens de commit, reviews e outras tarefas gerais de IA.";
+"settings.ai.defaultProvider.missingKey" = "O provedor padrão selecionado ainda não tem uma chave de API conectada.";
+"settings.ai.defaultProvider.recovery" = "Conecte uma chave abaixo ou troque o assistente padrão para outro provedor conectado.";
+"settings.ai.connectedProviders" = "Provedores Conectados";
+"settings.ai.connectedProviders.hint" = "Você pode conectar vários provedores ao mesmo tempo. O OpenAI pode ficar conectado só para Whisper enquanto Gemini ou Claude continua como assistente padrão.";
+"settings.ai.provider.defaultBadge" = "PADRÃO";
+"settings.ai.provider.status.connected" = "Conectado";
+"settings.ai.provider.status.notConnected" = "Não conectado";
+"settings.ai.provider.openDashboard" = "Abrir Dashboard";
+"settings.ai.provider.openaiWhisperHint" = "Também habilita a transcrição com OpenAI Whisper para entrada de voz.";
+"settings.ai.provider.cancelEdit" = "Cancelar";
+"settings.ai.provider.editKey" = "Editar Chave";
+"settings.ai.provider.addKey" = "Adicionar Chave";
+"settings.ai.provider.removeKey" = "Remover Chave";
+"settings.ai.provider.keyPlaceholder" = "Chave de API";
+"settings.ai.provider.saveKey" = "Salvar Chave";
+"settings.ai.recovery.badge" = "Cota de IA";
+"settings.ai.recovery.alternativeProviders" = "A cota de IA foi atingida. Abra as Configurações para trocar o assistente padrão. Alternativas conectadas: %@.";
+"settings.ai.recovery.openSettingsHint" = "A cota de IA foi atingida. Abra as configurações de IA para revisar os provedores conectados ou atualizar as chaves.";
+"settings.ai.recovery.openSettings" = "Abrir Configurações de IA";
+"settings.ai.commitStyle" = "Estilo de Commit";
+"settings.ai.diffExplanation" = "Explicação de Diff";
+"settings.ai.autoExplain" = "Explicar diffs automaticamente ao selecionar";
+"settings.ai.depth" = "Profundidade da Explicação";
+"settings.notifications.ntfy" = "ntfy";
+"settings.notifications.ntfyEnabled" = "Ativar Notificações ntfy";
+"settings.notifications.topic" = "Tópico ntfy";
+"settings.notifications.preferences" = "Preferências";
+"settings.notifications.events" = "Eventos";
+"settings.notifications.test" = "Testar";
+"settings.notifications.pr" = "Pull Requests";
+"settings.notifications.prPolling" = "Intervalo de Polling de PRs";
+"settings.notifications.prPolling.2min" = "A cada 2 minutos";
+"settings.notifications.prPolling.5min" = "A cada 5 minutos";
+"settings.notifications.prPolling.10min" = "A cada 10 minutos";
+"settings.notifications.prPolling.30min" = "A cada 30 minutos";
+"settings.notifications.autoReview" = "Revisar PRs atribuídos automaticamente";
+"settings.notifications.server" = "URL do Servidor";
+"settings.notifications.topicInvalid" = "Tópico inválido. Use apenas letras, números, '.', '_' ou '-' (1-64).";
+"settings.notifications.serverInvalid" = "Servidor inválido. Use uma URL HTTPS válida (por exemplo, https://ntfy.sh).";
+"settings.notifications.fixConfig" = "Corrija o tópico e o servidor antes de testar notificações.";
+"settings.diff.depth.quick" = "Rápido";
+"settings.diff.depth.detailed" = "Detalhado";
+
+// Phase 2: Diff Explanation
+"diff.explanation.title" = "Explicação IA";
+"diff.explanation.intent" = "Intenção";
+"diff.explanation.risks" = "Riscos";
+"diff.explanation.narrative" = "Narrativa";
+"diff.explanation.copy" = "Copiar";
+"diff.explanation.loading" = "Analisando diff...";
+"diff.severity.safe" = "Seguro";
+"diff.severity.moderate" = "Moderado";
+"diff.severity.risky" = "Arriscado";
+
+// Phase 3: Code Review
+"codereview.files" = "Arquivos";
+"codereview.reviewAll" = "Revisar Todos";
+"codereview.openInEditor.hint" = "Clique duplo para abrir no editor";
+"codereview.selectFile" = "Selecione um arquivo para ver os detalhes.";
+"codereview.copySummary" = "Copiar Resumo";
+"codereview.exportMarkdown" = "Exportar Markdown";
+"codereview.stats.files" = "arquivos";
+"codereview.stats.commits" = "commits";
+"codereview.card.title" = "Code Review";
+"codereview.card.subtitle" = "Revisão completa arquivo por arquivo com IA";
+"codereview.startReview" = "Iniciar Revisão";
+"codereview.startReview.hint" = "Iniciar revisão completa entre branches (⇧⌘R)";
+"file.status.added" = "Adicionado";
+"file.status.modified" = "Modificado";
+"file.status.deleted" = "Removido";
+"file.status.renamed" = "Renomeado";
+
+// Phase 3: Branch Review Upgrades
+"branch.review.fullReview" = "Revisão Completa";
+"branch.review.fullReview.hint" = "Abrir tela de revisão completa";
+
+// Phase 4: PR Inbox
+"pr.inbox.title" = "Revisões de PR";
+"pr.inbox.reviewAll" = "Revisar Todos";
+"pr.inbox.openGitHub" = "Abrir no GitHub";
+"pr.inbox.openProvider" = "Abrir PR";
+"pr.inbox.empty" = "Nenhum PR aguardando revisão";
+"pr.inbox.setup.hint" = "Requer gh CLI autenticado (gh auth login)";
+"pr.inbox.providerHint" = "Adicione um remote de hospedagem compatível para habilitar a caixa de revisão.";
+"pr.inbox.authRequired" = "Credenciais de %@ não configuradas";
+"pr.inbox.authRequired.hint" = "Configure o acesso de %@ em Ajustes > Git Hosting.";
+"pr.gh.notInstalled" = "GitHub CLI não encontrado";
+"pr.gh.notInstalled.hint" = "Instale com: brew install gh";
+"pr.gh.notAuthenticated" = "GitHub CLI não autenticado";
+"pr.gh.notAuthenticated.hint" = "Execute no terminal: gh auth login";
+"github.error.noToken" = "Token do GitHub não encontrado. Execute 'gh auth login' no terminal.";
+"github.error.invalidURL" = "URL inválida.";
+"github.error.api" = "GitHub API: %@";
+"github.error.parseError" = "Erro ao processar resposta do GitHub.";
+"pr.status.pending" = "Pendente";
+"pr.status.reviewing" = "Revisando...";
+"pr.status.reviewed" = "Revisado";
+"pr.status.clean" = "Limpo";
+"pr.tab.forReview" = "Para Revisão";
+"pr.tab.allOpen" = "Todos Abertos";
+"pr.allOpen.empty" = "Nenhum PR aberto";
+"pr.draft" = "Rascunho";
+"pr.review" = "Revisar";
+"ntfy.event.prAutoReviewComplete" = "Revisão automática de PR concluída";
+"pr.notification.request.header" = "%@ está pedindo sua revisão em: %@";
+"pr.notification.request.flow" = "Fluxo: %@ -> %@";
+"pr.notification.request.touches" = "Toca em: %@";
+"pr.notification.request.strategy" = "Estratégia: %@";
+"pr.notification.request.constraints" = "Restrições: %@";
+"pr.notification.review.header" = "Revisão local concluída para %@. Sinal de aprovação: %@%%";
+"pr.notification.review.clean" = "Nenhum bloqueio encontrado.";
+"pr.notification.review.fixes" = "Precisa corrigir: %@";
+
+// Phase 5: Help Sheet
+"help.settings.title" = "Janela de Configurações";
+"help.settings.features" = "Atalho Cmd+,|6 abas: Geral, Editor, Terminal, IA, Notificações e Mobile|Idioma, aparência, terminal e acesso remoto mobile|Gerenciamento de chave API e configurações do provedor";
+"help.diffExplanation.title" = "Explicação de Diff com IA";
+"help.diffExplanation.features" = "Intenção, Riscos, Narrativa|Badges de severidade|Explicação manual em Changes e Code Review|Copiar para área de transferência";
+"help.codeReview.title" = "Code Review";
+"help.codeReview.features" = "Revisão em tela cheia por arquivo|Análise IA por arquivo|Comentários inline em PRs com threads de resposta|Enviar reviews (Aprovar/Solicitar Alterações/Comentar)|Exportar como Markdown|Atalho Cmd+Shift+R";
+"help.prInbox.title" = "Caixa de PRs";
+"help.prInbox.features" = "Suporte a GitHub, GitLab, Bitbucket e Azure DevOps|Fila de PRs atribuídos|Navegar todos os PRs abertos com atualização por polling|Revisão automática com IA|Clique para abrir no Code Review|Alertas macOS + ntfy para novos PRs e reviews";
+
+
+// Zion Map — Settings
+"map.settings.subtitle" = "Janela de configurações nativa do macOS com 6 abas organizadas.";
+"map.settings.window.title" = "Janela de Configurações";
+"map.settings.window.description" = "Janela de Configurações completa do macOS acessível via Cmd+, com abas Geral, Editor, Terminal, IA, Notificações e Mobile.";
+"map.settings.tabs.title" = "Abas Organizadas";
+"map.settings.tabs.description" = "Configurações divididas em grupos lógicos: interface geral, editor, terminal, provedores de IA, notificações e acesso remoto mobile.";
+"map.settings.api.title" = "Gerenciamento de Chave API";
+"map.settings.api.description" = "Gerencie chaves API de provedores de IA armazenadas no Keychain do macOS com segurança.";
+
+// Zion Map — Diff Explanation
+"map.diffExplanation.subtitle" = "Análise estruturada de diff com IA e avaliação de risco.";
+"map.diffexp.structured.title" = "Análise Estruturada";
+"map.diffexp.structured.description" = "Cada diff recebe seções de Intenção, Riscos e Narrativa para compreensão completa.";
+"map.diffexp.severity.title" = "Severidade de Risco";
+"map.diffexp.severity.description" = "Badges de severidade com cores (Seguro/Moderado/Arriscado) ajudam a priorizar a atenção da revisão.";
+"map.diffexp.auto.title" = "Explicar Diff";
+"map.diffexp.auto.description" = "Use a ação de explicar para analisar diffs sob demanda em Changes e Code Review.";
+"map.diffexp.auto.tip1" = "Abra um diff e acione Explicar quando quiser contexto da IA.";
+
+// Zion Map — Code Review
+"map.codeReview.subtitle" = "Revisão de código em tela cheia arquivo por arquivo com IA.";
+"map.codereview.fullscreen.title" = "Revisão em Tela Cheia";
+"map.codereview.fullscreen.description" = "Janela dedicada de 1000x700 com lista de arquivos, visualizador de diff e achados da IA lado a lado.";
+"map.codereview.perfile.title" = "Análise IA por Arquivo";
+"map.codereview.perfile.description" = "Cada arquivo recebe revisão individual da IA com achados estruturados e explicação de diff.";
+"map.codereview.export.title" = "Exportar e Compartilhar";
+"map.codereview.export.description" = "Copie o resumo para a área de transferência ou exporte a revisão completa como Markdown para comentários de PR.";
+
+// Zion Map — PR Inbox
+"map.prInbox.subtitle" = "Acompanhe PRs atribuídos com revisão automática por IA.";
+"map.prinbox.queue.title" = "Fila de PRs";
+"map.prinbox.queue.description" = "Card na sidebar mostrando todos os PRs atribuídos com badges de status e resumos de severidade.";
+"map.prinbox.autoreview.title" = "Revisão Automática";
+"map.prinbox.autoreview.description" = "Quando ativado, a IA revisa automaticamente PRs atribuídos e notifica você com os achados prontos.";
+"map.prinbox.notifications.title" = "Notificações de Pull Requests";
+"map.prinbox.notifications.description" = "Receba notificações do macOS e alertas push via ntfy para PRs recém-abertos, pedidos de review e revisões de IA concluídas.";
+
+// Auto Updates (Sparkle)
+"Buscar Atualizacoes..." = "Buscar Atualizações...";
+"help.updates.title" = "Atualizações Automáticas";
+"help.updates.check" = "Busque atualizações pelo menu Ajuda";
+"help.updates.auto" = "Verificação automática diária em segundo plano";
+"help.updates.delta" = "Atualizações delta para downloads menores";
+"map.autoUpdates.subtitle" = "Atualizações automáticas nativas via Sparkle com verificação diária.";
+"map.updates.check.title" = "Buscar Atualizações";
+"map.updates.check.description" = "Busque manualmente por novas versões pelo menu Ajuda > Buscar Atualizações.";
+"map.updates.auto.title" = "Verificação Automática";
+"map.updates.auto.description" = "O Zion verifica automaticamente se há atualizações a cada 24 horas em segundo plano.";
+"map.updates.delta.title" = "Atualizações Delta";
+"map.updates.delta.description" = "Downloads inteligentes que transferem apenas as diferenças entre versões.";
+
+// Push divergence warnings
+"push.warning.title" = "Atenção ao Push";
+"push.warning.behind" = "Sua branch está %@ commits atrás do remoto. Faça Pull primeiro para evitar conflitos.";
+"push.warning.diverged" = "Sua branch divergiu: %@ commits à frente, %@ atrás do remoto.";
+"push.pullFirst" = "Fazer Pull primeiro";
+"push.forceWithLease" = "Force Push (seguro)";
+"push.force" = "Force Push";
+"push.force.confirm" = "Isso vai sobrescrever a branch remota %@. Quaisquer commits no remoto que não estejam na sua branch local serão perdidos permanentemente. Tem certeza?";
+"pill.postTo.section.default" = "%@ (padrão)";
+"pill.postTo.menu.always" = "Sempre enviar para";
+"pill.postTo.menu.always.askEachTime" = "Perguntar a cada vez";
+"checkout.multiRemote.title" = "'%@' existe em múltiplos remotes";
+"checkout.multiRemote.message" = "A branch local '%@' rastreia '%@'. Você clicou em '%@'. Escolha como prosseguir.";
+"checkout.multiRemote.switch" = "Trocar upstream para %@ e fazer pull";
+"checkout.multiRemote.newBranch" = "Criar nova branch '%@' rastreando o remote clicado";
+"checkout.multiRemote.upstream.switched.status" = "Upstream de %@ trocado para %@ e pull concluído";
+"checkout.multiRemote.newBranch.created" = "Branch %@ criada rastreando %@";
+"checkout.multiRemote.newBranch.exists" = "A branch '%@' já existe localmente";
+"pr.remote.picker.label" = "Abrir PR em:";
+"pr.branchNotOnRemote" = "A branch '%@' ainda não foi enviada para '%@'. Faça push antes de criar o PR.";
+
+// New File / Save As / Open in Editor
+"Novo Arquivo" = "Novo Arquivo";
+"Salvar Como..." = "Salvar Como...";
+"Sem titulo" = "Sem título";
+"help.code.newfile" = "Criar novos arquivos diretamente no editor (⌘N)";
+"help.code.saveas" = "Salvar Como para escolher nome e local do arquivo (⇧⌘S)";
+"help.code.openineditor" = "Abrir arquivos alterados no editor a partir de qualquer tela";
+"help.code.contextmenu" = "Menu de contexto completo no navegador de arquivos (novo, renomear, copiar, colar, excluir)";
+"help.code.filebrowserdnd" = "Arraste e solte arquivos no navegador para mover ou importar do Finder ou Smart Clipboard";
+"help.code.findreplace" = "Buscar e Substituir no editor com destaque de resultados (⌘F / ⌘H)";
+"help.code.markdownpreview" = "Preview Markdown lado a lado para arquivos .md, com links clicáveis e imagens locais";
+"help.code.tabsize" = "Tamanho de tab e estilo de indentação configuráveis (2/4/8, espaços ou tabs)";
+"help.code.columnruler" = "Régua de coluna configurável (80/100/120) para referência visual";
+"help.code.brackets" = "Destaque de pares de parênteses/colchetes/chaves ao posicionar o cursor";
+"help.code.indentguides" = "Guias visuais de indentação para navegação estrutural no código";
+"help.code.repoconfig" = "Configuração por repositório via .zion/editor.json (sobrescreve configurações globais)";
+
+// File Browser Context Menu
+"Nova Pasta" = "Nova Pasta";
+"Renomear..." = "Renomear...";
+"Duplicar" = "Duplicar";
+"Excluir" = "Excluir";
+"Recortar" = "Recortar";
+"Colar" = "Colar";
+"Revelar no Finder" = "Revelar no Finder";
+"Nome do arquivo:" = "Nome do arquivo:";
+"Nome da pasta:" = "Nome da pasta:";
+"Novo nome:" = "Novo nome:";
+"Deseja excluir '%@'?" = "Deseja excluir '%@'?";
+"Deseja excluir %d itens?" = "Deseja excluir %d itens?";
+"Copiar %d Itens" = "Copiar %d Itens";
+"Recortar %d Itens" = "Recortar %d Itens";
+"Duplicar %d Itens" = "Duplicar %d Itens";
+"Excluir %d Itens" = "Excluir %d Itens";
+"Adicionar ao .gitignore" = "Adicionar ao .gitignore";
+"Esta acao nao pode ser desfeita." = "Esta ação não pode ser desfeita.";
+
+// Editor Settings Tab
+"settings.tab.editor" = "Editor";
+"settings.editor.appearance" = "Aparência";
+"settings.editor.theme" = "Tema";
+"settings.editor.font" = "Fonte";
+"settings.editor.fontSize" = "Tamanho da Fonte";
+"settings.editor.markdownPreviewFontSize" = "Tamanho do Preview Markdown";
+"settings.editor.lineSpacing" = "Espaçamento de Linha";
+"settings.editor.editing" = "Edição";
+"settings.editor.tabSize" = "Tamanho do Tab";
+"settings.editor.useTabs" = "Usar Tabs (em vez de espaços)";
+"settings.editor.autoCloseBrackets" = "Fechar parênteses automaticamente";
+"settings.editor.bracketPairHighlight" = "Destacar par de parênteses";
+"settings.editor.display" = "Exibição";
+"settings.editor.lineWrap" = "Quebra de Linha Automática";
+"settings.editor.highlightCurrentLine" = "Destacar Linha Atual";
+"settings.editor.showIndentGuides" = "Mostrar guias de indentação";
+"settings.editor.showRuler" = "Mostrar régua de coluna";
+"settings.editor.rulerColumn" = "Coluna da régua";
+"settings.editor.letterSpacing" = "Espaçamento de Letras";
+"settings.editor.autoCloseQuotes" = "Fechar aspas automaticamente";
+"settings.editor.popover.title" = "Configurações do Editor";
+"settings.editor.formatting" = "Formatação";
+"settings.editor.allSettings" = "Todas as Configurações do Editor...";
+"settings.editor.formatOnSave" = "Formatar ao Salvar";
+"settings.editor.jsonSortKeys" = "JSON: Ordenar chaves";
+"settings.editor.trimTrailingWhitespace" = "Remover Espacos no Final";
+"settings.editor.renderWhitespace" = "Exibir Espacos";
+"settings.editor.renderWhitespace.none" = "Nenhum";
+"settings.editor.renderWhitespace.boundary" = "Limite";
+"settings.editor.renderWhitespace.trailing" = "Final";
+"settings.editor.renderWhitespace.all" = "Todos";
+"settings.editor.topPadding" = "Margem Superior";
+"settings.editor.scrollPastEnd" = "Rolar Alem do Final";
+"settings.editor.font.system" = "Fontes do Sistema";
+"settings.editor.font.installed" = "Fontes Instaladas";
+"fileBrowser.toggleHidden" = "Alternar Arquivos Ocultos";
+"fileBrowser.dropMove" = "Falha ao mover arquivo";
+"fileBrowser.filter" = "Filtrar Arquivos";
+"fileBrowser.filter.placeholder" = "Filtrar por nome...";
+"settings.editor.fileBrowser" = "Explorador de Arquivos";
+"settings.editor.showDotfiles" = "Mostrar Arquivos Ocultos (.env, .gitignore, etc.)";
+
+// Find/Replace
+"editor.search.placeholder" = "Buscar...";
+"editor.search.noResults" = "Nenhum";
+"editor.search.previous" = "Anterior";
+"editor.search.next" = "Próximo";
+"editor.search.matchCase" = "Diferenciar Maiusculas";
+"editor.search.wholeWord" = "Palavra Inteira";
+"editor.search.regex" = "Regex";
+"editor.replace.placeholder" = "Substituir...";
+"editor.replace.one" = "Substituir";
+"editor.replace.all" = "Substituir Tudo";
+"editor.markdown.preview" = "Preview Markdown";
+"editor.markdown.showPreview" = "Mostrar preview de Markdown";
+"editor.markdown.hidePreview" = "Ocultar preview de Markdown";
+"editor.markdown.imageUnavailable" = "Não foi possível carregar a imagem";
+"editor.markdown.empty" = "Nada para visualizar ainda";
+"editor.image.title" = "Preview de Imagem";
+"editor.image.fit" = "Ajustar";
+"editor.image.actual" = "Tamanho Real";
+"editor.image.zoom" = "Zoom";
+"editor.image.zoomOut" = "Diminuir zoom";
+"editor.image.zoomIn" = "Aumentar zoom";
+"editor.image.revealFinder" = "Revelar no Finder";
+"editor.image.openExternal" = "Abrir Externamente";
+"editor.image.loadFailed" = "Não foi possível carregar esta imagem";
+"editor.file.unsupported" = "Este tipo de arquivo não pode ser visualizado no editor";
+"editor.file.readOnlyBinary" = "Este arquivo binário não pode ser salvo pelo editor de texto";
+"editor.file.missingContent" = "Este arquivo foi removido do disco. Mantenha esta aba para contexto ou feche-a.";
+"editor.file.missingStatus" = "O arquivo \"%@\" foi removido do disco.";
+"editor.file.missingSaveBlocked" = "Não é possível salvar porque este arquivo não existe mais no disco.";
+
+// Per-Repo Config
+"editor.repoConfig.active" = "Configurações do editor definidas por .zion/editor.json";
+
+// Operations Center Section Labels
+"Operacoes Principais" = "Operações Principais";
+"Snapshots" = "Snapshots";
+"Infraestrutura" = "Infraestrutura";
+"Inteligencia Artificial" = "Inteligência Artificial";
+"Informacoes" = "Informações";
+"Manutencao" = "Manutenção";
+
+// --- L10n Audit: Missing Keys ---
+
+// GitClient errors
+"gitError.commandFailed" = "Falha ao executar `%@`: %@";
+"gitError.checkout.usedByWorktree" = "A branch '%@' já está em uso no worktree '%@'. Abra esse worktree para continuar.";
+"Selecione um repositorio Git primeiro." = "Selecione um repositório Git primeiro.";
+"Selecione um repositorio Git." = "Selecione um repositório Git.";
+
+// RepositoryViewModel status messages
+"Carregando detalhes do commit..." = "Carregando detalhes do commit...";
+"Selecione um commit para ver os detalhes." = "Selecione um commit para ver os detalhes.";
+"Hunk staged com sucesso." = "Hunk staged com sucesso.";
+"Hunk unstaged com sucesso." = "Hunk unstaged com sucesso.";
+"Linhas staged com sucesso." = "Linhas staged com sucesso.";
+"Nenhuma mudanca." = "Nenhuma mudança.";
+"Nenhuma diferenca entre as branches." = "Nenhuma diferença entre as branches.";
+"Rebase interativo concluido com sucesso." = "Rebase interativo concluído com sucesso.";
+
+// GraphScreen & commit actions
+"Esc" = "Esc";
+"Staged" = "Staged";
+"Stage All" = "Stage All";
+"Stage Hunk" = "Stage Hunk";
+"Stage Linhas" = "Stage Linhas";
+"Unstage" = "Unstage";
+"Unstage All" = "Unstage All";
+"Salvar no Stash" = "Salvar no Stash";
+"stash.apply.success" = "Stash aplicado com sucesso.";
+"stash.pop.success" = "Stash aplicado e removido com sucesso.";
+"stash.restore.blocked.title" = "Não foi possível aplicar o stash agora";
+"stash.restore.blocked.message" = "O stash %@ não pôde ser aplicado porque há mudanças locais que seriam sobrescritas.\n\nDeseja salvar as mudanças atuais em um stash de segurança e tentar novamente?";
+"stash.restore.blocked.autoStashRetry" = "Salvar e Tentar Novamente";
+"stash.restore.blocked.cancelled" = "Aplicação de stash cancelada.";
+"stash.restore.blocked.retried" = "Criado stash de segurança (%@) e tentativa realizada.";
+"stash.restore.blocked.transferRestored" = "Transferência aplicada e mudanças locais restauradas (stash de segurança: %@).";
+"stash.restore.blocked.transferConflicts" = "Conflitos detectados ao restaurar mudanças locais. Resolvedor de conflitos aberto.";
+"stash.restore.blocked.transferPartial" = "Transferência aplicada, mas não foi possível restaurar totalmente as mudanças locais (stash de segurança: %@).";
+"commit.mode.allChanges" = "Incluir todos os arquivos pendentes (git add -A)";
+"commit.mode.allChanges.hint" = "Ao ativar, o Zion vai rastrear automaticamente tudo antes do commit.";
+"commit.mode.stagedOnly.hint" = "Somente os arquivos em stage serão commitados.";
+"commit.error.noStagedChanges" = "Nenhum arquivo em stage. Faça stage dos arquivos ou ative a opção para incluir todos.";
+"commit.confirm.staged" = "Deseja realizar o commit das alterações em stage?";
+"changes.summary.staged" = "Stage";
+"changes.summary.pending" = "Pendentes";
+"changes.summary.untracked" = "Novos";
+"changes.summary.stageHint" = "Faça stage para commitar apenas os selecionados.";
+"Carregar mais" = "Carregar mais";
+"Sugerir mensagem de commit" = "Sugerir mensagem de commit";
+"Descartar Mudanças" = "Descartar Mudanças";
+"discardAll.confirm.current" = "Descartar TODAS as mudanças pendentes deste repositório?";
+"discardAll.confirm.worktree" = "Descartar TODAS as mudanças pendentes do worktree '%@'?";
+"discardAll.success.current" = "Todas as mudanças pendentes foram descartadas.";
+"discardAll.success.worktree" = "Mudanças pendentes descartadas no worktree '%@'.";
+"pending.createBranchHere" = "Criar Branch Aqui";
+"pending.createBranchHere.subtitle" = "Crie e faça checkout de uma branch a partir do contexto atual de mudanças pendentes.";
+"pending.createBranch.placeholder" = "nome-da-branch";
+"pending.copyChanges" = "Copiar Mudanças";
+"pending.transfer" = "Copiar/Mover Mudanças";
+"pending.transfer.noWorktrees" = "Nenhum worktree de destino disponível";
+"pending.transfer.copy" = "Copiar mudanças para worktree";
+"pending.transfer.move" = "Mover mudanças para worktree";
+"pending.transfer.copy.short" = "Copiar Mudanças";
+"pending.transfer.move.short" = "Mover Mudanças";
+"pending.transfer.move.confirm" = "Mover mudanças pendentes para o worktree '%@'?";
+"pending.transfer.noChanges" = "Não há mudanças pendentes para transferir.";
+"pending.transfer.error.ref" = "Não foi possível localizar o stash temporário da transferência.";
+"pending.transfer.copy.success" = "Mudanças copiadas para o worktree '%@'.";
+"pending.transfer.move.success" = "Mudanças movidas para o worktree '%@'.";
+"pending.transfer.support.title" = "Transferência precisa de suporte";
+"pending.transfer.support.message" = "%@ para o worktree '%@' não pôde ser concluído sem conflitos.";
+"pending.transfer.support.error" = "Git retornou: %@";
+"pending.transfer.support.sourceRecovered" = "O worktree de origem foi restaurado automaticamente.";
+"pending.transfer.support.sourceNotRecovered" = "Não foi possível restaurar automaticamente o worktree de origem.";
+"pending.transfer.support.stash" = "Stash de recuperação: %@";
+"pending.transfer.support.keepStash" = "Esse stash foi preservado para você tentar novamente com segurança.";
+"pending.transfer.support.ai.available" = "Suporte com IA está disponível. Se precisar, use as ferramentas de IA do Zion ao abrir o worktree de destino.";
+"pending.transfer.support.ai.optional" = "O suporte com IA é opcional. Você pode continuar manualmente sem IA.";
+"pending.transfer.support.openTarget" = "Abrir Worktree de Destino";
+"pending.transfer.support.openTargetAI" = "Abrir Destino + Resolver com IA";
+"pending.transfer.support.ai.opened" = "Resolvedor de conflitos aberto. Use Resolver com IA nas regiões de conflito.";
+"pending.transfer.support.ai.noConflictFiles" = "Nenhum arquivo com conflito de merge foi detectado. Revise as mudanças pendentes antes de aplicar o stash novamente.";
+"pending.transfer.support.ai.confirm.title" = "Aplicar stash no destino com suporte de IA";
+"pending.transfer.support.ai.confirm.message" = "O Zion vai tentar aplicar o stash %@ no worktree '%@'.\n\nSe houver conflitos reais, o resolvedor será aberto automaticamente.";
+"pending.transfer.support.ai.confirm.apply" = "Aplicar no Destino";
+"pending.transfer.support.ai.result.clean" = "Stash aplicado no destino sem conflitos.";
+"pending.transfer.support.ai.result.blocked" = "Aplicação bloqueada por mudanças locais no destino. Revise os pending changes e tente novamente.";
+"pending.transfer.support.ai.result.conflicts" = "Conflitos detectados. Resolvedor aberto no destino.";
+"pending.transfer.support.ai.result.failed" = "Não foi possível aplicar o stash no destino. Revise o stash e tente novamente.";
+"pending.transfer.support.localCollision.title" = "Mudanças locais colidiram com o stash";
+"pending.transfer.support.localCollision.message" = "O stash não pôde ser aplicado totalmente no worktree '%@' porque há mudanças locais sobrepostas.";
+"pending.transfer.support.localCollision.incomingError" = "Erro ao aplicar stash de origem:\n%@";
+"pending.transfer.support.localCollision.localError" = "Erro ao reaplicar mudanças locais:\n%@";
+"pending.transfer.support.localCollision.safetyRef" = "Ref do stash de segurança local: %@";
+"pending.transfer.support.localCollision.incomingRef" = "Ref do stash de origem: %@";
+"pending.transfer.support.localCollision.openOps" = "Abrir Operations";
+"pending.transfer.support.localCollision.copySafety" = "Copiar Ref de Segurança";
+"pending.transfer.support.localCollision.copiedSafety" = "Ref do stash de segurança copiada.";
+"pending.transfer.support.localCollision.status" = "Aplicação parcial detectada. Revise os stashes e pending changes no destino.";
+"pending.transfer.support.copyStash" = "Copiar Ref do Stash";
+"pending.transfer.support.copied" = "Referência de stash de recuperação copiada.";
+"pending.transfer.support.handled" = "Fluxo de suporte da transferência concluído. Resolva o worktree de destino e continue.";
+"Criar branch" = "Criar branch";
+"worktree.remove.pending.title" = "Worktree com mudanças pendentes";
+"worktree.remove.pending.message" = "O worktree '%@' possui mudanças pendentes. Escolha como continuar:";
+"worktree.remove.discardAndRemove" = "Descartar e Remover";
+"worktree.remove.withoutDiscard" = "Remover sem descartar";
+"worktree.remove.force" = "Forçar Remoção";
+"worktree.remove.success" = "Worktree '%@' removido com sucesso.";
+"worktree.remove.forced.success" = "Worktree '%@' removido com force.";
+"worktree.remove.discarded.success" = "Mudanças descartadas e worktree '%@' removido.";
+"worktree.remove.branchRemains" = "A branch '%@' também será removida.";
+"Selecionar..." = "Selecionar...";
+"Clipboard" = "Clipboard";
+"Imagem" = "Imagem";
+"Colar no Terminal" = "Colar no Terminal";
+"Limpar tudo" = "Limpar tudo";
+"agora" = "agora";
+
+// ContentView commit context menu
+"Revert" = "Revert";
+"Reverter este commit criando um novo commit?" = "Reverter este commit criando um novo commit?";
+"Rebase Interativo a partir daqui..." = "Rebase interativo a partir daqui...";
+"Reflog / Desfazer" = "Reflog / Desfazer";
+
+// Branch context menu
+"Criar Pull Request..." = "Criar Pull Request...";
+
+// ReflogSheet
+"Reflog" = "Reflog";
+"Historico de acoes do repositorio" = "Histórico de ações do repositório";
+"Desfazer Ultima Acao" = "Desfazer Última Ação";
+"Voltar ao estado anterior (git reset --soft)" = "Voltar ao estado anterior (git reset --soft)";
+"na branch %@" = "na branch %@";
+"Carregando reflog..." = "Carregando reflog...";
+"Reset --soft para aqui" = "Reset --soft para aqui";
+"Reset --hard para aqui" = "Reset --hard para aqui";
+
+// BlameView
+"Git Blame" = "Git Blame";
+
+// RepositoryStatsView
+"Estatisticas" = "Estatísticas";
+"Visao geral do repositorio" = "Visão geral do repositório";
+"Carregue as estatisticas para visualizar." = "Carregue as estatísticas para visualizar.";
+"Carregar" = "Carregar";
+"Autores" = "Autores";
+"Top Contribuidores" = "Top Contribuidores";
+"Linguagens" = "Linguagens";
+
+// SubmodulesCard
+"Submodulos" = "Submódulos";
+"Nenhum submodulo encontrado." = "Nenhum submódulo encontrado.";
+"Dependencias externas do repositorio" = "Dependências externas do repositório";
+"Init" = "Init";
+"Update" = "Update";
+"Sync" = "Sync";
+
+// InteractiveRebaseSheet
+"Rebase Interativo" = "Rebase Interativo";
+"Base: %@" = "Base: %@";
+"Executar Rebase" = "Executar Rebase";
+
+// PullRequestSheet
+"Criar Pull Request" = "Criar Pull Request";
+"Titulo" = "Título";
+"Titulo do PR..." = "Título do PR...";
+"Branch base" = "Branch base";
+"Descricao" = "Descrição";
+"Criar como Draft" = "Criar como Draft";
+"PR criado com sucesso!" = "PR criado com sucesso!";
+"Abrir no Navegador" = "Abrir no Navegador";
+"Criar PR" = "Criar PR";
+"Nenhum remote GitHub detectado." = "Nenhum remote GitHub detectado.";
+
+// AuthErrorSheet
+"Erro de Autenticacao" = "Erro de Autenticação";
+"Nao foi possivel acessar o repositorio remoto." = "Não foi possível acessar o repositório remoto.";
+"Possiveis solucoes:" = "Possíveis soluções:";
+"Verifique se sua chave SSH esta adicionada ao ssh-agent." = "Verifique se sua chave SSH está adicionada ao ssh-agent.";
+"Configuracao SSH" = "Configuração SSH";
+"Teste a conexao SSH com o GitHub." = "Teste a conexão SSH com o GitHub.";
+"Autentique-se com o GitHub CLI para configurar credenciais." = "Autentique-se com o GitHub CLI para configurar credenciais.";
+"Verifique as credenciais salvas no Keychain Access do macOS." = "Verifique as credenciais salvas no Keychain Access do macOS.";
+
+// SidebarView
+"Notificações ativas" = "Notificações ativas";
+
+// BranchReviewSheet
+"branch.review.title" = "Revisão de Branch";
+"branch.review.subtitle" = "Compare duas branches e revise as diferenças com IA";
+"branch.review.target" = "Branch Alvo";
+"branch.review.source" = "Branch Origem";
+"branch.review.button" = "Revisar Branch";
+"branch.review.loading" = "Analisando diferenças...";
+"branch.review.empty" = "Nenhuma diferença encontrada entre as branches";
+
+// HunkDiffView / ChangesScreen
+"Abrir repositorio..." = "Abrir repositório...";
+"Inicializar repositorio..." = "Inicializar repositório...";
+"Criar um novo repositorio Git em uma pasta existente" = "Criar um novo repositório Git em uma pasta existente";
+
+// Keys that existed in EN/ES but not PT-BR (used in code)
+"/caminho/para/worktree" = "/caminho/para/worktree";
+"ATUAL" = "ATUAL";
+"Adicionar" = "Adicionar";
+"Adicionar worktree" = "Adicionar worktree";
+"Aplicar e remover o stash selecionado?" = "Aplicar e remover o stash selecionado?";
+"Aplicar este commit na branch atual?" = "Aplicar este commit na branch atual?";
+"Aplicar o commit informado na branch atual?" = "Aplicar o commit informado na branch atual?";
+"Aplicar o stash selecionado?" = "Aplicar o stash selecionado?";
+"Apply" = "Apply";
+"Branches locais/remotas" = "Branches locais/remotas";
+"Busca (Cmd+F)" = "Busca (Cmd+F)";
+"CUIDADO: Operacoes de reset descartam alteracoes." = "CUIDADO: Operações de reset descartam alterações.";
+"Checkout branch" = "Checkout branch";
+"Checkout e integracao" = "Checkout e integração";
+"Cherry-pick" = "Cherry-pick";
+"Criar o novo worktree com os parametros informados?" = "Criar o novo worktree com os parâmetros informados?";
+"Criar stash" = "Criar stash";
+"Criar tag" = "Criar tag";
+"Criar tag no commit atual?" = "Criar tag no commit atual?";
+"Defina caminho e branch opcional" = "Defina caminho e branch opcional";
+"Deseja remover a tag informada?" = "Deseja remover a tag informada?";
+"Deseja remover o worktree %@?" = "Deseja remover o worktree %@?";
+"Deseja remover permanentemente o stash selecionado?" = "Deseja remover permanentemente o stash selecionado?";
+"Drop" = "Drop";
+"Esta acao e IRREVERSIVEL. Deseja continuar?" = "Esta ação é IRREVERSÍVEL. Deseja continuar?";
+"Fazer checkout da branch %@?" = "Fazer checkout da branch %@?";
+"Fazer checkout da referencia informada?" = "Fazer checkout da referência informada?";
+"Gerencie branches, tags, stashes e alteracoes de historico." = "Gerencie branches, tags, stashes e alterações de histórico.";
+"Gerencie contextos paralelos sem trocar branch no diretorio principal." = "Gerencie contextos paralelos sem trocar branch no diretório principal.";
+"Navegue e salte entre as pontas das branches." = "Navegue e salte entre as pontas das branches.";
+"Nenhum worktree encontrado" = "Nenhum worktree encontrado";
+"Pop" = "Pop";
+"Prune" = "Prune";
+"Prune worktrees" = "Prune worktrees";
+"Rebase e cherry-pick" = "Rebase e cherry-pick";
+"Nome da branch ou commit onde rebasear (ex: main, origin/main)" = "Nome da branch ou commit onde rebasear (ex: main, origin/main)";
+"Replay seus commits em cima da branch informada" = "Replay seus commits em cima da branch informada";
+"Hash do commit a aplicar (ex: a1b2c3d)" = "Hash do commit a aplicar (ex: a1b2c3d)";
+"Copiar um commit de outra branch para a branch atual" = "Copiar um commit de outra branch para a branch atual";
+"Referencia do commit (ex: HEAD~1, hash, branch)" = "Referência do commit (ex: HEAD~1, hash, branch)";
+"Descartar TODAS as alteracoes e voltar ao commit informado" = "Descartar TODAS as alterações e voltar ao commit informado";
+"Remover" = "Remover";
+"Remover metadados de worktrees obsoletos?" = "Remover metadados de worktrees obsoletos?";
+"Remover tag" = "Remover tag";
+"Remover worktree" = "Remover worktree";
+"Salvar alteracoes locais no stash?" = "Salvar alterações locais no stash?";
+"Selecionar branch ou hash..." = "Selecionar branch ou hash...";
+"Worktrees disponiveis" = "Worktrees disponíveis";
+"branch (opcional)" = "branch (opcional)";
+"cherry-pick hash" = "cherry-pick hash";
+"itens" = "itens";
+"mensagem do stash" = "mensagem do stash";
+"rebase target" = "rebase target";
+"refs" = "refs";
+
+// Pre-Commit AI Review Gate
+"settings.ai.preCommitReview" = "Review Pré-Commit";
+"settings.ai.preCommitReview.toggle" = "Executar review com IA antes de commitar";
+"settings.ai.preCommitReview.hint" = "Quando ativo, clicar em Commit primeiro executa um code review com IA. Você ainda pode commitar mesmo se problemas forem encontrados.";
+"settings.ai.transferSupport" = "Suporte de Transferência";
+"settings.ai.transferSupport.toggle" = "Mostrar dicas de suporte com IA para falhas de copiar/mover";
+"settings.ai.transferSupport.hint" = "Opcional. A recuperação da transferência funciona sem IA; quando ativo, o Zion também mostra disponibilidade de orientação por IA.";
+"settings.ai.mode" = "Modo de IA";
+"settings.ai.mode.efficient" = "Eficiente";
+"settings.ai.mode.efficient.hint" = "Preserva o caminho econômico. Usa modelos mais leves e contexto menor nas tarefas pesadas.";
+"settings.ai.mode.smart" = "Inteligente";
+"settings.ai.mode.smart.hint" = "Equilibra custo e qualidade com modelos mais fortes para reviews e explicações.";
+"settings.ai.mode.bestQuality" = "Melhor Qualidade";
+"settings.ai.mode.bestQuality.hint" = "Prioriza os modelos mais fortes disponíveis para as tarefas de IA mais importantes.";
+"settings.ai.mapping" = "Mapeamento Atual de Modelos";
+"settings.ai.mapping.hint" = "O Zion direciona cada categoria de tarefa de IA para um modelo específico do provedor com base no modo selecionado.";
+"settings.ai.mapping.cheapSummary" = "Resumos";
+"settings.ai.mapping.general" = "Tarefas Gerais";
+"settings.ai.mapping.review" = "Reviews";
+"settings.ai.mapping.reasoning" = "Raciocínio";
+"settings.ai.mapping.transcription" = "Transcrição";
+"settings.ai.repoMemory" = "Memória do Repositório";
+"settings.ai.repoMemory.refresh" = "Atualizar";
+"settings.ai.repoMemory.clear" = "Limpar";
+"settings.ai.repoMemory.status.closed" = "Abra um repositório para gerar a memória do repositório.";
+"settings.ai.repoMemory.status.notBuilt" = "ainda não gerada";
+"settings.ai.repoMemory.status.ready" = "A memória do repositório está pronta para %@.";
+"settings.ai.repoMemory.status.readyDetail" = "A memória do repositório está pronta para %@. Última atualização: %@.";
+"settings.ai.repoMemory.status.pendingDetail" = "A memória do repositório ainda não está pronta para %@.";
+"settings.ai.repoMemory.status.loading" = "Preparando a memória do repositório...";
+"settings.ai.repoMemory.status.missing" = "A memória do repositório ainda não foi gerada para este repositório.";
+"settings.ai.repoMemory.status.error" = "Não foi possível atualizar a memória do repositório.";
+"review.finding.evidence" = "Evidência";
+"review.finding.testImpact" = "Impacto em Testes";
+"precommit.gate.title" = "Review de IA Pré-Commit";
+"precommit.reviewing" = "Revisando código antes do commit...";
+"precommit.fixIssues" = "Corrigir Problemas";
+"precommit.commitAnyway" = "Commitar Mesmo Assim";
+"precommit.moreFindings" = "e mais findings:";
+"help.ai.precommit" = "Gate de review com IA automático antes de cada commit (ativar em Configurações)";
+
+// File History
+"filehistory.title" = "Histórico do Arquivo";
+"filehistory.loading" = "Carregando histórico do arquivo...";
+"filehistory.empty" = "Nenhum commit encontrado para este arquivo.";
+"filehistory.showInGraph" = "Mostrar no Grafo";
+"help.code.filehistory" = "Visualize o histórico de commits de qualquer arquivo com um clique";
+"help.code.openwith" = "Abrir arquivos pelo Finder (Abrir Com) ou arrastando para o editor";
+"help.code.format" = "Formatar código com ⇧⌥F — suporta JSON, XML, HTML, CSS, JavaScript, Python e mais";
+"help.code.dotfiles" = "Alterne arquivos ocultos com o botão de olho ou ⇧⌘H.";
+
+// Zion Map — Pre-Commit Review
+"map.ai.precommit.title" = "Gate de Review Pré-Commit";
+"map.ai.precommit.description" = "Executa automaticamente review de código com IA quando você clica em Commit. Mostra findings com contagem de safe/warning/critical e permite corrigir ou commitar mesmo assim.";
+"map.ai.precommit.tip1" = "Ative em Configurações > IA > Executar review com IA antes de commitar.";
+
+// Zion Map — File History
+"map.code.filehistory.title" = "Histórico do Arquivo";
+"map.code.filehistory.description" = "Veja o histórico de commits de qualquer arquivo. Mostra hash, autor, data e mensagem de cada commit que tocou o arquivo.";
+"map.code.filehistory.tip1" = "Clique com botão direito em um arquivo e selecione Histórico do Arquivo, ou use o botão na toolbar.";
+
+// Climbing Zion — Onboarding
+"onboarding.title" = "Climbing Zion";
+"onboarding.subtitle" = "A vista do topo.";
+"onboarding.discover" = "Descobrir";
+"onboarding.skip" = "Pular";
+"onboarding.continue" = "Continuar";
+"onboarding.back" = "Voltar";
+"onboarding.skipOnboarding" = "Pular introdução";
+
+"onboarding.tree.title" = "Zion Tree";
+"onboarding.tree.subtitle" = "Seu histórico Git, visualizado.";
+"onboarding.tree.lanes" = "Lanes coloridas mostram o fluxo de branches de relance";
+"onboarding.tree.search" = "Busque commits, tags e branches instantaneamente";
+"onboarding.tree.pending" = "Veja mudanças pendentes direto no grafo";
+"onboarding.tree.stash" = "Gerenciamento de stash integrado à lista de commits";
+
+"onboarding.code.title" = "Zion Code";
+"onboarding.code.subtitle" = "Edite, revise e execute — tudo em um lugar.";
+"onboarding.code.editor" = "Syntax highlighting com 6 temas lindos";
+"onboarding.code.terminal" = "Terminal integrado com splits e tabs";
+"onboarding.code.blame" = "Git blame com anotações inline";
+"onboarding.code.clipboard" = "Clipboard inteligente para snippets e imagens";
+
+"onboarding.ai.title" = "Assistente IA";
+"onboarding.ai.subtitle" = "12 recursos com IA para turbinar seu workflow.";
+"onboarding.ai.optional" = "Isso é completamente opcional.";
+"onboarding.ai.laterHint" = "Você pode ativar isso depois em Configurações > IA.";
+"onboarding.ai.getKey" = "Obter Chave";
+"onboarding.ai.skipAI" = "Pular por agora";
+"onboarding.ai.keySaved" = "Chave salva!";
+"onboarding.ai.features" = "Mensagens de commit, explicação de diffs, code review, busca semântica, resolução de conflitos e mais.";
+
+"onboarding.ready.title" = "Você chegou ao topo!";
+"onboarding.ready.subtitle" = "Zion está pronto. Abra um repositório para começar.";
+"onboarding.ready.openRepo" = "Abrir Repositório";
+"onboarding.ready.cloneRepo" = "Clonar Repositório";
+"onboarding.ready.initRepo" = "Inicializar Repositório";
+"onboarding.ready.enabled" = "Ativado";
+"onboarding.ready.skipped" = "Não configurado";
+
+// Tour guiado contextual
+"featureTour.stepLabel" = "Passo %d de %d";
+"featureTour.skip" = "Pular tour";
+"featureTour.back" = "Voltar";
+"featureTour.next" = "Próximo";
+"featureTour.done" = "Concluir";
+"featureTour.recent.title" = "Repositórios recentes";
+"featureTour.recent.body" = "Volte rápido para os repositórios em que você trabalhou recentemente sem precisar reabrir tudo pelo Finder.";
+"featureTour.workspace.title" = "Seletor de workspace";
+"featureTour.workspace.body" = "Alterne entre Zion Code, Zion Tree e Operations por aqui. Esse é o jeito mais rápido de entender o layout do Zion.";
+"featureTour.tree.title" = "Zion Tree";
+"featureTour.tree.body" = "Revise histórico, pesquise commits e inspecione mudanças pendentes no grafo antes de agir no repositório.";
+"featureTour.zen.title" = "Zen Mode";
+"featureTour.zen.body" = "Use este botão da toolbar quando quiser uma experiência focada em editor e terminal, com menos distrações ao redor.";
+"featureTour.worktrees.title" = "Worktrees";
+"featureTour.worktrees.body" = "Crie e troque worktrees paralelos aqui para revisar, corrigir ou prototipar em branches diferentes sem perder contexto.";
+"featureTour.ai.optional" = "Os recursos principais de Git, código, terminal e worktrees funcionam sem IA. Adicione um provedor depois em Configurações > IA para desbloquear ferramentas com IA.";
+
+// Wave 2: Terminal Search
+"Buscar no terminal..." = "Buscar no terminal...";
+"Fechar busca" = "Fechar busca";
+
+// Wave 2: Stash Badge
+"Stashes" = "Stashes";
+
+// Wave 2: Branch Search
+"Filtrar branches..." = "Filtrar branches...";
+
+// Wave 2: AI Pending Changes Summary
+"Resumo IA das mudancas" = "Resumo IA das mudanças";
+"Analisando mudancas..." = "Analisando mudanças...";
+"Usar como mensagem de commit" = "Usar como mensagem de commit";
+
+// Wave 2: Smart Clipboard
+"Mostrar no Graph" = "Mostrar no Graph";
+"Checkout %@" = "Checkout %@";
+"checkout.worktree.inUse.title" = "Branch em uso por outro worktree";
+"checkout.worktree.inUse.message" = "A branch '%@' já está ativa neste worktree:\n%@";
+"checkout.worktree.inUse.open" = "Abrir Worktree";
+"checkout.worktree.redirected" = "Abrindo worktree da branch '%@'.";
+
+// Wave 2: Help entries
+"help.terminalSearch" = "Buscar texto no terminal com Cmd+F";
+"help.stashBadge" = "Badge de contagem de stashes na sidebar";
+"help.branchSearch" = "Filtrar branches por nome na sidebar";
+"help.tree.commitLoading" = "Spinners de carregamento para detalhes de commit com re-acesso instantâneo via cache";
+"help.commitStats" = "Linhas adicionadas/removidas por commit no graph";
+"help.aiSummary" = "Resumo IA das mudanças pendentes";
+"help.smartClipboard" = "Ações contextuais inteligentes no clipboard";
+"help.avatars" = "Avatares opcionais de Gravatar dos autores no graph";
+
+// Worktree Smart Create
+"Abrir no Zion Code" = "Abrir no Zion Code";
+"worktree.smart.new" = "Novo Worktree";
+"worktree.smart.subtitle" = "Prefixo + nome. O caminho é derivado automaticamente.";
+"worktree.smart.prefix" = "Prefixo";
+"worktree.smart.name.placeholder" = "nome-da-branch";
+"worktree.smart.createOpen" = "Criar e Abrir";
+"worktree.smart.advanced" = "Avançado";
+"worktree.smart.confirm" = "Criar e abrir o novo worktree no Zion Code?";
+"worktree.smart.missing" = "Preencha nome (ou path + branch no modo avançado).";
+"worktree.smart.created" = "Worktree criado: %@";
+"worktree.smart.empty" = "Nenhum worktree paralelo ainda. Crie um acima.";
+"worktree.smart.branchExists.title" = "Branch ja existe";
+"worktree.smart.branchExists.message" = "A branch '%@' ja existe no repositorio. Como deseja continuar?";
+"worktree.smart.branchExists.reuse" = "Reusar branch existente";
+"worktree.smart.branchExists.createSuffix" = "Criar nova com sufixo";
+"worktree.smart.branchExists.cancelled" = "Criacao de worktree cancelada.";
+"worktree.main.badge" = "ROOT";
+"worktree.main.hint" = "Worktree principal (raiz do repositório)";
+"worktree.badge.short" = "WT";
+"worktree.badge.hint" = "(Checkout ativo em outro worktree)";
+"worktree.prefix.feat" = "feat";
+"worktree.prefix.fix" = "fix";
+"worktree.prefix.chore" = "chore";
+"worktree.prefix.hotfix" = "hotfix";
+"worktree.prefix.exp" = "exp";
+"branch.group.local" = "Locais";
+"branch.group.remote" = "Remotas";
+"codereview.sameBranch.inline" = "Origem e destino não podem ser a mesma branch.";
+"codereview.sameBranch.error" = "Selecione branches diferentes para iniciar a revisão.";
+"Merge into Current" = "Mesclar na Atual";
+"Pull into Current" = "Pull na Atual";
+"Rebase Current onto This" = "Rebase da Atual nesta";
+"stash.restore.error.noEntries" = "Nenhum stash disponível para aplicar.";
+"stash.restore.error.invalidReference" = "A referência de stash '%@' não é válida.";
+"stash.restore.error.applyConflict" = "Não foi possível aplicar o stash automaticamente por conflito. Abra o resolvedor de conflitos para continuar.";
+"stash.restore.error.popConflict" = "Não foi possível aplicar/remover o stash automaticamente por conflito. Abra o resolvedor de conflitos para continuar.";
+"stash.restore.error.applyGeneric" = "Falha ao aplicar o stash. Revise o estado do repositório e tente novamente.";
+"stash.restore.error.popGeneric" = "Falha ao executar pop do stash. Revise o estado do repositório e tente novamente.";
+"reset.hard.confirm.withCount" = "Reset --hard para '%@'. Mudanças pendentes afetadas: %@ arquivo(s). Deseja continuar?";
+"stash.drop.confirm.withCount" = "Remover permanentemente '%@'? Total de stashes atuais: %@.";
+"prune.merged.confirm.empty" = "Nenhuma branch local mesclada foi detectada para remover.";
+"prune.merged.confirm.withCount" = "Remover %@ branch(es) locais já mescladas?";
+"recovery.title" = "Recovery Vault";
+"recovery.subtitle" = "Snapshots de segurança para restaurar mudanças após falhas.";
+"recovery.refresh" = "Atualizar snapshots de recuperação";
+"recovery.empty" = "Nenhum snapshot de recuperação encontrado.";
+"recovery.status.loaded" = "%@ snapshot(s) carregados.";
+"recovery.status.empty" = "Nenhum snapshot disponível.";
+"recovery.status.failed" = "Falha ao carregar snapshots de recuperação.";
+"recovery.source.activeStash" = "Stash ativo";
+"recovery.source.danglingSnapshot" = "Snapshot órfão";
+"recovery.copy" = "Copiar";
+"recovery.copy.success" = "Referência de recuperação copiada: %@";
+"recovery.restore" = "Restaurar";
+"recovery.restore.confirm" = "Restaurar snapshot %@ no working tree atual? Isso pode sobrescrever mudanças locais.";
+"git.auth.title" = "Autenticacao Git HTTPS";
+"git.auth.azure.hint" = "No Azure DevOps, use um PAT no campo de senha.";
+"git.auth.username.label" = "Usuario ou email";
+"git.auth.username.placeholder" = "usuario@empresa.com";
+"git.auth.secret.label" = "Senha ou PAT";
+"git.auth.secret.placeholder" = "Cole o token aqui";
+"git.auth.continue" = "Continuar";
+"git.auth.cancelled" = "Autenticacao Git cancelada pelo usuario.";
+"git.auth.secretRequired" = "Informe uma senha ou PAT para continuar.";
+
+// Editor Navigation (VSCode-like)
+"shortcuts.selectNextOccurrence" = "Selecionar próxima ocorrência";
+"shortcuts.goToDefinition" = "Ir para definição";
+"shortcuts.findReferences" = "Encontrar referências";
+"shortcuts.cmdClickDefinition" = "Cmd+Click ir para definição";
+"help.code.navigation" = "Navegação de símbolo com Cmd+D, F12, Shift+F12 e Cmd+Click";
+"editor.navigation.definitions.title" = "Definições: %@";
+"editor.navigation.references.title" = "Referências: %@";
+"editor.navigation.noResults" = "Nenhum resultado encontrado.";
+"editor.navigation.definition.notFound" = "Definição não encontrada para '%@'.";
+"editor.navigation.definition.opened" = "Definição de '%@' aberta.";
+"editor.navigation.references.notFound" = "Nenhuma referência encontrada para '%@'.";
+"editor.navigation.references.found" = "%@ referência(s) encontrada(s) para '%@'.";
+"settings.editor.showBreadcrumb" = "Mostrar breadcrumb de caminho";
+"editor.breadcrumb.path" = "Breadcrumb do caminho do arquivo";
+
+// 1.2.1 — Documenter parity (HelpSheet x Zion Map x Shortcuts)
+"shortcuts.findAlias" = "Buscar (alias Ctrl+F)";
+
+"map.tree.commitstats.title" = "Estatísticas por Commit";
+"map.tree.commitstats.description" = "Veja linhas adicionadas (+) e removidas (-) em cada commit direto no grafo.";
+"map.tree.commitstats.tip1" = "Use para identificar rapidamente commits com maior impacto.";
+"map.tree.avatars.title" = "Avatares de Autor";
+"map.tree.avatars.description" = "Exibe opcionalmente identicons Gravatar ao lado dos autores para leitura visual mais rápida.";
+"map.tree.branchsearch.title" = "Busca de Branches";
+"map.tree.branchsearch.description" = "Filtre branches pelo nome na sidebar para encontrar referências rapidamente.";
+"map.tree.branchsearch.tip1" = "Funciona com nomes parciais e remotos, como origin/feature.";
+"map.tree.commitLoading.title" = "Carregamento de Detalhes";
+"map.tree.commitLoading.description" = "Spinners de carregamento aparecem ao buscar detalhes de commits e diffs. Commits visualizados anteriormente carregam instantaneamente via cache inteligente.";
+
+"map.code.fileactions.title" = "Ações de Arquivo";
+"map.code.fileactions.description" = "Crie arquivos (⌘N), use Salvar Como (⇧⌘S), abra mudanças no editor e acesse menu de contexto completo no navegador.";
+"map.code.fileactions.tip1" = "Clique com botão direito em arquivos/pastas para novo, renomear, duplicar, copiar, colar e excluir.";
+"map.code.searchreplace.title" = "Buscar e Substituir";
+"map.code.searchreplace.description" = "Busca com destaque e navegação entre resultados, substituição inline e atalho para ir direto para uma linha.";
+"map.code.searchreplace.tip1" = "Use ⌘G/⇧⌘G para navegar resultados quando a busca estiver aberta.";
+"map.code.navigation.title" = "Navegação de Símbolos";
+"map.code.navigation.description" = "Navegue por símbolos com seleção de próxima ocorrência, ir para definição, encontrar referências e Cmd+Click.";
+"map.code.navigation.tip1" = "Definições e referências abrem em lista para navegação rápida.";
+"map.code.editorsettings.title" = "Preferências de Edição";
+"map.code.editorsettings.description" = "Controle tabulação, régua de coluna, destaque de brackets, guias de indentação e configuração por repositório.";
+"map.code.editorsettings.tip1" = "Use .zion/editor.json para sobrescrever preferências globais por projeto.";
+
+"map.terminal.search.title" = "Busca no Terminal";
+"map.terminal.search.description" = "Pesquise texto no terminal ativo sem sair do fluxo de comandos.";
+
+"map.clipboard.smartactions.title" = "Ações Inteligentes";
+"map.clipboard.smartactions.description" = "Ações contextuais para hashes, branches e caminhos aceleram tarefas sem digitação manual.";
+"map.clipboard.smartactions.tip1" = "Use hashes para abrir no grafo e caminhos para abrir no editor.";
+
+"map.ops.init.title" = "Inicializar Repositório";
+"map.ops.init.description" = "Crie um novo repositório Git diretamente da tela inicial com um clique.";
+"map.ops.stashbadge.title" = "Badge de Stash";
+"map.ops.stashbadge.description" = "A sidebar exibe um badge com a contagem de stashes quando houver itens pendentes.";
+
+"map.ai.summary.title" = "Resumo de Mudanças Pendentes";
+"map.ai.summary.description" = "Gera um resumo em linguagem natural do que foi alterado para acelerar commits e status updates.";
+"map.ai.stash.title" = "Mensagens de Stash com IA";
+"map.ai.stash.description" = "Sugere mensagens descritivas para stashes com base nas mudanças atuais.";
+"map.ai.branch.title" = "Resumo de Branch";
+"map.ai.branch.description" = "Gera uma frase curta explicando o objetivo de qualquer branch.";
+
+"map.diag.sanitize.title" = "Sanitização de Dados";
+"map.diag.sanitize.description" = "Logs removem automaticamente credenciais e dados sensíveis antes de exportar ou copiar.";
+"status.nav.settings" = "Configuracoes";
+"statusBar.recents.title" = "Recentes";
+"statusBar.recents.openFolder" = "Abrir Pasta…";
+"statusBar.recents.showProjects" = "Mostrar Projetos";
+"statusBar.recents.empty" = "Nenhum repositório recente";
+"format.menu" = "Formatar";
+"format.document" = "Formatar Documento";
+"format.success" = "Documento formatado";
+"format.noChanges" = "Já está formatado";
+"format.unsupported" = "Nenhum formatador disponível para este tipo de arquivo";
+"format.error" = "Erro de formatação: %@";
+"focus.menu" = "Visualizacao";
+"focus.toggle" = "Modo Zen";
+"zen.mode" = "Modo Zen";
+"zen.enter" = "Entrar no Modo Zen";
+"zen.exit" = "Sair do Modo Zen";
+"graph.decoration.overflow" = "+%d mais refs";
+"graph.commit.review" = "Revisar este commit com IA";
+"graph.commit.review.cached" = "cache";
+"graph.commit.review.tab.details" = "Detalhes";
+"graph.commit.review.tab.ai" = "Review IA";
+"graph.commit.review.empty" = "Ainda não há review em cache para este commit.";
+"graph.commit.review.loading" = "Revisando mudanças do commit com IA...";
+"graph.commit.review.nodiff" = "Nenhum diff do commit disponível para revisão.";
+
+"settings.zionMode.subtitle" = "Tema premium SynthWave '84 — uma experiência neon cyberpunk";
+"zionMode.toggle" = "Zion Mode";
+"zionMode.enter" = "Entrar no Zion Mode";
+"zionMode.exit" = "Sair do Zion Mode";
+"help.zionMode.title" = "Zion Mode";
+"help.zionMode.toggle" = "Ative em Configurações > Geral ou no menu Visualização";
+"help.zionMode.shortcut" = "Atalho rápido ⌃⌘Z de qualquer lugar";
+"help.zionMode.restore" = "Restaura automaticamente o tema anterior ao desativar";
+"help.zionMode.theme" = "Ativa o tema SynthWave '84 no editor e terminal";
+"map.zionMode.subtitle" = "Experiência premium com tema neon cyberpunk";
+"map.zionMode.toggle.title" = "Atalho Rápido";
+"map.zionMode.toggle.description" = "Ative ou desative o tema SynthWave '84 instantaneamente com atalho de teclado ou menu.";
+"map.zionMode.settings.title" = "Toggle nas Configurações";
+"map.zionMode.settings.description" = "Ative o Zion Mode em Configurações > Geral com um ícone de raio gradiente e switch.";
+"map.zionMode.restore.title" = "Restauração de Tema";
+"map.zionMode.restore.description" = "Seu tema anterior é salvo e restaurado automaticamente ao desativar o Zion Mode.";
+"map.zionMode.theme.title" = "Tema SynthWave '84";
+"map.zionMode.theme.description" = "Paleta neon cyberpunk com fundo roxo, keywords douradas, tipos ciano, strings laranja e cursor rosa no terminal.";
+
+"Sobre o Zion" = "Sobre o Zion";
+"about.version" = "Versão %@ (%@)";
+"about.website" = "Visitar Site";
+"about.madeWith" = "Feito com SwiftUI";
+"help.visitWebsite" = "Visitar Site";
+"Arquivo binario ou nao legivel." = "Arquivo binário ou não legível.";
+
+"Buscar nos Arquivos" = "Buscar nos Arquivos";
+"Buscar na Pasta" = "Buscar na Pasta";
+"Incluir arquivos" = "Incluir";
+"Excluir arquivos" = "Excluir";
+"findInFiles.summary" = "%@ resultados em %@ arquivos";
+"Nenhum resultado" = "Nenhum resultado";
+"Filtros" = "Filtros";
+"findInFiles.close" = "Fechar busca em arquivos";
+
+// MARK: - Terminal Settings
+"settings.tab.terminal" = "Terminal";
+"settings.terminal.buffer" = "Buffer";
+"settings.terminal.scrollback" = "Linhas de Scrollback";
+"settings.terminal.scrollback.unlimited" = "Ilimitado";
+"settings.terminal.scrollback.hint" = "Número de linhas mantidas no buffer de rolagem. Alterações aplicam em novas sessões.";
+"settings.terminal.bell" = "Campainha";
+"settings.terminal.bellMode" = "Modo da Campainha";
+"settings.terminal.bell.off" = "Desligado";
+"settings.terminal.bell.visual" = "Flash Visual";
+"settings.terminal.bell.system" = "Beep do Sistema";
+"settings.terminal.advanced" = "Avançado";
+"settings.terminal.openHyperlinks" = "Abrir Hyperlinks com Cmd+Clique";
+"settings.terminal.openHyperlinks.hint" = "URLs abrem no navegador e caminhos de arquivos abrem no editor ao clicar com Cmd.";
+"settings.terminal.aiImageDisplay" = "Geracao de Imagens por IA e Helpers";
+"settings.terminal.aiImageDisplay.hint" = "Instala os helpers do zion-img e o zion_display na sua pasta home. Imagens geradas por IA sao salvas em zion-image/ no projeto atual para preview no Zion.";
+"settings.terminal.selection" = "Seleção";
+"settings.terminal.copyOnSelect" = "Copiar ao Selecionar";
+"recent.active.hint" = "Sessão ativa";
+
+// MARK: - Git Hosting Provider
+"hosting.provider.github" = "GitHub";
+"hosting.provider.gitlab" = "GitLab";
+"hosting.provider.bitbucket" = "Bitbucket";
+"hosting.gitlab.pat" = "Token de Acesso Pessoal";
+"hosting.gitlab.host" = "Host (padrão: gitlab.com)";
+"hosting.bitbucket.username" = "Nome de usuário";
+"hosting.bitbucket.appPassword" = "Senha do App";
+"hosting.github.pat" = "Token de Acesso Pessoal";
+"hosting.github.hint" = "Ou use `gh auth login` no terminal.";
+"hosting.notConnected" = "Nenhum provedor de hospedagem detectado.";
+"hosting.noRemotes" = "Nenhum remote git configurado.";
+"hosting.noProviderMatch" = "Não foi possível detectar GitHub, GitLab, Bitbucket ou Azure DevOps nos seus remotes.";
+"hosting.noToken" = "Nenhum token de autenticação encontrado.";
+"hosting.tokenPlaceholder" = "Cole seu token aqui...";
+"hosting.saveAndCreate" = "Salvar & Criar PR";
+"hosting.branchNotPushed" = "Envie \"%@\" para o remote antes de criar um pull request.";
+"hosting.notSupported" = "Esta ação não é suportada pelo provedor atual.";
+"settings.hosting.title" = "Hospedagem Git";
+"settings.hosting.github" = "GitHub";
+"settings.hosting.gitlab" = "GitLab";
+"settings.hosting.bitbucket" = "Bitbucket";
+"settings.hosting.azureDevOps" = "Azure DevOps";
+"hosting.provider.azureDevOps" = "Azure DevOps";
+"hosting.azure.pat" = "Token de Acesso Pessoal";
+"hosting.azure.hint" = "Crie um PAT com escopo Code (Leitura e Escrita).";
+"hosting.generateToken" = "Gerar Token";
+"hosting.github.signIn" = "Entrar com GitHub";
+"hosting.github.enterCode" = "Digite este codigo no GitHub:";
+"hosting.github.openGitHub" = "Abrir GitHub";
+"hosting.github.waitingAuth" = "Aguardando autorizacao...";
+"hosting.github.authSuccess" = "Autenticado como %@";
+"hosting.github.authExpired" = "Autorizacao expirou. Tente novamente.";
+"hosting.github.authError" = "Falha na autenticacao.";
+"hosting.github.addAnother" = "Adicionar Outra";
+
+// MARK: - Multi-Account Hosting
+"hosting.addWithPAT" = "Adicionar com Token";
+"hosting.add" = "Adicionar";
+"hosting.pat.placeholder" = "Token de Acesso Pessoal";
+"hosting.account.invalidToken" = "Token invalido. Verifique o token e tente novamente.";
+"hosting.bitbucket.usernameRequired" = "Nome de usuario e obrigatorio para o Bitbucket.";
+
+// MARK: - PR Comments & Reviews
+"pr.comment.reply" = "Responder";
+"pr.comment.post" = "Publicar";
+"pr.comment.cancel" = "Cancelar";
+"pr.comment.placeholder" = "Escreva um comentário...";
+"pr.review.submit" = "Enviar Review";
+"pr.review.state.comment" = "Comentar";
+"pr.review.state.approve" = "Aprovar";
+"pr.review.state.requestChanges" = "Solicitar Alterações";
+"pr.review.body.placeholder" = "Deixe um comentário de review...";
+"pr.review.submitting" = "Enviando review...";
+"pr.review.submitted" = "Review enviada";
+"pr.review.comments.count" = "%d comentários";
+"pr.review.addComment" = "Adicionar Comentário";
+"pr.release.whatsChanged" = "O que mudou";
+"pr.release.fullChangelog" = "Changelog completo";
+
+// MARK: - Tags
+"tag.detail.title" = "Criar Tag";
+"tag.detail.type" = "Tipo";
+"tag.detail.type.lightweight" = "Leve";
+"tag.detail.type.annotated" = "Anotada";
+"tag.detail.type.signed" = "Assinada (GPG)";
+"tag.detail.message" = "Mensagem";
+"tag.detail.message.placeholder" = "Mensagem da tag...";
+"tag.detail.pushAfterCreate" = "Push após criar";
+"tag.detail.targetRemote" = "Remote Destino";
+"tag.push.success" = "Tag enviada com sucesso";
+"tag.push.action" = "Enviar Tag";
+"tag.delete.remote" = "Remover do Remoto";
+
+// MARK: - Help & Map: Documentação de Novas Features
+"help.ops.tags" = "Crie tags lightweight, anotadas ou assinadas com push para o remoto";
+
+"map.ops.tags.tip1" = "Use tags anotadas para releases — elas armazenam autor, data e mensagem.";
+
+"map.codereview.comments.title" = "Comentários Inline em PRs";
+"map.codereview.comments.description" = "Visualize e poste comentários inline diretamente nas linhas do diff de PRs. Responda a threads existentes sem sair do Zion.";
+"map.codereview.comments.tip1" = "Passe o mouse sobre uma linha do diff e clique + para adicionar um comentário inline.";
+"map.codereview.review.title" = "Envio de Reviews";
+"map.codereview.review.description" = "Envie reviews formais com Comentar, Aprovar ou Solicitar Alterações. Comentários rascunho são agrupados e enviados juntos.";
+
+"map.prinbox.hosting.title" = "Suporte Multi-Provedor";
+"map.prinbox.hosting.description" = "Funciona com GitHub, GitLab, Bitbucket e Azure DevOps. O provedor é detectado automaticamente pelas URLs dos seus remotos.";
+"map.prinbox.hosting.tip1" = "Configure credenciais do GitLab, Bitbucket ou Azure DevOps em Configurações > Git Hosting.";
+
+// MARK: - Mobile Remote Access
+"settings.tab.mobileAccess" = "Mobile";
+"mobile.access.title" = "Acesso Remoto Mobile";
+"mobile.access.enable" = "Ativar Acesso Mobile";
+"mobile.access.description" = "Controle suas sessões de terminal pelo iPhone. Aprove prompts, envie comandos e monitore a saída remotamente por um túnel Cloudflare seguro.";
+"mobile.access.status" = "Status da Conexão";
+"mobile.access.state.disabled" = "Desativado";
+"mobile.access.state.starting" = "Iniciando...";
+"mobile.access.state.waitingForPairing" = "Aguardando pareamento do dispositivo";
+"mobile.access.state.connected" = "%lld dispositivo(s) conectado(s)";
+"mobile.access.qrCode" = "Parear Dispositivo";
+"mobile.access.qrCode.hint" = "Escaneie este QR code com seu iPhone para parear.";
+"mobile.access.tunnelURL" = "URL do Túnel";
+"mobile.access.security" = "Segurança";
+"mobile.access.regenerateKey" = "Regenerar Chave de Criptografia";
+"mobile.access.regenerateKey.hint" = "Gera uma nova chave de criptografia e invalida todos os dispositivos pareados. Será necessário parear novamente.";
+"mobile.access.regenerateKey.confirm" = "Regenerar";
+"mobile.access.requirements" = "Requisitos";
+"mobile.access.cloudflared.notFound" = "cloudflared não encontrado";
+"mobile.access.cloudflared.install" = "Instale o cloudflared para habilitar acesso seguro por túnel. Execute o seguinte comando no terminal:";
+"mobile.access.error.parseFailed" = "Falha ao extrair URL do túnel da saída do cloudflared";
+"mobile.access.error.timeout" = "Tempo esgotado aguardando túnel Cloudflare";
+"mobile.access.error.rateLimited" = "Limite de requisições Cloudflare atingido. Aguarde alguns minutos e tente novamente.";
+"mobile.access.error.startupFailed" = "Falha ao iniciar o túnel Cloudflare. %@";
+"mobile.access.error.dnsFailed" = "O túnel Cloudflare não conseguiu resolver os servidores da Cloudflare. Verifique sua conexão ou DNS e tente novamente.";
+"mobile.access.error.localServerUnavailable" = "O túnel Cloudflare alcançou seu Mac, mas o servidor local remoto do Zion não estava disponível. Tente desligar e ligar o Mobile Access novamente.";
+"mobile.access.error.keyNotFound" = "Chave de criptografia não encontrada. Tente regenerar a chave de pareamento.";
+"mobile.access.lan.title" = "Rede Local";
+"mobile.access.lan.description" = "Escaneie para conectar via Wi-Fi. Os dispositivos devem estar na mesma rede.";
+"mobile.access.tunnel.title" = "Internet (Tunnel)";
+"mobile.access.tunnel.description" = "Escaneie para conectar de qualquer lugar. Criptografado via Cloudflare.";
+"mobile.access.tunnel.loading" = "Iniciando tunnel...";
+"mobile.access.keepAwake" = "Impedir Suspensão";
+"mobile.access.keepAwake.hint" = "Manter o Mac ativo enquanto o servidor remoto estiver ligado.";
+"keepAwake.duration.off" = "Desligado";
+"keepAwake.duration.1h" = "1 Hora";
+"keepAwake.duration.2h" = "2 Horas";
+"keepAwake.duration.4h" = "4 Horas";
+"keepAwake.duration.8h" = "8 Horas";
+"keepAwake.duration.indefinite" = "Indefinido";
+"keepAwake.expired.title" = "Prevencao de Suspensao Encerrada";
+"keepAwake.expired.body" = "Seu timer de prevencao de suspensao (%@) expirou. O Mac pode dormir normalmente agora.";
+"keepAwake.warning.title" = "Prevencao de Suspensao Acabando";
+"keepAwake.warning.15min" = "A prevencao de suspensao vai encerrar em 15 minutos. Estenda nas Configuracoes se necessario.";
+"keepAwake.warning.5min" = "A prevencao de suspensao vai encerrar em 5 minutos. Estenda nas Configuracoes se necessario.";
+"ntfy.event.terminalPromptDetected" = "Terminal remoto aguardando entrada";
+"ntfy.event.terminalPromptDetected.hint" = "Somente para Acesso Remoto Mobile. Isso não responde o prompt pelo ntfy. Apenas avisa que uma sessão remota está aguardando entrada para você reabrir a sessão mobile remota e responder.";
+"ntfy.event.prMergedOrClosed" = "PR mergeado ou fechado";
+"ntfy.event.keepAwakeWarning" = "Aviso do temporizador keep-awake";
+"ntfy.prMergedClosed.title" = "PR Fechado";
+"ntfy.prMergedClosed.body" = "PR %@ foi mergeado ou fechado.";
+"pr.notification.request.riskScore" = "Score de risco: %d/100";
+"pr.notification.request.topFinding" = "Principal achado: %@";
+"pr.complexity.small" = "Revisao pequena";
+"pr.complexity.medium" = "Revisao media";
+"pr.complexity.large" = "Revisao grande";
+
+// Mobile Access — Onboarding Steps
+"mobile.access.step.header" = "Passo %lld — %@";
+"mobile.access.step.checking" = "Verificando requisitos...";
+"mobile.access.step.install.title" = "Instalar cloudflared";
+"mobile.access.step.install.description" = "O Cloudflare Tunnel cria uma conexão segura entre seu Mac e seu celular. Instale com Homebrew:";
+"mobile.access.step.install.recheck" = "Já instalei — verificar novamente";
+"mobile.access.step.enable.title" = "Ativar Acesso Mobile";
+"mobile.access.step.enable.description" = "Inicia um túnel seguro para seu celular acessar este Mac. Sem portas para abrir, sem configurar roteador.";
+"mobile.access.step.starting.title" = "Configurando...";
+"mobile.access.step.starting.server" = "Iniciando servidor local";
+"mobile.access.step.starting.tunnel" = "Abrindo túnel Cloudflare";
+"mobile.access.step.starting.qr" = "Gerando código de pareamento";
+"mobile.access.step.scan.title" = "Escaneie para conectar";
+"mobile.access.step.scan.description" = "Escaneie este QR code com seu iPhone para parear.";
+"mobile.access.step.connected.title" = "Conectado";
+"mobile.access.step.connected.description" = "Seu celular agora pode ver a saída do terminal, aprovar prompts e enviar comandos.";
+"mobile.access.step.error.title" = "Algo deu errado";
+"mobile.access.step.error.retry" = "Tentar novamente";
+"mobile.access.step.disable" = "Desativar Acesso Mobile";
+"mobile.access.copy" = "Copiar para área de transferência";
+
+// Mobile Remote Access — Help Sheet & Zion Map
+"help.mobileAccess.title" = "Acesso Remoto Mobile";
+"help.mobile.pairing" = "Pareamento por QR code com criptografia AES-256-GCM";
+"help.mobile.terminal" = "Saída do terminal transmitida em tempo real para o celular";
+"help.mobile.quickActions" = "Botões de ação rápida: Ctrl+C, Ctrl+D, Esc, Tab, setas";
+"help.mobile.multiProject" = "Sessões de múltiplos projetos agrupadas por repositório";
+"help.mobile.lanMode" = "Modo LAN para conectar na mesma rede sem túnel";
+"help.mobile.cloudflare" = "Túnel Cloudflare para acesso seguro fora da rede local";
+"help.mobile.preventSleep" = "Impedir suspensão do Mac enquanto o servidor estiver ativo";
+
+"map.mobileAccess.subtitle" = "Controle sessões de terminal pelo iPhone";
+"map.mobile.pairing.title" = "Pareamento por QR Code";
+"map.mobile.pairing.description" = "Escaneie um QR code com seu iPhone para estabelecer uma conexão segura. Todos os dados são criptografados com AES-256-GCM de ponta a ponta.";
+"map.mobile.pairing.tip1" = "Abra Configurações > Mobile e escaneie o QR code com a câmera do celular.";
+"map.mobile.terminal.title" = "Transmissão do Terminal";
+"map.mobile.terminal.description" = "A saída do terminal é transmitida em tempo real para o celular com atualizações controladas. Envie comandos, aprove prompts e monitore a saída remotamente.";
+"map.mobile.quickActions.title" = "Botões de Ação Rápida";
+"map.mobile.quickActions.description" = "Barra de ferramentas sempre visível com controles comuns do terminal: Ctrl+C, Ctrl+D, Esc, Tab, Seta Cima e Seta Baixo.";
+"map.mobile.quickActions.tip1" = "Ações rápidas enviam bytes brutos ao terminal — sem delay, resposta instantânea.";
+"map.mobile.multiProject.title" = "Sessões Multi-Projeto";
+"map.mobile.multiProject.description" = "Sessões de todos os repositórios abertos aparecem no celular, agrupadas por nome do repositório. Alterne entre projetos sem tocar no Mac.";
+"map.mobile.lanMode.title" = "Modo LAN";
+"map.mobile.lanMode.description" = "Conecte pela rede local sem túnel Cloudflare. Ideal para testes ou quando o celular está na mesma rede.";
+"map.mobile.cloudflare.title" = "Túnel Cloudflare";
+"map.mobile.cloudflare.description" = "Quando o modo LAN está desligado, o Zion publica um túnel Cloudflare seguro para conectar o iPhone sem abrir portas no roteador.";
+"map.mobile.cloudflare.tip1" = "Instale `cloudflared` para usar acesso remoto fora da sua rede local.";
+"map.mobile.preventSleep.title" = "Impedir Suspensão";
+"map.mobile.preventSleep.description" = "Configuração opcional para manter o Mac ativo enquanto o servidor remoto estiver ligado, evitando desconexão por suspensão.";
+
+// Mobile Access — Status Bar Badge
+"mobile.status.starting" = "Acesso Mobile: Iniciando...";
+"mobile.status.waitingForPairing" = "Acesso Mobile: Aguardando pareamento";
+"mobile.status.connected" = "Acesso Mobile: %lld dispositivo(s) conectado(s)";
+"mobile.status.error" = "Acesso Mobile: Erro";
+"mobile.status.mode.wan" = "Tunel internet ativo";
+"mobile.status.mode.lanOnly" = "Apenas LAN (sem tunel)";
+
+// Accessibility Labels — icon-only buttons
+"accessibility.dismiss" = "Fechar";
+"accessibility.expand" = "Expandir";
+"accessibility.collapse" = "Recolher";
+"accessibility.commit.suggestMessage" = "Sugerir mensagem de commit com IA";
+"accessibility.stash.suggestMessage" = "Sugerir mensagem de stash com IA";
+"accessibility.recovery.refresh" = "Atualizar snapshots de recuperação";
+"accessibility.remote.add" = "Adicionar remote";
+"accessibility.remote.testConnection" = "Testar conexão";
+"accessibility.remote.delete" = "Remover remote";
+
+// Empty state hints
+"worktrees.emptyHint" = "Use o formulário acima para criar seu primeiro worktree.";
+"branches.emptyHint" = "As branches aparecem após o primeiro commit.";
+"graph.empty.title" = "Nenhum commit ainda";
+"graph.empty.hint" = "Faça seu primeiro commit para ver o gráfico de histórico.";
+
+// Sidebar
+"sidebar.locked.hint" = "Abra um repositório para desbloquear esta seção.";
+"sidebar.graph.subtitle" = "Histórico visual";
+"sidebar.code.subtitle" = "Editor e Terminal";
+"sidebar.operations.subtitle" = "Ações e Comandos";
+
+// Git error messages (ErrorClassifier)
+"error.git.authFailed" = "Falha na autenticação. Verifique suas credenciais ou chave SSH.";
+"error.git.sshDenied" = "Acesso SSH negado. Verifique se sua chave SSH está adicionada e tem acesso.";
+"error.git.noHost" = "Não foi possível conectar ao servidor remoto. Verifique sua conexão.";
+"error.git.networkError" = "Erro de rede. Verifique sua conexão e tente novamente.";
+"error.git.mergeConflict" = "Existem conflitos de merge. Resolva-os antes de continuar.";
+"error.git.uncommittedChanges" = "Você tem alterações não commitadas. Faça commit ou stash primeiro.";
+"error.git.alreadyExists" = "Uma branch ou tag com esse nome já existe.";
+"error.git.invalidBranchName" = "Esse não é um nome de branch válido.";
+"error.git.worktreeInUse" = "Essa branch já está em uso por um worktree em %@.";
+"error.git.lockFile" = "Outro processo Git está rodando. Aguarde ou remova o arquivo de lock.";
+"error.git.pushRejected" = "Push rejeitado. Faça pull das últimas alterações e tente novamente.";
+"A lista abaixo mostra tags existentes. Clique em uma tag para preencher o campo." = "A lista abaixo mostra tags existentes. Clique em uma tag para preencher o campo.";
+"Abra um repositorio com refs para visualizar a arvore." = "Abra um repositorio com refs para visualizar a arvore.";
+"Abrir repositorio" = "Abrir repositorio";
+"Ajuste a busca para visualizar commits." = "Ajuste a busca para visualizar commits.";
+"Atualiza a branch atual com commits do remoto via fast-forward." = "Atualiza a branch atual com commits do remoto via fast-forward.";
+"Baixa atualizacoes dos remotos sem alterar sua branch local." = "Baixa atualizacoes dos remotos sem alterar sua branch local.";
+"branch/ref" = "branch/ref";
+"Buscar por hash, autor ou mensagem" = "Buscar por hash, autor ou mensagem";
+"Carregar mais commits (+300)" = "Carregar mais commits (+300)";
+"Checkout, criacao e merge" = "Checkout, criacao e merge";
+"Clique em Abrir para selecionar um repositorio Git" = "Clique em Abrir para selecionar um repositorio Git";
+"Comando personalizado" = "Comando personalizado";
+"Confirmar acoes criticas" = "Confirmar acoes criticas";
+"Confirmar todas as acoes" = "Confirmar todas as acoes";
+"Controla quando mostrar dialogo de confirmacao antes de executar comandos Git." = "Controla quando mostrar dialogo de confirmacao antes de executar comandos Git.";
+"Cria e remove tags rapidamente" = "Cria e remove tags rapidamente";
+"Crie un novo worktree para comecar a trabalhar em paralelo." = "Crie un novo worktree para comecar a trabalhar em paralelo.";
+"Define o idioma da interface (pt-BR, English ou Espanol)." = "Define o idioma da interface (pt-BR, English ou Espanol).";
+"Detalhes do commit" = "Detalhes do commit";
+"Digite uma branch/ref manualmente ou clique em uma da lista para preencher o campo." = "Digite uma branch/ref manualmente ou clique em uma da lista para preencher o campo.";
+"Envia commits locais da branch atual para o remoto." = "Envia commits locais da branch atual para o remoto.";
+"Executa qualquer comando git" = "Executa qualquer comando git";
+"Executar comando git custom informado?" = "Executar comando git custom informado?";
+"Executar comando" = "Executar comando";
+"Filtro:" = "Filtro:";
+"Fluxos de branch/tag/stash e comandos Git" = "Fluxos de branch/tag/stash e comandos Git";
+"Fluxos organizados por context para reduzir erros operacionais." = "Fluxos organizados por context para reduzir erros operacionais.";
+"Gerencia worktrees paralelos" = "Gerencia worktrees paralelos";
+"Historico visual, navega em commits e merges" = "Historico visual, navega em commits e merges";
+"Inferir origem da arvore (best practice)" = "Inferir origem da arvore (best practice)";
+"Inferir origem da arvore" = "Inferir origem da arvore";
+"Limpar" = "Limpar";
+"Navegue no historico, inspecione commits e veja origem das branches." = "Navegue no historico, inspecione commits e veja origem das branches.";
+"Nenhum commit encontrado" = "Nenhum commit encontrado";
+"Nenhum repositorio" = "Nenhum repositorio";
+"Nova" = "Nova";
+"Operacoes Git" = "Operacoes Git";
+"Quando ativo, tenta inferir branch de origem e ponto de fork na arvore de branches." = "Quando ativo, tenta inferir branch de origem e ponto de fork na arvore de branches.";
+"Recarrega branches, commits, tags, stashes e worktrees do repositorio atual." = "Recarrega branches, commits, tags, stashes e worktrees do repositorio atual.";
+"Reset" = "Reset";
+"Salva e reaplica alteracoes locais" = "Salva e reaplica alteracoes locais";
+"Seleciona um repositorio Git para abrir no Zion." = "Seleciona um repositorio Git para abrir no Zion.";
+"Selecione um repositorio" = "Selecione um repositorio";
+"Seu Git Graph nativo para macOS. Abra um repositorio para visualizar historico, executar comandos e gerenciar worktrees." = "Seu Git Graph nativo para macOS. Abra um repositorio para visualizar historico, executar comandos e gerenciar worktrees.";
+"Seu Git Graph nativo para macOS." = "Seu Git Graph nativo para macOS.";
+"status" = "status";
+"Zona sensivel: altera historico local" = "Zona sensivel: altera historico local";
+
+// Documentation sync — 1.4.0
+"help.code.findinfiles" = "Buscar em Arquivos em todo o repositório (⇧⌘F)";
+"help.terminal.finderdrag" = "Arraste arquivos do Finder direto para o terminal";
+"help.ops.forcepush" = "Force Push com Lease (seguro) e Force Push (sobrescrever) disponíveis";
+"help.ai.slashcommands" = "Comando de imagem para IA: /zion-img para Claude, Gemini e Codex";
+"shortcuts.findInFiles" = "Buscar em Arquivos";
+"shortcuts.findInFilesClose" = "Fechar busca em arquivos";
+"shortcuts.findInFilesNext" = "Próximo resultado em arquivos";
+"shortcuts.findInFilesPrevious" = "Resultado anterior em arquivos";
+
+"map.code.findinfiles.title" = "Buscar em Arquivos";
+"map.code.findinfiles.description" = "Busca em todos os arquivos do repositório com resultados destacados. Clique em um resultado para abrir o arquivo naquela linha.";
+"map.code.findinfiles.tip1" = "Use ⇧⌘F de qualquer tela para iniciar uma busca no projeto inteiro.";
+"map.code.formatter.title" = "Formatador de Código";
+"map.code.formatter.description" = "Formate código com ⇧⌥F. Suporta 16+ linguagens incluindo JSON, XML, HTML, CSS, JavaScript, Python, Swift, Go e mais. Formatação automática ao salvar opcional.";
+"map.code.formatter.tip1" = "Ative formatar ao salvar em Configurações > Editor para formatação automática.";
+"map.terminal.finderdrag.title" = "Arrastar do Finder";
+"map.terminal.finderdrag.description" = "Arraste arquivos ou pastas do Finder direto para o terminal. O caminho é colado automaticamente na posição do cursor.";
+"map.terminal.finderdrag.tip1" = "Funciona com qualquer tipo de arquivo — ótimo para comandos rápidos de cd ou open.";
+"map.ops.forcepush.title" = "Opções de Force Push";
+"map.ops.forcepush.description" = "Force Push com Lease (seguro, rejeita se o remoto tem commits novos) e Force Push (sobrescrever) disponíveis no menu de contexto da branch.";
+"map.ops.forcepush.tip1" = "Sempre prefira Force com Lease — evita sobrescrever commits de colegas.";
+"map.ai.slashcommands.title" = "Comandos Slash para IA";
+"map.ai.slashcommands.description" = "Comando /zion-img instalado automaticamente para Claude Code, Gemini CLI e Codex CLI. Gera arquivos de imagem em zion-image/ para preview no Zion.";
+"map.ai.slashcommands.tip1" = "Ative Geracao de Imagens por IA nas Configuracoes para instalar os comandos automaticamente ao iniciar o terminal.";
+"help.ai.connectedProviders" = "Conecte múltiplos provedores de IA simultaneamente (ex: Whisper + Claude)";
+"map.ai.connectedProviders.title" = "Provedores Conectados";
+"map.ai.connectedProviders.description" = "Mantenha múltiplos provedores de IA conectados ao mesmo tempo. Por exemplo, use OpenAI apenas para Whisper enquanto Claude ou Gemini é o assistente padrão.";
+"map.ai.connectedProviders.tip1" = "Configure cada provedor em Configurações > IA. Os provedores conectados aparecem na seção Provedores Conectados.";
+"help.ai.quotaBanner" = "Banner com acao quando a cota de IA e excedida com troca rapida de provedor";
+"map.ai.quotaBanner.title" = "Banner de Cota Excedida";
+"map.ai.quotaBanner.description" = "Quando a cota de um provedor de IA e atingida, um banner aparece com o nome do provedor, botao Trocar Provedor e opcao Dispensar.";
+"help.ai.bridgeSync" = "AI Smart Sync adapta a semantica do conteudo ao migrar entre ferramentas de IA";
+"map.ai.bridgeSync.title" = "Bridge AI Smart Sync";
+"map.ai.bridgeSync.description" = "Transformacao opcional por IA que adapta sintaxe e estrutura para a ferramenta destino (ex: diretivas XML do Claude para markdown do Codex).";
+"map.ai.bridgeSync.tip1" = "Clique no botao AI Sync no Bridge apos analisar. Avisos de validacao mostram problemas de compatibilidade por arquivo.";
+"help.ops.activeOperation" = "Banner de Continuar/Abortar durante merge, rebase ou cherry-pick com contagem de conflitos";
+"map.ops.activeOperation.title" = "Banner de Operacao Ativa";
+"map.ops.activeOperation.description" = "Um banner persistente aparece durante merge, rebase ou cherry-pick com botoes Continuar e Abortar. Mostra o numero de arquivos com conflitos.";
+"help.ops.emptyStates" = "Texto de orientacao quando listas de stash ou tags estao vazias";
+"map.ops.emptyStates.title" = "Dicas de Estado Vazio";
+"map.ops.emptyStates.description" = "As secoes Stash e Tags mostram texto de orientacao quando suas listas estao vazias, direcionando usuarios aos campos de entrada acima.";
+"help.mobile.keepAwakeWarnings" = "Notificacoes locais 15 min e 5 min antes do timer de prevencao de suspensao expirar";
+"map.mobile.keepAwakeWarnings.title" = "Avisos do Timer de Prevencao";
+"map.mobile.keepAwakeWarnings.description" = "Notificacoes locais do macOS 15 minutos e 5 minutos antes do timer de prevencao de suspensao expirar, mais uma notificacao final quando encerra.";
+
+// Voice-to-text — 1.6.0
+"speech.button.tooltip" = "Entrada de Voz";
+"speech.listening" = "Ouvindo...";
+"speech.language" = "Idioma";
+"speech.engine" = "Motor";
+"speech.engine.apple" = "Apple Speech (Grátis)";
+"speech.engine.gemini" = "Google Gemini (Grátis)";
+"speech.engine.whisper" = "OpenAI Whisper";
+"speech.recovery.whisperMissingKey" = "O OpenAI Whisper precisa de uma chave de API OpenAI conectada.";
+"speech.recovery.whisperQuotaExceeded" = "A cota do OpenAI Whisper foi excedida ou o saldo não está disponível.";
+"speech.recovery.whisperTemporarilyUnavailable" = "O OpenAI Whisper está temporariamente indisponível. Tente Apple Speech ou repita em instantes.";
+"speech.recovery.whisperFailed" = "A transcrição com Whisper falhou. Tente Apple Speech ou revise sua chave OpenAI.";
+"speech.recovery.geminiMissingKey" = "O Google Gemini precisa de uma chave de API Gemini conectada. Configure nas configurações de IA.";
+"speech.recovery.geminiQuotaExceeded" = "A cota do Google Gemini foi excedida. Tente Apple Speech ou repita em instantes.";
+"speech.recovery.geminiTemporarilyUnavailable" = "O Google Gemini está temporariamente indisponível. Tente Apple Speech ou repita em instantes.";
+"speech.recovery.geminiTranscribeFailed" = "A transcrição com Gemini falhou. Tente Apple Speech ou revise sua chave Gemini.";
+"speech.recording.placeholder" = "Gravando... a transcrição fica pronta quando você parar.";
+"speech.processing.placeholder" = "Transcrevendo...";
+"speech.recovery.useAppleSpeech" = "Usar Apple Speech";
+"speech.recovery.useGemini" = "Usar Gemini";
+"speech.recovery.manageOpenAI" = "Gerenciar OpenAI";
+"speech.send" = "Enviar para o Terminal";
+"speech.permission.denied" = "Acesso ao microfone ou reconhecimento de fala negado. Ative em Ajustes do Sistema > Privacidade e Segurança.";
+"speech.permission.alert.title" = "Permissão Necessária";
+"speech.permission.alert.openSettings" = "Abrir Ajustes do Sistema";
+"speech.permission.alert.micMessage" = "O Zion precisa de acesso ao microfone para entrada de voz. Ative em Ajustes do Sistema > Privacidade e Segurança > Microfone.";
+"speech.permission.alert.speechMessage" = "O Zion precisa de acesso ao reconhecimento de fala. Ative em Ajustes do Sistema > Privacidade e Segurança > Reconhecimento de Fala.";
+"speech.recovery.alert.title" = "Erro de Entrada de Voz";
+"speech.error.unavailable" = "O reconhecimento de fala não está disponível para o idioma selecionado.";
+"settings.speech.engine.hint" = "Apple Speech é gratuito e em tempo real. Google Gemini usa sua chave Gemini (plano gratuito). Whisper requer uma chave de API OpenAI.";
+"settings.speech.engine.geminiUnavailable" = "O Google Gemini fica indisponível até que uma chave de API Gemini seja conectada nas configurações de IA.";
+"settings.speech.engine.whisperUnavailable" = "O OpenAI Whisper fica indisponível até que uma chave de API OpenAI seja conectada nas configurações de IA.";
+"settings.speech.engine.configureGemini" = "Configurar Chave Gemini";
+"settings.speech.engine.configureOpenAI" = "Configurar Chave OpenAI";
+
+// Git Bisect
+"bisect.contextMenu.markBad" = "Encontrar Bug com Bisect";
+"bisect.contextMenu.markGood" = "Este Commit Funcionava";
+"bisect.abort" = "Abortar Bisect";
+"bisect.good" = "Isso Funciona";
+"bisect.bad" = "Isso Está Quebrado";
+"bisect.skip" = "Pular";
+"bisect.done" = "Concluído";
+"bisect.viewCommit" = "Ver Commit";
+"bisect.banner.pickGood.title" = "Agora escolha um commit onde tudo funcionava";
+"bisect.banner.pickGood.subtitle" = "Clique com botão direito em um commit mais antigo e escolha \"Este Commit Funcionava\"";
+"bisect.banner.active.title" = "Testando commit %@";
+"bisect.banner.active.subtitle" = "~%@ passos para encontrar o culpado";
+"bisect.banner.found.title" = "Encontrado — commit %@ introduziu o bug";
+"bisect.ai.loading" = "IA está analisando o commit culpado...";
+"bisect.ai.error" = "Não foi possível gerar explicação da IA.";
+"bisect.badge.culprit" = "Primeiro Commit Ruim";
+"bisect.status.pickGood" = "Bisect: escolha um commit bom";
+"bisect.status.testing" = "Bisect: testando %@";
+"bisect.status.found" = "Bisect: culpado encontrado %@";
+"bisect.status.aborted" = "Bisect abortado.";
+"bisect.status.done" = "Bisect concluído.";
+"bisect.pill.pickGood" = "Escolher Commit Bom";
+"bisect.pill.active" = "Bisect ~%@ passos";
+"bisect.pill.found" = "Encontrado: %@";
+"bisect.confirm.start" = "Marcar este commit como quebrado e iniciar bisect?";
+"bisect.error.invalidHash" = "Hash de commit inválido.";
+"bisect.good.hint" = "Marcar como bom (⇧⌘G)";
+"bisect.bad.hint" = "Marcar como quebrado (⇧⌘B)";
+"bisect.skip.hint" = "Pular este commit (⇧⌘S)";
+
+// Bisect (Bug Finder) — HelpSheet + ZionMap
+"help.bisect.title" = "Git Bisect (Caçador de Bugs)";
+"help.bisect.start" = "Clique com botão direito em qualquer commit para iniciar busca binária por bug";
+"help.bisect.banner" = "Banner interativo com controles Bom / Ruim / Pular / Abortar";
+"help.bisect.visual" = "Estados visuais dos commits: verde (bom), vermelho (ruim), azul (testando)";
+"help.bisect.ai" = "IA explica automaticamente o commit culpado quando encontrado";
+"help.bisect.statusPill" = "Pílula na barra de status mostra fase do bisect e passos restantes";
+"map.bisect.subtitle" = "Encontre o commit que introduziu um bug com busca binária";
+"map.bisect.start.title" = "Iniciar Bisect";
+"map.bisect.start.description" = "Clique com botão direito em qualquer commit no grafo e escolha 'Encontrar Bug com Bisect' para marcá-lo como ruim. Depois escolha um commit bom mais antigo para iniciar a busca binária.";
+"map.bisect.start.tip1" = "Você também pode iniciar bisect pelo terminal — o Zion detecta sessões em andamento e sincroniza a UI.";
+"map.bisect.banner.title" = "Banner Interativo";
+"map.bisect.banner.description" = "Um banner no topo com botões 'Funciona', 'Está Quebrado', 'Pular' e 'Abortar' guia você por cada passo da busca binária.";
+"map.bisect.visual.title" = "Estados Visuais dos Commits";
+"map.bisect.visual.description" = "Commits bons aparecem em verde, ruins em vermelho, o commit sendo testado em azul, e o culpado recebe um badge especial.";
+"map.bisect.ai.title" = "Explicação IA do Culpado";
+"map.bisect.ai.description" = "Quando o commit culpado é encontrado, a IA analisa o diff e explica o que mudou e por que provavelmente causou a regressão.";
+"map.bisect.statusPill.title" = "Pílula na Barra de Status";
+"map.bisect.statusPill.description" = "Um badge cápsula na barra de status mostra a fase atual do bisect e os passos estimados restantes.";
+
+// Voice Input — HelpSheet + ZionMap
+"help.terminal.voiceInput" = "Entrada de voz com Apple Speech ou OpenAI Whisper (⌥⌘X)";
+"map.terminal.voiceInput.title" = "Entrada de Voz";
+"map.terminal.voiceInput.description" = "Dite texto para o terminal usando Apple Speech (grátis, tempo real) ou OpenAI Whisper. Uma pílula flutuante com animação de onda mostra quando está ouvindo.";
+"map.terminal.voiceInput.tip1" = "Configure o motor de voz em Configurações > IA. Apple Speech funciona offline; Whisper precisa de chave de API OpenAI.";
+"help.terminal.whisperRecovery" = "Recuperação automática do Whisper com fallback para Apple Speech";
+"map.terminal.whisperRecovery.title" = "Recuperação do Whisper";
+"map.terminal.whisperRecovery.description" = "Quando o OpenAI Whisper não está disponível (cota excedida, chave ausente, serviço fora), o Zion automaticamente volta para Apple Speech e mostra orientações de recuperação.";
+"map.terminal.whisperRecovery.tip1" = "Pressione e segure o botão de voz para trocar de motor ou ver mensagens de recuperação.";
+
+// Clone Repository
+"help.clone.title" = "Clonar Repositório";
+"help.clone.sheet" = "Clone a partir de URL com detecção de protocolo SSH/HTTPS";
+"help.clone.welcome" = "Clone rápido pela Tela de Boas-vindas";
+"help.clone.protocol" = "Detecção automática de protocolo e seletor de destino";
+"map.clone.subtitle" = "Clone repositórios de URLs remotas";
+"map.clone.sheet.title" = "Tela de Clone";
+"map.clone.sheet.description" = "Clone um repositório de qualquer URL. O Zion detecta automaticamente SSH vs HTTPS e permite escolher a pasta de destino.";
+"map.clone.welcome.title" = "Integração com Tela de Boas-vindas";
+"map.clone.welcome.description" = "O clone está disponível direto na Tela de Boas-vindas para configuração rápida sem navegar por menus.";
+"map.clone.protocol.title" = "Detecção de Protocolo";
+"map.clone.protocol.description" = "Detecta automaticamente se a URL usa SSH ou HTTPS e configura o clone de acordo.";
+"map.clone.protocol.tip1" = "Cole qualquer URL do GitHub, GitLab ou Bitbucket — o Zion cuida do resto.";
+
+// Repository Statistics
+"help.repoStats.title" = "Estatísticas do Repositório";
+"help.repoStats.card" = "Commits, branches, tags e contribuidores de relance";
+"help.repoStats.languages" = "Detalhamento visual de linguagens do repositório";
+"map.repoStats.subtitle" = "Visão rápida das métricas do repositório";
+"map.repoStats.card.title" = "Card de Estatísticas";
+"map.repoStats.card.description" = "Veja contagem de commits, branches, tags e contribuidores em um único card. Atualizado automaticamente ao recarregar o repositório.";
+"map.repoStats.languages.title" = "Detalhamento de Linguagens";
+"map.repoStats.languages.description" = "Exibição visual da composição de linguagens do repositório com barras coloridas mostrando a proporção de cada linguagem.";
+
+// Remote Management
+"help.remotes.title" = "Gerenciamento de Remotos";
+"help.remotes.fetchPullPush" = "Fetch, Pull (fast-forward) e Push com botões na toolbar";
+"help.remotes.divergence" = "Aviso de divergência no push com badge ahead/behind";
+"help.remotes.manage" = "Adicionar, remover e renomear remotos";
+"help.remotes.testConnection" = "Testar conexão com remoto antes de fazer push";
+"map.remotes.subtitle" = "Gerencie repositórios remotos e operações de sincronização";
+"map.remotes.fetchPullPush.title" = "Fetch / Pull / Push";
+"map.remotes.fetchPullPush.description" = "Botões na toolbar para Fetch (baixar atualizações), Pull (merge fast-forward) e Push (enviar commits). Cada operação mostra progresso na barra de status.";
+"map.remotes.fetchPullPush.tip1" = "Use Fetch regularmente para se manter atualizado sem alterar sua branch local.";
+"map.remotes.divergence.title" = "Aviso de Divergência no Push";
+"map.remotes.divergence.description" = "Quando sua branch divergiu do remoto, o Zion mostra um badge ahead/behind e avisa antes de fazer push para evitar force-pushes acidentais.";
+"map.remotes.manage.title" = "Gerenciar Remotos";
+"map.remotes.manage.description" = "Adicione novos remotos, remova antigos ou renomeie. Acessível pela tela de Operações.";
+"map.remotes.testConnection.title" = "Testar Conexão";
+"map.remotes.testConnection.description" = "Verifique se suas credenciais e chaves SSH funcionam antes de fazer push. Mostra indicador de sucesso ou falha.";
+
+// Submodule Management
+"help.submodules.title" = "Gerenciamento de Submódulos";
+"help.submodules.status" = "Visualizar status e commit atual dos submódulos";
+"help.submodules.init" = "Inicializar submódulos com um clique";
+"help.submodules.update" = "Atualizar submódulos recursivamente";
+"help.submodules.sync" = "Sincronizar URLs dos submódulos do .gitmodules";
+"map.submodules.subtitle" = "Gerencie submódulos git no seu repositório";
+"map.submodules.status.title" = "Status dos Submódulos";
+"map.submodules.status.description" = "Veja o estado atual de cada submódulo: inicializado, atualizado ou precisando de update. Mostra o hash do commit atual.";
+"map.submodules.init.title" = "Inicializar";
+"map.submodules.init.description" = "Inicialize submódulos não inicializados com um único clique. Executa git submodule init para você.";
+"map.submodules.update.title" = "Atualização Recursiva";
+"map.submodules.update.description" = "Atualize todos os submódulos recursivamente para corresponder aos commits referenciados pelo repositório pai.";
+"map.submodules.update.tip1" = "Use atualização recursiva após pull para manter submódulos em sincronia.";
+"map.submodules.sync.title" = "Sincronizar URLs";
+"map.submodules.sync.description" = "Sincronize URLs remotas dos submódulos a partir do .gitmodules. Útil quando URLs upstream mudam.";
+
+// Git Hosting Integration
+"help.hosting.title" = "Hospedagem Git";
+"help.hosting.autoDetect" = "Detecta automaticamente GitHub, GitLab, Bitbucket ou Azure DevOps nos remotos";
+"help.hosting.providers" = "Suporte multi-provedor com autenticação OAuth e PAT";
+"help.hosting.createPR" = "Crie pull requests diretamente do Zion";
+"help.hosting.aiDescription" = "Descrições de PR geradas por IA a partir do diff da branch";
+"map.hosting.subtitle" = "Conecte-se ao GitHub, GitLab, Bitbucket e Azure DevOps";
+"map.hosting.autoDetect.title" = "Detecção Automática";
+"map.hosting.autoDetect.description" = "O Zion detecta automaticamente seu provedor de hospedagem git pelas URLs dos remotos. Sem configuração manual na maioria dos repositórios.";
+"map.hosting.autoDetect.tip1" = "Configure credenciais em Configurações > Hospedagem Git para repositórios privados.";
+"map.hosting.providers.title" = "Suporte Multi-Provedor";
+"map.hosting.providers.description" = "Funciona com GitHub (OAuth + PAT), GitLab (PAT), Bitbucket (App Password) e Azure DevOps (PAT). Alterne entre provedores facilmente.";
+"map.hosting.createPR.title" = "Criar Pull Requests";
+"map.hosting.createPR.description" = "Crie pull requests direto do Zion com título, descrição, branch base e seleção de revisores.";
+"map.hosting.aiDescription.title" = "Descrição de PR com IA";
+"map.hosting.aiDescription.description" = "A IA analisa o diff da branch e gera uma descrição estruturada do pull request com resumo e mudanças principais.";
+
+// Editor Tab Context Menu
+"editor.tab.close" = "Fechar";
+"editor.tab.closeOthers" = "Fechar Outros";
+"editor.tab.closeLeft" = "Fechar à Esquerda";
+"editor.tab.closeRight" = "Fechar à Direita";
+"editor.tab.closeAll" = "Fechar Todos";
+"editor.tab.revealInBrowser" = "Revelar no Navegador";
+"editor.tab.copyPath" = "Copiar Caminho";
+"editor.tab.copyRelativePath" = "Copiar Caminho Relativo";
+"editor.tab.missingTooltip" = "Arquivo removido no disco";
+"editor.tab.unsavedClose.title" = "Alterações Não Salvas";
+"editor.tab.unsavedClose.message" = "Deseja salvar as alterações de \"%@\" antes de fechar?";
+
+// Shortcuts
+"shortcuts.toggleDotfiles" = "Alternar Dotfiles";
+"shortcuts.navigateCodeByLetter" = "Codigo (Editor)";
+"shortcuts.navigateGraphByLetter" = "Grafo (Arvore)";
+"shortcuts.quickCommit" = "Commit Rapido";
+"shortcuts.stageAll" = "Adicionar Todos";
+"shortcuts.recorder.typeShortcut" = "Pressione um atalho...";
+"shortcuts.recorder.reserved" = "Este atalho e reservado pelo macOS";
+"shortcuts.recorder.conflictsWith" = "Conflita com %@";
+"shortcuts.resetAll" = "Redefinir Todos os Atalhos";
+"shortcuts.reset" = "Redefinir";
+"shortcuts.replace" = "Substituir";
+"menu.undo" = "Desfazer";
+"menu.redo" = "Refazer";
+"shortcuts.searchPlaceholder" = "Buscar atalhos...";
+"Zion Bridge" = "Zion Bridge";
+"sidebar.bridge.subtitle" = "Setup portátil para IA";
+"bridge.entry.title" = "Portabilidade de IA";
+"bridge.entry.subtitle" = "Inspecione mapeamentos nativos de IA e sincronize com segurança.";
+"bridge.title" = "Bridge";
+"bridge.subtitle" = "Analise estruturas nativas do repositório, visualize caminhos de destino e sincronize mudanças sem criar arquivos do Bridge no projeto.";
+"bridge.target.claude" = "Claude";
+"bridge.target.codex" = "Codex";
+"bridge.target.gemini" = "Gemini";
+"bridge.target.cursor" = "Cursor";
+"bridge.kind.guidance" = "Contexto";
+"bridge.kind.rule" = "Regras";
+"bridge.kind.skill" = "Skills";
+"bridge.kind.command" = "Comandos";
+"bridge.operation.create" = "criar";
+"bridge.operation.update" = "atualizar";
+"bridge.operation.noop" = "inalterado";
+"bridge.operation.review" = "revisar";
+"bridge.operation.unsupported" = "não suportado";
+"bridge.action.close" = "Fechar";
+"bridge.action.reload" = "Recarregar";
+"bridge.action.analyze" = "Analisar";
+"bridge.action.sync" = "Sincronizar";
+"bridge.action.selectAllSyncable" = "Selecionar Graváveis";
+"bridge.action.clearSyncSelection" = "Limpar Seleção";
+"bridge.session.title" = "Sessão de Migração";
+"bridge.session.from" = "De";
+"bridge.session.to" = "Para";
+"bridge.session.policy" = "Política de escrita";
+"bridge.session.policyValue" = "Somente os arquivos de %@ serão modificados.";
+"bridge.session.route" = "%@ -> %@";
+"bridge.detect.title" = "Estruturas Detectadas";
+"bridge.detect.empty" = "Nenhum arquivo de ferramenta de IA suportado foi detectado neste repositório.";
+"bridge.detect.detected" = "detectado";
+"bridge.detect.missing" = "ausente";
+"bridge.detect.none" = "Nenhum arquivo correspondente encontrado";
+"bridge.detect.empty.folder" = "vazio";
+"bridge.detect.willCreate" = "será criado";
+"bridge.summary.title" = "Resumo da Migração";
+"bridge.summary.updates" = "Escritas";
+"bridge.summary.review" = "Revisão";
+"bridge.summary.unsupported" = "Não suportado";
+"bridge.mapping.title" = "Mapa de Caminhos";
+"bridge.mapping.empty" = "Nenhum arquivo de origem foi encontrado para essa rota.";
+"bridge.mapping.noDestination" = "Sem caminho de destino";
+"bridge.mapping.knownMirror" = "Espelho conhecido";
+"bridge.mapping.inferredMirror" = "Inferido";
+"bridge.mapping.newImport" = "Nova importação";
+"bridge.mapping.manualReview" = "Revisar";
+"bridge.mapping.unsupported" = "Não suportado";
+"bridge.selection.summary" = "%d de %d arquivos graváveis selecionados.";
+"bridge.selection.empty" = "Nenhum arquivo gravável está disponível nesta análise.";
+"bridge.selection.add" = "Adicionar este arquivo à seleção de sincronização";
+"bridge.selection.remove" = "Remover este arquivo da seleção de sincronização";
+"bridge.confidence.high" = "alta confiança";
+"bridge.confidence.medium" = "confiança média";
+"bridge.confidence.low" = "baixa confiança";
+"bridge.detail.title" = "Detalhe do Mapeamento";
+"bridge.detail.source" = "Origem %@";
+"bridge.detail.destination" = "Destino %@";
+"bridge.detail.reason" = "Por que este mapeamento";
+"bridge.detail.readOnly" = "Os arquivos de origem são somente leitura durante a sincronização. O Bridge só escreve nos arquivos de destino após aprovação.";
+"bridge.detail.empty" = "Nenhuma prévia disponível.";
+"bridge.warnings.title" = "Avisos";
+"bridge.status.analyzed" = "Migração %@ -> %@ analisada.";
+"bridge.status.synced" = "Bridge sincronizado para %@.";
+"bridge.error.sameTarget" = "Escolha ferramentas de origem e destino diferentes.";
+"bridge.warning.noTargets" = "O Bridge não detectou pastas de IA suportadas neste repositório.";
+"bridge.warning.noSourceFiles" = "Nenhum arquivo de %@ foi encontrado para análise.";
+"bridge.reason.cached" = "Correspondência encontrada pela memória de sincronização anterior do Bridge.";
+"bridge.reason.home" = "Correspondência encontrada pelo caminho original registrado do arquivo.";
+"bridge.reason.pathMatch" = "Correspondência por nome e formato nativo de pastas do destino.";
+"bridge.reason.newImport" = "Nenhum espelho anterior foi encontrado, então isso será importado como um novo arquivo de destino.";
+"bridge.reason.multipleCandidates" = "Mais de um arquivo resolve para este caminho de destino. Revise antes de sincronizar.";
+"bridge.reason.unsupported" = "O Bridge não conhece um formato nativo seguro de destino para este arquivo.";
+"bridge.action.cancel" = "Cancelar";
+"bridge.preview.truncated" = "[truncado]";
+"bridge.open.hint" = "Abrir Zion Bridge";
+"bridge.action.aiSync" = "Sync IA";
+"bridge.action.aiSync.hint" = "Usar IA para adaptar a semantica do conteudo para a ferramenta destino";
+"bridge.status.aiTransformed" = "Transformacao de conteudo por IA concluida.";
+"bridge.validation.title" = "Avisos de Compatibilidade";
+"bridge.validation.cursor.noFrontmatter" = "Frontmatter YAML ausente. Regras do Cursor exigem frontmatter delimitado por ---.";
+"bridge.validation.cursor.wrongExtension" = "Caminho destino deve usar extensao .mdc para regras do Cursor.";
+"bridge.validation.cursor.unsupportedDirectives" = "Contem diretivas XML do Claude que o Cursor nao suporta.";
+"bridge.validation.claude.cursorSyntax" = "Contem sintaxe de frontmatter do Cursor (alwaysApply) que pode confundir o Claude.";
+"bridge.validation.claude.codexSyntax" = "Contem boilerplate de skill do Codex que deve ser removido para o Claude.";
+"bridge.validation.codex.missingSkillFrontmatter" = "Skills do Codex exigem frontmatter YAML com campos name e description.";
+"bridge.validation.gemini.claudeDirectives" = "Contem diretivas XML de ferramentas do Claude que o Gemini nao suporta.";
+"bridge.validation.emptyContent" = "Conteudo renderizado esta vazio. O arquivo fonte pode ter sido removido completamente.";
+"bridge.detail.compatibility" = "Compatibilidade IA";
+
+// Divergence Resolution
+"divergence.title" = "Branches Divergentes";
+"divergence.subtitle" = "As versões local e remota de '%@' divergiram.";
+"divergence.localAhead" = "%d local à frente";
+"divergence.remoteAhead" = "%d remoto à frente";
+"divergence.option.rebase" = "Pull com Rebase";
+"divergence.option.rebase.desc" = "Reaplica seus commits locais sobre o remoto — histórico linear mais limpo.";
+"divergence.option.merge" = "Pull com Merge";
+"divergence.option.merge.desc" = "Cria um commit de merge preservando ambos os históricos.";
+"divergence.option.forceAlign" = "Forçar Alinhamento com Remoto";
+"divergence.option.forceAlign.desc" = "Descarta commits locais e reseta para o remoto. Um snapshot de recuperação será criado antes.";
+
+"sidebar.release" = "Release";
+
+"recovery.showMore" = "Mostrar mais %d snapshots";
+"stash.empty.hint" = "Nenhum stash ainda. Use o campo acima para guardar alteracoes nao commitadas.";
+"tags.empty.hint" = "Nenhuma tag neste repositorio. Use o campo acima para criar uma tag no commit atual.";
+
+// AI Quota
+"ai.quota.exceeded.title" = "Cota de IA Excedida";
+"ai.quota.exceeded.message" = "Sua cota do %@ foi atingida. Troque de provedor ou aguarde.";
+"ai.quota.exceeded.switchProvider" = "Trocar Provedor";
+"ai.quota.exceeded.retry" = "Dispensar";
+
+// Error Classifier — Phase 4D
+"error.git.rebaseInProgress" = "Rebase em andamento. Continue, aborte ou pule.";
+"error.git.cherryPickFailed" = "Cherry-pick falhou devido a conflitos.";
+"error.git.detachedHead" = "HEAD esta desanexado. Crie uma branch para salvar seu trabalho.";
+"error.git.diverged" = "Branches local e remota divergiram. Faca pull ou rebase.";
+"error.git.submoduleError" = "Operacao de submodulo falhou. Verifique a inicializacao.";
+"error.git.nothingToCommit" = "Nada para commitar. Arvore de trabalho limpa.";
+"error.git.rebaseContinueNoChanges" = "Sem alteracoes para commitar. Use --skip ou resolva conflitos.";
+"error.git.remoteNotFound" = "Repositorio remoto nao encontrado. Verifique a URL.";
+"error.git.seeLog" = "Veja o log de Operacoes para detalhes.";
+
+// Git Operations Safety — Phase 4A/4B/4C
+"reset.hard.confirm.title" = "Resetar para o Alvo";
+"reset.hard.confirm.message" = "Isso vai resetar para %@. Esta acao nao pode ser desfeita.";
+"reset.hard.confirm.commits" = "%d commit(s) serao descartados.";
+"reset.hard.confirm.uncommitted" = "%d arquivo(s) nao commitados serao perdidos.";
+"reset.hard.confirm.proceed" = "Resetar";
+"ops.active.continue" = "Continuar";
+"ops.active.abort" = "Abortar";
+"ops.active.merge" = "Merge em andamento";
+"ops.active.rebase" = "Rebase em andamento";
+"ops.active.cherryPick" = "Cherry-pick em andamento";
+"ops.active.conflicts" = "%d arquivo(s) com conflitos";
+"ops.abort.confirm.title" = "Abortar %@?";
+"ops.abort.confirm.message" = "Voce tem %d arquivo(s) com conflitos. Abortar vai descartar todas as resolucoes.";
+"ops.abort.confirm.proceed" = "Abortar";
+
+// AI Concurrency Gate
+"ai.busy" = "Outra operacao de IA em andamento. Aguarde.";
+
+// Full History Search
+"graph.search.historyResults" = "no historico completo";
+"graph.search.historyTitle" = "Encontrado no historico completo";
+"graph.search.historyLoading" = "Buscando historico completo...";
+"graph.search.source.message" = "mensagem";
+"graph.search.source.author" = "autor";
+"graph.search.source.hash" = "hash";
+"graph.search.source.branch" = "branch";
+"graph.search.source.tag" = "tag";
+"settings.editor.detectedFromFile" = "Detectado do arquivo";
+"statusbar.mobile.wan" = "WAN";
+"statusbar.mobile.lan" = "LAN";
+"settings.general.zionMode" = "Modo Zion";
+"settings.mobile.qrCode.accessibility" = "Codigo QR para pareamento mobile";
+
+// Markdown Editor Fullscreen
+"editor.markdown.fullscreen" = "Tela Cheia";
+"editor.markdown.exitFullscreen" = "Sair da Tela Cheia";
+
+// Editor Themes
+"theme.dracula" = "Dracula";
+"theme.cityLights" = "City Lights";
+"theme.githubLight" = "GitHub Light";
+"theme.catppuccinMocha" = "Catppuccin Mocha";
+"theme.oneDarkPro" = "One Dark Pro";
+"theme.tokyoNight" = "Tokyo Night";
+"theme.synthwave" = "SynthWave '84";
+"theme.lunarPinkSatellite" = "Lunar Pink Satellite";
+"theme.neonGreenDarkTerminal" = "Neon Green Dark Terminal";
+"theme.macOSModernDarkVenturaXcode" = "macOS Modern Dark Ventura Xcode";
+"theme.everforestProLight" = "Everforest Pro Light";
+"theme.colorblindLight" = "Colorblind Light";
+
+// Local LLM Support (Ollama Phase 1)
+"settings.ai.provider.local" = "Local / OpenAI-compatível";
+"settings.ai.local.serverURL" = "URL do servidor";
+"settings.ai.local.serverURL.hint" = "ex.: http://localhost:11434/v1 (Ollama, LM Studio, MLX server, OpenRouter)";
+"settings.ai.local.model" = "Modelo";
+"settings.ai.local.model.refresh" = "Atualizar modelos";
+"settings.ai.local.model.empty" = "Nenhum modelo encontrado";
+"settings.ai.local.model.recommended" = "Recomendado";
+"settings.ai.local.model.discoveryHint" = "Clique em Atualizar modelos para listar o que está instalado no servidor. Ou consulte: `ollama list` (Ollama), aba Models (LM Studio) ou openrouter.ai/models (OpenRouter).";
+"settings.ai.local.model.lightFallback" = "Modelo leve de reserva";
+"settings.ai.local.timeout" = "Tempo limite da requisição";
+"settings.ai.local.timeout.unit" = "segundos";
+"settings.ai.local.health.healthy" = "Conectado";
+"settings.ai.local.health.unhealthy" = "Inacessível";
+"settings.ai.local.health.lastCheckedAt" = "Verificado pela última vez às %@";
+"settings.ai.local.health.test" = "Testar conexão";
+"settings.ai.local.singleModelWarning" = "Modo local usa um único modelo para todas as tarefas. Escolha o melhor modelo para suas necessidades.";
+"settings.ai.local.toolCallingDisabled" = "Recursos estruturados (sugestões de commit, revisão de código) estão desativados no modo local.";
+"settings.ai.local.apiKey.optional" = "Chave de API (opcional)";
+"settings.ai.local.error.connectionFailed" = "Conexão falhou. Verifique a URL do servidor e tente novamente.";
+"settings.ai.local.error.serverNotFound" = "Servidor não encontrado. Certifique-se de que o backend está em execução.";
+"settings.ai.local.error.modelError" = "Modelo não encontrado no servidor local. Vá em Settings → AI, clique em Atualizar modelos e escolha um que esteja carregado.";
+"settings.ai.local.error.toolCallingUnsupported" = "Este modelo não suporta chamadas de ferramentas.";
+"settings.ai.local.hint.ollamaServe" = "O Ollama está em execução? Tente: `ollama serve`";
+"settings.ai.local.hint.ollamaPull" = "Baixe o modelo primeiro: `ollama pull qwen3-coder:30b`";
+
+// MARK: - Chat (Zion Talks)
+"chat.title" = "Zion Talks";
+"chat.emptyState.headline" = "Pergunte qualquer coisa sobre seu repositório";
+"chat.emptyState.example.history" = "Resumir commits recentes";
+"chat.emptyState.example.branch" = "O que mudou nesta branch?";
+"chat.emptyState.example.diff" = "Explicar o diff atual";
+"chat.composer.hint" = "Digite uma mensagem — use /diff, /log, /file <caminho>";
+"chat.composer.send" = "Enviar";
+"chat.composer.stop" = "Parar";
+"chat.composer.newChat" = "Novo Chat";
+"chat.slash.diff.label" = "/diff — anexar diff atual";
+"chat.slash.log.label" = "/log — anexar commits recentes";
+"chat.slash.status.label" = "/status — anexar status da árvore de trabalho";
+"chat.slash.file.label" = "/file <caminho> — anexar conteúdo do arquivo";
+"chat.slash.commit.label" = "/commit — anexar detalhes do último commit";
+"chat.error.aiNotConfigured" = "Configure um provedor de IA nas Configurações para começar a conversar.";
+"chat.error.send.title" = "Falha ao enviar mensagem";
+"chat.contextHeader" = "Repositório: %@ · branch %@ · HEAD %@ · %d arquivo(s) não confirmado(s)";
+"chat.slash.fileOutsideRepo" = "O caminho especificado está fora do repositório.";
+"chat.slash.empty.diff" = "Nenhuma alteração para exibir. Sua árvore de trabalho está limpa.";
+"chat.head.unknown" = "?";

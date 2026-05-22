@@ -2462,3 +2462,13 @@
 "chat.harness.intent.commitDetails" = "commit %@";
 "ai.error.toolExecution.failed" = "Falha na execução da ferramenta: %@";
 "ai.error.toolCalling.notSupported" = "Provider selecionado não suporta tool calling.";
+"chat.thread.list.title" = "Conversas";
+"chat.thread.new" = "Nova conversa";
+"chat.thread.delete" = "Excluir";
+"chat.thread.rename" = "Renomear";
+"chat.thread.untitled" = "Sem título %@";
+"chat.thread.confirmDelete" = "Excluir esta conversa? Esta ação não pode ser desfeita.";
+"chat.thread.lastUpdatedAt" = "Atualizado %@";
+"chat.thread.empty" = "Nenhuma conversa ainda";
+"chat.thread.sidebar.toggle" = "Alternar conversas";
+"chat.persistence.error" = "Falha ao salvar o histórico do chat. Continuando em memória.";

@@ -716,6 +716,7 @@ final class RepositoryViewModel {
     @ObservationIgnored let worker = RepositoryWorker()
     @ObservationIgnored let fileWatcher = FileWatcher()
     @ObservationIgnored var _chatService: ChatService?
+    @ObservationIgnored private(set) var chatStorage = ChatStorage()
 
     @ObservationIgnored let defaultCommitLimitAll = 100
     @ObservationIgnored let defaultCommitLimitFocused = 100

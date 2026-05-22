@@ -1,0 +1,1591 @@
+{
+  "": {
+    "dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/Zion.d",
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/Zion.o",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/primary.swiftdeps"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/DesignSystem/DesignSystem.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DesignSystem.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DesignSystem~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DesignSystem.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DesignSystem.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Helpers/AsyncSemaphore.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AsyncSemaphore.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AsyncSemaphore~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AsyncSemaphore.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AsyncSemaphore.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Helpers/Constants.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/Constants.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/Constants~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/Constants.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/Constants.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Helpers/Debouncer.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/Debouncer.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/Debouncer~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/Debouncer.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/Debouncer.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Helpers/EditorFileInspector.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorFileInspector.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorFileInspector~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorFileInspector.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorFileInspector.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Helpers/EditorHelpers.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorHelpers.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorHelpers~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorHelpers.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorHelpers.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Helpers/ErrorClassifier.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ErrorClassifier.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ErrorClassifier~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ErrorClassifier.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ErrorClassifier.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Helpers/IndentationDetector.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/IndentationDetector.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/IndentationDetector~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/IndentationDetector.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/IndentationDetector.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Helpers/LRUCache.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/LRUCache.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/LRUCache~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/LRUCache.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/LRUCache.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Helpers/MonospaceFontResolver.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/MonospaceFontResolver.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/MonospaceFontResolver~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/MonospaceFontResolver.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/MonospaceFontResolver.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Helpers/QRCodeGenerator.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/QRCodeGenerator.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/QRCodeGenerator~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/QRCodeGenerator.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/QRCodeGenerator.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Helpers/TerminalShellEscaping.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalShellEscaping.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalShellEscaping~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalShellEscaping.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalShellEscaping.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Helpers/Throttler.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/Throttler.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/Throttler~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/Throttler.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/Throttler.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Helpers/UserDefaultsKeys.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/UserDefaultsKeys.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/UserDefaultsKeys~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/UserDefaultsKeys.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/UserDefaultsKeys.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Helpers/ZionResourceBundle.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionResourceBundle.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionResourceBundle~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionResourceBundle.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionResourceBundle.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Helpers/ZionTemp.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTemp.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTemp~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTemp.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTemp.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Models/AIModels.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIModels.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIModels~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIModels.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIModels.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Models/AppEnums.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AppEnums.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AppEnums~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AppEnums.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AppEnums.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Models/BridgeModels.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeModels.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeModels~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeModels.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeModels.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Models/ChatModels.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatModels.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatModels~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatModels.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatModels.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Models/ConflictModels.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ConflictModels.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ConflictModels~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ConflictModels.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ConflictModels.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Models/DiffModels.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DiffModels.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DiffModels~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DiffModels.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DiffModels.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Models/EditorTheme.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorTheme.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorTheme~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorTheme.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorTheme.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Models/FileModels.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FileModels.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FileModels~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FileModels.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FileModels.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Models/GitModels.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitModels.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitModels~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitModels.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitModels.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Models/HostingModels.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/HostingModels.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/HostingModels~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/HostingModels.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/HostingModels.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Models/LocalLLMConfig.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/LocalLLMConfig.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/LocalLLMConfig~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/LocalLLMConfig.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/LocalLLMConfig.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Models/RebaseModels.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RebaseModels.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RebaseModels~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RebaseModels.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RebaseModels.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Models/RemoteAccessModels.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RemoteAccessModels.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RemoteAccessModels~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RemoteAccessModels.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RemoteAccessModels.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Models/RepoMemoryModels.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepoMemoryModels.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepoMemoryModels~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepoMemoryModels.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepoMemoryModels.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Models/RepositoryModels.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryModels.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryModels~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryModels.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryModels.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Models/RepositoryWorkerModels.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorkerModels.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorkerModels~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorkerModels.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorkerModels.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Models/ReviewModels.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ReviewModels.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ReviewModels~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ReviewModels.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ReviewModels.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Models/TerminalModels.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalModels.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalModels~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalModels.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalModels.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Models/TerminalOutputCoordinator.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalOutputCoordinator.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalOutputCoordinator~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalOutputCoordinator.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalOutputCoordinator.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Models/WorktreeModels.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/WorktreeModels.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/WorktreeModels~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/WorktreeModels.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/WorktreeModels.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/AIClient+Analysis.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIClient+Analysis.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIClient+Analysis~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIClient+Analysis.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIClient+Analysis.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/AIClient+Helpers.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIClient+Helpers.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIClient+Helpers~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIClient+Helpers.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIClient+Helpers.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/AIClient+Local.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIClient+Local.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIClient+Local~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIClient+Local.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIClient+Local.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/AIClient+Review.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIClient+Review.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIClient+Review~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIClient+Review.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIClient+Review.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/AIClient.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIClient.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIClient~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIClient.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIClient.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/AIModelCatalogService.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIModelCatalogService.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIModelCatalogService~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIModelCatalogService.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIModelCatalogService.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/AIProviderSupport.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIProviderSupport.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIProviderSupport~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIProviderSupport.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIProviderSupport.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/AzureDevOpsClient.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AzureDevOpsClient.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AzureDevOpsClient~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AzureDevOpsClient.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AzureDevOpsClient.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/BitbucketClient.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BitbucketClient.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BitbucketClient~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BitbucketClient.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BitbucketClient.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/BridgeCacheStore.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeCacheStore.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeCacheStore~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeCacheStore.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeCacheStore.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/BridgeService+ContentUtils.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeService+ContentUtils.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeService+ContentUtils~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeService+ContentUtils.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeService+ContentUtils.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/BridgeService+Discovery.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeService+Discovery.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeService+Discovery~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeService+Discovery.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeService+Discovery.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/BridgeService.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeService.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeService~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeService.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeService.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/ChatContextBuilder.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatContextBuilder.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatContextBuilder~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatContextBuilder.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatContextBuilder.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/ChatService.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatService.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatService~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatService.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatService.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/ClipboardMonitor.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ClipboardMonitor.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ClipboardMonitor~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ClipboardMonitor.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ClipboardMonitor.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/CloudflareTunnelManager.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CloudflareTunnelManager.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CloudflareTunnelManager~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CloudflareTunnelManager.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CloudflareTunnelManager.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/CodeFormatter.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeFormatter.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeFormatter~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeFormatter.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeFormatter.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/DiagnosticLogger.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DiagnosticLogger.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DiagnosticLogger~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DiagnosticLogger.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DiagnosticLogger.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/EditorSymbolIndex.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorSymbolIndex.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorSymbolIndex~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorSymbolIndex.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorSymbolIndex.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/FileWatcher.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FileWatcher.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FileWatcher~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FileWatcher.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FileWatcher.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/GitClient.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitClient.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitClient~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitClient.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitClient.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/GitCredentialStore.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitCredentialStore.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitCredentialStore~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitCredentialStore.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitCredentialStore.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/GitGraphLaneCalculator.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitGraphLaneCalculator.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitGraphLaneCalculator~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitGraphLaneCalculator.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitGraphLaneCalculator.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/GitHostingProvider.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitHostingProvider.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitHostingProvider~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitHostingProvider.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitHostingProvider.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/GitHubClient.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitHubClient.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitHubClient~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitHubClient.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitHubClient.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/GitHubDeviceFlow.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitHubDeviceFlow.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitHubDeviceFlow~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitHubDeviceFlow.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitHubDeviceFlow.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/GitLabClient.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitLabClient.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitLabClient~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitLabClient.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitLabClient.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/GitOperation.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitOperation.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitOperation~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitOperation.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitOperation.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/HostingAccountStore.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/HostingAccountStore.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/HostingAccountStore~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/HostingAccountStore.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/HostingAccountStore.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/HostingCredentialStore.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/HostingCredentialStore.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/HostingCredentialStore~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/HostingCredentialStore.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/HostingCredentialStore.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/MobileWebClient.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/MobileWebClient.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/MobileWebClient~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/MobileWebClient.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/MobileWebClient.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/NtfyClient.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/NtfyClient.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/NtfyClient~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/NtfyClient.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/NtfyClient.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/OperationManager.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OperationManager.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OperationManager~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OperationManager.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OperationManager.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/PromptDetector.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PromptDetector.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PromptDetector~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PromptDetector.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PromptDetector.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/RecentRepositoryPrefetcher.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RecentRepositoryPrefetcher.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RecentRepositoryPrefetcher~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RecentRepositoryPrefetcher.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RecentRepositoryPrefetcher.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/RemoteAccessEncryption.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RemoteAccessEncryption.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RemoteAccessEncryption~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RemoteAccessEncryption.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RemoteAccessEncryption.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/RemoteAccessServer.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RemoteAccessServer.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RemoteAccessServer~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RemoteAccessServer.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RemoteAccessServer.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/RemoteAccessState.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RemoteAccessState.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RemoteAccessState~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RemoteAccessState.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RemoteAccessState.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/RemoteHeadlessTerminal.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RemoteHeadlessTerminal.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RemoteHeadlessTerminal~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RemoteHeadlessTerminal.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RemoteHeadlessTerminal.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/RepoMemoryService.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepoMemoryService.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepoMemoryService~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepoMemoryService.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepoMemoryService.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/RepositoryWorker+Commits.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorker+Commits.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorker+Commits~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorker+Commits.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorker+Commits.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/RepositoryWorker+Execution.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorker+Execution.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorker+Execution~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorker+Execution.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorker+Execution.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/RepositoryWorker+Refs.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorker+Refs.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorker+Refs~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorker+Refs.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorker+Refs.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/RepositoryWorker+Worktrees.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorker+Worktrees.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorker+Worktrees~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorker+Worktrees.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorker+Worktrees.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/RepositoryWorker.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorker.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorker~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorker.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryWorker.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/ShortcutRegistry.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ShortcutRegistry.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ShortcutRegistry~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ShortcutRegistry.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ShortcutRegistry.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/SparkleUpdater.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SparkleUpdater.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SparkleUpdater~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SparkleUpdater.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SparkleUpdater.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Services/SpeechRecognitionService.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SpeechRecognitionService.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SpeechRecognitionService~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SpeechRecognitionService.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SpeechRecognitionService.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+AI.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AI.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AI~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AI.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AI.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+AIAnalysis.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AIAnalysis.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AIAnalysis~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AIAnalysis.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AIAnalysis.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+AICodeReview.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AICodeReview.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AICodeReview~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AICodeReview.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AICodeReview.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+AIMemory.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AIMemory.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AIMemory~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AIMemory.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AIMemory.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+AINotifications.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AINotifications.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AINotifications~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AINotifications.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AINotifications.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+AIState.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AIState.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AIState~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AIState.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AIState.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+AutoDispose.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AutoDispose.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AutoDispose~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AutoDispose.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AutoDispose.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+AutoReveal.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AutoReveal.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AutoReveal~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AutoReveal.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+AutoReveal.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+BackgroundRepos.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+BackgroundRepos.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+BackgroundRepos~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+BackgroundRepos.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+BackgroundRepos.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+Bisect.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Bisect.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Bisect~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Bisect.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Bisect.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+Bridge.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Bridge.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Bridge~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Bridge.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Bridge.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+Chat.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Chat.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Chat~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Chat.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Chat.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+Checkout.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Checkout.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Checkout~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Checkout.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Checkout.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+Clone.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Clone.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Clone~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Clone.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Clone.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+EditorDraft.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+EditorDraft.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+EditorDraft~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+EditorDraft.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+EditorDraft.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+EditorLifecycle.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+EditorLifecycle.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+EditorLifecycle~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+EditorLifecycle.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+EditorLifecycle.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+EditorState.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+EditorState.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+EditorState~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+EditorState.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+EditorState.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+ExpandedPathPrune.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+ExpandedPathPrune.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+ExpandedPathPrune~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+ExpandedPathPrune.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+ExpandedPathPrune.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+FileBrowser.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+FileBrowser.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+FileBrowser~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+FileBrowser.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+FileBrowser.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+FileOperations.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+FileOperations.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+FileOperations~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+FileOperations.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+FileOperations.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+FileTree.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+FileTree.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+FileTree~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+FileTree.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+FileTree.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+Git.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Git.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Git~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Git.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Git.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+GitBranching.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitBranching.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitBranching~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitBranching.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitBranching.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+GitConflicts.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitConflicts.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitConflicts~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitConflicts.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitConflicts.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+GitHistory.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitHistory.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitHistory~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitHistory.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitHistory.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+GitRecovery.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitRecovery.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitRecovery~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitRecovery.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitRecovery.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+GitRemote.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitRemote.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitRemote~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitRemote.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitRemote.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+GitStaging.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitStaging.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitStaging~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitStaging.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+GitStaging.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+IdleFocusGate.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+IdleFocusGate.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+IdleFocusGate~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+IdleFocusGate.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+IdleFocusGate.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+OptimisticStaging.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+OptimisticStaging.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+OptimisticStaging~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+OptimisticStaging.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+OptimisticStaging.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+PRReview.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+PRReview.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+PRReview~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+PRReview.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+PRReview.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+PendingTransfer.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+PendingTransfer.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+PendingTransfer~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+PendingTransfer.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+PendingTransfer.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+RefreshGate.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+RefreshGate.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+RefreshGate~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+RefreshGate.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+RefreshGate.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+RemoteAccess.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+RemoteAccess.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+RemoteAccess~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+RemoteAccess.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+RemoteAccess.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+RemoteSync.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+RemoteSync.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+RemoteSync~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+RemoteSync.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+RemoteSync.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+Settings.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Settings.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Settings~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Settings.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Settings.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+SnapshotHelpers.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+SnapshotHelpers.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+SnapshotHelpers~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+SnapshotHelpers.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+SnapshotHelpers.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+Tags.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Tags.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Tags~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Tags.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Tags.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+Terminal.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Terminal.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Terminal~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Terminal.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Terminal.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+Worktrees.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Worktrees.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Worktrees~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Worktrees.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+Worktrees.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel+ZenMode.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+ZenMode.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+ZenMode~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+ZenMode.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel+ZenMode.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ViewModel/RepositoryViewModel.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryViewModel.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Bridge/BridgeScreen.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeScreen.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeScreen~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeScreen.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BridgeScreen.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Changes/ChangesScreen.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChangesScreen.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChangesScreen~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChangesScreen.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChangesScreen.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Changes/HunkDiffView.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/HunkDiffView.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/HunkDiffView~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/HunkDiffView.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/HunkDiffView.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Chat/ChatComposer.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatComposer.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatComposer~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatComposer.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatComposer.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Chat/ChatEmptyState.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatEmptyState.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatEmptyState~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatEmptyState.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatEmptyState.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Chat/ChatMessageBubble.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatMessageBubble.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatMessageBubble~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatMessageBubble.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatMessageBubble.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Chat/ChatScreen.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatScreen.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatScreen~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatScreen.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ChatScreen.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/BlameView.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BlameView.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BlameView~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BlameView.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BlameView.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/ClipboardDrawer.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ClipboardDrawer.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ClipboardDrawer~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ClipboardDrawer.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ClipboardDrawer.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/ClipboardPopoverButton.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ClipboardPopoverButton.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ClipboardPopoverButton~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ClipboardPopoverButton.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ClipboardPopoverButton.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/CodeScreen+Breadcrumb.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+Breadcrumb.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+Breadcrumb~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+Breadcrumb.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+Breadcrumb.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/CodeScreen+FileBrowser.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+FileBrowser.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+FileBrowser~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+FileBrowser.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+FileBrowser.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/CodeScreen+FindReplace.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+FindReplace.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+FindReplace~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+FindReplace.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+FindReplace.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/CodeScreen+Shortcuts.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+Shortcuts.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+Shortcuts~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+Shortcuts.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+Shortcuts.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/CodeScreen+SymbolNavigation.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+SymbolNavigation.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+SymbolNavigation~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+SymbolNavigation.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+SymbolNavigation.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/CodeScreen+Terminal.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+Terminal.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+Terminal~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+Terminal.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+Terminal.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/CodeScreen+Toolbar.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+Toolbar.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+Toolbar~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+Toolbar.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+Toolbar.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/CodeScreen+ZenMode.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+ZenMode.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+ZenMode~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+ZenMode.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen+ZenMode.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/CodeScreen.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreen.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/CodeScreenLayoutProfile.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreenLayoutProfile.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreenLayoutProfile~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreenLayoutProfile.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeScreenLayoutProfile.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/CodeTab.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeTab.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeTab~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeTab.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeTab.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/EditorBreadcrumbItem.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorBreadcrumbItem.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorBreadcrumbItem~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorBreadcrumbItem.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorBreadcrumbItem.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/EditorClipView.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorClipView.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorClipView~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorClipView.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorClipView.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/EditorSettingsPopoverButton.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorSettingsPopoverButton.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorSettingsPopoverButton~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorSettingsPopoverButton.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorSettingsPopoverButton.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/FileBrowserShortcutResponder.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FileBrowserShortcutResponder.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FileBrowserShortcutResponder~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FileBrowserShortcutResponder.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FileBrowserShortcutResponder.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/FileTreeNodeView.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FileTreeNodeView.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FileTreeNodeView~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FileTreeNodeView.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FileTreeNodeView.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/FindInFilesView.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FindInFilesView.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FindInFilesView~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FindInFilesView.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FindInFilesView.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/FindSearchTextField.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FindSearchTextField.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FindSearchTextField~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FindSearchTextField.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FindSearchTextField.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/FolderIcon.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FolderIcon.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FolderIcon~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FolderIcon.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FolderIcon.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/ImagePreviewView.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ImagePreviewView.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ImagePreviewView~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ImagePreviewView.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ImagePreviewView.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/MarkdownPreviewView.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/MarkdownPreviewView.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/MarkdownPreviewView~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/MarkdownPreviewView.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/MarkdownPreviewView.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/QuickOpenOverlay.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/QuickOpenOverlay.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/QuickOpenOverlay~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/QuickOpenOverlay.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/QuickOpenOverlay.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/SearchNavButton.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SearchNavButton.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SearchNavButton~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SearchNavButton.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SearchNavButton.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/SourceCodeEditor+Coordinator.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SourceCodeEditor+Coordinator.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SourceCodeEditor+Coordinator~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SourceCodeEditor+Coordinator.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SourceCodeEditor+Coordinator.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/SourceCodeEditor+EditorThemes.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SourceCodeEditor+EditorThemes.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SourceCodeEditor+EditorThemes~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SourceCodeEditor+EditorThemes.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SourceCodeEditor+EditorThemes.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/SourceCodeEditor.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SourceCodeEditor.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SourceCodeEditor~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SourceCodeEditor.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SourceCodeEditor.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/SymbolResultsSheet.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SymbolResultsSheet.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SymbolResultsSheet~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SymbolResultsSheet.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SymbolResultsSheet.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/TerminalFontPopoverButton.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalFontPopoverButton.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalFontPopoverButton~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalFontPopoverButton.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalFontPopoverButton.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/TerminalPaneView.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalPaneView.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalPaneView~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalPaneView.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalPaneView.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/TerminalTabChip.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalTabChip.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalTabChip~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalTabChip.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalTabChip.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/TerminalTabView+ScriptInstaller.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalTabView+ScriptInstaller.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalTabView+ScriptInstaller~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalTabView+ScriptInstaller.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalTabView+ScriptInstaller.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/TerminalToolbarButton.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalToolbarButton.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalToolbarButton~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalToolbarButton.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalToolbarButton.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/TerminalView.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalView.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalView~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalView.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalView.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/VisualEffectBlur.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/VisualEffectBlur.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/VisualEffectBlur~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/VisualEffectBlur.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/VisualEffectBlur.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/VoiceActivePill.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/VoiceActivePill.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/VoiceActivePill~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/VoiceActivePill.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/VoiceActivePill.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/VoiceInputButton.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/VoiceInputButton.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/VoiceInputButton~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/VoiceInputButton.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/VoiceInputButton.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/ZionTerminalView.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTerminalView.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTerminalView~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTerminalView.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTerminalView.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/ZionTextView+Drawing.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTextView+Drawing.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTextView+Drawing~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTextView+Drawing.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTextView+Drawing.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/ZionTextView+KeyboardHandling.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTextView+KeyboardHandling.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTextView+KeyboardHandling~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTextView+KeyboardHandling.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTextView+KeyboardHandling.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/ZionTextView+LineEditing.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTextView+LineEditing.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTextView+LineEditing~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTextView+LineEditing.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTextView+LineEditing.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/ZionTextView+SymbolNavigation.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTextView+SymbolNavigation.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTextView+SymbolNavigation~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTextView+SymbolNavigation.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTextView+SymbolNavigation.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Code/ZionTextView.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTextView.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTextView~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTextView.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionTextView.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/CodeReview/CodeReviewDiffPane.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeReviewDiffPane.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeReviewDiffPane~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeReviewDiffPane.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeReviewDiffPane.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/CodeReview/CodeReviewFileList.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeReviewFileList.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeReviewFileList~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeReviewFileList.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeReviewFileList.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/CodeReview/CodeReviewSheet.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeReviewSheet.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeReviewSheet~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeReviewSheet.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeReviewSheet.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/CodeReview/CodeReviewStatsBar.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeReviewStatsBar.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeReviewStatsBar~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeReviewStatsBar.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CodeReviewStatsBar.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/CodeReview/PRCommentThread.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PRCommentThread.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PRCommentThread~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PRCommentThread.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PRCommentThread.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/CodeReview/PRInlineCommentInput.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PRInlineCommentInput.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PRInlineCommentInput~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PRInlineCommentInput.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PRInlineCommentInput.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/CodeReview/PRReviewSubmitSheet.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PRReviewSubmitSheet.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PRReviewSubmitSheet~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PRReviewSubmitSheet.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PRReviewSubmitSheet.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/AIQuotaExceededBanner.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIQuotaExceededBanner.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIQuotaExceededBanner~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIQuotaExceededBanner.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AIQuotaExceededBanner.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/ActiveOperationBanner.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ActiveOperationBanner.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ActiveOperationBanner~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ActiveOperationBanner.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ActiveOperationBanner.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/AuthErrorSheet.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AuthErrorSheet.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AuthErrorSheet~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AuthErrorSheet.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AuthErrorSheet.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/BisectBanner.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BisectBanner.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BisectBanner~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BisectBanner.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BisectBanner.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/CloneSheet.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CloneSheet.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CloneSheet~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CloneSheet.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CloneSheet.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/CommitDetailContent.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CommitDetailContent.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CommitDetailContent~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CommitDetailContent.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CommitDetailContent.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/CommitRowView.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CommitRowView.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CommitRowView~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CommitRowView.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/CommitRowView.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/DecorationPill.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DecorationPill.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DecorationPill~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DecorationPill.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DecorationPill.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/DiffExplanationCard.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DiffExplanationCard.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DiffExplanationCard~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DiffExplanationCard.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DiffExplanationCard.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/DivergenceResolutionSheet.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DivergenceResolutionSheet.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DivergenceResolutionSheet~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DivergenceResolutionSheet.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DivergenceResolutionSheet.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/DraggableSplitView.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DraggableSplitView.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DraggableSplitView~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DraggableSplitView.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DraggableSplitView.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/FileHistorySheet.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FileHistorySheet.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FileHistorySheet~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FileHistorySheet.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FileHistorySheet.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/FlowLayout.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FlowLayout.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FlowLayout~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FlowLayout.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/FlowLayout.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/GitAuthPromptSheet.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitAuthPromptSheet.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitAuthPromptSheet~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitAuthPromptSheet.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GitAuthPromptSheet.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/GlassCard.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GlassCard.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GlassCard~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GlassCard.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GlassCard.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/HelpSheet.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/HelpSheet.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/HelpSheet~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/HelpSheet.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/HelpSheet.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/KeyboardShortcutsSheet.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/KeyboardShortcutsSheet.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/KeyboardShortcutsSheet~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/KeyboardShortcutsSheet.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/KeyboardShortcutsSheet.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/LaneGraphView.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/LaneGraphView.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/LaneGraphView~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/LaneGraphView.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/LaneGraphView.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/NativeDoubleClick.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/NativeDoubleClick.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/NativeDoubleClick~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/NativeDoubleClick.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/NativeDoubleClick.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/NeonProgressLine.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/NeonProgressLine.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/NeonProgressLine~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/NeonProgressLine.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/NeonProgressLine.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/ReflogSheet.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ReflogSheet.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ReflogSheet~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ReflogSheet.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ReflogSheet.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/ReviewFindingsView.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ReviewFindingsView.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ReviewFindingsView~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ReviewFindingsView.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ReviewFindingsView.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/ShortcutRecorderView.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ShortcutRecorderView.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ShortcutRecorderView~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ShortcutRecorderView.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ShortcutRecorderView.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/StableEditorTerminalSplit.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/StableEditorTerminalSplit.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/StableEditorTerminalSplit~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/StableEditorTerminalSplit.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/StableEditorTerminalSplit.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/StableFileBrowserSplit.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/StableFileBrowserSplit.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/StableFileBrowserSplit~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/StableFileBrowserSplit.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/StableFileBrowserSplit.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/StatusComponents.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/StatusComponents.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/StatusComponents~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/StatusComponents.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/StatusComponents.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/TruncatingHStack.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TruncatingHStack.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TruncatingHStack~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TruncatingHStack.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TruncatingHStack.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/ViewportContentContainer.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ViewportContentContainer.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ViewportContentContainer~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ViewportContentContainer.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ViewportContentContainer.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/ZionLoadingOverlay.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionLoadingOverlay.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionLoadingOverlay~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionLoadingOverlay.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionLoadingOverlay.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/ZionMapContent.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionMapContent.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionMapContent~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionMapContent.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionMapContent.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Components/ZionMapDetailPage.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionMapDetailPage.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionMapDetailPage~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionMapDetailPage.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionMapDetailPage.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Conflicts/ConflictRegionCard.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ConflictRegionCard.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ConflictRegionCard~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ConflictRegionCard.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ConflictRegionCard.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Conflicts/ConflictResolutionScreen.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ConflictResolutionScreen.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ConflictResolutionScreen~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ConflictResolutionScreen.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ConflictResolutionScreen.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Graph/GraphScreen+CommitDetails.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen+CommitDetails.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen+CommitDetails~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen+CommitDetails.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen+CommitDetails.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Graph/GraphScreen+Header.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen+Header.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen+Header~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen+Header.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen+Header.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Graph/GraphScreen+InlineChanges.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen+InlineChanges.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen+InlineChanges~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen+InlineChanges.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen+InlineChanges.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Graph/GraphScreen+PendingChanges.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen+PendingChanges.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen+PendingChanges~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen+PendingChanges.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen+PendingChanges.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Graph/GraphScreen+Search.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen+Search.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen+Search~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen+Search.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen+Search.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Graph/GraphScreen.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GraphScreen.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Main/AppShellLayoutProfile.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AppShellLayoutProfile.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AppShellLayoutProfile~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AppShellLayoutProfile.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AppShellLayoutProfile.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Main/ClimbingZionView.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ClimbingZionView.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ClimbingZionView~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ClimbingZionView.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ClimbingZionView.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Main/ContentView+ContextMenus.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ContentView+ContextMenus.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ContentView+ContextMenus~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ContentView+ContextMenus.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ContentView+ContextMenus.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Main/ContentView+Toolbar.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ContentView+Toolbar.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ContentView+Toolbar~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ContentView+Toolbar.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ContentView+Toolbar.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Main/ContentView.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ContentView.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ContentView~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ContentView.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ContentView.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Main/ContextualFeatureTour.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ContextualFeatureTour.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ContextualFeatureTour~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ContextualFeatureTour.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ContextualFeatureTour.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Main/LiquidBackgroundView.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/LiquidBackgroundView.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/LiquidBackgroundView~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/LiquidBackgroundView.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/LiquidBackgroundView.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Main/PRInboxCard.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PRInboxCard.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PRInboxCard~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PRInboxCard.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PRInboxCard.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Main/PRInboxRow.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PRInboxRow.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PRInboxRow~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PRInboxRow.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PRInboxRow.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Main/SidebarView+Worktrees.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SidebarView+Worktrees.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SidebarView+Worktrees~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SidebarView+Worktrees.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SidebarView+Worktrees.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Main/SidebarView.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SidebarView.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SidebarView~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SidebarView.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SidebarView.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Main/StatusBar.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/StatusBar.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/StatusBar~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/StatusBar.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/StatusBar.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Main/StatusBarRecentsMenu.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/StatusBarRecentsMenu.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/StatusBarRecentsMenu~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/StatusBarRecentsMenu.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/StatusBarRecentsMenu.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Main/WelcomeScreen.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/WelcomeScreen.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/WelcomeScreen~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/WelcomeScreen.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/WelcomeScreen.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Operations/BranchReviewSheet.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BranchReviewSheet.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BranchReviewSheet~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BranchReviewSheet.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/BranchReviewSheet.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Operations/InteractiveRebaseSheet.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/InteractiveRebaseSheet.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/InteractiveRebaseSheet~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/InteractiveRebaseSheet.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/InteractiveRebaseSheet.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Operations/OperationsScreen.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OperationsScreen.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OperationsScreen~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OperationsScreen.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OperationsScreen.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Operations/OpsAICards.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsAICards.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsAICards~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsAICards.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsAICards.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Operations/OpsBranchCard.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsBranchCard.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsBranchCard~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsBranchCard.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsBranchCard.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Operations/OpsCommitCard.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsCommitCard.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsCommitCard~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsCommitCard.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsCommitCard.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Operations/OpsHistoryCard.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsHistoryCard.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsHistoryCard~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsHistoryCard.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsHistoryCard.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Operations/OpsInfraCards.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsInfraCards.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsInfraCards~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsInfraCards.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsInfraCards.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Operations/OpsMaintenanceCard.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsMaintenanceCard.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsMaintenanceCard~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsMaintenanceCard.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsMaintenanceCard.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Operations/OpsSnapshotCards.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsSnapshotCards.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsSnapshotCards~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsSnapshotCards.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/OpsSnapshotCards.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Operations/PullRequestSheet.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PullRequestSheet.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PullRequestSheet~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PullRequestSheet.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/PullRequestSheet.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Operations/RepositoryStatsView.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryStatsView.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryStatsView~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryStatsView.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/RepositoryStatsView.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Operations/SubmodulesCard.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SubmodulesCard.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SubmodulesCard~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SubmodulesCard.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SubmodulesCard.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Operations/TagDetailSheet.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TagDetailSheet.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TagDetailSheet~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TagDetailSheet.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TagDetailSheet.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Settings/AISettingsTab.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AISettingsTab.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AISettingsTab~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AISettingsTab.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/AISettingsTab.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Settings/EditorSettingsTab.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorSettingsTab.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorSettingsTab~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorSettingsTab.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/EditorSettingsTab.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Settings/GeneralSettingsTab.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GeneralSettingsTab.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GeneralSettingsTab~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GeneralSettingsTab.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/GeneralSettingsTab.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Settings/LocalLLMSettingsSection.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/LocalLLMSettingsSection.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/LocalLLMSettingsSection~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/LocalLLMSettingsSection.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/LocalLLMSettingsSection.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Settings/MobileAccessSettingsTab.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/MobileAccessSettingsTab.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/MobileAccessSettingsTab~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/MobileAccessSettingsTab.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/MobileAccessSettingsTab.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Settings/NotificationSettingsTab.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/NotificationSettingsTab.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/NotificationSettingsTab~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/NotificationSettingsTab.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/NotificationSettingsTab.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Settings/SettingsView.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SettingsView.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SettingsView~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SettingsView.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/SettingsView.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Settings/TerminalSettingsTab.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalSettingsTab.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalSettingsTab~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalSettingsTab.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/TerminalSettingsTab.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/Views/Worktrees/WorktreesScreen.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/WorktreesScreen.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/WorktreesScreen~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/WorktreesScreen.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/WorktreesScreen.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/Sources/Zion/ZionApp.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionApp.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionApp~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionApp.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/ZionApp.dia"
+  },
+  "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/DerivedSources/resource_bundle_accessor.swift": {
+    "object": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/resource_bundle_accessor.swift.o",
+    "swiftmodule": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/resource_bundle_accessor~partial.swiftmodule",
+    "swift-dependencies": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/resource_bundle_accessor.swiftdeps",
+    "diagnostics": "/Users/nicolaregattieri/Developer/GraphForge/.build/arm64-apple-macosx/release/Zion.build/resource_bundle_accessor.dia"
+  }
+}

@@ -2458,3 +2458,13 @@
 "chat.harness.intent.commitDetails" = "commit %@";
 "ai.error.toolExecution.failed" = "Tool execution failed: %@";
 "ai.error.toolCalling.notSupported" = "Selected provider doesn't support tool calling.";
+"chat.thread.list.title" = "Conversations";
+"chat.thread.new" = "New thread";
+"chat.thread.delete" = "Delete";
+"chat.thread.rename" = "Rename";
+"chat.thread.untitled" = "Untitled %@";
+"chat.thread.confirmDelete" = "Delete this conversation? This cannot be undone.";
+"chat.thread.lastUpdatedAt" = "Updated %@";
+"chat.thread.empty" = "No conversations yet";
+"chat.thread.sidebar.toggle" = "Toggle conversations";
+"chat.persistence.error" = "Failed to save chat history. Continuing in memory.";
