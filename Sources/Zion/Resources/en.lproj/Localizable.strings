@@ -2491,3 +2491,21 @@
 "chat.cli.tool.running" = "Running %@...";
 "chat.cli.tool.completed" = "%@ completed";
 "chat.cli.tool.failed" = "%@ failed";
+
+"chat.local.autostart.binaryMissing" = "Local engine binary not found (%@). Install it or switch engine in Settings → AI.";
+"chat.local.autostart.timedOut" = "Local server did not respond in time. Check the model name and engine in Settings → AI.";
+"chat.local.autostart.spawnFailed" = "Failed to start local server: %@";
+
+"settings.ai.local.engine" = "Engine";
+"settings.ai.local.engine.ollama" = "Ollama";
+"settings.ai.local.engine.mlx" = "MLX (mlx_lm.server)";
+"settings.ai.local.engine.llamaCpp" = "llama.cpp server";
+"settings.ai.local.engine.lmStudio" = "LM Studio";
+"settings.ai.local.engine.custom" = "Custom (no auto-start)";
+"settings.ai.local.autostart" = "Auto-start server on first message";
+"settings.ai.local.autostart.hint" = "When the endpoint is unreachable, Zion launches the engine for the current model and waits up to 30s before sending.";
+"settings.ai.local.server.stop" = "Stop server";
+"settings.ai.local.server.stopped" = "Stopped (pid %@)";
+"settings.ai.local.server.stop.notRunning" = "Already stopped";
+"settings.ai.local.server.stop.noOwner" = "No process owns the port";
+"settings.ai.local.server.stop.failed" = "Stop failed: %@";

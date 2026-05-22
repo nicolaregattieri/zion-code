@@ -2513,3 +2513,21 @@
 "chat.cli.tool.running" = "Ejecutando %@...";
 "chat.cli.tool.completed" = "%@ completado";
 "chat.cli.tool.failed" = "%@ falló";
+
+"chat.local.autostart.binaryMissing" = "Binario del motor local no encontrado (%@). Instálalo o cambia el motor en Ajustes → AI.";
+"chat.local.autostart.timedOut" = "El servidor local no respondió a tiempo. Verifica el nombre del modelo y el motor en Ajustes → AI.";
+"chat.local.autostart.spawnFailed" = "Error al iniciar servidor local: %@";
+
+"settings.ai.local.engine" = "Motor";
+"settings.ai.local.engine.ollama" = "Ollama";
+"settings.ai.local.engine.mlx" = "MLX (mlx_lm.server)";
+"settings.ai.local.engine.llamaCpp" = "llama.cpp server";
+"settings.ai.local.engine.lmStudio" = "LM Studio";
+"settings.ai.local.engine.custom" = "Personalizado (sin auto-start)";
+"settings.ai.local.autostart" = "Iniciar servidor automáticamente en el primer mensaje";
+"settings.ai.local.autostart.hint" = "Cuando el endpoint no esté accesible, Zion inicia el motor para el modelo actual y espera hasta 30s antes de enviar.";
+"settings.ai.local.server.stop" = "Detener servidor";
+"settings.ai.local.server.stopped" = "Detenido (pid %@)";
+"settings.ai.local.server.stop.notRunning" = "Ya detenido";
+"settings.ai.local.server.stop.noOwner" = "Ningún proceso escucha en ese puerto";
+"settings.ai.local.server.stop.failed" = "Falló al detener: %@";

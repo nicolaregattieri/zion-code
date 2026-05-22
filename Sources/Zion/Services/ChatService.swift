@@ -425,6 +425,10 @@ final class ChatService {
         let maxTokens = 2048
         let threadID = activeThreadID
 
+        if config.autoStartEnabled, streamProvider == nil {
+            await ensureLocalServerRunning(config: config, assistantID: assistantID)
+        }
+
         let stream: AsyncThrowingStream<String, Error>
         if let injected = streamProvider {
             stream = injected(config, payload, maxTokens, modelID)
@@ -438,6 +442,35 @@ final class ChatService {
         }
 
         await consumeStream(stream, assistantID: assistantID, threadID: threadID)
+    }
+
+    private func ensureLocalServerRunning(config: LocalLLMConfig, assistantID: UUID) async {
+        let launcher = LocalServerLauncher()
+        let outcome = await launcher.ensureRunning(config: config, engine: config.engineKind)
+        switch outcome {
+        case .alreadyRunning, .started:
+            break // proceed with stream
+        case .binaryNotFound(let engine):
+            await MainActor.run {
+                self.setAssistantContent(
+                    id: assistantID,
+                    content: L10n("chat.local.autostart.binaryMissing", engine.rawValue)
+                )
+            }
+        case .timedOut:
+            await MainActor.run {
+                self.setAssistantContent(id: assistantID, content: L10n("chat.local.autostart.timedOut"))
+            }
+        case .spawnFailed(let message):
+            await MainActor.run {
+                self.setAssistantContent(
+                    id: assistantID,
+                    content: L10n("chat.local.autostart.spawnFailed", message)
+                )
+            }
+        case .unsupported:
+            break // custom engine — assume user manages it manually
+        }
     }
 
     private func consumeStream(_ stream: AsyncThrowingStream<String, Error>, assistantID: UUID, threadID: UUID) async {
