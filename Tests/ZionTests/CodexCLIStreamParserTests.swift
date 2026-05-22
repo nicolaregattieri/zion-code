@@ -119,19 +119,49 @@ final class CodexCLIStreamParserTests: XCTestCase {
         XCTAssertNil(event)
     }
 
-    func testMissingMsgKeyNil() {
-        let json = """
-        {"type":"agent_message","text":"hello"}
-        """
-        let event = AIClient.parseCodexJSONLLine(data(json))
-        XCTAssertNil(event)
-    }
-
     func testUnknownMsgTypeNil() {
         let json = """
         {"msg":{"type":"heartbeat","ts":1234567890}}
         """
         let event = AIClient.parseCodexJSONLLine(data(json))
         XCTAssertNil(event)
+    }
+
+    // MARK: - v0.131+ schema (top-level type + nested item)
+
+    func testV0131AgentMessage() {
+        let json = #"{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Hi there friend"}}"#
+        XCTAssertEqual(AIClient.parseCodexJSONLLine(data(json)), .textDelta("Hi there friend"))
+    }
+
+    func testV0131TurnCompleted() {
+        let json = #"{"type":"turn.completed","usage":{"input_tokens":1}}"#
+        XCTAssertEqual(AIClient.parseCodexJSONLLine(data(json)), .done)
+    }
+
+    func testV0131ThreadStartedIgnored() {
+        let json = #"{"type":"thread.started","thread_id":"abc"}"#
+        XCTAssertNil(AIClient.parseCodexJSONLLine(data(json)))
+    }
+
+    func testV0131FunctionCall() {
+        let json = #"{"type":"item.completed","item":{"id":"call_1","type":"function_call","name":"shell","arguments":"ls -la"}}"#
+        let event = AIClient.parseCodexJSONLLine(data(json))
+        if case .toolStart(let id, let name, let desc) = event {
+            XCTAssertEqual(id, "call_1")
+            XCTAssertEqual(name, "shell")
+            XCTAssertEqual(desc, "ls -la")
+        } else {
+            XCTFail("Expected toolStart, got \(String(describing: event))")
+        }
+    }
+
+    func testV0131Error() {
+        let json = #"{"type":"error","message":"network unreachable"}"#
+        if case .error(let m) = AIClient.parseCodexJSONLLine(data(json)) {
+            XCTAssertEqual(m, "network unreachable")
+        } else {
+            XCTFail("Expected .error event")
+        }
     }
 }

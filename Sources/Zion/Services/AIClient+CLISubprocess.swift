@@ -75,12 +75,54 @@ extension AIClient {
 
     // MARK: Codex JSONL Parser
 
-    /// Parses a single JSONL line emitted by `codex --full-auto`.
-    /// Returns nil for malformed input or unrecognised event types.
+    /// Parses a single JSONL line emitted by `codex exec --json` (v0.131+).
+    /// The schema places event details under a top-level `type` key, with
+    /// item payloads nested under `item`. Older `msg.type` schemas are also
+    /// accepted as a fallback so older codex builds keep working.
     static func parseCodexJSONLLine(_ line: Data) -> CLIStreamEvent? {
         guard !line.isEmpty,
-              let root = (try? JSONSerialization.jsonObject(with: line)) as? [String: Any],
-              let msg = root["msg"] as? [String: Any],
+              let root = (try? JSONSerialization.jsonObject(with: line)) as? [String: Any]
+        else { return nil }
+
+        // v0.131+: top-level `type` + nested `item`/`usage` payloads.
+        if let topType = root["type"] as? String {
+            switch topType {
+            case "item.completed":
+                guard let item = root["item"] as? [String: Any],
+                      let itemType = item["type"] as? String
+                else { return nil }
+                switch itemType {
+                case "agent_message":
+                    guard let text = item["text"] as? String, !text.isEmpty else { return nil }
+                    return .textDelta(text)
+                case "function_call", "tool_call":
+                    let id = (item["id"] as? String) ?? (item["call_id"] as? String) ?? UUID().uuidString
+                    let name = (item["name"] as? String) ?? (item["function_name"] as? String) ?? "tool"
+                    let argsRaw = (item["arguments"] as? String) ?? (item["args"] as? String) ?? ""
+                    return .toolStart(id: id, name: name, description: String(argsRaw.prefix(60)))
+                case "tool_result":
+                    let id = (item["id"] as? String) ?? (item["call_id"] as? String) ?? ""
+                    let success = (item["status"] as? String) == "success"
+                        || (item["exit_code"] as? Int) == 0
+                    return .toolEnd(id: id, success: success)
+                default:
+                    return nil
+                }
+
+            case "turn.completed", "task_complete":
+                return .done
+
+            case "error":
+                let message = root["message"] as? String ?? "codex error"
+                return .error(message)
+
+            default:
+                return nil
+            }
+        }
+
+        // Legacy schema fallback: { "msg": { "type": ..., ... } }
+        guard let msg = root["msg"] as? [String: Any],
               let msgType = msg["type"] as? String
         else { return nil }
 
@@ -93,10 +135,8 @@ extension AIClient {
             guard let callId = msg["call_id"] as? String,
                   let functionName = msg["function_name"] as? String
             else { return nil }
-
             let args = msg["args"] as? String ?? ""
-            let truncated = String(args.prefix(60))
-            return .toolStart(id: callId, name: functionName, description: truncated)
+            return .toolStart(id: callId, name: functionName, description: String(args.prefix(60)))
 
         case "function_call_end":
             guard let callId = msg["call_id"] as? String else { return nil }

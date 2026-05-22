@@ -332,7 +332,7 @@ final class ChatService {
                 }
             }
 
-            var payload = Self.makePayload(for: expandedText)
+            var payload = Self.makePayload(for: expandedText, provider: provider)
             payload.cwd = repoURL
 
             switch provider {
@@ -600,10 +600,39 @@ final class ChatService {
         return title.hasPrefix(untitledBase)
     }
 
-    private static func makePayload(for text: String) -> AIPromptPayload {
+    private static func makePayload(for text: String, provider: AIProvider) -> AIPromptPayload {
         AIClient.makePromptPayload(
             task: "Chat",
-            taskInstructions: """
+            taskInstructions: taskInstructions(for: provider),
+            untrustedSections: [
+                AIUntrustedPromptSection(
+                    kind: "user_message",
+                    label: "User message",
+                    content: text,
+                    maxLength: AILimits.maxDiffContentLength
+                )
+            ]
+        )
+    }
+
+    private static func taskInstructions(for provider: AIProvider) -> String {
+        switch provider {
+        case .claudeCLI, .codexCLI:
+            // CLI providers bring their own tool harness (Read/Edit/Bash/Grep/etc.) and
+            // session memory. We only tell them where they are and let them work.
+            return """
+            You are running inside Zion, a native macOS git client. The working
+            directory is the user's git repository — use your built-in tools
+            (Read, Bash, Edit, etc.) to inspect and act on it.
+
+            File edits are gated by Zion's `chat.cliAllowEdits` setting; if the
+            user asked you to modify files and you find you cannot, tell them to
+            enable "Allow file edits" in Settings → AI → Subscription CLIs.
+
+            Output style: concise. Code blocks for commands, paths, hashes.
+            """
+        default:
+            return """
             You are Zion's coding assistant, embedded in a native macOS git client.
 
             What you do well:
@@ -635,15 +664,7 @@ final class ChatService {
 
             Output style: concise. Code blocks for commands, file paths, hashes.
             Never invent file paths or commit SHAs you haven't seen in context.
-            """,
-            untrustedSections: [
-                AIUntrustedPromptSection(
-                    kind: "user_message",
-                    label: "User message",
-                    content: text,
-                    maxLength: AILimits.maxDiffContentLength
-                )
-            ]
-        )
+            """
+        }
     }
 }
