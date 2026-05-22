@@ -196,6 +196,20 @@ enum Constants {
         /// Default request timeout for local LLM API calls.
         static let localDefaultRequestTimeoutSeconds: TimeInterval = 60
 
+        // --- CLI Providers ---
+
+        /// Timeout for probing whether a CLI tool (claude, codex) is authenticated.
+        static let cliAuthProbeTimeout: TimeInterval = 10.0
+
+        /// Grace period between SIGTERM and SIGKILL when cancelling a CLI subprocess.
+        static let cliSigkillGrace: TimeInterval = 1.0
+
+        /// How long to cache CLI tool discovery results (path + version) before re-probing.
+        static let cliDiscoveryCacheTTL: TimeInterval = 300.0
+
+        /// Delay before cleaning up tool-event state after a tool call completes.
+        static let toolEventCleanupDelay: TimeInterval = 3.0
+
         /// Timeout for shortcut key recording before auto-cancelling.
         /// 5s gives users time to think about which key combo to use.
         static let shortcutRecordingTimeout: UInt64 = 5_000_000_000 // 5s

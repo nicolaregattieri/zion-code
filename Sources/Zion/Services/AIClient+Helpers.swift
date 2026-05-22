@@ -49,7 +49,7 @@ extension AIClient {
                         return try await callOpenAI(payload: payload, apiKey: apiKey, maxTokens: maxTokens, modelID: modelID)
                     case .gemini:
                         return try await callGemini(payload: payload, apiKey: apiKey, maxTokens: maxTokens, modelID: modelID)
-                    case .none:
+                    case .none, .claudeCLI, .codexCLI:
                         throw AIError.noProvider
                     case .local:
                         // Unreachable — .local is handled above before the candidates loop
@@ -552,6 +552,14 @@ enum StreamEvent: @unchecked Sendable {
     case done
 }
 
+// MARK: - CLI Tool Identity
+
+/// Identifies a CLI-based AI provider. Codable so it can be stored / sent as a raw string.
+enum CLITool: String, Codable, Equatable, Sendable {
+    case claude
+    case codex
+}
+
 // MARK: - Error Types
 
 enum AIError: LocalizedError {
@@ -569,6 +577,10 @@ enum AIError: LocalizedError {
     case toolExecutionFailed(String)
     case maxToolHopsExceeded
     case toolCallingNotSupported
+    case cliNotInstalled(CLITool)
+    case cliNotAuthenticated(CLITool)
+    case cliError(stderr: String, exitCode: Int32)
+    case cliVersionTooOld(required: String, found: String)
 
     var errorDescription: String? {
         switch self {
@@ -586,6 +598,10 @@ enum AIError: LocalizedError {
         case .toolExecutionFailed(let msg): return String(format: L10n("ai.error.toolExecution.failed"), msg)
         case .maxToolHopsExceeded: return L10n("chat.tool.error.maxHops")
         case .toolCallingNotSupported: return L10n("ai.error.toolCalling.notSupported")
+        case .cliNotInstalled(let tool): return String(format: L10n("ai.error.cli.notInstalled"), tool.rawValue)
+        case .cliNotAuthenticated(let tool): return String(format: L10n("ai.error.cli.notAuthenticated"), tool.rawValue)
+        case .cliError(let stderr, _): return String(format: L10n("ai.error.cli.execFailed"), stderr)
+        case .cliVersionTooOld(let required, let found): return String(format: L10n("ai.error.cli.versionTooOld"), required, found)
         }
     }
 }
