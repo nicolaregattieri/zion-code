@@ -20,6 +20,27 @@ while let arg = argIter.next() {
 let registry = ToolRegistry()
 let server = Server()
 
+// MARK: - Tool registration
+
+let repoURL: URL = {
+    if let path = repoPath { return URL(fileURLWithPath: path) }
+    return URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+}()
+
+registry.register(GitLog(repoURL: repoURL))
+registry.register(BranchList(repoURL: repoURL))
+registry.register(PendingChanges(repoURL: repoURL))
+registry.register(CommitInspect(repoURL: repoURL))
+registry.register(Worktrees(repoURL: repoURL))
+
+// T3 — Stash + RepoMemorySearch
+registry.register(StashListTool(repoURL: repoURL))
+registry.register(StashApplyTool(repoURL: repoURL))
+registry.register(RepoMemorySearchTool())
+
+// T4 — OpenInEditor bridge
+registry.register(OpenInEditorTool())
+
 // MARK: - initialize
 
 server.register(method: "initialize") { _ in

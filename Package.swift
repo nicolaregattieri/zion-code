@@ -34,6 +34,11 @@ let package = Package(
         .testTarget(
             name: "ZionTests",
             dependencies: ["Zion"]
+        ),
+        .testTarget(
+            name: "ZionMCPTests",
+            dependencies: ["ZionMCP"],
+            path: "Tests/ZionMCPTests"
         )
     ]
 )
