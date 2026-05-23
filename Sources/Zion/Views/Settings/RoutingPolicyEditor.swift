@@ -11,7 +11,8 @@ struct RoutingPolicyEditor: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
+            priorityHint
             ForEach(editableLanes) { lane in
                 laneRow(lane: lane)
                 if lane != editableLanes.last {
@@ -22,30 +23,47 @@ struct RoutingPolicyEditor: View {
         .padding(.vertical, 4)
     }
 
+    /// One-time hint at the top explaining priority direction.
+    private var priorityHint: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "arrow.left.and.right")
+                .font(DesignSystem.Typography.label)
+                .foregroundStyle(DesignSystem.Colors.textTertiary)
+            Text("Highest priority on the left — Zion tries each provider in order on quota / network errors.")
+                .font(DesignSystem.Typography.label)
+                .foregroundStyle(DesignSystem.Colors.textTertiary)
+        }
+    }
+
     @ViewBuilder
     private func laneRow(lane: AITaskLane) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             Text(lane.label)
                 .font(DesignSystem.Typography.labelBold)
 
-            HStack(spacing: 6) {
+            // Use a wrapping HStack via VStack-of-rows so capsules don't crush.
+            FlowLayout(spacing: 8, maxItemsPerRow: .max) {
                 let chain = policy.chains[lane.rawValue] ?? []
                 ForEach(Array(chain.enumerated()), id: \.offset) { index, rawProvider in
                     capsule(lane: lane, rawProvider: rawProvider, index: index, chainCount: chain.count)
                 }
-
                 addProviderMenu(lane: lane)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
     @ViewBuilder
     private func capsule(lane: AITaskLane, rawProvider: String, index: Int, chainCount: Int) -> some View {
-        let providerLabel = AIProvider(rawValue: rawProvider)?.label ?? rawProvider
+        let provider = AIProvider(rawValue: rawProvider)
+        let shortLabel = provider.map(Self.shortName(for:)) ?? rawProvider
+        let fullLabel = provider?.label ?? rawProvider
 
-        HStack(spacing: 4) {
-            // Move up
+        HStack(spacing: 6) {
+            Text("\(index + 1)")
+                .font(DesignSystem.Typography.metaSemibold)
+                .foregroundStyle(DesignSystem.Colors.textTertiary)
+                .frame(minWidth: 12, alignment: .leading)
+
             if index > 0 {
                 Button {
                     moveProvider(lane: lane, from: index, to: index - 1)
@@ -55,13 +73,15 @@ struct RoutingPolicyEditor: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
-                .help("Move left") // MARK: - TODO(T10): L10n
+                .help("Move left")
             }
 
-            Text(providerLabel)
+            Text(shortLabel)
                 .font(DesignSystem.Typography.metaSemibold)
+                .lineLimit(1)
+                .fixedSize()
+                .help(fullLabel)
 
-            // Move down
             if index < chainCount - 1 {
                 Button {
                     moveProvider(lane: lane, from: index, to: index + 1)
@@ -71,10 +91,9 @@ struct RoutingPolicyEditor: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
-                .help("Move right") // MARK: - TODO(T10): L10n
+                .help("Move right")
             }
 
-            // Remove
             Button {
                 removeProvider(lane: lane, at: index)
             } label: {
@@ -83,10 +102,10 @@ struct RoutingPolicyEditor: View {
             }
             .buttonStyle(.plain)
             .foregroundStyle(.secondary)
-            .help("Remove") // MARK: - TODO(T10): L10n
+            .help("Remove")
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
         .background(DesignSystem.Colors.actionPrimary.opacity(0.12))
         .clipShape(Capsule())
     }
@@ -94,7 +113,9 @@ struct RoutingPolicyEditor: View {
     @ViewBuilder
     private func addProviderMenu(lane: AITaskLane) -> some View {
         let chain = policy.chains[lane.rawValue] ?? []
-        let available = AIProvider.allCases.filter { !chain.contains($0.rawValue) }
+        let available = AIProvider.allCases.filter {
+            !chain.contains($0.rawValue) && $0 != .none && $0 != .auto
+        }
 
         if !available.isEmpty {
             Menu {
@@ -112,6 +133,21 @@ struct RoutingPolicyEditor: View {
             }
             .menuStyle(.borderlessButton)
             .fixedSize()
+            .help("Add provider")
+        }
+    }
+
+    /// Short display names so capsules fit on one line.
+    private static func shortName(for provider: AIProvider) -> String {
+        switch provider {
+        case .auto: return "Auto"
+        case .anthropic: return "Claude API"
+        case .openai: return "OpenAI"
+        case .gemini: return "Gemini"
+        case .local: return "Local"
+        case .claudeCLI: return "Claude CLI"
+        case .codexCLI: return "Codex CLI"
+        case .none: return "—"
         }
     }
 
@@ -141,3 +177,5 @@ struct RoutingPolicyEditor: View {
         policy.save()
     }
 }
+
+// FlowLayout reuses the shared implementation at Sources/Zion/Views/Components/FlowLayout.swift
