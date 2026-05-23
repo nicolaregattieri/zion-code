@@ -2586,3 +2586,42 @@
 "settings.zionTalks.toolHarness.title" = "Arnés de herramientas";
 "settings.zionTalks.plan.title" = "Modo de plan";
 "settings.zionTalks.general.title" = "General";
+
+// MARK: - Zion Talks (beta) — HelpSheet + ZionMap
+"help.chat.multiProvider" = "6 providers de IA — Anthropic, OpenAI, Gemini, Local, Claude CLI, Codex CLI";
+"help.chat.subscriptionCLIs" = "Usa las suscripciones Claude Pro + ChatGPT Plus que ya pagas";
+"help.chat.autoRouting" = "Enruta tareas entre providers con fallback de cuota / coste";
+"help.chat.localAutostart" = "Inicia Ollama / MLX / LM Studio / llama.cpp bajo demanda";
+"help.chat.mcpServer" = "Zion expone herramientas git al claude / codex CLI vía MCP";
+"help.chat.toolBridge" = "Mismas herramientas MCP en providers de API vía traducción";
+"help.chat.planMode" = "Previsualiza planes antes de aplicar — Apply / Reject por paso";
+"help.chat.editHarness" = "Bloques SEARCH/REPLACE con vista previa + auto-commit";
+"help.chat.sessionResume" = "Reanuda sesiones claude / codex por hilo";
+"help.chat.costMeter" = "Medidor $ + tokens en vivo por hilo";
+"help.chat.stickyContext" = "Inyecta contexto /diff /log automáticamente entre turnos";
+"help.chat.history" = "Sidebar de hilos por repo con historial completo";
+
+"map.chat.multiProvider.title" = "Chat multi-provider";
+"map.chat.multiProvider.description" = "Elige entre 6 providers por mensaje. Cada mensaje puede usar un modelo diferente — cambia desde el dropdown del composer.";
+"map.chat.subscriptionCLIs.title" = "CLIs de suscripción (sin clave API)";
+"map.chat.subscriptionCLIs.description" = "Zion spawnea tus CLIs `claude` y `codex` instalados, usando las suscripciones Claude Pro y ChatGPT Plus en lugar de claves de API.";
+"map.chat.autoRouting.title" = "Enrutamiento Auto";
+"map.chat.autoRouting.description" = "Elige \"Auto\" en el composer para que Zion seleccione el mejor provider por tarea. Configura la cadena de fallback en Ajustes → Zion Talks → Routing Policy.";
+"map.chat.localAutostart.title" = "Auto-arranque LLM local";
+"map.chat.localAutostart.description" = "Zion inicia tu motor local (Ollama, MLX, LM Studio, llama.cpp) la primera vez que el chat lo necesite y permite detenerlo desde Ajustes.";
+"map.chat.mcpServer.title" = "Servidor MCP de Zion";
+"map.chat.mcpServer.description" = "Servidor MCP nativo expone git_log, branch_list, pending_changes, commit_inspect, stash, worktrees, repo_map y herramientas de edición a los CLIs.";
+"map.chat.toolBridge.title" = "Puente universal de herramientas";
+"map.chat.toolBridge.description" = "Providers Anthropic / OpenAI / Gemini reciben las mismas herramientas MCP vía traducción de schema y bucle de tool-call en el cliente.";
+"map.chat.planMode.title" = "Modo plan";
+"map.chat.planMode.description" = "Cuando está activo, el modelo propone un plan estructurado primero. Revisa los pasos y Apply / Reject antes de escribir cualquier archivo.";
+"map.chat.editHarness.title" = "Edit harness";
+"map.chat.editHarness.description" = "Modelos emiten bloques SEARCH/REPLACE en tiempo real como tarjetas de vista previa. Apply ejecuta cadena de coincidencia exacta, snapshot vía recovery vault, auto-commit `aiedit:`.";
+"map.chat.sessionResume.title" = "Reanudación de sesión";
+"map.chat.sessionResume.description" = "Las sesiones Claude y Codex persisten por hilo — los turnos siguientes reutilizan el contexto del servidor sin reconsumir la caché de prompt.";
+"map.chat.costMeter.title" = "Medidor de coste y tokens";
+"map.chat.costMeter.description" = "Contadores en vivo de USD y tokens por hilo. Claude reporta total_cost_usd; codex y local reportan tokens.";
+"map.chat.stickyContext.title" = "Contexto persistente";
+"map.chat.stickyContext.description" = "El contexto git auto-inyectado (diff, log, status) permanece adjunto al hilo hasta que el clasificador de intención lo cambie por datos frescos.";
+"map.chat.history.title" = "Historial de hilos";
+"map.chat.history.description" = "Sidebar de hilos por repo respaldado en SQLite. Cambia, renombra, elimina; mensajes y metadatos persisten entre ejecuciones.";

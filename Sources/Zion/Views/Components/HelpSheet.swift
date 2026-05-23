@@ -123,7 +123,20 @@ struct HelpSheet: View {
             return ["help.hosting.autoDetect", "help.hosting.providers",
                     "help.hosting.createPR", "help.hosting.aiDescription"]
         case .chat:
-            return []
+            return [
+                "help.chat.multiProvider",
+                "help.chat.subscriptionCLIs",
+                "help.chat.autoRouting",
+                "help.chat.localAutostart",
+                "help.chat.mcpServer",
+                "help.chat.toolBridge",
+                "help.chat.planMode",
+                "help.chat.editHarness",
+                "help.chat.sessionResume",
+                "help.chat.costMeter",
+                "help.chat.stickyContext",
+                "help.chat.history"
+            ]
         }
     }
 

@@ -2564,3 +2564,42 @@
 "settings.zionTalks.toolHarness.title" = "Tool harness";
 "settings.zionTalks.plan.title" = "Plan mode";
 "settings.zionTalks.general.title" = "General";
+
+// MARK: - Zion Talks (beta) — HelpSheet + ZionMap
+"help.chat.multiProvider" = "6 AI providers — Anthropic, OpenAI, Gemini, Local, Claude CLI, Codex CLI";
+"help.chat.subscriptionCLIs" = "Use Claude Pro + ChatGPT Plus subscriptions you already pay for";
+"help.chat.autoRouting" = "Auto-routes tasks across providers with quota / cost fallback";
+"help.chat.localAutostart" = "Spawns Ollama / MLX / LM Studio / llama.cpp when needed";
+"help.chat.mcpServer" = "Zion exposes git tools to claude / codex CLI via MCP";
+"help.chat.toolBridge" = "Same MCP tools available on API providers via client-side translation";
+"help.chat.planMode" = "Preview plans before edits land — Apply / Reject per step";
+"help.chat.editHarness" = "SEARCH/REPLACE edit blocks with diff preview + auto-commit";
+"help.chat.sessionResume" = "Resumes claude / codex sessions per thread";
+"help.chat.costMeter" = "Live $ + token meter per thread";
+"help.chat.stickyContext" = "Auto-injects /diff /log context across turns";
+"help.chat.history" = "Per-repo thread sidebar with full conversation history";
+
+"map.chat.multiProvider.title" = "Multi-provider chat";
+"map.chat.multiProvider.description" = "Pick any of 6 providers per message. Each chat message can use a different model — switch via the composer dropdown.";
+"map.chat.subscriptionCLIs.title" = "Subscription CLIs (no API key)";
+"map.chat.subscriptionCLIs.description" = "Zion spawns your installed `claude` and `codex` CLIs as subprocesses, using your Claude Pro and ChatGPT Plus subscriptions instead of paid API keys.";
+"map.chat.autoRouting.title" = "Auto routing";
+"map.chat.autoRouting.description" = "Pick \"Auto\" in the composer to let Zion choose the best provider per task. Configure the fallback chain in Settings → Zion Talks → Routing Policy.";
+"map.chat.localAutostart.title" = "Local LLM auto-start";
+"map.chat.localAutostart.description" = "Zion launches your local engine (Ollama, MLX, LM Studio, llama.cpp) the first time chat needs it and stops it on demand via Settings.";
+"map.chat.mcpServer.title" = "Zion MCP server";
+"map.chat.mcpServer.description" = "Built-in MCP server exposes git_log, branch_list, pending_changes, commit_inspect, stash, worktrees, repo_map and edit tools to spawned CLIs.";
+"map.chat.toolBridge.title" = "Universal tool bridge";
+"map.chat.toolBridge.description" = "Anthropic / OpenAI / Gemini API providers gain the same MCP tools via client-side schema translation and a tool-call loop.";
+"map.chat.planMode.title" = "Plan mode";
+"map.chat.planMode.description" = "When on, the model proposes a structured plan first. Review steps, then Apply / Reject before any file is written.";
+"map.chat.editHarness.title" = "Edit harness";
+"map.chat.editHarness.description" = "Models emit SEARCH/REPLACE edit blocks streamed as preview cards. Apply runs an exact-match ladder, takes a recovery-vault snapshot, and auto-commits with `aiedit:` prefix.";
+"map.chat.sessionResume.title" = "Session resume";
+"map.chat.sessionResume.description" = "Claude and Codex sessions persist per chat thread — follow-up turns reuse the same server-side context without re-burning the prompt cache.";
+"map.chat.costMeter.title" = "Cost + token meter";
+"map.chat.costMeter.description" = "Live USD and token counters per thread. Claude reports total_cost_usd; codex and local report token usage.";
+"map.chat.stickyContext.title" = "Sticky context";
+"map.chat.stickyContext.description" = "Auto-injected git context (diff, log, status) stays attached to the thread across turns until the intent classifier swaps it for fresh data.";
+"map.chat.history.title" = "Thread history";
+"map.chat.history.description" = "Per-repo SQLite-backed thread sidebar. Switch, rename, delete threads; messages and metadata persist across launches.";

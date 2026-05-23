@@ -16,7 +16,7 @@ Graph, code, and terminal — in one window.
 [![Swift 6](https://img.shields.io/badge/Swift-6-F05138?style=flat-square&logo=swift&logoColor=white)](https://swift.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 
-**793+ tests · 40+ releases · Apple notarized**
+**1378+ tests · 40+ releases · Apple notarized**
 
 </div>
 
@@ -114,6 +114,17 @@ AI reads your diff and writes the commit message. AI reviews your code before yo
 
 You know a certain LLM is better at specific tasks. Bridge transfers your AI config instantly so you can switch mid-project. Hit your limit on Claude? Switch to Gemini and keep going — Bridge gets you ready in one click. Visual migration console with confidence levels and selective sync. Supports Claude, Codex, Gemini, and Cursor configurations (CLAUDE.md, AGENTS.md, .cursorrules, and more).
 
+### Zion Talks (beta) — AI Workflow Workspace
+> Your AI subscription, your repo, one window.
+
+Zion isn't a git client with AI bolted on — it's an **AI workflow workspace** where every agent you already pay for sees your repo for real. Plug your Claude Pro, ChatGPT Plus, OpenAI, Gemini, or local Ollama / MLX / LM Studio / llama.cpp — six providers, one chat. Pick **Auto** and Zion picks the right one per task with quota + cost fallback. Spawned CLIs get an embedded **MCP server** exposing live git state (staged hunks, branches, conflicts, repo map); API providers get the same tools via universal translation. **Plan mode** previews structured plans before any file is touched. **Edit harness** parses SEARCH/REPLACE blocks streamed by the model into per-block diff preview cards with Apply / Reject / Apply-all + auto-commit `aiedit:` after a recovery-vault snapshot. Tokens and cost meter live in the conversation header. Per-repo thread history persists in SQLite.
+
+Built on the patterns the field converged on in 2026 (Aider's polyglot benchmark winner format, Cline's diff-apply v3, Claude Code's str_replace_editor, the Pi minimalist harness) — applied with a git-client substrate nobody else has.
+
+<p align="center">
+  <img src="docs/screenshots/zion-talks-hero.png" width="80%" alt="Zion Talks — multi-provider chat with plan mode, edit preview cards, cost meter and history sidebar" />
+</p>
+
 ---
 
 ## Install
@@ -151,7 +162,7 @@ open dist/Zion.app
 
 ### Testing
 
-Zion ships with **793 tests** covering core functionality, Git operations, AI integrations, and UI behavior.
+Zion ships with **1378+ tests** covering core functionality, Git operations, AI integrations, the chat orchestration layer, and UI behavior.
 ```bash
 swift test
 ```
