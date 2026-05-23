@@ -332,6 +332,13 @@ extension AIClient {
             args.append(contentsOf: ["--model", model])
         }
 
+        // Inject edit-harness system prompt addition when enabled
+        let editHarnessOn = UserDefaults.standard.object(forKey: "chat.editHarness.enabled") as? Bool ?? true
+        let editHarnessCLIInject = UserDefaults.standard.object(forKey: "chat.editHarness.cliSystemPromptInject") as? Bool ?? true
+        if editHarnessOn && editHarnessCLIInject {
+            args.append(contentsOf: ["--append-system-prompt", ChatService.editHarnessDirective])
+        }
+
         // Inject MCP config so the zion-mcp tool server is available to claude.
         var configURL: URL? = nil
         if let binaryPath = MCPConfigBuilder.resolveBinaryPath() {

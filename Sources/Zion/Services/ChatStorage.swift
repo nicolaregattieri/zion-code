@@ -11,6 +11,19 @@ enum ChatStorageError: Error {
     case sqlite(code: Int32, message: String)
 }
 
+// MARK: - AIEditLogEntry
+
+struct AIEditLogEntry: Identifiable, Equatable, Codable {
+    let id: String
+    let threadID: UUID
+    let messageID: UUID
+    let filePath: String
+    let blockIndex: Int
+    let appliedAt: Date
+    let commitSHA: String?
+    let restoredAt: Date?
+}
+
 // MARK: - ChatStorage
 
 actor ChatStorage {
@@ -139,7 +152,8 @@ actor ChatStorage {
     func loadMessages(threadID: UUID, repoID: String) async throws -> [ChatMessage] {
         let db = try connection(for: repoID)
         let sql = """
-            SELECT m.id, m.role, m.content, m.created_at, m.is_streaming, m.plan_json
+            SELECT m.id, m.role, m.content, m.created_at, m.is_streaming, m.plan_json,
+                   m.edit_blocks_json
             FROM messages m
             JOIN threads t ON t.id = m.thread_id
             WHERE m.thread_id = ? AND t.repo_id = ?
@@ -169,6 +183,13 @@ actor ChatStorage {
                     return try? JSONDecoder().decode(ChatPlan.self, from: data)
                 })
                 : nil
+            let editBlocks: [EditBlock]? = sqlite3_column_type(stmt, 6) != SQLITE_NULL
+                ? (sqlite3_column_text(stmt, 6).flatMap { ptr -> [EditBlock]? in
+                    let jsonStr = String(cString: ptr)
+                    guard let data = jsonStr.data(using: .utf8) else { return nil }
+                    return try? JSONDecoder().decode([EditBlock].self, from: data)
+                })
+                : nil
 
             guard let id = UUID(uuidString: idStr) else { continue }
             let role: ChatRole = roleStr == "assistant" ? .assistant : .user
@@ -179,7 +200,8 @@ actor ChatStorage {
                 content: content,
                 timestamp: Date(timeIntervalSince1970: createdAt),
                 isStreaming: isStreaming,
-                plan: plan
+                plan: plan,
+                editBlocks: editBlocks
             ))
         }
         return messages
@@ -188,8 +210,9 @@ actor ChatStorage {
     func appendMessage(_ message: ChatMessage, threadID: UUID, repoID: String) async throws {
         let db = try connection(for: repoID)
         let sql = """
-            INSERT INTO messages (id, thread_id, role, content, created_at, is_streaming, plan_json)
-            VALUES (?, ?, ?, ?, ?, ?, ?);
+            INSERT INTO messages (id, thread_id, role, content, created_at, is_streaming,
+                                  plan_json, edit_blocks_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?);
             """
         var stmt: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
@@ -213,6 +236,13 @@ actor ChatStorage {
         } else {
             sqlite3_bind_null(stmt, 7)
         }
+        if let blocks = message.editBlocks,
+           let data = try? JSONEncoder().encode(blocks),
+           let jsonStr = String(data: data, encoding: .utf8) {
+            sqlite3_bind_text(stmt, 8, jsonStr, -1, sqliteTransient)
+        } else {
+            sqlite3_bind_null(stmt, 8)
+        }
 
         guard sqlite3_step(stmt) == SQLITE_DONE else {
             throw sqliteError(db)
@@ -231,7 +261,11 @@ actor ChatStorage {
 
     func updateMessage(_ message: ChatMessage, repoID: String) async throws {
         let db = try connection(for: repoID)
-        let sql = "UPDATE messages SET content = ?, is_streaming = ?, plan_json = ? WHERE id = ?;"
+        let sql = """
+            UPDATE messages SET content = ?, is_streaming = ?, plan_json = ?,
+                                edit_blocks_json = ?
+            WHERE id = ?;
+            """
         var stmt: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
             throw sqliteError(db)
@@ -248,11 +282,105 @@ actor ChatStorage {
         } else {
             sqlite3_bind_null(stmt, 3)
         }
-        sqlite3_bind_text(stmt, 4, idStr, -1, sqliteTransient)
+        if let blocks = message.editBlocks,
+           let data = try? JSONEncoder().encode(blocks),
+           let jsonStr = String(data: data, encoding: .utf8) {
+            sqlite3_bind_text(stmt, 4, jsonStr, -1, sqliteTransient)
+        } else {
+            sqlite3_bind_null(stmt, 4)
+        }
+        sqlite3_bind_text(stmt, 5, idStr, -1, sqliteTransient)
 
         guard sqlite3_step(stmt) == SQLITE_DONE else {
             throw sqliteError(db)
         }
+    }
+
+    func appendAIEditLog(
+        id: String,
+        threadID: UUID,
+        messageID: UUID,
+        filePath: String,
+        blockIndex: Int,
+        commitSHA: String?,
+        repoID: String
+    ) async throws {
+        let db = try connection(for: repoID)
+        let sql = """
+            INSERT INTO aiedit_log
+                (id, thread_id, message_id, file_path, block_index, applied_at, commit_sha)
+            VALUES (?, ?, ?, ?, ?, ?, ?);
+            """
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+            throw sqliteError(db)
+        }
+        defer { sqlite3_finalize(stmt) }
+
+        sqlite3_bind_text(stmt, 1, id, -1, sqliteTransient)
+        sqlite3_bind_text(stmt, 2, threadID.uuidString, -1, sqliteTransient)
+        sqlite3_bind_text(stmt, 3, messageID.uuidString, -1, sqliteTransient)
+        sqlite3_bind_text(stmt, 4, filePath, -1, sqliteTransient)
+        sqlite3_bind_int64(stmt, 5, Int64(blockIndex))
+        sqlite3_bind_double(stmt, 6, Date().timeIntervalSince1970)
+        if let sha = commitSHA {
+            sqlite3_bind_text(stmt, 7, sha, -1, sqliteTransient)
+        } else {
+            sqlite3_bind_null(stmt, 7)
+        }
+
+        guard sqlite3_step(stmt) == SQLITE_DONE else {
+            throw sqliteError(db)
+        }
+    }
+
+    func loadAIEditLog(threadID: UUID, repoID: String) async throws -> [AIEditLogEntry] {
+        let db = try connection(for: repoID)
+        let sql = """
+            SELECT id, thread_id, message_id, file_path, block_index, applied_at, commit_sha,
+                   restored_at
+            FROM aiedit_log
+            WHERE thread_id = ?
+            ORDER BY applied_at ASC;
+            """
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+            throw sqliteError(db)
+        }
+        defer { sqlite3_finalize(stmt) }
+
+        sqlite3_bind_text(stmt, 1, threadID.uuidString, -1, sqliteTransient)
+
+        var entries: [AIEditLogEntry] = []
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            let entryID = String(cString: sqlite3_column_text(stmt, 0))
+            let threadIDStr = String(cString: sqlite3_column_text(stmt, 1))
+            let messageIDStr = String(cString: sqlite3_column_text(stmt, 2))
+            let filePath = String(cString: sqlite3_column_text(stmt, 3))
+            let blockIndex = Int(sqlite3_column_int64(stmt, 4))
+            let appliedAt = sqlite3_column_double(stmt, 5)
+            let commitSHA: String? = sqlite3_column_type(stmt, 6) != SQLITE_NULL
+                ? String(cString: sqlite3_column_text(stmt, 6))
+                : nil
+            let restoredAt: Double? = sqlite3_column_type(stmt, 7) != SQLITE_NULL
+                ? sqlite3_column_double(stmt, 7)
+                : nil
+
+            guard let tid = UUID(uuidString: threadIDStr),
+                  let mid = UUID(uuidString: messageIDStr) else { continue }
+
+            entries.append(AIEditLogEntry(
+                id: entryID,
+                threadID: tid,
+                messageID: mid,
+                filePath: filePath,
+                blockIndex: blockIndex,
+                appliedAt: Date(timeIntervalSince1970: appliedAt),
+                commitSHA: commitSHA,
+                restoredAt: restoredAt.map { Date(timeIntervalSince1970: $0) }
+            ))
+        }
+        return entries
     }
 
     func deleteThread(_ id: UUID, repoID: String) async throws {
@@ -360,6 +488,27 @@ actor ChatStorage {
 
         // v3 migration: ChatPlan structured plan attached to messages.
         try? exec(db: db, sql: "ALTER TABLE messages ADD COLUMN plan_json TEXT NULL;")
+
+        // v4 migration: EditBlocks JSON column on messages.
+        try? exec(db: db, sql: "ALTER TABLE messages ADD COLUMN edit_blocks_json TEXT NULL;")
+
+        // v4 migration: AI edit log table.
+        try? exec(db: db, sql: """
+            CREATE TABLE IF NOT EXISTS aiedit_log (
+              id TEXT PRIMARY KEY,
+              thread_id TEXT NOT NULL,
+              message_id TEXT NOT NULL,
+              file_path TEXT NOT NULL,
+              block_index INTEGER NOT NULL,
+              applied_at REAL NOT NULL,
+              commit_sha TEXT,
+              restored_at REAL
+            );
+            """)
+        try? exec(db: db, sql: """
+            CREATE INDEX IF NOT EXISTS idx_aiedit_log_thread
+            ON aiedit_log(thread_id, applied_at);
+            """)
     }
 
     private func exec(db: OpaquePointer, sql: String) throws {
