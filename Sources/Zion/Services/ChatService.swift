@@ -1384,6 +1384,18 @@ final class ChatService {
         scheduleDebounce(for: assistantID, threadID: activeThreadID)
     }
 
+    /// Marks every edit block in a message as rejected.
+    func rejectAllEdits(messageID: UUID) {
+        guard let (tIdx, mIdx) = findAssistantMessage(messageID: messageID),
+              let blocks = threads[tIdx].messages[mIdx].editBlocks else { return }
+        for bIdx in blocks.indices {
+            if threads[tIdx].messages[mIdx].editBlocks![bIdx].failureReason == nil {
+                threads[tIdx].messages[mIdx].editBlocks![bIdx].failureReason = "rejected"
+            }
+        }
+        scheduleDebounce(for: messageID, threadID: activeThreadID)
+    }
+
     /// Replaces an edit block by re-parsing raw XML content.
     /// Derives the ApplyAllButton state from the message's edit blocks.
     func applyAllState(for assistantID: UUID) -> ApplyAllState {

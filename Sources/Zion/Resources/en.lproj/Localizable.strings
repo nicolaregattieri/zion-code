@@ -2654,3 +2654,8 @@
 "map.chat.stepCap.description" = "Configurable max-step count and daily cost budget. The loop stops and reports when either cap is hit. Press Cancel in the step indicator to stop early.";
 "map.chat.reactFallback.title" = "ReAct text fallback";
 "map.chat.reactFallback.description" = "Local models without native function-calling support use a structured Thought/Action/Observation text loop (ReAct format) so agentic tasks still work on older quantized models.";
+"chat.multifileDiff.header" = "%@ files about to change";
+"chat.multifileDiff.reviewAll" = "Review all";
+"chat.multifileDiff.approveAll" = "Approve all";
+"chat.multifileDiff.rejectAll" = "Reject all";
+"chat.multifileDiff.moreFiles" = "+ %@ more files (review above to see all)";
