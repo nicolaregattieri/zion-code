@@ -41,6 +41,10 @@ registry.register(RepoMemorySearchTool())
 // T4 — OpenInEditor bridge
 registry.register(OpenInEditorTool())
 
+// T8 — EditTool + RepoMapTool
+registry.register(EditTool(repoURL: repoURL))
+registry.register(RepoMapTool(repoURL: repoURL))
+
 // MARK: - initialize
 
 server.register(method: "initialize") { _ in
