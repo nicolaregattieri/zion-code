@@ -2608,3 +2608,49 @@
 "map.chat.stickyContext.description" = "Auto-injected git context (diff, log, status) stays attached to the thread across turns until the intent classifier swaps it for fresh data.";
 "map.chat.history.title" = "Thread history";
 "map.chat.history.description" = "Per-repo SQLite-backed thread sidebar. Switch, rename, delete threads; messages and metadata persist across launches.";
+
+// MARK: - Agentic Loop (Phase 11)
+"chat.settings.agenticLoop.title" = "Agentic Loop";
+"chat.agent.tier.label" = "Approval tier";
+"chat.agent.tier.readOnly" = "Read-only";
+"chat.agent.tier.workspaceWrite" = "Workspace write";
+"chat.agent.tier.fullAccess" = "Full access";
+"chat.agent.tier.fullAccess.warning" = "Full access lets the agent run any shell command without asking. Only enable if you trust the model and understand the risks.";
+"chat.agent.maxSteps.label" = "Max steps";
+"chat.agent.bashAllowlist.label" = "Bash allowlist";
+"chat.agent.bashAllowlist.placeholder" = "Newline-separated commands. Leave empty for defaults.";
+"chat.agent.stopOnFirstError.label" = "Stop on first error";
+"chat.agent.step.label" = "Step %@/%@";
+"chat.agent.plan.proposed.title" = "Plan ready for review";
+"chat.agent.plan.approve" = "Approve";
+"chat.agent.plan.reject" = "Reject";
+"chat.agent.error.budgetExceeded" = "Cost budget exceeded after %@ steps.";
+"chat.agent.error.rateLimited" = "Rate limited by provider \u{2014} try again later.";
+"chat.agent.error.reactParseFailed" = "Model output did not match the required format after several attempts. Try a different model.";
+"chat.agent.error.noProvider" = "No agentic-capable provider available.";
+"chat.agent.error.cliCrashed" = "CLI agent exited unexpectedly.";
+"chat.agent.error.loopAlreadyActive" = "A loop is already running.";
+
+// MARK: - Agentic Loop HelpSheet bullets (Phase 11 T12)
+"help.chat.agenticLoop" = "Agentic Loop (beta) \u{2014} multi-step autonomous tool chaining across Anthropic, OpenAI, Gemini, and local models";
+"help.chat.bashTool" = "Bash tool \u{2014} safe shell execution with an approval-tier system and optional per-command allowlist";
+"help.chat.approvalTiers" = "Approval tiers \u{2014} readOnly (no writes), workspaceWrite (repo only), or fullAccess (any command)";
+"help.chat.stickyProvider" = "Sticky provider \u{2014} the loop locks to the same provider for every step; no mid-loop failover";
+"help.chat.stepCap" = "Hard caps \u{2014} configurable max steps and daily cost budget; user can cancel at any step";
+"help.chat.reactFallback" = "ReAct text fallback \u{2014} older local models without native tool-calling use a structured thought/action text loop";
+
+// MARK: - Agentic Loop ZionMap entries (Phase 11 T12)
+"map.chat.agenticLoop.title" = "Agentic Loop (beta)";
+"map.chat.agenticLoop.description" = "Multi-step autonomous tool chaining across Anthropic, OpenAI, Gemini, and local Qwen2.5-Coder / Qwen3-Coder models. The loop runs tool calls, feeds results back, and continues until the model emits a stop signal.";
+"map.chat.agenticLoop.tip1" = "Enable in Settings \u{2192} Zion Talks \u{2192} Agentic Loop.";
+"map.chat.bashTool.title" = "Bash tool";
+"map.chat.bashTool.description" = "Safe shell execution with pre-execution approval tiers and an optional per-command allowlist. Recovery-vault snapshot taken before any destructive operation.";
+"map.chat.bashTool.tip1" = "Set an allowlist in Settings to restrict which commands the agent can run without asking.";
+"map.chat.approvalTiers.title" = "Approval tiers";
+"map.chat.approvalTiers.description" = "Three tiers control what the agent can do: readOnly (no file writes), workspaceWrite (edits inside the repo), fullAccess (any shell command). Configure per-session in the chat toolbar.";
+"map.chat.stickyProvider.title" = "Sticky provider";
+"map.chat.stickyProvider.description" = "The provider selected at loop start stays locked for every step. No automatic failover during an active loop \u{2014} switch providers between loops instead.";
+"map.chat.stepCap.title" = "Hard caps";
+"map.chat.stepCap.description" = "Configurable max-step count and daily cost budget. The loop stops and reports when either cap is hit. Press Cancel in the step indicator to stop early.";
+"map.chat.reactFallback.title" = "ReAct text fallback";
+"map.chat.reactFallback.description" = "Local models without native function-calling support use a structured Thought/Action/Observation text loop (ReAct format) so agentic tasks still work on older quantized models.";

@@ -2608,3 +2608,49 @@
 "map.chat.stickyContext.description" = "Contexto git auto-injetado (diff, log, status) permanece atrelado à thread até o classificador de intenção trocar por dado fresco.";
 "map.chat.history.title" = "Histórico de threads";
 "map.chat.history.description" = "Sidebar de threads por repo respaldada em SQLite. Troque, renomeie, apague; mensagens e metadados persistem entre execuções.";
+
+// MARK: - Agentic Loop (Phase 11)
+"chat.settings.agenticLoop.title" = "Loop Agêntico";
+"chat.agent.tier.label" = "Nível de aprovação";
+"chat.agent.tier.readOnly" = "Somente leitura";
+"chat.agent.tier.workspaceWrite" = "Gravação no workspace";
+"chat.agent.tier.fullAccess" = "Acesso total";
+"chat.agent.tier.fullAccess.warning" = "Acesso total permite que o agente execute qualquer comando shell sem confirmação. Habilite apenas em repositórios em que você confia.";
+"chat.agent.maxSteps.label" = "Passos máximos";
+"chat.agent.bashAllowlist.label" = "Lista de comandos permitidos";
+"chat.agent.bashAllowlist.placeholder" = "Comandos separados por nova linha. Deixe vazio para os padrões.";
+"chat.agent.stopOnFirstError.label" = "Parar no primeiro erro";
+"chat.agent.step.label" = "Passo %@/%@";
+"chat.agent.plan.proposed.title" = "Plano pronto para revisão";
+"chat.agent.plan.approve" = "Aprovar";
+"chat.agent.plan.reject" = "Rejeitar";
+"chat.agent.error.budgetExceeded" = "Orçamento de custo excedido após %@ passos.";
+"chat.agent.error.rateLimited" = "Limite de taxa do provedor atingido \u{2014} tente novamente mais tarde.";
+"chat.agent.error.reactParseFailed" = "A saída do modelo não correspondeu ao formato exigido após várias tentativas. Tente um modelo diferente.";
+"chat.agent.error.noProvider" = "Nenhum provedor com capacidade agêntica disponível.";
+"chat.agent.error.cliCrashed" = "O agente CLI encerrou inesperadamente.";
+"chat.agent.error.loopAlreadyActive" = "Um loop já está em execução.";
+
+// MARK: - Agentic Loop HelpSheet bullets (Phase 11 T12)
+"help.chat.agenticLoop" = "Loop Agêntico (beta) \u{2014} encadeamento autônomo de ferramentas em múltiplos passos para Anthropic, OpenAI, Gemini e modelos locais";
+"help.chat.bashTool" = "Ferramenta Bash \u{2014} execução segura de shell com sistema de níveis de aprovação e lista de comandos permitidos opcional";
+"help.chat.approvalTiers" = "Níveis de aprovação \u{2014} readOnly (sem escrita), workspaceWrite (somente repositório) ou fullAccess (qualquer comando)";
+"help.chat.stickyProvider" = "Provedor fixo \u{2014} o loop fica preso ao mesmo provedor em cada passo; sem failover durante o loop";
+"help.chat.stepCap" = "Limites rígidos \u{2014} número máximo de passos e orçamento de custo diário configuráveis; o usuário pode cancelar a qualquer momento";
+"help.chat.reactFallback" = "Fallback de texto ReAct \u{2014} modelos locais sem suporte nativo a chamadas de ferramentas usam um loop texto estruturado thought/action";
+
+// MARK: - Agentic Loop ZionMap entries (Phase 11 T12)
+"map.chat.agenticLoop.title" = "Loop Agêntico (beta)";
+"map.chat.agenticLoop.description" = "Encadeamento autônomo de ferramentas em múltiplos passos para Anthropic, OpenAI, Gemini e modelos locais Qwen2.5-Coder / Qwen3-Coder. O loop executa chamadas de ferramentas, alimenta os resultados de volta e continua até o modelo emitir um sinal de parada.";
+"map.chat.agenticLoop.tip1" = "Ative em Configurações \u{2192} Zion Talks \u{2192} Loop Agêntico.";
+"map.chat.bashTool.title" = "Ferramenta Bash";
+"map.chat.bashTool.description" = "Execução segura de shell com níveis de aprovação pré-execução e lista de comandos permitidos opcional. Snapshot do Recovery Vault criado antes de qualquer operação destrutiva.";
+"map.chat.bashTool.tip1" = "Defina uma lista de permitidos em Configurações para restringir quais comandos o agente pode executar sem perguntar.";
+"map.chat.approvalTiers.title" = "Níveis de aprovação";
+"map.chat.approvalTiers.description" = "Três níveis controlam o que o agente pode fazer: readOnly (sem escrita), workspaceWrite (edições dentro do repositório), fullAccess (qualquer comando shell). Configure por sessão na barra de ferramentas do chat.";
+"map.chat.stickyProvider.title" = "Provedor fixo";
+"map.chat.stickyProvider.description" = "O provedor selecionado no início do loop permanece bloqueado em cada passo. Sem failover automático durante um loop ativo \u{2014} troque de provedor entre loops.";
+"map.chat.stepCap.title" = "Limites rígidos";
+"map.chat.stepCap.description" = "Número máximo de passos e orçamento de custo diário configuráveis. O loop para e reporta quando qualquer limite é atingido. Pressione Cancelar no indicador de passos para parar antecipadamente.";
+"map.chat.reactFallback.title" = "Fallback de texto ReAct";
+"map.chat.reactFallback.description" = "Modelos locais sem suporte nativo a chamadas de funções usam um loop estruturado Pensamento/Ação/Observação (formato ReAct) para que tarefas agênticas funcionem em modelos quantizados mais antigos.";

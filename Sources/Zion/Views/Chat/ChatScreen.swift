@@ -85,6 +85,7 @@ struct ChatScreen: View {
         GlassCard(spacing: 8, expanding: true) {
             CardHeader(L10n("chat.card.conversation"), icon: "bubble.left.and.bubble.right.fill") {
                 HStack(spacing: 6) {
+                    AgentStepIndicator(agentRuntime: chat.agentRuntime)
                     let totalTokens = chat.thread.totalInputTokens + chat.thread.totalOutputTokens
                     if totalTokens > 0 {
                         Text(Self.formatTokens(totalTokens))

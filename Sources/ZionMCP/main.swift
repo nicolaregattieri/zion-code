@@ -45,6 +45,9 @@ registry.register(OpenInEditorTool())
 registry.register(EditTool(repoURL: repoURL))
 registry.register(RepoMapTool(repoURL: repoURL))
 
+// P11-T4 — BashTool (approval tier wired by T8/AgentRuntime)
+registry.register(BashToolMCP(repoURL: repoURL))
+
 // MARK: - initialize
 
 server.register(method: "initialize") { _ in

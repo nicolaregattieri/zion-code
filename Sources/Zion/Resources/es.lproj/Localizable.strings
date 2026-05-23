@@ -2630,3 +2630,49 @@
 "map.chat.stickyContext.description" = "El contexto git auto-inyectado (diff, log, status) permanece adjunto al hilo hasta que el clasificador de intención lo cambie por datos frescos.";
 "map.chat.history.title" = "Historial de hilos";
 "map.chat.history.description" = "Sidebar de hilos por repo respaldado en SQLite. Cambia, renombra, elimina; mensajes y metadatos persisten entre ejecuciones.";
+
+// MARK: - Agentic Loop (Phase 11)
+"chat.settings.agenticLoop.title" = "Bucle Agéntico";
+"chat.agent.tier.label" = "Nivel de aprobación";
+"chat.agent.tier.readOnly" = "Solo lectura";
+"chat.agent.tier.workspaceWrite" = "Escritura en workspace";
+"chat.agent.tier.fullAccess" = "Acceso total";
+"chat.agent.tier.fullAccess.warning" = "El acceso total permite que el agente ejecute cualquier comando shell sin confirmación. Actívalo solo en repositorios de confianza.";
+"chat.agent.maxSteps.label" = "Pasos máximos";
+"chat.agent.bashAllowlist.label" = "Lista de comandos permitidos";
+"chat.agent.bashAllowlist.placeholder" = "Comandos separados por nueva línea. Deja vacío para usar los predeterminados.";
+"chat.agent.stopOnFirstError.label" = "Detener en el primer error";
+"chat.agent.step.label" = "Paso %@/%@";
+"chat.agent.plan.proposed.title" = "Plan listo para revisión";
+"chat.agent.plan.approve" = "Aprobar";
+"chat.agent.plan.reject" = "Rechazar";
+"chat.agent.error.budgetExceeded" = "Presupuesto de coste superado tras %@ pasos.";
+"chat.agent.error.rateLimited" = "Límite de tasa del proveedor alcanzado \u{2014} inténtalo de nuevo más tarde.";
+"chat.agent.error.reactParseFailed" = "La salida del modelo no coincidió con el formato requerido tras varios intentos. Prueba un modelo diferente.";
+"chat.agent.error.noProvider" = "No hay ningún proveedor con capacidad agéntica disponible.";
+"chat.agent.error.cliCrashed" = "El agente CLI terminó inesperadamente.";
+"chat.agent.error.loopAlreadyActive" = "Ya hay un bucle en ejecución.";
+
+// MARK: - Agentic Loop HelpSheet bullets (Phase 11 T12)
+"help.chat.agenticLoop" = "Bucle Agéntico (beta) \u{2014} encadenamiento autónomo de herramientas en múltiples pasos para Anthropic, OpenAI, Gemini y modelos locales";
+"help.chat.bashTool" = "Herramienta Bash \u{2014} ejecución segura de shell con sistema de niveles de aprobación y lista de comandos permitidos opcional";
+"help.chat.approvalTiers" = "Niveles de aprobación \u{2014} readOnly (sin escritura), workspaceWrite (solo repositorio) o fullAccess (cualquier comando)";
+"help.chat.stickyProvider" = "Proveedor fijo \u{2014} el bucle queda bloqueado al mismo proveedor en cada paso; sin failover durante el bucle";
+"help.chat.stepCap" = "Límites rígidos \u{2014} número máximo de pasos y presupuesto de coste diario configurables; el usuario puede cancelar en cualquier momento";
+"help.chat.reactFallback" = "Fallback de texto ReAct \u{2014} modelos locales sin soporte nativo de llamadas a herramientas usan un bucle de texto estructurado thought/action";
+
+// MARK: - Agentic Loop ZionMap entries (Phase 11 T12)
+"map.chat.agenticLoop.title" = "Bucle Agéntico (beta)";
+"map.chat.agenticLoop.description" = "Encadenamiento autónomo de herramientas en múltiples pasos para Anthropic, OpenAI, Gemini y modelos locales Qwen2.5-Coder / Qwen3-Coder. El bucle ejecuta llamadas de herramientas, alimenta los resultados de vuelta y continúa hasta que el modelo emite una señal de parada.";
+"map.chat.agenticLoop.tip1" = "Activa en Ajustes \u{2192} Zion Talks \u{2192} Bucle Agéntico.";
+"map.chat.bashTool.title" = "Herramienta Bash";
+"map.chat.bashTool.description" = "Ejecución segura de shell con niveles de aprobación previos a la ejecución y lista de comandos permitidos opcional. Se crea un snapshot de Recovery Vault antes de cualquier operación destructiva.";
+"map.chat.bashTool.tip1" = "Define una lista de permitidos en Ajustes para restringir qué comandos puede ejecutar el agente sin preguntar.";
+"map.chat.approvalTiers.title" = "Niveles de aprobación";
+"map.chat.approvalTiers.description" = "Tres niveles controlan lo que el agente puede hacer: readOnly (sin escritura), workspaceWrite (ediciones dentro del repositorio), fullAccess (cualquier comando shell). Configúralo por sesión en la barra de herramientas del chat.";
+"map.chat.stickyProvider.title" = "Proveedor fijo";
+"map.chat.stickyProvider.description" = "El proveedor seleccionado al inicio del bucle permanece bloqueado en cada paso. Sin failover automático durante un bucle activo \u{2014} cambia de proveedor entre bucles.";
+"map.chat.stepCap.title" = "Límites rígidos";
+"map.chat.stepCap.description" = "Número máximo de pasos y presupuesto de coste diario configurables. El bucle se detiene e informa cuando se alcanza cualquier límite. Pulsa Cancelar en el indicador de pasos para detenerlo antes.";
+"map.chat.reactFallback.title" = "Fallback de texto ReAct";
+"map.chat.reactFallback.description" = "Los modelos locales sin soporte nativo de llamadas a funciones usan un bucle estructurado Pensamiento/Acción/Observación (formato ReAct) para que las tareas agénticas sigan funcionando en modelos cuantizados más antiguos.";

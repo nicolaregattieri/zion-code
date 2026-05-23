@@ -91,6 +91,28 @@ enum MCPConfigBuilder {
         return nil
     }
 
+    // MARK: - Bash Tool Descriptor
+
+    /// Returns the JSON schema descriptor for the `bash` MCP tool.
+    ///
+    /// This descriptor is used by the ZionMCP server to expose the bash tool to the claude CLI.
+    /// Actual dispatch is wired in `Sources/ZionMCP/Tools/BashToolMCP.swift`.
+    /// The `repoURL` is injected at spawn time from the chat session (T8: AgentRuntime will wire this).
+    static func bashToolDescriptor() -> [String: Any] {
+        return [
+            "name": "bash",
+            "description": "Execute a shell command in the workspace. Respects approval tier.",
+            "inputSchema": [
+                "type": "object",
+                "properties": [
+                    "command": ["type": "string"],
+                    "timeoutSec": ["type": "integer", "minimum": 1, "maximum": 300]
+                ],
+                "required": ["command"]
+            ] as [String: Any]
+        ]
+    }
+
     /// Removes stale `zion-mcp-*.json` files from `$TMPDIR` that are older than `maxAge`.
     ///
     /// - Parameters:

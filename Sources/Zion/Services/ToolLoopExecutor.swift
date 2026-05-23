@@ -12,7 +12,57 @@ import Foundation
 enum ProviderChunk: @unchecked Sendable {
     case textDelta(String)
     case toolCall(id: String, name: String, args: [String: Any])
+    /// Carries the raw finish/stop reason string emitted by the provider.
+    case finishReason(String)
     case done
+}
+
+// MARK: - StepOutcome
+
+/// Unified outcome of one streaming step, produced by `ToolLoopExecutor.runOneStep`.
+// [String: Any] fields require @unchecked Sendable — the JSON payloads are
+// immutable after decoding and never mutated across isolation boundaries.
+struct StepOutcome: @unchecked Sendable {
+
+    enum StopReason: Equatable, Sendable {
+        case endTurn
+        case toolUse
+        case maxTokens
+        case other(String)
+    }
+
+    struct ToolCall: @unchecked Sendable {
+        let id: String
+        let name: String
+        let args: [String: Any]
+    }
+
+    let text: String
+    let toolCalls: [ToolCall]
+    let stopReason: StopReason
+    let updatedConversation: [[String: Any]]
+
+    // MARK: Gemini adapter
+
+    /// Convert a Gemini-native `GeminiStepOutcome` into the unified `StepOutcome`.
+    static func fromGemini(_ outcome: GeminiStepOutcome) -> StepOutcome {
+        let calls = outcome.toolCalls.map { tc in
+            ToolCall(id: tc.id, name: tc.name, args: tc.args)
+        }
+        let reason: StopReason
+        switch outcome.stopReason {
+        case .endTurn:        reason = .endTurn
+        case .toolUse:        reason = .toolUse
+        case .maxTokens:      reason = .maxTokens
+        case .other(let s):   reason = .other(s)
+        }
+        return StepOutcome(
+            text: outcome.text,
+            toolCalls: calls,
+            stopReason: reason,
+            updatedConversation: outcome.updatedConversation
+        )
+    }
 }
 
 // MARK: - MCPClientError
@@ -254,6 +304,14 @@ enum ChunkParser {
             }
             return []
 
+        case "message_delta":
+            // Anthropic emits stop_reason in message_delta before message_stop
+            if let delta = json["delta"] as? [String: Any],
+               let stopReason = delta["stop_reason"] as? String {
+                return [.finishReason(stopReason)]
+            }
+            return []
+
         case "message_stop":
             return [.done]
 
@@ -294,9 +352,10 @@ enum ChunkParser {
             }
         }
 
-        // Finish reason
+        // Finish reason — emit both the named reason and done
         if let finishReason = first["finish_reason"] as? String,
-           finishReason == "stop" || finishReason == "tool_calls" {
+           !finishReason.isEmpty {
+            chunks.append(.finishReason(finishReason))
             chunks.append(.done)
         }
 
@@ -315,25 +374,24 @@ struct ToolLoopExecutor {
     /// Maximum tool-call rounds before giving up to prevent infinite loops.
     var maxRounds: Int = 10
 
-    // MARK: Run
+    // MARK: runOneStep
 
-    /// Given a stream of raw SSE-style lines, parses tool calls, executes them against
-    /// the MCP client, and returns the accumulated assistant text plus any tool round-trips
-    /// appended to the conversation.
+    /// Consume one provider stream, parse all chunks, execute any tool calls, and return
+    /// a `StepOutcome` describing what happened.
     ///
     /// - Parameters:
     ///   - streamLines: Raw SSE data lines (no `data:` prefix needed).
     ///   - conversation: Initial conversation messages.
-    /// - Returns: Updated conversation with tool results appended as user messages.
-    func run(
+    /// - Returns: `StepOutcome` with accumulated text, tool calls, stop reason, and updated conversation.
+    func runOneStep(
         streamLines: AsyncThrowingStream<String, Error>,
         conversation: [[String: Any]]
-    ) async throws -> (text: String, conversation: [[String: Any]]) {
+    ) async throws -> StepOutcome {
 
         var messages = conversation
         var accumulatedText = ""
-        var toolCalls: [(id: String, name: String, args: [String: Any])] = []
-        var rounds = 0
+        var rawToolCalls: [(id: String, name: String, args: [String: Any])] = []
+        var rawFinishReason: String? = nil
 
         var iter = streamLines.makeAsyncIterator()
         while let line = try await iter.next() {
@@ -347,7 +405,10 @@ struct ToolLoopExecutor {
                     accumulatedText += text
 
                 case .toolCall(let id, let name, let args):
-                    toolCalls.append((id: id, name: name, args: args))
+                    rawToolCalls.append((id: id, name: name, args: args))
+
+                case .finishReason(let reason):
+                    rawFinishReason = reason
 
                 case .done:
                     break
@@ -355,12 +416,28 @@ struct ToolLoopExecutor {
             }
         }
 
-        // Execute tool calls if any
-        if !toolCalls.isEmpty && rounds < maxRounds {
-            rounds += 1
+        // Determine stop reason
+        let stopReason: StepOutcome.StopReason
+        if !rawToolCalls.isEmpty {
+            stopReason = .toolUse
+        } else if let reason = rawFinishReason {
+            // Normalize across provider conventions
+            switch reason.lowercased() {
+            case "length", "max_tokens":
+                stopReason = .maxTokens
+            case "stop", "end_turn", "stop_sequence", "tool_calls", "tool_use":
+                stopReason = .endTurn
+            default:
+                stopReason = .other(reason)
+            }
+        } else {
+            stopReason = .endTurn
+        }
 
+        // Execute tool calls if any
+        if !rawToolCalls.isEmpty {
             var toolResults: [[String: Any]] = []
-            for tc in toolCalls {
+            for tc in rawToolCalls {
                 do {
                     let result = try await mcpClient.callTool(tc.name, args: tc.args)
                     toolResults.append([
@@ -386,7 +463,25 @@ struct ToolLoopExecutor {
             messages.append(toolResultMessage)
         }
 
-        return (text: accumulatedText, conversation: messages)
+        let unifiedCalls = rawToolCalls.map { StepOutcome.ToolCall(id: $0.id, name: $0.name, args: $0.args) }
+        return StepOutcome(
+            text: accumulatedText,
+            toolCalls: unifiedCalls,
+            stopReason: stopReason,
+            updatedConversation: messages
+        )
+    }
+
+    // MARK: Run (compatibility wrapper)
+
+    /// Thin wrapper around `runOneStep` that preserves the legacy `(text, conversation)` return type
+    /// for existing callers (`ZionToolBridge`).
+    func run(
+        streamLines: AsyncThrowingStream<String, Error>,
+        conversation: [[String: Any]]
+    ) async throws -> (text: String, conversation: [[String: Any]]) {
+        let outcome = try await runOneStep(streamLines: streamLines, conversation: conversation)
+        return (text: outcome.text, conversation: outcome.updatedConversation)
     }
 
     // MARK: Private
@@ -427,7 +522,8 @@ struct ToolLoopExecutor {
         }
 
         if let finishReason = (json["candidates"] as? [[String: Any]])?.first?["finishReason"] as? String,
-           finishReason == "STOP" || finishReason == "TOOL_CALLS" {
+           !finishReason.isEmpty {
+            chunks.append(.finishReason(finishReason))
             chunks.append(.done)
         }
 
