@@ -426,16 +426,22 @@ final class ChatService {
                 resolved = provider
             }
 
-            var payload = Self.makePayload(for: expandedText, provider: resolved)
-            payload.cwd = repoURL
-
-            // Resolve @mentions in the user text before building conversation.
+            // Resolve @mentions in the user text BEFORE building the payload,
+            // so both the AgentRuntime path and the legacy dispatchStream fallback
+            // see the resolved system context. The user-visible message stays
+            // unchanged; only the prompt sent to the model is enriched.
             let mentionPayload: MentionPayload
             if let resolver = self.mentionResolver {
                 mentionPayload = await resolver.expand(message: expandedText)
             } else {
                 mentionPayload = .empty
             }
+            let enrichedText: String = mentionPayload.systemContext.isEmpty
+                ? expandedText
+                : mentionPayload.systemContext + "\n\n" + expandedText
+
+            var payload = Self.makePayload(for: enrichedText, provider: resolved)
+            payload.cwd = repoURL
 
             // Build structured conversation for AgentRuntime (last 10 messages as role/content dicts).
             // Sendable boundary: MainActor closure must return [[String: String]] (Any is not Sendable).
@@ -445,12 +451,10 @@ final class ChatService {
                     return ["role": msg.role == .user ? "user" : "assistant", "content": msg.content]
                 }
             }
-            var historyForRuntime: [[String: Any]] = stringHistory.map { $0 as [String: Any] }
-
-            // Prepend mention context as a system message at the start of the conversation.
-            if !mentionPayload.systemContext.isEmpty {
-                historyForRuntime.insert(["role": "system", "content": mentionPayload.systemContext], at: 0)
-            }
+            let historyForRuntime: [[String: Any]] = stringHistory.map { $0 as [String: Any] }
+            // Mention context already prepended to `enrichedText` above, so the
+            // AgentRuntime path sees it through `userPrompt` without a separate
+            // system message.
 
             // Route through AgentRuntime. Falls back to legacy dispatchStream when
             // no real runners are injected (AgentRuntime throws .noProviderAvailable).
@@ -459,8 +463,8 @@ final class ChatService {
                     provider: resolved,
                     model: modelOverride,
                     conversation: historyForRuntime,
-                    userPrompt: expandedText,
-                    tools: [],
+                    userPrompt: enrichedText,
+                    tools: MCPConfigBuilder.allTools(),
                     maxSteps: 25,
                     onStep: { @Sendable event in
                         Task { @MainActor in
