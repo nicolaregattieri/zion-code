@@ -44,6 +44,10 @@ final class ChatService {
     @ObservationIgnored private let streamProvider: ((LocalLLMConfig, AIPromptPayload, Int, String) -> AsyncThrowingStream<String, Error>)?
     @ObservationIgnored private let cliStreamProvider: ((AIPromptPayload, URL) -> AsyncThrowingStream<CLIStreamEvent, Error>)?
 
+    /// Mention resolver — expands @file/@folder/@selection/@web before each send.
+    /// Nil = mentions disabled (default for non-injected callers; set via init).
+    @ObservationIgnored private var mentionResolver: MentionResolver?
+
     /// Injected storage (nil = volatile/test)
     @ObservationIgnored private let storage: ChatStorage?
     @ObservationIgnored private let repoID: String
@@ -80,7 +84,7 @@ final class ChatService {
 
     // MARK: - Init (production)
 
-    init(ai: AIClient, worker: RepositoryWorker, contextBuilder: ChatContextBuilder, harness: ZionHarness, storage: ChatStorage? = nil, repoID: String = "", agentRuntime: AgentRuntime = AgentRuntime()) {
+    init(ai: AIClient, worker: RepositoryWorker, contextBuilder: ChatContextBuilder, harness: ZionHarness, storage: ChatStorage? = nil, repoID: String = "", agentRuntime: AgentRuntime = AgentRuntime(), mentionResolver: MentionResolver? = nil) {
         self.ai = ai
         self.worker = worker
         self.contextBuilder = contextBuilder
@@ -90,6 +94,7 @@ final class ChatService {
         self.storage = storage
         self.repoID = repoID
         self.agentRuntime = agentRuntime
+        self.mentionResolver = mentionResolver
 
         if storage != nil {
             Task { await self.reloadFromStorage() }
@@ -106,7 +111,8 @@ final class ChatService {
         streamProvider: @escaping (LocalLLMConfig, AIPromptPayload, Int, String) -> AsyncThrowingStream<String, Error>,
         storage: ChatStorage? = nil,
         repoID: String = "",
-        agentRuntime: AgentRuntime = AgentRuntime()
+        agentRuntime: AgentRuntime = AgentRuntime(),
+        mentionResolver: MentionResolver? = nil
     ) {
         self.ai = ai
         self.worker = worker
@@ -117,6 +123,7 @@ final class ChatService {
         self.storage = storage
         self.repoID = repoID
         self.agentRuntime = agentRuntime
+        self.mentionResolver = mentionResolver
 
         if storage != nil {
             Task { await self.reloadFromStorage() }
@@ -133,7 +140,8 @@ final class ChatService {
         cliStreamProvider: @escaping (AIPromptPayload, URL) -> AsyncThrowingStream<CLIStreamEvent, Error>,
         storage: ChatStorage? = nil,
         repoID: String = "",
-        agentRuntime: AgentRuntime = AgentRuntime()
+        agentRuntime: AgentRuntime = AgentRuntime(),
+        mentionResolver: MentionResolver? = nil
     ) {
         self.ai = ai
         self.worker = worker
@@ -144,6 +152,7 @@ final class ChatService {
         self.storage = storage
         self.repoID = repoID
         self.agentRuntime = agentRuntime
+        self.mentionResolver = mentionResolver
 
         if storage != nil {
             Task { await self.reloadFromStorage() }
@@ -419,6 +428,14 @@ final class ChatService {
             var payload = Self.makePayload(for: expandedText, provider: resolved)
             payload.cwd = repoURL
 
+            // Resolve @mentions in the user text before building conversation.
+            let mentionPayload: MentionPayload
+            if let resolver = self.mentionResolver {
+                mentionPayload = await resolver.expand(message: expandedText)
+            } else {
+                mentionPayload = .empty
+            }
+
             // Build structured conversation for AgentRuntime (last 10 messages as role/content dicts).
             // Sendable boundary: MainActor closure must return [[String: String]] (Any is not Sendable).
             let stringHistory: [[String: String]] = await MainActor.run {
@@ -427,7 +444,12 @@ final class ChatService {
                     return ["role": msg.role == .user ? "user" : "assistant", "content": msg.content]
                 }
             }
-            let historyForRuntime: [[String: Any]] = stringHistory.map { $0 as [String: Any] }
+            var historyForRuntime: [[String: Any]] = stringHistory.map { $0 as [String: Any] }
+
+            // Prepend mention context as a system message at the start of the conversation.
+            if !mentionPayload.systemContext.isEmpty {
+                historyForRuntime.insert(["role": "system", "content": mentionPayload.systemContext], at: 0)
+            }
 
             // Route through AgentRuntime. Falls back to legacy dispatchStream when
             // no real runners are injected (AgentRuntime throws .noProviderAvailable).
