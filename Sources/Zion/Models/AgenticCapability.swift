@@ -3,7 +3,7 @@ import Foundation
 // MARK: - AgenticCapability
 
 /// Describes how a provider/model combination participates in the agentic loop.
-enum AgenticCapability {
+enum AgenticCapability: Equatable {
     /// Provider natively supports tool/function calling (structured JSON).
     case nativeToolUse
     /// Provider does not support tool calling; the loop uses ReAct-style text prompting as a fallback.

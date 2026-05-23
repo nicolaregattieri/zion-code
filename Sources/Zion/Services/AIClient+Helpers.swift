@@ -98,46 +98,6 @@ extension AIClient {
         throw lastError ?? AIError.invalidResponse
     }
 
-    private func callGemini(payload: AIPromptPayload, apiKey: String, maxTokens: Int, modelID: String) async throws -> String {
-        guard let encodedModel = modelID.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
-              let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/\(encodedModel):generateContent")
-        else { throw AIError.invalidResponse }
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
-        request.timeoutInterval = 30
-
-        let body = Self.geminiRequestBody(payload: payload, maxTokens: maxTokens, modelID: modelID)
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-
-        let session = _testURLSession ?? URLSession.shared
-        let (data, response): (Data, URLResponse)
-        do {
-            (data, response) = try await session.data(for: request)
-        } catch let urlError as URLError {
-            throw AIError.networkFailure(underlying: urlError.localizedDescription)
-        }
-        guard let http = response as? HTTPURLResponse else { throw AIError.invalidResponse }
-
-        if http.statusCode == 400 || http.statusCode == 401 { throw AIError.invalidKey }
-        if http.statusCode == 503 { throw AIError.temporarilyUnavailable }
-        if http.statusCode == 429 { throw AIError.rateLimited(retryAfter: Self.parseRetryAfter(from: http)) }
-        guard http.statusCode == 200 else {
-            throw AIError.apiError("Gemini request failed (\(http.statusCode)).")
-        }
-
-        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-        guard let candidates = json?["candidates"] as? [[String: Any]],
-              let firstCandidate = candidates.first,
-              let content = firstCandidate["content"] as? [String: Any],
-              let parts = content["parts"] as? [[String: Any]],
-              let text = parts.first?["text"] as? String else {
-            throw AIError.invalidResponse
-        }
-        return text.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
     private func callAnthropic(payload: AIPromptPayload, apiKey: String, maxTokens: Int, modelID: String) async throws -> String {
         let url = URL(string: "https://api.anthropic.com/v1/messages")!
         var request = URLRequest(url: url)
