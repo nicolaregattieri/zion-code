@@ -111,12 +111,18 @@ extension AIClient {
         let body = Self.geminiRequestBody(payload: payload, maxTokens: maxTokens, modelID: modelID)
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let session = _testURLSession ?? URLSession.shared
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch let urlError as URLError {
+            throw AIError.networkFailure(underlying: urlError.localizedDescription)
+        }
         guard let http = response as? HTTPURLResponse else { throw AIError.invalidResponse }
 
         if http.statusCode == 400 || http.statusCode == 401 { throw AIError.invalidKey }
         if http.statusCode == 503 { throw AIError.temporarilyUnavailable }
-        if http.statusCode == 429 { throw AIError.quotaExceeded }
+        if http.statusCode == 429 { throw AIError.rateLimited(retryAfter: Self.parseRetryAfter(from: http)) }
         guard http.statusCode == 200 else {
             throw AIError.apiError("Gemini request failed (\(http.statusCode)).")
         }
@@ -144,12 +150,18 @@ extension AIClient {
         let body = Self.anthropicRequestBody(payload: payload, maxTokens: maxTokens, modelID: modelID)
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let session = _testURLSession ?? URLSession.shared
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch let urlError as URLError {
+            throw AIError.networkFailure(underlying: urlError.localizedDescription)
+        }
         guard let http = response as? HTTPURLResponse else { throw AIError.invalidResponse }
 
         if http.statusCode == 401 { throw AIError.invalidKey }
         if http.statusCode == 503 { throw AIError.temporarilyUnavailable }
-        if http.statusCode == 429 { throw AIError.quotaExceeded }
+        if http.statusCode == 429 { throw AIError.rateLimited(retryAfter: Self.parseRetryAfter(from: http)) }
         guard http.statusCode == 200 else {
             throw AIError.apiError("Anthropic request failed (\(http.statusCode)).")
         }
@@ -173,12 +185,18 @@ extension AIClient {
         let body = Self.openAIRequestBody(payload: payload, maxTokens: maxTokens, modelID: modelID)
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let session = _testURLSession ?? URLSession.shared
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch let urlError as URLError {
+            throw AIError.networkFailure(underlying: urlError.localizedDescription)
+        }
         guard let http = response as? HTTPURLResponse else { throw AIError.invalidResponse }
 
         if http.statusCode == 401 { throw AIError.invalidKey }
         if http.statusCode == 503 { throw AIError.temporarilyUnavailable }
-        if http.statusCode == 429 { throw AIError.quotaExceeded }
+        if http.statusCode == 429 { throw AIError.rateLimited(retryAfter: Self.parseRetryAfter(from: http)) }
         guard http.statusCode == 200 else {
             throw AIError.apiError("OpenAI request failed (\(http.statusCode)).")
         }

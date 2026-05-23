@@ -33,7 +33,13 @@ extension AIClient {
                     body["stream"] = true
                     request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-                    let (asyncBytes, response) = try await session.bytes(for: request)
+                    let (asyncBytes, response): (URLSession.AsyncBytes, URLResponse)
+                    do {
+                        (asyncBytes, response) = try await session.bytes(for: request)
+                    } catch let urlError as URLError {
+                        continuation.finish(throwing: AIError.networkFailure(underlying: urlError.localizedDescription))
+                        return
+                    }
 
                     guard let http = response as? HTTPURLResponse else {
                         continuation.finish(throwing: AIError.invalidResponse)
@@ -47,7 +53,7 @@ extension AIClient {
                         continuation.finish(throwing: AIError.localAPIError("OpenAI auth error (\(http.statusCode))."))
                         return
                     case 429:
-                        continuation.finish(throwing: AIError.quotaExceeded)
+                        continuation.finish(throwing: AIError.rateLimited(retryAfter: Self.parseRetryAfter(from: http)))
                         return
                     default:
                         continuation.finish(throwing: AIError.localAPIError("OpenAI request failed (\(http.statusCode))."))
@@ -136,7 +142,13 @@ extension AIClient {
 
                     request.httpBody = bodyData
 
-                    let (asyncBytes, response) = try await urlSession.bytes(for: request)
+                    let (asyncBytes, response): (URLSession.AsyncBytes, URLResponse)
+                    do {
+                        (asyncBytes, response) = try await urlSession.bytes(for: request)
+                    } catch let urlError as URLError {
+                        continuation.finish(throwing: AIError.networkFailure(underlying: urlError.localizedDescription))
+                        return
+                    }
 
                     guard let http = response as? HTTPURLResponse else {
                         continuation.finish(throwing: AIError.invalidResponse)
@@ -146,7 +158,7 @@ extension AIClient {
                     switch http.statusCode {
                     case 200: break
                     case 401: continuation.finish(throwing: AIError.invalidKey); return
-                    case 429: continuation.finish(throwing: AIError.quotaExceeded); return
+                    case 429: continuation.finish(throwing: AIError.rateLimited(retryAfter: Self.parseRetryAfter(from: http))); return
                     case 503: continuation.finish(throwing: AIError.temporarilyUnavailable); return
                     default:
                         continuation.finish(throwing: AIError.apiError("OpenAI-compat request failed (\(http.statusCode))."))
