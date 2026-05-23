@@ -1,70 +1,70 @@
 import SwiftUI
 
-enum ChatFontSize: String, CaseIterable, Identifiable {
-    case small
-    case medium
-    case large
-    case xlarge
-
-    var id: String { rawValue }
-
-    private static let smallScale: Double = 0.9
-    private static let mediumScale: Double = 1.0
-    private static let largeScale: Double = 1.15
-    private static let xlargeScale: Double = 1.3
-
-    var scale: Double {
-        switch self {
-        case .small:  return Self.smallScale
-        case .medium: return Self.mediumScale
-        case .large:  return Self.largeScale
-        case .xlarge: return Self.xlargeScale
-        }
-    }
-
-    var labelKey: String {
-        switch self {
-        case .small:  return "chat.fontSize.small"
-        case .medium: return "chat.fontSize.medium"
-        case .large:  return "chat.fontSize.large"
-        case .xlarge: return "chat.fontSize.xlarge"
-        }
-    }
-}
-
 enum ZionTalksAppearance {
-    static let fontSizeKey = "chat.fontSize"
+    static let fontSizeKey = "chat.fontSizePx"
+    static let lineSpacingKey = "chat.lineSpacingPx"
 
-    static var current: ChatFontSize {
-        let raw = UserDefaults.standard.string(forKey: fontSizeKey) ?? ChatFontSize.medium.rawValue
-        return ChatFontSize(rawValue: raw) ?? .medium
-    }
+    static let defaultFontSizePx: Int = 12
+    static let minFontSizePx: Int = 9
+    static let maxFontSizePx: Int = 22
+
+    static let defaultLineSpacingPx: Int = 2
+    static let minLineSpacingPx: Int = 0
+    static let maxLineSpacingPx: Int = 12
+
+    static let labelDelta: Int = 2
 }
 
-private struct ChatFontScaleKey: EnvironmentKey {
-    static let defaultValue: Double = 1.0
+private struct ChatFontSizeKey: EnvironmentKey {
+    static let defaultValue: Int = ZionTalksAppearance.defaultFontSizePx
+}
+
+private struct ChatLineSpacingKey: EnvironmentKey {
+    static let defaultValue: Int = ZionTalksAppearance.defaultLineSpacingPx
 }
 
 extension EnvironmentValues {
-    var chatFontScale: Double {
-        get { self[ChatFontScaleKey.self] }
-        set { self[ChatFontScaleKey.self] = newValue }
+    var chatFontSizePx: Int {
+        get { self[ChatFontSizeKey.self] }
+        set { self[ChatFontSizeKey.self] = newValue }
     }
+    var chatLineSpacingPx: Int {
+        get { self[ChatLineSpacingKey.self] }
+        set { self[ChatLineSpacingKey.self] = newValue }
+    }
+}
+
+enum ChatFontRole {
+    case body
+    case label
 }
 
 extension View {
-    func chatScaledFont(baseSize: CGFloat, weight: Font.Weight = .regular, design: Font.Design = .default) -> some View {
-        modifier(ChatScaledFontModifier(baseSize: baseSize, weight: weight, design: design))
+    func chatScaledFont(role: ChatFontRole = .body, weight: Font.Weight = .regular, design: Font.Design = .default) -> some View {
+        modifier(ChatRoleFontModifier(role: role, weight: weight, design: design))
+    }
+
+    func chatLineSpacing() -> some View {
+        modifier(ChatLineSpacingModifier())
     }
 }
 
-private struct ChatScaledFontModifier: ViewModifier {
-    @Environment(\.chatFontScale) private var scale
-    let baseSize: CGFloat
+private struct ChatRoleFontModifier: ViewModifier {
+    @Environment(\.chatFontSizePx) private var bodyPx
+    let role: ChatFontRole
     let weight: Font.Weight
     let design: Font.Design
 
     func body(content: Content) -> some View {
-        content.font(.system(size: baseSize * scale, weight: weight, design: design))
+        let size = role == .body ? bodyPx : max(bodyPx - ZionTalksAppearance.labelDelta, ZionTalksAppearance.minFontSizePx)
+        return content.font(.system(size: CGFloat(size), weight: weight, design: design))
+    }
+}
+
+private struct ChatLineSpacingModifier: ViewModifier {
+    @Environment(\.chatLineSpacingPx) private var spacingPx
+
+    func body(content: Content) -> some View {
+        content.lineSpacing(CGFloat(spacingPx))
     }
 }

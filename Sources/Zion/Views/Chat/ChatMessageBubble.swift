@@ -24,7 +24,8 @@ struct ChatMessageBubble: View {
             HStack(alignment: .top, spacing: DesignSystem.Spacing.standard) {
                 Spacer(minLength: DesignSystem.Spacing.sectionGap)
                 Text(message.content)
-                    .chatScaledFont(baseSize: DesignSystem.Typography.bodyBaseSize)
+                    .chatScaledFont(role: .body)
+                    .chatLineSpacing()
                     .foregroundStyle(DesignSystem.Colors.brandWhite)
                     .textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)

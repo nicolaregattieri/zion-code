@@ -12,8 +12,8 @@ struct ChatScreen: View {
     @State private var planMode: PlanModeState = PlanModeState.current()
 
     @AppStorage("chat.threadListVisible") private var threadListVisible: Bool = true
-    @AppStorage(ZionTalksAppearance.fontSizeKey) private var fontSizeRaw: String = ChatFontSize.medium.rawValue
-    private var fontScale: Double { (ChatFontSize(rawValue: fontSizeRaw) ?? .medium).scale }
+    @AppStorage(ZionTalksAppearance.fontSizeKey) private var fontSizePx: Int = ZionTalksAppearance.defaultFontSizePx
+    @AppStorage(ZionTalksAppearance.lineSpacingKey) private var lineSpacingPx: Int = ZionTalksAppearance.defaultLineSpacingPx
 
     @AppStorage(UserDefaultsKeys.AI.provider) private var providerRaw: String = AIProvider.none.rawValue
     @AppStorage(UserDefaultsKeys.AI.mode) private var modeRaw: String = AIMode.efficient.rawValue
@@ -37,7 +37,8 @@ struct ChatScreen: View {
         .padding(.horizontal, 18)
         .padding(.top, 22)
         .padding(.bottom, 12)
-        .environment(\.chatFontScale, fontScale)
+        .environment(\.chatFontSizePx, fontSizePx)
+        .environment(\.chatLineSpacingPx, lineSpacingPx)
     }
 
     // MARK: - Page header

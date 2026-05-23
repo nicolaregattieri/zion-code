@@ -57,7 +57,7 @@ struct ChatThreadRow: View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.micro) {
             if isRenaming {
                 TextField("", text: $draftTitle)
-                    .chatScaledFont(baseSize: DesignSystem.Typography.labelBaseSize)
+                    .chatScaledFont(role: .label)
                     .foregroundStyle(DesignSystem.Colors.textPrimary)
                     .textFieldStyle(.plain)
                     .onSubmit {
@@ -68,14 +68,14 @@ struct ChatThreadRow: View {
                     }
             } else {
                 Text(thread.title)
-                    .chatScaledFont(baseSize: DesignSystem.Typography.labelBaseSize)
+                    .chatScaledFont(role: .label)
                     .foregroundStyle(DesignSystem.Colors.textPrimary)
                     .lineLimit(1)
                     .truncationMode(.tail)
             }
 
             Text(relativeDate)
-                .chatScaledFont(baseSize: DesignSystem.Typography.labelBaseSize, design: .monospaced)
+                .chatScaledFont(role: .label, design: .monospaced)
                 .foregroundStyle(DesignSystem.Colors.textTertiary)
         }
     }

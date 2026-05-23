@@ -1320,11 +1320,9 @@
 "chat.message.copied" = "Copiado!";
 "chat.settings.appearance" = "Aparência";
 "chat.settings.fontSize" = "Tamanho da fonte";
+"chat.settings.lineSpacing" = "Espaçamento de linha";
+"chat.settings.px" = "%@ px";
 "chat.settings.fontSize.hint" = "Aplica-se às mensagens do chat e aos balões do histórico.";
-"chat.fontSize.small" = "Pequena";
-"chat.fontSize.medium" = "Média";
-"chat.fontSize.large" = "Grande";
-"chat.fontSize.xlarge" = "Extra grande";
 "settings.ai.harness.title" = "Harness de IA";
 "settings.ai.harness.toolsEnabled" = "Ativar tool calling";
 "settings.ai.harness.allowEdits" = "Permitir edições de arquivo";

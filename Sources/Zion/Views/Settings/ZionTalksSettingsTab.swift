@@ -12,7 +12,8 @@ struct ZionTalksSettingsTab: View {
     @AppStorage("chat.editHarness.autoCommit") private var editHarnessAutoCommit: Bool = true
     @AppStorage("chat.editHarness.preferNativeTool") private var editHarnessPreferNativeTool: Bool = true
     @AppStorage("chat.routing.subscriptionFailover") private var subscriptionFailover: Bool = false
-    @AppStorage(ZionTalksAppearance.fontSizeKey) private var fontSizeRaw: String = ChatFontSize.medium.rawValue
+    @AppStorage(ZionTalksAppearance.fontSizeKey) private var fontSizePx: Int = ZionTalksAppearance.defaultFontSizePx
+    @AppStorage(ZionTalksAppearance.lineSpacingKey) private var lineSpacingPx: Int = ZionTalksAppearance.defaultLineSpacingPx
 
     var body: some View {
         Form {
@@ -28,12 +29,24 @@ struct ZionTalksSettingsTab: View {
             }
 
             Section(L10n("chat.settings.appearance")) {
-                Picker(L10n("chat.settings.fontSize"), selection: $fontSizeRaw) {
-                    ForEach(ChatFontSize.allCases) { size in
-                        Text(L10n(size.labelKey)).tag(size.rawValue)
+                Stepper(value: $fontSizePx, in: ZionTalksAppearance.minFontSizePx...ZionTalksAppearance.maxFontSizePx) {
+                    HStack {
+                        Text(L10n("chat.settings.fontSize"))
+                        Spacer()
+                        Text(L10n("chat.settings.px", "\(fontSizePx)"))
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
                     }
                 }
-                .pickerStyle(.segmented)
+                Stepper(value: $lineSpacingPx, in: ZionTalksAppearance.minLineSpacingPx...ZionTalksAppearance.maxLineSpacingPx) {
+                    HStack {
+                        Text(L10n("chat.settings.lineSpacing"))
+                        Spacer()
+                        Text(L10n("chat.settings.px", "\(lineSpacingPx)"))
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                    }
+                }
                 Text(L10n("chat.settings.fontSize.hint"))
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
