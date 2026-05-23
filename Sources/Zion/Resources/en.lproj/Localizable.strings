@@ -2608,3 +2608,25 @@
 "map.chat.stickyContext.description" = "Auto-injected git context (diff, log, status) stays attached to the thread across turns until the intent classifier swaps it for fresh data.";
 "map.chat.history.title" = "Thread history";
 "map.chat.history.description" = "Per-repo SQLite-backed thread sidebar. Switch, rename, delete threads; messages and metadata persist across launches.";
+
+// MARK: - Agentic Loop (Phase 11)
+"chat.settings.agenticLoop.title" = "Agentic Loop";
+"chat.agent.tier.label" = "Approval tier";
+"chat.agent.tier.readOnly" = "Read-only";
+"chat.agent.tier.workspaceWrite" = "Workspace write";
+"chat.agent.tier.fullAccess" = "Full access";
+"chat.agent.tier.fullAccess.warning" = "Full access lets the agent run any shell command without asking. Only enable if you trust the model and understand the risks.";
+"chat.agent.maxSteps.label" = "Max steps";
+"chat.agent.bashAllowlist.label" = "Bash allowlist";
+"chat.agent.bashAllowlist.placeholder" = "Newline-separated commands. Leave empty for defaults.";
+"chat.agent.stopOnFirstError.label" = "Stop on first error";
+"chat.agent.step.label" = "Step %@/%@";
+"chat.agent.plan.proposed.title" = "Plan ready for review";
+"chat.agent.plan.approve" = "Approve";
+"chat.agent.plan.reject" = "Reject";
+"chat.agent.error.budgetExceeded" = "Cost budget exceeded after %@ steps.";
+"chat.agent.error.rateLimited" = "Rate limited by provider \u{2014} try again later.";
+"chat.agent.error.reactParseFailed" = "Model output did not match the required format after several attempts. Try a different model.";
+"chat.agent.error.noProvider" = "No agentic-capable provider available.";
+"chat.agent.error.cliCrashed" = "CLI agent exited unexpectedly.";
+"chat.agent.error.loopAlreadyActive" = "A loop is already running.";

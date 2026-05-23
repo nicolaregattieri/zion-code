@@ -7,8 +7,6 @@ import SwiftUI
 
 struct AgentStepIndicator: View {
 
-    // MARK: - TODO(T11): L10n — key: chat.agent.step.label  (format: "Step %d/%d")
-
     @Bindable var agentRuntime: AgentRuntime
     @AppStorage("chat.agent.maxSteps") private var maxSteps: Int = 25
 
@@ -30,7 +28,7 @@ struct AgentStepIndicator: View {
                         }
                     }
 
-                Text("Step \(agentRuntime.currentStepIndex)/\(maxSteps)") // MARK: - TODO(T11): L10n — key: chat.agent.step.label
+                Text(String(format: L10n("chat.agent.step.label"), "\(agentRuntime.currentStepIndex)", "\(maxSteps)"))
                     .font(DesignSystem.Typography.monoLabelBold)
 
                 if let provider = agentRuntime.currentProviderResolved {

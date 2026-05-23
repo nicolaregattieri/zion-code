@@ -2608,3 +2608,25 @@
 "map.chat.stickyContext.description" = "Contexto git auto-injetado (diff, log, status) permanece atrelado à thread até o classificador de intenção trocar por dado fresco.";
 "map.chat.history.title" = "Histórico de threads";
 "map.chat.history.description" = "Sidebar de threads por repo respaldada em SQLite. Troque, renomeie, apague; mensagens e metadados persistem entre execuções.";
+
+// MARK: - Agentic Loop (Phase 11)
+"chat.settings.agenticLoop.title" = "Loop Agêntico";
+"chat.agent.tier.label" = "Nível de aprovação";
+"chat.agent.tier.readOnly" = "Somente leitura";
+"chat.agent.tier.workspaceWrite" = "Gravação no workspace";
+"chat.agent.tier.fullAccess" = "Acesso total";
+"chat.agent.tier.fullAccess.warning" = "Acesso total permite que o agente execute qualquer comando shell sem confirmação. Habilite apenas em repositórios em que você confia.";
+"chat.agent.maxSteps.label" = "Passos máximos";
+"chat.agent.bashAllowlist.label" = "Lista de comandos permitidos";
+"chat.agent.bashAllowlist.placeholder" = "Comandos separados por nova linha. Deixe vazio para os padrões.";
+"chat.agent.stopOnFirstError.label" = "Parar no primeiro erro";
+"chat.agent.step.label" = "Passo %@/%@";
+"chat.agent.plan.proposed.title" = "Plano pronto para revisão";
+"chat.agent.plan.approve" = "Aprovar";
+"chat.agent.plan.reject" = "Rejeitar";
+"chat.agent.error.budgetExceeded" = "Orçamento de custo excedido após %@ passos.";
+"chat.agent.error.rateLimited" = "Limite de taxa do provedor atingido \u{2014} tente novamente mais tarde.";
+"chat.agent.error.reactParseFailed" = "A saída do modelo não correspondeu ao formato exigido após várias tentativas. Tente um modelo diferente.";
+"chat.agent.error.noProvider" = "Nenhum provedor com capacidade agêntica disponível.";
+"chat.agent.error.cliCrashed" = "O agente CLI encerrou inesperadamente.";
+"chat.agent.error.loopAlreadyActive" = "Um loop já está em execução.";

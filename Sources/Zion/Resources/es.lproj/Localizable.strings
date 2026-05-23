@@ -2630,3 +2630,25 @@
 "map.chat.stickyContext.description" = "El contexto git auto-inyectado (diff, log, status) permanece adjunto al hilo hasta que el clasificador de intención lo cambie por datos frescos.";
 "map.chat.history.title" = "Historial de hilos";
 "map.chat.history.description" = "Sidebar de hilos por repo respaldado en SQLite. Cambia, renombra, elimina; mensajes y metadatos persisten entre ejecuciones.";
+
+// MARK: - Agentic Loop (Phase 11)
+"chat.settings.agenticLoop.title" = "Bucle Agéntico";
+"chat.agent.tier.label" = "Nivel de aprobación";
+"chat.agent.tier.readOnly" = "Solo lectura";
+"chat.agent.tier.workspaceWrite" = "Escritura en workspace";
+"chat.agent.tier.fullAccess" = "Acceso total";
+"chat.agent.tier.fullAccess.warning" = "El acceso total permite que el agente ejecute cualquier comando shell sin confirmación. Actívalo solo en repositorios de confianza.";
+"chat.agent.maxSteps.label" = "Pasos máximos";
+"chat.agent.bashAllowlist.label" = "Lista de comandos permitidos";
+"chat.agent.bashAllowlist.placeholder" = "Comandos separados por nueva línea. Deja vacío para usar los predeterminados.";
+"chat.agent.stopOnFirstError.label" = "Detener en el primer error";
+"chat.agent.step.label" = "Paso %@/%@";
+"chat.agent.plan.proposed.title" = "Plan listo para revisión";
+"chat.agent.plan.approve" = "Aprobar";
+"chat.agent.plan.reject" = "Rechazar";
+"chat.agent.error.budgetExceeded" = "Presupuesto de coste superado tras %@ pasos.";
+"chat.agent.error.rateLimited" = "Límite de tasa del proveedor alcanzado \u{2014} inténtalo de nuevo más tarde.";
+"chat.agent.error.reactParseFailed" = "La salida del modelo no coincidió con el formato requerido tras varios intentos. Prueba un modelo diferente.";
+"chat.agent.error.noProvider" = "No hay ningún proveedor con capacidad agéntica disponible.";
+"chat.agent.error.cliCrashed" = "El agente CLI terminó inesperadamente.";
+"chat.agent.error.loopAlreadyActive" = "Ya hay un bucle en ejecución.";
