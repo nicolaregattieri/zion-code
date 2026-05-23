@@ -66,6 +66,9 @@ extension AIClient {
                         return try await callGemini(payload: payload, apiKey: apiKey, maxTokens: maxTokens, modelID: modelID)
                     case .none:
                         throw AIError.noProvider
+                    case .auto:
+                        // Unreachable — .auto is handled by orchestrator before the candidates loop
+                        throw AIError.noProvider
                     case .claudeCLI, .codexCLI:
                         // Unreachable — CLI providers are handled above before the candidates loop
                         throw AIError.noProvider

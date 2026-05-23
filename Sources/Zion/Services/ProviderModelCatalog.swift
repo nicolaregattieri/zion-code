@@ -49,7 +49,7 @@ enum ProviderModelCatalog {
                 "o1",
                 "o3"
             ]
-        case .local, .none:
+        case .auto, .local, .none:
             return []
         }
     }

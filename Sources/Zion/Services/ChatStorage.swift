@@ -153,7 +153,7 @@ actor ChatStorage {
         let db = try connection(for: repoID)
         let sql = """
             SELECT m.id, m.role, m.content, m.created_at, m.is_streaming, m.plan_json,
-                   m.edit_blocks_json
+                   m.edit_blocks_json, m.provider_used
             FROM messages m
             JOIN threads t ON t.id = m.thread_id
             WHERE m.thread_id = ? AND t.repo_id = ?
@@ -190,6 +190,9 @@ actor ChatStorage {
                     return try? JSONDecoder().decode([EditBlock].self, from: data)
                 })
                 : nil
+            let providerUsed: String? = sqlite3_column_type(stmt, 7) != SQLITE_NULL
+                ? sqlite3_column_text(stmt, 7).map { String(cString: $0) }
+                : nil
 
             guard let id = UUID(uuidString: idStr) else { continue }
             let role: ChatRole = roleStr == "assistant" ? .assistant : .user
@@ -201,7 +204,8 @@ actor ChatStorage {
                 timestamp: Date(timeIntervalSince1970: createdAt),
                 isStreaming: isStreaming,
                 plan: plan,
-                editBlocks: editBlocks
+                editBlocks: editBlocks,
+                providerUsed: providerUsed
             ))
         }
         return messages
@@ -211,8 +215,8 @@ actor ChatStorage {
         let db = try connection(for: repoID)
         let sql = """
             INSERT INTO messages (id, thread_id, role, content, created_at, is_streaming,
-                                  plan_json, edit_blocks_json)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+                                  plan_json, edit_blocks_json, provider_used)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
             """
         var stmt: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
@@ -243,6 +247,11 @@ actor ChatStorage {
         } else {
             sqlite3_bind_null(stmt, 8)
         }
+        if let provider = message.providerUsed {
+            sqlite3_bind_text(stmt, 9, provider, -1, sqliteTransient)
+        } else {
+            sqlite3_bind_null(stmt, 9)
+        }
 
         guard sqlite3_step(stmt) == SQLITE_DONE else {
             throw sqliteError(db)
@@ -263,7 +272,7 @@ actor ChatStorage {
         let db = try connection(for: repoID)
         let sql = """
             UPDATE messages SET content = ?, is_streaming = ?, plan_json = ?,
-                                edit_blocks_json = ?
+                                edit_blocks_json = ?, provider_used = ?
             WHERE id = ?;
             """
         var stmt: OpaquePointer?
@@ -289,7 +298,12 @@ actor ChatStorage {
         } else {
             sqlite3_bind_null(stmt, 4)
         }
-        sqlite3_bind_text(stmt, 5, idStr, -1, sqliteTransient)
+        if let provider = message.providerUsed {
+            sqlite3_bind_text(stmt, 5, provider, -1, sqliteTransient)
+        } else {
+            sqlite3_bind_null(stmt, 5)
+        }
+        sqlite3_bind_text(stmt, 6, idStr, -1, sqliteTransient)
 
         guard sqlite3_step(stmt) == SQLITE_DONE else {
             throw sqliteError(db)
@@ -491,6 +505,9 @@ actor ChatStorage {
 
         // v4 migration: EditBlocks JSON column on messages.
         try? exec(db: db, sql: "ALTER TABLE messages ADD COLUMN edit_blocks_json TEXT NULL;")
+
+        // v5 migration: provider_used column on messages.
+        try? exec(db: db, sql: "ALTER TABLE messages ADD COLUMN provider_used TEXT NULL;")
 
         // v4 migration: AI edit log table.
         try? exec(db: db, sql: """

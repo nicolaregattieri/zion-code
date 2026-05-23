@@ -41,6 +41,8 @@ struct ChatMessage: Identifiable, Equatable {
     var plan: ChatPlan? = nil
     /// Edit blocks extracted from an assistant message (search-and-replace operations).
     var editBlocks: [EditBlock]? = nil
+    /// The CLI provider that generated this message (e.g. "anthropic", "openai"). Nil for API-sourced messages.
+    var providerUsed: String? = nil
 
     init(
         id: UUID = UUID(),
@@ -52,7 +54,8 @@ struct ChatMessage: Identifiable, Equatable {
         toolEvents: [ChatToolEvent]? = nil,
         internalContext: String? = nil,
         plan: ChatPlan? = nil,
-        editBlocks: [EditBlock]? = nil
+        editBlocks: [EditBlock]? = nil,
+        providerUsed: String? = nil
     ) {
         self.id = id
         self.role = role
@@ -64,6 +67,7 @@ struct ChatMessage: Identifiable, Equatable {
         self.internalContext = internalContext
         self.plan = plan
         self.editBlocks = editBlocks
+        self.providerUsed = providerUsed
     }
 }
 

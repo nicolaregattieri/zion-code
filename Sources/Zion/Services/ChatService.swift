@@ -422,7 +422,7 @@ final class ChatService {
                 }
                 await self.consumeCLIStream(stream, assistantID: assistantID, threadID: threadID)
 
-            case .gemini, .none:
+            case .auto, .gemini, .none:
                 do {
                     let response = try await self.ai.call(
                         payload: payload,
