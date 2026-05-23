@@ -51,6 +51,9 @@ final class FileSystemMentionToolClient: MentionToolClient, @unchecked Sendable 
         guard let urlString = args["url"] as? String, let url = URL(string: urlString) else {
             throw FSMentionError.missingArgument("url")
         }
+        let queryText = args["queryText"] as? String ?? ""
+        let alwaysRaw = UserDefaults.standard.bool(forKey: "chat.web.alwaysInjectRaw")
+
         var request = URLRequest(url: url)
         request.timeoutInterval = Self.webTimeout
         request.setValue("Zion/1.7 (+vibe)", forHTTPHeaderField: "User-Agent")
@@ -59,7 +62,11 @@ final class FileSystemMentionToolClient: MentionToolClient, @unchecked Sendable 
             throw FSMentionError.httpError(http.statusCode)
         }
         let capped = data.count > Self.webByteCap ? data.prefix(Self.webByteCap) : data
-        return String(data: capped, encoding: .utf8) ?? ""
+        let body = String(data: capped, encoding: .utf8) ?? ""
+
+        if alwaysRaw { return body }
+        if body.utf8.count <= WebExcerptRetriever.directInjectThresholdBytes { return body }
+        return WebExcerptRetriever.excerpt(html: body, query: queryText)
     }
 
     private func resolve(_ raw: String) throws -> URL {

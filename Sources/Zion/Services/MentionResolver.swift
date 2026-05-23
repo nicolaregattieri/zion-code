@@ -124,7 +124,7 @@ actor MentionResolver {
                 }
 
             case .web:
-                let (contents, bytes) = await resolveWeb(url: mention.argument, maxBytes: maxBytes)
+                let (contents, bytes) = await resolveWeb(url: mention.argument, queryText: message, maxBytes: maxBytes)
                 resolved.append(ResolvedMention(kind: .web, argument: mention.argument, contents: contents, bytes: bytes))
                 breakdown.append((path: mention.argument, bytes: bytes))
             }
@@ -314,10 +314,10 @@ actor MentionResolver {
         return results
     }
 
-    private func resolveWeb(url: String, maxBytes: Int) async -> (contents: String, bytes: Int) {
+    private func resolveWeb(url: String, queryText: String, maxBytes: Int) async -> (contents: String, bytes: Int) {
         guard !url.isEmpty else { return ("[error: missing argument]", 0) }
         do {
-            let raw = try await toolClient.callTool("web_fetch", args: ["url": url])
+            let raw = try await toolClient.callTool("web_fetch", args: ["url": url, "queryText": queryText])
             let capped = cap(raw, maxBytes: maxBytes)
             return (capped, capped.utf8.count)
         } catch {
