@@ -130,7 +130,7 @@ struct ChatComposer: View {
         TextField(L10n("chat.composer.hint"), text: $text, axis: .vertical)
             .textFieldStyle(.plain)
             .labelsHidden()
-            .font(DesignSystem.Typography.body)
+            .chatScaledFont(baseSize: DesignSystem.Typography.bodyBaseSize)
             .lineLimit(1...6)
             .padding(.horizontal, DesignSystem.Spacing.compact)
             .padding(.vertical, DesignSystem.Spacing.micro)

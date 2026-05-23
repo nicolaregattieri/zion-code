@@ -239,6 +239,10 @@ struct DesignSystem {
         static let subtitle = Font.system(size: 14, weight: .medium)
         static let sectionTitle = Font.system(size: 13, weight: .bold)
 
+        // Base sizes (referenced by scalable chat fonts)
+        static let bodyBaseSize: CGFloat = 12
+        static let labelBaseSize: CGFloat = 10
+
         // Body
         static let bodyLarge = Font.system(size: 14)
         static let body = Font.system(size: 12)

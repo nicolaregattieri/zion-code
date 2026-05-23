@@ -42,14 +42,14 @@ struct AssistantMarkdown: View {
             options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)
         ) {
             Text(attributed)
-                .font(DesignSystem.Typography.body)
+                .chatScaledFont(baseSize: DesignSystem.Typography.bodyBaseSize)
                 .foregroundStyle(DesignSystem.Colors.textPrimary)
                 .textSelection(.enabled)
                 .fixedSize(horizontal: false, vertical: true)
                 .multilineTextAlignment(.leading)
         } else {
             Text(text)
-                .font(DesignSystem.Typography.body)
+                .chatScaledFont(baseSize: DesignSystem.Typography.bodyBaseSize)
                 .foregroundStyle(DesignSystem.Colors.textPrimary)
                 .textSelection(.enabled)
                 .fixedSize(horizontal: false, vertical: true)

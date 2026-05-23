@@ -12,6 +12,7 @@ struct ZionTalksSettingsTab: View {
     @AppStorage("chat.editHarness.autoCommit") private var editHarnessAutoCommit: Bool = true
     @AppStorage("chat.editHarness.preferNativeTool") private var editHarnessPreferNativeTool: Bool = true
     @AppStorage("chat.routing.subscriptionFailover") private var subscriptionFailover: Bool = false
+    @AppStorage(ZionTalksAppearance.fontSizeKey) private var fontSizeRaw: String = ChatFontSize.medium.rawValue
 
     var body: some View {
         Form {
@@ -24,6 +25,18 @@ struct ZionTalksSettingsTab: View {
             Section("General") { // MARK: - TODO(T10): L10n
                 Toggle("Enable tool use", isOn: $toolsEnabled) // MARK: - TODO(T10): L10n
                 Toggle("Auto-inject context", isOn: $autoInject) // MARK: - TODO(T10): L10n
+            }
+
+            Section(L10n("chat.settings.appearance")) {
+                Picker(L10n("chat.settings.fontSize"), selection: $fontSizeRaw) {
+                    ForEach(ChatFontSize.allCases) { size in
+                        Text(L10n(size.labelKey)).tag(size.rawValue)
+                    }
+                }
+                .pickerStyle(.segmented)
+                Text(L10n("chat.settings.fontSize.hint"))
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(.secondary)
             }
 
             Section("File Edits") { // MARK: - TODO(T10): L10n

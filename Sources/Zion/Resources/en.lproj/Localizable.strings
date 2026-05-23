@@ -2459,6 +2459,13 @@
 "chat.code.copied" = "Copied";
 "chat.message.copy" = "Copy message";
 "chat.message.copied" = "Copied!";
+"chat.settings.appearance" = "Appearance";
+"chat.settings.fontSize" = "Font size";
+"chat.settings.fontSize.hint" = "Applies to chat messages and history bubbles.";
+"chat.fontSize.small" = "Small";
+"chat.fontSize.medium" = "Medium";
+"chat.fontSize.large" = "Large";
+"chat.fontSize.xlarge" = "Extra large";
 "ai.error.toolExecution.failed" = "Tool execution failed: %@";
 "ai.error.toolCalling.notSupported" = "Selected provider doesn't support tool calling.";
 "ai.error.cli.notInstalled" = "%@ is not installed. Install it and try again.";
