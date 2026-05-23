@@ -46,7 +46,8 @@ final class ChatService {
 
     /// Mention resolver — expands @file/@folder/@selection/@web before each send.
     /// Nil = mentions disabled (default for non-injected callers; set via init).
-    @ObservationIgnored private var mentionResolver: MentionResolver?
+    /// Exposed as internal(set) so ChatComposer can surface cost preview.
+    @ObservationIgnored private(set) var mentionResolver: MentionResolver?
 
     /// Injected storage (nil = volatile/test)
     @ObservationIgnored private let storage: ChatStorage?
