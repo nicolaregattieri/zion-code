@@ -217,11 +217,12 @@ enum DivergenceResolution {
 
 // MARK: - AI
 
-enum AIProvider: String, CaseIterable, Identifiable {
-    case none, anthropic, openai, gemini, local, claudeCLI, codexCLI
+enum AIProvider: String, CaseIterable, Identifiable, Codable {
+    case auto, none, anthropic, openai, gemini, local, claudeCLI, codexCLI
     var id: String { rawValue }
     var label: String {
         switch self {
+        case .auto: return L10n("settings.ai.provider.auto")
         case .none: return L10n("Desativado")
         case .anthropic: return L10n("Anthropic (Claude)")
         case .openai: return L10n("OpenAI (GPT)")
@@ -231,11 +232,25 @@ enum AIProvider: String, CaseIterable, Identifiable {
         case .codexCLI: return L10n("settings.ai.provider.codexCLI")
         }
     }
+    var icon: String {
+        switch self {
+        case .auto: return "wand.and.stars"
+        case .none: return "slash.circle"
+        case .anthropic: return "a.circle.fill"
+        case .openai: return "o.circle.fill"
+        case .gemini: return "g.circle.fill"
+        case .local: return "desktopcomputer"
+        case .claudeCLI: return "terminal.fill"
+        case .codexCLI: return "chevron.left.forwardslash.chevron.right"
+        }
+    }
 }
 
 extension AIProvider {
     var supportsToolCalling: Bool {
         switch self {
+        case .auto:
+            return true
         case .anthropic, .openai:
             return true
         case .gemini, .none:

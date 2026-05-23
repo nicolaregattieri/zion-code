@@ -19,10 +19,12 @@ struct AIQuotaRecoveryInfo: Equatable {
 }
 
 enum AIProviderSupport {
-    static let configurableProviders: [AIProvider] = [.anthropic, .openai, .gemini, .local, .claudeCLI, .codexCLI]
+    static let configurableProviders: [AIProvider] = [.auto, .anthropic, .openai, .gemini, .local, .claudeCLI, .codexCLI]
 
     static func dashboardURL(for provider: AIProvider) -> URL? {
         switch provider {
+        case .auto:
+            return nil
         case .anthropic:
             return URL(string: "https://console.anthropic.com/settings/keys")
         case .openai:
@@ -61,6 +63,9 @@ enum AIProviderSupport {
             guard let config = loadLocalConfig() else { return false }
             return localHealthProbe(config)
         }
+        if provider == .auto {
+            return true
+        }
         if provider == .claudeCLI || provider == .codexCLI {
             // CLI connection requires async probe via isCLIConnected(provider:discovery:)
             return false
@@ -93,7 +98,9 @@ enum AIProviderSupport {
         loadKey: (AIProvider) -> String? = AIClient.loadAPIKey
     ) -> [AIProvider] {
         configurableProviders.filter { provider in
-            provider != defaultProvider && isConnected(provider: provider, loadKey: loadKey)
+            provider != defaultProvider
+                && provider != .auto                 // .auto is a routing pseudo-provider, never a fallback
+                && isConnected(provider: provider, loadKey: loadKey)
         }
     }
 

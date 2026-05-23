@@ -1,5 +1,45 @@
 import Foundation
 
+// MARK: - Retry-After Header Parsing
+
+extension AIClient {
+
+    /// Parses the value of the `Retry-After` response header into a `TimeInterval`.
+    ///
+    /// Supports two formats per RFC 7231:
+    /// - Integer string (e.g. "60") → seconds as `Double`.
+    /// - HTTP-date string (e.g. "Wed, 21 Oct 2015 07:28:00 GMT") → seconds from now.
+    ///
+    /// Returns nil when the header is absent or unparseable.
+    static func parseRetryAfter(from response: HTTPURLResponse) -> TimeInterval? {
+        guard let raw = response.value(forHTTPHeaderField: "Retry-After") else { return nil }
+        let trimmed = raw.trimmingCharacters(in: .whitespaces)
+
+        // Integer form
+        if let seconds = Double(trimmed) {
+            return seconds
+        }
+
+        // HTTP-date form (RFC 7231 §7.1.3)
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        let formats = [
+            "EEE, dd MMM yyyy HH:mm:ss zzz",   // preferred (IMF-fixdate)
+            "EEEE, dd-MMM-yy HH:mm:ss zzz",     // RFC 850 (obsolete)
+            "EEE MMM d HH:mm:ss yyyy",           // ANSI C asctime
+        ]
+        for format in formats {
+            formatter.dateFormat = format
+            if let date = formatter.date(from: trimmed) {
+                let delta = date.timeIntervalSinceNow
+                return delta > 0 ? delta : 0
+            }
+        }
+
+        return nil
+    }
+}
+
 // MARK: - Anthropic SSE Stream Parsing
 
 extension AIClient {
@@ -74,7 +114,13 @@ extension AIClient {
                     body["stream"] = true
                     request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-                    let (asyncBytes, response) = try await session.bytes(for: request)
+                    let (asyncBytes, response): (URLSession.AsyncBytes, URLResponse)
+                    do {
+                        (asyncBytes, response) = try await session.bytes(for: request)
+                    } catch let urlError as URLError {
+                        continuation.finish(throwing: AIError.networkFailure(underlying: urlError.localizedDescription))
+                        return
+                    }
 
                     guard let http = response as? HTTPURLResponse else {
                         continuation.finish(throwing: AIError.invalidResponse)
@@ -88,7 +134,7 @@ extension AIClient {
                         continuation.finish(throwing: AIError.localAPIError("Anthropic auth error (\(http.statusCode))."))
                         return
                     case 429:
-                        continuation.finish(throwing: AIError.quotaExceeded)
+                        continuation.finish(throwing: AIError.rateLimited(retryAfter: Self.parseRetryAfter(from: http)))
                         return
                     default:
                         continuation.finish(throwing: AIError.localAPIError("Anthropic request failed (\(http.statusCode))."))
@@ -182,7 +228,13 @@ extension AIClient {
                     request.timeoutInterval = 60
 
                     request.httpBody = bodyData
-                    let (asyncBytes, response) = try await session.bytes(for: request)
+                    let (asyncBytes, response): (URLSession.AsyncBytes, URLResponse)
+                    do {
+                        (asyncBytes, response) = try await session.bytes(for: request)
+                    } catch let urlError as URLError {
+                        continuation.finish(throwing: AIError.networkFailure(underlying: urlError.localizedDescription))
+                        return
+                    }
 
                     guard let http = response as? HTTPURLResponse else {
                         continuation.finish(throwing: AIError.invalidResponse)
@@ -192,7 +244,7 @@ extension AIClient {
                     switch http.statusCode {
                     case 200: break
                     case 401: continuation.finish(throwing: AIError.invalidKey); return
-                    case 429: continuation.finish(throwing: AIError.quotaExceeded); return
+                    case 429: continuation.finish(throwing: AIError.rateLimited(retryAfter: Self.parseRetryAfter(from: http))); return
                     case 503: continuation.finish(throwing: AIError.temporarilyUnavailable); return
                     default:
                         continuation.finish(throwing: AIError.apiError("Anthropic request failed (\(http.statusCode))."))

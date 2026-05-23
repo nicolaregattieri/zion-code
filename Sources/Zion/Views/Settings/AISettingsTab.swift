@@ -6,13 +6,6 @@ struct AISettingsTab: View {
     @AppStorage(UserDefaultsKeys.AI.commitMessageStyle) private var commitStyleRaw: String = CommitMessageStyle.compact.rawValue
     @AppStorage(UserDefaultsKeys.AI.preCommitReview) private var preCommitReviewEnabled: Bool = false
     @AppStorage(UserDefaultsKeys.AI.transferSupportHints) private var aiTransferSupportHints: Bool = true
-    @AppStorage("chat.toolsEnabled") private var chatToolsEnabled: Bool = true
-    @AppStorage("chat.allowEdits") private var chatAllowEdits: Bool = false
-    @AppStorage("chat.autoInject") private var chatAutoInject: Bool = true
-    @AppStorage("chat.cliAllowEdits") private var chatCLIAllowEdits: Bool = false
-    @AppStorage("chat.editHarness.enabled") private var editHarnessEnabled: Bool = true
-    @AppStorage("chat.editHarness.autoCommit") private var editHarnessAutoCommit: Bool = true
-    @AppStorage("chat.editHarness.preferNativeTool") private var editHarnessPreferNativeTool: Bool = true
     @AppStorage(UserDefaultsKeys.RepoMemory.activeRepoName) private var repoMemoryRepoName: String = ""
     @AppStorage(UserDefaultsKeys.RepoMemory.lastRefresh) private var repoMemoryLastRefresh: Double = 0
     @AppStorage(UserDefaultsKeys.RepoMemory.ready) private var repoMemoryReady: Bool = false
@@ -67,6 +60,12 @@ struct AISettingsTab: View {
 
     var body: some View {
         Form {
+            Section {
+                Text("Used by built-in AI features (commit messages, PR descriptions, blame, conflicts) AND Zion Talks chat. For chat-only settings, see Zion Talks.") // MARK: - TODO(T10): L10n
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(.secondary)
+            }
+
             Section(L10n("settings.ai.defaultProvider")) {
                 Picker(L10n("settings.ai.defaultProvider"), selection: $aiProviderRaw) {
                     ForEach(AIProvider.allCases) { provider in
@@ -110,10 +109,6 @@ struct AISettingsTab: View {
                 cliToolRow(tool: .claude, status: claudeStatus)
                 cliToolRow(tool: .codex, status: codexStatus)
 
-                Toggle(L10n("settings.ai.cli.allowEdits"), isOn: $chatCLIAllowEdits)
-                Text(L10n("settings.ai.cli.allowEdits.hint"))
-                    .font(DesignSystem.Typography.label)
-                    .foregroundStyle(.secondary)
             }
             .task {
                 await refreshCLIStatus()
@@ -192,37 +187,6 @@ struct AISettingsTab: View {
                         .disabled(repoMemoryRepoName.isEmpty)
                     }
                 }
-            }
-
-            Section(L10n("settings.ai.harness.title")) {
-                Toggle(L10n("settings.ai.harness.toolsEnabled"), isOn: $chatToolsEnabled)
-                Toggle(L10n("settings.ai.harness.allowEdits"), isOn: $chatAllowEdits)
-                Toggle(L10n("settings.ai.harness.autoInject"), isOn: $chatAutoInject)
-
-                if defaultProvider == .local {
-                    let modelName = AIClient.loadLocalConfig()?.modelName ?? ""
-                    let supported = AIProviderSupport.localModelSupportsTools(modelName)
-                    Text(supported ? L10n("settings.ai.harness.toolCapability.supported") : L10n("settings.ai.harness.toolCapability.notSupported"))
-                        .font(DesignSystem.Typography.label)
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            Section(L10n("settings.editHarness.title")) {
-                Toggle(L10n("settings.editHarness.enable"), isOn: $editHarnessEnabled)
-                Text(L10n("settings.editHarness.enable.hint"))
-                    .font(DesignSystem.Typography.label)
-                    .foregroundStyle(.secondary)
-
-                Toggle(L10n("settings.editHarness.autoCommit"), isOn: $editHarnessAutoCommit)
-                Text(L10n("settings.editHarness.autoCommit.hint"))
-                    .font(DesignSystem.Typography.label)
-                    .foregroundStyle(.secondary)
-
-                Toggle(L10n("settings.editHarness.preferNativeTool"), isOn: $editHarnessPreferNativeTool)
-                Text(L10n("settings.editHarness.preferNativeTool.hint"))
-                    .font(DesignSystem.Typography.label)
-                    .foregroundStyle(.secondary)
             }
 
             Section(L10n("settings.ai.transferSupport")) {

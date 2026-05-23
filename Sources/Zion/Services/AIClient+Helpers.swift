@@ -66,6 +66,9 @@ extension AIClient {
                         return try await callGemini(payload: payload, apiKey: apiKey, maxTokens: maxTokens, modelID: modelID)
                     case .none:
                         throw AIError.noProvider
+                    case .auto:
+                        // Unreachable — .auto is handled by orchestrator before the candidates loop
+                        throw AIError.noProvider
                     case .claudeCLI, .codexCLI:
                         // Unreachable — CLI providers are handled above before the candidates loop
                         throw AIError.noProvider
@@ -108,12 +111,18 @@ extension AIClient {
         let body = Self.geminiRequestBody(payload: payload, maxTokens: maxTokens, modelID: modelID)
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let session = _testURLSession ?? URLSession.shared
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch let urlError as URLError {
+            throw AIError.networkFailure(underlying: urlError.localizedDescription)
+        }
         guard let http = response as? HTTPURLResponse else { throw AIError.invalidResponse }
 
         if http.statusCode == 400 || http.statusCode == 401 { throw AIError.invalidKey }
         if http.statusCode == 503 { throw AIError.temporarilyUnavailable }
-        if http.statusCode == 429 { throw AIError.quotaExceeded }
+        if http.statusCode == 429 { throw AIError.rateLimited(retryAfter: Self.parseRetryAfter(from: http)) }
         guard http.statusCode == 200 else {
             throw AIError.apiError("Gemini request failed (\(http.statusCode)).")
         }
@@ -141,12 +150,18 @@ extension AIClient {
         let body = Self.anthropicRequestBody(payload: payload, maxTokens: maxTokens, modelID: modelID)
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let session = _testURLSession ?? URLSession.shared
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch let urlError as URLError {
+            throw AIError.networkFailure(underlying: urlError.localizedDescription)
+        }
         guard let http = response as? HTTPURLResponse else { throw AIError.invalidResponse }
 
         if http.statusCode == 401 { throw AIError.invalidKey }
         if http.statusCode == 503 { throw AIError.temporarilyUnavailable }
-        if http.statusCode == 429 { throw AIError.quotaExceeded }
+        if http.statusCode == 429 { throw AIError.rateLimited(retryAfter: Self.parseRetryAfter(from: http)) }
         guard http.statusCode == 200 else {
             throw AIError.apiError("Anthropic request failed (\(http.statusCode)).")
         }
@@ -170,12 +185,18 @@ extension AIClient {
         let body = Self.openAIRequestBody(payload: payload, maxTokens: maxTokens, modelID: modelID)
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let session = _testURLSession ?? URLSession.shared
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch let urlError as URLError {
+            throw AIError.networkFailure(underlying: urlError.localizedDescription)
+        }
         guard let http = response as? HTTPURLResponse else { throw AIError.invalidResponse }
 
         if http.statusCode == 401 { throw AIError.invalidKey }
         if http.statusCode == 503 { throw AIError.temporarilyUnavailable }
-        if http.statusCode == 429 { throw AIError.quotaExceeded }
+        if http.statusCode == 429 { throw AIError.rateLimited(retryAfter: Self.parseRetryAfter(from: http)) }
         guard http.statusCode == 200 else {
             throw AIError.apiError("OpenAI request failed (\(http.statusCode)).")
         }
@@ -599,6 +620,8 @@ enum AIError: LocalizedError {
     case cliNotAuthenticated(CLITool)
     case cliError(stderr: String, exitCode: Int32)
     case cliVersionTooOld(required: String, found: String)
+    case rateLimited(retryAfter: TimeInterval?)
+    case networkFailure(underlying: String)
 
     var errorDescription: String? {
         switch self {
@@ -620,6 +643,40 @@ enum AIError: LocalizedError {
         case .cliNotAuthenticated(let tool): return String(format: L10n("ai.error.cli.notAuthenticated"), tool.rawValue)
         case .cliError(let stderr, _): return String(format: L10n("ai.error.cli.execFailed"), stderr)
         case .cliVersionTooOld(let required, let found): return String(format: L10n("ai.error.cli.versionTooOld"), required, found)
+        case .rateLimited(let retryAfter):
+            if let delay = retryAfter {
+                return String(format: L10n("ai.error.rateLimited.delay"), Int(delay))
+            }
+            return L10n("ai.error.rateLimited")
+        case .networkFailure(let underlying): return String(format: L10n("ai.error.networkFailure"), underlying)
+        }
+    }
+}
+
+extension AIError: Equatable {
+    static func == (lhs: AIError, rhs: AIError) -> Bool {
+        switch (lhs, rhs) {
+        case (.noProvider, .noProvider): return true
+        case (.invalidKey, .invalidKey): return true
+        case (.invalidResponse, .invalidResponse): return true
+        case (.quotaExceeded, .quotaExceeded): return true
+        case (.temporarilyUnavailable, .temporarilyUnavailable): return true
+        case (.apiError(let a), .apiError(let b)): return a == b
+        case (.localConnectionFailed, .localConnectionFailed): return true
+        case (.localServerNotFound, .localServerNotFound): return true
+        case (.localModelError, .localModelError): return true
+        case (.localAPIError(let a), .localAPIError(let b)): return a == b
+        case (.localToolCallingUnsupported, .localToolCallingUnsupported): return true
+        case (.toolExecutionFailed(let a), .toolExecutionFailed(let b)): return a == b
+        case (.maxToolHopsExceeded, .maxToolHopsExceeded): return true
+        case (.toolCallingNotSupported, .toolCallingNotSupported): return true
+        case (.cliNotInstalled(let a), .cliNotInstalled(let b)): return a == b
+        case (.cliNotAuthenticated(let a), .cliNotAuthenticated(let b)): return a == b
+        case (.cliError(let sa, let ca), .cliError(let sb, let cb)): return sa == sb && ca == cb
+        case (.cliVersionTooOld(let ra, let fa), .cliVersionTooOld(let rb, let fb)): return ra == rb && fa == fb
+        case (.rateLimited(let a), .rateLimited(let b)): return a == b
+        case (.networkFailure(let a), .networkFailure(let b)): return a == b
+        default: return false
         }
     }
 }
