@@ -207,3 +207,22 @@ extension SymbolIndexer {
     /// Set by ChatService / RepositoryViewModel on repo open (P12.5).
     nonisolated(unsafe) static var shared: SymbolIndexer?
 }
+
+// MARK: - MCP Tool helpers
+
+extension SymbolIndexer {
+
+    /// Find symbols by exact name, optionally filtered by kind.
+    /// Bridges `SymbolDB.symbolsByName` for use in MCP tool dispatch without
+    /// exposing the private `db` property.
+    func symbolsByName(_ name: String, kind: String? = nil) async throws -> [SymbolRow] {
+        try await db.symbolsByName(name, kind: kind)
+    }
+
+    /// Build a Markdown repo map and return it as a String.
+    /// Constructs `RepoMapBuilder` internally so callers need not hold a `SymbolDB` reference.
+    func buildRepoMap(focusFiles: [String] = [], tokenBudget: Int = 4000) async throws -> String {
+        let builder = RepoMapBuilder(db: db)
+        return try await builder.markdown(focusFiles: focusFiles, tokenBudget: tokenBudget)
+    }
+}
