@@ -121,6 +121,8 @@ Zion isn't a git client with AI bolted on — it's an **AI workflow workspace** 
 
 **Agentic Loop (beta)** — the loop goes further: autonomous multi-step tool chaining across Anthropic, OpenAI, Gemini, and local models. Plan-first mode proposes a structured plan before touching files. The Bash tool runs shell commands inside the loop with three approval tiers (readOnly / workspaceWrite / fullAccess) and recovery snapshots before destructive ops. Hard caps on max steps and daily cost budget prevent runaway spending. Older local models without native tool-calling fall back to a ReAct text loop automatically.
 
+**Smart Context (beta)** — Repomap MCP tool gives every provider a ranked map of the codebase, `@file`/`@folder`/`@selection`/`@web` attach explicit context with cost preview, and a multi-file diff card lets you approve N file changes in one click.
+
 Built on the patterns the field converged on in 2026 (Aider's polyglot benchmark winner format, Cline's diff-apply v3, Claude Code's str_replace_editor, the Pi minimalist harness) — applied with a git-client substrate nobody else has.
 
 <p align="center">
