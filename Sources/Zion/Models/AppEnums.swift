@@ -217,7 +217,7 @@ enum DivergenceResolution {
 
 // MARK: - AI
 
-enum AIProvider: String, CaseIterable, Identifiable {
+enum AIProvider: String, CaseIterable, Identifiable, Codable {
     case auto, none, anthropic, openai, gemini, local, claudeCLI, codexCLI
     var id: String { rawValue }
     var label: String {
