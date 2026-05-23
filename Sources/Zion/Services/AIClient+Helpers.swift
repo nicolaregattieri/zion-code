@@ -582,6 +582,8 @@ enum AIError: LocalizedError {
     case cliVersionTooOld(required: String, found: String)
     case rateLimited(retryAfter: TimeInterval?)
     case networkFailure(underlying: String)
+    /// T6 — ReAct text runner aborted after 3 consecutive parse failures.
+    case reactParseFailed
 
     var errorDescription: String? {
         switch self {
@@ -609,6 +611,7 @@ enum AIError: LocalizedError {
             }
             return L10n("ai.error.rateLimited")
         case .networkFailure(let underlying): return String(format: L10n("ai.error.networkFailure"), underlying)
+        case .reactParseFailed: return "ReAct loop aborted: 3 consecutive parse failures."
         }
     }
 }
@@ -636,6 +639,7 @@ extension AIError: Equatable {
         case (.cliVersionTooOld(let ra, let fa), .cliVersionTooOld(let rb, let fb)): return ra == rb && fa == fb
         case (.rateLimited(let a), .rateLimited(let b)): return a == b
         case (.networkFailure(let a), .networkFailure(let b)): return a == b
+        case (.reactParseFailed, .reactParseFailed): return true
         default: return false
         }
     }
