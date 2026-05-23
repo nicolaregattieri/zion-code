@@ -48,6 +48,12 @@ final class ChatService {
     @ObservationIgnored private let storage: ChatStorage?
     @ObservationIgnored private let repoID: String
 
+    /// Provider orchestrator — resolves `.auto` lane and tracks fallback health.
+    @ObservationIgnored private lazy var orchestrator = ProviderOrchestrator()
+
+    /// Recent provider-switch events for this session (last entry shown as banner).
+    var recentSwitches: [ProviderSwitchEvent] = []
+
     /// Pending debounce tasks keyed by message UUID
     @ObservationIgnored private var persistDebounce: [UUID: Task<Void, Never>] = [:]
 
@@ -368,79 +374,29 @@ final class ChatService {
                 }
             }
 
-            var payload = Self.makePayload(for: expandedText, provider: provider)
+            // Resolve .auto to a concrete provider via the orchestrator.
+            let resolved: AIProvider
+            if provider == .auto {
+                resolved = await self.orchestrator.resolve(lane: .general, requested: .auto)
+            } else {
+                resolved = provider
+            }
+
+            var payload = Self.makePayload(for: expandedText, provider: resolved)
             payload.cwd = repoURL
 
-            switch provider {
-            case .local:
-                await self.runLocalStream(payload: payload, assistantID: assistantID)
-
-            case .anthropic:
-                let defaultID = AIModelCatalogService.selection(for: .anthropic, mode: mode, lane: .general).primaryModelID
-                let modelID = modelOverride.map { $0.isEmpty ? defaultID : $0 } ?? defaultID
-                let stream = await self.ai.streamAnthropic(payload: payload, apiKey: apiKey, maxTokens: 2048, modelID: modelID)
-                await self.consumeStream(stream, assistantID: assistantID, threadID: threadID)
-
-            case .openai:
-                let defaultID = AIModelCatalogService.selection(for: .openai, mode: mode, lane: .general).primaryModelID
-                let modelID = modelOverride.map { $0.isEmpty ? defaultID : $0 } ?? defaultID
-                let stream = await self.ai.streamOpenAI(payload: payload, apiKey: apiKey, maxTokens: 2048, modelID: modelID)
-                await self.consumeStream(stream, assistantID: assistantID, threadID: threadID)
-
-            case .claudeCLI:
-                let stream: AsyncThrowingStream<CLIStreamEvent, Error>
-                await MainActor.run { self.stampSessionProvider("claude", threadID: threadID) }
-                if let injected = self.cliStreamProvider {
-                    stream = injected(payload, repoURL)
-                } else {
-                    let resumeID = await MainActor.run { self.resumeSessionID(for: "claude", threadID: threadID) }
-                    stream = await self.ai.streamClaudeCLI(
-                        payload: payload,
-                        cwd: repoURL,
-                        maxTokens: 2048,
-                        allowEdits: UserDefaults.standard.bool(forKey: "chat.cliAllowEdits"),
-                        resumeSessionID: resumeID,
-                        modelOverride: modelOverride
-                    )
-                }
-                await self.consumeCLIStream(stream, assistantID: assistantID, threadID: threadID)
-
-            case .codexCLI:
-                let stream: AsyncThrowingStream<CLIStreamEvent, Error>
-                await MainActor.run { self.stampSessionProvider("codex", threadID: threadID) }
-                if let injected = self.cliStreamProvider {
-                    stream = injected(payload, repoURL)
-                } else {
-                    let resumeID = await MainActor.run { self.resumeSessionID(for: "codex", threadID: threadID) }
-                    stream = await self.ai.streamCodexCLI(
-                        payload: payload,
-                        cwd: repoURL,
-                        allowEdits: UserDefaults.standard.bool(forKey: "chat.cliAllowEdits"),
-                        resumeSessionID: resumeID,
-                        modelOverride: modelOverride
-                    )
-                }
-                await self.consumeCLIStream(stream, assistantID: assistantID, threadID: threadID)
-
-            case .auto, .gemini, .none:
-                do {
-                    let response = try await self.ai.call(
-                        payload: payload,
-                        provider: provider,
-                        apiKey: apiKey,
-                        maxTokens: 2048,
-                        lane: .general,
-                        mode: mode
-                    )
-                    await MainActor.run {
-                        self.setAssistantContent(id: assistantID, content: response)
-                    }
-                } catch {
-                    await MainActor.run {
-                        self.setAssistantContent(id: assistantID, content: L10n("chat.error.generic"))
-                    }
-                }
-            }
+            await self.dispatchStream(
+                payload: payload,
+                provider: resolved,
+                originalRequestedProvider: provider,
+                apiKey: apiKey,
+                mode: mode,
+                repoURL: repoURL,
+                modelOverride: modelOverride,
+                assistantID: assistantID,
+                threadID: threadID,
+                hopCount: 0
+            )
         }
 
         activeTask = task
@@ -640,6 +596,341 @@ final class ChatService {
                 for idx in self.pendingToolEvents.indices where self.pendingToolEvents[idx].status == .running {
                     self.pendingToolEvents[idx].status = .failed
                 }
+            }
+        }
+    }
+
+    // MARK: - Orchestrated Dispatch (with fallback on rate-limit / network failure)
+
+    /// Maximum number of provider hops allowed per turn (prevents infinite loops).
+    private static let maxHopsPerTurn = 3
+
+    /// Dispatches the stream to `provider`. On `AIError.rateLimited` or
+    /// `AIError.networkFailure`, attempts to find a fallback provider via the
+    /// orchestrator and retries up to `maxHopsPerTurn` times.
+    private func dispatchStream(
+        payload: AIPromptPayload,
+        provider: AIProvider,
+        originalRequestedProvider: AIProvider,
+        apiKey: String,
+        mode: AIMode,
+        repoURL: URL,
+        modelOverride: String?,
+        assistantID: UUID,
+        threadID: UUID,
+        hopCount: Int
+    ) async {
+        do {
+            try await dispatchStreamThrowing(
+                payload: payload,
+                provider: provider,
+                apiKey: apiKey,
+                mode: mode,
+                repoURL: repoURL,
+                modelOverride: modelOverride,
+                assistantID: assistantID,
+                threadID: threadID
+            )
+            // Success — record cost via orchestrator if cost was tracked on the thread
+            let cost = await MainActor.run {
+                self.threads.first(where: { $0.id == threadID })?.totalCostUSD ?? 0.0
+            }
+            await orchestrator.recordCost(provider, usd: cost)
+            // Mark provider healthy after success
+            await orchestrator.markHealthy(provider)
+        } catch let error as AIError {
+            // Determine backoff duration
+            let retryAfter: TimeInterval?
+            switch error {
+            case .rateLimited(let after):
+                retryAfter = after
+                await orchestrator.markRateLimited(provider, retryAfter: after)
+            case .networkFailure:
+                retryAfter = 30
+                await orchestrator.markRateLimited(provider, retryAfter: 30)
+            default:
+                // Non-retryable error — surface it
+                await MainActor.run {
+                    self.setAssistantContent(id: assistantID, content: error.localizedDescription ?? L10n("chat.error.generic"))
+                }
+                return
+            }
+
+            // Attempt fallback if within hop limit
+            if hopCount < Self.maxHopsPerTurn,
+               let nextProvider = await orchestrator.nextFallback(from: provider, lane: .general) {
+                let reason = retryAfter != nil
+                    ? String(format: L10n("ai.error.rateLimited.delay"), Int(retryAfter!))
+                    : L10n("ai.error.rateLimited")
+                let switchEvent = ProviderSwitchEvent(
+                    from: provider,
+                    to: nextProvider,
+                    reason: reason
+                )
+                await MainActor.run {
+                    self.recentSwitches.append(switchEvent)
+                }
+                let originalText = payload.untrustedSections.first(where: { $0.kind == "user_message" })?.content ?? ""
+                let nextPayload = Self.makePayload(for: originalText, provider: nextProvider)
+                var updatedPayload = nextPayload
+                updatedPayload.cwd = repoURL
+                await dispatchStream(
+                    payload: updatedPayload,
+                    provider: nextProvider,
+                    originalRequestedProvider: originalRequestedProvider,
+                    apiKey: apiKey,
+                    mode: mode,
+                    repoURL: repoURL,
+                    modelOverride: modelOverride,
+                    assistantID: assistantID,
+                    threadID: threadID,
+                    hopCount: hopCount + 1
+                )
+            } else {
+                // All providers exhausted — surface error
+                await MainActor.run {
+                    self.setAssistantContent(id: assistantID, content: L10n("chat.routing.allProvidersExhausted"))
+                }
+            }
+        } catch {
+            // Non-AIError — surface generically
+            await MainActor.run {
+                self.setAssistantContent(id: assistantID, content: L10n("chat.error.generic"))
+            }
+        }
+    }
+
+    /// The inner throwing dispatch. Throws `AIError` on failure so `dispatchStream` can handle fallback.
+    private func dispatchStreamThrowing(
+        payload: AIPromptPayload,
+        provider: AIProvider,
+        apiKey: String,
+        mode: AIMode,
+        repoURL: URL,
+        modelOverride: String?,
+        assistantID: UUID,
+        threadID: UUID
+    ) async throws {
+        switch provider {
+        case .local:
+            await self.runLocalStream(payload: payload, assistantID: assistantID)
+
+        case .anthropic:
+            let defaultID = AIModelCatalogService.selection(for: .anthropic, mode: mode, lane: .general).primaryModelID
+            let modelID = modelOverride.map { $0.isEmpty ? defaultID : $0 } ?? defaultID
+            let stream = await self.ai.streamAnthropic(payload: payload, apiKey: apiKey, maxTokens: 2048, modelID: modelID)
+            try await self.consumeStreamThrowing(stream, assistantID: assistantID, threadID: threadID, provider: provider)
+
+        case .openai:
+            let defaultID = AIModelCatalogService.selection(for: .openai, mode: mode, lane: .general).primaryModelID
+            let modelID = modelOverride.map { $0.isEmpty ? defaultID : $0 } ?? defaultID
+            let stream = await self.ai.streamOpenAI(payload: payload, apiKey: apiKey, maxTokens: 2048, modelID: modelID)
+            try await self.consumeStreamThrowing(stream, assistantID: assistantID, threadID: threadID, provider: provider)
+
+        case .claudeCLI:
+            let stream: AsyncThrowingStream<CLIStreamEvent, Error>
+            await MainActor.run { self.stampSessionProvider("claude", threadID: threadID) }
+            if let injected = self.cliStreamProvider {
+                stream = injected(payload, repoURL)
+            } else {
+                let resumeID = await MainActor.run { self.resumeSessionID(for: "claude", threadID: threadID) }
+                stream = await self.ai.streamClaudeCLI(
+                    payload: payload,
+                    cwd: repoURL,
+                    maxTokens: 2048,
+                    allowEdits: UserDefaults.standard.bool(forKey: "chat.cliAllowEdits"),
+                    resumeSessionID: resumeID,
+                    modelOverride: modelOverride
+                )
+            }
+            try await self.consumeCLIStreamThrowing(stream, assistantID: assistantID, threadID: threadID, provider: provider)
+
+        case .codexCLI:
+            let stream: AsyncThrowingStream<CLIStreamEvent, Error>
+            await MainActor.run { self.stampSessionProvider("codex", threadID: threadID) }
+            if let injected = self.cliStreamProvider {
+                stream = injected(payload, repoURL)
+            } else {
+                let resumeID = await MainActor.run { self.resumeSessionID(for: "codex", threadID: threadID) }
+                stream = await self.ai.streamCodexCLI(
+                    payload: payload,
+                    cwd: repoURL,
+                    allowEdits: UserDefaults.standard.bool(forKey: "chat.cliAllowEdits"),
+                    resumeSessionID: resumeID,
+                    modelOverride: modelOverride
+                )
+            }
+            try await self.consumeCLIStreamThrowing(stream, assistantID: assistantID, threadID: threadID, provider: provider)
+
+        case .auto, .gemini, .none:
+            do {
+                let response = try await self.ai.call(
+                    payload: payload,
+                    provider: provider,
+                    apiKey: apiKey,
+                    maxTokens: 2048,
+                    lane: .general,
+                    mode: mode
+                )
+                await MainActor.run {
+                    self.setAssistantContent(id: assistantID, content: response)
+                }
+            } catch let aiErr as AIError {
+                throw aiErr
+            } catch {
+                await MainActor.run {
+                    self.setAssistantContent(id: assistantID, content: L10n("chat.error.generic"))
+                }
+            }
+        }
+    }
+
+    /// Variant of `consumeStream` that rethrows `AIError` instead of swallowing it.
+    private func consumeStreamThrowing(_ stream: AsyncThrowingStream<String, Error>, assistantID: UUID, threadID: UUID, provider: AIProvider) async throws {
+        var firstDelta = true
+        do {
+            for try await delta in stream {
+                if Task.isCancelled { break }
+                await MainActor.run {
+                    if firstDelta {
+                        // Record providerUsed on first delta
+                        self.setProviderUsed(id: assistantID, provider: provider)
+                    }
+                    self.appendAssistantDelta(id: assistantID, delta: delta)
+                    self.scheduleDebounce(for: assistantID, threadID: threadID)
+                    if self.planDetector != nil {
+                        if let plan = self.planDetector!.feed(delta) {
+                            self.planDetector = nil
+                            self.attachPlanToAssistant(plan, assistantID: assistantID, threadID: threadID)
+                        }
+                    }
+                    if self.editBlockParser != nil {
+                        let blocks = self.editBlockParser!.feed(delta)
+                        if !blocks.isEmpty {
+                            self.attachEditBlocksToAssistant(blocks, assistantID: assistantID, threadID: threadID)
+                        }
+                    }
+                }
+                firstDelta = false
+            }
+        } catch let aiErr as AIError {
+            throw aiErr
+        } catch {
+            // Leave whatever was accumulated
+        }
+    }
+
+    /// Variant of `consumeCLIStream` that rethrows `AIError` instead of swallowing it.
+    private func consumeCLIStreamThrowing(_ stream: AsyncThrowingStream<CLIStreamEvent, Error>, assistantID: UUID, threadID: UUID, provider: AIProvider) async throws {
+        var streamCompleted = false
+        var firstTextDelta = true
+        do {
+            for try await event in stream {
+                if Task.isCancelled { break }
+                if streamCompleted { break }
+
+                switch event {
+                case .textDelta(let text):
+                    await MainActor.run {
+                        if firstTextDelta {
+                            self.setProviderUsed(id: assistantID, provider: provider)
+                        }
+                        self.appendAssistantDelta(id: assistantID, delta: text)
+                        self.scheduleDebounce(for: assistantID, threadID: threadID)
+                        if self.planDetector != nil {
+                            if let plan = self.planDetector!.feed(text) {
+                                self.planDetector = nil
+                                self.attachPlanToAssistant(plan, assistantID: assistantID, threadID: threadID)
+                            }
+                        }
+                        if self.editBlockParser != nil {
+                            let blocks = self.editBlockParser!.feed(text)
+                            if !blocks.isEmpty {
+                                self.attachEditBlocksToAssistant(blocks, assistantID: assistantID, threadID: threadID)
+                            }
+                        }
+                    }
+                    firstTextDelta = false
+
+                case .toolStart(let id, let name, let description):
+                    await MainActor.run {
+                        let event = ChatToolEvent(id: id, name: name, status: .running, argsPreview: String(description.prefix(60)))
+                        if let idx = self.pendingToolEvents.firstIndex(where: { $0.id == id }) {
+                            self.pendingToolEvents[idx] = event
+                        } else {
+                            self.pendingToolEvents.append(event)
+                        }
+                    }
+
+                case .toolEnd(let id, let success, let output):
+                    await MainActor.run {
+                        if let idx = self.pendingToolEvents.firstIndex(where: { $0.id == id }) {
+                            self.pendingToolEvents[idx].status = success ? .completed : .failed
+                            self.pendingToolEvents[idx].output = output
+                        }
+                        self.attachToolEventToAssistant(assistantID: assistantID, id: id, status: success ? .completed : .failed, output: output)
+                    }
+                    let capturedID = id
+                    Task { @MainActor in
+                        try? await Task.sleep(nanoseconds: UInt64(Constants.Timing.toolEventCleanupDelay * 1_000_000_000))
+                        self.pendingToolEvents.removeAll { $0.id == capturedID }
+                    }
+
+                case .sessionStarted(let sessionID):
+                    await MainActor.run {
+                        self.recordCLISessionID(sessionID, threadID: threadID)
+                    }
+
+                case .turnCost(let usd):
+                    await MainActor.run {
+                        self.addTurnCost(usd, threadID: threadID)
+                    }
+
+                case .turnUsage(let input, let output):
+                    await MainActor.run {
+                        self.addTurnUsage(input: input, output: output, threadID: threadID)
+                    }
+
+                case .done:
+                    streamCompleted = true
+                    await MainActor.run {
+                        for idx in self.pendingToolEvents.indices where self.pendingToolEvents[idx].status == .running {
+                            self.pendingToolEvents[idx].status = .completed
+                        }
+                    }
+
+                case .error(let msg):
+                    streamCompleted = true
+                    await MainActor.run {
+                        for idx in self.pendingToolEvents.indices where self.pendingToolEvents[idx].status == .running {
+                            self.pendingToolEvents[idx].status = .failed
+                        }
+                        self.appendAssistantDelta(id: assistantID, delta: "\n\n" + msg)
+                    }
+                }
+            }
+        } catch let aiErr as AIError {
+            await MainActor.run {
+                for idx in self.pendingToolEvents.indices where self.pendingToolEvents[idx].status == .running {
+                    self.pendingToolEvents[idx].status = .failed
+                }
+            }
+            throw aiErr
+        } catch {
+            await MainActor.run {
+                for idx in self.pendingToolEvents.indices where self.pendingToolEvents[idx].status == .running {
+                    self.pendingToolEvents[idx].status = .failed
+                }
+            }
+        }
+    }
+
+    /// Sets `providerUsed` on the assistant message to the given provider's rawValue.
+    private func setProviderUsed(id: UUID, provider: AIProvider) {
+        for tIdx in threads.indices {
+            if let mIdx = threads[tIdx].messages.firstIndex(where: { $0.id == id }) {
+                threads[tIdx].messages[mIdx].providerUsed = provider.rawValue
+                return
             }
         }
     }
