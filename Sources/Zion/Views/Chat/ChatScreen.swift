@@ -206,6 +206,7 @@ struct ChatScreen: View {
                 let textToSend = composerText
                 composerText = ""
                 guard let url = repoURL else { return }
+                let modelOverride = ProviderModelCatalog.selectedModel(for: provider)
                 Task {
                     await chat.send(
                         text: textToSend,
@@ -213,7 +214,8 @@ struct ChatScreen: View {
                         apiKey: apiKey,
                         mode: mode,
                         repoURL: url,
-                        branch: branch
+                        branch: branch,
+                        modelOverride: modelOverride.isEmpty ? nil : modelOverride
                     )
                 }
             },

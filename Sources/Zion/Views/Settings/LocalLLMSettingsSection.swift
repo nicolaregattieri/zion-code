@@ -116,7 +116,48 @@ struct LocalLLMSettingsSection: View {
             Text(L10n("settings.ai.local.model"))
                 .font(DesignSystem.Typography.labelBold)
 
-            HStack(spacing: 8) {
+            if !discoveredModels.isEmpty {
+                Menu {
+                    ForEach(discoveredModels, id: \.self) { model in
+                        Button {
+                            config.modelName = model
+                        } label: {
+                            if model == config.modelName {
+                                Label(model, systemImage: "checkmark")
+                            } else {
+                                Text(model)
+                            }
+                        }
+                    }
+                    Divider()
+                    Button {
+                        Task { await discoverModels() }
+                    } label: {
+                        Label(L10n("settings.ai.local.model.refresh"), systemImage: "arrow.clockwise")
+                    }
+                } label: {
+                    HStack {
+                        Text(config.modelName.isEmpty ? L10n("settings.ai.local.model") : config.modelName)
+                            .font(DesignSystem.Typography.body)
+                            .foregroundStyle(DesignSystem.Colors.textPrimary)
+                        Spacer()
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(DesignSystem.Typography.label)
+                            .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    }
+                    .padding(8)
+                    .background(
+                        RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                            .fill(DesignSystem.Colors.glassHover)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
+                            .stroke(DesignSystem.Colors.glassStroke, lineWidth: 1)
+                    )
+                }
+                .menuStyle(.borderlessButton)
+            } else {
+                // No discovered models yet — let the user type the name manually.
                 TextField("qwen3-coder:30b", text: $config.modelName)
                     .textFieldStyle(.plain)
                     .labelsHidden()
@@ -130,20 +171,6 @@ struct LocalLLMSettingsSection: View {
                         RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous)
                             .stroke(DesignSystem.Colors.glassStroke, lineWidth: 1)
                     )
-
-                if !discoveredModels.isEmpty {
-                    Menu {
-                        ForEach(discoveredModels, id: \.self) { model in
-                            Button(model) { config.modelName = model }
-                        }
-                    } label: {
-                        Label(L10n("settings.ai.local.model.refresh"), systemImage: "chevron.down.circle")
-                            .labelStyle(.iconOnly)
-                            .font(DesignSystem.Typography.body)
-                    }
-                    .menuStyle(.borderlessButton)
-                    .fixedSize()
-                }
             }
         }
     }
