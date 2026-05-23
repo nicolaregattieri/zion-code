@@ -173,6 +173,12 @@ actor ProviderOrchestrator {
             // Subscription CLI check — skip if failover is disabled
             if isSubscriptionCLI(provider) && !subscriptionFailoverEnabled { continue }
 
+            // API key / CLI availability — skip providers that aren't connected.
+            // Without this guard, auto-routing picks a key-less provider and the
+            // first request 401s, surfacing as a hard error to the user instead
+            // of falling through to the next eligible provider.
+            guard AIProviderSupport.isConnected(provider: provider) else { continue }
+
             return provider
         }
         return nil

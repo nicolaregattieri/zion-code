@@ -762,6 +762,13 @@ final class ChatService {
             case .networkFailure:
                 retryAfter = 30
                 await orchestrator.markRateLimited(provider, retryAfter: 30)
+            case .invalidKey:
+                // Auth failure (401/403) — mark provider unhealthy so the
+                // orchestrator skips it for the rest of the session, then try
+                // the next provider in the chain. Surfacing 401 directly to
+                // the user breaks `.auto` when a key is missing.
+                retryAfter = nil
+                await orchestrator.markRateLimited(provider, retryAfter: 86_400)
             default:
                 // Non-retryable error — surface it
                 await MainActor.run {
