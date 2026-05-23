@@ -2652,3 +2652,27 @@
 "chat.agent.error.noProvider" = "No hay ningún proveedor con capacidad agéntica disponible.";
 "chat.agent.error.cliCrashed" = "El agente CLI terminó inesperadamente.";
 "chat.agent.error.loopAlreadyActive" = "Ya hay un bucle en ejecución.";
+
+// MARK: - Agentic Loop HelpSheet bullets (Phase 11 T12)
+"help.chat.agenticLoop" = "Bucle Agéntico (beta) \u{2014} encadenamiento autónomo de herramientas en múltiples pasos para Anthropic, OpenAI, Gemini y modelos locales";
+"help.chat.bashTool" = "Herramienta Bash \u{2014} ejecución segura de shell con sistema de niveles de aprobación y lista de comandos permitidos opcional";
+"help.chat.approvalTiers" = "Niveles de aprobación \u{2014} readOnly (sin escritura), workspaceWrite (solo repositorio) o fullAccess (cualquier comando)";
+"help.chat.stickyProvider" = "Proveedor fijo \u{2014} el bucle queda bloqueado al mismo proveedor en cada paso; sin failover durante el bucle";
+"help.chat.stepCap" = "Límites rígidos \u{2014} número máximo de pasos y presupuesto de coste diario configurables; el usuario puede cancelar en cualquier momento";
+"help.chat.reactFallback" = "Fallback de texto ReAct \u{2014} modelos locales sin soporte nativo de llamadas a herramientas usan un bucle de texto estructurado thought/action";
+
+// MARK: - Agentic Loop ZionMap entries (Phase 11 T12)
+"map.chat.agenticLoop.title" = "Bucle Agéntico (beta)";
+"map.chat.agenticLoop.description" = "Encadenamiento autónomo de herramientas en múltiples pasos para Anthropic, OpenAI, Gemini y modelos locales Qwen2.5-Coder / Qwen3-Coder. El bucle ejecuta llamadas de herramientas, alimenta los resultados de vuelta y continúa hasta que el modelo emite una señal de parada.";
+"map.chat.agenticLoop.tip1" = "Activa en Ajustes \u{2192} Zion Talks \u{2192} Bucle Agéntico.";
+"map.chat.bashTool.title" = "Herramienta Bash";
+"map.chat.bashTool.description" = "Ejecución segura de shell con niveles de aprobación previos a la ejecución y lista de comandos permitidos opcional. Se crea un snapshot de Recovery Vault antes de cualquier operación destructiva.";
+"map.chat.bashTool.tip1" = "Define una lista de permitidos en Ajustes para restringir qué comandos puede ejecutar el agente sin preguntar.";
+"map.chat.approvalTiers.title" = "Niveles de aprobación";
+"map.chat.approvalTiers.description" = "Tres niveles controlan lo que el agente puede hacer: readOnly (sin escritura), workspaceWrite (ediciones dentro del repositorio), fullAccess (cualquier comando shell). Configúralo por sesión en la barra de herramientas del chat.";
+"map.chat.stickyProvider.title" = "Proveedor fijo";
+"map.chat.stickyProvider.description" = "El proveedor seleccionado al inicio del bucle permanece bloqueado en cada paso. Sin failover automático durante un bucle activo \u{2014} cambia de proveedor entre bucles.";
+"map.chat.stepCap.title" = "Límites rígidos";
+"map.chat.stepCap.description" = "Número máximo de pasos y presupuesto de coste diario configurables. El bucle se detiene e informa cuando se alcanza cualquier límite. Pulsa Cancelar en el indicador de pasos para detenerlo antes.";
+"map.chat.reactFallback.title" = "Fallback de texto ReAct";
+"map.chat.reactFallback.description" = "Los modelos locales sin soporte nativo de llamadas a funciones usan un bucle estructurado Pensamiento/Acción/Observación (formato ReAct) para que las tareas agénticas sigan funcionando en modelos cuantizados más antiguos.";

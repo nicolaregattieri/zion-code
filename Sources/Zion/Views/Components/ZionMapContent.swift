@@ -338,6 +338,14 @@ struct ZionMapContent {
                 ZionMapEntry("map.chat.costMeter.title", description: "map.chat.costMeter.description"),
                 ZionMapEntry("map.chat.stickyContext.title", description: "map.chat.stickyContext.description"),
                 ZionMapEntry("map.chat.history.title", description: "map.chat.history.description"),
+                ZionMapEntry("map.chat.agenticLoop.title", description: "map.chat.agenticLoop.description",
+                             tips: ["map.chat.agenticLoop.tip1"]),
+                ZionMapEntry("map.chat.bashTool.title", description: "map.chat.bashTool.description",
+                             tips: ["map.chat.bashTool.tip1"]),
+                ZionMapEntry("map.chat.approvalTiers.title", description: "map.chat.approvalTiers.description"),
+                ZionMapEntry("map.chat.stickyProvider.title", description: "map.chat.stickyProvider.description"),
+                ZionMapEntry("map.chat.stepCap.title", description: "map.chat.stepCap.description"),
+                ZionMapEntry("map.chat.reactFallback.title", description: "map.chat.reactFallback.description"),
             ]
         }
     }

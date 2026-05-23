@@ -135,7 +135,13 @@ struct HelpSheet: View {
                 "help.chat.sessionResume",
                 "help.chat.costMeter",
                 "help.chat.stickyContext",
-                "help.chat.history"
+                "help.chat.history",
+                "help.chat.agenticLoop",
+                "help.chat.bashTool",
+                "help.chat.approvalTiers",
+                "help.chat.stickyProvider",
+                "help.chat.stepCap",
+                "help.chat.reactFallback"
             ]
         }
     }

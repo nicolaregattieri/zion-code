@@ -119,6 +119,8 @@ You know a certain LLM is better at specific tasks. Bridge transfers your AI con
 
 Zion isn't a git client with AI bolted on — it's an **AI workflow workspace** where every agent you already pay for sees your repo for real. Plug your Claude Pro, ChatGPT Plus, OpenAI, Gemini, or local Ollama / MLX / LM Studio / llama.cpp — six providers, one chat. Pick **Auto** and Zion picks the right one per task with quota + cost fallback. Spawned CLIs get an embedded **MCP server** exposing live git state (staged hunks, branches, conflicts, repo map); API providers get the same tools via universal translation. **Plan mode** previews structured plans before any file is touched. **Edit harness** parses SEARCH/REPLACE blocks streamed by the model into per-block diff preview cards with Apply / Reject / Apply-all + auto-commit `aiedit:` after a recovery-vault snapshot. Tokens and cost meter live in the conversation header. Per-repo thread history persists in SQLite.
 
+**Agentic Loop (beta)** — the loop goes further: autonomous multi-step tool chaining across Anthropic, OpenAI, Gemini, and local models. Plan-first mode proposes a structured plan before touching files. The Bash tool runs shell commands inside the loop with three approval tiers (readOnly / workspaceWrite / fullAccess) and recovery snapshots before destructive ops. Hard caps on max steps and daily cost budget prevent runaway spending. Older local models without native tool-calling fall back to a ReAct text loop automatically.
+
 Built on the patterns the field converged on in 2026 (Aider's polyglot benchmark winner format, Cline's diff-apply v3, Claude Code's str_replace_editor, the Pi minimalist harness) — applied with a git-client substrate nobody else has.
 
 <p align="center">

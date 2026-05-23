@@ -530,3 +530,18 @@ All shortcuts are customizable via the Keyboard Shortcuts editor (`⌥⌘K`). Cl
 | Per-repo threads | Thread sidebar lives inside the chat card; SQLite-backed persistence per repo |
 | Auto-title | First user message of a new thread renames it to the first 60 characters |
 | Cross-launch persistence | Threads, messages, edit history, plan state, cost totals and session IDs all persist between Zion launches |
+
+### Agentic Loop (beta)
+
+> Multi-step autonomous tool execution across all supported providers. The agent runs a full tool-call loop without user input per step, stopping only when it reaches a terminal state, a hard cap, or the user cancels.
+
+| Feature | Description |
+|---------|-------------|
+| Multi-provider loop | Full agentic loop on Anthropic, OpenAI, Gemini, OpenRouter, and local models (Qwen2.5-Coder, Qwen3-Coder). Claude CLI and Codex CLI pass through to their own internal loop. |
+| Plan-first mode | Header toggle asks the model to propose a structured plan before any file is touched; user approves or rejects before the loop begins. |
+| Bash tool | Safe shell execution inside the loop. Each command is checked against the active approval tier and optional per-command allowlist. Recovery-vault snapshot created before destructive shell operations. |
+| Approval tiers | Three configurable tiers: **readOnly** (no file writes or shell), **workspaceWrite** (file edits inside the repo, no arbitrary shell), **fullAccess** (any command without prompting). Set per-session in the chat toolbar. |
+| Sticky provider | The provider chosen at loop start is locked for every step. No automatic failover during an active loop — switch providers between sessions instead. |
+| Hard caps | Configurable max-step count and per-provider daily cost budget. Loop halts and surfaces a summary when either cap is hit. User can cancel at any step via the step indicator. |
+| ReAct text fallback | Local models without native function-calling support use a structured Thought / Action / Observation text loop (ReAct format). Older quantized models (Mistral, older LLaMA) automatically fall back to this mode. |
+| Step indicator | Live capsule badge in the conversation header shows current step N / max and cumulative cost during a running loop. |
