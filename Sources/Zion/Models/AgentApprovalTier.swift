@@ -12,14 +12,20 @@ enum AgentApprovalTier: String, CaseIterable, Codable {
     case fullAccess = "fullAccess"
 }
 
-// MARK: - UserDefaults persistence
+// MARK: - UserDefaults persistence + TaskLocal override
 
 extension AgentApprovalTier {
     private static let userDefaultsKey = "chat.agent.tier"
 
-    /// The current tier stored in UserDefaults. Defaults to `.readOnly` if no value has been saved.
+    /// Task-local override. When set (e.g. by PlanModeGate phase 1), `current` returns
+    /// this value instead of the UserDefaults value, scoped to the current Swift Task.
+    @TaskLocal static var overrideTier: AgentApprovalTier?
+
+    /// The effective tier for the current task context.
+    /// Returns `overrideTier` when set; otherwise falls back to the UserDefaults value.
     static var current: AgentApprovalTier {
         get {
+            if let override = overrideTier { return override }
             guard let raw = UserDefaults.standard.string(forKey: userDefaultsKey),
                   let tier = AgentApprovalTier(rawValue: raw) else {
                 return .readOnly

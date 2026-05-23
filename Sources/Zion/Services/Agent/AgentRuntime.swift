@@ -125,12 +125,18 @@ final class AgentRuntime {
     private(set) var currentProviderResolved: AIProvider?
     private(set) var lastError: AIError?
 
+    // MARK: - Plan Mode State
+
+    /// True while the runtime is suspended waiting for the user to approve or reject the plan.
+    private(set) var awaitingPlanApproval: Bool = false
+
     // MARK: - Private
 
     @ObservationIgnored private var cancelToken: CancellationToken?
     @ObservationIgnored private let toolLoopRunner: any ToolLoopRunnerProtocol
     @ObservationIgnored private let reactRunner: any ReActRunnerProtocol
     @ObservationIgnored private let cliRunner: any CLIRunnerProtocol
+    @ObservationIgnored private var planModeGate: PlanModeGate?
 
     // MARK: - Init
 
@@ -151,6 +157,10 @@ final class AgentRuntime {
     /// Executes the agentic loop. Resolves the capability for `provider`+`model`,
     /// then dispatches to the appropriate runner. Fires `onStep` for each step.
     ///
+    /// When `PlanModeState.current() == .planFirst` the loop runs phase 1 with
+    /// `.readOnly` tools (max 1 step), then pauses with `awaitingPlanApproval = true`
+    /// until the user calls `approvePlan(withTier:)` or `rejectPlan()`.
+    ///
     /// - Throws: `AIError.loopAlreadyActive` if a loop is already running.
     ///           `AIError.noProviderAvailable` if the provider/model combination is unsupported.
     func run(
@@ -164,8 +174,6 @@ final class AgentRuntime {
     ) async throws -> LoopResult {
         guard !isLoopActive else { throw AIError.loopAlreadyActive }
 
-        let capability = AgenticCapability.resolve(provider: provider, modelName: model)
-
         // Activate
         isLoopActive = true
         currentStepIndex = 0
@@ -174,68 +182,125 @@ final class AgentRuntime {
         let token = CancellationToken()
         cancelToken = token
 
+        // Set up plan mode gate
+        let gate = PlanModeGate(initialState: PlanModeState.current())
+        planModeGate = gate
+
         defer {
             isLoopActive = false
+            awaitingPlanApproval = false
             cancelToken = nil
+            planModeGate = nil
         }
 
         do {
-            let result: LoopResult
-            let selfRef = self // capture for step index updates
-            switch capability {
-            case .nativeToolUse:
-                result = try await toolLoopRunner.run(
-                    provider: provider,
-                    model: model,
-                    conversation: conversation,
-                    tools: tools,
-                    maxSteps: maxSteps,
-                    budgetCap: 0,
-                    cancel: token,
-                    onStep: { @MainActor @Sendable event in
-                        selfRef.currentStepIndex = event.stepIndex
-                        onStep(event)
-                    }
-                )
+            let gateStatus = await gate.status
+            if gateStatus == .beforeFirstStep {
+                // ── Phase 1: single step, readOnly ──────────────────────────────
+                let phase1Result = try await AgentApprovalTier.$overrideTier.withValue(.readOnly) {
+                    try await innerRun(
+                        provider: provider,
+                        model: model,
+                        conversation: conversation,
+                        userPrompt: userPrompt,
+                        tools: tools,
+                        maxSteps: 1,
+                        cancel: token,
+                        onStep: onStep
+                    )
+                }
 
-            case .reactTextFallback:
-                result = try await reactRunner.run(
-                    provider: provider,
-                    model: model,
-                    conversation: conversation,
-                    tools: tools,
-                    maxSteps: maxSteps,
-                    budgetCap: 0,
-                    cancel: token,
-                    onStep: { @MainActor @Sendable event in
-                        selfRef.currentStepIndex = event.stepIndex
-                        onStep(event)
-                    }
+                // Emit planProposed synthetic event so UI can render PlanCard
+                let syntheticEvent = AgentStepEvent(
+                    kind: .planProposed,
+                    toolEvent: ChatToolEvent(
+                        id: UUID().uuidString,
+                        name: "plan_proposed",
+                        status: .completed,
+                        argsPreview: phase1Result.finalText.prefix(120).description
+                    ),
+                    stepIndex: phase1Result.stepsUsed,
+                    cumulativeTokens: phase1Result.cumulativeTokens,
+                    cumulativeCostUSD: phase1Result.cumulativeCostUSD
                 )
+                onStep(syntheticEvent)
 
-            case .passthrough:
-                result = try await cliRunner.run(
-                    provider: provider,
-                    model: model,
-                    userPrompt: userPrompt,
-                    maxSteps: maxSteps,
-                    cancel: token,
-                    onStep: { @Sendable event in
-                        Task { @MainActor in
-                            selfRef.currentStepIndex = event.stepIndex
-                        }
-                        onStep(event)
-                    }
+                // Pause — wait for user approval/rejection
+                awaitingPlanApproval = true
+                let approvedTier = await gate.waitForApprovalIfNeeded(currentStep: 1)
+                awaitingPlanApproval = false
+
+                guard let tier = approvedTier else {
+                    // Rejected — return phase 1 result marked as cancelled
+                    return LoopResult(
+                        finalText: phase1Result.finalText,
+                        stepsUsed: phase1Result.stepsUsed,
+                        stopReason: .cancelled,
+                        cumulativeTokens: phase1Result.cumulativeTokens,
+                        cumulativeCostUSD: phase1Result.cumulativeCostUSD,
+                        cancelled: true,
+                        conversation: phase1Result.conversation
+                    )
+                }
+
+                // ── Phase 2: remaining steps, user's approved tier ──────────────
+                let remainingSteps = max(1, maxSteps - phase1Result.stepsUsed)
+                let phase2Result = try await AgentApprovalTier.$overrideTier.withValue(tier) {
+                    try await innerRun(
+                        provider: provider,
+                        model: model,
+                        conversation: phase1Result.conversation,
+                        userPrompt: userPrompt,
+                        tools: tools,
+                        maxSteps: remainingSteps,
+                        cancel: token,
+                        onStep: onStep
+                    )
+                }
+
+                return LoopResult(
+                    finalText: phase2Result.finalText.isEmpty ? phase1Result.finalText : phase2Result.finalText,
+                    stepsUsed: phase1Result.stepsUsed + phase2Result.stepsUsed,
+                    stopReason: phase2Result.stopReason,
+                    cumulativeTokens: phase1Result.cumulativeTokens + phase2Result.cumulativeTokens,
+                    cumulativeCostUSD: phase1Result.cumulativeCostUSD + phase2Result.cumulativeCostUSD,
+                    cancelled: phase2Result.cancelled,
+                    conversation: phase2Result.conversation
                 )
-
-            case .unsupported:
-                throw AIError.noProviderAvailable
+            } else {
+                // ── Normal path (autoApply or non-planFirst) ────────────────────
+                let userTier = AgentApprovalTier.current
+                return try await AgentApprovalTier.$overrideTier.withValue(userTier) {
+                    try await innerRun(
+                        provider: provider,
+                        model: model,
+                        conversation: conversation,
+                        userPrompt: userPrompt,
+                        tools: tools,
+                        maxSteps: maxSteps,
+                        cancel: token,
+                        onStep: onStep
+                    )
+                }
             }
-            return result
         } catch {
             lastError = (error as? AIError) ?? AIError.apiError(String(describing: error))
             throw error
         }
+    }
+
+    // MARK: - Plan Approval / Rejection
+
+    /// Approves the plan and resumes the loop with the given tier.
+    func approvePlan(withTier tier: AgentApprovalTier) async {
+        await planModeGate?.approve(withTier: tier)
+        awaitingPlanApproval = false
+    }
+
+    /// Rejects the plan, cancelling the loop.
+    func rejectPlan() async {
+        await planModeGate?.reject()
+        awaitingPlanApproval = false
     }
 
     // MARK: - Cancel
@@ -243,5 +308,72 @@ final class AgentRuntime {
     /// Signals the active loop to abort. No-op when no loop is running.
     func cancel() async {
         await cancelToken?.cancel()
+    }
+
+    // MARK: - Inner Run (capability dispatch)
+
+    /// Dispatches to the appropriate runner based on resolved AgenticCapability.
+    private func innerRun(
+        provider: AIProvider,
+        model: String?,
+        conversation: sending [[String: Any]],
+        userPrompt: String,
+        tools: [MCPToolDescriptor],
+        maxSteps: Int,
+        cancel: CancellationToken,
+        onStep: @escaping @Sendable (AgentStepEvent) -> Void
+    ) async throws -> LoopResult {
+        let capability = AgenticCapability.resolve(provider: provider, modelName: model)
+        let selfRef = self
+
+        switch capability {
+        case .nativeToolUse:
+            return try await toolLoopRunner.run(
+                provider: provider,
+                model: model,
+                conversation: conversation,
+                tools: tools,
+                maxSteps: maxSteps,
+                budgetCap: 0,
+                cancel: cancel,
+                onStep: { @MainActor @Sendable event in
+                    selfRef.currentStepIndex = event.stepIndex
+                    onStep(event)
+                }
+            )
+
+        case .reactTextFallback:
+            return try await reactRunner.run(
+                provider: provider,
+                model: model,
+                conversation: conversation,
+                tools: tools,
+                maxSteps: maxSteps,
+                budgetCap: 0,
+                cancel: cancel,
+                onStep: { @MainActor @Sendable event in
+                    selfRef.currentStepIndex = event.stepIndex
+                    onStep(event)
+                }
+            )
+
+        case .passthrough:
+            return try await cliRunner.run(
+                provider: provider,
+                model: model,
+                userPrompt: userPrompt,
+                maxSteps: maxSteps,
+                cancel: cancel,
+                onStep: { @Sendable event in
+                    Task { @MainActor in
+                        selfRef.currentStepIndex = event.stepIndex
+                    }
+                    onStep(event)
+                }
+            )
+
+        case .unsupported:
+            throw AIError.noProviderAvailable
+        }
     }
 }
