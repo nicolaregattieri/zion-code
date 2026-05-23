@@ -459,3 +459,74 @@ All shortcuts are customizable via the Keyboard Shortcuts editor (`⌥⌘K`). Cl
 | `⇧⌘A` | Stage All |
 | `↑↓` | Navigate commits |
 | `Esc` | Deselect / close |
+
+---
+
+## Zion Talks (beta) — AI Chat Workflow
+
+> Zion is an **AI workflow workspace** with a native git layer underneath, not just a git client. Zion Talks is the chat surface that drives the workflow.
+
+### Providers
+
+| Feature | Description |
+|---------|-------------|
+| Multi-provider chat | Anthropic, OpenAI, Gemini, OpenRouter, local OpenAI-compatible (Ollama / MLX / LM Studio / llama.cpp), Claude CLI, Codex CLI |
+| Subscription CLIs | Spawns the user's installed `claude` and `codex` CLIs as subprocesses, using existing Claude Pro and ChatGPT Plus subscriptions instead of paid API keys |
+| Local LLM auto-start | Zion starts Ollama / MLX / LM Studio / llama.cpp on demand when the chat needs it, with a Stop button in Settings |
+| Model picker per provider | Composer dropdown lists each provider's available models; static curated lists + dynamic discovery for local |
+| Auto routing | Pick `Auto` in the composer to let Zion's `ProviderOrchestrator` select per task via a per-lane fallback chain (Summaries / General / Reviews / Reasoning). Configurable in Settings → Zion Talks → Routing Policy |
+| Provider switch banner | On 429 / network failure mid-conversation, Zion fails over to the next provider in the chain and surfaces a small banner explaining the switch |
+
+### Tools
+
+| Feature | Description |
+|---------|-------------|
+| Zion MCP server | Embedded MCP server exposes git ops as tools to spawned CLIs: `zion_git_log`, `zion_branch_list`, `zion_pending_changes`, `zion_commit_inspect`, `zion_stash_list`, `zion_stash_apply`, `zion_worktrees`, `zion_repo_memory_search`, `zion_open_in_editor`, `zion_edit`, `zion_repo_map` |
+| Universal tool bridge | API providers (Anthropic / OpenAI / Gemini / OpenRouter / local) gain the same MCP tools via client-side schema translation and a tool-call loop |
+| Capability probe | Caches per-(provider, model) function-calling support for 24 h so local models without FC fall back gracefully |
+| Repo map | Tree-sitter-style symbol scanner across Swift / TS / JS / Python / Go / Rust + PageRank ranking, queried via `zion_repo_map` |
+
+### Plan mode
+
+| Feature | Description |
+|---------|-------------|
+| Plan-first toggle | Header toggle puts the model in plan mode (`--permission-mode plan` for claude) so it proposes a structured plan before touching files |
+| Plan card | Inline `<plan><step>` XML rendered as a card with Apply / Reject / Edit-raw buttons |
+| Recovery-vault snapshot | Apply takes a `zion-pre-plan-apply-<sha>` git stash snapshot before re-running the turn |
+
+### Edit harness
+
+| Feature | Description |
+|---------|-------------|
+| SEARCH/REPLACE edit primitive | Streamed `<<<<<<< SEARCH … ======= … >>>>>>> REPLACE` blocks parsed in real time into preview cards |
+| Apply ladder | exact match → whitespace-normalized → strip-indent → fuzzy (≥0.92) → reflection → 3-strike whole-file rewrite |
+| Per-block diff preview | Each block renders as a card with the before/after diff, Apply / Reject / Edit-raw buttons |
+| Apply all | Footer button applies every block in order, stops at the first failure, leaves the recovery snapshot intact |
+| Auto-commit | After all blocks land, Zion stages the touched files and commits with an AI-suggested message prefixed `aiedit:` |
+| Path safety | Rejects absolute paths and `..` traversal before any file write |
+
+### Session + cost
+
+| Feature | Description |
+|---------|-------------|
+| Session resume | Captures `session_id` from claude / `thread_id` from codex on first turn; subsequent turns reuse the same server-side session via `--resume` |
+| Cost meter | Live USD pill in the conversation card header (claude reports `total_cost_usd`; codex Plus and local are unmetered) |
+| Token meter | Live `k tok` pill per thread for every provider that reports usage |
+| Cost budget | Per-provider daily $ cap in Settings — Auto routing skips providers over budget until local midnight |
+
+### Context
+
+| Feature | Description |
+|---------|-------------|
+| Sticky context | Auto-injected git context (`/diff`, `/log`, `/status`) stays attached to the thread across turns until the intent classifier picks a different one |
+| Slash commands | `/diff`, `/log`, `/status`, `/file <path>`, `/commit <sha>` expand inline in the composer |
+| Tool harness toggle | Settings → Zion Talks → Tool harness — opts the chat in/out of the universal tool bridge |
+| Allow file edits | Settings toggle gating CLI Edit/Write tools (defaults off for CLI providers) |
+
+### History
+
+| Feature | Description |
+|---------|-------------|
+| Per-repo threads | Thread sidebar lives inside the chat card; SQLite-backed persistence per repo |
+| Auto-title | First user message of a new thread renames it to the first 60 characters |
+| Cross-launch persistence | Threads, messages, edit history, plan state, cost totals and session IDs all persist between Zion launches |

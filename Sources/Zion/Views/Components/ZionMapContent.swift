@@ -325,7 +325,20 @@ struct ZionMapContent {
             ]
 
         case .chat:
-            return []
+            return [
+                ZionMapEntry("map.chat.multiProvider.title", description: "map.chat.multiProvider.description"),
+                ZionMapEntry("map.chat.subscriptionCLIs.title", description: "map.chat.subscriptionCLIs.description"),
+                ZionMapEntry("map.chat.autoRouting.title", description: "map.chat.autoRouting.description"),
+                ZionMapEntry("map.chat.localAutostart.title", description: "map.chat.localAutostart.description"),
+                ZionMapEntry("map.chat.mcpServer.title", description: "map.chat.mcpServer.description"),
+                ZionMapEntry("map.chat.toolBridge.title", description: "map.chat.toolBridge.description"),
+                ZionMapEntry("map.chat.planMode.title", description: "map.chat.planMode.description"),
+                ZionMapEntry("map.chat.editHarness.title", description: "map.chat.editHarness.description"),
+                ZionMapEntry("map.chat.sessionResume.title", description: "map.chat.sessionResume.description"),
+                ZionMapEntry("map.chat.costMeter.title", description: "map.chat.costMeter.description"),
+                ZionMapEntry("map.chat.stickyContext.title", description: "map.chat.stickyContext.description"),
+                ZionMapEntry("map.chat.history.title", description: "map.chat.history.description"),
+            ]
         }
     }
 }
