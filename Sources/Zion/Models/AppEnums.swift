@@ -253,7 +253,9 @@ extension AIProvider {
             return true
         case .anthropic, .openai:
             return true
-        case .gemini, .none:
+        case .gemini:
+            return true
+        case .none:
             return false
         case .local:
             let modelName = AIClient.loadLocalConfig()?.modelName ?? ""
