@@ -51,17 +51,13 @@ struct ApplyAllButton: View {
     private var buttonLabel: String {
         switch state {
         case .ready(let count):
-            // MARK: - TODO(T10): L10n
-            return "Apply all (\(count))"
+            return L10n("chat.edit.applyAll", "\(count)")
         case .applying(let done, let total):
-            // MARK: - TODO(T10): L10n
-            return "Applying \(done)/\(total)\u{2026}"
+            return L10n("chat.edit.applying", "\(done)", "\(total)")
         case .stopped(let at):
-            // MARK: - TODO(T10): L10n
-            return "Stopped at block \(at)"
+            return L10n("chat.edit.stopped", "\(at)")
         case .done(let count):
-            // MARK: - TODO(T10): L10n
-            return "\(count) applied"
+            return L10n("chat.edit.applied", "\(count)")
         }
     }
 

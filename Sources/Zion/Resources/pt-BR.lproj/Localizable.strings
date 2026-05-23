@@ -2523,3 +2523,20 @@
 "chat.plan.applying" = "Aplicando plano...";
 "chat.plan.rejected" = "Plano rejeitado.";
 "chat.plan.mode.label" = "Modo plano primeiro";
+
+"settings.editHarness.title" = "Edit harness";
+"settings.editHarness.enable" = "Ativar edit harness";
+"settings.editHarness.enable.hint" = "Quando ativo, o chat lê blocos SEARCH/REPLACE do modelo e oferece cards de preview Apply / Reject.";
+"settings.editHarness.autoCommit" = "Commit automático ao aplicar";
+"settings.editHarness.autoCommit.hint" = "Ao aplicar, o Zion escreve os arquivos, faz stage e cria um commit git com mensagem sugerida prefixada `aiedit:`.";
+"settings.editHarness.preferNativeTool" = "Preferir ferramenta nativa quando MCP estiver disponível";
+"settings.editHarness.preferNativeTool.hint" = "Providers CLI (claude / codex) usam a ferramenta MCP `zion_edit` em vez de parsear blocos de texto.";
+"chat.edit.preview.title" = "Edição proposta";
+"chat.edit.apply" = "Aplicar";
+"chat.edit.reject" = "Rejeitar";
+"chat.edit.editRaw" = "Editar bruto";
+"chat.edit.save" = "Salvar";
+"chat.edit.applyAll" = "Aplicar tudo (%@)";
+"chat.edit.applying" = "Aplicando %@ / %@\u{2026}";
+"chat.edit.applied" = "%@ aplicado";
+"chat.edit.stopped" = "Parado no bloco %@";

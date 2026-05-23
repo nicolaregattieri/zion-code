@@ -45,8 +45,7 @@ struct EditPreviewCard: View {
                 .lineLimit(1)
                 .truncationMode(.middle)
             Spacer()
-            // MARK: - TODO(T10): L10n
-            Text("edit")
+            Text(L10n("chat.edit.preview.title"))
                 .font(DesignSystem.Typography.labelBold)
                 .foregroundStyle(DesignSystem.Colors.ai)
                 .padding(.horizontal, DesignSystem.Spacing.compact)
@@ -92,8 +91,7 @@ struct EditPreviewCard: View {
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous))
             HStack {
                 Spacer()
-                // MARK: - TODO(T10): L10n
-                Button("Save") {
+                Button(L10n("chat.edit.save")) {
                     saveTapped(draftXML)
                 }
                 .font(DesignSystem.Typography.bodySemibold)
@@ -109,8 +107,7 @@ struct EditPreviewCard: View {
 
     private var footerButtons: some View {
         HStack(spacing: DesignSystem.Spacing.standard) {
-            // MARK: - TODO(T10): L10n
-            Button("Apply") {
+            Button(L10n("chat.edit.apply")) {
                 applyTapped()
             }
             .font(DesignSystem.Typography.bodySemibold)
@@ -124,8 +121,7 @@ struct EditPreviewCard: View {
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous))
             .disabled(isStreaming)
 
-            // MARK: - TODO(T10): L10n
-            Button("Reject") {
+            Button(L10n("chat.edit.reject")) {
                 rejectTapped()
             }
             .font(DesignSystem.Typography.body)
@@ -138,8 +134,7 @@ struct EditPreviewCard: View {
 
             Spacer()
 
-            // MARK: - TODO(T10): L10n
-            Button("Edit raw") {
+            Button(L10n("chat.edit.editRaw")) {
                 editTapped()
             }
             .font(DesignSystem.Typography.body)
