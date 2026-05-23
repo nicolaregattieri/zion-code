@@ -180,6 +180,32 @@ struct ChatScreen: View {
                                 .padding(.horizontal, DesignSystem.Spacing.cardPadding)
                                 .padding(.vertical, DesignSystem.Spacing.compact)
                             }
+                            if message.role == .assistant, let blocks = message.editBlocks, !blocks.isEmpty {
+                                let msgID = message.id
+                                VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
+                                    ForEach(blocks) { block in
+                                        EditPreviewCard(block: block, isStreaming: message.isStreaming) { action in
+                                            switch action {
+                                            case .apply:
+                                                Task { await chat.applyEditBlock(blockID: block.id, in: msgID) }
+                                            case .reject:
+                                                chat.rejectEditBlock(blockID: block.id, in: msgID)
+                                            case .editRaw(let raw):
+                                                chat.replaceEditBlock(blockID: block.id, in: msgID, rawXML: raw)
+                                            }
+                                        }
+                                    }
+                                    ApplyAllButton(
+                                        blocks: blocks,
+                                        isStreaming: message.isStreaming,
+                                        state: chat.applyAllState(for: msgID)
+                                    ) {
+                                        Task { await chat.applyAllEdits(messageID: msgID) }
+                                    }
+                                }
+                                .padding(.horizontal, DesignSystem.Spacing.cardPadding)
+                                .padding(.vertical, DesignSystem.Spacing.compact)
+                            }
                         }
                     }
                 }

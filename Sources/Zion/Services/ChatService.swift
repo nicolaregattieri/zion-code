@@ -54,6 +54,12 @@ final class ChatService {
     /// Plan detector — lazy, reset at the start of each stream
     @ObservationIgnored private var planDetector: PlanDetector?
 
+    /// Edit-block parser — lazy init per stream, reset between streams
+    @ObservationIgnored private var editBlockParser: EditBlockParser?
+
+    /// Tracks applyAllEdits progress for UI
+    var applyAllState: ApplyAllState = .ready(0)
+
     /// The URL of the currently active repo (set during send, used by applyPlan)
     @ObservationIgnored private var activeRepoURL: URL?
 
@@ -348,6 +354,9 @@ final class ChatService {
             planDetector = nil
         }
 
+        // Reset edit-block parser for this stream
+        editBlockParser = Self.editHarnessEnabled ? EditBlockParser() : nil
+
         let task = Task<Void, Never> {
             defer {
                 Task { @MainActor in
@@ -523,6 +532,12 @@ final class ChatService {
                             self.attachPlanToAssistant(plan, assistantID: assistantID, threadID: threadID)
                         }
                     }
+                    if self.editBlockParser != nil {
+                        let blocks = self.editBlockParser!.feed(delta)
+                        if !blocks.isEmpty {
+                            self.attachEditBlocksToAssistant(blocks, assistantID: assistantID, threadID: threadID)
+                        }
+                    }
                 }
             }
         } catch {
@@ -547,6 +562,12 @@ final class ChatService {
                             if let plan = self.planDetector!.feed(text) {
                                 self.planDetector = nil
                                 self.attachPlanToAssistant(plan, assistantID: assistantID, threadID: threadID)
+                            }
+                        }
+                        if self.editBlockParser != nil {
+                            let blocks = self.editBlockParser!.feed(text)
+                            if !blocks.isEmpty {
+                                self.attachEditBlocksToAssistant(blocks, assistantID: assistantID, threadID: threadID)
                             }
                         }
                     }
@@ -822,6 +843,197 @@ final class ChatService {
         }
     }
 
+    // MARK: - Edit Harness System Prompt Directive
+
+    nonisolated static let editHarnessDirective: String = """
+    When modifying files, emit each edit as a SEARCH/REPLACE block:
+
+    <<<<<<< SEARCH: <relative/path/to/file>
+    <old code>
+    =======
+    <new code>
+    >>>>>>> REPLACE
+
+    The SEARCH section must match the file contents exactly. Emit one block per edit; multiple blocks per file are allowed. Do not emit Markdown code fences around the blocks — emit them as raw text in your reply.
+    """
+
+    private static var editHarnessEnabled: Bool {
+        UserDefaults.standard.object(forKey: "chat.editHarness.enabled") as? Bool ?? true
+    }
+
+    // MARK: - Edit Block Attachment (MainActor)
+
+    fileprivate func attachEditBlocksToAssistant(_ blocks: [EditBlock], assistantID: UUID, threadID: UUID) {
+        guard !blocks.isEmpty else { return }
+        for tIdx in threads.indices {
+            if let mIdx = threads[tIdx].messages.firstIndex(where: { $0.id == assistantID }) {
+                var existing = threads[tIdx].messages[mIdx].editBlocks ?? []
+                existing.append(contentsOf: blocks)
+                threads[tIdx].messages[mIdx].editBlocks = existing
+                scheduleDebounce(for: assistantID, threadID: threadID)
+                return
+            }
+        }
+    }
+
+    // MARK: - Edit Block Apply Actions (public API)
+
+    /// Applies a single edit block: runs the applier ladder, commits, logs.
+    func applyEditBlock(blockID: UUID, in assistantID: UUID) async {
+        guard let repoURL = activeRepoURL else { return }
+        let threadID = activeThreadID
+
+        // Locate the block
+        guard let (tIdx, mIdx, bIdx) = findEditBlock(blockID: blockID, assistantID: assistantID) else { return }
+        let block = threads[tIdx].messages[mIdx].editBlocks![bIdx]
+
+        // Read file from disk
+        let fileURL = repoURL.appendingPathComponent(block.path)
+        let currentContents: String
+        do {
+            currentContents = try String(contentsOf: fileURL, encoding: .utf8)
+        } catch {
+            threads[tIdx].messages[mIdx].editBlocks![bIdx].failureReason = "file_not_found: \(block.path)"
+            scheduleDebounce(for: assistantID, threadID: threadID)
+            return
+        }
+
+        // Run EditApplier ladder
+        let applier = EditApplier()
+        let result = await applier.apply(block, to: currentContents, reflection: nil, wholeFileRewrite: nil)
+
+        if result.applied, let finalContents = result.finalContents {
+            // Commit via EditCommitter
+            let commitInput = EditCommitInput(path: block.path, contents: finalContents)
+            let currentBranch = activeBranch
+            let committer = EditCommitter(worker: worker) { _, _ in
+                "apply AI edit: \(block.path)"
+            }
+            let commitResult = await committer.commit(inputs: [commitInput], in: repoURL, branch: currentBranch)
+
+            // Update block state
+            guard let (ti2, mi2, bi2) = findEditBlock(blockID: blockID, assistantID: assistantID) else { return }
+            threads[ti2].messages[mi2].editBlocks![bi2].appliedAt = Date()
+            threads[ti2].messages[mi2].editBlocks![bi2].attemptStrategies = result.attempts.map { $0.strategy }
+            if let reason = commitResult.failureReason {
+                threads[ti2].messages[mi2].editBlocks![bi2].failureReason = reason
+            }
+            scheduleDebounce(for: assistantID, threadID: threadID)
+
+            // Log to aiedit_log
+            let blockIndex = bi2
+            let commitSHA = commitResult.commitSHA
+            Task {
+                let logID = UUID().uuidString
+                try? await self.storage?.appendAIEditLog(
+                    id: logID,
+                    threadID: threadID,
+                    messageID: assistantID,
+                    filePath: block.path,
+                    blockIndex: blockIndex,
+                    commitSHA: commitSHA,
+                    repoID: self.repoID
+                )
+            }
+        } else {
+            // Mark failed
+            guard let (ti2, mi2, bi2) = findEditBlock(blockID: blockID, assistantID: assistantID) else { return }
+            threads[ti2].messages[mi2].editBlocks![bi2].failureReason = result.failureReason ?? "all_strategies_failed"
+            threads[ti2].messages[mi2].editBlocks![bi2].attemptStrategies = result.attempts.map { $0.strategy }
+            scheduleDebounce(for: assistantID, threadID: threadID)
+        }
+    }
+
+    /// Applies all edit blocks in a message in order; stops at the first failure.
+    func applyAllEdits(messageID: UUID) async {
+        guard let tIdx = threads.firstIndex(where: { $0.id == activeThreadID }),
+              let mIdx = threads[tIdx].messages.firstIndex(where: { $0.id == messageID }) else { return }
+
+        let blocks = threads[tIdx].messages[mIdx].editBlocks ?? []
+        guard !blocks.isEmpty else { return }
+
+        let total = blocks.count
+        applyAllState = .applying(0, total)
+
+        for (idx, block) in blocks.enumerated() {
+            // Skip already applied or rejected blocks
+            if block.appliedAt != nil { continue }
+            if block.failureReason != nil { continue }
+
+            await applyEditBlock(blockID: block.id, in: messageID)
+
+            // Re-check outcome
+            guard let (ti2, mi2, bi2) = findEditBlock(blockID: block.id, assistantID: messageID) else { break }
+            let updated = threads[ti2].messages[mi2].editBlocks![bi2]
+
+            if updated.failureReason != nil {
+                // Stop on first failure
+                applyAllState = .stopped(at: idx + 1)
+                return
+            }
+            applyAllState = .applying(idx + 1, total)
+        }
+
+        applyAllState = .done(total)
+    }
+
+    /// Marks an edit block as rejected.
+    func rejectEditBlock(blockID: UUID, in assistantID: UUID) {
+        guard let (tIdx, mIdx, bIdx) = findEditBlock(blockID: blockID, assistantID: assistantID) else { return }
+        threads[tIdx].messages[mIdx].editBlocks![bIdx].failureReason = "rejected"
+        scheduleDebounce(for: assistantID, threadID: activeThreadID)
+    }
+
+    /// Replaces an edit block by re-parsing raw XML content.
+    /// Derives the ApplyAllButton state from the message's edit blocks.
+    func applyAllState(for assistantID: UUID) -> ApplyAllState {
+        guard let (tIdx, mIdx) = findAssistantMessage(messageID: assistantID),
+              let blocks = threads[tIdx].messages[mIdx].editBlocks,
+              !blocks.isEmpty else { return .ready(0) }
+        let total = blocks.count
+        let applied = blocks.filter { $0.appliedAt != nil }.count
+        let firstFailedIdx = blocks.firstIndex { $0.failureReason != nil }
+        if applied == total { return .done(total) }
+        if let idx = firstFailedIdx { return .stopped(at: idx) }
+        return .ready(total)
+    }
+
+    private func findAssistantMessage(messageID: UUID) -> (tIdx: Int, mIdx: Int)? {
+        for tIdx in threads.indices {
+            if let mIdx = threads[tIdx].messages.firstIndex(where: { $0.id == messageID }) {
+                return (tIdx, mIdx)
+            }
+        }
+        return nil
+    }
+
+    func replaceEditBlock(blockID: UUID, in assistantID: UUID, rawXML: String) {
+        guard let (tIdx, mIdx, bIdx) = findEditBlock(blockID: blockID, assistantID: assistantID) else { return }
+        var parser = EditBlockParser()
+        let parsed = parser.feed(rawXML)
+        if let first = parsed.first {
+            // Replace the block's search/replace by substituting in a new EditBlock with the same id
+            let existing = threads[tIdx].messages[mIdx].editBlocks![bIdx]
+            let updated = EditBlock(id: existing.id, path: first.path.isEmpty ? existing.path : first.path, search: first.search, replace: first.replace)
+            threads[tIdx].messages[mIdx].editBlocks![bIdx] = updated
+        }
+        scheduleDebounce(for: assistantID, threadID: activeThreadID)
+    }
+
+    // MARK: - Edit Block Lookup Helper
+
+    private func findEditBlock(blockID: UUID, assistantID: UUID) -> (tIdx: Int, mIdx: Int, bIdx: Int)? {
+        for tIdx in threads.indices {
+            if let mIdx = threads[tIdx].messages.firstIndex(where: { $0.id == assistantID }) {
+                if let blocks = threads[tIdx].messages[mIdx].editBlocks,
+                   let bIdx = blocks.firstIndex(where: { $0.id == blockID }) {
+                    return (tIdx, mIdx, bIdx)
+                }
+            }
+        }
+        return nil
+    }
+
     // MARK: - Persistence Helpers
 
     private func persistThread(_ t: ChatThread) async {
@@ -943,6 +1155,11 @@ final class ChatService {
             Output style: concise. Code blocks for commands, file paths, hashes.
             Never invent file paths or commit SHAs you haven't seen in context.
             """
+        }
+
+        // Edit harness: append SEARCH/REPLACE directive when enabled
+        if editHarnessEnabled {
+            base += "\n\n## File edits\n" + editHarnessDirective
         }
 
         // Plan-first mode: append plan-tag directive so model wraps multi-step proposals in XML
