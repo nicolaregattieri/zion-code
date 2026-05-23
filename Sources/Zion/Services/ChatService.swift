@@ -51,6 +51,9 @@ final class ChatService {
     /// Provider orchestrator — resolves `.auto` lane and tracks fallback health.
     @ObservationIgnored private lazy var orchestrator = ProviderOrchestrator()
 
+    /// Agent runtime — owns the agentic loop lifecycle and sticky-lock flag.
+    @ObservationIgnored private(set) var agentRuntime: AgentRuntime
+
     /// Recent provider-switch events for this session (last entry shown as banner).
     var recentSwitches: [ProviderSwitchEvent] = []
 
@@ -77,7 +80,7 @@ final class ChatService {
 
     // MARK: - Init (production)
 
-    init(ai: AIClient, worker: RepositoryWorker, contextBuilder: ChatContextBuilder, harness: ZionHarness, storage: ChatStorage? = nil, repoID: String = "") {
+    init(ai: AIClient, worker: RepositoryWorker, contextBuilder: ChatContextBuilder, harness: ZionHarness, storage: ChatStorage? = nil, repoID: String = "", agentRuntime: AgentRuntime = AgentRuntime()) {
         self.ai = ai
         self.worker = worker
         self.contextBuilder = contextBuilder
@@ -86,6 +89,7 @@ final class ChatService {
         self.cliStreamProvider = nil
         self.storage = storage
         self.repoID = repoID
+        self.agentRuntime = agentRuntime
 
         if storage != nil {
             Task { await self.reloadFromStorage() }
@@ -101,7 +105,8 @@ final class ChatService {
         harness: ZionHarness,
         streamProvider: @escaping (LocalLLMConfig, AIPromptPayload, Int, String) -> AsyncThrowingStream<String, Error>,
         storage: ChatStorage? = nil,
-        repoID: String = ""
+        repoID: String = "",
+        agentRuntime: AgentRuntime = AgentRuntime()
     ) {
         self.ai = ai
         self.worker = worker
@@ -111,6 +116,7 @@ final class ChatService {
         self.cliStreamProvider = nil
         self.storage = storage
         self.repoID = repoID
+        self.agentRuntime = agentRuntime
 
         if storage != nil {
             Task { await self.reloadFromStorage() }
@@ -126,7 +132,8 @@ final class ChatService {
         harness: ZionHarness,
         cliStreamProvider: @escaping (AIPromptPayload, URL) -> AsyncThrowingStream<CLIStreamEvent, Error>,
         storage: ChatStorage? = nil,
-        repoID: String = ""
+        repoID: String = "",
+        agentRuntime: AgentRuntime = AgentRuntime()
     ) {
         self.ai = ai
         self.worker = worker
@@ -136,6 +143,33 @@ final class ChatService {
         self.cliStreamProvider = cliStreamProvider
         self.storage = storage
         self.repoID = repoID
+        self.agentRuntime = agentRuntime
+
+        if storage != nil {
+            Task { await self.reloadFromStorage() }
+        }
+    }
+
+    // MARK: - Init (agent runtime injection — for tests)
+
+    init(
+        ai: AIClient,
+        worker: RepositoryWorker,
+        contextBuilder: ChatContextBuilder,
+        harness: ZionHarness,
+        agentRuntime: AgentRuntime,
+        storage: ChatStorage? = nil,
+        repoID: String = ""
+    ) {
+        self.ai = ai
+        self.worker = worker
+        self.contextBuilder = contextBuilder
+        self.harness = harness
+        self.streamProvider = nil
+        self.cliStreamProvider = nil
+        self.storage = storage
+        self.repoID = repoID
+        self.agentRuntime = agentRuntime
 
         if storage != nil {
             Task { await self.reloadFromStorage() }
@@ -385,18 +419,70 @@ final class ChatService {
             var payload = Self.makePayload(for: expandedText, provider: resolved)
             payload.cwd = repoURL
 
-            await self.dispatchStream(
-                payload: payload,
-                provider: resolved,
-                originalRequestedProvider: provider,
-                apiKey: apiKey,
-                mode: mode,
-                repoURL: repoURL,
-                modelOverride: modelOverride,
-                assistantID: assistantID,
-                threadID: threadID,
-                hopCount: 0
-            )
+            // Build structured conversation for AgentRuntime (last 10 messages as role/content dicts).
+            // Sendable boundary: MainActor closure must return [[String: String]] (Any is not Sendable).
+            let stringHistory: [[String: String]] = await MainActor.run {
+                self.thread.messages.suffix(10).compactMap { msg -> [String: String]? in
+                    guard msg.id != assistantID else { return nil }
+                    return ["role": msg.role == .user ? "user" : "assistant", "content": msg.content]
+                }
+            }
+            let historyForRuntime: [[String: Any]] = stringHistory.map { $0 as [String: Any] }
+
+            // Route through AgentRuntime. Falls back to legacy dispatchStream when
+            // no real runners are injected (AgentRuntime throws .noProviderAvailable).
+            do {
+                let result = try await self.agentRuntime.run(
+                    provider: resolved,
+                    model: modelOverride,
+                    conversation: historyForRuntime,
+                    userPrompt: expandedText,
+                    tools: [],
+                    maxSteps: 25,
+                    onStep: { @Sendable event in
+                        Task { @MainActor in
+                            let toolEvent = event.toolEvent
+                            if let idx = self.pendingToolEvents.firstIndex(where: { $0.id == toolEvent.id }) {
+                                self.pendingToolEvents[idx] = toolEvent
+                            } else {
+                                self.pendingToolEvents.append(toolEvent)
+                            }
+                        }
+                    }
+                )
+                await MainActor.run {
+                    self.setAssistantContent(id: assistantID, content: result.finalText)
+                    self.setProviderUsed(id: assistantID, provider: resolved)
+                    if result.cumulativeCostUSD > 0 {
+                        self.addTurnCost(result.cumulativeCostUSD, threadID: threadID)
+                    }
+                    if result.cumulativeTokens > 0 {
+                        let half = result.cumulativeTokens / 2
+                        self.addTurnUsage(input: half, output: result.cumulativeTokens - half, threadID: threadID)
+                    }
+                }
+                await self.orchestrator.markHealthy(resolved)
+            } catch AIError.noProviderAvailable, AIError.loopAlreadyActive {
+                // AgentRuntime has no real runners (null default) or loop guard fired:
+                // fall back to the legacy stream dispatch path.
+                await self.dispatchStream(
+                    payload: payload,
+                    provider: resolved,
+                    originalRequestedProvider: provider,
+                    apiKey: apiKey,
+                    mode: mode,
+                    repoURL: repoURL,
+                    modelOverride: modelOverride,
+                    assistantID: assistantID,
+                    threadID: threadID,
+                    hopCount: 0
+                )
+            } catch {
+                // Any other AgentRuntime error — surface it
+                await MainActor.run {
+                    self.setAssistantContent(id: assistantID, content: error.localizedDescription)
+                }
+            }
         }
 
         activeTask = task
@@ -412,11 +498,12 @@ final class ChatService {
         Task { await harness.resetSession() }
     }
 
-    /// Cancels the active streaming task.
+    /// Cancels the active streaming task and the agent runtime loop (if any).
     func stop() {
         activeTask?.cancel()
         activeTask = nil
         isStreaming = false
+        Task { await self.agentRuntime.cancel() }
     }
 
     // MARK: - Private Stream Helpers

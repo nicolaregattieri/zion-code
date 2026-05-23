@@ -584,6 +584,10 @@ enum AIError: LocalizedError {
     case networkFailure(underlying: String)
     /// T6 — ReAct text runner aborted after 3 consecutive parse failures.
     case reactParseFailed
+    /// T8 — AgentRuntime.run() called while a loop is already active.
+    case loopAlreadyActive
+    /// T8 — Provider/model combination cannot participate in any agentic loop.
+    case noProviderAvailable
 
     var errorDescription: String? {
         switch self {
@@ -612,6 +616,8 @@ enum AIError: LocalizedError {
             return L10n("ai.error.rateLimited")
         case .networkFailure(let underlying): return String(format: L10n("ai.error.networkFailure"), underlying)
         case .reactParseFailed: return "ReAct loop aborted: 3 consecutive parse failures."
+        case .loopAlreadyActive: return "An agentic loop is already running. Wait for it to finish or cancel first."
+        case .noProviderAvailable: return "No provider available for the requested capability."
         }
     }
 }
@@ -640,6 +646,8 @@ extension AIError: Equatable {
         case (.rateLimited(let a), .rateLimited(let b)): return a == b
         case (.networkFailure(let a), .networkFailure(let b)): return a == b
         case (.reactParseFailed, .reactParseFailed): return true
+        case (.loopAlreadyActive, .loopAlreadyActive): return true
+        case (.noProviderAvailable, .noProviderAvailable): return true
         default: return false
         }
     }
