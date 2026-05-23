@@ -39,6 +39,8 @@ struct ChatMessage: Identifiable, Equatable {
     var internalContext: String? = nil
     /// Structured plan parsed from assistant XML response. Nil until a plan is detected.
     var plan: ChatPlan? = nil
+    /// Edit blocks extracted from an assistant message (search-and-replace operations).
+    var editBlocks: [EditBlock]? = nil
 
     init(
         id: UUID = UUID(),
@@ -49,7 +51,8 @@ struct ChatMessage: Identifiable, Equatable {
         autoInjectedIntent: String? = nil,
         toolEvents: [ChatToolEvent]? = nil,
         internalContext: String? = nil,
-        plan: ChatPlan? = nil
+        plan: ChatPlan? = nil,
+        editBlocks: [EditBlock]? = nil
     ) {
         self.id = id
         self.role = role
@@ -60,6 +63,7 @@ struct ChatMessage: Identifiable, Equatable {
         self.toolEvents = toolEvents
         self.internalContext = internalContext
         self.plan = plan
+        self.editBlocks = editBlocks
     }
 }
 
