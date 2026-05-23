@@ -208,6 +208,23 @@ extension SymbolIndexer {
     nonisolated(unsafe) static var shared: SymbolIndexer?
 }
 
+// MARK: - Stats helpers (used by SmartContextSettingsSection)
+
+extension SymbolIndexer {
+
+    /// Returns the number of files currently indexed in SymbolDB.
+    func statsFileCount() async -> Int {
+        (try? await db.allFiles())?.count ?? 0
+    }
+
+    /// Returns the most recent `lastParsedAt` timestamp across all indexed files, or nil if empty.
+    func statsLastReparse() async -> Date? {
+        guard let files = try? await db.allFiles(), !files.isEmpty else { return nil }
+        let latest = files.map { $0.lastParsedAt }.max() ?? 0
+        return Date(timeIntervalSinceReferenceDate: latest)
+    }
+}
+
 // MARK: - MCP Tool helpers
 
 extension SymbolIndexer {
