@@ -63,7 +63,6 @@ struct MultiFileDiffSummary: View {
             Image(systemName: "folder.fill")
                 .font(DesignSystem.Typography.subtitle)
                 .foregroundStyle(DesignSystem.Colors.ai)
-            // MARK: - TODO(T11): L10n
             Text(L10n("chat.multifileDiff.header", "\(blocks.count)"))
                 .font(DesignSystem.Typography.bodySemibold)
                 .foregroundStyle(DesignSystem.Colors.textPrimary)

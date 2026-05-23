@@ -51,9 +51,7 @@ struct MentionsCostPreview: View {
     private var previewText: String {
         let tokensEstimate = max(1, estimatedBytes / 4)
         let bytesStr = formatBytes(estimatedBytes)
-        // TODO(T11): L10n — replace with L10n("chat.mentions.preview", ...) when keys are added
-        let countLabel = mentionCount == 1 ? "mention" : "mentions"
-        return "\(mentionCount) \(countLabel) · ~\(bytesStr) · ~\(formatTokens(tokensEstimate)) tokens"
+        return L10n("chat.mentions.preview", "\(mentionCount)", bytesStr, "~\(formatTokens(tokensEstimate))")
     }
 
     private func formatBytes(_ bytes: Int) -> String {

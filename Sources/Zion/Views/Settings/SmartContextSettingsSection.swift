@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - SmartContextSettingsSection
 // Smart Context settings: symbol indexing, @mention limits, confirm-token threshold.
-// L10n keys are hardcoded string literals with TODO(T11) markers — T11 will add the actual keys.
+// L10n keys added in T11.
 
 struct SmartContextSettingsSection: View {
 
@@ -15,12 +15,12 @@ struct SmartContextSettingsSection: View {
     @State private var lastReparse: Date? = nil
 
     var body: some View {
-        Section(L10n("chat.smartContext.section.title")) { // TODO(T11)
-            Toggle(L10n("chat.smartContext.indexEnabled"), isOn: $indexEnabled) // TODO(T11)
+        Section(L10n("chat.smartContext.section.title")) {
+            Toggle(L10n("chat.smartContext.indexEnabled"), isOn: $indexEnabled)
 
             Stepper(value: $maxFilesPerFolder, in: 1...200) {
                 HStack {
-                    Text(L10n("chat.mentions.maxFilesPerFolder")) // TODO(T11)
+                    Text(L10n("chat.mentions.maxFilesPerFolder"))
                     Spacer()
                     Text("\(maxFilesPerFolder)")
                         .monospacedDigit()
@@ -30,9 +30,9 @@ struct SmartContextSettingsSection: View {
 
             Stepper(value: $maxBytesPerFile, in: 1024...1048576, step: 1024) {
                 HStack {
-                    Text(L10n("chat.mentions.maxBytesPerFile")) // TODO(T11)
+                    Text(L10n("chat.mentions.maxBytesPerFile"))
                     Spacer()
-                    Text(L10n("chat.mentions.bytesUnit", "\(maxBytesPerFile / 1024)")) // TODO(T11): "%@ KB"
+                    Text(L10n("chat.mentions.bytesUnit", "\(maxBytesPerFile / 1024)"))
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
                 }
@@ -40,9 +40,9 @@ struct SmartContextSettingsSection: View {
 
             Stepper(value: $confirmTokens, in: 1000...500000, step: 1000) {
                 HStack {
-                    Text(L10n("chat.mentions.confirmTokens")) // TODO(T11)
+                    Text(L10n("chat.mentions.confirmTokens"))
                     Spacer()
-                    Text(L10n("chat.mentions.tokensUnit", "\(confirmTokens / 1000)k")) // TODO(T11): "%@"
+                    Text(L10n("chat.mentions.tokensUnit", "\(confirmTokens / 1000)k"))
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
                 }
@@ -51,16 +51,16 @@ struct SmartContextSettingsSection: View {
             // Stats footer — read-only; refreshed asynchronously from SymbolIndexer.shared.
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.micro) {
                 HStack {
-                    Text(L10n("chat.smartContext.stats.indexSize")) // TODO(T11)
+                    Text(L10n("chat.smartContext.stats.indexSize"))
                     Spacer()
                     Text("\(indexFileCount)")
                         .monospacedDigit()
                 }
                 HStack {
-                    Text(L10n("chat.smartContext.stats.lastReparse")) // TODO(T11)
+                    Text(L10n("chat.smartContext.stats.lastReparse"))
                     Spacer()
                     Text(lastReparse.map { Self.dateFormatter.string(from: $0) }
-                         ?? L10n("chat.smartContext.stats.never")) // TODO(T11)
+                         ?? L10n("chat.smartContext.stats.never"))
                         .foregroundStyle(.secondary)
                 }
             }

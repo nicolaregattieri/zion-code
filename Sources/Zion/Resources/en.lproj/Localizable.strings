@@ -2659,3 +2659,48 @@
 "chat.multifileDiff.approveAll" = "Approve all";
 "chat.multifileDiff.rejectAll" = "Reject all";
 "chat.multifileDiff.moreFiles" = "+ %@ more files (review above to see all)";
+
+// MARK: - Smart Context (P12 T11)
+"chat.smartContext.section.title" = "Smart Context";
+"chat.smartContext.indexEnabled" = "Enable symbol indexing";
+"chat.smartContext.stats.indexSize" = "Index size (files)";
+"chat.smartContext.stats.lastReparse" = "Last reparse";
+"chat.smartContext.stats.never" = "never";
+"chat.mentions.maxFilesPerFolder" = "Max files per @folder";
+"chat.mentions.maxBytesPerFile" = "Max bytes per @file";
+"chat.mentions.confirmTokens" = "Confirm if @mentions exceed N tokens";
+"chat.mentions.bytesUnit" = "%@ KB";
+"chat.mentions.tokensUnit" = "%@ tokens";
+"chat.mentions.preview" = "%@ mention(s) attached \u{2014} %@, ~%@ tokens";
+"chat.mention.autocomplete.empty" = "No matches";
+"chat.mention.autocomplete.fileHint" = "files";
+"chat.mention.autocomplete.folderHint" = "folders";
+"chat.mention.binarySkipped" = "Binary file skipped";
+"chat.mention.folderEmpty" = "Folder is empty or contains only binaries";
+"chat.mention.webFailed" = "Web fetch failed: %@";
+"chat.mention.parseError" = "Couldn\u{2019}t parse @mention";
+
+// MARK: - Smart Context Help bullets (P12 T11)
+"help.chat.repoMap" = "RepoMap MCP tool surfaces ranked symbols across the repo";
+"help.chat.findSymbol" = "find_symbol MCP tool for precise identifier lookup";
+"help.chat.fileMention" = "@file path attaches a file as explicit context";
+"help.chat.folderMention" = "@folder path attaches a folder, capped";
+"help.chat.selectionMention" = "@selection attaches the current editor selection";
+"help.chat.webMention" = "@web URL fetches and attaches page text";
+"help.chat.multiFileDiff" = "Multi-file diff summary card shown when \u{2265}2 files change";
+
+// MARK: - Smart Context ZionMap entries (P12 T11)
+"map.chat.repoMap.title" = "RepoMap";
+"map.chat.repoMap.description" = "The repo_map MCP tool ranks all symbols in the repo by reference count and surfaces the top N in a Markdown outline so the model can navigate large codebases without reading every file.";
+"map.chat.findSymbol.title" = "find_symbol";
+"map.chat.findSymbol.description" = "The find_symbol MCP tool searches the symbol index for exact or prefix matches, returning file path, kind, line number, and reference count \u{2014} precision lookup for the model.";
+"map.chat.fileMention.title" = "@file mention";
+"map.chat.fileMention.description" = "Type @path/to/file in the composer to attach a file\u{2019}s contents as explicit context. Files over the byte limit are truncated; binary files are skipped with a warning.";
+"map.chat.folderMention.title" = "@folder mention";
+"map.chat.folderMention.description" = "Type @path/to/folder to attach up to N files from a folder (configurable in Settings). Files are capped per-file and per-folder to stay within the token budget.";
+"map.chat.selectionMention.title" = "@selection mention";
+"map.chat.selectionMention.description" = "Type @selection to attach the text currently selected in the editor. Updates automatically when the selection changes before you send.";
+"map.chat.webMention.title" = "@web mention";
+"map.chat.webMention.description" = "Type @web https://... to fetch a page and attach its plain-text content. Respects robots.txt; large pages are truncated to the byte limit.";
+"map.chat.multiFileDiff.title" = "Multi-file diff card";
+"map.chat.multiFileDiff.description" = "When the model proposes changes to \u{2265}2 files, a summary card appears above the individual diff previews. Review All, Approve All, or Reject All in one tap.";

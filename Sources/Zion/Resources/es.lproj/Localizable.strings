@@ -2676,3 +2676,55 @@
 "map.chat.stepCap.description" = "Número máximo de pasos y presupuesto de coste diario configurables. El bucle se detiene e informa cuando se alcanza cualquier límite. Pulsa Cancelar en el indicador de pasos para detenerlo antes.";
 "map.chat.reactFallback.title" = "Fallback de texto ReAct";
 "map.chat.reactFallback.description" = "Los modelos locales sin soporte nativo de llamadas a funciones usan un bucle estructurado Pensamiento/Acción/Observación (formato ReAct) para que las tareas agénticas sigan funcionando en modelos cuantizados más antiguos.";
+
+// MARK: - Multi-file diff (backfill from T9)
+"chat.multifileDiff.header" = "%@ archivos a punto de cambiar";
+"chat.multifileDiff.reviewAll" = "Revisar todo";
+"chat.multifileDiff.approveAll" = "Aprobar todo";
+"chat.multifileDiff.rejectAll" = "Rechazar todo";
+"chat.multifileDiff.moreFiles" = "+ %@ archivos más (revisa arriba para verlos todos)";
+
+// MARK: - Smart Context (P12 T11)
+"chat.smartContext.section.title" = "Contexto Inteligente";
+"chat.smartContext.indexEnabled" = "Activar indexación de símbolos";
+"chat.smartContext.stats.indexSize" = "Tamaño del índice (archivos)";
+"chat.smartContext.stats.lastReparse" = "Último reanálisis";
+"chat.smartContext.stats.never" = "nunca";
+"chat.mentions.maxFilesPerFolder" = "Máx. archivos por @carpeta";
+"chat.mentions.maxBytesPerFile" = "Máx. bytes por @archivo";
+"chat.mentions.confirmTokens" = "Confirmar si las @menciones superan N tokens";
+"chat.mentions.bytesUnit" = "%@ KB";
+"chat.mentions.tokensUnit" = "%@ tokens";
+"chat.mentions.preview" = "%@ mención(es) adjunta(s) \u{2014} %@, ~%@ tokens";
+"chat.mention.autocomplete.empty" = "Sin coincidencias";
+"chat.mention.autocomplete.fileHint" = "archivos";
+"chat.mention.autocomplete.folderHint" = "carpetas";
+"chat.mention.binarySkipped" = "Archivo binario omitido";
+"chat.mention.folderEmpty" = "La carpeta está vacía o contiene solo binarios";
+"chat.mention.webFailed" = "Error al obtener página: %@";
+"chat.mention.parseError" = "No se pudo analizar la @mención";
+
+// MARK: - Smart Context Help bullets (P12 T11)
+"help.chat.repoMap" = "La herramienta MCP RepoMap muestra símbolos clasificados en todo el repositorio";
+"help.chat.findSymbol" = "La herramienta MCP find_symbol para búsqueda precisa de identificadores";
+"help.chat.fileMention" = "@archivo ruta adjunta un archivo como contexto explícito";
+"help.chat.folderMention" = "@carpeta ruta adjunta una carpeta, con límite configurable";
+"help.chat.selectionMention" = "@selección adjunta la selección actual del editor";
+"help.chat.webMention" = "@web URL obtiene y adjunta el texto de una página";
+"help.chat.multiFileDiff" = "Tarjeta de resumen de diff multi-archivo mostrada cuando \u{2265}2 archivos cambian";
+
+// MARK: - Smart Context ZionMap entries (P12 T11)
+"map.chat.repoMap.title" = "RepoMap";
+"map.chat.repoMap.description" = "La herramienta MCP repo_map clasifica todos los símbolos del repositorio por recuento de referencias y muestra los N mejores en un esquema Markdown para que el modelo navegue en bases de código grandes sin leer cada archivo.";
+"map.chat.findSymbol.title" = "find_symbol";
+"map.chat.findSymbol.description" = "La herramienta MCP find_symbol busca en el índice de símbolos coincidencias exactas o de prefijo, devolviendo ruta, tipo, número de línea y recuento de referencias \u{2014} búsqueda precisa para el modelo.";
+"map.chat.fileMention.title" = "Mención @archivo";
+"map.chat.fileMention.description" = "Escribe @ruta/al/archivo en el compositor para adjuntar el contenido de un archivo como contexto explícito. Los archivos que superan el límite de bytes se truncan; los binarios se omiten con una advertencia.";
+"map.chat.folderMention.title" = "Mención @carpeta";
+"map.chat.folderMention.description" = "Escribe @ruta/a/carpeta para adjuntar hasta N archivos de una carpeta (configurable en Ajustes). Los archivos están limitados por archivo y por carpeta para respetar el presupuesto de tokens.";
+"map.chat.selectionMention.title" = "Mención @selección";
+"map.chat.selectionMention.description" = "Escribe @selección para adjuntar el texto seleccionado en el editor. Se actualiza automáticamente cuando la selección cambia antes de enviar.";
+"map.chat.webMention.title" = "Mención @web";
+"map.chat.webMention.description" = "Escribe @web https://... para obtener una página y adjuntar su contenido en texto plano. Respeta robots.txt; las páginas grandes se truncan al límite de bytes.";
+"map.chat.multiFileDiff.title" = "Tarjeta de diff multi-archivo";
+"map.chat.multiFileDiff.description" = "Cuando el modelo propone cambios en \u{2265}2 archivos, aparece una tarjeta de resumen sobre las vistas previas individuales. Revisa todo, Aprueba todo o Rechaza todo con un toque.";
