@@ -12,6 +12,8 @@ struct ZionTalksSettingsTab: View {
     @AppStorage("chat.editHarness.autoCommit") private var editHarnessAutoCommit: Bool = true
     @AppStorage("chat.editHarness.preferNativeTool") private var editHarnessPreferNativeTool: Bool = true
     @AppStorage("chat.routing.subscriptionFailover") private var subscriptionFailover: Bool = false
+    @AppStorage(ZionTalksAppearance.fontSizeKey) private var fontSizePx: Int = ZionTalksAppearance.defaultFontSizePx
+    @AppStorage(ZionTalksAppearance.lineSpacingKey) private var lineSpacingPx: Int = ZionTalksAppearance.defaultLineSpacingPx
 
     var body: some View {
         Form {
@@ -24,6 +26,30 @@ struct ZionTalksSettingsTab: View {
             Section("General") { // MARK: - TODO(T10): L10n
                 Toggle("Enable tool use", isOn: $toolsEnabled) // MARK: - TODO(T10): L10n
                 Toggle("Auto-inject context", isOn: $autoInject) // MARK: - TODO(T10): L10n
+            }
+
+            Section(L10n("chat.settings.appearance")) {
+                Stepper(value: $fontSizePx, in: ZionTalksAppearance.minFontSizePx...ZionTalksAppearance.maxFontSizePx) {
+                    HStack {
+                        Text(L10n("chat.settings.fontSize"))
+                        Spacer()
+                        Text(L10n("chat.settings.px", "\(fontSizePx)"))
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                    }
+                }
+                Stepper(value: $lineSpacingPx, in: ZionTalksAppearance.minLineSpacingPx...ZionTalksAppearance.maxLineSpacingPx) {
+                    HStack {
+                        Text(L10n("chat.settings.lineSpacing"))
+                        Spacer()
+                        Text(L10n("chat.settings.px", "\(lineSpacingPx)"))
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                    }
+                }
+                Text(L10n("chat.settings.fontSize.hint"))
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(.secondary)
             }
 
             Section("File Edits") { // MARK: - TODO(T10): L10n

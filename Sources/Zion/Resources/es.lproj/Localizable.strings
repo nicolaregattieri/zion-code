@@ -1377,6 +1377,11 @@
 "chat.code.copied" = "Copiado";
 "chat.message.copy" = "Copiar mensaje";
 "chat.message.copied" = "¡Copiado!";
+"chat.settings.appearance" = "Apariencia";
+"chat.settings.fontSize" = "Tamaño de fuente";
+"chat.settings.lineSpacing" = "Interlineado";
+"chat.settings.px" = "%@ px";
+"chat.settings.fontSize.hint" = "Se aplica a los mensajes del chat y a los globos del historial.";
 "settings.ai.harness.title" = "Harness de IA";
 "settings.ai.harness.toolsEnabled" = "Activar tool calling";
 "settings.ai.harness.allowEdits" = "Permitir edición de archivos";
