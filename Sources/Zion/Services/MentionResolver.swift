@@ -130,9 +130,15 @@ actor MentionResolver {
             }
         }
 
-        let context = buildSystemContext(resolved)
+        let volatileCtx = buildSystemContext(resolved)
         let total = breakdown.reduce(0) { $0 + $1.bytes }
-        return MentionPayload(systemContext: context, totalBytes: total, perFileBreakdown: breakdown, mentions: resolved)
+        return MentionPayload(
+            stableContext: "",
+            volatileContext: volatileCtx,
+            totalBytes: total,
+            perFileBreakdown: breakdown,
+            mentions: resolved
+        )
     }
 
     /// Dry-run: count mentions and estimate byte cost without performing I/O.
