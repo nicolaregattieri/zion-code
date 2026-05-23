@@ -67,6 +67,8 @@ struct ZionTalksSettingsTab: View {
                 .pickerStyle(.segmented)
             }
 
+            AgenticSettingsSection()
+
             Section("Tool Bridge") { // MARK: - TODO(T10): L10n
                 Toggle("Enable tool bridge", isOn: $toolBridge) // MARK: - TODO(T10): L10n
             }
