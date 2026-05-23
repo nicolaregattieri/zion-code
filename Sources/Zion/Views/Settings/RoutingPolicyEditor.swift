@@ -41,8 +41,9 @@ struct RoutingPolicyEditor: View {
             Text(lane.label)
                 .font(DesignSystem.Typography.labelBold)
 
-            // Use a wrapping HStack via VStack-of-rows so capsules don't crush.
-            FlowLayout(spacing: 8, maxItemsPerRow: .max) {
+            // Natural left-aligned flow — capsules keep their fitted width and
+            // wrap to the next row only when the container runs out of space.
+            NaturalFlow(hSpacing: 8, vSpacing: 8) {
                 let chain = policy.chains[lane.rawValue] ?? []
                 ForEach(Array(chain.enumerated()), id: \.offset) { index, rawProvider in
                     capsule(lane: lane, rawProvider: rawProvider, index: index, chainCount: chain.count)
@@ -178,4 +179,55 @@ struct RoutingPolicyEditor: View {
     }
 }
 
-// FlowLayout reuses the shared implementation at Sources/Zion/Views/Components/FlowLayout.swift
+// MARK: - NaturalFlow layout
+//
+// The shared `FlowLayout` evenly distributes items across the row width,
+// which makes the routing-policy capsules look comically far apart. This
+// private layout places each subview at its natural fitted size, left-
+// aligned, wrapping to the next row only when the container runs out of
+// width. No stretching, no equal columns.
+
+private struct NaturalFlow: Layout {
+    var hSpacing: CGFloat = 8
+    var vSpacing: CGFloat = 8
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let maxWidth = proposal.width ?? .infinity
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        var rowHeight: CGFloat = 0
+        var widestRow: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x > 0 && x + size.width > maxWidth {
+                widestRow = max(widestRow, x - hSpacing)
+                x = 0
+                y += rowHeight + vSpacing
+                rowHeight = 0
+            }
+            x += size.width + hSpacing
+            rowHeight = max(rowHeight, size.height)
+        }
+        widestRow = max(widestRow, x - hSpacing)
+        return CGSize(width: widestRow, height: y + rowHeight)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x: CGFloat = bounds.minX
+        var y: CGFloat = bounds.minY
+        var rowHeight: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x > bounds.minX && x + size.width > bounds.maxX {
+                x = bounds.minX
+                y += rowHeight + vSpacing
+                rowHeight = 0
+            }
+            subview.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
+            x += size.width + hSpacing
+            rowHeight = max(rowHeight, size.height)
+        }
+    }
+}
