@@ -115,7 +115,7 @@ actor MentionResolver {
 
             case .selection:
                 if let text = selectionProvider() {
-                    let capped = String(text.prefix(maxBytes))
+                    let capped = ByteSafeTruncate.cap(text, maxBytes: maxBytes)
                     let bytes = capped.utf8.count
                     resolved.append(ResolvedMention(kind: .selection, argument: "", contents: capped, bytes: bytes))
                     breakdown.append((path: "@selection", bytes: bytes))
@@ -322,17 +322,7 @@ actor MentionResolver {
     // MARK: Private helpers
 
     private func cap(_ text: String, maxBytes: Int) -> String {
-        guard text.utf8.count > maxBytes else { return text }
-        // Truncate to maxBytes at a valid UTF-8 boundary
-        var result = ""
-        var count = 0
-        for char in text {
-            let charBytes = String(char).utf8.count
-            if count + charBytes > maxBytes { break }
-            result.append(char)
-            count += charBytes
-        }
-        return result
+        ByteSafeTruncate.cap(text, maxBytes: maxBytes)
     }
 
     private func isTextFile(_ path: String) -> Bool {
