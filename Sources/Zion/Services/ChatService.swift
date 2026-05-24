@@ -596,10 +596,14 @@ final class ChatService {
                     if result.cumulativeCostUSD > 0 {
                         self.addTurnCost(result.cumulativeCostUSD, threadID: threadID)
                     }
-                    if result.cumulativeTokens > 0 {
-                        let half = result.cumulativeTokens / 2
-                        self.addTurnUsage(input: half, output: result.cumulativeTokens - half, threadID: threadID)
-                    }
+                    // NOTE: tokens deliberately NOT split half/half here. AgentRuntime
+                    // does not currently emit separate input/output token counts from
+                    // API providers' SSE usage fields (Anthropic message_delta usage,
+                    // OpenAI stream_options include_usage, Gemini usageMetadata).
+                    // Tracking those is P15 — until then, only CLI providers (which
+                    // emit accurate .turnUsage events from `usage.input_tokens` /
+                    // `usage.output_tokens` parsed from the CLI's JSON output) feed
+                    // the spend ledger truthfully.
                 }
                 await self.orchestrator.markHealthy(resolved)
             } catch AIError.noProviderAvailable, AIError.loopAlreadyActive {
@@ -865,7 +869,11 @@ final class ChatService {
             await orchestrator.recordCost(provider, usd: cost)
             // Mark provider healthy after success
             await orchestrator.markHealthy(provider)
-            // P14: append monthly spend ledger row so UsageSettingsSection + SpendMeterPill reflect actual usage.
+            // P14: append monthly spend ledger row ONLY when the source provider emits
+            // honest usage data. Today that is CLI providers (Claude Code, Codex) and
+            // local LLMs (zero cost is accurate). API direct providers (Anthropic,
+            // OpenAI, Gemini) are NOT yet parsed from SSE usage fields — we refuse to
+            // invent ledger rows for them. P15 wires real usage parsing per provider.
             let totals = await MainActor.run { (
                 input: self.threads.first(where: { $0.id == threadID })?.totalInputTokens ?? 0,
                 output: self.threads.first(where: { $0.id == threadID })?.totalOutputTokens ?? 0
@@ -875,6 +883,11 @@ final class ChatService {
             case .claudeCLI, .codexCLI: billing = .subscription
             case .local:                billing = .local
             default:                    billing = .api
+            }
+            // Refuse to log API-provider rows until real usage parsing lands (P15).
+            // Logging zeros or estimates here would corrupt the monthly aggregate.
+            if billing == .api && totals.input == 0 && totals.output == 0 {
+                return
             }
             let model = modelOverride ?? provider.rawValue
             let row = ProviderSpendRow(

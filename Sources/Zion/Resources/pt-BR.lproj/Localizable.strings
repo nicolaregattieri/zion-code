@@ -2855,6 +2855,8 @@
 "chat.spend.usage.softCap" = "Limite suave";
 "chat.spend.usage.softCap.off" = "Desligado";
 "chat.spend.usage.empty" = "Nenhum uso registrado ainda";
+"chat.spend.usage.honestyBanner" = "Rastreamento: Claude Code CLI e Codex CLI reportam uso real. LLMs locais são grátis. Provedores diretos via API (Anthropic, OpenAI, Gemini) ainda não são medidos aqui — consulte o painel do provedor para faturamento oficial.";
+"chat.spend.pill.tooltip" = "Gasto mensal. Provedores CLI reportam custo real. Provedores API não são medidos aqui — veja o painel do provedor.";
 "chat.spend.usage.resetsFooter" = "Reinicia no dia 1º de cada mês";
 
 // Auto-resolved chip
