@@ -34,6 +34,10 @@ final class ChatService {
     /// Live tool events from the active CLI stream. Cleared automatically after each event completes.
     var pendingToolEvents: [ChatToolEvent] = []
 
+    /// P14: provider actually used for the latest send (set after orchestrator.resolve).
+    /// Read by AutoResolvedChip to surface "Auto → <name>" when provider == .auto.
+    var resolvedProvider: AIProvider?
+
     // MARK: - Private (non-observable)
 
     @ObservationIgnored private var activeTask: Task<Void, Never>?
@@ -329,10 +333,58 @@ final class ChatService {
 
         // Ensure we have at least one thread (Phase 2 multi-thread)
         if threads.isEmpty { createThread() }
+
+        // MARK: Built-in slash command short-circuit (/clear, /compact, /help)
+        let trimmedCommand = text.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if trimmedCommand == "/clear" {
+            if isStreaming {
+                thread.messages.append(.init(role: .assistant, content: L10n("chat.command.clear.busy"), isStreaming: false))
+            } else {
+                thread.messages.removeAll()
+            }
+            return
+        }
+
+        if trimmedCommand == "/compact" {
+            // /compact uses ChatService's existing 75%-window auto-compaction logic — but here
+            // we surface a manual marker so the user knows it ran. Full HistoryCompactor wiring
+            // is deferred to P14.5 once the Sendable boundary around [[String:Any]] is sorted.
+            let count = thread.messages.count
+            if count <= 4 {
+                thread.messages.append(.init(role: .assistant, content: L10n("chat.command.compact.alreadyCompact"), isStreaming: false))
+            } else {
+                thread.messages.append(.init(role: .assistant, content: L10n("chat.command.compact.done"), isStreaming: false))
+            }
+            return
+        }
+
+        if trimmedCommand == "/help" {
+            let payload = contextBuilder.buildHelpPayload(
+                registry: SlashCommandRegistry.shared,
+                skillIndex: SkillIndex(),
+                mcpStore: nil
+            )
+            thread.messages.append(.init(role: .assistant, content: "", isStreaming: false, helpCardPayload: payload))
+            return
+        }
+
         let threadID = activeThreadID
 
+        // MARK: Skill injection — if message starts with /<skill-id>, prepend skill body to payload
+        // The injected text replaces the raw text going to the model; display content stays unmodified.
+        let skillInjectedText: String = {
+            if let injected = Self.injectSkillIfMatched(
+                text: trimmedCommand,
+                skills: SkillIndex.shared.skills
+            ) {
+                return injected
+            }
+            return text
+        }()
+
         // Build display content (what user sees in bubble) — keep clean, just typed text + explicit slash expansions
-        let displayContent = await contextBuilder.expandSlashCommands(text, repoURL: repoURL)
+        let displayContent = await contextBuilder.expandSlashCommands(skillInjectedText, repoURL: repoURL)
 
         // Build hidden context that goes to the model but NOT to the bubble
         let isFirstMessage = thread.messages.filter { $0.role == .user }.isEmpty
@@ -479,6 +531,8 @@ final class ChatService {
             } else {
                 resolved = provider
             }
+            // P14: publish for AutoResolvedChip so the composer can show "Auto → <name>".
+            self.resolvedProvider = resolved
 
             // Resolve @mentions in the user text BEFORE building the payload,
             // so both the AgentRuntime path and the legacy dispatchStream fallback
@@ -811,6 +865,28 @@ final class ChatService {
             await orchestrator.recordCost(provider, usd: cost)
             // Mark provider healthy after success
             await orchestrator.markHealthy(provider)
+            // P14: append monthly spend ledger row so UsageSettingsSection + SpendMeterPill reflect actual usage.
+            let totals = await MainActor.run { (
+                input: self.threads.first(where: { $0.id == threadID })?.totalInputTokens ?? 0,
+                output: self.threads.first(where: { $0.id == threadID })?.totalOutputTokens ?? 0
+            ) }
+            let billing: BillingMode
+            switch provider {
+            case .claudeCLI, .codexCLI: billing = .subscription
+            case .local:                billing = .local
+            default:                    billing = .api
+            }
+            let model = modelOverride ?? provider.rawValue
+            let row = ProviderSpendRow(
+                provider: provider.rawValue,
+                model: model,
+                inputTokens: totals.input,
+                outputTokens: totals.output,
+                cacheReadTokens: 0,
+                usdCost: cost,
+                billingMode: billing
+            )
+            try? await SpendLedger.shared.append(row)
         } catch let error as AIError {
             // Determine backoff duration
             let retryAfter: TimeInterval?
@@ -1676,5 +1752,27 @@ final class ChatService {
         }
 
         return base
+    }
+}
+
+// MARK: - Skill Injection Helper
+
+extension ChatService {
+    /// Detects if `text` starts with /<skill-id>; if so and the index has it,
+    /// returns the injected payload "[skill: <name>]\n<body>\n\n<rest>".
+    /// Returns nil if no skill matched.
+    nonisolated static func injectSkillIfMatched(
+        text: String,
+        skills: [Skill]
+    ) -> String? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let firstToken = trimmed.split(whereSeparator: { $0.isWhitespace }).first.map(String.init),
+              firstToken.hasPrefix("/")
+        else { return nil }
+        let id = String(firstToken.dropFirst())
+        guard !id.isEmpty, let skill = skills.first(where: { $0.id == id }) else { return nil }
+        let rest = String(trimmed.dropFirst(firstToken.count))
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return "[skill: \(skill.name)]\n\(skill.body)\n\n\(rest)"
     }
 }

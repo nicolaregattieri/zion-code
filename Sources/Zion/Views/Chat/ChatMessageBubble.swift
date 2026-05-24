@@ -64,7 +64,9 @@ struct ChatMessageBubble: View {
                         }
                     }
                 }
-                if message.isStreaming && message.content.isEmpty {
+                if let helpPayload = message.helpCardPayload {
+                    SlashHelpCard(payload: helpPayload)
+                } else if message.isStreaming && message.content.isEmpty {
                     ChatThinkingIndicator()
                 } else {
                     AssistantMarkdown(content: message.content)

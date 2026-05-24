@@ -51,7 +51,13 @@ struct ZionTalksSettingsTab: View {
 
             SmartContextSettingsSection()
 
+            SkillsSettingsSection()
+
+            MCPServersSettingsSection()
+
             ContextBudgetSection()
+
+            UsageSettingsSection()
 
             Section(L10n("chat.settings.toolBridge")) {
                 Toggle(L10n("chat.settings.toolBridge.toggle"), isOn: $toolBridge)

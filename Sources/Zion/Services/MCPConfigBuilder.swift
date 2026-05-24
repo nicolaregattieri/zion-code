@@ -102,6 +102,15 @@ enum MCPConfigBuilder {
         return [bashToolDescriptorTyped(), repoMapDescriptor(), findSymbolDescriptor()]
     }
 
+    /// P14: Returns built-in tools PLUS tools advertised by user-configured MCP servers.
+    /// Currently, user-server tool discovery is stubbed — returns built-in tools only.
+    /// Full integration (querying each server's `tools/list` MCP method) is P15.
+    static func allToolsIncludingUserServers(store: MCPRegistryStore?) -> [MCPToolDescriptor] {
+        let builtIn = allTools()
+        // TODO(P15): query each server in store.servers via JSON-RPC `tools/list` and merge.
+        return builtIn
+    }
+
     // MARK: - Dispatch
 
     /// Dispatch an MCP `tools/call` to the matching handler.

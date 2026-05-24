@@ -152,7 +152,11 @@ struct HelpSheet: View {
                 "help.chat.tokenBudget",
                 "help.chat.autoCompact",
                 "help.chat.promptCache",
-                "help.chat.approvalPolicy"
+                "help.chat.approvalPolicy",
+                "help.chat.slashAutocomplete",
+                "help.chat.mcpManagement",
+                "help.chat.skillScaffold",
+                "help.chat.spendLedger"
             ]
         }
     }

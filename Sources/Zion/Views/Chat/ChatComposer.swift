@@ -132,7 +132,7 @@ struct ChatComposer: View {
         ZStack(alignment: .topLeading) {
             // Placeholder — shown when text is empty
             if text.isEmpty {
-                Text(L10n("chat.composer.hint"))
+                Text(L10n("chat.composer.placeholder.discoverable"))
                     .chatScaledFont(role: .body)
                     .foregroundStyle(DesignSystem.Colors.textTertiary)
                     .padding(.horizontal, DesignSystem.Spacing.compact + 4)

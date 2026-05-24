@@ -162,23 +162,28 @@ actor ProviderOrchestrator {
             forKey: Self.subscriptionFailoverKey
         )
 
+        // First pass: eligible API providers only (skip subscription CLIs).
         for provider in candidates {
-            // Health check
+            guard !isSubscriptionCLI(provider) else { continue }
             guard await health.isHealthy(provider) else { continue }
-
-            // Cost cap check
             let cap = costCaps[provider] ?? 0
             if budget.capExceeded(provider: provider, cap: cap) { continue }
-
-            // Subscription CLI check — skip if failover is disabled
-            if isSubscriptionCLI(provider) && !subscriptionFailoverEnabled { continue }
-
-            // API key / CLI availability — skip providers that aren't connected.
-            // Without this guard, auto-routing picks a key-less provider and the
-            // first request 401s, surfacing as a hard error to the user instead
-            // of falling through to the next eligible provider.
             guard AIProviderSupport.isConnected(provider: provider) else { continue }
+            return provider
+        }
 
+        // Second pass: subscription CLIs. Allowed when failover is enabled OR
+        // when no API provider was eligible (CLI is the only working option,
+        // refusing it would surface "No AI provider configured" to the user
+        // even though Claude Code / Codex CLI are installed and authenticated).
+        for provider in candidates {
+            guard isSubscriptionCLI(provider) else { continue }
+            guard await health.isHealthy(provider) else { continue }
+            guard AIProviderSupport.isConnected(provider: provider) else { continue }
+            if subscriptionFailoverEnabled {
+                return provider
+            }
+            // Allow CLI as last-resort when nothing else qualified.
             return provider
         }
         return nil

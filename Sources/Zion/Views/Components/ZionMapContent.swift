@@ -357,6 +357,10 @@ struct ZionMapContent {
                 ZionMapEntry("map.chat.autoCompact.title", description: "map.chat.autoCompact.description"),
                 ZionMapEntry("map.chat.promptCache.title", description: "map.chat.promptCache.description"),
                 ZionMapEntry("map.chat.approvalPolicy.title", description: "map.chat.approvalPolicy.description"),
+                ZionMapEntry("map.chat.slashAutocomplete.title", description: "map.chat.slashAutocomplete.description"),
+                ZionMapEntry("map.chat.mcpManagement.title", description: "map.chat.mcpManagement.description"),
+                ZionMapEntry("map.chat.skillScaffold.title", description: "map.chat.skillScaffold.description"),
+                ZionMapEntry("map.chat.spendLedger.title", description: "map.chat.spendLedger.description"),
             ]
         }
     }
