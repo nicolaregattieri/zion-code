@@ -252,6 +252,88 @@ struct ComposerNSTextView: NSViewRepresentable {
             return true
         }
 
+        // MARK: Slash autocomplete
+
+        /// Called from ZionComposerTextView after '/' has been inserted at line start.
+        @MainActor func maybeShowSlashAutocomplete() {
+            guard let tv = textView, let window = tv.window else { return }
+            let registry = SlashCommandRegistry.shared
+            let items = registry.match(prefix: "/")
+            guard !items.isEmpty else { return }
+
+            let caretRect = tv.firstRect(forCharacterRange: tv.selectedRange(), actualRange: nil)
+            SlashAutocompletePanel.shared.show(anchor: caretRect, in: window, items: items) { [weak self] picked in
+                self?.commitSlash(picked)
+            }
+        }
+
+        /// Update slash filter as user continues typing after '/'.
+        @MainActor func updateSlashFilter() {
+            guard let tv = textView else { return }
+            guard SlashAutocompletePanel.shared.isShown else { return }
+
+            let nsString = tv.string as NSString
+            let insertionPoint = tv.selectedRange().location
+
+            // Walk back to find '/'
+            var pos = insertionPoint - 1
+            while pos >= 0 {
+                let ch = nsString.character(at: pos)
+                let scalar = Unicode.Scalar(ch)!
+                if ch == UInt16(("/".unicodeScalars.first!).value) {
+                    break
+                }
+                if CharacterSet.whitespacesAndNewlines.contains(scalar) {
+                    SlashAutocompletePanel.shared.dismiss()
+                    return
+                }
+                pos -= 1
+            }
+            guard pos >= 0 else {
+                SlashAutocompletePanel.shared.dismiss()
+                return
+            }
+
+            let prefix = nsString.substring(with: NSRange(location: pos, length: insertionPoint - pos))
+            let registry = SlashCommandRegistry.shared
+            let items = registry.match(prefix: prefix)
+            if items.isEmpty {
+                SlashAutocompletePanel.shared.dismiss()
+            } else {
+                guard let tv = textView, let window = tv.window else { return }
+                let caretRect = tv.firstRect(forCharacterRange: tv.selectedRange(), actualRange: nil)
+                SlashAutocompletePanel.shared.show(anchor: caretRect, in: window, items: items) { [weak self] picked in
+                    self?.commitSlash(picked)
+                }
+            }
+        }
+
+        /// Replace the /token with `picked.name + " "`.
+        func commitSlash(_ picked: SlashItem) {
+            guard let tv = textView else { return }
+            let nsString = tv.string as NSString
+            let insertionPoint = tv.selectedRange().location
+
+            // Walk back from insertion point to find '/'
+            var slashPos = insertionPoint - 1
+            while slashPos >= 0 {
+                let ch = nsString.character(at: slashPos)
+                if ch == UInt16(("/".unicodeScalars.first!).value) { break }
+                slashPos -= 1
+            }
+            guard slashPos >= 0 else { return }
+
+            let replaceRange = NSRange(location: slashPos, length: insertionPoint - slashPos)
+            let replacement = picked.name + " "
+            // TODO(P14.5): inline ghost-text arg hint
+            if tv.shouldChangeText(in: replaceRange, replacementString: replacement) {
+                tv.textStorage?.replaceCharacters(in: replaceRange, with: replacement)
+                tv.didChangeText()
+                tv.setSelectedRange(NSRange(location: slashPos + replacement.count, length: 0))
+            }
+            parent.text = tv.string
+        }
+
         // MARK: Code fence detection
 
         private func isInsideCodeFence(_ string: NSString, at position: Int) -> Bool {
@@ -276,7 +358,27 @@ final class ZionComposerTextView: NSTextView {
     override func keyDown(with event: NSEvent) {
         let coordinator = delegate as? ComposerNSTextView.Coordinator
 
-        // Enter (no shift) → send
+        // Forward keys to slash panel if visible
+        if SlashAutocompletePanel.shared.isShown {
+            switch event.keyCode {
+            case 125: // Arrow down
+                if SlashAutocompletePanel.shared.handleKey(.down) { return }
+            case 126: // Arrow up
+                if SlashAutocompletePanel.shared.handleKey(.up) { return }
+            case 36:  // Return (no shift → commit; with shift → pass through)
+                if !event.modifierFlags.contains(.shift) {
+                    if SlashAutocompletePanel.shared.handleKey(.returnKey) { return }
+                }
+            case 48:  // Tab → commit
+                if SlashAutocompletePanel.shared.handleKey(.tab) { return }
+            case 53:  // Escape → dismiss
+                if SlashAutocompletePanel.shared.handleKey(.escape) { return }
+            default:
+                break
+            }
+        }
+
+        // Enter (no shift) → send (mention panel check)
         if event.keyCode == 36 && !event.modifierFlags.contains(.shift) {
             if coordinator?.commitSelectedInPanel() == true {
                 // Panel consumed it
@@ -286,7 +388,7 @@ final class ZionComposerTextView: NSTextView {
             return
         }
 
-        // Escape → dismiss panel
+        // Escape → dismiss mention panel
         if event.keyCode == 53 {
             if let coord = coordinator, coord.autocompletePanel != nil {
                 coord.dismissAutocomplete()
@@ -294,17 +396,17 @@ final class ZionComposerTextView: NSTextView {
             }
         }
 
-        // Arrow up
+        // Arrow up (mention panel)
         if event.keyCode == 126 {
             if coordinator?.forwardArrowKey(.up) == true { return }
         }
 
-        // Arrow down
+        // Arrow down (mention panel)
         if event.keyCode == 125 {
             if coordinator?.forwardArrowKey(.down) == true { return }
         }
 
-        // Tab → commit from panel
+        // Tab → commit from mention panel
         if event.keyCode == 48 {
             if coordinator?.commitSelectedInPanel() == true { return }
         }
@@ -316,10 +418,28 @@ final class ZionComposerTextView: NSTextView {
             return
         }
 
+        // '/' trigger — show slash autocomplete when at line start
+        if let chars = event.charactersIgnoringModifiers, chars == "/" {
+            let insertion = selectedRange().location
+            let nsString = (self.string as NSString)
+            let atLineStart = (insertion == 0) ||
+                nsString.character(at: max(0, insertion - 1)) == UInt16(0x0A) // \n
+            if atLineStart {
+                super.keyDown(with: event) // insert the slash
+                coordinator?.maybeShowSlashAutocomplete()
+                return
+            }
+        }
+
         super.keyDown(with: event)
 
-        // After any other key, update prefix if panel is open
+        // After any other key, update prefix if mention panel is open
         coordinator?.updateAutocompletePrefix()
+
+        // After any other key, update slash filter if slash panel is open
+        if SlashAutocompletePanel.shared.isShown {
+            coordinator?.updateSlashFilter()
+        }
     }
 
     // MARK: Intrinsic size (grows with content, capped at ~6 lines via outer view)

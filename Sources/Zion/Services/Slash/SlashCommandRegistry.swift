@@ -63,3 +63,15 @@ final class SlashCommandRegistry: ObservableObject {
             .map { $0 }
     }
 }
+
+// MARK: - Shared accessor
+
+extension SlashCommandRegistry {
+    /// Lazily initialised shared registry. Reloads skill index once on first access.
+    @MainActor static let shared: SlashCommandRegistry = {
+        let skillIndex = SkillIndex()
+        let registry = SlashCommandRegistry(skillIndex: skillIndex)
+        Task { @MainActor in await skillIndex.reload() }
+        return registry
+    }()
+}
