@@ -132,7 +132,8 @@ struct ChatComposer: View {
         ZStack(alignment: .topLeading) {
             // Placeholder — shown when text is empty
             if text.isEmpty {
-                Text(L10n("chat.composer.hint"))
+                // MARK: - TODO(P14:T10): L10n — "Message · / for commands · @ for files"
+                Text(L10n("chat.composer.placeholder.discoverable"))
                     .chatScaledFont(role: .body)
                     .foregroundStyle(DesignSystem.Colors.textTertiary)
                     .padding(.horizontal, DesignSystem.Spacing.compact + 4)
