@@ -2704,3 +2704,4 @@
 "map.chat.webMention.description" = "Type @web https://... to fetch a page and attach its plain-text content. Respects robots.txt; large pages are truncated to the byte limit.";
 "map.chat.multiFileDiff.title" = "Multi-file diff card";
 "map.chat.multiFileDiff.description" = "When the model proposes changes to \u{2265}2 files, a summary card appears above the individual diff previews. Review All, Approve All, or Reject All in one tap.";
+"chat.error.budgetExceeded.banner" = "Message too long \u{2014} estimated tokens exceed context window. Tap Send anyway to proceed, or shorten your input.";
