@@ -125,6 +125,8 @@ Zion isn't a git client with AI bolted on — it's an **AI workflow workspace** 
 
 **Context Management (beta)** — Token-aware history (replaces the legacy 10-message cap), Anthropic prompt caching, auto-compact at 75% of the window, repomap auto-seed every turn, and one unified Approval Policy (Manual / Auto-safe / Auto / YOLO) consolidating the scattered toggles.
 
+**Discoverability (beta)** — Slash autocomplete popup (`/diff`, `/help`, `/skill-name`), MCP servers panel + JSON editor with presets, skill scaffold button (`.claude/skills/<slug>/SKILL.md`), monthly spend meter pill (`$X.XX this month` / `Subscription` / `$0 local`), Auto resolved chip in composer, and an empty-state hero with 4 starter cards.
+
 Built on the patterns the field converged on in 2026 (Aider's polyglot benchmark winner format, Cline's diff-apply v3, Claude Code's str_replace_editor, the Pi minimalist harness) — applied with a git-client substrate nobody else has.
 
 <p align="center">

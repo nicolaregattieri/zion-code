@@ -2886,3 +2886,19 @@
 "chat.command.clear.busy" = "No se puede limpiar mientras se genera una respuesta.";
 "chat.command.compact.done" = "Conversaci\u{00F3}n compactada.";
 "chat.command.compact.alreadyCompact" = "Nada que compactar todav\u{00ED}a.";
+
+// Discoverability bullets
+"help.chat.slashAutocomplete" = "Autocompletar con barra \u{2014} Escribe / en el compositor para explorar comandos y habilidades";
+"help.chat.mcpManagement" = "Panel de servidores MCP \u{2014} Agrega, edita y elimina servidores MCP con indicadores de estado";
+"help.chat.skillScaffold" = "Crear habilidad \u{2014} Crea habilidades en Ajustes \u{2192} Zion Talks \u{2192} Habilidades; invoca con /nombre";
+"help.chat.spendLedger" = "Medidor de gasto \u{2014} P\u{00ED}ldora de costo mensual en el encabezado con desglose por proveedor";
+
+// Discoverability map entries
+"map.chat.slashAutocomplete.title" = "Autocompletar con Barra";
+"map.chat.slashAutocomplete.description" = "Escribe / en el compositor para un men\u{00FA} desplegable de comandos y habilidades. Teclas de flecha + Tab/Intro para confirmar, Esc para cerrar.";
+"map.chat.mcpManagement.title" = "Panel de Servidores MCP";
+"map.chat.mcpManagement.description" = "Ajustes \u{2192} Zion Talks \u{2192} Servidores MCP lista cada servidor con indicador de estado y men\u{00FA} (editar / eliminar). Editor JSON con presets.";
+"map.chat.skillScaffold.title" = "Crear Habilidad";
+"map.chat.skillScaffold.description" = "Ajustes \u{2192} Zion Talks \u{2192} Habilidades lista las habilidades disponibles. Nueva Habilidad crea un SKILL.md inicial con frontmatter YAML. Invoca con /nombre.";
+"map.chat.spendLedger.title" = "Medidor de Gasto";
+"map.chat.spendLedger.description" = "El encabezado muestra una p\u{00ED}ldora de gasto mensual. Ajustes \u{2192} Zion Talks \u{2192} Uso lista el desglose por proveedor con l\u{00ED}mite de gasto.";

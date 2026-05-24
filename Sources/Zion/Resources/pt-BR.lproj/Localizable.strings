@@ -2864,3 +2864,19 @@
 "chat.command.clear.busy" = "N\u{00E3}o \u{00E9} poss\u{00ED}vel limpar enquanto uma resposta est\u{00E1} em andamento.";
 "chat.command.compact.done" = "Conversa compactada.";
 "chat.command.compact.alreadyCompact" = "Nada para compactar ainda.";
+
+// Discoverability bullets
+"help.chat.slashAutocomplete" = "Autocompletar com barra \u{2014} Digite / no compositor para navegar por comandos e habilidades";
+"help.chat.mcpManagement" = "Painel de servidores MCP \u{2014} Adicione, edite e remova servidores MCP com indicadores de status";
+"help.chat.skillScaffold" = "Criar habilidade \u{2014} Crie habilidades em Configura\u{00E7}\u{00F5}es \u{2192} Zion Talks \u{2192} Habilidades; invoque via /nome";
+"help.chat.spendLedger" = "Med\u{00ED}dor de gastos \u{2014} P\u{00ED}lula de custo mensal no cabe\u{00E7}alho com detalhamento por provedor";
+
+// Discoverability map entries
+"map.chat.slashAutocomplete.title" = "Autocompletar com Barra";
+"map.chat.slashAutocomplete.description" = "Digite / no compositor para um menu suspenso de comandos e habilidades. Teclas de seta + Tab/Enter para confirmar, Esc para dispensar.";
+"map.chat.mcpManagement.title" = "Painel de Servidores MCP";
+"map.chat.mcpManagement.description" = "Configura\u{00E7}\u{00F5}es \u{2192} Zion Talks \u{2192} Servidores MCP lista cada servidor configurado com indicador de status e menu (editar / remover). Editor JSON com presets.";
+"map.chat.skillScaffold.title" = "Criar Habilidade";
+"map.chat.skillScaffold.description" = "Configura\u{00E7}\u{00F5}es \u{2192} Zion Talks \u{2192} Habilidades lista as habilidades dispon\u{00ED}veis. Nova Habilidade cria um SKILL.md inicial com frontmatter YAML. Invoque via /nome.";
+"map.chat.spendLedger.title" = "Med\u{00ED}dor de Gastos";
+"map.chat.spendLedger.description" = "O cabe\u{00E7}alho mostra uma p\u{00ED}lula de gasto mensal. Configura\u{00E7}\u{00F5}es \u{2192} Zion Talks \u{2192} Uso lista o detalhamento por provedor com limitador de gasto.";

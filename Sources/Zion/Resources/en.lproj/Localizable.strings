@@ -2862,3 +2862,19 @@
 "chat.command.clear.busy" = "Cannot clear while a response is in progress.";
 "chat.command.compact.done" = "Conversation compacted.";
 "chat.command.compact.alreadyCompact" = "Nothing to compact yet.";
+
+// Discoverability bullets
+"help.chat.slashAutocomplete" = "Slash autocomplete \u{2014} Type / in the composer to browse built-in commands and skills";
+"help.chat.mcpManagement" = "MCP servers panel \u{2014} Add, edit, and remove MCP servers with status indicators";
+"help.chat.skillScaffold" = "Skill scaffold \u{2014} Create skills from Settings \u{2192} Zion Talks \u{2192} Skills; invoke via /skill-name";
+"help.chat.spendLedger" = "Spend meter \u{2014} Monthly cost pill in the conversation header with per-provider breakdown";
+
+// Discoverability map entries
+"map.chat.slashAutocomplete.title" = "Slash Autocomplete";
+"map.chat.slashAutocomplete.description" = "Type / in the composer for an inline dropdown of built-in commands and skills. Arrow keys + Tab/Enter to commit, Esc to dismiss.";
+"map.chat.mcpManagement.title" = "MCP Servers Panel";
+"map.chat.mcpManagement.description" = "Settings \u{2192} Zion Talks \u{2192} MCP Servers lists every configured server with status dot and ellipsis menu (edit / remove). JSON editor with filesystem, git, and github presets.";
+"map.chat.skillScaffold.title" = "Skill Scaffold";
+"map.chat.skillScaffold.description" = "Settings \u{2192} Zion Talks \u{2192} Skills lists available skills. New Skill writes a starter SKILL.md with YAML frontmatter. Invoke via /skill-name in chat.";
+"map.chat.spendLedger.title" = "Spend Meter";
+"map.chat.spendLedger.description" = "Conversation header shows a monthly spend pill. Settings \u{2192} Zion Talks \u{2192} Usage lists per-provider breakdown with a soft-cap stepper.";

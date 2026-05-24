@@ -571,3 +571,16 @@ Cursor-parity context management on top of the agentic loop.
 - **Unified Approval Policy** — One picker (Manual / Auto-safe / Auto / YOLO) controls plan-mode, auto-commit, and bash tier. Legacy settings migrate automatically.
 - **@web excerpt mode** — Pages > 32 KB chunk + BM25-lite rank against the user prompt; only top excerpts are injected.
 - **ByteSafe truncation** — UTF-8 safe; no more half-emoji / half-CJK in `@file` or `@folder` payloads.
+
+### Discoverability (beta)
+
+Power-user surface that exposes what Zion Talks can do without spelunking through docs.
+
+- **Slash autocomplete** — Type `/` in the composer; an inline dropdown lists every built-in command (`/diff`, `/log`, `/file`, `/status`, `/commit`, `/clear`, `/compact`, `/help`) plus every skill auto-loaded from `~/.claude/skills/` and `<repo>/.claude/skills/`. Arrow keys + Tab/Enter commit, Esc dismiss.
+- **`/help` card** — Renders a structured SwiftUI card with collapsible sections (Built-in / Project Skills / User Skills / @ mentions / MCP tools / Shortcuts).
+- **MCP servers panel** — Settings → Zion Talks → MCP Servers lists every configured MCP server with status dot + ellipsis menu (edit / remove). New Server sheet has 3 preset buttons (filesystem / git / github) + JSON editor. `Find more servers →` opens `registry.modelcontextprotocol.io` externally.
+- **Skill scaffold** — Settings → Zion Talks → Skills lists every available skill. `New Skill` button writes `<scope>/.claude/skills/<slug>/SKILL.md` with starter template + YAML frontmatter. Invoke via `/skill-name` in chat — body appended as `[skill: <name>]` to the system prompt.
+- **Spend meter** — Conversation card header shows a monthly spend pill: `$X.XX this month` for API providers, `Subscription · no API spend` for Claude CLI / Codex CLI, `$0 · local` for Ollama / MLX. Settings → Usage lists provider × model breakdown + soft-cap stepper.
+- **Auto resolved chip** — When `Auto` provider is selected, the composer shows a chip ("Auto → Claude") so the user sees the orchestrator's pick.
+- **Empty-state hero** — Brand-new threads show 4 starter cards: Browse repo (`/repo_map`), Edit a file (`@file`), Run tests (`/bash swift test`), Type / for all commands (`/help`). Click prefills the composer.
+- **Discoverable placeholder** — Composer reads `Message · / for commands · @ for files`.

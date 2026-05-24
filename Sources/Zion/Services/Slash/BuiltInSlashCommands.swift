@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - TODO(P14:T10): L10n — add keys chat.slash.builtin.*.description to all 3 locale files
-
 enum BuiltInSlashCommands {
     static let all: [SlashItem] = [
         SlashItem(
