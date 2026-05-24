@@ -57,6 +57,8 @@ struct ZionTalksSettingsTab: View {
 
             ContextBudgetSection()
 
+            UsageSettingsSection()
+
             Section(L10n("chat.settings.toolBridge")) {
                 Toggle(L10n("chat.settings.toolBridge.toggle"), isOn: $toolBridge)
             }

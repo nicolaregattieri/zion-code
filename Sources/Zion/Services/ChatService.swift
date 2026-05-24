@@ -34,6 +34,10 @@ final class ChatService {
     /// Live tool events from the active CLI stream. Cleared automatically after each event completes.
     var pendingToolEvents: [ChatToolEvent] = []
 
+    /// P14: provider actually used for the latest send (set after orchestrator.resolve).
+    /// Read by AutoResolvedChip to surface "Auto → <name>" when provider == .auto.
+    var resolvedProvider: AIProvider?
+
     // MARK: - Private (non-observable)
 
     @ObservationIgnored private var activeTask: Task<Void, Never>?
@@ -527,6 +531,8 @@ final class ChatService {
             } else {
                 resolved = provider
             }
+            // P14: publish for AutoResolvedChip so the composer can show "Auto → <name>".
+            self.resolvedProvider = resolved
 
             // Resolve @mentions in the user text BEFORE building the payload,
             // so both the AgentRuntime path and the legacy dispatchStream fallback
@@ -859,6 +865,28 @@ final class ChatService {
             await orchestrator.recordCost(provider, usd: cost)
             // Mark provider healthy after success
             await orchestrator.markHealthy(provider)
+            // P14: append monthly spend ledger row so UsageSettingsSection + SpendMeterPill reflect actual usage.
+            let totals = await MainActor.run { (
+                input: self.threads.first(where: { $0.id == threadID })?.totalInputTokens ?? 0,
+                output: self.threads.first(where: { $0.id == threadID })?.totalOutputTokens ?? 0
+            ) }
+            let billing: BillingMode
+            switch provider {
+            case .claudeCLI, .codexCLI: billing = .subscription
+            case .local:                billing = .local
+            default:                    billing = .api
+            }
+            let model = modelOverride ?? provider.rawValue
+            let row = ProviderSpendRow(
+                provider: provider.rawValue,
+                model: model,
+                inputTokens: totals.input,
+                outputTokens: totals.output,
+                cacheReadTokens: 0,
+                usdCost: cost,
+                billingMode: billing
+            )
+            try? await SpendLedger.shared.append(row)
         } catch let error as AIError {
             // Determine backoff duration
             let retryAfter: TimeInterval?

@@ -7,6 +7,17 @@ actor SpendLedger {
 
     private let dbQueue: DatabaseQueue
 
+    /// Production singleton — uses defaultPath. UI views read this via SpendLedger.shared.
+    static let shared: SpendLedger = {
+        do {
+            return try SpendLedger(path: SpendLedger.defaultPath)
+        } catch {
+            // Last-resort fallback to an in-memory ledger if the disk path fails.
+            // Spend writes will not persist across launches; UI will show empty totals.
+            return try! SpendLedger(path: URL(fileURLWithPath: "/tmp/zion-spend-\(UUID().uuidString).sqlite"))
+        }
+    }()
+
     init(path: URL = SpendLedger.defaultPath) throws {
         try FileManager.default.createDirectory(at: path.deletingLastPathComponent(), withIntermediateDirectories: true)
         var config = Configuration()

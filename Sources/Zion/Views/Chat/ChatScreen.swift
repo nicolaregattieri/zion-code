@@ -86,6 +86,7 @@ struct ChatScreen: View {
             CardHeader(L10n("chat.card.conversation"), icon: "bubble.left.and.bubble.right.fill") {
                 HStack(spacing: 6) {
                     AgentStepIndicator(agentRuntime: chat.agentRuntime)
+                    SpendMeterPill()
                     let totalTokens = chat.thread.totalInputTokens + chat.thread.totalOutputTokens
                     if totalTokens > 0 {
                         Text(Self.formatTokens(totalTokens))
@@ -269,6 +270,16 @@ struct ChatScreen: View {
     // MARK: - Composer Area
 
     private var composerArea: some View {
+        VStack(spacing: DesignSystem.Spacing.compact) {
+            HStack {
+                AutoResolvedChip(chat: chat)
+                Spacer()
+            }
+            composerView
+        }
+    }
+
+    private var composerView: some View {
         ChatComposer(
             chat: chat,
             text: $composerText,
