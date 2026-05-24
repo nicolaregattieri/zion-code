@@ -51,6 +51,16 @@ final class FileSystemMentionToolClient: MentionToolClient, @unchecked Sendable 
         guard let urlString = args["url"] as? String, let url = URL(string: urlString) else {
             throw FSMentionError.missingArgument("url")
         }
+        // Security: only http/https schemes. Block file://, ftp://, data:, javascript:,
+        // and custom schemes that could exfiltrate local content via URLSession.
+        let scheme = (url.scheme ?? "").lowercased()
+        guard scheme == "http" || scheme == "https" else {
+            throw FSMentionError.unknownTool("web scheme rejected: \(scheme)")
+        }
+        // SSRF block: refuse loopback / link-local / RFC1918 / cloud metadata IPs.
+        if let host = url.host?.lowercased(), Self.isPrivateOrMetadataHost(host) {
+            throw FSMentionError.unknownTool("private/internal host rejected: \(host)")
+        }
         let queryText = args["queryText"] as? String ?? ""
         let alwaysRaw = UserDefaults.standard.bool(forKey: "chat.web.alwaysInjectRaw")
 
@@ -77,10 +87,38 @@ final class FileSystemMentionToolClient: MentionToolClient, @unchecked Sendable 
             candidate = repoURL.appendingPathComponent(raw)
         }
         let resolved = candidate.standardizedFileURL.resolvingSymlinksInPath()
-        guard resolved.path.hasPrefix(repoURL.path) else {
+        // Security: prefix match must include the trailing separator so that
+        // `/Users/me/repo-evil/x` cannot pass when `repoURL.path == /Users/me/repo`.
+        let repoPath = repoURL.path
+        let resolvedPath = resolved.path
+        let isInside = (resolvedPath == repoPath) || resolvedPath.hasPrefix(repoPath + "/")
+        guard isInside else {
             throw FSMentionError.pathTraversal(raw)
         }
         return resolved
+    }
+
+    /// Refuses loopback / link-local / RFC1918 / cloud metadata hosts to block SSRF
+    /// from a malicious @web URL (e.g., `@web http://169.254.169.254/...` would otherwise
+    /// hit the EC2 instance metadata service).
+    static func isPrivateOrMetadataHost(_ host: String) -> Bool {
+        let blocked: [String] = [
+            "localhost", "0.0.0.0", "169.254.169.254"
+        ]
+        if blocked.contains(host) { return true }
+        // IPv4 ranges: 10/8, 127/8, 192.168/16, 172.16/12, 169.254/16
+        let parts = host.split(separator: ".").compactMap { Int($0) }
+        if parts.count == 4 {
+            let (a, b) = (parts[0], parts[1])
+            if a == 10 { return true }
+            if a == 127 { return true }
+            if a == 169 && b == 254 { return true }
+            if a == 192 && b == 168 { return true }
+            if a == 172 && (16...31).contains(b) { return true }
+        }
+        // IPv6 loopback / link-local prefix
+        if host == "::1" || host.hasPrefix("fe80:") || host.hasPrefix("[::1]") { return true }
+        return false
     }
 }
 

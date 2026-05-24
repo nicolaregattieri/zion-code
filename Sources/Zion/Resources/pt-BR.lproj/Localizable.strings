@@ -2748,7 +2748,7 @@
 // MARK: - HelpSheet .chat bullets (P13 T11)
 "help.chat.tokenBudget" = "Janela de histórico consciente de tokens respeita o tamanho de contexto do modelo ativo.";
 "help.chat.autoCompact" = "Rodadas antigas são auto-resumidas a 75% da janela de contexto.";
-"help.chat.promptCache" = "Cache de prompt Anthropic reduz custo repetido em rodadas de m\u{00FAltiplos} passos.";
+"help.chat.promptCache" = "Cache de prompt Anthropic reduz custo repetido em rodadas de múltiplos passos.";
 "help.chat.approvalPolicy" = "Um seletor de Política de Aprovação controla modo de plano, auto-commit e nível bash.";
 
 // MARK: - ZionMap .chat entries (P13 T11)
@@ -2757,7 +2757,7 @@
 "map.chat.autoCompact.title" = "Auto-compactar";
 "map.chat.autoCompact.description" = "A 75% da janela de contexto, rodadas mais antigas são resumidas por um modelo barato (Haiku / 4o-mini / Flash). Anexos fixados são preservados literalmente.";
 "map.chat.promptCache.title" = "Cache de prompt";
-"map.chat.promptCache.description" = "Cache de prompt Anthropic via cache_control: ephemeral no bloco de sistema. Loops de m\u{00FAltiplos} passos pagam apenas pela nova rodada após a primeira.";
+"map.chat.promptCache.description" = "Cache de prompt Anthropic via cache_control: ephemeral no bloco de sistema. Loops de múltiplos passos pagam apenas pela nova rodada após a primeira.";
 "map.chat.approvalPolicy.title" = "Política de Aprovação";
 "map.chat.approvalPolicy.description" = "Um seletor (Manual / Automático seguro / Auto / YOLO) controla modo de plano, auto-commit e nível bash. Configurações legadas migram automaticamente.";
 "chat.mcp.section.title" = "Servidores MCP";
