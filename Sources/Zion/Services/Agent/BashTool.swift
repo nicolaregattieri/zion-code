@@ -77,6 +77,13 @@ actor BashTool {
         // 2. Always-blocked patterns (any tier including fullAccess)
         try Self.checkAlwaysBlocked(command: command)
 
+        // 2b. Reject shell metacharacters that defeat the first-token allowlist.
+        // Without this, `git status; rm -rf ~` would pass the first-token gate
+        // because the first token is `git`, then `/bin/sh -c` would happily run
+        // both halves. Same for `&&`, `||`, `|`, command substitution, env-var
+        // expansion that escapes the repo via $HOME, etc.
+        try Self.checkShellInjection(command: command)
+
         // 3. Parse first token
         let trimmed = command.trimmingCharacters(in: .whitespaces)
         let firstToken = trimmed.components(separatedBy: .whitespaces).first ?? ""
@@ -127,6 +134,35 @@ actor BashTool {
     }
 
     // MARK: - Always-Blocked Patterns
+
+    // Pre-release security hotfix (P14.5): refuse shell metacharacters that bypass
+    // the first-token allowlist. The command is executed via `/bin/sh -c`, so any
+    // unstripped chain (`;`, `&&`, `||`, `|`), command substitution (`$()`, backticks),
+    // env-var escape (`$HOME`, `$PATH`), or redirection (`>`, `<`, `>>`) reaches the
+    // shell unchecked. Reject those upfront with a clear error so users hit a wall
+    // before any subprocess spawns.
+    private static let bannedShellMetachars: [String] = [
+        ";", "&&", "||", "|", "`", "$(", "${", ">>", "<", "$HOME", "$(",
+        "&", ">"
+    ]
+
+    private static func checkShellInjection(command: String) throws {
+        // Allow `>` only when used inside arguments that don't start a redirection.
+        // The conservative path here is to refuse any of the listed substrings.
+        for pattern in bannedShellMetachars {
+            if command.contains(pattern) {
+                throw BashError.blocked(reason: "shell metacharacter rejected (`\(pattern)`)")
+            }
+        }
+        // Reject `$variable` style env expansion entirely (would escape repoURL via $HOME etc.)
+        if command.range(of: #"\$[A-Z_]"#, options: .regularExpression) != nil {
+            throw BashError.blocked(reason: "environment-variable expansion rejected")
+        }
+        // Reject leading tilde paths beyond the very first character
+        if command.contains(" ~") || command.contains("=~") {
+            throw BashError.blocked(reason: "tilde path-expansion rejected")
+        }
+    }
 
     private static func checkAlwaysBlocked(command: String) throws {
         let lower = command.lowercased()

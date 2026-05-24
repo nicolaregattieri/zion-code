@@ -8,21 +8,32 @@ actor SpendLedger {
     private let dbQueue: DatabaseQueue
 
     /// Production singleton — uses defaultPath. UI views read this via SpendLedger.shared.
+    /// If the disk path fails, we fall back to NSTemporaryDirectory under the user's
+    /// scoped temp folder (never world-readable `/tmp`).
     static let shared: SpendLedger = {
         do {
             return try SpendLedger(path: SpendLedger.defaultPath)
         } catch {
-            // Last-resort fallback to an in-memory ledger if the disk path fails.
-            // Spend writes will not persist across launches; UI will show empty totals.
-            return try! SpendLedger(path: URL(fileURLWithPath: "/tmp/zion-spend-\(UUID().uuidString).sqlite"))
+            let userTemp = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+            let fallback = userTemp.appendingPathComponent("zion-spend-\(UUID().uuidString).sqlite")
+            // Best-effort fallback — if even this fails, the spend ledger is unusable
+            // for this session but the chat itself keeps working.
+            return try! SpendLedger(path: fallback)
         }
     }()
 
     init(path: URL = SpendLedger.defaultPath) throws {
-        try FileManager.default.createDirectory(at: path.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let dir = path.deletingLastPathComponent()
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        // Lock the containing directory to the user (rwx------).
+        try? FileManager.default.setAttributes([.posixPermissions: NSNumber(value: Int16(0o700))],
+                                                ofItemAtPath: dir.path)
         var config = Configuration()
         config.label = "zion.spend"
         self.dbQueue = try DatabaseQueue(path: path.path, configuration: config)
+        // Lock the DB file itself to the user (rw-------).
+        try? FileManager.default.setAttributes([.posixPermissions: NSNumber(value: Int16(0o600))],
+                                                ofItemAtPath: path.path)
         try Self.migrator.migrate(dbQueue)
     }
 

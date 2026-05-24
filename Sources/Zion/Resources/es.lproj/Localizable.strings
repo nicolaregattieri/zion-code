@@ -2770,7 +2770,7 @@
 // MARK: - HelpSheet .chat bullets (P13 T11)
 "help.chat.tokenBudget" = "La ventana de historial consciente de tokens respeta el tamaño de contexto del modelo activo.";
 "help.chat.autoCompact" = "Los turnos antiguos se auto-resumen al 75% de la ventana de contexto.";
-"help.chat.promptCache" = "El caché de prompts de Anthropic reduce el costo repetido en turnos de m\u{00FAltiples} pasos.";
+"help.chat.promptCache" = "El caché de prompts de Anthropic reduce el costo repetido en turnos de múltiples pasos.";
 "help.chat.approvalPolicy" = "Un selector de Política de Aprobación controla el modo de plan, auto-commit y nivel bash.";
 
 // MARK: - ZionMap .chat entries (P13 T11)
@@ -2779,7 +2779,7 @@
 "map.chat.autoCompact.title" = "Auto-compactar";
 "map.chat.autoCompact.description" = "Al 75% de la ventana de contexto, los turnos más antiguos se resumen mediante un modelo económico (Haiku / 4o-mini / Flash). Los archivos adjuntos fijados se preservan literalmente.";
 "map.chat.promptCache.title" = "Caché de prompts";
-"map.chat.promptCache.description" = "Caché de prompts de Anthropic mediante cache_control: ephemeral en el bloque de sistema. Los bucles de m\u{00FAltiples} pasos solo pagan por la nueva ronda después de la primera.";
+"map.chat.promptCache.description" = "Caché de prompts de Anthropic mediante cache_control: ephemeral en el bloque de sistema. Los bucles de múltiples pasos solo pagan por la nueva ronda después de la primera.";
 "map.chat.approvalPolicy.title" = "Política de Aprobación";
 "map.chat.approvalPolicy.description" = "Un selector (Manual / Automático seguro / Auto / YOLO) controla el modo de plan, auto-commit y nivel bash. Las configuraciones heredadas migran automáticamente.";
 "chat.mcp.section.title" = "Servidores MCP";
