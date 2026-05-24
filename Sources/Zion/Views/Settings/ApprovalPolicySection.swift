@@ -46,19 +46,19 @@ struct ApprovalPolicySection: View {
         HStack {
             Text(L10n("chat.approvalPolicy.advanced.bashTier"))
             Spacer()
-            Text(policy.bashTier.rawValue)
+            Text(policy.bashTier.label)
                 .foregroundStyle(.secondary)
         }
         HStack {
             Text(L10n("chat.approvalPolicy.advanced.autoCommit"))
             Spacer()
-            Text(policy.autoCommit ? L10n("Sim") : L10n("Não"))
+            Text(policy.autoCommit ? L10n("chat.bool.yes") : L10n("chat.bool.no"))
                 .foregroundStyle(.secondary)
         }
         HStack {
             Text(L10n("chat.approvalPolicy.advanced.asksDestructive"))
             Spacer()
-            Text(policy.asksDestructive ? L10n("Sim") : L10n("Não"))
+            Text(policy.asksDestructive ? L10n("chat.bool.yes") : L10n("chat.bool.no"))
                 .foregroundStyle(.secondary)
         }
     }

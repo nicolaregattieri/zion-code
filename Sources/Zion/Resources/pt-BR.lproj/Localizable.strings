@@ -2709,6 +2709,18 @@
 "chat.error.budgetExceeded.banner" = "Mensagem muito longa \u{2014} tokens estimados excedem a janela de contexto. Toque em Enviar assim mesmo para prosseguir, ou encurte a entrada.";
 
 // MARK: - Approval Policy (P13 T11)
+"chat.bool.yes" = "Sim";
+"chat.bool.no" = "N\u{00E3}o";
+"chat.settings.tab.intro" = "Estas configura\u{00E7}\u{00F5}es se aplicam apenas ao Zion Talks. Para a\u{00E7}\u{00F5}es internas de IA (mensagens de commit, descri\u{00E7}\u{00F5}es de PR, blame explainer), consulte Assistente IA.";
+"chat.settings.general" = "Geral";
+"chat.settings.toolsEnabled" = "Ativar uso de ferramentas";
+"chat.settings.autoInject" = "Injetar contexto automaticamente";
+"chat.settings.toolBridge" = "Ponte de Ferramentas";
+"chat.settings.toolBridge.toggle" = "Ativar ponte de ferramentas";
+"chat.settings.routingPolicy" = "Pol\u{00ED}tica de Roteamento";
+"chat.settings.cliFailover" = "Fallback de CLI de Assinatura";
+"chat.settings.cliFailover.toggle" = "Permitir fallback de CLI";
+"chat.settings.cliFailover.warning" = "Ativar isto permite que o chat use uma CLI de assinatura (Claude Code, Codex) quando o provedor selecionado n\u{00E3}o estiver dispon\u{00ED}vel. Verifique os termos da sua assinatura antes de ativar.";
 "chat.approvalPolicy.section.title" = "Pol\u{00ED}tica de Aprova\u{00E7}\u{00E3}o";
 "chat.approvalPolicy.picker.label" = "Modo";
 "chat.approvalPolicy.manual" = "Manual";

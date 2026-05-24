@@ -2731,6 +2731,18 @@
 "chat.error.budgetExceeded.banner" = "Mensaje demasiado largo \u{2014} los tokens estimados superan la ventana de contexto. Toca Enviar de todos modos para continuar, o acorta la entrada.";
 
 // MARK: - Approval Policy (P13 T11)
+"chat.bool.yes" = "S\u{00ED}";
+"chat.bool.no" = "No";
+"chat.settings.tab.intro" = "Estos ajustes aplican solo al chat de Zion Talks. Para acciones internas de IA (mensajes de commit, descripciones de PR, blame explainer), consulta Asistente IA.";
+"chat.settings.general" = "General";
+"chat.settings.toolsEnabled" = "Activar uso de herramientas";
+"chat.settings.autoInject" = "Inyectar contexto autom\u{00E1}ticamente";
+"chat.settings.toolBridge" = "Puente de Herramientas";
+"chat.settings.toolBridge.toggle" = "Activar puente de herramientas";
+"chat.settings.routingPolicy" = "Pol\u{00ED}tica de Enrutamiento";
+"chat.settings.cliFailover" = "Fallback de CLI de Suscripci\u{00F3}n";
+"chat.settings.cliFailover.toggle" = "Permitir fallback de CLI";
+"chat.settings.cliFailover.warning" = "Activar esto permite que el chat use una CLI de suscripci\u{00F3}n (Claude Code, Codex) cuando el proveedor seleccionado no est\u{00E9} disponible. Revisa los t\u{00E9}rminos de tu suscripci\u{00F3}n antes de activar.";
 "chat.approvalPolicy.section.title" = "Pol\u{00ED}tica de Aprobaci\u{00F3}n";
 "chat.approvalPolicy.picker.label" = "Modo";
 "chat.approvalPolicy.manual" = "Manual";

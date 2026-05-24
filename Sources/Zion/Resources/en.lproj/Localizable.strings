@@ -2707,6 +2707,18 @@
 "chat.error.budgetExceeded.banner" = "Message too long \u{2014} estimated tokens exceed context window. Tap Send anyway to proceed, or shorten your input.";
 
 // MARK: - Approval Policy (P13 T11)
+"chat.bool.yes" = "Yes";
+"chat.bool.no" = "No";
+"chat.settings.tab.intro" = "Settings here apply only to the Zion Talks chat. For built-in AI actions (commit messages, PR descriptions, blame explainer), see AI Assistant.";
+"chat.settings.general" = "General";
+"chat.settings.toolsEnabled" = "Enable tool use";
+"chat.settings.autoInject" = "Auto-inject context";
+"chat.settings.toolBridge" = "Tool Bridge";
+"chat.settings.toolBridge.toggle" = "Enable tool bridge";
+"chat.settings.routingPolicy" = "Routing Policy";
+"chat.settings.cliFailover" = "Subscription CLI Failover";
+"chat.settings.cliFailover.toggle" = "Allow CLI failover";
+"chat.settings.cliFailover.warning" = "Enabling this allows the chat to fall back to a subscription CLI (Claude Code, Codex) when the selected provider is unavailable. Check your subscription terms before enabling.";
 "chat.approvalPolicy.section.title" = "Approval Policy";
 "chat.approvalPolicy.picker.label" = "Mode";
 "chat.approvalPolicy.manual" = "Manual";
