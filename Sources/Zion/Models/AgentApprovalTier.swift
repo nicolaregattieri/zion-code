@@ -10,6 +10,15 @@ enum AgentApprovalTier: String, CaseIterable, Codable {
     case workspaceWrite = "workspaceWrite"
     /// Agent runs tools freely without per-action approval. User is notified after each step.
     case fullAccess = "fullAccess"
+
+    /// L10n-aware display label for settings UI.
+    var label: String {
+        switch self {
+        case .readOnly:       return L10n("chat.agent.tier.readOnly")
+        case .workspaceWrite: return L10n("chat.agent.tier.workspaceWrite")
+        case .fullAccess:     return L10n("chat.agent.tier.fullAccess")
+        }
+    }
 }
 
 // MARK: - UserDefaults persistence + TaskLocal override

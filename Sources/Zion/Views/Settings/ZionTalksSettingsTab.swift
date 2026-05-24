@@ -1,16 +1,9 @@
 import SwiftUI
 
-// MARK: - TODO(T10): L10n — all string literals here need L10n() once keys are added in T10
-
 struct ZionTalksSettingsTab: View {
-    @AppStorage("chat.cliAllowEdits") private var cliAllowEdits: Bool = false
     @AppStorage("chat.toolsEnabled") private var toolsEnabled: Bool = true
     @AppStorage("chat.autoInject") private var autoInject: Bool = true
     @AppStorage("chat.providers.toolBridge") private var toolBridge: Bool = true
-    @AppStorage("chat.plan.mode") private var planModeRaw: String = "planFirst"
-    @AppStorage("chat.editHarness.enabled") private var editHarnessEnabled: Bool = true
-    @AppStorage("chat.editHarness.autoCommit") private var editHarnessAutoCommit: Bool = true
-    @AppStorage("chat.editHarness.preferNativeTool") private var editHarnessPreferNativeTool: Bool = true
     @AppStorage("chat.routing.subscriptionFailover") private var subscriptionFailover: Bool = false
     @AppStorage(ZionTalksAppearance.fontSizeKey) private var fontSizePx: Int = ZionTalksAppearance.defaultFontSizePx
     @AppStorage(ZionTalksAppearance.lineSpacingKey) private var lineSpacingPx: Int = ZionTalksAppearance.defaultLineSpacingPx
@@ -18,14 +11,16 @@ struct ZionTalksSettingsTab: View {
     var body: some View {
         Form {
             Section {
-                Text("Settings here apply only to the Zion Talks chat. For built-in AI actions (commit messages, PR descriptions, blame explainer), see AI Assistant.") // MARK: - TODO(T10): L10n
+                Text(L10n("chat.settings.tab.intro"))
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
             }
 
-            Section("General") { // MARK: - TODO(T10): L10n
-                Toggle("Enable tool use", isOn: $toolsEnabled) // MARK: - TODO(T10): L10n
-                Toggle("Auto-inject context", isOn: $autoInject) // MARK: - TODO(T10): L10n
+            ApprovalPolicySection()
+
+            Section(L10n("chat.settings.general")) {
+                Toggle(L10n("chat.settings.toolsEnabled"), isOn: $toolsEnabled)
+                Toggle(L10n("chat.settings.autoInject"), isOn: $autoInject)
             }
 
             Section(L10n("chat.settings.appearance")) {
@@ -52,36 +47,23 @@ struct ZionTalksSettingsTab: View {
                     .foregroundStyle(.secondary)
             }
 
-            Section("File Edits") { // MARK: - TODO(T10): L10n
-                Toggle("Allow CLI file edits", isOn: $cliAllowEdits) // MARK: - TODO(T10): L10n
-                Toggle("Enable edit harness", isOn: $editHarnessEnabled) // MARK: - TODO(T10): L10n
-                Toggle("Auto-commit edits", isOn: $editHarnessAutoCommit) // MARK: - TODO(T10): L10n
-                Toggle("Prefer native diff tool", isOn: $editHarnessPreferNativeTool) // MARK: - TODO(T10): L10n
-            }
-
-            Section("Plan Mode") { // MARK: - TODO(T10): L10n
-                Picker("Plan mode", selection: $planModeRaw) { // MARK: - TODO(T10): L10n
-                    Text("Plan first").tag("planFirst") // MARK: - TODO(T10): L10n
-                    Text("Auto-apply").tag("autoApply") // MARK: - TODO(T10): L10n
-                }
-                .pickerStyle(.segmented)
-            }
-
             AgenticSettingsSection()
 
             SmartContextSettingsSection()
 
-            Section("Tool Bridge") { // MARK: - TODO(T10): L10n
-                Toggle("Enable tool bridge", isOn: $toolBridge) // MARK: - TODO(T10): L10n
+            ContextBudgetSection()
+
+            Section(L10n("chat.settings.toolBridge")) {
+                Toggle(L10n("chat.settings.toolBridge.toggle"), isOn: $toolBridge)
             }
 
-            Section("Routing Policy") { // MARK: - TODO(T10): L10n
+            Section(L10n("chat.settings.routingPolicy")) {
                 RoutingPolicyEditor()
             }
 
-            Section("Subscription CLI Failover") { // MARK: - TODO(T10): L10n
-                Toggle("Allow CLI failover", isOn: $subscriptionFailover) // MARK: - TODO(T10): L10n
-                Text("Enabling this allows the chat to fall back to a subscription CLI (Claude Code, Codex) when the selected provider is unavailable. Check your subscription terms before enabling.") // MARK: - TODO(T10): L10n
+            Section(L10n("chat.settings.cliFailover")) {
+                Toggle(L10n("chat.settings.cliFailover.toggle"), isOn: $subscriptionFailover)
+                Text(L10n("chat.settings.cliFailover.warning"))
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(DesignSystem.Colors.warning)
             }

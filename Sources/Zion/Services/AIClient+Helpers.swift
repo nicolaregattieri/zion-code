@@ -234,7 +234,35 @@ extension AIClient {
 
     // MARK: - Request Body Builders
 
+    // MARK: - Prompt Caching
+
+    /// Returns the value for the Anthropic `system` field.
+    ///
+    /// When `cacheEnabled` is true and `text` is non-empty, emits the block-array form with
+    /// `cache_control: { type: "ephemeral" }` so Anthropic prompt caching engages on the
+    /// stable system prompt (largest single-turn token budget in Zion).
+    ///
+    /// When `cacheEnabled` is false or `text` is empty, falls back to the plain string form
+    /// so non-caching callers and tests that verify the uncached path work without changes.
+    static func anthropicSystemField(_ text: String, cacheEnabled: Bool) -> Any {
+        if cacheEnabled && !text.isEmpty {
+            return [
+                ["type": "text", "text": text, "cache_control": ["type": "ephemeral"]]
+            ]
+        } else {
+            return text
+        }
+    }
+
+    /// Whether Anthropic prompt caching is enabled.
+    /// Reads `chat.cache.enabled` from UserDefaults; defaults to `true`.
+    static var anthropicCacheEnabled: Bool {
+        UserDefaults.standard.object(forKey: "chat.cache.enabled") as? Bool ?? true
+    }
+
     static func openAIRequestBody(payload: AIPromptPayload, maxTokens: Int, modelID: String) -> [String: Any] {
+        // System message is placed at index 0 so OpenAI automatic prefix caching engages
+        // for prefixes >= 1024 tokens (requires consistent ordering across requests).
         [
             "model": modelID,
             "messages": [
@@ -246,10 +274,11 @@ extension AIClient {
     }
 
     static func anthropicRequestBody(payload: AIPromptPayload, maxTokens: Int, modelID: String) -> [String: Any] {
-        [
+        let cacheEnabled = anthropicCacheEnabled
+        return [
             "model": modelID,
             "max_tokens": maxTokens,
-            "system": payload.systemInstructions,
+            "system": anthropicSystemField(payload.systemInstructions, cacheEnabled: cacheEnabled),
             "messages": [
                 ["role": "user", "content": renderUserMessage(from: payload)],
             ],

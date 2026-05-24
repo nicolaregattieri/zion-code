@@ -126,6 +126,23 @@ struct RepoMapBuilder: Sendable {
         return accumulated
     }
 
+    // MARK: - autoSeed
+
+    /// Produces a compact, cache-friendly Markdown outline of the repo.
+    /// Used by ChatService at session boot + every turn (cached by Anthropic post-warm).
+    /// This is a thin semantic wrapper over `markdown(...)` with sensible defaults.
+    /// - Parameters:
+    ///   - repoURL: reserved for future scoping (currently unused)
+    ///   - tokenBudget: hard cap on output (default 1500 tokens)
+    func autoSeed(repoURL: URL? = nil, tokenBudget: Int = 1500) async throws -> String {
+        try await markdown(
+            focusFiles: [],
+            historyFiles: [],
+            mentionedIdentifiers: [],
+            tokenBudget: tokenBudget
+        )
+    }
+
     // MARK: - Private
 
     private func formatSection(path: String, symbols: [SymbolRow]) -> String {

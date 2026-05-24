@@ -27,8 +27,15 @@ struct ResolvedMention: Sendable {
 // MARK: - MentionPayload
 
 struct MentionPayload: Sendable {
-    /// Ready-to-prepend Markdown block; empty string if no mentions found.
-    let systemContext: String
+    /// Stable, cache-friendly context (repomap auto-seed + git header).
+    /// Should be byte-identical across turns when the repo state is unchanged.
+    /// Filled by ChatService at send time; MentionResolver always leaves this empty.
+    let stableContext: String
+
+    /// Volatile, per-turn context (resolved @mention blocks + dynamic additions).
+    /// Changes every turn — must NOT be marked with `cache_control`.
+    let volatileContext: String
+
     /// Total byte count across all resolved mentions.
     let totalBytes: Int
     /// Per-file breakdown: (path, bytes). May have multiple entries for @folder.
@@ -36,8 +43,16 @@ struct MentionPayload: Sendable {
     /// All resolved mentions in order.
     let mentions: [ResolvedMention]
 
+    /// Back-compat: concatenated for callers not yet rewired to use stable/volatile.
+    var systemContext: String {
+        if stableContext.isEmpty { return volatileContext }
+        if volatileContext.isEmpty { return stableContext }
+        return stableContext + "\n\n" + volatileContext
+    }
+
     static let empty = MentionPayload(
-        systemContext: "",
+        stableContext: "",
+        volatileContext: "",
         totalBytes: 0,
         perFileBreakdown: [],
         mentions: []

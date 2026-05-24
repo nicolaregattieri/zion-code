@@ -148,7 +148,11 @@ struct HelpSheet: View {
                 "help.chat.folderMention",
                 "help.chat.selectionMention",
                 "help.chat.webMention",
-                "help.chat.multiFileDiff"
+                "help.chat.multiFileDiff",
+                "help.chat.tokenBudget",
+                "help.chat.autoCompact",
+                "help.chat.promptCache",
+                "help.chat.approvalPolicy"
             ]
         }
     }

@@ -2704,3 +2704,57 @@
 "map.chat.webMention.description" = "Type @web https://... to fetch a page and attach its plain-text content. Respects robots.txt; large pages are truncated to the byte limit.";
 "map.chat.multiFileDiff.title" = "Multi-file diff card";
 "map.chat.multiFileDiff.description" = "When the model proposes changes to \u{2265}2 files, a summary card appears above the individual diff previews. Review All, Approve All, or Reject All in one tap.";
+"chat.error.budgetExceeded.banner" = "Message too long \u{2014} estimated tokens exceed context window. Tap Send anyway to proceed, or shorten your input.";
+
+// MARK: - Approval Policy (P13 T11)
+"chat.bool.yes" = "Yes";
+"chat.bool.no" = "No";
+"chat.settings.tab.intro" = "Settings here apply only to the Zion Talks chat. For built-in AI actions (commit messages, PR descriptions, blame explainer), see AI Assistant.";
+"chat.settings.general" = "General";
+"chat.settings.toolsEnabled" = "Enable tool use";
+"chat.settings.autoInject" = "Auto-inject context";
+"chat.settings.toolBridge" = "Tool Bridge";
+"chat.settings.toolBridge.toggle" = "Enable tool bridge";
+"chat.settings.routingPolicy" = "Routing Policy";
+"chat.settings.cliFailover" = "Subscription CLI Failover";
+"chat.settings.cliFailover.toggle" = "Allow CLI failover";
+"chat.settings.cliFailover.warning" = "Enabling this allows the chat to fall back to a subscription CLI (Claude Code, Codex) when the selected provider is unavailable. Check your subscription terms before enabling.";
+"chat.approvalPolicy.section.title" = "Approval Policy";
+"chat.approvalPolicy.picker.label" = "Mode";
+"chat.approvalPolicy.manual" = "Manual";
+"chat.approvalPolicy.manual.description" = "Ask before every tool call or file edit.";
+"chat.approvalPolicy.autoSafe" = "Auto-safe";
+"chat.approvalPolicy.autoSafe.description" = "Auto-apply read-only + safe write tools. Ask for destructive ops + bash mutations.";
+"chat.approvalPolicy.auto" = "Auto";
+"chat.approvalPolicy.auto.description" = "Auto-apply every tool except always-blocked patterns.";
+"chat.approvalPolicy.yolo" = "YOLO";
+"chat.approvalPolicy.yolo.description" = "Full access. Skip every confirmation. Use only on repos you trust.";
+"chat.approvalPolicy.yolo.warning" = "YOLO mode is active. The agent can run any shell command and edit any file without confirmation.";
+"chat.approvalPolicy.advanced" = "Advanced";
+"chat.approvalPolicy.advanced.bashTier" = "Bash tier";
+"chat.approvalPolicy.advanced.autoCommit" = "Auto-commit edits";
+"chat.approvalPolicy.advanced.asksDestructive" = "Ask before destructive";
+
+// MARK: - Context Budget (P13 T11)
+"chat.contextBudget.section.title" = "Context Budget";
+"chat.contextBudget.responseReserve" = "Response reserve";
+"chat.contextBudget.responseReserve.hint" = "Tokens kept free for the model\u{2019}s reply. Larger reserve = shorter input window.";
+
+// MARK: - Compaction banner (P13 T11)
+"chat.banner.compactDone" = "Compacted %@ older turns to fit context.";
+
+// MARK: - HelpSheet .chat bullets (P13 T11)
+"help.chat.tokenBudget" = "Token-aware history window respects the active model\u{2019}s context size.";
+"help.chat.autoCompact" = "Older turns auto-summarize at 75% of the context window.";
+"help.chat.promptCache" = "Anthropic prompt caching cuts repeat cost on multi-step turns.";
+"help.chat.approvalPolicy" = "One Approval Policy switch controls plan-mode, auto-commit, and bash tier.";
+
+// MARK: - ZionMap .chat entries (P13 T11)
+"map.chat.tokenBudget.title" = "Token-aware history";
+"map.chat.tokenBudget.description" = "The history window is sized to the active model\u{2019}s context limit. Oldest assistant prose is dropped first; pinned @file / @selection blocks survive trimming.";
+"map.chat.autoCompact.title" = "Auto-compact";
+"map.chat.autoCompact.description" = "At 75% of the context window, older turns are summarized via a cheap model (Haiku / 4o-mini / Flash). Pinned attachments are preserved verbatim.";
+"map.chat.promptCache.title" = "Prompt caching";
+"map.chat.promptCache.description" = "Anthropic prompt caching via cache_control: ephemeral on the system block. Multi-step loops pay only for the new round after the first turn.";
+"map.chat.approvalPolicy.title" = "Approval Policy";
+"map.chat.approvalPolicy.description" = "One picker (Manual / Auto-safe / Auto / YOLO) controls plan-mode, auto-commit, and bash tier. Legacy approval tier settings migrate automatically.";

@@ -168,6 +168,27 @@ extension AIClient {
         ]
     }
 
+    // MARK: - Context Caching (stub)
+
+    /// TODO(P14): Wire explicit Gemini context caching API.
+    ///
+    /// Gemini supports explicit context caching via `models.cachedContents.create(...)` followed
+    /// by reusing the `cacheId` in subsequent `generateContent` requests via `cachedContent: "name"`.
+    /// This method is a placeholder — full implementation is deferred to Phase 14 when the stable
+    /// context pipeline is complete and we have enough token volume to benefit from cache billing.
+    ///
+    /// - Parameters:
+    ///   - payload: The prompt payload whose `stableContext` should be cached.
+    ///   - apiKey: Gemini API key.
+    ///   - model: Model identifier (e.g. "gemini-1.5-pro").
+    /// - Returns: `nil` always until the implementation is wired.
+    func enableGeminiContextCaching(payload: AIPromptPayload, apiKey: String, model: String) -> String? {
+        // TODO(P14): call `POST /v1beta/cachedContents` with payload.stableContext,
+        // store the returned cache name (e.g. "cachedContents/xyz"), and pass it as
+        // `cachedContent: "cachedContents/xyz"` in subsequent generateContent requests.
+        return nil
+    }
+
     // MARK: - SSE Parser (internal for testing)
 
     /// Parses Gemini SSE response text into a `GeminiStepOutcome`.
