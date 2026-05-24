@@ -3,7 +3,6 @@ import SwiftUI
 // MARK: - ApprovalPolicySection
 // Embedded by ZionTalksSettingsTab inside its Form.
 // Returns a Section — do NOT wrap in Form.
-// MARK: - TODO(T11): L10n — new keys below need locale entries
 
 struct ApprovalPolicySection: View {
     @AppStorage(ApprovalPolicy.storageKey) private var policyRaw: String = ApprovalPolicy.autoSafe.rawValue

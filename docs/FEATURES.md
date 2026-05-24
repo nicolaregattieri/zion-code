@@ -556,3 +556,18 @@ Closes the Cursor-parity gap for vibe coding while staying provider-agnostic.
 - **Multi-file diff summary** — When the agent changes ≥2 files, a single card surfaces the file list + Approve all / Reject all / Review all actions.
 - **Settings → Zion Talks → Smart Context** — Toggle indexing, max files per @folder, max bytes per @file, token-confirm threshold, stats footer.
 - **Cross-provider universal** — Works with Anthropic, OpenAI, Gemini, local models with tool calling, ReAct fallback for older models, Claude CLI and Codex CLI passthrough.
+
+### Context Management (beta)
+
+Cursor-parity context management on top of the agentic loop.
+
+- **Token-aware history window** — Replaces the legacy 10-message cap. Drops oldest assistant prose first; pinned `@file` / `@selection` blocks survive.
+- **Auto-compact at 75% of context window** — Older turns summarized via a cheap model (Haiku / 4o-mini / Flash), pinned attachments preserved verbatim.
+- **Anthropic prompt caching** — `cache_control: ephemeral` on the system block. Multi-step loops pay only for the new round.
+- **OpenAI auto-cache reorder** — System + tools at the head so automatic prefix caching engages.
+- **Tool-result eviction in agentic loop** — Old `tool_result` blocks rewritten as `[elided: N bytes — earlier round]` once newer rounds exist.
+- **Pre-send budget gate** — Banner blocks send when the request would exceed the model's window; user can override with `send anyway` or run a manual compaction.
+- **Repomap auto-seed** — Top-K Markdown outline (~1.5k tokens) injected on every turn as cache-friendly system context.
+- **Unified Approval Policy** — One picker (Manual / Auto-safe / Auto / YOLO) controls plan-mode, auto-commit, and bash tier. Legacy settings migrate automatically.
+- **@web excerpt mode** — Pages > 32 KB chunk + BM25-lite rank against the user prompt; only top excerpts are injected.
+- **ByteSafe truncation** — UTF-8 safe; no more half-emoji / half-CJK in `@file` or `@folder` payloads.

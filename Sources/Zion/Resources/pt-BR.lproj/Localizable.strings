@@ -2706,3 +2706,45 @@
 "map.chat.webMention.description" = "Digite @web https://... para buscar uma página e anexar seu conteúdo em texto simples. Respeita robots.txt; páginas grandes são truncadas ao limite de bytes.";
 "map.chat.multiFileDiff.title" = "Card de diff multi-arquivo";
 "map.chat.multiFileDiff.description" = "Quando o modelo propõe alterações em \u{2265}2 arquivos, um card de resumo aparece acima dos previews individuais. Revise tudo, Aprove tudo ou Rejeite tudo em um toque.";
+"chat.error.budgetExceeded.banner" = "Mensagem muito longa \u{2014} tokens estimados excedem a janela de contexto. Toque em Enviar assim mesmo para prosseguir, ou encurte a entrada.";
+
+// MARK: - Approval Policy (P13 T11)
+"chat.approvalPolicy.section.title" = "Pol\u{00ED}tica de Aprova\u{00E7}\u{00E3}o";
+"chat.approvalPolicy.picker.label" = "Modo";
+"chat.approvalPolicy.manual" = "Manual";
+"chat.approvalPolicy.manual.description" = "Perguntar antes de cada chamada de ferramenta ou edi\u{00E7}\u{00E3}o de arquivo.";
+"chat.approvalPolicy.autoSafe" = "Autom\u{00E1}tico seguro";
+"chat.approvalPolicy.autoSafe.description" = "Aplicar automaticamente ferramentas somente-leitura + escrita segura. Perguntar para opera\u{00E7}\u{00F5}es destrutivas + muta\u{00E7}\u{00F5}es bash.";
+"chat.approvalPolicy.auto" = "Auto";
+"chat.approvalPolicy.auto.description" = "Aplicar automaticamente cada ferramenta exceto padr\u{00F5}es sempre bloqueados.";
+"chat.approvalPolicy.yolo" = "YOLO";
+"chat.approvalPolicy.yolo.description" = "Acesso total. Pular cada confirma\u{00E7}\u{00E3}o. Use apenas em reposit\u{00F3}rios confi\u{00E1}veis.";
+"chat.approvalPolicy.yolo.warning" = "Modo YOLO ativo. O agente pode executar qualquer comando shell e editar qualquer arquivo sem confirma\u{00E7}\u{00E3}o.";
+"chat.approvalPolicy.advanced" = "Avan\u{00E7}ado";
+"chat.approvalPolicy.advanced.bashTier" = "N\u{00ED}vel bash";
+"chat.approvalPolicy.advanced.autoCommit" = "Auto-commit de edi\u{00E7}\u{00F5}es";
+"chat.approvalPolicy.advanced.asksDestructive" = "Perguntar antes de destrutivo";
+
+// MARK: - Context Budget (P13 T11)
+"chat.contextBudget.section.title" = "Or\u{00E7}amento de Contexto";
+"chat.contextBudget.responseReserve" = "Reserva de resposta";
+"chat.contextBudget.responseReserve.hint" = "Tokens reservados para a resposta do modelo. Reserva maior = janela de entrada menor.";
+
+// MARK: - Compaction banner (P13 T11)
+"chat.banner.compactDone" = "Compactadas %@ rodadas antigas para caber no contexto.";
+
+// MARK: - HelpSheet .chat bullets (P13 T11)
+"help.chat.tokenBudget" = "Janela de hist\u{00F3}rico consciente de tokens respeita o tamanho de contexto do modelo ativo.";
+"help.chat.autoCompact" = "Rodadas antigas s\u{00E3}o auto-resumidas a 75% da janela de contexto.";
+"help.chat.promptCache" = "Cache de prompt Anthropic reduz custo repetido em rodadas de m\u{00FAltiplos} passos.";
+"help.chat.approvalPolicy" = "Um seletor de Pol\u{00ED}tica de Aprova\u{00E7}\u{00E3}o controla modo de plano, auto-commit e n\u{00ED}vel bash.";
+
+// MARK: - ZionMap .chat entries (P13 T11)
+"map.chat.tokenBudget.title" = "Hist\u{00F3}rico consciente de tokens";
+"map.chat.tokenBudget.description" = "A janela de hist\u{00F3}rico \u{00E9} dimensionada ao limite de contexto do modelo ativo. O texto mais antigo do assistente \u{00E9} descartado primeiro; blocos @file / @selection fixados sobrevivem ao corte.";
+"map.chat.autoCompact.title" = "Auto-compactar";
+"map.chat.autoCompact.description" = "A 75% da janela de contexto, rodadas mais antigas s\u{00E3}o resumidas por um modelo barato (Haiku / 4o-mini / Flash). Anexos fixados s\u{00E3}o preservados literalmente.";
+"map.chat.promptCache.title" = "Cache de prompt";
+"map.chat.promptCache.description" = "Cache de prompt Anthropic via cache_control: ephemeral no bloco de sistema. Loops de m\u{00FAltiplos} passos pagam apenas pela nova rodada ap\u{00F3}s a primeira.";
+"map.chat.approvalPolicy.title" = "Pol\u{00ED}tica de Aprova\u{00E7}\u{00E3}o";
+"map.chat.approvalPolicy.description" = "Um seletor (Manual / Autom\u{00E1}tico seguro / Auto / YOLO) controla modo de plano, auto-commit e n\u{00ED}vel bash. Configura\u{00E7}\u{00F5}es legadas migram automaticamente.";

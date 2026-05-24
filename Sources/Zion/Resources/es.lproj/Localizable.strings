@@ -2728,3 +2728,45 @@
 "map.chat.webMention.description" = "Escribe @web https://... para obtener una página y adjuntar su contenido en texto plano. Respeta robots.txt; las páginas grandes se truncan al límite de bytes.";
 "map.chat.multiFileDiff.title" = "Tarjeta de diff multi-archivo";
 "map.chat.multiFileDiff.description" = "Cuando el modelo propone cambios en \u{2265}2 archivos, aparece una tarjeta de resumen sobre las vistas previas individuales. Revisa todo, Aprueba todo o Rechaza todo con un toque.";
+"chat.error.budgetExceeded.banner" = "Mensaje demasiado largo \u{2014} los tokens estimados superan la ventana de contexto. Toca Enviar de todos modos para continuar, o acorta la entrada.";
+
+// MARK: - Approval Policy (P13 T11)
+"chat.approvalPolicy.section.title" = "Pol\u{00ED}tica de Aprobaci\u{00F3}n";
+"chat.approvalPolicy.picker.label" = "Modo";
+"chat.approvalPolicy.manual" = "Manual";
+"chat.approvalPolicy.manual.description" = "Preguntar antes de cada llamada a herramienta o edici\u{00F3}n de archivo.";
+"chat.approvalPolicy.autoSafe" = "Autom\u{00E1}tico seguro";
+"chat.approvalPolicy.autoSafe.description" = "Aplicar autom\u{00E1}ticamente herramientas de solo lectura + escritura segura. Preguntar para operaciones destructivas + mutaciones bash.";
+"chat.approvalPolicy.auto" = "Auto";
+"chat.approvalPolicy.auto.description" = "Aplicar autom\u{00E1}ticamente cada herramienta excepto patrones siempre bloqueados.";
+"chat.approvalPolicy.yolo" = "YOLO";
+"chat.approvalPolicy.yolo.description" = "Acceso completo. Omitir cada confirmaci\u{00F3}n. Usar solo en repositorios de confianza.";
+"chat.approvalPolicy.yolo.warning" = "El modo YOLO est\u{00E1} activo. El agente puede ejecutar cualquier comando shell y editar cualquier archivo sin confirmaci\u{00F3}n.";
+"chat.approvalPolicy.advanced" = "Avanzado";
+"chat.approvalPolicy.advanced.bashTier" = "Nivel bash";
+"chat.approvalPolicy.advanced.autoCommit" = "Auto-commit de ediciones";
+"chat.approvalPolicy.advanced.asksDestructive" = "Preguntar antes de destructivo";
+
+// MARK: - Context Budget (P13 T11)
+"chat.contextBudget.section.title" = "Presupuesto de Contexto";
+"chat.contextBudget.responseReserve" = "Reserva de respuesta";
+"chat.contextBudget.responseReserve.hint" = "Tokens reservados para la respuesta del modelo. Mayor reserva = ventana de entrada m\u{00E1}s corta.";
+
+// MARK: - Compaction banner (P13 T11)
+"chat.banner.compactDone" = "Compactados %@ turnos anteriores para ajustar al contexto.";
+
+// MARK: - HelpSheet .chat bullets (P13 T11)
+"help.chat.tokenBudget" = "La ventana de historial consciente de tokens respeta el tama\u{00F1}o de contexto del modelo activo.";
+"help.chat.autoCompact" = "Los turnos antiguos se auto-resumen al 75% de la ventana de contexto.";
+"help.chat.promptCache" = "El cach\u{00E9} de prompts de Anthropic reduce el costo repetido en turnos de m\u{00FAltiples} pasos.";
+"help.chat.approvalPolicy" = "Un selector de Pol\u{00ED}tica de Aprobaci\u{00F3}n controla el modo de plan, auto-commit y nivel bash.";
+
+// MARK: - ZionMap .chat entries (P13 T11)
+"map.chat.tokenBudget.title" = "Historial consciente de tokens";
+"map.chat.tokenBudget.description" = "La ventana de historial se dimensiona al l\u{00ED}mite de contexto del modelo activo. El texto m\u{00E1}s antiguo del asistente se descarta primero; los bloques @file / @selection fijados sobreviven al recorte.";
+"map.chat.autoCompact.title" = "Auto-compactar";
+"map.chat.autoCompact.description" = "Al 75% de la ventana de contexto, los turnos m\u{00E1}s antiguos se resumen mediante un modelo econ\u{00F3}mico (Haiku / 4o-mini / Flash). Los archivos adjuntos fijados se preservan literalmente.";
+"map.chat.promptCache.title" = "Cach\u{00E9} de prompts";
+"map.chat.promptCache.description" = "Cach\u{00E9} de prompts de Anthropic mediante cache_control: ephemeral en el bloque de sistema. Los bucles de m\u{00FAltiples} pasos solo pagan por la nueva ronda despu\u{00E9}s de la primera.";
+"map.chat.approvalPolicy.title" = "Pol\u{00ED}tica de Aprobaci\u{00F3}n";
+"map.chat.approvalPolicy.description" = "Un selector (Manual / Autom\u{00E1}tico seguro / Auto / YOLO) controla el modo de plan, auto-commit y nivel bash. Las configuraciones heredadas migran autom\u{00E1}ticamente.";

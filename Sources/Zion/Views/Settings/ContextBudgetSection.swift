@@ -3,7 +3,6 @@ import SwiftUI
 // MARK: - ContextBudgetSection
 // Embedded by ZionTalksSettingsTab inside its Form, after SmartContextSettingsSection.
 // Returns a Section — do NOT wrap in Form.
-// MARK: - TODO(T11): L10n — new keys below need locale entries
 
 struct ContextBudgetSection: View {
     @AppStorage("chat.contextBudget.responseReserve") private var responseReserve: Int = 16_000
