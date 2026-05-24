@@ -51,6 +51,8 @@ struct ZionTalksSettingsTab: View {
 
             SmartContextSettingsSection()
 
+            SkillsSettingsSection()
+
             MCPServersSettingsSection()
 
             ContextBudgetSection()

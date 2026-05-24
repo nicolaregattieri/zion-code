@@ -367,8 +367,20 @@ final class ChatService {
 
         let threadID = activeThreadID
 
+        // MARK: Skill injection — if message starts with /<skill-id>, prepend skill body to payload
+        // The injected text replaces the raw text going to the model; display content stays unmodified.
+        let skillInjectedText: String = {
+            if let injected = Self.injectSkillIfMatched(
+                text: trimmedCommand,
+                skills: SkillIndex.shared.skills
+            ) {
+                return injected
+            }
+            return text
+        }()
+
         // Build display content (what user sees in bubble) — keep clean, just typed text + explicit slash expansions
-        let displayContent = await contextBuilder.expandSlashCommands(text, repoURL: repoURL)
+        let displayContent = await contextBuilder.expandSlashCommands(skillInjectedText, repoURL: repoURL)
 
         // Build hidden context that goes to the model but NOT to the bubble
         let isFirstMessage = thread.messages.filter { $0.role == .user }.isEmpty
@@ -1712,5 +1724,27 @@ final class ChatService {
         }
 
         return base
+    }
+}
+
+// MARK: - Skill Injection Helper
+
+extension ChatService {
+    /// Detects if `text` starts with /<skill-id>; if so and the index has it,
+    /// returns the injected payload "[skill: <name>]\n<body>\n\n<rest>".
+    /// Returns nil if no skill matched.
+    nonisolated static func injectSkillIfMatched(
+        text: String,
+        skills: [Skill]
+    ) -> String? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let firstToken = trimmed.split(whereSeparator: { $0.isWhitespace }).first.map(String.init),
+              firstToken.hasPrefix("/")
+        else { return nil }
+        let id = String(firstToken.dropFirst())
+        guard !id.isEmpty, let skill = skills.first(where: { $0.id == id }) else { return nil }
+        let rest = String(trimmed.dropFirst(firstToken.count))
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return "[skill: \(skill.name)]\n\(skill.body)\n\n\(rest)"
     }
 }

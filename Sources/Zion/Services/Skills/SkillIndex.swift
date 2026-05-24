@@ -4,6 +4,9 @@ import Foundation
 
 @MainActor
 final class SkillIndex: ObservableObject {
+    // MARK: - Shared accessor (used by ChatService.send skill injection)
+    @MainActor static let shared = SkillIndex()
+
     private(set) var skills: [Skill] = []
     private let userRoot: URL
     private let projectRoot: URL?
@@ -155,5 +158,75 @@ final class SkillIndex: ObservableObject {
         }
 
         return result
+    }
+}
+
+// MARK: - Scaffold
+
+extension SkillIndex {
+    enum ScaffoldError: Error {
+        case invalidName
+        case directoryExists
+        case writeFailed
+    }
+
+    /// Writes a starter SKILL.md to <root>/<slug>/SKILL.md.
+    /// Returns the URL of the new file. Throws if the directory already exists.
+    @discardableResult
+    nonisolated func scaffold(
+        name: String,
+        description: String,
+        scope: SkillScope,
+        rootOverride: URL? = nil
+    ) throws -> URL {
+        let slug = name.lowercased()
+            .replacingOccurrences(of: " ", with: "-")
+            .filter { $0.isLetter || $0.isNumber || $0 == "-" }
+        guard !slug.isEmpty else { throw ScaffoldError.invalidName }
+
+        let root: URL = rootOverride ?? {
+            if scope == .user {
+                return FileManager.default.homeDirectoryForCurrentUser
+                    .appendingPathComponent(".claude/skills")
+            } else {
+                return URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+                    .appendingPathComponent(".claude/skills")
+            }
+        }()
+
+        let dir = root.appendingPathComponent(slug, isDirectory: true)
+        guard !FileManager.default.fileExists(atPath: dir.path) else {
+            throw ScaffoldError.directoryExists
+        }
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+
+        let file = dir.appendingPathComponent("SKILL.md")
+        let body = """
+        ---
+        name: \(slug)
+        description: \(description.replacingOccurrences(of: "\n", with: " "))
+        ---
+
+        # \(name)
+
+        Describe what this skill does, when to invoke it, and any constraints.
+
+        ## Usage
+
+        Invoke this skill in chat with `/\(slug)`.
+
+        ## Steps
+
+        1. ...
+        2. ...
+
+        """
+
+        do {
+            try body.write(to: file, atomically: true, encoding: .utf8)
+        } catch {
+            throw ScaffoldError.writeFailed
+        }
+        return file
     }
 }
