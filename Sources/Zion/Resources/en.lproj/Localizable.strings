@@ -2774,3 +2774,91 @@
 "chat.mcp.preset.filesystem" = "Filesystem";
 "chat.mcp.preset.git" = "Git";
 "chat.mcp.preset.github" = "GitHub";
+
+// MARK: - Phase 14 — Discoverability
+
+// Slash help card
+"chat.slash.help.title" = "Commands & Shortcuts";
+"chat.slash.help.section.builtin" = "Built-in";
+"chat.slash.help.section.project" = "Project Skills";
+"chat.slash.help.section.user" = "User Skills";
+"chat.slash.help.section.mentions" = "Mentions";
+"chat.slash.help.section.mcp" = "MCP Tools";
+"chat.slash.help.section.shortcuts" = "Shortcuts";
+
+// Mention help descriptions
+"chat.help.mention.file" = "Attach a file to the conversation";
+"chat.help.mention.folder" = "Attach all files in a folder";
+"chat.help.mention.selection" = "Attach the current editor selection";
+"chat.help.mention.web" = "Fetch a URL and attach its content";
+"chat.help.mcpServer.description" = "Tool exposed via MCP server";
+
+// Keyboard shortcut descriptions
+"chat.help.shortcut.send" = "Send message";
+"chat.help.shortcut.newline" = "Insert newline";
+"chat.help.shortcut.stop" = "Stop generation";
+"chat.help.shortcut.history" = "Navigate message history";
+
+// Built-in slash command descriptions
+"chat.slash.builtin.diff.description" = "Show the current working-tree diff";
+"chat.slash.builtin.log.description" = "Show recent commit history";
+"chat.slash.builtin.file.description" = "Attach a file to the conversation";
+"chat.slash.builtin.status.description" = "Show git status of the repository";
+"chat.slash.builtin.commit.description" = "Generate and commit staged changes";
+"chat.slash.builtin.clear.description" = "Clear the current conversation";
+"chat.slash.builtin.compact.description" = "Summarize the conversation to save context";
+"chat.slash.builtin.help.description" = "Show all available commands";
+
+// Slash autocomplete source labels
+"chat.slash.source.builtin" = "Built-in";
+"chat.slash.source.project" = "Project";
+"chat.slash.source.user" = "User";
+
+// Chat empty state
+"chat.emptyState.hero.title" = "Ask anything about your code";
+"chat.emptyState.hero.subtitle" = "Use / for commands, @ to mention files, or just start typing";
+"chat.emptyState.starter.browse.title" = "Browse codebase";
+"chat.emptyState.starter.browse.subtitle" = "Explain the structure and key files";
+"chat.emptyState.starter.editFile.title" = "Edit a file";
+"chat.emptyState.starter.editFile.subtitle" = "Modify or refactor code with AI";
+"chat.emptyState.starter.runTests.title" = "Run tests";
+"chat.emptyState.starter.runTests.subtitle" = "Execute and analyze test results";
+"chat.emptyState.starter.allCommands.title" = "All commands";
+"chat.emptyState.starter.allCommands.subtitle" = "See everything Zion can do";
+
+// Composer placeholder
+"chat.composer.placeholder.discoverable" = "Message \u{00B7} / for commands \u{00B7} @ for files";
+
+// Skills settings
+"chat.skills.section.title" = "Skills";
+"chat.skills.empty" = "No skills installed";
+"chat.skills.scope.project" = "Project";
+"chat.skills.scope.user" = "User";
+"chat.skills.newSkill" = "New Skill\u{2026}";
+"chat.skills.newSkill.title" = "New Skill";
+"chat.skills.newSkill.name" = "Name";
+"chat.skills.newSkill.description" = "Description";
+"chat.skills.newSkill.scope" = "Scope";
+"chat.skills.newSkill.cancel" = "Cancel";
+"chat.skills.newSkill.save" = "Save";
+
+// Spend pill
+"chat.spend.pill.month" = "this month";
+"chat.spend.pill.subscription" = "subscription";
+"chat.spend.pill.local" = "local";
+"chat.spend.pill.empty" = "No spend";
+
+// Usage settings
+"chat.spend.usage.section.title" = "Usage";
+"chat.spend.usage.softCap" = "Soft cap";
+"chat.spend.usage.softCap.off" = "Off";
+"chat.spend.usage.empty" = "No usage recorded yet";
+"chat.spend.usage.resetsFooter" = "Resets on the 1st of each month";
+
+// Auto-resolved chip
+"chat.auto.resolvedChip" = "Auto \u{2192} %@";
+
+// Chat commands
+"chat.command.clear.busy" = "Cannot clear while a response is in progress.";
+"chat.command.compact.done" = "Conversation compacted.";
+"chat.command.compact.alreadyCompact" = "Nothing to compact yet.";

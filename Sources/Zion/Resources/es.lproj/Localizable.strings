@@ -2798,3 +2798,91 @@
 "chat.mcp.preset.filesystem" = "Sistema de archivos";
 "chat.mcp.preset.git" = "Git";
 "chat.mcp.preset.github" = "GitHub";
+
+// MARK: - Phase 14 — Discoverability
+
+// Slash help card
+"chat.slash.help.title" = "Comandos y Atajos";
+"chat.slash.help.section.builtin" = "Integrados";
+"chat.slash.help.section.project" = "Skills del Proyecto";
+"chat.slash.help.section.user" = "Skills del Usuario";
+"chat.slash.help.section.mentions" = "Menciones";
+"chat.slash.help.section.mcp" = "Herramientas MCP";
+"chat.slash.help.section.shortcuts" = "Atajos";
+
+// Mention help descriptions
+"chat.help.mention.file" = "Adjuntar un archivo a la conversaci\u{00F3}n";
+"chat.help.mention.folder" = "Adjuntar todos los archivos de una carpeta";
+"chat.help.mention.selection" = "Adjuntar la selecci\u{00F3}n actual del editor";
+"chat.help.mention.web" = "Obtener una URL y adjuntar su contenido";
+"chat.help.mcpServer.description" = "Herramienta expuesta v\u{00ED}a servidor MCP";
+
+// Keyboard shortcut descriptions
+"chat.help.shortcut.send" = "Enviar mensaje";
+"chat.help.shortcut.newline" = "Insertar nueva l\u{00ED}nea";
+"chat.help.shortcut.stop" = "Detener generaci\u{00F3}n";
+"chat.help.shortcut.history" = "Navegar por el historial de mensajes";
+
+// Built-in slash command descriptions
+"chat.slash.builtin.diff.description" = "Mostrar el diff actual del \u{00E1}rbol de trabajo";
+"chat.slash.builtin.log.description" = "Mostrar el historial reciente de commits";
+"chat.slash.builtin.file.description" = "Adjuntar un archivo a la conversaci\u{00F3}n";
+"chat.slash.builtin.status.description" = "Mostrar el estado git del repositorio";
+"chat.slash.builtin.commit.description" = "Generar y confirmar los cambios preparados";
+"chat.slash.builtin.clear.description" = "Limpiar la conversaci\u{00F3}n actual";
+"chat.slash.builtin.compact.description" = "Resumir la conversaci\u{00F3}n para ahorrar contexto";
+"chat.slash.builtin.help.description" = "Mostrar todos los comandos disponibles";
+
+// Slash autocomplete source labels
+"chat.slash.source.builtin" = "Integrado";
+"chat.slash.source.project" = "Proyecto";
+"chat.slash.source.user" = "Usuario";
+
+// Chat empty state
+"chat.emptyState.hero.title" = "Pregunta cualquier cosa sobre tu c\u{00F3}digo";
+"chat.emptyState.hero.subtitle" = "Usa / para comandos, @ para mencionar archivos, o simplemente escribe";
+"chat.emptyState.starter.browse.title" = "Explorar c\u{00F3}digo";
+"chat.emptyState.starter.browse.subtitle" = "Explicar la estructura y los archivos clave";
+"chat.emptyState.starter.editFile.title" = "Editar un archivo";
+"chat.emptyState.starter.editFile.subtitle" = "Modificar o refactorizar c\u{00F3}digo con IA";
+"chat.emptyState.starter.runTests.title" = "Ejecutar pruebas";
+"chat.emptyState.starter.runTests.subtitle" = "Ejecutar y analizar resultados de pruebas";
+"chat.emptyState.starter.allCommands.title" = "Todos los comandos";
+"chat.emptyState.starter.allCommands.subtitle" = "Ver todo lo que Zion puede hacer";
+
+// Composer placeholder
+"chat.composer.placeholder.discoverable" = "Mensaje \u{00B7} / para comandos \u{00B7} @ para archivos";
+
+// Skills settings
+"chat.skills.section.title" = "Skills";
+"chat.skills.empty" = "No hay skills instaladas";
+"chat.skills.scope.project" = "Proyecto";
+"chat.skills.scope.user" = "Usuario";
+"chat.skills.newSkill" = "Nueva Skill\u{2026}";
+"chat.skills.newSkill.title" = "Nueva Skill";
+"chat.skills.newSkill.name" = "Nombre";
+"chat.skills.newSkill.description" = "Descripci\u{00F3}n";
+"chat.skills.newSkill.scope" = "\u{00C1}mbito";
+"chat.skills.newSkill.cancel" = "Cancelar";
+"chat.skills.newSkill.save" = "Guardar";
+
+// Spend pill
+"chat.spend.pill.month" = "este mes";
+"chat.spend.pill.subscription" = "suscripci\u{00F3}n";
+"chat.spend.pill.local" = "local";
+"chat.spend.pill.empty" = "Sin gastos";
+
+// Usage settings
+"chat.spend.usage.section.title" = "Uso";
+"chat.spend.usage.softCap" = "L\u{00ED}mite suave";
+"chat.spend.usage.softCap.off" = "Desactivado";
+"chat.spend.usage.empty" = "A\u{00FA}n no hay uso registrado";
+"chat.spend.usage.resetsFooter" = "Se reinicia el 1 de cada mes";
+
+// Auto-resolved chip
+"chat.auto.resolvedChip" = "Auto \u{2192} %@";
+
+// Chat commands
+"chat.command.clear.busy" = "No se puede limpiar mientras se genera una respuesta.";
+"chat.command.compact.done" = "Conversaci\u{00F3}n compactada.";
+"chat.command.compact.alreadyCompact" = "Nada que compactar todav\u{00ED}a.";

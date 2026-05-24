@@ -22,20 +22,20 @@ struct SpendMeterPill: View {
             case .api(let total):
                 Text("$\(String(format: "%.2f", total))")
                     .font(DesignSystem.Typography.monoLabelBold)
-                Text(L10n("chat.spend.pill.month")) // MARK: - TODO(P14:T10): L10n
+                Text(L10n("chat.spend.pill.month"))
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
             case .subscription:
                 Image(systemName: "checkmark.seal")
                     .foregroundStyle(DesignSystem.Colors.success)
-                Text(L10n("chat.spend.pill.subscription")) // MARK: - TODO(P14:T10): L10n
+                Text(L10n("chat.spend.pill.subscription"))
                     .font(DesignSystem.Typography.metaSemibold)
             case .local:
                 Image(systemName: "desktopcomputer")
-                Text(L10n("chat.spend.pill.local")) // MARK: - TODO(P14:T10): L10n
+                Text(L10n("chat.spend.pill.local"))
                     .font(DesignSystem.Typography.metaSemibold)
             case .empty:
-                Text(L10n("chat.spend.pill.empty")) // MARK: - TODO(P14:T10): L10n
+                Text(L10n("chat.spend.pill.empty"))
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
             }
