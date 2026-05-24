@@ -3,14 +3,9 @@ import SwiftUI
 // MARK: - TODO(T10): L10n — all string literals here need L10n() once keys are added in T10
 
 struct ZionTalksSettingsTab: View {
-    @AppStorage("chat.cliAllowEdits") private var cliAllowEdits: Bool = false
     @AppStorage("chat.toolsEnabled") private var toolsEnabled: Bool = true
     @AppStorage("chat.autoInject") private var autoInject: Bool = true
     @AppStorage("chat.providers.toolBridge") private var toolBridge: Bool = true
-    @AppStorage("chat.plan.mode") private var planModeRaw: String = "planFirst"
-    @AppStorage("chat.editHarness.enabled") private var editHarnessEnabled: Bool = true
-    @AppStorage("chat.editHarness.autoCommit") private var editHarnessAutoCommit: Bool = true
-    @AppStorage("chat.editHarness.preferNativeTool") private var editHarnessPreferNativeTool: Bool = true
     @AppStorage("chat.routing.subscriptionFailover") private var subscriptionFailover: Bool = false
     @AppStorage(ZionTalksAppearance.fontSizeKey) private var fontSizePx: Int = ZionTalksAppearance.defaultFontSizePx
     @AppStorage(ZionTalksAppearance.lineSpacingKey) private var lineSpacingPx: Int = ZionTalksAppearance.defaultLineSpacingPx
@@ -22,6 +17,9 @@ struct ZionTalksSettingsTab: View {
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
             }
+
+            // MARK: Approval Policy (replaces Plan Mode + File Edits + Agentic Tier)
+            ApprovalPolicySection()
 
             Section("General") { // MARK: - TODO(T10): L10n
                 Toggle("Enable tool use", isOn: $toolsEnabled) // MARK: - TODO(T10): L10n
@@ -52,24 +50,11 @@ struct ZionTalksSettingsTab: View {
                     .foregroundStyle(.secondary)
             }
 
-            Section("File Edits") { // MARK: - TODO(T10): L10n
-                Toggle("Allow CLI file edits", isOn: $cliAllowEdits) // MARK: - TODO(T10): L10n
-                Toggle("Enable edit harness", isOn: $editHarnessEnabled) // MARK: - TODO(T10): L10n
-                Toggle("Auto-commit edits", isOn: $editHarnessAutoCommit) // MARK: - TODO(T10): L10n
-                Toggle("Prefer native diff tool", isOn: $editHarnessPreferNativeTool) // MARK: - TODO(T10): L10n
-            }
-
-            Section("Plan Mode") { // MARK: - TODO(T10): L10n
-                Picker("Plan mode", selection: $planModeRaw) { // MARK: - TODO(T10): L10n
-                    Text("Plan first").tag("planFirst") // MARK: - TODO(T10): L10n
-                    Text("Auto-apply").tag("autoApply") // MARK: - TODO(T10): L10n
-                }
-                .pickerStyle(.segmented)
-            }
-
             AgenticSettingsSection()
 
             SmartContextSettingsSection()
+
+            ContextBudgetSection()
 
             Section("Tool Bridge") { // MARK: - TODO(T10): L10n
                 Toggle("Enable tool bridge", isOn: $toolBridge) // MARK: - TODO(T10): L10n
