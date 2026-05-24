@@ -686,7 +686,7 @@
 "map.code.quickopen.description" = "Fuzzy search to open any repository file instantly. Filters as you type.";
 "map.code.quickopen.tip1" = "Type just part of the name — fuzzy search finds partial matches.";
 "map.code.filebrowser.title" = "File Browser";
-"map.code.filebrowser.description" = "Repository file tree respecting .gitignore. Toggle visibility with \u{2318}B.";
+"map.code.filebrowser.description" = "Repository file tree respecting .gitignore. Toggle visibility with ⌘B.";
 "map.code.filebrowserdnd.title" = "File Browser Drag & Drop";
 "map.code.filebrowserdnd.description" = "Move files and folders within the repository by dragging them onto a destination folder. Drop on empty space to move to root. Import files from Finder or Smart Clipboard.";
 "map.code.filebrowserdnd.tip1" = "Select multiple files first, then drag one to move the entire selection at once.";
@@ -710,7 +710,7 @@
 "map.terminal.pty.tip1" = "The terminal uses your default shell configuration (zsh, bash, fish).";
 "map.terminal.splits.title" = "Vertical and Horizontal Splits";
 "map.terminal.splits.description" = "Split the terminal into vertical or horizontal panes to work with multiple commands side by side.";
-"map.terminal.splits.tip1" = "Close a split pane with \u{21E7}\u{2318}W without affecting the others.";
+"map.terminal.splits.tip1" = "Close a split pane with ⇧⌘W without affecting the others.";
 "map.terminal.resizeSplits.title" = "Resizable Split Panes";
 "map.terminal.resizeSplits.description" = "Drag the divider between split panes to resize them. Double-tap the divider to reset to an equal 50/50 split.";
 "map.terminal.resizeSplits.tip1" = "A minimum pane size is enforced so you never lose a pane by accident.";
@@ -2542,7 +2542,7 @@
 "chat.edit.editRaw" = "Edit raw";
 "chat.edit.save" = "Save";
 "chat.edit.applyAll" = "Apply all (%@)";
-"chat.edit.applying" = "Applying %@ / %@\u{2026}";
+"chat.edit.applying" = "Applying %@ / %@…";
 "chat.edit.applied" = "%@ applied";
 "chat.edit.stopped" = "Stopped at block %@";
 "settings.scope.shared" = "Used by built-in AI features AND Zion Talks chat.";
@@ -2558,9 +2558,9 @@
 "settings.zionTalks.subscriptionFailover.tosWarning" = "When enabled, Zion may switch to your claude / codex CLI subscriptions on quota errors. Review each provider's terms before enabling.";
 "settings.ai.provider.auto" = "Auto";
 "chat.provider.auto.label" = "Auto (smart routing)";
-"chat.banner.switching" = "Switching to %@\u{2026}";
-"chat.banner.rateLimited" = "%@ rate limited \u{2014} falling back to %@.";
-"chat.banner.networkFailure" = "%@ unreachable \u{2014} falling back to %@.";
+"chat.banner.switching" = "Switching to %@…";
+"chat.banner.rateLimited" = "%@ rate limited — falling back to %@.";
+"chat.banner.networkFailure" = "%@ unreachable — falling back to %@.";
 "chat.banner.allExhausted" = "All providers exhausted for this turn.";
 "chat.banner.dismiss" = "Dismiss";
 "settings.ai.scope.builtIn" = "These settings power Zion's built-in AI features (commit message generator, PR description, blame explainer, conflict resolver).";
@@ -2625,31 +2625,31 @@
 "chat.agent.plan.approve" = "Approve";
 "chat.agent.plan.reject" = "Reject";
 "chat.agent.error.budgetExceeded" = "Cost budget exceeded after %@ steps.";
-"chat.agent.error.rateLimited" = "Rate limited by provider \u{2014} try again later.";
+"chat.agent.error.rateLimited" = "Rate limited by provider — try again later.";
 "chat.agent.error.reactParseFailed" = "Model output did not match the required format after several attempts. Try a different model.";
 "chat.agent.error.noProvider" = "No agentic-capable provider available.";
 "chat.agent.error.cliCrashed" = "CLI agent exited unexpectedly.";
 "chat.agent.error.loopAlreadyActive" = "A loop is already running.";
 
 // MARK: - Agentic Loop HelpSheet bullets (Phase 11 T12)
-"help.chat.agenticLoop" = "Agentic Loop (beta) \u{2014} multi-step autonomous tool chaining across Anthropic, OpenAI, Gemini, and local models";
-"help.chat.bashTool" = "Bash tool \u{2014} safe shell execution with an approval-tier system and optional per-command allowlist";
-"help.chat.approvalTiers" = "Approval tiers \u{2014} readOnly (no writes), workspaceWrite (repo only), or fullAccess (any command)";
-"help.chat.stickyProvider" = "Sticky provider \u{2014} the loop locks to the same provider for every step; no mid-loop failover";
-"help.chat.stepCap" = "Hard caps \u{2014} configurable max steps and daily cost budget; user can cancel at any step";
-"help.chat.reactFallback" = "ReAct text fallback \u{2014} older local models without native tool-calling use a structured thought/action text loop";
+"help.chat.agenticLoop" = "Agentic Loop (beta) — multi-step autonomous tool chaining across Anthropic, OpenAI, Gemini, and local models";
+"help.chat.bashTool" = "Bash tool — safe shell execution with an approval-tier system and optional per-command allowlist";
+"help.chat.approvalTiers" = "Approval tiers — readOnly (no writes), workspaceWrite (repo only), or fullAccess (any command)";
+"help.chat.stickyProvider" = "Sticky provider — the loop locks to the same provider for every step; no mid-loop failover";
+"help.chat.stepCap" = "Hard caps — configurable max steps and daily cost budget; user can cancel at any step";
+"help.chat.reactFallback" = "ReAct text fallback — older local models without native tool-calling use a structured thought/action text loop";
 
 // MARK: - Agentic Loop ZionMap entries (Phase 11 T12)
 "map.chat.agenticLoop.title" = "Agentic Loop (beta)";
 "map.chat.agenticLoop.description" = "Multi-step autonomous tool chaining across Anthropic, OpenAI, Gemini, and local Qwen2.5-Coder / Qwen3-Coder models. The loop runs tool calls, feeds results back, and continues until the model emits a stop signal.";
-"map.chat.agenticLoop.tip1" = "Enable in Settings \u{2192} Zion Talks \u{2192} Agentic Loop.";
+"map.chat.agenticLoop.tip1" = "Enable in Settings → Zion Talks → Agentic Loop.";
 "map.chat.bashTool.title" = "Bash tool";
 "map.chat.bashTool.description" = "Safe shell execution with pre-execution approval tiers and an optional per-command allowlist. Recovery-vault snapshot taken before any destructive operation.";
 "map.chat.bashTool.tip1" = "Set an allowlist in Settings to restrict which commands the agent can run without asking.";
 "map.chat.approvalTiers.title" = "Approval tiers";
 "map.chat.approvalTiers.description" = "Three tiers control what the agent can do: readOnly (no file writes), workspaceWrite (edits inside the repo), fullAccess (any shell command). Configure per-session in the chat toolbar.";
 "map.chat.stickyProvider.title" = "Sticky provider";
-"map.chat.stickyProvider.description" = "The provider selected at loop start stays locked for every step. No automatic failover during an active loop \u{2014} switch providers between loops instead.";
+"map.chat.stickyProvider.description" = "The provider selected at loop start stays locked for every step. No automatic failover during an active loop — switch providers between loops instead.";
 "map.chat.stepCap.title" = "Hard caps";
 "map.chat.stepCap.description" = "Configurable max-step count and daily cost budget. The loop stops and reports when either cap is hit. Press Cancel in the step indicator to stop early.";
 "map.chat.reactFallback.title" = "ReAct text fallback";
@@ -2671,14 +2671,14 @@
 "chat.mentions.confirmTokens" = "Confirm if @mentions exceed N tokens";
 "chat.mentions.bytesUnit" = "%@ KB";
 "chat.mentions.tokensUnit" = "%@ tokens";
-"chat.mentions.preview" = "%@ mention(s) attached \u{2014} %@, ~%@ tokens";
+"chat.mentions.preview" = "%@ mention(s) attached — %@, ~%@ tokens";
 "chat.mention.autocomplete.empty" = "No matches";
 "chat.mention.autocomplete.fileHint" = "files";
 "chat.mention.autocomplete.folderHint" = "folders";
 "chat.mention.binarySkipped" = "Binary file skipped";
 "chat.mention.folderEmpty" = "Folder is empty or contains only binaries";
 "chat.mention.webFailed" = "Web fetch failed: %@";
-"chat.mention.parseError" = "Couldn\u{2019}t parse @mention";
+"chat.mention.parseError" = "Couldn’t parse @mention";
 
 // MARK: - Smart Context Help bullets (P12 T11)
 "help.chat.repoMap" = "RepoMap MCP tool surfaces ranked symbols across the repo";
@@ -2687,15 +2687,15 @@
 "help.chat.folderMention" = "@folder path attaches a folder, capped";
 "help.chat.selectionMention" = "@selection attaches the current editor selection";
 "help.chat.webMention" = "@web URL fetches and attaches page text";
-"help.chat.multiFileDiff" = "Multi-file diff summary card shown when \u{2265}2 files change";
+"help.chat.multiFileDiff" = "Multi-file diff summary card shown when ≥2 files change";
 
 // MARK: - Smart Context ZionMap entries (P12 T11)
 "map.chat.repoMap.title" = "RepoMap";
 "map.chat.repoMap.description" = "The repo_map MCP tool ranks all symbols in the repo by reference count and surfaces the top N in a Markdown outline so the model can navigate large codebases without reading every file.";
 "map.chat.findSymbol.title" = "find_symbol";
-"map.chat.findSymbol.description" = "The find_symbol MCP tool searches the symbol index for exact or prefix matches, returning file path, kind, line number, and reference count \u{2014} precision lookup for the model.";
+"map.chat.findSymbol.description" = "The find_symbol MCP tool searches the symbol index for exact or prefix matches, returning file path, kind, line number, and reference count — precision lookup for the model.";
 "map.chat.fileMention.title" = "@file mention";
-"map.chat.fileMention.description" = "Type @path/to/file in the composer to attach a file\u{2019}s contents as explicit context. Files over the byte limit are truncated; binary files are skipped with a warning.";
+"map.chat.fileMention.description" = "Type @path/to/file in the composer to attach a file’s contents as explicit context. Files over the byte limit are truncated; binary files are skipped with a warning.";
 "map.chat.folderMention.title" = "@folder mention";
 "map.chat.folderMention.description" = "Type @path/to/folder to attach up to N files from a folder (configurable in Settings). Files are capped per-file and per-folder to stay within the token budget.";
 "map.chat.selectionMention.title" = "@selection mention";
@@ -2703,8 +2703,8 @@
 "map.chat.webMention.title" = "@web mention";
 "map.chat.webMention.description" = "Type @web https://... to fetch a page and attach its plain-text content. Respects robots.txt; large pages are truncated to the byte limit.";
 "map.chat.multiFileDiff.title" = "Multi-file diff card";
-"map.chat.multiFileDiff.description" = "When the model proposes changes to \u{2265}2 files, a summary card appears above the individual diff previews. Review All, Approve All, or Reject All in one tap.";
-"chat.error.budgetExceeded.banner" = "Message too long \u{2014} estimated tokens exceed context window. Tap Send anyway to proceed, or shorten your input.";
+"map.chat.multiFileDiff.description" = "When the model proposes changes to ≥2 files, a summary card appears above the individual diff previews. Review All, Approve All, or Reject All in one tap.";
+"chat.error.budgetExceeded.banner" = "Message too long — estimated tokens exceed context window. Tap Send anyway to proceed, or shorten your input.";
 
 // MARK: - Approval Policy (P13 T11)
 "chat.bool.yes" = "Yes";
@@ -2738,20 +2738,20 @@
 // MARK: - Context Budget (P13 T11)
 "chat.contextBudget.section.title" = "Context Budget";
 "chat.contextBudget.responseReserve" = "Response reserve";
-"chat.contextBudget.responseReserve.hint" = "Tokens kept free for the model\u{2019}s reply. Larger reserve = shorter input window.";
+"chat.contextBudget.responseReserve.hint" = "Tokens kept free for the model’s reply. Larger reserve = shorter input window.";
 
 // MARK: - Compaction banner (P13 T11)
 "chat.banner.compactDone" = "Compacted %@ older turns to fit context.";
 
 // MARK: - HelpSheet .chat bullets (P13 T11)
-"help.chat.tokenBudget" = "Token-aware history window respects the active model\u{2019}s context size.";
+"help.chat.tokenBudget" = "Token-aware history window respects the active model’s context size.";
 "help.chat.autoCompact" = "Older turns auto-summarize at 75% of the context window.";
 "help.chat.promptCache" = "Anthropic prompt caching cuts repeat cost on multi-step turns.";
 "help.chat.approvalPolicy" = "One Approval Policy switch controls plan-mode, auto-commit, and bash tier.";
 
 // MARK: - ZionMap .chat entries (P13 T11)
 "map.chat.tokenBudget.title" = "Token-aware history";
-"map.chat.tokenBudget.description" = "The history window is sized to the active model\u{2019}s context limit. Oldest assistant prose is dropped first; pinned @file / @selection blocks survive trimming.";
+"map.chat.tokenBudget.description" = "The history window is sized to the active model’s context limit. Oldest assistant prose is dropped first; pinned @file / @selection blocks survive trimming.";
 "map.chat.autoCompact.title" = "Auto-compact";
 "map.chat.autoCompact.description" = "At 75% of the context window, older turns are summarized via a cheap model (Haiku / 4o-mini / Flash). Pinned attachments are preserved verbatim.";
 "map.chat.promptCache.title" = "Prompt caching";
@@ -2759,8 +2759,8 @@
 "map.chat.approvalPolicy.title" = "Approval Policy";
 "map.chat.approvalPolicy.description" = "One picker (Manual / Auto-safe / Auto / YOLO) controls plan-mode, auto-commit, and bash tier. Legacy approval tier settings migrate automatically.";
 "chat.mcp.section.title" = "MCP Servers";
-"chat.mcp.newServer" = "New Server\u{2026}";
-"chat.mcp.findMore" = "Find more servers \u{2192}";
+"chat.mcp.newServer" = "New Server…";
+"chat.mcp.findMore" = "Find more servers →";
 "chat.mcp.menu.editConfig" = "Edit Config";
 "chat.mcp.menu.remove" = "Remove";
 "chat.mcp.editor.titleNew" = "Add MCP Server";
@@ -2827,14 +2827,14 @@
 "chat.emptyState.starter.allCommands.subtitle" = "See everything Zion can do";
 
 // Composer placeholder
-"chat.composer.placeholder.discoverable" = "Message \u{00B7} / for commands \u{00B7} @ for files";
+"chat.composer.placeholder.discoverable" = "Message · / for commands · @ for files";
 
 // Skills settings
 "chat.skills.section.title" = "Skills";
 "chat.skills.empty" = "No skills installed";
 "chat.skills.scope.project" = "Project";
 "chat.skills.scope.user" = "User";
-"chat.skills.newSkill" = "New Skill\u{2026}";
+"chat.skills.newSkill" = "New Skill…";
 "chat.skills.newSkill.title" = "New Skill";
 "chat.skills.newSkill.name" = "Name";
 "chat.skills.newSkill.description" = "Description";
@@ -2856,7 +2856,7 @@
 "chat.spend.usage.resetsFooter" = "Resets on the 1st of each month";
 
 // Auto-resolved chip
-"chat.auto.resolvedChip" = "Auto \u{2192} %@";
+"chat.auto.resolvedChip" = "Auto → %@";
 
 // Chat commands
 "chat.command.clear.busy" = "Cannot clear while a response is in progress.";
@@ -2864,17 +2864,17 @@
 "chat.command.compact.alreadyCompact" = "Nothing to compact yet.";
 
 // Discoverability bullets
-"help.chat.slashAutocomplete" = "Slash autocomplete \u{2014} Type / in the composer to browse built-in commands and skills";
-"help.chat.mcpManagement" = "MCP servers panel \u{2014} Add, edit, and remove MCP servers with status indicators";
-"help.chat.skillScaffold" = "Skill scaffold \u{2014} Create skills from Settings \u{2192} Zion Talks \u{2192} Skills; invoke via /skill-name";
-"help.chat.spendLedger" = "Spend meter \u{2014} Monthly cost pill in the conversation header with per-provider breakdown";
+"help.chat.slashAutocomplete" = "Slash autocomplete — Type / in the composer to browse built-in commands and skills";
+"help.chat.mcpManagement" = "MCP servers panel — Add, edit, and remove MCP servers with status indicators";
+"help.chat.skillScaffold" = "Skill scaffold — Create skills from Settings → Zion Talks → Skills; invoke via /skill-name";
+"help.chat.spendLedger" = "Spend meter — Monthly cost pill in the conversation header with per-provider breakdown";
 
 // Discoverability map entries
 "map.chat.slashAutocomplete.title" = "Slash Autocomplete";
 "map.chat.slashAutocomplete.description" = "Type / in the composer for an inline dropdown of built-in commands and skills. Arrow keys + Tab/Enter to commit, Esc to dismiss.";
 "map.chat.mcpManagement.title" = "MCP Servers Panel";
-"map.chat.mcpManagement.description" = "Settings \u{2192} Zion Talks \u{2192} MCP Servers lists every configured server with status dot and ellipsis menu (edit / remove). JSON editor with filesystem, git, and github presets.";
+"map.chat.mcpManagement.description" = "Settings → Zion Talks → MCP Servers lists every configured server with status dot and ellipsis menu (edit / remove). JSON editor with filesystem, git, and github presets.";
 "map.chat.skillScaffold.title" = "Skill Scaffold";
-"map.chat.skillScaffold.description" = "Settings \u{2192} Zion Talks \u{2192} Skills lists available skills. New Skill writes a starter SKILL.md with YAML frontmatter. Invoke via /skill-name in chat.";
+"map.chat.skillScaffold.description" = "Settings → Zion Talks → Skills lists available skills. New Skill writes a starter SKILL.md with YAML frontmatter. Invoke via /skill-name in chat.";
 "map.chat.spendLedger.title" = "Spend Meter";
-"map.chat.spendLedger.description" = "Conversation header shows a monthly spend pill. Settings \u{2192} Zion Talks \u{2192} Usage lists per-provider breakdown with a soft-cap stepper.";
+"map.chat.spendLedger.description" = "Conversation header shows a monthly spend pill. Settings → Zion Talks → Usage lists per-provider breakdown with a soft-cap stepper.";

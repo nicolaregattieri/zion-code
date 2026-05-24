@@ -681,7 +681,7 @@
 "map.code.quickopen.description" = "Búsqueda fuzzy para abrir cualquier archivo del repositorio al instante. Filtra mientras escribes.";
 "map.code.quickopen.tip1" = "Escribe solo parte del nombre — la búsqueda fuzzy encuentra coincidencias parciales.";
 "map.code.filebrowser.title" = "Navegador de Archivos";
-"map.code.filebrowser.description" = "Árbol de archivos del repositorio respetando .gitignore. Alterna visibilidad con \u{2318}B.";
+"map.code.filebrowser.description" = "Árbol de archivos del repositorio respetando .gitignore. Alterna visibilidad con ⌘B.";
 "map.code.filebrowserdnd.title" = "Arrastrar y Soltar en Navegador";
 "map.code.filebrowserdnd.description" = "Mueve archivos y carpetas dentro del repositorio arrastrándolos a una carpeta destino. Suelta en espacio vacío para mover a la raíz. Importa archivos desde Finder o Smart Clipboard.";
 "map.code.filebrowserdnd.tip1" = "Selecciona múltiples archivos primero, luego arrastra uno para mover toda la selección a la vez.";
@@ -705,7 +705,7 @@
 "map.terminal.pty.tip1" = "El terminal usa tu configuración de shell predeterminada (zsh, bash, fish).";
 "map.terminal.splits.title" = "Splits Vertical y Horizontal";
 "map.terminal.splits.description" = "Divide el terminal en paneles verticales u horizontales para trabajar con múltiples comandos lado a lado.";
-"map.terminal.splits.tip1" = "Cierra un panel split con \u{21E7}\u{2318}W sin afectar los demás.";
+"map.terminal.splits.tip1" = "Cierra un panel split con ⇧⌘W sin afectar los demás.";
 "map.terminal.resizeSplits.title" = "Paneles Split Redimensionables";
 "map.terminal.resizeSplits.description" = "Arrastra el divisor entre paneles split para redimensionarlos. Doble toque en el divisor para resetear a un split igual 50/50.";
 "map.terminal.resizeSplits.tip1" = "Se aplica un tamaño mínimo para que nunca pierdas un panel por accidente.";
@@ -2564,7 +2564,7 @@
 "chat.edit.editRaw" = "Editar crudo";
 "chat.edit.save" = "Guardar";
 "chat.edit.applyAll" = "Aplicar todo (%@)";
-"chat.edit.applying" = "Aplicando %@ / %@\u{2026}";
+"chat.edit.applying" = "Aplicando %@ / %@…";
 "chat.edit.applied" = "%@ aplicado";
 "chat.edit.stopped" = "Detenido en el bloque %@";
 "settings.scope.shared" = "Usado por las funciones de IA integradas Y el chat de Zion Talks.";
@@ -2580,9 +2580,9 @@
 "settings.zionTalks.subscriptionFailover.tosWarning" = "Cuando está habilitado, Zion puede cambiar a tus suscripciones CLI de claude / codex en caso de errores de cuota. Revisa los términos de cada proveedor antes de habilitar.";
 "settings.ai.provider.auto" = "Automático";
 "chat.provider.auto.label" = "Automático (enrutamiento inteligente)";
-"chat.banner.switching" = "Cambiando a %@\u{2026}";
-"chat.banner.rateLimited" = "%@ con límite de velocidad \u{2014} usando respaldo a %@.";
-"chat.banner.networkFailure" = "%@ inaccesible \u{2014} usando respaldo a %@.";
+"chat.banner.switching" = "Cambiando a %@…";
+"chat.banner.rateLimited" = "%@ con límite de velocidad — usando respaldo a %@.";
+"chat.banner.networkFailure" = "%@ inaccesible — usando respaldo a %@.";
 "chat.banner.allExhausted" = "Todos los proveedores agotados para este turno.";
 "chat.banner.dismiss" = "Descartar";
 "settings.ai.scope.builtIn" = "Estas configuraciones potencian las funciones de IA integradas de Zion (generador de mensajes de commit, descripción de PR, explicador de blame, resolvedor de conflictos).";
@@ -2647,31 +2647,31 @@
 "chat.agent.plan.approve" = "Aprobar";
 "chat.agent.plan.reject" = "Rechazar";
 "chat.agent.error.budgetExceeded" = "Presupuesto de coste superado tras %@ pasos.";
-"chat.agent.error.rateLimited" = "Límite de tasa del proveedor alcanzado \u{2014} inténtalo de nuevo más tarde.";
+"chat.agent.error.rateLimited" = "Límite de tasa del proveedor alcanzado — inténtalo de nuevo más tarde.";
 "chat.agent.error.reactParseFailed" = "La salida del modelo no coincidió con el formato requerido tras varios intentos. Prueba un modelo diferente.";
 "chat.agent.error.noProvider" = "No hay ningún proveedor con capacidad agéntica disponible.";
 "chat.agent.error.cliCrashed" = "El agente CLI terminó inesperadamente.";
 "chat.agent.error.loopAlreadyActive" = "Ya hay un bucle en ejecución.";
 
 // MARK: - Agentic Loop HelpSheet bullets (Phase 11 T12)
-"help.chat.agenticLoop" = "Bucle Agéntico (beta) \u{2014} encadenamiento autónomo de herramientas en múltiples pasos para Anthropic, OpenAI, Gemini y modelos locales";
-"help.chat.bashTool" = "Herramienta Bash \u{2014} ejecución segura de shell con sistema de niveles de aprobación y lista de comandos permitidos opcional";
-"help.chat.approvalTiers" = "Niveles de aprobación \u{2014} readOnly (sin escritura), workspaceWrite (solo repositorio) o fullAccess (cualquier comando)";
-"help.chat.stickyProvider" = "Proveedor fijo \u{2014} el bucle queda bloqueado al mismo proveedor en cada paso; sin failover durante el bucle";
-"help.chat.stepCap" = "Límites rígidos \u{2014} número máximo de pasos y presupuesto de coste diario configurables; el usuario puede cancelar en cualquier momento";
-"help.chat.reactFallback" = "Fallback de texto ReAct \u{2014} modelos locales sin soporte nativo de llamadas a herramientas usan un bucle de texto estructurado thought/action";
+"help.chat.agenticLoop" = "Bucle Agéntico (beta) — encadenamiento autónomo de herramientas en múltiples pasos para Anthropic, OpenAI, Gemini y modelos locales";
+"help.chat.bashTool" = "Herramienta Bash — ejecución segura de shell con sistema de niveles de aprobación y lista de comandos permitidos opcional";
+"help.chat.approvalTiers" = "Niveles de aprobación — readOnly (sin escritura), workspaceWrite (solo repositorio) o fullAccess (cualquier comando)";
+"help.chat.stickyProvider" = "Proveedor fijo — el bucle queda bloqueado al mismo proveedor en cada paso; sin failover durante el bucle";
+"help.chat.stepCap" = "Límites rígidos — número máximo de pasos y presupuesto de coste diario configurables; el usuario puede cancelar en cualquier momento";
+"help.chat.reactFallback" = "Fallback de texto ReAct — modelos locales sin soporte nativo de llamadas a herramientas usan un bucle de texto estructurado thought/action";
 
 // MARK: - Agentic Loop ZionMap entries (Phase 11 T12)
 "map.chat.agenticLoop.title" = "Bucle Agéntico (beta)";
 "map.chat.agenticLoop.description" = "Encadenamiento autónomo de herramientas en múltiples pasos para Anthropic, OpenAI, Gemini y modelos locales Qwen2.5-Coder / Qwen3-Coder. El bucle ejecuta llamadas de herramientas, alimenta los resultados de vuelta y continúa hasta que el modelo emite una señal de parada.";
-"map.chat.agenticLoop.tip1" = "Activa en Ajustes \u{2192} Zion Talks \u{2192} Bucle Agéntico.";
+"map.chat.agenticLoop.tip1" = "Activa en Ajustes → Zion Talks → Bucle Agéntico.";
 "map.chat.bashTool.title" = "Herramienta Bash";
 "map.chat.bashTool.description" = "Ejecución segura de shell con niveles de aprobación previos a la ejecución y lista de comandos permitidos opcional. Se crea un snapshot de Recovery Vault antes de cualquier operación destructiva.";
 "map.chat.bashTool.tip1" = "Define una lista de permitidos en Ajustes para restringir qué comandos puede ejecutar el agente sin preguntar.";
 "map.chat.approvalTiers.title" = "Niveles de aprobación";
 "map.chat.approvalTiers.description" = "Tres niveles controlan lo que el agente puede hacer: readOnly (sin escritura), workspaceWrite (ediciones dentro del repositorio), fullAccess (cualquier comando shell). Configúralo por sesión en la barra de herramientas del chat.";
 "map.chat.stickyProvider.title" = "Proveedor fijo";
-"map.chat.stickyProvider.description" = "El proveedor seleccionado al inicio del bucle permanece bloqueado en cada paso. Sin failover automático durante un bucle activo \u{2014} cambia de proveedor entre bucles.";
+"map.chat.stickyProvider.description" = "El proveedor seleccionado al inicio del bucle permanece bloqueado en cada paso. Sin failover automático durante un bucle activo — cambia de proveedor entre bucles.";
 "map.chat.stepCap.title" = "Límites rígidos";
 "map.chat.stepCap.description" = "Número máximo de pasos y presupuesto de coste diario configurables. El bucle se detiene e informa cuando se alcanza cualquier límite. Pulsa Cancelar en el indicador de pasos para detenerlo antes.";
 "map.chat.reactFallback.title" = "Fallback de texto ReAct";
@@ -2695,7 +2695,7 @@
 "chat.mentions.confirmTokens" = "Confirmar si las @menciones superan N tokens";
 "chat.mentions.bytesUnit" = "%@ KB";
 "chat.mentions.tokensUnit" = "%@ tokens";
-"chat.mentions.preview" = "%@ mención(es) adjunta(s) \u{2014} %@, ~%@ tokens";
+"chat.mentions.preview" = "%@ mención(es) adjunta(s) — %@, ~%@ tokens";
 "chat.mention.autocomplete.empty" = "Sin coincidencias";
 "chat.mention.autocomplete.fileHint" = "archivos";
 "chat.mention.autocomplete.folderHint" = "carpetas";
@@ -2711,13 +2711,13 @@
 "help.chat.folderMention" = "@carpeta ruta adjunta una carpeta, con límite configurable";
 "help.chat.selectionMention" = "@selección adjunta la selección actual del editor";
 "help.chat.webMention" = "@web URL obtiene y adjunta el texto de una página";
-"help.chat.multiFileDiff" = "Tarjeta de resumen de diff multi-archivo mostrada cuando \u{2265}2 archivos cambian";
+"help.chat.multiFileDiff" = "Tarjeta de resumen de diff multi-archivo mostrada cuando ≥2 archivos cambian";
 
 // MARK: - Smart Context ZionMap entries (P12 T11)
 "map.chat.repoMap.title" = "RepoMap";
 "map.chat.repoMap.description" = "La herramienta MCP repo_map clasifica todos los símbolos del repositorio por recuento de referencias y muestra los N mejores en un esquema Markdown para que el modelo navegue en bases de código grandes sin leer cada archivo.";
 "map.chat.findSymbol.title" = "find_symbol";
-"map.chat.findSymbol.description" = "La herramienta MCP find_symbol busca en el índice de símbolos coincidencias exactas o de prefijo, devolviendo ruta, tipo, número de línea y recuento de referencias \u{2014} búsqueda precisa para el modelo.";
+"map.chat.findSymbol.description" = "La herramienta MCP find_symbol busca en el índice de símbolos coincidencias exactas o de prefijo, devolviendo ruta, tipo, número de línea y recuento de referencias — búsqueda precisa para el modelo.";
 "map.chat.fileMention.title" = "Mención @archivo";
 "map.chat.fileMention.description" = "Escribe @ruta/al/archivo en el compositor para adjuntar el contenido de un archivo como contexto explícito. Los archivos que superan el límite de bytes se truncan; los binarios se omiten con una advertencia.";
 "map.chat.folderMention.title" = "Mención @carpeta";
@@ -2727,33 +2727,33 @@
 "map.chat.webMention.title" = "Mención @web";
 "map.chat.webMention.description" = "Escribe @web https://... para obtener una página y adjuntar su contenido en texto plano. Respeta robots.txt; las páginas grandes se truncan al límite de bytes.";
 "map.chat.multiFileDiff.title" = "Tarjeta de diff multi-archivo";
-"map.chat.multiFileDiff.description" = "Cuando el modelo propone cambios en \u{2265}2 archivos, aparece una tarjeta de resumen sobre las vistas previas individuales. Revisa todo, Aprueba todo o Rechaza todo con un toque.";
-"chat.error.budgetExceeded.banner" = "Mensaje demasiado largo \u{2014} los tokens estimados superan la ventana de contexto. Toca Enviar de todos modos para continuar, o acorta la entrada.";
+"map.chat.multiFileDiff.description" = "Cuando el modelo propone cambios en ≥2 archivos, aparece una tarjeta de resumen sobre las vistas previas individuales. Revisa todo, Aprueba todo o Rechaza todo con un toque.";
+"chat.error.budgetExceeded.banner" = "Mensaje demasiado largo — los tokens estimados superan la ventana de contexto. Toca Enviar de todos modos para continuar, o acorta la entrada.";
 
 // MARK: - Approval Policy (P13 T11)
-"chat.bool.yes" = "S\u{00ED}";
+"chat.bool.yes" = "Sí";
 "chat.bool.no" = "No";
 "chat.settings.tab.intro" = "Estos ajustes aplican solo al chat de Zion Talks. Para acciones internas de IA (mensajes de commit, descripciones de PR, blame explainer), consulta Asistente IA.";
 "chat.settings.general" = "General";
 "chat.settings.toolsEnabled" = "Activar uso de herramientas";
-"chat.settings.autoInject" = "Inyectar contexto autom\u{00E1}ticamente";
+"chat.settings.autoInject" = "Inyectar contexto automáticamente";
 "chat.settings.toolBridge" = "Puente de Herramientas";
 "chat.settings.toolBridge.toggle" = "Activar puente de herramientas";
-"chat.settings.routingPolicy" = "Pol\u{00ED}tica de Enrutamiento";
-"chat.settings.cliFailover" = "Fallback de CLI de Suscripci\u{00F3}n";
+"chat.settings.routingPolicy" = "Política de Enrutamiento";
+"chat.settings.cliFailover" = "Fallback de CLI de Suscripción";
 "chat.settings.cliFailover.toggle" = "Permitir fallback de CLI";
-"chat.settings.cliFailover.warning" = "Activar esto permite que el chat use una CLI de suscripci\u{00F3}n (Claude Code, Codex) cuando el proveedor seleccionado no est\u{00E9} disponible. Revisa los t\u{00E9}rminos de tu suscripci\u{00F3}n antes de activar.";
-"chat.approvalPolicy.section.title" = "Pol\u{00ED}tica de Aprobaci\u{00F3}n";
+"chat.settings.cliFailover.warning" = "Activar esto permite que el chat use una CLI de suscripción (Claude Code, Codex) cuando el proveedor seleccionado no esté disponible. Revisa los términos de tu suscripción antes de activar.";
+"chat.approvalPolicy.section.title" = "Política de Aprobación";
 "chat.approvalPolicy.picker.label" = "Modo";
 "chat.approvalPolicy.manual" = "Manual";
-"chat.approvalPolicy.manual.description" = "Preguntar antes de cada llamada a herramienta o edici\u{00F3}n de archivo.";
-"chat.approvalPolicy.autoSafe" = "Autom\u{00E1}tico seguro";
-"chat.approvalPolicy.autoSafe.description" = "Aplicar autom\u{00E1}ticamente herramientas de solo lectura + escritura segura. Preguntar para operaciones destructivas + mutaciones bash.";
+"chat.approvalPolicy.manual.description" = "Preguntar antes de cada llamada a herramienta o edición de archivo.";
+"chat.approvalPolicy.autoSafe" = "Automático seguro";
+"chat.approvalPolicy.autoSafe.description" = "Aplicar automáticamente herramientas de solo lectura + escritura segura. Preguntar para operaciones destructivas + mutaciones bash.";
 "chat.approvalPolicy.auto" = "Auto";
-"chat.approvalPolicy.auto.description" = "Aplicar autom\u{00E1}ticamente cada herramienta excepto patrones siempre bloqueados.";
+"chat.approvalPolicy.auto.description" = "Aplicar automáticamente cada herramienta excepto patrones siempre bloqueados.";
 "chat.approvalPolicy.yolo" = "YOLO";
-"chat.approvalPolicy.yolo.description" = "Acceso completo. Omitir cada confirmaci\u{00F3}n. Usar solo en repositorios de confianza.";
-"chat.approvalPolicy.yolo.warning" = "El modo YOLO est\u{00E1} activo. El agente puede ejecutar cualquier comando shell y editar cualquier archivo sin confirmaci\u{00F3}n.";
+"chat.approvalPolicy.yolo.description" = "Acceso completo. Omitir cada confirmación. Usar solo en repositorios de confianza.";
+"chat.approvalPolicy.yolo.warning" = "El modo YOLO está activo. El agente puede ejecutar cualquier comando shell y editar cualquier archivo sin confirmación.";
 "chat.approvalPolicy.advanced" = "Avanzado";
 "chat.approvalPolicy.advanced.bashTier" = "Nivel bash";
 "chat.approvalPolicy.advanced.autoCommit" = "Auto-commit de ediciones";
@@ -2762,32 +2762,32 @@
 // MARK: - Context Budget (P13 T11)
 "chat.contextBudget.section.title" = "Presupuesto de Contexto";
 "chat.contextBudget.responseReserve" = "Reserva de respuesta";
-"chat.contextBudget.responseReserve.hint" = "Tokens reservados para la respuesta del modelo. Mayor reserva = ventana de entrada m\u{00E1}s corta.";
+"chat.contextBudget.responseReserve.hint" = "Tokens reservados para la respuesta del modelo. Mayor reserva = ventana de entrada más corta.";
 
 // MARK: - Compaction banner (P13 T11)
 "chat.banner.compactDone" = "Compactados %@ turnos anteriores para ajustar al contexto.";
 
 // MARK: - HelpSheet .chat bullets (P13 T11)
-"help.chat.tokenBudget" = "La ventana de historial consciente de tokens respeta el tama\u{00F1}o de contexto del modelo activo.";
+"help.chat.tokenBudget" = "La ventana de historial consciente de tokens respeta el tamaño de contexto del modelo activo.";
 "help.chat.autoCompact" = "Los turnos antiguos se auto-resumen al 75% de la ventana de contexto.";
-"help.chat.promptCache" = "El cach\u{00E9} de prompts de Anthropic reduce el costo repetido en turnos de m\u{00FAltiples} pasos.";
-"help.chat.approvalPolicy" = "Un selector de Pol\u{00ED}tica de Aprobaci\u{00F3}n controla el modo de plan, auto-commit y nivel bash.";
+"help.chat.promptCache" = "El caché de prompts de Anthropic reduce el costo repetido en turnos de m\u{00FAltiples} pasos.";
+"help.chat.approvalPolicy" = "Un selector de Política de Aprobación controla el modo de plan, auto-commit y nivel bash.";
 
 // MARK: - ZionMap .chat entries (P13 T11)
 "map.chat.tokenBudget.title" = "Historial consciente de tokens";
-"map.chat.tokenBudget.description" = "La ventana de historial se dimensiona al l\u{00ED}mite de contexto del modelo activo. El texto m\u{00E1}s antiguo del asistente se descarta primero; los bloques @file / @selection fijados sobreviven al recorte.";
+"map.chat.tokenBudget.description" = "La ventana de historial se dimensiona al límite de contexto del modelo activo. El texto más antiguo del asistente se descarta primero; los bloques @file / @selection fijados sobreviven al recorte.";
 "map.chat.autoCompact.title" = "Auto-compactar";
-"map.chat.autoCompact.description" = "Al 75% de la ventana de contexto, los turnos m\u{00E1}s antiguos se resumen mediante un modelo econ\u{00F3}mico (Haiku / 4o-mini / Flash). Los archivos adjuntos fijados se preservan literalmente.";
-"map.chat.promptCache.title" = "Cach\u{00E9} de prompts";
-"map.chat.promptCache.description" = "Cach\u{00E9} de prompts de Anthropic mediante cache_control: ephemeral en el bloque de sistema. Los bucles de m\u{00FAltiples} pasos solo pagan por la nueva ronda despu\u{00E9}s de la primera.";
-"map.chat.approvalPolicy.title" = "Pol\u{00ED}tica de Aprobaci\u{00F3}n";
-"map.chat.approvalPolicy.description" = "Un selector (Manual / Autom\u{00E1}tico seguro / Auto / YOLO) controla el modo de plan, auto-commit y nivel bash. Las configuraciones heredadas migran autom\u{00E1}ticamente.";
+"map.chat.autoCompact.description" = "Al 75% de la ventana de contexto, los turnos más antiguos se resumen mediante un modelo económico (Haiku / 4o-mini / Flash). Los archivos adjuntos fijados se preservan literalmente.";
+"map.chat.promptCache.title" = "Caché de prompts";
+"map.chat.promptCache.description" = "Caché de prompts de Anthropic mediante cache_control: ephemeral en el bloque de sistema. Los bucles de m\u{00FAltiples} pasos solo pagan por la nueva ronda después de la primera.";
+"map.chat.approvalPolicy.title" = "Política de Aprobación";
+"map.chat.approvalPolicy.description" = "Un selector (Manual / Automático seguro / Auto / YOLO) controla el modo de plan, auto-commit y nivel bash. Las configuraciones heredadas migran automáticamente.";
 "chat.mcp.section.title" = "Servidores MCP";
-"chat.mcp.newServer" = "Nuevo servidor\u{2026}";
-"chat.mcp.findMore" = "Encontrar m\u{00E1}s servidores \u{2192}";
-"chat.mcp.menu.editConfig" = "Editar configuraci\u{00F3}n";
+"chat.mcp.newServer" = "Nuevo servidor…";
+"chat.mcp.findMore" = "Encontrar más servidores →";
+"chat.mcp.menu.editConfig" = "Editar configuración";
 "chat.mcp.menu.remove" = "Eliminar";
-"chat.mcp.editor.titleNew" = "A\u{00F1}adir servidor MCP";
+"chat.mcp.editor.titleNew" = "Añadir servidor MCP";
 "chat.mcp.editor.titleEdit" = "Editar servidor MCP";
 "chat.mcp.editor.id" = "ID del servidor";
 "chat.mcp.editor.command" = "Comando";
@@ -2811,26 +2811,26 @@
 "chat.slash.help.section.shortcuts" = "Atajos";
 
 // Mention help descriptions
-"chat.help.mention.file" = "Adjuntar un archivo a la conversaci\u{00F3}n";
+"chat.help.mention.file" = "Adjuntar un archivo a la conversación";
 "chat.help.mention.folder" = "Adjuntar todos los archivos de una carpeta";
-"chat.help.mention.selection" = "Adjuntar la selecci\u{00F3}n actual del editor";
+"chat.help.mention.selection" = "Adjuntar la selección actual del editor";
 "chat.help.mention.web" = "Obtener una URL y adjuntar su contenido";
-"chat.help.mcpServer.description" = "Herramienta expuesta v\u{00ED}a servidor MCP";
+"chat.help.mcpServer.description" = "Herramienta expuesta vía servidor MCP";
 
 // Keyboard shortcut descriptions
 "chat.help.shortcut.send" = "Enviar mensaje";
-"chat.help.shortcut.newline" = "Insertar nueva l\u{00ED}nea";
-"chat.help.shortcut.stop" = "Detener generaci\u{00F3}n";
+"chat.help.shortcut.newline" = "Insertar nueva línea";
+"chat.help.shortcut.stop" = "Detener generación";
 "chat.help.shortcut.history" = "Navegar por el historial de mensajes";
 
 // Built-in slash command descriptions
-"chat.slash.builtin.diff.description" = "Mostrar el diff actual del \u{00E1}rbol de trabajo";
+"chat.slash.builtin.diff.description" = "Mostrar el diff actual del árbol de trabajo";
 "chat.slash.builtin.log.description" = "Mostrar el historial reciente de commits";
-"chat.slash.builtin.file.description" = "Adjuntar un archivo a la conversaci\u{00F3}n";
+"chat.slash.builtin.file.description" = "Adjuntar un archivo a la conversación";
 "chat.slash.builtin.status.description" = "Mostrar el estado git del repositorio";
 "chat.slash.builtin.commit.description" = "Generar y confirmar los cambios preparados";
-"chat.slash.builtin.clear.description" = "Limpiar la conversaci\u{00F3}n actual";
-"chat.slash.builtin.compact.description" = "Resumir la conversaci\u{00F3}n para ahorrar contexto";
+"chat.slash.builtin.clear.description" = "Limpiar la conversación actual";
+"chat.slash.builtin.compact.description" = "Resumir la conversación para ahorrar contexto";
 "chat.slash.builtin.help.description" = "Mostrar todos los comandos disponibles";
 
 // Slash autocomplete source labels
@@ -2839,66 +2839,66 @@
 "chat.slash.source.user" = "Usuario";
 
 // Chat empty state
-"chat.emptyState.hero.title" = "Pregunta cualquier cosa sobre tu c\u{00F3}digo";
+"chat.emptyState.hero.title" = "Pregunta cualquier cosa sobre tu código";
 "chat.emptyState.hero.subtitle" = "Usa / para comandos, @ para mencionar archivos, o simplemente escribe";
-"chat.emptyState.starter.browse.title" = "Explorar c\u{00F3}digo";
+"chat.emptyState.starter.browse.title" = "Explorar código";
 "chat.emptyState.starter.browse.subtitle" = "Explicar la estructura y los archivos clave";
 "chat.emptyState.starter.editFile.title" = "Editar un archivo";
-"chat.emptyState.starter.editFile.subtitle" = "Modificar o refactorizar c\u{00F3}digo con IA";
+"chat.emptyState.starter.editFile.subtitle" = "Modificar o refactorizar código con IA";
 "chat.emptyState.starter.runTests.title" = "Ejecutar pruebas";
 "chat.emptyState.starter.runTests.subtitle" = "Ejecutar y analizar resultados de pruebas";
 "chat.emptyState.starter.allCommands.title" = "Todos los comandos";
 "chat.emptyState.starter.allCommands.subtitle" = "Ver todo lo que Zion puede hacer";
 
 // Composer placeholder
-"chat.composer.placeholder.discoverable" = "Mensaje \u{00B7} / para comandos \u{00B7} @ para archivos";
+"chat.composer.placeholder.discoverable" = "Mensaje · / para comandos · @ para archivos";
 
 // Skills settings
 "chat.skills.section.title" = "Skills";
 "chat.skills.empty" = "No hay skills instaladas";
 "chat.skills.scope.project" = "Proyecto";
 "chat.skills.scope.user" = "Usuario";
-"chat.skills.newSkill" = "Nueva Skill\u{2026}";
+"chat.skills.newSkill" = "Nueva Skill…";
 "chat.skills.newSkill.title" = "Nueva Skill";
 "chat.skills.newSkill.name" = "Nombre";
-"chat.skills.newSkill.description" = "Descripci\u{00F3}n";
-"chat.skills.newSkill.scope" = "\u{00C1}mbito";
+"chat.skills.newSkill.description" = "Descripción";
+"chat.skills.newSkill.scope" = "Ámbito";
 "chat.skills.newSkill.cancel" = "Cancelar";
 "chat.skills.newSkill.save" = "Guardar";
 
 // Spend pill
 "chat.spend.pill.month" = "este mes";
-"chat.spend.pill.subscription" = "suscripci\u{00F3}n";
+"chat.spend.pill.subscription" = "suscripción";
 "chat.spend.pill.local" = "local";
 "chat.spend.pill.empty" = "Sin gastos";
 
 // Usage settings
 "chat.spend.usage.section.title" = "Uso";
-"chat.spend.usage.softCap" = "L\u{00ED}mite suave";
+"chat.spend.usage.softCap" = "Límite suave";
 "chat.spend.usage.softCap.off" = "Desactivado";
-"chat.spend.usage.empty" = "A\u{00FA}n no hay uso registrado";
+"chat.spend.usage.empty" = "Aún no hay uso registrado";
 "chat.spend.usage.resetsFooter" = "Se reinicia el 1 de cada mes";
 
 // Auto-resolved chip
-"chat.auto.resolvedChip" = "Auto \u{2192} %@";
+"chat.auto.resolvedChip" = "Auto → %@";
 
 // Chat commands
 "chat.command.clear.busy" = "No se puede limpiar mientras se genera una respuesta.";
-"chat.command.compact.done" = "Conversaci\u{00F3}n compactada.";
-"chat.command.compact.alreadyCompact" = "Nada que compactar todav\u{00ED}a.";
+"chat.command.compact.done" = "Conversación compactada.";
+"chat.command.compact.alreadyCompact" = "Nada que compactar todavía.";
 
 // Discoverability bullets
-"help.chat.slashAutocomplete" = "Autocompletar con barra \u{2014} Escribe / en el compositor para explorar comandos y habilidades";
-"help.chat.mcpManagement" = "Panel de servidores MCP \u{2014} Agrega, edita y elimina servidores MCP con indicadores de estado";
-"help.chat.skillScaffold" = "Crear habilidad \u{2014} Crea habilidades en Ajustes \u{2192} Zion Talks \u{2192} Habilidades; invoca con /nombre";
-"help.chat.spendLedger" = "Medidor de gasto \u{2014} P\u{00ED}ldora de costo mensual en el encabezado con desglose por proveedor";
+"help.chat.slashAutocomplete" = "Autocompletar con barra — Escribe / en el compositor para explorar comandos y habilidades";
+"help.chat.mcpManagement" = "Panel de servidores MCP — Agrega, edita y elimina servidores MCP con indicadores de estado";
+"help.chat.skillScaffold" = "Crear habilidad — Crea habilidades en Ajustes → Zion Talks → Habilidades; invoca con /nombre";
+"help.chat.spendLedger" = "Medidor de gasto — Píldora de costo mensual en el encabezado con desglose por proveedor";
 
 // Discoverability map entries
 "map.chat.slashAutocomplete.title" = "Autocompletar con Barra";
-"map.chat.slashAutocomplete.description" = "Escribe / en el compositor para un men\u{00FA} desplegable de comandos y habilidades. Teclas de flecha + Tab/Intro para confirmar, Esc para cerrar.";
+"map.chat.slashAutocomplete.description" = "Escribe / en el compositor para un menú desplegable de comandos y habilidades. Teclas de flecha + Tab/Intro para confirmar, Esc para cerrar.";
 "map.chat.mcpManagement.title" = "Panel de Servidores MCP";
-"map.chat.mcpManagement.description" = "Ajustes \u{2192} Zion Talks \u{2192} Servidores MCP lista cada servidor con indicador de estado y men\u{00FA} (editar / eliminar). Editor JSON con presets.";
+"map.chat.mcpManagement.description" = "Ajustes → Zion Talks → Servidores MCP lista cada servidor con indicador de estado y menú (editar / eliminar). Editor JSON con presets.";
 "map.chat.skillScaffold.title" = "Crear Habilidad";
-"map.chat.skillScaffold.description" = "Ajustes \u{2192} Zion Talks \u{2192} Habilidades lista las habilidades disponibles. Nueva Habilidad crea un SKILL.md inicial con frontmatter YAML. Invoca con /nombre.";
+"map.chat.skillScaffold.description" = "Ajustes → Zion Talks → Habilidades lista las habilidades disponibles. Nueva Habilidad crea un SKILL.md inicial con frontmatter YAML. Invoca con /nombre.";
 "map.chat.spendLedger.title" = "Medidor de Gasto";
-"map.chat.spendLedger.description" = "El encabezado muestra una p\u{00ED}ldora de gasto mensual. Ajustes \u{2192} Zion Talks \u{2192} Uso lista el desglose por proveedor con l\u{00ED}mite de gasto.";
+"map.chat.spendLedger.description" = "El encabezado muestra una píldora de gasto mensual. Ajustes → Zion Talks → Uso lista el desglose por proveedor con límite de gasto.";
