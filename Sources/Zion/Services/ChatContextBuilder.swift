@@ -201,3 +201,72 @@ struct ChatContextBuilder {
         "```\(language)\n\(content)\n```"
     }
 }
+
+// MARK: - /help payload builder
+
+extension ChatContextBuilder {
+    /// Builds a static HelpCardPayload snapshot from live registries at /help time.
+    @MainActor
+    func buildHelpPayload(
+        registry: SlashCommandRegistry,
+        skillIndex: SkillIndex,
+        mcpStore: MCPRegistryStore? = nil
+    ) -> HelpCardPayload {
+        // Built-in commands
+        let builtIn = registry.all
+            .filter { $0.source == .builtIn }
+            .map { item in
+                HelpCardPayload.HelpCardItem(
+                    id: item.id,
+                    label: item.name + (item.argHint.map { " " + $0 } ?? ""),
+                    description: item.description
+                )
+            }
+
+        // Project skills
+        let projectSkills = skillIndex.skills
+            .filter { $0.scope == .project }
+            .map { HelpCardPayload.HelpCardItem(id: $0.id, label: "/" + $0.id, description: $0.description) }
+
+        // User skills
+        let userSkills = skillIndex.skills
+            .filter { $0.scope == .user }
+            .map { HelpCardPayload.HelpCardItem(id: $0.id, label: "/" + $0.id, description: $0.description) }
+
+        // @ mentions — static list
+        let mentions: [HelpCardPayload.HelpCardItem] = [
+            .init(id: "file", label: "@file <path>", description: L10n("chat.help.mention.file")),
+            .init(id: "folder", label: "@folder <path>", description: L10n("chat.help.mention.folder")),
+            .init(id: "selection", label: "@selection", description: L10n("chat.help.mention.selection")),
+            .init(id: "web", label: "@web <url>", description: L10n("chat.help.mention.web"))
+        ]
+
+        // MCP tools — from store if available
+        let mcpTools: [HelpCardPayload.HelpCardItem] = mcpStore.map { store in
+            store.servers.map { server in
+                HelpCardPayload.HelpCardItem(
+                    id: server.id,
+                    label: server.id,
+                    description: L10n("chat.help.mcpServer.description")
+                )
+            }
+        } ?? []
+
+        // Keyboard shortcuts
+        let shortcuts: [HelpCardPayload.HelpCardItem] = [
+            .init(id: "send", label: "\u{23CE}", description: L10n("chat.help.shortcut.send")),
+            .init(id: "newline", label: "\u{21E7}\u{23CE}", description: L10n("chat.help.shortcut.newline")),
+            .init(id: "stop", label: "\u{2303}C", description: L10n("chat.help.shortcut.stop")),
+            .init(id: "history", label: "\u{2318}L", description: L10n("chat.help.shortcut.history"))
+        ]
+
+        return HelpCardPayload(
+            builtInItems: builtIn,
+            projectSkills: projectSkills,
+            userSkills: userSkills,
+            mentions: mentions,
+            mcpTools: mcpTools,
+            shortcuts: shortcuts
+        )
+    }
+}

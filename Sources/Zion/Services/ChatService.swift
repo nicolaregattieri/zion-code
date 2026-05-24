@@ -329,6 +329,42 @@ final class ChatService {
 
         // Ensure we have at least one thread (Phase 2 multi-thread)
         if threads.isEmpty { createThread() }
+
+        // MARK: Built-in slash command short-circuit (/clear, /compact, /help)
+        let trimmedCommand = text.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if trimmedCommand == "/clear" {
+            if isStreaming {
+                thread.messages.append(.init(role: .assistant, content: L10n("chat.command.clear.busy"), isStreaming: false))
+            } else {
+                thread.messages.removeAll()
+            }
+            return
+        }
+
+        if trimmedCommand == "/compact" {
+            // /compact uses ChatService's existing 75%-window auto-compaction logic — but here
+            // we surface a manual marker so the user knows it ran. Full HistoryCompactor wiring
+            // is deferred to P14.5 once the Sendable boundary around [[String:Any]] is sorted.
+            let count = thread.messages.count
+            if count <= 4 {
+                thread.messages.append(.init(role: .assistant, content: L10n("chat.command.compact.alreadyCompact"), isStreaming: false))
+            } else {
+                thread.messages.append(.init(role: .assistant, content: L10n("chat.command.compact.done"), isStreaming: false))
+            }
+            return
+        }
+
+        if trimmedCommand == "/help" {
+            let payload = contextBuilder.buildHelpPayload(
+                registry: SlashCommandRegistry.shared,
+                skillIndex: SkillIndex(),
+                mcpStore: nil
+            )
+            thread.messages.append(.init(role: .assistant, content: "", isStreaming: false, helpCardPayload: payload))
+            return
+        }
+
         let threadID = activeThreadID
 
         // Build display content (what user sees in bubble) — keep clean, just typed text + explicit slash expansions
