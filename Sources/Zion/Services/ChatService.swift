@@ -83,6 +83,58 @@ final class ChatService {
     @ObservationIgnored private var activeMode: AIMode = .efficient
     @ObservationIgnored private var activeBranch: String = ""
 
+    // MARK: - Budget overflow state
+
+    struct BudgetOverflowState: Equatable, Sendable {
+        let estimatedTokens: Int
+        let availableTokens: Int
+        let messageID: UUID
+    }
+
+    /// Set when a send is blocked by the context budget gate.
+    /// UI observes this to show a "send anyway" prompt.
+    var budgetOverflowState: BudgetOverflowState? = nil
+
+    /// One-shot flag: if set, the next send skips the budget gate.
+    @ObservationIgnored private var budgetOverrideApproved: Bool = false
+
+    /// User clicks "send anyway" in the budget banner — next send bypasses the gate.
+    func approveBudgetOverride() {
+        budgetOverflowState = nil
+        budgetOverrideApproved = true
+    }
+
+    // MARK: - Static context helpers
+
+    /// Token-aware history window. Walks `messages` from newest to oldest, keeping the
+    /// most recent slice whose summed token estimate fits in `available`. Returns the
+    /// kept slice in chronological order. Replaces the legacy `suffix(10)` cap that was
+    /// message-count-based — wrong axis for token-budgeted providers.
+    nonisolated static func windowedHistory(
+        _ messages: [ChatMessage],
+        available: Int,
+        perMessageReserveTokens: Int = 0
+    ) -> [ChatMessage] {
+        guard !messages.isEmpty, available > 0 else { return [] }
+        var kept: [ChatMessage] = []
+        var acc = 0
+        let cap = max(0, available - perMessageReserveTokens)
+        for msg in messages.reversed() {
+            let toks = TokenEstimator.estimate(msg.content, kind: .code)
+            if acc + toks > cap { break }
+            kept.insert(msg, at: 0)
+            acc += toks
+        }
+        return kept
+    }
+
+    /// Returns true when the conversation token estimate exceeds 75% of the budget,
+    /// signalling that HistoryCompactor should run before forwarding to the provider.
+    nonisolated static func shouldCompact(estimated: Int, budget: Int) -> Bool {
+        guard budget > 0 else { return false }
+        return Double(estimated) > Double(budget) * 0.75
+    }
+
     // MARK: - Init (production)
 
     init(ai: AIClient, worker: RepositoryWorker, contextBuilder: ChatContextBuilder, harness: ZionHarness, storage: ChatStorage? = nil, repoID: String = "", agentRuntime: AgentRuntime = AgentRuntime(), mentionResolver: MentionResolver? = nil) {
@@ -334,8 +386,10 @@ final class ChatService {
             stickyContext = thread.messages.reversed().first(where: { $0.role == .user && $0.internalContext != nil })?.internalContext
         }
 
-        // Build conversation history block (last 10 messages BEFORE appending current) for multi-turn context
-        let historyMessages = thread.messages.suffix(10)
+        // Build conversation history block — token-aware window (replaces legacy suffix(10)).
+        // Hard cap of 50_000 tokens here matches the conservative pre-P13 default before any
+        // ContextBudget integration; safe for every model Zion supports.
+        let historyMessages = Self.windowedHistory(Array(thread.messages), available: 50_000)
         var historyBlock = ""
         if !historyMessages.isEmpty {
             historyBlock = "## Conversation so far\n\n"
@@ -445,8 +499,13 @@ final class ChatService {
 
             // Build structured conversation for AgentRuntime (last 10 messages as role/content dicts).
             // Sendable boundary: MainActor closure must return [[String: String]] (Any is not Sendable).
+            // Token-aware history window for AgentRuntime — replaces suffix(10).
+            // Provider-window aware budget computed via ContextBudget.
+            let windowAvailable = await ContextBudget().available(forProvider: resolved, model: modelOverride)
+            let historyReserve = max(8_000, Int(Double(windowAvailable) * 0.5))
             let stringHistory: [[String: String]] = await MainActor.run {
-                self.thread.messages.suffix(10).compactMap { msg -> [String: String]? in
+                let kept = ChatService.windowedHistory(self.thread.messages, available: historyReserve)
+                return kept.compactMap { msg -> [String: String]? in
                     guard msg.id != assistantID else { return nil }
                     return ["role": msg.role == .user ? "user" : "assistant", "content": msg.content]
                 }

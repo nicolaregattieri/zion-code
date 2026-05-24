@@ -146,6 +146,11 @@ final class ToolLoopRunner: @unchecked Sendable {
             if stepCount >= maxSteps    { loopStop = .maxStepsReached; break }
             if budgetCap > 0 && cumulativeCostUSD >= budgetCap { loopStop = .budgetExceeded; break }
 
+            // --- Evict stale tool_result blocks before the next provider call ---
+            if stepCount >= 1 {
+                conversation = ToolResultEvictor.evict(conversation, currentStep: stepCount + 1)
+            }
+
             // --- Stream + parse one step ---
             let outcome: StepOutcome
             do {

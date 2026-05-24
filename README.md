@@ -123,6 +123,8 @@ Zion isn't a git client with AI bolted on — it's an **AI workflow workspace** 
 
 **Smart Context (beta)** — Repomap MCP tool gives every provider a ranked map of the codebase, `@file`/`@folder`/`@selection`/`@web` attach explicit context with cost preview, and a multi-file diff card lets you approve N file changes in one click.
 
+**Context Management (beta)** — Token-aware history (replaces the legacy 10-message cap), Anthropic prompt caching, auto-compact at 75% of the window, repomap auto-seed every turn, and one unified Approval Policy (Manual / Auto-safe / Auto / YOLO) consolidating the scattered toggles.
+
 Built on the patterns the field converged on in 2026 (Aider's polyglot benchmark winner format, Cline's diff-apply v3, Claude Code's str_replace_editor, the Pi minimalist harness) — applied with a git-client substrate nobody else has.
 
 <p align="center">

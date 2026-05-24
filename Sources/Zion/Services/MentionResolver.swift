@@ -115,7 +115,7 @@ actor MentionResolver {
 
             case .selection:
                 if let text = selectionProvider() {
-                    let capped = String(text.prefix(maxBytes))
+                    let capped = ByteSafeTruncate.cap(text, maxBytes: maxBytes)
                     let bytes = capped.utf8.count
                     resolved.append(ResolvedMention(kind: .selection, argument: "", contents: capped, bytes: bytes))
                     breakdown.append((path: "@selection", bytes: bytes))
@@ -124,15 +124,21 @@ actor MentionResolver {
                 }
 
             case .web:
-                let (contents, bytes) = await resolveWeb(url: mention.argument, maxBytes: maxBytes)
+                let (contents, bytes) = await resolveWeb(url: mention.argument, queryText: message, maxBytes: maxBytes)
                 resolved.append(ResolvedMention(kind: .web, argument: mention.argument, contents: contents, bytes: bytes))
                 breakdown.append((path: mention.argument, bytes: bytes))
             }
         }
 
-        let context = buildSystemContext(resolved)
+        let volatileCtx = buildSystemContext(resolved)
         let total = breakdown.reduce(0) { $0 + $1.bytes }
-        return MentionPayload(systemContext: context, totalBytes: total, perFileBreakdown: breakdown, mentions: resolved)
+        return MentionPayload(
+            stableContext: "",
+            volatileContext: volatileCtx,
+            totalBytes: total,
+            perFileBreakdown: breakdown,
+            mentions: resolved
+        )
     }
 
     /// Dry-run: count mentions and estimate byte cost without performing I/O.
@@ -308,10 +314,10 @@ actor MentionResolver {
         return results
     }
 
-    private func resolveWeb(url: String, maxBytes: Int) async -> (contents: String, bytes: Int) {
+    private func resolveWeb(url: String, queryText: String, maxBytes: Int) async -> (contents: String, bytes: Int) {
         guard !url.isEmpty else { return ("[error: missing argument]", 0) }
         do {
-            let raw = try await toolClient.callTool("web_fetch", args: ["url": url])
+            let raw = try await toolClient.callTool("web_fetch", args: ["url": url, "queryText": queryText])
             let capped = cap(raw, maxBytes: maxBytes)
             return (capped, capped.utf8.count)
         } catch {
@@ -322,17 +328,7 @@ actor MentionResolver {
     // MARK: Private helpers
 
     private func cap(_ text: String, maxBytes: Int) -> String {
-        guard text.utf8.count > maxBytes else { return text }
-        // Truncate to maxBytes at a valid UTF-8 boundary
-        var result = ""
-        var count = 0
-        for char in text {
-            let charBytes = String(char).utf8.count
-            if count + charBytes > maxBytes { break }
-            result.append(char)
-            count += charBytes
-        }
-        return result
+        ByteSafeTruncate.cap(text, maxBytes: maxBytes)
     }
 
     private func isTextFile(_ path: String) -> Bool {
