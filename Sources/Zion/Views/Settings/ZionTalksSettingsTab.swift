@@ -51,6 +51,8 @@ struct ZionTalksSettingsTab: View {
 
             SmartContextSettingsSection()
 
+            MCPServersSettingsSection()
+
             ContextBudgetSection()
 
             Section(L10n("chat.settings.toolBridge")) {
