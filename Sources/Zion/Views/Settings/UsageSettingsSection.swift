@@ -10,7 +10,11 @@ struct UsageSettingsSection: View {
     @State private var rows: [ProviderSpendRow] = []
 
     var body: some View {
-        Section(L10n("chat.spend.usage.section.title")) { // MARK: - TODO(P14:T10): L10n
+        Section(L10n("chat.spend.usage.section.title")) {
+            Text(L10n("chat.spend.usage.honestyBanner"))
+                .font(DesignSystem.Typography.label)
+                .foregroundStyle(DesignSystem.Colors.warning)
+
             Stepper(value: $softCapUSD, in: 0...500, step: 5) {
                 HStack {
                     Text(L10n("chat.spend.usage.softCap"))

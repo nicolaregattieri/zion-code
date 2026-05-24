@@ -43,6 +43,7 @@ struct SpendMeterPill: View {
         .padding(.horizontal, DesignSystem.Spacing.compact)
         .padding(.vertical, DesignSystem.Spacing.micro)
         .background(Capsule().fill(DesignSystem.Colors.glassSubtle))
+        .help(L10n("chat.spend.pill.tooltip"))
         .task { await reload() }
     }
 
