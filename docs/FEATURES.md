@@ -545,3 +545,14 @@ All shortcuts are customizable via the Keyboard Shortcuts editor (`⌥⌘K`). Cl
 | Hard caps | Configurable max-step count and per-provider daily cost budget. Loop halts and surfaces a summary when either cap is hit. User can cancel at any step via the step indicator. |
 | ReAct text fallback | Local models without native function-calling support use a structured Thought / Action / Observation text loop (ReAct format). Older quantized models (Mistral, older LLaMA) automatically fall back to this mode. |
 | Step indicator | Live capsule badge in the conversation header shows current step N / max and cumulative cost during a running loop. |
+
+### Smart Context (beta)
+
+Closes the Cursor-parity gap for vibe coding while staying provider-agnostic.
+
+- **Repomap MCP tool** — `repo_map` returns a Markdown outline of the most relevant files + symbols, ranked by PageRank (focusFiles 50×, history 10×, mentioned identifiers 5×). Every provider gets a free "table of contents" to reduce blind grep calls.
+- **find_symbol MCP tool** — Precise identifier lookup across the repo, faster than grep for "where is `X` defined".
+- **@file / @folder / @selection / @web mentions** — Explicit context attachment in the composer. NSTextView-backed autocomplete popup, code-fence aware, with per-folder + per-file byte caps.
+- **Multi-file diff summary** — When the agent changes ≥2 files, a single card surfaces the file list + Approve all / Reject all / Review all actions.
+- **Settings → Zion Talks → Smart Context** — Toggle indexing, max files per @folder, max bytes per @file, token-confirm threshold, stats footer.
+- **Cross-provider universal** — Works with Anthropic, OpenAI, Gemini, local models with tool calling, ReAct fallback for older models, Claude CLI and Codex CLI passthrough.

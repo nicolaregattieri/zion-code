@@ -44,6 +44,11 @@ final class ChatService {
     @ObservationIgnored private let streamProvider: ((LocalLLMConfig, AIPromptPayload, Int, String) -> AsyncThrowingStream<String, Error>)?
     @ObservationIgnored private let cliStreamProvider: ((AIPromptPayload, URL) -> AsyncThrowingStream<CLIStreamEvent, Error>)?
 
+    /// Mention resolver — expands @file/@folder/@selection/@web before each send.
+    /// Nil = mentions disabled (default for non-injected callers; set via init).
+    /// Exposed as internal(set) so ChatComposer can surface cost preview.
+    @ObservationIgnored private(set) var mentionResolver: MentionResolver?
+
     /// Injected storage (nil = volatile/test)
     @ObservationIgnored private let storage: ChatStorage?
     @ObservationIgnored private let repoID: String
@@ -80,7 +85,7 @@ final class ChatService {
 
     // MARK: - Init (production)
 
-    init(ai: AIClient, worker: RepositoryWorker, contextBuilder: ChatContextBuilder, harness: ZionHarness, storage: ChatStorage? = nil, repoID: String = "", agentRuntime: AgentRuntime = AgentRuntime()) {
+    init(ai: AIClient, worker: RepositoryWorker, contextBuilder: ChatContextBuilder, harness: ZionHarness, storage: ChatStorage? = nil, repoID: String = "", agentRuntime: AgentRuntime = AgentRuntime(), mentionResolver: MentionResolver? = nil) {
         self.ai = ai
         self.worker = worker
         self.contextBuilder = contextBuilder
@@ -90,6 +95,7 @@ final class ChatService {
         self.storage = storage
         self.repoID = repoID
         self.agentRuntime = agentRuntime
+        self.mentionResolver = mentionResolver
 
         if storage != nil {
             Task { await self.reloadFromStorage() }
@@ -106,7 +112,8 @@ final class ChatService {
         streamProvider: @escaping (LocalLLMConfig, AIPromptPayload, Int, String) -> AsyncThrowingStream<String, Error>,
         storage: ChatStorage? = nil,
         repoID: String = "",
-        agentRuntime: AgentRuntime = AgentRuntime()
+        agentRuntime: AgentRuntime = AgentRuntime(),
+        mentionResolver: MentionResolver? = nil
     ) {
         self.ai = ai
         self.worker = worker
@@ -117,6 +124,7 @@ final class ChatService {
         self.storage = storage
         self.repoID = repoID
         self.agentRuntime = agentRuntime
+        self.mentionResolver = mentionResolver
 
         if storage != nil {
             Task { await self.reloadFromStorage() }
@@ -133,7 +141,8 @@ final class ChatService {
         cliStreamProvider: @escaping (AIPromptPayload, URL) -> AsyncThrowingStream<CLIStreamEvent, Error>,
         storage: ChatStorage? = nil,
         repoID: String = "",
-        agentRuntime: AgentRuntime = AgentRuntime()
+        agentRuntime: AgentRuntime = AgentRuntime(),
+        mentionResolver: MentionResolver? = nil
     ) {
         self.ai = ai
         self.worker = worker
@@ -144,6 +153,7 @@ final class ChatService {
         self.storage = storage
         self.repoID = repoID
         self.agentRuntime = agentRuntime
+        self.mentionResolver = mentionResolver
 
         if storage != nil {
             Task { await self.reloadFromStorage() }
@@ -416,7 +426,21 @@ final class ChatService {
                 resolved = provider
             }
 
-            var payload = Self.makePayload(for: expandedText, provider: resolved)
+            // Resolve @mentions in the user text BEFORE building the payload,
+            // so both the AgentRuntime path and the legacy dispatchStream fallback
+            // see the resolved system context. The user-visible message stays
+            // unchanged; only the prompt sent to the model is enriched.
+            let mentionPayload: MentionPayload
+            if let resolver = self.mentionResolver {
+                mentionPayload = await resolver.expand(message: expandedText)
+            } else {
+                mentionPayload = .empty
+            }
+            let enrichedText: String = mentionPayload.systemContext.isEmpty
+                ? expandedText
+                : mentionPayload.systemContext + "\n\n" + expandedText
+
+            var payload = Self.makePayload(for: enrichedText, provider: resolved)
             payload.cwd = repoURL
 
             // Build structured conversation for AgentRuntime (last 10 messages as role/content dicts).
@@ -428,6 +452,9 @@ final class ChatService {
                 }
             }
             let historyForRuntime: [[String: Any]] = stringHistory.map { $0 as [String: Any] }
+            // Mention context already prepended to `enrichedText` above, so the
+            // AgentRuntime path sees it through `userPrompt` without a separate
+            // system message.
 
             // Route through AgentRuntime. Falls back to legacy dispatchStream when
             // no real runners are injected (AgentRuntime throws .noProviderAvailable).
@@ -436,8 +463,8 @@ final class ChatService {
                     provider: resolved,
                     model: modelOverride,
                     conversation: historyForRuntime,
-                    userPrompt: expandedText,
-                    tools: [],
+                    userPrompt: enrichedText,
+                    tools: MCPConfigBuilder.allTools(),
                     maxSteps: 25,
                     onStep: { @Sendable event in
                         Task { @MainActor in
@@ -735,6 +762,13 @@ final class ChatService {
             case .networkFailure:
                 retryAfter = 30
                 await orchestrator.markRateLimited(provider, retryAfter: 30)
+            case .invalidKey:
+                // Auth failure (401/403) — mark provider unhealthy so the
+                // orchestrator skips it for the rest of the session, then try
+                // the next provider in the chain. Surfacing 401 directly to
+                // the user breaks `.auto` when a key is missing.
+                retryAfter = nil
+                await orchestrator.markRateLimited(provider, retryAfter: 86_400)
             default:
                 // Non-retryable error — surface it
                 await MainActor.run {
@@ -1360,6 +1394,18 @@ final class ChatService {
         guard let (tIdx, mIdx, bIdx) = findEditBlock(blockID: blockID, assistantID: assistantID) else { return }
         threads[tIdx].messages[mIdx].editBlocks![bIdx].failureReason = "rejected"
         scheduleDebounce(for: assistantID, threadID: activeThreadID)
+    }
+
+    /// Marks every edit block in a message as rejected.
+    func rejectAllEdits(messageID: UUID) {
+        guard let (tIdx, mIdx) = findAssistantMessage(messageID: messageID),
+              let blocks = threads[tIdx].messages[mIdx].editBlocks else { return }
+        for bIdx in blocks.indices {
+            if threads[tIdx].messages[mIdx].editBlocks![bIdx].failureReason == nil {
+                threads[tIdx].messages[mIdx].editBlocks![bIdx].failureReason = "rejected"
+            }
+        }
+        scheduleDebounce(for: messageID, threadID: activeThreadID)
     }
 
     /// Replaces an edit block by re-parsing raw XML content.

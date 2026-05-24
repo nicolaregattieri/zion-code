@@ -346,6 +346,13 @@ struct ZionMapContent {
                 ZionMapEntry("map.chat.stickyProvider.title", description: "map.chat.stickyProvider.description"),
                 ZionMapEntry("map.chat.stepCap.title", description: "map.chat.stepCap.description"),
                 ZionMapEntry("map.chat.reactFallback.title", description: "map.chat.reactFallback.description"),
+                ZionMapEntry("map.chat.repoMap.title", description: "map.chat.repoMap.description"),
+                ZionMapEntry("map.chat.findSymbol.title", description: "map.chat.findSymbol.description"),
+                ZionMapEntry("map.chat.fileMention.title", description: "map.chat.fileMention.description"),
+                ZionMapEntry("map.chat.folderMention.title", description: "map.chat.folderMention.description"),
+                ZionMapEntry("map.chat.selectionMention.title", description: "map.chat.selectionMention.description"),
+                ZionMapEntry("map.chat.webMention.title", description: "map.chat.webMention.description"),
+                ZionMapEntry("map.chat.multiFileDiff.title", description: "map.chat.multiFileDiff.description"),
             ]
         }
     }

@@ -141,7 +141,14 @@ struct HelpSheet: View {
                 "help.chat.approvalTiers",
                 "help.chat.stickyProvider",
                 "help.chat.stepCap",
-                "help.chat.reactFallback"
+                "help.chat.reactFallback",
+                "help.chat.repoMap",
+                "help.chat.findSymbol",
+                "help.chat.fileMention",
+                "help.chat.folderMention",
+                "help.chat.selectionMention",
+                "help.chat.webMention",
+                "help.chat.multiFileDiff"
             ]
         }
     }

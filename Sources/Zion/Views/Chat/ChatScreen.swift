@@ -188,24 +188,63 @@ struct ChatScreen: View {
                             if message.role == .assistant, let blocks = message.editBlocks, !blocks.isEmpty {
                                 let msgID = message.id
                                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
-                                    ForEach(blocks) { block in
-                                        EditPreviewCard(block: block, isStreaming: message.isStreaming) { action in
-                                            switch action {
-                                            case .apply:
-                                                Task { await chat.applyEditBlock(blockID: block.id, in: msgID) }
-                                            case .reject:
-                                                chat.rejectEditBlock(blockID: block.id, in: msgID)
-                                            case .editRaw(let raw):
-                                                chat.replaceEditBlock(blockID: block.id, in: msgID, rawXML: raw)
+                                    // Multi-file summary card (shown when >= 2 files)
+                                    if blocks.count >= 2 {
+                                        MultiFileDiffSummary(
+                                            blocks: blocks,
+                                            onReviewAll: {
+                                                // TODO(P12.5): open diff viewer sheet
+                                            },
+                                            onApproveAll: {
+                                                Task { await chat.applyAllEdits(messageID: msgID) }
+                                            },
+                                            onRejectAll: {
+                                                chat.rejectAllEdits(messageID: msgID)
+                                            }
+                                        )
+                                    }
+                                    // Per-file cards — collapse to summary lines when >= 4 files
+                                    if blocks.count < 4 {
+                                        ForEach(blocks) { block in
+                                            EditPreviewCard(block: block, isStreaming: message.isStreaming) { action in
+                                                switch action {
+                                                case .apply:
+                                                    Task { await chat.applyEditBlock(blockID: block.id, in: msgID) }
+                                                case .reject:
+                                                    chat.rejectEditBlock(blockID: block.id, in: msgID)
+                                                case .editRaw(let raw):
+                                                    chat.replaceEditBlock(blockID: block.id, in: msgID, rawXML: raw)
+                                                }
                                             }
                                         }
+                                    } else {
+                                        // Collapsed: show first 2 cards at reduced opacity + "N more" label
+                                        ForEach(blocks.prefix(2)) { block in
+                                            EditPreviewCard(block: block, isStreaming: message.isStreaming) { action in
+                                                switch action {
+                                                case .apply:
+                                                    Task { await chat.applyEditBlock(blockID: block.id, in: msgID) }
+                                                case .reject:
+                                                    chat.rejectEditBlock(blockID: block.id, in: msgID)
+                                                case .editRaw(let raw):
+                                                    chat.replaceEditBlock(blockID: block.id, in: msgID, rawXML: raw)
+                                                }
+                                            }
+                                            .opacity(DesignSystem.Opacity.dim)
+                                        }
+                                        Text(L10n("chat.multifileDiff.moreFiles", "\(blocks.count - 2)"))
+                                            .font(DesignSystem.Typography.label)
+                                            .foregroundStyle(.secondary)
                                     }
-                                    ApplyAllButton(
-                                        blocks: blocks,
-                                        isStreaming: message.isStreaming,
-                                        state: chat.applyAllState(for: msgID)
-                                    ) {
-                                        Task { await chat.applyAllEdits(messageID: msgID) }
+                                    // Single-file flow keeps the ApplyAll button; multi-file uses summary buttons
+                                    if blocks.count < 2 {
+                                        ApplyAllButton(
+                                            blocks: blocks,
+                                            isStreaming: message.isStreaming,
+                                            state: chat.applyAllState(for: msgID)
+                                        ) {
+                                            Task { await chat.applyAllEdits(messageID: msgID) }
+                                        }
                                     }
                                 }
                                 .padding(.horizontal, DesignSystem.Spacing.cardPadding)

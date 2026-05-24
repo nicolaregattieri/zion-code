@@ -1,5 +1,7 @@
 import Foundation
 
+// MARK: - MCPToolDescriptor
+
 /// Builds per-spawn MCP config files consumed by the claude CLI (`--mcp-config`)
 /// so that every subprocess has the zion-mcp tool server registered automatically.
 ///
@@ -91,7 +93,117 @@ enum MCPConfigBuilder {
         return nil
     }
 
+    // MARK: - Tool Registry
+
+    /// All tool descriptors registered in the Zion-internal MCP path.
+    /// Every provider family (Anthropic, OpenAI, Gemini, local, ReAct, CLI passthrough)
+    /// sees these tools via the MCP server's `tools/list` or direct descriptor injection.
+    static func allTools() -> [MCPToolDescriptor] {
+        return [bashToolDescriptorTyped(), repoMapDescriptor(), findSymbolDescriptor()]
+    }
+
+    // MARK: - Dispatch
+
+    /// Dispatch an MCP `tools/call` to the matching handler.
+    /// - Parameters:
+    ///   - name: Tool name from the JSON-RPC request.
+    ///   - args: Decoded argument dictionary (`[String: Any]`).
+    /// - Returns: Result string to surface to the AI.
+    static func dispatch(name: String, args: [String: Any]) async throws -> String {
+        switch name {
+        case "repo_map":
+            return try await dispatchRepoMap(args: args)
+        case "find_symbol":
+            return try await dispatchFindSymbol(args: args)
+        default:
+            throw MCPDispatchError.unknownTool(name)
+        }
+    }
+
+    // MARK: - repo_map
+
+    static func repoMapDescriptor() -> MCPToolDescriptor {
+        MCPToolDescriptor(
+            name: "repo_map",
+            description: "Returns a Markdown outline of the most relevant files + their top-level symbols, ranked by PageRank. Use to discover where things live before grep'ing.",
+            inputSchema: [
+                "type": "object",
+                "properties": [
+                    "focusFiles": [
+                        "type": "array",
+                        "items": ["type": "string"],
+                        "description": "File paths that should weigh heavily in the ranking"
+                    ] as [String: Any],
+                    "tokenBudget": [
+                        "type": "integer",
+                        "default": 4000,
+                        "description": "Token budget for the output (default 4000)"
+                    ] as [String: Any]
+                ] as [String: Any]
+            ]
+        )
+    }
+
+    static func dispatchRepoMap(args: [String: Any]) async throws -> String {
+        let focusFiles = args["focusFiles"] as? [String] ?? []
+        let tokenBudget = args["tokenBudget"] as? Int ?? 4000
+        guard let indexer = SymbolIndexer.shared else {
+            return "[error: SymbolIndexer not initialized — open a repo first]"
+        }
+        return try await indexer.buildRepoMap(focusFiles: focusFiles, tokenBudget: tokenBudget)
+    }
+
+    // MARK: - find_symbol
+
+    static func findSymbolDescriptor() -> MCPToolDescriptor {
+        MCPToolDescriptor(
+            name: "find_symbol",
+            description: "Find a symbol by exact or fuzzy name across the repo. Returns matching file paths + line numbers + kinds. Faster + more precise than grep for identifier search.",
+            inputSchema: [
+                "type": "object",
+                "properties": [
+                    "name": ["type": "string"] as [String: Any],
+                    "kind": [
+                        "type": "string",
+                        "description": "Optional filter: function, struct, class, protocol, enum, extension, variable, constant, enumCase"
+                    ] as [String: Any]
+                ] as [String: Any],
+                "required": ["name"]
+            ]
+        )
+    }
+
+    static func dispatchFindSymbol(args: [String: Any]) async throws -> String {
+        let name = args["name"] as? String ?? ""
+        let kindFilter = args["kind"] as? String
+        guard let indexer = SymbolIndexer.shared else {
+            return "[error: SymbolIndexer not initialized — open a repo first]"
+        }
+        let rows = try await indexer.symbolsByName(name, kind: kindFilter)
+        if rows.isEmpty {
+            return "No symbols found matching '\(name)'."
+        }
+        let lines = rows.map { "\($0.file):\($0.line) — \($0.kind) \($0.name)" }
+        return lines.joined(separator: "\n")
+    }
+
     // MARK: - Bash Tool Descriptor
+
+    /// Returns the `bash` tool as a typed `MCPToolDescriptor` (used by `allTools()`).
+    private static func bashToolDescriptorTyped() -> MCPToolDescriptor {
+        MCPToolDescriptor(
+            name: "bash",
+            description: "Execute a shell command in the workspace. Respects approval tier.",
+            inputSchema: [
+                "type": "object",
+                "properties": [
+                    "command": ["type": "string"] as [String: Any],
+                    "timeoutSec": ["type": "integer", "minimum": 1, "maximum": 300] as [String: Any]
+                ] as [String: Any],
+                "required": ["command"]
+            ]
+        )
+    }
 
     /// Returns the JSON schema descriptor for the `bash` MCP tool.
     ///
@@ -141,6 +253,18 @@ enum MCPConfigBuilder {
             if mtime < cutoff {
                 try? fm.removeItem(at: url)
             }
+        }
+    }
+}
+
+// MARK: - MCPDispatchError
+
+enum MCPDispatchError: Error, LocalizedError {
+    case unknownTool(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .unknownTool(let name): return "Unknown MCP tool: \(name)"
         }
     }
 }

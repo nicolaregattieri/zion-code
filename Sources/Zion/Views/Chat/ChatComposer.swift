@@ -10,7 +10,6 @@ struct ChatComposer: View {
     let onNewChat: () -> Void
 
     @AppStorage(UserDefaultsKeys.AI.provider) private var selectedProviderRaw: String = AIProvider.none.rawValue
-    @FocusState private var inputFocused: Bool
 
     @State private var selectedModelID: String = ""
     @State private var availableModels: [String] = []
@@ -26,6 +25,10 @@ struct ChatComposer: View {
     var body: some View {
         VStack(spacing: DesignSystem.Spacing.compact) {
             inputField
+            // Cost preview for @mentions (300 ms debounce, no I/O)
+            if let resolver = chat.mentionResolver {
+                MentionsCostPreview(message: text, resolver: resolver)
+            }
             HStack(spacing: DesignSystem.Spacing.standard) {
                 providerMenu
                 modelMenu
@@ -50,7 +53,6 @@ struct ChatComposer: View {
                 .shadow(color: Color.black.opacity(0.15), radius: 12, x: 0, y: 4)
         )
         .onAppear {
-            inputFocused = true
             refreshModelList()
         }
         .onChange(of: selectedProviderRaw) { _, _ in refreshModelList() }
@@ -127,23 +129,24 @@ struct ChatComposer: View {
     }
 
     private var inputField: some View {
-        TextField(L10n("chat.composer.hint"), text: $text, axis: .vertical)
-            .textFieldStyle(.plain)
-            .labelsHidden()
-            .chatScaledFont(role: .body)
-            .lineLimit(1...6)
+        ZStack(alignment: .topLeading) {
+            // Placeholder — shown when text is empty
+            if text.isEmpty {
+                Text(L10n("chat.composer.hint"))
+                    .chatScaledFont(role: .body)
+                    .foregroundStyle(DesignSystem.Colors.textTertiary)
+                    .padding(.horizontal, DesignSystem.Spacing.compact + 4)
+                    .padding(.vertical, DesignSystem.Spacing.micro + 6)
+                    .allowsHitTesting(false)
+            }
+            // NSTextView replacement — multi-line, enter-to-send, shift-enter newline
+            ComposerNSTextView(text: $text, onSend: {
+                if canSend { onSend() }
+            })
+            .frame(minHeight: 28, maxHeight: 120)
             .padding(.horizontal, DesignSystem.Spacing.compact)
             .padding(.vertical, DesignSystem.Spacing.micro)
-            .focused($inputFocused)
-            .onKeyPress(.return) {
-                if NSEvent.modifierFlags.contains(.shift) {
-                    return .ignored
-                }
-                if canSend {
-                    onSend()
-                }
-                return .handled
-            }
+        }
     }
 
     private var providerMenu: some View {
