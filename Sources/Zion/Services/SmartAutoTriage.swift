@@ -69,7 +69,17 @@ struct HeuristicTriageClassifier: AutoTriageClassifier {
     ]
 
     private static func matchesReasoning(_ lower: String, length: Int) -> Bool {
-        if Self.reasoningMarkers.contains(where: { lower.contains($0) }) { return true }
+        // Marker list uses leading-space prefixes (" plan", " feature", etc.)
+        // to avoid false positives like "complain"/"airplane". Also accept the
+        // marker when it sits at the start of the message (no preceding space).
+        if Self.reasoningMarkers.contains(where: { marker in
+            if lower.contains(marker) { return true }
+            if marker.hasPrefix(" ") {
+                let bare = String(marker.dropFirst())
+                return lower.hasPrefix(bare)
+            }
+            return false
+        }) { return true }
         return length > 280 && lower.contains("?")
     }
 

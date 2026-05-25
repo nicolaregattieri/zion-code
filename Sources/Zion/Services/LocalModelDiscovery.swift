@@ -160,12 +160,13 @@ enum LocalModelDiscovery {
     // MARK: - Custom server probe (opt-in)
 
     static func probeServer(url: URL, kind: LocalEngineKind?, timeout: TimeInterval = 0.8) async -> [LocalModelHint]? {
-        // SSRF guard: only allow loopback for local-server probes. A user can
-        // legitimately point the local config at 127.0.0.1 / localhost / *.local
-        // but never at private subnets or cloud metadata IPs — those would be
-        // someone else's network resource, not a local LLM.
+        // SSRF guard: only allow loopback for local-server probes. `.local`
+        // mDNS suffixes resolve to arbitrary LAN IPs (including 169.254.x
+        // link-local) so they are NOT treated as loopback — a user pointing
+        // the config at `foo.local` is reaching another host on their
+        // network, not a local LLM, and we refuse to probe.
         if let host = url.host?.lowercased() {
-            let loopback = host == "localhost" || host == "127.0.0.1" || host == "::1" || host.hasSuffix(".local")
+            let loopback = host == "localhost" || host == "127.0.0.1" || host == "::1"
             if !loopback, FileSystemMentionToolClient.isPrivateOrMetadataHost(host) {
                 return nil
             }

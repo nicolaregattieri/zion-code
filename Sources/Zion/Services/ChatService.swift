@@ -704,6 +704,20 @@ final class ChatService {
         Task { await self.agentRuntime.cancel() }
     }
 
+    /// Cancels every in-flight streaming task. Called on repo switch / app
+    /// teardown so an orphaned, never-completing stream cannot leak past the
+    /// ChatService's lifetime.
+    func cancelAll() {
+        for (_, task) in tasksByThread { task.cancel() }
+        tasksByThread.removeAll()
+        streamingThreadIDs.removeAll()
+        Task { await self.agentRuntime.cancel() }
+    }
+
+    deinit {
+        for (_, task) in tasksByThread { task.cancel() }
+    }
+
     // MARK: - Private Stream Helpers
 
     private func runLocalStream(payload: AIPromptPayload, assistantID: UUID) async {
@@ -804,22 +818,48 @@ final class ChatService {
         }
     }
 
-    /// Removes `<plan>…</plan>` (including the tags themselves) plus a single
-    /// trailing newline. Tolerant of leading whitespace.
-    static func stripPlanXML(from text: String) -> String {
-        guard let open = text.range(of: "<plan>"),
-              let close = text.range(of: "</plan>", range: open.upperBound..<text.endIndex) else {
-            return text
-        }
-        let blockStart = open.lowerBound
-        var blockEnd = close.upperBound
-        // Swallow a trailing newline so the strip leaves no blank line.
-        if blockEnd < text.endIndex, text[blockEnd] == "\n" {
-            blockEnd = text.index(after: blockEnd)
-        }
+    /// Removes every `<plan>…</plan>` block (tags included) plus a single
+    /// trailing newline per match. Skips any `<plan>` that lives inside a
+    /// fenced code block so documentation/example snippets survive.
+    /// Tolerant of leading whitespace and multiple plans in the same response.
+    nonisolated static func stripPlanXML(from text: String) -> String {
+        // Build a set of (start, end) byte offsets that fall inside ``` fences
+        // so we can skip plan-strip whenever the match overlaps a fence.
+        let fenceRanges = codeFenceRanges(in: text)
+
         var out = text
-        out.removeSubrange(blockStart..<blockEnd)
+        var cursor = out.startIndex
+        while cursor < out.endIndex,
+              let open = out.range(of: "<plan>", range: cursor..<out.endIndex),
+              let close = out.range(of: "</plan>", range: open.upperBound..<out.endIndex) {
+            // Skip plans that sit inside a code fence.
+            if fenceRanges.contains(where: { $0.contains(open.lowerBound) }) {
+                cursor = close.upperBound
+                continue
+            }
+            let blockStart = open.lowerBound
+            var blockEnd = close.upperBound
+            if blockEnd < out.endIndex, out[blockEnd] == "\n" {
+                blockEnd = out.index(after: blockEnd)
+            }
+            out.removeSubrange(blockStart..<blockEnd)
+            cursor = blockStart
+        }
         return out
+    }
+
+    /// Returns the substring ranges enclosed by triple-backtick fences. Used
+    /// by `stripPlanXML` to keep example XML inside code blocks intact.
+    nonisolated private static func codeFenceRanges(in text: String) -> [Range<String.Index>] {
+        var ranges: [Range<String.Index>] = []
+        var search = text.startIndex
+        while search < text.endIndex,
+              let open = text.range(of: "```", range: search..<text.endIndex),
+              let close = text.range(of: "```", range: open.upperBound..<text.endIndex) {
+            ranges.append(open.lowerBound..<close.upperBound)
+            search = close.upperBound
+        }
+        return ranges
     }
 
     private func consumeCLIStream(_ stream: AsyncThrowingStream<CLIStreamEvent, Error>, assistantID: UUID, threadID: UUID) async {

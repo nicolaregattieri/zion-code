@@ -2509,6 +2509,9 @@
 "chat.emptyState.smartAuto.installClaudeCLI" = "Instalar Claude CLI";
 "chat.emptyState.smartAuto.installOllama" = "Instalar Ollama";
 "chat.thread.streaming" = "Streaming em background";
+"chat.auto.tier.easy" = "fácil";
+"chat.auto.tier.medium" = "médio";
+"chat.auto.tier.hard" = "difícil";
 "chat.local.autostart.banner.title" = "Usar seu LLM local no Auto?";
 "chat.local.autostart.banner.subtitle" = "%@ está configurado mas não rodando. O Smart Auto pode usá-lo de graça.";
 "chat.local.autostart.banner.startOnce" = "Ligar uma vez";
