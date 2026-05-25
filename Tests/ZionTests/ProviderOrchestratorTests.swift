@@ -20,6 +20,10 @@ final class ProviderOrchestratorTests: XCTestCase {
 
     /// Builds a policy with a simple 3-provider general chain:
     ///   claudeCLI → anthropic → openai
+    ///
+    /// Injects a connectivity stub that always returns true so eligibility is
+    /// driven entirely by the health/cost-cap state under test, not by whether
+    /// the CI machine happens to have API keys configured.
     private func makeOrchestrator(health: ProviderHealth = ProviderHealth(),
                                   budget: CostBudget = CostBudget()) -> ProviderOrchestrator {
         var chains: [String: [String]] = [:]
@@ -29,7 +33,12 @@ final class ProviderOrchestratorTests: XCTestCase {
             AIProvider.openai.rawValue
         ]
         let policy = RoutingPolicy(chains: chains)
-        return ProviderOrchestrator(policy: policy, health: health, budget: budget)
+        return ProviderOrchestrator(
+            policy: policy,
+            health: health,
+            budget: budget,
+            connectivityCheck: { _ in true }
+        )
     }
 
     // MARK: - Tests
