@@ -122,6 +122,28 @@ private final class RecordingToolLoopRunner: ToolLoopRunnerProtocol, @unchecked 
 
 final class ProviderOrchestratorStickyTests: XCTestCase {
 
+    private var savedPlanModeRaw: String?
+
+    override func setUp() {
+        super.setUp()
+        // Force `.autoApply` for every test in this class. Default `.planFirst`
+        // makes `AgentRuntime.run()` suspend after phase 1 inside
+        // `PlanModeGate.waitForApprovalIfNeeded` waiting for a user action that
+        // never comes in tests — the call then hangs the entire suite.
+        savedPlanModeRaw = UserDefaults.standard.string(forKey: "chat.plan.mode")
+        PlanModeState.set(.autoApply)
+    }
+
+    override func tearDown() {
+        if let raw = savedPlanModeRaw {
+            UserDefaults.standard.set(raw, forKey: "chat.plan.mode")
+        } else {
+            UserDefaults.standard.removeObject(forKey: "chat.plan.mode")
+        }
+        savedPlanModeRaw = nil
+        super.tearDown()
+    }
+
     // MARK: Test 1 — Sticky lock refuses switch during active loop
 
     func testStickyLockRefusesSwitchDuringLoop() async {
@@ -244,13 +266,6 @@ final class ProviderOrchestratorStickyTests: XCTestCase {
     /// dependencies while still exercising the identical injection point.
     @MainActor
     func testAgentRuntimeDispatchesToInjectedRunner() async throws {
-        // Force `.autoApply` so AgentRuntime skips PlanModeGate.waitForApprovalIfNeeded.
-        // Default `.planFirst` would suspend the run() call indefinitely waiting for
-        // the user to approve/reject the plan, hanging the test (and the release).
-        let previous = PlanModeState.current()
-        PlanModeState.set(.autoApply)
-        defer { PlanModeState.set(previous) }
-
         let recorder = RecordingToolLoopRunner()
         let runtime = AgentRuntime(toolLoopRunner: recorder)
 
