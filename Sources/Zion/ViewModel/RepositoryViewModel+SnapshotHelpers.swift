@@ -84,6 +84,14 @@ extension RepositoryViewModel {
     func clearRepositorySwitchState() {
         isBlockingRepositorySwitch = false
         isSwitchingRepository = false
+        // Flush any file-watcher events that accumulated while the switch
+        // flag was up. Without this, disk changes made during the switch
+        // window stay invisible until the user triggers a manual refresh or
+        // the next FSEvent fires. Especially important when the safety
+        // watchdog has to force-clear a stale `isSwitchingRepository`.
+        if pendingFileWatcherEvent != nil {
+            processPendingFileWatcherEventIfNeeded()
+        }
     }
 
     /// Clears branch/commit/worktree data from the previous repo so the UI
@@ -114,6 +122,21 @@ extension RepositoryViewModel {
     }
 
     func captureRepositorySnapshot(for url: URL) {
+        // Refuse to snapshot a half-loaded repo: switching away before the
+        // git refresh finishes would otherwise persist `commits = []` and
+        // `repositoryFiles = []`, and the next time the user returns we
+        // restore that empty snapshot instead of running a fresh load —
+        // surface symptom is Zion Tree showing "0 commits" on a real repo.
+        let halfLoaded = isGitRepository
+            && commits.isEmpty
+            && repositoryFiles.isEmpty
+            && currentBranch.isEmpty
+        if halfLoaded {
+            logger.log(.info, "snapshot.skip half-loaded",
+                       context: "repo=\(url.lastPathComponent)", source: #function)
+            repositorySwitchSnapshots.removeValue(forKey: url)
+            return
+        }
         repositorySwitchSnapshots[url] = RepositorySwitchSnapshot(
             capturedAt: Date(),
             commitLimit: commitLimit,
@@ -638,9 +661,11 @@ extension RepositoryViewModel {
     }
 
     func enqueueFileWatcherEvent(_ event: FileWatcher.ChangeEvent) {
-        guard !isSwitchingRepository else { return }
+        // Always accumulate the event so disk changes that happen during a
+        // repo switch (or while Zen mode is paused) are not lost. The flush
+        // happens when `clearRepositorySwitchState` / `exitZenMode` runs.
         pendingFileWatcherEvent = pendingFileWatcherEvent?.merged(with: event) ?? event
-        guard !isZenModePaused else { return }
+        guard !isSwitchingRepository, !isZenModePaused else { return }
         processPendingFileWatcherEventIfNeeded()
     }
 
