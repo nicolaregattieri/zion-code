@@ -57,6 +57,15 @@ enum AIProviderSupport {
             let lastHealthy = UserDefaults.standard.double(forKey: UserDefaultsKeys.AI.localLastHealthyAt)
             guard lastHealthy > 0 else { return false }
             return Date().timeIntervalSince1970 - lastHealthy < Constants.Timing.localHealthFreshnessSeconds
+        },
+        cliProbe: (CLITool) -> Bool = { tool in
+            // Default sync probe: binary on disk + auth credentials. Replace in
+            // tests so machine-local CLI installs don't leak into assertions.
+            guard cliBinaryExistsSync(tool: tool) else { return false }
+            switch tool {
+            case .claude: return CLIDiscoveryService.checkClaudeAuthRealtime()
+            case .codex:  return CLIDiscoveryService.checkCodexAuthRealtime()
+            }
         }
     ) -> Bool {
         if provider == .local {
@@ -67,14 +76,8 @@ enum AIProviderSupport {
             return true
         }
         if provider == .claudeCLI || provider == .codexCLI {
-            // Sync probe: filesystem path + keychain/auth check. Mirrors
-            // CLIDiscoveryService.status() but without spawning subprocesses.
             let tool: CLITool = provider == .claudeCLI ? .claude : .codex
-            guard cliBinaryExistsSync(tool: tool) else { return false }
-            switch tool {
-            case .claude: return CLIDiscoveryService.checkClaudeAuthRealtime()
-            case .codex:  return CLIDiscoveryService.checkCodexAuthRealtime()
-            }
+            return cliProbe(tool)
         }
         guard provider != .none else { return false }
         guard let key = loadKey(provider)?.trimmingCharacters(in: .whitespacesAndNewlines) else {
@@ -152,12 +155,15 @@ enum AIProviderSupport {
     }
 
     static func connectionInfo(
-        loadKey: (AIProvider) -> String? = AIClient.loadAPIKey
+        loadKey: (AIProvider) -> String? = AIClient.loadAPIKey,
+        cliProbe: ((CLITool) -> Bool)? = nil
     ) -> [AIProviderConnectionInfo] {
         configurableProviders.map { provider in
             AIProviderConnectionInfo(
                 provider: provider,
-                isConnected: isConnected(provider: provider, loadKey: loadKey),
+                isConnected: cliProbe.map {
+                    isConnected(provider: provider, loadKey: loadKey, cliProbe: $0)
+                } ?? isConnected(provider: provider, loadKey: loadKey),
                 dashboardURL: dashboardURL(for: provider)
             )
         }
@@ -165,21 +171,27 @@ enum AIProviderSupport {
 
     static func alternativeProviders(
         excluding defaultProvider: AIProvider,
-        loadKey: (AIProvider) -> String? = AIClient.loadAPIKey
+        loadKey: (AIProvider) -> String? = AIClient.loadAPIKey,
+        cliProbe: ((CLITool) -> Bool)? = nil
     ) -> [AIProvider] {
         configurableProviders.filter { provider in
-            provider != defaultProvider
-                && provider != .auto                 // .auto is a routing pseudo-provider, never a fallback
-                && isConnected(provider: provider, loadKey: loadKey)
+            guard provider != defaultProvider, provider != .auto else { return false }
+            if let probe = cliProbe {
+                return isConnected(provider: provider, loadKey: loadKey, cliProbe: probe)
+            }
+            return isConnected(provider: provider, loadKey: loadKey)
         }
     }
 
     static func quotaRecoveryInfo(
         defaultProvider: AIProvider,
-        loadKey: (AIProvider) -> String? = AIClient.loadAPIKey
+        loadKey: (AIProvider) -> String? = AIClient.loadAPIKey,
+        cliProbe: ((CLITool) -> Bool)? = nil
     ) -> AIQuotaRecoveryInfo {
         AIQuotaRecoveryInfo(
-            alternativeProviders: alternativeProviders(excluding: defaultProvider, loadKey: loadKey)
+            alternativeProviders: alternativeProviders(
+                excluding: defaultProvider, loadKey: loadKey, cliProbe: cliProbe
+            )
         )
     }
 

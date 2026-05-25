@@ -29,31 +29,33 @@ final class AIProviderSupportTests: XCTestCase {
     }
 
     func testAlternativeProvidersExcludeCurrentDefault() {
-        let alternatives = AIProviderSupport.alternativeProviders(excluding: .gemini) { provider in
-            switch provider {
-            case .openai:
-                return "openai-key"
-            case .gemini:
-                return "gemini-key"
-            default:
-                return nil
-            }
-        }
+        let alternatives = AIProviderSupport.alternativeProviders(
+            excluding: .gemini,
+            loadKey: { provider in
+                switch provider {
+                case .openai: return "openai-key"
+                case .gemini: return "gemini-key"
+                default:      return nil
+                }
+            },
+            cliProbe: { _ in false }   // tests assume no subscription CLIs installed
+        )
 
         XCTAssertEqual(alternatives, [.openai])
     }
 
     func testQuotaRecoveryInfoTracksAlternatives() {
-        let recovery = AIProviderSupport.quotaRecoveryInfo(defaultProvider: .anthropic) { provider in
-            switch provider {
-            case .openai:
-                return "openai-key"
-            case .gemini:
-                return "gemini-key"
-            default:
-                return nil
-            }
-        }
+        let recovery = AIProviderSupport.quotaRecoveryInfo(
+            defaultProvider: .anthropic,
+            loadKey: { provider in
+                switch provider {
+                case .openai: return "openai-key"
+                case .gemini: return "gemini-key"
+                default:      return nil
+                }
+            },
+            cliProbe: { _ in false }
+        )
 
         XCTAssertTrue(recovery.hasAlternativeProvider)
         XCTAssertEqual(recovery.alternativeProviders, [.openai, .gemini])
