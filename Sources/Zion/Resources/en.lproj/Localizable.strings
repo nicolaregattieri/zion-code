@@ -2897,3 +2897,30 @@
 "map.chat.skillScaffold.description" = "Settings → Zion Talks → Skills lists available skills. New Skill writes a starter SKILL.md with YAML frontmatter. Invoke via /skill-name in chat.";
 "map.chat.spendLedger.title" = "Spend Meter";
 "map.chat.spendLedger.description" = "Conversation header shows a monthly spend pill. Settings → Zion Talks → Usage lists per-provider breakdown with a soft-cap stepper.";
+
+// Smart Auto v1 (P12)
+"help.chat.smartAutoTier" = "Smart Auto tier — every message is classified easy / medium / hard and routed to Haiku / Sonnet / Opus (or peer tier on other providers)";
+"help.chat.localModelDiscovery" = "Local model discovery — scans Ollama, LM Studio, MLX, llama.cpp folders plus a custom folder, no server spawn required";
+"help.chat.localServerStatus" = "Local server status bar — shows model, system RAM pressure, per-server RSS, with a Disconnect button (Zion never auto-disconnects)";
+"help.chat.localAutoStartBanner" = "Auto-start banner — when Auto could benefit from a local LLM, offers Start once / Always / Not now / Never (Zion never auto-spawns)";
+"help.chat.perThreadStreaming" = "Per-thread streaming — switching threads mid-response no longer cancels it; sidebar shows a spinner on streaming threads";
+"help.chat.planXmlStrip" = "Plan XML strip — raw <plan> blocks are removed from the rendered message once the structured Plan card appears";
+"help.chat.smartAutoOnboarding" = "Smart Auto empty-state — when no provider is connected, surfaces Install Claude CLI + Install Ollama links";
+"help.chat.mentionAutocomplete" = "Mention & slash autocomplete — @ panel works before SymbolIndexer finishes cold scan; / triggers after any whitespace, not only line start";
+
+"map.chat.smartAutoTier.title" = "Smart Auto tier routing";
+"map.chat.smartAutoTier.description" = "Auto mode classifies every user message into easy / medium / hard and routes to a per-provider model (Haiku / Sonnet / Opus, gpt-4o-mini / 4o / o1, Flash / Pro). The resolved chip ('Auto → Claude · sonnet · medium') is color-coded by tier and previews live while you type.";
+"map.chat.localModelDiscovery.title" = "Local model discovery";
+"map.chat.localModelDiscovery.description" = "Zion scans the default folders for Ollama, LM Studio, MLX, and llama.cpp plus a custom user folder to know which models exist, without spawning any server. The discovered list feeds the composer dropdown and the Smart Auto router.";
+"map.chat.localServerStatus.title" = "Local server status bar";
+"map.chat.localServerStatus.description" = "When a local LLM server is reachable, a bar inside the composer shows the active model, system RAM pressure, per-server RSS, and a Disconnect button. Zion never auto-disconnects — the bar disappears only when you click Disconnect or stop the server yourself.";
+"map.chat.localAutoStartBanner.title" = "Auto-start banner";
+"map.chat.localAutoStartBanner.description" = "When Auto could benefit from the local LLM but the server is off, a banner offers Start once, Always start, Not now, or Never ask. The choice persists via LocalAutoStartPolicy. Zion never auto-spawns a server without explicit consent.";
+"map.chat.perThreadStreaming.title" = "Per-thread streaming";
+"map.chat.perThreadStreaming.description" = "Switching threads while a response is streaming no longer cancels the response. Background-streaming threads show a spinner in the sidebar so you can keep working in another thread and come back later.";
+"map.chat.planXmlStrip.title" = "Plan XML strip";
+"map.chat.planXmlStrip.description" = "Once the structured Plan card appears, the raw <plan> XML block is removed from the rendered message so the conversation stays clean. The Plan card remains fully interactive (Apply / Reject / Edit-raw).";
+"map.chat.smartAutoOnboarding.title" = "Smart Auto empty state";
+"map.chat.smartAutoOnboarding.description" = "When no AI provider is connected, the chat shows an onboarding card describing Smart Auto and offering Install Claude CLI and Install Ollama links so a new user can reach a working setup in one click.";
+"map.chat.mentionAutocomplete.title" = "Mention & slash autocomplete";
+"map.chat.mentionAutocomplete.description" = "The @ panel now works even before the SymbolIndexer finishes its cold scan, using a filesystem fallback. The / autocomplete triggers after any whitespace, not only at line start, so you can chain commands inside a sentence.";

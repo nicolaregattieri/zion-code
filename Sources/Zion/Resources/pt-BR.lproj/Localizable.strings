@@ -2899,3 +2899,30 @@
 "map.chat.skillScaffold.description" = "Configurações → Zion Talks → Habilidades lista as habilidades disponíveis. Nova Habilidade cria um SKILL.md inicial com frontmatter YAML. Invoque via /nome.";
 "map.chat.spendLedger.title" = "Medídor de Gastos";
 "map.chat.spendLedger.description" = "O cabeçalho mostra uma pílula de gasto mensal. Configurações → Zion Talks → Uso lista o detalhamento por provedor com limitador de gasto.";
+
+// Smart Auto v1 (P12)
+"help.chat.smartAutoTier" = "Tier do Smart Auto — cada mensagem é classificada como fácil / médio / difícil e roteada para Haiku / Sonnet / Opus (ou tier equivalente em outros provedores)";
+"help.chat.localModelDiscovery" = "Descoberta de modelos locais — varre pastas do Ollama, LM Studio, MLX, llama.cpp e uma pasta customizada, sem iniciar servidor";
+"help.chat.localServerStatus" = "Barra de status do servidor local — mostra modelo, pressão de RAM, RSS por servidor e botão Desconectar (Zion nunca desconecta sozinho)";
+"help.chat.localAutoStartBanner" = "Banner de auto-start — quando o Auto se beneficiaria do LLM local, oferece Iniciar uma vez / Sempre / Agora não / Nunca perguntar (Zion nunca inicia sozinho)";
+"help.chat.perThreadStreaming" = "Streaming por thread — trocar de thread durante a resposta não cancela mais o stream; spinner aparece na sidebar nas threads em andamento";
+"help.chat.planXmlStrip" = "Remoção de XML do Plan — o bloco bruto <plan> é removido da mensagem renderizada assim que o card de Plano aparece";
+"help.chat.smartAutoOnboarding" = "Empty-state do Smart Auto — quando nenhum provedor está conectado, mostra links Instalar Claude CLI + Instalar Ollama";
+"help.chat.mentionAutocomplete" = "Autocomplete de @ e / — painel @ funciona antes do SymbolIndexer terminar; / dispara após qualquer espaço, não só no início da linha";
+
+"map.chat.smartAutoTier.title" = "Roteamento por tier do Smart Auto";
+"map.chat.smartAutoTier.description" = "O modo Auto classifica cada mensagem em fácil / médio / difícil e roteia para um modelo por provedor (Haiku / Sonnet / Opus, gpt-4o-mini / 4o / o1, Flash / Pro). O chip resolvido ('Auto → Claude · sonnet · médio') é colorido por tier e atualiza em tempo real enquanto você digita.";
+"map.chat.localModelDiscovery.title" = "Descoberta de modelos locais";
+"map.chat.localModelDiscovery.description" = "O Zion varre as pastas padrão de Ollama, LM Studio, MLX e llama.cpp, além de uma pasta customizada do usuário, para saber quais modelos existem — sem precisar iniciar nenhum servidor. A lista descoberta alimenta o dropdown do compositor e o roteador do Smart Auto.";
+"map.chat.localServerStatus.title" = "Barra de status do servidor local";
+"map.chat.localServerStatus.description" = "Quando um servidor LLM local está acessível, uma barra dentro do compositor mostra o modelo ativo, a pressão de RAM do sistema, o RSS por servidor e um botão Desconectar. O Zion nunca desconecta sozinho — a barra só some quando você clica Desconectar ou para o servidor manualmente.";
+"map.chat.localAutoStartBanner.title" = "Banner de auto-start";
+"map.chat.localAutoStartBanner.description" = "Quando o Auto se beneficiaria do LLM local mas o servidor está desligado, um banner oferece Iniciar uma vez, Sempre iniciar, Agora não ou Nunca perguntar. A escolha persiste via LocalAutoStartPolicy. O Zion nunca inicia um servidor sem consentimento explícito.";
+"map.chat.perThreadStreaming.title" = "Streaming por thread";
+"map.chat.perThreadStreaming.description" = "Trocar de thread enquanto uma resposta está em streaming não cancela mais o stream. Threads com streaming em andamento mostram um spinner na sidebar, permitindo trabalhar em outra thread e voltar depois.";
+"map.chat.planXmlStrip.title" = "Remoção do XML do Plano";
+"map.chat.planXmlStrip.description" = "Assim que o card estruturado do Plano aparece, o bloco bruto <plan> é removido da mensagem renderizada para manter a conversa limpa. O card de Plano continua totalmente interativo (Aplicar / Rejeitar / Editar bruto).";
+"map.chat.smartAutoOnboarding.title" = "Empty-state do Smart Auto";
+"map.chat.smartAutoOnboarding.description" = "Quando nenhum provedor de IA está conectado, o chat mostra um card de onboarding descrevendo o Smart Auto e oferecendo links Instalar Claude CLI e Instalar Ollama para que um novo usuário chegue a uma configuração funcional em um clique.";
+"map.chat.mentionAutocomplete.title" = "Autocomplete de @ e /";
+"map.chat.mentionAutocomplete.description" = "O painel @ agora funciona mesmo antes do SymbolIndexer terminar o scan inicial, usando um fallback de filesystem. O autocomplete de / dispara após qualquer espaço, não só no início da linha, permitindo encadear comandos no meio de uma frase.";
