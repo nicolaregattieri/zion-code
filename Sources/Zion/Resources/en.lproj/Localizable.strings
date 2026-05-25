@@ -2106,6 +2106,9 @@
 "map.terminal.whisperRecovery.title" = "Whisper Recovery";
 "map.terminal.whisperRecovery.description" = "When OpenAI Whisper is unavailable (quota exceeded, missing key, service down), Zion automatically falls back to Apple Speech and shows recovery guidance.";
 "map.terminal.whisperRecovery.tip1" = "Long-press the voice button to switch engines or see recovery messages.";
+"help.terminal.altScrollPeek" = "Peek normal-buffer scrollback while inside a TUI (claude / vim / less / htop)";
+"map.terminal.altScrollPeek.title" = "Alt-buffer scrollback peek";
+"map.terminal.altScrollPeek.description" = "Scroll up inside a full-screen TUI (claude, vim, less, htop) to reveal the normal-buffer scrollback that existed before the app entered the alt buffer. Any keypress, paste, or scroll-to-bottom restores the alt-buffer view with a full refresh.";
 
 // Clone Repository
 "help.clone.title" = "Clone Repository";
@@ -2924,3 +2927,6 @@
 "map.chat.smartAutoOnboarding.description" = "When no AI provider is connected, the chat shows an onboarding card describing Smart Auto and offering Install Claude CLI and Install Ollama links so a new user can reach a working setup in one click.";
 "map.chat.mentionAutocomplete.title" = "Mention & slash autocomplete";
 "map.chat.mentionAutocomplete.description" = "The @ panel now works even before the SymbolIndexer finishes its cold scan, using a filesystem fallback. The / autocomplete triggers after any whitespace, not only at line start, so you can chain commands inside a sentence.";
+"help.chat.fontSize" = "Adjust chat font size and line spacing (Settings → Zion Talks → Appearance)";
+"map.chat.fontSize.title" = "Chat font size";
+"map.chat.fontSize.description" = "Settings → Zion Talks → Appearance exposes a font size stepper (9–22 px, default 12) and a line spacing stepper (0–12 px, default 2). Changes propagate live to every chat surface; labels auto-scale relative to body size.";

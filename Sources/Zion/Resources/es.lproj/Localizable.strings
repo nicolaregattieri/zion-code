@@ -2127,6 +2127,9 @@
 "map.terminal.whisperRecovery.title" = "Recuperación del Whisper";
 "map.terminal.whisperRecovery.description" = "Cuando OpenAI Whisper no está disponible (cuota excedida, clave faltante, servicio caído), Zion automáticamente recurre a Apple Speech y muestra orientación de recuperación.";
 "map.terminal.whisperRecovery.tip1" = "Mantén presionado el botón de voz para cambiar de motor o ver mensajes de recuperación.";
+"help.terminal.altScrollPeek" = "Asoma el scrollback del buffer normal mientras estás dentro de un TUI (claude / vim / less / htop)";
+"map.terminal.altScrollPeek.title" = "Espiar scrollback del alt-buffer";
+"map.terminal.altScrollPeek.description" = "Desplázate hacia arriba dentro de un TUI a pantalla completa (claude, vim, less, htop) para revelar el scrollback del buffer normal que existía antes de que la app entrara al alt buffer. Cualquier tecla, pegado o scroll-to-bottom restaura la vista del alt buffer con un refresco completo.";
 
 // Clone Repository
 "help.clone.title" = "Clonar Repositorio";
@@ -2948,3 +2951,6 @@
 "map.chat.smartAutoOnboarding.description" = "Cuando ningún proveedor de IA está conectado, el chat muestra una tarjeta de onboarding que describe Smart Auto y ofrece enlaces Instalar Claude CLI e Instalar Ollama para que un usuario nuevo llegue a una configuración funcional en un clic.";
 "map.chat.mentionAutocomplete.title" = "Autocompletado de @ y /";
 "map.chat.mentionAutocomplete.description" = "El panel @ ahora funciona incluso antes de que SymbolIndexer termine su escaneo inicial, usando un fallback de filesystem. El autocompletado de / se dispara tras cualquier espacio, no solo al inicio de línea, permitiendo encadenar comandos a mitad de frase.";
+"help.chat.fontSize" = "Ajusta el tamaño de fuente y el interlineado del chat (Ajustes → Zion Talks → Apariencia)";
+"map.chat.fontSize.title" = "Tamaño de fuente del chat";
+"map.chat.fontSize.description" = "Ajustes → Zion Talks → Apariencia expone un stepper de tamaño de fuente (9–22 px, por defecto 12) y un stepper de interlineado (0–12 px, por defecto 2). Los cambios se propagan en vivo a todas las superficies del chat; las etiquetas se escalan automáticamente respecto al cuerpo.";

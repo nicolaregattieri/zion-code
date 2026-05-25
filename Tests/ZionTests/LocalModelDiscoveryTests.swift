@@ -38,7 +38,11 @@ final class LocalModelDiscoveryTests: XCTestCase {
     }
 }
 
-extension AIError: Equatable {
+// Equatable conformance lives in the Zion module (AIClient+Helpers.swift).
+// This extension exists only to provide a richer == for older test files;
+// kept as a non-conformance extension to silence the duplicate-conformance
+// warning under Swift 6.
+extension AIError {
     public static func == (lhs: AIError, rhs: AIError) -> Bool {
         switch (lhs, rhs) {
         case (.noProvider, .noProvider): return true
