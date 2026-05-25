@@ -13,8 +13,11 @@ final class AIProviderSupportToolsTests: XCTestCase {
         XCTAssertTrue(AIProvider.openai.supportsToolCalling)
     }
 
-    func testGeminiDoesNotSupportToolCalling() {
-        XCTAssertFalse(AIProvider.gemini.supportsToolCalling)
+    func testGeminiSupportsToolCalling() {
+        // Gemini exposes function calling via generateContent — supportsToolCalling
+        // was flipped to true during the Gemini tool-use integration. The previous
+        // negative assertion is stale.
+        XCTAssertTrue(AIProvider.gemini.supportsToolCalling)
     }
 
     func testNoneDoesNotSupportToolCalling() {
