@@ -10,6 +10,13 @@ struct ChatScreen: View {
 
     @State private var composerText: String = ""
     @State private var planMode: PlanModeState = PlanModeState.current()
+    /// Memory monitor instance — lifetime tied to ChatScreen. Polls every 5s,
+    /// watches local-server RSS when the LocalLLMConfig port is configured.
+    @State private var memoryMonitor = MemoryMonitor()
+    @State private var localConfig: LocalLLMConfig = AIClient.loadLocalConfig() ?? LocalLLMConfig()
+    /// Suppress the auto-start banner for the rest of this session (policy=.ask
+    /// + user clicked "Not now"). Reset on app relaunch.
+    @State private var autoStartBannerDismissed: Bool = false
 
     @AppStorage("chat.threadListVisible") private var threadListVisible: Bool = true
     @AppStorage(ZionTalksAppearance.fontSizeKey) private var fontSizePx: Int = ZionTalksAppearance.defaultFontSizePx
@@ -137,6 +144,7 @@ struct ChatScreen: View {
             ChatThreadList(
                 threads: chat.threads,
                 activeThreadID: chat.activeThreadID,
+                streamingThreadIDs: chat.streamingThreadIDs,
                 onSelect: { id in chat.selectThread(id) },
                 onNew: { chat.createThread() },
                 onDelete: { id in chat.deleteThread(id) },
@@ -269,13 +277,48 @@ struct ChatScreen: View {
 
     // MARK: - Composer Area
 
+    /// True when Smart Auto could benefit from the local LLM but the server
+    /// is not running AND the user hasn't opted out. Drives banner visibility.
+    private var shouldOfferLocalAutoStart: Bool {
+        guard provider == .auto else { return false }
+        guard !autoStartBannerDismissed else { return false }
+        guard LocalAutoStartPolicy.current() == .ask else { return false }
+        guard localConfig.engineKind != .custom else { return false }
+        guard !modelNameEmpty(localConfig.modelName) else { return false }
+        // Local NOT running = no RSS sample. Server-up case is handled by
+        // LocalServerStatusBar instead.
+        return memoryMonitor.localServerRSSBytes == nil
+    }
+
+    private func modelNameEmpty(_ name: String) -> Bool {
+        name.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
+    /// Spawn the local LLM server via `LocalServerLauncher` and immediately
+    /// poll the monitor so the status bar surfaces RSS within ~5s. Banner is
+    /// dismissed for the session regardless of outcome.
+    private func spawnLocal() {
+        autoStartBannerDismissed = true
+        let cfg = localConfig
+        Task {
+            _ = await LocalServerLauncher().ensureRunning(config: cfg, engine: cfg.engineKind)
+            await memoryMonitor.pollOnce()
+        }
+    }
+
     private var composerArea: some View {
-        VStack(spacing: DesignSystem.Spacing.compact) {
-            HStack {
-                AutoResolvedChip(chat: chat)
-                Spacer()
-            }
-            composerView
+        composerView
+            .onAppear {
+            // Reload config + wire monitor whenever the chat screen appears.
+            localConfig = AIClient.loadLocalConfig() ?? LocalLLMConfig()
+            memoryMonitor.setMonitoredPort(URL(string: localConfig.serverURL)?.port)
+            memoryMonitor.start()
+            // Hand the active repo URL to the mention panel fallback so '@'
+            // autocomplete works even before SymbolIndexer finishes cold scan.
+            MentionAutocompletePanel.repoURL = repoURL
+        }
+        .onDisappear {
+            memoryMonitor.stop()
         }
     }
 
@@ -306,10 +349,51 @@ struct ChatScreen: View {
             onNewChat: {
                 chat.newThread()
                 composerText = ""
-            }
+            },
+            topSlot: AnyView(composerTopSlot)
         )
         .frame(maxWidth: DesignSystem.Spacing.chatContentMaxWidth)
         .frame(maxWidth: .infinity)
+    }
+
+    /// Renders the auto-start banner and the local-server status bar inside
+    /// the composer card so they share its width / padding.
+    @ViewBuilder private var composerTopSlot: some View {
+        VStack(spacing: DesignSystem.Spacing.compact) {
+            if shouldOfferLocalAutoStart {
+                LocalAutoStartBanner(
+                    modelName: localConfig.modelName,
+                    onStartOnce: { spawnLocal() },
+                    onStartAlways: {
+                        LocalAutoStartPolicy.set(.always)
+                        spawnLocal()
+                    },
+                    onDismiss: { autoStartBannerDismissed = true },
+                    onNever: {
+                        LocalAutoStartPolicy.set(.never)
+                        autoStartBannerDismissed = true
+                    }
+                )
+            }
+            if memoryMonitor.localServerRSSBytes != nil {
+                LocalServerStatusBar(
+                    model: .init(
+                        modelName: localConfig.modelName,
+                        systemPressure: memoryMonitor.systemPressure,
+                        totalBytes: memoryMonitor.totalBytes,
+                        usedBytes: memoryMonitor.usedBytes,
+                        serverRSSBytes: memoryMonitor.localServerRSSBytes,
+                        isStreaming: chat.isStreaming
+                    ),
+                    onDisconnect: {
+                        Task {
+                            _ = await LocalServerLauncher().stop(config: localConfig)
+                            await memoryMonitor.pollOnce()
+                        }
+                    }
+                )
+            }
+        }
     }
 
     // MARK: - Helpers

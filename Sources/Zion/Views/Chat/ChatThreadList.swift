@@ -6,6 +6,7 @@ struct ChatThreadList: View {
 
     let threads: [ChatThread]
     let activeThreadID: UUID
+    let streamingThreadIDs: Set<UUID>
     let onSelect: (UUID) -> Void
     let onNew: () -> Void
     let onDelete: (UUID) -> Void
@@ -67,6 +68,7 @@ struct ChatThreadList: View {
                         ChatThreadRow(
                             thread: thread,
                             isSelected: thread.id == activeThreadID,
+                            isStreaming: streamingThreadIDs.contains(thread.id),
                             onSelect: { onSelect(thread.id) },
                             onDelete: { onDelete(thread.id) },
                             onRename: { newTitle in onRename(thread.id, newTitle) }

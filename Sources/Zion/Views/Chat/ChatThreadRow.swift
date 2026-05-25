@@ -6,6 +6,10 @@ struct ChatThreadRow: View {
 
     let thread: ChatThread
     let isSelected: Bool
+    /// True when a background streaming task is writing to this thread. Drives
+    /// the inline spinner that lets the user know a switched-away thread is
+    /// still working.
+    let isStreaming: Bool
     let onSelect: () -> Void
     let onDelete: () -> Void
     let onRename: (String) -> Void
@@ -21,6 +25,11 @@ struct ChatThreadRow: View {
         HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
             rowContent
             Spacer(minLength: 0)
+            if isStreaming {
+                ProgressView()
+                    .controlSize(.mini)
+                    .help(L10n("chat.thread.streaming"))
+            }
             if isHovered && !isRenaming {
                 trashButton
             }

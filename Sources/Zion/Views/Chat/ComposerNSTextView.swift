@@ -418,13 +418,21 @@ final class ZionComposerTextView: NSTextView {
             return
         }
 
-        // '/' trigger — show slash autocomplete when at line start
+        // '/' trigger — show slash autocomplete at line start OR after whitespace.
+        // Mirrors '@' behavior so users can drop slash commands mid-message
+        // (e.g. "look at /diff" suggests /diff completion).
         if let chars = event.charactersIgnoringModifiers, chars == "/" {
             let insertion = selectedRange().location
             let nsString = (self.string as NSString)
-            let atLineStart = (insertion == 0) ||
-                nsString.character(at: max(0, insertion - 1)) == UInt16(0x0A) // \n
-            if atLineStart {
+            let prevCharOK: Bool
+            if insertion == 0 {
+                prevCharOK = true
+            } else {
+                let prev = nsString.character(at: insertion - 1)
+                let scalar = Unicode.Scalar(prev)!
+                prevCharOK = CharacterSet.whitespacesAndNewlines.contains(scalar)
+            }
+            if prevCharOK {
                 super.keyDown(with: event) // insert the slash
                 coordinator?.maybeShowSlashAutocomplete()
                 return

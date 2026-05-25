@@ -128,14 +128,48 @@ final class MentionAutocompletePanel: NSPanel {
             if let indexer = SymbolIndexer.shared {
                 results = await indexer.fileSuggestions(prefix: prefix, limit: 6)
             }
+            // Fallback when the symbol indexer is still cold-scanning OR no
+            // indexer is wired: list repo root directly so the panel always
+            // surfaces something useful when the user types '@'.
+            if results.isEmpty, let repo = MentionAutocompletePanel.repoURL {
+                results = MentionAutocompletePanel.fallbackFiles(in: repo, matching: prefix, limit: 6)
+            }
             self.candidates = results
             self.selectedIndex = 0
             self.updateContent()
-            // Hide panel if no candidates
-            if results.isEmpty {
+            // Only dismiss when the user has typed a non-empty prefix that
+            // matches nothing. With an empty prefix (just pressed '@'), keep
+            // the panel open showing whatever the indexer / fallback returns —
+            // even if that's an empty list, the panel still acts as a hint.
+            if results.isEmpty, !prefix.isEmpty {
                 self.onDismiss?()
             }
         }
+    }
+
+    /// Set by ChatScreen on appear so the fallback knows where to list when
+    /// the symbol indexer is empty (cold scan in flight).
+    static var repoURL: URL?
+
+    private static func fallbackFiles(in repo: URL, matching prefix: String, limit: Int) -> [String] {
+        let lower = prefix.lowercased()
+        guard let enumerator = FileManager.default.enumerator(
+            at: repo,
+            includingPropertiesForKeys: [.isRegularFileKey],
+            options: [.skipsHiddenFiles, .skipsPackageDescendants]
+        ) else { return [] }
+        var out: [String] = []
+        let basePath = repo.path
+        while let url = enumerator.nextObject() as? URL {
+            if enumerator.level > 4 { enumerator.skipDescendants(); continue }
+            guard (try? url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true else { continue }
+            let relative = url.path.replacingOccurrences(of: basePath + "/", with: "")
+            if lower.isEmpty || relative.lowercased().contains(lower) {
+                out.append(relative)
+                if out.count >= limit { break }
+            }
+        }
+        return out
     }
 
     // MARK: Key handling

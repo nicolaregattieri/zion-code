@@ -2501,6 +2501,20 @@
 "chat.local.autostart.binaryMissing" = "Binário do motor local não encontrado (%@). Instale-o ou troque o motor em Ajustes → AI.";
 "chat.local.autostart.timedOut" = "Servidor local não respondeu a tempo. Verifique o nome do modelo e o motor em Ajustes → AI.";
 "chat.local.autostart.spawnFailed" = "Falha ao iniciar servidor local: %@";
+"chat.local.status.systemPressure" = "sistema";
+"chat.local.status.disconnect" = "Desconectar";
+"chat.local.status.disconnect.help" = "Para o servidor LLM local. Zion nunca desconecta automaticamente.";
+"chat.emptyState.smartAuto.title" = "Roteamento Smart Auto";
+"chat.emptyState.smartAuto.subtitle" = "Auto escolhe Haiku para chat, Sonnet para código, Opus para arquitetura. Funciona melhor com CLI grátis (subscription) ou LLM local.";
+"chat.emptyState.smartAuto.installClaudeCLI" = "Instalar Claude CLI";
+"chat.emptyState.smartAuto.installOllama" = "Instalar Ollama";
+"chat.thread.streaming" = "Streaming em background";
+"chat.local.autostart.banner.title" = "Usar seu LLM local no Auto?";
+"chat.local.autostart.banner.subtitle" = "%@ está configurado mas não rodando. O Smart Auto pode usá-lo de graça.";
+"chat.local.autostart.banner.startOnce" = "Ligar uma vez";
+"chat.local.autostart.banner.startAlways" = "Sempre ligar";
+"chat.local.autostart.banner.notNow" = "Agora não";
+"chat.local.autostart.banner.never" = "Nunca perguntar";
 
 "settings.ai.local.engine" = "Motor";
 "settings.ai.local.engine.ollama" = "Ollama";
