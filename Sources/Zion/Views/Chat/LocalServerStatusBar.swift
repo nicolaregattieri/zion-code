@@ -73,19 +73,19 @@ struct LocalServerStatusBar: View {
 
     private var statusDot: some View {
         Circle()
-            .fill(model.isStreaming ? Color.green : Color.gray)
+            .fill(model.isStreaming ? DesignSystem.Colors.success : DesignSystem.Colors.textTertiary)
             .frame(width: 8, height: 8)
             .overlay(
                 Circle()
-                    .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+                    .stroke(DesignSystem.Colors.glassOverlay, lineWidth: 0.5)
             )
     }
 
     private var pressureColor: Color {
         switch model.systemPressure {
         case ..<0.6:  return .secondary
-        case ..<0.85: return .orange
-        default:      return .red
+        case ..<0.85: return DesignSystem.Colors.warning
+        default:      return DesignSystem.Colors.destructive
         }
     }
 
@@ -99,10 +99,10 @@ struct LocalServerStatusBar: View {
             .padding(.vertical, 4)
             .padding(.horizontal, 8)
             .background(
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .fill(Color.red.opacity(0.15))
+                RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous)
+                    .fill(DesignSystem.Colors.destructive.opacity(0.15))
             )
-            .foregroundStyle(.red)
+            .foregroundStyle(DesignSystem.Colors.destructive)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

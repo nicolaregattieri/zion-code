@@ -71,9 +71,9 @@ extension SmartAutoTier {
 
     var label: String {
         switch self {
-        case .easy:   return "easy"
-        case .medium: return "medium"
-        case .hard:   return "hard"
+        case .easy:   return L10n("chat.auto.tier.easy")
+        case .medium: return L10n("chat.auto.tier.medium")
+        case .hard:   return L10n("chat.auto.tier.hard")
         }
     }
 }

@@ -79,16 +79,19 @@ final class MemoryMonitor {
                 Self.readRSS(forPort: port)
             }.value
             self.localServerRSSBytes = rss
-            // When a local server is detected for the first time (or returns
-            // after being down), stamp `localLastHealthyAt` so the orchestrator's
-            // `isConnected(.local)` returns true on the next Auto turn. Without
-            // this, the chain falls through to the next provider (Haiku/CLI)
-            // even though the local LLM is right there ready to serve.
-            if rss != nil {
-                UserDefaults.standard.set(
-                    Date().timeIntervalSince1970,
-                    forKey: UserDefaultsKeys.AI.localLastHealthyAt
-                )
+            // When a local server is detected, verify it actually responds as
+            // the configured LLM endpoint before stamping `localLastHealthyAt`.
+            // RSS != nil only proves *something* is bound to the port — a stale
+            // `nc`, an unrelated dev server, or a crashed Ollama would otherwise
+            // trick `isConnected(.local)` into routing a turn into a dead host.
+            if rss != nil, let cfg = AIClient.loadLocalConfig() {
+                let healthy = await AIClient.probeHealth(config: cfg)
+                if healthy {
+                    UserDefaults.standard.set(
+                        Date().timeIntervalSince1970,
+                        forKey: UserDefaultsKeys.AI.localLastHealthyAt
+                    )
+                }
             }
         }
     }
