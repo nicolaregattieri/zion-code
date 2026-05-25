@@ -63,13 +63,38 @@ private struct NewSkillSheet: View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.cardPadding) {
             Text(L10n("chat.skills.newSkill.title")) // TODO(P14:T10)
                 .font(DesignSystem.Typography.cardTitle)
-            Form {
-                TextField(L10n("chat.skills.newSkill.name"), text: $name) // TODO(P14:T10)
-                TextField(L10n("chat.skills.newSkill.description"), text: $description) // TODO(P14:T10)
-                Picker(L10n("chat.skills.newSkill.scope"), selection: $scopeRaw) { // TODO(P14:T10)
-                    Text(L10n("chat.skills.scope.user")).tag(SkillScope.user.rawValue)     // TODO(P14:T10)
-                    Text(L10n("chat.skills.scope.project")).tag(SkillScope.project.rawValue) // TODO(P14:T10)
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.standard) {
+                TextField(L10n("chat.skills.newSkill.name"), text: $name)
+                    .textFieldStyle(.roundedBorder)
+
+                // Skill description IS the skill body — system prompt the LLM
+                // sees when the slash command fires. Single-line TextField was
+                // misleading: users typed one sentence and lost the instruction
+                // surface. Multi-line editor with a visible label + min height
+                // signals "this is real content, not a tagline".
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.micro) {
+                    Text(L10n("chat.skills.newSkill.description"))
+                        .font(DesignSystem.Typography.labelMedium)
+                        .foregroundStyle(.secondary)
+                    TextEditor(text: $description)
+                        .font(DesignSystem.Typography.body)
+                        .frame(minHeight: 160, maxHeight: 320)
+                        .padding(DesignSystem.Spacing.micro)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .fill(DesignSystem.Colors.glassSubtle)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .strokeBorder(DesignSystem.Colors.glassStroke, lineWidth: 1)
+                        )
                 }
+
+                Picker(L10n("chat.skills.newSkill.scope"), selection: $scopeRaw) {
+                    Text(L10n("chat.skills.scope.user")).tag(SkillScope.user.rawValue)
+                    Text(L10n("chat.skills.scope.project")).tag(SkillScope.project.rawValue)
+                }
+                .pickerStyle(.segmented)
             }
             HStack {
                 Button(L10n("chat.skills.newSkill.cancel"), role: .cancel) { dismiss() } // TODO(P14:T10)
@@ -83,6 +108,6 @@ private struct NewSkillSheet: View {
             }
         }
         .padding(DesignSystem.Spacing.cardPadding * 2)
-        .frame(minWidth: 480, minHeight: 320)
+        .frame(minWidth: 520, minHeight: 460)
     }
 }
