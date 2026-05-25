@@ -433,7 +433,22 @@ actor NtfyClient {
     }
 
     func sendTest(serverURL: String, topic: String) async -> Bool {
-        await send(
+        // Defense-in-depth: validate inputs at the entry point too.
+        // `send` already validates via buildNtfyURL/buildLegacyCompatibleURL,
+        // but reaching it with garbage triggers DiagnosticLogger lines that
+        // include the raw values — keep them out of the log on the
+        // pre-validation rejection path.
+        guard Self.validateServerURL(serverURL), Self.validateTopic(topic) else {
+            await MainActor.run {
+                DiagnosticLogger.shared.log(
+                    .warn,
+                    "Rejected ntfy test: invalid server URL or topic",
+                    source: "NtfyClient.sendTest"
+                )
+            }
+            return false
+        }
+        return await send(
             serverURL: serverURL,
             topic: topic,
             title: "Zion: Test Notification",

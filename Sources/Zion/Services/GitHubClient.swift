@@ -1,5 +1,41 @@
 import Foundation
 
+/// URLSession delegate that strips the `Authorization` header on cross-host
+/// redirects. Default `URLSession` behavior re-applies the original headers
+/// on a 3xx, which would leak the GitHub PAT if a hostile (or compromised)
+/// upstream issued a redirect to an attacker-controlled host. Same-host
+/// redirects keep the header so legitimate flows still work.
+private final class StripAuthOnCrossHostRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        willPerformHTTPRedirection response: HTTPURLResponse,
+        newRequest request: URLRequest,
+        completionHandler: @escaping (URLRequest?) -> Void
+    ) {
+        let originalHost = task.originalRequest?.url?.host
+        let newHost = request.url?.host
+        if originalHost != newHost {
+            var stripped = request
+            stripped.setValue(nil, forHTTPHeaderField: "Authorization")
+            completionHandler(stripped)
+        } else {
+            completionHandler(request)
+        }
+    }
+}
+
+private let githubURLSession: URLSession = {
+    let config = URLSessionConfiguration.ephemeral
+    config.timeoutIntervalForRequest = 30
+    config.timeoutIntervalForResource = 60
+    return URLSession(
+        configuration: config,
+        delegate: StripAuthOnCrossHostRedirect(),
+        delegateQueue: nil
+    )
+}()
+
 actor GitHubClient: GitHostingProvider {
     let kind: GitHostingKind = .github
     private var injectedPAT: String?
@@ -179,7 +215,7 @@ actor GitHubClient: GitHostingProvider {
         request.timeoutInterval = 10
 
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await githubURLSession.data(for: request)
             guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { return nil }
             guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let login = json["login"] as? String else { return nil }
@@ -200,7 +236,7 @@ actor GitHubClient: GitHostingProvider {
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 10
 
-        guard let (data, response) = try? await URLSession.shared.data(for: request),
+        guard let (data, response) = try? await githubURLSession.data(for: request),
               let http = response as? HTTPURLResponse, http.statusCode == 200,
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let login = json["login"] as? String else { return ("", []) }
@@ -213,7 +249,7 @@ actor GitHubClient: GitHostingProvider {
             orgsRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             orgsRequest.timeoutInterval = 10
 
-            if let (orgsData, orgsResponse) = try? await URLSession.shared.data(for: orgsRequest),
+            if let (orgsData, orgsResponse) = try? await githubURLSession.data(for: orgsRequest),
                let orgsHTTP = orgsResponse as? HTTPURLResponse, orgsHTTP.statusCode == 200,
                let orgsJSON = try? JSONSerialization.jsonObject(with: orgsData) as? [[String: Any]] {
                 orgs = orgsJSON.compactMap { $0["login"] as? String }
@@ -240,7 +276,7 @@ actor GitHubClient: GitHostingProvider {
         }
 
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await githubURLSession.data(for: request)
             guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { return [] }
 
             guard let json = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return [] }
@@ -290,7 +326,7 @@ actor GitHubClient: GitHostingProvider {
         request.timeoutInterval = 15
 
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await githubURLSession.data(for: request)
             guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { return [] }
             guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let items = json["items"] as? [[String: Any]] else { return [] }
@@ -329,7 +365,7 @@ actor GitHubClient: GitHostingProvider {
         request.timeoutInterval = 30
 
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await githubURLSession.data(for: request)
             guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { return nil }
             return String(data: data, encoding: .utf8)
         } catch {
@@ -350,7 +386,7 @@ actor GitHubClient: GitHostingProvider {
         request.timeoutInterval = 30
 
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await githubURLSession.data(for: request)
             guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { return [] }
             guard let json = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return [] }
 
@@ -397,7 +433,7 @@ actor GitHubClient: GitHostingProvider {
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: payload)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await githubURLSession.data(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 201 else {
             let msg = Self.extractAPIErrorMessage(from: data)
                 ?? "HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0)"
@@ -437,7 +473,7 @@ actor GitHubClient: GitHostingProvider {
         request.timeoutInterval = 15
 
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await githubURLSession.data(for: request)
             guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { return [] }
             guard let json = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return [] }
 
@@ -493,7 +529,7 @@ actor GitHubClient: GitHostingProvider {
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: payload)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await githubURLSession.data(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 201 else {
             let msg = Self.extractAPIErrorMessage(from: data)
                 ?? "HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0)"
@@ -528,7 +564,7 @@ actor GitHubClient: GitHostingProvider {
         request.timeoutInterval = 15
 
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await githubURLSession.data(for: request)
             guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { return [] }
             guard let json = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return [] }
 
@@ -592,7 +628,7 @@ actor GitHubClient: GitHostingProvider {
 
         request.httpBody = try JSONSerialization.data(withJSONObject: payload)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await githubURLSession.data(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
             let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
             throw HostingError.apiError(msg)
