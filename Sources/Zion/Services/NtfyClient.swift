@@ -471,16 +471,20 @@ actor NtfyClient {
         let loggingContext: String
         if let strictURL = Self.buildNtfyURL(serverURL: serverURL, topic: topic) {
             resolvedURL = strictURL
-            loggingContext = strictURL.absoluteString
+            loggingContext = Self.redactTopic(in: strictURL.absoluteString)
         } else if let fallbackURL = Self.buildLegacyCompatibleURL(serverURL: serverURL, topic: topic) {
             resolvedURL = fallbackURL
-            loggingContext = fallbackURL.absoluteString
+            loggingContext = Self.redactTopic(in: fallbackURL.absoluteString)
             await MainActor.run {
                 DiagnosticLogger.shared.log(.warn, "Using legacy ntfy URL normalization", context: loggingContext, source: "NtfyClient.send")
             }
         } else {
+            // Reject path: don't echo raw server/topic into the log. The topic
+            // is the bearer secret on ntfy.sh — anyone reading an exported
+            // diagnostic log could subscribe to or publish into the user's
+            // channel.
             await MainActor.run {
-                DiagnosticLogger.shared.log(.error, "Invalid ntfy server/topic configuration", context: "\(serverURL) | \(topic)", source: "NtfyClient.send")
+                DiagnosticLogger.shared.log(.error, "Invalid ntfy server/topic configuration", source: "NtfyClient.send")
             }
             return false
         }
@@ -510,6 +514,19 @@ actor NtfyClient {
             }
             return false
         }
+    }
+
+    /// Replaces any `zion-code-*` topic segment with `[REDACTED]` so the topic
+    /// (which doubles as the bearer secret on public ntfy servers) doesn't
+    /// land in the diagnostic log. Pairs with the same rule in
+    /// `DiagnosticLogger.sanitize` for defense-in-depth at the sink.
+    static func redactTopic(in text: String) -> String {
+        let pattern = #"/zion-code-[A-Za-z0-9._-]+"#
+        return text.replacingOccurrences(
+            of: pattern,
+            with: "/[REDACTED]",
+            options: .regularExpression
+        )
     }
 
     /// Generate a secure random topic like `zion-code-3Y3k8If`
