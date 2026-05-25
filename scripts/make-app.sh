@@ -210,6 +210,17 @@ if [ "$CODESIGN_IDENTITY" != "-" ]; then
     --entitlements "$ROOT_DIR/Zion.entitlements" \
     "$APP_DIR/Contents/MacOS/Zion"
 
+  # Sign the bundled MCP server binary too. Notarization rejects the whole
+  # bundle if any executable inside is missing hardened runtime / secure
+  # timestamp / a Developer ID signature — `codesign` on the outer bundle
+  # does not propagate to plain executables placed alongside the main one.
+  if [ -f "$APP_DIR/Contents/MacOS/zion-mcp" ]; then
+    sign_with_identity \
+      --options runtime \
+      --entitlements "$ROOT_DIR/Zion.entitlements" \
+      "$APP_DIR/Contents/MacOS/zion-mcp"
+  fi
+
   # Notarization-ready: sign the outer app with the app entitlements.
   sign_with_identity \
     --options runtime \
