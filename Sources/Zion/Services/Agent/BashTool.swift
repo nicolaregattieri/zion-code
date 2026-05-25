@@ -143,7 +143,12 @@ actor BashTool {
     // before any subprocess spawns.
     private static let bannedShellMetachars: [String] = [
         ";", "&&", "||", "|", "`", "$(", "${", ">>", "<", "$HOME", "$(",
-        "&", ">"
+        "&", ">",
+        // Newlines / carriage returns are command separators inside `/bin/sh -c`,
+        // so smuggling them past the first-token allowlist would let a single
+        // payload run an arbitrary second command. Backslash makes escape
+        // chaining trivial — reject upfront.
+        "\n", "\r", "\\"
     ]
 
     private static func checkShellInjection(command: String) throws {
@@ -151,7 +156,13 @@ actor BashTool {
         // The conservative path here is to refuse any of the listed substrings.
         for pattern in bannedShellMetachars {
             if command.contains(pattern) {
-                throw BashError.blocked(reason: "shell metacharacter rejected (`\(pattern)`)")
+                let label: String
+                switch pattern {
+                case "\n": label = "\\n"
+                case "\r": label = "\\r"
+                default:   label = pattern
+                }
+                throw BashError.blocked(reason: "shell metacharacter rejected (`\(label)`)")
             }
         }
         // Reject `$variable` style env expansion entirely (would escape repoURL via $HOME etc.)

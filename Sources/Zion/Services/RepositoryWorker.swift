@@ -209,6 +209,24 @@ actor RepositoryWorker {
         var allResults: [GitSearchResult] = []
         var seenHashes: Set<String> = []
 
+        // Escape fnmatch metacharacters so `git branch/tag --list <pattern>`
+        // treats the user's query as a literal substring (wrapped in `*...*`)
+        // instead of expanding `*`, `?`, `[abc]`, or `\` from the query.
+        // Without this, a query like `*` matches everything, and `-foo` is
+        // parsed by git as an option (option-injection).
+        let escapedQuery: String = {
+            var out = ""
+            out.reserveCapacity(query.count)
+            for ch in query {
+                if ch == "\\" || ch == "*" || ch == "?" || ch == "[" {
+                    out.append("\\")
+                }
+                out.append(ch)
+            }
+            return out
+        }()
+        let listPattern = "*\(escapedQuery)*"
+
         func addResults(from output: String, source: GitSearchResult.Source) {
             let lines = output.split(separator: "\n", omittingEmptySubsequences: true)
             for line in lines {
@@ -270,8 +288,9 @@ actor RepositoryWorker {
         // Search branches (always include -- ref name is unique info even if commit was already found)
         var seenBranches: Set<String> = []
         let branchOutput = try runActionAllowingFailure(
-            args: ["branch", "--all", "--list", "*\(query)*",
-                   "--format=%(refname:short) %(objectname)"],
+            args: ["branch", "--all", "--list",
+                   "--format=%(refname:short) %(objectname)",
+                   "--", listPattern],
             in: repositoryURL
         )
         if branchOutput.status == 0 {
@@ -295,8 +314,9 @@ actor RepositoryWorker {
         // Search tags (always include -- ref name is unique info even if commit was already found)
         var seenTags: Set<String> = []
         let tagOutput = try runActionAllowingFailure(
-            args: ["tag", "--list", "*\(query)*",
-                   "--format=%(refname:short) %(objectname)"],
+            args: ["tag", "--list",
+                   "--format=%(refname:short) %(objectname)",
+                   listPattern],
             in: repositoryURL
         )
         if tagOutput.status == 0 {

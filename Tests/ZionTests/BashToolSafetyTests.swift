@@ -222,4 +222,43 @@ final class BashToolSafetyTests: XCTestCase {
             XCTFail("Expected BashError.blocked, got: \(error)")
         }
     }
+
+    // MARK: - Newline / CR / backslash injection blocked
+
+    /// `/bin/sh -c` treats `\n` as a command separator. Without this rejection
+    /// an LLM could smuggle a second command past the first-token allowlist
+    /// (e.g. `git status\ncat /etc/passwd`).
+    func testNewlineInCommandRejected() async throws {
+        do {
+            _ = try await tool.run(command: "git status\ncat /etc/passwd", tier: .readOnly, repoURL: tempRepoURL, timeoutSec: 5)
+            XCTFail("Expected BashError.blocked for embedded newline")
+        } catch BashError.blocked(let reason) {
+            XCTAssertTrue(reason.contains("\\n") || reason.lowercased().contains("metachar"),
+                          "Reason should mention newline / metachar, got: \(reason)")
+        } catch {
+            XCTFail("Expected BashError.blocked, got: \(error)")
+        }
+    }
+
+    func testCarriageReturnInCommandRejected() async throws {
+        do {
+            _ = try await tool.run(command: "git status\rcat /etc/passwd", tier: .readOnly, repoURL: tempRepoURL, timeoutSec: 5)
+            XCTFail("Expected BashError.blocked for embedded carriage return")
+        } catch BashError.blocked {
+            // Expected
+        } catch {
+            XCTFail("Expected BashError.blocked, got: \(error)")
+        }
+    }
+
+    func testBackslashEscapeRejected() async throws {
+        do {
+            _ = try await tool.run(command: #"git \; status"#, tier: .readOnly, repoURL: tempRepoURL, timeoutSec: 5)
+            XCTFail("Expected BashError.blocked for backslash")
+        } catch BashError.blocked {
+            // Expected
+        } catch {
+            XCTFail("Expected BashError.blocked, got: \(error)")
+        }
+    }
 }
