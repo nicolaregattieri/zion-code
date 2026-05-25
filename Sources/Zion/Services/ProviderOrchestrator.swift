@@ -42,6 +42,7 @@ actor ProviderOrchestrator {
     private let policy: RoutingPolicy
     private let health: ProviderHealth
     private let budget: CostBudget
+    private let connectivityCheck: @Sendable (AIProvider) -> Bool
 
     /// Optional reference to the agent runtime for sticky-lock enforcement.
     /// Set via `attachAgentRuntime(_:)` at app boot. Nil = lock disabled.
@@ -56,11 +57,15 @@ actor ProviderOrchestrator {
     init(
         policy: RoutingPolicy = .load(),
         health: ProviderHealth = ProviderHealth(),
-        budget: CostBudget = CostBudget()
+        budget: CostBudget = CostBudget(),
+        connectivityCheck: @escaping @Sendable (AIProvider) -> Bool = {
+            AIProviderSupport.isConnected(provider: $0)
+        }
     ) {
         self.policy = policy
         self.health = health
         self.budget = budget
+        self.connectivityCheck = connectivityCheck
         self.agentRuntime = nil
     }
 
@@ -154,6 +159,11 @@ actor ProviderOrchestrator {
     // MARK: - Private Helpers
 
     /// Returns the first provider from `candidates` that passes all eligibility checks.
+    ///
+    /// Walks the chain in declared order. A subscription CLI (claudeCLI / codexCLI)
+    /// is treated as an opt-in fallback: it is skipped when the user has disabled
+    /// `chat.routing.subscriptionFailover`, but otherwise participates in the same
+    /// health + cost-cap + connectivity gate as API providers.
     private func firstEligible(
         in candidates: [AIProvider],
         costCaps: [AIProvider: Double]
@@ -162,28 +172,12 @@ actor ProviderOrchestrator {
             forKey: Self.subscriptionFailoverKey
         )
 
-        // First pass: eligible API providers only (skip subscription CLIs).
         for provider in candidates {
-            guard !isSubscriptionCLI(provider) else { continue }
+            if isSubscriptionCLI(provider), !subscriptionFailoverEnabled { continue }
             guard await health.isHealthy(provider) else { continue }
             let cap = costCaps[provider] ?? 0
             if budget.capExceeded(provider: provider, cap: cap) { continue }
-            guard AIProviderSupport.isConnected(provider: provider) else { continue }
-            return provider
-        }
-
-        // Second pass: subscription CLIs. Allowed when failover is enabled OR
-        // when no API provider was eligible (CLI is the only working option,
-        // refusing it would surface "No AI provider configured" to the user
-        // even though Claude Code / Codex CLI are installed and authenticated).
-        for provider in candidates {
-            guard isSubscriptionCLI(provider) else { continue }
-            guard await health.isHealthy(provider) else { continue }
-            guard AIProviderSupport.isConnected(provider: provider) else { continue }
-            if subscriptionFailoverEnabled {
-                return provider
-            }
-            // Allow CLI as last-resort when nothing else qualified.
+            guard connectivityCheck(provider) else { continue }
             return provider
         }
         return nil
