@@ -313,7 +313,11 @@ extension AIClient {
         }
 
         let absPath = toolPath.path
-        let permissionMode = allowEdits ? "acceptEdits" : "plan"
+        // `plan` mode forces Claude into a "build a plan" persona that reads
+        // repo files for any input (including casual chat). Use `default` for
+        // read-only chat and `acceptEdits` when the user opted into edits.
+        // Plan mode is only entered explicitly via /plan.
+        let permissionMode = allowEdits ? "acceptEdits" : "default"
         _ = maxTokens // Claude CLI does not expose a max-tokens flag; budget is gated via --max-budget-usd.
         var args: [String] = [
             "-p", "-",

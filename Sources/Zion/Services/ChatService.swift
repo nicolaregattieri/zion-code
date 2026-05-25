@@ -26,7 +26,17 @@ final class ChatService {
         }
     }
 
-    var isStreaming: Bool = false
+    /// Per-thread streaming flag. Reflects whether any in-flight task is writing
+    /// to the *currently active* thread. Computed from `streamingThreadIDs` so
+    /// switching threads surfaces the correct spinner state without cancelling
+    /// background streams.
+    var isStreaming: Bool {
+        streamingThreadIDs.contains(activeThreadID)
+    }
+
+    /// Threads currently being written to by an in-flight task. Used to drive
+    /// `isStreaming` and surface a per-thread streaming indicator in the sidebar.
+    private(set) var streamingThreadIDs: Set<UUID> = []
 
     /// Set when a persistence operation fails; consumed by UI to surface a one-time error.
     var lastPersistenceError: String?
@@ -38,9 +48,26 @@ final class ChatService {
     /// Read by AutoResolvedChip to surface "Auto → <name>" when provider == .auto.
     var resolvedProvider: AIProvider?
 
+    /// Lane classified by Smart Auto for the latest send. Nil when the user
+    /// picked an explicit provider (no classification ran). Read by
+    /// AutoResolvedChip to surface "Auto → claudeCLI · code" style chips.
+    var resolvedLane: AITaskLane?
+
+    /// Tier classified by Smart Auto (easy / medium / hard). Drives per-provider
+    /// model selection via `SmartAutoTierTable` and is surfaced in the resolved
+    /// chip ("Auto → claudeCLI · sonnet · medium").
+    var resolvedTier: SmartAutoTier?
+
+    /// Effective model id Smart Auto picked for the latest send (e.g. "haiku",
+    /// "claude-sonnet-4-6", "gpt-4o-mini"). Nil when no override applies and the
+    /// provider's catalog default is in effect. Surfaced in the resolved chip.
+    var resolvedModelID: String?
+
     // MARK: - Private (non-observable)
 
-    @ObservationIgnored private var activeTask: Task<Void, Never>?
+    /// In-flight streaming tasks keyed by threadID. Allows multiple threads to
+    /// stream in parallel; switching threads no longer cancels active streams.
+    @ObservationIgnored private var tasksByThread: [UUID: Task<Void, Never>] = [:]
     @ObservationIgnored private let ai: AIClient
     @ObservationIgnored private let worker: RepositoryWorker
     @ObservationIgnored private let contextBuilder: ChatContextBuilder
@@ -494,7 +521,7 @@ final class ChatService {
             }
         }
 
-        isStreaming = true
+        streamingThreadIDs.insert(threadID)
 
         // Capture active context for applyPlan
         activeRepoURL = repoURL
@@ -516,7 +543,8 @@ final class ChatService {
         let task = Task<Void, Never> {
             defer {
                 Task { @MainActor in
-                    self.isStreaming = false
+                    self.streamingThreadIDs.remove(threadID)
+                    self.tasksByThread.removeValue(forKey: threadID)
                     self.updateAssistantIsStreaming(id: assistantID, isStreaming: false)
                     // Final flush to persistence
                     self.cancelDebounce(for: assistantID)
@@ -524,15 +552,37 @@ final class ChatService {
                 }
             }
 
-            // Resolve .auto to a concrete provider via the orchestrator.
+            // Smart Auto: classify the user message into a difficulty tier, route
+            // through the matching lane, and pick a per-tier model. Easy turns
+            // land on the cheap chain + Haiku/Flash; medium on the default chain
+            // + Sonnet/4o; hard on the reasoning chain + Opus/o1. Explicit
+            // providers bypass classification entirely.
             let resolved: AIProvider
+            let smartModelOverride: String?
             if provider == .auto {
-                resolved = await self.orchestrator.resolve(lane: .general, requested: .auto)
+                // Single-pass Smart Auto: classify text → tier → lane → resolve.
+                // Tier table maps (resolved provider, tier) → model independently
+                // of any "preliminary" provider, so we never call resolve twice.
+                let tier = await HeuristicTriageClassifier().classify(displayContent)
+                resolved = await self.orchestrator.resolve(
+                    lane: tier.lane, requested: .auto
+                )
+                smartModelOverride = SmartAutoTierTable.default.modelID(provider: resolved, tier: tier)
+                self.resolvedLane = tier.lane
+                self.resolvedTier = tier
             } else {
                 resolved = provider
+                smartModelOverride = nil
+                self.resolvedLane = nil
+                self.resolvedTier = nil
             }
             // P14: publish for AutoResolvedChip so the composer can show "Auto → <name>".
             self.resolvedProvider = resolved
+
+            // Effective model id: explicit user override wins; otherwise Smart
+            // Auto's tier-derived model. Nil falls back to provider catalog default.
+            let effectiveModel: String? = modelOverride ?? smartModelOverride
+            self.resolvedModelID = effectiveModel
 
             // Resolve @mentions in the user text BEFORE building the payload,
             // so both the AgentRuntime path and the legacy dispatchStream fallback
@@ -555,7 +605,7 @@ final class ChatService {
             // Sendable boundary: MainActor closure must return [[String: String]] (Any is not Sendable).
             // Token-aware history window for AgentRuntime — replaces suffix(10).
             // Provider-window aware budget computed via ContextBudget.
-            let windowAvailable = await ContextBudget().available(forProvider: resolved, model: modelOverride)
+            let windowAvailable = await ContextBudget().available(forProvider: resolved, model: effectiveModel)
             let historyReserve = max(8_000, Int(Double(windowAvailable) * 0.5))
             let stringHistory: [[String: String]] = await MainActor.run {
                 let kept = ChatService.windowedHistory(self.thread.messages, available: historyReserve)
@@ -574,7 +624,7 @@ final class ChatService {
             do {
                 let result = try await self.agentRuntime.run(
                     provider: resolved,
-                    model: modelOverride,
+                    model: effectiveModel,
                     conversation: historyForRuntime,
                     userPrompt: enrichedText,
                     tools: MCPConfigBuilder.allTools(),
@@ -591,7 +641,10 @@ final class ChatService {
                     }
                 )
                 await MainActor.run {
-                    self.setAssistantContent(id: assistantID, content: result.finalText)
+                    // Strip raw <plan>…</plan> XML so the Plan card is the only
+                    // surfacing — keeping the raw block visible doubles the noise.
+                    let cleaned = ChatService.stripPlanXML(from: result.finalText)
+                    self.setAssistantContent(id: assistantID, content: cleaned)
                     self.setProviderUsed(id: assistantID, provider: resolved)
                     if result.cumulativeCostUSD > 0 {
                         self.addTurnCost(result.cumulativeCostUSD, threadID: threadID)
@@ -616,7 +669,7 @@ final class ChatService {
                     apiKey: apiKey,
                     mode: mode,
                     repoURL: repoURL,
-                    modelOverride: modelOverride,
+                    modelOverride: effectiveModel,
                     assistantID: assistantID,
                     threadID: threadID,
                     hopCount: 0
@@ -629,24 +682,25 @@ final class ChatService {
             }
         }
 
-        activeTask = task
+        tasksByThread[threadID] = task
         await task.value
     }
 
     /// Creates a fresh thread (Phase 2 multi-thread) and clears harness session state (Phase 3).
+    /// Does NOT cancel in-flight streams on the previous thread — they keep running
+    /// in the background and update their own assistant message via message-id lookup.
     func newThread() {
-        activeTask?.cancel()
-        activeTask = nil
-        isStreaming = false
         createThread()
         Task { await harness.resetSession() }
     }
 
-    /// Cancels the active streaming task and the agent runtime loop (if any).
+    /// Cancels the *active* thread's streaming task and the agent runtime loop.
+    /// Streams on other threads continue.
     func stop() {
-        activeTask?.cancel()
-        activeTask = nil
-        isStreaming = false
+        let id = activeThreadID
+        tasksByThread[id]?.cancel()
+        tasksByThread.removeValue(forKey: id)
+        streamingThreadIDs.remove(id)
         Task { await self.agentRuntime.cancel() }
     }
 
@@ -717,6 +771,7 @@ final class ChatService {
                         if let plan = self.planDetector!.feed(delta) {
                             self.planDetector = nil
                             self.attachPlanToAssistant(plan, assistantID: assistantID, threadID: threadID)
+                            self.stripPlanXMLFromAssistant(assistantID: assistantID)
                         }
                     }
                     if self.editBlockParser != nil {
@@ -730,6 +785,41 @@ final class ChatService {
         } catch {
             // Leave whatever was accumulated
         }
+    }
+
+    /// Removes the raw `<plan>...</plan>` XML block from an assistant message
+    /// once the structured Plan card has been attached. Without this strip the
+    /// chat shows the XML AND the card, which is noisy. Idempotent — safe to
+    /// call multiple times.
+    private func stripPlanXMLFromAssistant(assistantID: UUID) {
+        for tIdx in threads.indices {
+            if let mIdx = threads[tIdx].messages.firstIndex(where: { $0.id == assistantID }) {
+                let original = threads[tIdx].messages[mIdx].content
+                let stripped = ChatService.stripPlanXML(from: original)
+                if stripped != original {
+                    threads[tIdx].messages[mIdx].content = stripped
+                }
+                return
+            }
+        }
+    }
+
+    /// Removes `<plan>…</plan>` (including the tags themselves) plus a single
+    /// trailing newline. Tolerant of leading whitespace.
+    static func stripPlanXML(from text: String) -> String {
+        guard let open = text.range(of: "<plan>"),
+              let close = text.range(of: "</plan>", range: open.upperBound..<text.endIndex) else {
+            return text
+        }
+        let blockStart = open.lowerBound
+        var blockEnd = close.upperBound
+        // Swallow a trailing newline so the strip leaves no blank line.
+        if blockEnd < text.endIndex, text[blockEnd] == "\n" {
+            blockEnd = text.index(after: blockEnd)
+        }
+        var out = text
+        out.removeSubrange(blockStart..<blockEnd)
+        return out
     }
 
     private func consumeCLIStream(_ stream: AsyncThrowingStream<CLIStreamEvent, Error>, assistantID: UUID, threadID: UUID) async {
@@ -749,6 +839,7 @@ final class ChatService {
                             if let plan = self.planDetector!.feed(text) {
                                 self.planDetector = nil
                                 self.attachPlanToAssistant(plan, assistantID: assistantID, threadID: threadID)
+                                self.stripPlanXMLFromAssistant(assistantID: assistantID)
                             }
                         }
                         if self.editBlockParser != nil {
@@ -1110,6 +1201,7 @@ final class ChatService {
                             if let plan = self.planDetector!.feed(text) {
                                 self.planDetector = nil
                                 self.attachPlanToAssistant(plan, assistantID: assistantID, threadID: threadID)
+                                self.stripPlanXMLFromAssistant(assistantID: assistantID)
                             }
                         }
                         if self.editBlockParser != nil {
@@ -1207,15 +1299,21 @@ final class ChatService {
     // MARK: - Private State Mutation Helpers (must be called on MainActor)
 
     private func appendAssistantDelta(id: UUID, delta: String) {
-        guard let tIdx = threads.firstIndex(where: { $0.id == activeThreadID }),
-              let mIdx = threads[tIdx].messages.firstIndex(where: { $0.id == id }) else { return }
-        threads[tIdx].messages[mIdx].content += delta
+        for tIdx in threads.indices {
+            if let mIdx = threads[tIdx].messages.firstIndex(where: { $0.id == id }) {
+                threads[tIdx].messages[mIdx].content += delta
+                return
+            }
+        }
     }
 
     private func setAssistantContent(id: UUID, content: String) {
-        guard let tIdx = threads.firstIndex(where: { $0.id == activeThreadID }),
-              let mIdx = threads[tIdx].messages.firstIndex(where: { $0.id == id }) else { return }
-        threads[tIdx].messages[mIdx].content = content
+        for tIdx in threads.indices {
+            if let mIdx = threads[tIdx].messages.firstIndex(where: { $0.id == id }) {
+                threads[tIdx].messages[mIdx].content = content
+                return
+            }
+        }
     }
 
     private func updateAssistantIsStreaming(id: UUID, isStreaming: Bool) {
@@ -1681,15 +1779,26 @@ final class ChatService {
         switch provider {
         case .claudeCLI, .codexCLI:
             // CLI providers bring their own tool harness (Read/Edit/Bash/Grep/etc.) and
-            // session memory. We only tell them where they are and let them work.
+            // session memory. We tell them they're inside Zion but DO NOT push them
+            // to use tools — they should respond conversationally when the user is
+            // chatting and only reach for tools when the user explicitly asks for
+            // code/file/repo work. Without this gate they explore the repo for every
+            // message (including casual greetings).
             base = """
             You are running inside Zion, a native macOS git client. The working
-            directory is the user's git repository — use your built-in tools
-            (Read, Bash, Edit, etc.) to inspect and act on it.
+            directory is the user's git repository.
 
-            File edits are gated by Zion's `chat.cliAllowEdits` setting; if the
-            user asked you to modify files and you find you cannot, tell them to
-            enable "Allow file edits" in Settings → AI → Subscription CLIs.
+            Default behavior: respond conversationally to the user's message. Match
+            the register and language of what they wrote. Greetings get greetings,
+            questions get answers. DO NOT call Read/Bash/Edit/Grep/Glob or any
+            other tool unless the user has explicitly asked you to inspect, search,
+            run, or modify something. A short message like "hi", "ola", "tudo bem",
+            or "thanks" is conversation — answer in one line, no tools.
+
+            When the user does ask for repo work, your built-in tools are available.
+            File edits are gated by Zion's `chat.cliAllowEdits` setting; if the user
+            asked you to modify files and you find you cannot, tell them to enable
+            "Allow file edits" in Settings → AI → Subscription CLIs.
 
             Output style: concise. Code blocks for commands, paths, hashes.
             """

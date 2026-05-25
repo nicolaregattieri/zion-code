@@ -8,6 +8,11 @@ struct ChatComposer: View {
     let onSend: () -> Void
     let onStop: () -> Void
     let onNewChat: () -> Void
+    /// Optional slot rendered ABOVE the chip row but INSIDE the composer card.
+    /// Used by ChatScreen to surface the local-server status bar / auto-start
+    /// banner so they share the composer's horizontal padding instead of
+    /// floating loose at the edge of the window.
+    let topSlot: AnyView
 
     @AppStorage(UserDefaultsKeys.AI.provider) private var selectedProviderRaw: String = AIProvider.none.rawValue
 
@@ -24,6 +29,11 @@ struct ChatComposer: View {
 
     var body: some View {
         VStack(spacing: DesignSystem.Spacing.compact) {
+            topSlot
+            HStack {
+                AutoResolvedChip(chat: chat, livePreviewText: text)
+                Spacer(minLength: 0)
+            }
             inputField
             // Cost preview for @mentions (300 ms debounce, no I/O)
             if let resolver = chat.mentionResolver {
