@@ -386,6 +386,10 @@ struct ChatScreen: View {
                         isStreaming: chat.isStreaming
                     ),
                     onDisconnect: {
+                        // Stop the server AND suppress local for the session so
+                        // the next Auto turn falls through to the cheap CLI (Haiku)
+                        // instead of silently resurrecting the local LLM.
+                        chat.localSessionSuppressed = true
                         Task {
                             _ = await LocalServerLauncher().stop(config: localConfig)
                             await memoryMonitor.pollOnce()

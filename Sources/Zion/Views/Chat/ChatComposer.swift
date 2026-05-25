@@ -18,6 +18,11 @@ struct ChatComposer: View {
 
     @State private var selectedModelID: String = ""
     @State private var availableModels: [String] = []
+    /// Locally-installed models discovered on disk (Ollama / LM Studio / MLX
+    /// / llama.cpp). Surfaces an inline picker so the user can swap models
+    /// without leaving the composer.
+    @State private var localHints: [LocalModelHint] = []
+    @State private var swapInFlight: Bool = false
 
     private var selectedProvider: AIProvider {
         AIProvider(rawValue: selectedProviderRaw) ?? .none
@@ -42,6 +47,9 @@ struct ChatComposer: View {
             HStack(spacing: DesignSystem.Spacing.standard) {
                 providerMenu
                 modelMenu
+                if !localHints.isEmpty {
+                    localSwapMenu
+                }
                 Spacer()
                 newChatButton
                 if chat.isStreaming {
@@ -64,8 +72,78 @@ struct ChatComposer: View {
         )
         .onAppear {
             refreshModelList()
+            Task { await loadLocalHints() }
         }
         .onChange(of: selectedProviderRaw) { _, _ in refreshModelList() }
+    }
+
+    /// Inline swap menu. Lists every locally-installed model. Pick = stop
+    /// running server, update `LocalLLMConfig.modelName`, restart with the
+    /// new model. Avoids the long Settings → Local → swap → back-to-Auto loop.
+    private var localSwapMenu: some View {
+        Menu {
+            ForEach(localHints, id: \.self) { hint in
+                Button {
+                    swapLocalModel(to: hint)
+                } label: {
+                    HStack {
+                        Text(hint.label)
+                        Spacer()
+                        if let sz = hint.sizeBytes {
+                            Text(MemoryMonitor.formatBytes(UInt64(sz)))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+            Divider()
+            Button("Refresh list") {
+                Task { await loadLocalHints() }
+            }
+        } label: {
+            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
+                Image(systemName: swapInFlight ? "arrow.triangle.2.circlepath" : "shippingbox")
+                    .font(DesignSystem.Typography.label)
+                Text(L10n("chat.composer.localSwap"))
+                    .font(DesignSystem.Typography.labelMedium)
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, DesignSystem.Spacing.compact)
+            .padding(.vertical, DesignSystem.Spacing.micro)
+            .background(Capsule().fill(DesignSystem.Colors.glassSubtle))
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .disabled(swapInFlight)
+    }
+
+    private func loadLocalHints() async {
+        let cfg = AIClient.loadLocalConfig()
+        let hints = await LocalModelDiscovery.scan(
+            config: cfg,
+            probeCustomServer: false
+        )
+        await MainActor.run { self.localHints = hints }
+    }
+
+    /// Swap to a different local model: stop server, persist new modelName,
+    /// hot-restart with new config. Fixes the OOM where MLX kept both the
+    /// old and the new model resident in RAM during a hot reload.
+    private func swapLocalModel(to hint: LocalModelHint) {
+        var cfg = AIClient.loadLocalConfig() ?? LocalLLMConfig()
+        cfg.modelName = hint.modelID
+        AIClient.saveLocalConfig(cfg)
+        // Picking a model from the menu is an explicit opt-in to use local
+        // again — clear the session suppression that Disconnect set so Smart
+        // Auto resumes routing to local.
+        chat.localSessionSuppressed = false
+        Task { await chat.orchestrator.markHealthy(.local) }
+        swapInFlight = true
+        Task {
+            _ = await LocalServerLauncher().restart(config: cfg, engine: cfg.engineKind)
+            await MainActor.run { self.swapInFlight = false }
+        }
     }
 
     /// Public — read by ChatScreen when calling chat.send so the chosen

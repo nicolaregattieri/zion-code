@@ -66,5 +66,13 @@ enum BuiltInSlashCommands {
             source: .builtIn,
             bodyLoader: nil
         ),
+        SlashItem(
+            id: "mcp",
+            name: "/mcp",
+            argHint: nil,
+            description: L10n("chat.slash.builtin.mcp.description"),
+            source: .builtIn,
+            bodyLoader: nil
+        ),
     ]
 }

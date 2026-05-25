@@ -63,6 +63,13 @@ final class ChatService {
     /// provider's catalog default is in effect. Surfaced in the resolved chip.
     var resolvedModelID: String?
 
+    /// Session-level flag set when the user clicks **Disconnect** on the local
+    /// server status bar. While true, Smart Auto skips `.local` in any chain
+    /// and `runLocalStream` does NOT auto-spawn the server. Clearing happens
+    /// when the user opts back in via the inline "Local model" menu or
+    /// switches Settings → AI to local explicitly. Resets on app launch.
+    var localSessionSuppressed: Bool = false
+
     // MARK: - Private (non-observable)
 
     /// In-flight streaming tasks keyed by threadID. Allows multiple threads to
@@ -85,7 +92,7 @@ final class ChatService {
     @ObservationIgnored private let repoID: String
 
     /// Provider orchestrator — resolves `.auto` lane and tracks fallback health.
-    @ObservationIgnored private lazy var orchestrator = ProviderOrchestrator()
+    @ObservationIgnored internal lazy var orchestrator = ProviderOrchestrator()
 
     /// Agent runtime — owns the agentic loop lifecycle and sticky-lock flag.
     @ObservationIgnored private(set) var agentRuntime: AgentRuntime
@@ -386,6 +393,49 @@ final class ChatService {
             return
         }
 
+        if trimmedCommand == "/mcp" {
+            // Two categories:
+            //  1) Custom MCP servers — user-installed via the registry (empty
+            //     out of the box; Zion ships zero).
+            //  2) Internal Zion harness tools — built-in via the `zion-mcp`
+            //     binary (read_file, bash, repo_map, find_symbol, list_dir,
+            //     web_fetch …). These are NOT MCP servers in the spec sense;
+            //     surfacing them separately so the user knows what's third-
+            //     party vs first-party.
+            // Read user MCP registry directly from `~/.zion/mcp.json`. The
+            // built-in `zion` seed (zion-mcp binary) is filtered out so the
+            // user only sees servers they've actually installed themselves.
+            let customServers: [MCPServerConfig] = {
+                guard let data = try? Data(contentsOf: MCPRegistryStore.defaultPath),
+                      let decoded = try? MCPRegistryStore.decode(data: data) else {
+                    return []
+                }
+                return decoded.filter { $0.id != "zion" }
+            }()
+            let harness = MCPConfigBuilder.allTools().map { $0.name }.sorted()
+
+            var lines: [String] = []
+            lines.append("### " + L10n("chat.command.mcp.custom.header"))
+            if customServers.isEmpty {
+                lines.append(L10n("chat.command.mcp.custom.empty"))
+            } else {
+                lines.append(String(format: L10n("chat.command.mcp.custom.summary"), customServers.count))
+                for server in customServers {
+                    lines.append("- `\(server.id)`")
+                }
+            }
+            lines.append("")
+            lines.append("---")
+            lines.append("")
+            lines.append("### " + L10n("chat.command.mcp.harness.header"))
+            lines.append(String(format: L10n("chat.command.mcp.harness.summary"), harness.count))
+            for tool in harness {
+                lines.append("- `\(tool)`")
+            }
+            thread.messages.append(.init(role: .assistant, content: lines.joined(separator: "\n"), isStreaming: false))
+            return
+        }
+
         if trimmedCommand == "/help" {
             let payload = contextBuilder.buildHelpPayload(
                 registry: SlashCommandRegistry.shared,
@@ -564,9 +614,19 @@ final class ChatService {
                 // Tier table maps (resolved provider, tier) → model independently
                 // of any "preliminary" provider, so we never call resolve twice.
                 let tier = await HeuristicTriageClassifier().classify(displayContent)
-                resolved = await self.orchestrator.resolve(
+                // Honour the session-level "user disconnected local" flag by
+                // re-resolving until the orchestrator yields a non-local provider.
+                // First attempt:
+                var tentative = await self.orchestrator.resolve(
                     lane: tier.lane, requested: .auto
                 )
+                if self.localSessionSuppressed, tentative == .local {
+                    await self.orchestrator.markRateLimited(.local, retryAfter: 86_400)
+                    tentative = await self.orchestrator.resolve(
+                        lane: tier.lane, requested: .auto
+                    )
+                }
+                resolved = tentative
                 smartModelOverride = SmartAutoTierTable.default.modelID(provider: resolved, tier: tier)
                 self.resolvedLane = tier.lane
                 self.resolvedTier = tier
@@ -726,7 +786,10 @@ final class ChatService {
         let maxTokens = 2048
         let threadID = activeThreadID
 
-        if config.autoStartEnabled, streamProvider == nil {
+        // Skip auto-spawn when the user disconnected this session — clicking
+        // Disconnect must STOP meaning "stop", not "stop + resurrect on next
+        // turn".
+        if config.autoStartEnabled, streamProvider == nil, !localSessionSuppressed {
             await ensureLocalServerRunning(config: config, assistantID: assistantID)
         }
 
@@ -1847,32 +1910,32 @@ final class ChatService {
             base = """
             You are Zion's coding assistant, embedded in a native macOS git client.
 
-            What you do well:
-            - Code review on diffs the user shares via /diff
-            - Explain repository structure and file contents via /file <path>
-            - Reason about git history (/log) and individual commits (/commit <sha>)
-            - Suggest branch names and merge strategies
-            - Draft commit messages and PR descriptions (the user copies them)
-            - Guide the user through conflict resolution step-by-step
+            Default behavior: respond conversationally to the user's message. Match
+            the register and language of what they wrote. Casual messages get
+            short conversational answers — do NOT ask the user to run any
+            command just to greet them or chit-chat.
 
-            You are READ-ONLY. You cannot:
-            - Execute git commands, stage files, or create commits
-            - Edit, create, or delete files in the user's repo
-            - Read files outside of /file <path> the user requests
+            When the user asks for repo work (review a diff, explain code,
+            propose a plan, etc.), use the tools available to you. The MCP
+            harness gives you:
+            - `repo_map` — high-level project structure
+            - `find_symbol` — locate types / functions by name
+            - `read_file` — read any file inside the active repository
+            - `list_dir` — enumerate a directory
+            - `web_fetch` — fetch http(s) URLs the user shared
+            Call them yourself when you need context. DO NOT beg the user to
+            run `/status` or `/diff` before answering — you already have tools.
 
-            Context: repository state (repo · branch · HEAD · uncommitted count) is
-            prepended to every user message. Treat it as ground truth.
+            Slash commands (/diff /log /status /file /commit) are OPTIONAL user
+            shortcuts. If the user invokes one, its fenced output is appended
+            to the message. Otherwise reach for the tools above.
 
-            Slash commands available to the user: /diff /log /status /file /commit.
-            Their output appears as fenced blocks in the message. When context is NOT
-            already provided, ASK the user to send the right slash command. Map intent:
-            - "last commit", "ultimo commit", "current changes" → /diff or /log
-            - "show file X" → /file <path>
-            - "what changed in <sha>" → /commit <sha>
-            - "working tree state" → /status
-            Be specific. Example: "Send `/log` and I'll summarize the last commits"
-            or "Send `/file Sources/Foo.swift` and I'll review it."
-            Do NOT refuse with "I can't show code"; guide the user.
+            File edits: respect Zion's `chat.cliAllowEdits` setting. When edits
+            are allowed, emit SEARCH/REPLACE blocks per the edit harness section
+            below. When not allowed, propose changes as a plan instead.
+
+            Context: repository state (repo · branch · HEAD · uncommitted count)
+            is prepended to every user message. Treat it as ground truth.
 
             Output style: concise. Code blocks for commands, file paths, hashes.
             Never invent file paths or commit SHAs you haven't seen in context.
