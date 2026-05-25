@@ -80,7 +80,18 @@ final class AIClientPromptHardeningTests: XCTestCase {
 
         let body = AIClient.anthropicRequestBody(payload: payload, maxTokens: 400, modelID: "claude-sonnet-4-0")
 
-        XCTAssertNotNil(body["system"] as? String)
+        // anthropicSystemField returns either a plain String (cache disabled) or
+        // an array of blocks `[{"type": "text", ...}]` when prompt caching is on.
+        // Accept either shape — both are valid Anthropic API requests.
+        let systemValue = body["system"]
+        if let plain = systemValue as? String {
+            XCTAssertFalse(plain.isEmpty)
+        } else if let blocks = systemValue as? [[String: Any]] {
+            XCTAssertEqual(blocks.first?["type"] as? String, "text")
+            XCTAssertNotNil(blocks.first?["text"] as? String)
+        } else {
+            XCTFail("system field has unexpected shape: \(String(describing: systemValue))")
+        }
         let messages = try XCTUnwrap(body["messages"] as? [[String: String]])
         XCTAssertEqual(messages.first?["role"], "user")
         XCTAssertTrue(messages.first?["content"]?.contains("Untrusted repository content follows.") == true)
