@@ -1051,7 +1051,8 @@ final class ChatService {
             default:
                 // Non-retryable error — surface it
                 await MainActor.run {
-                    self.setAssistantContent(id: assistantID, content: error.localizedDescription ?? L10n("chat.error.generic"))
+                    let description = error.localizedDescription
+                    self.setAssistantContent(id: assistantID, content: description.isEmpty ? L10n("chat.error.generic") : description)
                 }
                 return
             }
