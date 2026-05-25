@@ -15,7 +15,9 @@ struct RoutingPolicy: Codable, Equatable {
 
     static let defaultPolicy: RoutingPolicy = {
         var c: [String: [String]] = [:]
-        c[AITaskLane.cheapSummary.rawValue]  = [AIProvider.local.rawValue, AIProvider.claudeCLI.rawValue, AIProvider.anthropic.rawValue, AIProvider.openai.rawValue]
+        // cheapSummary = casual chat, ack, small talk. Prefer zero-cost providers:
+        // local LLM first, then subscription CLIs (no API spend), API only as fallback.
+        c[AITaskLane.cheapSummary.rawValue]  = [AIProvider.local.rawValue, AIProvider.claudeCLI.rawValue, AIProvider.codexCLI.rawValue, AIProvider.anthropic.rawValue, AIProvider.openai.rawValue]
         c[AITaskLane.general.rawValue]       = [AIProvider.claudeCLI.rawValue, AIProvider.anthropic.rawValue, AIProvider.openai.rawValue, AIProvider.local.rawValue]
         c[AITaskLane.reasoning.rawValue]     = [AIProvider.claudeCLI.rawValue, AIProvider.anthropic.rawValue, AIProvider.openai.rawValue]
         c[AITaskLane.review.rawValue]        = [AIProvider.claudeCLI.rawValue, AIProvider.anthropic.rawValue]

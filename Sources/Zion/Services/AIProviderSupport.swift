@@ -67,14 +67,84 @@ enum AIProviderSupport {
             return true
         }
         if provider == .claudeCLI || provider == .codexCLI {
-            // CLI connection requires async probe via isCLIConnected(provider:discovery:)
-            return false
+            // Sync probe: filesystem path + keychain/auth check. Mirrors
+            // CLIDiscoveryService.status() but without spawning subprocesses.
+            let tool: CLITool = provider == .claudeCLI ? .claude : .codex
+            guard cliBinaryExistsSync(tool: tool) else { return false }
+            switch tool {
+            case .claude: return CLIDiscoveryService.checkClaudeAuthRealtime()
+            case .codex:  return CLIDiscoveryService.checkCodexAuthRealtime()
+            }
         }
         guard provider != .none else { return false }
         guard let key = loadKey(provider)?.trimmingCharacters(in: .whitespacesAndNewlines) else {
             return false
         }
         return !key.isEmpty
+    }
+
+    /// Cache for `cliBinaryExistsSync`. 60s TTL — long enough that repeated UI
+    /// renders / orchestrator resolves don't hammer the filesystem, short enough
+    /// that installing/removing a CLI propagates within a minute.
+    private static let cliProbeCacheTTL: TimeInterval = 60
+    nonisolated(unsafe) private static var cliProbeCache: [CLITool: (Bool, Date)] = [:]
+    private static let cliProbeCacheLock = NSLock()
+
+    /// Sync filesystem probe for a CLI binary in well-known install locations.
+    /// Mirrors CLIDiscoveryService.buildProbePaths but without subprocess calls.
+    /// Result is memoised for `cliProbeCacheTTL` to keep `isConnected` cheap.
+    static func cliBinaryExistsSync(tool: CLITool) -> Bool {
+        cliProbeCacheLock.lock()
+        if let (cached, ts) = cliProbeCache[tool],
+           Date().timeIntervalSince(ts) < cliProbeCacheTTL {
+            cliProbeCacheLock.unlock()
+            return cached
+        }
+        cliProbeCacheLock.unlock()
+
+        let result = computeCliBinaryExists(tool: tool)
+
+        cliProbeCacheLock.lock()
+        cliProbeCache[tool] = (result, Date())
+        cliProbeCacheLock.unlock()
+        return result
+    }
+
+    private static func computeCliBinaryExists(tool: CLITool) -> Bool {
+        let home = NSHomeDirectory()
+        let fixed: [String] = [
+            "/opt/homebrew/bin/\(tool.rawValue)",
+            "/usr/local/bin/\(tool.rawValue)",
+            "\(home)/.local/bin/\(tool.rawValue)",
+            "\(home)/.bun/bin/\(tool.rawValue)",
+            "\(home)/.volta/bin/\(tool.rawValue)",
+            "\(home)/.deno/bin/\(tool.rawValue)",
+        ]
+        for p in fixed where FileManager.default.fileExists(atPath: p) { return true }
+
+        let nodeBases = [
+            "\(home)/.nvm/versions/node",
+            "\(home)/.asdf/installs/nodejs",
+            "/usr/local/n/versions/node",
+        ]
+        for base in nodeBases {
+            if let dirs = try? FileManager.default.contentsOfDirectory(atPath: base) {
+                for dir in dirs {
+                    if FileManager.default.fileExists(atPath: "\(base)/\(dir)/bin/\(tool.rawValue)") {
+                        return true
+                    }
+                }
+            }
+        }
+        let fnmBase = "\(home)/.fnm/node-versions"
+        if let dirs = try? FileManager.default.contentsOfDirectory(atPath: fnmBase) {
+            for dir in dirs {
+                if FileManager.default.fileExists(atPath: "\(fnmBase)/\(dir)/installation/bin/\(tool.rawValue)") {
+                    return true
+                }
+            }
+        }
+        return false
     }
 
     static func probeOnce(config: LocalLLMConfig) async -> Bool {
