@@ -105,6 +105,7 @@ struct ZionMapContent {
                              tips: ["map.terminal.voiceInput.tip1"]),
                 ZionMapEntry("map.terminal.whisperRecovery.title", description: "map.terminal.whisperRecovery.description",
                              tips: ["map.terminal.whisperRecovery.tip1"]),
+                ZionMapEntry("map.terminal.altScrollPeek.title", description: "map.terminal.altScrollPeek.description"),
             ]
 
         case .clipboard:
@@ -369,6 +370,7 @@ struct ZionMapContent {
                 ZionMapEntry("map.chat.planXmlStrip.title", description: "map.chat.planXmlStrip.description"),
                 ZionMapEntry("map.chat.smartAutoOnboarding.title", description: "map.chat.smartAutoOnboarding.description"),
                 ZionMapEntry("map.chat.mentionAutocomplete.title", description: "map.chat.mentionAutocomplete.description"),
+                ZionMapEntry("map.chat.fontSize.title", description: "map.chat.fontSize.description"),
             ]
         }
     }

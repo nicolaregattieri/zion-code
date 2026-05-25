@@ -134,6 +134,7 @@
 | Voice Engines | Apple Speech for instant local recognition; Whisper for higher accuracy with API key | Settings |
 | Voice Pill | Floating voice-active pill with waveform animation while listening |
 | Whisper Recovery | Graceful fallback to Apple Speech when Whisper is unavailable (quota, key missing, service down) with recovery guidance | — |
+| Alt-Buffer Scrollback Peek | Scroll up inside a TUI (claude / vim / less / htop) to peek the normal-buffer scrollback that existed before the app entered the alt buffer. Any keypress, paste, or scroll-to-bottom restores the alt-buffer view with a full refresh. | — |
 
 ## Smart Clipboard
 
@@ -584,6 +585,10 @@ Power-user surface that exposes what Zion Talks can do without spelunking throug
 - **Auto resolved chip** — When `Auto` provider is selected, the composer shows a chip ("Auto → Claude") so the user sees the orchestrator's pick.
 - **Empty-state hero** — Brand-new threads show 4 starter cards: Browse repo (`/repo_map`), Edit a file (`@file`), Run tests (`/bash swift test`), Type / for all commands (`/help`). Click prefills the composer.
 - **Discoverable placeholder** — Composer reads `Message · / for commands · @ for files`.
+
+### Appearance
+
+- **Chat font size** — Settings → Zion Talks → Appearance exposes a font size stepper (9 px – 22 px, default 12 px) and a line spacing stepper (0 – 12 px, default 2 px). Changes propagate live to every chat surface via the `chatFontSizePx` environment value; labels auto-scale relative to body size.
 
 ### Smart Auto v1 (beta)
 

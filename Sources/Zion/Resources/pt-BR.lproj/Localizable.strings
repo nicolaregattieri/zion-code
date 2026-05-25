@@ -2115,6 +2115,9 @@
 "map.terminal.whisperRecovery.title" = "Recuperação do Whisper";
 "map.terminal.whisperRecovery.description" = "Quando o OpenAI Whisper não está disponível (cota excedida, chave ausente, serviço fora), o Zion automaticamente volta para Apple Speech e mostra orientações de recuperação.";
 "map.terminal.whisperRecovery.tip1" = "Pressione e segure o botão de voz para trocar de motor ou ver mensagens de recuperação.";
+"help.terminal.altScrollPeek" = "Espie o scrollback do buffer normal enquanto está dentro de uma TUI (claude / vim / less / htop)";
+"map.terminal.altScrollPeek.title" = "Espiar scrollback do alt-buffer";
+"map.terminal.altScrollPeek.description" = "Role para cima dentro de uma TUI em tela cheia (claude, vim, less, htop) para revelar o scrollback do buffer normal que existia antes do app entrar no alt buffer. Qualquer tecla, colagem ou scroll-to-bottom restaura a visão do alt buffer com um refresh completo.";
 
 // Clone Repository
 "help.clone.title" = "Clonar Repositório";
@@ -2926,3 +2929,6 @@
 "map.chat.smartAutoOnboarding.description" = "Quando nenhum provedor de IA está conectado, o chat mostra um card de onboarding descrevendo o Smart Auto e oferecendo links Instalar Claude CLI e Instalar Ollama para que um novo usuário chegue a uma configuração funcional em um clique.";
 "map.chat.mentionAutocomplete.title" = "Autocomplete de @ e /";
 "map.chat.mentionAutocomplete.description" = "O painel @ agora funciona mesmo antes do SymbolIndexer terminar o scan inicial, usando um fallback de filesystem. O autocomplete de / dispara após qualquer espaço, não só no início da linha, permitindo encadear comandos no meio de uma frase.";
+"help.chat.fontSize" = "Ajuste o tamanho da fonte e o espaçamento de linha do chat (Ajustes → Zion Talks → Aparência)";
+"map.chat.fontSize.title" = "Tamanho da fonte do chat";
+"map.chat.fontSize.description" = "Ajustes → Zion Talks → Aparência expõe um stepper de tamanho de fonte (9–22 px, padrão 12) e um stepper de espaçamento de linha (0–12 px, padrão 2). As mudanças propagam ao vivo para todas as superfícies de chat; labels escalam automaticamente em relação ao tamanho do corpo.";

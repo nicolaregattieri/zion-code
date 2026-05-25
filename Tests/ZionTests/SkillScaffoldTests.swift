@@ -133,8 +133,10 @@ final class SkillScaffoldTests: XCTestCase {
     }
 }
 
-// Equatable conformance for test assertions
-extension SkillIndex.ScaffoldError: Equatable {
+// Equatable conformance lives in the Zion module (SkillIndex.swift). Drop the
+// `: Equatable` here so Swift 6 doesn't warn about duplicate conformance, but
+// keep the explicit == so tests use a test-friendly diff if cases evolve.
+extension SkillIndex.ScaffoldError {
     public static func == (lhs: SkillIndex.ScaffoldError, rhs: SkillIndex.ScaffoldError) -> Bool {
         switch (lhs, rhs) {
         case (.invalidName, .invalidName): return true

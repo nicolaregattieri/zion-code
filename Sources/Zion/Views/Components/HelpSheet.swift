@@ -56,7 +56,8 @@ struct HelpSheet: View {
                     "help.terminal.zoom", "help.terminal.persistence",
                     "help.terminal.transparency", "help.terminal.finderdrag",
                     "help.terminalSearch", "help.terminal.voiceInput",
-                    "help.terminal.whisperRecovery"]
+                    "help.terminal.whisperRecovery",
+                    "help.terminal.altScrollPeek"]
         case .clipboard:
             return ["help.clipboard.capture", "help.clipboard.paste",
                     "help.clipboard.drag", "help.clipboard.images",
@@ -164,7 +165,8 @@ struct HelpSheet: View {
                 "help.chat.perThreadStreaming",
                 "help.chat.planXmlStrip",
                 "help.chat.smartAutoOnboarding",
-                "help.chat.mentionAutocomplete"
+                "help.chat.mentionAutocomplete",
+                "help.chat.fontSize"
             ]
         }
     }
