@@ -465,6 +465,47 @@ final class RepositoryViewModelSettingsTests: XCTestCase {
         XCTAssertFalse(vm.isRepositorySwitchRefreshingInBackground)
     }
 
+    // MARK: - File-watcher event accumulation during repo switch
+
+    @MainActor
+    func testEnqueueFileWatcherEventAccumulatesWhileSwitching() {
+        let vm = RepositoryViewModel()
+        vm.isSwitchingRepository = true
+
+        let event = FileWatcher.classifyChangeEvent(
+            paths: ["/tmp/repo/Sources/main.swift"],
+            flags: [0]
+        )
+        XCTAssertNotNil(event)
+        vm.enqueueFileWatcherEvent(event!)
+
+        // Event is accumulated, not dropped, so a flush at switch-end can
+        // process it. Before the fix, the guard early-return discarded the
+        // event entirely.
+        XCTAssertNotNil(vm.pendingFileWatcherEvent)
+        XCTAssertTrue(vm.pendingFileWatcherEvent?.changedPaths.contains("/tmp/repo/Sources/main.swift") ?? false)
+    }
+
+    @MainActor
+    func testClearRepositorySwitchStateFlushesPendingFileWatcherEvent() {
+        let vm = RepositoryViewModel()
+        vm.isSwitchingRepository = true
+        let event = FileWatcher.classifyChangeEvent(
+            paths: ["/tmp/repo/Sources/main.swift"],
+            flags: [0]
+        )
+        XCTAssertNotNil(event)
+        vm.enqueueFileWatcherEvent(event!)
+        XCTAssertNotNil(vm.pendingFileWatcherEvent)
+
+        vm.clearRepositorySwitchState()
+
+        // Flush consumes the pending event so the next FSEvent isn't required
+        // to surface disk changes that arrived during the switch window.
+        XCTAssertNil(vm.pendingFileWatcherEvent)
+        XCTAssertFalse(vm.isRepositorySwitching)
+    }
+
     // MARK: - lineWrap sync
 
     @MainActor

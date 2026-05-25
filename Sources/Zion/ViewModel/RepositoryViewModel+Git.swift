@@ -590,10 +590,30 @@ extension RepositoryViewModel {
 
         refreshTask = Task {
             do {
-                // Fetch remote refs on user-initiated refresh so origin/* branches update
+                // Fetch remote refs in the background instead of blocking the
+                // initial load. Awaiting `fetch --all --prune` on a user-initiated
+                // refresh could take 10s+ on a slow network and stalled the
+                // switch flow (file tree + commits invisible until fetch returned,
+                // watchdog force-cleared isSwitchingRepository, snapshots ended
+                // up empty). RepositoryWorker is an actor with reentrancy, so
+                // the local `loadRepository` can run while fetch is still awaiting
+                // on its subprocess. When fetch finishes we kick a silent refresh
+                // to pick up any new origin/* refs.
                 if origin == .userInitiated {
-                    _ = try? await worker.runAction(args: ["fetch", "--all", "--prune"], in: repositoryURL)
-                    try Task.checkCancellation()
+                    Task { [weak self] in
+                        guard let self else { return }
+                        _ = try? await self.worker.runAction(
+                            args: ["fetch", "--all", "--prune"],
+                            in: repositoryURL
+                        )
+                        await MainActor.run {
+                            self.refreshRepository(
+                                setBusy: false,
+                                origin: .autoTimer,
+                                clearRepositorySwitchStateOnBusyCompletion: false
+                            )
+                        }
+                    }
                 }
 
                 let payload = try await worker.loadRepository(
@@ -977,9 +997,11 @@ extension RepositoryViewModel {
         busyWatchdogTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: Constants.Timing.busyWatchdogTimeout)
             guard let self, !Task.isCancelled else { return }
+            var didForceClear = false
             if self.isBusy {
                 self.logger.log(.warn, "Busy watchdog fired — force-clearing isBusy", source: #function)
                 self.isBusy = false
+                didForceClear = true
             }
             // Also clear stale git action token so subsequent actions aren't blocked
             // after the watchdog fires. Without this, a slow fetch that outlives the
@@ -990,6 +1012,15 @@ extension RepositoryViewModel {
                 self.actionTask?.cancel()
                 self.actionTask = nil
                 self.activeGitActionToken = nil
+                didForceClear = true
+            }
+            // After a force-clear, the UI is showing whatever snapshot was loaded
+            // when the task started — disk has likely moved on. Kick a worktree
+            // status refresh so the staging panel and pending-changes pill catch
+            // up without requiring the user to click around.
+            if didForceClear {
+                self.logger.log(.info, "Busy watchdog: scheduling recovery refresh", source: #function)
+                self.refreshRepository(setBusy: false, options: .worktreeStatus, origin: .fileWatcher)
             }
         }
     }
