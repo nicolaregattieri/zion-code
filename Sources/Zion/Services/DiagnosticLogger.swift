@@ -126,6 +126,16 @@ final class DiagnosticLogger {
             options: .regularExpression
         )
 
+        // Strip ntfy topics. The topic doubles as the bearer secret on public
+        // ntfy servers — anyone reading an exported diagnostic log could
+        // subscribe to or publish into the user's channel. Defense-in-depth
+        // alongside `NtfyClient.redactTopic` at the call site.
+        result = result.replacingOccurrences(
+            of: "/zion-code-[A-Za-z0-9._-]+",
+            with: "/[REDACTED]",
+            options: .regularExpression
+        )
+
         // Truncate very long lines
         if result.count > maxSanitizedLineLength {
             result = String(result.prefix(maxSanitizedLineLength)) + "...[truncated]"

@@ -152,19 +152,32 @@ actor RepositoryWorker {
     }
 
     func readConflictFileContent(path: String, in repositoryURL: URL) throws -> String {
-        let fileURL = repositoryURL.appendingPathComponent(path).standardizedFileURL
-        guard fileURL.path.hasPrefix(repositoryURL.standardizedFileURL.path + "/") else {
-            throw GitClientError.commandFailed(command: "read", message: "Invalid path: \(path)")
-        }
+        let fileURL = try Self.resolveInsideRepo(path: path, repositoryURL: repositoryURL, op: "read")
         return try String(contentsOf: fileURL, encoding: .utf8)
     }
 
     func writeResolvedFile(path: String, content: String, in repositoryURL: URL) throws {
-        let fileURL = repositoryURL.appendingPathComponent(path).standardizedFileURL
-        guard fileURL.path.hasPrefix(repositoryURL.standardizedFileURL.path + "/") else {
-            throw GitClientError.commandFailed(command: "write", message: "Invalid path: \(path)")
-        }
+        let fileURL = try Self.resolveInsideRepo(path: path, repositoryURL: repositoryURL, op: "write")
         try content.write(to: fileURL, atomically: true, encoding: .utf8)
+    }
+
+    /// Resolves `path` relative to `repositoryURL` and confirms it stays inside
+    /// the repo *after symlink resolution*. `standardizedFileURL` alone only
+    /// collapses `..` segments — it does not dereference symlinks, so a repo
+    /// containing `evil -> /etc/passwd` could otherwise smuggle reads outside
+    /// the working tree. Always pair `standardizedFileURL` with
+    /// `resolvingSymlinksInPath` on both sides of the prefix check.
+    private static func resolveInsideRepo(path: String, repositoryURL: URL, op: String) throws -> URL {
+        let candidate = repositoryURL.appendingPathComponent(path)
+            .standardizedFileURL
+            .resolvingSymlinksInPath()
+        let repoResolved = repositoryURL.standardizedFileURL.resolvingSymlinksInPath()
+        let candidatePath = candidate.path
+        let repoPath = repoResolved.path
+        guard candidatePath == repoPath || candidatePath.hasPrefix(repoPath + "/") else {
+            throw GitClientError.commandFailed(command: op, message: "Invalid path: \(path)")
+        }
+        return candidate
     }
 
     func markFileResolved(path: String, in repositoryURL: URL) throws {
