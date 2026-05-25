@@ -156,7 +156,15 @@ struct HelpSheet: View {
                 "help.chat.slashAutocomplete",
                 "help.chat.mcpManagement",
                 "help.chat.skillScaffold",
-                "help.chat.spendLedger"
+                "help.chat.spendLedger",
+                "help.chat.smartAutoTier",
+                "help.chat.localModelDiscovery",
+                "help.chat.localServerStatus",
+                "help.chat.localAutoStartBanner",
+                "help.chat.perThreadStreaming",
+                "help.chat.planXmlStrip",
+                "help.chat.smartAutoOnboarding",
+                "help.chat.mentionAutocomplete"
             ]
         }
     }

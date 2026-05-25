@@ -361,6 +361,14 @@ struct ZionMapContent {
                 ZionMapEntry("map.chat.mcpManagement.title", description: "map.chat.mcpManagement.description"),
                 ZionMapEntry("map.chat.skillScaffold.title", description: "map.chat.skillScaffold.description"),
                 ZionMapEntry("map.chat.spendLedger.title", description: "map.chat.spendLedger.description"),
+                ZionMapEntry("map.chat.smartAutoTier.title", description: "map.chat.smartAutoTier.description"),
+                ZionMapEntry("map.chat.localModelDiscovery.title", description: "map.chat.localModelDiscovery.description"),
+                ZionMapEntry("map.chat.localServerStatus.title", description: "map.chat.localServerStatus.description"),
+                ZionMapEntry("map.chat.localAutoStartBanner.title", description: "map.chat.localAutoStartBanner.description"),
+                ZionMapEntry("map.chat.perThreadStreaming.title", description: "map.chat.perThreadStreaming.description"),
+                ZionMapEntry("map.chat.planXmlStrip.title", description: "map.chat.planXmlStrip.description"),
+                ZionMapEntry("map.chat.smartAutoOnboarding.title", description: "map.chat.smartAutoOnboarding.description"),
+                ZionMapEntry("map.chat.mentionAutocomplete.title", description: "map.chat.mentionAutocomplete.description"),
             ]
         }
     }

@@ -584,3 +584,16 @@ Power-user surface that exposes what Zion Talks can do without spelunking throug
 - **Auto resolved chip** — When `Auto` provider is selected, the composer shows a chip ("Auto → Claude") so the user sees the orchestrator's pick.
 - **Empty-state hero** — Brand-new threads show 4 starter cards: Browse repo (`/repo_map`), Edit a file (`@file`), Run tests (`/bash swift test`), Type / for all commands (`/help`). Click prefills the composer.
 - **Discoverable placeholder** — Composer reads `Message · / for commands · @ for files`.
+
+### Smart Auto v1 (beta)
+
+Tier-aware routing, local-LLM model awareness, and onboarding polish shipped with PR #459 + #460.
+
+- **Smart Auto tier routing** — Auto mode classifies every user message into `easy` / `medium` / `hard` and routes to a per-provider model (Claude: Haiku / Sonnet / Opus, OpenAI: gpt-4o-mini / 4o / o1, Gemini: Flash / Pro). The resolved chip (`Auto → Claude · sonnet · medium`) is color-coded by tier and updates live while you type.
+- **Local LLM model discovery** — Zion scans Ollama, LM Studio, MLX, and llama.cpp default folders plus a user-configurable custom folder to enumerate which models exist on disk without spawning a server. The discovered list feeds the composer dropdown and the Smart Auto router.
+- **Local-server status bar** — When a local LLM server is reachable, a bar inside the composer surfaces the active model, system RAM pressure, per-server RSS, and a Disconnect button. Zion never auto-disconnects; the bar clears only via the explicit Disconnect button or when the server is stopped manually.
+- **Local auto-start banner** — When Auto could benefit from the local LLM but the server is off, a banner offers `Start once` / `Always start` / `Not now` / `Never ask`. The choice persists via `LocalAutoStartPolicy`. Zion never auto-spawns a server without consent.
+- **Per-thread streaming** — Switching threads mid-stream no longer cancels the response. Background-streaming threads show a spinner in the sidebar so the user can context-switch and return without losing output.
+- **Plan XML strip** — The raw `<plan>` block is stripped from the rendered message once the structured Plan card appears, keeping the conversation clean while the card remains fully interactive.
+- **Smart Auto empty state** — When no AI provider is connected, the chat surfaces an onboarding card with Install Claude CLI + Install Ollama links so new users reach a working setup in one click.
+- **Mention & slash autocomplete** — The `@` panel now works before `SymbolIndexer` finishes the cold scan (filesystem fallback). The `/` autocomplete triggers after any whitespace, not only at line start, so commands can be chained inside a sentence.
