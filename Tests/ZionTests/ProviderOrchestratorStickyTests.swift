@@ -244,6 +244,13 @@ final class ProviderOrchestratorStickyTests: XCTestCase {
     /// dependencies while still exercising the identical injection point.
     @MainActor
     func testAgentRuntimeDispatchesToInjectedRunner() async throws {
+        // Force `.autoApply` so AgentRuntime skips PlanModeGate.waitForApprovalIfNeeded.
+        // Default `.planFirst` would suspend the run() call indefinitely waiting for
+        // the user to approve/reject the plan, hanging the test (and the release).
+        let previous = PlanModeState.current()
+        PlanModeState.set(.autoApply)
+        defer { PlanModeState.set(previous) }
+
         let recorder = RecordingToolLoopRunner()
         let runtime = AgentRuntime(toolLoopRunner: recorder)
 
