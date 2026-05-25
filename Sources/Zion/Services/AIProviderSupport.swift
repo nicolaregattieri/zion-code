@@ -200,21 +200,31 @@ enum AIProviderSupport {
     /// Returns true if the given local model name is known to support tool calling.
     /// Matching is case-insensitive.
     static func localModelSupportsTools(_ name: String) -> Bool {
-        let patterns: [String] = [
-            "qwen3-coder",
-            "qwen2\\.5-coder",
-            "llama-3\\.[3-9]",
-            "mistral-large",
-            "deepseek-v3",
-            "gpt-oss",
-            "glm-4"
+        // Opt-out blacklist: assume every local model the user wired up can
+        // attempt tool calls. Worst case the model emits garbage and the
+        // ReActTextRunner falls back to plain text — strictly better than
+        // refusing to expose tools and forcing the user to send slash commands.
+        //
+        // Only refuse for known-bad families: pre-instruct base models, the
+        // tiny non-instruct variants, and the legacy GPT-2 lineage. Empty
+        // string also refuses (no model configured).
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return false }
+
+        let denylist: [String] = [
+            "^gpt-2",
+            "^gpt2",
+            "phi-?2(\\b|-)",
+            "gemma-?2-?2b",
+            "tinyllama",
+            "stablelm-?2-?1b"
         ]
-        let combined = patterns.joined(separator: "|")
+        let combined = denylist.joined(separator: "|")
         guard let regex = try? NSRegularExpression(pattern: combined, options: .caseInsensitive) else {
-            return false
+            return true
         }
-        let range = NSRange(name.startIndex..., in: name)
-        return regex.firstMatch(in: name, options: [], range: range) != nil
+        let range = NSRange(trimmed.startIndex..., in: trimmed)
+        return regex.firstMatch(in: trimmed, options: [], range: range) == nil
     }
 }
 

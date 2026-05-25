@@ -86,16 +86,35 @@ final class AIProviderSupportToolsTests: XCTestCase {
         XCTAssertFalse(AIProviderSupport.localModelSupportsTools("phi-2"))
     }
 
-    func testGpt35DoesNotMatch() {
-        XCTAssertFalse(AIProviderSupport.localModelSupportsTools("gpt-3.5"))
+    func testGpt35IsAllowed() {
+        // Opt-out policy: unknown models default to allowed. A user pointing
+        // their local config at a "gpt-3.5"-named mirror gets tool calling.
+        XCTAssertTrue(AIProviderSupport.localModelSupportsTools("gpt-3.5"))
     }
 
     func testEmptyStringDoesNotMatch() {
         XCTAssertFalse(AIProviderSupport.localModelSupportsTools(""))
     }
 
-    func testLlama32DoesNotMatch() {
-        // Regex covers 3.3 and above, not 3.2
-        XCTAssertFalse(AIProviderSupport.localModelSupportsTools("llama-3.2-3b"))
+    func testLlama32Matches() {
+        // Llama 3.2 instruct supports native tool calling — whitelist accepts
+        // the entire 3.x family now, not only 3.3+.
+        XCTAssertTrue(AIProviderSupport.localModelSupportsTools("llama-3.2-3b"))
+    }
+
+    func testQwen3NonCoderVariantsMatch() {
+        // Qwen3 family supports function calling across the board, not just
+        // the -Coder variants. Real-world MLX repo names look like:
+        XCTAssertTrue(AIProviderSupport.localModelSupportsTools("Qwen3.6-35B-A3B-4bit-DWQ"))
+        XCTAssertTrue(AIProviderSupport.localModelSupportsTools("mlx-community/Qwen3-32B-Instruct"))
+        XCTAssertTrue(AIProviderSupport.localModelSupportsTools("qwen2.5-7b-instruct"))
+    }
+
+    func testMixtralMatches() {
+        XCTAssertTrue(AIProviderSupport.localModelSupportsTools("mixtral-8x7b-instruct"))
+    }
+
+    func testCommandRMatches() {
+        XCTAssertTrue(AIProviderSupport.localModelSupportsTools("command-r-plus"))
     }
 }
