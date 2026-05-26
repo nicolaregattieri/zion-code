@@ -2904,6 +2904,7 @@
 "chat.composer.dictation.title" = "Ditado";
 "chat.composer.dictation.polish" = "Polir com LLM";
 "chat.composer.dictation.polish.hint" = "Após o ditado, envia a transcrição bruta pelo provedor de IA ativo para corrigir erros e preservar entrada mista (narração em português + termos técnicos em inglês).";
+"chat.composer.queue.help" = "Mensagens enfileiradas enquanto o turno atual streama. Toque numa linha para remover. Use Parar para cancelar o turno atual E limpar a fila.";
 
 // Chat commands
 "chat.command.clear.busy" = "Não é possível limpar enquanto uma resposta está em andamento.";
