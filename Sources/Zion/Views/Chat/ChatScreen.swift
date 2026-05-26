@@ -17,6 +17,11 @@ struct ChatScreen: View {
     /// Suppress the auto-start banner for the rest of this session (policy=.ask
     /// + user clicked "Not now"). Reset on app relaunch.
     @State private var autoStartBannerDismissed: Bool = false
+    /// Candidates surfaced by ProjectGuidanceImporter (CLAUDE.md / AGENTS.md / etc.)
+    /// for the active repo. Reloaded whenever the chat screen appears or the
+    /// repo URL changes. Empty + decided → banner hides.
+    @State private var guidanceCandidates: [ProjectGuidanceImporter.Candidate] = []
+    @State private var guidanceDecisionMade: Bool = false
 
     @AppStorage("chat.threadListVisible") private var threadListVisible: Bool = true
     @AppStorage(ZionTalksAppearance.fontSizeKey) private var fontSizePx: Int = ZionTalksAppearance.defaultFontSizePx
@@ -332,6 +337,15 @@ struct ChatScreen: View {
             // Hand the active repo URL to the mention panel fallback so '@'
             // autocomplete works even before SymbolIndexer finishes cold scan.
             MentionAutocompletePanel.repoURL = repoURL
+            // Scan for project guidance files (CLAUDE.md, AGENTS.md,
+            // GEMINI.md, .cursorrules, .cursor/rules/*) so the chat can
+            // offer to import them as hidden context. Already-decided
+            // repos skip the banner.
+            if let repo = repoURL {
+                let scan = ProjectGuidanceImporter.shared.scan(repoURL: repo)
+                guidanceCandidates = scan.candidates
+                guidanceDecisionMade = ProjectGuidanceImporter.shared.hasDecided(for: repo)
+            }
         }
         .onDisappear {
             memoryMonitor.stop()
@@ -398,6 +412,19 @@ struct ChatScreen: View {
     /// the composer card so they share its width / padding.
     @ViewBuilder private var composerTopSlot: some View {
         VStack(spacing: DesignSystem.Spacing.compact) {
+            if !guidanceCandidates.isEmpty && !guidanceDecisionMade, let repo = repoURL {
+                ProjectGuidanceImportBanner(
+                    candidates: guidanceCandidates,
+                    onImport: { selected in
+                        _ = ProjectGuidanceImporter.shared.importCandidates(selected, for: repo)
+                        guidanceDecisionMade = true
+                    },
+                    onDismiss: {
+                        ProjectGuidanceImporter.shared.dismiss(for: repo)
+                        guidanceDecisionMade = true
+                    }
+                )
+            }
             if shouldOfferLocalAutoStart {
                 LocalAutoStartBanner(
                     modelName: localConfig.modelName,
