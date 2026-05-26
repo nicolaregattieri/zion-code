@@ -19,8 +19,13 @@ struct RoutingPolicy: Codable, Equatable {
         // local LLM first, then subscription CLIs (no API spend), API only as fallback.
         c[AITaskLane.cheapSummary.rawValue]  = [AIProvider.local.rawValue, AIProvider.claudeCLI.rawValue, AIProvider.codexCLI.rawValue, AIProvider.anthropic.rawValue, AIProvider.openai.rawValue]
         c[AITaskLane.general.rawValue]       = [AIProvider.claudeCLI.rawValue, AIProvider.anthropic.rawValue, AIProvider.openai.rawValue, AIProvider.local.rawValue]
-        c[AITaskLane.reasoning.rawValue]     = [AIProvider.claudeCLI.rawValue, AIProvider.anthropic.rawValue, AIProvider.openai.rawValue]
-        c[AITaskLane.review.rawValue]        = [AIProvider.claudeCLI.rawValue, AIProvider.anthropic.rawValue]
+        // reasoning / review prefer premium models but MUST fall back to local
+        // when nothing else is wired. Both subscription CLIs (claude + codex)
+        // are in the chain so cool-down on one doesn't lock the user out, and
+        // local is the final last-resort. Refusing to route with "No provider"
+        // while any of these is live is the worse failure mode for Smart Auto.
+        c[AITaskLane.reasoning.rawValue]     = [AIProvider.claudeCLI.rawValue, AIProvider.codexCLI.rawValue, AIProvider.anthropic.rawValue, AIProvider.openai.rawValue, AIProvider.local.rawValue]
+        c[AITaskLane.review.rawValue]        = [AIProvider.claudeCLI.rawValue, AIProvider.codexCLI.rawValue, AIProvider.anthropic.rawValue, AIProvider.local.rawValue]
         c[AITaskLane.transcription.rawValue] = [AIProvider.openai.rawValue]
         return RoutingPolicy(chains: c)
     }()

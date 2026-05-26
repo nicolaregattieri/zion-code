@@ -29,6 +29,21 @@ final class DiagnosticLogger {
         return dateFormatter
     }()
 
+    /// Disk log path: `~/Library/Logs/Zion/diagnostic.log`. Created on first
+    /// write. Each `log()` call appends a line so users (and Claude in chat)
+    /// can `tail -f` it to debug provider routing / health failures live.
+    private static let diskLogURL: URL = {
+        let logs = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Logs/Zion", isDirectory: true)
+        try? FileManager.default.createDirectory(at: logs, withIntermediateDirectories: true)
+        return logs.appendingPathComponent("diagnostic.log")
+    }()
+    private let isoFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+
     private init() {}
 
     func log(_ level: LogLevel, _ message: String, context: String? = nil, source: String = #function) {
@@ -42,6 +57,27 @@ final class DiagnosticLogger {
         entries.append(entry)
         if entries.count > maxEntries {
             entries.removeFirst(entries.count - maxEntries)
+        }
+        appendToDisk(entry)
+    }
+
+    /// Best-effort append to the on-disk log. Failures are swallowed — disk
+    /// I/O must never break the in-memory buffer that the export UI relies on.
+    private func appendToDisk(_ entry: LogEntry) {
+        let ts = isoFormatter.string(from: entry.timestamp)
+        var line = "[\(ts)] [\(entry.level.rawValue)] \(sanitize(entry.message))"
+        if let ctx = entry.context { line += " | ctx: \(sanitize(ctx))" }
+        if let src = entry.source { line += " | source: \(src)" }
+        line += "\n"
+        guard let data = line.data(using: .utf8) else { return }
+        let url = Self.diskLogURL
+        if FileManager.default.fileExists(atPath: url.path),
+           let handle = try? FileHandle(forWritingTo: url) {
+            defer { try? handle.close() }
+            try? handle.seekToEnd()
+            try? handle.write(contentsOf: data)
+        } else {
+            try? data.write(to: url, options: .atomic)
         }
     }
 

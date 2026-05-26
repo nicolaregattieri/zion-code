@@ -37,7 +37,13 @@ struct LocalLLMSettingsSection: View {
             }
             .padding(.vertical, 4)
         } header: {
-            Text(L10n("settings.ai.provider.local"))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(L10n("settings.ai.provider.local"))
+                Text(L10n("settings.ai.provider.local.subtitle"))
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(.secondary)
+                    .textCase(nil)
+            }
         }
     }
 

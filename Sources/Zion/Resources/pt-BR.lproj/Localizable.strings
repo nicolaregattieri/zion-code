@@ -2402,7 +2402,8 @@
 "theme.colorblindLight" = "Colorblind Light";
 
 // Local LLM Support (Ollama Phase 1)
-"settings.ai.provider.local" = "Local / OpenAI-compatível";
+"settings.ai.provider.local" = "Endpoint LLM personalizado";
+"settings.ai.provider.local.subtitle" = "API compatível com OpenAI — local (Ollama, MLX, LM Studio, llama.cpp) ou remota (OpenRouter, Together, Fireworks, Groq). Um endpoint por vez.";
 "settings.ai.local.serverURL" = "URL do servidor";
 "settings.ai.local.serverURL.hint" = "ex.: http://localhost:11434/v1 (Ollama, LM Studio, MLX server, OpenRouter)";
 "settings.ai.local.model" = "Modelo";
@@ -2515,6 +2516,15 @@
 "chat.auto.tier.easy" = "fácil";
 "chat.auto.tier.medium" = "médio";
 "chat.auto.tier.hard" = "difícil";
+"chat.composer.localSwap" = "Modelo local";
+"chat.slash.builtin.mcp.description" = "Lista tools MCP ativas";
+"chat.command.mcp.empty" = "Nenhuma tool MCP registrada. O servidor `zion-mcp` pode não estar rodando.";
+"chat.command.mcp.summary" = "**%d tool(s) MCP ativa(s)**:\n\n- %@";
+"chat.command.mcp.custom.header" = "Servidores MCP customizados";
+"chat.command.mcp.harness.header" = "Ferramentas internas do Zion (built-in)";
+"chat.command.mcp.custom.empty" = "Nenhum servidor MCP customizado instalado. Adicione em `~/.zion/mcp.json` — veja [registro MCP](https://modelcontextprotocol.io/) para servidores compatíveis.";
+"chat.command.mcp.custom.summary" = "**%d servidor(es) MCP customizado(s):**";
+"chat.command.mcp.harness.summary" = "**%d ferramenta(s) internas do harness Zion** (embutidas no binário `zion-mcp`, não são terceiros):";
 "chat.local.autostart.banner.title" = "Usar seu LLM local no Auto?";
 "chat.local.autostart.banner.subtitle" = "%@ está configurado mas não rodando. O Smart Auto pode usá-lo de graça.";
 "chat.local.autostart.banner.startOnce" = "Ligar uma vez";
@@ -2881,6 +2891,7 @@
 
 // Auto-resolved chip
 "chat.auto.resolvedChip" = "Auto → %@";
+"chat.auto.providerShort.local" = "Local";
 
 // Chat commands
 "chat.command.clear.busy" = "Não é possível limpar enquanto uma resposta está em andamento.";

@@ -2424,7 +2424,8 @@
 "theme.colorblindLight" = "Colorblind Light";
 
 // Local LLM Support (Ollama Phase 1)
-"settings.ai.provider.local" = "Local / Compatible con OpenAI";
+"settings.ai.provider.local" = "Endpoint LLM personalizado";
+"settings.ai.provider.local.subtitle" = "API compatible con OpenAI — local (Ollama, MLX, LM Studio, llama.cpp) o remota (OpenRouter, Together, Fireworks, Groq). Un endpoint a la vez.";
 "settings.ai.local.serverURL" = "URL del servidor";
 "settings.ai.local.serverURL.hint" = "ej.: http://localhost:11434/v1 (Ollama, LM Studio, MLX server, OpenRouter)";
 "settings.ai.local.model" = "Modelo";
@@ -2537,6 +2538,15 @@
 "chat.auto.tier.easy" = "fácil";
 "chat.auto.tier.medium" = "medio";
 "chat.auto.tier.hard" = "difícil";
+"chat.composer.localSwap" = "Modelo local";
+"chat.slash.builtin.mcp.description" = "Lista herramientas MCP activas";
+"chat.command.mcp.empty" = "Sin herramientas MCP registradas. El servidor `zion-mcp` quizás no esté en ejecución.";
+"chat.command.mcp.summary" = "**%d herramienta(s) MCP activa(s)**:\n\n- %@";
+"chat.command.mcp.custom.header" = "Servidores MCP personalizados";
+"chat.command.mcp.harness.header" = "Herramientas internas de Zion (built-in)";
+"chat.command.mcp.custom.empty" = "Sin servidores MCP personalizados instalados. Añade uno en `~/.zion/mcp.json` — consulta el [registro MCP](https://modelcontextprotocol.io/) para servidores compatibles.";
+"chat.command.mcp.custom.summary" = "**%d servidor(es) MCP personalizado(s):**";
+"chat.command.mcp.harness.summary" = "**%d herramienta(s) internas del harness Zion** (incluidas en el binario `zion-mcp`, no son de terceros):";
 "chat.local.autostart.banner.title" = "¿Usar tu LLM local en Auto?";
 "chat.local.autostart.banner.subtitle" = "%@ está configurado pero no en ejecución. Smart Auto puede usarlo gratis.";
 "chat.local.autostart.banner.startOnce" = "Iniciar una vez";
@@ -2903,6 +2913,7 @@
 
 // Auto-resolved chip
 "chat.auto.resolvedChip" = "Auto → %@";
+"chat.auto.providerShort.local" = "Local";
 
 // Chat commands
 "chat.command.clear.busy" = "No se puede limpiar mientras se genera una respuesta.";

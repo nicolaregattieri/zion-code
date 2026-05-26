@@ -36,16 +36,62 @@ struct AutoResolvedChip: View {
 
     /// Live model id derived from preview tier + currently-resolved provider.
     /// Falls back to chat.resolvedModelID when no live text.
+    /// For `.local` the SmartAutoTierTable returns nil (the user picks the
+    /// model in Settings → Local), so we read the actual configured model name
+    /// from `AIClient.loadLocalConfig()` to keep the chip honest — without
+    /// this the user sees the generic "Local / OpenAI-compatible" label with
+    /// no hint of which model is actually answering.
     private var previewModelID: String? {
         if let txt = livePreviewText, !txt.trimmingCharacters(in: .whitespaces).isEmpty,
            let tier = previewTier, let provider = chat.resolvedProvider {
-            return SmartAutoTierTable.default.modelID(provider: provider, tier: tier)
+            if let m = SmartAutoTierTable.default.modelID(provider: provider, tier: tier), !m.isEmpty {
+                return m
+            }
+            return Self.fallbackModelID(for: provider)
         }
-        return chat.resolvedModelID
+        if let cached = chat.resolvedModelID, !cached.isEmpty {
+            return cached
+        }
+        if let provider = chat.resolvedProvider {
+            return Self.fallbackModelID(for: provider)
+        }
+        return nil
+    }
+
+    /// Provider-specific fallback when the tier table does not pin a model.
+    /// Today only `.local` needs this; once `customEndpoint` lands, add its
+    /// own loader here too so the chip can show e.g. the OpenRouter model id.
+    private static func fallbackModelID(for provider: AIProvider) -> String? {
+        switch provider {
+        case .local:
+            let name = AIClient.loadLocalConfig()?.modelName ?? ""
+            return name.isEmpty ? nil : name
+        default:
+            return nil
+        }
     }
 
     private static func syncClassify(_ text: String) -> SmartAutoTier {
         HeuristicTriageClassifier.classifySync(text)
+    }
+
+    /// HuggingFace-style IDs are `org/model-tag-quant`. The org prefix is
+    /// noise for a status pill — drop it and keep the tail. Full id stays in
+    /// the `.help()` tooltip on hover.
+    /// Short provider label tuned for the status pill. The full provider
+    /// label is descriptive ("Local / OpenAI-compatible") which is helpful in
+    /// Settings but redundant here — the model name already disambiguates
+    /// local vs remote OpenAI-compatible.
+    private static func shortLabel(for provider: AIProvider) -> String {
+        switch provider {
+        case .local: return L10n("chat.auto.providerShort.local")
+        default: return provider.label
+        }
+    }
+
+    private static func shortenModelID(_ id: String) -> String {
+        guard let slash = id.lastIndex(of: "/") else { return id }
+        return String(id[id.index(after: slash)...])
     }
 
     var body: some View {
@@ -54,16 +100,19 @@ struct AutoResolvedChip: View {
                 Image(systemName: "arrow.triangle.branch")
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(DesignSystem.Colors.ai)
-                Text(L10n("chat.auto.resolvedChip", resolved.label))
+                Text(L10n("chat.auto.resolvedChip", Self.shortLabel(for: resolved)))
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
                 if let model = previewModelID, !model.isEmpty {
                     Text("·")
                         .font(DesignSystem.Typography.label)
                         .foregroundStyle(.tertiary)
-                    Text(model)
+                    Text(Self.shortenModelID(model))
                         .font(DesignSystem.Typography.label)
                         .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .help(model)
                 }
                 if let tier = previewTier {
                     Text("·")

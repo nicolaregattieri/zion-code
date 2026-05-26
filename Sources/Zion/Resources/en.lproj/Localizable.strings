@@ -2393,7 +2393,8 @@
 "theme.colorblindLight" = "Colorblind Light";
 
 // Local LLM Support (Ollama Phase 1)
-"settings.ai.provider.local" = "Local / OpenAI-compatible";
+"settings.ai.provider.local" = "Custom LLM endpoint";
+"settings.ai.provider.local.subtitle" = "OpenAI-compatible API — on-device (Ollama, MLX, LM Studio, llama.cpp) or remote gateway (OpenRouter, Together, Fireworks, Groq). One endpoint at a time.";
 "settings.ai.local.serverURL" = "Server URL";
 "settings.ai.local.serverURL.hint" = "e.g. http://localhost:11434/v1 (Ollama, LM Studio, MLX server, OpenRouter)";
 "settings.ai.local.model" = "Model";
@@ -2515,6 +2516,15 @@
 "chat.auto.tier.easy" = "easy";
 "chat.auto.tier.medium" = "medium";
 "chat.auto.tier.hard" = "hard";
+"chat.composer.localSwap" = "Local model";
+"chat.slash.builtin.mcp.description" = "List active MCP tools";
+"chat.command.mcp.empty" = "No MCP tools registered. The `zion-mcp` server may not be running.";
+"chat.command.mcp.summary" = "**%d active MCP tool(s)**:\n\n- %@";
+"chat.command.mcp.custom.header" = "Custom MCP servers";
+"chat.command.mcp.harness.header" = "Zion harness tools (built-in)";
+"chat.command.mcp.custom.empty" = "No custom MCP servers installed. Add one in `~/.zion/mcp.json` — see [MCP registry](https://modelcontextprotocol.io/) for compatible servers.";
+"chat.command.mcp.custom.summary" = "**%d custom MCP server(s):**";
+"chat.command.mcp.harness.summary" = "**%d built-in Zion harness tool(s)** (shipped with the `zion-mcp` binary, not third-party):";
 "chat.local.autostart.banner.title" = "Use your local LLM for Auto?";
 "chat.local.autostart.banner.subtitle" = "%@ is configured but not running. Smart Auto could use it for free chat.";
 "chat.local.autostart.banner.startOnce" = "Start once";
@@ -2879,6 +2889,7 @@
 
 // Auto-resolved chip
 "chat.auto.resolvedChip" = "Auto → %@";
+"chat.auto.providerShort.local" = "Local";
 
 // Chat commands
 "chat.command.clear.busy" = "Cannot clear while a response is in progress.";

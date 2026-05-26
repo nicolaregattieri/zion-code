@@ -120,8 +120,28 @@ actor ProviderOrchestrator {
             return requested
         }
 
+        await DiagnosticLogger.shared.log(.info,
+            "orchestrator.resolve lane=\(lane.rawValue) requested=\(requested.rawValue)",
+            source: "orchestrator")
         let chain = policy.chain(for: lane)
-        return await firstEligible(in: chain, costCaps: costCaps) ?? .none
+        if let primary = await firstEligible(in: chain, costCaps: costCaps) {
+            return primary
+        }
+        // Graceful degrade: lane chain dry → fall back to cheapSummary chain
+        // (always includes `.local`).
+        if lane != .cheapSummary {
+            await DiagnosticLogger.shared.log(.warn,
+                "lane \(lane.rawValue) chain dry — falling back to cheapSummary chain",
+                source: "orchestrator")
+            let fallback = policy.chain(for: .cheapSummary)
+            if let any = await firstEligible(in: fallback, costCaps: costCaps) {
+                return any
+            }
+        }
+        await DiagnosticLogger.shared.log(.error,
+            "orchestrator returning .none — no provider passes any chain",
+            source: "orchestrator")
+        return .none
     }
 
     // MARK: - Fallback
@@ -160,26 +180,51 @@ actor ProviderOrchestrator {
 
     /// Returns the first provider from `candidates` that passes all eligibility checks.
     ///
-    /// Walks the chain in declared order. A subscription CLI (claudeCLI / codexCLI)
-    /// is treated as an opt-in fallback: it is skipped when the user has disabled
-    /// `chat.routing.subscriptionFailover`, but otherwise participates in the same
-    /// health + cost-cap + connectivity gate as API providers.
+    /// Walks the chain in declared order applying the same health + cost-cap +
+    /// connectivity gate to every provider. Subscription CLIs (claudeCLI /
+    /// codexCLI) used to be gated behind `chat.routing.subscriptionFailover`,
+    /// but Smart Auto inverts the policy: if the user installed + authenticated
+    /// the CLI, they want it as a first-class candidate (no extra opt-in).
+    /// Diagnostic logs are emitted so a "No AI provider configured" outcome
+    /// can be debugged from `~/Library/Logs/Zion/`.
     private func firstEligible(
         in candidates: [AIProvider],
         costCaps: [AIProvider: Double]
     ) async -> AIProvider? {
-        let subscriptionFailoverEnabled = UserDefaults.standard.bool(
-            forKey: Self.subscriptionFailoverKey
-        )
+        let chainSummary = candidates.map(\.rawValue).joined(separator: ",")
+        await DiagnosticLogger.shared.log(.info,
+            "orchestrator.firstEligible candidates=\(chainSummary)",
+            source: "orchestrator")
 
         for provider in candidates {
-            if isSubscriptionCLI(provider), !subscriptionFailoverEnabled { continue }
-            guard await health.isHealthy(provider) else { continue }
+            let healthy = await health.isHealthy(provider)
+            if !healthy {
+                await DiagnosticLogger.shared.log(.warn,
+                    "skip \(provider.rawValue): unhealthy (rate-limit cool-down)",
+                    source: "orchestrator")
+                continue
+            }
             let cap = costCaps[provider] ?? 0
-            if budget.capExceeded(provider: provider, cap: cap) { continue }
-            guard connectivityCheck(provider) else { continue }
+            if budget.capExceeded(provider: provider, cap: cap) {
+                await DiagnosticLogger.shared.log(.warn,
+                    "skip \(provider.rawValue): cost cap exceeded",
+                    source: "orchestrator")
+                continue
+            }
+            if !connectivityCheck(provider) {
+                await DiagnosticLogger.shared.log(.warn,
+                    "skip \(provider.rawValue): not connected (no key / CLI not installed / local server down)",
+                    source: "orchestrator")
+                continue
+            }
+            await DiagnosticLogger.shared.log(.info,
+                "picked \(provider.rawValue)",
+                source: "orchestrator")
             return provider
         }
+        await DiagnosticLogger.shared.log(.warn,
+            "chain exhausted — no eligible provider",
+            source: "orchestrator")
         return nil
     }
 

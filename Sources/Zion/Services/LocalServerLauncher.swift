@@ -71,6 +71,17 @@ actor LocalServerLauncher {
     /// (engine-dependent) and polls until healthy or `maxStartupSeconds`
     /// elapse. Safe to call concurrently — repeated calls during startup
     /// will share the same health-poll loop because the probe is cheap.
+    /// Hard restart: stop any process on the configured port, then start
+    /// fresh with the new config. Used by inline model-swap so the OLD model
+    /// stops loading first (otherwise MLX/Ollama can keep both in RAM and
+    /// trigger OOM on the user's machine).
+    func restart(config: LocalLLMConfig, engine: LocalEngineKind) async -> LaunchOutcome {
+        _ = await stop(config: config)
+        // Wait briefly so the port releases before the new spawn.
+        try? await Task.sleep(nanoseconds: 400_000_000)
+        return await ensureRunning(config: config, engine: engine)
+    }
+
     func ensureRunning(config: LocalLLMConfig, engine: LocalEngineKind) async -> LaunchOutcome {
         if await probe(config) { return .alreadyRunning }
 
