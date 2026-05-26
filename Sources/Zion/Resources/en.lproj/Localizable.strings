@@ -2916,6 +2916,9 @@
 "settings.ai.projectGuidance.subtitle" = "Repos with CLAUDE.md / AGENTS.md / GEMINI.md / .cursorrules content injected into Zion Talks. Click Clear to revoke an import and re-show the banner on next visit.";
 "settings.ai.projectGuidance.empty" = "No projects have imported guidance yet. Open a repo with a CLAUDE.md / AGENTS.md / GEMINI.md / .cursorrules and the chat composer will offer to import it.";
 "settings.ai.projectGuidance.clear" = "Clear";
+"settings.ai.globalPrompt.title" = "Global system prompt";
+"settings.ai.globalPrompt.subtitle" = "Applied to every Zion Talks turn across every repo. Project guidance still overrides repo-specific rules.";
+"settings.ai.globalPrompt.hint" = "Examples: \"Respond in Brazilian Portuguese.\" · \"Always cite file paths with file:line.\" · \"I prefer terse answers, skip preamble.\"";
 "chat.composer.bashTool.on.help" = "Bash tool is ON. The LLM (Anthropic / OpenAI / Gemini in native loop) can run shell commands via the harness allowlist. Click to disable.";
 "chat.composer.bashTool.off.help" = "Bash tool is OFF. Click to let the LLM run shell commands in native provider loops. CLI providers (Claude / Codex) ignore this toggle — they use their own approval flow.";
 "chat.message.searchReplace.unknownFile" = "Edit block";

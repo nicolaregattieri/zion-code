@@ -62,8 +62,20 @@ struct ChatContextBuilder {
         let guidance = await MainActor.run {
             ProjectGuidanceImporter.shared.importedContent(for: repoURL)
         }
-        if guidance.isEmpty { return header }
-        return header + "\n\n## Project guidance (imported)\n\n" + guidance
+        // Global system prompt — written once in Settings → AI, applied to
+        // every Zion Talks turn across every repo. Sits between the git
+        // header and the project guidance so the LLM reads "what the user
+        // always wants" before "what this repo specifically documents".
+        let globalPrompt = (UserDefaults.standard.string(forKey: "chat.globalSystemPrompt") ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        var sections = [header]
+        if !globalPrompt.isEmpty {
+            sections.append("## Global guidance (user)\n\n" + globalPrompt)
+        }
+        if !guidance.isEmpty {
+            sections.append("## Project guidance (imported)\n\n" + guidance)
+        }
+        return sections.joined(separator: "\n\n")
     }
 
     private func rawGitContextHeader(repoURL: URL, branch: String) async -> String {
