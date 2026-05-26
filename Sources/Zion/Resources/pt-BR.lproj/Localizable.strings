@@ -2914,6 +2914,10 @@
 "chat.projectGuidance.banner.import" = "Importar pro contexto";
 "chat.projectGuidance.banner.dismiss" = "Agora não";
 "chat.projectGuidance.banner.dismiss.help" = "Esconde este banner para este repo. Você pode resetar em Settings → AI depois.";
+"settings.ai.projectGuidance.title" = "Contexto de projeto importado";
+"settings.ai.projectGuidance.subtitle" = "Repos com conteúdo de CLAUDE.md / AGENTS.md / GEMINI.md / .cursorrules injetado no Zion Talks. Clique em Limpar para revogar e o banner volta na próxima visita.";
+"settings.ai.projectGuidance.empty" = "Nenhum projeto importou contexto ainda. Abra um repo com CLAUDE.md / AGENTS.md / GEMINI.md / .cursorrules e o composer vai oferecer importar.";
+"settings.ai.projectGuidance.clear" = "Limpar";
 "chat.composer.bashTool.on.help" = "Tool Bash ATIVA. O LLM (Anthropic / OpenAI / Gemini em loop nativo) pode rodar comandos shell via allowlist do harness. Clique para desativar.";
 "chat.composer.bashTool.off.help" = "Tool Bash DESATIVADA. Clique para permitir que o LLM rode comandos shell em loops nativos. CLIs (Claude / Codex) ignoram este toggle — usam o próprio fluxo de aprovação.";
 "chat.message.searchReplace.unknownFile" = "Bloco de edição";

@@ -135,6 +135,8 @@ struct AISettingsTab: View {
                     .foregroundStyle(.secondary)
             }
 
+            ProjectGuidanceSettingsSection()
+
             if defaultProvider != .none {
                 Section(L10n("settings.ai.mode")) {
                     Picker(L10n("settings.ai.mode"), selection: $aiModeRaw) {
