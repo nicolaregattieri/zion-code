@@ -43,6 +43,11 @@ struct MultiFileDiffSummary: View {
     let onReviewAll: () -> Void
     let onApproveAll: () -> Void
     let onRejectAll: () -> Void
+    /// Per-file Apply / Reject hooks so the Review sheet can act on a single
+    /// block without forcing the user back to the chat. Nil = sheet hides the
+    /// per-file actions (read-only viewer fallback).
+    var onApplyBlock: ((EditBlock) -> Void)? = nil
+    var onRejectBlock: ((EditBlock) -> Void)? = nil
 
     @State private var isExpanded: Bool = true
     @State private var isReviewSheetPresented: Bool = false
@@ -76,6 +81,8 @@ struct MultiFileDiffSummary: View {
         .sheet(isPresented: $isReviewSheetPresented) {
             MultiFileDiffReviewSheet(
                 blocks: blocks,
+                onApplyBlock: onApplyBlock,
+                onRejectBlock: onRejectBlock,
                 onDismiss: { isReviewSheetPresented = false }
             )
         }
@@ -154,31 +161,58 @@ struct MultiFileDiffSummary: View {
     }
 
     private func fileRow(block: EditBlock) -> some View {
-        HStack(spacing: DesignSystem.Spacing.iconTextGap) {
-            Image(systemName: "doc.text")
-                .font(DesignSystem.Typography.label)
-                .foregroundStyle(DesignSystem.Colors.textTertiary)
-            Text(block.path)
-                .font(DesignSystem.Typography.monoSmall)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-                .lineLimit(1)
-                .truncationMode(.middle)
-            Spacer()
-            let addCount = block.replace.components(separatedBy: "\n").count
-            let delCount = block.search.components(separatedBy: "\n").count
-            HStack(spacing: DesignSystem.Spacing.compact) {
-                Text("+\(addCount)")
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: DesignSystem.Spacing.iconTextGap) {
+                statusIcon(for: block)
+                Text(block.path)
+                    .font(DesignSystem.Typography.monoSmall)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                Spacer()
+                let addCount = block.replace.components(separatedBy: "\n").count
+                let delCount = block.search.components(separatedBy: "\n").count
+                HStack(spacing: DesignSystem.Spacing.compact) {
+                    Text("+\(addCount)")
+                        .font(DesignSystem.Typography.label)
+                        .foregroundStyle(DesignSystem.Colors.success)
+                    Text("-\(delCount)")
+                        .font(DesignSystem.Typography.label)
+                        .foregroundStyle(DesignSystem.Colors.error)
+                }
+            }
+            // Inline failure reason so users see WHY a block did not apply
+            // without having to expand the per-file card.
+            if let reason = block.failureReason, reason != "rejected" {
+                Text(reason)
                     .font(DesignSystem.Typography.label)
-                    .foregroundStyle(DesignSystem.Colors.success)
-                Text("-\(delCount)")
-                    .font(DesignSystem.Typography.label)
-                    .foregroundStyle(DesignSystem.Colors.error)
+                    .foregroundStyle(DesignSystem.Colors.destructive)
+                    .padding(.leading, 22)
+                    .lineLimit(2)
+                    .truncationMode(.tail)
             }
         }
         .padding(.horizontal, DesignSystem.Spacing.compact)
         .padding(.vertical, DesignSystem.Spacing.micro)
         .background(DesignSystem.Colors.glassInset)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous))
+    }
+
+    @ViewBuilder
+    private func statusIcon(for block: EditBlock) -> some View {
+        if block.appliedAt != nil {
+            Image(systemName: "checkmark.circle.fill")
+                .font(DesignSystem.Typography.label)
+                .foregroundStyle(DesignSystem.Colors.success)
+        } else if let reason = block.failureReason {
+            Image(systemName: reason == "rejected" ? "xmark.circle" : "exclamationmark.triangle.fill")
+                .font(DesignSystem.Typography.label)
+                .foregroundStyle(DesignSystem.Colors.destructive)
+        } else {
+            Image(systemName: "doc.text")
+                .font(DesignSystem.Typography.label)
+                .foregroundStyle(DesignSystem.Colors.textTertiary)
+        }
     }
 
     private var buttonRow: some View {
@@ -244,6 +278,8 @@ struct MultiFileDiffSummary: View {
 private struct MultiFileDiffReviewSheet: View {
 
     let blocks: [EditBlock]
+    let onApplyBlock: ((EditBlock) -> Void)?
+    let onRejectBlock: ((EditBlock) -> Void)?
     let onDismiss: () -> Void
 
     @State private var selectedIndex: Int = 0
@@ -317,8 +353,13 @@ private struct MultiFileDiffReviewSheet: View {
             if blocks.indices.contains(selectedIndex) {
                 let block = blocks[selectedIndex]
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
-                    Text(block.path)
-                        .font(DesignSystem.Typography.monoLabelBold)
+                    HStack {
+                        Text(block.path)
+                            .font(DesignSystem.Typography.monoLabelBold)
+                        Spacer()
+                        perFileActions(for: block)
+                    }
+                    statusBadge(for: block)
                     Text(block.search)
                         .font(DesignSystem.Typography.monoLabel)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -331,11 +372,6 @@ private struct MultiFileDiffReviewSheet: View {
                         .padding(DesignSystem.Spacing.compact)
                         .background(DesignSystem.Colors.success.opacity(0.08))
                         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous))
-                    if let reason = block.failureReason {
-                        Text(reason)
-                            .font(DesignSystem.Typography.label)
-                            .foregroundStyle(DesignSystem.Colors.destructive)
-                    }
                 }
                 .padding(DesignSystem.Spacing.standard)
             }
@@ -365,6 +401,46 @@ private struct MultiFileDiffReviewSheet: View {
         } else {
             Image(systemName: "circle.dashed")
                 .foregroundStyle(DesignSystem.Colors.textSecondary)
+        }
+    }
+
+    /// Per-file Apply / Reject buttons inside the review sheet. Hidden once
+    /// the block has been resolved (applied or rejected) so the user does not
+    /// double-fire actions.
+    @ViewBuilder
+    private func perFileActions(for block: EditBlock) -> some View {
+        if block.appliedAt == nil && block.failureReason == nil {
+            HStack(spacing: DesignSystem.Spacing.compact) {
+                if let onReject = onRejectBlock {
+                    Button(L10n("chat.editBlock.reject")) { onReject(block) }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .tint(.red)
+                }
+                if let onApply = onApplyBlock {
+                    Button(L10n("chat.editBlock.apply")) { onApply(block) }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+                        .tint(.green)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func statusBadge(for block: EditBlock) -> some View {
+        if block.appliedAt != nil {
+            Label(L10n("chat.editBlock.status.applied"),
+                  systemImage: "checkmark.circle.fill")
+                .font(DesignSystem.Typography.label)
+                .foregroundStyle(DesignSystem.Colors.success)
+        } else if let reason = block.failureReason {
+            Label(reason == "rejected"
+                  ? L10n("chat.editBlock.status.rejected")
+                  : reason,
+                  systemImage: reason == "rejected" ? "xmark.circle" : "exclamationmark.triangle.fill")
+                .font(DesignSystem.Typography.label)
+                .foregroundStyle(DesignSystem.Colors.destructive)
         }
     }
 }

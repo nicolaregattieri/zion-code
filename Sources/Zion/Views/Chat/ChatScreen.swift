@@ -202,13 +202,19 @@ struct ChatScreen: View {
                                         MultiFileDiffSummary(
                                             blocks: blocks,
                                             onReviewAll: {
-                                                // TODO(P12.5): open diff viewer sheet
+                                                // Sheet is handled inside MultiFileDiffSummary.
                                             },
                                             onApproveAll: {
                                                 Task { await chat.applyAllEdits(messageID: msgID) }
                                             },
                                             onRejectAll: {
                                                 chat.rejectAllEdits(messageID: msgID)
+                                            },
+                                            onApplyBlock: { block in
+                                                Task { await chat.applyEditBlock(blockID: block.id, in: msgID) }
+                                            },
+                                            onRejectBlock: { block in
+                                                chat.rejectEditBlock(blockID: block.id, in: msgID)
                                             }
                                         )
                                     }
