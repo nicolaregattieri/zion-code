@@ -26,6 +26,21 @@ struct ChatDictationButton: View {
     var body: some View {
         Button(action: handleTap) {
             ZStack {
+                // Pulsing ring while listening — proxy for an audio level
+                // meter. Real PCM level would require plumbing through
+                // SpeechRecognitionService.installTap; the pulse is a clear
+                // "I am awake and recording" signal without that refactor.
+                if speechService.isActive {
+                    TimelineView(.animation) { context in
+                        let phase = context.date.timeIntervalSinceReferenceDate
+                        let scale = 1.0 + 0.18 * sin(phase * 4.4)
+                        Circle()
+                            .stroke(DesignSystem.Colors.destructive.opacity(0.55), lineWidth: 1.4)
+                            .frame(width: 26, height: 26)
+                            .scaleEffect(scale)
+                            .opacity(2 - scale)
+                    }
+                }
                 Image(systemName: micSymbol)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(buttonColor)
