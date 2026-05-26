@@ -166,7 +166,15 @@ struct HelpSheet: View {
                 "help.chat.planXmlStrip",
                 "help.chat.smartAutoOnboarding",
                 "help.chat.mentionAutocomplete",
-                "help.chat.fontSize"
+                "help.chat.fontSize",
+                "help.chat.dictation",
+                "help.chat.projectGuidance",
+                "help.chat.globalPrompt",
+                "help.chat.messageQueue",
+                "help.chat.threadDrafts",
+                "help.chat.reviewSheet",
+                "help.chat.idleLocalHint",
+                "help.chat.inlineLocalSwap"
             ]
         }
     }

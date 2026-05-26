@@ -2993,5 +2993,13 @@
 "map.chat.mentionAutocomplete.title" = "Autocomplete de @ e /";
 "map.chat.mentionAutocomplete.description" = "O painel @ agora funciona mesmo antes do SymbolIndexer terminar o scan inicial, usando um fallback de filesystem. O autocomplete de / dispara após qualquer espaço, não só no início da linha, permitindo encadear comandos no meio de uma frase.";
 "help.chat.fontSize" = "Ajuste o tamanho da fonte e o espaçamento de linha do chat (Ajustes → Zion Talks → Aparência)";
+"help.chat.dictation" = "Dite prompts pelo microfone — engines Apple Speech / Gemini + polish opcional via LLM; ⌥⌘X liga/desliga";
+"help.chat.projectGuidance" = "Detecta CLAUDE.md / AGENTS.md / GEMINI.md / .cursorrules do repo e oferece importar para o contexto do chat";
+"help.chat.globalPrompt" = "Prompt global do sistema (Ajustes → AI) aplicado em todo repo, todo turno";
+"help.chat.messageQueue" = "Send fica habilitado durante streaming; mensagens entram na fila e disparam FIFO com dismiss por linha";
+"help.chat.threadDrafts" = "Texto do composer acompanha a thread ativa — sem contaminação ao trocar de thread";
+"help.chat.reviewSheet" = "Card multi-arquivo abre Review sheet em split-pane com Apply / Reject por arquivo + badges de status";
+"help.chat.idleLocalHint" = "Status bar marca servidor local ocioso quando o último turno foi roteado para outro provider";
+"help.chat.inlineLocalSwap" = "Pill no composer lista cada modelo local detectado — escolha para hot-swap sem ir em Settings";
 "map.chat.fontSize.title" = "Tamanho da fonte do chat";
 "map.chat.fontSize.description" = "Ajustes → Zion Talks → Aparência expõe um stepper de tamanho de fonte (9–22 px, padrão 12) e um stepper de espaçamento de linha (0–12 px, padrão 2). As mudanças propagam ao vivo para todas as superfícies de chat; labels escalam automaticamente em relação ao tamanho do corpo.";
