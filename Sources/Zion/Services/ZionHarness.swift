@@ -89,8 +89,22 @@ actor ZionHarness {
     private static let bashLineCap = 100
     private static let bashByteCap = 1_048_576       // 1 MB
 
-    private static let bashAllowlist = try! NSRegularExpression(
-        pattern: "^(git|swift|ls|pwd|cat|echo)\\s",
+    private static let bashAllowlistDefaults = ["git", "swift", "ls", "pwd", "cat", "echo"]
+
+    private static func currentBashAllowlist() -> NSRegularExpression {
+        let raw = UserDefaults.standard.string(forKey: "chat.agent.bashAllowlist") ?? ""
+        let commands = raw
+            .split(whereSeparator: { $0.isNewline })
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty && !$0.hasPrefix("#") }
+        let list = commands.isEmpty ? bashAllowlistDefaults : commands
+        let escaped = list.map { NSRegularExpression.escapedPattern(for: $0) }
+        let pattern = "^(\(escaped.joined(separator: "|")))(\\s|$)"
+        return (try? NSRegularExpression(pattern: pattern, options: [])) ?? bashAllowlistFallback
+    }
+
+    private static let bashAllowlistFallback = try! NSRegularExpression(
+        pattern: "^(git|swift|ls|pwd|cat|echo)(\\s|$)",
         options: []
     )
 
