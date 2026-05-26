@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ChatEmptyState: View {
+    let repoURL: URL?
     let onPickPrompt: (String) -> Void
 
     private struct StarterCard: Identifiable {
@@ -11,32 +12,34 @@ struct ChatEmptyState: View {
         let prefill: String
     }
 
-    private let cards: [StarterCard] = [
-        StarterCard(
-            icon: "doc.text.magnifyingglass",
-            titleKey: "chat.emptyState.starter.browse.title",       // TODO(P14:T10)
-            subtitleKey: "chat.emptyState.starter.browse.subtitle",  // TODO(P14:T10)
-            prefill: "/repo_map "
-        ),
-        StarterCard(
-            icon: "doc.text.below.ecg",
-            titleKey: "chat.emptyState.starter.editFile.title",       // TODO(P14:T10)
-            subtitleKey: "chat.emptyState.starter.editFile.subtitle", // TODO(P14:T10)
-            prefill: "@file "
-        ),
-        StarterCard(
-            icon: "terminal",
-            titleKey: "chat.emptyState.starter.runTests.title",       // TODO(P14:T10)
-            subtitleKey: "chat.emptyState.starter.runTests.subtitle", // TODO(P14:T10)
-            prefill: "/bash swift test"
-        ),
-        StarterCard(
-            icon: "questionmark.circle",
-            titleKey: "chat.emptyState.starter.allCommands.title",       // TODO(P14:T10)
-            subtitleKey: "chat.emptyState.starter.allCommands.subtitle", // TODO(P14:T10)
-            prefill: "/help"
-        ),
-    ]
+    private var cards: [StarterCard] {
+        [
+            StarterCard(
+                icon: "doc.text.magnifyingglass",
+                titleKey: "chat.emptyState.starter.browse.title",       // TODO(P14:T10)
+                subtitleKey: "chat.emptyState.starter.browse.subtitle",  // TODO(P14:T10)
+                prefill: "/repo_map "
+            ),
+            StarterCard(
+                icon: "doc.text.below.ecg",
+                titleKey: "chat.emptyState.starter.editFile.title",       // TODO(P14:T10)
+                subtitleKey: "chat.emptyState.starter.editFile.subtitle", // TODO(P14:T10)
+                prefill: "@file "
+            ),
+            StarterCard(
+                icon: "terminal",
+                titleKey: "chat.emptyState.starter.runTests.title",       // TODO(P14:T10)
+                subtitleKey: "chat.emptyState.starter.runTests.subtitle", // TODO(P14:T10)
+                prefill: TestRunnerDetector.detectSlashCommand(at: repoURL)
+            ),
+            StarterCard(
+                icon: "questionmark.circle",
+                titleKey: "chat.emptyState.starter.allCommands.title",       // TODO(P14:T10)
+                subtitleKey: "chat.emptyState.starter.allCommands.subtitle", // TODO(P14:T10)
+                prefill: "/help"
+            ),
+        ]
+    }
 
     /// True when no AI provider is connected — surfaces Smart Auto onboarding card.
     private var noProvidersConfigured: Bool {
