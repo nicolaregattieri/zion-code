@@ -351,7 +351,8 @@ struct ChatScreen: View {
                 chat.newThread()
                 composerText = ""
             },
-            topSlot: AnyView(composerTopSlot)
+            topSlot: AnyView(composerTopSlot),
+            repoURL: repoURL
         )
         .frame(maxWidth: DesignSystem.Spacing.chatContentMaxWidth)
         .frame(maxWidth: .infinity)
