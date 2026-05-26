@@ -14,6 +14,12 @@ final class ChatService {
     /// The ID of the currently active thread.
     var activeThreadID: UUID = UUID()
 
+    /// Per-thread composer draft. When the user switches threads the
+    /// composer's text follows the thread, so an unsent message in thread A
+    /// is preserved when the user toggles to thread B (and reappears on
+    /// return). Cleared automatically once the message is sent.
+    var threadDrafts: [UUID: String] = [:]
+
     /// Forwarding computed property — back-compat for callers that use `service.thread`.
     var thread: ChatThread {
         get {
