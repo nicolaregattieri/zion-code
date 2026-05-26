@@ -179,7 +179,17 @@ struct ChatScreen: View {
                             }
                             ChatMessageBubble(message: message)
                                 .id(message.id)
-                            if message.role == .assistant, let plan = message.plan {
+                            // Render the Plan card ONLY when no structured
+                            // EditBlocks have arrived yet. Once edits land,
+                            // they ARE the implementation of the plan — the
+                            // user clicks Apply on each edit card, so the
+                            // plan card becomes a redundant second Apply
+                            // surface (Image #39 — two Apply buttons for the
+                            // same change). The plan intent is preserved in
+                            // the assistant text bubble above.
+                            if message.role == .assistant,
+                               let plan = message.plan,
+                               (message.editBlocks?.isEmpty ?? true) {
                                 let msgID = message.id
                                 PlanCard(plan: plan, isStreaming: message.isStreaming) { action in
                                     switch action {

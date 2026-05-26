@@ -89,8 +89,22 @@ actor ZionHarness {
     private static let bashLineCap = 100
     private static let bashByteCap = 1_048_576       // 1 MB
 
-    private static let bashAllowlist = try! NSRegularExpression(
-        pattern: "^(git|swift|ls|pwd|cat|echo)\\s",
+    private static let bashAllowlistDefaults = ["git", "swift", "ls", "pwd", "cat", "echo"]
+
+    private static func currentBashAllowlist() -> NSRegularExpression {
+        let raw = UserDefaults.standard.string(forKey: "chat.agent.bashAllowlist") ?? ""
+        let commands = raw
+            .split(whereSeparator: { $0.isNewline })
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty && !$0.hasPrefix("#") }
+        let list = commands.isEmpty ? bashAllowlistDefaults : commands
+        let escaped = list.map { NSRegularExpression.escapedPattern(for: $0) }
+        let pattern = "^(\(escaped.joined(separator: "|")))(\\s|$)"
+        return (try? NSRegularExpression(pattern: pattern, options: [])) ?? bashAllowlistFallback
+    }
+
+    private static let bashAllowlistFallback = try! NSRegularExpression(
+        pattern: "^(git|swift|ls|pwd|cat|echo)(\\s|$)",
         options: []
     )
 
@@ -258,9 +272,10 @@ actor ZionHarness {
     private func handleBash(args: [String: Any]) async throws -> String {
         guard let command = args["command"] as? String else { throw HarnessError.bashNotAllowed }
 
-        // Allowlist check
+        // Allowlist check (user-configurable via chat.agent.bashAllowlist)
+        let allowlist = Self.currentBashAllowlist()
         let range = NSRange(command.startIndex..., in: command)
-        guard Self.bashAllowlist.firstMatch(in: command, range: range) != nil else {
+        guard allowlist.firstMatch(in: command, range: range) != nil else {
             throw HarnessError.bashNotAllowed
         }
 
