@@ -34,6 +34,7 @@ struct ChatDictationButton: View {
     /// both fired together because ContentView keeps every screen mounted.
     @Environment(\.zionActiveSection) private var activeSection
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @EnvironmentObject private var shortcutRegistry: ShortcutRegistry
 
     private var isChatActive: Bool {
         activeSection == .chat
@@ -93,10 +94,11 @@ struct ChatDictationButton: View {
         // Disabled state still receives the shortcut so the user does not
         // accidentally fire a tap while a transcript is settling — the
         // .disabled below blocks the action explicitly.
-        .keyboardShortcut("x", modifiers: [.option, .command])
-        // Shortcut fires only when Zion Talks is the visible section. The
-        // .disabled gating below blocks the keyboard event from triggering
-        // the button action when the user is on Code / Graph / Operations.
+        // Shortcut now comes from ShortcutRegistry so the customisation /
+        // overrides UI + KeyboardShortcutsSheet list it. Registry default
+        // = ⌥⌘X. .disabled gates on visible section so it does not fight
+        // the terminal mic shortcut.
+        .applyShortcutBinding(shortcutRegistry.binding(for: .toggleChatDictation))
         .disabled(isTranscribing || isPolishing || !isChatActive)
         .onHover { h in isHovered = h }
         .help(tooltipText)

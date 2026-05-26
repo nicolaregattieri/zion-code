@@ -367,6 +367,8 @@
 "shortcuts.zionMode" = "Zion Mode";
 "shortcuts.formatDocument" = "Formatear Documento";
 "shortcuts.general" = "General";
+"shortcuts.chat" = "Zion Talks";
+"shortcuts.chat.dictation" = "Alternar dictado";
 "Pressione" = "Presiona";
 "para ver todos os atalhos" = "para ver todos los atajos";
 
@@ -2934,6 +2936,7 @@
 "chat.composer.dictation.polish.hint" = "Tras el dictado, envía la transcripción bruta por el proveedor de IA activo para corregir errores y preservar entrada mixta (narración en portugués + términos técnicos en inglés).";
 "chat.composer.queue.help" = "Mensajes en cola mientras el turno actual se transmite. Toca una fila para quitarla. Usa Detener para cancelar el turno actual Y limpiar la cola.";
 "chat.composer.queue.cleared" = "Se quitaron %d mensaje(s) de la cola";
+"chat.composer.more" = "Más acciones (dictado, modelo local, bash, nuevo chat)";
 "chat.composer.bashTool" = "Bash";
 "chat.composer.bashTool.labelOn" = "Shell: ON";
 "chat.composer.bashTool.labelOff" = "Shell: OFF";

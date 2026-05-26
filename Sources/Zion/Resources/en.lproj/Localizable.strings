@@ -423,6 +423,8 @@
 "shortcuts.zionMode" = "Zion Mode";
 "shortcuts.formatDocument" = "Format Document";
 "shortcuts.general" = "General";
+"shortcuts.chat" = "Zion Talks";
+"shortcuts.chat.dictation" = "Toggle dictation";
 "Pressione" = "Press";
 "para ver todos os atalhos" = "to see all shortcuts";
 
@@ -2910,6 +2912,7 @@
 "chat.composer.dictation.polish.hint" = "After dictation, send the raw transcript through the active AI provider to fix transcription errors and preserve mixed-language input (Portuguese narration + English code terms).";
 "chat.composer.queue.help" = "Messages queued while the current turn streams. Tap a row to remove it. Use Stop to cancel the current turn AND clear the queue.";
 "chat.composer.queue.cleared" = "Cleared %d queued message(s)";
+"chat.composer.more" = "More actions (dictation, local model, bash, new chat)";
 "chat.composer.bashTool" = "Bash";
 "chat.composer.bashTool.labelOn" = "Shell: ON";
 "chat.composer.bashTool.labelOff" = "Shell: OFF";

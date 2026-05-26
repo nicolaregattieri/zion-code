@@ -8,6 +8,7 @@ enum ShortcutContext: String, CaseIterable, Codable {
     case fileBrowser
     case terminal
     case graph
+    case chat
 }
 
 enum ShortcutSection: Int, CaseIterable {
@@ -15,6 +16,7 @@ enum ShortcutSection: Int, CaseIterable {
     case editor
     case terminal
     case graph
+    case chat
     case general
 
     var title: String {
@@ -27,6 +29,8 @@ enum ShortcutSection: Int, CaseIterable {
             return L10n("Terminal")
         case .graph:
             return L10n("Grafo")
+        case .chat:
+            return L10n("shortcuts.chat")
         case .general:
             return L10n("shortcuts.general")
         }
@@ -42,6 +46,8 @@ enum ShortcutSection: Int, CaseIterable {
             return "terminal"
         case .graph:
             return "point.3.connected.trianglepath.dotted"
+        case .chat:
+            return "bubble.left.and.bubble.right.fill"
         case .general:
             return "gearshape"
         }
@@ -79,6 +85,7 @@ enum ShortcutActionID: String, CaseIterable, Codable, Hashable {
     case closeTerminalSplit
     case terminalSearch
     case toggleSpeechInput
+    case toggleChatDictation
     case terminalZoomIn
     case terminalZoomOut
     case graphFind
@@ -361,6 +368,7 @@ final class ShortcutRegistry: ObservableObject {
             .init(id: .closeTerminalSplit, context: .terminal, section: .terminal, titleKey: "Fechar painel dividido", defaultBinding: .init(key: .character("w"), modifiers: [.command, .shift])),
             .init(id: .terminalSearch, context: .terminal, section: .terminal, titleKey: "shortcuts.terminalSearch", defaultBinding: .init(key: .character("f"), modifiers: [.command])),
             .init(id: .toggleSpeechInput, context: .terminal, section: .terminal, titleKey: "speech.button.tooltip", defaultBinding: .init(key: .character("x"), modifiers: [.command, .option])),
+            .init(id: .toggleChatDictation, context: .chat, section: .chat, titleKey: "shortcuts.chat.dictation", defaultBinding: .init(key: .character("x"), modifiers: [.command, .option])),
             .init(id: .terminalZoomIn, context: .terminal, section: .terminal, titleKey: "Zoom in", defaultBinding: .init(key: .character("="), modifiers: [.control])),
             .init(id: .terminalZoomOut, context: .terminal, section: .terminal, titleKey: "Zoom out", defaultBinding: .init(key: .character("-"), modifiers: [.control])),
 

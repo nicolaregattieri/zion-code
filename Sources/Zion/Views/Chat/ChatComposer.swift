@@ -70,26 +70,16 @@ struct ChatComposer: View {
             if let resolver = chat.mentionResolver {
                 MentionsCostPreview(message: text, resolver: resolver)
             }
-            HStack(spacing: DesignSystem.Spacing.standard) {
-                providerMenu
-                modelMenu
-                if !localHints.isEmpty {
-                    localSwapMenu
-                }
-                bashTogglePill
-                Spacer()
-                ChatDictationButton(composerText: $text, repoURL: repoURL)
-                newChatButton
-                if chat.activePendingQueueCount > 0 {
-                    queueBadge
-                }
-                if chat.isStreaming {
-                    // Both buttons visible during streaming: Stop cancels the
-                    // current turn + clears the queue, Send enqueues a new
-                    // message that runs as soon as the current turn completes.
-                    stopButton
-                }
-                sendButton
+            // Composer action row. ViewThatFits picks the widest layout the
+            // container can show: full row when the window is comfortable,
+            // compressed row with an overflow `…` menu when the window is
+            // narrow (split panes / portrait monitors / small laptops). Send
+            // + Stop + provider + queue badge stay visible at every width
+            // because they are the primary actions; everything else moves
+            // into the overflow.
+            ViewThatFits(in: .horizontal) {
+                fullActionRow
+                compactActionRow
             }
         }
         .padding(.horizontal, DesignSystem.Spacing.cardPadding)
@@ -345,6 +335,83 @@ struct ChatComposer: View {
         }
         .buttonStyle(.plain)
         .help(L10n("chat.composer.stop"))
+    }
+
+    /// Wide layout — everything inline. Used when the composer has room.
+    private var fullActionRow: some View {
+        HStack(spacing: DesignSystem.Spacing.standard) {
+            providerMenu
+            modelMenu
+            if !localHints.isEmpty {
+                localSwapMenu
+            }
+            bashTogglePill
+            Spacer()
+            ChatDictationButton(composerText: $text, repoURL: repoURL)
+            newChatButton
+            if chat.activePendingQueueCount > 0 {
+                queueBadge
+            }
+            if chat.isStreaming {
+                stopButton
+            }
+            sendButton
+        }
+    }
+
+    /// Narrow layout — secondary controls collapse into an overflow menu.
+    /// Provider chip + model name still visible (you need them to know what
+    /// will respond), Send + Stop + queue badge stay clickable. Everything
+    /// else routes through the `…` menu so the row fits a 360pt wide pane.
+    private var compactActionRow: some View {
+        HStack(spacing: DesignSystem.Spacing.compact) {
+            providerMenu
+            modelMenu
+            Spacer()
+            overflowMenu
+            if chat.activePendingQueueCount > 0 {
+                queueBadge
+            }
+            if chat.isStreaming {
+                stopButton
+            }
+            sendButton
+        }
+    }
+
+    /// Overflow menu shown in the compact layout. Each entry mirrors the
+    /// inline control that was hidden so the user does not lose any
+    /// functionality just because the window is narrow.
+    private var overflowMenu: some View {
+        Menu {
+            Toggle(L10n("chat.composer.bashTool"), isOn: $allowBashTool)
+            if !localHints.isEmpty {
+                Section(L10n("chat.composer.localSwap")) {
+                    ForEach(localHints, id: \.self) { hint in
+                        Button {
+                            swapLocalModel(to: hint)
+                        } label: {
+                            Text(hint.label)
+                        }
+                    }
+                }
+            }
+            Divider()
+            Button {
+                onNewChat()
+            } label: {
+                Label(L10n("chat.composer.newChat"), systemImage: "plus.message")
+            }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+                .font(DesignSystem.Typography.body)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+                .frame(width: 30, height: 30)
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help(L10n("chat.composer.more"))
     }
 
     /// One-tap pill that gates the `bash` MCP tool for native provider
