@@ -30,6 +30,54 @@ final class ProjectGuidanceImporter {
 
     static let shared = ProjectGuidanceImporter()
 
+    /// Tracked repo paths so Settings can enumerate imports without scanning
+    /// every UserDefaults key. The hashed per-repo namespace stores the
+    /// actual content + sources; this array just lists which repos are in
+    /// it. JSON-encoded so paths with funky characters survive.
+    private static let registryKey = "chat.projectGuidance.registry"
+
+    private static func loadRegistry() -> [String] {
+        guard let data = UserDefaults.standard.data(forKey: registryKey),
+              let arr = try? JSONDecoder().decode([String].self, from: data) else { return [] }
+        return arr
+    }
+
+    private static func saveRegistry(_ paths: [String]) {
+        let data = try? JSONEncoder().encode(paths)
+        UserDefaults.standard.set(data, forKey: registryKey)
+    }
+
+    /// One row in the Settings "Imported project guidance" list.
+    struct ImportedRepo: Identifiable, Equatable {
+        let id: String      // canonical path
+        let repoURL: URL
+        let sources: [String]
+        let sizeBytes: Int
+    }
+
+    /// Snapshot for the Settings list. Walks the registry, drops entries
+    /// whose content has been cleared, and returns one row per still-active
+    /// repo with the source filenames + total bytes.
+    func allImported() -> [ImportedRepo] {
+        let paths = Self.loadRegistry()
+        var rows: [ImportedRepo] = []
+        for path in paths {
+            let url = URL(fileURLWithPath: path)
+            let prefix = Self.repoKey(url)
+            let content = UserDefaults.standard.string(forKey: prefix + ".content") ?? ""
+            guard !content.isEmpty else { continue }
+            let sources = (UserDefaults.standard.string(forKey: prefix + ".sources") ?? "")
+                .split(separator: "\n").map(String.init)
+            rows.append(ImportedRepo(
+                id: path,
+                repoURL: url,
+                sources: sources,
+                sizeBytes: content.utf8.count
+            ))
+        }
+        return rows
+    }
+
     /// UserDefaults namespace. We hash the repo URL so two repos with the
     /// same lastPathComponent ("zion-website" in two locations) do not
     /// share the same import state.
@@ -156,6 +204,13 @@ final class ProjectGuidanceImporter {
         UserDefaults.standard.set(joined, forKey: prefix + ".content")
         UserDefaults.standard.set(sources.joined(separator: "\n"), forKey: prefix + ".sources")
         UserDefaults.standard.removeObject(forKey: prefix + ".dismissed")
+        // Track this repo in the global registry so Settings can list it.
+        let canonical = repoURL.standardizedFileURL.path
+        var registry = Self.loadRegistry()
+        if !registry.contains(canonical) {
+            registry.append(canonical)
+            Self.saveRegistry(registry)
+        }
         return joined
     }
 
@@ -172,5 +227,9 @@ final class ProjectGuidanceImporter {
         UserDefaults.standard.removeObject(forKey: prefix + ".content")
         UserDefaults.standard.removeObject(forKey: prefix + ".sources")
         UserDefaults.standard.removeObject(forKey: prefix + ".dismissed")
+        let canonical = repoURL.standardizedFileURL.path
+        var registry = Self.loadRegistry()
+        registry.removeAll { $0 == canonical }
+        Self.saveRegistry(registry)
     }
 }
