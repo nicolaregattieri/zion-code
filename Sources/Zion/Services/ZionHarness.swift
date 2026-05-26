@@ -272,9 +272,10 @@ actor ZionHarness {
     private func handleBash(args: [String: Any]) async throws -> String {
         guard let command = args["command"] as? String else { throw HarnessError.bashNotAllowed }
 
-        // Allowlist check
+        // Allowlist check (user-configurable via chat.agent.bashAllowlist)
+        let allowlist = Self.currentBashAllowlist()
         let range = NSRange(command.startIndex..., in: command)
-        guard Self.bashAllowlist.firstMatch(in: command, range: range) != nil else {
+        guard allowlist.firstMatch(in: command, range: range) != nil else {
             throw HarnessError.bashNotAllowed
         }
 
