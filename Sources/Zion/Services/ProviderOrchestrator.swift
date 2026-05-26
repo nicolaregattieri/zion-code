@@ -195,9 +195,13 @@ actor ProviderOrchestrator {
             "orchestrator.firstEligible candidates=\(chainSummary)",
             source: "orchestrator")
 
-        let allowsSubscriptionFailover = UserDefaults.standard.bool(
-            forKey: Self.subscriptionFailoverKey
-        )
+        // Default ON: users who installed + authenticated a CLI want it as a
+        // first-class Auto candidate. Power users on metered Pro/Max plans who
+        // want to protect their CLI quota can flip the toggle off in
+        // Settings → AI → Routing to fall back to API-key providers only.
+        let allowsSubscriptionFailover = (
+            UserDefaults.standard.object(forKey: Self.subscriptionFailoverKey) as? Bool
+        ) ?? true
         for provider in candidates {
             if isSubscriptionCLI(provider) && !allowsSubscriptionFailover {
                 await DiagnosticLogger.shared.log(.info,

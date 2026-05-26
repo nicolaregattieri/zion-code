@@ -179,7 +179,11 @@ actor ZionHarness {
     private func handleEdit(args: [String: Any]) async throws -> String {
         guard let path = args["path"] as? String else { throw HarnessError.fileNotFound }
 
-        let allowEdits = UserDefaults.standard.object(forKey: "chat.allowEdits") as? Bool ?? false
+        // Default ON: native provider tool loops may write files. Power users
+        // can flip the toggle off in Settings → AI to require explicit edit
+        // approval per turn (matches the "block by default" stance some teams
+        // prefer for shared/CI environments).
+        let allowEdits = UserDefaults.standard.object(forKey: "chat.allowEdits") as? Bool ?? true
         guard allowEdits else { throw HarnessError.editsDisabled }
 
         let url = try validatePath(path)
@@ -224,7 +228,11 @@ actor ZionHarness {
         guard let path    = args["path"]    as? String else { throw HarnessError.fileNotFound }
         guard let content = args["content"] as? String else { throw HarnessError.invalidEdit }
 
-        let allowEdits = UserDefaults.standard.object(forKey: "chat.allowEdits") as? Bool ?? false
+        // Default ON: native provider tool loops may write files. Power users
+        // can flip the toggle off in Settings → AI to require explicit edit
+        // approval per turn (matches the "block by default" stance some teams
+        // prefer for shared/CI environments).
+        let allowEdits = UserDefaults.standard.object(forKey: "chat.allowEdits") as? Bool ?? true
         guard allowEdits else { throw HarnessError.editsDisabled }
 
         let url = try validatePath(path)
