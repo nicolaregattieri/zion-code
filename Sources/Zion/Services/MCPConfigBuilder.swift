@@ -100,10 +100,45 @@ enum MCPConfigBuilder {
 
     // MARK: - Tool Registry
 
+    /// UserDefaults key for the chat-composer toggle that controls whether
+    /// native provider loops (Anthropic / OpenAI / Gemini tool use) may call
+    /// the `bash` tool. Default OFF — the user opts in per session from the
+    /// composer pill (more visible than burying the toggle in Settings).
+    /// Independent of the CLI passthrough bash, which is always on inside
+    /// the claude/codex CLI's own approval flow.
+    static let bashToolToggleKey = "chat.allowBashTool"
+
+    static var bashToolEnabled: Bool {
+        UserDefaults.standard.bool(forKey: bashToolToggleKey)
+    }
+
     /// Tool descriptors backed by Zion's in-process handlers for native provider loops.
-    /// Mutation and shell tools are excluded until their execution path is fully wired.
+    /// Mutation tools are wired in ZionHarness.dispatch; we conditionally
+    /// surface bash here so the LLM only learns about it when the user has
+    /// explicitly turned the composer pill on.
     static func allTools() -> [MCPToolDescriptor] {
-        return [repoMapDescriptor(), findSymbolDescriptor()]
+        var tools: [MCPToolDescriptor] = [repoMapDescriptor(), findSymbolDescriptor()]
+        if bashToolEnabled {
+            tools.append(bashToolDescriptorTyped())
+        }
+        return tools
+    }
+
+    /// Typed descriptor for the `bash` tool. Mirrors the JSON in
+    /// `bashToolDescriptor()` but in the structured form `allTools()` expects.
+    static func bashToolDescriptorTyped() -> MCPToolDescriptor {
+        MCPToolDescriptor(
+            name: "bash",
+            description: "Execute a shell command in the workspace. Respects approval tier and the per-session composer toggle.",
+            inputSchema: [
+                "type": "object",
+                "properties": [
+                    "command": ["type": "string"] as [String: Any],
+                    "timeoutSec": ["type": "integer", "minimum": 1, "maximum": 300] as [String: Any]
+                ] as [String: Any],
+                "required": ["command"]
+            ]
+        )
     }
 
     /// P14: Returns built-in tools PLUS tools advertised by user-configured MCP servers.

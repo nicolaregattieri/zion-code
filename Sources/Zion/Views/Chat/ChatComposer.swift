@@ -18,6 +18,11 @@ struct ChatComposer: View {
     var repoURL: URL? = nil
 
     @AppStorage(UserDefaultsKeys.AI.provider) private var selectedProviderRaw: String = AIProvider.none.rawValue
+    /// Per-session opt-in for letting native provider tool loops call the
+    /// `bash` MCP tool. Rendered as a composer pill so the toggle is visible
+    /// before the user hits Send — burying it in Settings made the choice
+    /// invisible the moment the LLM said "I cannot run shell commands".
+    @AppStorage(MCPConfigBuilder.bashToolToggleKey) private var allowBashTool: Bool = false
 
     @State private var selectedModelID: String = ""
     @State private var availableModels: [String] = []
@@ -71,6 +76,7 @@ struct ChatComposer: View {
                 if !localHints.isEmpty {
                     localSwapMenu
                 }
+                bashTogglePill
                 Spacer()
                 ChatDictationButton(composerText: $text, repoURL: repoURL)
                 newChatButton
@@ -339,6 +345,44 @@ struct ChatComposer: View {
         }
         .buttonStyle(.plain)
         .help(L10n("chat.composer.stop"))
+    }
+
+    /// One-tap pill that gates the `bash` MCP tool for native provider
+    /// loops. Visible state: terminal icon + "Bash" label; tinted accent +
+    /// filled background when on, secondary text + glass when off. Settings
+    /// page does not duplicate this — the pill IS the control.
+    private var bashTogglePill: some View {
+        Button {
+            allowBashTool.toggle()
+        } label: {
+            HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
+                Image(systemName: allowBashTool ? "terminal.fill" : "terminal")
+                    .font(DesignSystem.Typography.label)
+                Text(L10n("chat.composer.bashTool"))
+                    .font(DesignSystem.Typography.labelMedium)
+            }
+            .padding(.horizontal, DesignSystem.Spacing.compact)
+            .padding(.vertical, DesignSystem.Spacing.micro)
+            .background(
+                Capsule().fill(allowBashTool
+                               ? DesignSystem.Colors.warning.opacity(0.18)
+                               : DesignSystem.Colors.glassHover)
+            )
+            .overlay(
+                Capsule().strokeBorder(allowBashTool
+                                       ? DesignSystem.Colors.warning
+                                       : DesignSystem.Colors.glassStroke,
+                                       lineWidth: 1)
+            )
+            .foregroundStyle(allowBashTool
+                             ? DesignSystem.Colors.warning
+                             : DesignSystem.Colors.textSecondary)
+        }
+        .buttonStyle(.plain)
+        .fixedSize()
+        .help(allowBashTool
+              ? L10n("chat.composer.bashTool.on.help")
+              : L10n("chat.composer.bashTool.off.help"))
     }
 
     /// Pill showing how many messages the user has typed-and-fired while a
