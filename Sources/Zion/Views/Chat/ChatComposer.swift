@@ -41,6 +41,21 @@ struct ChatComposer: View {
     var body: some View {
         VStack(spacing: DesignSystem.Spacing.compact) {
             topSlot
+            if let notice = chat.transientNotice {
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+                    Image(systemName: "info.circle.fill")
+                        .font(DesignSystem.Typography.label)
+                        .foregroundStyle(DesignSystem.Colors.warning)
+                    Text(notice)
+                        .font(DesignSystem.Typography.label)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, DesignSystem.Spacing.compact)
+                .padding(.vertical, DesignSystem.Spacing.micro)
+                .background(Capsule().fill(DesignSystem.Colors.warning.opacity(0.12)))
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
             HStack {
                 AutoResolvedChip(chat: chat, livePreviewText: text)
                 Spacer(minLength: 0)

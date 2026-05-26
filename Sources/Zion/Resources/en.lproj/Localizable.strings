@@ -2903,6 +2903,7 @@
 "chat.composer.dictation.polish" = "Polish with LLM";
 "chat.composer.dictation.polish.hint" = "After dictation, send the raw transcript through the active AI provider to fix transcription errors and preserve mixed-language input (Portuguese narration + English code terms).";
 "chat.composer.queue.help" = "Messages queued while the current turn streams. Tap a row to remove it. Use Stop to cancel the current turn AND clear the queue.";
+"chat.composer.queue.cleared" = "Cleared %d queued message(s)";
 "chat.message.searchReplace.unknownFile" = "Edit block";
 "chat.message.searchReplace.search" = "Search";
 "chat.message.searchReplace.replace" = "Replace";
@@ -2910,6 +2911,10 @@
 "chat.multifileDiff.review.title" = "Review %@ edits";
 "chat.multifileDiff.review.footer" = "Use ⎋ to dismiss. Use the per-file Apply / Reject buttons in the chat to act on each edit.";
 "chat.multifileDiff.review.close" = "Close";
+"chat.editBlock.apply" = "Apply";
+"chat.editBlock.reject" = "Reject";
+"chat.editBlock.status.applied" = "Applied";
+"chat.editBlock.status.rejected" = "Rejected";
 
 // Chat commands
 "chat.command.clear.busy" = "Cannot clear while a response is in progress.";
