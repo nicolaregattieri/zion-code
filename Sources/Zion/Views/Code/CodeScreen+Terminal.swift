@@ -111,6 +111,11 @@ extension CodeScreen {
 
             Button("") { voiceToggleRequestID += 1 }
                 .applyShortcutBinding(shortcutRegistry.binding(for: .toggleSpeechInput))
+                // Block the ⌥⌘X shortcut from firing the terminal mic when
+                // the user is on a non-Code section. Zion Talks binds the
+                // same combo for its composer dictation — both used to fire
+                // because ContentView keeps every screen mounted.
+                .disabled(!isVisible)
                 .frame(width: 0, height: 0).opacity(0)
         }
     }

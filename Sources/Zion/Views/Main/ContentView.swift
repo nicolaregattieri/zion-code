@@ -606,6 +606,11 @@ struct ContentView: View {
             }
         }
         .animation(DesignSystem.Motion.panel, value: selectedSection)
+        // Publish the currently-visible section so child screens can gate
+        // their keyboard shortcuts. Necessary because every screen stays
+        // mounted (opacity-toggled overlays) and would otherwise compete
+        // for the same shortcut.
+        .environment(\.zionActiveSection, selectedSection)
     }
 
     func updateShellWidth(_ width: CGFloat) {

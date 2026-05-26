@@ -2907,6 +2907,8 @@
 "chat.composer.queue.help" = "Messages queued while the current turn streams. Tap a row to remove it. Use Stop to cancel the current turn AND clear the queue.";
 "chat.composer.queue.cleared" = "Cleared %d queued message(s)";
 "chat.composer.bashTool" = "Bash";
+"chat.composer.bashTool.labelOn" = "Shell: ON";
+"chat.composer.bashTool.labelOff" = "Shell: OFF";
 "chat.projectGuidance.banner.title" = "Project context detected (%@ files)";
 "chat.projectGuidance.banner.subtitle" = "This repo ships LLM context files for other tools. Import them so Zion Talks answers consistently with the project's conventions instead of starting from zero.";
 "chat.projectGuidance.banner.import" = "Import to chat context";
