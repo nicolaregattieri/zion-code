@@ -2928,6 +2928,9 @@
 "chat.composer.dictation.polish.hint" = "Tras el dictado, envía la transcripción bruta por el proveedor de IA activo para corregir errores y preservar entrada mixta (narración en portugués + términos técnicos en inglés).";
 "chat.composer.queue.help" = "Mensajes en cola mientras el turno actual se transmite. Toca una fila para quitarla. Usa Detener para cancelar el turno actual Y limpiar la cola.";
 "chat.composer.queue.cleared" = "Se quitaron %d mensaje(s) de la cola";
+"chat.composer.bashTool" = "Bash";
+"chat.composer.bashTool.on.help" = "Tool Bash ACTIVADA. El LLM (Anthropic / OpenAI / Gemini en loop nativo) puede ejecutar comandos shell vía allowlist del harness. Pulsa para desactivar.";
+"chat.composer.bashTool.off.help" = "Tool Bash DESACTIVADA. Pulsa para permitir que el LLM ejecute comandos shell en loops nativos. Las CLIs (Claude / Codex) ignoran este toggle — usan su propio flujo de aprobación.";
 "chat.message.searchReplace.unknownFile" = "Bloque de edición";
 "chat.message.searchReplace.search" = "Buscar";
 "chat.message.searchReplace.replace" = "Reemplazar";
