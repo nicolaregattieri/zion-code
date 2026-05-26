@@ -2750,8 +2750,9 @@
 "chat.settings.general" = "Geral";
 "chat.settings.toolsEnabled" = "Ativar uso de ferramentas";
 "chat.settings.autoInject" = "Injetar contexto automaticamente";
-"chat.settings.toolBridge" = "Ponte de Ferramentas";
-"chat.settings.toolBridge.toggle" = "Ativar ponte de ferramentas";
+"chat.settings.toolBridge" = "Ponte de Tools MCP (providers nativos de API)";
+"chat.settings.toolBridge.toggle" = "Permitir Anthropic / OpenAI / Gemini chamarem tools MCP";
+"chat.settings.toolBridge.hint" = "Traduz schemas MCP (read_file, repo_map, find_symbol, bash, etc) para o formato nativo de tool-use de Anthropic / OpenAI / Gemini e roda o loop de tool-call no cliente. Sem isso, só providers CLI (Claude / Codex) chamam tools. Não tem relação com o \"Bridge / AI Portability\" da sidebar — aquele sincroniza arquivos CLAUDE.md ↔ AGENTS.md ↔ GEMINI.md entre tools de IA.";
 "chat.settings.routingPolicy" = "Política de Roteamento";
 "chat.settings.cliFailover" = "Fallback de CLI de Assinatura";
 "chat.settings.cliFailover.toggle" = "Permitir fallback de CLI";

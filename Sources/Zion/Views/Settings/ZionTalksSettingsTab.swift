@@ -61,6 +61,10 @@ struct ZionTalksSettingsTab: View {
 
             Section(L10n("chat.settings.toolBridge")) {
                 Toggle(L10n("chat.settings.toolBridge.toggle"), isOn: $toolBridge)
+                Text(L10n("chat.settings.toolBridge.hint"))
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             Section(L10n("chat.settings.routingPolicy")) {

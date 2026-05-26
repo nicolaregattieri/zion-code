@@ -2748,8 +2748,9 @@
 "chat.settings.general" = "General";
 "chat.settings.toolsEnabled" = "Enable tool use";
 "chat.settings.autoInject" = "Auto-inject context";
-"chat.settings.toolBridge" = "Tool Bridge";
-"chat.settings.toolBridge.toggle" = "Enable tool bridge";
+"chat.settings.toolBridge" = "MCP Tool Bridge (native API providers)";
+"chat.settings.toolBridge.toggle" = "Let Anthropic / OpenAI / Gemini call MCP tools";
+"chat.settings.toolBridge.hint" = "Translates MCP tool schemas (read_file, repo_map, find_symbol, bash, etc) into Anthropic / OpenAI / Gemini native tool-use format and runs the tool-call loop on the client. Without this, only CLI providers (Claude / Codex) can call tools. Unrelated to the sidebar \"Bridge / AI Portability\" feature — that one syncs CLAUDE.md ↔ AGENTS.md ↔ GEMINI.md files between LLM tools.";
 "chat.settings.routingPolicy" = "Routing Policy";
 "chat.settings.cliFailover" = "Subscription CLI Failover";
 "chat.settings.cliFailover.toggle" = "Allow CLI failover";
