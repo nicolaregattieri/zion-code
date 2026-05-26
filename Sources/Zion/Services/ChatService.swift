@@ -47,6 +47,11 @@ final class ChatService {
     /// Set when a persistence operation fails; consumed by UI to surface a one-time error.
     var lastPersistenceError: String?
 
+    /// Short-lived banner text shown in the composer area, e.g. "Cleared 3
+    /// queued messages." after Stop drains the queue. Auto-clears via a
+    /// detached Task to avoid lingering. Nil = no banner.
+    var transientNotice: String?
+
     /// Live tool events from the active CLI stream. Cleared automatically after each event completes.
     var pendingToolEvents: [ChatToolEvent] = []
 
@@ -97,7 +102,10 @@ final class ChatService {
         let branch: String
         let modelOverride: String?
     }
-    private(set) var pendingQueueByThread: [UUID: [PendingMessage]] = [:]
+    /// Public setter so tests (and any future composer-side reorder action)
+    /// can mutate the queue without going through a private helper. UI flow
+    /// still mutates exclusively via send() + dropPendingMessage() + stop().
+    var pendingQueueByThread: [UUID: [PendingMessage]] = [:]
     /// Snapshot count for the active thread — convenience for ChatComposer.
     var activePendingQueueCount: Int {
         pendingQueueByThread[activeThreadID]?.count ?? 0
@@ -664,6 +672,21 @@ final class ChatService {
                     self.streamingThreadIDs.remove(threadID)
                     self.tasksByThread.removeValue(forKey: threadID)
                     self.updateAssistantIsStreaming(id: assistantID, isStreaming: false)
+                    // Approval-policy auto-apply: if the user is on autoSafe /
+                    // auto / yolo, edits do not require a click. The stream
+                    // produced N EditBlocks while running; apply them all now
+                    // so the "approval card" stops being a manual step the
+                    // user did not ask for. Manual mode keeps the card and
+                    // waits for explicit Approve.
+                    if ApprovalPolicy.current.autoCommit,
+                       let assistantTuple = self.findAssistantMessage(messageID: assistantID),
+                       let pendingBlocks = self.threads[assistantTuple.tIdx]
+                            .messages[assistantTuple.mIdx]
+                            .editBlocks,
+                       !pendingBlocks.isEmpty,
+                       pendingBlocks.contains(where: { $0.appliedAt == nil && $0.failureReason == nil }) {
+                        Task { await self.applyAllEdits(messageID: assistantID) }
+                    }
                     // Final flush to persistence
                     self.cancelDebounce(for: assistantID)
                     Task { await self.flushMessageToPersistence(id: assistantID, threadID: threadID) }
@@ -865,8 +888,30 @@ final class ChatService {
         // Drop the pending queue for this thread too — Stop must mean "stop
         // everything I had lined up", not "stop the current turn and start
         // the next one I forgot about".
+        let droppedCount = pendingQueueByThread[id]?.count ?? 0
         pendingQueueByThread.removeValue(forKey: id)
+        if droppedCount > 0 {
+            // Surface a short banner so the user sees we just discarded N
+            // queued messages they had typed. Without this the queue badge
+            // simply vanishes — silent destruction of typed input is worse
+            // than the original "Send is locked" UX.
+            showTransientNotice(
+                String(format: L10n("chat.composer.queue.cleared"), droppedCount)
+            )
+        }
         Task { await self.agentRuntime.cancel() }
+    }
+
+    /// Posts a short-lived banner string into `transientNotice` and clears it
+    /// after `seconds`. Multiple calls reset the timer.
+    private func showTransientNotice(_ message: String, seconds: Double = 3.0) {
+        transientNotice = message
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(seconds))
+            if self?.transientNotice == message {
+                self?.transientNotice = nil
+            }
+        }
     }
 
     /// Removes a single queued message without aborting the running turn.
@@ -978,6 +1023,7 @@ final class ChatService {
                         let blocks = self.editBlockParser!.feed(delta)
                         if !blocks.isEmpty {
                             self.attachEditBlocksToAssistant(blocks, assistantID: assistantID, threadID: threadID)
+                            self.stripEditBlockMarkersFromAssistant(assistantID: assistantID)
                         }
                     }
                 }
@@ -1002,6 +1048,54 @@ final class ChatService {
                 return
             }
         }
+    }
+
+    /// Mirror of stripPlanXMLFromAssistant for aider-style SEARCH/REPLACE
+    /// blocks. EditBlockParser already extracts these into structured
+    /// EditBlock entries; this method removes the raw markers from the
+    /// assistant's `content` so the chat does not show both the structured
+    /// card AND the raw text (Image #38). Idempotent.
+    private func stripEditBlockMarkersFromAssistant(assistantID: UUID) {
+        for tIdx in threads.indices {
+            if let mIdx = threads[tIdx].messages.firstIndex(where: { $0.id == assistantID }) {
+                let original = threads[tIdx].messages[mIdx].content
+                let stripped = ChatService.stripEditBlockMarkers(from: original)
+                if stripped != original {
+                    threads[tIdx].messages[mIdx].content = stripped
+                }
+                return
+            }
+        }
+    }
+
+    /// Removes every `<<<<<<< SEARCH … ======= … >>>>>>> REPLACE` block
+    /// (header + body + footer) from the assistant text. Skips matches inside
+    /// fenced code blocks so example documentation snippets survive.
+    nonisolated static func stripEditBlockMarkers(from text: String) -> String {
+        // Pre-compute NSRange fence offsets so we can intersect with regex
+        // matches without crossing the String.Index / Int boundary.
+        let fenceNSRanges: [NSRange] = codeFenceRanges(in: text).map {
+            NSRange($0, in: text)
+        }
+        let pattern = #"<{7}\s*SEARCH(?::[^\n]*)?\n[\s\S]*?\n>{7}\s*REPLACE\s*\n?"#
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return text }
+        let nsText = text as NSString
+        let fullRange = NSRange(location: 0, length: nsText.length)
+        let matches = regex.matches(in: text, range: fullRange).reversed()
+        var result = text
+        for match in matches {
+            let matchStart = match.range.location
+            let matchEnd = match.range.location + match.range.length
+            if fenceNSRanges.contains(where: { fence in
+                let fStart = fence.location
+                let fEnd = fence.location + fence.length
+                return matchStart < fEnd && matchEnd > fStart
+            }) { continue }
+            if let range = Range(match.range, in: result) {
+                result.removeSubrange(range)
+            }
+        }
+        return result
     }
 
     /// Removes every `<plan>…</plan>` block (tags included) plus a single
@@ -1072,6 +1166,7 @@ final class ChatService {
                             let blocks = self.editBlockParser!.feed(text)
                             if !blocks.isEmpty {
                                 self.attachEditBlocksToAssistant(blocks, assistantID: assistantID, threadID: threadID)
+                            self.stripEditBlockMarkersFromAssistant(assistantID: assistantID)
                             }
                         }
                     }
@@ -1392,6 +1487,7 @@ final class ChatService {
                         let blocks = self.editBlockParser!.feed(delta)
                         if !blocks.isEmpty {
                             self.attachEditBlocksToAssistant(blocks, assistantID: assistantID, threadID: threadID)
+                            self.stripEditBlockMarkersFromAssistant(assistantID: assistantID)
                         }
                     }
                 }
@@ -1432,6 +1528,7 @@ final class ChatService {
                             let blocks = self.editBlockParser!.feed(text)
                             if !blocks.isEmpty {
                                 self.attachEditBlocksToAssistant(blocks, assistantID: assistantID, threadID: threadID)
+                            self.stripEditBlockMarkersFromAssistant(assistantID: assistantID)
                             }
                         }
                     }
