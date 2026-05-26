@@ -2907,6 +2907,11 @@
 "chat.composer.queue.help" = "Messages queued while the current turn streams. Tap a row to remove it. Use Stop to cancel the current turn AND clear the queue.";
 "chat.composer.queue.cleared" = "Cleared %d queued message(s)";
 "chat.composer.bashTool" = "Bash";
+"chat.projectGuidance.banner.title" = "Project context detected (%@ files)";
+"chat.projectGuidance.banner.subtitle" = "This repo ships LLM context files for other tools. Import them so Zion Talks answers consistently with the project's conventions instead of starting from zero.";
+"chat.projectGuidance.banner.import" = "Import to chat context";
+"chat.projectGuidance.banner.dismiss" = "Not now";
+"chat.projectGuidance.banner.dismiss.help" = "Hide this banner for this repo. You can reset the dismissal from Settings → AI later.";
 "chat.composer.bashTool.on.help" = "Bash tool is ON. The LLM (Anthropic / OpenAI / Gemini in native loop) can run shell commands via the harness allowlist. Click to disable.";
 "chat.composer.bashTool.off.help" = "Bash tool is OFF. Click to let the LLM run shell commands in native provider loops. CLI providers (Claude / Codex) ignore this toggle — they use their own approval flow.";
 "chat.message.searchReplace.unknownFile" = "Edit block";

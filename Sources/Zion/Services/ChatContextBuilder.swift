@@ -54,7 +54,19 @@ struct ChatContextBuilder {
     // MARK: - Context Header
 
     /// Produces a formatted header with repo name, branch, HEAD SHA, and uncommitted count.
+    /// Suffixes any imported project guidance (CLAUDE.md / AGENTS.md / etc.)
+    /// so Zion Talks inherits the conventions the project already documented
+    /// for other LLMs.
     func gitContextHeader(repoURL: URL, branch: String) async -> String {
+        let header = await rawGitContextHeader(repoURL: repoURL, branch: branch)
+        let guidance = await MainActor.run {
+            ProjectGuidanceImporter.shared.importedContent(for: repoURL)
+        }
+        if guidance.isEmpty { return header }
+        return header + "\n\n## Project guidance (imported)\n\n" + guidance
+    }
+
+    private func rawGitContextHeader(repoURL: URL, branch: String) async -> String {
         let repoName = repoURL.lastPathComponent
 
         let sha: String
