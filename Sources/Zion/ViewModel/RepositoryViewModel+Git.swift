@@ -548,6 +548,27 @@ extension RepositoryViewModel {
             return
         }
 
+        // Coalesce redundant background refreshes that fire on the heels of a
+        // recent successful load. Cold cache loads can take 5-10s on first repo
+        // open; the autoTimer and fileWatcher both kick a fresh refresh within
+        // seconds, stacking three loads back-to-back and tripping the
+        // repositorySwitch watchdog. User-initiated, repositorySwitch, and
+        // gitAction refreshes always run — only opportunistic background ticks
+        // are coalesced.
+        if origin == .autoTimer || origin == .fileWatcher {
+            let ageSinceLast = Date().timeIntervalSince(lastRefreshSucceededAt ?? .distantPast)
+            if ageSinceLast < 5.0 {
+                logger.log(
+                    .info,
+                    "refresh.skip coalesced",
+                    context: "origin=\(origin.rawValue) ageSinceLast=\(String(format: "%.2f", ageSinceLast))s",
+                    source: #function
+                )
+                onFinish?()
+                return
+            }
+        }
+
         switch evaluateRefreshGate(origin: origin) {
         case .skip:
             onFinish?()
@@ -752,6 +773,10 @@ extension RepositoryViewModel {
                 if origin == .userInitiated || origin == .gitAction || origin == .repositorySwitch {
                     captureRepositorySnapshot(for: repositoryURL)
                 }
+                // Stamp success for background-refresh coalescing. Set before
+                // clearing isBusy so any cascaded autoTimer/fileWatcher kicked
+                // during the same tick observes the fresh timestamp.
+                lastRefreshSucceededAt = Date()
                 if setBusy {
                     isBusy = false
                     disarmBusyWatchdog()
