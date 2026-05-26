@@ -809,6 +809,15 @@ final class ChatService {
     }
 
     private func ensureLocalServerRunning(config: LocalLLMConfig, assistantID: UUID) async {
+        // Trace WHO asks for the local server to come up. The Image #32
+        // confusion was: memory bumps but the chip shows Claude. If this log
+        // never fires for the turn in question, the bump came from elsewhere
+        // (warm-from-prior-session, external Ollama running, periodic probe).
+        await DiagnosticLogger.shared.log(
+            .info,
+            "ensureLocalServerRunning called — engine=\(config.engineKind.rawValue) model=\(config.modelName)",
+            source: "ChatService"
+        )
         let launcher = LocalServerLauncher()
         let outcome = await launcher.ensureRunning(config: config, engine: config.engineKind)
         switch outcome {
