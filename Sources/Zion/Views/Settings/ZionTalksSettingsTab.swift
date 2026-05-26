@@ -1,10 +1,7 @@
 import SwiftUI
 
 struct ZionTalksSettingsTab: View {
-    @AppStorage("chat.toolsEnabled") private var toolsEnabled: Bool = true
     @AppStorage("chat.autoInject") private var autoInject: Bool = true
-    @AppStorage("chat.providers.toolBridge") private var toolBridge: Bool = true
-    @AppStorage("chat.routing.subscriptionFailover") private var subscriptionFailover: Bool = false
     @AppStorage(ZionTalksAppearance.fontSizeKey) private var fontSizePx: Int = ZionTalksAppearance.defaultFontSizePx
     @AppStorage(ZionTalksAppearance.lineSpacingKey) private var lineSpacingPx: Int = ZionTalksAppearance.defaultLineSpacingPx
 
@@ -19,8 +16,11 @@ struct ZionTalksSettingsTab: View {
             ApprovalPolicySection()
 
             Section(L10n("chat.settings.general")) {
-                Toggle(L10n("chat.settings.toolsEnabled"), isOn: $toolsEnabled)
                 Toggle(L10n("chat.settings.autoInject"), isOn: $autoInject)
+                Text(L10n("chat.settings.autoInject.hint"))
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             Section(L10n("chat.settings.appearance")) {
@@ -59,24 +59,22 @@ struct ZionTalksSettingsTab: View {
 
             UsageSettingsSection()
 
-            Section(L10n("chat.settings.toolBridge")) {
-                Toggle(L10n("chat.settings.toolBridge.toggle"), isOn: $toolBridge)
-                Text(L10n("chat.settings.toolBridge.hint"))
-                    .font(DesignSystem.Typography.label)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+            // Tool Bridge toggle removed from the UI in this prune — keeping
+            // a working tool-bridge ON is part of "Zion Talks is LLM-agnostic"
+            // and disabling it would silently cripple native API providers.
+            // The storage key (`chat.providers.toolBridge`) and the
+            // ZionToolBridge runtime gate stay in place so developers /
+            // debugging sessions can flip it via `defaults write` if needed.
 
             Section(L10n("chat.settings.routingPolicy")) {
                 RoutingPolicyEditor()
             }
 
-            Section(L10n("chat.settings.cliFailover")) {
-                Toggle(L10n("chat.settings.cliFailover.toggle"), isOn: $subscriptionFailover)
-                Text(L10n("chat.settings.cliFailover.warning"))
-                    .font(DesignSystem.Typography.label)
-                    .foregroundStyle(DesignSystem.Colors.warning)
-            }
+            // Subscription-CLI failover toggle removed here — it already
+            // lives in Settings → AI → "Routing & Safety" with a clearer
+            // hint. Two duplicate toggles for the same UserDefault was
+            // confusing (and shipped with DIFFERENT defaults, false here vs
+            // true there). The AISettingsTab control is authoritative.
         }
         .formStyle(.grouped)
         .toggleStyle(SwitchToggleStyle(tint: DesignSystem.Colors.actionPrimary))

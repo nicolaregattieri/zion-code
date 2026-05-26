@@ -2750,6 +2750,7 @@
 "chat.settings.general" = "Geral";
 "chat.settings.toolsEnabled" = "Ativar uso de ferramentas";
 "chat.settings.autoInject" = "Injetar contexto automaticamente";
+"chat.settings.autoInject.hint" = "Anexa um bloco de contexto oculto na primeira mensagem de cada thread com nome do repo, branch, HEAD SHA, uncommitted e guidance importado. Desligue para sessões com dados sensíveis em que estado do git não deve ir para o modelo.";
 "chat.settings.toolBridge" = "Ponte de Tools MCP (providers nativos de API)";
 "chat.settings.toolBridge.toggle" = "Permitir Anthropic / OpenAI / Gemini chamarem tools MCP";
 "chat.settings.toolBridge.hint" = "Traduz schemas MCP (read_file, repo_map, find_symbol, bash, etc) para o formato nativo de tool-use de Anthropic / OpenAI / Gemini e roda o loop de tool-call no cliente. Sem isso, só providers CLI (Claude / Codex) chamam tools. Não tem relação com o \"Bridge / AI Portability\" da sidebar — aquele sincroniza arquivos CLAUDE.md ↔ AGENTS.md ↔ GEMINI.md entre tools de IA.";
