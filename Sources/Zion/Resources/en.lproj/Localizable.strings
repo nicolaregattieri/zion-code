@@ -2749,6 +2749,8 @@
 "chat.settings.toolsEnabled" = "Enable tool use";
 "chat.settings.autoInject" = "Auto-inject context";
 "chat.settings.autoInject.hint" = "Prepends a hidden context block to the first message of every thread with repo name, branch, HEAD SHA, uncommitted count, plus any imported project guidance. Turn OFF for privacy-sensitive sessions where git state should not be sent to the model.";
+"chat.settings.advanced.toggle" = "Advanced settings";
+"chat.settings.advanced.count" = "Agentic · Smart context · Skills · MCP · Budget · Usage · Routing";
 "chat.settings.toolBridge" = "MCP Tool Bridge (native API providers)";
 "chat.settings.toolBridge.toggle" = "Let Anthropic / OpenAI / Gemini call MCP tools";
 "chat.settings.toolBridge.hint" = "Translates MCP tool schemas (read_file, repo_map, find_symbol, bash, etc) into Anthropic / OpenAI / Gemini native tool-use format and runs the tool-call loop on the client. Without this, only CLI providers (Claude / Codex) can call tools. Unrelated to the sidebar \"Bridge / AI Portability\" feature — that one syncs CLAUDE.md ↔ AGENTS.md ↔ GEMINI.md files between LLM tools.";
@@ -2924,6 +2926,9 @@
 "settings.ai.globalPrompt.title" = "Global system prompt";
 "settings.ai.globalPrompt.subtitle" = "Applied to every Zion Talks turn across every repo. Project guidance still overrides repo-specific rules.";
 "settings.ai.globalPrompt.hint" = "Examples: \"Respond in Brazilian Portuguese.\" · \"Always cite file paths with file:line.\" · \"I prefer terse answers, skip preamble.\"";
+"settings.ai.globalPrompt.placeholder" = "Respond in Brazilian Portuguese. Cite file:line. Skip preamble.";
+"settings.ai.repoMemory.refresh.queued" = "Refresh queued — rebuild starts in the background.";
+"settings.ai.repoMemory.clear.queued" = "Repo memory cleared.";
 "chat.composer.bashTool.on.help" = "Bash tool is ON. The LLM (Anthropic / OpenAI / Gemini in native loop) can run shell commands via the harness allowlist. Click to disable.";
 "chat.composer.bashTool.off.help" = "Bash tool is OFF. Click to let the LLM run shell commands in native provider loops. CLI providers (Claude / Codex) ignore this toggle — they use their own approval flow.";
 "chat.message.searchReplace.unknownFile" = "Edit block";

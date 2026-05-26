@@ -2773,6 +2773,8 @@
 "chat.settings.toolsEnabled" = "Activar uso de herramientas";
 "chat.settings.autoInject" = "Inyectar contexto automáticamente";
 "chat.settings.autoInject.hint" = "Antepone un bloque de contexto oculto en el primer mensaje de cada hilo con nombre del repo, branch, HEAD SHA, uncommitted y guidance importado. Apaga para sesiones sensibles donde el estado del git no debe enviarse al modelo.";
+"chat.settings.advanced.toggle" = "Ajustes avanzados";
+"chat.settings.advanced.count" = "Agentic · Smart context · Skills · MCP · Budget · Usage · Routing";
 "chat.settings.toolBridge" = "Puente de Tools MCP (providers nativos de API)";
 "chat.settings.toolBridge.toggle" = "Dejar que Anthropic / OpenAI / Gemini llamen tools MCP";
 "chat.settings.toolBridge.hint" = "Traduce schemas MCP (read_file, repo_map, find_symbol, bash, etc) al formato nativo de tool-use de Anthropic / OpenAI / Gemini y ejecuta el loop de tool-call en el cliente. Sin esto, sólo los providers CLI (Claude / Codex) pueden llamar tools. No relacionado con el \"Bridge / AI Portability\" de la sidebar — ese sincroniza archivos CLAUDE.md ↔ AGENTS.md ↔ GEMINI.md entre tools de IA.";
@@ -2948,6 +2950,9 @@
 "settings.ai.globalPrompt.title" = "Prompt global del sistema";
 "settings.ai.globalPrompt.subtitle" = "Aplicado en cada turno de Zion Talks en cualquier repo. La guía del proyecto sobrescribe reglas específicas del repo.";
 "settings.ai.globalPrompt.hint" = "Ejemplos: \"Responde en español.\" · \"Cita rutas con file:line.\" · \"Prefiero respuestas breves, sin preámbulo.\"";
+"settings.ai.globalPrompt.placeholder" = "Responde en español. Cita file:line. Sin preámbulo.";
+"settings.ai.repoMemory.refresh.queued" = "Refresh en cola — rebuild en segundo plano.";
+"settings.ai.repoMemory.clear.queued" = "Memoria del repo limpiada.";
 "chat.composer.bashTool.on.help" = "Tool Bash ACTIVADA. El LLM (Anthropic / OpenAI / Gemini en loop nativo) puede ejecutar comandos shell vía allowlist del harness. Pulsa para desactivar.";
 "chat.composer.bashTool.off.help" = "Tool Bash DESACTIVADA. Pulsa para permitir que el LLM ejecute comandos shell en loops nativos. Las CLIs (Claude / Codex) ignoran este toggle — usan su propio flujo de aprobación.";
 "chat.message.searchReplace.unknownFile" = "Bloque de edición";

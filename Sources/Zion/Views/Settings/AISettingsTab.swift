@@ -29,6 +29,7 @@ struct AISettingsTab: View {
     @State private var claudeStatus: CLIToolStatus?
     @State private var codexStatus: CLIToolStatus?
     @State private var cliDiscovery = CLIDiscoveryService()
+    @State private var repoMemoryActionFeedback: String? = nil
 
     private var defaultProvider: AIProvider {
         AIProvider(rawValue: aiProviderRaw) ?? .none
@@ -73,9 +74,15 @@ struct AISettingsTab: View {
     var body: some View {
         Form {
             Section {
-                Text(L10n("settings.ai.tab.intro"))
-                    .font(DesignSystem.Typography.label)
-                    .foregroundStyle(.secondary)
+                HStack(alignment: .top, spacing: DesignSystem.Spacing.iconLabelGap) {
+                    Image(systemName: "sparkles")
+                        .foregroundStyle(DesignSystem.Colors.ai)
+                        .padding(.top, 2)
+                    Text(L10n("settings.ai.tab.intro"))
+                        .font(DesignSystem.Typography.label)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
 
             Section(L10n("settings.ai.defaultProvider")) {
@@ -146,18 +153,32 @@ struct AISettingsTab: View {
                         .font(DesignSystem.Typography.label)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
-                    TextEditor(text: $globalSystemPrompt)
-                        .font(DesignSystem.Typography.body)
-                        .frame(minHeight: 120, maxHeight: 260)
-                        .padding(DesignSystem.Spacing.micro)
-                        .background(
-                            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                .fill(DesignSystem.Colors.glassSubtle)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                .strokeBorder(DesignSystem.Colors.glassStroke, lineWidth: 1)
-                        )
+                    ZStack(alignment: .topLeading) {
+                        // Placeholder shown when the editor is empty. Without
+                        // it the empty field reads as visual debt — users
+                        // skip past thinking the section is unconfigurable.
+                        if globalSystemPrompt.isEmpty {
+                            Text(L10n("settings.ai.globalPrompt.placeholder"))
+                                .font(DesignSystem.Typography.body)
+                                .foregroundStyle(DesignSystem.Colors.textTertiary)
+                                .padding(.horizontal, DesignSystem.Spacing.micro + 5)
+                                .padding(.vertical, DesignSystem.Spacing.micro + 8)
+                                .allowsHitTesting(false)
+                        }
+                        TextEditor(text: $globalSystemPrompt)
+                            .font(DesignSystem.Typography.body)
+                            .frame(minHeight: 120, maxHeight: 260)
+                            .padding(DesignSystem.Spacing.micro)
+                            .scrollContentBackground(.hidden)
+                    }
+                    .background(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .fill(DesignSystem.Colors.glassSubtle)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .strokeBorder(DesignSystem.Colors.glassStroke, lineWidth: 1)
+                    )
                 }
             } header: {
                 VStack(alignment: .leading, spacing: 2) {
@@ -210,6 +231,9 @@ struct AISettingsTab: View {
                 Section(L10n("settings.ai.mapping")) {
                     ForEach(AIModelCatalogService.mappingRows(for: defaultProvider, mode: mode), id: \.lane) { row in
                         HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.iconLabelGap) {
+                            Image(systemName: laneIcon(row.lane))
+                                .foregroundStyle(laneColor(row.lane))
+                                .frame(width: 16)
                             Text(row.lane.label)
                                 .font(DesignSystem.Typography.labelBold)
                             Spacer()
@@ -217,6 +241,8 @@ struct AISettingsTab: View {
                                 .font(DesignSystem.Typography.monoLabel)
                                 .foregroundStyle(.secondary)
                                 .multilineTextAlignment(.trailing)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
                         }
                     }
 
@@ -233,6 +259,7 @@ struct AISettingsTab: View {
                     HStack {
                         Button(L10n("settings.ai.repoMemory.refresh")) {
                             NotificationCenter.default.post(name: .refreshRepoMemory, object: nil)
+                            flashRepoMemoryFeedback(L10n("settings.ai.repoMemory.refresh.queued"))
                         }
                         .disabled(repoMemoryRepoName.isEmpty)
 
@@ -240,8 +267,22 @@ struct AISettingsTab: View {
 
                         Button(L10n("settings.ai.repoMemory.clear")) {
                             NotificationCenter.default.post(name: .clearRepoMemory, object: nil)
+                            flashRepoMemoryFeedback(L10n("settings.ai.repoMemory.clear.queued"))
                         }
                         .disabled(repoMemoryRepoName.isEmpty)
+                    }
+                    // Inline feedback strip — buttons used to post a
+                    // Notification with no acknowledgement, so users could
+                    // not tell whether the click did anything.
+                    if let feedback = repoMemoryActionFeedback {
+                        HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(DesignSystem.Colors.success)
+                            Text(feedback)
+                                .font(DesignSystem.Typography.label)
+                                .foregroundStyle(.secondary)
+                        }
+                        .transition(.opacity)
                     }
                 }
             }
@@ -279,7 +320,13 @@ struct AISettingsTab: View {
     private func cliToolRow(tool: CLITool, status: CLIToolStatus?) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-                Text(tool.rawValue.prefix(1).uppercased() + tool.rawValue.dropFirst())
+                Image(systemName: tool == .claude
+                      ? "a.circle.fill"
+                      : "chevron.left.forwardslash.chevron.right")
+                    .foregroundStyle(DesignSystem.Colors.ai)
+                Text(tool == .claude
+                     ? L10n("settings.ai.provider.claudeCLI")
+                     : L10n("settings.ai.provider.codexCLI"))
                     .font(DesignSystem.Typography.bodySemibold)
 
                 Spacer()
@@ -457,6 +504,43 @@ struct AISettingsTab: View {
             }
         }
         .padding(.vertical, 4)
+    }
+
+    /// Glyph mapping for the lane → model mapping rows. Distinguishes
+    /// cheapSummary (leaf) / general (sparkles) / reasoning (brain) /
+    /// review (eyes / pen) / code (chevrons) so the list is scannable
+    /// instead of a wall of identical bold labels.
+    private func laneIcon(_ lane: AITaskLane) -> String {
+        switch lane {
+        case .cheapSummary:  return "leaf"
+        case .general:       return "sparkles"
+        case .reasoning:     return "brain"
+        case .review:        return "checkmark.shield"
+        case .transcription: return "waveform"
+        }
+    }
+
+    private func laneColor(_ lane: AITaskLane) -> Color {
+        switch lane {
+        case .cheapSummary:  return DesignSystem.Colors.success
+        case .general:       return DesignSystem.Colors.ai
+        case .reasoning:     return DesignSystem.Colors.warning
+        case .review:        return DesignSystem.Colors.info
+        case .transcription: return DesignSystem.Colors.textSecondary
+        }
+    }
+
+    /// Shows a green checkmark + message under the repo-memory buttons for
+    /// 2.5 seconds so the user gets visible acknowledgement that the
+    /// Notification was dispatched.
+    private func flashRepoMemoryFeedback(_ message: String) {
+        repoMemoryActionFeedback = message
+        Task {
+            try? await Task.sleep(for: .seconds(2.5))
+            if repoMemoryActionFeedback == message {
+                repoMemoryActionFeedback = nil
+            }
+        }
     }
 
     private func beginEditing(_ provider: AIProvider) {

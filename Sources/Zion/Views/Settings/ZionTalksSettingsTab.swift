@@ -2,15 +2,25 @@ import SwiftUI
 
 struct ZionTalksSettingsTab: View {
     @AppStorage("chat.autoInject") private var autoInject: Bool = true
+    /// Persist the disclosure state per-user so a power user who opens the
+    /// advanced section doesn't have to re-expand it every time they
+    /// revisit Settings.
+    @AppStorage("chat.settings.showAdvanced") private var showAdvanced: Bool = false
     @AppStorage(ZionTalksAppearance.fontSizeKey) private var fontSizePx: Int = ZionTalksAppearance.defaultFontSizePx
     @AppStorage(ZionTalksAppearance.lineSpacingKey) private var lineSpacingPx: Int = ZionTalksAppearance.defaultLineSpacingPx
 
     var body: some View {
         Form {
             Section {
-                Text(L10n("chat.settings.tab.intro"))
-                    .font(DesignSystem.Typography.label)
-                    .foregroundStyle(.secondary)
+                HStack(alignment: .top, spacing: DesignSystem.Spacing.iconLabelGap) {
+                    Image(systemName: "bubble.left.and.bubble.right.fill")
+                        .foregroundStyle(DesignSystem.Colors.ai)
+                        .padding(.top, 2)
+                    Text(L10n("chat.settings.tab.intro"))
+                        .font(DesignSystem.Typography.label)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
 
             ApprovalPolicySection()
@@ -47,27 +57,43 @@ struct ZionTalksSettingsTab: View {
                     .foregroundStyle(.secondary)
             }
 
-            AgenticSettingsSection()
+            // Advanced — collapsed by default. Sections under this line are
+            // power-user surfaces (Smart Context tuning, MCP servers, context
+            // budget, usage meter, routing policy, agentic loop tuning) that
+            // overwhelmed first-time users when laid out linearly. Pinned
+            // disclosure state to UserDefaults so a user who opens it keeps
+            // it open across launches.
+            Section {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) { showAdvanced.toggle() }
+                } label: {
+                    HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+                        Image(systemName: showAdvanced ? "chevron.down" : "chevron.right")
+                            .font(DesignSystem.Typography.metaSemibold)
+                            .foregroundStyle(.secondary)
+                        Text(L10n("chat.settings.advanced.toggle"))
+                            .font(DesignSystem.Typography.bodySemibold)
+                        Spacer()
+                        Text(L10n("chat.settings.advanced.count"))
+                            .font(DesignSystem.Typography.label)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
 
-            SmartContextSettingsSection()
+            if showAdvanced {
+                AgenticSettingsSection()
+                SmartContextSettingsSection()
+                SkillsSettingsSection()
+                MCPServersSettingsSection()
+                ContextBudgetSection()
+                UsageSettingsSection()
 
-            SkillsSettingsSection()
-
-            MCPServersSettingsSection()
-
-            ContextBudgetSection()
-
-            UsageSettingsSection()
-
-            // Tool Bridge toggle removed from the UI in this prune — keeping
-            // a working tool-bridge ON is part of "Zion Talks is LLM-agnostic"
-            // and disabling it would silently cripple native API providers.
-            // The storage key (`chat.providers.toolBridge`) and the
-            // ZionToolBridge runtime gate stay in place so developers /
-            // debugging sessions can flip it via `defaults write` if needed.
-
-            Section(L10n("chat.settings.routingPolicy")) {
-                RoutingPolicyEditor()
+                Section(L10n("chat.settings.routingPolicy")) {
+                    RoutingPolicyEditor()
+                }
             }
 
             // Subscription-CLI failover toggle removed here — it already
