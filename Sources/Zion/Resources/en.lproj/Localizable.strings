@@ -3004,3 +3004,33 @@
 "help.chat.inlineLocalSwap" = "Composer pill lists every discovered local model — pick to hot-swap without a Settings round-trip";
 "map.chat.fontSize.title" = "Chat font size";
 "map.chat.fontSize.description" = "Settings → Zion Talks → Appearance exposes a font size stepper (9–22 px, default 12) and a line spacing stepper (0–12 px, default 2). Changes propagate live to every chat surface; labels auto-scale relative to body size.";
+
+/* MARK: Pre-flight chip row (replaces dumb welcome cards) */
+"chat.preflight.mode.title" = "Mode";
+"chat.preflight.mode.help" = "What Zion will do this turn";
+"chat.preflight.mode.ask" = "Ask";
+"chat.preflight.mode.edit" = "Edit";
+"chat.preflight.mode.task" = "Run task";
+"chat.preflight.approval.title" = "Permission";
+"chat.preflight.approval.help" = "How Zion confirms actions";
+"chat.preflight.context.title" = "Context";
+"chat.preflight.context.help" = "What Zion sees";
+"chat.preflight.context.openFile" = "Open file";
+"chat.preflight.context.repo" = "Repository";
+"chat.preflight.context.manual" = "@ to pick";
+"chat.preflight.shell.title" = "Run commands";
+"chat.preflight.shell.help" = "Whether the agent may run shell commands";
+"chat.preflight.shell.none" = "No";
+"chat.preflight.shell.safeOnly" = "Safe only";
+"chat.preflight.shell.all" = "All";
+"chat.emptyState.suggested.explainRepo" = "Explain the repo";
+"chat.emptyState.suggested.editFile" = "Edit a file";
+"chat.emptyState.suggested.runTests" = "Run tests";
+"chat.emptyState.suggested.help" = "See commands";
+"shortcuts.chat.cycleMode" = "Cycle chat mode";
+"shortcuts.chat.cycleApproval" = "Cycle chat permission";
+"chat.composer.attach" = "Attach file";
+"chat.attach.remove" = "Remove attachment";
+"chat.attach.error.tooLarge" = "Attachment is %@ — over the %@ limit.";
+"chat.attach.error.unsupported" = "Unsupported attachment type: %@";
+"chat.attach.error.read" = "Could not read file: %@";

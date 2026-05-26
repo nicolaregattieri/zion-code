@@ -3028,3 +3028,33 @@
 "help.chat.inlineLocalSwap" = "Pill del composer lista cada modelo local detectado — elige para hot-swap sin pasar por Settings";
 "map.chat.fontSize.title" = "Tamaño de fuente del chat";
 "map.chat.fontSize.description" = "Ajustes → Zion Talks → Apariencia expone un stepper de tamaño de fuente (9–22 px, por defecto 12) y un stepper de interlineado (0–12 px, por defecto 2). Los cambios se propagan en vivo a todas las superficies del chat; las etiquetas se escalan automáticamente respecto al cuerpo.";
+
+/* MARK: Pre-flight chip row (reemplaza welcome cards) */
+"chat.preflight.mode.title" = "Modo";
+"chat.preflight.mode.help" = "Lo que Zion va a hacer";
+"chat.preflight.mode.ask" = "Preguntar";
+"chat.preflight.mode.edit" = "Editar";
+"chat.preflight.mode.task" = "Ejecutar tarea";
+"chat.preflight.approval.title" = "Permiso";
+"chat.preflight.approval.help" = "Cómo Zion confirma acciones";
+"chat.preflight.context.title" = "Contexto";
+"chat.preflight.context.help" = "Lo que Zion ve";
+"chat.preflight.context.openFile" = "Archivo abierto";
+"chat.preflight.context.repo" = "Repositorio";
+"chat.preflight.context.manual" = "@ para elegir";
+"chat.preflight.shell.title" = "Ejecutar comandos";
+"chat.preflight.shell.help" = "Si el agente puede ejecutar comandos de shell";
+"chat.preflight.shell.none" = "No";
+"chat.preflight.shell.safeOnly" = "Solo seguros";
+"chat.preflight.shell.all" = "Todos";
+"chat.emptyState.suggested.explainRepo" = "Explicar el repositorio";
+"chat.emptyState.suggested.editFile" = "Editar un archivo";
+"chat.emptyState.suggested.runTests" = "Ejecutar tests";
+"chat.emptyState.suggested.help" = "Ver comandos";
+"shortcuts.chat.cycleMode" = "Alternar modo del chat";
+"shortcuts.chat.cycleApproval" = "Alternar permiso del chat";
+"chat.composer.attach" = "Adjuntar archivo";
+"chat.attach.remove" = "Quitar adjunto";
+"chat.attach.error.tooLarge" = "El adjunto pesa %@ — supera el límite de %@.";
+"chat.attach.error.unsupported" = "Tipo de adjunto no soportado: %@";
+"chat.attach.error.read" = "No se pudo leer el archivo: %@";

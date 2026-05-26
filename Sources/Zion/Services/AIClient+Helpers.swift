@@ -275,12 +275,37 @@ extension AIClient {
 
     static func anthropicRequestBody(payload: AIPromptPayload, maxTokens: Int, modelID: String) -> [String: Any] {
         let cacheEnabled = anthropicCacheEnabled
+        // When attachments are present we send a structured content array so
+        // images ride alongside the text as native vision blocks. When there
+        // are no attachments we keep the flat string form for backward
+        // compatibility with existing prompt-cache prefixes.
+        let userContent: Any
+        if payload.imageAttachments.isEmpty {
+            userContent = renderUserMessage(from: payload)
+        } else {
+            var blocks: [[String: Any]] = []
+            for image in payload.imageAttachments {
+                blocks.append([
+                    "type": "image",
+                    "source": [
+                        "type": "base64",
+                        "media_type": image.mimeType,
+                        "data": image.base64,
+                    ],
+                ])
+            }
+            blocks.append([
+                "type": "text",
+                "text": renderUserMessage(from: payload),
+            ])
+            userContent = blocks
+        }
         return [
             "model": modelID,
             "max_tokens": maxTokens,
             "system": anthropicSystemField(payload.systemInstructions, cacheEnabled: cacheEnabled),
             "messages": [
-                ["role": "user", "content": renderUserMessage(from: payload)],
+                ["role": "user", "content": userContent],
             ],
         ]
     }

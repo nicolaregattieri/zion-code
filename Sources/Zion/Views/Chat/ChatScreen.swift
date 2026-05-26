@@ -166,7 +166,7 @@ struct ChatScreen: View {
             ScrollView {
                 LazyVStack(spacing: 0) {
                     if chat.thread.messages.isEmpty {
-                        ChatEmptyState { pickedPrompt in
+                        ChatEmptyState(repoURL: repoURL) { pickedPrompt in
                             composerText = pickedPrompt
                         }
                     } else {
@@ -358,8 +358,11 @@ struct ChatScreen: View {
             text: $composerText,
             onSend: {
                 let textToSend = composerText
+                let activeID = chat.activeThreadID
+                let pendingAttachments = chat.threadAttachments[activeID] ?? []
                 composerText = ""
-                chat.threadDrafts.removeValue(forKey: chat.activeThreadID)
+                chat.threadDrafts.removeValue(forKey: activeID)
+                chat.threadAttachments.removeValue(forKey: activeID)
                 guard let url = repoURL else { return }
                 let modelOverride = ProviderModelCatalog.selectedModel(for: provider)
                 Task {
@@ -370,7 +373,8 @@ struct ChatScreen: View {
                         mode: mode,
                         repoURL: url,
                         branch: branch,
-                        modelOverride: modelOverride.isEmpty ? nil : modelOverride
+                        modelOverride: modelOverride.isEmpty ? nil : modelOverride,
+                        attachments: pendingAttachments
                     )
                 }
             },
@@ -472,6 +476,11 @@ struct ChatScreen: View {
                     }
                 )
             }
+            // Pre-flight chip row — sits directly above the input field so
+            // Modo / Permissão / Contexto / (Rodar comandos) / Modelo are the
+            // last things the user sees before hitting Send. Stays visible
+            // mid-thread so the user can switch on the fly.
+            ChatPreflightChipRow(chat: chat)
         }
     }
 

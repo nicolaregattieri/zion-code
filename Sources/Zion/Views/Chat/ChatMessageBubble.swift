@@ -21,6 +21,14 @@ struct ChatMessageBubble: View {
 
     private var userRow: some View {
         VStack(alignment: .trailing, spacing: DesignSystem.Spacing.compact) {
+            if !message.attachments.isEmpty {
+                HStack(spacing: DesignSystem.Spacing.compact) {
+                    Spacer(minLength: 0)
+                    ForEach(message.attachments) { att in
+                        AttachmentBubbleView(attachment: att)
+                    }
+                }
+            }
             HStack(alignment: .top, spacing: DesignSystem.Spacing.standard) {
                 Spacer(minLength: DesignSystem.Spacing.sectionGap)
                 Text(message.content)
@@ -100,6 +108,66 @@ struct ChatMessageBubble: View {
             Circle()
                 .strokeBorder(DesignSystem.Colors.glassBorder, lineWidth: 1)
         )
+    }
+}
+
+// MARK: - AttachmentBubbleView
+
+/// Rendered inside a sent user bubble: image thumbnail (64pt rounded
+/// square) for images, file pill with icon + name for PDFs and other
+/// files. Mirrors `AttachmentChipRow` but without the remove button — once
+/// a message has been sent the attachment list is immutable.
+private struct AttachmentBubbleView: View {
+    let attachment: ChatAttachment
+
+    var body: some View {
+        switch attachment.kind {
+        case .image:
+            imageThumb
+        case .pdf, .other:
+            filePill
+        }
+    }
+
+    private var imageThumb: some View {
+        Group {
+            if let url = attachment.fileURL(),
+               let image = NSImage(contentsOf: url) {
+                Image(nsImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                Color.gray.opacity(0.2)
+            }
+        }
+        .frame(width: 72, height: 72)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous)
+                .strokeBorder(DesignSystem.Colors.glassStroke, lineWidth: 1)
+        )
+        .help(attachment.originalName)
+    }
+
+    private var filePill: some View {
+        HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+            Image(systemName: attachment.kind == .pdf ? "doc.richtext" : "doc")
+                .foregroundStyle(DesignSystem.Colors.brandPrimary)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(attachment.originalName)
+                    .font(DesignSystem.Typography.labelMedium)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                Text(ByteCountFormatter.string(fromByteCount: Int64(attachment.size), countStyle: .file))
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(DesignSystem.Colors.textTertiary)
+            }
+        }
+        .padding(.horizontal, DesignSystem.Spacing.compact)
+        .padding(.vertical, DesignSystem.Spacing.micro)
+        .background(Capsule().fill(DesignSystem.Colors.glassSubtle))
+        .overlay(Capsule().strokeBorder(DesignSystem.Colors.glassStroke, lineWidth: 1))
+        .help(attachment.originalName)
     }
 }
 

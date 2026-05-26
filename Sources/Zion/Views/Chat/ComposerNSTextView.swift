@@ -14,6 +14,12 @@ struct ComposerNSTextView: NSViewRepresentable {
 
     @Binding var text: String
     var onSend: () -> Void
+    /// Optional hook the composer wires up to capture image / PDF / file
+    /// URL paste events. When set, the NSTextView intercepts paste before
+    /// the system inserts a path-as-text, hands the pasteboard to the
+    /// composer, and only falls back to the default paste if no
+    /// attachment was captured.
+    var onPasteAttachments: (([PendingChatAttachment]) -> Void)? = nil
 
     @Environment(\.chatFontSizePx) private var fontSizePx
     @Environment(\.chatLineSpacingPx) private var lineSpacingPx
@@ -354,6 +360,23 @@ struct ComposerNSTextView: NSViewRepresentable {
 enum ArrowKey { case up, down }
 
 final class ZionComposerTextView: NSTextView {
+
+    /// Intercepts Cmd+V. When the pasteboard carries an image (raw image
+    /// data or a file URL to an image / PDF), we capture it as an
+    /// attachment via the composer callback instead of letting the system
+    /// paste the file path or TIFF blob as plain text. When nothing
+    /// captureable is found, we fall back to NSTextView's default paste.
+    override func paste(_ sender: Any?) {
+        if let coordinator = delegate as? ComposerNSTextView.Coordinator,
+           let handler = coordinator.parent.onPasteAttachments {
+            let captured = ChatAttachmentService.captureFromPasteboard()
+            if !captured.isEmpty {
+                handler(captured)
+                return
+            }
+        }
+        super.paste(sender)
+    }
 
     override func keyDown(with event: NSEvent) {
         let coordinator = delegate as? ComposerNSTextView.Coordinator

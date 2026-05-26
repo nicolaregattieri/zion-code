@@ -3006,3 +3006,33 @@
 "help.chat.inlineLocalSwap" = "Pill no composer lista cada modelo local detectado — escolha para hot-swap sem ir em Settings";
 "map.chat.fontSize.title" = "Tamanho da fonte do chat";
 "map.chat.fontSize.description" = "Ajustes → Zion Talks → Aparência expõe um stepper de tamanho de fonte (9–22 px, padrão 12) e um stepper de espaçamento de linha (0–12 px, padrão 2). As mudanças propagam ao vivo para todas as superfícies de chat; labels escalam automaticamente em relação ao tamanho do corpo.";
+
+/* MARK: Pre-flight chip row (substitui welcome cards) */
+"chat.preflight.mode.title" = "Modo";
+"chat.preflight.mode.help" = "O que o Zion vai fazer";
+"chat.preflight.mode.ask" = "Perguntar";
+"chat.preflight.mode.edit" = "Editar";
+"chat.preflight.mode.task" = "Executar tarefa";
+"chat.preflight.approval.title" = "Permissão";
+"chat.preflight.approval.help" = "Como o Zion confirma ações";
+"chat.preflight.context.title" = "Contexto";
+"chat.preflight.context.help" = "O que o Zion vê";
+"chat.preflight.context.openFile" = "Arquivo aberto";
+"chat.preflight.context.repo" = "Repositório";
+"chat.preflight.context.manual" = "@ para escolher";
+"chat.preflight.shell.title" = "Rodar comandos";
+"chat.preflight.shell.help" = "Se o agente pode rodar comandos no terminal";
+"chat.preflight.shell.none" = "Não";
+"chat.preflight.shell.safeOnly" = "Só seguros";
+"chat.preflight.shell.all" = "Tudo";
+"chat.emptyState.suggested.explainRepo" = "Explicar o repositório";
+"chat.emptyState.suggested.editFile" = "Editar um arquivo";
+"chat.emptyState.suggested.runTests" = "Rodar testes";
+"chat.emptyState.suggested.help" = "Ver comandos";
+"shortcuts.chat.cycleMode" = "Alternar modo do chat";
+"shortcuts.chat.cycleApproval" = "Alternar permissão do chat";
+"chat.composer.attach" = "Anexar arquivo";
+"chat.attach.remove" = "Remover anexo";
+"chat.attach.error.tooLarge" = "Anexo tem %@ — acima do limite de %@.";
+"chat.attach.error.unsupported" = "Tipo de anexo não suportado: %@";
+"chat.attach.error.read" = "Não foi possível ler o arquivo: %@";
