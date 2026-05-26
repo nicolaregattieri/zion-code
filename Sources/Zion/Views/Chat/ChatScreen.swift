@@ -212,27 +212,6 @@ struct ChatScreen: View {
                             if message.role == .assistant, let blocks = message.editBlocks, !blocks.isEmpty {
                                 let msgID = message.id
                                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
-                                    // Multi-file summary card (shown when >= 2 files)
-                                    if blocks.count >= 2 {
-                                        MultiFileDiffSummary(
-                                            blocks: blocks,
-                                            onReviewAll: {
-                                                // Sheet is handled inside MultiFileDiffSummary.
-                                            },
-                                            onApproveAll: {
-                                                Task { await chat.applyAllEdits(messageID: msgID) }
-                                            },
-                                            onRejectAll: {
-                                                chat.rejectAllEdits(messageID: msgID)
-                                            },
-                                            onApplyBlock: { block in
-                                                Task { await chat.applyEditBlock(blockID: block.id, in: msgID) }
-                                            },
-                                            onRejectBlock: { block in
-                                                chat.rejectEditBlock(blockID: block.id, in: msgID)
-                                            }
-                                        )
-                                    }
                                     // Per-file cards — collapse to summary lines when >= 4 files
                                     if blocks.count < 4 {
                                         ForEach(blocks) { block in
@@ -265,6 +244,28 @@ struct ChatScreen: View {
                                         Text(L10n("chat.multifileDiff.moreFiles", "\(blocks.count - 2)"))
                                             .font(DesignSystem.Typography.label)
                                             .foregroundStyle(.secondary)
+                                    }
+                                    // Multi-file summary card rendered AFTER per-file cards so the
+                                    // Approve all / Reject all controls stay near the composer.
+                                    if blocks.count >= 2 {
+                                        MultiFileDiffSummary(
+                                            blocks: blocks,
+                                            onReviewAll: {
+                                                // Sheet is handled inside MultiFileDiffSummary.
+                                            },
+                                            onApproveAll: {
+                                                Task { await chat.applyAllEdits(messageID: msgID) }
+                                            },
+                                            onRejectAll: {
+                                                chat.rejectAllEdits(messageID: msgID)
+                                            },
+                                            onApplyBlock: { block in
+                                                Task { await chat.applyEditBlock(blockID: block.id, in: msgID) }
+                                            },
+                                            onRejectBlock: { block in
+                                                chat.rejectEditBlock(blockID: block.id, in: msgID)
+                                            }
+                                        )
                                     }
                                     // Single-file flow keeps the ApplyAll button; multi-file uses summary buttons
                                     if blocks.count < 2 {
