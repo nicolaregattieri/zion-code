@@ -412,6 +412,13 @@ struct ChatScreen: View {
     /// the composer card so they share its width / padding.
     @ViewBuilder private var composerTopSlot: some View {
         VStack(spacing: DesignSystem.Spacing.compact) {
+            // Compact pre-flight chip row above composer, visible only after
+            // the welcome state has been dismissed (first message sent). The
+            // welcome state renders its own full-size variant.
+            if !chat.thread.messages.isEmpty {
+                ChatPreflightChipRow(compact: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
             if !guidanceCandidates.isEmpty && !guidanceDecisionMade, let repo = repoURL {
                 ProjectGuidanceImportBanner(
                     candidates: guidanceCandidates,
