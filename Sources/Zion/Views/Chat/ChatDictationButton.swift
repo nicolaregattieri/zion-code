@@ -16,6 +16,13 @@ struct ChatDictationButton: View {
     let repoURL: URL?
 
     @State private var speechService = SpeechRecognitionService()
+    /// True between tap-to-stop and the transcript actually landing in the
+    /// composer. Apple Speech returns immediately on stop but the closing
+    /// frames + final transcript settle on a background queue; Gemini /
+    /// Whisper engines have an explicit network transcribe call. Without
+    /// this state the user sees the pulse die and assumes recording is
+    /// still on (no feedback that we are now working on the transcript).
+    @State private var isTranscribing = false
     @State private var isPolishing = false
     @State private var permissionDenial: SpeechRecognitionService.PermissionDenial?
     @State private var isPopoverPresented = false
@@ -26,10 +33,6 @@ struct ChatDictationButton: View {
     var body: some View {
         Button(action: handleTap) {
             ZStack {
-                // Pulsing ring while listening — proxy for an audio level
-                // meter. Real PCM level would require plumbing through
-                // SpeechRecognitionService.installTap; the pulse is a clear
-                // "I am awake and recording" signal without that refactor.
                 if speechService.isActive {
                     TimelineView(.animation) { context in
                         let phase = context.date.timeIntervalSinceReferenceDate
@@ -41,32 +44,41 @@ struct ChatDictationButton: View {
                             .opacity(2 - scale)
                     }
                 }
+                // Working states (transcribing / polishing) draw their own
+                // spinner ring around the glyph so the user has clear "still
+                // working" feedback after the pulse dies.
+                if isTranscribing || isPolishing {
+                    ProgressView()
+                        .controlSize(.small)
+                        .progressViewStyle(.circular)
+                }
                 Image(systemName: micSymbol)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(buttonColor)
-                if isPolishing {
-                    ProgressView()
-                        .controlSize(.mini)
-                }
+                    .opacity((isTranscribing || isPolishing) ? 0.35 : 1.0)
             }
             .frame(width: 30, height: 30)
             .background(
                 Circle().fill(
                     speechService.isActive
                     ? DesignSystem.Colors.destructive.opacity(0.18)
-                    : (isHovered
-                       ? DesignSystem.Colors.glassHover
-                       : Color.clear)
+                    : (isTranscribing || isPolishing
+                       ? DesignSystem.Colors.ai.opacity(0.18)
+                       : (isHovered ? DesignSystem.Colors.glassHover : Color.clear))
                 )
             )
             .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .disabled(isPolishing)
+        // Globally-listenable shortcut to mirror the terminal feature's
+        // mic toggle. ⌥⌘X starts dictation when idle, stops when active.
+        // Disabled state still receives the shortcut so the user does not
+        // accidentally fire a tap while a transcript is settling — the
+        // .disabled below blocks the action explicitly.
+        .keyboardShortcut("x", modifiers: [.option, .command])
+        .disabled(isTranscribing || isPolishing)
         .onHover { h in isHovered = h }
-        .help(speechService.isActive
-              ? L10n("chat.composer.dictation.stop")
-              : L10n("chat.composer.dictation.start"))
+        .help(tooltipText)
         .onLongPressGesture(minimumDuration: 0.45) {
             isPopoverPresented = true
         }
@@ -160,7 +172,15 @@ struct ChatDictationButton: View {
 
     private var micSymbol: String {
         if isPolishing { return "wand.and.sparkles" }
+        if isTranscribing { return "waveform" }
         return speechService.isActive ? "mic.fill" : "mic"
+    }
+
+    private var tooltipText: String {
+        if isPolishing { return L10n("chat.composer.dictation.polishing") }
+        if isTranscribing { return L10n("chat.composer.dictation.transcribing") }
+        if speechService.isActive { return L10n("chat.composer.dictation.stop") }
+        return L10n("chat.composer.dictation.start") + " (⌥⌘X)"
     }
 
     private var buttonColor: Color {
@@ -203,7 +223,14 @@ struct ChatDictationButton: View {
     }
 
     private func stopAndApply() {
+        // Flip the transcribing state immediately so the spinner replaces the
+        // pulse ring as soon as the user taps stop. Apple Speech returns
+        // synchronously but the SwiftUI render cycle still benefits from this
+        // explicit "we are now working" state — without it the user sees the
+        // pulse die and assumes the mic is still hot.
+        isTranscribing = true
         Task {
+            defer { isTranscribing = false }
             let result: (transcript: String, sessionID: UUID?)
             switch speechService.selectedEngine {
             case .apple:
