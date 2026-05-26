@@ -2927,6 +2927,9 @@
 "chat.composer.dictation.polish" = "Pulir con LLM";
 "chat.composer.dictation.polish.hint" = "Tras el dictado, envía la transcripción bruta por el proveedor de IA activo para corregir errores y preservar entrada mixta (narración en portugués + términos técnicos en inglés).";
 "chat.composer.queue.help" = "Mensajes en cola mientras el turno actual se transmite. Toca una fila para quitarla. Usa Detener para cancelar el turno actual Y limpiar la cola.";
+"chat.message.searchReplace.unknownFile" = "Bloque de edición";
+"chat.message.searchReplace.search" = "Buscar";
+"chat.message.searchReplace.replace" = "Reemplazar";
 
 // Chat commands
 "chat.command.clear.busy" = "No se puede limpiar mientras se genera una respuesta.";
