@@ -2899,6 +2899,8 @@
 "chat.local.status.idleLastTurn.help" = "The local server is running but Smart Auto routed the last turn to another provider (cheaper or healthier). The model is loaded in memory but unused. Click Disconnect to free the RAM.";
 "chat.composer.dictation.start" = "Start dictation";
 "chat.composer.dictation.stop" = "Stop dictation";
+"chat.composer.dictation.transcribing" = "Transcribing…";
+"chat.composer.dictation.polishing" = "Polishing transcript…";
 "chat.composer.dictation.title" = "Dictation";
 "chat.composer.dictation.polish" = "Polish with LLM";
 "chat.composer.dictation.polish.hint" = "After dictation, send the raw transcript through the active AI provider to fix transcription errors and preserve mixed-language input (Portuguese narration + English code terms).";

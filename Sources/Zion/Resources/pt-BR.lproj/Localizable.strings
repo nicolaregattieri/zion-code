@@ -2901,6 +2901,8 @@
 "chat.local.status.idleLastTurn.help" = "O servidor local está rodando mas o Smart Auto roteou o último turno para outro provedor (mais barato ou mais saudável). O modelo está carregado na memória mas sem uso. Clique em Desconectar para liberar a RAM.";
 "chat.composer.dictation.start" = "Iniciar ditado";
 "chat.composer.dictation.stop" = "Parar ditado";
+"chat.composer.dictation.transcribing" = "Transcrevendo…";
+"chat.composer.dictation.polishing" = "Polindo transcrição…";
 "chat.composer.dictation.title" = "Ditado";
 "chat.composer.dictation.polish" = "Polir com LLM";
 "chat.composer.dictation.polish.hint" = "Após o ditado, envia a transcrição bruta pelo provedor de IA ativo para corrigir erros e preservar entrada mista (narração em português + termos técnicos em inglês).";
