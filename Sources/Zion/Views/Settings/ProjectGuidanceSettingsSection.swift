@@ -23,11 +23,12 @@ struct ProjectGuidanceSettingsSection: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(row.repoURL.lastPathComponent)
                                 .font(DesignSystem.Typography.bodySemibold)
-                            Text(row.repoURL.path)
+                            Text(homeAliasedPath(row.repoURL.path))
                                 .font(DesignSystem.Typography.label)
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
                                 .truncationMode(.middle)
+                                .help(row.repoURL.path)
                             Text(row.sources.joined(separator: " · "))
                                 .font(DesignSystem.Typography.label)
                                 .foregroundStyle(.tertiary)
@@ -64,6 +65,15 @@ struct ProjectGuidanceSettingsSection: View {
     private func reload() {
         rows = ProjectGuidanceImporter.shared.allImported()
         refreshTick &+= 1
+    }
+
+    /// Replaces the user's home prefix with `~` so middle-truncation in
+    /// narrow Settings layouts keeps the meaningful tail of the path
+    /// (folder name) instead of dropping it.
+    private func homeAliasedPath(_ path: String) -> String {
+        let home = NSHomeDirectory()
+        guard path.hasPrefix(home) else { return path }
+        return "~" + path.dropFirst(home.count)
     }
 
     private func formatBytes(_ bytes: Int) -> String {
