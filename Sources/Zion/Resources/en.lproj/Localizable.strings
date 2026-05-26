@@ -2489,6 +2489,11 @@
 "settings.ai.provider.claudeCLI" = "Claude Code (subscription)";
 "settings.ai.provider.codexCLI" = "Codex CLI (ChatGPT)";
 "settings.ai.cli.subscription.title" = "Subscription CLIs";
+"settings.ai.safety.title" = "Routing & Safety";
+"settings.ai.safety.subscriptionFailover" = "Auto may route to subscription CLIs";
+"settings.ai.safety.subscriptionFailover.hint" = "When ON, Smart Auto includes installed + authenticated Claude/Codex CLIs as first-class candidates. Turn OFF to protect your Pro/Max quota — Auto falls back to API-key providers only. Explicit CLI selection ignores this setting.";
+"settings.ai.safety.allowEdits" = "Allow tool-driven file edits";
+"settings.ai.safety.allowEdits.hint" = "When ON, native provider loops (Anthropic, OpenAI, Gemini) may call the write_file tool to modify files in your repo. Turn OFF to require an explicit approval flow per edit (recommended for CI / shared workspaces).";
 "settings.ai.cli.installed" = "Installed v%@";
 "settings.ai.cli.notInstalled" = "Not installed";
 "settings.ai.cli.notInstalled.claude.hint" = "Install: `npm install -g @anthropic-ai/claude-code`";
