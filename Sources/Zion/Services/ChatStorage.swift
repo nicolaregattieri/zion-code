@@ -50,7 +50,15 @@ actor ChatStorage {
     // MARK: - Public API
 
     static func repoID(for url: URL) -> String {
-        let path = url.standardizedFileURL.path
+        // Normalize against path-encoding variants that would otherwise produce
+        // different hashes for the same logical repository: trailing slashes
+        // and symlink prefixes (e.g. /var → /private/var on macOS). Without
+        // this collapse, the same repo can hash to two distinct IDs and
+        // orphan threads in a parallel per-repo DB.
+        var path = url.resolvingSymlinksInPath().standardizedFileURL.path
+        while path.count > 1, path.hasSuffix("/") {
+            path.removeLast()
+        }
         let data = Data(path.utf8)
         let digest = SHA256.hash(data: data)
         return digest.prefix(8).map { String(format: "%02x", $0) }.joined()
