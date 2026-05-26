@@ -37,4 +37,24 @@ final class ChatServiceBudgetGateTests: XCTestCase {
     func test_shouldCompact_zero_estimated_returns_false() {
         XCTAssertFalse(ChatService.shouldCompact(estimated: 0, budget: 1000))
     }
+
+    func test_turnMeteredTotals_records_only_new_usage() {
+        let before = ChatService.MeteredTotals(costUSD: 0.25, inputTokens: 1_000, outputTokens: 100)
+        let after = ChatService.MeteredTotals(costUSD: 0.40, inputTokens: 1_450, outputTokens: 170)
+
+        let delta = ChatService.turnMeteredTotals(after: after, before: before)
+
+        XCTAssertEqual(delta.costUSD, 0.15, accuracy: 1e-9)
+        XCTAssertEqual(delta.inputTokens, 450)
+        XCTAssertEqual(delta.outputTokens, 70)
+    }
+
+    func test_turnMeteredTotals_never_records_negative_usage() {
+        let before = ChatService.MeteredTotals(costUSD: 0.40, inputTokens: 1_450, outputTokens: 170)
+        let after = ChatService.MeteredTotals(costUSD: 0.25, inputTokens: 1_000, outputTokens: 100)
+
+        let delta = ChatService.turnMeteredTotals(after: after, before: before)
+
+        XCTAssertEqual(delta, ChatService.MeteredTotals(costUSD: 0, inputTokens: 0, outputTokens: 0))
+    }
 }

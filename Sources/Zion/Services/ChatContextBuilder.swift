@@ -175,18 +175,12 @@ struct ChatContextBuilder {
     }
 
     private func expandFile(path: String, repoURL: URL) async -> String {
-        // Safe path resolution — reject if outside repo
-        let resolvedURL = repoURL
-            .appendingPathComponent(path)
-            .standardizedFileURL
-        let repoStandardized = repoURL.standardizedFileURL
-
-        guard resolvedURL.path.hasPrefix(repoStandardized.path + "/")
-                || resolvedURL.path == repoStandardized.path else {
-            return L10n("chat.slash.fileOutsideRepo")
-        }
-
         do {
+            let resolvedURL = try RepositoryWorker.resolveInsideRepo(
+                path: path,
+                repositoryURL: repoURL,
+                op: "read"
+            )
             let content = try String(contentsOf: resolvedURL, encoding: .utf8)
             let truncated = content.count > AILimits.maxFileContentPreviewLength
                 ? String(content.prefix(AILimits.maxFileContentPreviewLength))
