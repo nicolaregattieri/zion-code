@@ -2920,6 +2920,7 @@
 "settings.ai.projectGuidance.subtitle" = "Repos with CLAUDE.md / AGENTS.md / GEMINI.md / .cursorrules content injected into Zion Talks. Click Clear to revoke an import and re-show the banner on next visit.";
 "settings.ai.projectGuidance.empty" = "No projects have imported guidance yet. Open a repo with a CLAUDE.md / AGENTS.md / GEMINI.md / .cursorrules and the chat composer will offer to import it.";
 "settings.ai.projectGuidance.clear" = "Clear";
+"settings.ai.tab.intro" = "Used by built-in AI features (commit messages, PR descriptions, blame, conflict resolution) AND Zion Talks chat. For chat-only settings, see Zion Talks.";
 "settings.ai.globalPrompt.title" = "Global system prompt";
 "settings.ai.globalPrompt.subtitle" = "Applied to every Zion Talks turn across every repo. Project guidance still overrides repo-specific rules.";
 "settings.ai.globalPrompt.hint" = "Examples: \"Respond in Brazilian Portuguese.\" · \"Always cite file paths with file:line.\" · \"I prefer terse answers, skip preamble.\"";
