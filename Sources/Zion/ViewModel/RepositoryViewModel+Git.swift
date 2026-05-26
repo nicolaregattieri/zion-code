@@ -589,6 +589,8 @@ extension RepositoryViewModel {
         extendFileWatcherGitMetadataSuppression(by: 1.2)
 
         refreshTask = Task {
+            let perfStart = Date()
+            logger.log(.info, "perf.refreshRepository.start", context: "origin=\(origin.rawValue)", source: #function)
             do {
                 // Fetch remote refs in the background instead of blocking the
                 // initial load. Awaiting `fetch --all --prune` on a user-initiated
@@ -599,6 +601,7 @@ extension RepositoryViewModel {
                 // the local `loadRepository` can run while fetch is still awaiting
                 // on its subprocess. When fetch finishes we kick a silent refresh
                 // to pick up any new origin/* refs.
+                let perfT0 = Date()
                 if origin == .userInitiated {
                     Task { [weak self] in
                         guard let self else { return }
@@ -624,6 +627,7 @@ extension RepositoryViewModel {
                     options: effectiveOptions,
                     limit: commitLimitSnapshot
                 )
+                logger.log(.info, "perf.loadRepository dur=\(Int(Date().timeIntervalSince(perfT0)*1000))ms commits=\(payload.commits.count)", source: #function)
                 try Task.checkCancellation()
                 guard refreshRequestID == requestID else {
                     onFinish?()
@@ -657,6 +661,7 @@ extension RepositoryViewModel {
                 }
                 if remotes != payload.remotes { remotes = payload.remotes }
 
+                let perfTMerge = Date()
                 let mergedCommits = mergeExistingStats(into: payload.commits)
                 // Fast-path: skip graph re-render if commits haven't changed.
                 // Also force update when branch labels or ref positions moved
@@ -674,6 +679,7 @@ extension RepositoryViewModel {
                     commits = mergedCommits
                     recalculateMaxLaneCount()
                 }
+                logger.log(.info, "perf.mergeAndLanes dur=\(Int(Date().timeIntervalSince(perfTMerge)*1000))ms changed=\(commitsChanged)", source: #function)
                 if hasMoreCommits != payload.hasMoreCommits { hasMoreCommits = payload.hasMoreCommits }
 
                 // Preserve user's selection if they clicked a different commit while
@@ -749,6 +755,7 @@ extension RepositoryViewModel {
                 if setBusy {
                     isBusy = false
                     disarmBusyWatchdog()
+                    logger.log(.info, "perf.refreshRepository.busyCleared dur=\(Int(Date().timeIntervalSince(perfStart)*1000))ms", context: "origin=\(origin.rawValue)", source: #function)
                     if clearRepositorySwitchStateOnBusyCompletion, isSwitchingRepository {
                         clearRepositorySwitchState()
                     }
@@ -769,8 +776,12 @@ extension RepositoryViewModel {
                 }
                 // Stats and prefetch are decorative -- skip on background ticks (RT-005)
                 if origin == .userInitiated || origin == .gitAction || origin == .repositorySwitch {
+                    let perfTStats = Date()
                     loadCommitStats()
+                    logger.log(.info, "perf.loadCommitStats.dispatched dur=\(Int(Date().timeIntervalSince(perfTStats)*1000))ms", source: #function)
+                    let perfTPrefetch = Date()
                     prefetchCommitDetails(for: Array(payload.commits.prefix(Constants.Limits.commitDetailsPrefetchCount).map(\.id)))
+                    logger.log(.info, "perf.prefetchDispatched dur=\(Int(Date().timeIntervalSince(perfTPrefetch)*1000))ms count=\(min(payload.commits.count, Constants.Limits.commitDetailsPrefetchCount))", source: #function)
                 }
                 ensureTerminalBridgeHealth(context: "refreshRepository.success.\(origin.rawValue)")
                 onFinish?()
