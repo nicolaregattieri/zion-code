@@ -29,6 +29,14 @@ struct ChatDictationButton: View {
     @State private var isHovered = false
 
     @AppStorage(DictationPolishService.settingsKey) private var polishEnabled: Bool = true
+    /// Gate the ⌥⌘X shortcut on Zion Talks being the visible section. Code
+    /// tab also binds ⌥⌘X to its terminal mic; without this scope check
+    /// both fired together because ContentView keeps every screen mounted.
+    @Environment(\.zionActiveSection) private var activeSection
+
+    private var isChatActive: Bool {
+        activeSection == .chat
+    }
 
     var body: some View {
         Button(action: handleTap) {
@@ -76,7 +84,10 @@ struct ChatDictationButton: View {
         // accidentally fire a tap while a transcript is settling — the
         // .disabled below blocks the action explicitly.
         .keyboardShortcut("x", modifiers: [.option, .command])
-        .disabled(isTranscribing || isPolishing)
+        // Shortcut fires only when Zion Talks is the visible section. The
+        // .disabled gating below blocks the keyboard event from triggering
+        // the button action when the user is on Code / Graph / Operations.
+        .disabled(isTranscribing || isPolishing || !isChatActive)
         .onHover { h in isHovered = h }
         .help(tooltipText)
         .onLongPressGesture(minimumDuration: 0.45) {

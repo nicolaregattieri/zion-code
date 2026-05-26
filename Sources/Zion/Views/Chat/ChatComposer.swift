@@ -358,8 +358,20 @@ struct ChatComposer: View {
             HStack(spacing: DesignSystem.Spacing.iconInlineGap) {
                 Image(systemName: allowBashTool ? "terminal.fill" : "terminal")
                     .font(DesignSystem.Typography.label)
-                Text(L10n("chat.composer.bashTool"))
+                // Explicit "Shell: ON / OFF" label — bare "Bash" left the
+                // user guessing whether the pill was a status badge or a
+                // toggle (Image #x feedback).
+                Text(allowBashTool
+                     ? L10n("chat.composer.bashTool.labelOn")
+                     : L10n("chat.composer.bashTool.labelOff"))
                     .font(DesignSystem.Typography.labelMedium)
+                // Mini status dot for at-a-glance recognition independent of
+                // the text label / icon fill state.
+                Circle()
+                    .fill(allowBashTool
+                          ? DesignSystem.Colors.warning
+                          : DesignSystem.Colors.textTertiary)
+                    .frame(width: 6, height: 6)
             }
             .padding(.horizontal, DesignSystem.Spacing.compact)
             .padding(.vertical, DesignSystem.Spacing.micro)

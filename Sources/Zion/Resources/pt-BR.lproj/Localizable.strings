@@ -2909,6 +2909,8 @@
 "chat.composer.queue.help" = "Mensagens enfileiradas enquanto o turno atual streama. Toque numa linha para remover. Use Parar para cancelar o turno atual E limpar a fila.";
 "chat.composer.queue.cleared" = "Removidas %d mensagem(ns) da fila";
 "chat.composer.bashTool" = "Bash";
+"chat.composer.bashTool.labelOn" = "Shell: ON";
+"chat.composer.bashTool.labelOff" = "Shell: OFF";
 "chat.projectGuidance.banner.title" = "Contexto do projeto detectado (%@ arquivos)";
 "chat.projectGuidance.banner.subtitle" = "Este repo tem arquivos de contexto pra outras LLMs. Importa pro Zion Talks responder consistente com as convenções do projeto em vez de começar do zero.";
 "chat.projectGuidance.banner.import" = "Importar pro contexto";
