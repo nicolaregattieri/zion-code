@@ -41,6 +41,37 @@ final class MCPConfigBuilderTests: XCTestCase {
         XCTAssertEqual(args, ["--repo", cwd.path], "args should be ['--repo', cwd.path]")
     }
 
+    func testBuildDoesNotEnableMutationToolsByDefault() throws {
+        let cwd = URL(fileURLWithPath: "/tmp/read-only-repo")
+        let configURL = try MCPConfigBuilder.build(cwd: cwd, binaryPath: "/tmp/zion-mcp")
+        defer { try? FileManager.default.removeItem(at: configURL) }
+
+        let data = try Data(contentsOf: configURL)
+        let root = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        let zion = (root?["mcpServers"] as? [String: Any])?["zion"] as? [String: Any]
+        let args = zion?["args"] as? [String]
+
+        XCTAssertEqual(args, ["--repo", cwd.path])
+        XCTAssertFalse(args?.contains("--allow-edits") ?? true)
+    }
+
+    func testBuildForEditEnabledSessionPassesExplicitMutationOptIn() throws {
+        let cwd = URL(fileURLWithPath: "/tmp/editable-repo")
+        let configURL = try MCPConfigBuilder.build(
+            cwd: cwd,
+            binaryPath: "/tmp/zion-mcp",
+            allowEdits: true
+        )
+        defer { try? FileManager.default.removeItem(at: configURL) }
+
+        let data = try Data(contentsOf: configURL)
+        let root = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        let zion = (root?["mcpServers"] as? [String: Any])?["zion"] as? [String: Any]
+        let args = zion?["args"] as? [String]
+
+        XCTAssertEqual(args, ["--repo", cwd.path, "--allow-edits"])
+    }
+
     // MARK: - testSweepRemovesStaleFiles
 
     func testSweepRemovesStaleFiles() throws {

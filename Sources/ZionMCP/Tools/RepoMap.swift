@@ -73,7 +73,7 @@ struct RepoMapTool: Tool {
         let query = try args.requireString("query")
         let limit: Int
         if let v = args["limit"], case .int(let n) = v {
-            limit = max(1, n)
+            limit = max(1, min(n, 50))
         } else {
             limit = 30
         }

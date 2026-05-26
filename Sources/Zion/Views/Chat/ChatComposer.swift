@@ -13,6 +13,9 @@ struct ChatComposer: View {
     /// banner so they share the composer's horizontal padding instead of
     /// floating loose at the edge of the window.
     let topSlot: AnyView
+    /// Repository this composer is targeting. Forwarded to the dictation
+    /// button so the polish call carries `cwd` to CLI providers.
+    var repoURL: URL? = nil
 
     @AppStorage(UserDefaultsKeys.AI.provider) private var selectedProviderRaw: String = AIProvider.none.rawValue
 
@@ -51,6 +54,7 @@ struct ChatComposer: View {
                     localSwapMenu
                 }
                 Spacer()
+                ChatDictationButton(composerText: $text, repoURL: repoURL)
                 newChatButton
                 if chat.isStreaming {
                     stopButton

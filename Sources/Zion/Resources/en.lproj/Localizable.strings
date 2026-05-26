@@ -2489,6 +2489,11 @@
 "settings.ai.provider.claudeCLI" = "Claude Code (subscription)";
 "settings.ai.provider.codexCLI" = "Codex CLI (ChatGPT)";
 "settings.ai.cli.subscription.title" = "Subscription CLIs";
+"settings.ai.safety.title" = "Routing & Safety";
+"settings.ai.safety.subscriptionFailover" = "Auto may route to subscription CLIs";
+"settings.ai.safety.subscriptionFailover.hint" = "When ON, Smart Auto includes installed + authenticated Claude/Codex CLIs as first-class candidates. Turn OFF to protect your Pro/Max quota — Auto falls back to API-key providers only. Explicit CLI selection ignores this setting.";
+"settings.ai.safety.allowEdits" = "Allow tool-driven file edits";
+"settings.ai.safety.allowEdits.hint" = "When ON, native provider loops (Anthropic, OpenAI, Gemini) may call the write_file tool to modify files in your repo. Turn OFF to require an explicit approval flow per edit (recommended for CI / shared workspaces).";
 "settings.ai.cli.installed" = "Installed v%@";
 "settings.ai.cli.notInstalled" = "Not installed";
 "settings.ai.cli.notInstalled.claude.hint" = "Install: `npm install -g @anthropic-ai/claude-code`";
@@ -2648,7 +2653,7 @@
 "chat.agent.tier.fullAccess.warning" = "Full access lets the agent run any shell command without asking. Only enable if you trust the model and understand the risks.";
 "chat.agent.maxSteps.label" = "Max steps";
 "chat.agent.bashAllowlist.label" = "Bash allowlist";
-"chat.agent.bashAllowlist.placeholder" = "Newline-separated commands. Leave empty for defaults.";
+"chat.agent.bashAllowlist.placeholder" = "git\nswift\nls\npwd\ncat\necho";
 "chat.agent.stopOnFirstError.label" = "Stop on first error";
 "chat.agent.step.label" = "Step %@/%@";
 "chat.agent.plan.proposed.title" = "Plan ready for review";
@@ -2892,6 +2897,11 @@
 "chat.auto.providerShort.local" = "Local";
 "chat.local.status.idleLastTurn" = "Idle · Last turn: %@";
 "chat.local.status.idleLastTurn.help" = "The local server is running but Smart Auto routed the last turn to another provider (cheaper or healthier). The model is loaded in memory but unused. Click Disconnect to free the RAM.";
+"chat.composer.dictation.start" = "Start dictation";
+"chat.composer.dictation.stop" = "Stop dictation";
+"chat.composer.dictation.title" = "Dictation";
+"chat.composer.dictation.polish" = "Polish with LLM";
+"chat.composer.dictation.polish.hint" = "After dictation, send the raw transcript through the active AI provider to fix transcription errors and preserve mixed-language input (Portuguese narration + English code terms).";
 
 // Chat commands
 "chat.command.clear.busy" = "Cannot clear while a response is in progress.";

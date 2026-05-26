@@ -205,6 +205,48 @@ final class ChatServiceCLIIntegrationTests: XCTestCase {
 
         XCTAssertTrue(service.pendingToolEvents.isEmpty, "Late events after .done must be discarded")
     }
+
+    func testResumedSessionDoesNotResendPriorRenderedHistory() async throws {
+        let repoURL = try dummyRepoURL()
+        defer { GitTestHelper.cleanup(repoURL) }
+
+        let recorder = PayloadRecorder()
+        let service = makeService(repoURL: repoURL) { payload, _ in
+            AsyncThrowingStream<CLIStreamEvent, Error> { continuation in
+                Task {
+                    await recorder.record(payload)
+                    continuation.yield(.sessionStarted(id: "session-1"))
+                    continuation.yield(.textDelta("ok"))
+                    continuation.yield(.done)
+                    continuation.finish()
+                }
+            }
+        }
+
+        await service.send(
+            text: "first question with expensive history",
+            provider: .claudeCLI,
+            apiKey: "",
+            mode: .efficient,
+            repoURL: repoURL,
+            branch: "main"
+        )
+        await service.send(
+            text: "second question only",
+            provider: .claudeCLI,
+            apiKey: "",
+            mode: .efficient,
+            repoURL: repoURL,
+            branch: "main"
+        )
+
+        let submitted = await recorder.messages()
+        XCTAssertEqual(submitted.count, 2)
+        XCTAssertTrue(submitted[0].contains("first question with expensive history"))
+        XCTAssertTrue(submitted[1].contains("second question only"))
+        XCTAssertFalse(submitted[1].contains("first question with expensive history"))
+        XCTAssertFalse(submitted[1].contains("## Conversation so far"))
+    }
 }
 
 // MARK: - StreamBridge
@@ -223,5 +265,18 @@ private actor StreamBridge {
 
     func finish() {
         continuation?.finish()
+    }
+}
+
+private actor PayloadRecorder {
+    private var submittedMessages: [String] = []
+
+    func record(_ payload: AIPromptPayload) {
+        let message = payload.untrustedSections.first(where: { $0.kind == "user_message" })?.content ?? ""
+        submittedMessages.append(message)
+    }
+
+    func messages() -> [String] {
+        submittedMessages
     }
 }

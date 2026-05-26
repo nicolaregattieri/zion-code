@@ -95,6 +95,22 @@ final class ChatContextBuilderTests: XCTestCase {
         XCTAssertTrue(result.contains(outsideMsg), "Should reject outside-repo path, got: \(result)")
     }
 
+    func testExpandSlashFileRejectsSymlinkOutsideRepo() async throws {
+        let outsideURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("zion-secret-\(UUID().uuidString).txt")
+        defer { try? FileManager.default.removeItem(at: outsideURL) }
+        try "external secret\n".write(to: outsideURL, atomically: true, encoding: .utf8)
+        try FileManager.default.createSymbolicLink(
+            at: repoURL.appendingPathComponent("linked.txt"),
+            withDestinationURL: outsideURL
+        )
+
+        let result = await builder.expandSlashCommands("/file linked.txt", repoURL: repoURL)
+
+        XCTAssertTrue(result.contains(L10n("chat.slash.fileOutsideRepo")))
+        XCTAssertFalse(result.contains("external secret"))
+    }
+
     func testExpandSlashCommit() async throws {
         // Get HEAD SHA
         let sha = try await worker.runAction(args: ["rev-parse", "--short=7", "HEAD"], in: repoURL)

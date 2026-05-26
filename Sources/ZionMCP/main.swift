@@ -7,11 +7,14 @@ import Foundation
 // MARK: - CLI args
 
 var repoPath: String? = nil
+var allowEdits = false
 var cliArgs = CommandLine.arguments.dropFirst()
 var argIter = cliArgs.makeIterator()
 while let arg = argIter.next() {
     if arg == "--repo", let path = argIter.next() {
         repoPath = path
+    } else if arg == "--allow-edits" {
+        allowEdits = true
     }
 }
 
@@ -27,26 +30,27 @@ let repoURL: URL = {
     return URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
 }()
 
-registry.register(GitLog(repoURL: repoURL))
-registry.register(BranchList(repoURL: repoURL))
-registry.register(PendingChanges(repoURL: repoURL))
-registry.register(CommitInspect(repoURL: repoURL))
-registry.register(Worktrees(repoURL: repoURL))
+func registerMutationTools(in registry: ToolRegistry, repoURL: URL, allowEdits: Bool) {
+    guard allowEdits else { return }
+    registry.register(StashApplyTool(repoURL: repoURL))
+    registry.register(EditTool(repoURL: repoURL))
+}
 
-// T3 — Stash + RepoMemorySearch
-registry.register(StashListTool(repoURL: repoURL))
-registry.register(StashApplyTool(repoURL: repoURL))
-registry.register(RepoMemorySearchTool())
+func registerSessionTools(in registry: ToolRegistry, repoURL: URL, allowEdits: Bool) {
+    registry.register(GitLog(repoURL: repoURL))
+    registry.register(BranchList(repoURL: repoURL))
+    registry.register(PendingChanges(repoURL: repoURL))
+    registry.register(CommitInspect(repoURL: repoURL))
+    registry.register(Worktrees(repoURL: repoURL))
+    registry.register(StashListTool(repoURL: repoURL))
+    registry.register(RepoMemorySearchTool(repoURL: repoURL))
+    registry.register(RepoMapTool(repoURL: repoURL))
+    registerMutationTools(in: registry, repoURL: repoURL, allowEdits: allowEdits)
+}
 
-// T4 — OpenInEditor bridge
-registry.register(OpenInEditorTool())
-
-// T8 — EditTool + RepoMapTool
-registry.register(EditTool(repoURL: repoURL))
-registry.register(RepoMapTool(repoURL: repoURL))
-
-// P11-T4 — BashTool (approval tier wired by T8/AgentRuntime)
-registry.register(BashToolMCP(repoURL: repoURL))
+// Advertise only tools that execute correctly for the active CLI session.
+// `bash` and `zion_open_in_editor` stay unregistered until their runtime bridges exist.
+registerSessionTools(in: registry, repoURL: repoURL, allowEdits: allowEdits)
 
 // MARK: - initialize
 

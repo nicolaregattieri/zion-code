@@ -21,15 +21,20 @@ enum MCPConfigBuilder {
     ///   - cwd: The repository root the MCP server should observe (`--repo` arg).
     ///   - binaryPath: Override the binary path (used by unit tests). When nil,
     ///     `resolveBinaryPath()` is called to locate the production or dev binary.
+    ///   - allowEdits: Adds mutating MCP tools only after the user has enabled CLI edits.
     /// - Returns: URL of the written config file.
     /// - Throws: If JSON serialisation or the file write fails.
-    static func build(cwd: URL, binaryPath: String? = nil) throws -> URL {
+    static func build(cwd: URL, binaryPath: String? = nil, allowEdits: Bool = false) throws -> URL {
         let binary = binaryPath ?? resolveBinaryPath() ?? ""
+        var serverArgs = ["--repo", cwd.path]
+        if allowEdits {
+            serverArgs.append("--allow-edits")
+        }
         let config: [String: Any] = [
             "mcpServers": [
                 "zion": [
                     "command": binary,
-                    "args": ["--repo", cwd.path]
+                    "args": serverArgs
                 ]
             ]
         ]
@@ -95,11 +100,10 @@ enum MCPConfigBuilder {
 
     // MARK: - Tool Registry
 
-    /// All tool descriptors registered in the Zion-internal MCP path.
-    /// Every provider family (Anthropic, OpenAI, Gemini, local, ReAct, CLI passthrough)
-    /// sees these tools via the MCP server's `tools/list` or direct descriptor injection.
+    /// Tool descriptors backed by Zion's in-process handlers for native provider loops.
+    /// Mutation and shell tools are excluded until their execution path is fully wired.
     static func allTools() -> [MCPToolDescriptor] {
-        return [bashToolDescriptorTyped(), repoMapDescriptor(), findSymbolDescriptor()]
+        return [repoMapDescriptor(), findSymbolDescriptor()]
     }
 
     /// P14: Returns built-in tools PLUS tools advertised by user-configured MCP servers.
@@ -197,22 +201,6 @@ enum MCPConfigBuilder {
     }
 
     // MARK: - Bash Tool Descriptor
-
-    /// Returns the `bash` tool as a typed `MCPToolDescriptor` (used by `allTools()`).
-    private static func bashToolDescriptorTyped() -> MCPToolDescriptor {
-        MCPToolDescriptor(
-            name: "bash",
-            description: "Execute a shell command in the workspace. Respects approval tier.",
-            inputSchema: [
-                "type": "object",
-                "properties": [
-                    "command": ["type": "string"] as [String: Any],
-                    "timeoutSec": ["type": "integer", "minimum": 1, "maximum": 300] as [String: Any]
-                ] as [String: Any],
-                "required": ["command"]
-            ]
-        )
-    }
 
     /// Returns the JSON schema descriptor for the `bash` MCP tool.
     ///

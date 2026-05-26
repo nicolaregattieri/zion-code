@@ -16,6 +16,11 @@ final class CrossProviderToolsTests: XCTestCase {
         XCTAssertTrue(tools.contains { $0.name == "find_symbol" }, "find_symbol must be registered for every provider family")
     }
 
+    func test_allTools_doesNotAdvertiseUnwiredBash() {
+        let tools = MCPConfigBuilder.allTools()
+        XCTAssertFalse(tools.contains { $0.name == "bash" }, "bash must stay hidden until it has a live dispatcher")
+    }
+
     func test_repo_map_schema_object_with_properties() {
         guard let tool = MCPConfigBuilder.allTools().first(where: { $0.name == "repo_map" }) else {
             XCTFail("repo_map missing")

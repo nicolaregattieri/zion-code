@@ -329,6 +329,7 @@ struct ChatScreen: View {
             onSend: {
                 let textToSend = composerText
                 composerText = ""
+                chat.threadDrafts.removeValue(forKey: chat.activeThreadID)
                 guard let url = repoURL else { return }
                 let modelOverride = ProviderModelCatalog.selectedModel(for: provider)
                 Task {
@@ -350,10 +351,31 @@ struct ChatScreen: View {
                 chat.newThread()
                 composerText = ""
             },
-            topSlot: AnyView(composerTopSlot)
+            topSlot: AnyView(composerTopSlot),
+            repoURL: repoURL
         )
         .frame(maxWidth: DesignSystem.Spacing.chatContentMaxWidth)
         .frame(maxWidth: .infinity)
+        // Save the composer draft into the OLD thread before switching, then
+        // load the draft (if any) saved for the NEW thread. Empty drafts are
+        // not persisted so the dictionary stays tight.
+        .onChange(of: chat.activeThreadID) { oldID, newID in
+            if composerText.isEmpty {
+                chat.threadDrafts.removeValue(forKey: oldID)
+            } else {
+                chat.threadDrafts[oldID] = composerText
+            }
+            composerText = chat.threadDrafts[newID] ?? ""
+        }
+        .onAppear {
+            // Restore any draft saved for whatever thread is active when the
+            // screen mounts (covers re-entry from another tab).
+            if composerText.isEmpty,
+               let restored = chat.threadDrafts[chat.activeThreadID],
+               !restored.isEmpty {
+                composerText = restored
+            }
+        }
     }
 
     /// Renders the auto-start banner and the local-server status bar inside

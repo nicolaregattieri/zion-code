@@ -6,6 +6,13 @@ struct AISettingsTab: View {
     @AppStorage(UserDefaultsKeys.AI.commitMessageStyle) private var commitStyleRaw: String = CommitMessageStyle.compact.rawValue
     @AppStorage(UserDefaultsKeys.AI.preCommitReview) private var preCommitReviewEnabled: Bool = false
     @AppStorage(UserDefaultsKeys.AI.transferSupportHints) private var aiTransferSupportHints: Bool = true
+    // Both flags default to true (opt-out). Power users who want stricter
+    // posture flip them off here. Backing UserDefaults keys are read elsewhere
+    // (ProviderOrchestrator + ZionHarness) using the same default = true so
+    // a brand-new install behaves the same whether the user visits this tab
+    // or not.
+    @AppStorage("chat.routing.subscriptionFailover") private var subscriptionFailover: Bool = true
+    @AppStorage("chat.allowEdits") private var allowEdits: Bool = true
     @AppStorage(UserDefaultsKeys.RepoMemory.activeRepoName) private var repoMemoryRepoName: String = ""
     @AppStorage(UserDefaultsKeys.RepoMemory.lastRefresh) private var repoMemoryLastRefresh: Double = 0
     @AppStorage(UserDefaultsKeys.RepoMemory.ready) private var repoMemoryReady: Bool = false
@@ -112,6 +119,20 @@ struct AISettingsTab: View {
             }
             .task {
                 await refreshCLIStatus()
+            }
+
+            Section(L10n("settings.ai.safety.title")) {
+                Toggle(L10n("settings.ai.safety.subscriptionFailover"),
+                       isOn: $subscriptionFailover)
+                Text(L10n("settings.ai.safety.subscriptionFailover.hint"))
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(.secondary)
+
+                Toggle(L10n("settings.ai.safety.allowEdits"),
+                       isOn: $allowEdits)
+                Text(L10n("settings.ai.safety.allowEdits.hint"))
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(.secondary)
             }
 
             if defaultProvider != .none {

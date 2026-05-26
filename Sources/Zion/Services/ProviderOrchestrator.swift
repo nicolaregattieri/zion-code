@@ -182,9 +182,8 @@ actor ProviderOrchestrator {
     ///
     /// Walks the chain in declared order applying the same health + cost-cap +
     /// connectivity gate to every provider. Subscription CLIs (claudeCLI /
-    /// codexCLI) used to be gated behind `chat.routing.subscriptionFailover`,
-    /// but Smart Auto inverts the policy: if the user installed + authenticated
-    /// the CLI, they want it as a first-class candidate (no extra opt-in).
+    /// codexCLI) participate in automatic routing only after the user enables
+    /// subscription failover in settings; an explicit CLI selection is unchanged.
     /// Diagnostic logs are emitted so a "No AI provider configured" outcome
     /// can be debugged from `~/Library/Logs/Zion/`.
     private func firstEligible(
@@ -196,7 +195,20 @@ actor ProviderOrchestrator {
             "orchestrator.firstEligible candidates=\(chainSummary)",
             source: "orchestrator")
 
+        // Default ON: users who installed + authenticated a CLI want it as a
+        // first-class Auto candidate. Power users on metered Pro/Max plans who
+        // want to protect their CLI quota can flip the toggle off in
+        // Settings → AI → Routing to fall back to API-key providers only.
+        let allowsSubscriptionFailover = (
+            UserDefaults.standard.object(forKey: Self.subscriptionFailoverKey) as? Bool
+        ) ?? true
         for provider in candidates {
+            if isSubscriptionCLI(provider) && !allowsSubscriptionFailover {
+                await DiagnosticLogger.shared.log(.info,
+                    "skip \(provider.rawValue): subscription failover disabled",
+                    source: "orchestrator")
+                continue
+            }
             let healthy = await health.isHealthy(provider)
             if !healthy {
                 await DiagnosticLogger.shared.log(.warn,

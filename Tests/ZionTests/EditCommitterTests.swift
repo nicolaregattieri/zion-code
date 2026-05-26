@@ -114,4 +114,31 @@ final class EditCommitterTests: XCTestCase {
         let msg = try await worker.runAction(args: ["log", "-1", "--format=%s"], in: repoURL).clean
         XCTAssertEqual(msg, "aiedit: fix thing")
     }
+
+    func testRejectsSymlinkEscapingRepositoryBeforeWriting() async throws {
+        let repoURL = try GitTestHelper.makeTempRepo()
+        defer { GitTestHelper.cleanup(repoURL) }
+        let outsideURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("zion-aiedit-outside-\(UUID().uuidString).swift")
+        defer { try? FileManager.default.removeItem(at: outsideURL) }
+        try "// original\n".write(to: outsideURL, atomically: true, encoding: .utf8)
+        try FileManager.default.createSymbolicLink(
+            at: repoURL.appendingPathComponent("Linked.swift"),
+            withDestinationURL: outsideURL
+        )
+
+        let worker = RepositoryWorker()
+        let committer = EditCommitter(worker: worker, commitMessageProvider: stubProvider)
+        let result = await committer.commit(
+            inputs: [EditCommitInput(path: "Linked.swift", contents: "// modified\n")],
+            in: repoURL,
+            branch: "main"
+        )
+
+        XCTAssertNotNil(result.failureReason)
+        XCTAssertNil(result.commitSHA)
+        XCTAssertEqual(try String(contentsOf: outsideURL, encoding: .utf8), "// original\n")
+        let stashList = try await worker.runAction(args: ["stash", "list"], in: repoURL)
+        XCTAssertTrue(stashList.isEmpty)
+    }
 }

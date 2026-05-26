@@ -29,7 +29,7 @@ private struct RMSSnapshot: Codable {
 // MARK: - Search result entry
 
 private struct SearchEntry {
-    let path: String       // snapshot file path
+    let path: String       // snapshot filename (storage location is not exposed)
     let kind: String       // "moduleHint" | "branchPattern" | "convention" | "testKey"
     let snippet: String    // the matching value
     let score: Int
@@ -39,21 +39,24 @@ private struct SearchEntry {
 // MARK: - zion_repo_memory_search
 
 struct RepoMemorySearchTool: Tool {
+    let repoURL: URL
+
     /// Injected for tests; defaults to the real Application Support directory.
     let snapshotsDir: URL
 
     /// Default initialiser pointing at the real location.
-    init() {
+    init(repoURL: URL) {
+        self.repoURL = repoURL
         let appSupport = FileManager.default
             .urls(for: .applicationSupportDirectory, in: .userDomainMask)
             .first ?? URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Library/Application Support")
         self.snapshotsDir = appSupport
-            .appendingPathComponent("Zion")
-            .appendingPathComponent("repo-memory")
+            .appendingPathComponent("Zion/RepoMemory", isDirectory: true)
     }
 
     /// Injected initialiser for tests.
-    init(snapshotsDir: URL) {
+    init(repoURL: URL, snapshotsDir: URL) {
+        self.repoURL = repoURL
         self.snapshotsDir = snapshotsDir
     }
 
@@ -83,7 +86,7 @@ struct RepoMemorySearchTool: Tool {
         let query = try args.requireString("query")
         let limit: Int
         if let v = args["limit"], case .int(let n) = v {
-            limit = max(1, n)
+            limit = max(1, min(n, 20))
         } else {
             limit = 8
         }
@@ -97,8 +100,8 @@ struct RepoMemorySearchTool: Tool {
             return makeContent(["results": .array([])])
         }
 
-        // Load all snapshot files
-        let snapshots = loadSnapshots()
+        // Only the active repository's memory may enter this chat session.
+        let snapshots = loadCurrentRepositorySnapshot()
 
         // Collect + score entries
         var entries: [SearchEntry] = []
@@ -127,25 +130,18 @@ struct RepoMemorySearchTool: Tool {
 
     // MARK: - Private
 
-    private func loadSnapshots() -> [(URL, RMSSnapshot)] {
-        guard let contents = try? FileManager.default.contentsOfDirectory(
-            at: snapshotsDir,
-            includingPropertiesForKeys: nil,
-            options: .skipsHiddenFiles
-        ) else { return [] }
-
+    private func loadCurrentRepositorySnapshot() -> [(URL, RMSSnapshot)] {
+        let fingerprint = RepoMapTool.computeRepoID(for: repoURL)
+        let fileURL = snapshotsDir.appendingPathComponent("\(fingerprint).json")
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
 
-        var result: [(URL, RMSSnapshot)] = []
-        for fileURL in contents where fileURL.pathExtension == "json" {
-            guard let data = try? Data(contentsOf: fileURL),
-                  let snapshot = try? decoder.decode(RMSSnapshot.self, from: data) else {
-                continue // skip malformed files
-            }
-            result.append((fileURL, snapshot))
+        guard let data = try? Data(contentsOf: fileURL),
+              let snapshot = try? decoder.decode(RMSSnapshot.self, from: data),
+              snapshot.repositoryID.hasPrefix(fingerprint + "-") else {
+            return []
         }
-        return result
+        return [(fileURL, snapshot)]
     }
 
     private func scoredEntries(
@@ -155,7 +151,7 @@ struct RepoMemorySearchTool: Tool {
     ) -> [SearchEntry] {
         var entries: [SearchEntry] = []
         let date = snapshot.generatedAt
-        let path = fileURL.path
+        let path = fileURL.lastPathComponent
 
         // moduleHints — weight 3 (treated like "name")
         for hint in snapshot.moduleHints {

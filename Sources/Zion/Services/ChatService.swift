@@ -14,6 +14,12 @@ final class ChatService {
     /// The ID of the currently active thread.
     var activeThreadID: UUID = UUID()
 
+    /// Per-thread composer draft. When the user switches threads the
+    /// composer's text follows the thread, so an unsent message in thread A
+    /// is preserved when the user toggles to thread B (and reappears on
+    /// return). Cleared automatically once the message is sent.
+    var threadDrafts: [UUID: String] = [:]
+
     /// Forwarding computed property — back-compat for callers that use `service.thread`.
     var thread: ChatThread {
         get {
@@ -127,6 +133,22 @@ final class ChatService {
         let estimatedTokens: Int
         let availableTokens: Int
         let messageID: UUID
+    }
+
+    struct MeteredTotals: Equatable, Sendable {
+        let costUSD: Double
+        let inputTokens: Int
+        let outputTokens: Int
+    }
+
+    /// Produces a single-turn ledger row from the cumulative totals retained on a thread.
+    /// The thread persists across sends, so recording cumulative values duplicates prior usage.
+    nonisolated static func turnMeteredTotals(after: MeteredTotals, before: MeteredTotals) -> MeteredTotals {
+        MeteredTotals(
+            costUSD: max(0, after.costUSD - before.costUSD),
+            inputTokens: max(0, after.inputTokens - before.inputTokens),
+            outputTokens: max(0, after.outputTokens - before.outputTokens)
+        )
     }
 
     /// Set when a send is blocked by the context budget gate.
@@ -395,13 +417,10 @@ final class ChatService {
 
         if trimmedCommand == "/mcp" {
             // Two categories:
-            //  1) Custom MCP servers — user-installed via the registry (empty
-            //     out of the box; Zion ships zero).
-            //  2) Internal Zion harness tools — built-in via the `zion-mcp`
-            //     binary (read_file, bash, repo_map, find_symbol, list_dir,
-            //     web_fetch …). These are NOT MCP servers in the spec sense;
-            //     surfacing them separately so the user knows what's third-
-            //     party vs first-party.
+            //  1) Custom MCP servers — user-installed via the registry.
+            //  2) Zion in-process context tools currently safe to advertise to
+            //     native provider loops. CLI subprocess tools are managed by
+            //     their own server/session and are not represented here.
             // Read user MCP registry directly from `~/.zion/mcp.json`. The
             // built-in `zion` seed (zion-mcp binary) is filtered out so the
             // user only sees servers they've actually installed themselves.
@@ -543,6 +562,16 @@ final class ChatService {
         parts.append("## Current user message\n\n" + displayContent)
         let expandedText: String = parts.joined(separator: "\n\n")
 
+        // CLI resume already retains prior conversation context server-side. Keep a
+        // compact current-turn payload available so resumed sessions do not resend
+        // the entire Zion-rendered history and duplicate token usage.
+        var currentTurnParts: [String] = []
+        if !hiddenContext.isEmpty {
+            currentTurnParts.append(hiddenContext)
+        }
+        currentTurnParts.append("## Current user message\n\n" + displayContent)
+        let currentTurnText = currentTurnParts.joined(separator: "\n\n")
+
         // Persist user message
         Task {
             do {
@@ -644,19 +673,31 @@ final class ChatService {
             let effectiveModel: String? = modelOverride ?? smartModelOverride
             self.resolvedModelID = effectiveModel
 
-            // Resolve @mentions in the user text BEFORE building the payload,
+            let isResumedCLI: Bool = {
+                switch resolved {
+                case .claudeCLI:
+                    return self.resumeSessionID(for: "claude", threadID: threadID) != nil
+                case .codexCLI:
+                    return self.resumeSessionID(for: "codex", threadID: threadID) != nil
+                default:
+                    return false
+                }
+            }()
+            let providerInputText = isResumedCLI ? currentTurnText : expandedText
+
+            // Resolve @mentions in the text that will actually be submitted,
             // so both the AgentRuntime path and the legacy dispatchStream fallback
             // see the resolved system context. The user-visible message stays
             // unchanged; only the prompt sent to the model is enriched.
             let mentionPayload: MentionPayload
             if let resolver = self.mentionResolver {
-                mentionPayload = await resolver.expand(message: expandedText)
+                mentionPayload = await resolver.expand(message: providerInputText)
             } else {
                 mentionPayload = .empty
             }
             let enrichedText: String = mentionPayload.systemContext.isEmpty
-                ? expandedText
-                : mentionPayload.systemContext + "\n\n" + expandedText
+                ? providerInputText
+                : mentionPayload.systemContext + "\n\n" + providerInputText
 
             var payload = Self.makePayload(for: enrichedText, provider: resolved)
             payload.cwd = repoURL
@@ -1054,6 +1095,7 @@ final class ChatService {
         threadID: UUID,
         hopCount: Int
     ) async {
+        let startingTotals = meteredTotals(for: threadID)
         do {
             try await dispatchStreamThrowing(
                 payload: payload,
@@ -1065,11 +1107,11 @@ final class ChatService {
                 assistantID: assistantID,
                 threadID: threadID
             )
-            // Success — record cost via orchestrator if cost was tracked on the thread
-            let cost = await MainActor.run {
-                self.threads.first(where: { $0.id == threadID })?.totalCostUSD ?? 0.0
-            }
-            await orchestrator.recordCost(provider, usd: cost)
+            let turnTotals = Self.turnMeteredTotals(
+                after: meteredTotals(for: threadID),
+                before: startingTotals
+            )
+            await orchestrator.recordCost(provider, usd: turnTotals.costUSD)
             // Mark provider healthy after success
             await orchestrator.markHealthy(provider)
             // P14: append monthly spend ledger row ONLY when the source provider emits
@@ -1077,10 +1119,6 @@ final class ChatService {
             // local LLMs (zero cost is accurate). API direct providers (Anthropic,
             // OpenAI, Gemini) are NOT yet parsed from SSE usage fields — we refuse to
             // invent ledger rows for them. P15 wires real usage parsing per provider.
-            let totals = await MainActor.run { (
-                input: self.threads.first(where: { $0.id == threadID })?.totalInputTokens ?? 0,
-                output: self.threads.first(where: { $0.id == threadID })?.totalOutputTokens ?? 0
-            ) }
             let billing: BillingMode
             switch provider {
             case .claudeCLI, .codexCLI: billing = .subscription
@@ -1089,17 +1127,17 @@ final class ChatService {
             }
             // Refuse to log API-provider rows until real usage parsing lands (P15).
             // Logging zeros or estimates here would corrupt the monthly aggregate.
-            if billing == .api && totals.input == 0 && totals.output == 0 {
+            if billing == .api && turnTotals.inputTokens == 0 && turnTotals.outputTokens == 0 {
                 return
             }
             let model = modelOverride ?? provider.rawValue
             let row = ProviderSpendRow(
                 provider: provider.rawValue,
                 model: model,
-                inputTokens: totals.input,
-                outputTokens: totals.output,
+                inputTokens: turnTotals.inputTokens,
+                outputTokens: turnTotals.outputTokens,
                 cacheReadTokens: 0,
-                usdCost: cost,
+                usdCost: turnTotals.costUSD,
                 billingMode: billing
             )
             try? await SpendLedger.shared.append(row)
@@ -1487,6 +1525,17 @@ final class ChatService {
         threads[tIdx].totalOutputTokens += output
     }
 
+    private func meteredTotals(for threadID: UUID) -> MeteredTotals {
+        guard let thread = threads.first(where: { $0.id == threadID }) else {
+            return MeteredTotals(costUSD: 0, inputTokens: 0, outputTokens: 0)
+        }
+        return MeteredTotals(
+            costUSD: thread.totalCostUSD,
+            inputTokens: thread.totalInputTokens,
+            outputTokens: thread.totalOutputTokens
+        )
+    }
+
     fileprivate func attachToolEventToAssistant(assistantID: UUID, id: String, status: ToolEventStatus, output: String?) {
         for tIdx in threads.indices {
             if let mIdx = threads[tIdx].messages.firstIndex(where: { $0.id == assistantID }) {
@@ -1658,8 +1707,20 @@ final class ChatService {
         guard let (tIdx, mIdx, bIdx) = findEditBlock(blockID: blockID, assistantID: assistantID) else { return }
         let block = threads[tIdx].messages[mIdx].editBlocks![bIdx]
 
-        // Read file from disk
-        let fileURL = repoURL.appendingPathComponent(block.path)
+        // Resolve before reading so an approved edit cannot escape through a symlink.
+        let fileURL: URL
+        do {
+            fileURL = try RepositoryWorker.resolveInsideRepo(
+                path: block.path,
+                repositoryURL: repoURL,
+                op: "read"
+            )
+        } catch {
+            threads[tIdx].messages[mIdx].editBlocks![bIdx].failureReason = "invalid_path"
+            scheduleDebounce(for: assistantID, threadID: threadID)
+            return
+        }
+
         let currentContents: String
         do {
             currentContents = try String(contentsOf: fileURL, encoding: .utf8)

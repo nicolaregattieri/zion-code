@@ -38,6 +38,15 @@ actor EditCommitter {
         var result = EditCommitResult()
 
         do {
+            let resolvedInputs = try inputs.map { input in
+                let fileURL = try RepositoryWorker.resolveInsideRepo(
+                    path: input.path,
+                    repositoryURL: repoURL,
+                    op: "write"
+                )
+                return (input: input, fileURL: fileURL)
+            }
+
             // Step 1: Snapshot if dirty
             let statusOutput = try await worker.runAction(args: ["status", "--porcelain"], in: repoURL)
             let uncommittedLines = statusOutput
@@ -71,8 +80,9 @@ actor EditCommitter {
             }
 
             // Step 2: Write files
-            for input in inputs {
-                let fileURL = repoURL.appendingPathComponent(input.path)
+            for resolvedInput in resolvedInputs {
+                let input = resolvedInput.input
+                let fileURL = resolvedInput.fileURL
                 let parentDir = fileURL.deletingLastPathComponent()
                 try FileManager.default.createDirectory(
                     at: parentDir, withIntermediateDirectories: true

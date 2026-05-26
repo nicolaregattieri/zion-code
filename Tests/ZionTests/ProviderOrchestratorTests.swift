@@ -96,6 +96,14 @@ final class ProviderOrchestratorTests: XCTestCase {
         XCTAssertEqual(result, .anthropic, "CLI providers must be skipped when subscriptionFailover is false")
     }
 
+    /// A user's explicit CLI choice remains available when automatic subscription failover is off.
+    func testExplicitCLISelectionIgnoresSubscriptionFailoverSetting() async throws {
+        UserDefaults.standard.set(false, forKey: Self.failoverKey)
+        let orchestrator = makeOrchestrator()
+        let result = await orchestrator.resolve(lane: .general, requested: .claudeCLI)
+        XCTAssertEqual(result, .claudeCLI)
+    }
+
     /// nextFallback returns nil when no providers after current are eligible.
     func testNextFallbackReturnsNilWhenExhausted() async throws {
         let health = ProviderHealth()

@@ -4,6 +4,7 @@ import Foundation
 
 struct GitLog: Tool {
     let repoURL: URL
+    static let maximumLimit = 200
 
     var name: String { "zion_git_log" }
     var description: String { "Return recent commits from the repository." }
@@ -26,13 +27,14 @@ struct GitLog: Tool {
     }
 
     func call(args: [String: JSONValue]) throws -> JSONValue {
-        let branch = args.optionalString("branch") ?? "HEAD"
-        let limit: Int
+        let branch = try Self.validatedBranch(args.optionalString("branch") ?? "HEAD")
+        let requestedLimit: Int?
         if let v = args["limit"], case .int(let n) = v {
-            limit = n
+            requestedLimit = n
         } else {
-            limit = 50
+            requestedLimit = nil
         }
+        let limit = Self.boundedLimit(requestedLimit)
 
         // Format: sha\x1fauthor\x1fdate\x1fsubject
         let sep = "\u{1f}"
@@ -55,6 +57,24 @@ struct GitLog: Tool {
         }
         let result: [String: JSONValue] = ["commits": .array(commitsJSON)]
         return makeContent(result)
+    }
+
+    static func boundedLimit(_ requested: Int?) -> Int {
+        max(1, min(requested ?? 50, maximumLimit))
+    }
+
+    static func validatedBranch(_ branch: String) throws -> String {
+        if branch == "HEAD" { return branch }
+        let range = NSRange(branch.startIndex..., in: branch)
+        let valid = try? NSRegularExpression(pattern: #"^[A-Za-z0-9][A-Za-z0-9._/-]*$"#)
+            .firstMatch(in: branch, range: range)
+        guard valid != nil,
+              !branch.contains(".."),
+              !branch.contains("//"),
+              !branch.hasSuffix("/") else {
+            throw ToolError.invalidArgument("branch", "expected a branch name or HEAD")
+        }
+        return branch
     }
 
     private struct Commit {
