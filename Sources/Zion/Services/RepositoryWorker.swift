@@ -167,7 +167,7 @@ actor RepositoryWorker {
     /// containing `evil -> /etc/passwd` could otherwise smuggle reads outside
     /// the working tree. Always pair `standardizedFileURL` with
     /// `resolvingSymlinksInPath` on both sides of the prefix check.
-    private static func resolveInsideRepo(path: String, repositoryURL: URL, op: String) throws -> URL {
+    nonisolated static func resolveInsideRepo(path: String, repositoryURL: URL, op: String) throws -> URL {
         let candidate = repositoryURL.appendingPathComponent(path)
             .standardizedFileURL
             .resolvingSymlinksInPath()

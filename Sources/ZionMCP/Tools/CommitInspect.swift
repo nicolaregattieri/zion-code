@@ -22,7 +22,7 @@ struct CommitInspect: Tool {
     }
 
     func call(args: [String: JSONValue]) throws -> JSONValue {
-        let sha = try args.requireString("sha")
+        let sha = try Self.validatedSHA(args.requireString("sha"))
 
         let sep = "\u{1f}"
         // Header: sha\x1fparents\x1fauthor\x1fdate\x1fsubject\x1fbody
@@ -95,5 +95,15 @@ struct CommitInspect: Tool {
             "files":   .array(files)
         ]
         return makeContent(result)
+    }
+
+    static func validatedSHA(_ sha: String) throws -> String {
+        let range = NSRange(sha.startIndex..., in: sha)
+        let match = try? NSRegularExpression(pattern: #"^[0-9A-Fa-f]{4,64}$"#)
+            .firstMatch(in: sha, range: range)
+        guard match != nil else {
+            throw ToolError.invalidArgument("sha", "expected an abbreviated or full commit hash")
+        }
+        return sha
     }
 }

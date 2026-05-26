@@ -71,7 +71,7 @@ struct StashApplyTool: Tool {
     }
 
     func call(args: [String: JSONValue]) throws -> JSONValue {
-        let id = try args.requireString("id")
+        let id = try Self.validatedStashID(args.requireString("id"))
         let useIndex: Bool
         if let v = args["use_index"], case .bool(let b) = v {
             useIndex = b
@@ -105,6 +105,16 @@ struct StashApplyTool: Tool {
             "applied":   .bool(applied),
             "conflicts": .array(conflicts.map { .string($0) })
         ])
+    }
+
+    static func validatedStashID(_ id: String) throws -> String {
+        let range = NSRange(id.startIndex..., in: id)
+        let match = try? NSRegularExpression(pattern: #"^stash@\{[0-9]+\}$"#)
+            .firstMatch(in: id, range: range)
+        guard match != nil else {
+            throw ToolError.invalidArgument("id", "expected a stash identifier such as stash@{0}")
+        }
+        return id
     }
 }
 

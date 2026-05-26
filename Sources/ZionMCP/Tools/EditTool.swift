@@ -52,7 +52,22 @@ struct EditTool: Tool {
             ])
         }
 
-        let fileURL = repoURL.appendingPathComponent(path)
+        let repoRoot = repoURL.standardizedFileURL.resolvingSymlinksInPath()
+        let fileURL = repoRoot.appendingPathComponent(path)
+            .standardizedFileURL
+            .resolvingSymlinksInPath()
+        let remainsInsideRepo = fileURL.path == repoRoot.path
+            || fileURL.path.hasPrefix(repoRoot.path + "/")
+        guard remainsInsideRepo else {
+            let attempts: [JSONValue] = [
+                .object(["strategy": .string("pathRejected"), "ok": .bool(false),
+                         "note": .string("resolved path outside repository")])
+            ]
+            return makeContent([
+                "applied": .bool(false),
+                "attempts": .array(attempts)
+            ])
+        }
 
         // --- Read file ---
         guard let currentContents = try? String(contentsOf: fileURL, encoding: .utf8) else {
