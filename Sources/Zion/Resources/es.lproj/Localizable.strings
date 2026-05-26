@@ -2914,6 +2914,8 @@
 // Auto-resolved chip
 "chat.auto.resolvedChip" = "Auto → %@";
 "chat.auto.providerShort.local" = "Local";
+"chat.local.status.idleLastTurn" = "Inactivo · Último turno: %@";
+"chat.local.status.idleLastTurn.help" = "El servidor local está corriendo pero Smart Auto enrutó el último turno a otro proveedor (más barato o más saludable). El modelo está cargado en memoria pero sin uso. Pulsa Desconectar para liberar la RAM.";
 
 // Chat commands
 "chat.command.clear.busy" = "No se puede limpiar mientras se genera una respuesta.";

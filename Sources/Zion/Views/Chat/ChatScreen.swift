@@ -383,7 +383,17 @@ struct ChatScreen: View {
                         totalBytes: memoryMonitor.totalBytes,
                         usedBytes: memoryMonitor.usedBytes,
                         serverRSSBytes: memoryMonitor.localServerRSSBytes,
-                        isStreaming: chat.isStreaming
+                        isStreaming: chat.isStreaming,
+                        // When the last turn went somewhere OTHER than the
+                        // local server (Smart Auto routed to Claude CLI, say,
+                        // because the user message was easy and the cheap
+                        // chain was cheaper), surface that fact next to the
+                        // RSS so the user doesn't conflate "memory in use"
+                        // with "local was queried this turn".
+                        idleLastProviderLabel: {
+                            guard let p = chat.resolvedProvider, p != .local else { return nil }
+                            return p.label
+                        }()
                     ),
                     onDisconnect: {
                         // Stop the server AND suppress local for the session so

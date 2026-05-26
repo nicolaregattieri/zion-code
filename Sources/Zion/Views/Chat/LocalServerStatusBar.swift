@@ -22,6 +22,13 @@ struct LocalServerStatusBar: View {
         var usedBytes: UInt64
         var serverRSSBytes: UInt64?
         var isStreaming: Bool
+        /// Label of the provider that handled the last turn, when it was NOT
+        /// the local server (e.g. "Claude CLI"). The user reported confusion
+        /// (Image #32): memory bar shows RSS while the chat chip shows Claude
+        /// — they assume local was used. Surfacing "Idle · Last turn: Claude
+        /// CLI" makes it explicit that the server is warm but unused this
+        /// turn. Nil = local handled the last turn (or no turn happened yet).
+        var idleLastProviderLabel: String?
     }
 
     var body: some View {
@@ -38,6 +45,12 @@ struct LocalServerStatusBar: View {
                             .font(DesignSystem.Typography.label)
                             .foregroundStyle(.secondary)
                             .monospacedDigit()
+                    }
+                    if let lastProvider = model.idleLastProviderLabel, !model.isStreaming {
+                        Text("· " + String(format: L10n("chat.local.status.idleLastTurn"), lastProvider))
+                            .font(DesignSystem.Typography.label)
+                            .foregroundStyle(DesignSystem.Colors.warning)
+                            .help(L10n("chat.local.status.idleLastTurn.help"))
                     }
                 }
                 HStack(spacing: 6) {
