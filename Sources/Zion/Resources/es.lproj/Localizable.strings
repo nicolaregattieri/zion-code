@@ -2675,7 +2675,7 @@
 "chat.agent.tier.fullAccess.warning" = "El acceso total permite que el agente ejecute cualquier comando shell sin confirmación. Actívalo solo en repositorios de confianza.";
 "chat.agent.maxSteps.label" = "Pasos máximos";
 "chat.agent.bashAllowlist.label" = "Lista de comandos permitidos";
-"chat.agent.bashAllowlist.placeholder" = "Comandos separados por nueva línea. Deja vacío para usar los predeterminados.";
+"chat.agent.bashAllowlist.placeholder" = "git\nswift\nls\npwd\ncat\necho";
 "chat.agent.stopOnFirstError.label" = "Detener en el primer error";
 "chat.agent.step.label" = "Paso %@/%@";
 "chat.agent.plan.proposed.title" = "Plan listo para revisión";
