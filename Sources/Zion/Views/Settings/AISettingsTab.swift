@@ -73,7 +73,7 @@ struct AISettingsTab: View {
     var body: some View {
         Form {
             Section {
-                Text("Used by built-in AI features (commit messages, PR descriptions, blame, conflicts) AND Zion Talks chat. For chat-only settings, see Zion Talks.") // MARK: - TODO(T10): L10n
+                Text(L10n("settings.ai.tab.intro"))
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
             }
