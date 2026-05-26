@@ -45,6 +45,22 @@ struct MultiFileDiffSummary: View {
     let onRejectAll: () -> Void
 
     @State private var isExpanded: Bool = true
+    @State private var isReviewSheetPresented: Bool = false
+
+    /// Counts derived from the current block state, recomputed every render so
+    /// the summary reflects progress as applyAllEdits walks the list.
+    private var appliedCount: Int {
+        blocks.filter { $0.appliedAt != nil }.count
+    }
+    private var rejectedCount: Int {
+        blocks.filter { $0.failureReason != nil }.count
+    }
+    private var pendingCount: Int {
+        blocks.count - appliedCount - rejectedCount
+    }
+    private var allResolved: Bool {
+        pendingCount == 0
+    }
 
     var body: some View {
         GlassCard(borderTint: DesignSystem.Colors.ai.opacity(0.4)) {
@@ -52,8 +68,54 @@ struct MultiFileDiffSummary: View {
             if isExpanded {
                 fileList
             }
+            if !blocks.isEmpty && (appliedCount > 0 || rejectedCount > 0) {
+                resultsStrip
+            }
             buttonRow
         }
+        .sheet(isPresented: $isReviewSheetPresented) {
+            MultiFileDiffReviewSheet(
+                blocks: blocks,
+                onDismiss: { isReviewSheetPresented = false }
+            )
+        }
+    }
+
+    /// Inline result strip — shown when applyAllEdits has touched any block.
+    /// Surfaces "Applied N · Rejected M · Pending P" so the user gets visible
+    /// feedback (the Image #37 complaint: buttons appeared inert because
+    /// nothing in the card changed after the click).
+    private var resultsStrip: some View {
+        HStack(spacing: DesignSystem.Spacing.standard) {
+            if appliedCount > 0 {
+                Label("\(appliedCount)", systemImage: "checkmark.circle.fill")
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(DesignSystem.Colors.success)
+                    .monospacedDigit()
+            }
+            if rejectedCount > 0 {
+                Label("\(rejectedCount)", systemImage: "xmark.circle.fill")
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(DesignSystem.Colors.destructive)
+                    .monospacedDigit()
+            }
+            if pendingCount > 0 {
+                Label("\(pendingCount)", systemImage: "circle.dashed")
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    .monospacedDigit()
+            }
+            Spacer()
+            if allResolved {
+                Text(L10n("chat.multifileDiff.allResolved"))
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(DesignSystem.Colors.success)
+            }
+        }
+        .padding(.horizontal, DesignSystem.Spacing.compact)
+        .padding(.vertical, DesignSystem.Spacing.micro)
+        .background(DesignSystem.Colors.glassSubtle)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous))
     }
 
     // MARK: - Subviews
@@ -121,9 +183,12 @@ struct MultiFileDiffSummary: View {
 
     private var buttonRow: some View {
         HStack(spacing: DesignSystem.Spacing.standard) {
-            // Review all — TODO(P12.5): open diff viewer sheet
+            // Review all — opens a sheet rendering every block side-by-side
+            // with its full diff. Also calls onReviewAll() so callers wanting
+            // to override (e.g. open a custom viewer) can still hook in.
             Button(L10n("chat.multifileDiff.reviewAll")) {
                 onReviewAll()
+                isReviewSheetPresented = true
             }
             .font(DesignSystem.Typography.body)
             .foregroundStyle(DesignSystem.Colors.ai)
@@ -167,5 +232,139 @@ struct MultiFileDiffSummary: View {
 
     internal func rejectAllTapped() {
         onRejectAll()
+    }
+}
+
+// MARK: - MultiFileDiffReviewSheet
+
+/// Modal viewer that walks the user through each EditBlock with full diff
+/// content + a status badge per file (pending / applied / rejected). The
+/// "Review all" button on the summary card opened the void closure before —
+/// now lands here.
+private struct MultiFileDiffReviewSheet: View {
+
+    let blocks: [EditBlock]
+    let onDismiss: () -> Void
+
+    @State private var selectedIndex: Int = 0
+
+    var body: some View {
+        VStack(spacing: 0) {
+            header
+            Divider().overlay(DesignSystem.Colors.glassBorder)
+            HSplitView {
+                fileList
+                    .frame(minWidth: 220, idealWidth: 260)
+                diffPane
+                    .frame(minWidth: 380)
+            }
+            Divider().overlay(DesignSystem.Colors.glassBorder)
+            footer
+        }
+        .frame(minWidth: 760, minHeight: 520)
+    }
+
+    private var header: some View {
+        HStack {
+            Image(systemName: "folder.fill")
+                .foregroundStyle(DesignSystem.Colors.ai)
+            Text(L10n("chat.multifileDiff.review.title", "\(blocks.count)"))
+                .font(DesignSystem.Typography.cardTitle)
+            Spacer()
+            Button(action: onDismiss) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 16))
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut(.escape, modifiers: [])
+        }
+        .padding(DesignSystem.Spacing.standard)
+    }
+
+    private var fileList: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 2) {
+                ForEach(Array(blocks.enumerated()), id: \.offset) { idx, block in
+                    Button {
+                        selectedIndex = idx
+                    } label: {
+                        HStack {
+                            statusGlyph(for: block)
+                            Text(block.path)
+                                .font(DesignSystem.Typography.monoSmall)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                            Spacer()
+                        }
+                        .padding(.horizontal, DesignSystem.Spacing.standard)
+                        .padding(.vertical, DesignSystem.Spacing.compact)
+                        .background(idx == selectedIndex
+                                    ? DesignSystem.Colors.ai.opacity(0.18)
+                                    : Color.clear)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.vertical, DesignSystem.Spacing.compact)
+        }
+        .background(DesignSystem.Colors.glassSubtle)
+    }
+
+    private var diffPane: some View {
+        ScrollView {
+            if blocks.indices.contains(selectedIndex) {
+                let block = blocks[selectedIndex]
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
+                    Text(block.path)
+                        .font(DesignSystem.Typography.monoLabelBold)
+                    Text(block.search)
+                        .font(DesignSystem.Typography.monoLabel)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(DesignSystem.Spacing.compact)
+                        .background(DesignSystem.Colors.destructive.opacity(0.08))
+                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous))
+                    Text(block.replace)
+                        .font(DesignSystem.Typography.monoLabel)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(DesignSystem.Spacing.compact)
+                        .background(DesignSystem.Colors.success.opacity(0.08))
+                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous))
+                    if let reason = block.failureReason {
+                        Text(reason)
+                            .font(DesignSystem.Typography.label)
+                            .foregroundStyle(DesignSystem.Colors.destructive)
+                    }
+                }
+                .padding(DesignSystem.Spacing.standard)
+            }
+        }
+    }
+
+    private var footer: some View {
+        HStack {
+            Text(L10n("chat.multifileDiff.review.footer"))
+                .font(DesignSystem.Typography.label)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Button(L10n("chat.multifileDiff.review.close")) { onDismiss() }
+                .keyboardShortcut(.defaultAction)
+        }
+        .padding(DesignSystem.Spacing.standard)
+    }
+
+    @ViewBuilder
+    private func statusGlyph(for block: EditBlock) -> some View {
+        if block.appliedAt != nil {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(DesignSystem.Colors.success)
+        } else if block.failureReason != nil {
+            Image(systemName: "xmark.circle.fill")
+                .foregroundStyle(DesignSystem.Colors.destructive)
+        } else {
+            Image(systemName: "circle.dashed")
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+        }
     }
 }

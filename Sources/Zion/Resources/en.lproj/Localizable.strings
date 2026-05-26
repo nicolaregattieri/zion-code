@@ -2906,6 +2906,10 @@
 "chat.message.searchReplace.unknownFile" = "Edit block";
 "chat.message.searchReplace.search" = "Search";
 "chat.message.searchReplace.replace" = "Replace";
+"chat.multifileDiff.allResolved" = "All resolved";
+"chat.multifileDiff.review.title" = "Review %@ edits";
+"chat.multifileDiff.review.footer" = "Use ⎋ to dismiss. Use the per-file Apply / Reject buttons in the chat to act on each edit.";
+"chat.multifileDiff.review.close" = "Close";
 
 // Chat commands
 "chat.command.clear.busy" = "Cannot clear while a response is in progress.";

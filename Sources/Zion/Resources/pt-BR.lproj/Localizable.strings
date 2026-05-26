@@ -2908,6 +2908,10 @@
 "chat.message.searchReplace.unknownFile" = "Bloco de edição";
 "chat.message.searchReplace.search" = "Buscar";
 "chat.message.searchReplace.replace" = "Substituir";
+"chat.multifileDiff.allResolved" = "Tudo resolvido";
+"chat.multifileDiff.review.title" = "Revisar %@ edições";
+"chat.multifileDiff.review.footer" = "Use ⎋ para fechar. Use os botões Aplicar / Rejeitar por arquivo no chat para agir em cada edição.";
+"chat.multifileDiff.review.close" = "Fechar";
 
 // Chat commands
 "chat.command.clear.busy" = "Não é possível limpar enquanto uma resposta está em andamento.";
