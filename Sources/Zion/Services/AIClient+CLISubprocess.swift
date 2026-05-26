@@ -346,7 +346,7 @@ extension AIClient {
         // Inject MCP config so the zion-mcp tool server is available to claude.
         var configURL: URL? = nil
         if let binaryPath = MCPConfigBuilder.resolveBinaryPath() {
-            if let url = try? MCPConfigBuilder.build(cwd: cwd, binaryPath: binaryPath) {
+            if let url = try? MCPConfigBuilder.build(cwd: cwd, binaryPath: binaryPath, allowEdits: allowEdits) {
                 args.append(contentsOf: ["--mcp-config", url.path])
                 configURL = url
             }
@@ -429,7 +429,12 @@ extension AIClient {
         // Inject MCP server flags so codex can call zion tools.
         // codex uses -c key=value pairs instead of a config file.
         if let binaryPath = MCPConfigBuilder.resolveBinaryPath() {
-            let argsJSON = "[\"--repo\",\"\(cwd.path)\"]"
+            var mcpArgs = ["--repo", cwd.path]
+            if allowEdits {
+                mcpArgs.append("--allow-edits")
+            }
+            let argsData = try? JSONSerialization.data(withJSONObject: mcpArgs)
+            let argsJSON = argsData.flatMap { String(data: $0, encoding: .utf8) } ?? "[]"
             args.append(contentsOf: [
                 "-c", "mcp_servers.zion.command=\(binaryPath)",
                 "-c", "mcp_servers.zion.args=\(argsJSON)"

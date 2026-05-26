@@ -92,6 +92,22 @@ final class ZionHarnessTests: XCTestCase {
                       "Expected 'fileExists' in error message, got: \(result.content)")
     }
 
+    func test_write_rejected_when_edits_are_disabled() async throws {
+        UserDefaults.standard.set(false, forKey: "chat.allowEdits")
+        let target = repoURL.appendingPathComponent("disabled-write.txt")
+        let toolCall = ToolCall(
+            id: "t2-disabled",
+            name: "write",
+            arguments: ["path": target.path, "content": "new content"]
+        )
+
+        let result = await harness.execute(toolCall: toolCall)
+
+        XCTAssertTrue(result.isError)
+        XCTAssertTrue(result.content.contains("editsDisabled"))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: target.path))
+    }
+
     // MARK: - Test 3: bash allowlist enforced
 
     func test_bash_allowlist_enforced() async throws {

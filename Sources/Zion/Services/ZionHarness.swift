@@ -224,6 +224,9 @@ actor ZionHarness {
         guard let path    = args["path"]    as? String else { throw HarnessError.fileNotFound }
         guard let content = args["content"] as? String else { throw HarnessError.invalidEdit }
 
+        let allowEdits = UserDefaults.standard.object(forKey: "chat.allowEdits") as? Bool ?? false
+        guard allowEdits else { throw HarnessError.editsDisabled }
+
         let url = try validatePath(path)
 
         // prefer-edit-over-create: reject if file already exists
