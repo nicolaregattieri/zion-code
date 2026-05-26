@@ -2653,7 +2653,7 @@
 "chat.agent.tier.fullAccess.warning" = "Full access lets the agent run any shell command without asking. Only enable if you trust the model and understand the risks.";
 "chat.agent.maxSteps.label" = "Max steps";
 "chat.agent.bashAllowlist.label" = "Bash allowlist";
-"chat.agent.bashAllowlist.placeholder" = "Newline-separated commands. Leave empty for defaults.";
+"chat.agent.bashAllowlist.placeholder" = "git\nswift\nls\npwd\ncat\necho";
 "chat.agent.stopOnFirstError.label" = "Stop on first error";
 "chat.agent.step.label" = "Step %@/%@";
 "chat.agent.plan.proposed.title" = "Plan ready for review";
