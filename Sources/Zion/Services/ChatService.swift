@@ -81,6 +81,27 @@ final class ChatService {
     /// In-flight streaming tasks keyed by threadID. Allows multiple threads to
     /// stream in parallel; switching threads no longer cancels active streams.
     @ObservationIgnored private var tasksByThread: [UUID: Task<Void, Never>] = [:]
+
+    /// FIFO of user messages typed while a stream was already running for the
+    /// same thread. The streaming task drains this on completion so the user
+    /// can type-and-fire in bursts without waiting for each LLM turn — the
+    /// "rajada" flow most chat users expect from modern clients (Claude.ai,
+    /// ChatGPT, Cursor). Per-thread so two threads stream independently.
+    struct PendingMessage: Identifiable, Equatable {
+        let id: UUID = UUID()
+        let text: String
+        let provider: AIProvider
+        let apiKey: String
+        let mode: AIMode
+        let repoURL: URL
+        let branch: String
+        let modelOverride: String?
+    }
+    private(set) var pendingQueueByThread: [UUID: [PendingMessage]] = [:]
+    /// Snapshot count for the active thread — convenience for ChatComposer.
+    var activePendingQueueCount: Int {
+        pendingQueueByThread[activeThreadID]?.count ?? 0
+    }
     @ObservationIgnored private let ai: AIClient
     @ObservationIgnored private let worker: RepositoryWorker
     @ObservationIgnored private let contextBuilder: ChatContextBuilder
@@ -467,6 +488,24 @@ final class ChatService {
 
         let threadID = activeThreadID
 
+        // If a stream is already running on this thread, queue the message
+        // instead of blocking the user. The streaming task drains the queue
+        // when it finishes (see `defer` block below). Skips queueing for
+        // slash commands — those run synchronously above and never block.
+        if streamingThreadIDs.contains(threadID) {
+            let queued = PendingMessage(
+                text: text,
+                provider: provider,
+                apiKey: apiKey,
+                mode: mode,
+                repoURL: repoURL,
+                branch: branch,
+                modelOverride: modelOverride
+            )
+            pendingQueueByThread[threadID, default: []].append(queued)
+            return
+        }
+
         // MARK: Skill injection — if message starts with /<skill-id>, prepend skill body to payload
         // The injected text replaces the raw text going to the model; display content stays unmodified.
         let skillInjectedText: String = {
@@ -628,6 +667,27 @@ final class ChatService {
                     // Final flush to persistence
                     self.cancelDebounce(for: assistantID)
                     Task { await self.flushMessageToPersistence(id: assistantID, threadID: threadID) }
+                    // Drain the next queued message for this thread, if any.
+                    // Kicked off async so the defer-cleanup completes first and
+                    // streamingThreadIDs reflects the idle state when the recursive
+                    // send() call evaluates its guard. This is the queue's
+                    // "auto-advance" — the user's burst-typed messages get
+                    // processed in FIFO order without further input.
+                    if var queue = self.pendingQueueByThread[threadID], !queue.isEmpty {
+                        let next = queue.removeFirst()
+                        self.pendingQueueByThread[threadID] = queue.isEmpty ? nil : queue
+                        Task {
+                            await self.send(
+                                text: next.text,
+                                provider: next.provider,
+                                apiKey: next.apiKey,
+                                mode: next.mode,
+                                repoURL: next.repoURL,
+                                branch: next.branch,
+                                modelOverride: next.modelOverride
+                            )
+                        }
+                    }
                 }
             }
 
@@ -802,7 +862,20 @@ final class ChatService {
         tasksByThread[id]?.cancel()
         tasksByThread.removeValue(forKey: id)
         streamingThreadIDs.remove(id)
+        // Drop the pending queue for this thread too — Stop must mean "stop
+        // everything I had lined up", not "stop the current turn and start
+        // the next one I forgot about".
+        pendingQueueByThread.removeValue(forKey: id)
         Task { await self.agentRuntime.cancel() }
+    }
+
+    /// Removes a single queued message without aborting the running turn.
+    /// Used by the composer's queue popover (per-row delete).
+    func dropPendingMessage(id: UUID, threadID: UUID? = nil) {
+        let target = threadID ?? activeThreadID
+        guard var queue = pendingQueueByThread[target] else { return }
+        queue.removeAll { $0.id == id }
+        pendingQueueByThread[target] = queue.isEmpty ? nil : queue
     }
 
     /// Cancels every in-flight streaming task. Called on repo switch / app

@@ -2904,6 +2904,14 @@
 "chat.composer.dictation.title" = "Ditado";
 "chat.composer.dictation.polish" = "Polir com LLM";
 "chat.composer.dictation.polish.hint" = "Após o ditado, envia a transcrição bruta pelo provedor de IA ativo para corrigir erros e preservar entrada mista (narração em português + termos técnicos em inglês).";
+"chat.composer.queue.help" = "Mensagens enfileiradas enquanto o turno atual streama. Toque numa linha para remover. Use Parar para cancelar o turno atual E limpar a fila.";
+"chat.message.searchReplace.unknownFile" = "Bloco de edição";
+"chat.message.searchReplace.search" = "Buscar";
+"chat.message.searchReplace.replace" = "Substituir";
+"chat.multifileDiff.allResolved" = "Tudo resolvido";
+"chat.multifileDiff.review.title" = "Revisar %@ edições";
+"chat.multifileDiff.review.footer" = "Use ⎋ para fechar. Use os botões Aplicar / Rejeitar por arquivo no chat para agir em cada edição.";
+"chat.multifileDiff.review.close" = "Fechar";
 
 // Chat commands
 "chat.command.clear.busy" = "Não é possível limpar enquanto uma resposta está em andamento.";

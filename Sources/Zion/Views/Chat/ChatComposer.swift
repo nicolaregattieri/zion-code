@@ -31,8 +31,11 @@ struct ChatComposer: View {
         AIProvider(rawValue: selectedProviderRaw) ?? .none
     }
 
+    /// Allow send even while a stream is in flight — the typed message will
+    /// queue and dispatch automatically when the current turn finishes. The
+    /// composer is only disabled when the input is empty/whitespace.
     private var canSend: Bool {
-        !chat.isStreaming && !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     var body: some View {
@@ -56,11 +59,16 @@ struct ChatComposer: View {
                 Spacer()
                 ChatDictationButton(composerText: $text, repoURL: repoURL)
                 newChatButton
-                if chat.isStreaming {
-                    stopButton
-                } else {
-                    sendButton
+                if chat.activePendingQueueCount > 0 {
+                    queueBadge
                 }
+                if chat.isStreaming {
+                    // Both buttons visible during streaming: Stop cancels the
+                    // current turn + clears the queue, Send enqueues a new
+                    // message that runs as soon as the current turn completes.
+                    stopButton
+                }
+                sendButton
             }
         }
         .padding(.horizontal, DesignSystem.Spacing.cardPadding)
@@ -316,6 +324,40 @@ struct ChatComposer: View {
         }
         .buttonStyle(.plain)
         .help(L10n("chat.composer.stop"))
+    }
+
+    /// Pill showing how many messages the user has typed-and-fired while a
+    /// stream was running. Tap → popover lists each queued message with a
+    /// dismiss button so the user can drop any without aborting the live
+    /// turn.
+    private var queueBadge: some View {
+        Menu {
+            ForEach(chat.pendingQueueByThread[chat.activeThreadID] ?? []) { item in
+                Button(role: .destructive) {
+                    chat.dropPendingMessage(id: item.id, threadID: chat.activeThreadID)
+                } label: {
+                    let preview = String(item.text.prefix(60))
+                    Label(preview, systemImage: "minus.circle")
+                }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "clock.arrow.circlepath")
+                    .font(.system(size: 11, weight: .semibold))
+                Text("\(chat.activePendingQueueCount)")
+                    .font(DesignSystem.Typography.labelMedium)
+                    .monospacedDigit()
+            }
+            .padding(.horizontal, DesignSystem.Spacing.compact)
+            .padding(.vertical, DesignSystem.Spacing.micro)
+            .background(Capsule().fill(DesignSystem.Colors.glassSubtle))
+            .overlay(Capsule().strokeBorder(DesignSystem.Colors.glassStroke, lineWidth: 1))
+            .foregroundStyle(DesignSystem.Colors.ai)
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help(L10n("chat.composer.queue.help"))
     }
 
     private var newChatButton: some View {

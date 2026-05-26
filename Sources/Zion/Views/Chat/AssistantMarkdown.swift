@@ -30,6 +30,8 @@ struct AssistantMarkdown: View {
                     proseView(text)
                 case .code(let language, let body):
                     CodeBlock(language: language, code: body)
+                case .searchReplace(let file, let search, let replace):
+                    SearchReplaceCard(file: file, search: search, replace: replace)
                 }
             }
         }
@@ -63,6 +65,11 @@ struct AssistantMarkdown: View {
     enum Chunk: Equatable {
         case prose(String)
         case code(language: String?, body: String)
+        /// Raw aider-style edit block leaked into the assistant text instead of
+        /// being parsed into a structured EditBlock card. We still collapse it
+        /// to a one-line summary so it doesn't dominate the chat. The user can
+        /// expand to inspect the diff.
+        case searchReplace(file: String, search: String, replace: String)
     }
 
     static func parse(_ source: String) -> [Chunk] {
@@ -94,6 +101,46 @@ struct AssistantMarkdown: View {
                 }
                 chunks.append(.code(language: language.isEmpty ? nil : language, body: codeLines.joined(separator: "\n")))
                 i += 1
+                continue
+            }
+            // aider-style SEARCH/REPLACE block (leak from edit harness when
+            // parsing fails or model emits raw markers). Header line shape:
+            //   <<<<<<< SEARCH[: <path>]
+            // Body: <search>\n=======\n<replace>\n>>>>>>> REPLACE
+            if line.hasPrefix("<<<<<<<") && line.contains("SEARCH") {
+                flushProse()
+                // Optional file path after "SEARCH:"
+                var file = ""
+                if let range = line.range(of: "SEARCH:") {
+                    file = String(line[range.upperBound...]).trimmingCharacters(in: .whitespaces)
+                }
+                var searchLines: [String] = []
+                var replaceLines: [String] = []
+                var sawDivider = false
+                i += 1
+                while i < lines.count {
+                    let inner = lines[i]
+                    if inner.hasPrefix("=======") {
+                        sawDivider = true
+                        i += 1
+                        continue
+                    }
+                    if inner.hasPrefix(">>>>>>>") && inner.contains("REPLACE") {
+                        i += 1
+                        break
+                    }
+                    if sawDivider {
+                        replaceLines.append(inner)
+                    } else {
+                        searchLines.append(inner)
+                    }
+                    i += 1
+                }
+                chunks.append(.searchReplace(
+                    file: file,
+                    search: searchLines.joined(separator: "\n"),
+                    replace: replaceLines.joined(separator: "\n")
+                ))
                 continue
             }
             prose.append(line)
@@ -177,6 +224,113 @@ private struct CodeBlock: View {
         copied = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
             copied = false
+        }
+    }
+}
+
+// MARK: - SearchReplaceCard
+
+/// Compact card for raw SEARCH/REPLACE markers leaked into chat text. Default
+/// state is COLLAPSED — only the file path + change counts visible. Tap the
+/// header to expand a side-by-side preview of the old/new content. Keeps
+/// long localization-file diffs from dominating the chat (Image #38 fix).
+private struct SearchReplaceCard: View {
+    let file: String
+    let search: String
+    let replace: String
+
+    @State private var isExpanded = false
+
+    private var searchLineCount: Int {
+        search.isEmpty ? 0 : search.split(separator: "\n").count
+    }
+
+    private var replaceLineCount: Int {
+        replace.isEmpty ? 0 : replace.split(separator: "\n").count
+    }
+
+    private var displayFile: String {
+        file.isEmpty ? L10n("chat.message.searchReplace.unknownFile") : file
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            header
+            if isExpanded {
+                Divider().overlay(DesignSystem.Colors.glassBorder)
+                expandedBody
+            }
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous)
+                .strokeBorder(DesignSystem.Colors.glassBorder, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous))
+        .background(DesignSystem.Colors.glassSubtle)
+    }
+
+    private var header: some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.18)) { isExpanded.toggle() }
+        } label: {
+            HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+                Image(systemName: "arrow.left.arrow.right.square")
+                    .foregroundStyle(DesignSystem.Colors.ai)
+                    .font(.system(size: 12, weight: .semibold))
+                Text(displayFile)
+                    .font(DesignSystem.Typography.monoLabelBold)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                Spacer(minLength: 8)
+                Text("−\(searchLineCount)")
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(DesignSystem.Colors.destructive)
+                    .monospacedDigit()
+                Text("+\(replaceLineCount)")
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(DesignSystem.Colors.success)
+                    .monospacedDigit()
+                Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+            }
+            .padding(.horizontal, DesignSystem.Spacing.standard)
+            .padding(.vertical, DesignSystem.Spacing.compact)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var expandedBody: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
+            if !search.isEmpty {
+                diffPane(label: L10n("chat.message.searchReplace.search"),
+                         body: search,
+                         tint: DesignSystem.Colors.destructive)
+            }
+            if !replace.isEmpty {
+                diffPane(label: L10n("chat.message.searchReplace.replace"),
+                         body: replace,
+                         tint: DesignSystem.Colors.success)
+            }
+        }
+        .padding(DesignSystem.Spacing.standard)
+    }
+
+    private func diffPane(label: String, body: String, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(DesignSystem.Typography.metaSemibold)
+                .foregroundStyle(tint)
+            ScrollView(.horizontal, showsIndicators: false) {
+                Text(body)
+                    .font(DesignSystem.Typography.monoLabel)
+                    .textSelection(.enabled)
+                    .padding(DesignSystem.Spacing.compact)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .background(tint.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous))
         }
     }
 }
