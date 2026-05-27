@@ -1069,8 +1069,11 @@ extension RepositoryViewModel {
     static func shouldSkipRefreshWhileBusy(setBusy: Bool, isBusy: Bool, origin: RefreshOrigin) -> Bool {
         guard !setBusy && isBusy else { return false }
         // Deferred repository-switch refresh is responsible for finalizing switch state.
-        // If we skip it while busy, `isSwitchingRepository` can remain true.
-        return origin != .repositorySwitch && origin != .fileWatcher
+        // If we skip it while busy, `isSwitchingRepository` can remain true. Everything
+        // else (including fileWatcher) is safe to drop when an in-flight refresh exists:
+        // the watcher will fire again on the next tick once the in-flight load is done,
+        // so we don't lose updates — we just avoid stacking two cold loads in parallel.
+        return origin != .repositorySwitch
     }
 
     // MARK: - Helpers
