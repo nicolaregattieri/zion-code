@@ -95,6 +95,10 @@ final class ChatService {
     /// `registerProcess` (see `ChatService+ProcessTracking.swift`) so
     /// `stop()` can SIGTERM/SIGKILL them when the user hits cancel.
     @ObservationIgnored var activeProcesses: [UUID: TrackedProcess] = [:]
+    /// Phase 4 continue-chip — total extra hops the user has granted to the
+    /// active turn via the Continue chip. Reset on every new turn. Read by
+    /// the harness loop via `effectiveHopBudget`.
+    @ObservationIgnored var extraHopsGranted: Int = 0
 
     /// FIFO of user messages typed while a stream was already running for the
     /// same thread. The streaming task drains this on completion so the user
