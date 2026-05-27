@@ -80,14 +80,16 @@ final class PlanCardTests: XCTestCase {
         XCTAssertEqual(captured, .apply)
     }
 
-    func testApplyDisabledWhileStreaming() {
+    func testApplyDuringStreamingQueuesNotFire() {
+        // Apply while streaming arms a pending flag (auto-fires when isStreaming flips false).
+        // Direct callback must NOT fire on first tap during stream.
         let plan = makePlan()
         var captured: ChatPlanAction?
         var card = PlanCard(plan: plan, isStreaming: true) { action in
             captured = action
         }
         card.applyTapped()
-        XCTAssertNil(captured, "Apply must be a no-op while isStreaming is true")
+        XCTAssertNil(captured, "Apply must queue (not fire callback) while isStreaming is true")
     }
 
     // MARK: - Reject
@@ -137,6 +139,40 @@ final class PlanCardTests: XCTestCase {
         card.onAction = { captured = $0 }
         card.saveTapped(xml: originalXML)
         XCTAssertEqual(captured, .reedit(originalXML))
+    }
+
+    // MARK: - Phase 4 — single-click + L10n contract
+
+    /// Spec criterion #2 — single tap on Apply transitions the plan to the
+    /// executing state when not streaming. Locks down the user-reported
+    /// "two clicks needed" symptom from the 2.0.5 dogfood: with isStreaming
+    /// false the action callback MUST fire on the FIRST applyTapped().
+    func test_applyButton_singleClickTransitionsToExecuting() {
+        let plan = makePlan()
+        var callbackCount = 0
+        var captured: ChatPlanAction?
+        var card = PlanCard(plan: plan, isStreaming: false) { action in
+            callbackCount += 1
+            captured = action
+        }
+        card.applyTapped()
+        XCTAssertEqual(callbackCount, 1, "Apply must dispatch exactly once on a single tap")
+        XCTAssertEqual(captured, .apply)
+    }
+
+    /// Spec criterion #2b — the three previously hardcoded labels resolve
+    /// through L10n now and never fall back to the raw key. Locks down the
+    /// localization regression caught by the documenter audit.
+    func test_localizedLabels_renderViaL10n() {
+        let save = L10n("plan.save")
+        let reject = L10n("plan.reject")
+        let edit = L10n("plan.edit")
+        XCTAssertFalse(save.isEmpty)
+        XCTAssertFalse(reject.isEmpty)
+        XCTAssertFalse(edit.isEmpty)
+        XCTAssertNotEqual(save, "plan.save", "L10n must resolve, not return the bare key")
+        XCTAssertNotEqual(reject, "plan.reject")
+        XCTAssertNotEqual(edit, "plan.edit")
     }
 
     // MARK: - ChatPlanAction Equatable

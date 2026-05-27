@@ -17,6 +17,7 @@ struct PlanCard: View {
 
     @State private var isEditing: Bool = false
     @State private var draftXML: String = ""
+    @State private var pendingApply: Bool = false
 
     var body: some View {
         GlassCard(borderTint: DesignSystem.Colors.ai.opacity(0.4)) {
@@ -28,6 +29,12 @@ struct PlanCard: View {
                 editSection
             } else {
                 footerButtons
+            }
+        }
+        .onChange(of: isStreaming) { _, newValue in
+            if !newValue && pendingApply {
+                pendingApply = false
+                onAction(.apply)
             }
         }
     }
@@ -75,8 +82,7 @@ struct PlanCard: View {
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.smallCornerRadius, style: .continuous))
             HStack {
                 Spacer()
-                // MARK: - TODO(T10): L10n
-                Button("Save") {
+                Button(L10n("plan.save")) {
                     onAction(.reedit(draftXML))
                     isEditing = false
                 }
@@ -94,22 +100,21 @@ struct PlanCard: View {
     private var footerButtons: some View {
         HStack(spacing: DesignSystem.Spacing.standard) {
             // MARK: - TODO(T10): L10n
-            Button("Apply") {
+            Button(applyLabel) {
                 applyTapped()
             }
             .font(DesignSystem.Typography.bodySemibold)
-            .foregroundStyle(isStreaming ? DesignSystem.Colors.textTertiary : DesignSystem.Colors.success)
+            .foregroundStyle(pendingApply ? DesignSystem.Colors.ai : DesignSystem.Colors.success)
             .buttonStyle(.plain)
             .padding(.horizontal, DesignSystem.Spacing.standard)
             .padding(.vertical, DesignSystem.Spacing.compact)
-            .background(isStreaming
-                ? DesignSystem.Colors.glassSubtle
+            .background(pendingApply
+                ? DesignSystem.Colors.ai.opacity(0.15)
                 : DesignSystem.Colors.success.opacity(0.15))
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous))
-            .disabled(isStreaming)
+            .disabled(pendingApply)
 
-            // MARK: - TODO(T10): L10n
-            Button("Reject") {
+            Button(L10n("plan.reject")) {
                 rejectTapped()
             }
             .font(DesignSystem.Typography.body)
@@ -122,8 +127,7 @@ struct PlanCard: View {
 
             Spacer()
 
-            // MARK: - TODO(T10): L10n
-            Button("Edit") {
+            Button(L10n("plan.edit")) {
                 editTapped()
             }
             .font(DesignSystem.Typography.body)
@@ -134,9 +138,16 @@ struct PlanCard: View {
 
     // MARK: - Action Helpers (testable)
 
+    private var applyLabel: String {
+        pendingApply ? "Applying after stream…" : "Apply"
+    }
+
     internal func applyTapped() {
-        guard !isStreaming else { return }
-        onAction(.apply)
+        if isStreaming {
+            pendingApply = true
+        } else {
+            onAction(.apply)
+        }
     }
 
     internal func rejectTapped() {
