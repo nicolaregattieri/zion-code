@@ -91,6 +91,10 @@ final class ChatService {
     /// In-flight streaming tasks keyed by threadID. Allows multiple threads to
     /// stream in parallel; switching threads no longer cancels active streams.
     @ObservationIgnored private var tasksByThread: [UUID: Task<Void, Never>] = [:]
+    /// Active tool subprocesses keyed by tool-call UUID. Populated by
+    /// `registerProcess` (see `ChatService+ProcessTracking.swift`) so
+    /// `stop()` can SIGTERM/SIGKILL them when the user hits cancel.
+    @ObservationIgnored var activeProcesses: [UUID: TrackedProcess] = [:]
 
     /// FIFO of user messages typed while a stream was already running for the
     /// same thread. The streaming task drains this on completion so the user
@@ -989,6 +993,7 @@ final class ChatService {
             )
         }
         Task { await self.agentRuntime.cancel() }
+        Task { @MainActor in await self.terminateAllActiveProcesses() }
     }
 
     /// Posts a short-lived banner string into `transientNotice` and clears it
