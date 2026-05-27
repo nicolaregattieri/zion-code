@@ -14,16 +14,7 @@ struct TopBarSystemMonitorPill: View {
             Text("·").foregroundStyle(.tertiary)
             metric(label: "RAM", value: monitor.memoryPressure)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .background(
-            Capsule(style: .continuous)
-                .fill(DesignSystem.Colors.glassSubtle)
-        )
-        .overlay(
-            Capsule(style: .continuous)
-                .strokeBorder(DesignSystem.Colors.glassStroke, lineWidth: 1)
-        )
+        .padding(.horizontal, DesignSystem.Spacing.toolbarItemGap)
         .fixedSize()
         .onAppear { monitor.start() }
         .onDisappear { monitor.stop() }

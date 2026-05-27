@@ -5,16 +5,6 @@ extension ContentView {
 
     @ToolbarContentBuilder
     var mainToolbar: some ToolbarContent {
-        // System monitor sits in the empty area between the macOS window
-        // controls and the first toolbar buttons — opt-in via Settings.
-        // Placed as its own leading item so it does NOT join the rounded
-        // ControlGroup capsule that holds the file/clone buttons.
-        if topBarSystemMonitorEnabled {
-            ToolbarItem(placement: .navigation) {
-                TopBarSystemMonitorPill()
-            }
-        }
-
         ToolbarItemGroup(placement: .navigation) {
             if shellLayoutProfile.usesCompactToolbar {
                 Button { togglePrimarySidebar() } label: {
@@ -22,6 +12,12 @@ extension ContentView {
                 }
                 .help(L10n("Barra lateral"))
                 .accessibilityLabel(L10n("Barra lateral"))
+            }
+
+            if topBarSystemMonitorEnabled {
+                ControlGroup {
+                    TopBarSystemMonitorPill()
+                }
             }
 
             ControlGroup {
