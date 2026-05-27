@@ -170,8 +170,17 @@ struct ChatScreen: View {
                             composerText = pickedPrompt
                         }
                     } else {
+                        let latestStreamingAssistantID = chat.thread.messages.last(where: { $0.role == .assistant && $0.isStreaming })?.id
+                        // Precompute applyAllState for every assistant message once — O(n) total
+                        // instead of O(n * m) from calling chat.applyAllState(for:) per row.
+                        let applyAllStateByID: [UUID: ApplyAllState] = Dictionary(
+                            uniqueKeysWithValues: chat.thread.messages.compactMap { msg -> (UUID, ApplyAllState)? in
+                                guard msg.role == .assistant, let blocks = msg.editBlocks, !blocks.isEmpty else { return nil }
+                                return (msg.id, chat.applyAllState(for: msg.id))
+                            }
+                        )
                         ForEach(chat.thread.messages) { message in
-                            if message.role == .assistant && message.isStreaming && message.id == chat.thread.messages.last(where: { $0.role == .assistant && $0.isStreaming })?.id && !chat.pendingToolEvents.isEmpty {
+                            if message.role == .assistant && message.isStreaming && message.id == latestStreamingAssistantID && !chat.pendingToolEvents.isEmpty {
                                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
                                     ForEach(chat.pendingToolEvents) { event in
                                         ChatToolEventBadge(event: event)
@@ -272,7 +281,7 @@ struct ChatScreen: View {
                                         ApplyAllButton(
                                             blocks: blocks,
                                             isStreaming: message.isStreaming,
-                                            state: chat.applyAllState(for: msgID)
+                                            state: applyAllStateByID[msgID] ?? .ready(blocks.count)
                                         ) {
                                             Task { await chat.applyAllEdits(messageID: msgID) }
                                         }

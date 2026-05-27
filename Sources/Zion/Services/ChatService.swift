@@ -91,6 +91,14 @@ final class ChatService {
     /// In-flight streaming tasks keyed by threadID. Allows multiple threads to
     /// stream in parallel; switching threads no longer cancels active streams.
     @ObservationIgnored private var tasksByThread: [UUID: Task<Void, Never>] = [:]
+    /// Active tool subprocesses keyed by tool-call UUID. Populated by
+    /// `registerProcess` (see `ChatService+ProcessTracking.swift`) so
+    /// `stop()` can SIGTERM/SIGKILL them when the user hits cancel.
+    @ObservationIgnored var activeProcesses: [UUID: TrackedProcess] = [:]
+    /// Phase 4 continue-chip — total extra hops the user has granted to the
+    /// active turn via the Continue chip. Reset on every new turn. Read by
+    /// the harness loop via `effectiveHopBudget`.
+    @ObservationIgnored var extraHopsGranted: Int = 0
 
     /// FIFO of user messages typed while a stream was already running for the
     /// same thread. The streaming task drains this on completion so the user
@@ -107,6 +115,17 @@ final class ChatService {
         let branch: String
         let modelOverride: String?
         let attachments: [PendingChatAttachment]
+
+        init(text: String, provider: AIProvider, apiKey: String, mode: AIMode, repoURL: URL, branch: String, modelOverride: String?, attachments: [PendingChatAttachment] = []) {
+            self.text = text
+            self.provider = provider
+            self.apiKey = apiKey
+            self.mode = mode
+            self.repoURL = repoURL
+            self.branch = branch
+            self.modelOverride = modelOverride
+            self.attachments = attachments
+        }
     }
     /// Public setter so tests (and any future composer-side reorder action)
     /// can mutate the queue without going through a private helper. UI flow
@@ -978,6 +997,7 @@ final class ChatService {
             )
         }
         Task { await self.agentRuntime.cancel() }
+        Task { @MainActor in await self.terminateAllActiveProcesses() }
     }
 
     /// Posts a short-lived banner string into `transientNotice` and clears it

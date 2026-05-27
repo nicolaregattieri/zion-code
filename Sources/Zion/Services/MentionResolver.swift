@@ -5,6 +5,61 @@
 
 import Foundation
 
+// MARK: - MentionShellRunner protocol
+
+/// Thin subprocess-running protocol so diff/PR resolvers can be tested without real git/gh.
+protocol MentionShellRunner: Sendable {
+    /// Run an executable with args in `directory`. Returns stdout on success (exit 0),
+    /// throws on non-zero exit or launch failure.
+    func run(executable: String, args: [String], in directory: URL) async throws -> String
+}
+
+// MARK: - DefaultMentionShellRunner
+
+/// Production implementation using Foundation.Process.
+final class DefaultMentionShellRunner: MentionShellRunner, @unchecked Sendable {
+    static let shared = DefaultMentionShellRunner()
+
+    func run(executable: String, args: [String], in directory: URL) async throws -> String {
+        try await withCheckedThrowingContinuation { continuation in
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: executable)
+            process.arguments = args
+            process.currentDirectoryURL = directory
+
+            let stdout = Pipe()
+            let stderr = Pipe()
+            process.standardOutput = stdout
+            process.standardError = stderr
+
+            do {
+                try process.run()
+            } catch {
+                continuation.resume(throwing: error)
+                return
+            }
+
+            process.waitUntilExit()
+
+            guard process.terminationStatus == 0 else {
+                let errData = stderr.fileHandleForReading.readDataToEndOfFile()
+                let errMsg = String(data: errData, encoding: .utf8) ?? ""
+                continuation.resume(throwing: MentionShellError.nonZeroExit(Int(process.terminationStatus), errMsg))
+                return
+            }
+
+            let data = stdout.fileHandleForReading.readDataToEndOfFile()
+            let output = String(data: data, encoding: .utf8) ?? ""
+            continuation.resume(returning: output)
+        }
+    }
+}
+
+enum MentionShellError: Error {
+    case nonZeroExit(Int, String)
+    case launchFailed(String)
+}
+
 // MARK: - MentionToolClient protocol
 
 /// Thin string-returning protocol so tests can inject a mock without
@@ -61,24 +116,34 @@ actor MentionResolver {
 
     private let toolClient: any MentionToolClient
     private let selectionProvider: @Sendable () -> String?
+    let repoURL: URL?
+    let shellRunner: any MentionShellRunner
 
     // MARK: Init
 
     init(
         toolClient: any MentionToolClient,
-        selectionProvider: @escaping @Sendable () -> String? = { nil }
+        selectionProvider: @escaping @Sendable () -> String? = { nil },
+        repoURL: URL? = nil,
+        shellRunner: any MentionShellRunner = DefaultMentionShellRunner.shared
     ) {
         self.toolClient = toolClient
         self.selectionProvider = selectionProvider
+        self.repoURL = repoURL
+        self.shellRunner = shellRunner
     }
 
     /// Convenience init that wraps an MCPClientProtocol.
     init(
         mcpClient: any MCPClientProtocol,
-        selectionProvider: @escaping @Sendable () -> String? = { nil }
+        selectionProvider: @escaping @Sendable () -> String? = { nil },
+        repoURL: URL? = nil,
+        shellRunner: any MentionShellRunner = DefaultMentionShellRunner.shared
     ) {
         self.toolClient = MCPMentionAdapter(mcpClient)
         self.selectionProvider = selectionProvider
+        self.repoURL = repoURL
+        self.shellRunner = shellRunner
     }
 
     // MARK: Public API
@@ -127,6 +192,16 @@ actor MentionResolver {
                 let (contents, bytes) = await resolveWeb(url: mention.argument, queryText: message, maxBytes: maxBytes)
                 resolved.append(ResolvedMention(kind: .web, argument: mention.argument, contents: contents, bytes: bytes))
                 breakdown.append((path: mention.argument, bytes: bytes))
+
+            case .diff:
+                let (contents, bytes) = await resolveDiff(maxBytes: Constants.Limits.diffTokenCap * 4)
+                resolved.append(ResolvedMention(kind: .diff, argument: mention.argument, contents: contents, bytes: bytes))
+                breakdown.append((path: "@diff", bytes: bytes))
+
+            case .pr:
+                let (contents, bytes) = await resolvePR(branch: mention.argument)
+                resolved.append(ResolvedMention(kind: .pr, argument: mention.argument, contents: contents, bytes: bytes))
+                breakdown.append((path: "@pr", bytes: bytes))
             }
         }
 
@@ -153,6 +228,7 @@ actor MentionResolver {
             case .file, .web: return sum + maxBytes
             case .folder: return sum + (maxFiles * maxBytes)
             case .selection: return sum + maxBytes
+            case .diff, .pr: return sum + maxBytes
             }
         }
         return (estimatedBytes: estimated, mentionCount: parsed.count)
@@ -254,12 +330,11 @@ actor MentionResolver {
                     searchStart = text.endIndex
                 }
 
-                // Only emit if we have an argument (or it's @selection, which doesn't need one)
-                if kind == .selection || !argument.isEmpty {
+                // Only emit if we have an argument (or for argumentless tokens: @selection, @diff, @pr)
+                if kind == .selection || kind == .diff || kind == .pr || !argument.isEmpty {
                     let mentionEnd = searchStart == text.endIndex ? text.endIndex : searchStart
                     results.append((kind: kind, argument: argument, range: atRange.lowerBound..<mentionEnd))
                 }
-                // If no argument for non-selection kinds, skip silently
             }
         }
 
@@ -314,6 +389,48 @@ actor MentionResolver {
         return results
     }
 
+    private func resolveDiff(maxBytes: Int) async -> (contents: String, bytes: Int) {
+        guard let repo = repoURL else {
+            return ("[error: no active repository]", 0)
+        }
+        let git = "/usr/bin/git"
+        do {
+            let staged = (try? await shellRunner.run(executable: git, args: ["diff", "--staged"], in: repo)) ?? ""
+            let unstaged = (try? await shellRunner.run(executable: git, args: ["diff"], in: repo)) ?? ""
+            let combined = [staged, unstaged].filter { !$0.isEmpty }.joined(separator: "\n")
+            if combined.utf8.count > maxBytes {
+                let nameStat = (try? await shellRunner.run(executable: git, args: ["diff", "--shortstat", "HEAD"], in: repo)) ?? ""
+                let summary = "\(L10n("mention.diff.summary"))\n\(nameStat.trimmingCharacters(in: .whitespacesAndNewlines))"
+                return (summary, summary.utf8.count)
+            }
+            return (combined, combined.utf8.count)
+        }
+    }
+
+    private func resolvePR(branch: String) async -> (contents: String, bytes: Int) {
+        guard let repo = repoURL else {
+            return ("[error: no active repository]", 0)
+        }
+        do {
+            _ = try await shellRunner.run(executable: "/usr/bin/which", args: ["gh"], in: repo)
+        } catch {
+            let hint = L10n("mention.pr.ghMissing")
+            return (hint, hint.utf8.count)
+        }
+        let target = branch.isEmpty ? "HEAD" : branch
+        do {
+            let raw = try await shellRunner.run(
+                executable: "/usr/bin/env",
+                args: ["gh", "pr", "view", target, "--json", "title,body,files"],
+                in: repo
+            )
+            return (raw, raw.utf8.count)
+        } catch {
+            let hint = L10n("mention.pr.ghMissing")
+            return (hint, hint.utf8.count)
+        }
+    }
+
     private func resolveWeb(url: String, queryText: String, maxBytes: Int) async -> (contents: String, bytes: Int) {
         guard !url.isEmpty else { return ("[error: missing argument]", 0) }
         do {
@@ -358,6 +475,10 @@ actor MentionResolver {
                 sections.append("## @selection\n\(mention.contents)")
             case .web:
                 sections.append("## @web \(mention.argument)\n\(mention.contents)")
+            case .diff:
+                sections.append("## @diff \(mention.argument)\n\(mention.contents)")
+            case .pr:
+                sections.append("## @pr \(mention.argument)\n\(mention.contents)")
             }
         }
         return "<attached_context>\n" + sections.joined(separator: "\n\n") + "\n</attached_context>"

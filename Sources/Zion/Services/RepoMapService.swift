@@ -93,6 +93,22 @@ public actor RepoMapService {
         try await ensureMap(repoURL: repoURL)
     }
 
+    /// Phase 4 — top-N PageRank-ranked symbols mapped to `SymbolEntry`.
+    /// Reads from already-computed snapshots; never recomputes PageRank,
+    /// never touches the persisted snapshot file format.
+    func topSymbols(limit: Int = 50) async -> [SymbolEntry] {
+        let all = snapshots.values.flatMap { $0.entries }
+        let sorted = all.sorted { $0.score > $1.score }
+        return sorted.prefix(limit).map { entry in
+            SymbolEntry(
+                file: entry.path,
+                line: 0,
+                kind: entry.kind,
+                score: entry.score
+            )
+        }
+    }
+
     /// Returns top-N entries whose name or path contains `q`, ranked by PageRank score.
     public func query(_ q: String, limit: Int = 30) async -> [RepoMapEntry] {
         // Merge all snapshots — in practice callers should scope to a repo.

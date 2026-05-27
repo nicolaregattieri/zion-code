@@ -254,9 +254,11 @@ extension ChatContextBuilder {
         // @ mentions — static list
         let mentions: [HelpCardPayload.HelpCardItem] = [
             .init(id: "file", label: "@file <path>", description: L10n("chat.help.mention.file")),
-            .init(id: "folder", label: "@folder <path>", description: L10n("chat.help.mention.folder")),
+            .init(id: "folder", label: "@folder <path>", description: L10n("mention.folder.token")),
             .init(id: "selection", label: "@selection", description: L10n("chat.help.mention.selection")),
-            .init(id: "web", label: "@web <url>", description: L10n("chat.help.mention.web"))
+            .init(id: "web", label: "@web <url>", description: L10n("chat.help.mention.web")),
+            .init(id: "diff", label: "@diff", description: L10n("mention.diff.token")),
+            .init(id: "pr", label: "@pr", description: L10n("mention.pr.token"))
         ]
 
         // MCP tools — from store if available

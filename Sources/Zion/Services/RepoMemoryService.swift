@@ -2,7 +2,9 @@ import CryptoKit
 import Foundation
 
 actor RepoMemoryService {
-    private static let schemaVersion = 1
+    /// Phase 4 — schemaVersion is owned by `RepoMemoryModels.currentSchemaVersion`.
+    /// Kept as a forwarding alias so the rest of this file does not change shape.
+    private static var schemaVersion: Int { RepoMemorySnapshot.currentSchemaVersion }
     private let fileManager: FileManager
     private let baseDirectory: URL
 
@@ -20,7 +22,21 @@ actor RepoMemoryService {
     func loadSnapshot(for repositoryURL: URL) -> RepoMemorySnapshot? {
         let url = snapshotURL(for: repositoryURL)
         guard let data = try? Data(contentsOf: url) else { return nil }
-        return try? JSONDecoder.repoMemoryDecoder.decode(RepoMemorySnapshot.self, from: data)
+        guard let loaded = try? JSONDecoder.repoMemoryDecoder.decode(RepoMemorySnapshot.self, from: data) else {
+            // Decode failure → drop the file so the next refreshSnapshot
+            // rebuilds cleanly. Same outcome as schemaVersion mismatch.
+            try? fileManager.removeItem(at: url)
+            return nil
+        }
+        if loaded.schemaVersion < RepoMemorySnapshot.currentSchemaVersion {
+            // Phase 4 migration: drop the stale file and return nil so the
+            // caller treats it as a fresh repo. The next ensure/refresh call
+            // rebuilds the snapshot at the new schemaVersion. Downstream
+            // callers MUST tolerate a missing snapshot (topSymbols == []).
+            try? fileManager.removeItem(at: url)
+            return nil
+        }
+        return loaded
     }
 
     func saveSnapshot(_ snapshot: RepoMemorySnapshot, for repositoryURL: URL) throws {
