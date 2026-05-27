@@ -191,6 +191,37 @@ final class MentionAutocompletePanel: NSPanel {
         let candidate = candidates[min(selectedIndex, candidates.count - 1)]
         onCommit?(candidate)
     }
+
+    // MARK: - Phase 4 — token list + longest-prefix disambiguation
+
+    /// Canonical token list surfaced by the autocomplete panel when the user
+    /// types `@` followed by a partial token. Order is intentional and matches
+    /// the static legend in `ChatContextBuilder` (file, folder, selection,
+    /// web, diff, pr). Used by `MentionAutocompletePanelTests` to lock down
+    /// criterion 12 (all five Phase-4 tokens present) and criterion 11b
+    /// (longest-prefix ranking so `@fo` prefers `@folder` over `@file`).
+    static let availableTokens: [String] = [
+        "@file", "@folder", "@selection", "@web", "@diff", "@pr"
+    ]
+
+    /// Rank `availableTokens` by longest-prefix match against the typed
+    /// partial token (e.g. `"fo"`). Tokens that do not contain the prefix
+    /// land at the end; ties broken by longer-token-first so `@folder`
+    /// outranks `@file` when the prefix is `"fo"`.
+    static func rankedTokens(matching partial: String) -> [String] {
+        let lower = partial.lowercased()
+        if lower.isEmpty { return availableTokens }
+        return availableTokens.sorted { lhs, rhs in
+            // Strip the leading "@" so a partial like "fo" matches "folder".
+            let l = lhs.dropFirst().lowercased()
+            let r = rhs.dropFirst().lowercased()
+            let lHas = l.hasPrefix(lower)
+            let rHas = r.hasPrefix(lower)
+            if lHas != rHas { return lHas && !rHas }
+            if lHas && rHas { return l.count > r.count }
+            return lhs < rhs
+        }
+    }
 }
 
 // MARK: - AutocompleteListView
