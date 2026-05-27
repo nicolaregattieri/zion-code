@@ -372,6 +372,7 @@
 | Confirmation Mode | Never / Destructive Only / All |
 | Background Fetch | Auto-checks remote every 60s |
 | Recent Repositories | Root-only list (up to 10) with per-project `WT n` badge |
+| Top-Bar System Monitor | Optional CPU + RAM pill in the window toolbar (Settings → General → Mostrar monitor de sistema). Polls every 2s, tints amber / red under load |
 
 ## Diagnostics
 
