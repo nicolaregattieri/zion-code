@@ -485,10 +485,10 @@ struct ChatScreen: View {
                 )
             }
             // Pre-flight chip row — sits directly above the input field so
-            // Modo / Permissão / Contexto / (Rodar comandos) / Modelo are the
-            // last things the user sees before hitting Send. Stays visible
-            // mid-thread so the user can switch on the fly.
-            ChatPreflightChipRow(chat: chat)
+            // Modo / Permissão / (Rodar comandos) are the last things the user
+            // sees before hitting Send. Stays visible mid-thread so the user
+            // can switch on the fly.
+            ChatPreflightChipRow(compact: true)
         }
     }
 

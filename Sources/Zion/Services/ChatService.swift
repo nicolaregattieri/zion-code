@@ -25,28 +25,6 @@ final class ChatService {
     /// follow the user across thread switches like the text draft does.
     var threadAttachments: [UUID: [PendingChatAttachment]] = [:]
 
-    /// Per-thread pre-flight chip selection (Modo / Contexto / Rodar comandos).
-    /// Falls back to `ChatPreflightDefaults.load()` for any thread without an
-    /// explicit entry so brand-new threads inherit the user's last choice.
-    var preflightSelections: [UUID: ChatPreflightSelection] = [:]
-
-    /// Read-or-seed the pre-flight selection for the given thread. Seeding
-    /// happens with the global default so the chip row never renders against
-    /// a stale snapshot.
-    func preflightSelection(for threadID: UUID) -> ChatPreflightSelection {
-        if let existing = preflightSelections[threadID] { return existing }
-        let seed = ChatPreflightDefaults.load()
-        preflightSelections[threadID] = seed
-        return seed
-    }
-
-    /// Persist the chip selection for the given thread AND mirror it to
-    /// UserDefaults so the next new thread inherits these choices.
-    func setPreflightSelection(_ selection: ChatPreflightSelection, for threadID: UUID) {
-        preflightSelections[threadID] = selection
-        ChatPreflightDefaults.save(selection)
-    }
-
     /// Forwarding computed property — back-compat for callers that use `service.thread`.
     var thread: ChatThread {
         get {
