@@ -110,10 +110,17 @@ actor ProviderOrchestrator {
     ///   returned immediately — the orchestrator only kicks in on retries / auto.
     /// - When `.auto`, walks the lane chain and returns the first eligible provider,
     ///   or `.none` if every option is ineligible.
+    /// Providers known to accept image input on their default Auto-selected
+    /// model. Local LLM and OpenRouter depend on which specific model the
+    /// user configured, so they're excluded from vision auto-routing — a
+    /// concrete user pick is honored even if it lacks vision (with a warn).
+    static let visionCapableInAuto: Set<AIProvider> = [.anthropic, .openai, .gemini, .claudeCLI]
+
     func resolve(
         lane: AITaskLane,
         requested: AIProvider,
-        costCaps: [AIProvider: Double] = [:]
+        costCaps: [AIProvider: Double] = [:],
+        requiresVision: Bool = false
     ) async -> AIProvider {
         // Explicit provider — pass straight through.
         if requested != .auto && requested != .none {
@@ -121,9 +128,18 @@ actor ProviderOrchestrator {
         }
 
         await DiagnosticLogger.shared.log(.info,
-            "orchestrator.resolve lane=\(lane.rawValue) requested=\(requested.rawValue)",
+            "orchestrator.resolve lane=\(lane.rawValue) requested=\(requested.rawValue) requiresVision=\(requiresVision)",
             source: "orchestrator")
-        let chain = policy.chain(for: lane)
+        var chain = policy.chain(for: lane)
+        if requiresVision {
+            let filtered = chain.filter { Self.visionCapableInAuto.contains($0) }
+            if !filtered.isEmpty {
+                await DiagnosticLogger.shared.log(.info,
+                    "orchestrator.vision filter chain=\(chain.map(\.rawValue).joined(separator: ",")) → \(filtered.map(\.rawValue).joined(separator: ","))",
+                    source: "orchestrator")
+                chain = filtered
+            }
+        }
         if let primary = await firstEligible(in: chain, costCaps: costCaps) {
             return primary
         }

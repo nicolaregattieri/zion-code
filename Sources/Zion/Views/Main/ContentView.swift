@@ -53,6 +53,7 @@ struct ContentView: View {
     @AppStorage(UserDefaultsKeys.General.hasOpenedRepositoryOnce) private var hasOpenedRepositoryOnce: Bool = false
     @AppStorage(UserDefaultsKeys.General.zenModeEnabled) var zenModeEnabled: Bool = false
     @AppStorage(UserDefaultsKeys.General.zionModeEnabled) var zionModeEnabled: Bool = false
+    @AppStorage("topbar.systemMonitor.enabled") var topBarSystemMonitorEnabled: Bool = false
     @AppStorage(UserDefaultsKeys.General.preZionModeTheme) private var preZionModeTheme: String = ""
     @AppStorage(UserDefaultsKeys.General.openWithDrawerCollapsed) private var openWithDrawerCollapsed: Bool = false
 

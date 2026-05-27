@@ -5,6 +5,24 @@ extension RepositoryViewModel {
 
     // MARK: - Worktrees
 
+    /// Lightweight worktree-only refresh. Skips the full repo reload so the
+    /// sidebar worktree card and the Worktrees panel can update reactively
+    /// (e.g. when the user removed worktrees from a terminal, or another
+    /// Zion session pruned them) without dragging in the cold-cache commit
+    /// reload. Safe to call on `.onAppear` — bails when no repo is open.
+    func refreshWorktreesOnly() {
+        guard let repositoryURL else { return }
+        let worker = self.worker
+        Task { [weak self] in
+            guard let self else { return }
+            let resolved = (try? await worker.worktreeList(in: repositoryURL, includeStatus: false)) ?? []
+            await MainActor.run {
+                let merged = self.mergeWorktreeStatusIfNeeded(resolved, includeWorktreeStatus: false)
+                if self.worktrees != merged { self.worktrees = merged }
+            }
+        }
+    }
+
     func addWorktree() {
         let path = worktreePathInput.clean
         guard !path.isEmpty else { return }

@@ -781,16 +781,20 @@ final class ChatService {
                 // Tier table maps (resolved provider, tier) → model independently
                 // of any "preliminary" provider, so we never call resolve twice.
                 let tier = await HeuristicTriageClassifier().classify(displayContent)
+                // If the user attached at least one image, ask the
+                // orchestrator to bias Auto towards a vision-capable
+                // provider (Anthropic / OpenAI / Gemini / claudeCLI).
+                let hasImageAttachment = boundAttachments.contains { $0.kind == .image }
                 // Honour the session-level "user disconnected local" flag by
                 // re-resolving until the orchestrator yields a non-local provider.
                 // First attempt:
                 var tentative = await self.orchestrator.resolve(
-                    lane: tier.lane, requested: .auto
+                    lane: tier.lane, requested: .auto, requiresVision: hasImageAttachment
                 )
                 if self.localSessionSuppressed, tentative == .local {
                     await self.orchestrator.markRateLimited(.local, retryAfter: 86_400)
                     tentative = await self.orchestrator.resolve(
-                        lane: tier.lane, requested: .auto
+                        lane: tier.lane, requested: .auto, requiresVision: hasImageAttachment
                     )
                 }
                 resolved = tentative
@@ -840,9 +844,13 @@ final class ChatService {
             var payload = Self.makePayload(for: enrichedText, provider: resolved)
             payload.cwd = repoURL
             // Forward image attachments to providers that support vision
-            // natively. Anthropic is the only one wired today; other
-            // providers will see the inlined text marker in `enrichedText`.
-            if resolved == .anthropic, !boundAttachments.isEmpty {
+            // natively. Anthropic / OpenAI / Gemini all expose image content
+            // blocks; their request builders pick `payload.imageAttachments`
+            // up. Other providers (local without VL, openrouter text models)
+            // see only the inlined `[Image attached: …]` text marker via
+            // `enrichedText`.
+            let visionProviders: Set<AIProvider> = [.anthropic, .openai, .gemini]
+            if visionProviders.contains(resolved), !boundAttachments.isEmpty {
                 payload.imageAttachments = boundAttachments.compactMap { att in
                     guard att.kind == .image,
                           let url = att.fileURL(),

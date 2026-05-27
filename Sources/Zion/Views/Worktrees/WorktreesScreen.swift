@@ -158,6 +158,12 @@ struct WorktreesScreen: View {
             .padding(18)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .onAppear {
+            // Refresh worktree list on screen mount so external removals
+            // (terminal `git worktree remove`, other sessions) show up
+            // without needing a full repo reload.
+            model.refreshWorktreesOnly()
+        }
     }
 }
 

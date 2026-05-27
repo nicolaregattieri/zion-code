@@ -263,11 +263,35 @@ extension AIClient {
     static func openAIRequestBody(payload: AIPromptPayload, maxTokens: Int, modelID: String) -> [String: Any] {
         // System message is placed at index 0 so OpenAI automatic prefix caching engages
         // for prefixes >= 1024 tokens (requires consistent ordering across requests).
-        [
+        let userContent: Any
+        if payload.imageAttachments.isEmpty {
+            userContent = renderUserMessage(from: payload)
+        } else {
+            // OpenAI multimodal content array: each image becomes
+            // {type: "image_url", image_url: {url: "data:<mime>;base64,..."}}.
+            // Vision-capable models (gpt-4o, gpt-4-turbo, o1, o3, gpt-5)
+            // accept this format; text-only models will 400 — caller is
+            // expected to route only vision-capable models through here.
+            var parts: [[String: Any]] = []
+            for image in payload.imageAttachments {
+                parts.append([
+                    "type": "image_url",
+                    "image_url": [
+                        "url": "data:\(image.mimeType);base64,\(image.base64)"
+                    ],
+                ])
+            }
+            parts.append([
+                "type": "text",
+                "text": renderUserMessage(from: payload),
+            ])
+            userContent = parts
+        }
+        return [
             "model": modelID,
             "messages": [
                 ["role": "system", "content": payload.systemInstructions],
-                ["role": "user", "content": renderUserMessage(from: payload)],
+                ["role": "user", "content": userContent],
             ],
             "max_tokens": maxTokens,
         ]
@@ -315,12 +339,23 @@ extension AIClient {
         Task instructions:
         \(sanitizePromptSegment(payload.taskInstructions))
         """
-        let untrustedParts: [[String: String]] = payload.untrustedSections.map { section in
+        let untrustedParts: [[String: Any]] = payload.untrustedSections.map { section in
             ["text": """
             \(sanitizePromptSegment(section.label)):
             \(wrapUntrustedContent(section.content, kind: section.kind, maxLength: section.maxLength))
             """]
         }
+        // Gemini multimodal: inline_data parts carry base64 bytes alongside
+        // the text. Vision-capable Gemini models (1.5+/2.x) accept this.
+        let imageParts: [[String: Any]] = payload.imageAttachments.map { image in
+            [
+                "inline_data": [
+                    "mime_type": image.mimeType,
+                    "data": image.base64,
+                ]
+            ]
+        }
+        let allParts: [[String: Any]] = [["text": trustedPart]] + untrustedParts + imageParts
 
         return [
             "system_instruction": [
@@ -330,7 +365,7 @@ extension AIClient {
             ],
             "contents": [
                 [
-                    "parts": [["text": trustedPart]] + untrustedParts
+                    "parts": allParts
                 ]
             ],
             "generationConfig": [
