@@ -33,8 +33,25 @@ without shipping a multi-hundred-MB model in the bundle.
 - **Repo identity**: reuse `ChatStorage.repoID(for:)` for the `<repoID>`
   segment so RAG, chat, and memory all key off the same hash for a given
   repository URL (already SHA256-normalized + symlink-resolved).
-- **Chunking**: 256-token windows with a 32-token overlap. One row per
-  chunk; `content_sha` short-circuits re-embed when nothing changed.
+- **Chunking**: tree-sitter AST chunks at function / class boundaries,
+  merging siblings up to a 512-token cap. Fixed 256-token + 32-token
+  overlap is the FALLBACK path for languages without a tree-sitter
+  grammar (Markdown, plain text). This matches Cursor's 2024-2026 recipe
+  ([TDS: How Cursor Indexes](https://towardsdatascience.com/how-cursor-actually-indexes-your-codebase/),
+  [supermemory AST chunking](https://supermemory.ai/blog/building-code-chunk-ast-aware-code-chunking/));
+  fixed windows alone are below the 2026 baseline for code repos.
+- **Hybrid retrieval**: `sqlite_fts5` virtual table on the same per-repo
+  DB carrying tokenized chunk text, merged with `vec0` results via
+  Reciprocal Rank Fusion (k = 60). Pattern from `sqlite-vec` author's
+  own cookbook ([Alex Garcia, hybrid FTS5+vec](https://alexgarcia.xyz/blog/2024/sqlite-vec-hybrid-search/index.html))
+  — local-first default in 2026, not optional.
+- **Embedding fallback ladder**: `NLContextualEmbedding` (default,
+  zero-cost) → Core ML **Qodo-Embed-1-1.5B** as opt-in upgrade for power
+  users. Qodo scores 68.53 on CoIR vs OpenAI-3-large 65.17, Apache-2.0,
+  runs on M-series silicon (~600MB Core ML asset)
+  ([Qodo HF card](https://huggingface.co/Qodo/Qodo-Embed-1-1.5B),
+  [VentureBeat coverage](https://venturebeat.com/programming-development/qodos-open-code-embedding-model-sets-new-enterprise-standard-beating-openai-salesforce)).
+  Promotion to default gated by A/B Recall@10 — see acceptance criteria.
 
 ## Schema
 
@@ -109,11 +126,11 @@ the Phase 4 acceptance criterion `[0-9]+\s*(MB|ms|s)\b`.
 ## Risks
 
 - **Identifier coverage in `NLContextualEmbedding`** — Apple does not
-  publish retrieval benchmarks for Swift / TS code. Before locking in,
-  Phase 5 task #1 runs a 100-query eval on the GraphForge repo (questions
-  like "where do we handle ghost frame guard?", "where is L10n loaded?")
-  and reports recall@5. If recall < 0.7, swap to MiniLM-L6-v2 via Core ML
-  (deferred fallback below). Eval lives at
+  publish ANY retrieval benchmark for this model on code (no MTEB / CoIR
+  entry exists). Treat MVP recall as **unknown** until measured on
+  Zion's own corpus. Phase 5 task #1 runs a 100-query golden-set eval on
+  the GraphForge repo + a Qodo-Embed-1-1.5B A/B; promotion path defined
+  in acceptance criteria. Eval lives at
   `Tests/ZionTests/RAG/IdentifierEvalTests.swift`.
 - **`sqlite-vec` ANN absence** — current release is exact brute force.
   Fine at the 6k-vector working point; if a monorepo hits 100k vectors,
@@ -170,11 +187,44 @@ the Phase 4 acceptance criterion `[0-9]+\s*(MB|ms|s)\b`.
 3. Settings surface — single "Re-index" button? Per-repo? "Pause
    indexing"? Out of scope for the RFC; Phase 5 follow-up.
 
+## Phase 5 Acceptance Criteria (added 2026-05-27 after 2026 SOTA review)
+
+- **Recall@10 ≥ 0.55** on a hand-labeled 100-query Zion-corpus golden
+  set. Measured for vector-only AND vector+FTS5/RRF (Cursor-style
+  baseline). Bar lifted from "TBD" to a concrete number per [TDS Cursor
+  index writeup](https://towardsdatascience.com/how-cursor-actually-indexes-your-codebase/).
+- **AST-chunk coverage ≥ 90%** of indexed bytes across Swift / TypeScript
+  / Python (all three have tree-sitter grammars). Fallback path
+  (Markdown, plain text) measured separately; report % of bytes that
+  hit fallback.
+- **Hybrid query p95 < 50ms** at 10k chunks. sqlite-vec brute-force +
+  FTS5 RRF benchmarks hit 3ms total on a Raspberry Pi Zero 2 W
+  ([Alex Garcia hybrid](https://alexgarcia.xyz/blog/2024/sqlite-vec-hybrid-search/index.html)),
+  so 50ms on M-series is conservative.
+- **A/B promotion gate**: NLContextualEmbedding vs Qodo-Embed-1-1.5B on
+  the golden set. If Qodo wins by ≥ 10% Recall@10, promote Qodo to
+  default and accept the ~600MB Core ML asset download (gated, opt-in
+  in MVP). Schema dim moves 512 → 1536; drop-and-rebuild on first
+  launch after the swap.
+- **`sqlite-vec` ANN re-check**: before scaling past 50k vectors (single
+  repo > ~80k LOC), verify ANN (IVF / DiskANN) status via
+  [issue #25](https://github.com/asg017/sqlite-vec/issues/25); brute
+  force stops being acceptable past 100k.
+
 ## References
 
 - Apple, *NaturalLanguage — NLContextualEmbedding*: <https://developer.apple.com/documentation/naturallanguage/nlcontextualembedding>.
 - Apple, WWDC23 "What's new in NaturalLanguage": <https://developer.apple.com/videos/play/wwdc2023/10042/>.
 - Garcia, Alex. *sqlite-vec*: <https://github.com/asg017/sqlite-vec>.
+- Garcia, Alex. *sqlite-vec v0.1.0 stable*: <https://alexgarcia.xyz/blog/2024/sqlite-vec-stable-release/index.html>.
+- Garcia, Alex. *Hybrid FTS5 + vec0 with RRF*: <https://alexgarcia.xyz/blog/2024/sqlite-vec-hybrid-search/index.html>.
+- sqlite-vec ANN tracking issue: <https://github.com/asg017/sqlite-vec/issues/25>.
 - jkrukowski, *SQLiteVec* Swift bindings (MIT): <https://github.com/jkrukowski/SQLiteVec>.
+- Qodo, *Qodo-Embed-1-1.5B model card*: <https://huggingface.co/Qodo/Qodo-Embed-1-1.5B>.
+- VentureBeat, *Qodo open code-embedding model beats OpenAI / Salesforce*: <https://venturebeat.com/programming-development/qodos-open-code-embedding-model-sets-new-enterprise-standard-beating-openai-salesforce>.
+- Towards Data Science, *How Cursor Indexes Your Codebase*: <https://towardsdatascience.com/how-cursor-actually-indexes-your-codebase/>.
+- supermemory, *Building AST-aware code chunking*: <https://supermemory.ai/blog/building-code-chunk-ast-aware-code-chunking/>.
+- CoIR benchmark (ACL 2025): <https://github.com/CoIR-team/coir>.
+- SQLite WAL docs: <https://sqlite.org/wal.html>.
 - Hugging Face, *all-MiniLM-L6-v2*: <https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2>.
 - Hugging Face, *bge-small-en-v1.5*: <https://huggingface.co/BAAI/bge-small-en-v1.5>.
