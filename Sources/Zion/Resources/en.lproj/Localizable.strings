@@ -3004,3 +3004,17 @@
 "help.chat.inlineLocalSwap" = "Composer pill lists every discovered local model — pick to hot-swap without a Settings round-trip";
 "map.chat.fontSize.title" = "Chat font size";
 "map.chat.fontSize.description" = "Settings → Zion Talks → Appearance exposes a font size stepper (9–22 px, default 12) and a line spacing stepper (0–12 px, default 2). Changes propagate live to every chat surface; labels auto-scale relative to body size.";
+
+// Pre-flight chip row (mode / permission / shell-command policy)
+"chat.preflight.mode" = "Mode";
+"chat.preflight.mode.ask" = "Ask";
+"chat.preflight.mode.edit" = "Edit";
+"chat.preflight.mode.execute" = "Run task";
+"chat.preflight.permission" = "Permission";
+"chat.preflight.permission.askAlways" = "Always ask";
+"chat.preflight.permission.acceptEdits" = "Accept edits";
+"chat.preflight.permission.automatic" = "Automatic";
+"chat.preflight.shell" = "Run commands";
+"chat.preflight.shell.off" = "No";
+"chat.preflight.shell.safe" = "Safe only";
+"chat.preflight.shell.all" = "All";
