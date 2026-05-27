@@ -3020,3 +3020,10 @@
 "chat.preflight.shell.off" = "Não";
 "chat.preflight.shell.safe" = "Só seguros";
 "chat.preflight.shell.all" = "Tudo";
+
+// Composer attachments (paste, drop, picker for images / PDFs)
+"chat.composer.attach" = "Anexar arquivo";
+"chat.attach.remove" = "Remover anexo";
+"chat.attach.error.tooLarge" = "Anexo tem %@ — acima do limite de %@.";
+"chat.attach.error.unsupported" = "Tipo de anexo não suportado: %@";
+"chat.attach.error.read" = "Não foi possível ler o arquivo: %@";

@@ -1,4 +1,6 @@
 import SwiftUI
+import AppKit
+import UniformTypeIdentifiers
 
 struct ChatComposer: View {
 
@@ -8,6 +10,9 @@ struct ChatComposer: View {
     let onSend: () -> Void
     let onStop: () -> Void
     let onNewChat: () -> Void
+
+    /// Banner shown briefly when an attachment is rejected (oversize, unreadable).
+    @State private var attachmentError: String?
     /// Optional slot rendered ABOVE the chip row but INSIDE the composer card.
     /// Used by ChatScreen to surface the local-server status bar / auto-start
     /// banner so they share the composer's horizontal padding instead of
@@ -64,6 +69,20 @@ struct ChatComposer: View {
             HStack {
                 AutoResolvedChip(chat: chat, livePreviewText: text)
                 Spacer(minLength: 0)
+            }
+            if let err = attachmentError {
+                Text(err)
+                    .font(DesignSystem.Typography.label)
+                    .foregroundStyle(DesignSystem.Colors.destructive)
+                    .padding(.horizontal, DesignSystem.Spacing.compact)
+                    .padding(.vertical, DesignSystem.Spacing.micro)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            let pending = chat.threadAttachments[chat.activeThreadID] ?? []
+            if !pending.isEmpty {
+                AttachmentChipRow(pending: pending) { id in
+                    removeAttachment(id: id)
+                }
             }
             inputField
             // Cost preview for @mentions (300 ms debounce, no I/O)
@@ -250,13 +269,115 @@ struct ChatComposer: View {
                     .padding(.vertical, DesignSystem.Spacing.micro + 6)
                     .allowsHitTesting(false)
             }
-            // NSTextView replacement — multi-line, enter-to-send, shift-enter newline
-            ComposerNSTextView(text: $text, onSend: {
-                if canSend { onSend() }
-            })
+            // NSTextView replacement — multi-line, enter-to-send, shift-enter newline.
+            // The custom NSTextView consults the pasteboard before letting the
+            // system paste a path-as-text when an image is on the clipboard;
+            // see ZionComposerTextView.paste(_:).
+            ComposerNSTextView(
+                text: $text,
+                onSend: { if canSend { onSend() } },
+                onPasteAttachments: { items in addAttachments(items) }
+            )
             .frame(minHeight: 28, maxHeight: 120)
             .padding(.horizontal, DesignSystem.Spacing.compact)
             .padding(.vertical, DesignSystem.Spacing.micro)
+        }
+        .onDrop(of: [UTType.fileURL, UTType.image, UTType.pdf], isTargeted: nil) { providers in
+            handleDrop(providers: providers)
+        }
+    }
+
+    // MARK: - Attachment helpers
+
+    private func addAttachments(_ items: [PendingChatAttachment]) {
+        guard !items.isEmpty else { return }
+        let key = chat.activeThreadID
+        var current = chat.threadAttachments[key] ?? []
+        current.append(contentsOf: items)
+        chat.threadAttachments[key] = current
+    }
+
+    private func removeAttachment(id: UUID) {
+        let key = chat.activeThreadID
+        var current = chat.threadAttachments[key] ?? []
+        current.removeAll { $0.id == id }
+        if current.isEmpty {
+            chat.threadAttachments.removeValue(forKey: key)
+        } else {
+            chat.threadAttachments[key] = current
+        }
+    }
+
+    private func handleDrop(providers: [NSItemProvider]) -> Bool {
+        var accepted = false
+        for provider in providers {
+            // Prefer file URL representation so we get a real on-disk file
+            // we can copy from. Falls back to a generic data load for
+            // pasteboard-only providers.
+            if provider.canLoadObject(ofClass: NSURL.self) {
+                accepted = true
+                _ = provider.loadObject(ofClass: NSURL.self) { item, _ in
+                    guard let url = item as? URL else { return }
+                    do {
+                        let pending = try ChatAttachmentService.captureFromFile(url: url)
+                        DispatchQueue.main.async {
+                            addAttachments([pending])
+                        }
+                    } catch {
+                        DispatchQueue.main.async {
+                            surfaceAttachmentError(error)
+                        }
+                    }
+                }
+            }
+        }
+        return accepted
+    }
+
+    fileprivate func surfaceAttachmentError(_ error: Error) {
+        attachmentError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        // Auto-dismiss the inline error after a few seconds so it doesn't
+        // hang around forever.
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(4))
+            attachmentError = nil
+        }
+    }
+
+    /// Paperclip pill — opens NSOpenPanel scoped to images + PDFs.
+    private var attachButton: some View {
+        Button {
+            presentAttachmentPicker()
+        } label: {
+            Image(systemName: "paperclip")
+                .font(DesignSystem.Typography.body)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+                .frame(width: 30, height: 30)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(L10n("chat.composer.attach"))
+    }
+
+    private func presentAttachmentPicker() {
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = true
+        panel.canChooseDirectories = false
+        panel.canChooseFiles = true
+        panel.allowedContentTypes = [.image, .pdf]
+        panel.prompt = L10n("chat.composer.attach")
+        if panel.runModal() == .OK {
+            var collected: [PendingChatAttachment] = []
+            for url in panel.urls {
+                do {
+                    collected.append(try ChatAttachmentService.captureFromFile(url: url))
+                } catch {
+                    surfaceAttachmentError(error)
+                }
+            }
+            if !collected.isEmpty {
+                addAttachments(collected)
+            }
         }
     }
 
@@ -347,6 +468,7 @@ struct ChatComposer: View {
             }
             bashTogglePill
             Spacer()
+            attachButton
             ChatDictationButton(composerText: $text, repoURL: repoURL)
             newChatButton
             if chat.activePendingQueueCount > 0 {
@@ -368,6 +490,7 @@ struct ChatComposer: View {
             providerMenu
             modelMenu
             Spacer()
+            attachButton
             overflowMenu
             if chat.activePendingQueueCount > 0 {
                 queueBadge

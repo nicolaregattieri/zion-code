@@ -3018,3 +3018,10 @@
 "chat.preflight.shell.off" = "No";
 "chat.preflight.shell.safe" = "Safe only";
 "chat.preflight.shell.all" = "All";
+
+// Composer attachments (paste, drop, picker for images / PDFs)
+"chat.composer.attach" = "Attach file";
+"chat.attach.remove" = "Remove attachment";
+"chat.attach.error.tooLarge" = "Attachment is %@ — over the %@ limit.";
+"chat.attach.error.unsupported" = "Unsupported attachment type: %@";
+"chat.attach.error.read" = "Could not read file: %@";

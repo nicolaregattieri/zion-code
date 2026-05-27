@@ -3042,3 +3042,10 @@
 "chat.preflight.shell.off" = "No";
 "chat.preflight.shell.safe" = "Solo seguros";
 "chat.preflight.shell.all" = "Todos";
+
+// Composer attachments (paste, drop, picker for images / PDFs)
+"chat.composer.attach" = "Adjuntar archivo";
+"chat.attach.remove" = "Quitar adjunto";
+"chat.attach.error.tooLarge" = "El adjunto pesa %@ — supera el límite de %@.";
+"chat.attach.error.unsupported" = "Tipo de adjunto no soportado: %@";
+"chat.attach.error.read" = "No se pudo leer el archivo: %@";

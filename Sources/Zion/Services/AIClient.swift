@@ -49,6 +49,19 @@ struct AIPromptPayload {
     let suspiciousPatterns: [String]
     /// Working directory for subprocess-based providers (`.claudeCLI`/`.codexCLI`). Defaults to nil.
     var cwd: URL? = nil
+    /// Image attachments that should be forwarded as native multimodal
+    /// content blocks where the provider supports it (Anthropic). Other
+    /// providers ignore this — the caller is expected to inline a
+    /// text-friendly representation into `taskInstructions` for them.
+    var imageAttachments: [AIImageAttachment] = []
+}
+
+/// Multimodal image payload. Kept provider-agnostic; encoders pick the
+/// representation that matches the wire format.
+struct AIImageAttachment: Sendable {
+    let mimeType: String
+    let base64: String
+    let originalName: String
 }
 
 actor AIClient {

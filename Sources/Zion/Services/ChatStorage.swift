@@ -161,7 +161,7 @@ actor ChatStorage {
         let db = try connection(for: repoID)
         let sql = """
             SELECT m.id, m.role, m.content, m.created_at, m.is_streaming, m.plan_json,
-                   m.edit_blocks_json, m.provider_used
+                   m.edit_blocks_json, m.provider_used, m.attachments_json
             FROM messages m
             JOIN threads t ON t.id = m.thread_id
             WHERE m.thread_id = ? AND t.repo_id = ?
@@ -201,6 +201,13 @@ actor ChatStorage {
             let providerUsed: String? = sqlite3_column_type(stmt, 7) != SQLITE_NULL
                 ? sqlite3_column_text(stmt, 7).map { String(cString: $0) }
                 : nil
+            let attachments: [ChatAttachment] = sqlite3_column_type(stmt, 8) != SQLITE_NULL
+                ? (sqlite3_column_text(stmt, 8).flatMap { ptr -> [ChatAttachment]? in
+                    let jsonStr = String(cString: ptr)
+                    guard let data = jsonStr.data(using: .utf8) else { return nil }
+                    return try? JSONDecoder().decode([ChatAttachment].self, from: data)
+                }) ?? []
+                : []
 
             guard let id = UUID(uuidString: idStr) else { continue }
             let role: ChatRole = roleStr == "assistant" ? .assistant : .user
@@ -213,7 +220,8 @@ actor ChatStorage {
                 isStreaming: isStreaming,
                 plan: plan,
                 editBlocks: editBlocks,
-                providerUsed: providerUsed
+                providerUsed: providerUsed,
+                attachments: attachments
             ))
         }
         return messages
@@ -223,8 +231,8 @@ actor ChatStorage {
         let db = try connection(for: repoID)
         let sql = """
             INSERT INTO messages (id, thread_id, role, content, created_at, is_streaming,
-                                  plan_json, edit_blocks_json, provider_used)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+                                  plan_json, edit_blocks_json, provider_used, attachments_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             """
         var stmt: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
@@ -259,6 +267,13 @@ actor ChatStorage {
             sqlite3_bind_text(stmt, 9, provider, -1, sqliteTransient)
         } else {
             sqlite3_bind_null(stmt, 9)
+        }
+        if !message.attachments.isEmpty,
+           let data = try? JSONEncoder().encode(message.attachments),
+           let jsonStr = String(data: data, encoding: .utf8) {
+            sqlite3_bind_text(stmt, 10, jsonStr, -1, sqliteTransient)
+        } else {
+            sqlite3_bind_null(stmt, 10)
         }
 
         guard sqlite3_step(stmt) == SQLITE_DONE else {
@@ -516,6 +531,9 @@ actor ChatStorage {
 
         // v5 migration: provider_used column on messages.
         try? exec(db: db, sql: "ALTER TABLE messages ADD COLUMN provider_used TEXT NULL;")
+
+        // v6 migration: attachments JSON (images, PDFs, etc.) on messages.
+        try? exec(db: db, sql: "ALTER TABLE messages ADD COLUMN attachments_json TEXT NULL;")
 
         // v4 migration: AI edit log table.
         try? exec(db: db, sql: """
