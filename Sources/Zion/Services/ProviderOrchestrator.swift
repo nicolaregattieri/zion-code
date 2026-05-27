@@ -116,6 +116,13 @@ actor ProviderOrchestrator {
     /// concrete user pick is honored even if it lacks vision (with a warn).
     static let visionCapableInAuto: Set<AIProvider> = [.anthropic, .openai, .gemini, .claudeCLI]
 
+    /// Phase 4 — public per-provider vision capability probe consumed by
+    /// `AIClient+Helpers` to decide whether to attach the image payload or
+    /// surface a `ChatAttachmentUnsupportedBanner`.
+    static func isVisionCapable(for provider: AIProvider) -> Bool {
+        visionCapableInAuto.contains(provider)
+    }
+
     func resolve(
         lane: AITaskLane,
         requested: AIProvider,

@@ -260,6 +260,15 @@ extension AIClient {
         UserDefaults.standard.object(forKey: "chat.cache.enabled") as? Bool ?? true
     }
 
+    /// Phase 4 — filters `imageAttachments` to those whose MIME is in
+    /// `Constants.Attachments.acceptedMIMEs`. Unsupported MIMEs are dropped
+    /// silently from the payload; the caller surfaces a banner via the
+    /// `ChatAttachmentUnsupportedBanner` event so the user knows the image
+    /// was not forwarded to the provider.
+    static func acceptedImageAttachments(from payload: AIPromptPayload) -> [AIImageAttachment] {
+        payload.imageAttachments.filter { Constants.Attachments.acceptedMIMEs.contains($0.mimeType) }
+    }
+
     static func openAIRequestBody(payload: AIPromptPayload, maxTokens: Int, modelID: String) -> [String: Any] {
         // System message is placed at index 0 so OpenAI automatic prefix caching engages
         // for prefixes >= 1024 tokens (requires consistent ordering across requests).
