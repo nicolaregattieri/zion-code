@@ -166,7 +166,7 @@ struct ChatScreen: View {
             ScrollView {
                 LazyVStack(spacing: 0) {
                     if chat.thread.messages.isEmpty {
-                        ChatEmptyState { pickedPrompt in
+                        ChatEmptyState(repoURL: repoURL) { pickedPrompt in
                             composerText = pickedPrompt
                         }
                     } else {
