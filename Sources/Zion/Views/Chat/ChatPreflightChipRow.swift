@@ -158,25 +158,30 @@ struct ChatPreflightChipRow: View {
 
     @ViewBuilder
     private func chipLabel(prefix: String, value: String, tint: Color) -> some View {
-        HStack(spacing: 4) {
-            Text(prefix + ":")
-                .foregroundStyle(.secondary)
-            Text(value)
-                .foregroundStyle(DesignSystem.Colors.textPrimary)
-            Image(systemName: "chevron.down")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-        }
-        .font(compact ? DesignSystem.Typography.label : DesignSystem.Typography.body)
-        .padding(.horizontal, compact ? DesignSystem.Spacing.compact : DesignSystem.Spacing.standard)
-        .padding(.vertical, compact ? 4 : 6)
-        .background(
-            Capsule()
-                .fill(tint == .clear ? DesignSystem.Colors.glassSubtle : tint)
-        )
-        .overlay(
-            Capsule()
-                .strokeBorder(DesignSystem.Colors.glassStroke, lineWidth: 1)
-        )
+        // Single Text with inline AttributedString so the Menu trigger
+        // renders the whole "Prefix: Value ▾" instead of dropping the value
+        // (macOS Menu strips multi-view HStack labels in some build
+        // configurations — proved by Mode/Permission chips showing only the
+        // prefix). Composing a single Text avoids that hazard.
+        var attr = AttributedString(prefix + ": ")
+        attr.foregroundColor = .secondary
+        var valueAttr = AttributedString(value)
+        valueAttr.foregroundColor = DesignSystem.Colors.textPrimary
+        attr.append(valueAttr)
+        var chevronAttr = AttributedString("  ▾")
+        chevronAttr.foregroundColor = .secondary
+        attr.append(chevronAttr)
+        return Text(attr)
+            .font(compact ? DesignSystem.Typography.label : DesignSystem.Typography.body)
+            .padding(.horizontal, compact ? DesignSystem.Spacing.compact : DesignSystem.Spacing.standard)
+            .padding(.vertical, compact ? 4 : 6)
+            .background(
+                Capsule()
+                    .fill(tint == .clear ? DesignSystem.Colors.glassSubtle : tint)
+            )
+            .overlay(
+                Capsule()
+                    .strokeBorder(DesignSystem.Colors.glassStroke, lineWidth: 1)
+            )
     }
 }
