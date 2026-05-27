@@ -725,6 +725,11 @@ final class RepositoryViewModel {
     @ObservationIgnored var commitLimit = 300
     @ObservationIgnored var refreshRequestID = UUID()
     @ObservationIgnored var detailsRequestID = UUID()
+    /// Timestamp of the last successful refresh; used to coalesce redundant
+    /// background refreshes (autoTimer / fileWatcher) that fire within a few
+    /// seconds of a completed load. User-initiated and operational refreshes
+    /// (repositorySwitch, gitAction, userInitiated) bypass this coalescing.
+    @ObservationIgnored var lastRefreshSucceededAt: Date?
     @ObservationIgnored var refreshTask: Task<Void, Never>?
     @ObservationIgnored var detailsTask: Task<Void, Never>?
     @ObservationIgnored var actionTask: Task<Void, Never>?
