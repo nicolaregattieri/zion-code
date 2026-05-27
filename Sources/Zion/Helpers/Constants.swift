@@ -219,6 +219,11 @@ enum Constants {
         /// 5s gives users time to think about which key combo to use.
         static let shortcutRecordingTimeout: UInt64 = 5_000_000_000 // 5s
 
+        // --- AI Harness ---
+
+        /// Grace period before the harness cancels a hung AI turn (milliseconds).
+        static let harnessCancelDeadlineMs: Int = 500
+
         // --- File Watcher Gate ---
 
         /// Cooldown after processing a file watcher event before accepting the next.
@@ -276,6 +281,26 @@ enum Constants {
         /// Maximum number of parent-directory paths the FileWatcher coalescer may buffer
         /// before flushing immediately (safety ceiling for extreme burst writes).
         static let fileWatcherCoalesceMaxPaths: Int = 5_000
+
+        // --- AI / Context Assembly ---
+
+        /// Maximum tokens to include from a git diff in AI context.
+        static let diffTokenCap = 8_000
+
+        /// Maximum tokens to include from a folder mention in AI context.
+        static let folderTokenCap = 6_000
+
+        /// Maximum lines to preview per file inside a folder mention.
+        static let folderFilePreviewLines = 20
+
+        /// Maximum symbols to pass to the symbols tool per invocation.
+        static let symbolsToolLimit = 20
+
+        /// Maximum top symbols to embed in a RepoMemory snapshot.
+        static let repoMemoryTopSymbolsLimit = 50
+
+        /// Extra hop-score boost applied to the continue chip's next-message candidate.
+        static let continueChipHopBoost = 10
     }
 
     enum RemoteAccess {
@@ -302,4 +327,25 @@ enum Constants {
     /// GitHub OAuth App client ID for Device Flow authentication.
     /// This is a public identifier (not a secret) — safe to embed in source.
     static let gitHubOAuthClientID = "Ov23liMlw7pMjQqLHcD0"
+
+    enum Attachments {
+        /// MIME types accepted for user-attached files in the chat input.
+        static let acceptedMIMEs: [String] = [
+            "image/png",
+            "image/jpeg",
+            "application/pdf"
+        ]
+    }
+
+    enum Feature {
+        /// When true, the AI harness sends SIGKILL to the subprocess on stop
+        /// instead of relying solely on cooperative cancellation.
+        /// Override via UserDefaults key "harness.processKillOnStop".
+        static var harnessProcessKillOnStop: Bool {
+            if let override = UserDefaults.standard.object(forKey: "harness.processKillOnStop") as? Bool {
+                return override
+            }
+            return true
+        }
+    }
 }

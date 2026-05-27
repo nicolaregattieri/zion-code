@@ -86,6 +86,90 @@ final class ChatLocalizationTests: XCTestCase {
         }
     }
 
+    // MARK: - Phase 4 keys
+
+    private let phase4Keys: [String] = [
+        "chat.continue.plus10",
+        "chat.continue.plus10.subtitle",
+        "attachment.unsupported.textOnly",
+        "attachment.unsupported.mime",
+        "mention.diff.summary",
+        "mention.pr.ghMissing",
+        "mention.folder.empty",
+        "mention.folder.unreadable",
+        "settings.mcp.title",
+        "settings.mcp.add",
+        "settings.mcp.malformedWarning",
+        "settings.rules.title",
+        "settings.rules.emptyState",
+        "settings.rules.createFirst",
+        "mention.diff.token",
+        "mention.pr.token",
+        "mention.folder.token",
+        "plan.save",
+        "plan.reject",
+        "plan.edit",
+    ]
+
+    func test_phase4_keys_existInAllLocales() {
+        let locales = ["en", "pt-BR", "es"]
+
+        for locale in locales {
+            guard let path = Bundle.zionResources.path(
+                forResource: "Localizable",
+                ofType: "strings",
+                inDirectory: nil,
+                forLocalization: locale
+            ) else {
+                XCTFail("Could not find Localizable.strings for locale: \(locale)")
+                continue
+            }
+
+            guard let dict = NSDictionary(contentsOfFile: path) as? [String: String] else {
+                XCTFail("Could not parse Localizable.strings for locale: \(locale) at \(path)")
+                continue
+            }
+
+            for key in phase4Keys {
+                guard let value = dict[key] else {
+                    XCTFail("Missing Phase 4 key \"\(key)\" in locale: \(locale)")
+                    continue
+                }
+                XCTAssertFalse(
+                    value.isEmpty,
+                    "Empty value for Phase 4 key \"\(key)\" in locale: \(locale)"
+                )
+            }
+        }
+    }
+
+    func test_phase4_keys_haveCallSite() throws {
+        try XCTSkip("Call sites land in task 11+ — skipped until all Phase 4 views are wired")
+
+        let sourcesPath = "/Users/nicolaregattieri/Developer/GraphForge/Sources"
+
+        for key in phase4Keys {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/grep")
+            process.arguments = ["-rE", "L10n\\(\"\(key)\"", sourcesPath]
+
+            let pipe = Pipe()
+            process.standardOutput = pipe
+            process.standardError = Pipe()
+
+            try process.run()
+            process.waitUntilExit()
+
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            let output = String(data: data, encoding: .utf8) ?? ""
+
+            XCTAssertFalse(
+                output.isEmpty,
+                "No call site found for Phase 4 key \"\(key)\" — grep found no L10n(\"\\(key)\") in Sources/"
+            )
+        }
+    }
+
     func testContextHeaderContainsPositionalTokens() {
         let locales = ["en", "pt-BR", "es"]
 

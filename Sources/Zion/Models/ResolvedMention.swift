@@ -9,6 +9,8 @@ enum MentionKind: String, Sendable, CaseIterable {
     case folder
     case selection
     case web
+    case diff
+    case pr
 }
 
 // MARK: - ResolvedMention

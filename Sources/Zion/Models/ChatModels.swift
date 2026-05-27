@@ -159,3 +159,24 @@ private extension DateFormatter {
         return formatter
     }()
 }
+
+// MARK: - ContinueChipEvent
+
+/// Carries metadata for the "Continue" suggestion chip shown after an assistant turn.
+struct ContinueChipEvent: Equatable, Sendable {
+    /// The suggested follow-up text to pre-fill in the chat input.
+    let suggestedText: String
+    /// Hop-score boost applied when ranking this chip against other candidates.
+    let hopBoost: Int
+}
+
+// MARK: - ChatAttachmentUnsupportedBanner
+
+/// Emitted when the user tries to attach a file whose MIME type is not in
+/// `Constants.Attachments.acceptedMIMEs`. Drives an inline banner in the chat UI.
+struct ChatAttachmentUnsupportedBanner: Equatable, Sendable {
+    /// Original filename the user attempted to attach.
+    let filename: String
+    /// Detected (or guessed) MIME type, if available.
+    let detectedMIME: String?
+}

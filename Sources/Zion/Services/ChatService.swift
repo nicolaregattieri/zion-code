@@ -107,6 +107,17 @@ final class ChatService {
         let branch: String
         let modelOverride: String?
         let attachments: [PendingChatAttachment]
+
+        init(text: String, provider: AIProvider, apiKey: String, mode: AIMode, repoURL: URL, branch: String, modelOverride: String?, attachments: [PendingChatAttachment] = []) {
+            self.text = text
+            self.provider = provider
+            self.apiKey = apiKey
+            self.mode = mode
+            self.repoURL = repoURL
+            self.branch = branch
+            self.modelOverride = modelOverride
+            self.attachments = attachments
+        }
     }
     /// Public setter so tests (and any future composer-side reorder action)
     /// can mutate the queue without going through a private helper. UI flow

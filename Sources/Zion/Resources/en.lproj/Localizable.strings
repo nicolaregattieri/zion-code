@@ -3028,3 +3028,25 @@
 "chat.attach.error.tooLarge" = "Attachment is %@ — over the %@ limit.";
 "chat.attach.error.unsupported" = "Unsupported attachment type: %@";
 "chat.attach.error.read" = "Could not read file: %@";
+
+// Phase 4 — Zion Talks
+"chat.continue.plus10" = "Continue (+10 hops)";
+"chat.continue.plus10.subtitle" = "Extend the tool-call budget";
+"attachment.unsupported.textOnly" = "Current model does not support images";
+"attachment.unsupported.mime" = "Unsupported file format";
+"mention.diff.summary" = "Diff too large — summary:";
+"mention.pr.ghMissing" = "Install GitHub CLI (gh) to use @pr";
+"mention.folder.empty" = "Empty folder";
+"mention.folder.unreadable" = "Folder not readable";
+"settings.mcp.title" = "MCP Servers";
+"settings.mcp.add" = "Add server";
+"settings.mcp.malformedWarning" = "Invalid mcp-servers.json — fix it before editing";
+"settings.rules.title" = "Project Rules";
+"settings.rules.emptyState" = "No rules in this project";
+"settings.rules.createFirst" = "Create first rule";
+"mention.diff.token" = "@diff — current repo diff";
+"mention.pr.token" = "@pr — PR for current branch";
+"mention.folder.token" = "@folder — folder listing";
+"plan.save" = "Save";
+"plan.reject" = "Reject";
+"plan.edit" = "Edit";

@@ -127,6 +127,10 @@ actor MentionResolver {
                 let (contents, bytes) = await resolveWeb(url: mention.argument, queryText: message, maxBytes: maxBytes)
                 resolved.append(ResolvedMention(kind: .web, argument: mention.argument, contents: contents, bytes: bytes))
                 breakdown.append((path: mention.argument, bytes: bytes))
+
+            case .diff, .pr:
+                // FIXME(T1): Resolution for .diff and .pr mentions is implemented in a later task.
+                break
             }
         }
 
@@ -153,6 +157,7 @@ actor MentionResolver {
             case .file, .web: return sum + maxBytes
             case .folder: return sum + (maxFiles * maxBytes)
             case .selection: return sum + maxBytes
+            case .diff, .pr: return sum + maxBytes
             }
         }
         return (estimatedBytes: estimated, mentionCount: parsed.count)
@@ -358,6 +363,10 @@ actor MentionResolver {
                 sections.append("## @selection\n\(mention.contents)")
             case .web:
                 sections.append("## @web \(mention.argument)\n\(mention.contents)")
+            case .diff:
+                sections.append("## @diff \(mention.argument)\n\(mention.contents)")
+            case .pr:
+                sections.append("## @pr \(mention.argument)\n\(mention.contents)")
             }
         }
         return "<attached_context>\n" + sections.joined(separator: "\n\n") + "\n</attached_context>"

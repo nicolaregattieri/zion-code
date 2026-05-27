@@ -3030,3 +3030,25 @@
 "chat.attach.error.tooLarge" = "Anexo tem %@ — acima do limite de %@.";
 "chat.attach.error.unsupported" = "Tipo de anexo não suportado: %@";
 "chat.attach.error.read" = "Não foi possível ler o arquivo: %@";
+
+// Phase 4 — Zion Talks
+"chat.continue.plus10" = "Continuar (+10 passos)";
+"chat.continue.plus10.subtitle" = "Estende o orçamento de tool calls";
+"attachment.unsupported.textOnly" = "Modelo atual não suporta imagens";
+"attachment.unsupported.mime" = "Formato de arquivo não suportado";
+"mention.diff.summary" = "Diff muito grande — resumo:";
+"mention.pr.ghMissing" = "Instale o GitHub CLI (gh) para usar @pr";
+"mention.folder.empty" = "Pasta vazia";
+"mention.folder.unreadable" = "Pasta sem permissão de leitura";
+"settings.mcp.title" = "Servidores MCP";
+"settings.mcp.add" = "Adicionar servidor";
+"settings.mcp.malformedWarning" = "Arquivo mcp-servers.json inválido — corrija antes de editar";
+"settings.rules.title" = "Regras do projeto";
+"settings.rules.emptyState" = "Nenhuma regra no projeto";
+"settings.rules.createFirst" = "Criar primeira regra";
+"mention.diff.token" = "@diff — diff atual do repo";
+"mention.pr.token" = "@pr — PR da branch atual";
+"mention.folder.token" = "@folder — listagem de pasta";
+"plan.save" = "Salvar";
+"plan.reject" = "Rejeitar";
+"plan.edit" = "Editar";
