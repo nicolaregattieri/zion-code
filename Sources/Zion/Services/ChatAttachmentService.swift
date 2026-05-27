@@ -69,6 +69,33 @@ enum ChatAttachmentService {
             }
         }
 
+        // Case 3: plain string that looks like a filesystem path pointing to
+        // an image or PDF. Some upstream tools (Claude Code's /zion-img
+        // skill, certain screenshot helpers, drag-from-some-IDEs) write the
+        // path as a STRING instead of a true file URL onto the pasteboard.
+        // Without this fallback the user pastes `/Users/.../IMG_xxx.jpg`
+        // and gets the path as plain text in the composer.
+        if let s = pb.string(forType: .string) {
+            let candidate = s.trimmingCharacters(in: .whitespacesAndNewlines)
+            // Reject anything that is clearly not a single absolute path:
+            // multi-line, embedded spaces with no quotes, or non-leading slash.
+            let looksLikePath = candidate.hasPrefix("/") || candidate.hasPrefix("~")
+            let multiline = candidate.contains("\n")
+            if looksLikePath && !multiline {
+                let expanded = (candidate as NSString).expandingTildeInPath
+                let ext = (expanded as NSString).pathExtension.lowercased()
+                let imageExts: Set<String> = ["png", "jpg", "jpeg", "gif", "webp", "heic", "tiff", "tif", "bmp", "pdf"]
+                if imageExts.contains(ext) {
+                    let url = URL(fileURLWithPath: expanded)
+                    if FileManager.default.fileExists(atPath: url.path),
+                       let pending = try? captureFromFile(url: url) {
+                        out.append(pending)
+                        return out
+                    }
+                }
+            }
+        }
+
         return out
     }
 
