@@ -4,6 +4,12 @@ import Foundation
 
 private let currentSchemaVersion = 2
 
+extension RepoMemorySnapshot {
+    /// Phase 4 — accessible mirror of the file-private constant so downstream
+    /// callers (and tests) can compare against the canonical schemaVersion.
+    static var currentSchemaVersion: Int { 2 }
+}
+
 // MARK: - CommitStyleProfile
 
 struct CommitStyleProfile: Codable, Equatable {
