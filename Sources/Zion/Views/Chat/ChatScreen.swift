@@ -170,8 +170,9 @@ struct ChatScreen: View {
                             composerText = pickedPrompt
                         }
                     } else {
+                        let latestStreamingAssistantID = chat.thread.messages.last(where: { $0.role == .assistant && $0.isStreaming })?.id
                         ForEach(chat.thread.messages) { message in
-                            if message.role == .assistant && message.isStreaming && message.id == chat.thread.messages.last(where: { $0.role == .assistant && $0.isStreaming })?.id && !chat.pendingToolEvents.isEmpty {
+                            if message.role == .assistant && message.isStreaming && message.id == latestStreamingAssistantID && !chat.pendingToolEvents.isEmpty {
                                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
                                     ForEach(chat.pendingToolEvents) { event in
                                         ChatToolEventBadge(event: event)
