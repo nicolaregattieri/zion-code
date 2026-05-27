@@ -727,6 +727,9 @@
 "settings.general.confirmation" = "Modo de Confirmação";
 "settings.general.graphAuthorAvatars" = "Ativar avatares de autores";
 "settings.general.graphAuthorAvatarsHint" = "Baixa avatares do Gravatar e GitHub/GitLab.";
+"settings.general.systemMonitor" = "Mostrar CPU / RAM na barra superior";
+"settings.general.systemMonitor.hint" = "Carga do sistema ao vivo ao lado dos botões da barra. Atualiza a cada 2 segundos.";
+"topbar.systemMonitor.help" = "Uso de CPU e memória do sistema";
 "settings.general.openWithDrawerCollapsed" = "Abrir o Zion com a gaveta lateral fechada";
 "settings.general.openWithDrawerCollapsedHint" = "Inicia com um workspace mais limpo. Use o menu do rodapé ou o ícone de barra lateral da toolbar para expandir.";
 "settings.general.customPath" = "Caminho Personalizado";
@@ -3006,3 +3009,24 @@
 "help.chat.inlineLocalSwap" = "Pill no composer lista cada modelo local detectado — escolha para hot-swap sem ir em Settings";
 "map.chat.fontSize.title" = "Tamanho da fonte do chat";
 "map.chat.fontSize.description" = "Ajustes → Zion Talks → Aparência expõe um stepper de tamanho de fonte (9–22 px, padrão 12) e um stepper de espaçamento de linha (0–12 px, padrão 2). As mudanças propagam ao vivo para todas as superfícies de chat; labels escalam automaticamente em relação ao tamanho do corpo.";
+
+// Pre-flight chip row (mode / permission / shell-command policy)
+"chat.preflight.mode" = "Modo";
+"chat.preflight.mode.ask" = "Perguntar";
+"chat.preflight.mode.edit" = "Editar";
+"chat.preflight.mode.execute" = "Executar tarefa";
+"chat.preflight.permission" = "Permissão";
+"chat.preflight.permission.askAlways" = "Pedir sempre";
+"chat.preflight.permission.acceptEdits" = "Aceitar edições";
+"chat.preflight.permission.automatic" = "Automático";
+"chat.preflight.shell" = "Rodar comandos";
+"chat.preflight.shell.off" = "Não";
+"chat.preflight.shell.safe" = "Só seguros";
+"chat.preflight.shell.all" = "Tudo";
+
+// Composer attachments (paste, drop, picker for images / PDFs)
+"chat.composer.attach" = "Anexar arquivo";
+"chat.attach.remove" = "Remover anexo";
+"chat.attach.error.tooLarge" = "Anexo tem %@ — acima do limite de %@.";
+"chat.attach.error.unsupported" = "Tipo de anexo não suportado: %@";
+"chat.attach.error.read" = "Não foi possível ler o arquivo: %@";

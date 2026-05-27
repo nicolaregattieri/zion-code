@@ -85,14 +85,44 @@ struct LocalServerStatusBar: View {
     }
 
     private var statusDot: some View {
+        // The status bar is only mounted when a local server is reachable, so
+        // the dot is always the "connected" color (green). Streaming animates
+        // the dot via a subtle pulse; idle stays solid green. Previously the
+        // dot was grey when not streaming, which read as "disconnected" even
+        // though the Disconnect button next to it implied the opposite.
         Circle()
-            .fill(model.isStreaming ? DesignSystem.Colors.success : DesignSystem.Colors.textTertiary)
+            .fill(DesignSystem.Colors.success)
             .frame(width: 8, height: 8)
             .overlay(
                 Circle()
                     .stroke(DesignSystem.Colors.glassOverlay, lineWidth: 0.5)
             )
+            .modifier(PulsingIfStreaming(isStreaming: model.isStreaming))
     }
+}
+
+private struct PulsingIfStreaming: ViewModifier {
+    let isStreaming: Bool
+    @State private var phase: Double = 1.0
+
+    func body(content: Content) -> some View {
+        if isStreaming {
+            content
+                .scaleEffect(phase)
+                .opacity(2 - phase)
+                .animation(
+                    .easeInOut(duration: 0.9).repeatForever(autoreverses: true),
+                    value: phase
+                )
+                .onAppear { phase = 1.35 }
+                .onDisappear { phase = 1.0 }
+        } else {
+            content
+        }
+    }
+}
+
+private extension LocalServerStatusBar {
 
     private var pressureColor: Color {
         switch model.systemPressure {

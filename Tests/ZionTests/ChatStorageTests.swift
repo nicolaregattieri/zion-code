@@ -219,3 +219,48 @@ final class ChatPlanPersistenceTests: XCTestCase {
         XCTAssertNil(loaded.first?.plan)
     }
 }
+
+// MARK: - ChatStorageRepoIDNormalizationTests
+
+/// Regression: chat threads "disappeared" when the same logical repo URL
+/// reached `ChatStorage.repoID(for:)` with slightly different encodings
+/// (trailing slash, symlink prefix). The hash differed → threads orphaned
+/// in a separate per-repo DB. `repoID(for:)` must collapse those variants
+/// to a single stable repoID.
+final class ChatStorageRepoIDNormalizationTests: XCTestCase {
+
+    func testRepoIDStableAcrossTrailingSlash() {
+        let base = URL(fileURLWithPath: "/tmp/zion-test-repoid-fixture")
+        let withSlash = URL(fileURLWithPath: "/tmp/zion-test-repoid-fixture/")
+        XCTAssertEqual(
+            ChatStorage.repoID(for: base),
+            ChatStorage.repoID(for: withSlash),
+            "Trailing slash must not change repoID"
+        )
+    }
+
+    func testRepoIDStableAcrossDoubleTrailingSlash() {
+        let a = URL(fileURLWithPath: "/tmp/zion-test-repoid-fixture")
+        var components = URLComponents()
+        components.scheme = "file"
+        components.path = "/tmp/zion-test-repoid-fixture//"
+        let weird = components.url!
+        XCTAssertEqual(
+            ChatStorage.repoID(for: a),
+            ChatStorage.repoID(for: weird),
+            "Double trailing slash must not change repoID"
+        )
+    }
+
+    func testRepoIDStableAcrossSymlink() {
+        // On macOS, /tmp is a symlink to /private/tmp. Both URLs must hash
+        // to the same repoID after resolvingSymlinksInPath.
+        let viaSymlink = URL(fileURLWithPath: "/tmp")
+        let resolved = URL(fileURLWithPath: "/private/tmp")
+        XCTAssertEqual(
+            ChatStorage.repoID(for: viaSymlink),
+            ChatStorage.repoID(for: resolved),
+            "Symlink-prefixed path must collapse to the resolved path"
+        )
+    }
+}

@@ -548,6 +548,27 @@ extension RepositoryViewModel {
             return
         }
 
+        // Coalesce redundant background refreshes that fire on the heels of a
+        // recent successful load. Cold cache loads can take 5-10s on first repo
+        // open; the autoTimer and fileWatcher both kick a fresh refresh within
+        // seconds, stacking three loads back-to-back and tripping the
+        // repositorySwitch watchdog. User-initiated, repositorySwitch, and
+        // gitAction refreshes always run — only opportunistic background ticks
+        // are coalesced.
+        if origin == .autoTimer || origin == .fileWatcher {
+            let ageSinceLast = Date().timeIntervalSince(lastRefreshSucceededAt ?? .distantPast)
+            if ageSinceLast < 5.0 {
+                logger.log(
+                    .info,
+                    "refresh.skip coalesced",
+                    context: "origin=\(origin.rawValue) ageSinceLast=\(String(format: "%.2f", ageSinceLast))s",
+                    source: #function
+                )
+                onFinish?()
+                return
+            }
+        }
+
         switch evaluateRefreshGate(origin: origin) {
         case .skip:
             onFinish?()
@@ -589,6 +610,8 @@ extension RepositoryViewModel {
         extendFileWatcherGitMetadataSuppression(by: 1.2)
 
         refreshTask = Task {
+            let perfStart = Date()
+            logger.log(.info, "perf.refreshRepository.start", context: "origin=\(origin.rawValue)", source: #function)
             do {
                 // Fetch remote refs in the background instead of blocking the
                 // initial load. Awaiting `fetch --all --prune` on a user-initiated
@@ -599,6 +622,7 @@ extension RepositoryViewModel {
                 // the local `loadRepository` can run while fetch is still awaiting
                 // on its subprocess. When fetch finishes we kick a silent refresh
                 // to pick up any new origin/* refs.
+                let perfT0 = Date()
                 if origin == .userInitiated {
                     Task { [weak self] in
                         guard let self else { return }
@@ -624,6 +648,7 @@ extension RepositoryViewModel {
                     options: effectiveOptions,
                     limit: commitLimitSnapshot
                 )
+                logger.log(.info, "perf.loadRepository dur=\(Int(Date().timeIntervalSince(perfT0)*1000))ms commits=\(payload.commits.count)", source: #function)
                 try Task.checkCancellation()
                 guard refreshRequestID == requestID else {
                     onFinish?()
@@ -657,6 +682,7 @@ extension RepositoryViewModel {
                 }
                 if remotes != payload.remotes { remotes = payload.remotes }
 
+                let perfTMerge = Date()
                 let mergedCommits = mergeExistingStats(into: payload.commits)
                 // Fast-path: skip graph re-render if commits haven't changed.
                 // Also force update when branch labels or ref positions moved
@@ -674,6 +700,7 @@ extension RepositoryViewModel {
                     commits = mergedCommits
                     recalculateMaxLaneCount()
                 }
+                logger.log(.info, "perf.mergeAndLanes dur=\(Int(Date().timeIntervalSince(perfTMerge)*1000))ms changed=\(commitsChanged)", source: #function)
                 if hasMoreCommits != payload.hasMoreCommits { hasMoreCommits = payload.hasMoreCommits }
 
                 // Preserve user's selection if they clicked a different commit while
@@ -746,9 +773,14 @@ extension RepositoryViewModel {
                 if origin == .userInitiated || origin == .gitAction || origin == .repositorySwitch {
                     captureRepositorySnapshot(for: repositoryURL)
                 }
+                // Stamp success for background-refresh coalescing. Set before
+                // clearing isBusy so any cascaded autoTimer/fileWatcher kicked
+                // during the same tick observes the fresh timestamp.
+                lastRefreshSucceededAt = Date()
                 if setBusy {
                     isBusy = false
                     disarmBusyWatchdog()
+                    logger.log(.info, "perf.refreshRepository.busyCleared dur=\(Int(Date().timeIntervalSince(perfStart)*1000))ms", context: "origin=\(origin.rawValue)", source: #function)
                     if clearRepositorySwitchStateOnBusyCompletion, isSwitchingRepository {
                         clearRepositorySwitchState()
                     }
@@ -769,8 +801,12 @@ extension RepositoryViewModel {
                 }
                 // Stats and prefetch are decorative -- skip on background ticks (RT-005)
                 if origin == .userInitiated || origin == .gitAction || origin == .repositorySwitch {
+                    let perfTStats = Date()
                     loadCommitStats()
+                    logger.log(.info, "perf.loadCommitStats.dispatched dur=\(Int(Date().timeIntervalSince(perfTStats)*1000))ms", source: #function)
+                    let perfTPrefetch = Date()
                     prefetchCommitDetails(for: Array(payload.commits.prefix(Constants.Limits.commitDetailsPrefetchCount).map(\.id)))
+                    logger.log(.info, "perf.prefetchDispatched dur=\(Int(Date().timeIntervalSince(perfTPrefetch)*1000))ms count=\(min(payload.commits.count, Constants.Limits.commitDetailsPrefetchCount))", source: #function)
                 }
                 ensureTerminalBridgeHealth(context: "refreshRepository.success.\(origin.rawValue)")
                 onFinish?()
@@ -1033,8 +1069,11 @@ extension RepositoryViewModel {
     static func shouldSkipRefreshWhileBusy(setBusy: Bool, isBusy: Bool, origin: RefreshOrigin) -> Bool {
         guard !setBusy && isBusy else { return false }
         // Deferred repository-switch refresh is responsible for finalizing switch state.
-        // If we skip it while busy, `isSwitchingRepository` can remain true.
-        return origin != .repositorySwitch && origin != .fileWatcher
+        // If we skip it while busy, `isSwitchingRepository` can remain true. Everything
+        // else (including fileWatcher) is safe to drop when an in-flight refresh exists:
+        // the watcher will fire again on the next tick once the in-flight load is done,
+        // so we don't lose updates — we just avoid stacking two cold loads in parallel.
+        return origin != .repositorySwitch
     }
 
     // MARK: - Helpers

@@ -20,6 +20,11 @@ final class ChatService {
     /// return). Cleared automatically once the message is sent.
     var threadDrafts: [UUID: String] = [:]
 
+    /// Per-thread pending attachments staged in the composer. Cleared when
+    /// the message is sent. Lives next to `threadDrafts` so attachments
+    /// follow the user across thread switches like the text draft does.
+    var threadAttachments: [UUID: [PendingChatAttachment]] = [:]
+
     /// Forwarding computed property — back-compat for callers that use `service.thread`.
     var thread: ChatThread {
         get {
@@ -101,6 +106,7 @@ final class ChatService {
         let repoURL: URL
         let branch: String
         let modelOverride: String?
+        let attachments: [PendingChatAttachment]
     }
     /// Public setter so tests (and any future composer-side reorder action)
     /// can mutate the queue without going through a private helper. UI flow
@@ -412,7 +418,8 @@ final class ChatService {
         mode: AIMode,
         repoURL: URL,
         branch: String,
-        modelOverride: String? = nil
+        modelOverride: String? = nil,
+        attachments: [PendingChatAttachment] = []
     ) async {
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
 
@@ -508,7 +515,8 @@ final class ChatService {
                 mode: mode,
                 repoURL: repoURL,
                 branch: branch,
-                modelOverride: modelOverride
+                modelOverride: modelOverride,
+                attachments: attachments
             )
             pendingQueueByThread[threadID, default: []].append(queued)
             return
@@ -595,7 +603,47 @@ final class ChatService {
         }
 
         // User bubble shows ONLY clean displayContent + chip (if injected). Persist internalContext when fresh (sticky).
-        let userMessage = ChatMessage(role: .user, content: displayContent, autoInjectedIntent: injectedLabel, internalContext: freshInjection)
+        // Bind any pending attachments to this message's permanent storage
+        // location before persisting — file URLs in PendingChatAttachment
+        // live under `attachments/draft/` and would be cleaned up later.
+        let userMessageID = UUID()
+        let boundAttachments: [ChatAttachment] = attachments.isEmpty
+            ? []
+            : ChatAttachmentService.bindDrafts(attachments, threadID: threadID, messageID: userMessageID)
+
+        // For non-vision providers we inline PDF text and image markers into
+        // the prompt body so context is preserved even when the model can't
+        // see pixels. Anthropic uses the structured content path (see
+        // AIClient+Helpers).
+        var attachmentTextBlock = ""
+        if !boundAttachments.isEmpty {
+            var fragments: [String] = []
+            for att in boundAttachments {
+                switch att.kind {
+                case .image:
+                    fragments.append("[Image attached: \(att.originalName)]")
+                case .pdf:
+                    if let url = att.fileURL(),
+                       let text = ChatAttachmentService.extractText(fromPDF: url) {
+                        fragments.append("[PDF attached: \(att.originalName)]\n\(text)")
+                    } else {
+                        fragments.append("[PDF attached: \(att.originalName)] (no text extractable)")
+                    }
+                case .other:
+                    fragments.append("[File attached: \(att.originalName)]")
+                }
+            }
+            attachmentTextBlock = fragments.joined(separator: "\n\n")
+        }
+
+        let userMessage = ChatMessage(
+            id: userMessageID,
+            role: .user,
+            content: displayContent,
+            autoInjectedIntent: injectedLabel,
+            internalContext: freshInjection,
+            attachments: boundAttachments
+        )
         thread.messages.append(userMessage)
 
         // Payload = history + hidden context (header + fresh injection) + sticky context (if no fresh) + user text
@@ -607,6 +655,9 @@ final class ChatService {
             parts.append("## Carried context from previous turn\n\n" + sticky)
         }
         parts.append("## Current user message\n\n" + displayContent)
+        if !attachmentTextBlock.isEmpty {
+            parts.append("## Attachments\n\n" + attachmentTextBlock)
+        }
         let expandedText: String = parts.joined(separator: "\n\n")
 
         // CLI resume already retains prior conversation context server-side. Keep a
@@ -617,6 +668,9 @@ final class ChatService {
             currentTurnParts.append(hiddenContext)
         }
         currentTurnParts.append("## Current user message\n\n" + displayContent)
+        if !attachmentTextBlock.isEmpty {
+            currentTurnParts.append("## Attachments\n\n" + attachmentTextBlock)
+        }
         let currentTurnText = currentTurnParts.joined(separator: "\n\n")
 
         // Persist user message
@@ -707,7 +761,8 @@ final class ChatService {
                                 mode: next.mode,
                                 repoURL: next.repoURL,
                                 branch: next.branch,
-                                modelOverride: next.modelOverride
+                                modelOverride: next.modelOverride,
+                                attachments: next.attachments
                             )
                         }
                     }
@@ -726,16 +781,20 @@ final class ChatService {
                 // Tier table maps (resolved provider, tier) → model independently
                 // of any "preliminary" provider, so we never call resolve twice.
                 let tier = await HeuristicTriageClassifier().classify(displayContent)
+                // If the user attached at least one image, ask the
+                // orchestrator to bias Auto towards a vision-capable
+                // provider (Anthropic / OpenAI / Gemini / claudeCLI).
+                let hasImageAttachment = boundAttachments.contains { $0.kind == .image }
                 // Honour the session-level "user disconnected local" flag by
                 // re-resolving until the orchestrator yields a non-local provider.
                 // First attempt:
                 var tentative = await self.orchestrator.resolve(
-                    lane: tier.lane, requested: .auto
+                    lane: tier.lane, requested: .auto, requiresVision: hasImageAttachment
                 )
                 if self.localSessionSuppressed, tentative == .local {
                     await self.orchestrator.markRateLimited(.local, retryAfter: 86_400)
                     tentative = await self.orchestrator.resolve(
-                        lane: tier.lane, requested: .auto
+                        lane: tier.lane, requested: .auto, requiresVision: hasImageAttachment
                     )
                 }
                 resolved = tentative
@@ -784,6 +843,25 @@ final class ChatService {
 
             var payload = Self.makePayload(for: enrichedText, provider: resolved)
             payload.cwd = repoURL
+            // Forward image attachments to providers that support vision
+            // natively. Anthropic / OpenAI / Gemini all expose image content
+            // blocks; their request builders pick `payload.imageAttachments`
+            // up. Other providers (local without VL, openrouter text models)
+            // see only the inlined `[Image attached: …]` text marker via
+            // `enrichedText`.
+            let visionProviders: Set<AIProvider> = [.anthropic, .openai, .gemini]
+            if visionProviders.contains(resolved), !boundAttachments.isEmpty {
+                payload.imageAttachments = boundAttachments.compactMap { att in
+                    guard att.kind == .image,
+                          let url = att.fileURL(),
+                          let data = try? Data(contentsOf: url) else { return nil }
+                    return AIImageAttachment(
+                        mimeType: att.mimeType,
+                        base64: data.base64EncodedString(),
+                        originalName: att.originalName
+                    )
+                }
+            }
 
             // Build structured conversation for AgentRuntime (last 10 messages as role/content dicts).
             // Sendable boundary: MainActor closure must return [[String: String]] (Any is not Sendable).

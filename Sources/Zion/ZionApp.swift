@@ -288,6 +288,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         registerFonts()
 
+        // System monitor titlebar accessory — adds the CPU / RAM pill into
+        // the NSWindow titlebar when `topbar.systemMonitor.enabled` is on.
+        TitlebarSystemMonitorManager.shared.install()
+
         // Hosting credential migrations
         HostingCredentialStore.migrateFromUserDefaults()
         HostingAccountStore.migrateFromSingleAccount()

@@ -14,6 +14,12 @@ extension ContentView {
                 .accessibilityLabel(L10n("Barra lateral"))
             }
 
+            if topBarSystemMonitorEnabled {
+                ControlGroup {
+                    TopBarSystemMonitorPill()
+                }
+            }
+
             ControlGroup {
                 Button { openRepositoryPanel() } label: { Image(systemName: "folder") }
                     .help(L10n("toolbar.openFolder"))

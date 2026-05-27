@@ -7,6 +7,7 @@ struct GeneralSettingsTab: View {
     @AppStorage(UserDefaultsKeys.General.confirmationMode) private var confirmationModeRaw: String = ConfirmationMode.destructiveOnly.rawValue
     @AppStorage(UserDefaultsKeys.General.zionModeEnabled) private var zionModeEnabled: Bool = false
     @AppStorage(UserDefaultsKeys.General.graphAuthorAvatarsEnabled) private var graphAuthorAvatarsEnabled: Bool = false
+    @AppStorage("topbar.systemMonitor.enabled") private var topBarSystemMonitorEnabled: Bool = false
     @AppStorage(UserDefaultsKeys.General.openWithDrawerCollapsed) private var openWithDrawerCollapsed: Bool = false
     // Multi-account state
     @State private var accounts: [HostingAccount] = []
@@ -178,6 +179,12 @@ struct GeneralSettingsTab: View {
                 Toggle(L10n("settings.general.graphAuthorAvatars"), isOn: $graphAuthorAvatarsEnabled)
 
                 Text(L10n("settings.general.graphAuthorAvatarsHint"))
+                    .font(DesignSystem.Typography.bodySmall)
+                    .foregroundStyle(.secondary)
+
+                Toggle(L10n("settings.general.systemMonitor"), isOn: $topBarSystemMonitorEnabled)
+
+                Text(L10n("settings.general.systemMonitor.hint"))
                     .font(DesignSystem.Typography.bodySmall)
                     .foregroundStyle(.secondary)
             }

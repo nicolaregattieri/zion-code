@@ -53,6 +53,7 @@ struct ContentView: View {
     @AppStorage(UserDefaultsKeys.General.hasOpenedRepositoryOnce) private var hasOpenedRepositoryOnce: Bool = false
     @AppStorage(UserDefaultsKeys.General.zenModeEnabled) var zenModeEnabled: Bool = false
     @AppStorage(UserDefaultsKeys.General.zionModeEnabled) var zionModeEnabled: Bool = false
+    @AppStorage("topbar.systemMonitor.enabled") var topBarSystemMonitorEnabled: Bool = false
     @AppStorage(UserDefaultsKeys.General.preZionModeTheme) private var preZionModeTheme: String = ""
     @AppStorage(UserDefaultsKeys.General.openWithDrawerCollapsed) private var openWithDrawerCollapsed: Bool = false
 
@@ -484,6 +485,19 @@ struct ContentView: View {
         .toolbar {
             if !zenLayoutActive {
                 mainToolbar
+            }
+        }
+        .background {
+            // System monitor lives INSIDE the NSWindow title bar via
+            // NSTitlebarAccessoryViewController — not as a SwiftUI
+            // ToolbarItem (which auto-merges with adjacent navigation
+            // items) and not as a safeAreaInset row (which steals
+            // vertical space). The accessory controller renders a small
+            // SwiftUI pill flush with the window controls / toolbar.
+            if !zenLayoutActive && topBarSystemMonitorEnabled {
+                TitlebarSystemMonitorMount()
+                    .frame(width: 0, height: 0)
+                    .opacity(0)
             }
         }
         .safeAreaInset(edge: .bottom) {

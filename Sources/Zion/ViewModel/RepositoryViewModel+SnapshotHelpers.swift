@@ -506,13 +506,23 @@ extension RepositoryViewModel {
     func finalizeRepositorySwitch(for url: URL, switchToken: UUID) {
         guard repositorySwitchToken == switchToken, repositoryURL == url else { return }
         if isGitRepository {
+            let perfT0 = Date()
             loadPullRequests()
+            logger.log(.info, "perf.loadPRs dispatched dur=\(Int(Date().timeIntervalSince(perfT0)*1000))ms", source: #function)
+            let perfT1 = Date()
             refreshPRReviewQueue()
+            logger.log(.info, "perf.refreshPRQueue dur=\(Int(Date().timeIntervalSince(perfT1)*1000))ms", source: #function)
+            let perfT2 = Date()
             startPRPollingTimer()
+            logger.log(.info, "perf.startPRPolling dur=\(Int(Date().timeIntervalSince(perfT2)*1000))ms", source: #function)
+            let perfT3 = Date()
             loadSubmodules()
+            logger.log(.info, "perf.loadSubmodules dur=\(Int(Date().timeIntervalSince(perfT3)*1000))ms", source: #function)
             // loadSignatureStatuses() and loadBridgeState() deferred to on-demand
             // (PERF-012: avoid startup work for features most users don't access immediately)
+            let perfT4 = Date()
             startBackgroundFetch()
+            logger.log(.info, "perf.startBackgroundFetch dur=\(Int(Date().timeIntervalSince(perfT4)*1000))ms", source: #function)
         }
         captureRepositorySnapshot(for: url)
         clearRepositorySwitchState()

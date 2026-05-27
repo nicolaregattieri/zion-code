@@ -111,7 +111,9 @@ enum Constants {
         static let maxRepositorySwitchAttempts = 40 // 40 x 50ms = 2s max
 
         /// Safety timeout to force-clear isSwitchingRepository if finalization never fires.
-        static let repositorySwitchWatchdogTimeout: UInt64 = 10_000_000_000 // 10s
+        /// Cold OS-cache loads on a fresh repo open can exceed 10s; the watchdog must be a
+        /// safety net, not the normal path.
+        static let repositorySwitchWatchdogTimeout: UInt64 = 20_000_000_000 // 20s
 
         // --- Retry / Network Error ---
 

@@ -45,6 +45,15 @@ extension SidebarView {
         }
         .padding(.horizontal, 10)
         .featureTourAnchor(.worktrees)
+        .onAppear {
+            // External removal (terminal `git worktree remove`, another Zion
+            // session, system cleanup) leaves stale entries in this panel
+            // because the existing autoTimer only refreshes after the
+            // 5-second coalesce window plus a full repo reload. Force a
+            // lightweight worktree-only pass when the card mounts so the
+            // user sees current truth without having to nav to Tree.
+            model.refreshWorktreesOnly()
+        }
     }
 
     var smartWorktreeInlineForm: some View {

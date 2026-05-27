@@ -164,11 +164,9 @@ struct ChatDictationButton: View {
                 .labelsHidden()
             }
 
-            Toggle(L10n("chat.composer.dictation.polish"), isOn: $polishEnabled)
-            Text(L10n("chat.composer.dictation.polish.hint"))
-                .font(DesignSystem.Typography.label)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+            // Polish toggle hidden for this release — feature flagged off in
+            // handleStop. The @AppStorage binding stays around so a future
+            // release can restore the toggle without a settings migration.
 
             if speechService.isActive && !speechService.currentTranscript.isEmpty {
                 Text(speechService.currentTranscript)
@@ -264,11 +262,33 @@ struct ChatDictationButton: View {
             let raw = result.transcript.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !raw.isEmpty else { return }
 
+            // Polish disabled for this release — current providers (Qwen-Coder
+            // local, claudeCLI) either translate / hallucinate / take too long
+            // to run a clean polish pass. Apple / Gemini / Whisper transcripts
+            // ship as-is. Toggle + setting kept so we can re-enable in a
+            // future release once a fast raw-API provider is the default.
+            let needsPolish = false
+            DiagnosticLogger.shared.log(
+                .info,
+                "dictation.transcribed engine=\(speechService.selectedEngine.rawValue) chars=\(raw.count) polish=\(needsPolish)",
+                source: "ChatDictationButton.handleStop"
+            )
+
             let final: String
-            if polishEnabled {
+            if needsPolish {
                 isPolishing = true
-                final = await DictationPolishService.polish(rawText: raw, repoURL: repoURL)
+                let polished = await DictationPolishService.polish(
+                    rawText: raw,
+                    repoURL: repoURL,
+                    localeIdentifier: speechService.selectedLocale.identifier
+                )
                 isPolishing = false
+                DiagnosticLogger.shared.log(
+                    .info,
+                    "dictation.polished rawChars=\(raw.count) polishedChars=\(polished.count) changed=\(polished != raw)",
+                    source: "ChatDictationButton.handleStop"
+                )
+                final = polished
             } else {
                 final = raw
             }

@@ -166,7 +166,7 @@ struct ChatScreen: View {
             ScrollView {
                 LazyVStack(spacing: 0) {
                     if chat.thread.messages.isEmpty {
-                        ChatEmptyState { pickedPrompt in
+                        ChatEmptyState(repoURL: repoURL) { pickedPrompt in
                             composerText = pickedPrompt
                         }
                     } else {
@@ -212,27 +212,6 @@ struct ChatScreen: View {
                             if message.role == .assistant, let blocks = message.editBlocks, !blocks.isEmpty {
                                 let msgID = message.id
                                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
-                                    // Multi-file summary card (shown when >= 2 files)
-                                    if blocks.count >= 2 {
-                                        MultiFileDiffSummary(
-                                            blocks: blocks,
-                                            onReviewAll: {
-                                                // Sheet is handled inside MultiFileDiffSummary.
-                                            },
-                                            onApproveAll: {
-                                                Task { await chat.applyAllEdits(messageID: msgID) }
-                                            },
-                                            onRejectAll: {
-                                                chat.rejectAllEdits(messageID: msgID)
-                                            },
-                                            onApplyBlock: { block in
-                                                Task { await chat.applyEditBlock(blockID: block.id, in: msgID) }
-                                            },
-                                            onRejectBlock: { block in
-                                                chat.rejectEditBlock(blockID: block.id, in: msgID)
-                                            }
-                                        )
-                                    }
                                     // Per-file cards — collapse to summary lines when >= 4 files
                                     if blocks.count < 4 {
                                         ForEach(blocks) { block in
@@ -265,6 +244,28 @@ struct ChatScreen: View {
                                         Text(L10n("chat.multifileDiff.moreFiles", "\(blocks.count - 2)"))
                                             .font(DesignSystem.Typography.label)
                                             .foregroundStyle(.secondary)
+                                    }
+                                    // Multi-file summary card rendered AFTER per-file cards so the
+                                    // Approve all / Reject all controls stay near the composer.
+                                    if blocks.count >= 2 {
+                                        MultiFileDiffSummary(
+                                            blocks: blocks,
+                                            onReviewAll: {
+                                                // Sheet is handled inside MultiFileDiffSummary.
+                                            },
+                                            onApproveAll: {
+                                                Task { await chat.applyAllEdits(messageID: msgID) }
+                                            },
+                                            onRejectAll: {
+                                                chat.rejectAllEdits(messageID: msgID)
+                                            },
+                                            onApplyBlock: { block in
+                                                Task { await chat.applyEditBlock(blockID: block.id, in: msgID) }
+                                            },
+                                            onRejectBlock: { block in
+                                                chat.rejectEditBlock(blockID: block.id, in: msgID)
+                                            }
+                                        )
                                     }
                                     // Single-file flow keeps the ApplyAll button; multi-file uses summary buttons
                                     if blocks.count < 2 {
@@ -358,8 +359,11 @@ struct ChatScreen: View {
             text: $composerText,
             onSend: {
                 let textToSend = composerText
+                let activeID = chat.activeThreadID
+                let pendingAttachments = chat.threadAttachments[activeID] ?? []
                 composerText = ""
-                chat.threadDrafts.removeValue(forKey: chat.activeThreadID)
+                chat.threadDrafts.removeValue(forKey: activeID)
+                chat.threadAttachments.removeValue(forKey: activeID)
                 guard let url = repoURL else { return }
                 let modelOverride = ProviderModelCatalog.selectedModel(for: provider)
                 Task {
@@ -370,7 +374,8 @@ struct ChatScreen: View {
                         mode: mode,
                         repoURL: url,
                         branch: branch,
-                        modelOverride: modelOverride.isEmpty ? nil : modelOverride
+                        modelOverride: modelOverride.isEmpty ? nil : modelOverride,
+                        attachments: pendingAttachments
                     )
                 }
             },
@@ -412,6 +417,8 @@ struct ChatScreen: View {
     /// the composer card so they share its width / padding.
     @ViewBuilder private var composerTopSlot: some View {
         VStack(spacing: DesignSystem.Spacing.compact) {
+            // Pre-flight chip row lives below the composer (see body) — do not
+            // re-mount here to avoid the duplicated "Mode: Permission:" row.
             if !guidanceCandidates.isEmpty && !guidanceDecisionMade, let repo = repoURL {
                 ProjectGuidanceImportBanner(
                     candidates: guidanceCandidates,
@@ -472,6 +479,11 @@ struct ChatScreen: View {
                     }
                 )
             }
+            // Pre-flight chip row — sits directly above the input field so
+            // Modo / Permissão / (Rodar comandos) are the last things the user
+            // sees before hitting Send. Stays visible mid-thread so the user
+            // can switch on the fly.
+            ChatPreflightChipRow(compact: true)
         }
     }
 
