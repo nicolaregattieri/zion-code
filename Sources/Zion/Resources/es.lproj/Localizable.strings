@@ -3094,3 +3094,19 @@
 "mention.code.token" = "@code <consulta> — búsqueda semántica en código";
 "mention.code.empty" = "Sin resultados para la consulta";
 "rag.tool.notReady" = "Índice aún no construido — abre el repo y espera la indexación";
+
+// MARK: - Phase 6 — Auto-context
+"chat.context.title" = "Contexto";
+"chat.context.chip.tooltip" = "%1$@ · líneas %2$@";
+"chat.context.chip.remove" = "Quitar del contexto";
+"chat.context.loading" = "Buscando contexto…";
+"chat.context.more" = "+%d más";
+"chat.context.empty" = "Sin contexto relevante";
+"chat.context.budgetExceeded" = "Presupuesto alcanzado (%d tok)";
+"chat.context.summary" = "%1$d contexto · %2$d tok";
+"chat.context.settings.section.title" = "Contexto automático";
+"chat.context.settings.autoToggle" = "Incluir contexto automáticamente";
+"chat.context.settings.autoHelp" = "Busca en el código antes de cada mensaje e inyecta los mejores resultados.";
+"chat.context.settings.budgetLabel" = "Presupuesto por mensaje";
+"chat.context.settings.budgetUnit" = "%d tok";
+"chat.context.tool.retrieveMore" = "Buscando más contexto";

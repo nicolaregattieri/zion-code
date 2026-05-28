@@ -86,6 +86,7 @@ struct ZionTalksSettingsTab: View {
             if showAdvanced {
                 AgenticSettingsSection()
                 SmartContextSettingsSection()
+                ChatContextSettingsSection()
                 SkillsSettingsSection()
                 MCPServersSettingsSection()
                 ContextBudgetSection()

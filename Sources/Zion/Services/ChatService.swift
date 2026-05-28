@@ -59,6 +59,17 @@ final class ChatService {
 
     /// Live tool events from the active CLI stream. Cleared automatically after each event completes.
     var pendingToolEvents: [ChatToolEvent] = []
+    /// Phase 6 — auto-context hits pre-fetched for the message currently
+    /// being composed. Cleared on send (consumed into the request) and
+    /// repopulated on each composer-text settle by the auto-injector.
+    var pendingContextHits: [RAGHit] = []
+    /// True while a hybrid retrieval is in flight; ChatContextChipRow
+    /// renders the shimmer skeleton.
+    var isPendingContextLoading: Bool = false
+    /// Paths the user has explicitly pinned via `@file` / `@code` /
+    /// `@folder`. The injector short-circuits against this list to
+    /// avoid duplicating context.
+    var pendingMentionedPaths: Set<String> = []
 
     /// P14: provider actually used for the latest send (set after orchestrator.resolve).
     /// Read by AutoResolvedChip to surface "Auto → <name>" when provider == .auto.

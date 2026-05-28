@@ -121,7 +121,8 @@ enum MCPConfigBuilder {
             repoMapDescriptor(),
             findSymbolDescriptor(),
             symbolsDescriptor(),
-            semanticSearchDescriptor()
+            semanticSearchDescriptor(),
+            retrieveMoreDescriptor()
         ]
         if bashToolEnabled {
             tools.append(bashToolDescriptorTyped())
@@ -172,6 +173,8 @@ enum MCPConfigBuilder {
             return try await dispatchSymbols(args: args)
         case "semantic_search":
             return try await dispatchSemanticSearch(args: args)
+        case "retrieve_more":
+            return try await dispatchRetrieveMore(args: args)
         default:
             throw MCPDispatchError.unknownTool(name)
         }
