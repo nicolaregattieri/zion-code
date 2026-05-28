@@ -55,3 +55,10 @@ extension MCPConfigBuilder {
 enum RAGQueryServiceLocator {
     nonisolated(unsafe) static var shared: RAGQueryService?
 }
+
+/// Phase 5f — parallel locator for the indexer so the FSEvents bridge
+/// can drop delta tasks on it from outside the chat surface.
+enum RAGIndexerLocator {
+    nonisolated(unsafe) static var shared: RAGIndexer?
+    nonisolated(unsafe) static var repoURL: URL?
+}
