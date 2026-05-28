@@ -7,8 +7,9 @@ struct RAGSettingsSection: View {
 
     @AppStorage("rag.hybridEnabled") private var hybridEnabled: Bool = true
     @AppStorage("rag.qodoEnabled") private var qodoEnabled: Bool = false
-    @AppStorage("rag.chunkCount") private var chunkCount: Int = 0
     @AppStorage("rag.lastIndexed") private var lastIndexedRaw: Double = 0
+
+    @State private var chunkCount: Int = 0
 
     /// Closure plumbed by the parent view that knows the active
     /// repoURL. When nil, the Reindex button is hidden.
@@ -59,6 +60,15 @@ struct RAGSettingsSection: View {
         .padding(DesignSystem.Spacing.cardPadding)
         .background(DesignSystem.Colors.glassSubtle)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.mediumCornerRadius, style: .continuous))
+        .task {
+            await refreshChunkCount()
+        }
+    }
+
+    private func refreshChunkCount() async {
+        if let service = RAGQueryServiceLocator.shared {
+            chunkCount = await service.chunkCount()
+        }
     }
 
     private static func formatTimestamp(_ raw: Double) -> String {
