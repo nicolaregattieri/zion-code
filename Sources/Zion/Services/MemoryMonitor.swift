@@ -57,6 +57,16 @@ final class MemoryMonitor {
         pollTask = nil
     }
 
+    /// Pause polling while the host section (e.g. Chat) is hidden behind
+    /// other workspace tabs. Identical to `stop()` in behavior — kept as a
+    /// distinct entry point so call sites read clearly and we can swap in
+    /// a different policy later (e.g. slower poll rate) without touching
+    /// every caller.
+    func pause() { stop() }
+
+    /// Resume polling after `pause()`. No-op if already polling.
+    func resume() { start() }
+
     /// Watch the given port for local-server RSS. Pass `nil` to clear.
     func setMonitoredPort(_ port: Int?) {
         monitoredPort = port

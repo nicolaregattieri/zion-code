@@ -23,6 +23,8 @@ struct ChatScreen: View {
     @State private var guidanceCandidates: [ProjectGuidanceImporter.Candidate] = []
     @State private var guidanceDecisionMade: Bool = false
 
+    @Environment(\.zionActiveSection) private var activeSection: AppSection?
+
     @AppStorage("chat.threadListVisible") private var threadListVisible: Bool = true
     @AppStorage(ZionTalksAppearance.fontSizeKey) private var fontSizePx: Int = ZionTalksAppearance.defaultFontSizePx
     @AppStorage(ZionTalksAppearance.lineSpacingKey) private var lineSpacingPx: Int = ZionTalksAppearance.defaultLineSpacingPx
@@ -51,6 +53,17 @@ struct ChatScreen: View {
         .padding(.bottom, 12)
         .environment(\.chatFontSizePx, fontSizePx)
         .environment(\.chatLineSpacingPx, lineSpacingPx)
+        .onChange(of: activeSection) { _, newSection in
+            // ChatScreen stays mounted (ZStack-overlay layout) when the user
+            // switches to Code / Graph / Operations. Pause the memory monitor
+            // poll loop while we're off-screen so we don't spawn `lsof`/`ps`
+            // subprocesses every 5s for a UI nobody is looking at.
+            if newSection == .chat {
+                memoryMonitor.resume()
+            } else {
+                memoryMonitor.pause()
+            }
+        }
     }
 
     // MARK: - Page header
