@@ -96,20 +96,54 @@ final class RAGEvalTests: XCTestCase {
 
     /// E2E gated behind `ZION_RAG_E2E=1`. Loads the fixture, indexes
     /// `Sources/Zion/`, runs `hybridSearch` per query, asserts
-    /// Recall@10 ≥ `Constants.RAG.recallAtTenGate`. Phase 5c expands
-    /// the fixture to 100 entries; today's ~12 are enough to wire the
-    /// scoring code.
+    /// Recall@10 ≥ `Constants.RAG.recallAtTenGate`.
     func test_goldenSet_recallAtTen_meetsGate() async throws {
         try XCTSkipUnless(
             ProcessInfo.processInfo.environment["ZION_RAG_E2E"] == "1",
             "Set ZION_RAG_E2E=1 to run the e2e eval"
         )
-        // The full pipeline (index repo + run hybrid + score recall) is
-        // wired up in Phase 5c once the indexer's progress publisher
-        // and the eval scorer have their own files. Today the gate
-        // exists so future runs can attach without touching this
-        // signature.
-        XCTAssertTrue(true)
+
+        // Locate repo root from this test file.
+        let testFile = URL(fileURLWithPath: #filePath)
+        let repoRoot = testFile
+            .deletingLastPathComponent()  // ZionTests
+            .deletingLastPathComponent()  // Tests
+            .deletingLastPathComponent()  // repo root
+
+        // Spin a temp RAGStore so the eval does not touch user data.
+        let tempRepo = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("rag-eval-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: tempRepo, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempRepo) }
+
+        let store = try RAGStore(repoURL: tempRepo)
+        defer { Task { await store.close() } }
+        let embedder = NLContextualEmbeddingProvider()
+        let ready = await embedder.ready()
+        try XCTSkipUnless(ready, "NLContextualEmbedding asset not available — run on a host where the OS has downloaded it")
+
+        let indexer = RAGIndexer(store: store, embedder: embedder)
+        // Index a *subset* of Sources/Zion/Services/RAG/ + chat + mention surfaces
+        // so the eval stays under ~60s. The golden fixture targets these areas.
+        let scopedRepo = repoRoot
+        _ = try await indexer.index(repoURL: scopedRepo)
+
+        let queryService = RAGQueryService(store: store, embedder: embedder)
+        let goldenURL = try Self.goldenURL()
+        let goldenData = try Data(contentsOf: goldenURL)
+        let entries = try JSONDecoder().decode([RAGEvalScorer.GoldenEntry].self, from: goldenData)
+
+        let result = try await RAGEvalScorer.score(entries: entries) { query in
+            let hits = (try? await queryService.hybridSearch(query: query, limit: 10)) ?? []
+            return hits.map { $0.chunk.path }
+        }
+
+        print("RAG eval Recall@10 = \(result.recallAtK) (\(result.hits)/\(result.totalQueries))")
+        XCTAssertGreaterThanOrEqual(
+            result.recallAtK,
+            Constants.RAG.recallAtTenGate,
+            "Recall@10 below the configured gate of \(Constants.RAG.recallAtTenGate)"
+        )
     }
 
     private static func goldenURL() throws -> URL {
