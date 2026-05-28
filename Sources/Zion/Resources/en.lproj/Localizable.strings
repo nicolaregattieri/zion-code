@@ -833,7 +833,7 @@
 "settings.general.graphAuthorAvatarsHint" = "Downloads avatars from Gravatar and GitHub/GitLab.";
 "settings.general.systemMonitor" = "Show CPU / RAM in toolbar";
 "settings.general.systemMonitor.hint" = "Live system load next to the toolbar buttons. Polls every 2 seconds.";
-"topbar.systemMonitor.help" = "System CPU and memory usage";
+"topbar.systemMonitor.help" = "System CPU and memory usage. RAM = active + wired + compressed. Activity Monitor's pressure bar shows only active+wired; compressed is physical RAM held by the compressor (not free, but not 'in use' in the classic sense).";
 "settings.general.openWithDrawerCollapsed" = "Open Zion with the side drawer collapsed";
 "settings.general.openWithDrawerCollapsedHint" = "Launches with a cleaner workspace. Use the footer menu or click the toolbar sidebar icon to expand it.";
 "settings.general.customPath" = "Custom Path";
@@ -3087,3 +3087,6 @@
 "chat.context.settings.budgetUnit" = "%d tok";
 "chat.context.tool.retrieveMore" = "Searching more context";
 "chat.edit.applying.label" = "Applying…";
+
+// MARK: - Memory monitor tooltips
+"chat.local.status.memory.help" = "RAM = active + wired + compressed. Activity Monitor's pressure bar shows only active+wired; compressed is physical RAM held by the compressor.";
