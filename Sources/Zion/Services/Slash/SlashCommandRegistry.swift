@@ -37,21 +37,35 @@ final class SlashCommandRegistry: ObservableObject {
         self.skillIndex = skillIndex
     }
 
-    /// All items: built-in first, then project skills, then user skills.
+    /// Re-scan the underlying skill index so newly added / edited skills show
+    /// up in the autocomplete without an app restart.
+    func reloadSkills() async {
+        await skillIndex.reload()
+    }
+
+    /// All items: project skills first, then user skills, then built-ins.
+    /// Skills are the differentiator — surface them first; built-ins are always
+    /// available so they can sit at the bottom.
     var all: [SlashItem] {
-        var out: [SlashItem] = BuiltInSlashCommands.all
+        var projectSkills: [SlashItem] = []
+        var userSkills: [SlashItem] = []
         for skill in skillIndex.skills {
+            let isProject = skill.scope == .project
             let item = SlashItem(
                 id: skill.id,
                 name: "/" + skill.id,
                 argHint: nil,
                 description: skill.description,
-                source: skill.scope == .project ? .projectSkill : .userSkill,
+                source: isProject ? .projectSkill : .userSkill,
                 bodyLoader: { skill.body }
             )
-            out.append(item)
+            if isProject {
+                projectSkills.append(item)
+            } else {
+                userSkills.append(item)
+            }
         }
-        return out
+        return projectSkills + userSkills + BuiltInSlashCommands.all
     }
 
     /// Prefix-match against `name` (case-insensitive). Returns top `limit` results.

@@ -108,6 +108,15 @@ struct ChatDictationButton: View {
         .popover(isPresented: $isPopoverPresented) {
             settingsPopover
         }
+        // `.disabled` blocks interaction but does not auto-dismiss a SwiftUI
+        // popover — without this teardown the long-press settings sheet
+        // keeps floating over Code / Graph / Operations after the user
+        // switches sections. Close it explicitly when Chat loses focus.
+        .onChange(of: activeSection) { _, newSection in
+            if newSection != .chat && isPopoverPresented {
+                isPopoverPresented = false
+            }
+        }
         .alert(
             L10n("speech.permission.alert.title"),
             isPresented: Binding(

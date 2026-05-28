@@ -27,10 +27,19 @@ struct GraphScreen: View {
     @FocusState var isCommitMessageFocused: Bool
 
     @State var showingPendingChanges: Bool = false
-    @State var splitRatio: CGFloat = 0.7
-    @State var inlineSplitRatio: CGFloat = 0.35
     @State var hoveredInlineFilePath: String?
     @FocusState var isGraphFocused: Bool
+
+    /// Hoisted out of the per-row `LazyVStack` body so `UserDefaults.bool(forKey:)`
+    /// is read once per render of GraphScreen instead of once per visible commit
+    /// row. SwiftUI re-renders the LazyVStack on every selection change.
+    @AppStorage(UserDefaultsKeys.General.graphAuthorAvatarsEnabled)
+    private var graphAuthorAvatarsEnabled: Bool = false
+
+    /// GraphScreen stays mounted under other workspace tabs (ZStack-overlay).
+    /// Gate avatar prefetch on this so we don't fire off Gravatar downloads
+    /// for commits the user isn't looking at.
+    @Environment(\.zionActiveSection) private var activeSection: AppSection?
 
     var commitRowMinWidth: CGFloat {
         let rawLaneWidth = CGFloat(max(model.maxLaneCount, 1)) * 20
@@ -64,7 +73,7 @@ struct GraphScreen: View {
                 ZStack {
                     DraggableSplitView(
                         axis: .horizontal,
-                        ratio: $splitRatio,
+                        ratio: $model.graphSplitRatio,
                         minLeading: DesignSystem.Layout.commitListMinWidth,
                         minTrailing: DesignSystem.Layout.commitDetailMinWidth
                     ) {
@@ -99,6 +108,31 @@ struct GraphScreen: View {
             .padding(.bottom, 12)
             .onAppear {
                 updateSearchMatches()
+                // Restore the commit the user was looking at when they last
+                // left the Graph tab. Approximated by selectedCommitID since
+                // measuring topmost-visible row in a SwiftUI LazyVStack
+                // without a ScrollPositionReader is more complex than it's
+                // worth here.
+                if let anchor = model.graphScrollAnchorCommitID {
+                    DispatchQueue.main.async {
+                        proxy.scrollTo(anchor, anchor: .top)
+                    }
+                }
+            }
+            .onChange(of: activeSection) { _, newSection in
+                if newSection == .graph {
+                    if let anchor = model.graphScrollAnchorCommitID {
+                        DispatchQueue.main.async {
+                            proxy.scrollTo(anchor, anchor: .top)
+                        }
+                    }
+                } else {
+                    // Leaving Graph: snapshot the current focus so the next
+                    // re-entry lands roughly where the user left off.
+                    if let id = model.selectedCommitID {
+                        model.graphScrollAnchorCommitID = id
+                    }
+                }
             }
             .onChange(of: model.shouldClosePopovers) { _, shouldClose in
                 if shouldClose {
@@ -206,7 +240,11 @@ struct GraphScreen: View {
                 let rowWidth = commitRowWidth(for: geometry.size.width)
 
                 ScrollView(.vertical, showsIndicators: true) {
-                    let avatarsEnabled = UserDefaults.standard.bool(forKey: UserDefaultsKeys.General.graphAuthorAvatarsEnabled)
+                    // Avatars are only prefetched while the Graph section is the
+                    // visible one — every other section keeps GraphScreen mounted
+                    // but hidden, and we don't want to spend network on rows the
+                    // user isn't seeing.
+                    let avatarsEnabled = graphAuthorAvatarsEnabled && activeSection == .graph
                     let remoteNames = model.remotes.map(\.name)
                     let hasAdditionalWorktrees = model.worktrees.contains { !$0.isMainWorktree }
                     let worktreeBranchNames = Set(

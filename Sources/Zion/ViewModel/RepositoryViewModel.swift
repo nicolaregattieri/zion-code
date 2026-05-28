@@ -83,6 +83,16 @@ final class RepositoryViewModel {
     var stashes: [String] = []
     var selectedStash: String = ""
 
+    // Graph view UI state preserved across workspace tab switches so the
+    // user returns to the same split layout + scroll position they left.
+    // Search / AI-match state intentionally NOT hoisted — view-local for now.
+    var graphSplitRatio: CGFloat = 0.7
+    var graphInlineSplitRatio: CGFloat = 0.35
+    /// Commit ID of the topmost-visible row when the user last left the
+    /// Graph section. Used to anchor `proxy.scrollTo(_:anchor:.top)` on the
+    /// next `.task` so re-entering the tab doesn't snap to top.
+    var graphScrollAnchorCommitID: String?
+
     func applyTagAndStashPayload(_ payload: RepositoryLoadPayload, includeTagsAndStashes: Bool) {
         guard includeTagsAndStashes else { return }
         tags = payload.tags
@@ -521,6 +531,21 @@ final class RepositoryViewModel {
     var expandedPaths: Set<String> = []
     var findInFilesScopeRequest: String? = nil
     var revealFileInBrowserRequestID: Int = 0
+
+    // Per-file editor UI state preserved across tab switches inside Zion Code.
+    // Keyed by the same `activeFileID` (file path) used elsewhere. Cursor +
+    // scroll only here — undo-stack persistence is intentionally out of scope
+    // because NSTextView shares one undo manager across all swapped buffers
+    // and lifting per-file undo is a larger change.
+    //
+    // TODO(editor-undo-per-file): persist per-file undo/redo stacks too.
+    // Requires either an undo-coalescing wrapper or keeping a pool of
+    // NSTextView instances alive per open file.
+    struct EditorBufferState: Sendable {
+        var selectedRange: NSRange
+        var scrollY: CGFloat
+    }
+    @ObservationIgnored var editorBufferStates: [String: EditorBufferState] = [:]
 
     // Tracking unsaved changes per file
     var unsavedFiles: Set<String> = []

@@ -41,6 +41,15 @@ struct SourceCodeEditor: NSViewRepresentable {
     var onFindNextShortcut: (() -> Void)?
     var onFindPreviousShortcut: (() -> Void)?
     var isEditorVisible: Bool = true
+    /// Called immediately before swapping `textView.string` on a file switch.
+    /// Caller persists `(selectedRange, scrollY)` keyed by the *outgoing*
+    /// activeFileID. Nil-safe: not called if the previous file ID is nil.
+    var onCaptureBufferState: ((_ outgoingFileID: String, _ selectedRange: NSRange, _ scrollY: CGFloat) -> Void)?
+    /// Called immediately after swapping `textView.string` on a file switch.
+    /// Caller returns previously-captured state for the *incoming* file ID,
+    /// or nil if none. Used to restore cursor + scroll position so tab
+    /// switches inside Zion Code don't snap back to top-of-file.
+    var onRestoreBufferState: ((_ incomingFileID: String) -> (NSRange, CGFloat)?)?
 
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSScrollView()
@@ -180,6 +189,7 @@ struct SourceCodeEditor: NSViewRepresentable {
         }
 
         let coord = context.coordinator
+        let outgoingFileID = coord.lastActiveFileID
         let fileChanged = activeFileID != coord.lastActiveFileID
         if fileChanged { coord.lastActiveFileID = activeFileID }
 
@@ -210,10 +220,34 @@ struct SourceCodeEditor: NSViewRepresentable {
                 // clearing undo there would destroy multi-level Cmd+Z history.
                 textView.undoManager?.removeAllActions()
                 let sel = textView.selectedRange()
+
+                // On a real file switch, snapshot the outgoing buffer's cursor +
+                // scroll position so we can restore it next time the user comes
+                // back to that file. Undo stack is intentionally not persisted —
+                // see EditorBufferState comment in RepositoryViewModel.
+                if fileChanged, let outgoingID = outgoingFileID {
+                    let scrollY = nsView.contentView.bounds.origin.y
+                    onCaptureBufferState?(outgoingID, sel, scrollY)
+                }
+
                 textView.string = text
                 let clampedLoc = min(sel.location, (text as NSString).length)
                 let clampedLen = min(sel.length, max(0, (text as NSString).length - clampedLoc))
                 textView.setSelectedRange(NSRange(location: clampedLoc, length: clampedLen))
+
+                // Restore previously-captured cursor + scroll for the incoming
+                // file. Overrides the clamped-fallback selection set just above.
+                if fileChanged,
+                   let incomingID = activeFileID,
+                   let restored = onRestoreBufferState?(incomingID) {
+                    let (savedRange, savedScrollY) = restored
+                    let docLen = (text as NSString).length
+                    let restLoc = min(savedRange.location, docLen)
+                    let restLen = min(savedRange.length, max(0, docLen - restLoc))
+                    textView.setSelectedRange(NSRange(location: restLoc, length: restLen))
+                    nsView.contentView.scroll(to: NSPoint(x: 0, y: savedScrollY))
+                    nsView.reflectScrolledClipView(nsView.contentView)
+                }
             }
         }
 
