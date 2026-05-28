@@ -330,8 +330,14 @@ struct AISettingsTab: View {
     // MARK: - CLI Status
 
     private func refreshCLIStatus() async {
-        async let claudeResult = cliDiscovery.status(for: .claude, refresh: true)
-        async let codexResult = cliDiscovery.status(for: .codex, refresh: true)
+        // Use cache on initial tab open (TTL = 5min). The Refresh button per row
+        // calls `status(for:refresh:true)` explicitly. Forcing refresh on every
+        // `.task` invocation re-spawned `which claude` + `claude --version` (and
+        // codex equivalents) on every tab visit — each subprocess can take
+        // seconds when shell init is slow, leaving the row spinner stuck even
+        // though work runs off-main now.
+        async let claudeResult = cliDiscovery.status(for: .claude, refresh: false)
+        async let codexResult = cliDiscovery.status(for: .codex, refresh: false)
         let (c, d) = await (claudeResult, codexResult)
         claudeStatus = c
         codexStatus = d
