@@ -432,7 +432,12 @@ struct ChatScreen: View {
     /// Renders the auto-start banner and the local-server status bar inside
     /// the composer card so they share its width / padding.
     @ViewBuilder private var composerTopSlot: some View {
-        VStack(spacing: DesignSystem.Spacing.compact) {
+        // Phase 6.2 — leading alignment so the auto-context chip row
+        // (collapsed pill, expanded list, loading skeleton) all anchor
+        // to the same left edge. Without this the parent VStack
+        // defaulted to `.center` and the collapsed pill drifted right
+        // every retrieval cycle (UX audit Issue 1).
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
             // Pre-flight chip row lives below the composer (see body) — do not
             // re-mount here to avoid the duplicated "Mode: Permission:" row.
             if !guidanceCandidates.isEmpty && !guidanceDecisionMade, let repo = repoURL {
@@ -522,8 +527,23 @@ struct ChatScreen: View {
 
     private func scrollToLast(proxy: ScrollViewProxy) {
         guard let lastID = chat.thread.messages.last?.id else { return }
-        withAnimation {
-            proxy.scrollTo(lastID, anchor: .bottom)
+        // Phase 6.2 — when there is only one message (just-sent first
+        // turn) anchor `.top` so the user keeps seeing their question;
+        // anchoring `.bottom` on a single bubble scrolls the
+        // LazyVStack origin past the leading edge and the top of the
+        // conversation disappears until any tap forces a re-layout
+        // (user screenshot #57 + verbal "some definitivamente").
+        let anchor: UnitPoint = chat.thread.messages.count <= 1 ? .top : .bottom
+        // Defer one runloop tick so the LazyVStack has measured the new
+        // bubble before we anchor. Without this the scrollTo runs
+        // against stale layout, overshoots, and the leading message
+        // ends up hidden above the viewport (user only sees it back
+        // after clicking — confirms it is a layout-timing bug, not a
+        // state-loss bug).
+        DispatchQueue.main.async {
+            withAnimation {
+                proxy.scrollTo(lastID, anchor: anchor)
+            }
         }
     }
 }
