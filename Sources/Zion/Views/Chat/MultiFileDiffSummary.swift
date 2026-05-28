@@ -94,20 +94,23 @@ struct MultiFileDiffSummary: View {
     /// nothing in the card changed after the click).
     private var resultsStrip: some View {
         HStack(spacing: DesignSystem.Spacing.standard) {
+            // Phase 6.1 — show "applied / total" so the user understands the
+            // badge does NOT mean "this edit was already applied" when there
+            // are still pending blocks below it (see issue Image #54).
             if appliedCount > 0 {
-                Label("\(appliedCount)", systemImage: "checkmark.circle.fill")
+                Label("\(appliedCount)/\(blocks.count)", systemImage: "checkmark.circle.fill")
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(DesignSystem.Colors.success)
                     .monospacedDigit()
             }
             if rejectedCount > 0 {
-                Label("\(rejectedCount)", systemImage: "xmark.circle.fill")
+                Label("\(rejectedCount)/\(blocks.count)", systemImage: "xmark.circle.fill")
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(DesignSystem.Colors.destructive)
                     .monospacedDigit()
             }
             if pendingCount > 0 {
-                Label("\(pendingCount)", systemImage: "circle.dashed")
+                Label("\(pendingCount)/\(blocks.count)", systemImage: "circle.dashed")
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(DesignSystem.Colors.textSecondary)
                     .monospacedDigit()

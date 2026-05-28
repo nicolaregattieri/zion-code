@@ -3086,3 +3086,4 @@
 "chat.context.settings.budgetLabel" = "Per-message budget";
 "chat.context.settings.budgetUnit" = "%d tok";
 "chat.context.tool.retrieveMore" = "Searching more context";
+"chat.edit.applying.label" = "Applying…";

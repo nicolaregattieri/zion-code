@@ -3088,3 +3088,4 @@
 "chat.context.settings.budgetLabel" = "Orçamento por mensagem";
 "chat.context.settings.budgetUnit" = "%d tok";
 "chat.context.tool.retrieveMore" = "Buscando mais contexto";
+"chat.edit.applying.label" = "Aplicando…";
