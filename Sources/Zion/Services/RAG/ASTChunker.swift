@@ -38,15 +38,78 @@ struct ASTChunker: Sendable {
             throw ASTChunkerError.notUTF8
         }
         if source.isEmpty { return [] }
-        // Phase 5e — Swift gets symbol-bounded chunks via the existing
-        // SwiftSymbolScanner. Other languages still go through the
-        // fixed-window fallback until tree-sitter grammars unblock.
+        // Phase 5e — Swift via SwiftSymbolScanner.
+        // Phase 5h — TS / JS / Python via RegexSymbolScanner.
+        // Markdown / JSON / plain still fall through to fixed-window.
         if language == .swift {
             if let semantic = semanticSwiftChunks(source: source, file: file) {
                 return semantic
             }
         }
+        if language == .typescript || language == .javascript || language == .python {
+            if let semantic = semanticRegexChunks(source: source, file: file, language: language) {
+                return semantic
+            }
+        }
         return fixedWindowChunks(source: source, filePath: file.path)
+    }
+
+    /// Generic regex-driven semantic chunker for non-Swift languages.
+    /// Mirrors `semanticSwiftChunks` but consumes `RegexSymbolScanner.Hit`
+    /// rows. Hits within the same line collapse to the first kind seen.
+    private func semanticRegexChunks(source: String, file: URL, language: SourceLanguage) -> [RAGChunk]? {
+        let scanner = RegexSymbolScanner()
+        let raw = scanner.scan(source: source, language: language)
+        guard !raw.isEmpty else { return nil }
+        // Deduplicate by line, preserve order.
+        var seenLines: Set<Int> = []
+        var hits: [RegexSymbolScanner.Hit] = []
+        for hit in raw where !seenLines.contains(hit.line) {
+            seenLines.insert(hit.line)
+            hits.append(hit)
+        }
+        hits.sort { $0.line < $1.line }
+
+        let lines = source.components(separatedBy: "\n")
+        let totalLines = lines.count
+        var chunks: [RAGChunk] = []
+        for (idx, hit) in hits.enumerated() {
+            let startLine = hit.line
+            let nextStart = idx + 1 < hits.count ? hits[idx + 1].line : totalLines + 1
+            let endLine = max(startLine, nextStart - 1)
+            let startIdx = max(0, startLine - 1)
+            let endIdx = min(totalLines, endLine)
+            guard startIdx < endIdx else { continue }
+            let chunkLines = lines[startIdx..<endIdx]
+            let content = chunkLines.joined(separator: "\n")
+            let approxTokens = content.count / 4
+            if approxTokens > Constants.RAG.chunkMaxTokens {
+                let windowed = fixedWindowChunks(source: content, filePath: file.path)
+                let shifted = windowed.map { w in
+                    RAGChunk(
+                        path: w.path,
+                        startLine: w.startLine + startIdx,
+                        endLine: w.endLine + startIdx,
+                        kind: hit.kind,
+                        contentSHA: w.contentSHA,
+                        fallback: false,
+                        content: w.content
+                    )
+                }
+                chunks.append(contentsOf: shifted)
+            } else {
+                chunks.append(RAGChunk(
+                    path: file.path,
+                    startLine: startLine,
+                    endLine: endLine,
+                    kind: hit.kind,
+                    contentSHA: sha256(content),
+                    fallback: false,
+                    content: content
+                ))
+            }
+        }
+        return chunks.isEmpty ? nil : chunks
     }
 
     // MARK: - Swift semantic path

@@ -41,7 +41,7 @@ enum SourceLanguage: String, CaseIterable, Sendable {
     /// keep the fixed-window fallback path.
     var hasGrammar: Bool {
         switch self {
-        case .swift: return true
+        case .swift, .typescript, .javascript, .python: return true
         default: return false
         }
     }
