@@ -22,9 +22,14 @@ let package = Package(
         // Swift-only symbol extractor; tree-sitter integration deferred until
         // upstream grammars publish SPM 6.2-compatible manifests.
         // GRDB.swift — symbol DB store, T2+
-        .package(url: "https://github.com/groue/GRDB.swift.git", exact: "7.7.1"),
-        // SQLiteVec — vector similarity search for on-device RAG (Phase 5)
-        .package(url: "https://github.com/jkrukowski/SQLiteVec", branch: "main")
+        .package(url: "https://github.com/groue/GRDB.swift.git", exact: "7.7.1")
+        // SQLiteVec — DEFERRED. jkrukowski/SQLiteVec vendored amalgamation
+        // redefines `sqlite3_api_routines` and clashes with the macOS
+        // system SQLite that ChatStorage already links. Phase 5 RAGStore
+        // ships behind a `notImplemented` stub until we either (a) load
+        // sqlite-vec as a runtime extension on the system sqlite3 via
+        // `sqlite3_load_extension`, or (b) the bindings ship a flag to
+        // skip the bundled amalgamation. Re-enable in Phase 5b.
     ],
     targets: [
         .executableTarget(
@@ -32,8 +37,7 @@ let package = Package(
             dependencies: [
                 "SwiftTerm",
                 "Sparkle",
-                .product(name: "GRDB", package: "GRDB.swift"),
-                .product(name: "SQLiteVec", package: "SQLiteVec")
+                .product(name: "GRDB", package: "GRDB.swift")
             ],
             resources: [
                 .process("Resources")

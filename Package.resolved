@@ -1,5 +1,5 @@
 {
-  "originHash" : "dc2514ed613e9dd66621fda3046f6a80efc59634164d42caa9e3f590cc68b999",
+  "originHash" : "5361b2cf6040cd74cb8017d13139a473de2ba17b5fdbb4a40a2f5e85f00e33b9",
   "pins" : [
     {
       "identity" : "grdb.swift",
@@ -17,15 +17,6 @@
       "state" : {
         "revision" : "5581748cef2bae787496fe6d61139aebe0a451f6",
         "version" : "2.8.1"
-      }
-    },
-    {
-      "identity" : "sqlitevec",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/jkrukowski/SQLiteVec",
-      "state" : {
-        "branch" : "main",
-        "revision" : "1504246d0900db950a5065f43fce964bf4adceda"
       }
     },
     {
