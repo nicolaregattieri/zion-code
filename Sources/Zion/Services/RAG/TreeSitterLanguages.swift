@@ -32,8 +32,17 @@ enum SourceLanguage: String, CaseIterable, Sendable {
         }
     }
 
-    /// True when a grammar-backed AST walk is available for this language.
+    /// True when a semantic chunker is available for this language.
     ///
-    /// Currently always `false` — tree-sitter integration is deferred.
-    var hasGrammar: Bool { false }
+    /// Phase 5e: Swift gets semantic chunking via the existing
+    /// `SwiftSymbolScanner` (regex-based, top-level boundaries). Tree-
+    /// sitter integration for TS / Python / JS / JSON / Markdown is
+    /// still deferred (grammar packages fail SPM 6.2 resolution); they
+    /// keep the fixed-window fallback path.
+    var hasGrammar: Bool {
+        switch self {
+        case .swift: return true
+        default: return false
+        }
+    }
 }

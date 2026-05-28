@@ -38,11 +38,82 @@ struct ASTChunker: Sendable {
             throw ASTChunkerError.notUTF8
         }
         if source.isEmpty { return [] }
-        if language.hasGrammar {
-            // Grammar path — stub, falls through to fixed-window for now.
-            return fixedWindowChunks(source: source, filePath: file.path)
-        } else {
-            return fixedWindowChunks(source: source, filePath: file.path)
+        // Phase 5e — Swift gets symbol-bounded chunks via the existing
+        // SwiftSymbolScanner. Other languages still go through the
+        // fixed-window fallback until tree-sitter grammars unblock.
+        if language == .swift {
+            if let semantic = semanticSwiftChunks(source: source, file: file) {
+                return semantic
+            }
+        }
+        return fixedWindowChunks(source: source, filePath: file.path)
+    }
+
+    // MARK: - Swift semantic path
+
+    /// Use the regex-based `SwiftSymbolScanner` already shipped for
+    /// RepoMap to bracket chunks at top-level symbol boundaries.
+    /// Each chunk spans from one symbol's line to the line before the
+    /// next symbol. Chunks that exceed `Constants.RAG.chunkMaxTokens`
+    /// fall back to the fixed-window splitter for that range only.
+    private func semanticSwiftChunks(source: String, file: URL) -> [RAGChunk]? {
+        let scanner = SwiftSymbolScanner()
+        let symbols = (try? scanner.parse(file: file, content: source)) ?? []
+        let topLevel = symbols
+            .filter { Self.isChunkBoundaryKind($0.kind) }
+            .sorted { $0.line < $1.line }
+        guard !topLevel.isEmpty else { return nil }
+
+        let lines = source.components(separatedBy: "\n")
+        let totalLines = lines.count
+        var chunks: [RAGChunk] = []
+
+        for (idx, sym) in topLevel.enumerated() {
+            let startLine = sym.line // 1-indexed
+            let nextStart = idx + 1 < topLevel.count ? topLevel[idx + 1].line : totalLines + 1
+            let endLine = max(startLine, nextStart - 1)
+            let startIdx = max(0, startLine - 1)
+            let endIdx = min(totalLines, endLine)
+            guard startIdx < endIdx else { continue }
+            let chunkLines = lines[startIdx..<endIdx]
+            let content = chunkLines.joined(separator: "\n")
+            // Hard split if a single semantic chunk exceeds the cap.
+            let approxTokens = content.count / 4
+            if approxTokens > Constants.RAG.chunkMaxTokens {
+                let windowed = fixedWindowChunks(source: content, filePath: file.path)
+                let shifted = windowed.map { w in
+                    RAGChunk(
+                        path: w.path,
+                        startLine: w.startLine + startIdx,
+                        endLine: w.endLine + startIdx,
+                        kind: sym.kind.rawValue,
+                        contentSHA: w.contentSHA,
+                        fallback: false,
+                        content: w.content
+                    )
+                }
+                chunks.append(contentsOf: shifted)
+            } else {
+                chunks.append(RAGChunk(
+                    path: file.path,
+                    startLine: startLine,
+                    endLine: endLine,
+                    kind: sym.kind.rawValue,
+                    contentSHA: sha256(content),
+                    fallback: false,
+                    content: content
+                ))
+            }
+        }
+        return chunks.isEmpty ? nil : chunks
+    }
+
+    private static func isChunkBoundaryKind(_ kind: SymbolKind) -> Bool {
+        switch kind {
+        case .function, .method, .struct, .class, .enum, .protocol, .extension:
+            return true
+        case .type, .enumCase, .variable, .constant:
+            return false
         }
     }
 
