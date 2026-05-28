@@ -77,6 +77,8 @@ extension RepositoryViewModel {
             // working via the other tools. Index runs at `.utility`
             // QoS so it does not steal cycles from active streaming.
             let indexer = RAGIndexer(store: store, embedder: embedder)
+            RAGIndexerLocator.shared = indexer
+            RAGIndexerLocator.repoURL = url
             Task.detached(priority: .utility) {
                 _ = try? await indexer.index(repoURL: url)
             }
@@ -95,5 +97,7 @@ extension RepositoryViewModel {
         // Phase 5c — drop the per-repo RAG locator so the next
         // openRepository can bootstrap fresh.
         RAGQueryServiceLocator.shared = nil
+        RAGIndexerLocator.shared = nil
+        RAGIndexerLocator.repoURL = nil
     }
 }

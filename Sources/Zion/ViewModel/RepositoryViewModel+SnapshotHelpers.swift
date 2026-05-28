@@ -675,6 +675,17 @@ extension RepositoryViewModel {
         // repo switch (or while Zen mode is paused) are not lost. The flush
         // happens when `clearRepositorySwitchState` / `exitZenMode` runs.
         pendingFileWatcherEvent = pendingFileWatcherEvent?.merged(with: event) ?? event
+        // Phase 5f — fan the changedPaths out to the RAG indexer so the
+        // store keeps up with on-disk edits without waiting for the
+        // user to hit Reindex. Fire-and-forget; failures are silent.
+        if let indexer = RAGIndexerLocator.shared,
+           let repoURL = RAGIndexerLocator.repoURL,
+           !event.changedPaths.isEmpty {
+            let paths = event.changedPaths
+            Task.detached(priority: .utility) {
+                await indexer.processDelta(paths: paths, repoURL: repoURL)
+            }
+        }
         guard !isSwitchingRepository, !isZenModePaused else { return }
         processPendingFileWatcherEventIfNeeded()
     }

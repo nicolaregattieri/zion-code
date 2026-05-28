@@ -105,6 +105,68 @@ actor RAGIndexer {
         return progress.chunksIndexed
     }
 
+    /// Phase 5f — incremental delta. For each path in `paths` that
+    /// lives under `repoURL` and is RAG-eligible (language-supported,
+    /// not ignored, within size limit), delete every existing row
+    /// keyed by the relative path, then re-chunk + re-embed + re-insert
+    /// in a single transaction (via `RAGStore.insertDocuments`). Paths
+    /// outside the repo or in the ignore list are no-ops.
+    func processDelta(paths: [String], repoURL: URL) async {
+        guard await embedder.ready() else { return }
+        let repoPath = repoURL.path
+        for raw in paths {
+            if cancelled { return }
+            let abs = raw.hasPrefix("/") ? raw : repoPath + "/" + raw
+            guard abs.hasPrefix(repoPath) else { continue }
+            let url = URL(fileURLWithPath: abs)
+            // Reject if ANY path component lives inside an ignored dir
+            // (FSEvents fires on files nested deep inside .git/, etc.).
+            let components = url.pathComponents
+            if components.contains(where: { Self.ignoredDirs.contains($0) }) { continue }
+            // Ignore directory hits — FSEvents fires both for the file
+            // and its parent. We re-index per file.
+            if (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true { continue }
+            let language = Self.guessLanguage(for: url)
+            if language == .plain { continue }
+            let relative = abs.replacingOccurrences(of: repoPath + "/", with: "")
+
+            // Delete the file's old rows even if the file no longer
+            // exists on disk (rename / delete event).
+            try? await store.deleteByPath(relative)
+
+            // Re-index only when the file still exists + is small.
+            guard FileManager.default.fileExists(atPath: abs) else { continue }
+            if let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize,
+               size > Constants.RAG.maxBytesPerFile { continue }
+
+            let chunks: [RAGChunk]
+            do {
+                chunks = try chunker.chunk(file: url, language: language)
+            } catch {
+                continue
+            }
+            let rebound = chunks.map { chunk in
+                RAGChunk(
+                    path: relative,
+                    startLine: chunk.startLine,
+                    endLine: chunk.endLine,
+                    kind: chunk.kind,
+                    contentSHA: chunk.contentSHA,
+                    fallback: chunk.fallback,
+                    content: chunk.content
+                )
+            }
+            let texts = rebound.map { $0.content?.isEmpty ?? true ? " " : $0.content! }
+            do {
+                let vectors = try await embedder.embed(texts)
+                try await store.insertDocuments(rebound, embeddings: vectors)
+                progress.chunksIndexed += rebound.count
+            } catch {
+                continue
+            }
+        }
+    }
+
     private func flushBatch(_ chunks: inout [RAGChunk], _ texts: inout [String]) async throws {
         let toEmbed = texts.map { $0.isEmpty ? " " : $0 } // empty strings → space sentinel for the embedder
         let vectors = try await embedder.embed(toEmbed)
