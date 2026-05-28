@@ -3074,3 +3074,23 @@
 "plan.save" = "Guardar";
 "plan.reject" = "Rechazar";
 "plan.edit" = "Editar";
+
+// MARK: - Phase 5 RAG
+"rag.indexing.title" = "Indexación de código";
+"rag.indexing.progress" = "Indexado %1$d de %2$d chunks";
+"rag.indexing.paused.memory" = "Indexación pausada — presión de memoria";
+"rag.embedding.assetMissing" = "Modelo de lenguaje aún no descargado";
+"rag.scale.annRequired" = "Repo grande — el rendimiento puede degradar hasta que llegue el índice ANN";
+"rag.evalGate.belowRecall" = "Recall por debajo del objetivo en la evaluación";
+"rag.backend.nlContextual" = "Apple NLContextualEmbedding";
+"rag.backend.qodo" = "Qodo Embed (opt-in)";
+"rag.backend.promoted" = "Backend promovido según la evaluación";
+"rag.settings.title" = "Búsqueda semántica";
+"rag.settings.hybridToggle" = "Combinar búsqueda vectorial y por palabra clave";
+"rag.settings.reindex" = "Reindexar";
+"rag.settings.chunkCount" = "%d chunks indexados";
+"rag.settings.lastIndexed" = "Última indexación:";
+"chat.help.mention.code" = "Búsqueda semántica en código";
+"mention.code.token" = "@code <consulta> — búsqueda semántica en código";
+"mention.code.empty" = "Sin resultados para la consulta";
+"rag.tool.notReady" = "Índice aún no construido — abre el repo y espera la indexación";

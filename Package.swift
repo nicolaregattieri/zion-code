@@ -22,7 +22,9 @@ let package = Package(
         // Swift-only symbol extractor; tree-sitter integration deferred until
         // upstream grammars publish SPM 6.2-compatible manifests.
         // GRDB.swift — symbol DB store, T2+
-        .package(url: "https://github.com/groue/GRDB.swift.git", exact: "7.7.1")
+        .package(url: "https://github.com/groue/GRDB.swift.git", exact: "7.7.1"),
+        // SQLiteVec — vector similarity search for on-device RAG (Phase 5)
+        .package(url: "https://github.com/jkrukowski/SQLiteVec", branch: "main")
     ],
     targets: [
         .executableTarget(
@@ -30,7 +32,8 @@ let package = Package(
             dependencies: [
                 "SwiftTerm",
                 "Sparkle",
-                .product(name: "GRDB", package: "GRDB.swift")
+                .product(name: "GRDB", package: "GRDB.swift"),
+                .product(name: "SQLiteVec", package: "SQLiteVec")
             ],
             resources: [
                 .process("Resources")
