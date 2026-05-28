@@ -202,6 +202,11 @@ actor MentionResolver {
                 let (contents, bytes) = await resolvePR(branch: mention.argument)
                 resolved.append(ResolvedMention(kind: .pr, argument: mention.argument, contents: contents, bytes: bytes))
                 breakdown.append((path: "@pr", bytes: bytes))
+
+            case .code:
+                let (contents, bytes) = await resolveCode(query: mention.argument)
+                resolved.append(ResolvedMention(kind: .code, argument: mention.argument, contents: contents, bytes: bytes))
+                breakdown.append((path: "@code", bytes: bytes))
             }
         }
 
@@ -229,6 +234,7 @@ actor MentionResolver {
             case .folder: return sum + (maxFiles * maxBytes)
             case .selection: return sum + maxBytes
             case .diff, .pr: return sum + maxBytes
+            case .code: return sum + maxBytes
             }
         }
         return (estimatedBytes: estimated, mentionCount: parsed.count)
@@ -332,6 +338,7 @@ actor MentionResolver {
 
                 // Only emit if we have an argument (or for argumentless tokens: @selection, @diff, @pr)
                 if kind == .selection || kind == .diff || kind == .pr || !argument.isEmpty {
+                    // .code requires an argument; argless case falls through and is dropped.
                     let mentionEnd = searchStart == text.endIndex ? text.endIndex : searchStart
                     results.append((kind: kind, argument: argument, range: atRange.lowerBound..<mentionEnd))
                 }
@@ -479,6 +486,8 @@ actor MentionResolver {
                 sections.append("## @diff \(mention.argument)\n\(mention.contents)")
             case .pr:
                 sections.append("## @pr \(mention.argument)\n\(mention.contents)")
+            case .code:
+                sections.append("## @code \(mention.argument)\n\(mention.contents)")
             }
         }
         return "<attached_context>\n" + sections.joined(separator: "\n\n") + "\n</attached_context>"

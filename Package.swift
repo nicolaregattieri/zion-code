@@ -23,6 +23,13 @@ let package = Package(
         // upstream grammars publish SPM 6.2-compatible manifests.
         // GRDB.swift — symbol DB store, T2+
         .package(url: "https://github.com/groue/GRDB.swift.git", exact: "7.7.1")
+        // SQLiteVec — DEFERRED. jkrukowski/SQLiteVec vendored amalgamation
+        // redefines `sqlite3_api_routines` and clashes with the macOS
+        // system SQLite that ChatStorage already links. Phase 5 RAGStore
+        // ships behind a `notImplemented` stub until we either (a) load
+        // sqlite-vec as a runtime extension on the system sqlite3 via
+        // `sqlite3_load_extension`, or (b) the bindings ship a flag to
+        // skip the bundled amalgamation. Re-enable in Phase 5b.
     ],
     targets: [
         .executableTarget(

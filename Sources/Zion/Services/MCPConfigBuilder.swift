@@ -117,7 +117,12 @@ enum MCPConfigBuilder {
     /// surface bash here so the LLM only learns about it when the user has
     /// explicitly turned the composer pill on.
     static func allTools() -> [MCPToolDescriptor] {
-        var tools: [MCPToolDescriptor] = [repoMapDescriptor(), findSymbolDescriptor(), symbolsDescriptor()]
+        var tools: [MCPToolDescriptor] = [
+            repoMapDescriptor(),
+            findSymbolDescriptor(),
+            symbolsDescriptor(),
+            semanticSearchDescriptor()
+        ]
         if bashToolEnabled {
             tools.append(bashToolDescriptorTyped())
         }
@@ -165,6 +170,8 @@ enum MCPConfigBuilder {
             return try await dispatchFindSymbol(args: args)
         case "symbols":
             return try await dispatchSymbols(args: args)
+        case "semantic_search":
+            return try await dispatchSemanticSearch(args: args)
         default:
             throw MCPDispatchError.unknownTool(name)
         }

@@ -3050,3 +3050,23 @@
 "plan.save" = "Save";
 "plan.reject" = "Reject";
 "plan.edit" = "Edit";
+
+// MARK: - Phase 5 RAG
+"rag.indexing.title" = "Code Indexing";
+"rag.indexing.progress" = "Indexed %1$d of %2$d chunks";
+"rag.indexing.paused.memory" = "Indexing paused — memory pressure";
+"rag.embedding.assetMissing" = "Language model not yet downloaded";
+"rag.scale.annRequired" = "Large repo — performance may degrade until ANN indexing lands";
+"rag.evalGate.belowRecall" = "Recall below target in evaluation";
+"rag.backend.nlContextual" = "Apple NLContextualEmbedding";
+"rag.backend.qodo" = "Qodo Embed (opt-in)";
+"rag.backend.promoted" = "Backend promoted based on evaluation";
+"rag.settings.title" = "Semantic Search";
+"rag.settings.hybridToggle" = "Combine vector and keyword search";
+"rag.settings.reindex" = "Reindex";
+"rag.settings.chunkCount" = "%d chunks indexed";
+"rag.settings.lastIndexed" = "Last indexed:";
+"chat.help.mention.code" = "Semantic code search";
+"mention.code.token" = "@code <query> — semantic code search";
+"mention.code.empty" = "No results for query";
+"rag.tool.notReady" = "Index not yet built — open the repo and wait for indexing";

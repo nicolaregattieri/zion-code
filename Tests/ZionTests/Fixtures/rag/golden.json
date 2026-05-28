@@ -1,0 +1,50 @@
+[
+  {
+    "query": "where do we kill in-flight tool subprocesses on stop?",
+    "expectedFiles": ["Sources/Zion/Services/ChatService+ProcessTracking.swift"]
+  },
+  {
+    "query": "where is L10n loaded from the bundle?",
+    "expectedFiles": ["Sources/Zion/Models/AppEnums.swift"]
+  },
+  {
+    "query": "where does the ghost frame guard live in SwiftTerm?",
+    "expectedFiles": ["docs/GHOST_FRAME_INVESTIGATION.md", "Sources/Zion/Services/SwiftTerm"]
+  },
+  {
+    "query": "where is the multi-file approve fan-out wired?",
+    "expectedFiles": ["Sources/Zion/Services/ChatService.swift", "Sources/Zion/Views/Chat/ApplyAllButton.swift"]
+  },
+  {
+    "query": "where do we detect the test runner per stack?",
+    "expectedFiles": ["Sources/Zion/Helpers/TestRunnerDetector.swift"]
+  },
+  {
+    "query": "how do mentions resolve @diff via git?",
+    "expectedFiles": ["Sources/Zion/Services/MentionResolver+DiffMention.swift"]
+  },
+  {
+    "query": "where is the system monitor pill placed in the toolbar?",
+    "expectedFiles": ["Sources/Zion/Views/Main/ContentView+Toolbar.swift", "Sources/Zion/Views/Main/TopBarSystemMonitorPill.swift"]
+  },
+  {
+    "query": "where is the refresh-storm coalesce logic?",
+    "expectedFiles": ["Sources/Zion/ViewModel/RepositoryViewModel+Git.swift"]
+  },
+  {
+    "query": "where do MCP servers persist on disk?",
+    "expectedFiles": ["Sources/Zion/Services/MCP/MCPRegistryStore.swift"]
+  },
+  {
+    "query": "how are chat threads stored per repo?",
+    "expectedFiles": ["Sources/Zion/Services/ChatStorage.swift"]
+  },
+  {
+    "query": "where is the harness hop budget defined?",
+    "expectedFiles": ["Sources/Zion/Services/ChatService.swift", "Sources/Zion/Services/ChatService+ContinueChip.swift"]
+  },
+  {
+    "query": "where does the file watcher coalesce FSEvents?",
+    "expectedFiles": ["Sources/Zion/Services/FileWatcher.swift"]
+  }
+]

@@ -1,45 +1,37 @@
-# Build Learnings — Zion Talks Phase 3 (ZionHarness)
+## Project State
 
-## Critical
-- NEVER commit .sdd/ files — user dev folder, excluded from repo
-- swift build needs `dangerouslyDisableSandbox: true`
-- Use `swift build --scratch-path /tmp/zion-build-fresh` if SwiftPM lock contention
-- Phase 1 (PR #436) merged; Phase 2 (PR #437) in review — Phase 3 builds on Phase 1 only
-- Branch off master; will rebase onto Phase 2 once merged
+Phase 5 RAG ships end-to-end as Phase 5b: per-repo SQLite store (system sqlite3 + Accelerate cosine + FTS5 + BLOB embeddings, no SwiftPM dep — sidesteps the SQLiteVec amalgamation collision against ChatStorage), one-shot RAGIndexer over ignore-filtered repo files, RAGQueryService with vector / keyword / hybrid RRF (k=60), `semantic_search` MCP tool + `@code` mention resolver wired through MCPConfigBuilder, RAGSettingsSection UI scaffold with reindex affordance, and an A/B promotion gate (RAGBackendPromotion) for future Qodo upgrade. Recall@10 e2e test is wired but gated by `ZION_RAG_E2E=1`; golden fixture currently has 12 entries, expand to 100 in Phase 5c. Tree-sitter AST chunking remains XCTSkipped (grammars fail SPM 6.2); fixed-window fallback path ships for every language. FSEvents-driven incremental indexing is deferred to Phase 5c — today the user reindexes from Settings on demand.
 
-## Approach
-- str_replace_based_edit_tool schema (Anthropic verbatim) for edit tool — model fires correctly
-- Hard rules harness-enforced (not prompt): read-before-edit, prefer-edit-over-create, bash allowlist, path safety
-- StreamEvent enum in AIClient+Helpers.swift = single source for provider-agnostic streaming with tools
+## Phase 5 build summary
+- Wave 1 (foundation): Constants.RAG, RAGChunk/RAGHit value types, 18 locale keys
+- Wave 2 (store + chunker + embedder): RAGSchema, RAGStore via system SQLite, ASTChunker, EmbeddingProvider (NLContextualEmbedding + Qodo stub)
+- Wave 3 (indexer + query): RAGIndexer one-shot, RAGQueryService with RRF
+- Wave 4 (tool + mention + UI): semantic_search MCP tool, MentionResolver+CodeMention, RAGSettingsSection
+- Wave 5 (eval): RAGBackendPromotion + 12-entry golden.json + RAGEvalTests harness
 
-### Task 5: ZionHarness actor + FileMutationQueue + tests (DONE, 3 cycles)
-- Swift 6 strict concurrency: `[[String: Any]]` is non-Sendable — convert to typed `Sendable` struct BEFORE the `@Sendable` closure boundary; `var` for that struct array must be renamed to `let` at capture site
-- XCTestCase is not Sendable — extract `let h = harness!` before `withTaskGroup` to avoid `self` capture error in Swift 6 test code
-- `FileMutationQueue` pattern: chain `Task` references per path key; works for serializing same-path writes while allowing different paths in parallel
-- `validatePath` uses `resolvingSymlinksInPath()` + `standardizedFileURL` + trailing-`/` prefix check to block symlink traversal outside repo
-- `chat.allowEdits` UserDefaults key must be set `true` in test `setUp`, otherwise all edit tests fail with `editsDisabled`
+## Test coverage (all green)
+- RAGLocalizationTests: 1
+- RAGStoreTests: 6 (insert, count, delete, vectorSearch cosine, FTS5 keyword)
+- RAGStoreIsolationTests: 2
+- ASTChunkerTests: 14 (1 XCTSkip pending tree-sitter)
+- ASTChunkerCoverageTests: 1
+- EmbeddingProviderTests: skip-aware
+- HybridQueryTests: 3 (RRF, sanitizer empty, sanitizer NL)
+- ZionToolsSemanticSearchTests: 4
+- RAGEvalTests: 4 (1 skip pending ZION_RAG_E2E=1)
 
-### Task 6: StreamEvent enum + AIError tool cases (DONE, 1 cycle)
-- StreamEvent lives at the bottom of AIClient+Helpers.swift, just above the AIError block
-- `[String: Any]` in enum case requires `@unchecked Sendable` on the enum (not individual cases)
-- New L10n key `ai.error.toolExecution.failed` uses `%@` format specifier; caller uses String(format:...) 
-- Read-before-edit tool requirement: must Read locale files before Edit even for append-only changes
+## Known deferrals (Phase 5c)
+1. FSEvents-driven incremental indexer + Progress publisher
+2. Tree-sitter AST chunker (vendoring path TBD; SPM 6.2 incompatibility upstream)
+3. RepositoryViewModel+Chat wiring of RAGQueryServiceLocator + chunkCount AppStorage publisher
+4. Golden fixture expansion 12 → 100 entries
+5. sqlite-vec runtime extension load (drop the brute-force cosine when ANN matures)
 
-### Task 10: ToolEventBadge + AutoInjectionChip + ChatMessageBubble integration (DONE, 1 cycle)
-- `Capsule()` shape avoids any `cornerRadius:` literal — use it for pill/capsule backgrounds
-- `ProgressView().scaleEffect(0.6)` is the idiomatic SwiftUI way to shrink circular progress inline
-- Switch on `event.status` inside `@ViewBuilder` with `case .pending, .running:` combined works cleanly
-- `DesignSystem.Typography.label` is `Font.system(size: 10)` — correct token for badge/chip text
-- AutoInjectionChip keeps L10n format string as-is; the en.lproj value already includes the sparkle emoji so the `sparkles` SF Symbol is additional decoration
-- ChatMessageBubble integration: tool badges go above bubble content (inside VStack before messageText); AutoInjectionChip goes inside the same VStack after messageText with `HStack { Spacer(); chip }` for right-alignment
-
-### Task 1: ZionTools — tool schemas (DONE, 2 cycles)
-- AIProviderSupport.swift had a pre-existing broken `}` brace (localModelSupportsTools orphaned outside enum) — had to fix it to allow build; logged as out-of-scope but necessary
-- `[String: Any]` in a `Sendable` struct requires `@unchecked Sendable` — use it for JSON schema types
-- edit tool items schema: properties dict uses `[String: Any]` nested casts — tests must cast through `[String: Any]` at each level to reach `oldText`/`newText` keys
-- ZionTools.tools is a `static let` array — Swift strict concurrency requires `@unchecked Sendable` on the element type
-
-### Task 11: AISettingsTab AI Harness section + StatusBar .chat button (DONE, 1 cycle)
-- `if defaultProvider == .local { let ... }` block inside a SwiftUI Section compiles fine — no `@ViewBuilder` wrapper needed for simple let bindings
-- statusBarSectionLabel(_:) delegates to `L10n(section.title)` — no explicit switch needed for new AppSection cases
-- Read-before-edit rule applies to locale files even for append-only insertions
+## Patterns
+- Localization test pattern: use `Bundle.zionResources.path(forResource:ofType:inDirectory:forLocalization:)` + `NSDictionary(contentsOfFile:)`. See `ChatLocalizationTests.swift`.
+- Phase keys go as a `// MARK: - Phase N` block appended at the end of each `.strings` file.
+- `swift build` / `swift test` require sandbox disabled (`dangerouslyDisableSandbox: true`).
+- `#filePath` in test files reliably locates `Tests/ZionTests/Fixtures/` without `Bundle.module`.
+- Actor + `OpaquePointer` sqlite3 handle: cannot deinit-touch in Swift 6 strict concurrency — explicit `close()` method.
+- Static `SQLITE_TRANSIENT` inside an actor must be referenced as `Self.SQLITE_TRANSIENT` from instance methods.
+- Avoid SQLiteVec SwiftPM dep — its bundled amalgamation redefines `sqlite3_api_routines` and conflicts with system sqlite3 (which ChatStorage already links).
