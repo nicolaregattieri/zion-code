@@ -2,31 +2,30 @@ import Foundation
 
 // MARK: - RAGSchema
 
-/// DDL constants and schema metadata for the per-repo RAG SQLite database.
+/// DDL for the per-repo RAG SQLite database. Phase 5b uses the macOS
+/// system SQLite directly (no SwiftPM dep) and stores embeddings as a
+/// plain BLOB column of float32 bytes. Phase 5c may swap the vector
+/// column for the `sqlite-vec` `vec0` virtual table once the build-
+/// system collision against `ChatStorage`'s `import SQLite3` is
+/// resolved (load sqlite-vec as a runtime extension via
+/// `sqlite3_load_extension` or upstream a build flag).
+///
+/// FTS5 is built into the macOS-shipped SQLite, so the keyword side
+/// works today without any vendored binary.
 enum RAGSchema {
 
-    // MARK: - Version
-
-    /// Current schema version. Bump this when DDL changes require a full rebuild.
+    /// Bump on any DDL change that requires a full rebuild.
     static let schemaVersion: Int = 1
 
-    /// Identifier for the embedding backend stored in schema_meta.
-    /// Used to detect when the model changes and a full re-index is needed.
-    static let embeddingBackend: String = "apple-512"
-
-    // MARK: - Table names
-
-    static let documentsTable: String = "documents"
-    static let vectorsTable: String = "vec_embeddings"
-    static let ftsTable: String = "documents_fts"
-    static let metaTable: String = "schema_meta"
-
-    // MARK: - DDL
+    /// Embedding backend identifier persisted in `schema_meta`. Used to
+    /// drop-and-rebuild when the backend changes (e.g., a future swap
+    /// from NLContextualEmbedding-512 to Qodo-1536).
+    static let defaultEmbeddingBackend: String = "nl-contextual-latin-512"
 
     /// Main document metadata table.
-    static let createDocuments: String = """
-        CREATE TABLE IF NOT EXISTS \(documentsTable) (
-            id              INTEGER PRIMARY KEY,
+    static let documentsTable: String = """
+        CREATE TABLE IF NOT EXISTS documents (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
             path            TEXT    NOT NULL,
             chunk_start_ln  INTEGER NOT NULL,
             chunk_end_ln    INTEGER NOT NULL,
@@ -35,64 +34,37 @@ enum RAGSchema {
             fallback        INTEGER NOT NULL DEFAULT 0,
             indexed_at      INTEGER NOT NULL
         );
+        CREATE INDEX IF NOT EXISTS idx_documents_path ON documents(path);
+        CREATE INDEX IF NOT EXISTS idx_documents_sha ON documents(content_sha);
         """
 
-    /// Index on path for fast per-file delete / lookup.
-    static let createDocumentsPathIndex: String = """
-        CREATE INDEX IF NOT EXISTS idx_documents_path
-        ON \(documentsTable)(path);
-        """
-
-    /// vec0 virtual table — stores float[N] embeddings keyed by document_id.
-    static var createVectors: String {
-        """
-        CREATE VIRTUAL TABLE IF NOT EXISTS \(vectorsTable)
-        USING vec0(
+    /// Vector table — Phase 5b stores embeddings as a raw BLOB column
+    /// (float32 little-endian, length = `Constants.RAG.embeddingDim *
+    /// 4` bytes). Phase 5c may swap this for `vec0` once SQLiteVec is
+    /// unblocked.
+    static let vectorsTable: String = """
+        CREATE TABLE IF NOT EXISTS vectors (
             document_id INTEGER PRIMARY KEY,
-            embedding   FLOAT[\(Constants.RAG.embeddingDim)]
+            embedding   BLOB    NOT NULL,
+            FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
         );
         """
-    }
 
-    /// FTS5 virtual table over document content for keyword search.
-    ///
-    /// Content is stored externally in `documents`; we use the content= option
-    /// so the FTS index can be kept in sync via triggers or explicit inserts.
-    static let createFTS: String = """
-        CREATE VIRTUAL TABLE IF NOT EXISTS \(ftsTable)
-        USING fts5(
+    /// FTS5 virtual table over chunk content. Macos-shipped SQLite has
+    /// the fts5 module compiled in by default.
+    static let documentsFtsTable: String = """
+        CREATE VIRTUAL TABLE IF NOT EXISTS documents_fts USING fts5(
             content,
-            content=\(documentsTable),
-            content_rowid=id,
-            tokenize='unicode61'
+            tokenize='unicode61',
+            content_rowid='id'
         );
         """
 
-    /// Schema version / embedding backend registry.
-    static let createMeta: String = """
-        CREATE TABLE IF NOT EXISTS \(metaTable) (
-            key     TEXT PRIMARY KEY,
-            value   TEXT NOT NULL
+    /// Metadata table — `schema_version` + `embedding_backend`.
+    static let schemaMetaTable: String = """
+        CREATE TABLE IF NOT EXISTS schema_meta (
+            key   TEXT PRIMARY KEY,
+            value TEXT NOT NULL
         );
-        """
-
-    /// SQL to seed the meta table on first creation.
-    static func insertMetaSQL(version: Int, backend: String) -> String {
-        """
-        INSERT OR IGNORE INTO \(metaTable) (key, value)
-        VALUES
-            ('schema_version', '\(version)'),
-            ('embedding_backend', '\(backend)');
-        """
-    }
-
-    // MARK: - Queries
-
-    static let selectSchemaVersion: String = """
-        SELECT value FROM \(metaTable) WHERE key = 'schema_version';
-        """
-
-    static let selectEmbeddingBackend: String = """
-        SELECT value FROM \(metaTable) WHERE key = 'embedding_backend';
         """
 }
