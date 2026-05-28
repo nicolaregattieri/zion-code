@@ -522,6 +522,21 @@ final class RepositoryViewModel {
     var findInFilesScopeRequest: String? = nil
     var revealFileInBrowserRequestID: Int = 0
 
+    // Per-file editor UI state preserved across tab switches inside Zion Code.
+    // Keyed by the same `activeFileID` (file path) used elsewhere. Cursor +
+    // scroll only here — undo-stack persistence is intentionally out of scope
+    // because NSTextView shares one undo manager across all swapped buffers
+    // and lifting per-file undo is a larger change.
+    //
+    // TODO(editor-undo-per-file): persist per-file undo/redo stacks too.
+    // Requires either an undo-coalescing wrapper or keeping a pool of
+    // NSTextView instances alive per open file.
+    struct EditorBufferState: Sendable {
+        var selectedRange: NSRange
+        var scrollY: CGFloat
+    }
+    @ObservationIgnored var editorBufferStates: [String: EditorBufferState] = [:]
+
     // Tracking unsaved changes per file
     var unsavedFiles: Set<String> = []
     @ObservationIgnored var originalFileContents: [String: String] = [:]

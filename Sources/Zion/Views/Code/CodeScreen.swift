@@ -542,7 +542,17 @@ struct CodeScreen: View {
                 guard isSearchVisible, !searchQuery.isEmpty else { return }
                 navigateToPreviousMatch()
             },
-            isEditorVisible: !zenTerminalFullscreen && layout != .terminalOnly
+            isEditorVisible: !zenTerminalFullscreen && layout != .terminalOnly,
+            onCaptureBufferState: { fileID, range, scrollY in
+                model.editorBufferStates[fileID] = RepositoryViewModel.EditorBufferState(
+                    selectedRange: range,
+                    scrollY: scrollY
+                )
+            },
+            onRestoreBufferState: { fileID in
+                guard let state = model.editorBufferStates[fileID] else { return nil }
+                return (state.selectedRange, state.scrollY)
+            }
         )
         .help(L10n("help.code.navigation"))
     }
