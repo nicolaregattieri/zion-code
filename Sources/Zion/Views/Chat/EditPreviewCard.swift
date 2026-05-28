@@ -17,9 +17,20 @@ struct EditPreviewCard: View {
 
     @State private var isEditing: Bool = false
     @State private var draftXML: String = ""
+    /// Optimistic per-card "we just clicked Apply, waiting for the
+    /// service to flip block.appliedAt" flag. Resets whenever the
+    /// authoritative block.appliedAt / failureReason settles. Without
+    /// this the Apply button looked inert mid-async (file #54 report).
+    @State private var pendingApply: Bool = false
+
+    private var borderTint: Color {
+        if block.appliedAt != nil { return DesignSystem.Colors.success.opacity(0.5) }
+        if block.failureReason != nil { return DesignSystem.Colors.destructive.opacity(0.5) }
+        return DesignSystem.Colors.ai.opacity(0.4)
+    }
 
     var body: some View {
-        GlassCard(borderTint: DesignSystem.Colors.ai.opacity(0.4)) {
+        GlassCard(borderTint: borderTint) {
             fileHeader
             Divider()
                 .overlay(DesignSystem.Colors.glassBorderDark)
@@ -30,6 +41,8 @@ struct EditPreviewCard: View {
                 footerButtons
             }
         }
+        .onChange(of: block.appliedAt) { _, _ in pendingApply = false }
+        .onChange(of: block.failureReason) { _, _ in pendingApply = false }
     }
 
     // MARK: - Subviews
@@ -105,21 +118,69 @@ struct EditPreviewCard: View {
         }
     }
 
+    @ViewBuilder
     private var footerButtons: some View {
+        if block.appliedAt != nil {
+            appliedFooter
+        } else if let reason = block.failureReason {
+            rejectedFooter(reason: reason)
+        } else {
+            actionFooter
+        }
+    }
+
+    private var appliedFooter: some View {
+        HStack(spacing: DesignSystem.Spacing.iconTextGap) {
+            Label(L10n("chat.editBlock.status.applied"), systemImage: "checkmark.circle.fill")
+                .font(DesignSystem.Typography.bodySemibold)
+                .foregroundStyle(DesignSystem.Colors.success)
+            Spacer()
+        }
+        .padding(.horizontal, DesignSystem.Spacing.standard)
+        .padding(.vertical, DesignSystem.Spacing.compact)
+        .background(DesignSystem.Colors.success.opacity(0.15))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous))
+    }
+
+    private func rejectedFooter(reason: String) -> some View {
+        HStack(spacing: DesignSystem.Spacing.iconTextGap) {
+            Label(reason == "rejected"
+                ? L10n("chat.editBlock.status.rejected")
+                : reason,
+                  systemImage: "xmark.circle.fill")
+                .font(DesignSystem.Typography.bodySemibold)
+                .foregroundStyle(DesignSystem.Colors.destructive)
+            Spacer()
+        }
+        .padding(.horizontal, DesignSystem.Spacing.standard)
+        .padding(.vertical, DesignSystem.Spacing.compact)
+        .background(DesignSystem.Colors.destructiveBg)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous))
+    }
+
+    private var actionFooter: some View {
         HStack(spacing: DesignSystem.Spacing.standard) {
-            Button(L10n("chat.edit.apply")) {
+            Button {
                 applyTapped()
+            } label: {
+                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
+                    if pendingApply {
+                        ProgressView()
+                            .controlSize(.small)
+                    }
+                    Text(pendingApply
+                        ? L10n("chat.edit.applying.label")
+                        : L10n("chat.edit.apply"))
+                }
             }
             .font(DesignSystem.Typography.bodySemibold)
-            .foregroundStyle(isStreaming ? DesignSystem.Colors.textTertiary : DesignSystem.Colors.success)
+            .foregroundStyle(applyForeground)
             .buttonStyle(.plain)
             .padding(.horizontal, DesignSystem.Spacing.standard)
             .padding(.vertical, DesignSystem.Spacing.compact)
-            .background(isStreaming
-                ? DesignSystem.Colors.glassSubtle
-                : DesignSystem.Colors.success.opacity(0.15))
+            .background(applyBackground)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous))
-            .disabled(isStreaming)
+            .disabled(isStreaming || pendingApply)
 
             Button(L10n("chat.edit.reject")) {
                 rejectTapped()
@@ -131,6 +192,7 @@ struct EditPreviewCard: View {
             .padding(.vertical, DesignSystem.Spacing.compact)
             .background(DesignSystem.Colors.destructiveBg)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.elementCornerRadius, style: .continuous))
+            .disabled(pendingApply)
 
             Spacer()
 
@@ -140,13 +202,26 @@ struct EditPreviewCard: View {
             .font(DesignSystem.Typography.body)
             .foregroundStyle(DesignSystem.Colors.textSecondary)
             .buttonStyle(.plain)
+            .disabled(pendingApply)
         }
+    }
+
+    private var applyForeground: Color {
+        if isStreaming || pendingApply { return DesignSystem.Colors.textTertiary }
+        return DesignSystem.Colors.success
+    }
+
+    private var applyBackground: Color {
+        if isStreaming { return DesignSystem.Colors.glassSubtle }
+        if pendingApply { return DesignSystem.Colors.ai.opacity(0.15) }
+        return DesignSystem.Colors.success.opacity(0.15)
     }
 
     // MARK: - Action Helpers (testable)
 
     internal func applyTapped() {
-        guard !isStreaming else { return }
+        guard !isStreaming, !pendingApply else { return }
+        pendingApply = true
         onAction(.apply)
     }
 
