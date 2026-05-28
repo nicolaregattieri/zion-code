@@ -50,7 +50,33 @@ final class ASTChunkerTests: XCTestCase {
     /// yet publish SPM 6.2-compatible manifests.  This test is skipped until
     /// AST chunking is wired up.
     func test_swiftSource_chunksAtFunctionBoundaries() throws {
-        throw XCTSkip("AST chunker pending grammar vendoring (tree-sitter SPM 6.2 compat deferred)")
+        let tmp = FileManager.default.temporaryDirectory
+            .appendingPathComponent("rag_swift_\(UUID().uuidString).swift")
+        defer { try? FileManager.default.removeItem(at: tmp) }
+        let source = """
+        import Foundation
+
+        struct Foo {
+            func one() {
+                print("one")
+            }
+
+            func two() {
+                print("two")
+            }
+        }
+
+        class Bar {
+            func three() {
+                print("three")
+            }
+        }
+        """
+        try source.write(to: tmp, atomically: true, encoding: .utf8)
+        let chunks = try chunker.chunk(file: tmp, language: .swift)
+        XCTAssertGreaterThan(chunks.count, 0)
+        XCTAssertTrue(chunks.contains { $0.kind == "struct" || $0.kind == "class" || $0.kind == "function" || $0.kind == "method" })
+        XCTAssertTrue(chunks.contains { $0.fallback == false }, "expected at least one semantic chunk, got \(chunks.map { $0.fallback })")
     }
 
     // MARK: - Fallback fixed-window path
@@ -84,8 +110,11 @@ final class ASTChunkerTests: XCTestCase {
 
         XCTAssertEqual(chunks.count, 1)
         XCTAssertEqual(chunks[0].startLine, 1)
-        XCTAssertEqual(chunks[0].kind, "block")
-        XCTAssertTrue(chunks[0].fallback)
+        // Phase 5e — Swift now goes through the SwiftSymbolScanner path
+        // and tags chunks by symbol kind ("function" here) with
+        // fallback = false. Markdown / plain still produce "block".
+        XCTAssertEqual(chunks[0].kind, "function")
+        XCTAssertFalse(chunks[0].fallback)
     }
 
     func test_emptyFile_producesNoChunks() throws {
