@@ -62,6 +62,17 @@ struct ChatScreen: View {
                 memoryMonitor.resume()
             } else {
                 memoryMonitor.pause()
+                // Floating NSPanel singletons / instances anchored at the
+                // composer caret do NOT auto-hide when their host view gets
+                // `.disabled`. They keep painting over whatever section the
+                // user switched into (Tree / Code / Graph / Operations).
+                // Tear them down explicitly here so the slash menu and the
+                // @mention picker disappear the moment Chat loses focus.
+                SlashAutocompletePanel.shared.dismiss()
+                for window in NSApplication.shared.windows
+                    where window is MentionAutocompletePanel && window.isVisible {
+                    window.orderOut(nil)
+                }
             }
         }
     }
