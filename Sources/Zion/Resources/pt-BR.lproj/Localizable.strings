@@ -729,7 +729,7 @@
 "settings.general.graphAuthorAvatarsHint" = "Baixa avatares do Gravatar e GitHub/GitLab.";
 "settings.general.systemMonitor" = "Mostrar CPU / RAM na barra superior";
 "settings.general.systemMonitor.hint" = "Carga do sistema ao vivo ao lado dos botões da barra. Atualiza a cada 2 segundos.";
-"topbar.systemMonitor.help" = "Uso de CPU e memória do sistema";
+"topbar.systemMonitor.help" = "Uso de CPU e memória do sistema. RAM = ativa + fixada (wired) + comprimida. Activity Monitor mostra só ativa+fixada na barra de pressão; a comprimida é RAM física presa no compressor (não livre, mas também não 'em uso' clássico).";
 "settings.general.openWithDrawerCollapsed" = "Abrir o Zion com a gaveta lateral fechada";
 "settings.general.openWithDrawerCollapsedHint" = "Inicia com um workspace mais limpo. Use o menu do rodapé ou o ícone de barra lateral da toolbar para expandir.";
 "settings.general.customPath" = "Caminho Personalizado";
@@ -3089,3 +3089,6 @@
 "chat.context.settings.budgetUnit" = "%d tok";
 "chat.context.tool.retrieveMore" = "Buscando mais contexto";
 "chat.edit.applying.label" = "Aplicando…";
+
+// MARK: - Memory monitor tooltips
+"chat.local.status.memory.help" = "RAM = ativa + fixada (wired) + comprimida. Activity Monitor mostra só ativa+fixada na barra de pressão; a comprimida é física mas presa no compressor.";

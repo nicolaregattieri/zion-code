@@ -66,6 +66,7 @@ struct LocalServerStatusBar: View {
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
                 }
+                .help(L10n("chat.local.status.memory.help"))
             }
 
             Spacer(minLength: 8)
