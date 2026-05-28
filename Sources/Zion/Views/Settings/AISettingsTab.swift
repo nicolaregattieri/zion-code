@@ -31,6 +31,17 @@ struct AISettingsTab: View {
     @State private var cliDiscovery = CLIDiscoveryService()
     @State private var repoMemoryActionFeedback: String? = nil
 
+    // Cached results — recomputed off-main via `refreshConnections()`. Previously
+    // these were computed-properties that ran `AIClient.loadAPIKey` (sync
+    // `SecItemCopyMatching`) for EVERY provider on EVERY body recompute. With
+    // multiple @AppStorage observers in scope, SwiftUI re-runs body many times
+    // per second; the resulting Keychain spam saturated the main thread and
+    // hung the AI Settings tab for tens of seconds (hang reports show
+    // SwiftUI runTransaction → DynamicBody.updateValue → GroupedSection
+    // looping while waiting on Keychain).
+    @State private var providerConnections: [AIProviderConnectionInfo] = []
+    @State private var isDefaultProviderConnected: Bool = false
+
     private var defaultProvider: AIProvider {
         AIProvider(rawValue: aiProviderRaw) ?? .none
     }
@@ -39,16 +50,17 @@ struct AISettingsTab: View {
         AIMode(rawValue: aiModeRaw) ?? .efficient
     }
 
-    private var providerConnections: [AIProviderConnectionInfo] {
-        let _ = connectionRefreshID
-        return AIProviderSupport.connectionInfo().filter {
-            $0.provider != .local && $0.provider != .claudeCLI && $0.provider != .codexCLI
-        }
-    }
-
-    private var isDefaultProviderConnected: Bool {
-        let _ = connectionRefreshID
-        return AIProviderSupport.isConnected(provider: defaultProvider)
+    private func refreshConnections() async {
+        let provider = defaultProvider
+        let (infos, connected) = await Task.detached(priority: .userInitiated) {
+            let infos = AIProviderSupport.connectionInfo().filter {
+                $0.provider != .local && $0.provider != .claudeCLI && $0.provider != .codexCLI
+            }
+            let connected = AIProviderSupport.isConnected(provider: provider)
+            return (infos, connected)
+        }.value
+        providerConnections = infos
+        isDefaultProviderConnected = connected
     }
 
     private var repoMemoryStatusText: String {
@@ -303,6 +315,15 @@ struct AISettingsTab: View {
         }
         .onChange(of: localConfig) { _, newValue in
             AIClient.saveLocalConfig(newValue)
+        }
+        .task {
+            await refreshConnections()
+        }
+        .onChange(of: connectionRefreshID) { _, _ in
+            Task { await refreshConnections() }
+        }
+        .onChange(of: aiProviderRaw) { _, _ in
+            Task { await refreshConnections() }
         }
     }
 
