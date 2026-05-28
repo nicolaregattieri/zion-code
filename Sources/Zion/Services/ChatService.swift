@@ -880,7 +880,7 @@ final class ChatService {
                 ? providerInputText
                 : mentionPayload.systemContext + "\n\n" + providerInputText
 
-            var payload = Self.makePayload(for: enrichedText, provider: resolved)
+            var payload = makePayload(for: enrichedText, provider: resolved)
             payload.cwd = repoURL
             // Forward image attachments to providers that support vision
             // natively. Anthropic / OpenAI / Gemini all expose image content
@@ -1468,7 +1468,7 @@ final class ChatService {
                     self.recentSwitches.append(switchEvent)
                 }
                 let originalText = payload.untrustedSections.first(where: { $0.kind == "user_message" })?.content ?? ""
-                let nextPayload = Self.makePayload(for: originalText, provider: nextProvider)
+                let nextPayload = makePayload(for: originalText, provider: nextProvider)
                 var updatedPayload = nextPayload
                 updatedPayload.cwd = repoURL
                 await dispatchStream(
@@ -2221,10 +2221,10 @@ final class ChatService {
         return title.hasPrefix(untitledBase)
     }
 
-    private static func makePayload(for text: String, provider: AIProvider) -> AIPromptPayload {
+    private func makePayload(for text: String, provider: AIProvider) -> AIPromptPayload {
         AIClient.makePromptPayload(
             task: "Chat",
-            taskInstructions: taskInstructions(for: provider),
+            taskInstructions: Self.taskInstructions(for: provider) + Self.branchAwarenessAppendix(branch: activeBranch),
             untrustedSections: [
                 AIUntrustedPromptSection(
                     kind: "user_message",
@@ -2234,6 +2234,38 @@ final class ChatService {
                 )
             ]
         )
+    }
+
+    /// Phase 6.2 — appends branch-awareness guidance to the assistant
+    /// system prompt. Tells the model exactly which branch is active and
+    /// asks it to surface a feature-branch suggestion BEFORE applying
+    /// edits when the user is on the protected default branch
+    /// (`master` / `main`). Avoids the "agent silently committed to
+    /// master" bug the user reported in screenshot #56.
+    nonisolated static func branchAwarenessAppendixForTesting(branch: String) -> String {
+        branchAwarenessAppendix(branch: branch)
+    }
+
+    nonisolated private static func branchAwarenessAppendix(branch: String) -> String {
+        let normalized = branch.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalized.isEmpty else { return "" }
+        let isProtected = (normalized == "master" || normalized == "main")
+        var appendix = "\n\n## Branch awareness\nActive branch: `\(normalized)`."
+        if isProtected {
+            appendix += """
+
+
+            CRITICAL: the user is on the protected default branch. Before applying
+            ANY edit (especially via SEARCH/REPLACE blocks), STOP and propose
+            checking out a feature branch first (suggest a short kebab-case name
+            derived from the change). Wait for the user's explicit go-ahead
+            before emitting edit blocks. If the user explicitly says "commit to
+            \(normalized)" or "stay on \(normalized)", honor that and proceed.
+            """
+        } else {
+            appendix += " Apply edits directly to this branch unless the user asks otherwise."
+        }
+        return appendix
     }
 
     private static func taskInstructions(for provider: AIProvider) -> String {
