@@ -420,6 +420,13 @@ struct ChatScreen: View {
                 composerText = restored
             }
         }
+        // Phase 6 — recompute the auto-context chip row whenever the
+        // composer text settles. Debounced via `.task(id:)` so each new
+        // keystroke supersedes the previous query without piling tasks.
+        .task(id: composerText) {
+            try? await Task.sleep(nanoseconds: 350_000_000)
+            await chat.refreshPendingContext(for: composerText)
+        }
     }
 
     /// Renders the auto-start banner and the local-server status bar inside
@@ -493,6 +500,15 @@ struct ChatScreen: View {
             // sees before hitting Send. Stays visible mid-thread so the user
             // can switch on the fly.
             ChatPreflightChipRow(compact: true)
+            // Phase 6 — auto-context chip row. Sits between the preflight
+            // policy chips above and the input below; renders the chunks the
+            // hybrid retrieval picked for the upcoming message. Collapsed
+            // by default; user expands or dismisses individual chips.
+            ChatContextChipRow(
+                hits: chat.pendingContextHits,
+                isLoading: chat.isPendingContextLoading,
+                onRemove: { chat.removePendingContext($0) }
+            )
         }
     }
 

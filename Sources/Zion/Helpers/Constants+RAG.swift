@@ -31,6 +31,31 @@ extension Constants {
 
         /// Chunk count at which a scale-tripwire warning is emitted.
         static let scaleTripwireChunks: Int = 50_000
+
+        // MARK: - Phase 6 — Auto-context budgets per provider tier
+
+        /// Token budget cap for auto-injected context per chat turn — cheap tier
+        /// (local LLM / Haiku / 4o-mini). Lower bound to avoid blowing the
+        /// context window on smaller models.
+        static let autoBudgetTokensCheap: Int = 1500
+
+        /// Token budget cap for auto-injected context per chat turn — expensive
+        /// tier (Opus, GPT-5-pro, Gemini Pro). Higher headroom matches the
+        /// larger window these models bill against.
+        static let autoBudgetTokensExpensive: Int = 2500
+
+        /// Skip auto-injection on messages shorter than this token estimate
+        /// (chars / 4 heuristic). Most "hi", "thanks", "continue" turns fall
+        /// below this threshold and would only inject noise.
+        static let autoSkipTokenThreshold: Int = 8
+
+        /// Skeleton-chip reveal delay — only show the loading skeleton if the
+        /// retrieval has not returned within this window (UX cue: hides
+        /// flicker on fast hits, shows progress on slow ones).
+        static let autoSkeletonDelayMs: Int = 150
+
+        /// Maximum chips to display before collapsing into a "+N more" pill.
+        static let autoMaxVisibleChips: Int = 5
     }
 
     // MARK: - Feature flags (extending existing Feature namespace via nested extension)
@@ -56,6 +81,15 @@ extension Constants.Feature {
             return override
         }
         return false
+    }
+
+    /// Phase 6 — Auto-inject hybrid retrieval into every chat turn.
+    /// Default true; UserDefaults key "chat.context.autoEnabled" overrides.
+    static var chatContextAutoEnabled: Bool {
+        if let override = UserDefaults.standard.object(forKey: "chat.context.autoEnabled") as? Bool {
+            return override
+        }
+        return true
     }
 }
 

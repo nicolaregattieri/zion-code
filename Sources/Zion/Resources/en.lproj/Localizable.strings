@@ -3070,3 +3070,19 @@
 "mention.code.token" = "@code <query> — semantic code search";
 "mention.code.empty" = "No results for query";
 "rag.tool.notReady" = "Index not yet built — open the repo and wait for indexing";
+
+// MARK: - Phase 6 — Auto-context
+"chat.context.title" = "Context";
+"chat.context.chip.tooltip" = "%1$@ · lines %2$@";
+"chat.context.chip.remove" = "Remove from context";
+"chat.context.loading" = "Searching codebase…";
+"chat.context.more" = "+%d more";
+"chat.context.empty" = "No relevant context found";
+"chat.context.budgetExceeded" = "Budget reached (%d tok)";
+"chat.context.summary" = "%1$d context · %2$d tok";
+"chat.context.settings.section.title" = "Auto-Context";
+"chat.context.settings.autoToggle" = "Auto-include context";
+"chat.context.settings.autoHelp" = "Search the codebase before each message and inject the top matches.";
+"chat.context.settings.budgetLabel" = "Per-message budget";
+"chat.context.settings.budgetUnit" = "%d tok";
+"chat.context.tool.retrieveMore" = "Searching more context";
