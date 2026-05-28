@@ -83,6 +83,16 @@ final class RepositoryViewModel {
     var stashes: [String] = []
     var selectedStash: String = ""
 
+    // Graph view UI state preserved across workspace tab switches so the
+    // user returns to the same split layout + scroll position they left.
+    // Search / AI-match state intentionally NOT hoisted — view-local for now.
+    var graphSplitRatio: CGFloat = 0.7
+    var graphInlineSplitRatio: CGFloat = 0.35
+    /// Commit ID of the topmost-visible row when the user last left the
+    /// Graph section. Used to anchor `proxy.scrollTo(_:anchor:.top)` on the
+    /// next `.task` so re-entering the tab doesn't snap to top.
+    var graphScrollAnchorCommitID: String?
+
     func applyTagAndStashPayload(_ payload: RepositoryLoadPayload, includeTagsAndStashes: Bool) {
         guard includeTagsAndStashes else { return }
         tags = payload.tags

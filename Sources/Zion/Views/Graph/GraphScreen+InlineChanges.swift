@@ -4,7 +4,7 @@ extension GraphScreen {
     var inlineChangesPane: some View {
         DraggableSplitView(
             axis: .vertical,
-            ratio: $inlineSplitRatio,
+            ratio: $model.graphInlineSplitRatio,
             minLeading: DesignSystem.Layout.graphInlineSplitMinLeading,
             minTrailing: DesignSystem.Layout.graphInlineSplitMinTrailing
         ) {

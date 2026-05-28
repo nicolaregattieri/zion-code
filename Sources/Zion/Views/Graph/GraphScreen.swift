@@ -27,8 +27,6 @@ struct GraphScreen: View {
     @FocusState var isCommitMessageFocused: Bool
 
     @State var showingPendingChanges: Bool = false
-    @State var splitRatio: CGFloat = 0.7
-    @State var inlineSplitRatio: CGFloat = 0.35
     @State var hoveredInlineFilePath: String?
     @FocusState var isGraphFocused: Bool
 
@@ -75,7 +73,7 @@ struct GraphScreen: View {
                 ZStack {
                     DraggableSplitView(
                         axis: .horizontal,
-                        ratio: $splitRatio,
+                        ratio: $model.graphSplitRatio,
                         minLeading: DesignSystem.Layout.commitListMinWidth,
                         minTrailing: DesignSystem.Layout.commitDetailMinWidth
                     ) {
@@ -110,6 +108,31 @@ struct GraphScreen: View {
             .padding(.bottom, 12)
             .onAppear {
                 updateSearchMatches()
+                // Restore the commit the user was looking at when they last
+                // left the Graph tab. Approximated by selectedCommitID since
+                // measuring topmost-visible row in a SwiftUI LazyVStack
+                // without a ScrollPositionReader is more complex than it's
+                // worth here.
+                if let anchor = model.graphScrollAnchorCommitID {
+                    DispatchQueue.main.async {
+                        proxy.scrollTo(anchor, anchor: .top)
+                    }
+                }
+            }
+            .onChange(of: activeSection) { _, newSection in
+                if newSection == .graph {
+                    if let anchor = model.graphScrollAnchorCommitID {
+                        DispatchQueue.main.async {
+                            proxy.scrollTo(anchor, anchor: .top)
+                        }
+                    }
+                } else {
+                    // Leaving Graph: snapshot the current focus so the next
+                    // re-entry lands roughly where the user left off.
+                    if let id = model.selectedCommitID {
+                        model.graphScrollAnchorCommitID = id
+                    }
+                }
             }
             .onChange(of: model.shouldClosePopovers) { _, shouldClose in
                 if shouldClose {
