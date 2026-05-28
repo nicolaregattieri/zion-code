@@ -762,7 +762,16 @@ final class ChatService {
                     // so the "approval card" stops being a manual step the
                     // user did not ask for. Manual mode keeps the card and
                     // waits for explicit Approve.
-                    if ApprovalPolicy.current.autoCommit,
+                    // Phase 6.2 — the chat preflight chip ("Permission")
+                    // overrides ApprovalPolicy. When the user picked
+                    // "Always ask", NEVER auto-apply on stream end — the
+                    // approval card stays as the only way through. Fixes
+                    // the trust regression where edits landed on disk
+                    // before the user clicked Apply (screenshot #54/#56).
+                    let preflight = UserDefaults.standard.string(forKey: "chat.preflight.permission") ?? "askAlways"
+                    let preflightBlocksAutoApply = (preflight == "askAlways")
+                    if !preflightBlocksAutoApply,
+                       ApprovalPolicy.current.autoCommit,
                        let assistantTuple = self.findAssistantMessage(messageID: assistantID),
                        let pendingBlocks = self.threads[assistantTuple.tIdx]
                             .messages[assistantTuple.mIdx]
