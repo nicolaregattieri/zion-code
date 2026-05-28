@@ -11,6 +11,7 @@ enum MentionKind: String, Sendable, CaseIterable {
     case web
     case diff
     case pr
+    case code
 }
 
 // MARK: - ResolvedMention

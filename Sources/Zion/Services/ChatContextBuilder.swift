@@ -258,7 +258,8 @@ extension ChatContextBuilder {
             .init(id: "selection", label: "@selection", description: L10n("chat.help.mention.selection")),
             .init(id: "web", label: "@web <url>", description: L10n("chat.help.mention.web")),
             .init(id: "diff", label: "@diff", description: L10n("mention.diff.token")),
-            .init(id: "pr", label: "@pr", description: L10n("mention.pr.token"))
+            .init(id: "pr", label: "@pr", description: L10n("mention.pr.token")),
+            .init(id: "code", label: "@code <query>", description: L10n("mention.code.token"))
         ]
 
         // MCP tools — from store if available

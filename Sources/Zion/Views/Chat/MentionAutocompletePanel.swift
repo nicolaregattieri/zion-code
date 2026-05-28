@@ -201,7 +201,7 @@ final class MentionAutocompletePanel: NSPanel {
     /// criterion 12 (all five Phase-4 tokens present) and criterion 11b
     /// (longest-prefix ranking so `@fo` prefers `@folder` over `@file`).
     static let availableTokens: [String] = [
-        "@file", "@folder", "@selection", "@web", "@diff", "@pr"
+        "@file", "@folder", "@selection", "@web", "@diff", "@pr", "@code"
     ]
 
     /// Rank `availableTokens` by longest-prefix match against the typed
