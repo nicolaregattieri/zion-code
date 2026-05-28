@@ -17,6 +17,13 @@ extension RepositoryViewModel {
         // SymbolIndexer.shared is read by repo_map / find_symbol MCP tools and
         // by the composer's @file/@symbol autocomplete.
         Self.bootstrapSmartContext(for: url)
+        // Phase 5c: Bootstrap RAG layer alongside SymbolIndexer so the
+        // semantic_search MCP tool + @code mention have a live query
+        // service for the active repo. No-op when ragHybridEnabled is
+        // false. Cold index is fire-and-forget.
+        if Constants.Feature.ragHybridEnabled {
+            Self.bootstrapRAG(for: url)
+        }
         let resolver = MentionResolver(
             toolClient: FileSystemMentionToolClient(repoURL: url)
         )
@@ -54,10 +61,39 @@ extension RepositoryViewModel {
         }
     }
 
+    /// Phase 5c — one-shot RAG bootstrap. Instantiates `RAGStore`,
+    /// `RAGIndexer`, `RAGQueryService` for the given repo and assigns
+    /// the query service to `RAGQueryServiceLocator.shared` so the
+    /// semantic_search MCP tool + @code mention can reach it. Cold
+    /// indexing runs detached so the chat surface boots immediately;
+    /// the locator returns hits once the first batch lands.
+    private static func bootstrapRAG(for url: URL) {
+        do {
+            let store = try RAGStore(repoURL: url)
+            let embedder = NLContextualEmbeddingProvider()
+            let service = RAGQueryService(store: store, embedder: embedder)
+            RAGQueryServiceLocator.shared = service
+            // Cold index detached. Failures are non-fatal — chat keeps
+            // working via the other tools. Index runs at `.utility`
+            // QoS so it does not steal cycles from active streaming.
+            let indexer = RAGIndexer(store: store, embedder: embedder)
+            Task.detached(priority: .utility) {
+                _ = try? await indexer.index(repoURL: url)
+            }
+        } catch {
+            // RAG is optional; semantic_search / @code surface their
+            // own localized "not ready" messages when the locator is
+            // nil.
+        }
+    }
+
     /// Stops any in-flight streaming and discards the current ChatService instance.
     /// Called by `cancelRepositoryBackgroundActivityForSwitch()` on every repo switch.
     func resetChatService() {
         _chatService?.stop()
         _chatService = nil
+        // Phase 5c — drop the per-repo RAG locator so the next
+        // openRepository can bootstrap fresh.
+        RAGQueryServiceLocator.shared = nil
     }
 }
