@@ -246,6 +246,11 @@ struct ContentView: View {
             }
         }
         .onChange(of: selectedSection) { _, newSection in
+            // Defense in depth: when the user switches sections, force-close
+            // any open NSMenu / popover tracking belonging to the previous
+            // section. ZStack-overlay layout keeps hidden views alive, and
+            // AppKit dropdowns occasionally leak across tabs without this.
+            NSApp.menu?.cancelTracking()
             model.activeSection = newSection
             // Load deferred data when navigating to a tab that needs it
             model.loadDeferredDataForSection(newSection)
@@ -577,8 +582,7 @@ struct ContentView: View {
         ZStack {
             CodeScreen(model: model, onOpenFolder: { openRepositoryPanel() }, isZenMode: zenLayoutActive, zenTerminalFullscreen: zenTerminalFullscreen, isVisible: selectedSection == .code)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .opacity(selectedSection == .code ? 1 : 0)
-                .allowsHitTesting(selectedSection == .code)
+                .hostedInSection(.code, active: selectedSection)
 
             if model.hasGitWorkspace {
                 nonCodeSharedBanners
@@ -594,8 +598,7 @@ struct ContentView: View {
                     tagContextMenu: { tag in AnyView(tagContextMenu(for: tag)) }
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .opacity(selectedSection == .graph ? 1 : 0)
-                .allowsHitTesting(selectedSection == .graph)
+                .hostedInSection(.graph, active: selectedSection)
 
                 OperationsScreen(
                     model: model,
@@ -603,8 +606,7 @@ struct ContentView: View {
                     branchContextMenu: { branch in AnyView(branchContextMenu(for: branch)) }
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .opacity(selectedSection == .operations ? 1 : 0)
-                .allowsHitTesting(selectedSection == .operations)
+                .hostedInSection(.operations, active: selectedSection)
 
                 ChatScreen(
                     chat: model.chatService,
@@ -612,8 +614,7 @@ struct ContentView: View {
                     branch: model.currentBranch ?? ""
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .opacity(selectedSection == .chat ? 1 : 0)
-                .allowsHitTesting(selectedSection == .chat)
+                .hostedInSection(.chat, active: selectedSection)
             } else if selectedSection != .code {
                 WelcomeScreen(model: model, onOpen: { openRepositoryPanel() }, onInit: { initRepositoryPanel() })
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
