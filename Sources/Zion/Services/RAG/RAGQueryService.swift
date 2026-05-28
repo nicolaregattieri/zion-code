@@ -15,6 +15,12 @@ actor RAGQueryService {
         self.embedder = embedder
     }
 
+    /// Phase 5d — read-through to the store's chunk count. Used by the
+    /// Settings panel to surface "N chunks indexed".
+    func chunkCount() async -> Int {
+        (try? await store.chunkCount()) ?? 0
+    }
+
     /// Vector-only search. Embeds the query then asks `RAGStore` for
     /// the top-k by cosine. Returns `[]` if the embedder is not ready
     /// (e.g., Apple asset pack not downloaded yet).

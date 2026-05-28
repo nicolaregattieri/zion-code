@@ -52,6 +52,48 @@ final class RAGEvalTests: XCTestCase {
         }
     }
 
+    func test_scorer_matchesAbsoluteRelativeAndDirectory() {
+        XCTAssertTrue(RAGEvalScorer.matches(
+            path: "Sources/Zion/Services/RAG/RAGStore.swift",
+            expected: "Sources/Zion/Services/RAG/RAGStore.swift"
+        ))
+        XCTAssertTrue(RAGEvalScorer.matches(
+            path: "/abs/path/Sources/Zion/Services/RAG/RAGStore.swift",
+            expected: "Sources/Zion/Services/RAG/RAGStore.swift"
+        ))
+        XCTAssertTrue(RAGEvalScorer.matches(
+            path: "Sources/Zion/Services/SwiftTerm/Foo.swift",
+            expected: "Sources/Zion/Services/SwiftTerm"
+        ))
+        XCTAssertFalse(RAGEvalScorer.matches(
+            path: "Sources/Zion/Services/RAG/RAGSchema.swift",
+            expected: "Sources/Zion/Services/RAG/RAGStore.swift"
+        ))
+    }
+
+    func test_scorer_recallAtK_overGoldenStub() async throws {
+        // Synthetic golden set + a fake runQuery that mirrors the
+        // expected files for the first half of entries.
+        let golden: [RAGEvalScorer.GoldenEntry] = [
+            .init(query: "q1", expectedFiles: ["a.swift"]),
+            .init(query: "q2", expectedFiles: ["b.swift"]),
+            .init(query: "q3", expectedFiles: ["c.swift"]),
+            .init(query: "q4", expectedFiles: ["d.swift"]),
+        ]
+        let answers: [String: [String]] = [
+            "q1": ["a.swift", "z.swift"],
+            "q2": ["b.swift"],
+            "q3": ["x.swift"], // miss
+            "q4": ["d.swift", "y.swift"],
+        ]
+        let result = try await RAGEvalScorer.score(entries: golden) { query in
+            answers[query] ?? []
+        }
+        XCTAssertEqual(result.hits, 3)
+        XCTAssertEqual(result.totalQueries, 4)
+        XCTAssertEqual(result.recallAtK, 0.75, accuracy: 1e-9)
+    }
+
     /// E2E gated behind `ZION_RAG_E2E=1`. Loads the fixture, indexes
     /// `Sources/Zion/`, runs `hybridSearch` per query, asserts
     /// Recall@10 ≥ `Constants.RAG.recallAtTenGate`. Phase 5c expands
