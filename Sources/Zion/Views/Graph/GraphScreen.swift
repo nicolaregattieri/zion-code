@@ -32,6 +32,17 @@ struct GraphScreen: View {
     @State var hoveredInlineFilePath: String?
     @FocusState var isGraphFocused: Bool
 
+    /// Hoisted out of the per-row `LazyVStack` body so `UserDefaults.bool(forKey:)`
+    /// is read once per render of GraphScreen instead of once per visible commit
+    /// row. SwiftUI re-renders the LazyVStack on every selection change.
+    @AppStorage(UserDefaultsKeys.General.graphAuthorAvatarsEnabled)
+    private var graphAuthorAvatarsEnabled: Bool = false
+
+    /// GraphScreen stays mounted under other workspace tabs (ZStack-overlay).
+    /// Gate avatar prefetch on this so we don't fire off Gravatar downloads
+    /// for commits the user isn't looking at.
+    @Environment(\.zionActiveSection) private var activeSection: AppSection?
+
     var commitRowMinWidth: CGFloat {
         let rawLaneWidth = CGFloat(max(model.maxLaneCount, 1)) * 20
         let cappedLaneWidth = min(rawLaneWidth, DesignSystem.Layout.graphColumnMaxWidth)
@@ -206,7 +217,11 @@ struct GraphScreen: View {
                 let rowWidth = commitRowWidth(for: geometry.size.width)
 
                 ScrollView(.vertical, showsIndicators: true) {
-                    let avatarsEnabled = UserDefaults.standard.bool(forKey: UserDefaultsKeys.General.graphAuthorAvatarsEnabled)
+                    // Avatars are only prefetched while the Graph section is the
+                    // visible one — every other section keeps GraphScreen mounted
+                    // but hidden, and we don't want to spend network on rows the
+                    // user isn't seeing.
+                    let avatarsEnabled = graphAuthorAvatarsEnabled && activeSection == .graph
                     let remoteNames = model.remotes.map(\.name)
                     let hasAdditionalWorktrees = model.worktrees.contains { !$0.isMainWorktree }
                     let worktreeBranchNames = Set(
