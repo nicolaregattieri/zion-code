@@ -263,6 +263,13 @@ struct ComposerNSTextView: NSViewRepresentable {
         /// Called from ZionComposerTextView after '/' has been inserted at line start.
         @MainActor func maybeShowSlashAutocomplete() {
             guard let tv = textView, let window = tv.window else { return }
+
+            // Refresh the skill index in the background so newly added / edited
+            // skills appear without restarting the app. The first render uses
+            // whatever is already cached; if reload() picks up new items, the
+            // next keystroke (which triggers updateSlashFilter) will reflect them.
+            Self.refreshSkillIndexIfNeeded()
+
             let registry = SlashCommandRegistry.shared
             let items = registry.match(prefix: "/")
             guard !items.isEmpty else { return }
@@ -270,6 +277,25 @@ struct ComposerNSTextView: NSViewRepresentable {
             let caretRect = tv.firstRect(forCharacterRange: tv.selectedRange(), actualRange: nil)
             SlashAutocompletePanel.shared.show(anchor: caretRect, in: window, items: items) { [weak self] picked in
                 self?.commitSlash(picked)
+            }
+        }
+
+        // MARK: Skill index refresh (throttled)
+
+        /// Timestamp of the last `SkillIndex.shared.reload()` we triggered.
+        /// Used to avoid spamming disk scans on every '/' keystroke.
+        @MainActor private static var lastSkillReload: Date = .distantPast
+        private static let skillReloadMinInterval: TimeInterval = 2.0
+
+        /// Fire-and-forget reload of the shared skill index, throttled to once
+        /// every `skillReloadMinInterval` seconds.
+        @MainActor
+        private static func refreshSkillIndexIfNeeded() {
+            let now = Date()
+            guard now.timeIntervalSince(lastSkillReload) >= skillReloadMinInterval else { return }
+            lastSkillReload = now
+            Task { @MainActor in
+                await SlashCommandRegistry.shared.reloadSkills()
             }
         }
 

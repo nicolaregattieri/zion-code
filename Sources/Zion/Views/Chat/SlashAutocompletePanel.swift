@@ -203,6 +203,11 @@ private struct SlashSuggestionList: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 2) {
                 ForEach(Array(items.enumerated()), id: \.offset) { idx, item in
+                    // Insert a small group header whenever the source changes
+                    // from the previous row (or at the very top of the list).
+                    if idx == 0 || items[idx - 1].source != item.source {
+                        groupHeader(for: item.source)
+                    }
                     rowView(item, isSelected: idx == selectedIndex)
                         .contentShape(Rectangle())
                         .onTapGesture { onCommit(item) }
@@ -247,6 +252,21 @@ private struct SlashSuggestionList: View {
                 : Color.clear
         )
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.microCornerRadius))
+    }
+
+    /// Minimal, non-interactive group header. Uses the same source label strings
+    /// as the per-row chip so we don't introduce new design tokens or L10n keys.
+    @ViewBuilder
+    private func groupHeader(for source: SlashItem.Source) -> some View {
+        Text(sourceLabel(source).uppercased())
+            .font(.system(size: 9, weight: .semibold))
+            .foregroundStyle(.secondary)
+            .opacity(0.6)
+            .padding(.horizontal, 8)
+            .padding(.top, 4)
+            .padding(.bottom, 2)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .allowsHitTesting(false)
     }
 
     private func sourceLabel(_ source: SlashItem.Source) -> String {
