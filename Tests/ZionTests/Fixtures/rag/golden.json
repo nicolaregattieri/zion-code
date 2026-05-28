@@ -9,7 +9,7 @@
   },
   {
     "query": "where does the ghost frame guard live in SwiftTerm?",
-    "expectedFiles": ["docs/GHOST_FRAME_INVESTIGATION.md", "Sources/Zion/Services/SwiftTerm"]
+    "expectedFiles": ["docs/GHOST_FRAME_INVESTIGATION.md"]
   },
   {
     "query": "where is the multi-file approve fan-out wired?",
@@ -46,5 +46,77 @@
   {
     "query": "where does the file watcher coalesce FSEvents?",
     "expectedFiles": ["Sources/Zion/Services/FileWatcher.swift"]
+  },
+  {
+    "query": "where is the RAG store schema defined?",
+    "expectedFiles": ["Sources/Zion/Services/RAG/RAGSchema.swift"]
+  },
+  {
+    "query": "how does the AST chunker walk source code?",
+    "expectedFiles": ["Sources/Zion/Services/RAG/ASTChunker.swift"]
+  },
+  {
+    "query": "where is the reciprocal rank fusion implementation?",
+    "expectedFiles": ["Sources/Zion/Services/RAG/RAGQueryService.swift"]
+  },
+  {
+    "query": "where do we mean-pool token embeddings?",
+    "expectedFiles": ["Sources/Zion/Services/RAG/EmbeddingProvider.swift"]
+  },
+  {
+    "query": "where is the semantic_search MCP tool registered?",
+    "expectedFiles": ["Sources/Zion/Services/ZionTools+SemanticSearch.swift", "Sources/Zion/Services/MCPConfigBuilder.swift"]
+  },
+  {
+    "query": "where does @code resolve hits into chat context?",
+    "expectedFiles": ["Sources/Zion/Services/MentionResolver+CodeMention.swift"]
+  },
+  {
+    "query": "how does PlanCard avoid the double-click bug?",
+    "expectedFiles": ["Sources/Zion/Views/Chat/PlanCard.swift"]
+  },
+  {
+    "query": "where is the vision MIME guard applied?",
+    "expectedFiles": ["Sources/Zion/Services/AIClient+Helpers.swift"]
+  },
+  {
+    "query": "where does the unsupported attachment banner render?",
+    "expectedFiles": ["Sources/Zion/Views/Chat/ChatAttachmentUnsupportedBanner.swift"]
+  },
+  {
+    "query": "where is the local LLM dispatch path?",
+    "expectedFiles": ["Sources/Zion/Services/AIClient.swift"]
+  },
+  {
+    "query": "where do we coalesce burst FSEvents?",
+    "expectedFiles": ["Sources/Zion/Services/FileWatcher.swift"]
+  },
+  {
+    "query": "where is the system monitor data sourced from?",
+    "expectedFiles": ["Sources/Zion/Services/SystemMonitor.swift"]
+  },
+  {
+    "query": "how does the AI client retry on rate-limit?",
+    "expectedFiles": ["Sources/Zion/Services/ChatService.swift", "Sources/Zion/Services/ProviderOrchestrator.swift"]
+  },
+  {
+    "query": "where is the design system primary brand color?",
+    "expectedFiles": ["Sources/Zion/DesignSystem/DesignSystem.swift"]
+  },
+  {
+    "query": "where do we persist provider API keys?",
+    "expectedFiles": ["Sources/Zion/Services/AIClient.swift"]
+  },
+  {
+    "query": "where is the repo PageRank ranking computed?",
+    "expectedFiles": ["Sources/Zion/Services/RepoMapService.swift"]
+  },
+  {
+    "query": "where are autocomplete tokens listed?",
+    "expectedFiles": ["Sources/Zion/Views/Chat/MentionAutocompletePanel.swift"]
+  },
+  {
+    "query": "where does the chat composer paste attachments?",
+    "expectedFiles": ["Sources/Zion/Views/Chat/ComposerNSTextView.swift", "Sources/Zion/Services/ChatAttachmentService.swift"]
   }
 ]
