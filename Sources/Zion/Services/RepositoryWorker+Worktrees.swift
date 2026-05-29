@@ -2,7 +2,7 @@ import Foundation
 
 extension RepositoryWorker {
 
-    func worktreeList(in repositoryURL: URL, includeStatus: Bool) throws -> [WorktreeItem] {
+    nonisolated func worktreeList(in repositoryURL: URL, includeStatus: Bool) throws -> [WorktreeItem] {
         let output = try git.run(args: ["worktree", "list", "--porcelain"], in: repositoryURL).stdout
         let currentPath = repositoryURL.path
         let parsed = parseWorktrees(from: output, currentPath: currentPath)
@@ -10,7 +10,7 @@ extension RepositoryWorker {
         return parsed.map { enrichWorktreeStatus(for: $0, repositoryURL: repositoryURL) }
     }
 
-    func parseWorktrees(from output: String, currentPath: String) -> [WorktreeItem] {
+    nonisolated func parseWorktrees(from output: String, currentPath: String) -> [WorktreeItem] {
         var items: [WorktreeItem] = []
         var path = ""
         var head = ""
@@ -78,14 +78,14 @@ extension RepositoryWorker {
         return items
     }
 
-    func isMainWorktreePath(_ path: String) -> Bool {
+    nonisolated func isMainWorktreePath(_ path: String) -> Bool {
         var isDirectory: ObjCBool = false
         let gitPath = URL(fileURLWithPath: path).appendingPathComponent(".git").path
         let exists = FileManager.default.fileExists(atPath: gitPath, isDirectory: &isDirectory)
         return exists && isDirectory.boolValue
     }
 
-    func enrichWorktreeStatus(for item: WorktreeItem, repositoryURL: URL) -> WorktreeItem {
+    nonisolated func enrichWorktreeStatus(for item: WorktreeItem, repositoryURL: URL) -> WorktreeItem {
         let statusResult = try? git.runAllowingFailure(
             args: ["-C", item.path, "status", "--porcelain"],
             in: repositoryURL

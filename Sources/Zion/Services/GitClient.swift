@@ -44,7 +44,7 @@ enum GitExecutionMode: Sendable {
     case withCredential(GitCredentialInput)
 }
 
-struct GitClient {
+struct GitClient: Sendable {
     func runWithStdin(
         args: [String],
         stdin: String,

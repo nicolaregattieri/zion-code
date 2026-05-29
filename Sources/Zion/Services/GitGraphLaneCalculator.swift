@@ -10,7 +10,7 @@ struct CommitGraphLayout {
     let outgoingEdges: [LaneEdge]
 }
 
-struct GitGraphLaneCalculator {
+struct GitGraphLaneCalculator: Sendable {
     /// Walk first-parent chain from the repo's main line to build the set of lane-0 commit hashes.
     static func mainFirstParentChain(from commits: [ParsedCommit]) -> Set<String> {
         guard let anchorCommit = preferredMainlineCommit(in: commits) else {

@@ -12,7 +12,7 @@ extension RepositoryWorker {
         ).stdout
     }
 
-    func commitList(in repositoryURL: URL, reference: String?, limit: Int) throws -> ([Commit], Bool) {
+    nonisolated func commitList(in repositoryURL: URL, reference: String?, limit: Int) throws -> ([Commit], Bool) {
         let effectiveLimit = max(150, limit)
         let format = "%H%x1F%P%x1F%an%x1F%ae%x1F%ad%x1F%s%x1F%D%x1E"
         var args = ["log"]
@@ -114,7 +114,7 @@ extension RepositoryWorker {
         return stats
     }
 
-    func parseCommits(from output: String) -> [ParsedCommit] {
+    nonisolated func parseCommits(from output: String) -> [ParsedCommit] {
         let recordSeparator = Constants.gitRecordSeparator
         let fieldSeparator = Constants.gitFieldSeparator
 
@@ -151,7 +151,7 @@ extension RepositoryWorker {
             }
     }
 
-    func collapseStashHelperCommits(in commits: [ParsedCommit]) -> [ParsedCommit] {
+    nonisolated func collapseStashHelperCommits(in commits: [ParsedCommit]) -> [ParsedCommit] {
         guard !commits.isEmpty else { return commits }
 
         let hiddenHelperHashes = Set(
