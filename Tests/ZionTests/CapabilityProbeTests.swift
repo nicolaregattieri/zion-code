@@ -89,7 +89,7 @@ final class CapabilityProbeTests: XCTestCase {
 
         // Inject an old cache entry (25 hours ago — beyond 24h TTL)
         let oldDate = Date().addingTimeInterval(-(CapabilityProbe.ttlSeconds + 3_600))
-        await probe.injectCacheEntry(provider: .openai, modelID: "gpt-4o", supported: true, checkedAt: oldDate)
+        probe.injectCacheEntry(provider: .openai, modelID: "gpt-4o", supported: true, checkedAt: oldDate)
 
         let counter = _ProbeCallCounter()
         let result = await probe.supportsTools(provider: .openai, modelID: "gpt-4o") {
@@ -108,7 +108,7 @@ final class CapabilityProbeTests: XCTestCase {
 
         // Inject a fresh entry (1 hour ago — within 24h TTL)
         let recentDate = Date().addingTimeInterval(-3_600)
-        await probe.injectCacheEntry(provider: .anthropic, modelID: "claude-3-5-sonnet", supported: true, checkedAt: recentDate)
+        probe.injectCacheEntry(provider: .anthropic, modelID: "claude-3-5-sonnet", supported: true, checkedAt: recentDate)
 
         let counter = _ProbeCallCounter()
         let result = await probe.supportsTools(provider: .anthropic, modelID: "claude-3-5-sonnet") {
@@ -163,7 +163,7 @@ final class CapabilityProbeTests: XCTestCase {
 
         _ = await probe.supportsTools(provider: .openai, modelID: "gpt-4o") { true }
 
-        await probe.evict(provider: .openai, modelID: "gpt-4o")
+        probe.evict(provider: .openai, modelID: "gpt-4o")
 
         let counter = _ProbeCallCounter()
         _ = await probe.supportsTools(provider: .openai, modelID: "gpt-4o") {
@@ -181,7 +181,7 @@ final class CapabilityProbeTests: XCTestCase {
 
         // Inject exactly at TTL boundary
         let exactTTLDate = Date().addingTimeInterval(-CapabilityProbe.ttlSeconds)
-        await probe.injectCacheEntry(provider: .openai, modelID: "model-x", supported: true, checkedAt: exactTTLDate)
+        probe.injectCacheEntry(provider: .openai, modelID: "model-x", supported: true, checkedAt: exactTTLDate)
 
         let counter = _ProbeCallCounter()
         _ = await probe.supportsTools(provider: .openai, modelID: "model-x") {

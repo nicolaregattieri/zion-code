@@ -336,7 +336,10 @@ final class RepositoryViewModelGitTests: XCTestCase {
 
     func testShouldSkipRefreshWhileBusyForSilentRefresh() {
         XCTAssertTrue(RepositoryViewModel.shouldSkipRefreshWhileBusy(setBusy: false, isBusy: true, origin: .autoTimer))
-        XCTAssertFalse(RepositoryViewModel.shouldSkipRefreshWhileBusy(setBusy: false, isBusy: true, origin: .fileWatcher))
+        // The refresh gate now drops fileWatcher refreshes while a load is in
+        // flight — the watcher fires again on the next tick, so we don't lose
+        // updates, we just avoid stacking two cold loads in parallel.
+        XCTAssertTrue(RepositoryViewModel.shouldSkipRefreshWhileBusy(setBusy: false, isBusy: true, origin: .fileWatcher))
     }
 
     func testShouldSkipRefreshWhileBusyForInteractiveRefresh() {

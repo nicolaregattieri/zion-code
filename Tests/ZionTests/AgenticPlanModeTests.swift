@@ -195,11 +195,11 @@ final class AgenticPlanModeTests: XCTestCase {
 
         // Wait for runtime to enter awaitingPlanApproval
         let deadline = Date().addingTimeInterval(3)
-        while !(await runtime.awaitingPlanApproval) && Date() < deadline {
+        while !runtime.awaitingPlanApproval && Date() < deadline {
             try await Task.sleep(nanoseconds: 20_000_000)
         }
 
-        let awaiting1 = await runtime.awaitingPlanApproval
+        let awaiting1 = runtime.awaitingPlanApproval
         XCTAssertTrue(awaiting1, "Should be awaiting approval")
 
         // Approve with workspaceWrite tier
@@ -246,11 +246,11 @@ final class AgenticPlanModeTests: XCTestCase {
 
         // Wait for awaitingPlanApproval
         let deadline = Date().addingTimeInterval(3)
-        while !(await runtime.awaitingPlanApproval) && Date() < deadline {
+        while !runtime.awaitingPlanApproval && Date() < deadline {
             try await Task.sleep(nanoseconds: 20_000_000)
         }
 
-        let awaiting2 = await runtime.awaitingPlanApproval
+        let awaiting2 = runtime.awaitingPlanApproval
         XCTAssertTrue(awaiting2, "Should be awaiting approval before rejection")
 
         // Reject

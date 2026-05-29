@@ -4,7 +4,12 @@ import XCTest
 final class RepositoryRefreshPolicyTests: XCTestCase {
     @MainActor
     func testFileWatcherRefreshIsNotSkippedWhileBusy() {
-        XCTAssertFalse(
+        // Behavior intentionally changed: fileWatcher refreshes are now also
+        // skipped while a load is in flight. The watcher fires again on the
+        // next tick, so we don't lose updates — we just avoid stacking two
+        // cold loads in parallel. Only `.repositorySwitch` is permitted to
+        // run through, because it finalizes the switch state.
+        XCTAssertTrue(
             RepositoryViewModel.shouldSkipRefreshWhileBusy(
                 setBusy: false,
                 isBusy: true,

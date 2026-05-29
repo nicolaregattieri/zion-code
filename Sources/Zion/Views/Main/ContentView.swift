@@ -611,7 +611,7 @@ struct ContentView: View {
                 ChatScreen(
                     chat: model.chatService,
                     repoURL: model.repositoryURL,
-                    branch: model.currentBranch ?? ""
+                    branch: model.currentBranch
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .hostedInSection(.chat, active: selectedSection)

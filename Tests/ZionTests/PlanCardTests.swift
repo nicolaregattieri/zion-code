@@ -73,7 +73,7 @@ final class PlanCardTests: XCTestCase {
     func testApplyFiresCallback() {
         let plan = makePlan()
         var captured: ChatPlanAction?
-        var card = PlanCard(plan: plan, isStreaming: false) { action in
+        let card = PlanCard(plan: plan, isStreaming: false) { action in
             captured = action
         }
         card.applyTapped()
@@ -85,7 +85,7 @@ final class PlanCardTests: XCTestCase {
         // Direct callback must NOT fire on first tap during stream.
         let plan = makePlan()
         var captured: ChatPlanAction?
-        var card = PlanCard(plan: plan, isStreaming: true) { action in
+        let card = PlanCard(plan: plan, isStreaming: true) { action in
             captured = action
         }
         card.applyTapped()
@@ -97,7 +97,7 @@ final class PlanCardTests: XCTestCase {
     func testRejectFiresCallback() {
         let plan = makePlan()
         var captured: ChatPlanAction?
-        var card = PlanCard(plan: plan, isStreaming: false) { action in
+        let card = PlanCard(plan: plan, isStreaming: false) { action in
             captured = action
         }
         card.rejectTapped()
@@ -108,7 +108,7 @@ final class PlanCardTests: XCTestCase {
         // Reject is always enabled (no streaming guard)
         let plan = makePlan()
         var captured: ChatPlanAction?
-        var card = PlanCard(plan: plan, isStreaming: true) { action in
+        let card = PlanCard(plan: plan, isStreaming: true) { action in
             captured = action
         }
         card.rejectTapped()
@@ -121,7 +121,7 @@ final class PlanCardTests: XCTestCase {
         let plan = makePlan(rawXML: "<original/>")
         let newXML = "<edited>step updated</edited>"
         var captured: ChatPlanAction?
-        var card = PlanCard(plan: plan, isStreaming: false) { action in
+        let card = PlanCard(plan: plan, isStreaming: false) { action in
             captured = action
         }
         card.saveTapped(xml: newXML)
@@ -151,7 +151,7 @@ final class PlanCardTests: XCTestCase {
         let plan = makePlan()
         var callbackCount = 0
         var captured: ChatPlanAction?
-        var card = PlanCard(plan: plan, isStreaming: false) { action in
+        let card = PlanCard(plan: plan, isStreaming: false) { action in
             callbackCount += 1
             captured = action
         }
