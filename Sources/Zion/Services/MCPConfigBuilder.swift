@@ -155,12 +155,30 @@ enum MCPConfigBuilder {
             semanticSearchDescriptor(),
             retrieveMoreDescriptor(),
             installMCPServerDescriptor(),
-            createSkillDescriptor()
+            createSkillDescriptor(),
+            useSkillDescriptor()
         ]
         if bashToolEnabled {
             tools.append(bashToolDescriptorTyped())
         }
         return tools
+    }
+
+    /// Lets the model activate an installed skill by id. Returns the
+    /// skill body as tool_result so the conversation can apply it
+    /// without a slash from the user.
+    static func useSkillDescriptor() -> MCPToolDescriptor {
+        MCPToolDescriptor(
+            name: "use_skill",
+            description: "Activate an installed skill by id. Returns the skill body (markdown). Use when the user's request maps to a skill listed in the system prompt's 'Available skills' section.",
+            inputSchema: [
+                "type": "object",
+                "properties": [
+                    "id": ["type": "string", "description": "Skill slug (the `/<id>` part)."] as [String: Any]
+                ] as [String: Any],
+                "required": ["id"]
+            ]
+        )
     }
 
     /// Typed descriptor for the `bash` tool. Mirrors the JSON in
@@ -220,6 +238,8 @@ enum MCPConfigBuilder {
             return try await dispatchInstallMCPServer(args: args)
         case "create_skill":
             return try await dispatchCreateSkill(args: args)
+        case "use_skill":
+            return try await dispatchUseSkill(args: args)
         default:
             // Phase 6.4 — fall through to MCPClientPool so calls to
             // user-installed MCP tools (filesystem, brave-search, etc.)
