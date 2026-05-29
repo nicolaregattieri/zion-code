@@ -433,7 +433,17 @@ struct ChatScreen: View {
             } else {
                 chat.threadDrafts[oldID] = composerText
             }
-            composerText = chat.threadDrafts[newID] ?? ""
+            // Async reloadFromStorage on first-mount can flip activeThreadID
+            // from the bootstrap UUID to the freshly-loaded thread AFTER the
+            // user has started typing. Carry the in-flight draft over instead
+            // of wiping it.
+            if let saved = chat.threadDrafts[newID] {
+                composerText = saved
+            } else if !composerText.isEmpty {
+                chat.threadDrafts[newID] = composerText
+            } else {
+                composerText = ""
+            }
         }
         .onAppear {
             // Restore any draft saved for whatever thread is active when the
