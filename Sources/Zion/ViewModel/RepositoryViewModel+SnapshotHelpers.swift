@@ -396,18 +396,19 @@ extension RepositoryViewModel {
             // graph/commit data loads when they navigate to Graph or Ops.
             let targetSection = nextSectionAfterRepositoryOpen ?? activeSection
             if targetSection == .code {
-                // Wait for BOTH refreshForCodeTabOnly and refreshFileTree before
-                // finalizing, so the loading overlay only clears when the header
-                // and file browser are both ready.
-                let pending = PendingCompletions(count: 2)
-                let done: () -> Void = { [weak self] in
-                    pending.remaining -= 1
-                    if pending.remaining == 0 {
-                        self?.finalizeRepositorySwitch(for: url, switchToken: switchToken)
-                    }
-                }
-                refreshForCodeTabOnly(onFinish: done)
-                refreshFileTree(onFinish: done)
+                // Gate the loading overlay on file-tree only — it dominates the
+                // perceived switch time. refreshForCodeTabOnly fires-and-forgets:
+                // its 4 git calls go through the RepositoryWorker actor's serial
+                // queue and can take seconds on cold worker / contention with
+                // background work, so blocking the overlay on them kept the user
+                // staring at a spinner for 10s+ on first switch into a repo.
+                // Branch/hash/status fields update inline as the git results
+                // arrive — header shows the prefetched-light values (if any) or
+                // stale values until they refresh.
+                refreshForCodeTabOnly()
+                refreshFileTree(onFinish: { [weak self] in
+                    self?.finalizeRepositorySwitch(for: url, switchToken: switchToken)
+                })
             } else {
                 hasLoadedFullGraphForCurrentRepo = true
                 refreshRepository(

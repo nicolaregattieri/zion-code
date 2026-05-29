@@ -29,25 +29,34 @@ extension RepositoryViewModel {
 
             let initial = await self.loadFiles(at: url, ignoredPaths: nil, maxDepth: 0)
             guard !Task.isCancelled else { return }
-
-            let ignoredPaths = await self.loadGitIgnoredPaths(for: url)
-            let files: [FileItem]
-            if !ignoredPaths.isEmpty {
-                files = await self.loadFiles(at: url, ignoredPaths: ignoredPaths, maxDepth: 0)
-            } else {
-                files = initial
-            }
-
-            guard !Task.isCancelled else { return }
             guard self.fileTreeRefreshRequestID == requestID, self.repositoryURL?.standardizedFileURL == url else { return }
 
-            self.repositoryFiles = self.mergeTopLevel(old: self.repositoryFiles, new: files)
+            // Publish the tree immediately without waiting for the gitignored
+            // pass. `git ls-files --others --ignored --exclude-standard` can
+            // serialize behind other RepositoryWorker calls (refreshForCodeTabOnly
+            // status, deferred fetch, etc.) on a freshly-switched repo and was
+            // observed to stall the file-tree refresh — and therefore the
+            // loading overlay — for 10s+. Ignored-path annotation runs in a
+            // background pass below and re-publishes when ready.
+            self.repositoryFiles = self.mergeTopLevel(old: self.repositoryFiles, new: initial)
             self.reloadExpandedDirectories(forceReload: forceReloadExpandedDirectories)
             self.pruneStaleSelections()
             self.recalculateMissingOpenFileState(updateEditorForActiveFile: true)
             self.expandedPathsByRepository[url] = self.expandedPaths
             self.captureRepositorySnapshot(for: url)
             self.scheduleEditorSymbolIndexRebuild(repositoryURL: url)
+
+            // Background pass — annotate gitignored entries without blocking
+            // the overlay-clearing onFinish callback.
+            Task { [weak self] in
+                guard let self else { return }
+                let ignoredPaths = await self.loadGitIgnoredPaths(for: url)
+                guard !Task.isCancelled, !ignoredPaths.isEmpty else { return }
+                guard self.repositoryURL?.standardizedFileURL == url else { return }
+                let annotated = await self.loadFiles(at: url, ignoredPaths: ignoredPaths, maxDepth: 0)
+                guard self.repositoryURL?.standardizedFileURL == url else { return }
+                self.repositoryFiles = self.mergeTopLevel(old: self.repositoryFiles, new: annotated)
+            }
         }
     }
 
@@ -76,42 +85,9 @@ extension RepositoryViewModel {
         guard let repositoryURL else { return }
         guard !_isReloadingExpandedDirs else { return }
         _isReloadingExpandedDirs = true
-
-        let targetRepositoryURL = repositoryURL
-        let sortedPaths = sortedExpandedDirectoryPaths(expandedPaths)
-        let ignoredPaths = cachedIgnoredPaths
-
-        // Batched reload: walk expanded paths sequentially on a single Task,
-        // accumulate the new tree in a local working copy, and publish exactly
-        // one mutation + one snapshot at the end. Avoids N fan-out Tasks each
-        // mutating @Observable state and triggering SwiftUI re-diffs of the
-        // file tree, which previously caused multi-second stalls on repo
-        // switch when the Editor tab was active.
-        Task { [weak self] in
-            guard let self else { return }
-            defer { self._isReloadingExpandedDirs = false }
-
-            var workingTree = self.repositoryFiles
-            for path in sortedPaths {
-                guard !Task.isCancelled else { return }
-                guard self.repositoryURL == targetRepositoryURL else { return }
-                guard let item = self.findItem(path: path, in: workingTree),
-                      item.isDirectory,
-                      item.children == nil || forceReload else { continue }
-                let itemURL = item.url
-                let existingChildren = item.children ?? []
-                let children = await self.loadFiles(at: itemURL, ignoredPaths: ignoredPaths, maxDepth: 0)
-                guard !Task.isCancelled else { return }
-                guard self.repositoryURL == targetRepositoryURL else { return }
-                let merged = self.mergeDirectoryChildren(old: existingChildren, new: children)
-                workingTree = self.updateTree(workingTree, path: path, newChildren: merged)
-            }
-
-            guard !Task.isCancelled else { return }
-            guard self.repositoryURL == targetRepositoryURL else { return }
-
-            self.repositoryFiles = workingTree
-            self.captureRepositorySnapshot(for: targetRepositoryURL)
+        defer { _isReloadingExpandedDirs = false }
+        for path in sortedExpandedDirectoryPaths(expandedPaths) {
+            loadChildrenIfNeeded(for: path, forceReload: forceReload, expectedRepositoryURL: repositoryURL)
         }
     }
 
