@@ -122,7 +122,9 @@ enum MCPConfigBuilder {
             findSymbolDescriptor(),
             symbolsDescriptor(),
             semanticSearchDescriptor(),
-            retrieveMoreDescriptor()
+            retrieveMoreDescriptor(),
+            installMCPServerDescriptor(),
+            createSkillDescriptor()
         ]
         if bashToolEnabled {
             tools.append(bashToolDescriptorTyped())
@@ -175,6 +177,10 @@ enum MCPConfigBuilder {
             return try await dispatchSemanticSearch(args: args)
         case "retrieve_more":
             return try await dispatchRetrieveMore(args: args)
+        case "install_mcp_server":
+            return try await dispatchInstallMCPServer(args: args)
+        case "create_skill":
+            return try await dispatchCreateSkill(args: args)
         default:
             throw MCPDispatchError.unknownTool(name)
         }
