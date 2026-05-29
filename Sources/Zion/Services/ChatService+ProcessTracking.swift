@@ -31,14 +31,14 @@ extension ChatService {
         guard !snapshot.isEmpty else { return }
         activeProcesses.removeAll(keepingCapacity: true)
 
-        await DiagnosticLogger.shared.log(
+        DiagnosticLogger.shared.log(
             .info,
             "harness.stop terminating \(snapshot.count) active subprocess(es)"
         )
 
         for (_, tracked) in snapshot where tracked.process.isRunning {
             tracked.process.terminate() // SIGTERM
-            await DiagnosticLogger.shared.log(
+            DiagnosticLogger.shared.log(
                 .info,
                 "harness.stop SIGTERM tool=\(tracked.tool) pid=\(tracked.process.processIdentifier)"
             )
@@ -49,7 +49,7 @@ extension ChatService {
 
         for (_, tracked) in snapshot where tracked.process.isRunning {
             kill(tracked.process.processIdentifier, SIGKILL)
-            await DiagnosticLogger.shared.log(
+            DiagnosticLogger.shared.log(
                 .warn,
                 "harness.stop SIGKILL tool=\(tracked.tool) pid=\(tracked.process.processIdentifier)"
             )

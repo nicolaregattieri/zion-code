@@ -16,7 +16,7 @@ extension ChatService {
     func continueWithExtraHops(_ delta: Int = Constants.Limits.continueChipHopBoost) {
         extraHopsGranted += delta
         Task { @MainActor in
-            await DiagnosticLogger.shared.log(
+            DiagnosticLogger.shared.log(
                 .info,
                 "chat.continueWithExtraHops delta=\(delta) total=\(self.extraHopsGranted) activeProcesses=\(self.activeProcesses.count) deferred=\(!self.activeProcesses.isEmpty)"
             )

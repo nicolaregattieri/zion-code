@@ -1090,7 +1090,7 @@ final class ChatService {
         // confusion was: memory bumps but the chip shows Claude. If this log
         // never fires for the turn in question, the bump came from elsewhere
         // (warm-from-prior-session, external Ollama running, periodic probe).
-        await DiagnosticLogger.shared.log(
+        DiagnosticLogger.shared.log(
             .info,
             "ensureLocalServerRunning called — engine=\(config.engineKind.rawValue) model=\(config.modelName)",
             source: "ChatService"
