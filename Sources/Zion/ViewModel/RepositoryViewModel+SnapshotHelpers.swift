@@ -366,10 +366,16 @@ extension RepositoryViewModel {
             )
             loadCommitDetails(for: selectedCommitID, policy: .silent)
             refreshFileTree()
+            // Snapshot already painted the UI — clear the switch state now so
+            // the loading overlay disappears and the user can interact. The
+            // full refresh continues in the background and updates state
+            // as fresh data arrives.
+            finalizeRepositorySwitch(for: url, switchToken: switchToken)
             scheduleDeferredRepositoryLoads(
                 for: url,
                 switchToken: switchToken,
-                refreshRepositoryFirst: true
+                refreshRepositoryFirst: true,
+                finalizeOnRefresh: false
             )
         } else {
             // FRESH open: clear stale data from previous repo so the UI
@@ -458,7 +464,8 @@ extension RepositoryViewModel {
     func scheduleDeferredRepositoryLoads(
         for url: URL,
         switchToken: UUID,
-        refreshRepositoryFirst: Bool
+        refreshRepositoryFirst: Bool,
+        finalizeOnRefresh: Bool = true
     ) {
         deferredRepositoryLoadTask?.cancel()
         deferredRepositoryLoadTask = Task { [weak self] in
@@ -491,9 +498,9 @@ extension RepositoryViewModel {
                     setBusy: false,
                     options: .full,
                     origin: .repositorySwitch,
-                    onFinish: { [weak self] in
+                    onFinish: finalizeOnRefresh ? { [weak self] in
                         self?.finalizeRepositorySwitch(for: url, switchToken: switchToken)
-                    }
+                    } : nil
                 )
             } else {
                 self.finalizeRepositorySwitch(for: url, switchToken: switchToken)
