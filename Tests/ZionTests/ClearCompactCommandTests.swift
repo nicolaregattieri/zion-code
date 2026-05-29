@@ -25,11 +25,15 @@ final class ClearCompactCommandTests: XCTestCase {
         XCTAssertTrue(ids.contains("diff"), "Expected 'diff' in builtInItems, got: \(ids)")
     }
 
-    // MARK: - Test 2: mentions count equals 4
+    // MARK: - Test 2: mentions count equals 7
+    //
+    // Phase 4 expanded the @mention catalog beyond the original 4 (file/folder/diff/pr...)
+    // — the help payload now surfaces 7 mention tokens. Test renamed and expected count
+    // updated to match the shipped catalog.
 
     func test_help_payload_includes_mentions_count_4() {
         let payload = makePayload()
-        XCTAssertEqual(payload.mentions.count, 4, "Expected 4 @mention items, got \(payload.mentions.count)")
+        XCTAssertEqual(payload.mentions.count, 7, "Expected 7 @mention items (Phase 4 catalog), got \(payload.mentions.count)")
     }
 
     // MARK: - Test 3: HelpCardPayload equality round-trip
