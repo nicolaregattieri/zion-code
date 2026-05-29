@@ -29,25 +29,34 @@ extension RepositoryViewModel {
 
             let initial = await self.loadFiles(at: url, ignoredPaths: nil, maxDepth: 0)
             guard !Task.isCancelled else { return }
-
-            let ignoredPaths = await self.loadGitIgnoredPaths(for: url)
-            let files: [FileItem]
-            if !ignoredPaths.isEmpty {
-                files = await self.loadFiles(at: url, ignoredPaths: ignoredPaths, maxDepth: 0)
-            } else {
-                files = initial
-            }
-
-            guard !Task.isCancelled else { return }
             guard self.fileTreeRefreshRequestID == requestID, self.repositoryURL?.standardizedFileURL == url else { return }
 
-            self.repositoryFiles = self.mergeTopLevel(old: self.repositoryFiles, new: files)
+            // Publish the tree immediately without waiting for the gitignored
+            // pass. `git ls-files --others --ignored --exclude-standard` can
+            // serialize behind other RepositoryWorker calls (refreshForCodeTabOnly
+            // status, deferred fetch, etc.) on a freshly-switched repo and was
+            // observed to stall the file-tree refresh — and therefore the
+            // loading overlay — for 10s+. Ignored-path annotation runs in a
+            // background pass below and re-publishes when ready.
+            self.repositoryFiles = self.mergeTopLevel(old: self.repositoryFiles, new: initial)
             self.reloadExpandedDirectories(forceReload: forceReloadExpandedDirectories)
             self.pruneStaleSelections()
             self.recalculateMissingOpenFileState(updateEditorForActiveFile: true)
             self.expandedPathsByRepository[url] = self.expandedPaths
             self.captureRepositorySnapshot(for: url)
             self.scheduleEditorSymbolIndexRebuild(repositoryURL: url)
+
+            // Background pass — annotate gitignored entries without blocking
+            // the overlay-clearing onFinish callback.
+            Task { [weak self] in
+                guard let self else { return }
+                let ignoredPaths = await self.loadGitIgnoredPaths(for: url)
+                guard !Task.isCancelled, !ignoredPaths.isEmpty else { return }
+                guard self.repositoryURL?.standardizedFileURL == url else { return }
+                let annotated = await self.loadFiles(at: url, ignoredPaths: ignoredPaths, maxDepth: 0)
+                guard self.repositoryURL?.standardizedFileURL == url else { return }
+                self.repositoryFiles = self.mergeTopLevel(old: self.repositoryFiles, new: annotated)
+            }
         }
     }
 
