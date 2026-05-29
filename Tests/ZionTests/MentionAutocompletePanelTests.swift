@@ -4,6 +4,7 @@ import XCTest
 /// Phase 4 — autocomplete token list contract.
 /// Locks down criteria 11b (longest-prefix disambiguation) and 12 (Phase-4
 /// tokens surfaced in the suggestion list).
+@MainActor
 final class MentionAutocompletePanelTests: XCTestCase {
 
     func test_tokenList_containsDiffPrFolder() {
