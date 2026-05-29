@@ -343,6 +343,26 @@ extension AIClient {
         ]
     }
 
+    /// Variant of `anthropicRequestBody` that lets the caller append extra
+    /// messages (used by the native tool loop to carry assistant tool_use
+    /// blocks and user tool_result blocks between rounds). The base user
+    /// turn is built normally; `additionalMessages` are appended after it
+    /// in order. Pass an empty array to get the same shape as the original
+    /// builder.
+    static func anthropicRequestBodyWithMessages(
+        payload: AIPromptPayload,
+        maxTokens: Int,
+        modelID: String,
+        additionalMessages: [[String: Any]]
+    ) -> [String: Any] {
+        var body = anthropicRequestBody(payload: payload, maxTokens: maxTokens, modelID: modelID)
+        guard !additionalMessages.isEmpty else { return body }
+        var messages = (body["messages"] as? [[String: Any]]) ?? []
+        messages.append(contentsOf: additionalMessages)
+        body["messages"] = messages
+        return body
+    }
+
     static func anthropicRequestBody(payload: AIPromptPayload, maxTokens: Int, modelID: String) -> [String: Any] {
         let cacheEnabled = anthropicCacheEnabled
         // When attachments are present we send a structured content array so

@@ -146,7 +146,7 @@ final class ChatService {
     var activePendingQueueCount: Int {
         pendingQueueByThread[activeThreadID]?.count ?? 0
     }
-    @ObservationIgnored private let ai: AIClient
+    @ObservationIgnored let ai: AIClient
     @ObservationIgnored private let worker: RepositoryWorker
     @ObservationIgnored private let contextBuilder: ChatContextBuilder
     @ObservationIgnored private let harness: ZionHarness
@@ -1528,8 +1528,20 @@ final class ChatService {
         case .anthropic:
             let defaultID = AIModelCatalogService.selection(for: .anthropic, mode: mode, lane: .general).primaryModelID
             let modelID = modelOverride.map { $0.isEmpty ? defaultID : $0 } ?? defaultID
-            let stream = await self.ai.streamAnthropic(payload: payload, apiKey: apiKey, maxTokens: 2048, modelID: modelID)
-            try await self.consumeStreamThrowing(stream, assistantID: assistantID, threadID: threadID, provider: provider)
+            if Self.nativeToolLoopEnabled {
+                try await self.runAnthropicToolLoop(
+                    payload: payload,
+                    apiKey: apiKey,
+                    modelID: modelID,
+                    maxTokens: 2048,
+                    assistantID: assistantID,
+                    threadID: threadID,
+                    provider: provider
+                )
+            } else {
+                let stream = await self.ai.streamAnthropic(payload: payload, apiKey: apiKey, maxTokens: 2048, modelID: modelID)
+                try await self.consumeStreamThrowing(stream, assistantID: assistantID, threadID: threadID, provider: provider)
+            }
 
         case .openai:
             let defaultID = AIModelCatalogService.selection(for: .openai, mode: mode, lane: .general).primaryModelID
@@ -1750,7 +1762,7 @@ final class ChatService {
 
     // MARK: - Private State Mutation Helpers (must be called on MainActor)
 
-    private func appendAssistantDelta(id: UUID, delta: String) {
+    func appendAssistantDelta(id: UUID, delta: String) {
         for tIdx in threads.indices {
             if let mIdx = threads[tIdx].messages.firstIndex(where: { $0.id == id }) {
                 threads[tIdx].messages[mIdx].content += delta
