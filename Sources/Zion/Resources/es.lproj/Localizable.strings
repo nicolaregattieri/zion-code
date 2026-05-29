@@ -2925,6 +2925,7 @@
 "chat.spend.usage.section.title" = "Uso";
 "chat.spend.usage.softCap" = "Límite suave";
 "chat.spend.usage.softCap.off" = "Desactivado";
+"chat.spend.usage.softCap.amount" = "Límite mensual";
 "chat.spend.usage.empty" = "Aún no hay uso registrado";
 "chat.spend.usage.honestyBanner" = "Seguimiento: Claude Code CLI y Codex CLI reportan uso real. Los LLM locales son gratis. Proveedores directos por API (Anthropic, OpenAI, Gemini) aún no se miden aquí — consulta el panel del proveedor para facturación oficial.";
 "chat.spend.pill.tooltip" = "Gasto mensual. Los proveedores CLI reportan el costo real. Los proveedores API no se miden aquí — ve el panel del proveedor.";
