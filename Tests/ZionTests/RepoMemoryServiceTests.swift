@@ -123,8 +123,11 @@ final class RepoMemoryServiceTests: XCTestCase {
         try FileManager.default.createDirectory(at: repositoryURL, withIntermediateDirectories: true)
 
         let service = RepoMemoryService(baseDirectory: baseDirectory)
+        // Phase 4 bumped the snapshot schema to v2 — `loadSnapshot` discards any
+        // file whose `schemaVersion < currentSchemaVersion`. Use the current
+        // version so the round-trip survives the migration gate.
         let snapshot = RepoMemorySnapshot(
-            schemaVersion: 1,
+            schemaVersion: RepoMemorySnapshot.currentSchemaVersion,
             repositoryID: "repo-123",
             generatedAt: Date(timeIntervalSince1970: 1_700_000_000),
             activeBranch: "feature/repo-memory",
