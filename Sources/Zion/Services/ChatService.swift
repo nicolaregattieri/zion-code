@@ -1965,7 +1965,7 @@ final class ChatService {
     The SEARCH section must match the file contents exactly. Emit one block per edit; multiple blocks per file are allowed. Do not emit Markdown code fences around the blocks — emit them as raw text in your reply.
     """
 
-    private static var editHarnessEnabled: Bool {
+    nonisolated private static var editHarnessEnabled: Bool {
         UserDefaults.standard.object(forKey: "chat.editHarness.enabled") as? Bool ?? true
     }
 
@@ -2246,6 +2246,14 @@ final class ChatService {
         branchAwarenessAppendix(branch: branch)
     }
 
+    /// Test seam — exposes the chat system-prompt builder so unit
+    /// tests can pin the extensibility directive (create_skill +
+    /// install_mcp_server discoverability) without instantiating the
+    /// actor harness.
+    nonisolated static func taskInstructionsForTesting(provider: AIProvider) -> String {
+        taskInstructions(for: provider)
+    }
+
     nonisolated private static func branchAwarenessAppendix(branch: String) -> String {
         let normalized = branch.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normalized.isEmpty else { return "" }
@@ -2268,7 +2276,7 @@ final class ChatService {
         return appendix
     }
 
-    private static func taskInstructions(for provider: AIProvider) -> String {
+    nonisolated private static func taskInstructions(for provider: AIProvider) -> String {
         var base: String
         switch provider {
         case .claudeCLI, .codexCLI:
@@ -2336,6 +2344,38 @@ final class ChatService {
         if editHarnessEnabled {
             base += "\n\n## File edits\n" + editHarnessDirective
         }
+
+        // Phase 6.3 — extensibility directive. Surfaces install_mcp_server
+        // + create_skill so the model knows it can act on natural-language
+        // requests like "save this as a skill" / "add the filesystem MCP".
+        base += """
+
+
+        ## Extending Zion (skills + MCP)
+        You have two extensibility tools available:
+
+        - `create_skill(name, description, body, scope?, triggers?)` — write a
+          reusable workflow as SKILL.md under `~/.zion/skills/` (user) or
+          `<repo>/.zion/skills/` (project). Use when the user asks to:
+            • "save this as a skill" / "transform this into a skill"
+            • "create a skill that <does X>"
+            • "remember this workflow" / "reuse this in the future"
+          When the request is "save this session as a skill", summarise the
+          recent steps the user just walked through (you have them in the
+          turn history) into a step-by-step body, derive a kebab-case slug
+          from the user-supplied title, and write it. Scope defaults to
+          `user`; switch to `project` when the user says "for this repo".
+
+        - `install_mcp_server(json)` — accepts the standard MCP JSON shapes
+          (`{mcpServers: {...}}`, single named, or `{id, command, args}`).
+          Use when the user pastes config OR names a server ("add the
+          filesystem MCP at /tmp"). For named-only requests, propose the
+          canonical npm package and ask before installing.
+
+        Skills are provider-agnostic (Anthropic / OpenAI / Gemini / local
+        all consume them via SkillIndex).
+        Do NOT ask the user to edit JSON files by hand or open Settings panes — that is what these tools exist to remove.
+        """
 
         // Plan-first mode: append plan-tag directive so model wraps multi-step proposals in XML
         if PlanModeState.current() == .planFirst {

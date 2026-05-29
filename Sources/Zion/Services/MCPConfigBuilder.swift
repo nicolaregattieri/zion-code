@@ -149,13 +149,21 @@ enum MCPConfigBuilder {
         )
     }
 
-    /// P14: Returns built-in tools PLUS tools advertised by user-configured MCP servers.
-    /// Currently, user-server tool discovery is stubbed — returns built-in tools only.
-    /// Full integration (querying each server's `tools/list` MCP method) is P15.
-    static func allToolsIncludingUserServers(store: MCPRegistryStore?) -> [MCPToolDescriptor] {
+    /// Built-in tools PLUS tools advertised by user-configured MCP
+    /// servers. Phase 6.4 wires the user-server side via
+    /// `MCPClientPool.shared`: pool warms on first call (spawns each
+    /// registered server, queries `tools/list`) and the routing table
+    /// then powers `dispatch(name:args:)`. Built-in tools take
+    /// precedence so a poorly-named user tool can't shadow `bash` /
+    /// `read` / `repo_map` / etc.
+    static func allToolsIncludingUserServers(store: MCPRegistryStore?) async -> [MCPToolDescriptor] {
         let builtIn = allTools()
-        // TODO(P15): query each server in store.servers via JSON-RPC `tools/list` and merge.
-        return builtIn
+        guard let store else { return builtIn }
+        await MCPClientPool.shared.warm(from: store)
+        let userTools = await MCPClientPool.shared.allUserTools()
+        let builtInNames = Set(builtIn.map { $0.name })
+        let merged = builtIn + userTools.filter { !builtInNames.contains($0.name) }
+        return merged
     }
 
     // MARK: - Dispatch
@@ -182,7 +190,14 @@ enum MCPConfigBuilder {
         case "create_skill":
             return try await dispatchCreateSkill(args: args)
         default:
-            throw MCPDispatchError.unknownTool(name)
+            // Phase 6.4 — fall through to MCPClientPool so calls to
+            // user-installed MCP tools (filesystem, brave-search, etc.)
+            // dispatch to the right subprocess over JSON-RPC stdio
+            // instead of hitting `unknownTool`. Re-encode args through
+            // JSON to land them on the actor with a Sendable shape.
+            let data = try JSONSerialization.data(withJSONObject: args)
+            let safe = (try JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? [:]
+            return try await MCPClientPool.shared.dispatch(toolName: name, args: safe)
         }
     }
 
