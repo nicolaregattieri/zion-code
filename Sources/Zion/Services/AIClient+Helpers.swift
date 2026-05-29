@@ -306,6 +306,23 @@ extension AIClient {
         payload.imageAttachments.filter { Constants.Attachments.acceptedMIMEs.contains($0.mimeType) }
     }
 
+    /// Variant of `openAIRequestBody` that lets the caller append extra
+    /// messages (used by the native tool loop to carry assistant `tool_calls`
+    /// and `tool` role tool_result messages between rounds).
+    static func openAIRequestBodyWithMessages(
+        payload: AIPromptPayload,
+        maxTokens: Int,
+        modelID: String,
+        additionalMessages: [[String: Any]]
+    ) -> [String: Any] {
+        var body = openAIRequestBody(payload: payload, maxTokens: maxTokens, modelID: modelID)
+        guard !additionalMessages.isEmpty else { return body }
+        var messages = (body["messages"] as? [[String: Any]]) ?? []
+        messages.append(contentsOf: additionalMessages)
+        body["messages"] = messages
+        return body
+    }
+
     static func openAIRequestBody(payload: AIPromptPayload, maxTokens: Int, modelID: String) -> [String: Any] {
         // System message is placed at index 0 so OpenAI automatic prefix caching engages
         // for prefixes >= 1024 tokens (requires consistent ordering across requests).
