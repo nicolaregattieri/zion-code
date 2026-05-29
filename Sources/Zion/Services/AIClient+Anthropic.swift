@@ -205,15 +205,41 @@ extension AIClient {
         payload: AIPromptPayload,
         apiKey: String,
         tools: [[String: Any]],
-        maxTokens: Int
+        maxTokens: Int,
+        modelID: String = "claude-3-5-sonnet-20241022",
+        additionalMessages: [[String: Any]] = []
     ) -> AsyncThrowingStream<StreamEvent, Error> {
         // Pre-serialize tools before Task boundary to avoid non-Sendable [[String: Any]] capture
-        var preBody = Self.anthropicRequestBody(payload: payload, maxTokens: maxTokens, modelID: "claude-3-5-sonnet-20241022")
+        var preBody = Self.anthropicRequestBodyWithMessages(
+            payload: payload,
+            maxTokens: maxTokens,
+            modelID: modelID,
+            additionalMessages: additionalMessages
+        )
         preBody["stream"] = true
         if !tools.isEmpty {
             preBody["tools"] = tools
         }
         let bodyData = (try? JSONSerialization.data(withJSONObject: preBody)) ?? Data()
+        return streamAnthropicWithTools(bodyData: bodyData, apiKey: apiKey)
+    }
+
+    /// Sendable-friendly entry point: caller hands over a fully-serialized
+    /// JSON body (`Data` is Sendable), we drive the HTTP request and SSE
+    /// parsing. Used by `ChatService.runAnthropicToolLoop` which needs to
+    /// cross the actor boundary with `tools` + `additionalMessages` arrays
+    /// that strict-concurrency cannot prove safe at the call site.
+    func streamAnthropicWithToolsBody(
+        bodyData: Data,
+        apiKey: String
+    ) -> AsyncThrowingStream<StreamEvent, Error> {
+        return streamAnthropicWithTools(bodyData: bodyData, apiKey: apiKey)
+    }
+
+    private func streamAnthropicWithTools(
+        bodyData: Data,
+        apiKey: String
+    ) -> AsyncThrowingStream<StreamEvent, Error> {
         let session = _testURLSession ?? URLSession.shared
 
         return AsyncThrowingStream { continuation in
