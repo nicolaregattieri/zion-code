@@ -574,6 +574,19 @@ final class ChatService {
             hiddenContext = await contextBuilder.gitContextHeader(repoURL: repoURL, branch: branch)
         }
 
+        // Skill auto-trigger: scan installed skills, if any trigger keyword is
+        // a case-insensitive substring of the user message, inject the skill
+        // body into hiddenContext. Server-side short-circuit so the model
+        // does not need a separate round-trip to discover & request a skill.
+        // Multiple skills can fire in the same turn; first match wins per skill.
+        let autoInjected = Self.autoInjectedSkillBodies(
+            text: text,
+            skills: SkillIndex.shared.skills
+        )
+        if !autoInjected.isEmpty {
+            hiddenContext += (hiddenContext.isEmpty ? "" : "\n\n") + autoInjected
+        }
+
         // MARK: Pre-flight intent injection — runs for ALL providers (tool loop NYI Phase 3)
         let autoInject = UserDefaults.standard.object(forKey: "chat.autoInject") as? Bool ?? true
         var injectedLabel: String? = nil
@@ -2487,6 +2500,34 @@ extension ChatService {
     /// Detects if `text` starts with /<skill-id>; if so and the index has it,
     /// returns the injected payload "[skill: <name>]\n<body>\n\n<rest>".
     /// Returns nil if no skill matched.
+    /// Scans skills for any `trigger` substring (case-insensitive) hit
+    /// in `text`. Returns the concatenated bodies of matched skills,
+    /// each prefixed with a `[auto-skill: name]` marker so the model
+    /// knows what was injected. Returns "" when nothing matches.
+    /// Cap at 3 skills per turn to bound context growth.
+    nonisolated static func autoInjectedSkillBodies(
+        text: String,
+        skills: [Skill]
+    ) -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "" }
+        var hits: [(String, String)] = []
+        for skill in skills {
+            guard !skill.triggers.isEmpty else { continue }
+            for trigger in skill.triggers {
+                let needle = trigger.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !needle.isEmpty else { continue }
+                if trimmed.range(of: needle, options: [.caseInsensitive]) != nil {
+                    hits.append((skill.name, skill.body))
+                    break
+                }
+            }
+            if hits.count >= 3 { break }
+        }
+        guard !hits.isEmpty else { return "" }
+        return hits.map { "[auto-skill: \($0.0)]\n\($0.1)" }.joined(separator: "\n\n")
+    }
+
     nonisolated static func injectSkillIfMatched(
         text: String,
         skills: [Skill]
