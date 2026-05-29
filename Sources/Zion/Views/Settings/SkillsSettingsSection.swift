@@ -3,7 +3,11 @@ import SwiftUI
 // MARK: - SkillsSettingsSection
 
 struct SkillsSettingsSection: View {
-    @State private var index = SkillIndex()
+    // Phase 6.3 — use the process-wide shared index (audit P1) so the
+    // Settings panel reflects skills ChatService injects + paste-to-
+    // install scaffolds. Without this the panel showed a separate
+    // local list that drifted on every reload.
+    @ObservedObject private var index = SkillIndex.shared
     @State private var showNewSkillSheet = false
 
     var body: some View {

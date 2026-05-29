@@ -10,14 +10,29 @@ final class SkillIndex: ObservableObject {
     private(set) var skills: [Skill] = []
     private let userRoot: URL
     private let projectRoot: URL?
+    /// Phase 6.3 — legacy `.claude/skills/` roots kept as fallback so
+    /// users with skills already authored under the Claude namespace
+    /// keep seeing them. `.zion/skills/` is the new canonical home
+    /// since Zion is multi-LLM (Anthropic / OpenAI / Gemini / local).
+    private let legacyUserRoot: URL
+    private let legacyProjectRoot: URL?
 
     init(
         userRoot: URL = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".zion/skills"),
+        projectRoot: URL? = nil,
+        legacyUserRoot: URL = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(".claude/skills"),
-        projectRoot: URL? = nil
+        legacyProjectRoot: URL? = nil
     ) {
         self.userRoot = userRoot
         self.projectRoot = projectRoot
+        self.legacyUserRoot = legacyUserRoot
+        self.legacyProjectRoot = legacyProjectRoot ?? projectRoot.map {
+            $0.deletingLastPathComponent()
+                .deletingLastPathComponent()
+                .appendingPathComponent(".claude/skills")
+        }
     }
 
     // MARK: - Reload
@@ -26,14 +41,27 @@ final class SkillIndex: ObservableObject {
         var loaded: [Skill] = []
         let projectSkills = await scan(root: projectRoot, scope: .project)
         let userSkills = await scan(root: userRoot, scope: .user)
+        let legacyProjectSkills = await scan(root: legacyProjectRoot, scope: .project)
+        let legacyUserSkills = await scan(root: legacyUserRoot, scope: .user)
 
-        // Merge: project shadows user (same id wins to project)
+        // Merge precedence: project (.zion) > project (.claude legacy) >
+        // user (.zion) > user (.claude legacy). Same id wins to higher
+        // precedence so a migrated `.zion/skills/foo` shadows the
+        // leftover `.claude/skills/foo`.
         var seen = Set<String>()
         for skill in projectSkills {
             loaded.append(skill)
             seen.insert(skill.id)
         }
+        for skill in legacyProjectSkills where !seen.contains(skill.id) {
+            loaded.append(skill)
+            seen.insert(skill.id)
+        }
         for skill in userSkills where !seen.contains(skill.id) {
+            loaded.append(skill)
+            seen.insert(skill.id)
+        }
+        for skill in legacyUserSkills where !seen.contains(skill.id) {
             loaded.append(skill)
         }
         self.skills = loaded.sorted { $0.id < $1.id }
@@ -184,13 +212,16 @@ extension SkillIndex {
             .filter { $0.isLetter || $0.isNumber || $0 == "-" }
         guard !slug.isEmpty else { throw ScaffoldError.invalidName }
 
+        // Phase 6.3 — scaffold writes to `.zion/skills/` (provider-
+        // agnostic). The init still scans `.claude/skills/` as legacy
+        // fallback so older skills keep showing up read-only.
         let root: URL = rootOverride ?? {
             if scope == .user {
                 return FileManager.default.homeDirectoryForCurrentUser
-                    .appendingPathComponent(".claude/skills")
+                    .appendingPathComponent(".zion/skills")
             } else {
                 return URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-                    .appendingPathComponent(".claude/skills")
+                    .appendingPathComponent(".zion/skills")
             }
         }()
 

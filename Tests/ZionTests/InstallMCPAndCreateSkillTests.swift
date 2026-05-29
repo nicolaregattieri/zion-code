@@ -104,10 +104,11 @@ final class InstallMCPAndCreateSkillTests: XCTestCase {
         defer {
             let slug = MCPConfigBuilder.slugify(unique)
             let path = FileManager.default.homeDirectoryForCurrentUser
-                .appendingPathComponent(".claude/skills/\(slug)", isDirectory: true)
+                .appendingPathComponent(".zion/skills/\(slug)", isDirectory: true)
             try? FileManager.default.removeItem(at: path)
         }
         XCTAssertTrue(result.hasPrefix("Created skill `"), "got: \(result)")
-        XCTAssertTrue(result.contains(".claude/skills/"))
+        XCTAssertTrue(result.contains(".zion/skills/"),
+                      "Skills must land in the provider-agnostic .zion namespace, not .claude")
     }
 }

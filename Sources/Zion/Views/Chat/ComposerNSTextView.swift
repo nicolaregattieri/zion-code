@@ -20,6 +20,11 @@ struct ComposerNSTextView: NSViewRepresentable {
     /// composer, and only falls back to the default paste if no
     /// attachment was captured.
     var onPasteAttachments: (([PendingChatAttachment]) -> Void)? = nil
+    /// Phase 6.3 — paste-to-install hook. When the clipboard carries
+    /// MCP-server JSON or a SKILL.md-shaped markdown block, the
+    /// composer auto-installs it instead of dropping the text into
+    /// the input. Matches Cursor / Claude Desktop default UX.
+    var onPasteAutoInstall: ((PasteAutoInstall) -> Void)? = nil
 
     @Environment(\.chatFontSizePx) private var fontSizePx
     @Environment(\.chatLineSpacingPx) private var lineSpacingPx
@@ -418,6 +423,19 @@ final class ZionComposerTextView: NSTextView {
     /// paste the file path or TIFF blob as plain text. When nothing
     /// captureable is found, we fall back to NSTextView's default paste.
     override func paste(_ sender: Any?) {
+        // Phase 6.3 — paste-to-install (Cursor / Claude Desktop UX).
+        // Check FIRST so MCP/SKILL clipboards never reach the attachment
+        // capture or the default text insertion. Falls through to the
+        // existing paths if nothing detected.
+        if let coordinator = delegate as? ComposerNSTextView.Coordinator,
+           let autoHandler = coordinator.parent.onPasteAutoInstall {
+            let pb = NSPasteboard.general
+            if let text = pb.string(forType: .string),
+               let detected = PasteAutoInstallDetector.detect(in: text) {
+                autoHandler(detected)
+                return
+            }
+        }
         if let coordinator = delegate as? ComposerNSTextView.Coordinator,
            let handler = coordinator.parent.onPasteAttachments {
             let captured = ChatAttachmentService.captureFromPasteboard()
