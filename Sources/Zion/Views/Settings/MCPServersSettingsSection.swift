@@ -24,7 +24,17 @@ struct MCPServersSettingsSection: View {
                     .font(DesignSystem.Typography.label)
             }
         }
-        .task { try? await store.load() }
+        .task {
+            try? await store.load()
+            // Phase 6.3 — keep the list reactive to paste-to-install
+            // events and external edits to ~/.zion/mcp.json. Without
+            // startWatching the user had to leave + reopen Settings to
+            // see new servers (audit P1).
+            await store.startWatching()
+        }
+        .onDisappear {
+            Task { await store.stopWatching() }
+        }
         .sheet(isPresented: $showEditor) {
             MCPServerEditorSheet(initial: editingConfig) { config in
                 Task {

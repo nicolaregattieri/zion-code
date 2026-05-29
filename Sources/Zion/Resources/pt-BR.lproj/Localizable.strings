@@ -3098,3 +3098,9 @@
 
 // MARK: - Memory monitor tooltips
 "chat.local.status.memory.help" = "RAM = ativa + fixada (wired) + comprimida. Activity Monitor mostra só ativa+fixada na barra de pressão; a comprimida é física mas presa no compressor.";
+
+// MARK: - Phase 6.3 — Paste-to-install
+"chat.paste.mcp.installed" = "MCP instalado · %@";
+"chat.paste.mcp.failed" = "Falha ao instalar MCP · %@";
+"chat.paste.skill.installed" = "Skill '%@' criada";
+"chat.paste.skill.failed" = "Falha ao criar skill · %@";

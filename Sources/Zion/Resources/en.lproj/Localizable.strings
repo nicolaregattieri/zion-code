@@ -3096,3 +3096,9 @@
 
 // MARK: - Memory monitor tooltips
 "chat.local.status.memory.help" = "RAM = active + wired + compressed. Activity Monitor's pressure bar shows only active+wired; compressed is physical RAM held by the compressor.";
+
+// MARK: - Phase 6.3 — Paste-to-install
+"chat.paste.mcp.installed" = "MCP installed · %@";
+"chat.paste.mcp.failed" = "MCP install failed · %@";
+"chat.paste.skill.installed" = "Skill '%@' created";
+"chat.paste.skill.failed" = "Skill create failed · %@";

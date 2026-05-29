@@ -140,6 +140,11 @@ struct ZionTalksSettingsTab: View {
                 AgenticSettingsSection()
                 SmartContextSettingsSection()
                 ChatContextSettingsSection()
+                // Phase 6.3 — RAGSettingsSection was an orphan (audit P0).
+                // Mount alongside ChatContextSettingsSection so the
+                // hybrid toggle, reindex button, and chunk count are
+                // reachable from Settings.
+                RAGSettingsSection(onReindex: nil)
                 SkillsSettingsSection()
                 MCPServersSettingsSection()
                 ContextBudgetSection()

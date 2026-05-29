@@ -1022,7 +1022,7 @@ final class ChatService {
 
     /// Posts a short-lived banner string into `transientNotice` and clears it
     /// after `seconds`. Multiple calls reset the timer.
-    private func showTransientNotice(_ message: String, seconds: Double = 3.0) {
+    func showTransientNotice(_ message: String, seconds: Double = 3.0) {
         transientNotice = message
         Task { @MainActor [weak self] in
             try? await Task.sleep(for: .seconds(seconds))

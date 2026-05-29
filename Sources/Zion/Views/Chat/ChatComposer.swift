@@ -276,7 +276,10 @@ struct ChatComposer: View {
             ComposerNSTextView(
                 text: $text,
                 onSend: { if canSend { onSend() } },
-                onPasteAttachments: { items in addAttachments(items) }
+                onPasteAttachments: { items in addAttachments(items) },
+                onPasteAutoInstall: { payload in
+                    Task { await chat.handlePasteAutoInstall(payload) }
+                }
             )
             .frame(minHeight: 28, maxHeight: 120)
             .padding(.horizontal, DesignSystem.Spacing.compact)

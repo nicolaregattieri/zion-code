@@ -11,7 +11,7 @@ extension MCPConfigBuilder {
     static func createSkillDescriptor() -> MCPToolDescriptor {
         MCPToolDescriptor(
             name: "create_skill",
-            description: "Create a new Zion skill (SKILL.md with YAML frontmatter + markdown body). Use when the user asks to 'create a skill that …' or wants to make a repeatable workflow available across chat sessions. Project-scope = inside this repo's .claude/skills/; user-scope = ~/.claude/skills/ (default).",
+            description: "Create a new Zion skill (SKILL.md with YAML frontmatter + markdown body). Use when the user asks to 'create a skill that …' or wants to make a repeatable workflow available across chat sessions. Project-scope = inside this repo's .zion/skills/; user-scope = ~/.zion/skills/ (default). Provider-agnostic — picked up across Anthropic / OpenAI / Gemini / local.",
             inputSchema: [
                 "type": "object",
                 "properties": [
@@ -57,18 +57,23 @@ extension MCPConfigBuilder {
         let slug = Self.slugify(name)
         guard !slug.isEmpty else { return "[error: name produces empty slug]" }
 
+        // Phase 6.3 — skills live under `.zion/skills/` so they are
+        // provider-agnostic (Anthropic / OpenAI / Gemini / local all
+        // pick them up via SkillIndex). Legacy `.claude/skills/` is
+        // still read by SkillIndex for migration but new skills land
+        // in the Zion namespace.
         let baseDir: URL
         if scopeRaw == "project" {
             guard let repoURL = RAGIndexerLocator.repoURL else {
                 return "[error: no active repo for project-scope skill]"
             }
             baseDir = repoURL
-                .appendingPathComponent(".claude", isDirectory: true)
+                .appendingPathComponent(".zion", isDirectory: true)
                 .appendingPathComponent("skills", isDirectory: true)
         } else {
             let home = FileManager.default.homeDirectoryForCurrentUser
             baseDir = home
-                .appendingPathComponent(".claude", isDirectory: true)
+                .appendingPathComponent(".zion", isDirectory: true)
                 .appendingPathComponent("skills", isDirectory: true)
         }
         let skillDir = baseDir.appendingPathComponent(slug, isDirectory: true)
