@@ -1,14 +1,14 @@
 import Foundation
 
 actor RepositoryWorker {
-    let git = GitClient()
-    let laneCalculator = GitGraphLaneCalculator()
-    let isoDateWithFractions: ISO8601DateFormatter = {
+    nonisolated let git = GitClient()
+    nonisolated let laneCalculator = GitGraphLaneCalculator()
+    nonisolated(unsafe) static let isoDateWithFractions: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return formatter
     }()
-    let isoDateWithoutFractions: ISO8601DateFormatter = {
+    nonisolated(unsafe) static let isoDateWithoutFractions: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime]
         return formatter
@@ -22,7 +22,7 @@ actor RepositoryWorker {
         try git.run(args: args, in: repositoryURL, mode: mode).stdout
     }
 
-    func isGitRepository(at url: URL) -> Bool {
+    nonisolated func isGitRepository(at url: URL) -> Bool {
         do {
             let result = try git.runAllowingFailure(args: ["rev-parse", "--is-inside-work-tree"], in: url)
             return result.status == 0
@@ -51,7 +51,25 @@ actor RepositoryWorker {
         selectedStash: String,
         options: RepositoryLoadOptions = .full,
         limit: Int
-    ) throws -> RepositoryLoadPayload {
+    ) async throws -> RepositoryLoadPayload {
+        try await loadRepositoryParallel(
+            in: repositoryURL,
+            focusedBranch: focusedBranch,
+            selectedCommitID: selectedCommitID,
+            selectedStash: selectedStash,
+            options: options,
+            limit: limit
+        )
+    }
+
+    nonisolated func loadRepositoryParallel(
+        in repositoryURL: URL,
+        focusedBranch: String?,
+        selectedCommitID: String?,
+        selectedStash: String,
+        options: RepositoryLoadOptions,
+        limit: Int
+    ) async throws -> RepositoryLoadPayload {
         guard isGitRepository(at: repositoryURL) else {
             return RepositoryLoadPayload(
                 currentBranch: "-",
@@ -79,23 +97,52 @@ actor RepositoryWorker {
             )
         }
 
-        let branch = try currentBranchName(in: repositoryURL)
-        let head = (try? currentHeadHash(in: repositoryURL)) ?? "-"
-        let infos = try branchInfoList(in: repositoryURL)
+        async let branchTask: String = Task.detached { [self] in try currentBranchName(in: repositoryURL) }.value
+        async let headTask: String = Task.detached { [self] in (try? currentHeadHash(in: repositoryURL)) ?? "-" }.value
+        async let infosTask: [BranchInfo] = Task.detached { [self] in try branchInfoList(in: repositoryURL) }.value
+        async let tagsTask: [String] = Task.detached { [self] in
+            options.includeTagsAndStashes ? (try tagList(in: repositoryURL)) : []
+        }.value
+        async let stashesTask: [String] = Task.detached { [self] in
+            options.includeTagsAndStashes ? (try stashList(in: repositoryURL)) : []
+        }.value
+        async let worktreesTask: [WorktreeItem] = Task.detached { [self] in
+            try worktreeList(in: repositoryURL, includeStatus: options.includeWorktreeStatus)
+        }.value
+        async let remotesTask: [RemoteInfo] = Task.detached { [self] in try remoteList(in: repositoryURL) }.value
+        async let conflictTask: Bool = Task.detached { [self] in
+            let r = try? git.runAllowingFailure(args: ["ls-files", "--unmerged"], in: repositoryURL)
+            return !(r?.stdout.clean.isEmpty ?? true)
+        }.value
+        async let statusTask: [String] = Task.detached { [self] in
+            let r = try? git.runAllowingFailure(args: ["status", "--porcelain"], in: repositoryURL)
+            return r?.stdout.split(separator: "\n").map { String($0) } ?? []
+        }.value
+        async let bisectHeadTask: String = Task.detached { [self] in
+            let gitDir = repositoryURL.appendingPathComponent(".git")
+            guard FileManager.default.fileExists(atPath: gitDir.appendingPathComponent("BISECT_START").path) else { return "" }
+            let r = try? git.runAllowingFailure(args: ["rev-parse", "HEAD"], in: repositoryURL)
+            return r?.stdout.clean ?? ""
+        }.value
+
+        let branch = try await branchTask
+        let head = await headTask
+        let infos = try await infosTask
         let names = infos.map(\.name)
         let resolvedFocused = focusedBranch.flatMap { names.contains($0) ? $0 : nil }
-        let loadedTags = options.includeTagsAndStashes ? try tagList(in: repositoryURL) : []
-        let loadedStashes = options.includeTagsAndStashes ? try stashList(in: repositoryURL) : []
+        let loadedTags = try await tagsTask
+        let loadedStashes = try await stashesTask
         let stashSelection = loadedStashes.contains(selectedStash) ? selectedStash : (loadedStashes.first ?? "")
-        let loadedWorktrees = try worktreeList(in: repositoryURL, includeStatus: options.includeWorktreeStatus)
-        let loadedRemotes = try remoteList(in: repositoryURL)
+        let loadedWorktrees = try await worktreesTask
+        let loadedRemotes = try await remotesTask
+
+        // commitList depends on resolvedFocused, must run after branchInfoList
         let (loadedCommits, hasMore) = (try? commitList(in: repositoryURL, reference: resolvedFocused, limit: limit)) ?? ([], false)
         let selected = loadedCommits.contains(where: { $0.id == selectedCommitID })
             ? selectedCommitID
             : loadedCommits.first?.id
 
-        let conflictResult = try? git.runAllowingFailure(args: ["ls-files", "--unmerged"], in: repositoryURL)
-        let hasConflicts = !(conflictResult?.stdout.clean.isEmpty ?? true)
+        let hasConflicts = await conflictTask
 
         let gitDir = repositoryURL.appendingPathComponent(".git")
         let isMerging = FileManager.default.fileExists(atPath: gitDir.appendingPathComponent("MERGE_HEAD").path)
@@ -103,16 +150,9 @@ actor RepositoryWorker {
                          FileManager.default.fileExists(atPath: gitDir.appendingPathComponent("rebase-merge").path)
         let isCherryPicking = FileManager.default.fileExists(atPath: gitDir.appendingPathComponent("CHERRY_PICK_HEAD").path)
         let isBisecting = FileManager.default.fileExists(atPath: gitDir.appendingPathComponent("BISECT_START").path)
-        let bisectCurrentHash: String
-        if isBisecting {
-            let headResult = try? git.runAllowingFailure(args: ["rev-parse", "HEAD"], in: repositoryURL)
-            bisectCurrentHash = headResult?.stdout.clean ?? ""
-        } else {
-            bisectCurrentHash = ""
-        }
+        let bisectCurrentHash = isBisecting ? await bisectHeadTask : ""
 
-        let statusResult = try? git.runAllowingFailure(args: ["status", "--porcelain"], in: repositoryURL)
-        let uncommittedLines = statusResult?.stdout.split(separator: "\n").map { String($0) } ?? []
+        let uncommittedLines = await statusTask
 
         return RepositoryLoadPayload(
             currentBranch: branch,
@@ -353,11 +393,11 @@ actor RepositoryWorker {
         return Array(allResults.prefix(50))
     }
 
-    func parseISODate(_ value: String) -> Date {
-        if let parsed = isoDateWithFractions.date(from: value) {
+    nonisolated func parseISODate(_ value: String) -> Date {
+        if let parsed = Self.isoDateWithFractions.date(from: value) {
             return parsed
         }
-        if let parsed = isoDateWithoutFractions.date(from: value) {
+        if let parsed = Self.isoDateWithoutFractions.date(from: value) {
             return parsed
         }
         return Date(timeIntervalSince1970: 0)
@@ -378,7 +418,7 @@ actor RepositoryWorker {
         return nil
     }
 
-    func sortTagsDescending(_ tags: [String]) -> [String] {
+    nonisolated func sortTagsDescending(_ tags: [String]) -> [String] {
         tags.sorted { lhs, rhs in
             let lhsVersion = versionComponents(from: lhs)
             let rhsVersion = versionComponents(from: rhs)
@@ -398,7 +438,7 @@ actor RepositoryWorker {
         }
     }
 
-    private func compareVersionComponents(_ lhs: [Int], _ rhs: [Int]) -> ComparisonResult {
+    nonisolated private func compareVersionComponents(_ lhs: [Int], _ rhs: [Int]) -> ComparisonResult {
         let count = max(lhs.count, rhs.count)
         for index in 0..<count {
             let leftValue = index < lhs.count ? lhs[index] : 0
@@ -410,7 +450,7 @@ actor RepositoryWorker {
         return .orderedSame
     }
 
-    func versionComponents(from tag: String) -> [Int] {
+    nonisolated func versionComponents(from tag: String) -> [Int] {
         let normalized = tag.hasPrefix("v") || tag.hasPrefix("V")
             ? String(tag.dropFirst())
             : tag

@@ -2,7 +2,7 @@ import Foundation
 
 extension RepositoryWorker {
 
-    func currentBranchName(in repositoryURL: URL) throws -> String {
+    nonisolated func currentBranchName(in repositoryURL: URL) throws -> String {
         let branch = try git.runAllowingFailure(args: ["branch", "--show-current"], in: repositoryURL).stdout.clean
         if !branch.isEmpty { return branch }
 
@@ -16,11 +16,11 @@ extension RepositoryWorker {
         return "detached (\(hash ?? "unknown"))"
     }
 
-    func currentHeadHash(in repositoryURL: URL) throws -> String {
+    nonisolated func currentHeadHash(in repositoryURL: URL) throws -> String {
         try git.run(args: ["rev-parse", "--short", "HEAD"], in: repositoryURL).stdout.clean
     }
 
-    func remoteList(in repositoryURL: URL) throws -> [RemoteInfo] {
+    nonisolated func remoteList(in repositoryURL: URL) throws -> [RemoteInfo] {
         let output = try git.run(args: ["remote", "-v"], in: repositoryURL).stdout
         var remotesMap: [String: String] = [:]
         for line in output.split(separator: "\n") {
@@ -35,7 +35,7 @@ extension RepositoryWorker {
         return remotesMap.map { RemoteInfo(name: $0.key, url: $0.value) }.sorted { $0.name < $1.name }
     }
 
-    func branchInfoList(in repositoryURL: URL) throws -> [BranchInfo] {
+    nonisolated func branchInfoList(in repositoryURL: URL) throws -> [BranchInfo] {
         let output = try git.run(
             args: [
                 "for-each-ref",
@@ -75,7 +75,7 @@ extension RepositoryWorker {
             }
     }
 
-    func tagList(in repositoryURL: URL) throws -> [String] {
+    nonisolated func tagList(in repositoryURL: URL) throws -> [String] {
         let output = try git.run(args: ["tag", "--list", "--sort=-creatordate"], in: repositoryURL).stdout
         let tags = output
             .split(separator: "\n", omittingEmptySubsequences: true)
@@ -83,7 +83,7 @@ extension RepositoryWorker {
         return sortTagsDescending(tags)
     }
 
-    func stashList(in repositoryURL: URL) throws -> [String] {
+    nonisolated func stashList(in repositoryURL: URL) throws -> [String] {
         let output = try git.run(args: ["stash", "list"], in: repositoryURL).stdout
         return output
             .split(separator: "\n", omittingEmptySubsequences: true)
