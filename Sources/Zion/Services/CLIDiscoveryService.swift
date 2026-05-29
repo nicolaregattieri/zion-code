@@ -226,43 +226,55 @@ actor CLIDiscoveryService {
     // MARK: - Real Process Runner
 
     private static let realProcessRunner: ProcessRunner = { executable, arguments, timeout in
-        await withCheckedContinuation { continuation in
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: executable)
-            process.arguments = arguments
+        // CRITICAL: `withCheckedContinuation` runs its closure on the caller's
+        // executor. Callers of `status(for:refresh:)` are SwiftUI views (e.g.
+        // AISettingsTab's `.task { await refreshCLIStatus() }`), which run on
+        // @MainActor. Without `Task.detached`, `process.waitUntilExit()` and
+        // the synchronous `readDataToEndOfFile()` calls below would block the
+        // main thread for the lifetime of `which claude` / `which codex` —
+        // which can be 5–30 s under slow `.zshrc` hooks (nvm, completions,
+        // path_helper), reliably hanging the AI Settings tab on every open.
+        // Hang reports captured the stack in `FormCell.body.getter` →
+        // `VStack.init` while waiting for these subprocesses to complete.
+        await Task.detached(priority: .userInitiated) {
+            await withCheckedContinuation { continuation in
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: executable)
+                process.arguments = arguments
 
-            let stdoutPipe = Pipe()
-            let stderrPipe = Pipe()
-            process.standardOutput = stdoutPipe
-            process.standardError = stderrPipe
+                let stdoutPipe = Pipe()
+                let stderrPipe = Pipe()
+                process.standardOutput = stdoutPipe
+                process.standardError = stderrPipe
 
-            var timedOut = false
-            let timer = DispatchSource.makeTimerSource(queue: .global())
-            timer.schedule(deadline: .now() + timeout)
-            timer.setEventHandler {
-                timedOut = true
-                process.terminate()
-                timer.cancel()
+                var timedOut = false
+                let timer = DispatchSource.makeTimerSource(queue: .global())
+                timer.schedule(deadline: .now() + timeout)
+                timer.setEventHandler {
+                    timedOut = true
+                    process.terminate()
+                    timer.cancel()
+                }
+
+                do {
+                    try process.run()
+                    timer.resume()
+                    process.waitUntilExit()
+                    timer.cancel()
+                } catch {
+                    timer.cancel()
+                    continuation.resume(returning: (1, "", error.localizedDescription))
+                    return
+                }
+
+                let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+                let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+                let stdout = String(data: stdoutData, encoding: .utf8) ?? ""
+                let stderr = String(data: stderrData, encoding: .utf8) ?? ""
+                let code: Int32 = timedOut ? 124 : process.terminationStatus
+
+                continuation.resume(returning: (code, stdout, stderr))
             }
-
-            do {
-                try process.run()
-                timer.resume()
-                process.waitUntilExit()
-                timer.cancel()
-            } catch {
-                timer.cancel()
-                continuation.resume(returning: (1, "", error.localizedDescription))
-                return
-            }
-
-            let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-            let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-            let stdout = String(data: stdoutData, encoding: .utf8) ?? ""
-            let stderr = String(data: stderrData, encoding: .utf8) ?? ""
-            let code: Int32 = timedOut ? 124 : process.terminationStatus
-
-            continuation.resume(returning: (code, stdout, stderr))
-        }
+        }.value
     }
 }

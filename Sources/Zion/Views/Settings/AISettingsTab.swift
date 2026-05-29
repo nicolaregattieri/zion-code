@@ -12,12 +12,10 @@ struct AISettingsTab: View {
     // a brand-new install behaves the same whether the user visits this tab
     // or not.
     @AppStorage("chat.routing.subscriptionFailover") private var subscriptionFailover: Bool = true
-    @AppStorage("chat.allowEdits") private var allowEdits: Bool = true
-    /// Optional free-form prompt prepended to the hidden context block of
-    /// every Zion Talks turn across every repo. Use cases: "respond in
-    /// pt-BR", "always cite file:line", "I am a Swift dev, skip JS
-    /// explanations". Project guidance still wins for repo-specific rules.
-    @AppStorage("chat.globalSystemPrompt") private var globalSystemPrompt: String = ""
+    // `chat.allowEdits` and `chat.globalSystemPrompt` were previously surfaced
+    // here. They live in `ZionTalksSettingsTab` now — both are chat-scoped
+    // (the keys use the `chat.` namespace) and surfacing them next to
+    // cross-cutting AI provider settings created the wrong mental model.
     @AppStorage(UserDefaultsKeys.RepoMemory.activeRepoName) private var repoMemoryRepoName: String = ""
     @AppStorage(UserDefaultsKeys.RepoMemory.lastRefresh) private var repoMemoryLastRefresh: Double = 0
     @AppStorage(UserDefaultsKeys.RepoMemory.ready) private var repoMemoryReady: Bool = false
@@ -31,6 +29,17 @@ struct AISettingsTab: View {
     @State private var cliDiscovery = CLIDiscoveryService()
     @State private var repoMemoryActionFeedback: String? = nil
 
+    // Cached results — recomputed off-main via `refreshConnections()`. Previously
+    // these were computed-properties that ran `AIClient.loadAPIKey` (sync
+    // `SecItemCopyMatching`) for EVERY provider on EVERY body recompute. With
+    // multiple @AppStorage observers in scope, SwiftUI re-runs body many times
+    // per second; the resulting Keychain spam saturated the main thread and
+    // hung the AI Settings tab for tens of seconds (hang reports show
+    // SwiftUI runTransaction → DynamicBody.updateValue → GroupedSection
+    // looping while waiting on Keychain).
+    @State private var providerConnections: [AIProviderConnectionInfo] = []
+    @State private var isDefaultProviderConnected: Bool = false
+
     private var defaultProvider: AIProvider {
         AIProvider(rawValue: aiProviderRaw) ?? .none
     }
@@ -39,16 +48,17 @@ struct AISettingsTab: View {
         AIMode(rawValue: aiModeRaw) ?? .efficient
     }
 
-    private var providerConnections: [AIProviderConnectionInfo] {
-        let _ = connectionRefreshID
-        return AIProviderSupport.connectionInfo().filter {
-            $0.provider != .local && $0.provider != .claudeCLI && $0.provider != .codexCLI
-        }
-    }
-
-    private var isDefaultProviderConnected: Bool {
-        let _ = connectionRefreshID
-        return AIProviderSupport.isConnected(provider: defaultProvider)
+    private func refreshConnections() async {
+        let provider = defaultProvider
+        let (infos, connected) = await Task.detached(priority: .userInitiated) {
+            let infos = AIProviderSupport.connectionInfo().filter {
+                $0.provider != .local && $0.provider != .claudeCLI && $0.provider != .codexCLI
+            }
+            let connected = AIProviderSupport.isConnected(provider: provider)
+            return (infos, connected)
+        }.value
+        providerConnections = infos
+        isDefaultProviderConnected = connected
     }
 
     private var repoMemoryStatusText: String {
@@ -133,61 +143,12 @@ struct AISettingsTab: View {
                 await refreshCLIStatus()
             }
 
-            Section(L10n("settings.ai.safety.title")) {
+            Section(L10n("settings.ai.routing.title")) {
                 Toggle(L10n("settings.ai.safety.subscriptionFailover"),
                        isOn: $subscriptionFailover)
                 Text(L10n("settings.ai.safety.subscriptionFailover.hint"))
                     .font(DesignSystem.Typography.label)
                     .foregroundStyle(.secondary)
-
-                Toggle(L10n("settings.ai.safety.allowEdits"),
-                       isOn: $allowEdits)
-                Text(L10n("settings.ai.safety.allowEdits.hint"))
-                    .font(DesignSystem.Typography.label)
-                    .foregroundStyle(.secondary)
-            }
-
-            Section {
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
-                    Text(L10n("settings.ai.globalPrompt.hint"))
-                        .font(DesignSystem.Typography.label)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                    ZStack(alignment: .topLeading) {
-                        // Placeholder shown when the editor is empty. Without
-                        // it the empty field reads as visual debt — users
-                        // skip past thinking the section is unconfigurable.
-                        if globalSystemPrompt.isEmpty {
-                            Text(L10n("settings.ai.globalPrompt.placeholder"))
-                                .font(DesignSystem.Typography.body)
-                                .foregroundStyle(DesignSystem.Colors.textTertiary)
-                                .padding(.horizontal, DesignSystem.Spacing.micro + 5)
-                                .padding(.vertical, DesignSystem.Spacing.micro + 8)
-                                .allowsHitTesting(false)
-                        }
-                        TextEditor(text: $globalSystemPrompt)
-                            .font(DesignSystem.Typography.body)
-                            .frame(minHeight: 120, maxHeight: 260)
-                            .padding(DesignSystem.Spacing.micro)
-                            .scrollContentBackground(.hidden)
-                    }
-                    .background(
-                        RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .fill(DesignSystem.Colors.glassSubtle)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .strokeBorder(DesignSystem.Colors.glassStroke, lineWidth: 1)
-                    )
-                }
-            } header: {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(L10n("settings.ai.globalPrompt.title"))
-                    Text(L10n("settings.ai.globalPrompt.subtitle"))
-                        .font(DesignSystem.Typography.label)
-                        .foregroundStyle(.secondary)
-                        .textCase(nil)
-                }
             }
 
             ProjectGuidanceSettingsSection()
@@ -304,13 +265,28 @@ struct AISettingsTab: View {
         .onChange(of: localConfig) { _, newValue in
             AIClient.saveLocalConfig(newValue)
         }
+        .task {
+            await refreshConnections()
+        }
+        .onChange(of: connectionRefreshID) { _, _ in
+            Task { await refreshConnections() }
+        }
+        .onChange(of: aiProviderRaw) { _, _ in
+            Task { await refreshConnections() }
+        }
     }
 
     // MARK: - CLI Status
 
     private func refreshCLIStatus() async {
-        async let claudeResult = cliDiscovery.status(for: .claude, refresh: true)
-        async let codexResult = cliDiscovery.status(for: .codex, refresh: true)
+        // Use cache on initial tab open (TTL = 5min). The Refresh button per row
+        // calls `status(for:refresh:true)` explicitly. Forcing refresh on every
+        // `.task` invocation re-spawned `which claude` + `claude --version` (and
+        // codex equivalents) on every tab visit — each subprocess can take
+        // seconds when shell init is slow, leaving the row spinner stuck even
+        // though work runs off-main now.
+        async let claudeResult = cliDiscovery.status(for: .claude, refresh: false)
+        async let codexResult = cliDiscovery.status(for: .codex, refresh: false)
         let (c, d) = await (claudeResult, codexResult)
         claudeStatus = c
         codexStatus = d

@@ -2516,11 +2516,16 @@
 "settings.ai.provider.claudeCLI" = "Claude Code (suscripción)";
 "settings.ai.provider.codexCLI" = "Codex CLI (ChatGPT)";
 "settings.ai.cli.subscription.title" = "CLIs de suscripción";
-"settings.ai.safety.title" = "Enrutamiento y Seguridad";
+"settings.ai.routing.title" = "Enrutamiento";
 "settings.ai.safety.subscriptionFailover" = "Auto puede enrutar a CLIs de suscripción";
 "settings.ai.safety.subscriptionFailover.hint" = "Cuando ON, Smart Auto incluye las CLIs Claude/Codex instaladas + autenticadas como candidatos primarios. Apaga para proteger tu cuota Pro/Max — Auto recurrirá solo a proveedores con API key. La selección explícita de CLI ignora este ajuste.";
-"settings.ai.safety.allowEdits" = "Permitir ediciones de archivo vía tools";
-"settings.ai.safety.allowEdits.hint" = "Cuando ON, los loops nativos de proveedor (Anthropic, OpenAI, Gemini) pueden llamar a la tool write_file para modificar archivos en tu repo. Apaga para requerir aprobación explícita por edición (recomendado para CI / espacios compartidos).";
+"chat.settings.safety.title" = "Seguridad";
+"chat.settings.safety.allowEdits" = "Permitir ediciones de archivo vía tools";
+"chat.settings.safety.allowEdits.hint" = "Cuando ON, los loops nativos de proveedor (Anthropic, OpenAI, Gemini) pueden llamar a la tool write_file para modificar archivos en tu repo. Apaga para requerir aprobación explícita por edición (recomendado para CI / espacios compartidos).";
+"chat.settings.systemPrompt.title" = "Prompt del sistema";
+"chat.settings.systemPrompt.subtitle" = "Aplicado en cada turno de Zion Talks en cualquier repo. La guía del proyecto sobrescribe reglas específicas del repo.";
+"chat.settings.systemPrompt.hint" = "Ejemplos: \"Responde en español.\" · \"Cita rutas con file:line.\" · \"Prefiero respuestas breves, sin preámbulo.\"";
+"chat.settings.systemPrompt.placeholder" = "Responde en español. Cita file:line. Sin preámbulo.";
 "settings.ai.cli.installed" = "Instalado v%@";
 "settings.ai.cli.notInstalled" = "No instalado";
 "settings.ai.cli.notInstalled.claude.hint" = "Instalar: `npm install -g @anthropic-ai/claude-code`";
@@ -2920,6 +2925,7 @@
 "chat.spend.usage.section.title" = "Uso";
 "chat.spend.usage.softCap" = "Límite suave";
 "chat.spend.usage.softCap.off" = "Desactivado";
+"chat.spend.usage.softCap.amount" = "Límite mensual";
 "chat.spend.usage.empty" = "Aún no hay uso registrado";
 "chat.spend.usage.honestyBanner" = "Seguimiento: Claude Code CLI y Codex CLI reportan uso real. Los LLM locales son gratis. Proveedores directos por API (Anthropic, OpenAI, Gemini) aún no se miden aquí — consulta el panel del proveedor para facturación oficial.";
 "chat.spend.pill.tooltip" = "Gasto mensual. Los proveedores CLI reportan el costo real. Los proveedores API no se miden aquí — ve el panel del proveedor.";
@@ -2949,7 +2955,7 @@
 "chat.projectGuidance.banner.dismiss" = "Ahora no";
 "chat.projectGuidance.banner.dismiss.help" = "Oculta este banner para este repo. Puedes restablecer en Settings → AI después.";
 "settings.ai.projectGuidance.title" = "Contexto de proyecto importado";
-"settings.ai.projectGuidance.subtitle" = "Repos con contenido de CLAUDE.md / AGENTS.md / GEMINI.md / .cursorrules inyectado en Zion Talks. Pulsa Limpiar para revocar y el banner volverá en la próxima visita.";
+"settings.ai.projectGuidance.subtitle" = "Repos con contenido de CLAUDE.md / AGENTS.md / GEMINI.md / .cursorrules inyectado en el chat de Zion Talks y en las sugerencias de commit. Pulsa Limpiar para revocar y el banner volverá en la próxima visita.";
 "settings.ai.projectGuidance.empty" = "Ningún proyecto ha importado contexto aún. Abre un repo con CLAUDE.md / AGENTS.md / GEMINI.md / .cursorrules y el composer ofrecerá importar.";
 "settings.ai.projectGuidance.clear" = "Limpiar";
 "settings.ai.tab.intro" = "Usado por las features de IA integradas (commit messages, PR descriptions, blame, resolución de conflictos) Y por el chat Zion Talks. Para ajustes sólo del chat, ve a Zion Talks.";

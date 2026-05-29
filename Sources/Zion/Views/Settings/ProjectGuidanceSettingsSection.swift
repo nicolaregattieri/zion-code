@@ -7,7 +7,6 @@ import SwiftUI
 struct ProjectGuidanceSettingsSection: View {
 
     @State private var rows: [ProjectGuidanceImporter.ImportedRepo] = []
-    @State private var refreshTick: Int = 0
 
     var body: some View {
         Section {
@@ -59,12 +58,10 @@ struct ProjectGuidanceSettingsSection: View {
             }
         }
         .task { reload() }
-        .id(refreshTick)
     }
 
     private func reload() {
         rows = ProjectGuidanceImporter.shared.allImported()
-        refreshTick &+= 1
     }
 
     /// Replaces the user's home prefix with `~` so middle-truncation in
