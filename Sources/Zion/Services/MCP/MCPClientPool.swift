@@ -14,6 +14,11 @@ actor MCPClientPool {
 
     private init() {}
 
+    /// Most recent launch outcomes from `warm`. Callers (ChatService)
+    /// consume this to surface a transient notice when a registered
+    /// server failed to spawn. Cleared at the start of every `warm`.
+    private(set) var lastWarmErrors: [(serverID: String, message: String)] = []
+
     /// Launches every enabled server in `store`, queries `tools/list`,
     /// and caches the tool→server routing table. Subsequent calls
     /// reuse cached state; pass `forceReload: true` to rebuild from
@@ -25,6 +30,26 @@ actor MCPClientPool {
             toolToServer.removeAll()
         }
         let servers = await MainActor.run { store.servers }
+        await warmServers(servers, forceReload: false)
+    }
+
+    /// Reads `~/.zion/mcp.json` directly (no MainActor coupling) and
+    /// warms each enabled server. This is the hot-path entry used by
+    /// the native tool loops — the ad-hoc `MCPRegistryStore()` they
+    /// previously instantiated never called `load()`, so `servers`
+    /// stayed empty and user MCPs were silently absent.
+    func warmFromDisk(forceReload: Bool = false) async {
+        if forceReload {
+            for (_, proc) in processes { await proc.terminate() }
+            processes.removeAll()
+            toolToServer.removeAll()
+        }
+        let servers = Self.readServersFromDisk()
+        await warmServers(servers, forceReload: false)
+    }
+
+    private func warmServers(_ servers: [MCPServerConfig], forceReload: Bool) async {
+        lastWarmErrors.removeAll()
         for config in servers where !config.disabled {
             if processes[config.id] != nil { continue }
             let proc = MCPServerProcess(config: config)
@@ -41,11 +66,46 @@ actor MCPClientPool {
                     }
                 }
             } catch {
-                // Server failed to launch — skip silently; stderr ring
-                // buffer captures the reason for the Settings UI.
+                lastWarmErrors.append((serverID: config.id, message: error.localizedDescription))
                 continue
             }
         }
+    }
+
+    private static func readServersFromDisk() -> [MCPServerConfig] {
+        let path = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".zion/mcp.json")
+        guard let data = try? Data(contentsOf: path),
+              let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let raw = root["mcpServers"] as? [String: [String: Any]]
+        else { return [] }
+        var out: [MCPServerConfig] = []
+        for (id, dict) in raw {
+            let command = (dict["command"] as? String) ?? ""
+            let args = (dict["args"] as? [String]) ?? []
+            let env = (dict["env"] as? [String: String]) ?? [:]
+            let transport = (dict["transport"] as? String) ?? "stdio"
+            let disabled = (dict["disabled"] as? Bool) ?? false
+            let autoApprove = (dict["autoApprove"] as? [String]) ?? []
+            out.append(MCPServerConfig(
+                id: id,
+                command: command,
+                args: args,
+                env: env,
+                transport: transport,
+                disabled: disabled,
+                autoApprove: autoApprove
+            ))
+        }
+        return out
+    }
+
+    /// Snapshot consumed by ChatService after a warm to surface launch
+    /// failures via `showTransientNotice`. Read-and-clear semantics.
+    func consumeWarmErrors() -> [(serverID: String, message: String)] {
+        let errs = lastWarmErrors
+        lastWarmErrors.removeAll()
+        return errs
     }
 
     /// All tools advertised across every running user server. Order

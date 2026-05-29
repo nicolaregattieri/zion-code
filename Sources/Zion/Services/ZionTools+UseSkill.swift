@@ -20,6 +20,21 @@ extension MCPConfigBuilder {
             let known = skills.map { "/\($0.id)" }.joined(separator: ", ")
             return "[use_skill: no skill named '\(id)']\nInstalled: \(known.isEmpty ? "(none)" : known)"
         }
-        return "[skill: \(skill.name)]\n\(skill.body)"
+        // Audit P1 fix (2026-05-29): the weak `[skill: name]\nbody` framing
+        // worked on Anthropic but left OpenAI / Gemini / local treating the
+        // body as inert markdown. The header below is an explicit directive
+        // that maps cleanly to every provider's instruction-following.
+        return """
+        SKILL ACTIVATED: \(skill.name) (/\(skill.id))
+
+        The text below is a procedure the user has installed. Treat it as
+        authoritative instructions for the current turn — apply its steps,
+        checklists, and constraints to your response. Do NOT echo the
+        procedure back to the user verbatim; execute it.
+
+        --- skill body ---
+        \(skill.body)
+        --- end skill body ---
+        """
     }
 }

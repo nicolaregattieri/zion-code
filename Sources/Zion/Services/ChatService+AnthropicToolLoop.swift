@@ -42,6 +42,7 @@ extension ChatService {
         let toolDescriptors = await MCPConfigBuilder.allToolsIncludingUserServers(
             store: MCPRegistryStore()
         )
+        await self.surfaceMCPWarmErrorsIfAny()
         let anthropicTools = ToolSchemaTranslator.translate(toolDescriptors, for: .anthropic)
 
         var additionalMessages: [[String: Any]] = []
@@ -129,8 +130,9 @@ extension ChatService {
             for call in pendingToolCalls {
                 let result: String
                 let isError: Bool
+                let argsJSON = (try? JSONSerialization.data(withJSONObject: call.args)) ?? Data("{}".utf8)
                 do {
-                    result = try await MCPConfigBuilder.dispatch(name: call.name, args: call.args)
+                    result = try await MCPConfigBuilder.dispatch(name: call.name, argsJSON: argsJSON)
                     isError = false
                 } catch {
                     result = "[tool error: \(error.localizedDescription)]"
