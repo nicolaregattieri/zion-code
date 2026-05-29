@@ -833,6 +833,13 @@ final class ChatService {
                 // Tier table maps (resolved provider, tier) → model independently
                 // of any "preliminary" provider, so we never call resolve twice.
                 let tier = await HeuristicTriageClassifier().classify(displayContent)
+                // Audit P1 fix (2026-05-29): the orchestrator used to look
+                // ONLY at the keyword-driven tier. `IntentClassifier` already
+                // recognises clear git intents (`status`, `lastCommit`,
+                // `currentChanges`, etc.) — pipe that signal in so we pin
+                // the right lane regardless of how the message phrases it.
+                let intentLane = Self.laneForIntent(text: text)
+                let chosenLane = intentLane ?? tier.lane
                 // If the user attached at least one image, ask the
                 // orchestrator to bias Auto towards a vision-capable
                 // provider (Anthropic / OpenAI / Gemini / claudeCLI).
@@ -841,17 +848,17 @@ final class ChatService {
                 // re-resolving until the orchestrator yields a non-local provider.
                 // First attempt:
                 var tentative = await self.orchestrator.resolve(
-                    lane: tier.lane, requested: .auto, requiresVision: hasImageAttachment
+                    lane: chosenLane, requested: .auto, requiresVision: hasImageAttachment
                 )
                 if self.localSessionSuppressed, tentative == .local {
                     await self.orchestrator.markRateLimited(.local, retryAfter: 86_400)
                     tentative = await self.orchestrator.resolve(
-                        lane: tier.lane, requested: .auto, requiresVision: hasImageAttachment
+                        lane: chosenLane, requested: .auto, requiresVision: hasImageAttachment
                     )
                 }
                 resolved = tentative
                 smartModelOverride = SmartAutoTierTable.default.modelID(provider: resolved, tier: tier)
-                self.resolvedLane = tier.lane
+                self.resolvedLane = chosenLane
                 self.resolvedTier = tier
             } else {
                 resolved = provider
@@ -1043,6 +1050,18 @@ final class ChatService {
                 self?.transientNotice = nil
             }
         }
+    }
+
+    /// Audit P0 follow-up: consume the latest `MCPClientPool` warm errors
+    /// and surface a transient banner so the user notices when a
+    /// registered MCP server failed to spawn (missing `npx`, bad command,
+    /// crashed on init). Without this the failure was silent — the model
+    /// thought a tool existed and the dispatch returned `unknownTool`.
+    func surfaceMCPWarmErrorsIfAny() async {
+        let errs = await MCPClientPool.shared.consumeWarmErrors()
+        guard !errs.isEmpty else { return }
+        let summary = errs.map { "\($0.serverID) (\($0.message))" }.joined(separator: " · ")
+        showTransientNotice(L10n("chat.mcp.warmFailed", summary), seconds: 6.0)
     }
 
     /// Removes a single queued message without aborting the running turn.
@@ -2332,6 +2351,26 @@ final class ChatService {
     /// actor harness.
     nonisolated static func taskInstructionsForTesting(provider: AIProvider) -> String {
         taskInstructions(for: provider)
+    }
+
+    /// Audit P1 follow-up: maps `IntentClassifier` output onto a lane so
+    /// the orchestrator can pick a provider matched to the task type
+    /// instead of relying on the keyword tier alone.
+    /// - `status` / `recentHistory` → `cheapSummary` (trivial git fetch)
+    /// - `currentChanges` / `commitDetails` / `fileContent` → `review`
+    /// - `lastCommit` → `general` (could be either summary or review)
+    /// Returns nil when the text is not a recognised git intent; caller
+    /// then falls back to the tier-driven lane.
+    nonisolated static func laneForIntent(text: String) -> AITaskLane? {
+        guard let intent = IntentClassifier.classify(text) else { return nil }
+        switch intent {
+        case .status, .recentHistory:
+            return .cheapSummary
+        case .currentChanges, .commitDetails, .fileContent:
+            return .review
+        case .lastCommit:
+            return .general
+        }
     }
 
     /// Test seam for the skill catalog block.

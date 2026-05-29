@@ -207,8 +207,12 @@ enum MCPConfigBuilder {
     /// `read` / `repo_map` / etc.
     static func allToolsIncludingUserServers(store: MCPRegistryStore?) async -> [MCPToolDescriptor] {
         let builtIn = allTools()
-        guard let store else { return builtIn }
-        await MCPClientPool.shared.warm(from: store)
+        // P0 fix (audit 2026-05-29): the previous code branched on `store
+        // != nil` but tool loops always passed an ad-hoc `MCPRegistryStore()`
+        // whose servers list was empty (no `load()` call), so `warm` warmoed
+        // zero servers and user MCPs were silently invisible. Use the new
+        // disk-backed warm path which reads `~/.zion/mcp.json` directly.
+        await MCPClientPool.shared.warmFromDisk()
         let userTools = await MCPClientPool.shared.allUserTools()
         let builtInNames = Set(builtIn.map { $0.name })
         let merged = builtIn + userTools.filter { !builtInNames.contains($0.name) }

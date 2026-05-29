@@ -3104,3 +3104,4 @@
 "chat.paste.mcp.failed" = "Falha ao instalar MCP · %@";
 "chat.paste.skill.installed" = "Skill '%@' criada";
 "chat.paste.skill.failed" = "Falha ao criar skill · %@";
+"chat.mcp.warmFailed" = "Servidor MCP falhou ao iniciar · %@";

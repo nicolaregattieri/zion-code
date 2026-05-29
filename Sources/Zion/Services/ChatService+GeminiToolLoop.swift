@@ -20,6 +20,7 @@ extension ChatService {
         let toolDescriptors = await MCPConfigBuilder.allToolsIncludingUserServers(
             store: MCPRegistryStore()
         )
+        await self.surfaceMCPWarmErrorsIfAny()
         let geminiTools = ToolSchemaTranslator.translate(toolDescriptors, for: .gemini)
 
         // First step: send the rendered user prompt with no history. Empty
