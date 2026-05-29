@@ -145,7 +145,7 @@ final class ChatServiceTests: XCTestCase {
         defer { GitTestHelper.cleanup(repoURL) }
 
         // Collect intermediate states via the observable thread
-        var capturedStates: [String] = []
+        let capturedStates: [String] = []
 
         let service = makeService { _, _, _, _ in
             AsyncThrowingStream<String, Error> { continuation in
