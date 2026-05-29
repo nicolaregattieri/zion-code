@@ -30,20 +30,51 @@ enum MCPConfigBuilder {
         if allowEdits {
             serverArgs.append("--allow-edits")
         }
-        let config: [String: Any] = [
-            "mcpServers": [
-                "zion": [
-                    "command": binary,
-                    "args": serverArgs
-                ]
+        var mcpServers: [String: Any] = [
+            "zion": [
+                "command": binary,
+                "args": serverArgs
             ]
         ]
+
+        // Bridge user-installed MCP servers from ~/.zion/mcp.json into the
+        // CLI subprocess config so Claude Code / Codex see the same MCP
+        // catalog the native chat sees. Built-in `zion` keeps precedence.
+        if let userServers = readUserMCPServersForCLI() {
+            for (id, dict) in userServers where mcpServers[id] == nil {
+                mcpServers[id] = dict
+            }
+        }
+
+        let config: [String: Any] = ["mcpServers": mcpServers]
         let data = try JSONSerialization.data(withJSONObject: config, options: [.prettyPrinted, .sortedKeys])
         let filename = "zion-mcp-\(UUID().uuidString).json"
         let tmpDir = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
         let fileURL = tmpDir.appendingPathComponent(filename)
         try data.write(to: fileURL, options: .atomic)
         return fileURL
+    }
+
+    /// Reads `~/.zion/mcp.json` synchronously and returns each enabled
+    /// server as the dictionary shape Claude Code / Codex expect under
+    /// `mcpServers`. Returns nil when the file is missing or unreadable.
+    private static func readUserMCPServersForCLI() -> [String: [String: Any]]? {
+        let path = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".zion/mcp.json")
+        guard let data = try? Data(contentsOf: path),
+              let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let servers = root["mcpServers"] as? [String: [String: Any]]
+        else { return nil }
+        var out: [String: [String: Any]] = [:]
+        for (id, raw) in servers {
+            if let disabled = raw["disabled"] as? Bool, disabled { continue }
+            var entry: [String: Any] = [:]
+            if let cmd = raw["command"] as? String { entry["command"] = cmd }
+            if let args = raw["args"] as? [String] { entry["args"] = args }
+            if let env = raw["env"] as? [String: String], !env.isEmpty { entry["env"] = env }
+            if entry["command"] != nil { out[id] = entry }
+        }
+        return out.isEmpty ? nil : out
     }
 
     /// Resolves the path to the `zion-mcp` binary using the following priority order:

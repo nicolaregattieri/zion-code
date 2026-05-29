@@ -928,7 +928,7 @@ final class ChatService {
                     model: effectiveModel,
                     conversation: historyForRuntime,
                     userPrompt: enrichedText,
-                    tools: MCPConfigBuilder.allTools(),
+                    tools: await MCPConfigBuilder.allToolsIncludingUserServers(store: MCPRegistryStore()),
                     maxSteps: 25,
                     onStep: { @Sendable event in
                         Task { @MainActor in
@@ -2222,9 +2222,13 @@ final class ChatService {
     }
 
     private func makePayload(for text: String, provider: AIProvider) -> AIPromptPayload {
-        AIClient.makePromptPayload(
+        let base = Self.taskInstructions(for: provider)
+            + Self.branchAwarenessAppendix(branch: activeBranch)
+            + Self.skillCatalogAppendix(skills: SkillIndex.shared.skills)
+            + Self.userMCPCatalogAppendix()
+        return AIClient.makePromptPayload(
             task: "Chat",
-            taskInstructions: Self.taskInstructions(for: provider) + Self.branchAwarenessAppendix(branch: activeBranch),
+            taskInstructions: base,
             untrustedSections: [
                 AIUntrustedPromptSection(
                     kind: "user_message",
@@ -2252,6 +2256,72 @@ final class ChatService {
     /// actor harness.
     nonisolated static func taskInstructionsForTesting(provider: AIProvider) -> String {
         taskInstructions(for: provider)
+    }
+
+    /// Test seam for the skill catalog block.
+    nonisolated static func skillCatalogAppendixForTesting(skills: [Skill]) -> String {
+        skillCatalogAppendix(skills: skills)
+    }
+
+    /// Test seam for the user MCP catalog block.
+    nonisolated static func userMCPCatalogAppendixForTesting() -> String {
+        userMCPCatalogAppendix()
+    }
+
+    /// Lists installed skills (`/<id>` slash + description) in the system
+    /// prompt so the model knows they exist. Without this the model is
+    /// blind to skills until the user types `/<id>` literally.
+    /// Cap at 30 skills to avoid blowing the prompt window.
+    nonisolated static func skillCatalogAppendix(skills: [Skill]) -> String {
+        guard !skills.isEmpty else { return "" }
+        let capped = skills.prefix(30)
+        var lines: [String] = []
+        lines.append("")
+        lines.append("")
+        lines.append("## Available skills")
+        lines.append("The user has installed these skills. When the user describes a task that matches one, suggest the slash form (`/<id>`) or call it implicitly — DO NOT pretend they do not exist.")
+        for skill in capped {
+            let desc = skill.description.trimmingCharacters(in: .whitespacesAndNewlines)
+            let short = desc.count > 200 ? String(desc.prefix(200)) + "…" : desc
+            lines.append("- `/\(skill.id)` — \(short)")
+        }
+        if skills.count > capped.count {
+            lines.append("- … and \(skills.count - capped.count) more (truncated)")
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    /// Lists installed user MCP servers (registry name + advertised
+    /// tools when warm) so the model knows they exist. Read directly
+    /// from `~/.zion/mcp.json` to avoid MainActor coupling. Excludes
+    /// the built-in `zion` seed.
+    nonisolated static func userMCPCatalogAppendix() -> String {
+        let path = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".zion/mcp.json")
+        guard let data = try? Data(contentsOf: path),
+              let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let servers = root["mcpServers"] as? [String: [String: Any]]
+        else { return "" }
+        let entries: [(String, String)] = servers
+            .filter { $0.key != "zion" }
+            .filter { ($0.value["disabled"] as? Bool) != true }
+            .map { id, raw in
+                let cmd = (raw["command"] as? String) ?? ""
+                let args = (raw["args"] as? [String]) ?? []
+                let invocation = ([cmd] + args).joined(separator: " ")
+                return (id, invocation)
+            }
+            .sorted { $0.0 < $1.0 }
+        guard !entries.isEmpty else { return "" }
+        var lines: [String] = []
+        lines.append("")
+        lines.append("")
+        lines.append("## Installed user MCP servers")
+        lines.append("These servers are registered in `~/.zion/mcp.json` and run on demand via stdio JSON-RPC. When the user asks about functionality these servers provide, acknowledge them by name and explain that tools become callable on first dispatch. DO NOT claim they are uninstalled.")
+        for (id, invocation) in entries {
+            lines.append("- `\(id)` (`\(invocation)`)")
+        }
+        return lines.joined(separator: "\n")
     }
 
     nonisolated private static func branchAwarenessAppendix(branch: String) -> String {
