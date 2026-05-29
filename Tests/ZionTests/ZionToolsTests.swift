@@ -98,7 +98,7 @@ final class ZionToolsTests: XCTestCase {
 
     func testEditToolEditsArrayHasOldTextAndNewText() {
         guard let editTool = ZionTools.tools.first(where: { $0.name == "edit" }),
-              let editsSchema = editTool.properties["edits"] as? [String: Any],
+              let editsSchema = editTool.properties["edits"],
               let items = editsSchema["items"] as? [String: Any],
               let itemProps = items["properties"] as? [String: Any] else {
             XCTFail("edit tool edits schema malformed")
