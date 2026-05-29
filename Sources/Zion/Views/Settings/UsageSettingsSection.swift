@@ -27,20 +27,24 @@ struct UsageSettingsSection: View {
             ))
 
             if isSoftCapEnabled {
-                Stepper(
-                    value: $softCapUSD,
-                    in: Constants.Limits.spendSoftCapStepUSD...Constants.Limits.spendSoftCapMaxUSD,
-                    step: Constants.Limits.spendSoftCapStepUSD
-                ) {
-                    HStack {
-                        Text(L10n("chat.spend.usage.softCap.amount"))
-                            .font(DesignSystem.Typography.label)
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        Text("$\(softCapUSD)")
-                            .font(DesignSystem.Typography.bodySemibold)
-                            .monospacedDigit()
-                    }
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+                    Text(L10n("chat.spend.usage.softCap.amount"))
+                        .font(DesignSystem.Typography.label)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text("$")
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                    TextField("", value: $softCapUSD, format: .number.grouping(.never))
+                        .textFieldStyle(.roundedBorder)
+                        .multilineTextAlignment(.trailing)
+                        .frame(width: 90)
+                        .monospacedDigit()
+                        .onChange(of: softCapUSD) { _, new in
+                            // Floor at 1 — anything below 1 means "off", which the
+                            // toggle above is the authoritative control for.
+                            if new < 1 { softCapUSD = 1 }
+                        }
                 }
             }
 

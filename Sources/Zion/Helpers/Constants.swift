@@ -258,12 +258,10 @@ enum Constants {
         static let maxEditorLocationWaitAttempts = 50
         /// Polling interval in milliseconds when waiting for editor file to load
         static let editorLocationWaitIntervalMs = 30
-        /// Maximum monthly spend soft cap (USD) the Usage stepper allows.
-        static let spendSoftCapMaxUSD = 500
-        /// Step size (USD) for the spend soft cap stepper.
-        static let spendSoftCapStepUSD = 5
-        /// Default soft-cap value used when a user enables the cap for the first
-        /// time (the toggle has no obvious entry value otherwise).
+        /// Default soft-cap value used when a user enables the cap for the
+        /// first time (the toggle needs a sensible starting amount). The user
+        /// then edits the value freely via a numeric text field — there is no
+        /// upper bound enforced here. Currency: USD.
         static let spendSoftCapDefaultUSD = 50
         /// Maximum untracked files to read content for AI context
         static let maxUntrackedFilesForContext = 5
