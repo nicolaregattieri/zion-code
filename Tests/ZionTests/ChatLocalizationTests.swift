@@ -145,7 +145,7 @@ final class ChatLocalizationTests: XCTestCase {
 
     func test_phase4_keys_haveCallSite() throws {
         // TODO: Phase 4 task 11+ wires the remaining call sites. Until then, skip.
-        throw XCTSkip("Call sites land in task 11+ — skipped until all Phase 4 views are wired")
+        try XCTSkipIf(true, "Call sites land in task 11+ — skipped until all Phase 4 views are wired")
 
         let sourcesPath = "/Users/nicolaregattieri/Developer/GraphForge/Sources"
 
