@@ -222,7 +222,7 @@ enum MCPConfigBuilder {
     ///   - name: Tool name from the JSON-RPC request.
     ///   - args: Decoded argument dictionary (`[String: Any]`).
     /// - Returns: Result string to surface to the AI.
-    static func dispatch(name: String, args: [String: Any]) async throws -> String {
+    static func dispatch(name: String, args: sending [String: Any]) async throws -> String {
         switch name {
         case "repo_map":
             return try await dispatchRepoMap(args: args)
@@ -241,15 +241,18 @@ enum MCPConfigBuilder {
         case "use_skill":
             return try await dispatchUseSkill(args: args)
         default:
-            // Phase 6.4 — fall through to MCPClientPool so calls to
-            // user-installed MCP tools (filesystem, brave-search, etc.)
-            // dispatch to the right subprocess over JSON-RPC stdio
-            // instead of hitting `unknownTool`. Re-encode args through
-            // JSON to land them on the actor with a Sendable shape.
             let data = try JSONSerialization.data(withJSONObject: args)
             let safe = (try JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? [:]
             return try await MCPClientPool.shared.dispatch(toolName: name, args: safe)
         }
+    }
+
+    /// Sendable-friendly overload — caller passes JSON-encoded args.
+    /// Decodes inside this function so we never carry `[String: Any]`
+    /// across the call site under strict concurrency.
+    static func dispatch(name: String, argsJSON: Data) async throws -> String {
+        let decoded = (try? JSONSerialization.jsonObject(with: argsJSON) as? [String: Any]) ?? [:]
+        return try await dispatch(name: name, args: decoded)
     }
 
     // MARK: - repo_map

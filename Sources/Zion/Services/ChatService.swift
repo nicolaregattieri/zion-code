@@ -150,7 +150,7 @@ final class ChatService {
     @ObservationIgnored private let worker: RepositoryWorker
     @ObservationIgnored private let contextBuilder: ChatContextBuilder
     @ObservationIgnored private let harness: ZionHarness
-    @ObservationIgnored private let streamProvider: ((LocalLLMConfig, AIPromptPayload, Int, String) -> AsyncThrowingStream<String, Error>)?
+    @ObservationIgnored let streamProvider: ((LocalLLMConfig, AIPromptPayload, Int, String) -> AsyncThrowingStream<String, Error>)?
     @ObservationIgnored private let cliStreamProvider: ((AIPromptPayload, URL) -> AsyncThrowingStream<CLIStreamEvent, Error>)?
 
     /// Mention resolver — expands @file/@folder/@selection/@web before each send.
@@ -1098,7 +1098,7 @@ final class ChatService {
         await consumeStream(stream, assistantID: assistantID, threadID: threadID)
     }
 
-    private func ensureLocalServerRunning(config: LocalLLMConfig, assistantID: UUID) async {
+    func ensureLocalServerRunning(config: LocalLLMConfig, assistantID: UUID) async {
         // Trace WHO asks for the local server to come up. The Image #32
         // confusion was: memory bumps but the chip shows Claude. If this log
         // never fires for the turn in question, the bump came from elsewhere
@@ -1523,7 +1523,11 @@ final class ChatService {
     ) async throws {
         switch provider {
         case .local:
-            await self.runLocalStream(payload: payload, assistantID: assistantID)
+            if Self.nativeToolLoopEnabled {
+                try await self.runLocalNativeToolLoop(payload: payload, assistantID: assistantID)
+            } else {
+                await self.runLocalStream(payload: payload, assistantID: assistantID)
+            }
 
         case .anthropic:
             let defaultID = AIModelCatalogService.selection(for: .anthropic, mode: mode, lane: .general).primaryModelID
@@ -1546,8 +1550,23 @@ final class ChatService {
         case .openai:
             let defaultID = AIModelCatalogService.selection(for: .openai, mode: mode, lane: .general).primaryModelID
             let modelID = modelOverride.map { $0.isEmpty ? defaultID : $0 } ?? defaultID
-            let stream = await self.ai.streamOpenAI(payload: payload, apiKey: apiKey, maxTokens: 2048, modelID: modelID)
-            try await self.consumeStreamThrowing(stream, assistantID: assistantID, threadID: threadID, provider: provider)
+            if Self.nativeToolLoopEnabled {
+                let url = URL(string: "https://api.openai.com/v1/chat/completions")!
+                try await self.runOpenAICompatToolLoop(
+                    payload: payload,
+                    apiKey: apiKey,
+                    modelID: modelID,
+                    maxTokens: 2048,
+                    url: url,
+                    authField: "Authorization",
+                    authValue: "Bearer \(apiKey)",
+                    urlSession: URLSession.shared,
+                    assistantID: assistantID
+                )
+            } else {
+                let stream = await self.ai.streamOpenAI(payload: payload, apiKey: apiKey, maxTokens: 2048, modelID: modelID)
+                try await self.consumeStreamThrowing(stream, assistantID: assistantID, threadID: threadID, provider: provider)
+            }
 
         case .claudeCLI:
             let stream: AsyncThrowingStream<CLIStreamEvent, Error>
@@ -1584,7 +1603,39 @@ final class ChatService {
             }
             try await self.consumeCLIStreamThrowing(stream, assistantID: assistantID, threadID: threadID, provider: provider)
 
-        case .auto, .gemini, .none:
+        case .gemini:
+            if Self.nativeToolLoopEnabled {
+                let defaultID = AIModelCatalogService.selection(for: .gemini, mode: mode, lane: .general).primaryModelID
+                let modelID = modelOverride.map { $0.isEmpty ? defaultID : $0 } ?? defaultID
+                try await self.runGeminiToolLoop(
+                    payload: payload,
+                    apiKey: apiKey,
+                    modelID: modelID,
+                    assistantID: assistantID
+                )
+            } else {
+                do {
+                    let response = try await self.ai.call(
+                        payload: payload,
+                        provider: provider,
+                        apiKey: apiKey,
+                        maxTokens: 2048,
+                        lane: .general,
+                        mode: mode
+                    )
+                    await MainActor.run {
+                        self.setAssistantContent(id: assistantID, content: response)
+                    }
+                } catch let aiErr as AIError {
+                    throw aiErr
+                } catch {
+                    await MainActor.run {
+                        self.setAssistantContent(id: assistantID, content: L10n("chat.error.generic"))
+                    }
+                }
+            }
+
+        case .auto, .none:
             do {
                 let response = try await self.ai.call(
                     payload: payload,

@@ -107,6 +107,26 @@ extension AIClient {
     // MARK: - Shared OpenAI-compat streaming core
 
     /// Internal helper used by both streamOpenAIWithTools and streamLocalWithTools.
+    /// Sendable-friendly entry — caller passes a fully serialized body
+    /// (`Data` is Sendable) so the native tool loop can re-invoke the
+    /// stream with assistant + tool result messages appended without
+    /// crossing `[[String: Any]]` across the actor barrier.
+    func streamOpenAICompatWithToolsBody(
+        url: URL,
+        authField: String?,
+        authValue: String?,
+        bodyData: Data,
+        urlSession: URLSession
+    ) -> AsyncThrowingStream<StreamEvent, Error> {
+        return streamOpenAICompatWithToolsImpl(
+            url: url,
+            authField: authField,
+            authValue: authValue,
+            bodyData: bodyData,
+            urlSession: urlSession
+        )
+    }
+
     func streamOpenAICompatWithTools(
         payload: AIPromptPayload,
         url: URL,
@@ -127,6 +147,22 @@ extension AIClient {
             preBody["tools"] = tools
         }
         let bodyData = (try? JSONSerialization.data(withJSONObject: preBody)) ?? Data()
+        return streamOpenAICompatWithToolsImpl(
+            url: url,
+            authField: authField,
+            authValue: authValue,
+            bodyData: bodyData,
+            urlSession: urlSession
+        )
+    }
+
+    private func streamOpenAICompatWithToolsImpl(
+        url: URL,
+        authField: String?,
+        authValue: String?,
+        bodyData: Data,
+        urlSession: URLSession
+    ) -> AsyncThrowingStream<StreamEvent, Error> {
 
         return AsyncThrowingStream { continuation in
             Task {

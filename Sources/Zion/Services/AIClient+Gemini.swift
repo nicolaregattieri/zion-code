@@ -31,6 +31,15 @@ struct GeminiToolCall: @unchecked Sendable {
 /// Outcome of one Gemini streaming step.
 /// T3 will unify StepOutcome across providers — this is the Gemini-local shape until then.
 // T3 will unify StepOutcome
+/// Slim outcome for the Sendable-friendly `streamGeminiWithToolsBody`
+/// entry. Caller stitches `modelTurnMessages` onto its own history.
+struct GeminiModelTurn: @unchecked Sendable {
+    let text: String
+    let toolCalls: [GeminiToolCall]
+    let stopReason: GeminiStopReason
+    let modelTurnMessages: [[String: Any]]
+}
+
 struct GeminiStepOutcome: @unchecked Sendable {
     let text: String
     let toolCalls: [GeminiToolCall]
@@ -54,6 +63,51 @@ extension AIClient {
     ///   - model: Model identifier (e.g. "gemini-1.5-pro").
     ///   - history: Prior conversation turns (`contents` array). Pass `[]` for a fresh conversation.
     /// - Returns: A `GeminiStepOutcome` with the accumulated text, tool calls, stop reason, and updated history.
+    /// Sendable-friendly entry — caller hands over fully serialized `Data`
+    /// for `contents` + `tools`, dodging the `[[String: Any]]` cross-actor
+    /// barrier under strict concurrency. Returns the parsed outcome with
+    /// the conversation already extended by the model's response so the
+    /// caller can append `functionResponse` parts and re-step.
+    /// Returns only the model's turn (text + tool calls + stop reason).
+    /// Caller is responsible for stitching it back onto its own history.
+    /// This sidesteps the strict-concurrency Sendable barrier on `history`.
+    func streamGeminiWithToolsBody(
+        bodyData: Data,
+        apiKey: String,
+        model: String
+    ) async throws -> GeminiModelTurn {
+        guard let encodedModel = model.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
+              let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/\(encodedModel):streamGenerateContent?alt=sse&key=\(apiKey)")
+        else { throw AIError.invalidResponse }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 120
+        request.httpBody = bodyData
+        let session = _testURLSession ?? URLSession.shared
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch let urlError as URLError {
+            throw AIError.networkFailure(underlying: urlError.localizedDescription)
+        }
+        guard let http = response as? HTTPURLResponse else { throw AIError.invalidResponse }
+        if http.statusCode == 400 || http.statusCode == 401 { throw AIError.invalidKey }
+        if http.statusCode == 503 { throw AIError.temporarilyUnavailable }
+        if http.statusCode == 429 { throw AIError.rateLimited(retryAfter: Self.parseRetryAfter(from: http)) }
+        guard http.statusCode == 200 else {
+            throw AIError.apiError("Gemini streaming request failed (\(http.statusCode)).")
+        }
+        let sseText = String(data: data, encoding: .utf8) ?? ""
+        let outcome = Self.parseGeminiSSE(sseText, history: [])
+        return GeminiModelTurn(
+            text: outcome.text,
+            toolCalls: outcome.toolCalls,
+            stopReason: outcome.stopReason,
+            modelTurnMessages: outcome.updatedConversation
+        )
+    }
+
     func streamGeminiWithTools(
         prompt: String,
         tools: [[String: Any]] = [],
