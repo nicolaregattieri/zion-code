@@ -4,6 +4,10 @@ import AppKit
 struct ChatMessageBubble: View {
 
     let message: ChatMessage
+    /// When true (default), the assistant role label is suppressed for
+    /// "burst" continuation messages so consecutive assistant turns read
+    /// as one flowing thread instead of repeating chrome.
+    var hideAssistantLabel: Bool = false
 
     var body: some View {
         Group {
@@ -17,7 +21,7 @@ struct ChatMessageBubble: View {
         .padding(.vertical, DesignSystem.Spacing.compact)
     }
 
-    // MARK: - User row (right-aligned compact bubble)
+    // MARK: - User row (right-aligned subtle tint, Apple-style)
 
     private var userRow: some View {
         VStack(alignment: .trailing, spacing: DesignSystem.Spacing.compact) {
@@ -34,7 +38,7 @@ struct ChatMessageBubble: View {
                 Text(message.content)
                     .chatScaledFont(role: .body)
                     .chatLineSpacing()
-                    .foregroundStyle(DesignSystem.Colors.brandWhite)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
                     .textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
                     .multilineTextAlignment(.leading)
@@ -43,14 +47,11 @@ struct ChatMessageBubble: View {
                     .frame(maxWidth: DesignSystem.Spacing.chatUserBubbleMaxWidth, alignment: .leading)
                     .background(
                         RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [DesignSystem.Colors.brandPrimary, DesignSystem.Colors.brandInk],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
+                            .fill(DesignSystem.Colors.brandPrimary.opacity(0.10))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous)
+                                    .strokeBorder(DesignSystem.Colors.brandPrimary.opacity(0.18), lineWidth: 0.5)
                             )
-                            .shadow(color: DesignSystem.Colors.brandPrimary.opacity(DesignSystem.Opacity.dim), radius: DesignSystem.Spacing.standard, x: 0, y: 2)
                     )
             }
             if let intent = message.autoInjectedIntent {
@@ -59,55 +60,35 @@ struct ChatMessageBubble: View {
         }
     }
 
-    // MARK: - Assistant row (full-width Claude/ChatGPT style)
+    // MARK: - Assistant row (borderless flow, no role labels, hover copy)
 
     private var assistantRow: some View {
-        HStack(alignment: .top, spacing: DesignSystem.Spacing.standard) {
-            assistantAvatar
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
-                if let events = message.toolEvents, !events.isEmpty {
-                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.micro) {
-                        ForEach(events) { event in
-                            ChatToolEventBadge(event: event)
-                        }
-                    }
-                }
-                if let helpPayload = message.helpCardPayload {
-                    SlashHelpCard(payload: helpPayload)
-                } else if message.isStreaming && message.content.isEmpty {
-                    ChatThinkingIndicator()
-                } else {
-                    AssistantMarkdown(content: message.content)
-                    if message.isStreaming {
-                        StreamingDot()
-                    } else if !message.content.isEmpty {
-                        MessageCopyButton(content: message.content)
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.compact) {
+            if let events = message.toolEvents, !events.isEmpty {
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.micro) {
+                    ForEach(events) { event in
+                        ChatToolEventBadge(event: event)
                     }
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            if let helpPayload = message.helpCardPayload {
+                SlashHelpCard(payload: helpPayload)
+            } else if message.isStreaming && message.content.isEmpty {
+                ChatThinkingIndicator()
+            } else {
+                AssistantMarkdown(content: message.content)
+                if message.isStreaming {
+                    StreamingDot()
+                } else if !message.content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    // Copy button has its own internal hover state. Render it
+                    // always so the whole bubble does NOT re-evaluate on
+                    // hover — AssistantMarkdown rendering glitches under
+                    // parent recompose (Image #66 — text vanished, copy stayed).
+                    MessageCopyButton(content: message.content)
+                }
+            }
         }
-    }
-
-    private var assistantAvatar: some View {
-        ZStack {
-            Circle()
-                .fill(
-                    LinearGradient(
-                        colors: [DesignSystem.Colors.brandPrimary, DesignSystem.Colors.brandInk],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .frame(width: DesignSystem.Spacing.chatAvatarSize, height: DesignSystem.Spacing.chatAvatarSize)
-            Image(systemName: "sparkles")
-                .font(DesignSystem.Typography.label.weight(.semibold))
-                .foregroundStyle(DesignSystem.Colors.brandWhite)
-        }
-        .overlay(
-            Circle()
-                .strokeBorder(DesignSystem.Colors.glassBorder, lineWidth: 1)
-        )
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -186,6 +167,7 @@ private struct StreamingDot: View {
 private struct MessageCopyButton: View {
     let content: String
     @State private var copied = false
+    @State private var hovering = false
 
     var body: some View {
         Button {
@@ -200,8 +182,11 @@ private struct MessageCopyButton: View {
                 Text(copied ? L10n("chat.message.copied") : L10n("chat.message.copy"))
             }
             .font(DesignSystem.Typography.metaSemibold)
-            .foregroundStyle(copied ? DesignSystem.Colors.success : DesignSystem.Colors.textSecondary)
+            .foregroundStyle(copied ? DesignSystem.Colors.success : DesignSystem.Colors.textTertiary)
+            .opacity(copied ? 1.0 : (hovering ? 1.0 : 0.55))
+            .animation(.easeInOut(duration: 0.18), value: hovering)
         }
         .buttonStyle(.plain)
+        .onHover { hovering = $0 }
     }
 }

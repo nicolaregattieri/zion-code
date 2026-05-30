@@ -39,6 +39,13 @@ struct AssistantMarkdown: View {
 
     @ViewBuilder
     private func proseView(_ text: String) -> some View {
+        // `.textSelection(.enabled)` + SwiftUI's `Text` had a regression
+        // on macOS 14/15 where multi-click (≥3 taps) inside the selectable
+        // text caused the AppKit backing field to clear its text storage,
+        // leaving an empty space where the message used to be (Image #67).
+        // Selection is dropped here in favour of the row-level Copy button;
+        // code blocks still expose `.textSelection(.enabled)` because their
+        // monospace renderer does not exhibit the same bug.
         if let attributed = try? AttributedString(
             markdown: text,
             options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)
@@ -47,7 +54,6 @@ struct AssistantMarkdown: View {
                 .chatScaledFont(role: .body)
                 .chatLineSpacing()
                 .foregroundStyle(DesignSystem.Colors.textPrimary)
-                .textSelection(.enabled)
                 .fixedSize(horizontal: false, vertical: true)
                 .multilineTextAlignment(.leading)
         } else {
@@ -55,7 +61,6 @@ struct AssistantMarkdown: View {
                 .chatScaledFont(role: .body)
                 .chatLineSpacing()
                 .foregroundStyle(DesignSystem.Colors.textPrimary)
-                .textSelection(.enabled)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }

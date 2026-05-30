@@ -221,7 +221,7 @@ struct DesignSystem {
 
         // Chat-specific layout
         static let chatContentMaxWidth: CGFloat = 900    // Centered column for messages + composer
-        static let chatUserBubbleMaxWidth: CGFloat = 560 // User bubble caps so prose stays readable
+        static let chatUserBubbleMaxWidth: CGFloat = 440 // User bubble caps so prose stays readable
         static let chatAvatarSize: CGFloat = 28          // Assistant avatar circle
         static let streamingDotSize: CGFloat = 6         // Streaming pulse indicator
 

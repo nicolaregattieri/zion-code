@@ -3116,3 +3116,7 @@
 "settings.webSearch.getKey" = "Obter chave do %@";
 "settings.webSearch.searxng.url" = "URL base";
 "settings.webSearch.alternative" = "Prefere um servidor MCP de busca? Cole a config no chat — a harness do Zion roteia do mesmo jeito.";
+
+// MARK: - Chat header meta
+"chat.thread.meta.message" = "mensagem";
+"chat.thread.meta.messages" = "mensagens";

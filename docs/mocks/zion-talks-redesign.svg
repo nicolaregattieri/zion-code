@@ -1,0 +1,200 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui">
+  <!-- ============ COLOR TOKENS ============ -->
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0E0E12"/>
+      <stop offset="100%" stop-color="#0A0A0D"/>
+    </linearGradient>
+    <linearGradient id="brandActive" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7C5CFF"/>
+      <stop offset="100%" stop-color="#5B3FE0"/>
+    </linearGradient>
+    <linearGradient id="cardGlass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1A1A22" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#15151C" stop-opacity="0.6"/>
+    </linearGradient>
+    <linearGradient id="userTint" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7C5CFF" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#7C5CFF" stop-opacity="0.05"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ============ BACKGROUND ============ -->
+  <rect width="1440" height="900" fill="url(#bgGrad)"/>
+
+  <!-- ============ THIN TOP BAR ============ -->
+  <rect x="0" y="0" width="1440" height="40" fill="#0A0A0D"/>
+  <rect x="0" y="39" width="1440" height="1" fill="#222229"/>
+  <text x="20" y="26" fill="#9999A5" font-size="12" letter-spacing="0.4">Zion · GraphForge</text>
+  <text x="1340" y="26" fill="#6B6B78" font-size="11" font-family="SF Mono, monospace">⌘N · ⌘K · ⌘L</text>
+
+  <!-- ============ MAIN LAYOUT: 3-col like Apple Mail ============ -->
+  <!-- 60px sidebar collapsed left | flexible chat | 280px history right -->
+
+  <!-- Slim left sidebar (icons only, like Mail/Notion narrow rail) -->
+  <rect x="0" y="40" width="56" height="860" fill="#0C0C10"/>
+  <rect x="55" y="40" width="1" height="860" fill="#1F1F26"/>
+  <!-- icons -->
+  <g fill="#6B6B78" font-size="14">
+    <text x="22" y="74">⎘</text>
+    <text x="22" y="118">◐</text>
+    <text x="22" y="162">⌥</text>
+  </g>
+  <!-- Active item (chat) -->
+  <rect x="14" y="194" width="28" height="28" rx="8" fill="#7C5CFF" fill-opacity="0.15"/>
+  <text x="22" y="214" fill="#B8A4FF" font-size="14">▤</text>
+
+  <!-- ============ CONVERSATION COLUMN ============ -->
+  <!-- 56 → 1140 width = 1084px conversation, then 1140→1440 = 300px right pane -->
+
+  <!-- Thread title row (replaces big "Zion Talks" + "Chat with your repository.") -->
+  <text x="80" y="80" fill="#E8E8EF" font-size="15" font-weight="600">Memory pressure cleanup</text>
+  <text x="80" y="100" fill="#6B6B78" font-size="11.5">12 messages · started 2h ago</text>
+  <!-- model chip (right-aligned in this column) -->
+  <g transform="translate(996, 68)">
+    <rect width="120" height="22" rx="11" fill="#1A1A22" stroke="#2A2A33" stroke-width="0.5"/>
+    <circle cx="12" cy="11" r="3" fill="#3FCF8E"/>
+    <text x="22" y="15" fill="#B8B8C4" font-size="10.5" font-family="SF Mono, monospace">Auto → Qwen 14B</text>
+  </g>
+
+  <!-- separator -->
+  <rect x="80" y="120" width="1036" height="1" fill="#1A1A22"/>
+
+  <!-- ============ MESSAGE 1: assistant (flowing, no bubble, no avatar repeat) ============ -->
+  <text x="80" y="158" fill="#6B6B78" font-size="10.5" letter-spacing="0.5" font-weight="600">ASSISTANT</text>
+  <text x="80" y="192" fill="#E0E0E8" font-size="14.5" font-weight="400">
+    Inclui memória <tspan font-weight="600">comprimida</tspan> no total &quot;usado&quot;. O Activity Monitor do macOS por
+  </text>
+  <text x="80" y="214" fill="#E0E0E8" font-size="14.5">
+    padrão mostra só <tspan font-family="SF Mono, monospace" font-size="13" fill="#B8A4FF">active + wired</tspan> na barra de pressão.
+  </text>
+
+  <!-- Code block, subtle frame, no chunky border -->
+  <rect x="80" y="236" width="720" height="56" rx="6" fill="#13131A"/>
+  <rect x="80" y="236" width="3" height="56" fill="#7C5CFF" fill-opacity="0.4"/>
+  <text x="96" y="258" font-family="SF Mono, monospace" font-size="12.5">
+    <tspan fill="#FF8A6E">let</tspan>
+    <tspan fill="#E0E0E8"> used = active + wired</tspan>
+    <tspan fill="#5B5B6B">  // sem compressed</tspan>
+  </text>
+  <text x="96" y="280" fill="#5B5B6B" font-family="SF Mono, monospace" font-size="11">swift · 1 line</text>
+  <!-- copy button only on hover (shown faded here as preview) -->
+  <text x="788" y="252" fill="#3A3A45" font-size="11">⧉</text>
+
+  <!-- ============ MESSAGE 2: user (right-aligned, subtle tint, NOT full-width) ============ -->
+  <!-- bubble max ~440px, tucks to right gutter -->
+  <rect x="676" y="316" width="440" height="36" rx="10" fill="url(#userTint)" stroke="#3A2A6B" stroke-width="0.5"/>
+  <text x="696" y="339" fill="#E0E0E8" font-size="14">nao sei o que me sugere mostrar?</text>
+
+  <!-- ============ ASSISTANT BURST (no label repeat, no avatar) ============ -->
+  <text x="80" y="396" fill="#E0E0E8" font-size="14.5">Posso aplicar a remoção do <tspan font-family="SF Mono, monospace" font-size="13" fill="#B8A4FF">compressed</tspan> e revisar os call sites?</text>
+
+  <!-- inline action chip — small, low-contrast affordance instead of huge buttons -->
+  <g transform="translate(80, 412)">
+    <rect width="98" height="26" rx="13" fill="#7C5CFF" fill-opacity="0.14" stroke="#7C5CFF" stroke-opacity="0.3" stroke-width="0.5"/>
+    <text x="14" y="18" fill="#B8A4FF" font-size="11.5" font-weight="500">Apply edit</text>
+    <text x="80" y="18" fill="#7C5CFF" font-size="11">↵</text>
+  </g>
+  <g transform="translate(186, 412)">
+    <rect width="78" height="26" rx="13" fill="none" stroke="#2A2A33" stroke-width="0.5"/>
+    <text x="14" y="18" fill="#9999A5" font-size="11.5" font-weight="500">Reject</text>
+  </g>
+
+  <!-- ============ MESSAGE 3: user short ============ -->
+  <rect x="956" y="462" width="160" height="36" rx="10" fill="url(#userTint)" stroke="#3A2A6B" stroke-width="0.5"/>
+  <text x="976" y="485" fill="#E0E0E8" font-size="14">consigo adicionar MCP?</text>
+
+  <!-- ============ ASSISTANT WITH TOOL CALL CHIP ============ -->
+  <text x="80" y="540" fill="#E0E0E8" font-size="14.5">Sim — cola o JSON do server aqui, ou me dá o link:</text>
+
+  <!-- tool call chip — Anthropic-style inline tool indicator -->
+  <g transform="translate(80, 558)">
+    <rect width="280" height="38" rx="6" fill="#13131A" stroke="#1F1F26"/>
+    <circle cx="20" cy="19" r="6" fill="#7C5CFF" fill-opacity="0.18"/>
+    <text x="20" y="23" fill="#B8A4FF" font-size="10" text-anchor="middle">⚙</text>
+    <text x="36" y="16" fill="#E0E0E8" font-size="12" font-weight="500">install_mcp_server</text>
+    <text x="36" y="30" fill="#6B6B78" font-size="10.5" font-family="SF Mono, monospace">ready · waiting for JSON</text>
+  </g>
+
+  <!-- ============ STICKY COMPOSER — DOCKED, MINIMAL, EXPANDS ON FOCUS ============ -->
+  <!-- Anchored to bottom of chat column, hairline top border, no detached card -->
+
+  <!-- subtle gradient fade above composer so it feels anchored -->
+  <rect x="80" y="730" width="1036" height="24" fill="url(#bgGrad)" opacity="0.7"/>
+
+  <!-- composer pill (single line, expands on multiline) -->
+  <g transform="translate(80, 760)">
+    <rect width="1036" height="84" rx="14" fill="#13131A" stroke="#26262E" stroke-width="0.5"/>
+    <!-- placeholder text -->
+    <text x="20" y="32" fill="#5B5B6B" font-size="14">Ask, attach a file, paste an MCP config, or "/" for commands…</text>
+
+    <!-- bottom controls row INSIDE the composer (less chrome) -->
+    <rect x="0" y="56" width="1036" height="0.5" fill="#1F1F26"/>
+
+    <!-- left meta chips (small, single character icons) -->
+    <g transform="translate(14, 64)">
+      <text x="0" y="10" fill="#6B6B78" font-size="11" font-family="SF Mono">@</text>
+      <text x="20" y="10" fill="#6B6B78" font-size="11" font-family="SF Mono">/</text>
+      <text x="40" y="10" fill="#6B6B78" font-size="11">📎</text>
+    </g>
+
+    <!-- center: single status pill, hidden under "⚙" expand -->
+    <g transform="translate(440, 60)">
+      <rect width="156" height="22" rx="11" fill="none" stroke="#26262E" stroke-width="0.5"/>
+      <text x="12" y="15" fill="#9999A5" font-size="10.5">Auto · Edit · Always ask</text>
+      <text x="140" y="15" fill="#6B6B78" font-size="9">⌃</text>
+    </g>
+
+    <!-- right: token meter + send -->
+    <g transform="translate(870, 60)">
+      <text x="0" y="15" fill="#6B6B78" font-size="10.5" font-family="SF Mono, monospace">1.2k / 200k</text>
+    </g>
+    <!-- send button — sole purple element in whole composer -->
+    <circle cx="1006" cy="71" r="13" fill="url(#brandActive)"/>
+    <text x="1006" y="76" fill="white" font-size="14" text-anchor="middle">↑</text>
+  </g>
+
+  <!-- mode/permission pulled out of composer — appears only on ⚙ click -->
+
+  <!-- ============ RIGHT PANE: THREAD LIST — MINIMAL, NO CARD CHROME ============ -->
+  <rect x="1140" y="40" width="1" height="860" fill="#1A1A22"/>
+
+  <text x="1166" y="74" fill="#6B6B78" font-size="10.5" letter-spacing="0.6" font-weight="600">THREADS</text>
+  <g transform="translate(1262, 60)">
+    <rect width="22" height="22" rx="6" fill="#1A1A22"/>
+    <text x="11" y="16" fill="#9999A5" font-size="11" text-anchor="middle">＋</text>
+  </g>
+
+  <!-- thread items: title line + metadata line, no card boxes -->
+  <g transform="translate(1166, 102)">
+    <rect x="-10" y="-8" width="270" height="40" rx="8" fill="#7C5CFF" fill-opacity="0.06"/>
+    <text x="0" y="6" fill="#E0E0E8" font-size="13" font-weight="500">Memory pressure cleanup</text>
+    <text x="0" y="22" fill="#6B6B78" font-size="11">2h ago · 12 msgs</text>
+  </g>
+
+  <g transform="translate(1166, 162)">
+    <text x="0" y="6" fill="#B8B8C4" font-size="13" font-weight="500">context tokens overflow</text>
+    <text x="0" y="22" fill="#5B5B6B" font-size="11">22h ago · 5 msgs</text>
+  </g>
+
+  <g transform="translate(1166, 220)">
+    <text x="0" y="6" fill="#B8B8C4" font-size="13" font-weight="500">tree scan investigation</text>
+    <text x="0" y="22" fill="#5B5B6B" font-size="11">2d ago · 18 msgs</text>
+  </g>
+
+  <g transform="translate(1166, 278)">
+    <text x="0" y="6" fill="#B8B8C4" font-size="13" font-weight="500">hello</text>
+    <text x="0" y="22" fill="#5B5B6B" font-size="11">2d ago · 1 msg</text>
+  </g>
+
+  <!-- footer ghost text — like Linear's quiet hints -->
+  <text x="1166" y="876" fill="#3A3A45" font-size="10.5">↑↓ navigate · ⌘N new</text>
+
+  <!-- ============ BOTTOM STATUS LINE — SUPER QUIET ============ -->
+  <rect x="0" y="884" width="1440" height="16" fill="#0C0C10"/>
+  <rect x="0" y="884" width="1440" height="0.5" fill="#1A1A22"/>
+  <text x="72" y="895" fill="#5B5B6B" font-size="10" font-family="SF Mono, monospace">feat/builtin-web-search</text>
+  <text x="220" y="895" fill="#3A3A45" font-size="10" font-family="SF Mono, monospace">●</text>
+  <text x="240" y="895" fill="#5B5B6B" font-size="10" font-family="SF Mono, monospace">~/Developer/GraphForge</text>
+  <text x="1340" y="895" fill="#3A3A45" font-size="10" font-family="SF Mono, monospace">CPU 8% · RAM 32%</text>
+</svg>

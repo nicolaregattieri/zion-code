@@ -461,19 +461,18 @@ struct ChatComposer: View {
         .help(L10n("chat.composer.stop"))
     }
 
-    /// Wide layout — everything inline. Used when the composer has room.
+    /// Wide layout — slimmed-down row. Provider + model stay visible (need
+    /// to know what will respond); bash + local-swap + new-chat moved to
+    /// the overflow menu so the composer reads like a single sentence,
+    /// not a control panel.
     private var fullActionRow: some View {
         HStack(spacing: DesignSystem.Spacing.standard) {
             providerMenu
             modelMenu
-            if !localHints.isEmpty {
-                localSwapMenu
-            }
-            bashTogglePill
             Spacer()
             attachButton
             ChatDictationButton(composerText: $text, repoURL: repoURL)
-            newChatButton
+            overflowMenu
             if chat.activePendingQueueCount > 0 {
                 queueBadge
             }
