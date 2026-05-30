@@ -82,11 +82,11 @@ struct ChatScreen: View {
     private var pageHeader: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(L10n("chat.screen.title"))
-                    .font(DesignSystem.Typography.screenTitle)
-                Text(L10n("chat.screen.subtitle"))
+                Text(currentThreadTitle)
+                    .font(DesignSystem.Typography.cardTitle)
+                Text(currentThreadMeta)
                     .foregroundStyle(.secondary)
-                    .font(DesignSystem.Typography.subtitle)
+                    .font(DesignSystem.Typography.label)
             }
             Spacer()
             Button {
@@ -115,47 +115,56 @@ struct ChatScreen: View {
         }
     }
 
+    // MARK: - Header helpers
+
+    private var currentThreadTitle: String {
+        let raw = chat.thread.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        return raw.isEmpty ? L10n("chat.screen.title") : raw
+    }
+
+    private var currentThreadMeta: String {
+        let count = chat.thread.messages.count
+        guard count > 0 else { return L10n("chat.screen.subtitle") }
+        return "\(count) " + (count == 1 ? L10n("chat.thread.meta.message") : L10n("chat.thread.meta.messages"))
+    }
+
     // MARK: - Conversation card (main content)
 
     private var conversationCard: some View {
         GlassCard(spacing: 8, expanding: true) {
-            CardHeader(L10n("chat.card.conversation"), icon: "bubble.left.and.bubble.right.fill") {
-                HStack(spacing: 6) {
-                    AgentStepIndicator(agentRuntime: chat.agentRuntime)
-                    SpendMeterPill()
-                    let totalTokens = chat.thread.totalInputTokens + chat.thread.totalOutputTokens
-                    if totalTokens > 0 {
-                        Text(Self.formatTokens(totalTokens))
-                            .font(DesignSystem.Typography.monoLabelBold)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(DesignSystem.Colors.glassSubtle)
-                            .clipShape(Capsule())
-                            .help(L10n("chat.tokens.tooltip"))
-                    }
-                    if chat.thread.totalCostUSD > 0 {
-                        Text(String(format: "$%.3f", chat.thread.totalCostUSD))
-                            .font(DesignSystem.Typography.monoLabelBold)
-                            .foregroundStyle(DesignSystem.Colors.brandPrimary)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(DesignSystem.Colors.glassSubtle)
-                            .clipShape(Capsule())
-                            .help(L10n("chat.cost.tooltip"))
-                    }
-                    Text("\(chat.thread.messages.count)")
-                        .font(DesignSystem.Typography.monoLabelBold)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(DesignSystem.Colors.glassSubtle)
-                        .clipShape(Capsule())
-                }
-            }
+            // Audit 2026-05-30 redesign: drop the "Conversation" card header.
+            // Thread title + meta already live in pageHeader; another bubble
+            // icon + label was redundant chrome. Quiet meter strip stays as
+            // a single hairline row above the messages.
+            quietMeterStrip
             messageList
             if repoURL != nil {
                 composerArea
             }
         }
+    }
+
+    private var quietMeterStrip: some View {
+        HStack(spacing: 8) {
+            AgentStepIndicator(agentRuntime: chat.agentRuntime)
+            SpendMeterPill()
+            Spacer(minLength: 0)
+            let totalTokens = chat.thread.totalInputTokens + chat.thread.totalOutputTokens
+            if totalTokens > 0 {
+                Text(Self.formatTokens(totalTokens))
+                    .font(DesignSystem.Typography.monoLabelBold)
+                    .foregroundStyle(DesignSystem.Colors.textTertiary)
+                    .help(L10n("chat.tokens.tooltip"))
+            }
+            if chat.thread.totalCostUSD > 0 {
+                Text(String(format: "$%.3f", chat.thread.totalCostUSD))
+                    .font(DesignSystem.Typography.monoLabelBold)
+                    .foregroundStyle(DesignSystem.Colors.textTertiary)
+                    .help(L10n("chat.cost.tooltip"))
+            }
+        }
+        .padding(.horizontal, DesignSystem.Spacing.cardPadding)
+        .padding(.bottom, DesignSystem.Spacing.micro)
     }
 
     // MARK: - History card (trailing column)
