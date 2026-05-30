@@ -839,7 +839,20 @@ final class ChatService {
                 // `currentChanges`, etc.) — pipe that signal in so we pin
                 // the right lane regardless of how the message phrases it.
                 let intentLane = Self.laneForIntent(text: text)
-                let chosenLane = intentLane ?? tier.lane
+                // Tool-affinity bias: if the turn references an installed
+                // MCP tool name or strong tool-action verbs, prefer a
+                // capable lane (`.general` / `.reasoning`) over `.cheapSummary`
+                // so we don't ask the cheapest provider to drive a tool loop
+                // it can barely fire. Only consults the pool when the native
+                // tool loop is on AND there's at least one user MCP tool.
+                let toolLane: AITaskLane?
+                if Self.nativeToolLoopEnabled {
+                    let userTools = await MCPClientPool.shared.allUserTools()
+                    toolLane = Self.toolAffinityLane(text: text, userToolNames: userTools.map { $0.name })
+                } else {
+                    toolLane = nil
+                }
+                let chosenLane = toolLane ?? intentLane ?? tier.lane
                 // If the user attached at least one image, ask the
                 // orchestrator to bias Auto towards a vision-capable
                 // provider (Anthropic / OpenAI / Gemini / claudeCLI).
@@ -2409,6 +2422,48 @@ final class ChatService {
         case .lastCommit:
             return .general
         }
+    }
+
+    /// Tool-affinity routing: returns the lane Auto should prefer based
+    /// on whether the user turn is shaped like a tool-heavy request.
+    /// - Direct mention of an installed MCP tool name → `.general`
+    ///   (clear intent to dispatch; cheap-tier models often botch tool
+    ///   schemas / arg encoding).
+    /// - Reasoning / planning verbs ("debug", "why", "explain step", "plan",
+    ///   "architect", "compare") → `.reasoning` (multi-step inference
+    ///   benefits from frontier-class models).
+    /// - Generic action verbs ("search", "fetch", "run", "execute",
+    ///   "analyze", "review") → `.general`.
+    /// Returns nil for chitchat / trivial replies so the tier-driven
+    /// lane still applies.
+    nonisolated static func toolAffinityLane(text: String, userToolNames: [String]) -> AITaskLane? {
+        let lowered = text.lowercased()
+        // Direct tool-name mention wins.
+        for name in userToolNames {
+            let n = name.lowercased()
+            guard !n.isEmpty else { continue }
+            if lowered.range(of: n) != nil { return .general }
+        }
+        // Reasoning verbs win over generic action verbs.
+        let reasoningKeywords: [String] = [
+            "debug", "why is", "why does", "step by step", "step-by-step",
+            "architect", "design ", "design a ", "trade-off", "trade off",
+            "compare", "evaluate ", "reason about", "propose a plan"
+        ]
+        for kw in reasoningKeywords where lowered.range(of: kw) != nil {
+            return .reasoning
+        }
+        // Generic tool-action verbs.
+        let actionKeywords: [String] = [
+            "search ", "search for", "fetch ", "scrape ", "crawl ",
+            "run ", "execute ", "invoke ", "call the ",
+            "analyze ", "analyse ", "summarise", "summarize",
+            "review ", "audit ", "lint "
+        ]
+        for kw in actionKeywords where lowered.range(of: kw) != nil {
+            return .general
+        }
+        return nil
     }
 
     /// Test seam for the skill catalog block.
