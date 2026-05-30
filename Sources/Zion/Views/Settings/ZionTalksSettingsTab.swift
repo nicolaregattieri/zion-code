@@ -147,6 +147,7 @@ struct ZionTalksSettingsTab: View {
                 RAGSettingsSection(onReindex: nil)
                 SkillsSettingsSection()
                 MCPServersSettingsSection()
+                WebSearchSettingsSection()
                 ContextBudgetSection()
                 UsageSettingsSection()
 

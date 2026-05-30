@@ -3103,3 +3103,14 @@
 "chat.paste.skill.installed" = "Skill '%@' created";
 "chat.paste.skill.failed" = "Skill create failed · %@";
 "chat.mcp.warmFailed" = "MCP server failed to launch · %@";
+
+// MARK: - Phase 6.8 — Web search
+"settings.webSearch.title" = "Web search";
+"settings.webSearch.subtitle" = "Built-in web_search tool. Pick an engine and add your API key.";
+"settings.webSearch.engine" = "Engine";
+"settings.webSearch.apiKey" = "API key";
+"settings.webSearch.save" = "Save";
+"settings.webSearch.saved" = "Saved to Keychain.";
+"settings.webSearch.getKey" = "Get a %@ key";
+"settings.webSearch.searxng.url" = "Base URL";
+"settings.webSearch.alternative" = "Prefer an MCP server instead? Paste its config in chat — Zion's harness will route to it the same way.";
