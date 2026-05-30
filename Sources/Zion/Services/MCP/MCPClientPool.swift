@@ -54,8 +54,16 @@ actor MCPClientPool {
             if processes[config.id] != nil { continue }
             let proc = MCPServerProcess(config: config)
             do {
-                try await proc.launch()
-                let tools = try await proc.loadAdvertisedTools()
+                // Hard cap launch + tools/list at 10 s. Without this a
+                // server that never responds to `initialize` (cold npx
+                // install, broken stdio handshake) blocks the whole
+                // turn — and, worse, hangs `swift test` in CI when a
+                // test environment runs warm.
+                try await Self.withTimeout(seconds: 10) {
+                    try await proc.launch()
+                    _ = try await proc.loadAdvertisedTools()
+                }
+                let tools = await proc.advertisedTools
                 processes[config.id] = proc
                 for tool in tools {
                     // First server claiming a tool name wins; later
@@ -66,9 +74,25 @@ actor MCPClientPool {
                     }
                 }
             } catch {
+                await proc.terminate()
                 lastWarmErrors.append((serverID: config.id, message: error.localizedDescription))
                 continue
             }
+        }
+    }
+
+    /// Race a body against a deadline. Throws `MCPDispatchError.timeout`
+    /// when the body does not finish in time so the caller can recycle
+    /// the subprocess.
+    private static func withTimeout(seconds: Double, _ body: @escaping @Sendable () async throws -> Void) async throws {
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            group.addTask { try await body() }
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                throw MCPDispatchError.timeout
+            }
+            _ = try await group.next()
+            group.cancelAll()
         }
     }
 
