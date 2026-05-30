@@ -208,11 +208,12 @@ enum MCPConfigBuilder {
     /// `read` / `repo_map` / etc.
     static func allToolsIncludingUserServers(store: MCPRegistryStore?) async -> [MCPToolDescriptor] {
         let builtIn = allTools()
-        // P0 fix (audit 2026-05-29): the previous code branched on `store
-        // != nil` but tool loops always passed an ad-hoc `MCPRegistryStore()`
-        // whose servers list was empty (no `load()` call), so `warm` warmoed
-        // zero servers and user MCPs were silently invisible. Use the new
-        // disk-backed warm path which reads `~/.zion/mcp.json` directly.
+        // P0 fix (audit 2026-05-29): production callers pass a real store
+        // and expect `warmFromDisk` to spawn registered MCPs. Tests pass
+        // `nil` to opt out of the warm so they don't sit waiting for
+        // `npx -y …` to complete inside `swift test`. Honour the opt-out
+        // explicitly — built-ins only when `store == nil`.
+        guard store != nil else { return builtIn }
         await MCPClientPool.shared.warmFromDisk()
         let userTools = await MCPClientPool.shared.allUserTools()
         let builtInNames = Set(builtIn.map { $0.name })
@@ -387,10 +388,12 @@ enum MCPConfigBuilder {
 
 enum MCPDispatchError: Error, LocalizedError {
     case unknownTool(String)
+    case timeout
 
     var errorDescription: String? {
         switch self {
         case .unknownTool(let name): return "Unknown MCP tool: \(name)"
+        case .timeout: return "MCP server did not respond within the launch timeout"
         }
     }
 }
