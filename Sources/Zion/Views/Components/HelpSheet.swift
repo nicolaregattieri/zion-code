@@ -174,7 +174,21 @@ struct HelpSheet: View {
                 "help.chat.threadDrafts",
                 "help.chat.reviewSheet",
                 "help.chat.idleLocalHint",
-                "help.chat.inlineLocalSwap"
+                "help.chat.inlineLocalSwap",
+                "help.chat.pasteInstall",
+                "help.chat.mcpRuntimeDispatch",
+                "help.chat.cliMcpBridge",
+                "help.chat.skillCatalog",
+                "help.chat.mcpCatalog",
+                "help.chat.mcpRoutingInstructions",
+                "help.chat.skillTriggers",
+                "help.chat.useSkillTool",
+                "help.chat.nativeToolLoop",
+                "help.chat.intentLane",
+                "help.chat.toolAffinity",
+                "help.chat.webSearchBuiltIn",
+                "help.chat.webSearchEngines",
+                "help.chat.mcpLaunchFailures"
             ]
         }
     }

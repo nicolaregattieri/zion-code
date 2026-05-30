@@ -3118,3 +3118,48 @@
 // MARK: - Chat header meta
 "chat.thread.meta.message" = "message";
 "chat.thread.meta.messages" = "messages";
+
+// MARK: - Help (Phase 6 + v2.1.4)
+"help.chat.pasteInstall" = "Paste an MCP JSON config or a SKILL.md block into the composer — Zion installs it on the spot, no Settings round-trip.";
+"help.chat.mcpRuntimeDispatch" = "User-installed MCP servers run on demand via JSON-RPC stdio; their `tools/call` is dispatched by `MCPClientPool` and routed by name.";
+"help.chat.cliMcpBridge" = "Claude CLI / Codex CLI subprocesses get `--mcp-config` pointing at a merged file with `~/.zion/mcp.json` + the built-in `zion` seed.";
+"help.chat.skillCatalog" = "Every turn's system prompt lists installed skills (id + description) so the model knows what is available without memorisation.";
+"help.chat.mcpCatalog" = "Every turn's system prompt lists user-installed MCP servers so the model can name them in suggestions.";
+"help.chat.mcpRoutingInstructions" = "Servers that publish `result.instructions` in MCP `initialize` (context-mode, GitHub, …) have their routing guidance injected — no hardcode per vendor.";
+"help.chat.skillTriggers" = "`Skill.triggers` keywords trigger server-side auto-injection of the skill body when they appear in the user message (cap 3 per turn).";
+"help.chat.useSkillTool" = "The model can call `use_skill(id)` to activate an installed skill without you typing `/<slug>`. Body returned as a directive so OpenAI / Gemini / local also apply it.";
+"help.chat.nativeToolLoop" = "`chat.nativeToolLoop.enabled` runs a real Anthropic / OpenAI / Local / Gemini tool-use cycle: stream → tool_use → dispatch → tool_result → re-stream. Capped at 8 rounds.";
+"help.chat.intentLane" = "IntentClassifier output drives Auto-mode lane choice: `status` → cheap, `currentChanges` → review, `lastCommit` → general.";
+"help.chat.toolAffinity" = "Auto mode upgrades lane when the user names an installed MCP tool or uses reasoning verbs (`debug`, `step-by-step`, …).";
+"help.chat.webSearchBuiltIn" = "Built-in `web_search` tool every provider can call. Vendor-multiplexed (Tavily / Brave / Exa / SearXNG) so swapping engines is a Settings click.";
+"help.chat.webSearchEngines" = "Settings → Zion Talks → Web search lets you pick the engine, paste your API key, and link straight to the signup page.";
+"help.chat.mcpLaunchFailures" = "When a registered MCP server fails to launch (missing `npx`, bad command, init crash), a 6 s banner explains why instead of swallowing the error.";
+
+// MARK: - Map (Phase 6 + v2.1.4)
+"map.chat.pasteInstall.title" = "Paste-to-install";
+"map.chat.pasteInstall.description" = "MCP JSON or SKILL.md pasted into chat is detected by shape, persisted under `~/.zion/`, and surfaced via a transient banner.";
+"map.chat.mcpRuntimeDispatch.title" = "MCP runtime dispatch";
+"map.chat.mcpRuntimeDispatch.description" = "`MCPClientPool` spawns each enabled server lazily, captures advertised tools + initialize.instructions, and routes `tools/call` over stdio JSON-RPC.";
+"map.chat.cliMcpBridge.title" = "CLI MCP bridge";
+"map.chat.cliMcpBridge.description" = "`MCPConfigBuilder.build` writes the same MCP catalog into the temp config passed as `--mcp-config` to Claude Code / Codex CLI.";
+"map.chat.skillCatalog.title" = "Skill catalog in prompt";
+"map.chat.skillCatalog.description" = "System prompt gains an `Available skills` block (cap 30) listing each installed skill with description.";
+"map.chat.mcpCatalog.title" = "MCP catalog in prompt";
+"map.chat.mcpCatalog.description" = "System prompt gains an `Installed user MCP servers` block listing each registry entry.";
+"map.chat.mcpRoutingInstructions.title" = "MCP server routing instructions";
+"map.chat.mcpRoutingInstructions.description" = "Capture `result.instructions` from MCP `initialize` and inject as a system-prompt section so any compliant server is auto-routed.";
+"map.chat.skillTriggers.title" = "Skill triggers";
+"map.chat.skillTriggers.description" = "`Skill.triggers: [String]` are matched case-insensitively against the user message. Match → skill body appended to hidden context.";
+"map.chat.useSkillTool.title" = "`use_skill` tool";
+"map.chat.useSkillTool.description" = "Built-in tool the model can dispatch. Returns the skill body wrapped in an `Apply these instructions` directive so non-Anthropic providers behave too.";
+"map.chat.nativeToolLoop.title" = "Native tool-use loop";
+"map.chat.nativeToolLoop.description" = "Real tool-use cycle for Anthropic / OpenAI / Local / Gemini behind `chat.nativeToolLoop.enabled` (default off until validated).";
+"map.chat.intentLane.title" = "Intent-aware Auto";
+"map.chat.intentLane.description" = "`ChatService.laneForIntent(text:)` maps IntentClassifier output onto the orchestrator's lane before tier-based fallback.";
+"map.chat.toolAffinity.title" = "Tool-affinity lane bias";
+"map.chat.toolAffinity.description" = "Direct mention of an installed MCP tool name or reasoning verbs upgrades Auto's lane. Precedence: tool > intent > tier.";
+"map.chat.webSearchBuiltIn.title" = "Built-in web search";
+"map.chat.webSearchBuiltIn.description" = "`web_search(query, limit)` tool ships with every chat. Engine + key configured under Settings → Zion Talks → Web search.";
+"map.chat.webSearchBuiltIn.tip1" = "Privacy-first? Pick SearXNG (self-hosted) so queries never leave your machine.";
+"map.chat.mcpLaunchFailures.title" = "MCP launch failure surfacing";
+"map.chat.mcpLaunchFailures.description" = "`MCPClientPool.consumeWarmErrors` is surfaced as a transient banner whenever a registered server cannot spawn.";

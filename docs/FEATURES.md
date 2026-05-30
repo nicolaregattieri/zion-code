@@ -620,3 +620,43 @@ Polish wave from PRs #475 – #492. Each item below was a real user friction rep
 - **Inline local model swap** — A `Local model` menu next to the provider chip lists every discovered local model with size; picking one stops the running server and hot-restarts with the new model, no Settings round-trip.
 - **/mcp split** — `/mcp` now separates "Custom MCP servers" (user-installed) from "Zion harness tools (built-in)" so users no longer mistake the bundled tools for third-party servers.
 - **Settings prune** — Routing & Safety toggles (`subscriptionFailover`, `allowEdits`) flipped to opt-out defaults and surfaced as visible Switch toggles with hints. Tool Bridge toggle UI removed (hardcoded ON), duplicate CLI failover deduped between AI tab and Zion Talks tab, dead `chat.toolsEnabled` toggle removed. Power-user Zion Talks sections (Agentic / Smart Context / Skills / MCP / Budget / Usage / Routing) now hide behind a persistent "Advanced settings" disclosure.
+
+### Extensibility — MCP & Skills (v2.1.4)
+
+Phase 6 wave (#525 – #535). Lifts Zion from "advertise tools" to "model actually calls them" across every provider, and makes installation work without leaving the chat.
+
+- **Paste-to-install MCP** — Paste a standard MCP JSON config (`{mcpServers:{…}}`, single-named, or `{id,command,args}`) into the composer. Zion detects the shape, writes `~/.zion/mcp.json`, and surfaces a transient banner so the server appears in `/mcp` on the next turn.
+- **Paste-to-install Skill** — Paste a `SKILL.md` frontmatter+body block; Zion creates `<scope>/.zion/skills/<slug>/SKILL.md` with the right path layout and reloads `SkillIndex` immediately.
+- **`install_mcp_server` tool** — Model-callable built-in. Natural-language requests like "instala o filesystem MCP em /tmp" land via this tool — no Settings round-trip.
+- **`create_skill` tool** — Model-callable built-in. Asking "salva esse fluxo como skill" wraps the recent turn into a fresh `.zion/skills/<slug>/SKILL.md`.
+- **`use_skill` tool** — Model can request an installed skill by id without the user typing `/<slug>`. Dispatch returns the skill body framed as an authoritative directive so OpenAI / Gemini / local also apply it (not just Anthropic).
+- **Skill catalog in system prompt** — Every turn surfaces an `Available skills` block (id + description, cap 30) so the model knows what is installed without memorisation.
+- **MCP catalog in system prompt** — Every turn surfaces an `Installed user MCP servers` block listing each registered server from `~/.zion/mcp.json` (excluding the built-in `zion` seed).
+- **MCP routing instructions from `initialize`** — Servers that publish `result.instructions` (per MCP spec — context-mode, GitHub, Linear, …) have their guidance injected as `## MCP server routing instructions` so the model picks the right tool from natural-language intent without learning tool names.
+- **Skill triggers auto-injection** — `Skill.triggers: [String]` is honoured server-side. When any trigger keyword is a case-insensitive substring of the user message, the skill body is appended to `hiddenContext` (cap 3 per turn).
+- **Native MCP runtime dispatch** — `MCPClientPool` actor spawns each enabled server lazily (`npx -y …` etc.), queries `tools/list`, captures `initialize.instructions`, and routes `tools/call` over JSON-RPC stdio. Built-in tools take precedence by name so a user server cannot shadow `bash` / `read_file` / `repo_map`.
+- **CLI MCP bridge** — Spawning Claude CLI / Codex CLI subprocesses now writes a `--mcp-config` file that merges `~/.zion/mcp.json` alongside the built-in `zion` seed. The same catalog the native chat sees is now visible to CLI sessions.
+- **Native tool-use loop (all providers)** — `chat.nativeToolLoop.enabled` flag drives a real tool-use cycle for Anthropic, OpenAI, Local (OpenAI-compat), and Gemini: stream → tool_use → MCPClientPool dispatch → tool_result → re-stream. Capped at 8 rounds.
+- **Intent-aware Auto routing** — `IntentClassifier` output (`status` / `currentChanges` / `lastCommit` / …) feeds the orchestrator lane in Auto mode. Status checks no longer escalate to a reasoning provider; diff reviews no longer fall to the cheap tier.
+- **Tool-affinity Auto bias** — Auto mode upgrades lane when the user message names an installed MCP tool or uses reasoning verbs (`debug`, `step-by-step`, …). Tier-driven fallback remains for chitchat. Precedence: tool > intent > tier.
+- **MCP launch failure surfacing** — A failed `npx`/binary launch is no longer silent: `MCPClientPool` captures the error and surfaces a 6 s transient banner ("MCP server failed to launch · <id> (<reason>)") so users see why a tool stayed unreachable.
+
+### Web search
+
+- **Built-in `web_search` tool** — Vendor-multiplexed dispatcher available to every provider. The model emits `tool_use` with `{query, limit}`, Zion routes to the engine the user picked, returns the top results as Markdown bullets.
+- **Engine picker (Settings → Zion Talks → Web search)** — Tavily (default, free 1 k/mo), Brave, Exa, or self-hosted SearXNG (no third-party round-trip). Keys live in Keychain per engine. Signup deeplinks built-in.
+- **Graceful no-key fallback** — When no API key is configured, the dispatcher returns a structured error marker that points the model + the user at Settings → Web Search or at installing an MCP search server instead.
+
+### Chat UI redesign (v2.1.4)
+
+- **Quieter conversation surface** — Brand purple reserved for the send button. User bubbles use a subtle 10 %-opacity tint + 0.5 px hairline border (not a saturated gradient). User bubble max width 440 pt so long URLs no longer stretch coast-to-coast.
+- **Borderless assistant flow** — Persistent sparkle avatar + per-message role label removed (Anthropic / Apple Messages convention). Conversations read as one thread, not a list of cards.
+- **Thread title in page header** — Replaces the static `Zion Talks / Chat with your repository.` chrome with the active thread's title + message count.
+- **Quiet meter strip** — Token + cost counters demoted to a hairline strip; the redundant "Conversation" card label dropped.
+- **Slimmer composer action row** — Bash pill, local-swap menu, and `New chat` button folded into the `…` overflow. Provider + model picker stay visible because they answer "what will respond?".
+- **Stable copy button** — Copy lives next to the assistant text at 0.55 opacity with its own self-contained hover. No layout jump when the cursor reaches for it, no cursor-lose-target dance, no recompose of `AssistantMarkdown` on hover.
+
+### Stability fixes (v2.1.4)
+
+- **Composer draft preserved across async thread load** — Typing in a brand-new project no longer drops the first message: when `ChatService.reloadFromStorage` flips `activeThreadID` from the bootstrap UUID to the freshly-loaded thread, the in-flight composer text is carried over instead of wiped (#528).
+- **Triple-click no longer empties assistant messages** — `.textSelection(.enabled)` removed from the prose renderer to dodge the macOS 14/15 SwiftUI Text regression that cleared the AppKit text-storage backing on multi-click. Code blocks keep selection — they use a different rendering path that is not affected (#537).

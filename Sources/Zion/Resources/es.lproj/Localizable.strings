@@ -3142,3 +3142,48 @@
 // MARK: - Chat header meta
 "chat.thread.meta.message" = "mensaje";
 "chat.thread.meta.messages" = "mensajes";
+
+// MARK: - Help (Phase 6 + v2.1.4)
+"help.chat.pasteInstall" = "Pega un JSON de MCP o un bloque SKILL.md en el composer — Zion lo instala al toque, sin pasar por Configuración.";
+"help.chat.mcpRuntimeDispatch" = "Los servidores MCP instalados se ejecutan bajo demanda vía JSON-RPC stdio; `MCPClientPool` despacha el `tools/call`.";
+"help.chat.cliMcpBridge" = "Los subprocesos Claude CLI / Codex CLI reciben `--mcp-config` apuntando a un archivo que mezcla `~/.zion/mcp.json` con el seed `zion`.";
+"help.chat.skillCatalog" = "Cada turno lista las skills instaladas en el system prompt (id + descripción) para que el modelo sepa qué hay sin memorizar.";
+"help.chat.mcpCatalog" = "Cada turno lista los servidores MCP del usuario en el system prompt para que el modelo los nombre en sugerencias.";
+"help.chat.mcpRoutingInstructions" = "Servidores que publican `result.instructions` en `initialize` (context-mode, GitHub, …) tienen su guía inyectada — sin hardcode por vendor.";
+"help.chat.skillTriggers" = "Las palabras clave en `Skill.triggers` disparan la inyección del cuerpo de la skill cuando aparecen en el mensaje (límite 3 por turno).";
+"help.chat.useSkillTool" = "El modelo puede llamar `use_skill(id)` para activar una skill sin que escribas `/<slug>`. El cuerpo vuelve con framing de directiva para que OpenAI / Gemini / local también lo apliquen.";
+"help.chat.nativeToolLoop" = "`chat.nativeToolLoop.enabled` activa el ciclo real de tool-use en Anthropic / OpenAI / Local / Gemini: stream → tool_use → dispatch → tool_result → re-stream. Tope 8 rounds.";
+"help.chat.intentLane" = "La salida del IntentClassifier define el carril del Auto: `status` → cheap, `currentChanges` → review, `lastCommit` → general.";
+"help.chat.toolAffinity" = "Auto sube el carril cuando el usuario nombra una tool MCP o usa verbos de razonamiento (`debug`, `step-by-step`, …).";
+"help.chat.webSearchBuiltIn" = "Tool `web_search` nativa, llamable por cualquier proveedor. Multiplexada (Tavily / Brave / Exa / SearXNG) — cambiar engine es un clic en Configuración.";
+"help.chat.webSearchEngines" = "Configuración → Zion Talks → Búsqueda web permite elegir engine, pegar la API key y abrir el signup.";
+"help.chat.mcpLaunchFailures" = "Cuando un servidor MCP no arranca (sin `npx`, comando malo, crash de init), un banner de 6 s explica por qué en vez de tragarse el error.";
+
+// MARK: - Map (Phase 6 + v2.1.4)
+"map.chat.pasteInstall.title" = "Paste-to-install";
+"map.chat.pasteInstall.description" = "JSON de MCP o SKILL.md pegado en el chat se detecta por forma, se persiste en `~/.zion/` y se anuncia con un banner transitorio.";
+"map.chat.mcpRuntimeDispatch.title" = "Dispatch MCP en runtime";
+"map.chat.mcpRuntimeDispatch.description" = "`MCPClientPool` levanta cada server habilitado bajo demanda, captura `tools/list` + `initialize.instructions` y enruta `tools/call` por stdio JSON-RPC.";
+"map.chat.cliMcpBridge.title" = "Puente MCP para CLI";
+"map.chat.cliMcpBridge.description" = "`MCPConfigBuilder.build` escribe el mismo catálogo MCP en el archivo temp pasado como `--mcp-config` a Claude Code / Codex CLI.";
+"map.chat.skillCatalog.title" = "Catálogo de skills en el prompt";
+"map.chat.skillCatalog.description" = "El system prompt gana un bloque `Available skills` (cap 30) con cada skill instalada y su descripción.";
+"map.chat.mcpCatalog.title" = "Catálogo MCP en el prompt";
+"map.chat.mcpCatalog.description" = "El system prompt gana un bloque `Installed user MCP servers` con cada entrada del registry.";
+"map.chat.mcpRoutingInstructions.title" = "Routing instructions del MCP";
+"map.chat.mcpRoutingInstructions.description" = "Captura `result.instructions` del `initialize` MCP e inyecta en el system prompt — cualquier server compliant queda auto-enrutado.";
+"map.chat.skillTriggers.title" = "Skill triggers";
+"map.chat.skillTriggers.description" = "`Skill.triggers: [String]` se cotejan sin distinguir mayúsculas contra el mensaje — match → cuerpo de la skill anexado al hidden context.";
+"map.chat.useSkillTool.title" = "Tool `use_skill`";
+"map.chat.useSkillTool.description" = "Tool built-in que el modelo despacha. Devuelve el cuerpo de la skill envuelto en una directiva `Apply these instructions` para que también respondan providers no-Anthropic.";
+"map.chat.nativeToolLoop.title" = "Loop nativo de tool-use";
+"map.chat.nativeToolLoop.description" = "Ciclo real para Anthropic / OpenAI / Local / Gemini detrás del flag `chat.nativeToolLoop.enabled` (default off hasta validación).";
+"map.chat.intentLane.title" = "Auto consciente de intención";
+"map.chat.intentLane.description" = "`ChatService.laneForIntent(text:)` mapea la salida del IntentClassifier sobre el carril antes del fallback por tier.";
+"map.chat.toolAffinity.title" = "Bias por afinidad de tool";
+"map.chat.toolAffinity.description" = "Mencionar una tool MCP o usar verbos de razonamiento sube el carril del Auto. Orden: tool > intent > tier.";
+"map.chat.webSearchBuiltIn.title" = "Búsqueda web nativa";
+"map.chat.webSearchBuiltIn.description" = "Tool `web_search(query, limit)` en todo chat. Engine + key configurados en Configuración → Zion Talks → Búsqueda web.";
+"map.chat.webSearchBuiltIn.tip1" = "¿Privacidad? Elige SearXNG self-hosted — las queries no salen de tu máquina.";
+"map.chat.mcpLaunchFailures.title" = "Errores de launch MCP visibles";
+"map.chat.mcpLaunchFailures.description" = "`MCPClientPool.consumeWarmErrors` se muestra como banner transitorio cuando un server registrado no arranca.";
