@@ -22,6 +22,14 @@ actor MCPServerProcess {
     /// Tools published by the server after `initialize` + `tools/list`.
     private(set) var advertisedTools: [MCPToolDescriptor] = []
 
+    /// Server-level routing instructions captured from the `initialize`
+    /// response (`result.instructions` field per MCP spec). Many servers
+    /// — context-mode, GitHub, Linear, etc. — ship a routing block here
+    /// explaining when to prefer their tools over generic Read/Bash/etc.
+    /// Surfaced in the chat system prompt so the model picks the right
+    /// tool without the user memorising names.
+    private(set) var serverInstructions: String = ""
+
     // MARK: - Test injection
     /// When set, called instead of spawning a real subprocess.
     /// The override receives the config and may set status directly via the actor.
@@ -153,11 +161,16 @@ actor MCPServerProcess {
     @discardableResult
     func loadAdvertisedTools() async throws -> [MCPToolDescriptor] {
         if !advertisedTools.isEmpty { return advertisedTools }
-        _ = try? await sendRequest(method: "initialize", params: [
+        let initResult = try? await sendRequest(method: "initialize", params: [
             "protocolVersion": "2024-11-05",
             "clientInfo": ["name": "Zion", "version": "1.0"],
             "capabilities": [:] as [String: Any]
         ])
+        if let initDict = initResult as? [String: Any],
+           let instr = initDict["instructions"] as? String,
+           !instr.isEmpty {
+            serverInstructions = instr
+        }
         let raw = try await sendRequest(method: "tools/list")
         guard let dict = raw as? [String: Any],
               let toolsArray = dict["tools"] as? [[String: Any]] else {

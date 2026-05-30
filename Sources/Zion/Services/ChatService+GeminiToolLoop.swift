@@ -21,6 +21,7 @@ extension ChatService {
             store: MCPRegistryStore()
         )
         await self.surfaceMCPWarmErrorsIfAny()
+        await self.refreshMCPRoutingInstructions()
         let geminiTools = ToolSchemaTranslator.translate(toolDescriptors, for: .gemini)
 
         // First step: send the rendered user prompt with no history. Empty

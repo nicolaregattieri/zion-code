@@ -24,6 +24,7 @@ extension ChatService {
             store: MCPRegistryStore()
         )
         await self.surfaceMCPWarmErrorsIfAny()
+        await self.refreshMCPRoutingInstructions()
         let openAITools = ToolSchemaTranslator.translate(toolDescriptors, for: .openai)
 
         var additionalMessages: [[String: Any]] = []

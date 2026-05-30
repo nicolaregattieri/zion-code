@@ -108,6 +108,19 @@ actor MCPClientPool {
         return errs
     }
 
+    /// Per-server routing instructions captured during `initialize`.
+    /// Surfaced in the chat system prompt so the model knows when to
+    /// call each MCP's tools without the user memorising names.
+    func allServerInstructions() async -> [(serverID: String, instructions: String)] {
+        var out: [(String, String)] = []
+        for (id, proc) in processes {
+            let instr = await proc.serverInstructions
+            guard !instr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { continue }
+            out.append((id, instr))
+        }
+        return out.sorted { $0.0 < $1.0 }
+    }
+
     /// All tools advertised across every running user server. Order
     /// matches registration order; duplicates dropped.
     func allUserTools() async -> [MCPToolDescriptor] {
