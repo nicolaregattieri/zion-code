@@ -156,7 +156,8 @@ enum MCPConfigBuilder {
             retrieveMoreDescriptor(),
             installMCPServerDescriptor(),
             createSkillDescriptor(),
-            useSkillDescriptor()
+            useSkillDescriptor(),
+            webSearchDescriptor()
         ]
         if bashToolEnabled {
             tools.append(bashToolDescriptorTyped())
@@ -244,6 +245,8 @@ enum MCPConfigBuilder {
             return try await dispatchCreateSkill(args: args)
         case "use_skill":
             return try await dispatchUseSkill(args: args)
+        case "web_search":
+            return try await dispatchWebSearch(args: args)
         default:
             let data = try JSONSerialization.data(withJSONObject: args)
             let safe = (try JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? [:]
