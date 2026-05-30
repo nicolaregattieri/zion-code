@@ -371,6 +371,20 @@ struct ZionMapContent {
                 ZionMapEntry("map.chat.smartAutoOnboarding.title", description: "map.chat.smartAutoOnboarding.description"),
                 ZionMapEntry("map.chat.mentionAutocomplete.title", description: "map.chat.mentionAutocomplete.description"),
                 ZionMapEntry("map.chat.fontSize.title", description: "map.chat.fontSize.description"),
+                ZionMapEntry("map.chat.pasteInstall.title", description: "map.chat.pasteInstall.description"),
+                ZionMapEntry("map.chat.mcpRuntimeDispatch.title", description: "map.chat.mcpRuntimeDispatch.description"),
+                ZionMapEntry("map.chat.cliMcpBridge.title", description: "map.chat.cliMcpBridge.description"),
+                ZionMapEntry("map.chat.skillCatalog.title", description: "map.chat.skillCatalog.description"),
+                ZionMapEntry("map.chat.mcpCatalog.title", description: "map.chat.mcpCatalog.description"),
+                ZionMapEntry("map.chat.mcpRoutingInstructions.title", description: "map.chat.mcpRoutingInstructions.description"),
+                ZionMapEntry("map.chat.skillTriggers.title", description: "map.chat.skillTriggers.description"),
+                ZionMapEntry("map.chat.useSkillTool.title", description: "map.chat.useSkillTool.description"),
+                ZionMapEntry("map.chat.nativeToolLoop.title", description: "map.chat.nativeToolLoop.description"),
+                ZionMapEntry("map.chat.intentLane.title", description: "map.chat.intentLane.description"),
+                ZionMapEntry("map.chat.toolAffinity.title", description: "map.chat.toolAffinity.description"),
+                ZionMapEntry("map.chat.webSearchBuiltIn.title", description: "map.chat.webSearchBuiltIn.description",
+                             tips: ["map.chat.webSearchBuiltIn.tip1"]),
+                ZionMapEntry("map.chat.mcpLaunchFailures.title", description: "map.chat.mcpLaunchFailures.description"),
             ]
         }
     }
