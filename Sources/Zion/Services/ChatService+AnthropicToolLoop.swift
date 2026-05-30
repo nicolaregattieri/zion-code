@@ -43,6 +43,7 @@ extension ChatService {
             store: MCPRegistryStore()
         )
         await self.surfaceMCPWarmErrorsIfAny()
+        await self.refreshMCPRoutingInstructions()
         let anthropicTools = ToolSchemaTranslator.translate(toolDescriptors, for: .anthropic)
 
         var additionalMessages: [[String: Any]] = []

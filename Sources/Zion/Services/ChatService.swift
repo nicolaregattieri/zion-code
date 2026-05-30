@@ -900,6 +900,15 @@ final class ChatService {
                 ? providerInputText
                 : mentionPayload.systemContext + "\n\n" + providerInputText
 
+            // Pre-warm MCP pool when the native tool loop is on so the
+            // initialize.instructions field from each server is captured
+            // BEFORE we build the system prompt. Without this the routing
+            // block in the prompt is empty on the first turn and the
+            // model has no idea when to reach for context-mode / etc.
+            if Self.nativeToolLoopEnabled {
+                _ = await MCPConfigBuilder.allToolsIncludingUserServers(store: MCPRegistryStore())
+                await self.refreshMCPRoutingInstructions()
+            }
             var payload = makePayload(for: enrichedText, provider: resolved)
             payload.cwd = repoURL
             // Forward image attachments to providers that support vision
@@ -2321,6 +2330,7 @@ final class ChatService {
             + Self.branchAwarenessAppendix(branch: activeBranch)
             + Self.skillCatalogAppendix(skills: SkillIndex.shared.skills)
             + Self.userMCPCatalogAppendix()
+            + self.mcpRoutingInstructionsBlock
         return AIClient.makePromptPayload(
             task: "Chat",
             taskInstructions: base,
@@ -2333,6 +2343,34 @@ final class ChatService {
                 )
             ]
         )
+    }
+
+    /// Cached server-level routing instructions captured from each MCP's
+    /// `initialize` response. Refreshed by `refreshMCPRoutingInstructions`
+    /// after every warm so the model picks the right tool without the
+    /// user needing to memorise tool names.
+    var mcpRoutingInstructionsBlock: String = ""
+
+    /// Pulls latest `initialize.instructions` per running server from
+    /// `MCPClientPool` and bakes them into the system-prompt extension
+    /// string `mcpRoutingInstructionsBlock`. Called after each warm.
+    func refreshMCPRoutingInstructions() async {
+        let entries = await MCPClientPool.shared.allServerInstructions()
+        guard !entries.isEmpty else {
+            mcpRoutingInstructionsBlock = ""
+            return
+        }
+        var lines: [String] = []
+        lines.append("")
+        lines.append("")
+        lines.append("## MCP server routing instructions")
+        lines.append("Each installed MCP advertises its own routing guidance below. Use these to decide WHEN to reach for a server's tools instead of generic `bash` / `read_file` / `web_fetch`. Do NOT ask the user to name a tool — pick the right one based on the guidance.")
+        for entry in entries {
+            lines.append("")
+            lines.append("### \(entry.serverID)")
+            lines.append(entry.instructions)
+        }
+        mcpRoutingInstructionsBlock = lines.joined(separator: "\n")
     }
 
     /// Phase 6.2 — appends branch-awareness guidance to the assistant
