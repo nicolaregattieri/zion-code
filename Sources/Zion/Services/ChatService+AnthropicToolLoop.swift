@@ -39,6 +39,7 @@ extension ChatService {
         threadID: UUID,
         provider: AIProvider
     ) async throws {
+        await MCPClientPool.shared.warmFromDisk()
         let toolDescriptors = await MCPConfigBuilder.allToolsIncludingUserServers(
             store: MCPRegistryStore()
         )

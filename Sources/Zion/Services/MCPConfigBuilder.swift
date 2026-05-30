@@ -208,16 +208,17 @@ enum MCPConfigBuilder {
     /// `read` / `repo_map` / etc.
     static func allToolsIncludingUserServers(store: MCPRegistryStore?) async -> [MCPToolDescriptor] {
         let builtIn = allTools()
-        // P0 fix (audit 2026-05-29): production callers pass a real store
-        // and expect `warmFromDisk` to spawn registered MCPs. Tests pass
-        // `nil` to opt out of the warm so they don't sit waiting for
-        // `npx -y …` to complete inside `swift test`. Honour the opt-out
-        // explicitly — built-ins only when `store == nil`.
-        guard store != nil else { return builtIn }
-        await MCPClientPool.shared.warmFromDisk()
+        // Read whatever the pool currently has. Production callers are
+        // expected to pre-warm the pool explicitly via
+        // `MCPClientPool.shared.warmFromDisk()` (see ChatService.send)
+        // because a synchronous warm inside this function deadlocked
+        // `swift test --quiet` when a registered MCP did not respond to
+        // `initialize` in time. Read-only behaviour here keeps the
+        // accessor safe for unit tests and quick UI surveys.
         let userTools = await MCPClientPool.shared.allUserTools()
         let builtInNames = Set(builtIn.map { $0.name })
         let merged = builtIn + userTools.filter { !builtInNames.contains($0.name) }
+        _ = store // intentionally unused — kept for callers that still pass it.
         return merged
     }
 

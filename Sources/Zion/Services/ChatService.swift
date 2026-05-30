@@ -919,6 +919,7 @@ final class ChatService {
             // block in the prompt is empty on the first turn and the
             // model has no idea when to reach for context-mode / etc.
             if Self.nativeToolLoopEnabled {
+                await MCPClientPool.shared.warmFromDisk()
                 _ = await MCPConfigBuilder.allToolsIncludingUserServers(store: MCPRegistryStore())
                 await self.refreshMCPRoutingInstructions()
             }
