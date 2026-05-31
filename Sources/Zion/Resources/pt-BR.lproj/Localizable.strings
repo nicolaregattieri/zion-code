@@ -3171,3 +3171,4 @@
 "chat.beta.notice.body" = "Zion Talks é uma superfície experimental de chat com IA. Você pode usar, mas espere arestas: instabilidades, crashes ocasionais, particularidades no ciclo de vida dos modelos e mudanças de comportamento entre versões. Seu feedback guia as próximas iterações.";
 "chat.beta.notice.understood" = "Entendi e quero continuar.";
 "chat.beta.notice.continue" = "Continuar";
+"chat.beta.notice.reportLink" = "Reportar um problema no GitHub";

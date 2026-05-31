@@ -26,6 +26,10 @@ struct ChatBetaNoticeSheet: View {
                 .foregroundStyle(DesignSystem.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
+            Link(L10n("chat.beta.notice.reportLink"),
+                 destination: URL(string: "https://github.com/nicolaregattieri/zion-code/issues")!)
+                .font(DesignSystem.Typography.body)
+
             Button {
                 understood.toggle()
             } label: {
