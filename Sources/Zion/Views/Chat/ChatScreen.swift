@@ -26,6 +26,8 @@ struct ChatScreen: View {
     @Environment(\.zionActiveSection) private var activeSection: AppSection?
 
     @AppStorage("chat.threadListVisible") private var threadListVisible: Bool = true
+    @AppStorage("chat.betaNoticeAcknowledged") private var betaNoticeAcknowledged: Bool = false
+    @State private var showBetaNotice: Bool = false
     @AppStorage(ZionTalksAppearance.fontSizeKey) private var fontSizePx: Int = ZionTalksAppearance.defaultFontSizePx
     @AppStorage(ZionTalksAppearance.lineSpacingKey) private var lineSpacingPx: Int = ZionTalksAppearance.defaultLineSpacingPx
 
@@ -53,6 +55,12 @@ struct ChatScreen: View {
         .padding(.bottom, 12)
         .environment(\.chatFontSizePx, fontSizePx)
         .environment(\.chatLineSpacingPx, lineSpacingPx)
+        .onAppear {
+            if !betaNoticeAcknowledged { showBetaNotice = true }
+        }
+        .sheet(isPresented: $showBetaNotice) {
+            ChatBetaNoticeSheet(isPresented: $showBetaNotice)
+        }
         .onChange(of: activeSection) { _, newSection in
             // ChatScreen stays mounted (ZStack-overlay layout) when the user
             // switches to Code / Graph / Operations. Pause the memory monitor

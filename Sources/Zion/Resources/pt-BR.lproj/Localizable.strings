@@ -3165,3 +3165,9 @@
 "map.chat.webSearchBuiltIn.tip1" = "Quer privacidade? Escolha SearXNG self-hosted — queries não saem da sua máquina.";
 "map.chat.mcpLaunchFailures.title" = "Falhas de launch MCP visíveis";
 "map.chat.mcpLaunchFailures.description" = "`MCPClientPool.consumeWarmErrors` vira banner transiente quando um server registrado não sobe.";
+
+// MARK: - Chat beta notice
+"chat.beta.notice.title" = "Zion Talks está em beta";
+"chat.beta.notice.body" = "Zion Talks é uma superfície experimental de chat com IA. Você pode usar, mas espere arestas: instabilidades, crashes ocasionais, particularidades no ciclo de vida dos modelos e mudanças de comportamento entre versões. Seu feedback guia as próximas iterações.";
+"chat.beta.notice.understood" = "Entendi e quero continuar.";
+"chat.beta.notice.continue" = "Continuar";
