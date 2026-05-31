@@ -366,6 +366,8 @@ struct ZionMapContent {
                 ZionMapEntry("map.chat.localModelDiscovery.title", description: "map.chat.localModelDiscovery.description"),
                 ZionMapEntry("map.chat.localServerStatus.title", description: "map.chat.localServerStatus.description"),
                 ZionMapEntry("map.chat.localAutoStartBanner.title", description: "map.chat.localAutoStartBanner.description"),
+                ZionMapEntry("map.chat.localServerLifecycle.title", description: "map.chat.localServerLifecycle.description"),
+                ZionMapEntry("map.chat.betaNotice.title", description: "map.chat.betaNotice.description"),
                 ZionMapEntry("map.chat.perThreadStreaming.title", description: "map.chat.perThreadStreaming.description"),
                 ZionMapEntry("map.chat.planXmlStrip.title", description: "map.chat.planXmlStrip.description"),
                 ZionMapEntry("map.chat.smartAutoOnboarding.title", description: "map.chat.smartAutoOnboarding.description"),

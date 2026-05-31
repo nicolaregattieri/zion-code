@@ -3172,3 +3172,11 @@
 "chat.beta.notice.understood" = "Entendi e quero continuar.";
 "chat.beta.notice.continue" = "Continuar";
 "chat.beta.notice.reportLink" = "Reportar um problema no GitHub";
+
+// MARK: - Ciclo de vida do servidor local + aviso beta
+"help.chat.localServerLifecycle" = "Ciclo de vida do servidor local — SIGTERM no Cmd+Q, varredura de órfãos no boot e watchdog ocioso de 10 minutos desligam o servidor de modelo local quando você não está usando.";
+"help.chat.betaNotice" = "Aviso de beta aparece na primeira vez que você abre o Chat. Repete a cada nova entrada até você marcar Entendi.";
+"map.chat.localServerLifecycle.title" = "Ciclo de vida do servidor local";
+"map.chat.localServerLifecycle.description" = "Três camadas evitam que o servidor LLM local (mlx_lm.server, ollama, llama-server, lms) sobreviva ao Zion: cleanup no applicationWillTerminate, varredura de órfãos no launch e watchdog ocioso. Configure o timeout via chat.local.idleTimeoutMinutes (0 desliga).";
+"map.chat.betaNotice.title" = "Confirmação de beta";
+"map.chat.betaNotice.description" = "Primeira entrada na seção Chat mostra um aviso único de que Zion Talks é experimental. Continuar fica desabilitado até marcar Entendi. Inclui link para GitHub Issues para feedback.";
