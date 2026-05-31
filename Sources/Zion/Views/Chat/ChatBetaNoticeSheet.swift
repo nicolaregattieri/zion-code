@@ -26,11 +26,21 @@ struct ChatBetaNoticeSheet: View {
                 .foregroundStyle(DesignSystem.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Toggle(isOn: $understood) {
-                Text(L10n("chat.beta.notice.understood"))
-                    .font(DesignSystem.Typography.body)
+            Button {
+                understood.toggle()
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: understood ? "checkmark.square.fill" : "square")
+                        .font(.system(size: 16))
+                        .foregroundStyle(understood ? DesignSystem.Colors.ai : DesignSystem.Colors.textSecondary)
+                    Text(L10n("chat.beta.notice.understood"))
+                        .font(DesignSystem.Typography.body)
+                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                    Spacer()
+                }
+                .contentShape(Rectangle())
             }
-            .toggleStyle(.checkbox)
+            .buttonStyle(.plain)
 
             HStack {
                 Spacer()

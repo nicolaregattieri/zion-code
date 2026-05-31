@@ -55,9 +55,6 @@ struct ChatScreen: View {
         .padding(.bottom, 12)
         .environment(\.chatFontSizePx, fontSizePx)
         .environment(\.chatLineSpacingPx, lineSpacingPx)
-        .onAppear {
-            if !betaNoticeAcknowledged { showBetaNotice = true }
-        }
         .sheet(isPresented: $showBetaNotice) {
             ChatBetaNoticeSheet(isPresented: $showBetaNotice)
         }
@@ -67,6 +64,10 @@ struct ChatScreen: View {
             // poll loop while we're off-screen so we don't spawn `lsof`/`ps`
             // subprocesses every 5s for a UI nobody is looking at.
             if newSection == .chat {
+                // Beta acknowledgement: only when the user actually enters
+                // the Chat section. Re-prompt every time until they tick
+                // the "I understand" box.
+                if !betaNoticeAcknowledged { showBetaNotice = true }
                 memoryMonitor.resume()
             } else {
                 memoryMonitor.pause()
