@@ -1118,6 +1118,10 @@ final class ChatService {
         let maxTokens = 2048
         let threadID = activeThreadID
 
+        // Mark the local server as in-use so the idle watchdog will not
+        // SIGTERM it mid-conversation. Reset on every turn aimed locally.
+        await MainActor.run { LocalServerIdleSentinel.shared.noteActivity() }
+
         // Skip auto-spawn when the user disconnected this session — clicking
         // Disconnect must STOP meaning "stop", not "stop + resurrect on next
         // turn".

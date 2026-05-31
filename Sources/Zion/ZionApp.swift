@@ -292,6 +292,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // the NSWindow titlebar when `topbar.systemMonitor.enabled` is on.
         TitlebarSystemMonitorManager.shared.install()
 
+        // Belt-and-suspenders cleanup: applicationWillTerminate cannot fire
+        // after a crash / force-quit / OS kill, so a prior session can leave
+        // a multi-GB mlx_lm.server / ollama / llama-server orphaned on its
+        // configured port. Sweep on launch — only argv matching known
+        // Zion-spawned engines are stopped.
+        LocalServerLauncher.sweepOrphanedServerOnLaunch()
+
         // Hosting credential migrations
         HostingCredentialStore.migrateFromUserDefaults()
         HostingAccountStore.migrateFromSingleAccount()
@@ -305,6 +312,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         ClipboardMonitor.cleanupAllTempFiles()
+        // Avoid orphaning the local LLM server (mlx_lm.server / ollama /
+        // llama-server / lms). It was spawned with stdio detached so it
+        // outlives Zion crashes; we explicitly SIGTERM here on clean quit.
+        LocalServerLauncher.stopActiveConfigSync()
     }
 
     private func registerFonts() {

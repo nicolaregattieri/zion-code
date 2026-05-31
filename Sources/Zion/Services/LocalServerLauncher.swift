@@ -257,6 +257,106 @@ actor LocalServerLauncher {
         return .stopped(pid: pid)
     }
 
+    // MARK: - Orphan sweep (launch)
+
+    /// Best-effort SIGTERM of a local LLM server that survived a previous
+    /// Zion session (crash, force-quit, OS kill) and is still holding the
+    /// port the user has saved in `LocalLLMConfig`.
+    ///
+    /// We refuse to kill arbitrary listeners — `ps` is consulted and the
+    /// process is only stopped if its argv matches one of the engines
+    /// Zion knows how to spawn (`mlx_lm.server`, `ollama serve`,
+    /// `llama-server`, `lms server`). Anything else is assumed to be a
+    /// user-managed server and left alone.
+    @MainActor
+    static func sweepOrphanedServerOnLaunch() {
+        guard let config = AIClient.loadLocalConfig(),
+              let port = URL(string: config.serverURL)?.port else { return }
+
+        let lsof = "/usr/sbin/lsof"
+        let ps = "/bin/ps"
+        guard FileManager.default.isExecutableFile(atPath: lsof),
+              FileManager.default.isExecutableFile(atPath: ps) else { return }
+
+        // 1. Resolve the listening PID.
+        let lsofProc = Process()
+        lsofProc.executableURL = URL(fileURLWithPath: lsof)
+        lsofProc.arguments = ["-ti", ":\(port)"]
+        let lsofPipe = Pipe()
+        lsofProc.standardOutput = lsofPipe
+        lsofProc.standardError = FileHandle.nullDevice
+        do {
+            try lsofProc.run()
+            lsofProc.waitUntilExit()
+        } catch { return }
+
+        let pidsText = String(data: lsofPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        let pids = pidsText
+            .split(whereSeparator: { $0.isNewline })
+            .compactMap { Int32($0.trimmingCharacters(in: .whitespaces)) }
+        guard let pid = pids.first else { return }
+
+        // 2. Inspect the argv of that PID. Only kill known Zion engines.
+        let psProc = Process()
+        psProc.executableURL = URL(fileURLWithPath: ps)
+        psProc.arguments = ["-p", String(pid), "-o", "command="]
+        let psPipe = Pipe()
+        psProc.standardOutput = psPipe
+        psProc.standardError = FileHandle.nullDevice
+        do {
+            try psProc.run()
+            psProc.waitUntilExit()
+        } catch { return }
+
+        let cmd = String(data: psPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let known = ["mlx_lm.server", "ollama serve", "llama-server", "lms server"]
+        guard known.contains(where: { cmd.contains($0) }) else { return }
+
+        DiagnosticLogger.shared.log(
+            .info,
+            "Orphan local server detected on port \(port) pid=\(pid) cmd=\(cmd.prefix(120))",
+            source: "LocalServerLauncher"
+        )
+        Darwin.kill(pid, SIGTERM)
+    }
+
+    // MARK: - Shutdown cleanup
+
+    /// Best-effort synchronous SIGTERM of any local LLM server listening on the
+    /// port from the user's saved `LocalLLMConfig`. Called from
+    /// `applicationWillTerminate`, where async tasks are not guaranteed to run
+    /// to completion. Uses `lsof -ti :<port>` + `kill` directly.
+    /// No-op if no config saved, no port, or no listener.
+    @MainActor
+    static func stopActiveConfigSync() {
+        guard let config = AIClient.loadLocalConfig(),
+              let port = URL(string: config.serverURL)?.port else { return }
+
+        let lsof = "/usr/sbin/lsof"
+        guard FileManager.default.isExecutableFile(atPath: lsof) else { return }
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: lsof)
+        process.arguments = ["-ti", ":\(port)"]
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = FileHandle.nullDevice
+        do {
+            try process.run()
+            process.waitUntilExit()
+        } catch { return }
+
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        guard let text = String(data: data, encoding: .utf8) else { return }
+        let pids = text
+            .split(whereSeparator: { $0.isNewline })
+            .compactMap { Int32($0.trimmingCharacters(in: .whitespaces)) }
+        for pid in pids {
+            Darwin.kill(pid, SIGTERM)
+        }
+    }
+
     // MARK: - Real process runner
 
     private static let realProcessRunner: ProcessRunner = { binary, args in

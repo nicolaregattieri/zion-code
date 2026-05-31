@@ -26,6 +26,8 @@ struct ChatScreen: View {
     @Environment(\.zionActiveSection) private var activeSection: AppSection?
 
     @AppStorage("chat.threadListVisible") private var threadListVisible: Bool = true
+    @AppStorage("chat.betaNoticeAcknowledged") private var betaNoticeAcknowledged: Bool = false
+    @State private var showBetaNotice: Bool = false
     @AppStorage(ZionTalksAppearance.fontSizeKey) private var fontSizePx: Int = ZionTalksAppearance.defaultFontSizePx
     @AppStorage(ZionTalksAppearance.lineSpacingKey) private var lineSpacingPx: Int = ZionTalksAppearance.defaultLineSpacingPx
 
@@ -53,12 +55,19 @@ struct ChatScreen: View {
         .padding(.bottom, 12)
         .environment(\.chatFontSizePx, fontSizePx)
         .environment(\.chatLineSpacingPx, lineSpacingPx)
+        .sheet(isPresented: $showBetaNotice) {
+            ChatBetaNoticeSheet(isPresented: $showBetaNotice)
+        }
         .onChange(of: activeSection) { _, newSection in
             // ChatScreen stays mounted (ZStack-overlay layout) when the user
             // switches to Code / Graph / Operations. Pause the memory monitor
             // poll loop while we're off-screen so we don't spawn `lsof`/`ps`
             // subprocesses every 5s for a UI nobody is looking at.
             if newSection == .chat {
+                // Beta acknowledgement: only when the user actually enters
+                // the Chat section. Re-prompt every time until they tick
+                // the "I understand" box.
+                if !betaNoticeAcknowledged { showBetaNotice = true }
                 memoryMonitor.resume()
             } else {
                 memoryMonitor.pause()
