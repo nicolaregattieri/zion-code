@@ -16,7 +16,7 @@ final class RemoteParsingTests: XCTestCase {
         try process.run()
         process.waitUntilExit()
 
-        let remotes = try await worker.remoteList(in: repoURL)
+        let remotes = try worker.remoteList(in: repoURL)
 
         XCTAssertEqual(remotes.count, 1)
         XCTAssertEqual(remotes[0].name, "origin")
@@ -39,7 +39,7 @@ final class RemoteParsingTests: XCTestCase {
         try addRemote("origin", "https://github.com/user/repo.git")
         try addRemote("upstream", "https://github.com/upstream/repo.git")
 
-        let remotes = try await worker.remoteList(in: repoURL)
+        let remotes = try worker.remoteList(in: repoURL)
 
         XCTAssertEqual(remotes.count, 2)
         // Should be sorted alphabetically
@@ -58,7 +58,7 @@ final class RemoteParsingTests: XCTestCase {
         try process.run()
         process.waitUntilExit()
 
-        let remotes = try await worker.remoteList(in: repoURL)
+        let remotes = try worker.remoteList(in: repoURL)
 
         XCTAssertEqual(remotes[0].url, "git@github.com:user/repo.git")
     }
@@ -67,7 +67,7 @@ final class RemoteParsingTests: XCTestCase {
         let repoURL = try GitTestHelper.makeTempRepo()
         defer { GitTestHelper.cleanup(repoURL) }
 
-        let remotes = try await worker.remoteList(in: repoURL)
+        let remotes = try worker.remoteList(in: repoURL)
         XCTAssertTrue(remotes.isEmpty)
     }
 
@@ -84,7 +84,7 @@ final class RemoteParsingTests: XCTestCase {
         try process.run()
         process.waitUntilExit()
 
-        let remotes = try await worker.remoteList(in: repoURL)
+        let remotes = try worker.remoteList(in: repoURL)
 
         // Should be 1, not 2 (fetch + push lines are deduped)
         XCTAssertEqual(remotes.count, 1)
@@ -107,7 +107,7 @@ final class RemoteParsingTests: XCTestCase {
         try addRemote("alpha", "https://example.com/alpha.git")
         try addRemote("middle", "https://example.com/middle.git")
 
-        let remotes = try await worker.remoteList(in: repoURL)
+        let remotes = try worker.remoteList(in: repoURL)
 
         XCTAssertEqual(remotes.map(\.name), ["alpha", "middle", "zebra"])
     }

@@ -18,7 +18,7 @@ final class GitIntegrationTests: XCTestCase {
     // MARK: - Repository Detection
 
     func testIsGitRepository() async {
-        let result = await worker.isGitRepository(at: repoURL)
+        let result = worker.isGitRepository(at:repoURL)
         XCTAssertTrue(result)
     }
 
@@ -28,7 +28,7 @@ final class GitIntegrationTests: XCTestCase {
         try FileManager.default.createDirectory(at: emptyDir, withIntermediateDirectories: true)
         defer { GitTestHelper.cleanup(emptyDir) }
 
-        let result = await worker.isGitRepository(at: emptyDir)
+        let result = worker.isGitRepository(at:emptyDir)
         XCTAssertFalse(result)
     }
 
@@ -74,7 +74,7 @@ final class GitIntegrationTests: XCTestCase {
         try process.run()
         process.waitUntilExit()
 
-        let branchInfos = try await worker.branchInfoList(in: repoURL)
+        let branchInfos = try worker.branchInfoList(in: repoURL)
         let branchNames = branchInfos.map(\.name)
 
         XCTAssertTrue(branchNames.contains("test-branch"))

@@ -22,7 +22,7 @@ final class CommitParsingTests: XCTestCase {
 
     func testParseSingleCommit() async {
         let output = makeRecord() + rs
-        let commits = await worker.parseCommits(from: output)
+        let commits = worker.parseCommits(from: output)
 
         XCTAssertEqual(commits.count, 1)
         XCTAssertEqual(commits[0].hash, "abc123def456789012345678901234567890abcd")
@@ -33,7 +33,7 @@ final class CommitParsingTests: XCTestCase {
 
     func testParseParents() async {
         let output = makeRecord(parents: "aaaa1111 bbbb2222") + rs
-        let commits = await worker.parseCommits(from: output)
+        let commits = worker.parseCommits(from: output)
 
         XCTAssertEqual(commits[0].parents, ["aaaa1111", "bbbb2222"])
     }
@@ -43,7 +43,7 @@ final class CommitParsingTests: XCTestCase {
             parents: "aaa111aaa111aaa111aaa111aaa111aaa111aaa1 bbb222bbb222bbb222bbb222bbb222bbb222bbb2",
             subject: "Merge branch 'feature'"
         ) + rs
-        let commits = await worker.parseCommits(from: output)
+        let commits = worker.parseCommits(from: output)
 
         XCTAssertEqual(commits[0].parents.count, 2)
         XCTAssertEqual(commits[0].subject, "Merge branch 'feature'")
@@ -51,7 +51,7 @@ final class CommitParsingTests: XCTestCase {
 
     func testParseRootCommitNoParents() async {
         let output = makeRecord(parents: "") + rs
-        let commits = await worker.parseCommits(from: output)
+        let commits = worker.parseCommits(from: output)
 
         XCTAssertEqual(commits[0].parents, [])
     }
@@ -60,7 +60,7 @@ final class CommitParsingTests: XCTestCase {
 
     func testParseDecorations() async {
         let output = makeRecord(decorations: "HEAD -> main, origin/main, tag: v1.0") + rs
-        let commits = await worker.parseCommits(from: output)
+        let commits = worker.parseCommits(from: output)
 
         XCTAssertEqual(commits[0].decorations.count, 3)
         XCTAssertTrue(commits[0].decorations.contains("HEAD -> main"))
@@ -70,7 +70,7 @@ final class CommitParsingTests: XCTestCase {
 
     func testParseEmptyDecorations() async {
         let output = makeRecord(decorations: "") + rs
-        let commits = await worker.parseCommits(from: output)
+        let commits = worker.parseCommits(from: output)
 
         // Empty string split by "," will produce one empty element after trimming
         // but the parser keeps trimmed non-empty entries
@@ -81,21 +81,21 @@ final class CommitParsingTests: XCTestCase {
 
     func testParseSubjectWithEmoji() async {
         let output = makeRecord(subject: "🚀 Deploy new feature") + rs
-        let commits = await worker.parseCommits(from: output)
+        let commits = worker.parseCommits(from: output)
 
         XCTAssertEqual(commits[0].subject, "🚀 Deploy new feature")
     }
 
     func testParseSubjectWithQuotes() async {
         let output = makeRecord(subject: "Fix \"quoted\" strings in parser") + rs
-        let commits = await worker.parseCommits(from: output)
+        let commits = worker.parseCommits(from: output)
 
         XCTAssertEqual(commits[0].subject, "Fix \"quoted\" strings in parser")
     }
 
     func testParseEmptyAuthor() async {
         let output = makeRecord(author: "", email: "") + rs
-        let commits = await worker.parseCommits(from: output)
+        let commits = worker.parseCommits(from: output)
 
         XCTAssertEqual(commits.count, 1)
         XCTAssertEqual(commits[0].author, "")
@@ -105,14 +105,14 @@ final class CommitParsingTests: XCTestCase {
     // MARK: - Edge Cases
 
     func testParseEmptyOutput() async {
-        let commits = await worker.parseCommits(from: "")
+        let commits = worker.parseCommits(from: "")
         XCTAssertTrue(commits.isEmpty)
     }
 
     func testParseMalformedTooFewFields() async {
         // Only 4 fields instead of 7 — should be discarded by compactMap
         let output = ["hash", "parents", "author", "email"].joined(separator: fs) + rs
-        let commits = await worker.parseCommits(from: output)
+        let commits = worker.parseCommits(from: output)
 
         XCTAssertTrue(commits.isEmpty)
     }
@@ -123,7 +123,7 @@ final class CommitParsingTests: XCTestCase {
         let record3 = makeRecord(hash: "cccc" + String(repeating: "2", count: 36), subject: "Third")
         let output = [record1, record2, record3].joined(separator: rs) + rs
 
-        let commits = await worker.parseCommits(from: output)
+        let commits = worker.parseCommits(from: output)
 
         XCTAssertEqual(commits.count, 3)
         XCTAssertEqual(commits[0].subject, "First")
@@ -134,7 +134,7 @@ final class CommitParsingTests: XCTestCase {
     func testParseEmptyHashDiscarded() async {
         // Hash is empty after trimming — should be discarded
         let output = makeRecord(hash: "  ") + rs
-        let commits = await worker.parseCommits(from: output)
+        let commits = worker.parseCommits(from: output)
 
         XCTAssertTrue(commits.isEmpty)
     }
@@ -143,7 +143,7 @@ final class CommitParsingTests: XCTestCase {
 
     func testParseDateISO8601() async {
         let output = makeRecord(date: "2025-06-15T14:30:00+00:00") + rs
-        let commits = await worker.parseCommits(from: output)
+        let commits = worker.parseCommits(from: output)
 
         XCTAssertEqual(commits.count, 1)
         // Verify the date is not epoch (fallback)
@@ -152,7 +152,7 @@ final class CommitParsingTests: XCTestCase {
 
     func testParseDateISO8601WithFractions() async {
         let output = makeRecord(date: "2025-06-15T14:30:00.123+00:00") + rs
-        let commits = await worker.parseCommits(from: output)
+        let commits = worker.parseCommits(from: output)
 
         XCTAssertEqual(commits.count, 1)
         XCTAssertNotEqual(commits[0].date, Date(timeIntervalSince1970: 0))
@@ -160,7 +160,7 @@ final class CommitParsingTests: XCTestCase {
 
     func testParseInvalidDateFallsBackToEpoch() async {
         let output = makeRecord(date: "not-a-date") + rs
-        let commits = await worker.parseCommits(from: output)
+        let commits = worker.parseCommits(from: output)
 
         XCTAssertEqual(commits.count, 1)
         XCTAssertEqual(commits[0].date, Date(timeIntervalSince1970: 0))
@@ -174,7 +174,7 @@ final class CommitParsingTests: XCTestCase {
             author: "  Test User  ",
             subject: "  Trim me  "
         ) + rs
-        let commits = await worker.parseCommits(from: output)
+        let commits = worker.parseCommits(from: output)
 
         XCTAssertEqual(commits[0].hash, "abc123def456789012345678901234567890abcd")
         XCTAssertEqual(commits[0].author, "Test User")
@@ -187,7 +187,7 @@ final class CommitParsingTests: XCTestCase {
         let record2 = makeRecord(hash: "bbbb" + String(repeating: "1", count: 36), subject: "Second")
         let output = record1 + rs + rs + record2 + rs
 
-        let commits = await worker.parseCommits(from: output)
+        let commits = worker.parseCommits(from: output)
         XCTAssertEqual(commits.count, 2)
     }
 
@@ -226,7 +226,7 @@ final class CommitParsingTests: XCTestCase {
             ),
         ]
 
-        let collapsed = await worker.collapseStashHelperCommits(in: commits)
+        let collapsed = worker.collapseStashHelperCommits(in: commits)
 
         XCTAssertEqual(collapsed.map(\.hash), [stashHash, baseHash])
         XCTAssertEqual(collapsed.first?.parents, [baseHash])
@@ -255,7 +255,7 @@ final class CommitParsingTests: XCTestCase {
             ),
         ]
 
-        let collapsed = await worker.collapseStashHelperCommits(in: commits)
+        let collapsed = worker.collapseStashHelperCommits(in: commits)
 
         XCTAssertEqual(collapsed, commits)
     }
