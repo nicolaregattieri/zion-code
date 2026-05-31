@@ -128,7 +128,7 @@ final class ZionToolBridge: @unchecked Sendable {
 
     /// Stop the underlying MCP client.
     func stop() async {
-        await mcpClient.stop()
+        mcpClient.stop()
         isStarted = false
     }
 

@@ -156,7 +156,6 @@ struct ChatPreflightChipRow: View {
         .fixedSize()
     }
 
-    @ViewBuilder
     private func chipLabel(prefix: String, value: String, tint: Color) -> some View {
         // Single Text with inline AttributedString so the Menu trigger
         // renders the whole "Prefix: Value ▾" instead of dropping the value

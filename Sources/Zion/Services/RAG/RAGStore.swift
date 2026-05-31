@@ -141,7 +141,7 @@ actor RAGStore {
                 }
                 try execBound(insertVec) { stmt in
                     sqlite3_bind_int64(stmt, 1, rowid)
-                    embedding.withUnsafeBufferPointer { buf in
+                    _ = embedding.withUnsafeBufferPointer { buf in
                         sqlite3_bind_blob(stmt, 2, buf.baseAddress, Int32(buf.count * MemoryLayout<Float>.size), Self.SQLITE_TRANSIENT)
                     }
                 }

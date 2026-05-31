@@ -61,7 +61,7 @@ actor ZionMCPBridge {
         }
 
         let copyByteCount = min(pathBytes.count, sunPathSize)
-        _ = pathBytes.withUnsafeBufferPointer { src -> Void in
+        pathBytes.withUnsafeBufferPointer { src -> Void in
             withUnsafeMutablePointer(to: &addr.sun_path) { ptr in
                 UnsafeMutableRawPointer(ptr).copyMemory(
                     from: src.baseAddress!,

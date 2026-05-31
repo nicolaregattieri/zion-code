@@ -145,13 +145,11 @@ actor MCPServerProcess {
         let data = try JSONSerialization.data(withJSONObject: envelope)
         return try await withCheckedThrowingContinuation { continuation in
             pendingResponses[id] = continuation
-            do {
-                stdin.write(data)
-                stdin.write("\n".data(using: .utf8)!)
-            } catch {
-                pendingResponses.removeValue(forKey: id)
-                continuation.resume(throwing: error)
-            }
+            // FileHandle.write(Data) does not throw on macOS (signature is
+            // non-throwing). Keep the body without a `do/catch` so the
+            // compiler doesn't flag the catch as unreachable.
+            stdin.write(data)
+            stdin.write("\n".data(using: .utf8)!)
         }
     }
 

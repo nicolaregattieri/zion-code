@@ -133,7 +133,7 @@ final class MCPClient: @unchecked Sendable {
         readerTask = Task.detached { [weak self] in
             do {
                 for try await line in stdoutHandle.bytes.lines {
-                    await self?.handleLine(line)
+                    self?.handleLine(line)
                 }
             } catch {
                 // Reader exited; ignore
