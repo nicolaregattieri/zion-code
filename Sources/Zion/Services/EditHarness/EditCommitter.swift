@@ -61,7 +61,7 @@ actor EditCommitter {
                 let trimmedHash = hash.clean
                 if !trimmedHash.isEmpty {
                     // Has tracked changes — store the object as a stash entry.
-                    try await worker.runAction(
+                    _ = try await worker.runAction(
                         args: ["stash", "store", "-m", label, trimmedHash],
                         in: repoURL
                     )
@@ -92,7 +92,7 @@ actor EditCommitter {
 
             // Step 3: git add
             let paths = inputs.map { $0.path }
-            try await worker.runAction(args: ["add"] + paths, in: repoURL)
+            _ = try await worker.runAction(args: ["add"] + paths, in: repoURL)
 
             // Step 4: Check for actual changes
             let diffStat = (try? await worker.runAction(args: ["diff", "--cached", "--stat"], in: repoURL)) ?? ""
@@ -113,7 +113,7 @@ actor EditCommitter {
             }
 
             // Step 6: Commit
-            try await worker.runAction(args: ["commit", "-m", message], in: repoURL)
+            _ = try await worker.runAction(args: ["commit", "-m", message], in: repoURL)
 
             // Step 7: Capture HEAD SHA
             let headSHA = try await worker.runAction(args: ["rev-parse", "HEAD"], in: repoURL)

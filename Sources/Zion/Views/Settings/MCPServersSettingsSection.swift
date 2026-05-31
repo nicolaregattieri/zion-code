@@ -30,10 +30,10 @@ struct MCPServersSettingsSection: View {
             // events and external edits to ~/.zion/mcp.json. Without
             // startWatching the user had to leave + reopen Settings to
             // see new servers (audit P1).
-            await store.startWatching()
+            store.startWatching()
         }
         .onDisappear {
-            Task { await store.stopWatching() }
+            store.stopWatching()
         }
         .sheet(isPresented: $showEditor) {
             MCPServerEditorSheet(initial: editingConfig) { config in

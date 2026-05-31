@@ -15,7 +15,7 @@ extension RepositoryViewModel {
         let worker = self.worker
         Task { [weak self] in
             guard let self else { return }
-            let resolved = (try? await worker.worktreeList(in: repositoryURL, includeStatus: false)) ?? []
+            let resolved = (try? worker.worktreeList(in: repositoryURL, includeStatus: false)) ?? []
             await MainActor.run {
                 let merged = self.mergeWorktreeStatusIfNeeded(resolved, includeWorktreeStatus: false)
                 if self.worktrees != merged { self.worktrees = merged }

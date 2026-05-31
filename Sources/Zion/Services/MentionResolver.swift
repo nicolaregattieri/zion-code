@@ -171,7 +171,7 @@ actor MentionResolver {
 
             case .folder:
                 let results = await resolveFolder(path: mention.argument, maxFiles: maxFiles, maxBytes: maxBytes)
-                for (path, contents, bytes) in results {
+                for (path, _, bytes) in results {
                     breakdown.append((path: path, bytes: bytes))
                 }
                 let folderContents = buildFolderContents(mention.argument, files: results)

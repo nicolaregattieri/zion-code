@@ -116,6 +116,7 @@ struct ComposerNSTextView: NSViewRepresentable {
 
     // MARK: - Coordinator
 
+    @MainActor
     final class Coordinator: NSObject, NSTextViewDelegate {
 
         var parent: ComposerNSTextView
