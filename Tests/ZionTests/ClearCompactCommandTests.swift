@@ -95,7 +95,7 @@ final class ClearCompactCommandTests: XCTestCase {
 
         defer { try? FileManager.default.removeItem(at: tmp) }
 
-        let skillIndex = SkillIndex(userRoot: userRoot, projectRoot: projectRoot)
+        let skillIndex = SkillIndex(userRoot: userRoot, projectRoot: projectRoot, legacyUserRoot: userRoot, legacyProjectRoot: projectRoot)
         await skillIndex.reload()
 
         let payload = makePayload(skillIndex: skillIndex)

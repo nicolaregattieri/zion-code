@@ -70,7 +70,7 @@ final class SlashCommandRegistryTests: XCTestCase {
         """
         try skillMD.write(to: skillDir.appendingPathComponent("SKILL.md"), atomically: true, encoding: .utf8)
 
-        let index = SkillIndex(userRoot: tmp, projectRoot: nil)
+        let index = SkillIndex(userRoot: tmp, projectRoot: nil, legacyUserRoot: tmp, legacyProjectRoot: nil)
         await index.reload()
 
         XCTAssertEqual(index.skills.count, 1)
@@ -98,7 +98,7 @@ final class SlashCommandRegistryTests: XCTestCase {
             try md.write(to: skillDir.appendingPathComponent("SKILL.md"), atomically: true, encoding: .utf8)
         }
 
-        let index = SkillIndex(userRoot: userRoot, projectRoot: projectRoot)
+        let index = SkillIndex(userRoot: userRoot, projectRoot: projectRoot, legacyUserRoot: userRoot, legacyProjectRoot: projectRoot)
         await index.reload()
 
         // Only one "foo" should survive, and it should be the project version
@@ -131,7 +131,7 @@ final class SlashCommandRegistryTests: XCTestCase {
             try md.write(to: dir.appendingPathComponent("SKILL.md"), atomically: true, encoding: .utf8)
         }
 
-        let index = SkillIndex(userRoot: tmp, projectRoot: nil)
+        let index = SkillIndex(userRoot: tmp, projectRoot: nil, legacyUserRoot: tmp, legacyProjectRoot: nil)
         await index.reload()
         XCTAssertEqual(index.skills.count, 20, "Should have loaded 20 skills")
 
