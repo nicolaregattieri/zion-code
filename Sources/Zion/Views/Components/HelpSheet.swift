@@ -174,6 +174,8 @@ struct HelpSheet: View {
                 "help.chat.threadDrafts",
                 "help.chat.reviewSheet",
                 "help.chat.idleLocalHint",
+                "help.chat.localServerLifecycle",
+                "help.chat.betaNotice",
                 "help.chat.inlineLocalSwap",
                 "help.chat.pasteInstall",
                 "help.chat.mcpRuntimeDispatch",

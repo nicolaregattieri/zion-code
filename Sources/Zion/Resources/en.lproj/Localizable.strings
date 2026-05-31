@@ -3170,3 +3170,11 @@
 "chat.beta.notice.understood" = "I understand and want to continue.";
 "chat.beta.notice.continue" = "Continue";
 "chat.beta.notice.reportLink" = "Report an issue on GitHub";
+
+// MARK: - Local server lifecycle + beta notice
+"help.chat.localServerLifecycle" = "Local server lifecycle — clean-quit SIGTERM, launch sweep for orphaned engines, and a 10-minute idle watchdog stop the local model server when you are not using it.";
+"help.chat.betaNotice" = "Beta acknowledgement sheet appears the first time you open Chat. Re-prompts on every re-entry until you tick I understand.";
+"map.chat.localServerLifecycle.title" = "Local server lifecycle";
+"map.chat.localServerLifecycle.description" = "Three layers prevent the local LLM server (mlx_lm.server, ollama, llama-server, lms) from outliving Zion: applicationWillTerminate cleanup, launch-time orphan sweep, and an idle watchdog. Configure idle timeout via chat.local.idleTimeoutMinutes (0 disables).";
+"map.chat.betaNotice.title" = "Beta acknowledgement";
+"map.chat.betaNotice.description" = "First entry into the Chat section shows a one-time notice that Zion Talks is experimental. Continue stays disabled until I understand is checked. Includes a link to GitHub Issues for feedback.";
