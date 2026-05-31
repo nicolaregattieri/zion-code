@@ -13,7 +13,7 @@ final class WorktreeParsingTests: XCTestCase {
         branch refs/heads/main
 
         """
-        let items = await worker.parseWorktrees(from: output, currentPath: "/Users/dev/other")
+        let items = worker.parseWorktrees(from: output, currentPath: "/Users/dev/other")
 
         XCTAssertEqual(items.count, 1)
         XCTAssertEqual(items[0].path, "/Users/dev/project")
@@ -31,7 +31,7 @@ final class WorktreeParsingTests: XCTestCase {
         detached
 
         """
-        let items = await worker.parseWorktrees(from: output, currentPath: "/other")
+        let items = worker.parseWorktrees(from: output, currentPath: "/other")
 
         XCTAssertEqual(items.count, 1)
         XCTAssertTrue(items[0].isDetached)
@@ -46,7 +46,7 @@ final class WorktreeParsingTests: XCTestCase {
         locked
 
         """
-        let items = await worker.parseWorktrees(from: output, currentPath: "/other")
+        let items = worker.parseWorktrees(from: output, currentPath: "/other")
 
         XCTAssertEqual(items.count, 1)
         XCTAssertTrue(items[0].isLocked)
@@ -61,7 +61,7 @@ final class WorktreeParsingTests: XCTestCase {
         locked working on experiment
 
         """
-        let items = await worker.parseWorktrees(from: output, currentPath: "/other")
+        let items = worker.parseWorktrees(from: output, currentPath: "/other")
 
         XCTAssertEqual(items.count, 1)
         XCTAssertTrue(items[0].isLocked)
@@ -76,7 +76,7 @@ final class WorktreeParsingTests: XCTestCase {
         prunable gitdir file points to non-existent location
 
         """
-        let items = await worker.parseWorktrees(from: output, currentPath: "/other")
+        let items = worker.parseWorktrees(from: output, currentPath: "/other")
 
         XCTAssertEqual(items.count, 1)
         XCTAssertTrue(items[0].isPrunable)
@@ -100,7 +100,7 @@ final class WorktreeParsingTests: XCTestCase {
         branch refs/heads/hotfix
 
         """
-        let items = await worker.parseWorktrees(from: output, currentPath: "/other")
+        let items = worker.parseWorktrees(from: output, currentPath: "/other")
 
         XCTAssertEqual(items.count, 3)
         XCTAssertEqual(items[0].branch, "main")
@@ -117,7 +117,7 @@ final class WorktreeParsingTests: XCTestCase {
         branch refs/heads/main
 
         """
-        let items = await worker.parseWorktrees(from: output, currentPath: "/Users/dev/project")
+        let items = worker.parseWorktrees(from: output, currentPath: "/Users/dev/project")
 
         XCTAssertEqual(items.count, 1)
         XCTAssertTrue(items[0].isCurrent)
@@ -130,7 +130,7 @@ final class WorktreeParsingTests: XCTestCase {
         branch refs/heads/main
 
         """
-        let items = await worker.parseWorktrees(from: output, currentPath: "/Users/dev/other-project")
+        let items = worker.parseWorktrees(from: output, currentPath: "/Users/dev/other-project")
 
         XCTAssertFalse(items[0].isCurrent)
     }
@@ -144,7 +144,7 @@ final class WorktreeParsingTests: XCTestCase {
         branch refs/heads/feature/login
 
         """
-        let items = await worker.parseWorktrees(from: output, currentPath: "/other")
+        let items = worker.parseWorktrees(from: output, currentPath: "/other")
 
         XCTAssertEqual(items[0].branch, "feature/login")
     }
@@ -156,7 +156,7 @@ final class WorktreeParsingTests: XCTestCase {
         branch refs/remotes/origin/main
 
         """
-        let items = await worker.parseWorktrees(from: output, currentPath: "/other")
+        let items = worker.parseWorktrees(from: output, currentPath: "/other")
 
         XCTAssertEqual(items[0].branch, "origin/main")
     }
@@ -167,7 +167,7 @@ final class WorktreeParsingTests: XCTestCase {
         HEAD abc123def456789012345678901234567890abcd
 
         """
-        let items = await worker.parseWorktrees(from: output, currentPath: "/other")
+        let items = worker.parseWorktrees(from: output, currentPath: "/other")
 
         XCTAssertEqual(items[0].branch, "detached")
     }
@@ -175,7 +175,7 @@ final class WorktreeParsingTests: XCTestCase {
     // MARK: - Empty Output
 
     func testParseEmptyOutput() async {
-        let items = await worker.parseWorktrees(from: "", currentPath: "/test")
+        let items = worker.parseWorktrees(from: "", currentPath: "/test")
         XCTAssertTrue(items.isEmpty)
     }
 }
