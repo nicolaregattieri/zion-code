@@ -79,6 +79,10 @@ struct ZionMapContent {
                 ZionMapEntry("map.code.formatter.title", description: "map.code.formatter.description",
                              shortcut: "\u{21E7}\u{2325}F",
                              tips: ["map.code.formatter.tip1"]),
+                ZionMapEntry("map.code.gutterDiffMarkers.title", description: "map.code.gutterDiffMarkers.description",
+                             tips: ["map.code.gutterDiffMarkers.tip1"]),
+                ZionMapEntry("map.code.filetreeBadges.title", description: "map.code.filetreeBadges.description",
+                             tips: ["map.code.filetreeBadges.tip1"]),
             ]
 
         case .terminal:
@@ -141,6 +145,8 @@ struct ZionMapContent {
                              tips: ["map.ops.forcepush.tip1"]),
                 ZionMapEntry("map.ops.activeOperation.title", description: "map.ops.activeOperation.description"),
                 ZionMapEntry("map.ops.emptyStates.title", description: "map.ops.emptyStates.description"),
+                ZionMapEntry("map.ops.aiCommitFallback.title", description: "map.ops.aiCommitFallback.description",
+                             tips: ["map.ops.aiCommitFallback.tip1"]),
             ]
 
         case .worktrees:

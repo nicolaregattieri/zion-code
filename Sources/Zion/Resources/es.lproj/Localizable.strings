@@ -1439,6 +1439,9 @@
 "help.code.openwith" = "Abrir archivos desde Finder (Abrir Con) o arrastrar al editor";
 "help.code.format" = "Formatear código con ⇧⌥F — soporta JSON, XML, HTML, CSS, JavaScript, Python y más";
 "help.code.dotfiles" = "Alterna archivos ocultos con el botón del ojo o ⇧⌘H.";
+"help.code.gutterDiffMarkers" = "Barras de color junto a los números de línea muestran added (verde), modified (azul) y deleted (triángulo rojo); pasa el cursor para ver el contenido anterior.";
+"help.code.filetreeBadges" = "Cada archivo modificado en el árbol obtiene una insignia U/M/A/D/R/! con color semántico (untracked, modified, added, deleted, renamed, conflict).";
+"help.ops.aiCommitFallback" = "Cuando la IA no puede generar el mensaje de commit, una advertencia amarilla en Quick Commit explica el motivo (proveedor ausente, clave faltante, error del proveedor).";
 
 // Zion Map — Pre-Commit Review
 "map.ai.precommit.title" = "Gate de Review Pre-Commit";
@@ -2007,6 +2010,12 @@
 "map.code.formatter.title" = "Formateador de Código";
 "map.code.formatter.description" = "Formatea código con ⇧⌥F. Soporta 16+ lenguajes incluyendo JSON, XML, HTML, CSS, JavaScript, Python, Swift, Go y más. Formato al guardar opcional.";
 "map.code.formatter.tip1" = "Activa formato al guardar en Configuración > Editor para formateo automático.";
+"map.code.gutterDiffMarkers.title" = "Marcadores de Diff en el Editor";
+"map.code.gutterDiffMarkers.description" = "Las líneas modificadas reciben una barra de 3pt en el borde del editor: verde para adiciones, azul para modificaciones y un triángulo rojo donde se eliminaron líneas. Los colores derivan de tokens DesignSystem.Colors.";
+"map.code.gutterDiffMarkers.tip1" = "Pasa el cursor sobre una barra azul o roja para abrir un popover transient con el contenido anterior de la línea — compara antes/después sin salir del editor.";
+"map.code.filetreeBadges.title" = "Insignias de Estado en el Árbol";
+"map.code.filetreeBadges.description" = "Cada archivo modificado recibe una insignia monoespaciada U/M/A/D/R/! con color semántico: verde para untracked, azul para added/renamed, naranja para modified, rojo para deleted/conflict.";
+"map.code.filetreeBadges.tip1" = "El color del icono y del texto del archivo también cambia — basta una mirada para saber qué cambió en cada carpeta sin expandirla.";
 "map.terminal.finderdrag.title" = "Arrastrar desde Finder";
 "map.terminal.finderdrag.description" = "Arrastra archivos o carpetas desde Finder directamente al terminal. La ruta se pega automáticamente en la posición del cursor.";
 "map.terminal.finderdrag.tip1" = "Funciona con cualquier tipo de archivo — ideal para comandos rápidos de cd o open.";
@@ -2033,6 +2042,9 @@
 "help.ops.emptyStates" = "Texto de orientacion cuando las listas de stash o tags estan vacias";
 "map.ops.emptyStates.title" = "Sugerencias de Estado Vacio";
 "map.ops.emptyStates.description" = "Las secciones Stash y Tags muestran texto de orientacion cuando sus listas estan vacias, dirigiendo a los usuarios a los campos de entrada.";
+"map.ops.aiCommitFallback.title" = "Aviso de Fallback del Mensaje por IA";
+"map.ops.aiCommitFallback.description" = "Cuando el generador de mensajes por IA falla (sin proveedor seleccionado, clave faltante, error del proveedor), el sheet Quick Commit y la tarjeta Operations muestran una fila amarilla con el motivo exacto y un atajo a Ajustes > IA.";
+"map.ops.aiCommitFallback.tip1" = "El proveedor .auto resuelve al primer backend conectado (Anthropic, Gemini, OpenAI, CLI o local). Si ninguno está conectado, la advertencia te lleva a la pantalla de configuración.";
 "help.mobile.keepAwakeWarnings" = "Notificaciones locales 15 min y 5 min antes de que expire el temporizador de prevencion";
 "map.mobile.keepAwakeWarnings.title" = "Avisos del Temporizador de Prevencion";
 "map.mobile.keepAwakeWarnings.description" = "Notificaciones locales de macOS 15 minutos y 5 minutos antes de que expire el temporizador de prevencion de suspension, mas una notificacion final cuando termina.";

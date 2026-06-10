@@ -1418,6 +1418,9 @@
 "help.code.openwith" = "Open files from Finder (Open With) or drag-and-drop onto the editor";
 "help.code.format" = "Format code with ⇧⌥F — supports JSON, XML, HTML, CSS, JavaScript, Python, and more";
 "help.code.dotfiles" = "Toggle hidden files with the eye button or ⇧⌘H.";
+"help.code.gutterDiffMarkers" = "Color bars next to line numbers show added (green), modified (blue) and deleted (red triangle); hover to see the previous content.";
+"help.code.filetreeBadges" = "Each dirty file in the file tree gets a U/M/A/D/R/! badge with a semantic color (untracked, modified, added, deleted, renamed, conflict).";
+"help.ops.aiCommitFallback" = "When the AI fails to generate the commit message, a yellow inline warning in Quick Commit explains the reason (missing provider, missing key, provider error).";
 
 // Zion Map — Pre-Commit Review
 "map.ai.precommit.title" = "Pre-Commit Review Gate";
@@ -1986,6 +1989,12 @@
 "map.code.formatter.title" = "Code Formatter";
 "map.code.formatter.description" = "Format code with ⇧⌥F. Supports 16+ languages including JSON, XML, HTML, CSS, JavaScript, Python, Swift, Go, and more. Optional format-on-save.";
 "map.code.formatter.tip1" = "Enable format-on-save in Settings > Editor for automatic formatting.";
+"map.code.gutterDiffMarkers.title" = "Editor Gutter Diff Markers";
+"map.code.gutterDiffMarkers.description" = "Modified lines get a 3pt bar on the editor ruler edge: green for additions, blue for modifications, and a red triangle where lines were removed. Bar colors come from DesignSystem.Colors tokens.";
+"map.code.gutterDiffMarkers.tip1" = "Hover a blue or red bar to open a transient popover with the previous line content — diff in-place without leaving the editor.";
+"map.code.filetreeBadges.title" = "File Tree Status Badges";
+"map.code.filetreeBadges.description" = "Every dirty file gets a monospaced U/M/A/D/R/! badge with a semantic color: green for untracked, blue for added/renamed, orange for modified, red for deleted/conflict.";
+"map.code.filetreeBadges.tip1" = "The file icon and label tint match the badge color — a quick glance tells you what changed in each folder without expanding it.";
 "map.terminal.finderdrag.title" = "Finder Drag & Drop";
 "map.terminal.finderdrag.description" = "Drag files or folders from Finder directly into the terminal. The path is automatically pasted at the cursor.";
 "map.terminal.finderdrag.tip1" = "Works with any file type — great for quick cd or open commands.";
@@ -2012,6 +2021,9 @@
 "help.ops.emptyStates" = "Helpful guidance text when stash or tag lists are empty";
 "map.ops.emptyStates.title" = "Empty State Hints";
 "map.ops.emptyStates.description" = "Stash and Tags sections show helpful guidance text when their lists are empty, directing users to the input fields above.";
+"map.ops.aiCommitFallback.title" = "AI Commit Fallback Warning";
+"map.ops.aiCommitFallback.description" = "When the AI message generator fails (no provider selected, missing key, provider error), the Quick Commit sheet and Operations card show a yellow inline row with the exact reason and a quick path back to Settings > AI.";
+"map.ops.aiCommitFallback.tip1" = "The .auto provider resolves to the first connected backend (Anthropic, Gemini, OpenAI, CLI, or local). If none is connected, the warning points you straight at the settings screen.";
 "help.mobile.keepAwakeWarnings" = "Local notifications at 15 min and 5 min before prevent-sleep expires";
 "map.mobile.keepAwakeWarnings.title" = "Keep-Awake Timer Warnings";
 "map.mobile.keepAwakeWarnings.description" = "Local macOS notifications at 15 minutes and 5 minutes before the prevent-sleep timer expires, plus a final notification when it ends.";
