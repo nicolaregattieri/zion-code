@@ -125,6 +125,22 @@ enum Constants {
         /// Safety timeout to force-clear isBusy if a refresh never completes.
         static let busyWatchdogTimeout: UInt64 = 60_000_000_000 // 60s
 
+        /// Hard wall-clock cap for network-touching git subcommands (fetch /
+        /// pull / push / clone / ls-remote). Past this, the underlying
+        /// `git` process is sent SIGTERM so the worker queue can drain instead
+        /// of leaking an orphan that the busy watchdog can only mask.
+        static let networkCommandTimeoutSeconds: Int = 45
+
+        /// `git -c http.lowSpeedTime` — bytes-per-window for the low-speed
+        /// gate. With limit=1000 and time=20s, a stalled HTTPS transfer aborts
+        /// in ~20s instead of hanging until the OS kernel drops the socket.
+        static let networkLowSpeedTimeSeconds: Int = 20
+
+        /// `ssh -o ConnectTimeout` for git-over-SSH. Bounds the TCP+handshake
+        /// phase so a stale jumphost / dead VPN drops fast instead of hanging
+        /// the fetch loop.
+        static let sshConnectTimeoutSeconds: Int = 15
+
         /// Grace period before escalating SIGTERM to SIGKILL for frozen terminal processes.
         static let processKillEscalation: UInt64 = 500_000_000 // 500ms
 
