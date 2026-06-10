@@ -14,13 +14,38 @@ struct FileTreeNodeView: View {
         let isSelected = model.selectedFileIDs.contains(item.id) ||
                          (model.selectedFileIDs.isEmpty && model.activeFileID == item.id)
         let isDark = model.selectedTheme.isDark
-        let isModified: Bool = {
-            guard let repoPath = model.repositoryURL?.path else { return false }
+        // Touch the observed version counter so SwiftUI Observation re-renders
+        // this row when the file-watcher rebuilds the lookup Sets. The Sets
+        // themselves are @ObservationIgnored for perf, so a plain read of them
+        // would not subscribe the view to changes.
+        let lookupVersion = model.uncommittedLookupVersion
+        let fileKind: PendingFileKind? = {
+            _ = lookupVersion
+            guard let repoPath = model.repositoryURL?.path else { return nil }
             let relativePath = item.url.path.replacingOccurrences(of: repoPath + "/", with: "")
             if item.isDirectory {
-                return model.uncommittedDirectoryPrefixes.contains(relativePath + "/")
-            } else {
-                return model.uncommittedFilePaths.contains(relativePath)
+                return model.uncommittedDirectoryPrefixes.contains(relativePath + "/") ? .modified : nil
+            }
+            return model.uncommittedKindByPath[relativePath]
+        }()
+        let isModified = fileKind != nil
+        let pendingColor: Color = {
+            switch fileKind {
+            case .untracked: return DesignSystem.Colors.success
+            case .deleted, .conflicted: return DesignSystem.Colors.destructive
+            case .added, .renamed: return DesignSystem.Colors.info
+            case .modified, .none: return DesignSystem.Colors.warning
+            }
+        }()
+        let pendingBadge: String? = {
+            switch fileKind {
+            case .untracked: return "U"
+            case .modified: return "M"
+            case .added: return "A"
+            case .deleted: return "D"
+            case .renamed: return "R"
+            case .conflicted: return "!"
+            case .none: return nil
             }
         }()
         let isIgnored = item.isGitIgnored
@@ -45,20 +70,29 @@ struct FileTreeNodeView: View {
                     if item.isDirectory {
                         FolderIcon(
                             isOpen: isExpanded,
-                            color: isModified ? DesignSystem.Colors.warning : (isDark ? Color.accentColor : DesignSystem.Colors.info),
+                            color: isModified ? pendingColor : (isDark ? Color.accentColor : DesignSystem.Colors.info),
                             size: 14
                         )
                     } else {
                         Image(systemName: "doc.text")
                             .font(DesignSystem.Typography.body)
-                            .foregroundStyle(isModified ? DesignSystem.Colors.warning : .secondary)
+                            .foregroundStyle(isModified ? pendingColor : .secondary)
                     }
 
                     Text(item.name)
                         .font(isSelected ? DesignSystem.Typography.monoBodyBold : DesignSystem.Typography.monoBody)
                         .lineLimit(1)
                         .help(item.name)
-                        .foregroundStyle(isSelected ? (isDark ? .white : DesignSystem.Colors.info) : (isModified ? DesignSystem.Colors.warning : .primary))
+                        .foregroundStyle(isSelected ? (isDark ? .white : DesignSystem.Colors.info) : (isModified ? pendingColor : .primary))
+
+                    if let badge = pendingBadge, !item.isDirectory {
+                        Spacer(minLength: 4)
+                        Text(badge)
+                            .font(DesignSystem.Typography.micro.monospacedDigit())
+                            .foregroundStyle(pendingColor)
+                            .frame(width: 12, alignment: .trailing)
+                            .help(badgeTooltip(for: fileKind))
+                    }
                 }
                 .opacity((isIgnored || model.isFileInCutClipboard(item.id)) && !isSelected ? 0.5 : 1.0)
                 .padding(.horizontal, 12).padding(.vertical, 6).padding(.leading, CGFloat(level) * 12)
@@ -228,6 +262,18 @@ struct FileTreeNodeView: View {
                     )
                 }
             }
+        }
+    }
+
+    private func badgeTooltip(for kind: PendingFileKind?) -> String {
+        switch kind {
+        case .untracked: return L10n("filetree.badge.untracked")
+        case .modified: return L10n("filetree.badge.modified")
+        case .added: return L10n("filetree.badge.added")
+        case .deleted: return L10n("filetree.badge.deleted")
+        case .renamed: return L10n("filetree.badge.renamed")
+        case .conflicted: return L10n("filetree.badge.conflicted")
+        case .none: return ""
         }
     }
 }

@@ -170,12 +170,29 @@ struct GitClient: Sendable {
     ) throws -> GitCommandResult {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = ["git"] + args
+
+        // Network-touching subcommands hang forever when the remote stalls
+        // (slow SSH handshake, dropped HTTP connection). Prepend tight low-speed
+        // gates and bound the SSH connect handshake so the process exits with
+        // an error instead of blocking the worker queue.
+        let networkSub = Self.networkSubcommand(in: args)
+        var finalArgs: [String] = ["git"]
+        if networkSub != nil {
+            finalArgs += [
+                "-c", "http.lowSpeedLimit=1000",
+                "-c", "http.lowSpeedTime=\(Constants.Timing.networkLowSpeedTimeSeconds)"
+            ]
+        }
+        finalArgs += args
+        process.arguments = finalArgs
         process.currentDirectoryURL = repositoryURL
 
         let environmentSetup = try prepareEnvironment(for: mode)
         defer { cleanupAskPassScript(at: environmentSetup.askPassScriptURL) }
-        let environment = environmentSetup.environment
+        var environment = environmentSetup.environment
+        if networkSub != nil, environment["GIT_SSH_COMMAND"] == nil {
+            environment["GIT_SSH_COMMAND"] = "ssh -o ConnectTimeout=\(Constants.Timing.sshConnectTimeoutSeconds) -o ServerAliveInterval=15 -o ServerAliveCountMax=3"
+        }
         process.environment = environment
 
         let stdoutPipe = Pipe()
@@ -185,12 +202,55 @@ struct GitClient: Sendable {
 
         try process.run()
 
+        // Hard wall-clock cap for network commands. If git still hasn't
+        // returned (the low-speed gate failed to trip, e.g. proxy buffered
+        // bytes trickling under threshold), terminate the process so the
+        // worker queue can move on instead of the busy watchdog clearing the
+        // UI flag while the orphan keeps running.
+        var timeoutItem: DispatchWorkItem?
+        if networkSub != nil {
+            let item = DispatchWorkItem {
+                if process.isRunning {
+                    process.terminate()
+                }
+            }
+            DispatchQueue.global().asyncAfter(
+                deadline: .now() + .seconds(Constants.Timing.networkCommandTimeoutSeconds),
+                execute: item
+            )
+            timeoutItem = item
+        }
+
         let (stdoutData, stderrData) = readPipesUntilExit(process: process, stdout: stdoutPipe, stderr: stderrPipe)
+        timeoutItem?.cancel()
 
         let stdout = String(data: stdoutData, encoding: .utf8) ?? ""
         let stderr = String(data: stderrData, encoding: .utf8) ?? ""
 
         return GitCommandResult(stdout: stdout, stderr: stderr, status: process.terminationStatus)
+    }
+
+    /// First positional token after option flags. Network-aware so we can
+    /// special-case timeouts only for `fetch`/`pull`/`push`/`clone`/`ls-remote`
+    /// — other subcommands (status, log, diff) must not pay the SSH/HTTP gate
+    /// overhead and must not be killed at 45s.
+    private static let networkSubcommands: Set<String> = ["fetch", "pull", "push", "clone", "ls-remote"]
+
+    private static func networkSubcommand(in args: [String]) -> String? {
+        var index = 0
+        while index < args.count {
+            let token = args[index]
+            if token == "-C" || token == "-c" {
+                index += 2
+                continue
+            }
+            if token.hasPrefix("-") {
+                index += 1
+                continue
+            }
+            return networkSubcommands.contains(token) ? token : nil
+        }
+        return nil
     }
 
     /// Reads stdout and stderr pipes concurrently on background threads while waiting for process exit.

@@ -117,16 +117,29 @@ final class RepositoryViewModel {
     }
     var uncommittedCount: Int = 0
 
-    // Pre-computed sets for O(1) file tree lookups (PERF-005)
+    // Pre-computed sets for O(1) file tree lookups (PERF-005).
+    // Kept @ObservationIgnored so the Set storage itself does not show up in
+    // Observation's per-property tracking on every FileTreeNodeView render.
+    // Views that depend on these Sets must read `uncommittedLookupVersion`
+    // (below) to subscribe to rebuilds; the watcher's `refreshStatusOnly()`
+    // path otherwise updates the Sets silently and dirty colors stale until
+    // the user hits the toolbar refresh.
     @ObservationIgnored var uncommittedFilePaths: Set<String> = []
     @ObservationIgnored var uncommittedDirectoryPrefixes: Set<String> = []
+    @ObservationIgnored var uncommittedKindByPath: [String: PendingFileKind] = [:]
+    var uncommittedLookupVersion: Int = 0
 
     private func rebuildUncommittedLookupSets() {
         var paths = Set<String>()
         var dirs = Set<String>()
+        var kinds: [String: PendingFileKind] = [:]
         for change in uncommittedChanges {
             // Porcelain lines have a 3-char status prefix: "XY path" (e.g. " M src/foo.txt")
-            let filePath = change.count > 3 ? String(change.dropFirst(3)) : change
+            guard change.count >= 3 else { continue }
+            let xy = String(change.prefix(2))
+            let indexCh = xy.first ?? " "
+            let workCh = xy.dropFirst().first ?? " "
+            let filePath = String(change.dropFirst(3))
             // Handle renames: "R  old -> new" -- use the new path
             let resolvedPath: String
             if let arrowRange = filePath.range(of: " -> ") {
@@ -135,6 +148,7 @@ final class RepositoryViewModel {
                 resolvedPath = filePath
             }
             paths.insert(resolvedPath)
+            kinds[resolvedPath] = PendingFileKind(indexStatus: indexCh, worktreeStatus: workCh)
             if let lastSlash = resolvedPath.lastIndex(of: "/") {
                 // Build directory prefixes: "src/foo/bar.txt" -> "src/foo/", "src/"
                 var dirPath = resolvedPath[resolvedPath.startIndex..<lastSlash]
@@ -151,7 +165,50 @@ final class RepositoryViewModel {
         }
         uncommittedFilePaths = paths
         uncommittedDirectoryPrefixes = dirs
+        uncommittedKindByPath = kinds
+        uncommittedLookupVersion &+= 1
+        // Scope: only re-run the editor diff loader when the open file's
+        // status actually flipped (added → modified, modified → untracked,
+        // gone clean). Skipping the blanket "refresh on every status tick"
+        // avoids the worker-queue starvation that left Changes-tab diffs
+        // blank, while still catching external writes (LLM agent, checkout).
+        if let relPath = editorDiffMarkersPath {
+            let nowKind = uncommittedKindByPath[relPath]
+            if nowKind != editorDiffMarkersLastKind {
+                editorDiffMarkersLastKind = nowKind
+                if let fileURL = selectedCodeFile?.url {
+                    loadEditorDiffMarkers(for: fileURL)
+                }
+            }
+        }
     }
+
+    // MARK: - Editor Gutter Diff Markers
+    //
+    // Set when the user opens a dirty file in the editor. Keys are 1-based
+    // *new-side* line numbers (i.e. lines in the working-tree buffer the user
+    // sees). LineNumberRulerView consumes this map and paints a colored bar
+    // on the right edge of the gutter per VS Code convention.
+    var editorDiffMarkers: [Int: EditorLineChangeKind] = [:]
+    /// For `.modified` and `.deleted` markers we keep the pre-change content
+    /// (one entry per deletion line that was paired with the addition). Used
+    /// by the ruler hover tooltip so the user can compare new vs. old without
+    /// opening the Changes tab.
+    var editorDiffOriginalByLine: [Int: [String]] = [:]
+    var editorDiffMarkersVersion: Int = 0
+    @ObservationIgnored var editorDiffMarkersPath: String?
+    @ObservationIgnored var editorDiffMarkersTask: Task<Void, Never>?
+    /// Last `PendingFileKind` observed for the editor's currently-open file.
+    /// Used by `rebuildUncommittedLookupSets` to detect external writes (LLM
+    /// agent, `git checkout`, file system change) that flipped this file's
+    /// status, so the gutter bars catch up without the user having to reopen.
+    @ObservationIgnored var editorDiffMarkersLastKind: PendingFileKind?
+
+    /// Set by `suggestCommitMessage` when the AI path failed and we fell
+    /// back to the local heuristic. Surfaced inline in the Quick Commit
+    /// sheet so the user understands why the message looks generic.
+    /// Cleared at the start of every new AI commit request.
+    var aiCommitWarning: String?
     var selectedChangeFile: String?
     var currentFileDiff: String = "" {
         didSet {
@@ -212,6 +269,10 @@ final class RepositoryViewModel {
     var isBlameVisible: Bool = false
     var blameEntries: [BlameEntry] = []
     @ObservationIgnored var blameTask: Task<Void, Never>?
+    @ObservationIgnored var loadDiffTask: Task<Void, Never>?
+    @ObservationIgnored var nextLoadDiffRequestID: Int = 0
+    @ObservationIgnored var activeLoadDiffRequestID: Int = 0
+    @ObservationIgnored var loadDiffInFlightFile: String?
 
     // Reflog state
     var reflogEntries: [ReflogEntry] = []
@@ -850,6 +911,50 @@ final class RepositoryViewModel {
                     }
                 }
             }
+        }
+    }
+}
+
+/// Coarse classification of a porcelain status entry. Used by the file
+/// browser to color new vs modified vs deleted entries differently (VS Code
+/// parity: green = untracked, orange = modified, red = deleted, blue =
+/// staged/renamed, red = conflicted).
+enum PendingFileKind: Sendable {
+    case modified
+    case added
+    case deleted
+    case renamed
+    case untracked
+    case conflicted
+
+    init(indexStatus: Character, worktreeStatus: Character) {
+        // Conflicts: any U, or both sides non-space identical pairs (AA/DD).
+        if indexStatus == "U" || worktreeStatus == "U"
+            || (indexStatus == "A" && worktreeStatus == "A")
+            || (indexStatus == "D" && worktreeStatus == "D") {
+            self = .conflicted
+            return
+        }
+        if indexStatus == "?" && worktreeStatus == "?" {
+            self = .untracked
+            return
+        }
+        // Worktree side wins for "what changed on disk" — that is what the
+        // file browser is showing. Staged-only changes still surface as the
+        // staged kind via the index branch below.
+        switch worktreeStatus {
+        case "M", "T": self = .modified; return
+        case "D": self = .deleted; return
+        case "R": self = .renamed; return
+        case "A": self = .added; return
+        default: break
+        }
+        switch indexStatus {
+        case "M", "T": self = .modified
+        case "A": self = .added
+        case "D": self = .deleted
+        case "R", "C": self = .renamed
+        default: self = .modified
         }
     }
 }

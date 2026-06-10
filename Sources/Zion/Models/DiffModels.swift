@@ -1,6 +1,16 @@
 import Foundation
 import SwiftUI
 
+// MARK: - Editor Gutter Diff Markers
+
+/// Per-line change kind shown as a colored bar in the editor gutter.
+/// VS Code parity: blue=modified, green=added, red triangle=deleted.
+enum EditorLineChangeKind: Sendable {
+    case added
+    case modified
+    case deleted
+}
+
 // MARK: - Diff Hunks & Lines
 
 struct DiffHunk: Identifiable {

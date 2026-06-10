@@ -150,6 +150,9 @@ extension RepositoryViewModel {
 
         if activeFileID == file.id {
             applyEditorContent(content, syncDraftFor: file.id)
+            // Save changed disk state vs HEAD → reload gutter markers so the
+            // colored bars next to line numbers track the new content.
+            loadEditorDiffMarkers(for: file.url)
         }
     }
 }

@@ -111,6 +111,20 @@ extension GraphScreen {
                                     }
                                 }
 
+                                if let warning = model.aiCommitWarning, !model.aiQuotaExceeded {
+                                    HStack(alignment: .top, spacing: DesignSystem.Spacing.iconInlineGap) {
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                            .font(DesignSystem.Typography.label)
+                                            .foregroundStyle(DesignSystem.Colors.warning)
+                                        Text(warning)
+                                            .font(DesignSystem.Typography.labelMedium)
+                                            .foregroundStyle(DesignSystem.Colors.warning)
+                                            .multilineTextAlignment(.leading)
+                                        Spacer()
+                                    }
+                                    .padding(.top, -8)
+                                }
+
                                 if model.aiQuotaExceeded {
                                     VStack(alignment: .leading, spacing: 6) {
                                         HStack(spacing: DesignSystem.Spacing.iconInlineGap) {

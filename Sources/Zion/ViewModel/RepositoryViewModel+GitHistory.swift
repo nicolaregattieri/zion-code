@@ -110,15 +110,43 @@ extension RepositoryViewModel {
     func loadDiff(for file: String) {
         guard let url = repositoryURL else { return }
 
-        Task {
+        // Status refreshes can call back here repeatedly for the *same* file
+        // (e.g. file watcher fires while the user is still reading the diff).
+        // Cancelling+restarting on every tick produced an endless restart loop
+        // that left the diff card blank — `git diff` never finished before the
+        // next refresh torpedoed it. Skip if a task is already running for the
+        // same file.
+        if loadDiffInFlightFile == file, let existing = loadDiffTask, !existing.isCancelled {
+            return
+        }
+
+        // File changed → cancel the prior in-flight load. Without this, rapid
+        // clicks (file A → file B → file A) leak parallel `git diff`
+        // subprocesses and the late winner overwrites the UI for whichever
+        // file the user last selected, leaving the diff card stale or blank.
+        loadDiffTask?.cancel()
+        let requestID = nextLoadDiffRequestID &+ 1
+        nextLoadDiffRequestID = requestID
+        activeLoadDiffRequestID = requestID
+        loadDiffInFlightFile = file
+
+        loadDiffTask = Task { [weak self] in
+            guard let self else { return }
+            defer {
+                if self.loadDiffInFlightFile == file {
+                    self.loadDiffInFlightFile = nil
+                }
+            }
             do {
                 // Get diff including staged changes
                 let diff = try await worker.runAction(args: ["diff", "HEAD", "--", file], in: url)
+                if Task.isCancelled { return }
                 let newDiff: String
                 let newHunks: [DiffHunk]
                 if diff.isEmpty {
                     let status = statusForFile(file)
                     let resolvedDiff: String? = await resolveMissingDiff(for: file, status: status, in: url)
+                    if Task.isCancelled { return }
                     if let resolvedDiff, !resolvedDiff.isEmpty {
                         newDiff = resolvedDiff
                         newHunks = Self.parseDiffHunks(resolvedDiff)
@@ -130,6 +158,12 @@ extension RepositoryViewModel {
                     newDiff = diff
                     newHunks = Self.parseDiffHunks(diff)
                 }
+                // Drop stale result if the user already picked a different file
+                // (or a newer load was started). Without this guard, the late
+                // result for an old file would overwrite the freshly-loaded
+                // diff for the current selection.
+                guard self.activeLoadDiffRequestID == requestID,
+                      self.selectedChangeFile == file else { return }
                 // Only update UI when the diff content actually changed,
                 // preventing flicker and preserving hunk selection on auto-refresh.
                 if newDiff != currentFileDiff {
@@ -137,7 +171,11 @@ extension RepositoryViewModel {
                     currentFileDiffHunks = newHunks
                     selectedHunkLines = []
                 }
+            } catch is CancellationError {
+                return
             } catch {
+                guard self.activeLoadDiffRequestID == requestID,
+                      self.selectedChangeFile == file else { return }
                 logger.log(.warn, "Failed to load diff: \(error.localizedDescription)", context: file, source: #function)
                 currentFileDiff = L10n("error.loadDiff", error.localizedDescription)
                 currentFileDiffHunks = []

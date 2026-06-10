@@ -38,6 +38,14 @@ extension RepositoryViewModel {
     func suggestCommitMessage() {
         guard let url = repositoryURL else { return }
 
+        // Force re-read of the Keychain-backed key. A stale `_cachedAIKey`
+        // (e.g. user just saved a new key in Settings) would otherwise make
+        // `isAIConfigured` return false and silently fall back to the
+        // heuristic generator. Bump the revision so the getter ignores cache.
+        _cachedAIKey = nil
+        _aiKeyRevision &+= 1
+        aiCommitWarning = nil
+
         aiTask?.cancel()
         aiTask = Task {
             guard await !aiSemaphore.isFull else {
@@ -47,16 +55,25 @@ extension RepositoryViewModel {
             await aiSemaphore.acquire()
             defer { Task { await aiSemaphore.release() } }
 
+            // Without these checks a rapidly re-clicked button leaks semaphore
+            // slots: the cancelled prior Task keeps running because no body
+            // step checks isCancelled.
+            if Task.isCancelled { return }
+
             isGeneratingAIMessage = true
             defer { isGeneratingAIMessage = false }
 
             do {
                 aiQuotaExceeded = false
                 let diffStatOutput = try await worker.runAction(args: ["diff", "--cached", "--stat"], in: url)
+                if Task.isCancelled { return }
                 var diffStat = diffStatOutput
                 let status = try await worker.runAction(args: ["status", "--porcelain"], in: url)
+                if Task.isCancelled { return }
 
-                logger.log(.ai, "AI Configured: \(isAIConfigured), Provider: \(aiProvider.rawValue), Key length: \(aiAPIKey.count)")
+                let effProvider = effectiveAIProvider
+                let effKey = effectiveAIAPIKey
+                logger.log(.ai, "AI Configured: \(isAIConfigured), Provider: \(aiProvider.rawValue) → effective: \(effProvider.rawValue), Key length: \(effKey.count)", source: #function)
 
                 if isAIConfigured {
                     logger.log(.ai, "Requesting commit message", context: aiProvider.rawValue)
@@ -107,8 +124,8 @@ extension RepositoryViewModel {
                         diffStat: diffStat,
                         recentMessages: recentMessages,
                         branchName: currentBranch,
-                        provider: aiProvider,
-                        apiKey: aiAPIKey,
+                        provider: effProvider,
+                        apiKey: effKey,
                         style: commitMessageStyle,
                         mode: aiMode,
                         repoContext: buildRepoContext(
@@ -119,6 +136,18 @@ extension RepositoryViewModel {
                     logger.log(.ai, "Commit message generated OK")
                     suggestedCommitMessage = message
                 } else {
+                    // User clicked Sparkles but provider/key not set. Make
+                    // the silent heuristic fallback visible so the user knows
+                    // why the message looks generic.
+                    let reason: String
+                    if aiProvider == .none {
+                        reason = L10n("ai.notConfigured.noProvider")
+                    } else {
+                        reason = L10n("ai.notConfigured.missingKey", aiProvider.rawValue)
+                    }
+                    statusMessage = reason
+                    aiCommitWarning = reason
+                    logger.log(.warn, "AI commit fell back to heuristic: \(reason)", source: #function)
                     suggestedCommitMessage = Self.generateCommitMessage(diffStat: diffStat, status: status)
                 }
             } catch {
@@ -131,8 +160,21 @@ extension RepositoryViewModel {
                     case .localConnectionFailed, .localServerNotFound, .localModelError, .localAPIError, .localToolCallingUnsupported:
                         statusMessage = aiErr.errorDescription ?? L10n("settings.ai.local.error.modelError")
                     default:
-                        break
+                        // Unhandled AIError (network down, invalid key, 4xx
+                        // from provider). Surface the underlying message so
+                        // the user knows AI was attempted and *why* the
+                        // heuristic fallback fired.
+                        let msg = L10n("ai.commit.failed.usingFallback", aiErr.errorDescription ?? error.localizedDescription)
+                        statusMessage = msg
+                        aiCommitWarning = msg
                     }
+                } else {
+                    // Non-AIError (worker process crash, JSON decode, etc).
+                    // Same surfacing — heuristic message is shown silently
+                    // otherwise and the user thinks "AI didn't run at all".
+                    let msg = L10n("ai.commit.failed.usingFallback", error.localizedDescription)
+                    statusMessage = msg
+                    aiCommitWarning = msg
                 }
                 logger.log(.error, "AI commit message failed: \(error.localizedDescription)", context: aiProvider.rawValue, source: #function)
                 // Fallback to heuristic on AI failure
