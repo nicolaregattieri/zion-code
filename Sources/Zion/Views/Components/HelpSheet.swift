@@ -49,7 +49,9 @@ struct HelpSheet: View {
                     "help.code.tabsize", "help.code.columnruler",
                     "help.code.brackets", "help.code.indentguides", "help.code.repoconfig",
                     "help.code.filehistory", "help.code.openwith",
-                    "help.code.format", "help.code.dotfiles"]
+                    "help.code.format", "help.code.dotfiles",
+                    "help.code.gutterDiffMarkers",
+                    "help.code.filetreeBadges"]
         case .terminal:
             return ["help.terminal.pty", "help.terminal.splits", "help.terminal.resizeSplits",
                     "help.terminal.tabs",
@@ -69,6 +71,7 @@ struct HelpSheet: View {
                     "help.ops.init", "help.ops.recovery",
                     "help.ops.activeOperation",
                     "help.ops.emptyStates",
+                    "help.ops.aiCommitFallback",
                     "help.stashBadge"]
         case .worktrees:
             return ["help.worktree.parallel", "help.worktree.quick", "help.worktree.terminal"]

@@ -106,6 +106,8 @@
 | Format Document | Built-in code formatting for 16+ languages (JSON, XML, HTML, CSS, JS/TS, Python, Go, Rust, Swift, SQL, YAML, and more) | `⇧⌥F` |
 | Format on Save | Automatically format code when saving a file | Settings |
 | JSON Sort Keys | Optional alphabetical key sorting for JSON formatting | Settings |
+| Gutter Diff Markers | 3pt bar on the editor ruler edge per changed line: green = added, blue = modified, red triangle = deleted. Hover blue/red to open a popover with the previous line content. | — |
+| File Tree Status Badges | Per-file U/M/A/D/R/! letter badge + semantic color (untracked, modified, added, deleted, renamed, conflict) — matches VS Code's source-control gutter. | — |
 
 ## Integrated Terminal
 
@@ -175,6 +177,7 @@
 | Discard Changes | Revert file changes (with confirmation) |
 | Add to .gitignore | Ignore a file from context menu |
 | Initialize Repository | Create a new Git repo from the welcome screen directory picker |
+| AI Commit Fallback Warning | When the AI commit-message generator falls back to the local heuristic (no provider, missing key, provider HTTP error), Quick Commit and the Operations card show a yellow inline row with the exact reason and a path to Settings → AI. |
 
 ## Worktree Management
 
