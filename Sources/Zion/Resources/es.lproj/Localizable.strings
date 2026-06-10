@@ -2394,6 +2394,7 @@
 
 // AI Concurrency Gate
 "ai.busy" = "Otra operacion de IA en curso. Espere.";
+"editor.diff.popover.previous" = "Version anterior";
 
 // Full History Search
 "graph.search.historyResults" = "en historial completo";
@@ -3202,3 +3203,9 @@
 "map.chat.localServerLifecycle.description" = "Tres capas evitan que el servidor LLM local (mlx_lm.server, ollama, llama-server, lms) sobreviva a Zion: limpieza en applicationWillTerminate, barrido de huérfanos al inicio y vigilante de inactividad. Configura el timeout via chat.local.idleTimeoutMinutes (0 desactiva).";
 "map.chat.betaNotice.title" = "Confirmación beta";
 "map.chat.betaNotice.description" = "La primera entrada en la sección Chat muestra un aviso único de que Zion Talks es experimental. Continuar permanece deshabilitado hasta marcar Entiendo. Incluye un enlace a GitHub Issues para feedback.";
+"filetree.badge.untracked" = "Nuevo (sin rastrear)";
+"filetree.badge.modified" = "Modificado";
+"filetree.badge.added" = "Añadido";
+"filetree.badge.deleted" = "Eliminado";
+"filetree.badge.renamed" = "Renombrado";
+"filetree.badge.conflicted" = "En conflicto";

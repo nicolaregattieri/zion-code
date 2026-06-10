@@ -99,6 +99,7 @@ extension RepositoryViewModel {
         activeFileID = activeItem.id
         selectedCodeFile = activeItem
         editorFocusRequestID += 1
+        loadEditorDiffMarkers(for: activeItem.url)
         if restoreDraftIfAvailable(for: activeItem) {
             if let draftContent = draftFileContents[activeItem.id] {
                 if let detected = IndentationDetector.detect(in: draftContent) {

@@ -552,7 +552,10 @@ struct CodeScreen: View {
             onRestoreBufferState: { fileID in
                 guard let state = model.editorBufferStates[fileID] else { return nil }
                 return (state.selectedRange, state.scrollY)
-            }
+            },
+            diffMarkers: model.editorDiffMarkers,
+            diffOriginalByLine: model.editorDiffOriginalByLine,
+            diffMarkersVersion: model.editorDiffMarkersVersion
         )
         .help(L10n("help.code.navigation"))
     }

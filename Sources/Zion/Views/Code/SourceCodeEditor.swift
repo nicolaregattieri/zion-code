@@ -50,6 +50,16 @@ struct SourceCodeEditor: NSViewRepresentable {
     /// or nil if none. Used to restore cursor + scroll position so tab
     /// switches inside Zion Code don't snap back to top-of-file.
     var onRestoreBufferState: ((_ incomingFileID: String) -> (NSRange, CGFloat)?)?
+    /// 1-based line numbers (new side / worktree) mapped to their change
+    /// kind. Painted as colored bars on the right edge of the gutter.
+    var diffMarkers: [Int: EditorLineChangeKind] = [:]
+    /// Pre-change content for modified/deleted lines. Used by the gutter
+    /// hover tooltip so the user can compare new vs. old without opening the
+    /// Changes tab.
+    var diffOriginalByLine: [Int: [String]] = [:]
+    /// Bumped by the view model whenever `diffMarkers` is reassigned, so
+    /// `updateNSView` notices identity-stable but content-changed maps.
+    var diffMarkersVersion: Int = 0
 
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSScrollView()
@@ -102,6 +112,8 @@ struct SourceCodeEditor: NSViewRepresentable {
         scrollView.documentView = textView
 
         let ruler = LineNumberRulerView(textView: textView)
+        ruler.diffMarkers = diffMarkers
+        ruler.diffOriginalByLine = diffOriginalByLine
         scrollView.hasVerticalRuler = true
         scrollView.verticalRulerView = ruler
         scrollView.rulersVisible = true
@@ -145,6 +157,11 @@ struct SourceCodeEditor: NSViewRepresentable {
 
         if let ruler = nsView.verticalRulerView as? LineNumberRulerView {
             ruler.theme = theme
+            if ruler.diffMarkersVersion != diffMarkersVersion {
+                ruler.diffMarkers = diffMarkers
+                ruler.diffOriginalByLine = diffOriginalByLine
+                ruler.diffMarkersVersion = diffMarkersVersion
+            }
             ruler.needsDisplay = true
         }
 
