@@ -92,6 +92,19 @@ struct OpsCommitCard: View {
                     }
                 }
 
+                if let warning = model.aiCommitWarning, !model.aiQuotaExceeded {
+                    HStack(alignment: .top, spacing: DesignSystem.Spacing.iconInlineGap) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(DesignSystem.Typography.label)
+                            .foregroundStyle(DesignSystem.Colors.warning)
+                        Text(warning)
+                            .font(DesignSystem.Typography.labelMedium)
+                            .foregroundStyle(DesignSystem.Colors.warning)
+                            .multilineTextAlignment(.leading)
+                        Spacer()
+                    }
+                }
+
                 HStack {
                     Toggle(L10n("Corrigir ultimo commit (Amend)"), isOn: $model.amendLastCommit)
                         .toggleStyle(.checkbox)

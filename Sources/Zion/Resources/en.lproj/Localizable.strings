@@ -2363,6 +2363,9 @@
 
 // AI Concurrency Gate
 "ai.busy" = "Another AI operation is in progress. Please wait.";
+"ai.notConfigured.noProvider" = "No AI provider selected. Configure one in Settings → AI.";
+"ai.notConfigured.missingKey" = "No API key saved for %@. Open Settings → AI to add it.";
+"ai.commit.failed.usingFallback" = "AI commit failed (%@). Using local fallback.";
 "editor.diff.popover.previous" = "Previous version";
 
 // Full History Search

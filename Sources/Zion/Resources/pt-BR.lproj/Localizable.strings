@@ -2372,6 +2372,9 @@
 
 // AI Concurrency Gate
 "ai.busy" = "Outra operacao de IA em andamento. Aguarde.";
+"ai.notConfigured.noProvider" = "Nenhum provedor de IA selecionado. Configure em Ajustes → IA.";
+"ai.notConfigured.missingKey" = "Chave de API ausente para %@. Abra Ajustes → IA para adicionar.";
+"ai.commit.failed.usingFallback" = "IA falhou (%@). Usando sugestao local.";
 "editor.diff.popover.previous" = "Versao anterior";
 
 // Full History Search

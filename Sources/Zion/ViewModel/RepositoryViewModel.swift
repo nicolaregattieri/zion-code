@@ -203,6 +203,12 @@ final class RepositoryViewModel {
     /// agent, `git checkout`, file system change) that flipped this file's
     /// status, so the gutter bars catch up without the user having to reopen.
     @ObservationIgnored var editorDiffMarkersLastKind: PendingFileKind?
+
+    /// Set by `suggestCommitMessage` when the AI path failed and we fell
+    /// back to the local heuristic. Surfaced inline in the Quick Commit
+    /// sheet so the user understands why the message looks generic.
+    /// Cleared at the start of every new AI commit request.
+    var aiCommitWarning: String?
     var selectedChangeFile: String?
     var currentFileDiff: String = "" {
         didSet {
