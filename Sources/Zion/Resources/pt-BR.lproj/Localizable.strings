@@ -2407,6 +2407,10 @@
 // Markdown Editor Fullscreen
 "editor.markdown.fullscreen" = "Tela Cheia";
 "editor.markdown.exitFullscreen" = "Sair da Tela Cheia";
+"editor.markdown.edit" = "Editar";
+"editor.markdown.edit.help" = "Voltar ao editor";
+"editor.markdown.readerMode" = "Modo Leitura";
+"editor.markdown.toggleReader" = "Alternar Modo Leitura";
 
 // Editor Themes
 "theme.dracula" = "Dracula";

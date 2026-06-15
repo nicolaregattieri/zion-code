@@ -401,6 +401,20 @@ struct CodeScreen: View {
             Button("") { model.formatCurrentFile() }
                 .applyShortcutBinding(shortcutRegistry.binding(for: .formatDocument))
                 .frame(width: 0, height: 0).opacity(0)
+
+            Button("") {
+                guard isMarkdownFile else { return }
+                withAnimation(DesignSystem.Motion.detail) {
+                    if isMarkdownFullscreen {
+                        isMarkdownFullscreen = false
+                    } else {
+                        isMarkdownPreviewVisible = true
+                        isMarkdownFullscreen = true
+                    }
+                }
+            }
+            .keyboardShortcut("m", modifiers: [.command, .shift])
+            .frame(width: 0, height: 0).opacity(0)
         }
 
         if isMarkdownFullscreen {
@@ -414,21 +428,44 @@ struct CodeScreen: View {
         ZStack {
             DesignSystem.Colors.modalScrim
                 .ignoresSafeArea()
-                .onTapGesture {
-                    withAnimation(DesignSystem.Motion.detail) {
-                        isMarkdownFullscreen = false
-                    }
+
+            Button("") {
+                withAnimation(DesignSystem.Motion.detail) {
+                    isMarkdownFullscreen = false
                 }
+            }
+            .keyboardShortcut(.escape, modifiers: [])
+            .frame(width: 0, height: 0)
+            .opacity(0)
 
             VStack(spacing: 0) {
-                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
-                    Label(
-                        model.selectedCodeFile?.name ?? L10n("editor.markdown.preview"),
-                        systemImage: "doc.text.image"
-                    )
-                    .font(DesignSystem.Typography.bodyMedium)
-                    .foregroundStyle(.secondary)
+                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+                    Image(systemName: "doc.text.image")
+                        .foregroundStyle(.secondary)
+                    Text(model.selectedCodeFile?.name ?? L10n("editor.markdown.preview"))
+                        .font(DesignSystem.Typography.bodyMedium)
+                        .foregroundStyle(.secondary)
+                    Text(L10n("editor.markdown.readerMode"))
+                        .font(DesignSystem.Typography.metaSemibold)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(DesignSystem.Colors.accent.opacity(0.15))
+                        .foregroundStyle(DesignSystem.Colors.accent)
+                        .clipShape(Capsule())
                     Spacer(minLength: 0)
+                    Button {
+                        withAnimation(DesignSystem.Motion.detail) {
+                            isMarkdownFullscreen = false
+                            isMarkdownPreviewVisible = false
+                        }
+                    } label: {
+                        Label(L10n("editor.markdown.edit"), systemImage: "pencil")
+                            .font(DesignSystem.Typography.bodySmall)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .help(L10n("editor.markdown.edit.help"))
                     Button {
                         withAnimation(DesignSystem.Motion.detail) {
                             isMarkdownFullscreen = false
