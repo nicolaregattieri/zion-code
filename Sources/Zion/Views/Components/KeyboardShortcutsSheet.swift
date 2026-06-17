@@ -111,6 +111,8 @@ struct KeyboardShortcutsSheet: View {
                 (L10n("shortcuts.findInFilesNext"), "Enter"),
                 (L10n("shortcuts.findNext"), "⌃G"),
                 (L10n("shortcuts.cmdClickDefinition"), "⌘Click"),
+                (L10n("shortcuts.markdownReader"), "⇧⌘M"),
+                (L10n("shortcuts.markdownReaderSidebar"), "⌘O"),
             ]
         case .graph:
             return [

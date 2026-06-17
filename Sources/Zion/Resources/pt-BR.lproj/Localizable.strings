@@ -596,6 +596,10 @@
 "map.code.markdownpreview.title" = "Preview Markdown";
 "map.code.markdownpreview.description" = "Para arquivos .md, ative preview renderizado em painel lado a lado sem sair do editor.";
 "map.code.markdownpreview.tip1" = "Use o botão de preview na toolbar para alternar entre edição pura e edição + visualização.";
+"map.code.markdownreader.title" = "Modo Leitura Markdown";
+"map.code.markdownreader.description" = "Abre qualquer .md em tela cheia de verdade — cobre sidebar, file tree e terminal. Atalho ⇧⌘M alterna; Esc ou ✕ sai; botão Editar volta pro editor mantendo o arquivo selecionado.";
+"map.code.markdownreader.tip1" = "Dentro do modo leitura, ⌘O abre uma sidebar flutuante listando todos os .md do projeto (inclui .claude/ e subpastas via git ls-files).";
+"map.code.markdownreader.tip2" = "Selecione qualquer arquivo da lista para trocar de doc sem sair do fullscreen — perfeito pra ler PRDs, specs e READMEs em sequência.";
 "map.code.themes.title" = "Temas e Fontes";
 "map.code.themes.description" = "Escolha entre Dracula, GitHub Light, Catppuccin, One Dark Pro, Tokyo Night e City Lights. Fonte e tamanho configuráveis.";
 "map.code.themes.tip1" = "O tema também se aplica ao terminal integrado.";
@@ -949,6 +953,7 @@
 "help.code.filebrowserdnd" = "Arraste e solte arquivos no navegador para mover ou importar do Finder ou Smart Clipboard";
 "help.code.findreplace" = "Buscar e Substituir no editor com destaque de resultados (⌘F / ⌘H)";
 "help.code.markdownpreview" = "Preview Markdown lado a lado para arquivos .md, com links clicáveis e imagens locais";
+"help.code.markdownreader" = "Modo Leitura Markdown em tela cheia real (cobre todo o app) com sidebar flutuante listando todos os .md do repo via git ls-files. ⇧⌘M alterna, Esc sai, botão Editar volta pro editor";
 "help.code.tabsize" = "Tamanho de tab e estilo de indentação configuráveis (2/4/8, espaços ou tabs)";
 "help.code.columnruler" = "Régua de coluna configurável (80/100/120) para referência visual";
 "help.code.brackets" = "Destaque de pares de parênteses/colchetes/chaves ao posicionar o cursor";
@@ -1556,6 +1561,8 @@
 "shortcuts.goToDefinition" = "Ir para definição";
 "shortcuts.findReferences" = "Encontrar referências";
 "shortcuts.cmdClickDefinition" = "Cmd+Click ir para definição";
+"shortcuts.markdownReader" = "Alternar Modo Leitura Markdown";
+"shortcuts.markdownReaderSidebar" = "Alternar lista de arquivos no Modo Leitura";
 "help.code.navigation" = "Navegação de símbolo com Cmd+D, F12, Shift+F12 e Cmd+Click";
 "editor.navigation.definitions.title" = "Definições: %@";
 "editor.navigation.references.title" = "Referências: %@";
