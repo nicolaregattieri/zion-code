@@ -695,6 +695,10 @@
 "map.code.markdownpreview.title" = "Vista previa Markdown";
 "map.code.markdownpreview.description" = "Para archivos .md, activa una vista renderizada en panel lado a lado sin salir del editor.";
 "map.code.markdownpreview.tip1" = "Usa el botón de vista previa en la toolbar para alternar entre edición pura y edición + vista previa.";
+"map.code.markdownreader.title" = "Modo Lectura Markdown";
+"map.code.markdownreader.description" = "Abre cualquier .md en pantalla completa real — cubre la barra lateral, el árbol de archivos y la terminal. ⇧⌘M alterna; Esc o ✕ sale; el botón Editar regresa al editor con el mismo archivo seleccionado.";
+"map.code.markdownreader.tip1" = "Dentro del modo lectura, ⌘O abre una barra flotante con todos los .md del repositorio (incluye .claude/ y subcarpetas vía git ls-files).";
+"map.code.markdownreader.tip2" = "Selecciona cualquier archivo de la lista para cambiar de documento sin salir del modo lectura — ideal para leer PRDs, specs y READMEs en secuencia.";
 "map.code.themes.title" = "Temas y Fuentes";
 "map.code.themes.description" = "Elige entre Dracula, GitHub Light, Catppuccin, One Dark Pro, Tokyo Night y City Lights. Fuente y tamaño configurables.";
 "map.code.themes.tip1" = "El tema también se aplica al terminal integrado.";
@@ -1048,6 +1052,7 @@
 "help.code.filebrowserdnd" = "Arrastra y suelta archivos en el navegador para mover o importar desde Finder o Smart Clipboard";
 "help.code.findreplace" = "Buscar y Reemplazar en el editor con resaltado de resultados (⌘F / ⌘H)";
 "help.code.markdownpreview" = "Vista previa Markdown lado a lado para archivos .md, con enlaces clicables e imágenes locales";
+"help.code.markdownreader" = "Modo Lectura Markdown en pantalla completa real (cubre toda la app) con barra flotante listando todos los .md del repo vía git ls-files. ⇧⌘M alterna, Esc sale, el botón Editar regresa al editor";
 "help.code.tabsize" = "Tamaño de tabulación y estilo de indentación configurables (2/4/8, espacios o tabs)";
 "help.code.columnruler" = "Regla de columna configurable (80/100/120) para referencia visual";
 "help.code.brackets" = "Resaltado de pares de paréntesis/corchetes/llaves al posicionar el cursor";
@@ -1615,6 +1620,8 @@
 "shortcuts.goToDefinition" = "Ir a definicion";
 "shortcuts.findReferences" = "Buscar referencias";
 "shortcuts.cmdClickDefinition" = "Cmd+Click ir a definicion";
+"shortcuts.markdownReader" = "Alternar Modo Lectura Markdown";
+"shortcuts.markdownReaderSidebar" = "Alternar lista de archivos en Modo Lectura";
 "help.code.navigation" = "Navegación de símbolo con Cmd+D, F12, Shift+F12 y Cmd+Click";
 "editor.navigation.definitions.title" = "Definiciones: %@";
 "editor.navigation.references.title" = "Referencias: %@";

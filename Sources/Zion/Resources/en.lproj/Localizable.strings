@@ -700,6 +700,10 @@
 "map.code.markdownpreview.title" = "Markdown Preview";
 "map.code.markdownpreview.description" = "For .md files, enable rendered preview in a side-by-side pane without leaving the editor.";
 "map.code.markdownpreview.tip1" = "Use the preview button in the toolbar to switch between plain edit and edit + preview.";
+"map.code.markdownreader.title" = "Markdown Reader Mode";
+"map.code.markdownreader.description" = "Open any .md in true fullscreen — covers the sidebar, file tree, and terminal. ⇧⌘M toggles; Esc or ✕ exits; the Edit button drops back to the editor with the same file selected.";
+"map.code.markdownreader.tip1" = "Inside the reader, ⌘O reveals a floating sidebar listing every .md in the repo (includes .claude/ and any nested folder, sourced via git ls-files).";
+"map.code.markdownreader.tip2" = "Pick any file from the list to swap docs without leaving fullscreen — ideal for reading PRDs, specs, and READMEs back to back.";
 "map.code.themes.title" = "Themes and Fonts";
 "map.code.themes.description" = "Choose from Dracula, GitHub Light, Catppuccin, One Dark Pro, Tokyo Night, and City Lights. Configurable font and size.";
 "map.code.themes.tip1" = "The theme also applies to the integrated terminal.";
@@ -1053,6 +1057,7 @@
 "help.code.filebrowserdnd" = "Drag and drop files within the file browser to move or import from Finder or Smart Clipboard";
 "help.code.findreplace" = "Find and Replace in the editor with match highlighting (⌘F / ⌘H)";
 "help.code.markdownpreview" = "Side-by-side Markdown preview for .md files, with clickable links and local images";
+"help.code.markdownreader" = "True-fullscreen Markdown Reader (covers the entire app) with a floating sidebar listing every .md in the repo via git ls-files. ⇧⌘M toggles, Esc exits, Edit button returns to the editor";
 "help.code.tabsize" = "Configurable tab size and indent style (2/4/8, spaces or tabs)";
 "help.code.columnruler" = "Configurable column ruler (80/100/120) for visual reference";
 "help.code.brackets" = "Bracket pair highlighting when cursor is adjacent to ()[]{}";
@@ -1594,6 +1599,8 @@
 "shortcuts.goToDefinition" = "Go to definition";
 "shortcuts.findReferences" = "Find references";
 "shortcuts.cmdClickDefinition" = "Cmd+Click go to definition";
+"shortcuts.markdownReader" = "Toggle Markdown Reader Mode";
+"shortcuts.markdownReaderSidebar" = "Toggle file list inside Reader";
 "help.code.navigation" = "Symbol navigation with Cmd+D, F12, Shift+F12 and Cmd+Click";
 "editor.navigation.definitions.title" = "Definitions: %@";
 "editor.navigation.references.title" = "References: %@";

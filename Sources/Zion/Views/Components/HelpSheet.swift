@@ -45,6 +45,7 @@ struct HelpSheet: View {
                     "help.code.filebrowserdnd",
                     "help.code.findreplace", "help.code.findinfiles",
                     "help.code.markdownpreview",
+                    "help.code.markdownreader",
                     "help.code.navigation",
                     "help.code.tabsize", "help.code.columnruler",
                     "help.code.brackets", "help.code.indentguides", "help.code.repoconfig",

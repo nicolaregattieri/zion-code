@@ -94,6 +94,7 @@
 | Go to Definition | Jump to symbol definition (opens in new tab) | `F12` / `⌘Click` |
 | Find References | List references of the selected symbol across repository files | `⇧F12` |
 | Markdown Preview | Optional side-by-side rendered preview for `.md` files with links and local images | — |
+| Markdown Reader Mode | Edge-to-edge fullscreen rendered view of any `.md` file (hides sidebar, file tree, terminal). Floating left sidebar lists every `.md` in the repo (including `.claude/` and any nested folder, sourced via `git ls-files`). Esc or `xmark` exits, Edit button drops back to the editor. | `⇧⌘M` toggle / `⌘O` toggle sidebar (inside reader) / `Esc` exit |
 | Tab Size & Indent | Configurable 2/4/8 spaces or real tabs | Settings |
 | Column Ruler | Thin vertical line at configurable column (80/100/120) | Settings |
 | Bracket Pair Highlight | Highlights matching bracket when cursor is adjacent to `()[]{}` | Settings |
