@@ -66,9 +66,6 @@ struct CodeScreen: View {
     @State var markdownPreviewRatio: CGFloat = 0.5
     @State var markdownPreviewVerticalRatio: CGFloat = 0.58
     @State var isMarkdownPreviewVisible: Bool = false
-    @State var isMarkdownFullscreen: Bool = false
-    @State var isMarkdownReaderSidebarVisible: Bool = false
-    @State var markdownReaderSidebarSearch: String = ""
     @FocusState var isTerminalSearchFocused: Bool
     @State var isSymbolResultsVisible: Bool = false
     @State var symbolResultsMode: EditorSymbolResultsMode = .definitions
@@ -258,7 +255,7 @@ struct CodeScreen: View {
             let keepPreview = isMarkdownPreviewVisible && newIsMarkdown
             if !keepPreview {
                 isMarkdownPreviewVisible = false
-                isMarkdownFullscreen = false
+                model.isMarkdownFullscreen = false
             }
             if !isTextEditorActive {
                 closeSearch()
@@ -407,11 +404,11 @@ struct CodeScreen: View {
             Button("") {
                 guard isMarkdownFile else { return }
                 withAnimation(DesignSystem.Motion.detail) {
-                    if isMarkdownFullscreen {
-                        isMarkdownFullscreen = false
+                    if model.isMarkdownFullscreen {
+                        model.isMarkdownFullscreen = false
                     } else {
                         isMarkdownPreviewVisible = true
-                        isMarkdownFullscreen = true
+                        model.isMarkdownFullscreen = true
                     }
                 }
             }
@@ -419,119 +416,9 @@ struct CodeScreen: View {
             .frame(width: 0, height: 0).opacity(0)
         }
 
-        if isMarkdownFullscreen {
-            markdownFullscreenOverlay
-                .transition(DesignSystem.Motion.fadeScale)
-        }
         } // ZStack
     }
 
-    private var markdownFullscreenOverlay: some View {
-        ZStack {
-            model.effectiveTheme.colors.background
-                .ignoresSafeArea()
-
-            Button("") {
-                withAnimation(DesignSystem.Motion.detail) {
-                    isMarkdownFullscreen = false
-                }
-            }
-            .keyboardShortcut(.escape, modifiers: [])
-            .frame(width: 0, height: 0)
-            .opacity(0)
-
-            Button("") {
-                withAnimation(DesignSystem.Motion.detail) {
-                    isMarkdownReaderSidebarVisible.toggle()
-                }
-            }
-            .keyboardShortcut("o", modifiers: [.command])
-            .frame(width: 0, height: 0)
-            .opacity(0)
-
-            HStack(spacing: 0) {
-                if isMarkdownReaderSidebarVisible {
-                    MarkdownReaderSidebar(
-                        model: model,
-                        searchText: $markdownReaderSidebarSearch
-                    ) { file in
-                        model.selectCodeFile(file)
-                    }
-                    .transition(.move(edge: .leading).combined(with: .opacity))
-                }
-
-                VStack(spacing: 0) {
-                    HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-                        Button {
-                            withAnimation(DesignSystem.Motion.detail) {
-                                isMarkdownReaderSidebarVisible.toggle()
-                            }
-                        } label: {
-                            Image(systemName: isMarkdownReaderSidebarVisible ? "sidebar.leading" : "list.bullet.indent")
-                                .font(DesignSystem.Typography.body)
-                                .frame(width: 24, height: 24)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .help(L10n("editor.markdown.reader.toggleSidebar"))
-
-                        Image(systemName: "doc.text.image")
-                            .foregroundStyle(.secondary)
-                        Text(model.selectedCodeFile?.name ?? L10n("editor.markdown.preview"))
-                            .font(DesignSystem.Typography.bodyMedium)
-                            .foregroundStyle(.secondary)
-                        Text(L10n("editor.markdown.readerMode"))
-                            .font(DesignSystem.Typography.metaSemibold)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(DesignSystem.Colors.accent.opacity(0.15))
-                            .foregroundStyle(DesignSystem.Colors.accent)
-                            .clipShape(Capsule())
-                        Spacer(minLength: 0)
-                        Button {
-                            withAnimation(DesignSystem.Motion.detail) {
-                                isMarkdownFullscreen = false
-                                isMarkdownPreviewVisible = false
-                            }
-                        } label: {
-                            Label(L10n("editor.markdown.edit"), systemImage: "pencil")
-                                .font(DesignSystem.Typography.bodySmall)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                        .help(L10n("editor.markdown.edit.help"))
-                        Button {
-                            withAnimation(DesignSystem.Motion.detail) {
-                                isMarkdownFullscreen = false
-                            }
-                        } label: {
-                            Image(systemName: "xmark")
-                                .font(DesignSystem.Typography.body)
-                                .frame(width: 24, height: 24)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .help(L10n("editor.markdown.exitFullscreen"))
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 8)
-                    .background(model.effectiveTheme.colors.background)
-
-                    Divider()
-
-                    MarkdownPreviewView(
-                        markdownText: model.codeFileContent,
-                        fileURL: model.selectedCodeFile?.url,
-                        repositoryURL: model.repositoryURL,
-                        theme: model.effectiveTheme
-                    )
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(model.effectiveTheme.colors.background)
-            }
-        }
-    }
 
     var isMarkdownFile: Bool {
         model.selectedEditorContentKind == .markdown
@@ -659,7 +546,7 @@ struct CodeScreen: View {
             Button {
                 withAnimation(DesignSystem.Motion.detail) {
                     isMarkdownPreviewVisible = true
-                    isMarkdownFullscreen = true
+                    model.isMarkdownFullscreen = true
                 }
             } label: {
                 Label(L10n("editor.markdown.fullscreen"), systemImage: "arrow.up.left.and.arrow.down.right")
@@ -692,7 +579,7 @@ struct CodeScreen: View {
                 Spacer(minLength: 0)
                 Button {
                     withAnimation(DesignSystem.Motion.detail) {
-                        isMarkdownFullscreen = true
+                        model.isMarkdownFullscreen = true
                     }
                 } label: {
                     Image(systemName: "arrow.up.left.and.arrow.down.right")

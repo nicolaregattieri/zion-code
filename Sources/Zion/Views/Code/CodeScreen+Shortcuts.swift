@@ -26,9 +26,9 @@ extension CodeScreen {
     }
 
     func handleEscapeShortcut() {
-        if isMarkdownFullscreen {
+        if model.isMarkdownFullscreen {
             withAnimation(DesignSystem.Motion.detail) {
-                isMarkdownFullscreen = false
+                model.isMarkdownFullscreen = false
             }
             return
         }

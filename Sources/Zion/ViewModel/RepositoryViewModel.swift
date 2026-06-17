@@ -107,6 +107,9 @@ final class RepositoryViewModel {
     var statusMessage: String = "Selecione um repositorio para iniciar."
     var lastError: String?
     var isBusy: Bool = false
+    var isMarkdownFullscreen: Bool = false
+    var isMarkdownReaderSidebarVisible: Bool = false
+    var markdownReaderSidebarSearch: String = ""
     var hasConflicts: Bool = false
     var isMerging: Bool = false
     var isRebasing: Bool = false

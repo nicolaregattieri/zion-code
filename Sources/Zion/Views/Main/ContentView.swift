@@ -425,6 +425,11 @@ struct ContentView: View {
                     .transition(.opacity)
                     .zIndex(100)
             }
+            if model.isMarkdownFullscreen {
+                MarkdownFullscreenReader(model: model)
+                    .transition(DesignSystem.Motion.fadeScale)
+                    .zIndex(200)
+            }
         }
         .coordinateSpace(name: "featureTour")
         .background(shellWidthReader)
