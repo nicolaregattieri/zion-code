@@ -3,7 +3,7 @@ import SwiftUI
 struct MarkdownReaderSidebar: View {
     var model: RepositoryViewModel
     @Binding var searchText: String
-    var onSelect: (FileItem) -> Void
+    var onSelect: (URL) -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -30,7 +30,7 @@ struct MarkdownReaderSidebar: View {
             Text(L10n("editor.markdown.reader.sidebar.title"))
                 .font(DesignSystem.Typography.bodySemibold)
             Spacer(minLength: 0)
-            Text("\(markdownFiles.count)")
+            Text("\(model.allMarkdownFiles.count)")
                 .font(DesignSystem.Typography.metaSemibold)
                 .foregroundStyle(.secondary)
         }
@@ -70,8 +70,8 @@ struct MarkdownReaderSidebar: View {
                         .foregroundStyle(.secondary)
                         .padding(12)
                 } else {
-                    ForEach(filteredFiles) { file in
-                        row(for: file)
+                    ForEach(filteredFiles, id: \.self) { url in
+                        row(for: url)
                     }
                 }
             }
@@ -79,17 +79,17 @@ struct MarkdownReaderSidebar: View {
         }
     }
 
-    private func row(for file: FileItem) -> some View {
-        let isSelected = model.selectedCodeFile?.url == file.url
+    private func row(for url: URL) -> some View {
+        let isSelected = model.selectedCodeFile?.url == url
         return Button {
-            onSelect(file)
+            onSelect(url)
         } label: {
             VStack(alignment: .leading, spacing: 1) {
-                Text(file.name)
+                Text(url.lastPathComponent)
                     .font(isSelected ? DesignSystem.Typography.monoBodyBold : DesignSystem.Typography.monoBody)
                     .lineLimit(1)
                     .truncationMode(.middle)
-                if let folder = folderHint(for: file) {
+                if let folder = folderHint(for: url) {
                     Text(folder)
                         .font(DesignSystem.Typography.metaSemibold)
                         .foregroundStyle(.secondary)
@@ -114,38 +114,19 @@ struct MarkdownReaderSidebar: View {
         .padding(.horizontal, 6)
     }
 
-    private var markdownFiles: [FileItem] {
-        Self.flattenMarkdown(model.repositoryFiles)
-            .sorted { $0.url.path.lowercased() < $1.url.path.lowercased() }
-    }
-
-    private var filteredFiles: [FileItem] {
+    private var filteredFiles: [URL] {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        guard !query.isEmpty else { return markdownFiles }
-        return markdownFiles.filter { $0.url.path.lowercased().contains(query) }
+        guard !query.isEmpty else { return model.allMarkdownFiles }
+        return model.allMarkdownFiles.filter { $0.path.lowercased().contains(query) }
     }
 
-    private func folderHint(for file: FileItem) -> String? {
+    private func folderHint(for url: URL) -> String? {
         guard let repoPath = model.repositoryURL?.path else { return nil }
-        let filePath = file.url.deletingLastPathComponent().path
+        let filePath = url.deletingLastPathComponent().path
         if filePath.hasPrefix(repoPath + "/") {
             let relative = String(filePath.dropFirst(repoPath.count + 1))
             return relative.isEmpty ? nil : relative
         }
         return filePath.isEmpty ? nil : filePath
-    }
-
-    static func flattenMarkdown(_ items: [FileItem]) -> [FileItem] {
-        var out: [FileItem] = []
-        for item in items {
-            if item.isDirectory {
-                if let kids = item.children {
-                    out.append(contentsOf: flattenMarkdown(kids))
-                }
-            } else if item.url.pathExtension.lowercased() == "md" {
-                out.append(item)
-            }
-        }
-        return out
     }
 }

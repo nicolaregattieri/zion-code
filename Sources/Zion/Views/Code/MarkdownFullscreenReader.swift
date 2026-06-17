@@ -34,8 +34,8 @@ struct MarkdownFullscreenReader: View {
                             get: { model.markdownReaderSidebarSearch },
                             set: { model.markdownReaderSidebarSearch = $0 }
                         )
-                    ) { file in
-                        model.selectCodeFile(file)
+                    ) { url in
+                        model.openExternalFiles([url])
                     }
                     .transition(.move(edge: .leading).combined(with: .opacity))
                 }
@@ -54,6 +54,7 @@ struct MarkdownFullscreenReader: View {
                 .background(model.effectiveTheme.colors.background)
             }
         }
+        .onAppear { model.refreshAllMarkdownFiles() }
     }
 
     private var header: some View {

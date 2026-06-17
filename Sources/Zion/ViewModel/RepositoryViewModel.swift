@@ -110,6 +110,7 @@ final class RepositoryViewModel {
     var isMarkdownFullscreen: Bool = false
     var isMarkdownReaderSidebarVisible: Bool = false
     var markdownReaderSidebarSearch: String = ""
+    var allMarkdownFiles: [URL] = []
     var hasConflicts: Bool = false
     var isMerging: Bool = false
     var isRebasing: Bool = false
