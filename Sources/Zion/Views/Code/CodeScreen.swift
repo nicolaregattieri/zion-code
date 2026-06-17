@@ -66,7 +66,6 @@ struct CodeScreen: View {
     @State var markdownPreviewRatio: CGFloat = 0.5
     @State var markdownPreviewVerticalRatio: CGFloat = 0.58
     @State var isMarkdownPreviewVisible: Bool = false
-    @State var isMarkdownFullscreen: Bool = false
     @FocusState var isTerminalSearchFocused: Bool
     @State var isSymbolResultsVisible: Bool = false
     @State var symbolResultsMode: EditorSymbolResultsMode = .definitions
@@ -256,7 +255,7 @@ struct CodeScreen: View {
             let keepPreview = isMarkdownPreviewVisible && newIsMarkdown
             if !keepPreview {
                 isMarkdownPreviewVisible = false
-                isMarkdownFullscreen = false
+                model.isMarkdownFullscreen = false
             }
             if !isTextEditorActive {
                 closeSearch()
@@ -401,66 +400,25 @@ struct CodeScreen: View {
             Button("") { model.formatCurrentFile() }
                 .applyShortcutBinding(shortcutRegistry.binding(for: .formatDocument))
                 .frame(width: 0, height: 0).opacity(0)
+
+            Button("") {
+                guard isMarkdownFile else { return }
+                withAnimation(DesignSystem.Motion.detail) {
+                    if model.isMarkdownFullscreen {
+                        model.isMarkdownFullscreen = false
+                    } else {
+                        isMarkdownPreviewVisible = true
+                        model.isMarkdownFullscreen = true
+                    }
+                }
+            }
+            .keyboardShortcut("m", modifiers: [.command, .shift])
+            .frame(width: 0, height: 0).opacity(0)
         }
 
-        if isMarkdownFullscreen {
-            markdownFullscreenOverlay
-                .transition(DesignSystem.Motion.fadeScale)
-        }
         } // ZStack
     }
 
-    private var markdownFullscreenOverlay: some View {
-        ZStack {
-            DesignSystem.Colors.modalScrim
-                .ignoresSafeArea()
-                .onTapGesture {
-                    withAnimation(DesignSystem.Motion.detail) {
-                        isMarkdownFullscreen = false
-                    }
-                }
-
-            VStack(spacing: 0) {
-                HStack(spacing: DesignSystem.Spacing.iconTextGap) {
-                    Label(
-                        model.selectedCodeFile?.name ?? L10n("editor.markdown.preview"),
-                        systemImage: "doc.text.image"
-                    )
-                    .font(DesignSystem.Typography.bodyMedium)
-                    .foregroundStyle(.secondary)
-                    Spacer(minLength: 0)
-                    Button {
-                        withAnimation(DesignSystem.Motion.detail) {
-                            isMarkdownFullscreen = false
-                        }
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(DesignSystem.Typography.body)
-                            .frame(width: 24, height: 24)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .help(L10n("editor.markdown.exitFullscreen"))
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 8)
-                .background(model.effectiveTheme.colors.background)
-
-                Divider()
-
-                MarkdownPreviewView(
-                    markdownText: model.codeFileContent,
-                    fileURL: model.selectedCodeFile?.url,
-                    repositoryURL: model.repositoryURL,
-                    theme: model.effectiveTheme
-                )
-            }
-            .background(model.effectiveTheme.colors.background)
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous))
-            .shadow(color: DesignSystem.Colors.shadowDark, radius: 20, y: 10)
-            .padding(DesignSystem.Spacing.sectionGap)
-        }
-    }
 
     var isMarkdownFile: Bool {
         model.selectedEditorContentKind == .markdown
@@ -588,7 +546,7 @@ struct CodeScreen: View {
             Button {
                 withAnimation(DesignSystem.Motion.detail) {
                     isMarkdownPreviewVisible = true
-                    isMarkdownFullscreen = true
+                    model.isMarkdownFullscreen = true
                 }
             } label: {
                 Label(L10n("editor.markdown.fullscreen"), systemImage: "arrow.up.left.and.arrow.down.right")
@@ -621,7 +579,7 @@ struct CodeScreen: View {
                 Spacer(minLength: 0)
                 Button {
                     withAnimation(DesignSystem.Motion.detail) {
-                        isMarkdownFullscreen = true
+                        model.isMarkdownFullscreen = true
                     }
                 } label: {
                     Image(systemName: "arrow.up.left.and.arrow.down.right")
