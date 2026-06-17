@@ -2433,6 +2433,10 @@
 "editor.markdown.edit.help" = "Cambiar al editor";
 "editor.markdown.readerMode" = "Modo Lectura";
 "editor.markdown.toggleReader" = "Alternar Modo Lectura";
+"editor.markdown.reader.sidebar.title" = "Archivos Markdown";
+"editor.markdown.reader.sidebar.empty" = "Sin archivos markdown";
+"editor.markdown.reader.sidebar.search" = "Buscar...";
+"editor.markdown.reader.toggleSidebar" = "Alternar lista de archivos (⌘O)";
 
 // Editor Themes
 "theme.dracula" = "Dracula";

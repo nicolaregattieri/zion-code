@@ -67,6 +67,8 @@ struct CodeScreen: View {
     @State var markdownPreviewVerticalRatio: CGFloat = 0.58
     @State var isMarkdownPreviewVisible: Bool = false
     @State var isMarkdownFullscreen: Bool = false
+    @State var isMarkdownReaderSidebarVisible: Bool = false
+    @State var markdownReaderSidebarSearch: String = ""
     @FocusState var isTerminalSearchFocused: Bool
     @State var isSymbolResultsVisible: Bool = false
     @State var symbolResultsMode: EditorSymbolResultsMode = .definitions
@@ -426,7 +428,7 @@ struct CodeScreen: View {
 
     private var markdownFullscreenOverlay: some View {
         ZStack {
-            DesignSystem.Colors.modalScrim
+            model.effectiveTheme.colors.background
                 .ignoresSafeArea()
 
             Button("") {
@@ -438,64 +440,96 @@ struct CodeScreen: View {
             .frame(width: 0, height: 0)
             .opacity(0)
 
-            VStack(spacing: 0) {
-                HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
-                    Image(systemName: "doc.text.image")
-                        .foregroundStyle(.secondary)
-                    Text(model.selectedCodeFile?.name ?? L10n("editor.markdown.preview"))
-                        .font(DesignSystem.Typography.bodyMedium)
-                        .foregroundStyle(.secondary)
-                    Text(L10n("editor.markdown.readerMode"))
-                        .font(DesignSystem.Typography.metaSemibold)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(DesignSystem.Colors.accent.opacity(0.15))
-                        .foregroundStyle(DesignSystem.Colors.accent)
-                        .clipShape(Capsule())
-                    Spacer(minLength: 0)
-                    Button {
-                        withAnimation(DesignSystem.Motion.detail) {
-                            isMarkdownFullscreen = false
-                            isMarkdownPreviewVisible = false
-                        }
-                    } label: {
-                        Label(L10n("editor.markdown.edit"), systemImage: "pencil")
-                            .font(DesignSystem.Typography.bodySmall)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                    .help(L10n("editor.markdown.edit.help"))
-                    Button {
-                        withAnimation(DesignSystem.Motion.detail) {
-                            isMarkdownFullscreen = false
-                        }
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(DesignSystem.Typography.body)
-                            .frame(width: 24, height: 24)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .help(L10n("editor.markdown.exitFullscreen"))
+            Button("") {
+                withAnimation(DesignSystem.Motion.detail) {
+                    isMarkdownReaderSidebarVisible.toggle()
                 }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 8)
-                .background(model.effectiveTheme.colors.background)
-
-                Divider()
-
-                MarkdownPreviewView(
-                    markdownText: model.codeFileContent,
-                    fileURL: model.selectedCodeFile?.url,
-                    repositoryURL: model.repositoryURL,
-                    theme: model.effectiveTheme
-                )
             }
-            .background(model.effectiveTheme.colors.background)
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Spacing.cardCornerRadius, style: .continuous))
-            .shadow(color: DesignSystem.Colors.shadowDark, radius: 20, y: 10)
-            .padding(DesignSystem.Spacing.sectionGap)
+            .keyboardShortcut("o", modifiers: [.command])
+            .frame(width: 0, height: 0)
+            .opacity(0)
+
+            HStack(spacing: 0) {
+                if isMarkdownReaderSidebarVisible {
+                    MarkdownReaderSidebar(
+                        model: model,
+                        searchText: $markdownReaderSidebarSearch
+                    ) { file in
+                        model.selectCodeFile(file)
+                    }
+                    .transition(.move(edge: .leading).combined(with: .opacity))
+                }
+
+                VStack(spacing: 0) {
+                    HStack(spacing: DesignSystem.Spacing.iconLabelGap) {
+                        Button {
+                            withAnimation(DesignSystem.Motion.detail) {
+                                isMarkdownReaderSidebarVisible.toggle()
+                            }
+                        } label: {
+                            Image(systemName: isMarkdownReaderSidebarVisible ? "sidebar.leading" : "list.bullet.indent")
+                                .font(DesignSystem.Typography.body)
+                                .frame(width: 24, height: 24)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .help(L10n("editor.markdown.reader.toggleSidebar"))
+
+                        Image(systemName: "doc.text.image")
+                            .foregroundStyle(.secondary)
+                        Text(model.selectedCodeFile?.name ?? L10n("editor.markdown.preview"))
+                            .font(DesignSystem.Typography.bodyMedium)
+                            .foregroundStyle(.secondary)
+                        Text(L10n("editor.markdown.readerMode"))
+                            .font(DesignSystem.Typography.metaSemibold)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(DesignSystem.Colors.accent.opacity(0.15))
+                            .foregroundStyle(DesignSystem.Colors.accent)
+                            .clipShape(Capsule())
+                        Spacer(minLength: 0)
+                        Button {
+                            withAnimation(DesignSystem.Motion.detail) {
+                                isMarkdownFullscreen = false
+                                isMarkdownPreviewVisible = false
+                            }
+                        } label: {
+                            Label(L10n("editor.markdown.edit"), systemImage: "pencil")
+                                .font(DesignSystem.Typography.bodySmall)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .help(L10n("editor.markdown.edit.help"))
+                        Button {
+                            withAnimation(DesignSystem.Motion.detail) {
+                                isMarkdownFullscreen = false
+                            }
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(DesignSystem.Typography.body)
+                                .frame(width: 24, height: 24)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .help(L10n("editor.markdown.exitFullscreen"))
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .background(model.effectiveTheme.colors.background)
+
+                    Divider()
+
+                    MarkdownPreviewView(
+                        markdownText: model.codeFileContent,
+                        fileURL: model.selectedCodeFile?.url,
+                        repositoryURL: model.repositoryURL,
+                        theme: model.effectiveTheme
+                    )
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(model.effectiveTheme.colors.background)
+            }
         }
     }
 
