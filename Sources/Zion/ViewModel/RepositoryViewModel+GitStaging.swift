@@ -135,8 +135,10 @@ extension RepositoryViewModel {
                     try content.write(to: gitIgnoreURL, atomically: true, encoding: .utf8)
                 }
 
-                // After adding to gitignore, we should unstage it if it was staged
-                let _ = try await worker.runAction(args: ["rm", "--cached", path], in: url)
+                // After adding to gitignore, unstage if tracked. `-r` covers
+                // directories; `--ignore-unmatch` keeps untracked paths from
+                // erroring out (common case: ignoring a brand new folder).
+                let _ = try await worker.runAction(args: ["rm", "-r", "--cached", "--ignore-unmatch", path], in: url)
 
                 clearError()
                 statusMessage = L10n("Adicionado ao .gitignore: %@", path)
