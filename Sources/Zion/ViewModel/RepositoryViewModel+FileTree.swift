@@ -178,7 +178,16 @@ extension RepositoryViewModel {
         for changed in paths {
             let normalized = FileWatcher.normalizePath(changed)
             guard normalized.hasPrefix(repoPath) else { continue }
-            var ancestor = URL(fileURLWithPath: normalized).deletingLastPathComponent().path
+            // Start the walk at the changed path itself, not at its parent.
+            // `FileWatcher.coalesceEvent` already collapses file events into
+            // their parent directory, so the incoming `changed` is typically
+            // the directory whose children just mutated. Starting at the
+            // parent (the previous behaviour) skipped that directory entirely
+            // and only walked grandparents up to the repo root, so a new file
+            // dropped into an expanded folder never surfaced until the next
+            // top-level refresh. `loadChildrenIfNeeded` safely no-ops if the
+            // path is a file or otherwise not a directory item.
+            var ancestor = normalized
             var hops = 0
             while ancestor.count >= repoPath.count, ancestor.hasPrefix(repoPath), hops < maxDepth {
                 ancestors.insert(FileWatcher.normalizePath(ancestor))
