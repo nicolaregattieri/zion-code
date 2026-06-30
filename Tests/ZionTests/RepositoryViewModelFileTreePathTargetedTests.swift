@@ -23,11 +23,12 @@ final class RepositoryViewModelFileTreePathTargetedTests: XCTestCase {
         }
     }
 
-    // RT-005: file dropped inside a brand-new folder should be discoverable
-    // without the user clicking — `ensureChildrenLoadedForChangedPaths` walks
-    // the changed path's ancestors, force-reloads each parent dir, and
-    // auto-expands any directory that did not yet have its children loaded.
-    func testEnsureChildrenLoadedAutoExpandsBrandNewFolder() async throws {
+    // A file dropped inside a folder that the user has never opened should
+    // load that folder's children silently (so the file is in memory the
+    // moment the user clicks to expand). The folder must NOT be auto-added
+    // to `expandedPaths` — that heuristic was removed because it misfired
+    // for every unopened folder (`.git`, `build`, `dist`).
+    func testEnsureChildrenLoadedReloadsUnopenedFolderWithoutExpanding() async throws {
         let vm = RepositoryViewModel()
         let tempDir = try makeTemporaryDirectory()
         defer { try? FileManager.default.removeItem(at: tempDir) }
@@ -39,7 +40,7 @@ final class RepositoryViewModelFileTreePathTargetedTests: XCTestCase {
 
         vm.repositoryURL = tempDir
         // Simulate the state that follows `runFileTreeRefresh`'s top-level
-        // walk: the new folder is in `repositoryFiles` but its children have
+        // walk: the folder is in `repositoryFiles` but its children have
         // not been loaded yet (would normally only happen on user click).
         let folderItem = FileItem(url: newFolder, isDirectory: true, children: nil)
         vm.repositoryFiles = [folderItem]
@@ -47,9 +48,10 @@ final class RepositoryViewModelFileTreePathTargetedTests: XCTestCase {
 
         vm.ensureChildrenLoadedForChangedPaths([newFile.path])
 
-        // Auto-expand happens synchronously; child load is async.
-        XCTAssertTrue(vm.expandedPaths.contains(newFolder.path),
-                      "Brand-new folder should be auto-added to expandedPaths")
+        // Folder stays collapsed.
+        XCTAssertFalse(vm.expandedPaths.contains(newFolder.path),
+                       "Unopened folder must not be auto-added to expandedPaths")
+        // Children load asynchronously so the file shows on first click.
         await waitForCondition {
             guard let folder = vm.findItem(path: newFolder.path, in: vm.repositoryFiles) else {
                 return false
@@ -59,7 +61,47 @@ final class RepositoryViewModelFileTreePathTargetedTests: XCTestCase {
         let folderAfter = vm.findItem(path: newFolder.path, in: vm.repositoryFiles)
         XCTAssertNotNil(folderAfter?.children, "Children should load asynchronously")
         XCTAssertTrue(folderAfter?.children?.contains(where: { $0.url.lastPathComponent == "newFile.swift" }) ?? false,
-                      "newFile.swift should appear inside auto-expanded new folder")
+                      "newFile.swift should be loaded into the folder's children for instant click reveal")
+    }
+
+    // `FileWatcher.coalesceEvent` collapses incoming file paths into their
+    // parent directory before forwarding to `ensureChildrenLoadedForChangedPaths`.
+    // So the function may be invoked with the parent directory itself as the
+    // `changed` path (NOT the new file path). Walk must start at the changed
+    // path so that directory gets reloaded — previously the walk started at
+    // its parent and only reached the repo root, which was skipped, so the
+    // new file never surfaced in an already-expanded folder.
+    func testEnsureChildrenLoadedReloadsCoalescedParentDirectory() async throws {
+        let vm = RepositoryViewModel()
+        let tempDir = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let folder = tempDir.appendingPathComponent("postman", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let oldFile = folder.appendingPathComponent("a.json")
+        try "{}\n".write(to: oldFile, atomically: true, encoding: .utf8)
+
+        vm.repositoryURL = tempDir
+        let oldChild = FileItem(url: oldFile, isDirectory: false, children: nil)
+        let folderItem = FileItem(url: folder, isDirectory: true, children: [oldChild])
+        vm.repositoryFiles = [folderItem]
+        vm.expandedPaths.insert(folder.path)
+
+        // External actor drops a new file inside the (already-expanded) folder.
+        let newFile = folder.appendingPathComponent("b.json")
+        try "{}\n".write(to: newFile, atomically: true, encoding: .utf8)
+
+        // Coalesced event: the watcher reports the PARENT directory, not the
+        // file. This is the production path.
+        vm.ensureChildrenLoadedForChangedPaths([folder.path])
+
+        await waitForCondition {
+            guard let f = vm.findItem(path: folder.path, in: vm.repositoryFiles) else { return false }
+            return f.children?.contains(where: { $0.url.lastPathComponent == "b.json" }) ?? false
+        }
+        let folderAfter = vm.findItem(path: folder.path, in: vm.repositoryFiles)
+        XCTAssertTrue(folderAfter?.children?.contains(where: { $0.url.lastPathComponent == "b.json" }) ?? false,
+                      "b.json should appear after a coalesced parent-directory event")
     }
 
     // Existing folder that is already collapsed (children already loaded
