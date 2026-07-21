@@ -342,7 +342,7 @@
 | Feature | Description |
 |---------|-------------|
 | Fetch | `git fetch --all --prune` |
-| Pull | `git pull --ff-only` |
+| Pull | `git pull --ff-only`; prompts a remote/branch picker when the local branch has no upstream (with opt-in "Set as upstream") |
 | Push | `git push` with pre-push divergence check |
 | Push Divergence Warning | Detects when branch is behind or diverged from remote before pushing; offers Pull First or Force Push with Lease |
 | Ahead/Behind Badges | Status bar shows ↑N (ahead, blue) and ↓N (behind, orange) commit counts vs remote |
