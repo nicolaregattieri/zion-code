@@ -413,6 +413,9 @@ struct ContentView: View {
                 model.resolveDivergence(resolution, context: context)
             }
         }
+        .sheet(isPresented: $model.isPullUpstreamPickerVisible) {
+            PullUpstreamPickerSheet(model: model)
+        }
     }
 
     private var rootShell: some View {

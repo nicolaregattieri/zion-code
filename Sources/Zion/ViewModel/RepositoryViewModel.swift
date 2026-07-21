@@ -568,6 +568,11 @@ final class RepositoryViewModel {
     @ObservationIgnored var gitAuthPromptContinuation: CheckedContinuation<GitAuthPromptResult, Never>?
     @ObservationIgnored let gitCredentialStore = GitCredentialStore()
 
+    var isPullUpstreamPickerVisible: Bool = false
+    var pullUpstreamPickerRemote: String = "origin"
+    var pullUpstreamPickerBranch: String = ""
+    var pullUpstreamPickerSetUpstream: Bool = true
+
     // Zion Code state
     var repositoryFiles: [FileItem] = [] {
         didSet { isFlatFileCacheDirty = true }

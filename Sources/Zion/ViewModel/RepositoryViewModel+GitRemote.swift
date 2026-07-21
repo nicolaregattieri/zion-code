@@ -5,8 +5,62 @@ extension RepositoryViewModel {
     // MARK: - Fetch / Pull / Push
 
     func fetch() { runGitAction(label: "Fetch", args: ["fetch", "--all", "--prune"]) }
-    func pull() { runGitAction(label: "Pull", args: ["pull", "--ff-only"]) }
-    func pullRebase() { runGitAction(label: "Pull (rebase)", args: ["pull", "--rebase"]) }
+
+    func pull() {
+        if currentBranchHasUpstream {
+            runGitAction(label: "Pull", args: ["pull", "--ff-only"])
+        } else {
+            presentPullUpstreamPicker()
+        }
+    }
+
+    func pullRebase() {
+        if currentBranchHasUpstream {
+            runGitAction(label: "Pull (rebase)", args: ["pull", "--rebase"])
+        } else {
+            presentPullUpstreamPicker()
+        }
+    }
+
+    var currentBranchHasUpstream: Bool {
+        let branch = currentBranch.clean
+        guard !branch.isEmpty, branch != "-" else { return false }
+        return branchInfos.first(where: { !$0.isRemote && $0.name == branch })?.upstream.isEmpty == false
+    }
+
+    func presentPullUpstreamPicker() {
+        let branch = currentBranch.clean
+        let defaultRemote = remotes.first(where: { $0.name == "origin" })?.name ?? remotes.first?.name ?? "origin"
+        pullUpstreamPickerRemote = defaultRemote
+        pullUpstreamPickerBranch = branch.isEmpty || branch == "-" ? "" : branch
+        pullUpstreamPickerSetUpstream = true
+        isPullUpstreamPickerVisible = true
+    }
+
+    func confirmPullWithUpstream() {
+        let remote = pullUpstreamPickerRemote.clean
+        let branch = pullUpstreamPickerBranch.clean
+        let setUpstream = pullUpstreamPickerSetUpstream
+        let localBranch = currentBranch.clean
+        guard !remote.isEmpty, !branch.isEmpty else { return }
+        isPullUpstreamPickerVisible = false
+
+        if setUpstream, !localBranch.isEmpty, localBranch != "-" {
+            runGitAction(
+                label: "Pull",
+                args: ["pull", "--ff-only", remote, branch],
+                onCommandSuccess: { [weak self] in
+                    guard let self else { return }
+                    self.runGitAction(
+                        label: "Set upstream",
+                        args: ["branch", "--set-upstream-to=\(remote)/\(branch)", localBranch]
+                    )
+                }
+            )
+        } else {
+            runGitAction(label: "Pull", args: ["pull", "--ff-only", remote, branch])
+        }
+    }
     func requestPush() {
         guard let repositoryURL else {
             push()
