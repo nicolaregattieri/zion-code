@@ -1762,6 +1762,16 @@
 "pr.release.whatsChanged" = "O que mudou";
 "pr.release.fullChangelog" = "Changelog completo";
 
+// MARK: - Pull Upstream Picker
+"pull.upstream.title" = "Pull do Remoto";
+"pull.upstream.subtitle" = "Esta branch não tem upstream. Escolha uma branch remota para puxar.";
+"pull.upstream.remote" = "Remoto";
+"pull.upstream.branch" = "Branch remota";
+"pull.upstream.branchPlaceholder" = "nome da branch";
+"pull.upstream.setUpstream" = "Definir como upstream";
+"pull.upstream.setUpstreamHint" = "Futuros pulls e pushes usam esta branch remota automaticamente.";
+"pull.upstream.pull" = "Pull";
+
 // MARK: - Tags
 "tag.detail.title" = "Criar Tag";
 "tag.detail.type" = "Tipo";

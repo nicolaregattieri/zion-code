@@ -1800,6 +1800,16 @@
 "pr.release.whatsChanged" = "What's Changed";
 "pr.release.fullChangelog" = "Full Changelog";
 
+// MARK: - Pull Upstream Picker
+"pull.upstream.title" = "Pull from Remote";
+"pull.upstream.subtitle" = "This branch has no upstream. Pick a remote branch to pull from.";
+"pull.upstream.remote" = "Remote";
+"pull.upstream.branch" = "Remote branch";
+"pull.upstream.branchPlaceholder" = "branch name";
+"pull.upstream.setUpstream" = "Set as upstream";
+"pull.upstream.setUpstreamHint" = "Future pulls and pushes use this remote branch automatically.";
+"pull.upstream.pull" = "Pull";
+
 // MARK: - Tags
 "tag.detail.title" = "Create Tag";
 "tag.detail.type" = "Type";

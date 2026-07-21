@@ -133,12 +133,14 @@ extension RepositoryViewModel {
                 // 1. Determine local branch name and full remote target
                 var localName = target
                 var remoteTarget = target
+                var remoteName = ""
 
                 // Check if target is a known remote branch (e.g. origin/develop)
                 for remote in remotes {
                     if target.hasPrefix("\(remote.name)/") {
                         localName = String(target.dropFirst(remote.name.count + 1))
                         remoteTarget = target
+                        remoteName = remote.name
                         break
                     }
                 }
@@ -151,8 +153,11 @@ extension RepositoryViewModel {
                     return
                 }
 
+                let localExistedBefore = localBranchExists(named: localName)
+                let priorUpstreamEmpty = branchInfos.first(where: { !$0.isRemote && $0.name == localName })?.upstream.clean.isEmpty ?? true
+
                 // 2. Perform Smart Checkout
-                if localBranchExists(named: localName) {
+                if localExistedBefore {
                     // Already exists locally, just checkout and pull
                     let _ = try await worker.runAction(args: ["checkout", localName], in: url)
                 } else if isRemoteRefName(remoteTarget) {
@@ -165,13 +170,30 @@ extension RepositoryViewModel {
 
                 await MainActor.run { currentBranch = localName }
 
-                // 3. Pull changes
+                // 3. Pull changes — when we know the remote (clicked remote pill),
+                // pass <remote> <branch> explicitly so branches without upstream
+                // don't fail with "no tracking information for the current branch".
+                let pullArgs: [String]
+                if !remoteName.isEmpty {
+                    pullArgs = ["pull", remoteName, localName]
+                } else {
+                    pullArgs = ["pull"]
+                }
                 let _ = try await runActionWithCredentialRetry(
                     label: "Pull",
-                    args: ["pull"],
+                    args: pullArgs,
                     in: url,
-                    commandSummary: redactedGitCommandSummary(args: ["pull"])
+                    commandSummary: redactedGitCommandSummary(args: pullArgs)
                 )
+
+                // 4. Set upstream when the pre-existing local branch had none.
+                // Fresh `checkout -t` already sets it; skip in that path.
+                if !remoteName.isEmpty, localExistedBefore, priorUpstreamEmpty {
+                    let _ = try await worker.runAction(
+                        args: ["branch", "--set-upstream-to=\(remoteName)/\(localName)", localName],
+                        in: url
+                    )
+                }
 
                 clearError()
                 statusMessage = L10n("Checkout e Pull concluídos para %@", localName)
