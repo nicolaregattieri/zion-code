@@ -33,7 +33,17 @@ extension RepositoryViewModel {
     /// when `repositoryURL` is not set.
     func revealSelectedCodeFileInTree() {
         guard autoRevealEnabled else { return }
-        guard let file = selectedCodeFile else { return }
+        guard let file = selectedCodeFile else {
+            lastRevealedFileID = nil
+            return
+        }
+        // Skip when the file didn't actually change. Refresh cycles reassign
+        // `selectedCodeFile` to a fresh FileItem instance for the same file,
+        // which fires `didSet` and would otherwise re-insert every ancestor
+        // into `expandedPaths` — reopening folders the user just collapsed
+        // (e.g. `.build/…` popping back open on every watcher tick).
+        if lastRevealedFileID == file.id { return }
+        lastRevealedFileID = file.id
         guard let repoURL = repositoryURL else { return }
 
         let filePath = file.url.standardizedFileURL.path
