@@ -288,6 +288,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         registerFonts()
 
+        // Process-level perf sampler. No-op unless ZION_PERF=1 is set.
+        PerfMonitor.shared.startIfEnabled()
+
         // System monitor titlebar accessory — adds the CPU / RAM pill into
         // the NSWindow titlebar when `topbar.systemMonitor.enabled` is on.
         TitlebarSystemMonitorManager.shared.install()
