@@ -573,6 +573,8 @@ final class RepositoryViewModel {
     var pullUpstreamPickerBranch: String = ""
     var pullUpstreamPickerSetUpstream: Bool = true
 
+    @ObservationIgnored var lastRevealedFileID: String?
+
     // Zion Code state
     var repositoryFiles: [FileItem] = [] {
         didSet { isFlatFileCacheDirty = true }
