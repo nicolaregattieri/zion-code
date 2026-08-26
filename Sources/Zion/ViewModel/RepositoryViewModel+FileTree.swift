@@ -61,14 +61,25 @@ extension RepositoryViewModel {
     }
 
     private func completeFileTreeRefresh(requestID: UUID, repositoryURL: URL) {
-        guard fileTreeRefreshRequestID == requestID else { return }
-        fileTreeRefreshTask = nil
-        isRefreshingFileTree = false
+        // A stale (superseded) task must still fire its onFinish callback and
+        // release the `isRefreshingFileTree` flag. Otherwise: if the current
+        // request was cancelled by a mid-flight repository switch, the flag
+        // stays true forever and the switch's own refreshFileTree(onFinish:)
+        // gets queued but never runs — so `finalizeRepositorySwitch` is only
+        // reached via the 20s watchdog and the Zion Tree overlay sits on
+        // "loading" for the full timeout.
+        let isCurrentRequest = fileTreeRefreshRequestID == requestID
+        if isCurrentRequest {
+            fileTreeRefreshTask = nil
+            isRefreshingFileTree = false
+        }
 
-        guard let pendingURL = pendingFileTreeRefreshRepositoryURL,
+        guard isCurrentRequest,
+              let pendingURL = pendingFileTreeRefreshRepositoryURL,
               pendingURL == repositoryURL,
               repositoryURL == self.repositoryURL?.standardizedFileURL else {
-            // No queued re-run — fire any stored onFinish callback now.
+            // No queued re-run (or this was a superseded task) — fire any
+            // stored onFinish callback now so switch finalization can proceed.
             let callback = fileTreeRefreshOnFinish
             fileTreeRefreshOnFinish = nil
             callback?()
@@ -199,8 +210,29 @@ extension RepositoryViewModel {
         let sortedAncestors = sortedExpandedDirectoryPaths(ancestors)
         for ancestorPath in sortedAncestors {
             if ancestorPath == repoPath { continue }
-            loadChildrenIfNeeded(for: ancestorPath, forceReload: true, expectedRepositoryURL: repositoryURL)
+            // If the ancestor doesn't yet exist as a node in `repositoryFiles`
+            // (freshly-created folder from an AI CLI, a `mkdir`, etc.),
+            // `loadChildrenIfNeeded` silently no-ops. Walk up to the nearest
+            // ancestor that *does* exist and force-reload it so the missing
+            // node materialises; a subsequent iteration then picks it up.
+            let anchor = nearestExistingAncestor(for: ancestorPath, repoPath: repoPath)
+            let target = anchor ?? ancestorPath
+            guard target != repoPath else { continue }
+            loadChildrenIfNeeded(for: target, forceReload: true, expectedRepositoryURL: repositoryURL)
         }
+    }
+
+    /// Walks `path` upward until it finds a directory that already exists as
+    /// a `FileItem` in `repositoryFiles`. Returns nil if no ancestor exists
+    /// (should not happen — the repo root is always present).
+    private func nearestExistingAncestor(for path: String, repoPath: String) -> String? {
+        var current = path
+        while current.count >= repoPath.count, current.hasPrefix(repoPath) {
+            if findItem(path: current, in: repositoryFiles) != nil { return current }
+            if current == repoPath { break }
+            current = URL(fileURLWithPath: current).deletingLastPathComponent().path
+        }
+        return nil
     }
 
     func sortedExpandedDirectoryPaths(_ paths: some Sequence<String>) -> [String] {
