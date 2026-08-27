@@ -122,11 +122,15 @@ final class SystemMonitor {
             }
         }
         guard result == KERN_SUCCESS else { return nil }
+        // `truncatingIfNeeded` — never a trapping conversion. The tick counters
+        // are monotonic and cross `Int32.max` after ~15 days of uptime on a
+        // many-core host, which made a checked `Int32(...)` conversion trap and
+        // kill the app on launch.
         return (
-            user: UInt32(bitPattern: Int32(info.cpu_ticks.0)),
-            system: UInt32(bitPattern: Int32(info.cpu_ticks.1)),
-            idle: UInt32(bitPattern: Int32(info.cpu_ticks.2)),
-            nice: UInt32(bitPattern: Int32(info.cpu_ticks.3))
+            user: UInt32(truncatingIfNeeded: info.cpu_ticks.0),
+            system: UInt32(truncatingIfNeeded: info.cpu_ticks.1),
+            idle: UInt32(truncatingIfNeeded: info.cpu_ticks.2),
+            nice: UInt32(truncatingIfNeeded: info.cpu_ticks.3)
         )
     }
 
