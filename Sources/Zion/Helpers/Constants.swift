@@ -112,8 +112,9 @@ enum Constants {
 
         /// Safety timeout to force-clear isSwitchingRepository if finalization never fires.
         /// Cold OS-cache loads on a fresh repo open can exceed 10s; the watchdog must be a
-        /// safety net, not the normal path.
-        static let repositorySwitchWatchdogTimeout: UInt64 = 20_000_000_000 // 20s
+        /// safety net, not the normal path. Lowered to 8s after fixing the FileTree onFinish
+        /// leak — the previous 20s was masking that bug as "Zion Tree loading forever".
+        static let repositorySwitchWatchdogTimeout: UInt64 = 8_000_000_000 // 8s
 
         // --- Retry / Network Error ---
 

@@ -708,20 +708,21 @@ extension RepositoryViewModel {
             pendingFileWatcherEvent = (pendingFileWatcherEvent?.merged(with: event)) ?? event
         } else {
             if event.hasStructuralImpact || event.requiresRescan {
-                // RT-003: Skip file tree walk while user is on Graph/Operations
-                // sections — tree is not visible. Mark pending and replay on
-                // switch back to .code.
-                if activeSection == .code {
-                    refreshFileTree(forceReloadExpandedDirectories: true)
-                    // RT-005: top-level walk + reloadExpandedDirectories alone
-                    // does not surface a file dropped inside a brand-new folder
-                    // (folder appears empty until clicked). Walk the event's
-                    // changed paths to surgically reload each affected parent
-                    // dir and auto-expand newly-discovered folders.
-                    ensureChildrenLoadedForChangedPaths(event.changedPaths)
-                } else {
-                    pendingFileTreeRefreshFromGate = true
-                }
+                // RT-003 update: previously we skipped the tree walk when the
+                // user wasn't on the Code section and replayed it on
+                // section return. That deferral was surprising: switching to
+                // Zion Tree while an AI CLI was creating files meant the tree
+                // still reflected old state on return until the next FSEvent.
+                // The walk is cheap (top-level enumeration + reload of already-
+                // expanded dirs), so run it always. `pendingFileTreeRefreshFromGate`
+                // is kept for other code paths that may still set it.
+                refreshFileTree(forceReloadExpandedDirectories: true)
+                // RT-005: top-level walk + reloadExpandedDirectories alone
+                // does not surface a file dropped inside a brand-new folder
+                // (folder appears empty until clicked). Walk the event's
+                // changed paths to surgically reload each affected parent
+                // dir and auto-expand newly-discovered folders.
+                ensureChildrenLoadedForChangedPaths(event.changedPaths)
             }
 
             if event.hasTreeImpact {

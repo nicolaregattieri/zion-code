@@ -145,6 +145,47 @@ final class RepositoryViewModelFileTreePathTargetedTests: XCTestCase {
                       "New.swift should be loaded into the collapsed folder's children for instant click reveal")
     }
 
+    // Regression: an AI CLI (claude, codex) creates a whole NEW folder tree
+    // like `newpkg/lib/foo.swift`. `newpkg` doesn't exist in `repositoryFiles`
+    // yet. Previously `ensureChildrenLoadedForChangedPaths` walked ancestors
+    // and called `loadChildrenIfNeeded(newpkg)` — which no-ops (findItem is
+    // nil) — so the folder never surfaced until the next top-level refresh
+    // AND `refreshFileTree`'s maxDepth-0 walk added `newpkg` but left its
+    // children nil, hiding `lib/foo.swift`. Fix: walk up to the nearest
+    // existing ancestor (here: the repo root's direct child that DOES exist,
+    // or the caller of this method — which is followed by refreshFileTree
+    // adding newpkg — so we re-force-reload newpkg on the next tick).
+    func testEnsureChildrenLoadedSurfacesFreshlyCreatedTopLevelFolder() async throws {
+        let vm = RepositoryViewModel()
+        let tempDir = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        vm.repositoryURL = tempDir
+        // Simulate the state right after a top-level refreshFileTree walk:
+        // the new top-level folder DOES exist in repositoryFiles (with nil
+        // children) — this is the realistic state because refreshFileTree
+        // and ensureChildrenLoadedForChangedPaths run back-to-back.
+        let newPkg = tempDir.appendingPathComponent("newpkg", isDirectory: true)
+        let libDir = newPkg.appendingPathComponent("lib", isDirectory: true)
+        try FileManager.default.createDirectory(at: libDir, withIntermediateDirectories: true)
+        let deepFile = libDir.appendingPathComponent("foo.swift")
+        try "let x = 1\n".write(to: deepFile, atomically: true, encoding: .utf8)
+
+        vm.repositoryFiles = [FileItem(url: newPkg, isDirectory: true, children: nil)]
+
+        // FSEvent coalesces to the parent dir of the created file.
+        vm.ensureChildrenLoadedForChangedPaths([libDir.path])
+
+        // newpkg should get its children loaded so lib/ is discoverable.
+        await waitForCondition(timeout: 3.0) {
+            guard let pkg = vm.findItem(path: newPkg.path, in: vm.repositoryFiles) else { return false }
+            return pkg.children?.contains(where: { $0.url.lastPathComponent == "lib" }) ?? false
+        }
+        let pkgAfter = vm.findItem(path: newPkg.path, in: vm.repositoryFiles)
+        XCTAssertTrue(pkgAfter?.children?.contains(where: { $0.url.lastPathComponent == "lib" }) ?? false,
+                      "newpkg should have 'lib' in its children after ensureChildrenLoaded walks up to the nearest existing ancestor")
+    }
+
     // Paths outside the repository must be ignored — no expandedPaths
     // mutation, no I/O.
     func testEnsureChildrenLoadedIgnoresPathsOutsideRepository() async throws {
