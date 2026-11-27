@@ -882,6 +882,12 @@ final class ChatService {
             // P14: publish for AutoResolvedChip so the composer can show "Auto → <name>".
             self.resolvedProvider = resolved
 
+            // The composer loads the key stored for the *selected* provider. In
+            // Auto that is `.auto`, which never has a key, so API providers got
+            // an empty key and failed with 401. Load the key for the provider
+            // the orchestrator actually picked.
+            let resolvedAPIKey = Self.resolveAPIKey(for: resolved, requested: provider, passedKey: apiKey)
+
             // Effective model id: explicit user override wins; otherwise Smart
             // Auto's tier-derived model. Nil falls back to provider catalog default.
             let effectiveModel: String? = modelOverride ?? smartModelOverride
@@ -1010,7 +1016,7 @@ final class ChatService {
                     payload: payload,
                     provider: resolved,
                     originalRequestedProvider: provider,
-                    apiKey: apiKey,
+                    apiKey: resolvedAPIKey,
                     mode: mode,
                     repoURL: repoURL,
                     modelOverride: effectiveModel,
@@ -1425,6 +1431,33 @@ final class ChatService {
     /// Maximum number of provider hops allowed per turn (prevents infinite loops).
     private static let maxHopsPerTurn = 3
 
+    /// Output-token budget for chat replies on API providers. 2048 cut long
+    /// code answers mid-way; every current Anthropic / OpenAI / Gemini chat
+    /// model accepts at least 8192 output tokens. Local models keep their
+    /// own smaller budget.
+    nonisolated static let chatMaxOutputTokens = 8192
+
+    /// API providers whose request builders forward `payload.imageAttachments`.
+    nonisolated static let visionAPIProviders: Set<AIProvider> = [.anthropic, .openai, .gemini]
+
+    /// Picks the API key for the provider that will actually serve the turn.
+    /// The caller's key is only valid when it was loaded for that same
+    /// provider; otherwise (Auto, or a fallback hop) load the resolved
+    /// provider's own key.
+    nonisolated static func resolveAPIKey(
+        for resolved: AIProvider,
+        requested: AIProvider,
+        passedKey: String,
+        loader: (AIProvider) -> String?
+    ) -> String {
+        if resolved == requested, !passedKey.isEmpty { return passedKey }
+        return loader(resolved) ?? ""
+    }
+
+    nonisolated static func resolveAPIKey(for resolved: AIProvider, requested: AIProvider, passedKey: String) -> String {
+        resolveAPIKey(for: resolved, requested: requested, passedKey: passedKey, loader: { AIClient.loadAPIKey(for: $0) })
+    }
+
     /// Dispatches the stream to `provider`. On `AIError.rateLimited` or
     /// `AIError.networkFailure`, attempts to find a fallback provider via the
     /// orchestrator and retries up to `maxHopsPerTurn` times.
@@ -1502,7 +1535,12 @@ final class ChatService {
                 // the next provider in the chain. Surfacing 401 directly to
                 // the user breaks `.auto` when a key is missing.
                 retryAfter = nil
-                await orchestrator.markRateLimited(provider, retryAfter: 86_400)
+                // Only Auto routes around a bad key. With an explicit provider
+                // the error is shown below; benching the provider for a day
+                // would keep Auto away from it even after the key is fixed.
+                if originalRequestedProvider == .auto {
+                    await orchestrator.markRateLimited(provider, retryAfter: 86_400)
+                }
             default:
                 // Non-retryable error — surface it
                 await MainActor.run {
@@ -1512,9 +1550,21 @@ final class ChatService {
                 return
             }
 
+            // Only Auto may switch providers. When the user picked a provider,
+            // a silent switch would answer with a provider they did not choose;
+            // show the real error instead.
+            guard originalRequestedProvider == .auto else {
+                await MainActor.run {
+                    let description = error.localizedDescription
+                    self.setAssistantContent(id: assistantID, content: description.isEmpty ? L10n("chat.error.generic") : description)
+                }
+                return
+            }
+
             // Attempt fallback if within hop limit
+            let fallbackLane = self.resolvedLane ?? .general
             if hopCount < Self.maxHopsPerTurn,
-               let nextProvider = await orchestrator.nextFallback(from: provider, lane: .general) {
+               let nextProvider = await orchestrator.nextFallback(from: provider, lane: fallbackLane) {
                 let reason = retryAfter != nil
                     ? String(format: L10n("ai.error.rateLimited.delay"), Int(retryAfter!))
                     : L10n("ai.error.rateLimited")
@@ -1525,19 +1575,34 @@ final class ChatService {
                 )
                 await MainActor.run {
                     self.recentSwitches.append(switchEvent)
+                    // Drop partial text from the failed provider so the next
+                    // one does not write on top of a truncated answer.
+                    self.setAssistantContent(id: assistantID, content: "")
+                    self.showTransientNotice(
+                        String(format: L10n("chat.routing.switched"), provider.label, nextProvider.label)
+                    )
                 }
                 let originalText = payload.untrustedSections.first(where: { $0.kind == "user_message" })?.content ?? ""
-                let nextPayload = makePayload(for: originalText, provider: nextProvider)
-                var updatedPayload = nextPayload
+                var updatedPayload = makePayload(for: originalText, provider: nextProvider)
                 updatedPayload.cwd = repoURL
+                // Keep image attachments when the next provider can read them.
+                if Self.visionAPIProviders.contains(nextProvider) {
+                    updatedPayload.imageAttachments = payload.imageAttachments
+                }
+                // The failed provider's key and model mean nothing to the next
+                // one: load its own key and pick its own tier model.
+                let nextAPIKey = Self.resolveAPIKey(for: nextProvider, requested: originalRequestedProvider, passedKey: "")
+                let nextModel = self.resolvedTier.flatMap {
+                    SmartAutoTierTable.default.modelID(provider: nextProvider, tier: $0)
+                }
                 await dispatchStream(
                     payload: updatedPayload,
                     provider: nextProvider,
                     originalRequestedProvider: originalRequestedProvider,
-                    apiKey: apiKey,
+                    apiKey: nextAPIKey,
                     mode: mode,
                     repoURL: repoURL,
-                    modelOverride: modelOverride,
+                    modelOverride: nextModel,
                     assistantID: assistantID,
                     threadID: threadID,
                     hopCount: hopCount + 1
@@ -1583,13 +1648,13 @@ final class ChatService {
                     payload: payload,
                     apiKey: apiKey,
                     modelID: modelID,
-                    maxTokens: 2048,
+                    maxTokens: Self.chatMaxOutputTokens,
                     assistantID: assistantID,
                     threadID: threadID,
                     provider: provider
                 )
             } else {
-                let stream = await self.ai.streamAnthropic(payload: payload, apiKey: apiKey, maxTokens: 2048, modelID: modelID)
+                let stream = await self.ai.streamAnthropic(payload: payload, apiKey: apiKey, maxTokens: Self.chatMaxOutputTokens, modelID: modelID)
                 try await self.consumeStreamThrowing(stream, assistantID: assistantID, threadID: threadID, provider: provider)
             }
 
@@ -1602,7 +1667,7 @@ final class ChatService {
                     payload: payload,
                     apiKey: apiKey,
                     modelID: modelID,
-                    maxTokens: 2048,
+                    maxTokens: Self.chatMaxOutputTokens,
                     url: url,
                     authField: "Authorization",
                     authValue: "Bearer \(apiKey)",
@@ -1610,7 +1675,7 @@ final class ChatService {
                     assistantID: assistantID
                 )
             } else {
-                let stream = await self.ai.streamOpenAI(payload: payload, apiKey: apiKey, maxTokens: 2048, modelID: modelID)
+                let stream = await self.ai.streamOpenAI(payload: payload, apiKey: apiKey, maxTokens: Self.chatMaxOutputTokens, modelID: modelID)
                 try await self.consumeStreamThrowing(stream, assistantID: assistantID, threadID: threadID, provider: provider)
             }
 
@@ -1624,7 +1689,7 @@ final class ChatService {
                 stream = await self.ai.streamClaudeCLI(
                     payload: payload,
                     cwd: repoURL,
-                    maxTokens: 2048,
+                    maxTokens: Self.chatMaxOutputTokens,
                     allowEdits: UserDefaults.standard.bool(forKey: "chat.cliAllowEdits"),
                     resumeSessionID: resumeID,
                     modelOverride: modelOverride
@@ -1665,7 +1730,7 @@ final class ChatService {
                         payload: payload,
                         provider: provider,
                         apiKey: apiKey,
-                        maxTokens: 2048,
+                        maxTokens: Self.chatMaxOutputTokens,
                         lane: .general,
                         mode: mode
                     )
@@ -1687,7 +1752,7 @@ final class ChatService {
                     payload: payload,
                     provider: provider,
                     apiKey: apiKey,
-                    maxTokens: 2048,
+                    maxTokens: Self.chatMaxOutputTokens,
                     lane: .general,
                     mode: mode
                 )
@@ -1710,6 +1775,15 @@ final class ChatService {
         do {
             for try await delta in stream {
                 if Task.isCancelled { break }
+                if delta == AIClient.truncationSentinel {
+                    // Provider stopped at the output-token limit: say so
+                    // instead of leaving a silently cut answer.
+                    await MainActor.run {
+                        self.appendAssistantDelta(id: assistantID, delta: "\n\n" + L10n("chat.response.truncated"))
+                        self.scheduleDebounce(for: assistantID, threadID: threadID)
+                    }
+                    continue
+                }
                 await MainActor.run {
                     if firstDelta {
                         // Record providerUsed on first delta

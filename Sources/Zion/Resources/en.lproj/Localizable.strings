@@ -3225,3 +3225,13 @@
 "filetree.badge.deleted" = "Deleted";
 "filetree.badge.renamed" = "Renamed";
 "filetree.badge.conflicted" = "Conflicted";
+
+/* Chat routing and error messages (keys used in code that were missing) */
+"chat.error.generic" = "Something went wrong. Try again.";
+"ai.error.rateLimited" = "The provider is rate limiting requests. Try again in a moment.";
+"ai.error.rateLimited.delay" = "The provider is rate limiting requests. Try again in %d s.";
+"ai.error.networkFailure" = "Network error: %@";
+"chat.routing.allProvidersExhausted" = "No AI provider could answer right now. Check your API keys in Settings or try again in a moment.";
+"chat.routing.switched" = "%@ failed, switched to %@.";
+"chat.response.truncated" = "_Reply cut off at the output token limit. Ask me to continue._";
+"Ir" = "Go";

@@ -3227,3 +3227,13 @@
 "filetree.badge.deleted" = "Removido";
 "filetree.badge.renamed" = "Renomeado";
 "filetree.badge.conflicted" = "Em conflito";
+
+/* Chat routing and error messages (keys used in code that were missing) */
+"chat.error.generic" = "Algo deu errado. Tente de novo.";
+"ai.error.rateLimited" = "O provedor está limitando as requisições. Tente de novo em instantes.";
+"ai.error.rateLimited.delay" = "O provedor está limitando as requisições. Tente de novo em %d s.";
+"ai.error.networkFailure" = "Erro de rede: %@";
+"chat.routing.allProvidersExhausted" = "Nenhum provedor de IA conseguiu responder agora. Confira suas chaves de API nas Configurações ou tente de novo em instantes.";
+"chat.routing.switched" = "%@ falhou, troquei para %@.";
+"chat.response.truncated" = "_Resposta cortada no limite de tokens. Peça para eu continuar._";
+"Ir" = "Ir";

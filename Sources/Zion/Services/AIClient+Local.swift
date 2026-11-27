@@ -9,7 +9,16 @@ extension AIClient {
     struct LocalStreamChunk {
         let text: String
         let done: Bool
+        /// True when the provider stopped because it hit the output-token
+        /// limit (Anthropic `stop_reason: max_tokens`, OpenAI
+        /// `finish_reason: length`).
+        var truncated: Bool = false
     }
+
+    /// Yielded by the text streams when the reply was cut at the token
+    /// limit. Consumers turn it into a visible notice; it never reaches the
+    /// transcript as-is.
+    static let truncationSentinel = "\u{1F}zion.truncated\u{1F}"
 
     // MARK: - SSE Parser
 
@@ -60,7 +69,7 @@ extension AIClient {
             isDone = false
         }
 
-        return LocalStreamChunk(text: text, done: isDone)
+        return LocalStreamChunk(text: text, done: isDone, truncated: (finishReason as? String) == "length")
     }
 
     // MARK: - Model Discovery Parser
