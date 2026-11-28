@@ -29,6 +29,30 @@ final class ChatAutoRoutingFixesTests: XCTestCase {
         XCTAssertEqual(key, "sk-passed")
     }
 
+    func testExplicitProviderWithEmptyKeyNeverHitsKeychain() {
+        // Reading the Keychain can block on a locked keychain (CI runners),
+        // so an explicit provider must keep the caller's key as is.
+        let key = ChatService.resolveAPIKey(
+            for: .gemini,
+            requested: .gemini,
+            passedKey: "",
+            loader: { _ in XCTFail("loader must not run for an explicit provider"); return nil }
+        )
+        XCTAssertEqual(key, "")
+    }
+
+    func testAutoResolvingToCLIOrLocalNeverHitsKeychain() {
+        for resolved in [AIProvider.claudeCLI, .codexCLI, .local] {
+            let key = ChatService.resolveAPIKey(
+                for: resolved,
+                requested: .auto,
+                passedKey: "",
+                loader: { _ in XCTFail("loader must not run for \(resolved)"); return nil }
+            )
+            XCTAssertEqual(key, "", "\(resolved) needs no API key")
+        }
+    }
+
     func testFallbackHopNeverReusesPreviousProvidersKey() {
         // Hop from Anthropic to OpenAI: the Anthropic key must not leak over.
         let key = ChatService.resolveAPIKey(

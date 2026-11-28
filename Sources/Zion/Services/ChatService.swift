@@ -1441,18 +1441,27 @@ final class ChatService {
     nonisolated static let visionAPIProviders: Set<AIProvider> = [.anthropic, .openai, .gemini]
 
     /// Picks the API key for the provider that will actually serve the turn.
-    /// The caller's key is only valid when it was loaded for that same
-    /// provider; otherwise (Auto, or a fallback hop) load the resolved
-    /// provider's own key.
+    ///
+    /// - An explicit provider keeps the caller's key unchanged (the composer
+    ///   already loaded it for that provider), so this path never touches
+    ///   the Keychain.
+    /// - In Auto, or on a fallback hop, the caller's key belongs to another
+    ///   provider (or to `.auto`, which has none), so load the resolved
+    ///   provider's own key. Only API providers have one; CLI and local
+    ///   providers get an empty key, as before.
     nonisolated static func resolveAPIKey(
         for resolved: AIProvider,
         requested: AIProvider,
         passedKey: String,
         loader: (AIProvider) -> String?
     ) -> String {
-        if resolved == requested, !passedKey.isEmpty { return passedKey }
+        if resolved == requested { return passedKey }
+        guard keyedAPIProviders.contains(resolved) else { return "" }
         return loader(resolved) ?? ""
     }
+
+    /// Providers that authenticate with a stored API key.
+    nonisolated static let keyedAPIProviders: Set<AIProvider> = [.anthropic, .openai, .gemini]
 
     nonisolated static func resolveAPIKey(for resolved: AIProvider, requested: AIProvider, passedKey: String) -> String {
         resolveAPIKey(for: resolved, requested: requested, passedKey: passedKey, loader: { AIClient.loadAPIKey(for: $0) })
