@@ -103,7 +103,7 @@ final class ChatServiceCLIIntegrationTests: XCTestCase {
         }
 
         // Wait for the continuation to be registered
-        try await Task.sleep(nanoseconds: 50_000_000) // 50 ms
+        try await bridge.waitUntilReady()
 
         // Yield toolStart
         await bridge.yield(.toolStart(id: toolID, name: "read_file", description: "Reading main.swift"))
@@ -191,7 +191,7 @@ final class ChatServiceCLIIntegrationTests: XCTestCase {
             )
         }
 
-        try await Task.sleep(nanoseconds: 50_000_000)
+        try await bridge.waitUntilReady()
 
         // Send .done first
         await bridge.yield(.done)
@@ -257,6 +257,21 @@ private actor StreamBridge {
 
     func setContinuation(_ c: AsyncThrowingStream<CLIStreamEvent, Error>.Continuation) {
         continuation = c
+    }
+
+    /// Waits until the service has opened the stream, instead of guessing
+    /// with a fixed sleep. Events yielded before that are silently dropped,
+    /// which made these tests depend on how fast the machine is.
+    func waitUntilReady(timeoutNanos: UInt64 = 5_000_000_000) async throws {
+        var waited: UInt64 = 0
+        while continuation == nil {
+            guard waited < timeoutNanos else {
+                XCTFail("Stream was never opened")
+                return
+            }
+            try await Task.sleep(nanoseconds: 10_000_000)
+            waited += 10_000_000
+        }
     }
 
     func yield(_ event: CLIStreamEvent) {
