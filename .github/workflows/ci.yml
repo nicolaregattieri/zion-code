@@ -36,7 +36,14 @@ jobs:
           restore-keys: spm-${{ runner.os }}-
 
       - name: Build
-        run: swift build
+        run: swift build --build-tests
 
+      # XCTest output is block-buffered when piped, so a hung test looked
+      # like it hung on whatever test the last flushed chunk ended on.
+      # Unbuffered output shows the test that is really stuck, and the step
+      # timeout keeps one hang from eating the whole job.
       - name: Test
-        run: swift test
+        timeout-minutes: 20
+        env:
+          NSUnbufferedIO: "YES"
+        run: swift test --skip-build

@@ -311,28 +311,10 @@ actor BashTool {
         let lock = NSLock()
         var stdoutData = Data()
         var stderrData = Data()
-        /// Set once the continuation has been resumed, by exit or by timeout.
-        var resumed = false
-
-        /// Returns true only for the first caller.
-        func claimResume() -> Bool {
-            lock.withLock {
-                if resumed { return false }
-                resumed = true
-                return true
-            }
-        }
+        var didTimeout = false
+        var finished = false
     }
 
-    /// Runs the command and resumes exactly once: when the process exits,
-    /// or when the timeout fires, whichever comes first.
-    ///
-    /// Uses the same pattern as `GitClient.readPipesUntilExit`: both pipes
-    /// are read to EOF on background threads while `waitUntilExit()` runs on
-    /// a dedicated queue. It no longer depends on `terminationHandler`, and
-    /// the timeout path resumes the caller itself after `terminate()`, so a
-    /// missed exit can never leave the caller suspended forever (that hang
-    /// stalled CI for an hour on `git status` with a 10 s timeout).
     private static func execute(command: String, repoURL: URL, timeoutSec: Int) async throws -> BashOutput {
         return try await withCheckedThrowingContinuation { continuation in
             let process = Process()
@@ -347,61 +329,62 @@ actor BashTool {
 
             let state = ProcessState()
 
+            // Timer for timeout
+            let timerSource = DispatchSource.makeTimerSource(queue: DispatchQueue.global())
+            timerSource.schedule(deadline: .now() + .seconds(timeoutSec))
+            timerSource.setEventHandler {
+                state.lock.withLock {
+                    guard !state.finished else { return }
+                    state.didTimeout = true
+                    state.finished = true
+                }
+                process.terminate()
+            }
+            timerSource.resume()
+
+            process.terminationHandler = { proc in
+                timerSource.cancel()
+
+                var outCopy: Data = Data()
+                var errCopy: Data = Data()
+                var timedOut: Bool = false
+                state.lock.withLock {
+                    if !state.finished { state.finished = true }
+                    outCopy = state.stdoutData
+                    errCopy = state.stderrData
+                    timedOut = state.didTimeout
+                }
+
+                let (stdoutStr, stdoutTruncated) = Self.truncate(outCopy)
+                let (stderrStr, stderrTruncated) = Self.truncate(errCopy)
+
+                if timedOut {
+                    continuation.resume(throwing: BashError.timeout)
+                } else {
+                    continuation.resume(returning: BashOutput(
+                        stdout: stdoutStr,
+                        stderr: stderrStr,
+                        exitCode: proc.terminationStatus,
+                        truncated: stdoutTruncated || stderrTruncated
+                    ))
+                }
+            }
+
+            // Read data asynchronously
+            stdoutPipe.fileHandleForReading.readabilityHandler = { fh in
+                let chunk = fh.availableData
+                state.lock.withLock { state.stdoutData.append(chunk) }
+            }
+            stderrPipe.fileHandleForReading.readabilityHandler = { fh in
+                let chunk = fh.availableData
+                state.lock.withLock { state.stderrData.append(chunk) }
+            }
+
             do {
                 try process.run()
             } catch {
-                if state.claimResume() { continuation.resume(throwing: error) }
-                return
-            }
-
-            // Read both pipes to EOF concurrently so a full pipe buffer can't
-            // block the child.
-            let readers = DispatchGroup()
-            readers.enter()
-            DispatchQueue.global(qos: .userInitiated).async {
-                let data = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-                state.lock.withLock { state.stdoutData = data }
-                readers.leave()
-            }
-            readers.enter()
-            DispatchQueue.global(qos: .userInitiated).async {
-                let data = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-                state.lock.withLock { state.stderrData = data }
-                readers.leave()
-            }
-
-            // Timeout: terminate and resume right away.
-            let timeoutItem = DispatchWorkItem {
-                if process.isRunning { process.terminate() }
-                if state.claimResume() { continuation.resume(throwing: BashError.timeout) }
-            }
-            DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(timeoutSec), execute: timeoutItem)
-
-            // Exit: wait on a dedicated queue, then collect the output.
-            DispatchQueue.global(qos: .userInitiated).async {
-                process.waitUntilExit()
-                // The timeout item may still fire later; it finds the process
-                // gone and the continuation already claimed, so it does nothing.
-                // A grandchild that inherited the pipes could keep them open
-                // after the shell exits, so don't wait on the readers forever.
-                _ = readers.wait(timeout: .now() + 2)
-
-                var outCopy = Data()
-                var errCopy = Data()
-                state.lock.withLock {
-                    outCopy = state.stdoutData
-                    errCopy = state.stderrData
-                }
-
-                guard state.claimResume() else { return }
-                let (stdoutStr, stdoutTruncated) = Self.truncate(outCopy)
-                let (stderrStr, stderrTruncated) = Self.truncate(errCopy)
-                continuation.resume(returning: BashOutput(
-                    stdout: stdoutStr,
-                    stderr: stderrStr,
-                    exitCode: process.terminationStatus,
-                    truncated: stdoutTruncated || stderrTruncated
-                ))
+                timerSource.cancel()
+                continuation.resume(throwing: error)
             }
         }
     }
