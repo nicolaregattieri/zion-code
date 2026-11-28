@@ -88,8 +88,8 @@ final class MultiRemoteCheckoutTests: XCTestCase {
         let pivotreeBare = scratch.appendingPathComponent("pivotree.git")
         let work = scratch.appendingPathComponent("work")
 
-        try sh(["git", "init", "--bare", originBare.path])
-        try sh(["git", "init", "--bare", pivotreeBare.path])
+        try sh(["git", "init", "--bare", "-b", "main", originBare.path])
+        try sh(["git", "init", "--bare", "-b", "main", pivotreeBare.path])
 
         // Seed origin with an initial commit on main
         try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)

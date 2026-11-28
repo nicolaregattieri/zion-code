@@ -125,10 +125,11 @@ final class ChatStreamingCloudIntegrationTests: XCTestCase {
             ) {}
             XCTFail("Expected error to be thrown")
         } catch let error as AIError {
-            if case .localAPIError = error {
-                // Pass — 401 maps to localAPIError
+            if case .invalidKey = error {
+                // Pass — 401 maps to invalidKey, so Auto can bench the
+                // provider and fall back instead of stopping the turn.
             } else {
-                XCTFail("Expected AIError.localAPIError, got \(error)")
+                XCTFail("Expected AIError.invalidKey, got \(error)")
             }
         } catch {
             XCTFail("Unexpected error type: \(error)")

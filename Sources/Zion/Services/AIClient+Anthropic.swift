@@ -61,7 +61,17 @@ extension AIClient {
     /// - Unknown event → nil
     static func parseAnthropicSSEEvent(eventName: String, data: Data) -> LocalStreamChunk? {
         switch eventName {
-        case "message_start", "content_block_start", "content_block_stop", "message_delta":
+        case "message_delta":
+            // Only surface the stop reason when the reply was cut at the
+            // output-token limit; every other message_delta stays silent.
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let delta = json["delta"] as? [String: Any],
+                  (delta["stop_reason"] as? String) == "max_tokens" else {
+                return nil
+            }
+            return LocalStreamChunk(text: "", done: false, truncated: true)
+
+        case "message_start", "content_block_start", "content_block_stop":
             return nil
 
         case "message_stop":
@@ -131,7 +141,9 @@ extension AIClient {
                     case 200:
                         break
                     case 401, 403:
-                        continuation.finish(throwing: AIError.localAPIError("Anthropic auth error (\(http.statusCode))."))
+                        // invalidKey lets Auto fall back to the next provider
+                        // and shows the localized "invalid key" message otherwise.
+                        continuation.finish(throwing: AIError.invalidKey)
                         return
                     case 429:
                         continuation.finish(throwing: AIError.rateLimited(retryAfter: Self.parseRetryAfter(from: http)))
@@ -156,6 +168,9 @@ extension AIClient {
                         }
                         if !chunk.text.isEmpty {
                             continuation.yield(chunk.text)
+                        }
+                        if chunk.truncated {
+                            continuation.yield(Self.truncationSentinel)
                         }
                         return chunk.done
                     }

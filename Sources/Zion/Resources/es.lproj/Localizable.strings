@@ -3249,3 +3249,13 @@
 "filetree.badge.deleted" = "Eliminado";
 "filetree.badge.renamed" = "Renombrado";
 "filetree.badge.conflicted" = "En conflicto";
+
+/* Chat routing and error messages (keys used in code that were missing) */
+"chat.error.generic" = "Algo salió mal. Inténtalo de nuevo.";
+"ai.error.rateLimited" = "El proveedor está limitando las solicitudes. Inténtalo de nuevo en un momento.";
+"ai.error.rateLimited.delay" = "El proveedor está limitando las solicitudes. Inténtalo de nuevo en %d s.";
+"ai.error.networkFailure" = "Error de red: %@";
+"chat.routing.allProvidersExhausted" = "Ningún proveedor de IA pudo responder ahora. Revisa tus claves de API en Ajustes o inténtalo de nuevo en un momento.";
+"chat.routing.switched" = "%@ falló, cambié a %@.";
+"chat.response.truncated" = "_Respuesta cortada en el límite de tokens. Pídeme que continúe._";
+"Ir" = "Ir";

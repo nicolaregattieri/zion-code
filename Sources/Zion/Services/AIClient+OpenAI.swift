@@ -50,7 +50,9 @@ extension AIClient {
                     case 200:
                         break
                     case 401, 403:
-                        continuation.finish(throwing: AIError.localAPIError("OpenAI auth error (\(http.statusCode))."))
+                        // invalidKey lets Auto fall back to the next provider
+                        // and shows the localized "invalid key" message otherwise.
+                        continuation.finish(throwing: AIError.invalidKey)
                         return
                     case 429:
                         continuation.finish(throwing: AIError.rateLimited(retryAfter: Self.parseRetryAfter(from: http)))
@@ -64,6 +66,9 @@ extension AIClient {
                         guard let chunk = Self.parseOpenAISSELine(Data(line.utf8)) else { continue }
                         if !chunk.text.isEmpty {
                             continuation.yield(chunk.text)
+                        }
+                        if chunk.truncated {
+                            continuation.yield(Self.truncationSentinel)
                         }
                         if chunk.done { break }
                     }

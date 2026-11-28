@@ -1,0 +1,49 @@
+name: CI
+
+# Build and test on every PR and on pushes to master, so a change is known
+# to compile before it is merged or released. Public repo: standard macOS
+# runners are free.
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    # Package.swift needs swift-tools 6.2, which ships with Xcode 26.
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Cache SwiftPM
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: spm-${{ runner.os }}-${{ hashFiles('Package.resolved') }}
+          restore-keys: spm-${{ runner.os }}-
+
+      - name: Build
+        run: swift build --build-tests
+
+      # XCTest output is block-buffered when piped, so a hung test looked
+      # like it hung on whatever test the last flushed chunk ended on.
+      # Unbuffered output shows the test that is really stuck, and the step
+      # timeout keeps one hang from eating the whole job.
+      - name: Test
+        timeout-minutes: 20
+        env:
+          NSUnbufferedIO: "YES"
+        run: swift test --skip-build
